@@ -34,7 +34,7 @@ defmodule HELM.Account.Model do
 
   defp put_uuid(changeset) do
     if changeset.valid?,
-      do: Ecto.Changeset.put_change(changeset, :account_id, HELL.ID.generate("ACCNT")),
+      do: Ecto.Changeset.put_change(changeset, :account_id, HELL.ID.generate("ACCT")),
       else: changeset
   end
 
