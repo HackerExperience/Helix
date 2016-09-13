@@ -58,10 +58,15 @@ defmodule HELM.Account.Controller do
   end
 
   defp do_login({:ok, account}) do
-    # TODO Call `jwt:account:create` hebroker topic
-    account["account_id"]
+    Broker.call("jwt:create", account.account_id)
   end
 
-  defp do_login(err), do: err
-
+  defp do_login({:error, err}) do
+    case err do
+      :notfound ->
+        {:error, Error.format_reply(:unauthorized, "Account not found.")}
+      _ ->
+        {:error, Error.format_reply(:unspecified, "oh god")}
+    end
+  end
 end
