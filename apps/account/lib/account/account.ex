@@ -1,3 +1,4 @@
+require IEx
 defmodule HELM.Account.Service do
   use GenServer
 
@@ -22,9 +23,11 @@ defmodule HELM.Account.Service do
 
     Consumer.subscribe(:account_service, "account:login", call:
       fn _,_,account,_ ->
-        Account.Controller.login_with(account)
+        response = Account.Controller.login_with(account)
+        {:reply, response}
       end)
 
+    # TODO: fix this return
     {:ok, %{}}
   end
 
