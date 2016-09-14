@@ -1,4 +1,3 @@
-require IEx
 defmodule HELM.Account.Service do
   use GenServer
 
