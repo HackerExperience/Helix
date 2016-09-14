@@ -2,6 +2,7 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+config :account, ecto_repos: [HELM.Account.Repo]
 config :account, HELM.Account.Repo,
   adapter: Ecto.Adapters.Postgres,
   database: "account_service",
