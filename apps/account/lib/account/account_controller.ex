@@ -1,3 +1,5 @@
+require IEx
+
 defmodule HELM.Account.Controller do
   import Ecto.Changeset
   import Ecto.Query
@@ -54,7 +56,9 @@ defmodule HELM.Account.Controller do
   end
 
   defp do_new_account(changeset) do
-    Repo.insert(changeset)
+    result = Repo.insert(changeset)
+    Broker.cast("event:account:created", changeset.changes.account_id)
+    result
   end
 
   defp do_login({:ok, account}) do
