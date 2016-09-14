@@ -5,7 +5,7 @@ use Mix.Config
 config :guardian, Guardian,
   issuer: "Ws",
   ttl: { 2, :days},
-  allowed_algos: ["HS512", "ES512"],
+  allowed_algos: ["ES512"],
   secret_key: %{
     "crv" => "P-521",
     "d" => "axDuTtGavPjnhlfnYAwkHa4qyfz2fdseppXEzmKpQyY0xd3bGpYLEF4ognDpRJm5IRaM31Id2NfEtDFw4iTbDSE",
