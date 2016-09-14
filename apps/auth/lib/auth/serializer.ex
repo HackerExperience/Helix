@@ -1,6 +1,3 @@
-require IEx
-
-
 defmodule HELM.Auth.GuardianSerializer do
   @behaviour Guardian.Serializer
 
