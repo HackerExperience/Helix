@@ -17,7 +17,7 @@ defmodule HELM.Entity.App do
       supervisor(HELM.Entity.Repo, [])
     ]
 
-    Consumer.subscribe(:entity, "event:create-account", cast:
+    Consumer.subscribe(:entity, "event:account:created", cast:
     fn _, _, id ->
       HELM.Entity.Controller.create(%{ account_id: id })
     end)
