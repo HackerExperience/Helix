@@ -4,12 +4,12 @@ defmodule HELM.Account.Service do
   alias HELM.Account
 
   alias HELF.Broker
-  alias HELF.Router.Topics
+  alias HELF.Router
 
   def start_link(state \\ []) do
-    Topics.register("account.create", "account:create")
-    Topics.register("account.login", "account:login")
-    Topics.register("account.get", "account:get")
+    Router.register("account.create", "account:create")
+    Router.register("account.login", "account:login")
+    Router.register("account.get", "account:get")
 
     GenServer.start_link(__MODULE__, state, name: :account_service)
   end
