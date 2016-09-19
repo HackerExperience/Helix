@@ -1,5 +1,3 @@
-require IEx
-
 defmodule HELM.Entity.App do
   use Application
 

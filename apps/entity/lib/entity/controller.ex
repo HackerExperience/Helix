@@ -1,5 +1,3 @@
-require IEx
-
 defmodule HELM.Entity.Controller do
   import Ecto.Query
 
