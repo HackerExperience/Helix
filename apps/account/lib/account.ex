@@ -3,6 +3,7 @@ defmodule HELM.Account.App do
 
   alias HELM.Account
   alias HELF.Router
+  alias HELF.Router.Topics
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -10,6 +11,7 @@ defmodule HELM.Account.App do
     children = [
       worker(HeBroker, []),
       worker(Router, [], function: :run),
+      worker(Topics, []),
       worker(Account.Repo, []),
       worker(Account.Service, [])
     ]

@@ -2,25 +2,32 @@ defmodule HELM.Account.Service do
   use GenServer
 
   alias HELM.Account
-  alias HeBroker.Consumer
+
+  alias HELF.Broker
+  alias HELF.Router.Topics
 
   def start_link(state \\ []) do
+    Topics.register("account.create", "account:create")
+    Topics.register("account.login", "account:login")
+    Topics.register("account.get", "account:get")
+
     GenServer.start_link(__MODULE__, state, name: :account_service)
   end
 
   def init(_args) do
-    Consumer.subscribe(:account_service, "account:create", call:
+    Broker.subscribe(:account_service, "account:create", call:
       fn _,_,account,_ ->
         response = Account.Controller.new_account(account)
         {:reply, response}
       end)
 
-    Consumer.subscribe(:account_service, "account:get", call:
+    Broker.subscribe(:account_service, "account:get", call:
       fn _,_,request,_ ->
-        Account.Controller.get(request)
+        response = Account.Controller.get(request)
+        {:reply, response}
       end)
 
-    Consumer.subscribe(:account_service, "account:login", call:
+    Broker.subscribe(:account_service, "account:login", call:
       fn _,_,account,_ ->
         response = Account.Controller.login_with(account)
         {:reply, response}
