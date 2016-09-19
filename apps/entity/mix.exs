@@ -29,7 +29,7 @@ defmodule HELM.Entity.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"},
-     {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v1.0.0"},
+     {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v1.1.0"},
      {:postgrex, ">= 0.0.0"},
      {:ecto, "~> 2.0"}]
   end
