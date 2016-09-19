@@ -5,10 +5,10 @@ defmodule HELM.Account.Controller do
   alias HeBroker.Publisher
 
   alias HELF.{Broker, Error}
-  alias HELM.Account.{Repo, Model}
+  alias HELM.Account.{Repo, Schema}
 
   def find_account(account_id) do
-    Model
+    Schema
     |> where([a], a.account_id == ^account_id)
     |> select([a], map(a, [:account_id, :confirmed, :email]))
     |> Repo.one()
@@ -19,7 +19,7 @@ defmodule HELM.Account.Controller do
   end
 
   def new_account(account) do
-    Model.create_changeset(account)
+    Schema.create_changeset(account)
     |> do_new_account()
   end
 
@@ -43,7 +43,7 @@ defmodule HELM.Account.Controller do
   end
 
   defp do_find_account(email: email, password: password) do
-    Model
+    Schema
     |> where([a], a.email == ^email and a.password == ^password)
     |> select([a], map(a, [:account_id, :confirmed, :email]))
     |> Repo.one()

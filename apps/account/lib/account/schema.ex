@@ -1,5 +1,6 @@
-defmodule HELM.Account.Model do
+defmodule HELM.Account.Schema do
   use Ecto.Schema
+
   import Ecto.Changeset
 
   @primary_key {:account_id, :string, autogenerate: false}
@@ -23,13 +24,13 @@ defmodule HELM.Account.Model do
     |> validate_required(:password_confirmation)
     |> validate_confirmation(:password)
     |> update_change(:email, &String.downcase/1)
-    #|> unique_constraint(:email, name: :account_special_email_index)
+    |> unique_constraint(:email, name: :unique_account_email)
     |> generic_validations()
     |> put_uuid()
   end
 
-  def update_changeset(model, params) do
-    model
+  def update_changeset(schema, params) do
+    schema
     |> cast(params, @update_fields)
     |> generic_validations()
   end
