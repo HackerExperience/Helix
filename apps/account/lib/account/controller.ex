@@ -1,5 +1,3 @@
-require IEx
-
 defmodule HELM.Account.Controller do
   import Ecto.Changeset
   import Ecto.Query
