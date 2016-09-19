@@ -54,9 +54,15 @@ defmodule HELM.Account.Controller do
   end
 
   defp do_new_account(changeset) do
-    result = Repo.insert(changeset)
-    Broker.cast("event:account:created", changeset.changes.account_id)
-    result
+    case Repo.insert(changeset) do
+      {:ok, result} ->
+        Broker.cast("event:account:created", changeset.changes.account_id)
+        {:ok, result}
+      {:error, %Ecto.Changeset{errors: [email: {"has already been taken", _}]}} ->
+        {:error, {400, "Email has already been taken"}}
+      {:error, _} ->
+        {:error, {500, "Could not create the account"}}
+    end
   end
 
   defp do_login({:ok, account}) do
