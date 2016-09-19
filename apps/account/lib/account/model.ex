@@ -22,6 +22,8 @@ defmodule HELM.Account.Model do
     |> cast(params, @creation_fields)
     |> validate_required(:password_confirmation)
     |> validate_confirmation(:password)
+    |> update_change(:email, &String.downcase/1)
+    #|> unique_constraint(:email, name: :account_special_email_index)
     |> generic_validations()
     |> put_uuid()
   end
