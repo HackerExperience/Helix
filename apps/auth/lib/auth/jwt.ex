@@ -4,6 +4,7 @@ defmodule HELM.Auth.JWT do
 
   def generate(id) do
     value = Guardian.encode_and_sign(%{account_id: id}, :access)
+
     case value do
       {:ok, jwt, _full_claims} ->
         {:reply, {:ok, %{"token" => jwt}}}
@@ -19,7 +20,7 @@ defmodule HELM.Auth.JWT do
   def verify(jwt) do
     case Guardian.decode_and_verify(jwt) do
       {:ok, _claims} -> {:reply, :ok}
-      {:error, _reason} -> {:reply, {:error, Error.format_reply(:invalid, 500, "Invalid token")}}
+      {:error, _reason} -> {:reply, {:error, Error.format_reply(:unauthorized, "Invalid token")}}
     end
   end
 

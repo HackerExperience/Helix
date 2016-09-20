@@ -36,7 +36,7 @@ defmodule HELM.Account.Controller do
   end
 
   def get(request) do
-    case Broker.call("jwt:account:verify", request.args["jwt"]) do
+    case Broker.call("auth:account:verify", request.args["jwt"]) do
       :ok -> find(request.args["email"])
       {:error, reason} -> {:reply, {:error, reason}}
     end

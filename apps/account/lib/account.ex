@@ -2,7 +2,6 @@ defmodule HELM.Account.App do
   use Application
 
   alias HELM.Account
-  alias HELF.Router
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
