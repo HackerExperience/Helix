@@ -8,7 +8,6 @@ defmodule HELM.Entity.App do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(HeBroker, []),
       worker(Entity.Repo, []),
       worker(Entity.Service, [])
     ]

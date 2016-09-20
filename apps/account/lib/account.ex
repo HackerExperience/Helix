@@ -8,8 +8,6 @@ defmodule HELM.Account.App do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(HeBroker, []),
-      worker(Router, []),
       worker(Account.Repo, []),
       worker(Account.Service, [])
     ]
