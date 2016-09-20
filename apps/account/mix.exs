@@ -16,7 +16,7 @@ defmodule Account.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :cowboy, :ecto, :postgrex, :comeonin, :he_broker],
+    [applications: [:logger, :helf, :ecto, :postgrex, :comeonin, :auth],
      mod: {Account.App, []}]
   end
 
@@ -32,6 +32,7 @@ defmodule Account.Mixfile do
   defp deps do
     [{:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"},
      {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v1.1.1"},
+     {:auth, in_umbrella: true},
      {:postgrex, ">= 0.0.0"},
      {:ecto, "~> 2.0"},
      {:comeonin, "~> 2.5"},

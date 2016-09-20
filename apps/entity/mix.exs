@@ -14,7 +14,7 @@ defmodule HELM.Entity.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :ecto, :postgrex, :he_broker],
+    [applications: [:logger, :ecto, :postgrex, :helf],
      mod: {HELM.Entity.App, []}]
   end
 
