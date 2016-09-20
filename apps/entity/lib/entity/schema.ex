@@ -1,24 +1,29 @@
-defmodule HELM.Entity.Model do
+defmodule HELM.Entity.Schema do
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  @primary_key false
+  alias HELM.Account
+
+  @primary_key {:entity_id, :string, autogenerate: false}
 
   schema "entities" do
     field :account_id, :string
-    field :npc_id, :string
-    field :clan_id, :string
 
     timestamps
   end
 
-  @required_fields ~w()
-  @optional_fields ~w(account_id npc_id clan_id)
+  @creation_fields ~w(account_id npc_id clan_id)
 
-  def changeset(entity, params \\ :empty) do
+  def create_changeset(entity, params \\ :empty) do
     entity
-    |> cast(params, @required_fields, @optional_fields)
+    |> cast(params, @creation_fields)
+    |> put_uuid()
   end
 
+  defp put_uuid(changeset) do
+    if changeset.valid?,
+      do: Ecto.Changeset.put_change(changeset, :entity_id, HELL.ID.generate("ENTY")),
+      else: changeset
+  end
 end

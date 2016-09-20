@@ -1,12 +1,14 @@
 defmodule HELM.Entity.Controller do
   import Ecto.Query
 
-  alias HELM.Entity.{Repo, Model}
+  alias HELM.Entity.{Repo, Schema}
 
   def create(entity) do
-    changeset = Model.changeset(%Model{}, entity)
+    changeset = Schema.changeset(%Schema{}, entity)
     case Repo.insert(changeset) do
-       {:ok, res} -> :ok
+       {:ok, _} ->
+         Broker.cast("event:entity:created", changeset.changes.account_id)
+         :ok
        {:error, _} -> changeset
     end
   end

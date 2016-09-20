@@ -1,7 +1,7 @@
 defmodule HELM.Account.Controller do
   import Ecto.Changeset
   import Ecto.Query
-  
+
   alias HELF.{Broker, Error}
   alias HELM.Account.{Repo, Schema}
 
@@ -35,19 +35,38 @@ defmodule HELM.Account.Controller do
   end
 
   def new_account(account) do
-    Schema.create_changeset(account)
-    |> do_new_account()
+    changeset   = Schema.create_changeset(account)
+    account_id  = changeset.changes.account_id
+
+    with {:ok, _} <- do_new_account(changeset),
+         {:ok, _} <- do_new_entity(account_id) do
+      Broker.cast("event:account:created", account_id)
+      {:ok, changeset}
+    else
+      {:error, :entity, msg} ->
+        Repo.delete(changeset)
+        {:error, msg}
+      {:error, msg} -> {:error, msg}
+    end
   end
 
   defp do_new_account(changeset) do
     case Repo.insert(changeset) do
-      {:ok, result} ->
-        Broker.cast("event:account:created", changeset.changes.account_id)
-        {:ok, result}
-      {:error, %Ecto.Changeset{errors: [email: {"has already been taken", _}]}} ->
-        {:error, {400, "Email has already been taken"}}
-      {:error, _} ->
-        {:error, {500, "Could not create the account"}}
+      {:ok, changeset} -> {:ok, changeset}
+      {:error, changeset} ->
+        email_taken? = Enum.any?(changeset.errors, &(&1 == {:email, "has already been taken"}))
+        if email_taken? do
+          {:error, Error.format_reply({:bad_request, "Email has already been taken"})}
+        else
+          {:error, Error.format_reply({:internal, "Could not create the account"})}
+        end
+    end
+  end
+
+  defp do_new_entity(account_id) do
+    case Broker.call("entity:create", {:account_id, account_id}) do
+      {:ok, message} -> {:ok, message}
+      {:error, _} -> {:error, :entity, Error.format_reply({:internal, "Could not create the entity"})}
     end
   end
 
