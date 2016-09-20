@@ -33,8 +33,6 @@ defmodule HELM.Account.Service do
         {:reply, response}
       end)
 
-    # TODO: fix this return
     {:ok, %{}}
   end
-
 end
