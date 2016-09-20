@@ -1,9 +1,7 @@
 defmodule HELM.Account.Controller do
   import Ecto.Changeset
   import Ecto.Query
-
-  alias HeBroker.Publisher
-
+  
   alias HELF.{Broker, Error}
   alias HELM.Account.{Repo, Schema}
 
@@ -18,27 +16,10 @@ defmodule HELM.Account.Controller do
     end
   end
 
-  def new_account(account) do
-    Schema.create_changeset(account)
-    |> do_new_account()
-  end
-
-  def login_with(account = %{"email" => email, "password" => pass}) do
-    do_find_account(email: email, password: pass)
-    |> do_login
-  end
-
   def find(email) do
     case Repo.get_by(Account, email: email) do
       nil -> {:reply, {:error, Error.format_reply(:not_found, "Account with given email not found")}}
       res -> {:reply, {:ok, res}}
-    end
-  end
-
-  def get(request) do
-    case Broker.call("auth:account:verify", request.args["jwt"]) do
-      :ok -> find(request.args["email"])
-      {:error, reason} -> {:reply, {:error, reason}}
     end
   end
 
@@ -53,6 +34,11 @@ defmodule HELM.Account.Controller do
     end
   end
 
+  def new_account(account) do
+    Schema.create_changeset(account)
+    |> do_new_account()
+  end
+
   defp do_new_account(changeset) do
     case Repo.insert(changeset) do
       {:ok, result} ->
@@ -65,6 +51,11 @@ defmodule HELM.Account.Controller do
     end
   end
 
+  def login_with(account = %{"email" => email, "password" => pass}) do
+    do_find_account(email: email, password: pass)
+    |> do_login
+  end
+
   defp do_login({:ok, account}) do
     Broker.call("jwt:create", account.account_id)
   end
@@ -75,6 +66,13 @@ defmodule HELM.Account.Controller do
         {:error, Error.format_reply(:unauthorized, "Account not found.")}
       _ ->
         {:error, Error.format_reply(:unspecified, "oh god")}
+    end
+  end
+
+  def get(request) do
+    case Broker.call("auth:account:verify", request.args["jwt"]) do
+      :ok -> find(request.args["email"])
+      {:error, reason} -> {:reply, {:error, reason}}
     end
   end
 end
