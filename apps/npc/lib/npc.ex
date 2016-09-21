@@ -7,6 +7,7 @@ defmodule HELM.NPC.App do
     import Supervisor.Spec, warn: false
 
     children = [
+      worker(NPC.Repo, []),
       worker(NPC.Service, []),
     ]
 

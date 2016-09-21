@@ -9,6 +9,11 @@ defmodule HELM.NPC.Service do
   end
 
   def init(_args) do
+    Broker.subscribe(:npc_service, "npc:create", call:
+      fn _,_,npc,_ ->
+        response = NPC.Controller.new_npc(npc)
+        {:reply, response}
+      end)
     {:ok, %{}}
   end
 end

@@ -18,7 +18,7 @@ defmodule HELM.NPC.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:framework, :logger],
+    [applications: [:framework, :logger, :ecto, :postgrex],
      mod: {HELM.NPC.App, []}]
   end
 
