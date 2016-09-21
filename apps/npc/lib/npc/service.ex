@@ -14,6 +14,12 @@ defmodule HELM.NPC.Service do
         response = NPC.Controller.new_npc(npc)
         {:reply, response}
       end)
+
+    Broker.subscribe(:npc_service, "npc:remove", call:
+      fn _,_,args,_ ->
+        response = NPC.Controller.remove_npc(args.npc_id)
+        {:reply, response}
+      end)
     {:ok, %{}}
   end
 end
