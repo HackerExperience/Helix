@@ -16,7 +16,7 @@ defmodule Account.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:framework, :logger, :ecto, :postgrex, :comeonin, :auth],
+    [applications: [:framework, :logger, :ecto, :postgrex, :auth],
      mod: {Account.App, []}]
   end
 
@@ -31,10 +31,10 @@ defmodule Account.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:framework, in_umbrella: true},
+     {:hell, in_umbrella: true},
      {:auth, in_umbrella: true},
      {:postgrex, ">= 0.0.0"},
      {:ecto, "~> 2.0"},
-     {:comeonin, "~> 2.5"},
      {:poison, "~> 2.0"}] # TODO: add guardian
   end
 end
