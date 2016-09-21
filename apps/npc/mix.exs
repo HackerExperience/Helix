@@ -37,6 +37,7 @@ defmodule HELM.NPC.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:framework, in_umbrella: true},
+     {:hell, in_umbrella: true},
      {:postgrex, ">= 0.0.0"},
      {:ecto, "~> 2.0"}]
   end
