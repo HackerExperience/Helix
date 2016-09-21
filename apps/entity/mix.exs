@@ -14,7 +14,7 @@ defmodule HELM.Entity.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :ecto, :postgrex, :helf],
+    [applications: [:framework, :logger, :ecto, :postgrex],
      mod: {HELM.Entity.App, []}]
   end
 
@@ -28,8 +28,7 @@ defmodule HELM.Entity.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"},
-     {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v1.1.1"},
+    [{:framework, in_umbrella: true},
      {:postgrex, ">= 0.0.0"},
      {:ecto, "~> 2.0"}]
   end

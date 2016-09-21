@@ -8,7 +8,7 @@ defmodule HELM.Framework.App do
 
     children = [
       supervisor(HeBroker, []),
-      supervisor(Router, [])
+      supervisor(Router, [8080])
     ]
 
     opts = [strategy: :one_for_one, name: HELM.Framework.Supervisor]

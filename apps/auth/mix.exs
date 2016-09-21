@@ -18,7 +18,7 @@ defmodule HELM.Auth.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :helf],
+    [applications: [:framework, :logger],
      mod: {HELM.Auth.App, []}]
   end
 
@@ -36,10 +36,8 @@ defmodule HELM.Auth.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [
-      {:guardian, "~> 0.12.0"},
-      {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"},
-      {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v1.1.1"}
-    ]
+    [{:framework, in_umbrella: true},
+     {:guardian, "~> 0.12.0"},
+     {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"}]
   end
 end

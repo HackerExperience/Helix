@@ -9,7 +9,8 @@ defmodule HELM.Entity.Schema do
 
   schema "entities" do
     field :account_id, :string
-
+    field :npc_id, :string
+    field :clan_id, :string
     timestamps
   end
 

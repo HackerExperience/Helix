@@ -7,7 +7,7 @@ defmodule HELM.Entity.Controller do
     changeset = Schema.changeset(%Schema{}, entity)
     case Repo.insert(changeset) do
        {:ok, _} ->
-         Broker.cast("event:entity:created", changeset.changes.account_id)
+         Broker.cast("event:entity:created", changeset.changes.entity_id)
          :ok
        {:error, _} -> changeset
     end
