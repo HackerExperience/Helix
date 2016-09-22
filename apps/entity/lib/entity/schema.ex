@@ -16,8 +16,8 @@ defmodule HELM.Entity.Schema do
 
   @creation_fields ~w(account_id npc_id clan_id)
 
-  def create_changeset(entity, params \\ :empty) do
-    entity
+  def create_changeset(params) do
+    %__MODULE__{}
     |> cast(params, @creation_fields)
     |> put_uuid()
   end
