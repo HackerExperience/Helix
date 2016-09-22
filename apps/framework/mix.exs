@@ -38,6 +38,6 @@ defmodule HELM.Framework.Mixfile do
   defp deps do
     [{:cowboy,"~> 1.0"},
      {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"},
-     {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v1.1.1"}]
+     {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v2.0.0"}]
   end
 end
