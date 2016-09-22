@@ -21,16 +21,19 @@ defmodule HELM.Entity.Service do
 
   # Try to create an Entity for given `account_id`
   defp cast_account_created(_, _, account_id) do
+    Entity.Controller.new_entity(%{account_id: account_id})
   end
 
   # Synchronous subscriptions
   defp register_call do
-    Broker.subscribe(:entity, "entity:create", cast: &call_entity_create/4)
+    Broker.subscribe(:entity, "entity:create", call: &call_entity_create/4)
   end
 
   # Try to create a Entity to given struct
   defp call_entity_create(_, _, struct, _timeout) do
-    Entity.Controller.new_entity(struct)
-    {:reply, {:ok, "lel"}}
+    case Entity.Controller.new_entity(struct) do
+      {:ok, struct} -> {:reply, {:ok, struct}}
+      {:error, schema} -> {:reply, :error}
+    end
   end
 end

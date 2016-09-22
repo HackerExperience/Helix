@@ -6,7 +6,7 @@ defmodule HELM.Entity.Schema do
   alias HELM.Account
 
   @primary_key {:entity_id, :string, autogenerate: false}
-
+  
   schema "entities" do
     field :account_id, :string
     field :npc_id, :string
