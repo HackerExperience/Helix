@@ -1,6 +1,7 @@
 defmodule HELM.Entity.Controller do
   import Ecto.Query
 
+  alias HELF.Broker
   alias HELM.Entity
 
   @doc ~S"""
