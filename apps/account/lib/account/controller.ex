@@ -35,24 +35,15 @@ defmodule HELM.Account.Controller do
   end
 
   def new_account(account) do
-    changeset   = Schema.create_changeset(account)
-    account_id  = changeset.changes.account_id
-
-    with {:ok, _} <- do_new_account(changeset),
-         {:ok, _} <- do_new_entity(account_id) do
-      Broker.cast("event:account:created", account_id)
-      {:ok, changeset}
-    else
-      {:error, :entity, msg} ->
-        Repo.delete(changeset)
-        {:error, msg}
-      {:error, msg} -> {:error, msg}
-    end
+    Schema.create_changeset(account)
+    |> do_new_account
   end
 
   defp do_new_account(changeset) do
     case Repo.insert(changeset) do
-      {:ok, changeset} -> {:ok, changeset}
+      {:ok, struct} ->
+        Broker.cast("event:account:created", struct.account_id)
+        {:ok, struct}
       {:error, changeset} ->
         email_taken? = Enum.any?(changeset.errors, &(&1 == {:email, "has already been taken"}))
         if email_taken? do
@@ -60,13 +51,6 @@ defmodule HELM.Account.Controller do
         else
           {:error, Error.format_reply({:internal, "Could not create the account"})}
         end
-    end
-  end
-
-  defp do_new_entity(account_id) do
-    case Broker.call("entity:create", {:account_id, account_id}) do
-      {:ok, message} -> {:ok, message}
-      {:error, _} -> {:error, :entity, Error.format_reply({:internal, "Could not create the entity"})}
     end
   end
 
