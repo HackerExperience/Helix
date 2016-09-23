@@ -10,12 +10,12 @@ defmodule HELM.Entity.Service do
 
   def init(_args) do
     Broker.subscribe(:entity, "event:account:created", cast:
-      fn (pid, _, id) ->
+      fn pid,_,id ->
         GenServer.cast(pid, {:account_created, id})
       end)
 
     Broker.subscribe(:entity, "entity:create", call:
-      fn (pid, _, struct, timeout) ->
+      fn pid,_,struct,timeout ->
         case GenServer.call(pid, {:entity_create, struct}, timeout) do
           {:ok, entity_id} -> {:reply, {:ok, entity_id}}
           error -> error
