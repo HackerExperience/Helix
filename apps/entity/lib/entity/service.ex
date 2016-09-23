@@ -9,31 +9,31 @@ defmodule HELM.Entity.Service do
   end
 
   def init(_args) do
-    register_cast
-    register_call
+    Broker.subscribe(:entity, "event:account:created", cast:
+      fn (pid, _, id) ->
+        GenServer.cast(pid, {:account_created, id})
+      end)
+
+    Broker.subscribe(:entity, "entity:create", call:
+      fn (pid, _, struct, timeout) ->
+        case GenServer.call(pid, {:entity_create, struct}, timeout) do
+          {:ok, entity_id} -> {:reply, {:ok, entity_id}}
+          error -> error
+        end
+      end)
+
     {:ok, %{}}
   end
 
-  # Asynchronous subscriptions
-  defp register_cast do
-    Broker.subscribe(:entity, "event:account:created", cast: &cast_account_created/3)
+  def handle_cast({:account_created, id}, state) do
+    Entity.Controller.new_entity(%{account_id: id})
+    {:noreply, state}
   end
 
-  # Try to create an Entity for given `account_id`
-  defp cast_account_created(_, _, account_id) do
-    Entity.Controller.new_entity(%{account_id: account_id})
-  end
-
-  # Synchronous subscriptions
-  defp register_call do
-    Broker.subscribe(:entity, "entity:create", call: &call_entity_create/4)
-  end
-
-  # Try to create a Entity to given struct
-  defp call_entity_create(_, _, struct, _timeout) do
+  def handle_call({:entity_create, struct}, _from, state) do
     case Entity.Controller.new_entity(struct) do
-      {:ok, struct} -> {:reply, {:ok, struct}}
-      {:error, schema} -> {:reply, :error}
+      {:ok, schema} -> {:reply, {:ok, schema.entity_id}, state}
+      {:error, _} -> {:reply, :error, state}
     end
   end
 end
