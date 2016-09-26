@@ -8,8 +8,8 @@ defmodule HELM.Server.Controller do
     Server.Repo.get(Server.Schema, server_id)
   end
 
-  def new_server(server) do
-    changeset = Server.Schema.create_changeset(server)
+  def new_server(id) do
+    changeset = Server.Schema.create_changeset(%{server_id: id})
 
     case Server.Repo.insert(changeset) do
       {:ok, operation} -> {:ok, operation}

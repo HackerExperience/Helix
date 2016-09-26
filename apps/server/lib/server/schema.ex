@@ -21,7 +21,7 @@ defmodule HELM.Server.Schema do
 
   defp put_uuid(changeset) do
     if changeset.valid?,
-      do: Ecto.Changeset.put_change(changeset, :server_id, HELL.ID.generate("PROCESS")),
+      do: Ecto.Changeset.put_change(changeset, :server_id, HELL.ID.generate("SERVER")),
       else: changeset
   end
 end
