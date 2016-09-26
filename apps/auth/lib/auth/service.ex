@@ -9,14 +9,14 @@ defmodule HELM.Auth.Service do
   end
 
   def init(_args) do
-    Broker.subscribe(:auth, "auth:create", call:
+    Broker.subscribe(:auth_service, "auth:create", call:
       fn pid,_,id,timeout ->
         GenServer.call(pid, {:auth_create, id}, timeout)
       end)
 
-    Broker.subscribe(:auth, "auth:verify", call:
+    Broker.subscribe(:auth_service, "auth:verify", call:
       fn pid,_,jwt,timeout ->
-        GenServer.call(pid, {:auth_verify, id}, timeout)
+        GenServer.call(pid, {:auth_verify, jwt}, timeout)
       end)
 
     {:ok, %{}}

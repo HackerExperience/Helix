@@ -10,16 +10,20 @@ defmodule HELM.NPC.Service do
 
   def init(_args) do
     Broker.subscribe(:npc_service, "npc:create", call:
-      fn _,_,npc,_ ->
-        response = NPC.Controller.new_npc(npc)
-        {:reply, response}
+      fn pid,_,struct,timeout ->
+        case GenServer.call(pid, {:npc_create, struct}, timeout) do
+          {:ok, npc_id} -> {:reply, {:ok, npc_id}}
+          error -> error
+        end
       end)
 
-    Broker.subscribe(:npc_service, "npc:remove", call:
-      fn _,_,args,_ ->
-        response = NPC.Controller.remove_npc(args.npc_id)
-        {:reply, response}
-      end)
     {:ok, %{}}
+  end
+
+  def handle_call({:npc_create, struct}, _from, state) do
+    case Entity.Controller.new_npc(struct) do
+      {:ok, schema} -> {:reply, {:ok, schema.npc_id}, state}
+      {:error, _} -> {:reply, :error, state}
+    end
   end
 end
