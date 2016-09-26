@@ -31,7 +31,7 @@ defmodule HELM.Server.Service do
   end
 
   def handle_call({:server_create, struct}, _from, state) do
-    case Entity.Controller.new_server(struct) do
+    case Server.Controller.new_server(struct) do
       {:ok, schema} -> {:reply, {:ok, schema.server_id}, state}
       {:error, _} -> {:reply, :error, state}
     end
