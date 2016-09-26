@@ -2,7 +2,7 @@ defmodule HELM.Auth.Service do
   use GenServer
 
   alias HELF.Broker
-  alias HELM.Auth.JWT
+  alias HELM.Auth
 
   def start_link(state \\ []) do
     GenServer.start_link(__MODULE__, state, name: :auth_service)
