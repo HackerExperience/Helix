@@ -20,7 +20,7 @@ defmodule HELFRouter.Mixfile do
   end
 
   defp deps do
-    [{:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v2.0.0"},
+    [{:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},
      {:cowboy,"~> 1.0"}]
   end
 end

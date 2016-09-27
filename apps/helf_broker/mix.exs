@@ -20,7 +20,7 @@ defmodule HELFBroker.Mixfile do
   end
 
   defp deps do
-    [{:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", tag: "v2.0.0"},
-      {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"}]
+    [{:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},
+     {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"}]
   end
 end

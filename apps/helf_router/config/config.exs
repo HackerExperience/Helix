@@ -2,4 +2,4 @@ use Mix.Config
 
 # TODO: change this to helf_router
 config :helf,
-  port: 8080
+  router_port: 8080
