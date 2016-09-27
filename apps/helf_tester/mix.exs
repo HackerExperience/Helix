@@ -15,7 +15,7 @@ defmodule HELFTester.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :helf_broker, :helf_router],
+    [applications: [:logger, :helf_broker, :helf_router, :account, :entity, :server],
      mod: {HELFTester.App, []}]
   end
 
