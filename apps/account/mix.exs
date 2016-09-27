@@ -13,7 +13,7 @@ defmodule Account.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :ecto, :postgrex, :auth],
+    [applications: [:logger, :helf_broker, :helf_router, :ecto, :postgrex, :auth],
      mod: {Account.App, []}]
   end
 
