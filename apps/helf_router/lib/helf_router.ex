@@ -1,4 +1,4 @@
-defmodule HELFRouter.App do
+defmodule HELM.HELFRouter.App do
   use Application
 
   def start(_type, _args) do

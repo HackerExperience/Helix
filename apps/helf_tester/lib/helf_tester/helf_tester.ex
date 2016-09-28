@@ -1,4 +1,4 @@
-defmodule HELFTester do
+defmodule HELM.HELFTester do
   use GenServer
 
   alias HELF.Tester
@@ -6,7 +6,7 @@ defmodule HELFTester do
   def start_link do
     GenServer.start_link(__MODULE__, [])
   end
-  
+
   def init([]) do
     {:ok, pid} = Tester.start_link(:tester_test)
 

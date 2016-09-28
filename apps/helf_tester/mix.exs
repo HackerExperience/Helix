@@ -1,4 +1,4 @@
-defmodule HELFTester.Mixfile do
+defmodule HELM.HELFTester.Mixfile do
   use Mix.Project
 
   def project do
@@ -16,7 +16,7 @@ defmodule HELFTester.Mixfile do
 
   def application do
     [applications: [:logger, :helf_broker, :helf_router, :account, :entity, :server],
-     mod: {HELFTester.App, []}]
+     mod: {HELM.HELFTester.App, []}]
   end
 
   defp deps do

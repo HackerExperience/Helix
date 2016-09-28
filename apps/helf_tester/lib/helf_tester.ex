@@ -1,5 +1,7 @@
-defmodule HELFTester.App do
+defmodule HELM.HELFTester.App do
   use Application
+
+  alias HELM.HELFTester
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false

@@ -1,4 +1,4 @@
-defmodule HELFRouter.Mixfile do
+defmodule HELM.HELFRouter.Mixfile do
   use Mix.Project
 
   def project do
@@ -16,7 +16,7 @@ defmodule HELFRouter.Mixfile do
 
   def application do
     [applications: [:logger, :cowboy],
-     mod: {HELFRouter.App, []}]
+     mod: {HELM.HELFRouter.App, []}]
   end
 
   defp deps do
