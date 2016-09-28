@@ -23,7 +23,7 @@ defmodule HELM.Server.Schema do
   def create_changeset(params \\ :empty) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> put_default_type
+    |> put_default_server_type
     |> generic_validations
     |> put_uuid()
   end
@@ -43,7 +43,7 @@ defmodule HELM.Server.Schema do
     end
   end
 
-  defp put_default_type(changeset) do
+  defp put_default_server_type(changeset) do
     with true  <- changeset.valid?,
          false <- Map.has_key?(changeset, :server_type)
     do
