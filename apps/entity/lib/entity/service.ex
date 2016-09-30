@@ -17,7 +17,7 @@ defmodule HELM.Entity.Service do
     Broker.subscribe(:entity_service, "entity:create", call:
       fn pid,_,struct,timeout ->
         case GenServer.call(pid, {:entity_create, struct}, timeout) do
-          {:ok, entity_id} -> {:reply, {:ok, entity_id}}
+          {:ok, entity} -> {:reply, {:ok, entity}}
           error -> error
         end
       end)
@@ -32,7 +32,7 @@ defmodule HELM.Entity.Service do
 
   def handle_call({:entity_create, struct}, _from, state) do
     case Entity.Controller.new_entity(struct) do
-      {:ok, schema} -> {:reply, {:ok, schema.entity_id}, state}
+      {:ok, schema} -> {:reply, {:ok, schema}, state}
       {:error, _} -> {:reply, :error, state}
     end
   end
