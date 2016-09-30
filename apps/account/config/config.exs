@@ -2,6 +2,7 @@ use Mix.Config
 
 # Importing auth guardian configuration
 import_config "../../auth/config/config.exs"
+import_config "../../helf_router/config/config.exs"
 
 config :account, ecto_repos: [HELM.Account.Repo]
 config :account, HELM.Account.Repo,
