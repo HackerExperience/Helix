@@ -3,8 +3,10 @@ defmodule HELM.Account.Controller do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
+  alias HELM.Account
   alias HELM.Account.{Repo, Schema}
 
+  # TODO: check if this is ok
   def find_account(account_id) do
     Schema
     |> where([a], a.account_id == ^account_id)
@@ -17,9 +19,9 @@ defmodule HELM.Account.Controller do
   end
 
   def find(email) do
-    case Repo.get_by(Account, email: email) do
-      nil -> {:reply, {:error, Error.format_reply(:not_found, "Account with given email not found")}}
-      res -> {:reply, {:ok, res}}
+    case Repo.get_by(Account.Schema, email: email) do
+      nil -> {:error, Error.format_reply(:not_found, "Account with given email not found")}
+      res -> {:ok, res}
     end
   end
 
@@ -69,6 +71,13 @@ defmodule HELM.Account.Controller do
         {:error, Error.format_reply(:unauthorized, "Account not found.")}
       _ ->
         {:error, Error.format_reply(:unspecified, "oh god")}
+    end
+  end
+
+  def remove_account(account) do
+    case Account.Repo.delete(account) do
+      {:ok, result} -> {:ok, result}
+      {:error, msg} -> {:error, msg}
     end
   end
 
