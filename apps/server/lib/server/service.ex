@@ -11,7 +11,8 @@ defmodule HELM.Server.Service do
   def init(_args) do
     Broker.subscribe(:server_service, "event:entity:created", cast:
       fn pid,_,id ->
-        GenServer.cast(pid, {:entity_created, id})
+        response = GenServer.cast(pid, {:entity_created, id})
+        {:noreply, :ok}
       end)
 
     Broker.subscribe(:server_service, "server:create", call:

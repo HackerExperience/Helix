@@ -17,40 +17,32 @@ defmodule HELM.Server.Schema do
     timestamps
   end
 
-  @creation_fields ~w(server_type entity_id poi_id motherboard_id)
+  @creation_fields ~w(entity_id server_type poi_id motherboard_id)
   @update_fields ~w(poi_id motherboard_id)
 
   def create_changeset(params \\ :empty) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> put_default_server_type
-    |> generic_validations
-    |> put_uuid()
+    |> validate_required(:entity_id)
+    |> update_change(:server_type, &default_server_type/1)
+    |> validate_server_type
+    |> put_uuid
   end
 
   def update_changeset(params \\ :empty) do
     %__MODULE__{}
     |> cast(params, @update_fields)
-    |> generic_validations
+    |> validate_server_type
   end
 
-  defp generic_validations(changeset) do
-    if not Map.has_key?(changeset, :server_type) do
-      changeset
-      |> validate_format(changeset, :server_type, ~r/mobile|server/)
-    else
-      changeset
-    end
+  defp default_server_type(got) do
+    if is_nil(got) or got == "",
+      do: "desktop",
+      else: got
   end
 
-  defp put_default_server_type(changeset) do
-    with true  <- changeset.valid?,
-         false <- Map.has_key?(changeset, :server_type)
-    do
-      Changeset.put_change(changeset, :server_type, "desktop")
-    else
-      _ -> changeset
-    end
+  defp validate_server_type(changeset) do
+    validate_format(changeset, :server_type, ~r/mobile|server/)
   end
 
   defp put_uuid(changeset) do

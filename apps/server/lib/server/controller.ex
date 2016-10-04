@@ -1,11 +1,14 @@
 defmodule HELM.Server.Controller do
   import Ecto.Query
 
-  alias HELF.Broker
+  alias HELF.{Broker, Error}
   alias HELM.Server
 
-  def find_server(server_id) do
-    Server.Repo.get(Server.Schema, server_id)
+  def find(server_id) do
+    case Server.Repo.get_by(Server.Schema, server_id: server_id) do
+      nil -> {:error, Error.format_reply(:not_found, "No Entity found with given")}
+      res -> {:ok, res}
+    end
   end
 
   def new_server(params) do
@@ -14,6 +17,8 @@ defmodule HELM.Server.Controller do
 
   defp new(params) do
     changeset = Server.Schema.create_changeset(params)
+
+    IO.inspect changeset
 
     case Server.Repo.insert(changeset) do
       {:ok, result} -> {:ok, result}
