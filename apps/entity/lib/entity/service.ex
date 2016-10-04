@@ -33,7 +33,7 @@ defmodule HELM.Entity.Service do
   def handle_call({:entity_create, struct}, _from, state) do
     case Entity.Controller.new_entity(struct) do
       {:ok, schema} -> {:reply, {:ok, schema}, state}
-      {:error, _} -> {:reply, :error, state}
+      {:error, msg} -> {:reply, {:error, msg}, state}
     end
   end
 end
