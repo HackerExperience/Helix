@@ -9,6 +9,7 @@ defmodule HELM.Account.BrokerTest do
   setup do
     {:ok, _} = Application.ensure_all_started(:helf_router)
     {:ok, _} = Application.ensure_all_started(:helf_broker)
+    {:ok, _} = Application.ensure_all_started(:account)
 
     # account email
     email = "account@test02.com"
