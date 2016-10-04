@@ -9,10 +9,9 @@ defmodule HELM.Account.BrokerTest do
   setup do
     {:ok, _} = Application.ensure_all_started(:helf_router)
     {:ok, _} = Application.ensure_all_started(:helf_broker)
-    {:ok, pid} = Tester.start_link(self())
 
     # account email
-    email = "account@test01.com"
+    email = "account@test02.com"
 
     # remove existing user
     case HELM.Account.Controller.find(email) do
@@ -20,13 +19,15 @@ defmodule HELM.Account.BrokerTest do
       {:error, _} -> nil
     end
 
-    {:ok, pid: pid, email: email}
+    {:ok, email: email}
   end
 
+  test "account creation messaging", %{email: email} do
+    service = :account_broker_tests_01
+    {:ok, pid} = Tester.start_link(service, self())
 
-  test "account creation messaging", %{pid: pid, email: email} do
     # This tester listens to event:acount:created casts
-    Tester.listen(pid, :cast, :test_account_creation1, "event:account:created")
+    Tester.listen(pid, :cast, "event:account:created")
 
     # Example account payload
     account = %{
@@ -48,7 +49,7 @@ defmodule HELM.Account.BrokerTest do
     assert String.length(account_id) == 25
 
     # Assert that message was received
-    assert_receive {:cast, "event:account:created"}
+    assert_receive {:cast, service, "event:account:created"}
 
     # Assert that the state was saved
     {:ok, event_accound_id} = Tester.assert(pid, :cast, "event:account:created")
