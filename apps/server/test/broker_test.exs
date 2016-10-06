@@ -9,19 +9,18 @@ defmodule HELM.Server.BrokerTest do
   setup do
     {:ok, _} = Application.ensure_all_started(:helf_router)
     {:ok, _} = Application.ensure_all_started(:helf_broker)
+    {:ok, _} = Application.ensure_all_started(:entity)
+    {:ok, _} = Application.ensure_all_started(:account)
 
     # account email
     email = "account@test03.com"
+    puuid = "pseudo-uuid"
 
     # remove acount and entity
     with {:ok, account} <- Account.Controller.find(email),
          Account.Controller.remove_account(account),
          {:ok, entity} <- Entity.Controller.find_by(account_id: account.account_id),
       do: Entity.Controller.remove_entity(entity)
-
-    # remove server created with pseudo-id (email)
-    #with {:ok, entity} <- Server.Controller.find(email),
-    #  do: Entity.Controller.remove_entity(entity)
 
     # Example account payload
     account = %{
@@ -30,27 +29,38 @@ defmodule HELM.Server.BrokerTest do
       password_confirmation: "12345678"
     }
 
-    {:ok, email: email, payload: account}
+    {:ok, payload: account, puuid: puuid}
   end
 
-  test "server creation from account messaging", %{email: email, payload: payload} do
+  test "server creation from account messaging", %{payload: payload} do
+    # Tester id
+    service = :server_broker_tests_01
+
+    # Create a tester instance
     {:ok, pid} = Tester.start_link(service, self())
 
-    # This tester only cares about
-    #Tester.listen(pid, :cast, :test_server_creation1, "event:entity:created")
-
-    #IO.inspect Server.Repo.all(Server.Schema)
+    # This tester only cares about server
+    Tester.listen(pid, :cast, "event:server:created")
 
     # Try to create the user
     {:ok, _} = HELF.Broker.call("account:create", payload)
 
-    # assert that entit
-    #assert_receive {:cast, "event:entity:created"}
+    # Assert that server was created
+    assert_receive {:cast, service, "event:server:created"}, 5000
 
-    #{:ok, entity_id} = Tester.assert(pid, :cast, "event:entity:created")
+    # Get the server id
+    {:ok, server_id} = Tester.assert(pid, :cast, "event:server:created")
 
-    #IO.puts "test"
+    # assert that the server_id is binary
+    assert is_binary(server_id)
 
-    #IO.inspect entity_id
+    # assert that the server_id length is 25
+    assert String.length(server_id) == 25
+
+    # assert that the entity is on db
+    #{:ok, _} = Entity.Controller.find(entity_id)
+  end
+
+  test "direct server creation", %{payload: payload} do
   end
 end

@@ -18,10 +18,11 @@ defmodule HELM.Server.Controller do
   defp new(params) do
     changeset = Server.Schema.create_changeset(params)
 
-    IO.inspect changeset
-
     case Server.Repo.insert(changeset) do
-      {:ok, result} -> {:ok, result}
+      {:ok, result} ->
+        IO.inspect(result)
+        Broker.cast("event:server:created", result.server_id)
+        {:ok, result}
       {:error, msg} -> {:error, msg}
     end
   end
