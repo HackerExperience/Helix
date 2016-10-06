@@ -19,4 +19,18 @@ defmodule HELM.Hardware.Component.Type.Controller do
         {:error, changeset}
     end
   end
+
+  def find(component_type) do
+    case Hardware.Repo.get_by(Component.Type.Schema, component_type: component_type) do
+      nil -> {:error, "Component.Type not found."}
+      res -> {:ok, res}
+    end
+  end
+
+  def remove(component_type) do
+    case Hardware.Repo.delete(component_type) do
+      {:ok, result} -> {:ok, result}
+      {:error, msg} -> {:error, msg}
+    end
+  end
 end

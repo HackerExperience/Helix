@@ -26,7 +26,7 @@ defmodule HELM.Hardware.Motherboard.Slot.Controller do
 
   def find(slot_id) do
     case Hardware.Repo.get_by(Motherboard.Slot.Schema, slot_id: slot_id) do
-      nil -> {:error, "Motherboard not found."}
+      nil -> {:error, "Component.Slot not found."}
       res -> {:ok, res}
     end
   end

@@ -20,4 +20,18 @@ defmodule HELM.Hardware.Component.Spec.Controller do
         {:error, changeset}
     end
   end
+
+  def find(spec_id) do
+    case Hardware.Repo.get_by(Component.Spec.Schema, spec_id: spec_id) do
+      nil -> {:error, "Component.Spec not found."}
+      res -> {:ok, res}
+    end
+  end
+
+  def remove(component_spec) do
+    case Hardware.Repo.delete(component_spec) do
+      {:ok, result} -> {:ok, result}
+      {:error, msg} -> {:error, msg}
+    end
+  end
 end
