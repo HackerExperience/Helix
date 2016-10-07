@@ -5,7 +5,7 @@ defmodule HELM.Hardware.Component.Type.Controller do
   alias HELM.Hardware
   alias HELM.Hardware.Component
 
-  def new(component_type) do
+  def new_type(component_type) do
     Component.Type.Schema.create_changeset(%{component_type: component_type})
     |> do_new_type
   end
@@ -20,15 +20,22 @@ defmodule HELM.Hardware.Component.Type.Controller do
     end
   end
 
-  def find(component_type) do
+  def find_type(component_type) do
     case Hardware.Repo.get_by(Component.Type.Schema, component_type: component_type) do
       nil -> {:error, "Component.Type not found."}
       res -> {:ok, res}
     end
   end
 
-  def remove(component_type) do
-    case Hardware.Repo.delete(component_type) do
+  def remove_type(component_type) do
+    case find_type(component_type) do
+      {:ok, comp_type} -> do_remove_type(comp_type)
+      error -> error
+    end
+  end
+
+  defp do_remove_type(component) do
+    case Hardware.Repo.delete(component) do
       {:ok, result} -> {:ok, result}
       {:error, msg} -> {:error, msg}
     end

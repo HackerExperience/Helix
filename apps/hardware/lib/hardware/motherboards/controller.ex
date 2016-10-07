@@ -5,12 +5,16 @@ defmodule HELM.Hardware.Motherboard.Controller do
   alias HELM.Hardware
   alias HELM.Hardware.Motherboard
 
-  def new do
+  def new_motherboard do
     Motherboard.Schema.create_changeset
-    |> do_new_mobo
+    |> do_new_motherboard
   end
 
-  def do_new_mobo(changeset) do
+  def attach(motherboard_id, server_id) do
+    # WIP
+  end
+
+  def do_new_motherboard(changeset) do
     case Hardware.Repo.insert(changeset) do
       {:ok, schema} ->
         Broker.cast("event:component:motherboard:created", changeset.changes.motherboard_id)
@@ -20,14 +24,25 @@ defmodule HELM.Hardware.Motherboard.Controller do
     end
   end
 
-  def find(motherboard_id) do
+  def detach(motherboard_id) do
+    # WIP
+  end
+  
+  def find_motherboard(motherboard_id) do
     case Hardware.Repo.get_by(Motherboard.Schema, motherboard_id: motherboard_id) do
       nil -> {:error, "Motherboard not found."}
       res -> {:ok, res}
     end
   end
 
-  def remove(motherboard) do
+  def delete_motherboard(motherboard_id) do
+    case find_motherboard(motherboard_id) do
+      {:ok, mobo} -> do_delete_motherboard(mobo)
+      error -> error
+    end
+  end
+
+  defp do_delete_motherboard(motherboard) do
     case Hardware.Repo.delete(motherboard) do
       {:ok, result} -> {:ok, result}
       {:error, msg} -> {:error, msg}

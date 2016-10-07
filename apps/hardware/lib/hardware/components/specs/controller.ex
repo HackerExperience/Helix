@@ -5,7 +5,7 @@ defmodule HELM.Hardware.Component.Spec.Controller do
   alias HELM.Hardware
   alias HELM.Hardware.Component
 
-  def new(component_type, spec) do
+  def new_spec(component_type, spec) do
     %{component_type: component_type, spec: spec}
     |> Component.Spec.Schema.create_changeset
     |> do_new_spec
@@ -21,14 +21,21 @@ defmodule HELM.Hardware.Component.Spec.Controller do
     end
   end
 
-  def find(spec_id) do
+  def find_spec(spec_id) do
     case Hardware.Repo.get_by(Component.Spec.Schema, spec_id: spec_id) do
       nil -> {:error, "Component.Spec not found."}
       res -> {:ok, res}
     end
   end
 
-  def remove(component_spec) do
+  def remove_spec(spec_id) do
+    case find_spec(spec_id) do
+      {:ok, spec} -> do_remove_spec(spec)
+      error -> error
+    end
+  end
+
+  defp do_remove_spec(component_spec) do
     case Hardware.Repo.delete(component_spec) do
       {:ok, result} -> {:ok, result}
       {:error, msg} -> {:error, msg}
