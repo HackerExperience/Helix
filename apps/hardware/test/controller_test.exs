@@ -1,7 +1,11 @@
 defmodule HELM.Hardware.ControllerTest do
   use ExUnit.Case
 
-  alias HELM.Hardware.{Component, Motherboard}
+  alias HELM.Hardware.Motherboard.Controller, as: MoboCtrl
+  alias HELM.Hardware.Motherboard.Slot.Controller, as: MoboSlotCtrl
+  alias HELM.Hardware.Component.Controller, as: CompCtrl
+  alias HELM.Hardware.Component.Type.Controller, as: CompTypeCtrl
+  alias HELM.Hardware.Component.Spec.Controller, as: CompSpecCtrl
 
   def random_num do
     :rand.uniform(134217727)
@@ -16,124 +20,119 @@ defmodule HELM.Hardware.ControllerTest do
     types = ["ram", "hd"]
 
     Enum.each(types, fn (type) ->
-      Component.Type.Controller.new_type(type)
+      CompTypeCtrl.create(type)
     end)
 
     :ok
   end
 
-  describe "Component.Type.Controller" do
-    test "new_type/1 success" do
-      assert {:ok, _} = Component.Type.Controller.new_type(random_str)
+  describe "HELM.Hardware.Component.Type.Controller" do
+    test "create/1 success" do
+      assert {:ok, _} = CompTypeCtrl.create(random_str)
     end
 
-    test "find_type/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      assert {:ok, comp_type} = Component.Type.Controller.find_type(comp_type.component_type)
+    test "find/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      assert {:ok, comp_type} = CompTypeCtrl.find(comp_type.component_type)
     end
 
-    test "remove_type/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      assert {:ok, _} = Component.Type.Controller.remove_type(comp_type.component_type)
-    end
-  end
-
-  describe "Component.Spec.Controller" do
-    test "new_spec/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      assert {:ok, _} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-    end
-
-    test "find_spec/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      assert {:ok, comp_spec} = Component.Spec.Controller.find_spec(comp_spec.spec_id)
-    end
-
-    test "remove_spec/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      assert {:ok, _} = Component.Spec.Controller.remove_spec(comp_spec.spec_id)
+    test "delete/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      assert {:ok, _} = CompTypeCtrl.delete(comp_type.component_type)
     end
   end
 
-  describe "Component.Controller" do
-    test "new_component/2 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      assert {:ok, _} = Component.Controller.new_component(comp_type.component_type, comp_spec.spec_id)
+  describe "HELM.Hardware.Component.Spec.Controller" do
+    test "create/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      assert {:ok, _} = CompSpecCtrl.create(comp_type.component_type, %{})
     end
 
-    test "find_component/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      {:ok, comp} = Component.Controller.new_component(comp_type.component_type,
-                                                       comp_spec.spec_id)
-      assert {:ok, comp} = Component.Controller.find_component(comp.component_id)
+    test "find/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      assert {:ok, comp_spec} = CompSpecCtrl.find(comp_spec.spec_id)
     end
 
-    test "remove_component/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      {:ok, comp} = Component.Controller.new_component(comp_type.component_type,
-                                                       comp_spec.spec_id)
-      assert {:ok, _} = Component.Controller.remove_component(comp.component_id)
+    test "delete/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      assert {:ok, _} = CompSpecCtrl.delete(comp_spec.spec_id)
     end
   end
 
-  describe "Motherboard.Controller" do
-    test "new_motherboard/0 success" do
-      {:ok, _} = Motherboard.Controller.new_motherboard
+  describe "HELM.Hardware.Component.Controller" do
+    test "create/2 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      assert {:ok, _} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
     end
 
-    test "find_component/1 success" do
-      {:ok, mobo} = Motherboard.Controller.new_motherboard
-      assert {:ok, mobo} = Motherboard.Controller.find_motherboard(mobo.motherboard_id)
+    test "find/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      {:ok, comp} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
+      assert {:ok, comp} = CompCtrl.find(comp.component_id)
     end
 
-    test "remove_component/1 success" do
-      {:ok, mobo} = Motherboard.Controller.new_motherboard
-      assert {:ok, _} = Motherboard.Controller.delete_motherboard(mobo.motherboard_id)
+    test "delete/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      {:ok, comp} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
+      assert {:ok, _} = CompCtrl.delete(comp.component_id)
     end
   end
 
-  describe "Motherboard.Slot.Controller" do
-    test "new_slot/0 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      {:ok, comp} = Component.Controller.new_component(comp_type.component_type,
-                                                       comp_spec.spec_id)
-      {:ok, mobo} = Motherboard.Controller.new_motherboard
-      assert {:ok, _} = Motherboard.Slot.Controller.new_slot(mobo.motherboard_id,
-                                                             random_num,
-                                                             comp_type.component_type,
-                                                             comp.component_id)
+  describe "HELM.Hardware.Motherboard.Controller" do
+    test "create/0 success" do
+      {:ok, _} = MoboCtrl.create
     end
 
-    test "find_component/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      {:ok, comp} = Component.Controller.new_component(comp_type.component_type,
-                                                       comp_spec.spec_id)
-      {:ok, mobo} = Motherboard.Controller.new_motherboard
-      {:ok, slot} = Motherboard.Slot.Controller.new_slot(mobo.motherboard_id,
-                                                         random_num,
-                                                         comp_type.component_type,
-                                                         comp.component_id)
-      assert {:ok, slot} = Motherboard.Slot.Controller.find_slot(slot.slot_id)
+    test "find/1 success" do
+      {:ok, mobo} = MoboCtrl.create
+      assert {:ok, mobo} = MoboCtrl.find(mobo.motherboard_id)
     end
 
-    test "remove_component/1 success" do
-      {:ok, comp_type} = Component.Type.Controller.new_type(random_str)
-      {:ok, comp_spec} = Component.Spec.Controller.new_spec(comp_type.component_type, %{})
-      {:ok, comp} = Component.Controller.new_component(comp_type.component_type,
-                                                       comp_spec.spec_id)
-      {:ok, mobo} = Motherboard.Controller.new_motherboard
-      {:ok, slot} = Motherboard.Slot.Controller.new_slot(mobo.motherboard_id,
-                                                         random_num,
-                                                         comp_type.component_type,
-                                                         comp.component_id)
-      assert {:ok, _} = Motherboard.Slot.Controller.delete_slot(slot.slot_id)
+    test "delete/1 success" do
+      {:ok, mobo} = MoboCtrl.create
+      assert {:ok, _} = MoboCtrl.delete(mobo.motherboard_id)
+    end
+  end
+
+  describe "HELM.Hardware.Motherboard.Slot.Controller" do
+    test "create/0 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      {:ok, comp} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
+      {:ok, mobo} = MoboCtrl.create
+      assert {:ok, _} = MoboSlotCtrl.create(mobo.motherboard_id,
+                                            random_num,
+                                            comp_type.component_type,
+                                            comp.component_id)
+    end
+
+    test "find/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      {:ok, comp} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
+      {:ok, mobo} = MoboCtrl.create
+      {:ok, slot} = MoboSlotCtrl.create(mobo.motherboard_id,
+                                        random_num,
+                                        comp_type.component_type,
+                                        comp.component_id)
+      assert {:ok, slot} = MoboSlotCtrl.find(slot.slot_id)
+    end
+
+    test "delete/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      {:ok, comp} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
+      {:ok, mobo} = MoboCtrl.create
+      {:ok, slot} = MoboSlotCtrl.create(mobo.motherboard_id,
+                                        random_num,
+                                        comp_type.component_type,
+                                        comp.component_id)
+      assert {:ok, _} = MoboSlotCtrl.delete(slot.slot_id)
     end
   end
 end
