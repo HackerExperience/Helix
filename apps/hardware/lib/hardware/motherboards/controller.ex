@@ -2,11 +2,11 @@ defmodule HELM.Hardware.Motherboard.Controller do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Hardware
-  alias HELM.Hardware.Motherboard
+  alias HELM.Hardware.Repo
+  alias HELM.Hardware.Motherboard.Schema, as: MoboSchema
 
   def new_motherboard do
-    Motherboard.Schema.create_changeset
+    MoboSchema.create_changeset
     |> do_new_motherboard
   end
 
@@ -15,7 +15,7 @@ defmodule HELM.Hardware.Motherboard.Controller do
   end
 
   def do_new_motherboard(changeset) do
-    case Hardware.Repo.insert(changeset) do
+    case Repo.insert(changeset) do
       {:ok, schema} ->
         Broker.cast("event:component:motherboard:created", changeset.changes.motherboard_id)
         {:ok, schema}
@@ -27,9 +27,9 @@ defmodule HELM.Hardware.Motherboard.Controller do
   def detach(motherboard_id) do
     # WIP
   end
-  
+
   def find_motherboard(motherboard_id) do
-    case Hardware.Repo.get_by(Motherboard.Schema, motherboard_id: motherboard_id) do
+    case Repo.get_by(MoboSchema, motherboard_id: motherboard_id) do
       nil -> {:error, "Motherboard not found."}
       res -> {:ok, res}
     end
@@ -43,7 +43,7 @@ defmodule HELM.Hardware.Motherboard.Controller do
   end
 
   defp do_delete_motherboard(motherboard) do
-    case Hardware.Repo.delete(motherboard) do
+    case Repo.delete(motherboard) do
       {:ok, result} -> {:ok, result}
       {:error, msg} -> {:error, msg}
     end

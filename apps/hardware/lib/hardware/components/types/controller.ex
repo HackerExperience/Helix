@@ -2,16 +2,16 @@ defmodule HELM.Hardware.Component.Type.Controller do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Hardware
-  alias HELM.Hardware.Component
+  alias HELM.Hardware.Repo
+  alias HELM.Hardware.Component.Type.Schema, as: CompTypeSchema
 
   def new_type(component_type) do
-    Component.Type.Schema.create_changeset(%{component_type: component_type})
+    CompTypeSchema.create_changeset(%{component_type: component_type})
     |> do_new_type
   end
 
   defp do_new_type(changeset) do
-    case Hardware.Repo.insert(changeset) do
+    case Repo.insert(changeset) do
       {:ok, schema} ->
         Broker.cast("event:component:type:created", changeset.changes.component_type)
         {:ok, schema}
@@ -21,7 +21,7 @@ defmodule HELM.Hardware.Component.Type.Controller do
   end
 
   def find_type(component_type) do
-    case Hardware.Repo.get_by(Component.Type.Schema, component_type: component_type) do
+    case Repo.get_by(CompTypeSchema, component_type: component_type) do
       nil -> {:error, "Component.Type not found."}
       res -> {:ok, res}
     end
@@ -35,7 +35,7 @@ defmodule HELM.Hardware.Component.Type.Controller do
   end
 
   defp do_remove_type(component) do
-    case Hardware.Repo.delete(component) do
+    case Repo.delete(component) do
       {:ok, result} -> {:ok, result}
       {:error, msg} -> {:error, msg}
     end

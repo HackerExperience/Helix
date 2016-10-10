@@ -4,12 +4,22 @@ defmodule HELM.Hardware.ControllerTest do
   alias HELM.Hardware.{Component, Motherboard}
 
   def random_num do
-    :rand.uniform(8001)
+    :rand.uniform(134217727)
   end
 
   def random_str do
     random_num()
     |> Integer.to_string
+  end
+
+  setup = fn ->
+    types = ["ram", "hd"]
+
+    Enum.each(types, fn (type) ->
+      Component.Type.Controller.new_type(type)
+    end)
+
+    :ok
   end
 
   describe "Component.Type.Controller" do

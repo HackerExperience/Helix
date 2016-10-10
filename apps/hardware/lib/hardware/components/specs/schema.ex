@@ -4,16 +4,19 @@ defmodule HELM.Hardware.Component.Spec.Schema do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELM.Hardware.Component
+
+  alias HELM.Hardware.Component.Schema, as: CompSchema
 
   @primary_key {:spec_id, :string, autogenerate: false}
-  @creation_fields ~w(spec component_type)
+  @creation_fields ~w/spec component_type/a
 
   schema "component_specs" do
     field :component_type, :string
     field :spec, :map
 
-    has_one :component_types, Component.Type.Schema, foreign_key: :component_type, references: :component_type
+    has_many :components, CompSchema,
+      foreign_key: :spec_id,
+      references: :spec_id
 
     timestamps
   end
