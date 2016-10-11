@@ -3,30 +3,37 @@ defmodule HELM.Account.Controller do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Account
-  alias HELM.Account.{Repo, Schema}
+  alias HELM.Account.Repo
+  alias HELM.Account.Schema, as: AccountSchema
 
-  # TODO: check if this is ok
-  def find_account(account_id) do
-    Schema
-    |> where([a], a.account_id == ^account_id)
-    |> select([a], map(a, [:account_id, :confirmed, :email]))
-    |> Repo.one()
-    |> case do
-      nil -> {:error, :notfound}
-      account -> {:ok, account}
+  def create(account) do
+    AccountSchema.create_changeset(account)
+    |> do_new_account
+  end
+
+  def find(account_id) do
+    case Repo.get_by(AccountSchema, account_id: account_id) do
+      nil -> {:error, "Account not found."}
+      res -> {:ok, res}
     end
   end
 
-  def find(email) do
-    case Repo.get_by(Account.Schema, email: email) do
+  def find_with_email(email) do
+    case Repo.get_by(AccountSchema, email: email) do
       nil -> {:error, Error.format_reply(:not_found, "Account with given email not found")}
       res -> {:ok, res}
     end
   end
 
-  defp do_find_account(email: email, password: password) do
-    Schema
+  def delete(account_id) do
+    case find(account_id) do
+      {:ok, account} -> do_delete(account)
+      error -> error
+    end
+  end
+
+  def login(email: email, password: password) do
+    AccountSchema
     |> where([a], a.email == ^email and a.password == ^password)
     |> select([a], map(a, [:account_id, :confirmed, :email]))
     |> Repo.one()
@@ -36,9 +43,11 @@ defmodule HELM.Account.Controller do
     end
   end
 
-  def new_account(account) do
-    Schema.create_changeset(account)
-    |> do_new_account
+  def get(request) do
+    case Broker.call("auth:account:verify", request.args["jwt"]) do
+      :ok -> find(request.args["email"])
+      {:error, reason} -> {:reply, {:error, reason}}
+    end
   end
 
   defp do_new_account(changeset) do
@@ -56,9 +65,11 @@ defmodule HELM.Account.Controller do
     end
   end
 
-  def login_with(account = %{"email" => email, "password" => pass}) do
-    do_find_account(email: email, password: pass)
-    |> do_login
+  defp do_delete(account) do
+    case Repo.delete(account) do
+      {:ok, result} -> {:ok, result}
+      {:error, msg} -> {:error, msg}
+    end
   end
 
   defp do_login({:ok, account}) do
@@ -71,20 +82,6 @@ defmodule HELM.Account.Controller do
         {:error, Error.format_reply(:unauthorized, "Account not found.")}
       _ ->
         {:error, Error.format_reply(:unspecified, "oh god")}
-    end
-  end
-
-  def remove_account(account) do
-    case Account.Repo.delete(account) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
-    end
-  end
-
-  def get(request) do
-    case Broker.call("auth:account:verify", request.args["jwt"]) do
-      :ok -> find(request.args["email"])
-      {:error, reason} -> {:reply, {:error, reason}}
     end
   end
 end

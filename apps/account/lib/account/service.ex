@@ -20,11 +20,6 @@ defmodule HELM.Account.Service do
         {:reply, response}
       end)
 
-    Broker.subscribe(:account_service, "account:get", call:
-      fn pid,_,request,timeout ->
-        GenServer.call(pid, {:account_get, request}, timeout)
-      end)
-
     Broker.subscribe(:account_service, "account:login", call:
       fn pid,_,account,timeout ->
         GenServer.call(pid, {:account_login, account}, timeout)
@@ -34,12 +29,7 @@ defmodule HELM.Account.Service do
   end
 
   def handle_call({:account_create, account}, _from, state) do
-    response = Account.Controller.new_account(account)
-    {:reply, response, state}
-  end
-
-  def handle_call({:account_get, request}, _from, state) do
-    response = Account.Controller.get(request)
+    response = Account.Controller.create(account)
     {:reply, response, state}
   end
 

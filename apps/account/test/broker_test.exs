@@ -15,8 +15,8 @@ defmodule HELM.Account.BrokerTest do
     email = "account@test02.com"
 
     # remove existing user
-    case HELM.Account.Controller.find(email) do
-      {:ok, account} -> HELM.Account.Controller.remove_account(account)
+    case HELM.Account.Controller.find_with_email(email) do
+      {:ok, account} -> HELM.Account.Controller.delete(account.account_id)
       {:error, _} -> nil
     end
 
