@@ -15,7 +15,7 @@ defmodule HELM.Server.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity],
+    [applications: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity, :hardware],
      mod: {HELM.Server.App, []}]
   end
 
@@ -24,6 +24,7 @@ defmodule HELM.Server.Mixfile do
      {:hell, in_umbrella: true},
      {:account, in_umbrella: true},
      {:entity, in_umbrella: true},
+     {:hardware, in_umbrella: true},
      {:postgrex, ">= 0.0.0"},
      {:ecto, "~> 2.0"}]
   end

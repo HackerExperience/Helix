@@ -2,52 +2,61 @@ defmodule HELM.Server.Controller do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Server
+
+  alias HELM.Server.Repo
+  alias HELM.Server.Schema, as: ServerSchema
+
+  def create(params) do
+    ServerSchema.create_changeset(params)
+    |> do_create
+  end
 
   def find(server_id) do
-    case Server.Repo.get_by(Server.Schema, server_id: server_id) do
-      nil -> {:error, Error.format_reply(:not_found, "No Entity found with given")}
-      res -> {:ok, res}
+    case Repo.get_by(ServerSchema, server_id: server_id) do
+      res when not is_nil(res) -> {:ok, res}
+      error -> {:error, "Server not found."}
     end
   end
 
-  def new_server(params) do
-    new(params)
+  def attach(server_id, mobo_id) do
+    with {:ok, server} <- find(server_id),
+         {:ok, _} <- Broker.call("hardware:get", {:motherboard, mobo_id}) do
+      ServerSchema.update_changeset(server, %{motherboard_id: mobo_id})
+      |> do_update
+    else
+      error -> error
+    end
   end
 
-  defp new(params) do
-    changeset = Server.Schema.create_changeset(params)
+  def detach(server_id) do
+    case find(server_id) do
+      {:ok, server} ->
+        ServerSchema.update_changeset(server, %{motherboard_id: nil})
+        |> do_update
+      error -> error
+    end
+  end
 
-    case Server.Repo.insert(changeset) do
+  defp do_create(changeset) do
+    case Repo.insert(changeset) do
       {:ok, result} ->
-        IO.inspect(result)
         Broker.cast("event:server:created", result.server_id)
         {:ok, result}
-      {:error, msg} -> {:error, msg}
+      error -> error
     end
   end
 
-  def update_motherboard(server_id, motherboard_id) do
-    update(%{server_id: server_id, motherboard_id: motherboard_id})
-  end
-
-  def update_poi(server_id, poi_id) do
-    update(%{server_id: server_id, poi_id: poi_id})
-  end
-
-  defp update(params) do
-    changeset = Server.Schema.update_changeset(params)
-
-    case Server.Repo.update(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
+  defp do_update(changeset) do
+    case Repo.update(changeset) do
+      {:ok, schema} -> {:ok, schema}
+      error -> error
     end
   end
 
   def remove_server(server_id) do
-    case Server.Repo.delete(%{server_id: server_id}) do
+    case Repo.delete(%{server_id: server_id}) do
       {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
+      error -> error
     end
   end
 end
