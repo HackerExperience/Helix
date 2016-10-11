@@ -17,6 +17,12 @@ defmodule HELM.Hardware.Component.Type.Controller do
     end
   end
 
+  def all do
+    CompTypeSchema
+    |> select([t], t.component_type)
+    |> Repo.all
+  end
+
   def delete(component_type) do
     case find(component_type) do
       {:ok, comp_type} -> do_delete(comp_type)

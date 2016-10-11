@@ -24,7 +24,7 @@ defmodule HELM.Hardware.Component.Controller do
       error -> error
     end
   end
-
+  
   defp do_create(changeset) do
     case Repo.insert(changeset) do
       {:ok, schema} ->
@@ -34,7 +34,7 @@ defmodule HELM.Hardware.Component.Controller do
         {:error, changeset}
     end
   end
-  
+
   defp do_delete(component) do
     case Repo.delete(component) do
       {:ok, result} -> {:ok, result}

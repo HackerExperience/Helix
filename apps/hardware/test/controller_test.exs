@@ -26,6 +26,12 @@ defmodule HELM.Hardware.ControllerTest do
       assert {:ok, comp_type} = CompTypeCtrl.find(comp_type.component_type)
     end
 
+    test "all/0 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      types = CompTypeCtrl.all()
+      assert Enum.member?(types, comp_type.component_type)
+    end
+
     test "delete/1 success" do
       {:ok, comp_type} = CompTypeCtrl.create(random_str)
       assert {:ok, _} = CompTypeCtrl.delete(comp_type.component_type)
