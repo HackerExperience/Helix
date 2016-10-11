@@ -10,6 +10,7 @@ defmodule HELM.Hardware.Motherboard.Slot.Schema do
 
   @primary_key {:slot_id, :string, autogenerate: false}
   @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
+  @update_fields ~w/link_component_id/a
 
   schema "motherboard_slots" do
     field :motherboard_id, :string
@@ -33,9 +34,13 @@ defmodule HELM.Hardware.Motherboard.Slot.Schema do
     |> cast(params, @creation_fields)
     |> validate_required(:motherboard_id)
     |> validate_required(:link_component_type)
-    |> validate_required(:link_component_id)
     |> validate_required(:slot_internal_id)
     |> put_uid
+  end
+
+  def update_changeset(struct, params \\ %{}) do
+    struct
+    |> cast(params, @update_fields)
   end
 
   defp put_uid(changeset) do

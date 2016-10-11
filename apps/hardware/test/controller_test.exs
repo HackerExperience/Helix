@@ -16,16 +16,6 @@ defmodule HELM.Hardware.ControllerTest do
     |> Integer.to_string
   end
 
-  setup = fn ->
-    types = ["ram", "hd"]
-
-    Enum.each(types, fn (type) ->
-      CompTypeCtrl.create(type)
-    end)
-
-    :ok
-  end
-
   describe "HELM.Hardware.Component.Type.Controller" do
     test "create/1 success" do
       assert {:ok, _} = CompTypeCtrl.create(random_str)
@@ -100,6 +90,7 @@ defmodule HELM.Hardware.ControllerTest do
   end
 
   describe "HELM.Hardware.Motherboard.Slot.Controller" do
+
     test "create/0 success" do
       {:ok, comp_type} = CompTypeCtrl.create(random_str)
       {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
@@ -133,6 +124,29 @@ defmodule HELM.Hardware.ControllerTest do
                                         comp_type.component_type,
                                         comp.component_id)
       assert {:ok, _} = MoboSlotCtrl.delete(slot.slot_id)
+    end
+
+    test "link/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      {:ok, comp} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
+      {:ok, mobo} = MoboCtrl.create
+      {:ok, slot} = MoboSlotCtrl.create(%{motherboard_id: mobo.motherboard_id,
+                                          internal_id: random_num,
+                                          component_type: comp_type.component_type})
+      assert {:ok, _} = MoboSlotCtrl.link(slot.slot_id, comp.component_id)
+    end
+
+    test "unlink/1 success" do
+      {:ok, comp_type} = CompTypeCtrl.create(random_str)
+      {:ok, comp_spec} = CompSpecCtrl.create(comp_type.component_type, %{})
+      {:ok, comp} = CompCtrl.create(comp_type.component_type, comp_spec.spec_id)
+      {:ok, mobo} = MoboCtrl.create
+      {:ok, slot} = MoboSlotCtrl.create(%{motherboard_id: mobo.motherboard_id,
+                                          internal_id: random_num,
+                                          component_type: comp_type.component_type})
+      {:ok, _} = MoboSlotCtrl.link(slot.slot_id, comp.component_id)
+      assert {:ok, _} = MoboSlotCtrl.unlink(slot.slot_id)
     end
   end
 end
