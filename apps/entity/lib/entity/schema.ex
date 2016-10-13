@@ -3,14 +3,19 @@ defmodule HELM.Entity.Schema do
 
   import Ecto.Changeset
 
-  alias HELM.Account
+  alias HELM.Entity.Server.Schema, as: EntityServerSchema
 
   @primary_key {:entity_id, :string, autogenerate: false}
-  
+
   schema "entities" do
     field :account_id, :string
     field :npc_id, :string
     field :clan_id, :string
+
+    has_many :servers, EntityServerSchema,
+      foreign_key: :entity_id,
+      references: :entity_id
+
     timestamps
   end
 
