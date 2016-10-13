@@ -4,12 +4,17 @@ defmodule HELM.Server.Schema do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELM.Server
+
+  alias HELM.Server.Type.Schema, as: ServerTypeSchema
 
   @primary_key {:server_id, :string, autogenerate: false}
 
   schema "servers" do
-    field :server_type, :string
+    belongs_to :server_types, ServerTypeSchema,
+      foreign_key: :server_type,
+      references: :server_type,
+      type: :string
+
     field :entity_id, :string
     field :poi_id, :string
     field :motherboard_id, :string
@@ -17,7 +22,7 @@ defmodule HELM.Server.Schema do
     timestamps
   end
 
-  @creation_fields ~w(entity_id server_type poi_id motherboard_id)
+  @creation_fields ~w(entity_id  poi_id motherboard_id)
   @update_fields ~w(poi_id motherboard_id)
 
   def create_changeset(params \\ :empty) do
