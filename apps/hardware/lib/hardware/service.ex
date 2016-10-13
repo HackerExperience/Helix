@@ -11,17 +11,30 @@ defmodule HELM.Hardware.Service do
   alias HELM.Hardware.Component.Type.Controller, as: CompTypeCtrl
 
   def start_link(state \\ []) do
-    GenServer.start_link(__MODULE__, state, name: :hardware_service)
+    GenServer.start_link(__MODULE__, state, name: :hardware)
   end
 
   def init(_args) do
-    Broker.subscribe(:hardware_service, "hardware:get", call:
+    Broker.subscribe(:hardware, "hardware:get", call:
       fn pid,_,params,timeout ->
         response = GenServer.call(pid, {:get, params}, timeout)
         {:reply, response}
       end)
 
+    Broker.subscribe(:hardware, "hardware:motherboard:create", call:
+      fn pid,_,params,timeout ->
+        response = GenServer.call(pid, {:create, :motherboard}, timeout)
+        {:reply, response}
+      end)
+
     {:ok, %{}}
+  end
+
+  def handle_call({:create, :motherboard}, _from, state) do
+    case MoboCtrl.create() do
+      {:ok, mobo} -> {:reply, {:ok, mobo.motherboard_id}, state}
+      {:error, _} -> {:reply, :error, state}
+    end
   end
 
   def handle_call({:get, {:motherboard, id}}, _from, state) do

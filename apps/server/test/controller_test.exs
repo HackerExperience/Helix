@@ -1,6 +1,7 @@
 defmodule HELM.Server.ControllerTest do
   use ExUnit.Case
 
+  alias HELF.Broker
   alias HELM.Server.Type.Controller, as: ServerTypeCtrl
   alias HELM.Server.Controller, as: ServerCtrl
 
@@ -49,6 +50,21 @@ defmodule HELM.Server.ControllerTest do
       {:ok, serv_type} = ServerTypeCtrl.create(random_str)
       {:ok, serv} = ServerCtrl.create("08007277222", serv_type.server_type)
       assert {:ok, _} = ServerCtrl.delete(serv.server_id)
+    end
+
+    test "attach/1 success" do
+      {:ok, serv_type} = ServerTypeCtrl.create(random_str)
+      {:ok, serv} = ServerCtrl.create("08007277222", serv_type.server_type)
+      {:ok, mobo_id} = Broker.call("hardware:motherboard:create", [])
+      assert {:ok, _} = ServerCtrl.attach(serv.server_id, mobo_id)
+    end
+
+    test "detach/1 success" do
+      {:ok, serv_type} = ServerTypeCtrl.create(random_str)
+      {:ok, serv} = ServerCtrl.create("08007277222", serv_type.server_type)
+      {:ok, mobo_id} = Broker.call("hardware:motherboard:create", [])
+      {:ok, _} = ServerCtrl.attach(serv.server_id, mobo_id)
+      assert {:ok, _} = ServerCtrl.detach(serv.server_id)
     end
   end
 end

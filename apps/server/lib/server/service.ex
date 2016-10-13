@@ -5,17 +5,17 @@ defmodule HELM.Server.Service do
   alias HELF.Broker
 
   def start_link(state \\ []) do
-    GenServer.start_link(__MODULE__, state, name: :server_service)
+    GenServer.start_link(__MODULE__, state, name: :server)
   end
 
   def init(_args) do
-    Broker.subscribe(:server_service, "event:entity:created", cast:
+    Broker.subscribe(:server, "event:entity:created", cast:
       fn pid,_,id ->
         response = GenServer.cast(pid, {:entity_created, id})
         {:noreply, :ok}
       end)
 
-    Broker.subscribe(:server_service, "server:create", call:
+    Broker.subscribe(:server, "server:create", call:
       fn pid,_,struct,timeout ->
         case GenServer.call(pid, {:create, struct}, timeout) do
           {:ok, server_id} -> {:reply, {:ok, server_id}}
@@ -23,7 +23,7 @@ defmodule HELM.Server.Service do
         end
       end)
 
-    Broker.subscribe(:server_service, "server:attach", call:
+    Broker.subscribe(:server, "server:attach", call:
       fn pid,_,{server, mobo},timeout ->
         case GenServer.call(pid, {:attach, server, mobo}, timeout) do
           {:ok, server_id} -> {:reply, {:ok, server_id}}
@@ -31,7 +31,7 @@ defmodule HELM.Server.Service do
         end
       end)
 
-    Broker.subscribe(:server_service, "server:detach", call:
+    Broker.subscribe(:server, "server:detach", call:
       fn pid,_,server,timeout ->
         case GenServer.call(pid, {:detach, server}, timeout) do
           {:ok, server_id} -> {:reply, {:ok, server_id}}
