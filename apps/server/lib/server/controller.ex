@@ -6,8 +6,18 @@ defmodule HELM.Server.Controller do
   alias HELM.Server.Repo
   alias HELM.Server.Schema, as: ServerSchema
 
+  def create(entity_id, server_type) do
+    %{entity_id: entity_id, server_type: server_type}
+    |> ServerSchema.create_changeset
+    |> do_create
+  end
+
   def create(params) do
-    ServerSchema.create_changeset(params)
+    %{entity_id: params.entity_id,
+      server_type: params.server_type,
+      poi_id: params[:poi_id],
+      motherboard_id: params[:motherboard_id]}
+    |> ServerSchema.create_changeset
     |> do_create
   end
 
@@ -37,6 +47,13 @@ defmodule HELM.Server.Controller do
     end
   end
 
+  def delete(server_id) do
+    case find(server_id) do
+      {:ok, server_id} -> do_delete(server_id)
+      error -> error
+    end
+  end
+
   defp do_create(changeset) do
     case Repo.insert(changeset) do
       {:ok, result} ->
@@ -53,8 +70,8 @@ defmodule HELM.Server.Controller do
     end
   end
 
-  def remove_server(server_id) do
-    case Repo.delete(%{server_id: server_id}) do
+  defp do_delete(server) do
+    case Repo.delete(server) do
       {:ok, result} -> {:ok, result}
       error -> error
     end

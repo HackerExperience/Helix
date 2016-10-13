@@ -34,7 +34,21 @@ defmodule HELM.Server.ControllerTest do
   end
 
   describe "HELM.Server.Controller" do
-    test "attach/2 success" do
+    test "create/2 success" do
+      {:ok, serv_type} = ServerTypeCtrl.create(random_str)
+      assert {:ok, _} = ServerCtrl.create("08007277222", serv_type.server_type)
+    end
+
+    test "find/1 success" do
+      {:ok, serv_type} = ServerTypeCtrl.create(random_str)
+      {:ok, serv} = ServerCtrl.create("08007277222", serv_type.server_type)
+      assert {:ok, serv} = ServerCtrl.find(serv.server_id)
+    end
+
+    test "delete/1 success" do
+      {:ok, serv_type} = ServerTypeCtrl.create(random_str)
+      {:ok, serv} = ServerCtrl.create("08007277222", serv_type.server_type)
+      assert {:ok, _} = ServerCtrl.delete(serv.server_id)
     end
   end
 end

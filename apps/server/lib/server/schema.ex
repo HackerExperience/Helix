@@ -22,13 +22,14 @@ defmodule HELM.Server.Schema do
     timestamps
   end
 
-  @creation_fields ~w(entity_id  poi_id motherboard_id)
-  @update_fields ~w(poi_id motherboard_id)
+  @creation_fields ~w(entity_id server_type poi_id motherboard_id)
+  @update_fields ~w(entity_id poi_id motherboard_id)
 
-  def create_changeset(params \\ :empty) do
+  def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:entity_id)
+    |> validate_required(:server_type)
     |> put_uuid
   end
 
