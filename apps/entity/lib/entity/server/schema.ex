@@ -6,7 +6,7 @@ defmodule HELM.Entity.Server.Schema do
   alias HELM.Entity.Schema, as: EntitySchema
 
   @primary_key {:server_id, :string, autogenerate: false}
-  @creation_fields ~w/server_id/a
+  @creation_fields ~w/server_id entity_id/a
 
   schema "servers" do
     belongs_to :entities, EntitySchema,
@@ -20,6 +20,6 @@ defmodule HELM.Entity.Server.Schema do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(:server_type)
+    |> validate_required(:entity_id)
   end
 end

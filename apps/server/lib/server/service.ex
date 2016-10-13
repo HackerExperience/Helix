@@ -42,7 +42,7 @@ defmodule HELM.Server.Service do
   end
 
   def handle_cast({:entity_created, id}, state) do
-    Server.Controller.create(%{entity_id: id, poi_id: "", motherboard_id: ""})
+    #Server.Controller.create(%{entity_id: id, poi_id: "", motherboard_id: ""})
     {:noreply, state}
   end
 
