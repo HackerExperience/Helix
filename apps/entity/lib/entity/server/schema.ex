@@ -8,7 +8,7 @@ defmodule HELM.Entity.Server.Schema do
   @primary_key {:server_id, :string, autogenerate: false}
   @creation_fields ~w/server_id entity_id/a
 
-  schema "servers" do
+  schema "entity_servers" do
     belongs_to :entities, EntitySchema,
       foreign_key: :entity_id,
       references: :entity_id,
