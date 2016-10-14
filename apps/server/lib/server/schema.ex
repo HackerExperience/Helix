@@ -15,7 +15,6 @@ defmodule HELM.Server.Schema do
       references: :server_type,
       type: :string
 
-    field :entity_id, :string
     field :poi_id, :string
     field :motherboard_id, :string
 
