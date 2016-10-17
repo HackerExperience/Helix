@@ -25,7 +25,7 @@ defmodule HELM.Entity.Type.Controller do
     end
   end
 
-  def do_create(changeset) do
+  defp do_create(changeset) do
     case Repo.insert(changeset) do
       {:ok, schema} ->
         {:ok, schema}
@@ -34,7 +34,7 @@ defmodule HELM.Entity.Type.Controller do
     end
   end
 
-  def do_delete(changeset) do
+  defp do_delete(changeset) do
     case Repo.delete(changeset) do
       {:ok, result} -> {:ok, result}
       {:error, msg} -> {:error, msg}
