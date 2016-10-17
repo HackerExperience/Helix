@@ -4,6 +4,7 @@ defmodule HELM.Software.ControllerTest do
   alias HELF.Broker
   alias HELM.Software.Storage.Controller, as: SoftStorageCtrl
   alias HELM.Software.Storage.Drive.Controller, as: SoftStorageDriveCtrl
+  alias HELM.Software.File.Type.Controller, as: SoftFileTypeCtrl
 
   def random_num do
     :rand.uniform(134217727)
@@ -31,7 +32,7 @@ defmodule HELM.Software.ControllerTest do
   end
 
   describe "HELM.Software.Storage.Drive.Controller" do
-    test "create/1 success" do
+    test "create/2 success" do
       {:ok, storage} = SoftStorageCtrl.create()
       assert {:ok, _} = SoftStorageDriveCtrl.create(random_num, storage.storage_id)
     end
@@ -49,4 +50,19 @@ defmodule HELM.Software.ControllerTest do
     end
   end
 
+  describe "HELM.Software.File.Type.Controller" do
+    test "create/2 success" do
+      assert {:ok, _} = SoftFileTypeCtrl.create(random_str, ".test")
+    end
+
+    test "find/1 success" do
+      {:ok, file} = SoftFileTypeCtrl.create(random_str, ".test")
+      assert {:ok, file} = SoftFileTypeCtrl.find(file.file_type)
+    end
+
+    test "delete/1 success" do
+      {:ok, file} = SoftFileTypeCtrl.create(random_str, ".test")
+      assert {:ok, _} = SoftFileTypeCtrl.delete(file.file_type)
+    end
+  end
 end
