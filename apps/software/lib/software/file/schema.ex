@@ -9,6 +9,7 @@ defmodule HELM.Software.File.Schema do
 
   @primary_key {:file_id, :string, autogenerate: false}
   @creation_fields ~w/name file_path file_size file_type storage_id/a
+  @update_fields ~w/name file_path storage_id/a
 
   schema "files" do
     field :name, :string
@@ -33,6 +34,11 @@ defmodule HELM.Software.File.Schema do
     |> cast(params, @creation_fields)
     |> validate_number(:file_size, greater_than: 0)
     |> put_uuid
+  end
+
+  def update_changeset(struct, params) do
+    struct
+    |> cast(params, @update_fields)
   end
 
   defp put_uuid(changeset) do
