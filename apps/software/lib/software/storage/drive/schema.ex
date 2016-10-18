@@ -6,14 +6,17 @@ defmodule HELM.Software.Storage.Drive.Schema do
   alias HELM.Software.Storage.Schema, as: SoftStorageSchema
   alias Ecto.Changeset
 
-  @primary_key {:drive_id, :integer, autogenerate: false}
+  @primary_key false
   @creation_fields ~w/drive_id storage_id/a
 
   schema "storage_drives" do
+    field :drive_id, :integer, primary_key: true
+
     belongs_to :storages, SoftStorageSchema,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: :string
+      type: :string,
+      primary_key: true
 
     timestamps
   end
