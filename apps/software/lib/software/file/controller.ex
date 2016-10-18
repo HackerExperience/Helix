@@ -21,6 +21,16 @@ defmodule HELM.Software.File.Controller do
     end
   end
 
+  def update(file_id, params) do
+    case find(file_id) do
+      {:ok, file} ->
+        file
+        |> FileSchema.update_changeset(params)
+        |> do_update()
+      error -> error
+    end
+  end
+
   def delete(file_id) do
     case find(file_id) do
       {:ok, file} -> do_delete(file)
@@ -30,6 +40,10 @@ defmodule HELM.Software.File.Controller do
 
   defp do_create(changeset) do
     Repo.insert(changeset)
+  end
+
+  defp do_update(changeset) do
+    Repo.update(changeset)
   end
 
   defp do_delete(changeset) do
