@@ -5,6 +5,7 @@ defmodule HELM.Software.ControllerTest do
   alias HELM.Software.Storage.Controller, as: SoftStorageCtrl
   alias HELM.Software.Storage.Drive.Controller, as: SoftStorageDriveCtrl
   alias HELM.Software.File.Type.Controller, as: SoftFileTypeCtrl
+  alias HELM.Software.File.Controller, as: SoftFileCtrl
 
   def random_num do
     :rand.uniform(134217727)
@@ -63,6 +64,31 @@ defmodule HELM.Software.ControllerTest do
     test "delete/1 success" do
       {:ok, file} = SoftFileTypeCtrl.create(random_str, ".test")
       assert {:ok, _} = SoftFileTypeCtrl.delete(file.file_type)
+    end
+  end
+
+  describe "HELM.Software.File.Controller" do
+    test "create/2 success" do
+      {:ok, ftype} = SoftFileTypeCtrl.create(random_str, ".test")
+      {:ok, stor} = SoftStorageCtrl.create()
+      assert {:ok, _} = SoftFileCtrl.create(stor.storage_id, "/dev/null", "void",
+                                            ftype.file_type, random_num)
+    end
+
+    test "find/1 success" do
+      {:ok, ftype} = SoftFileTypeCtrl.create(random_str, ".test")
+      {:ok, stor} = SoftStorageCtrl.create()
+      {:ok, file} = SoftFileCtrl.create(stor.storage_id, "/dev/null", "void",
+                                        ftype.file_type, random_num)
+      assert {:ok, file} = SoftFileCtrl.find(file.file_id)
+    end
+
+    test "delete/1 success" do
+      {:ok, ftype} = SoftFileTypeCtrl.create(random_str, ".test")
+      {:ok, stor} = SoftStorageCtrl.create()
+      {:ok, file} = SoftFileCtrl.create(stor.storage_id, "/dev/null", "void",
+                                        ftype.file_type, random_num)
+      assert {:ok, _} = SoftFileCtrl.delete(file.file_id)
     end
   end
 end

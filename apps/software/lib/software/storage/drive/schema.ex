@@ -3,14 +3,14 @@ defmodule HELM.Software.Storage.Drive.Schema do
 
   import Ecto.Changeset
 
-  alias HELM.Software.Storage.Schema, as: StorageSchema
+  alias HELM.Software.Storage.Schema, as: SoftStorageSchema
   alias Ecto.Changeset
 
   @primary_key {:drive_id, :integer, autogenerate: false}
   @creation_fields ~w/drive_id storage_id/a
 
   schema "storage_drives" do
-    belongs_to :storages, StorageSchema,
+    belongs_to :storages, SoftStorageSchema,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :string
