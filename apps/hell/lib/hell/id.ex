@@ -1,8 +1,7 @@
 defmodule HELL.ID do
-
-  alias HELL.Random
+  alias HELL.Random, as: HRandom
 
   def generate(type) do
-    "HEID" <> "-" <> type <> "-" <> Random.random_string(15)
+    "HEID" <> "-" <> type <> "-" <> HRandom.random_string(15)
   end
 end
