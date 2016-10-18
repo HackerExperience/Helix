@@ -6,6 +6,7 @@ defmodule HELM.Software.ControllerTest do
   alias HELM.Software.Storage.Drive.Controller, as: SoftStorageDriveCtrl
   alias HELM.Software.File.Type.Controller, as: SoftFileTypeCtrl
   alias HELM.Software.File.Controller, as: SoftFileCtrl
+  alias HELM.Software.Module.Role.Controller, as: SoftModuleRoleCtrl
 
   def random_num do
     :rand.uniform(134217727)
@@ -89,6 +90,25 @@ defmodule HELM.Software.ControllerTest do
       {:ok, file} = SoftFileCtrl.create(stor.storage_id, "/dev/null", "void",
                                         ftype.file_type, random_num)
       assert {:ok, _} = SoftFileCtrl.delete(file.file_id)
+    end
+  end
+
+  describe "HELM.Software.Module.Role.Controller" do
+    test "create/2 success" do
+      {:ok, ftype} = SoftFileTypeCtrl.create(random_str, ".test")
+      assert {:ok, _} = SoftModuleRoleCtrl.create(random_str, ftype.file_type)
+    end
+
+    test "find/1 success" do
+      {:ok, ftype} = SoftFileTypeCtrl.create(random_str, ".test")
+      {:ok, role} = SoftModuleRoleCtrl.create(random_str, ftype.file_type)
+      assert {:ok, role} = SoftModuleRoleCtrl.find(role.module_role, role.file_type)
+    end
+
+    test "delete/1 success" do
+      {:ok, ftype} = SoftFileTypeCtrl.create(random_str, ".test")
+      {:ok, role} = SoftModuleRoleCtrl.create(random_str, ftype.file_type)
+      assert {:ok, _} = SoftModuleRoleCtrl.delete(role.module_role, role.file_type)
     end
   end
 end
