@@ -2,7 +2,7 @@ defmodule HELM.Software.File.Controller do
   import Ecto.Query
 
   alias HELM.Software.Repo
-  alias HELM.Software.File.Schema, as: SoftFileSchema
+  alias HELM.Software.File.Schema, as: FileSchema
 
   def create(storage, path, name, type, size) do
     %{storage_id: storage,
@@ -10,14 +10,14 @@ defmodule HELM.Software.File.Controller do
       file_name: name,
       file_type: type,
       file_size: size}
-    |> SoftFileSchema.create_changeset
-    |> do_create
+    |> FileSchema.create_changeset()
+    |> do_create()
   end
 
   def find(file_id) do
-    case Repo.get_by(SoftFileSchema, file_id: file_id) do
-      nil -> {:error, "File not found."}
-      res -> {:ok, res}
+    case Repo.get_by(FileSchema, file_id: file_id) do
+      nil -> {:error, :notfound}
+      changeset -> {:ok, changeset}
     end
   end
 
@@ -29,18 +29,10 @@ defmodule HELM.Software.File.Controller do
   end
 
   defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
+    Repo.insert(changeset)
   end
 
   defp do_delete(changeset) do
-    case Repo.delete(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
-    end
+    Repo.delete(changeset)
   end
 end
