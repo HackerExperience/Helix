@@ -3,20 +3,17 @@ defmodule HELM.Software.Module.Role.Schema do
 
   import Ecto.Changeset
 
-  alias HELM.Software.File.Type.Schema, as: SoftFileTypeSchema
+  alias HELM.Software.File.Type.Schema, as: FileTypeSchema
   alias Ecto.Changeset
 
-  @primary_key false
+  @primary_key {:module_role, :string, autogenerate: false}
   @creation_fields ~w/file_type module_role/a
 
   schema "module_roles" do
-    belongs_to :file_types, SoftFileTypeSchema,
+    belongs_to :file_types, FileTypeSchema,
       foreign_key: :file_type,
       references: :file_type,
-      type: :string,
-      primary_key: true
-
-    field :module_role, :string, primary_key: true
+      type: :string
 
     timestamps
   end
