@@ -8,13 +8,13 @@ defmodule HELM.Software.Module.Controller do
     %{module_role: role,
       file_type: type,
       module_version: version}
-    |> SoftModuleSchema.create_changeset
-    |> do_create
+    |> SoftModuleSchema.create_changeset()
+    |> do_create()
   end
 
   def find(role, type) do
     case Repo.get_by(SoftModuleSchema, module_role: role, file_type: type) do
-      nil -> {:error, "Role not found."}
+      nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
@@ -27,18 +27,10 @@ defmodule HELM.Software.Module.Controller do
   end
 
   defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
+    Repo.insert(changeset)
   end
 
   defp do_delete(changeset) do
-    case Repo.delete(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
-    end
+    Repo.delete(changeset)
   end
 end

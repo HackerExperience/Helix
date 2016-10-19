@@ -11,7 +11,7 @@ defmodule HELM.Software.Storage.Controller do
 
   def find(storage_id) do
     case Repo.get_by(SoftStorageSchema, storage_id: storage_id) do
-      nil -> {:error, "Storage not found."}
+      nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
@@ -25,18 +25,10 @@ defmodule HELM.Software.Storage.Controller do
   end
 
   defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
+    Repo.insert(changeset)
   end
 
   defp do_delete(changeset) do
-    case Repo.delete(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
-    end
+    Repo.delete(changeset)
   end
 end

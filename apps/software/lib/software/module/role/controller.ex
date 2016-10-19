@@ -13,7 +13,7 @@ defmodule HELM.Software.Module.Role.Controller do
 
   def find(role, type) do
     case Repo.get_by(SoftModuleRoleSchema, module_role: role, file_type: type) do
-      nil -> {:error, "Role not found."}
+      nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
@@ -26,18 +26,10 @@ defmodule HELM.Software.Module.Role.Controller do
   end
 
   defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
+    Repo.insert(changeset)
   end
 
   defp do_delete(changeset) do
-    case Repo.delete(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
-    end
+    Repo.delete(changeset)
   end
 end

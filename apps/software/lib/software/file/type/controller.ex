@@ -12,7 +12,7 @@ defmodule HELM.Software.File.Type.Controller do
 
   def find(file_type) do
     case Repo.get_by(SoftFileTypeSchema, file_type: file_type) do
-      nil -> {:error, "File.Type not found."}
+      nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
@@ -25,18 +25,10 @@ defmodule HELM.Software.File.Type.Controller do
   end
 
   defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
+    Repo.insert(changeset)
   end
 
   defp do_delete(changeset) do
-    case Repo.delete(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
-    end
+    Repo.delete(changeset)
   end
 end
