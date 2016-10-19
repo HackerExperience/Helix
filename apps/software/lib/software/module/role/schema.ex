@@ -4,6 +4,7 @@ defmodule HELM.Software.Module.Role.Schema do
   import Ecto.Changeset
 
   alias HELM.Software.File.Type.Schema, as: FileTypeSchema
+  alias HELM.Software.Module.Schema, as: ModuleSchema
   alias Ecto.Changeset
 
   @primary_key {:module_role, :string, autogenerate: false}
@@ -14,6 +15,10 @@ defmodule HELM.Software.Module.Role.Schema do
       foreign_key: :file_type,
       references: :file_type,
       type: :string
+
+    has_many :modules, ModuleSchema,
+      foreign_key: :module_role,
+      references: :module_role
 
     timestamps
   end
