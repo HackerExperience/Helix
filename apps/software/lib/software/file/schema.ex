@@ -36,8 +36,8 @@ defmodule HELM.Software.File.Schema do
     |> put_uuid
   end
 
-  def update_changeset(struct, params) do
-    struct
+  def update_changeset(model, params) do
+    model
     |> cast(params, @update_fields)
   end
 
