@@ -6,7 +6,7 @@ defmodule HELM.Software.File.Type.Controller do
 
   def create(file_type, extension) do
     %{file_type: file_type, extension: extension}
-    |> FileTypeSchema.create_changeset
+    |> FileTypeSchema.create_changeset()
     |> Repo.insert()
   end
 

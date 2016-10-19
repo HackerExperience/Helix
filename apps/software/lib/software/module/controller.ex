@@ -4,23 +4,23 @@ defmodule HELM.Software.Module.Controller do
   alias HELM.Software.Repo
   alias HELM.Software.Module.Schema, as: ModuleSchema
 
-  def create(role, type, version) do
+  def create(role, file_id, version) do
     %{module_role: role,
-      file_type: type,
+      file_id: file_id,
       module_version: version}
     |> ModuleSchema.create_changeset()
     |> Repo.insert()
   end
 
-  def find(role, type) do
-    case Repo.get_by(ModuleSchema, module_role: role, file_type: type) do
+  def find(role, file_id) do
+    case Repo.get_by(ModuleSchema, module_role: role, file_id: file_id) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
 
-  def delete(role, type) do
-    case find(role, type) do
+  def delete(role, file_id) do
+    case find(role, file_id) do
       {:ok, file} -> Repo.delete(file)
       error -> error
     end

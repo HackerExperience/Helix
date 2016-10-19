@@ -8,16 +8,16 @@ defmodule HELM.Software.Module.Schema do
   alias Ecto.Changeset
 
   @primary_key false
-  @creation_fields ~w/file_type module_role module_version/a
+  @creation_fields ~w/file_id module_role module_version/a
 
   schema "modules" do
-    belongs_to :files, FileSchema,
+    belongs_to :file_entity, FileSchema,
       foreign_key: :file_id,
       references: :file_id,
       type: :string,
       primary_key: true
 
-    belongs_to :module_roles, ModuleRoleSchema,
+    belongs_to :module_role_entity, ModuleRoleSchema,
       foreign_key: :module_role,
       references: :module_role,
       type: :string,

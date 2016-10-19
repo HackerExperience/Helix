@@ -6,7 +6,7 @@ defmodule HELM.Software.Storage.Drive.Controller do
 
   def create(drive_id, storage_id) do
     %{drive_id: drive_id, storage_id: storage_id}
-    |> StorageDriveSchema.create_changeset
+    |> StorageDriveSchema.create_changeset()
     |> Repo.insert()
   end
 
