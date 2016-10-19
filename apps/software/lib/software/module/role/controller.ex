@@ -7,8 +7,8 @@ defmodule HELM.Software.Module.Role.Controller do
   def create(role, type) do
     %{module_role: role,
       file_type: type}
-    |> SoftModuleRoleSchema.create_changeset
-    |> do_create
+    |> SoftModuleRoleSchema.create_changeset()
+    |> do_create()
   end
 
   def find(role, type) do

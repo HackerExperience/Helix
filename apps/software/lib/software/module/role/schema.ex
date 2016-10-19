@@ -10,7 +10,7 @@ defmodule HELM.Software.Module.Role.Schema do
   @creation_fields ~w/file_type module_role/a
 
   schema "module_roles" do
-    belongs_to :file_types, FileTypeSchema,
+    belongs_to :file_type, FileTypeSchema,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
