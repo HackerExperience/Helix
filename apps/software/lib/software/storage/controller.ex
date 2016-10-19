@@ -6,7 +6,7 @@ defmodule HELM.Software.Storage.Controller do
 
   def create do
     SoftStorageSchema.create_changeset()
-    |> do_create
+    |> Repo.insert()
   end
 
   def find(storage_id) do
@@ -19,16 +19,8 @@ defmodule HELM.Software.Storage.Controller do
   def delete(storage_id) do
   alias HELM.Software.Storage.Schema, as: SoftStorageSchema
     case find(storage_id) do
-      {:ok, storage} -> do_delete(storage)
+      {:ok, storage} -> Repo.delete(storage)
       error -> error
     end
-  end
-
-  defp do_create(changeset) do
-    Repo.insert(changeset)
-  end
-
-  defp do_delete(changeset) do
-    Repo.delete(changeset)
   end
 end

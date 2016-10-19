@@ -9,7 +9,7 @@ defmodule HELM.Software.Module.Controller do
       file_type: type,
       module_version: version}
     |> SoftModuleSchema.create_changeset()
-    |> do_create()
+    |> Repo.insert()
   end
 
   def find(role, type) do
@@ -21,16 +21,8 @@ defmodule HELM.Software.Module.Controller do
 
   def delete(role, type) do
     case find(role, type) do
-      {:ok, file} -> do_delete(file)
+      {:ok, file} -> Repo.delete(file)
       error -> error
     end
-  end
-
-  defp do_create(changeset) do
-    Repo.insert(changeset)
-  end
-
-  defp do_delete(changeset) do
-    Repo.delete(changeset)
   end
 end

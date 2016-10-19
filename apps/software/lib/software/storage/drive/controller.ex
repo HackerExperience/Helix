@@ -7,7 +7,7 @@ defmodule HELM.Software.Storage.Drive.Controller do
   def create(drive_id, storage_id) do
     %{drive_id: drive_id, storage_id: storage_id}
     |> SoftStorageDriveSchema.create_changeset
-    |> do_create
+    |> Repo.insert()
   end
 
   def find(drive_id) do
@@ -19,16 +19,8 @@ defmodule HELM.Software.Storage.Drive.Controller do
 
   def delete(drive_id) do
     case find(drive_id) do
-      {:ok, drive} -> do_delete(drive)
+      {:ok, drive} -> Repo.delete(drive)
       error -> error
     end
-  end
-
-  defp do_create(changeset) do
-    Repo.insert(changeset)
-  end
-
-  defp do_delete(changeset) do
-    Repo.delete(changeset)
   end
 end
