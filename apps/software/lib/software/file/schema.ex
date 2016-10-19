@@ -16,12 +16,12 @@ defmodule HELM.Software.File.Schema do
     field :file_path, :string
     field :file_size, :integer
 
-    belongs_to :file_types, FileTypeSchema,
+    belongs_to :file_type_entity, FileTypeSchema,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
 
-    belongs_to :storages, StorageSchema,
+    belongs_to :storage_entity, StorageSchema,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :string

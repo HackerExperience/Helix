@@ -12,7 +12,7 @@ defmodule HELM.Software.Storage.Drive.Schema do
   schema "storage_drives" do
     field :drive_id, :integer, primary_key: true
 
-    belongs_to :storages, StorageSchema,
+    belongs_to :storage_entity, StorageSchema,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :string,
