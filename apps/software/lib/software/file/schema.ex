@@ -3,8 +3,8 @@ defmodule HELM.Software.File.Schema do
 
   import Ecto.Changeset
 
-  alias HELM.Software.File.Type.Schema, as: SoftFileTypeSchema
-  alias HELM.Software.Storage.Schema, as: SoftStorageSchema
+  alias HELM.Software.File.Type.Schema, as: FileTypeSchema
+  alias HELM.Software.Storage.Schema, as: StorageSchema
   alias Ecto.Changeset
 
   @primary_key {:file_id, :string, autogenerate: false}
@@ -16,12 +16,12 @@ defmodule HELM.Software.File.Schema do
     field :file_path, :string
     field :file_size, :integer
 
-    belongs_to :file_types, SoftFileTypeSchema,
+    belongs_to :file_types, FileTypeSchema,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
 
-    belongs_to :storages, SoftStorageSchema,
+    belongs_to :storages, StorageSchema,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :string

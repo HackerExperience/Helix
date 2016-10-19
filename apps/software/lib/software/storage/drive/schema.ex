@@ -3,7 +3,7 @@ defmodule HELM.Software.Storage.Drive.Schema do
 
   import Ecto.Changeset
 
-  alias HELM.Software.Storage.Schema, as: SoftStorageSchema
+  alias HELM.Software.Storage.Schema, as: StorageSchema
   alias Ecto.Changeset
 
   @primary_key false
@@ -12,7 +12,7 @@ defmodule HELM.Software.Storage.Drive.Schema do
   schema "storage_drives" do
     field :drive_id, :integer, primary_key: true
 
-    belongs_to :storages, SoftStorageSchema,
+    belongs_to :storages, StorageSchema,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :string,
