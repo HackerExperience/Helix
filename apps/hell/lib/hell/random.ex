@@ -17,7 +17,7 @@ defmodule HELL.Random do
     |> String.slice(0 .. length - 1)
   end
 
-  defp random_bytes(n) do
+  def random_bytes(n) do
     :crypto.strong_rand_bytes(n)
   end
 end

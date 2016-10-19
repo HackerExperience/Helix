@@ -19,6 +19,7 @@ defmodule HELL.Mixfile do
   end
 
   defp deps do
-    [{:comeonin, "~> 2.5"}]
+    [{:comeonin, "~> 2.5"},
+     {:uuid, "~> 1.1"}]
   end
 end
