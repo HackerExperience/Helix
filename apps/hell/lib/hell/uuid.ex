@@ -1,34 +1,33 @@
 defmodule HELL.UUID do
 
-  @hex_validation ~r/^[0-9A-F]+$/i
+  @hex_chars ?0..9
+    |> Enum.to_list()
+    |> Kernel.++(Enum.to_list(?a..?f))
+    |> Enum.map(&List.wrap/1)
+    |> Enum.map(&to_string/1)
 
   def create(domain_name, opts \\ []) do
     head = header(domain_name, opts)
-    uuid = generate()
-    merge(head, uuid)
+    if head, do: merge_header(head), else: nil
   end
 
-  def generate,
-    do: UUID.uuid4()
+  def merge_header(head),
+    do: if head, do: merge(UUID.uuid4(), head), else: nil
 
-  def header(domain_name, opts \\ []) do
-    domain =
-      domain_name
-      |> do_validate(:domain, :length, &(validate_length(&1, min: 2, max: 2)))
-      |> do_validate(:domain, :hex, &validate_hex/1)
+  def header(domain, opts \\ []) do
+    meta1 = Keyword.get(opts, :meta1, "0")
+    meta2 = Keyword.get(opts, :meta2, "0")
 
-    meta1 =
-      Keyword.get(opts, :meta1, "")
-      |> do_validate(:meta1, :hex, &validate_hex/1)
-
-    meta2 =
-      Keyword.get(opts, :meta2, "")
-      |> do_validate(:meta2, :hex, &validate_hex/1)
-
-    domain <> meta1 <> meta2
+    with true <- valid_domain?(domain),
+         true <- valid_meta?(meta1),
+         true <- valid_meta?(meta2) do
+      domain <> meta1 <> meta2
+    else
+      _ -> nil
+    end
   end
 
-  def merge(prepend, uuid),
+  defp merge(uuid, prepend),
     do: merge(uuid, prepend, "")
   defp merge("-" <> uuid, prepend, acc),
     do: merge(uuid, prepend, acc <> "-")
@@ -38,24 +37,20 @@ defmodule HELL.UUID do
     do: acc <> uuid
   defp merge("", prepend, acc),
     do: acc <> prepend
-
-  defp do_validate(string, target_name, validation_name, fun) do
-    if fun.(string) do
-      string
-    else
-      throw {:invalid_uuid, target_name, validation_name}
-    end
+    
+  for x <- @hex_chars do
+    defp valid_meta?("#{unquote(x)}"),
+      do: true
   end
 
-  defp validate_length(string, params) do
-    max = Keyword.get(params, :max, 0)
-    min = Keyword.get(params, :min, 0)
+  defp valid_meta?(_),
+    do: false
 
-    length = String.length(string)
-
-    (max == 0 or length <= max) and (min == 0 or length >= min)
+  for x <- @hex_chars, y <- @hex_chars do
+    defp valid_domain?("#{unquote(x)}#{unquote(y)}"),
+      do: true
   end
 
-  defp validate_hex(string),
-    do: (string == "") or Regex.match?(@hex_validation, string)
+  defp valid_domain?(_),
+    do: false
 end
