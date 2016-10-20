@@ -24,7 +24,7 @@ defmodule HELL.UUID do
 
   @doc """
   Generates a valid header with given `domain`, `meta1` and `meta2`.
-  Follow the same format rules from create.
+  Follow the same format rules from `create/2`.
   Useful for caching headers on module attributes, merge the header into an UUID later using
   `merge_header/1`.
   """
@@ -49,7 +49,7 @@ defmodule HELL.UUID do
     do: if head, do: merge(UUID.uuid4(), head), else: nil
 
   @doc """
-  Parses the header, never use this to on game logic, this is only for debug code or IEX usage.
+  Parses the header, never use this to on game logic, this is only for debug code or `iex` usage.
   """
   def parse(header) do
     <<domain::bytes-size(2), meta1::bytes-size(1), meta2::bytes-size(1), rest::binary>> = header
