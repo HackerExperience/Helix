@@ -15,11 +15,15 @@ defmodule HELL.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :comeonin]]
+    [applications: applications(Mix.env)]
   end
+
+  defp applications(:dev), do: applications(:all) ++ [:remix]
+  defp applications(_all), do: [:logger, :comeonin]
 
   defp deps do
     [{:comeonin, "~> 2.5"},
-     {:uuid, "~> 1.1"}]
+     {:uuid, "~> 1.1"},
+     {:remix, "~> 0.0.1", only: :dev}]
   end
 end

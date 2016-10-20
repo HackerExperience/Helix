@@ -15,14 +15,18 @@ defmodule HELM.NPC.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :helf_broker, :ecto, :postgrex],
+    [applications: applications(Mix.env),
      mod: {HELM.NPC.App, []}]
   end
 
+  defp applications(:dev), do: applications(:all) ++ [:remix]
+  defp applications(_all), do: [:logger, :helf_broker, :ecto, :postgrex]
+  
   defp deps do
     [{:helf_broker, in_umbrella: true},
      {:hell, in_umbrella: true},
      {:postgrex, ">= 0.0.0"},
-     {:ecto, "~> 2.0"}]
+     {:ecto, "~> 2.0"},
+     {:remix, "~> 0.0.1", only: :dev}]
   end
 end

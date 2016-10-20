@@ -13,9 +13,12 @@ defmodule Account.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :helf_broker, :helf_router, :ecto, :postgrex, :auth],
+    [applications: applications(Mix.env),
      mod: {Account.App, []}]
   end
+
+  defp applications(:dev), do: applications(:all) ++ [:remix]
+  defp applications(_all), do: [:logger, :helf_broker, :helf_router, :ecto, :postgrex, :auth]
 
   defp deps do
     [{:helf_router, in_umbrella: true},
@@ -24,6 +27,7 @@ defmodule Account.Mixfile do
      {:auth, in_umbrella: true},
      {:postgrex, ">= 0.0.0"},
      {:ecto, "~> 2.0"},
-     {:poison, "~> 2.0"}]
+     {:poison, "~> 2.0"},
+     {:remix, "~> 0.0.1", only: :dev}]
   end
 end

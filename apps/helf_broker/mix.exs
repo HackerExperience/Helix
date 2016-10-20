@@ -15,12 +15,16 @@ defmodule HELM.HELFBroker.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :he_broker],
+    [applications: applications(Mix.env),
      mod: {HELM.HELFBroker.App, []}]
   end
 
+  defp applications(:dev), do: applications(:all) ++ [:remix]
+  defp applications(_all), do: [:logger, :he_broker]
+
   defp deps do
     [{:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},
-     {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"}]
+     {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"},
+     {:remix, "~> 0.0.1", only: :dev}]
   end
 end

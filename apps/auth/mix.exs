@@ -15,12 +15,16 @@ defmodule HELM.Auth.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :helf_broker],
+    [applications: applications(Mix.env),
      mod: {HELM.Auth.App, []}]
   end
 
+  defp applications(:dev), do: applications(:all) ++ [:remix]
+  defp applications(_all), do: [:logger, :helf_broker]
+
   defp deps do
     [{:helf_broker, in_umbrella: true},
-     {:guardian, "~> 0.12.0"}]
+     {:guardian, "~> 0.12.0"},
+     {:remix, "~> 0.0.1", only: :dev}]
   end
 end
