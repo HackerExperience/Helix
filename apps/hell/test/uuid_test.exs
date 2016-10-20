@@ -32,12 +32,18 @@ defmodule HELL.UUIDTest do
   end
 
   describe "debug/1" do
-    test "parsing debug information" do
+    test "parsing valid information" do
       a = "ff"
       b = "a"
       c = "b"
       assert {:ok, uuid} = HUUID.create(a, meta1: b, meta2: c)
       assert %{domain: domain, meta1: a, meta2: b} = HUUID.debug(uuid)
+    end
+
+    test "parsing invalid information" do
+      assert_raise MatchError, fn ->
+        HUUID.debug("")
+      end
     end
   end
 end
