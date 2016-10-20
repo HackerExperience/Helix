@@ -35,9 +35,7 @@ defmodule HELL.UUID do
     do: merge(uuid, prepend, <<acc::binary, char::utf8>>)
   defp merge(uuid, "", acc),
     do: acc <> uuid
-  defp merge("", prepend, acc),
-    do: acc <> prepend
-    
+
   for x <- @hex_chars do
     defp valid_meta?("#{unquote(x)}"),
       do: true
