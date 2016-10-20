@@ -37,7 +37,7 @@ defmodule HELL.UUIDTest do
       b = "a"
       c = "b"
       assert {:ok, uuid} = HUUID.create(a, meta1: b, meta2: c)
-      assert %{domain: domain, meta1: a, meta2: b} = HUUID.debug(uuid)
+      assert %{domain: ^a, meta1: ^b, meta2: ^c} = HUUID.debug(uuid)
     end
 
     test "parsing invalid information" do

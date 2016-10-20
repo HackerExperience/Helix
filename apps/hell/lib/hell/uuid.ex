@@ -24,7 +24,7 @@ defmodule HELL.UUID do
   end
 
   @doc """
-  Same as `create/2` but raises `ArgumentError` when header not valid.
+  Same as `create/2` but raises `ArgumentError` when header is not valid.
   """
   def create!(domain, opts \\ []) do
     case create(domain, opts) do
@@ -34,10 +34,10 @@ defmodule HELL.UUID do
   end
 
   @doc """
-  Parses the header, never use this with game logic, this is only for debug code or `iex` usage.
+  Parses the UUID, never use this with game logic, this is only for debug code or `iex` usage.
   """
-  def debug(header) do
-    <<domain::bytes-size(2), meta1::bytes-size(1), meta2::bytes-size(1), rest::binary>> = header
+  def debug(uuid) do
+    <<domain::bytes-size(2), meta1::bytes-size(1), meta2::bytes-size(1), rest::binary>> = uuid
     %{domain: domain, meta1: meta1, meta2: meta2, uuid_part: rest}
   end
 
