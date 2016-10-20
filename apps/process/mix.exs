@@ -19,8 +19,9 @@ defmodule HELM.Process.Mixfile do
      mod: {HELM.Process.App, []}]
   end
 
-  defp applications(:dev), do: applications(:all) ++ [:remix]
-  defp applications(_all), do: [:logger, :helf_broker, :ecto, :postgrex]
+  defp applications(:dev), do: default_applications ++ [:remix]
+  defp applications(_), do: default_applications()
+  defp default_applications, do: [:logger, :helf_broker, :ecto, :postgrex]
 
   defp deps do
     [{:helf_broker, in_umbrella: true},

@@ -19,8 +19,9 @@ defmodule HELM.HELFBroker.Mixfile do
      mod: {HELM.HELFBroker.App, []}]
   end
 
-  defp applications(:dev), do: applications(:all) ++ [:remix]
-  defp applications(_all), do: [:logger, :he_broker]
+  defp applications(:dev), do: default_applications ++ [:remix]
+  defp applications(_), do: default_applications()
+  defp default_applications, do: [:logger, :hebroker]
 
   defp deps do
     [{:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},

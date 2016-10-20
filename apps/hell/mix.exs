@@ -18,8 +18,9 @@ defmodule HELL.Mixfile do
     [applications: applications(Mix.env)]
   end
 
-  defp applications(:dev), do: applications(:all) ++ [:remix]
-  defp applications(_all), do: [:logger, :comeonin]
+  defp applications(:dev), do: default_applications ++ [:remix]
+  defp applications(_), do: default_applications()
+  defp default_applications, do: [:logger, :comeonin]
 
   defp deps do
     [{:comeonin, "~> 2.5"},

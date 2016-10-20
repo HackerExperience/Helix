@@ -17,9 +17,10 @@ defmodule Account.Mixfile do
      mod: {Account.App, []}]
   end
 
-  defp applications(:dev), do: applications(:all) ++ [:remix]
-  defp applications(_all), do: [:logger, :helf_broker, :helf_router, :ecto, :postgrex, :auth]
-
+  defp applications(:dev), do: default_applications ++ [:remix]
+  defp applications(_), do: default_applications()
+  defp default_applications, do: [:logger, :helf_broker, :helf_router, :ecto, :postgrex, :auth]
+  
   defp deps do
     [{:helf_router, in_umbrella: true},
      {:helf_broker, in_umbrella: true},

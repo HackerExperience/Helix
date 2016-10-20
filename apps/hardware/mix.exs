@@ -19,9 +19,10 @@ defmodule HELM.Hardware.Mixfile do
      mod: {HELM.Hardware.App, []}]
   end
 
-  defp applications(:dev), do: applications(:all) ++ [:remix]
-  defp applications(_all), do: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity]
-
+  defp applications(:dev), do: default_applications ++ [:remix]
+  defp applications(_), do: default_applications()
+  defp default_applications, do: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity]
+  
   defp deps do
     [{:helf_broker, in_umbrella: true},
      {:hell, in_umbrella: true},

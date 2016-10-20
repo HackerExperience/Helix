@@ -19,8 +19,9 @@ defmodule HELM.HELFRouter.Mixfile do
      mod: {HELM.HELFRouter.App, []}]
   end
 
-  defp applications(:dev), do: applications(:all) ++ [:remix]
-  defp applications(_all), do: [:logger, :cowboy]
+defp applications(:dev), do: default_applications ++ [:remix]
+defp applications(_), do: default_applications()
+defp default_applications, do: [:logger, :cowboy]
 
   defp deps do
     [{:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},

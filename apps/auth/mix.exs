@@ -19,8 +19,9 @@ defmodule HELM.Auth.Mixfile do
      mod: {HELM.Auth.App, []}]
   end
 
-  defp applications(:dev), do: applications(:all) ++ [:remix]
-  defp applications(_all), do: [:logger, :helf_broker]
+  defp applications(:dev), do: default_applications ++ [:remix]
+  defp applications(_), do: default_applications()
+  defp default_applications, do: [:logger, :helf_broker]
 
   defp deps do
     [{:helf_broker, in_umbrella: true},
