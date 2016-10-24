@@ -1,7 +1,6 @@
 defmodule HELM.Account.Schema do
   use Ecto.Schema
 
-  alias HELM.Entity
   import Ecto.Changeset
 
   @primary_key {:account_id, :string, autogenerate: false}

@@ -1,7 +1,7 @@
 defmodule HELM.Account.Service do
   use GenServer
 
-  alias HELM.Account
+  alias HELM.Account.Controller, as: AccountCtrl
   alias HELF.Broker
   alias HELF.Router
 
@@ -20,21 +20,11 @@ defmodule HELM.Account.Service do
         {:reply, response}
       end)
 
-    Broker.subscribe(:account_service, "account:login", call:
-      fn pid,_,account,timeout ->
-        GenServer.call(pid, {:account_login, account}, timeout)
-      end)
-
     {:ok, %{}}
   end
 
   def handle_call({:account_create, account}, _from, state) do
-    response = Account.Controller.create(account)
-    {:reply, response, state}
-  end
-
-  def handle_call({:account_login, account}, _from, state) do
-    response = Account.Controller.login_with(account)
+    response = AccountCtrl.create(account)
     {:reply, response, state}
   end
 end

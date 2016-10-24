@@ -3,27 +3,16 @@ defmodule HELM.Account.BrokerTest do
 
   require Logger
 
-  alias HELM.Account
+  alias HELL.Random, as: HRand
+  alias HELM.Account.Controller, as: AccountCtrl
   alias HELF.{Tester, Broker}
 
   setup do
-    {:ok, _} = Application.ensure_all_started(:helf_router)
-    {:ok, _} = Application.ensure_all_started(:helf_broker)
-    {:ok, _} = Application.ensure_all_started(:account)
-
-    # account email
-    email = "account@test02.com"
-
-    # remove existing user
-    case HELM.Account.Controller.find_with_email(email) do
-      {:ok, account} -> HELM.Account.Controller.delete(account.account_id)
-      {:error, _} -> nil
-    end
-
+    email = HRand.random_numeric_string()
     {:ok, email: email}
   end
 
-  test "account creation messaging", %{email: email} do
+  test "account creation messaging", data do
     service = :account_broker_tests_01
     {:ok, pid} = Tester.start_link(service, self())
 
@@ -32,13 +21,13 @@ defmodule HELM.Account.BrokerTest do
 
     # Example account payload
     account = %{
-      email: email,
+      email: data.email,
       password: "12345678",
       password_confirmation: "12345678"
     }
 
     # Try to create the user
-    {:ok, account} = HELF.Broker.call("account:create", account)
+    {:ok, account} = Broker.call("account:create", account)
 
     # cache the account id
     account_id = account.account_id

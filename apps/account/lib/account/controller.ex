@@ -6,30 +6,34 @@ defmodule HELM.Account.Controller do
   alias HELM.Account.Repo
   alias HELM.Account.Schema, as: AccountSchema
 
+  def create(email, password, confirmation) do
+    %{email: email, password: password,
+      password_confirmation: confirmation}
+    |> create()
+  end
+
   def create(account) do
     AccountSchema.create_changeset(account)
-    |> do_new_account
+    |> do_create()
   end
 
   def find(account_id) do
     case Repo.get_by(AccountSchema, account_id: account_id) do
-      nil -> {:error, "Account not found."}
-      res -> {:ok, res}
+      nil -> {:error, :notfound}
+      account -> {:ok, account}
     end
   end
 
-  def find_with_email(email) do
+  def find_by(email: email) do
     case Repo.get_by(AccountSchema, email: email) do
-      nil -> {:error, Error.format_reply(:not_found, "Account with given email not found")}
-      res -> {:ok, res}
+      nil -> {:error, :notfound}
+      account -> {:ok, account}
     end
   end
 
   def delete(account_id) do
-    case find(account_id) do
-      {:ok, account} -> do_delete(account)
-      error -> error
-    end
+    with {:ok, account} <- find(account_id),
+      do: Repo.delete(account)
   end
 
   def login(email: email, password: password) do
@@ -43,45 +47,26 @@ defmodule HELM.Account.Controller do
     end
   end
 
-  def get(request) do
-    case Broker.call("auth:account:verify", request.args["jwt"]) do
-      :ok -> find(request.args["email"])
-      {:error, reason} -> {:reply, {:error, reason}}
-    end
-  end
-
-  defp do_new_account(changeset) do
+  defp do_create(changeset) do
     case Repo.insert(changeset) do
       {:ok, struct} ->
         Broker.cast("event:account:created", struct.account_id)
         {:ok, struct}
       {:error, changeset} ->
-        email_taken? = Enum.any?(changeset.errors, &(&1 == {:email, "has already been taken"}))
-        if email_taken? do
-          {:error, Error.format_reply({:bad_request, "Email has already been taken"})}
-        else
-          {:error, Error.format_reply({:internal, "Could not create the account"})}
+        email_errors = Keyword.get(changeset.errors, :email, {})
+        passwd_errors = Keyword.get(changeset.errors, :password, {})
+        confirm_errors = Keyword.get(changeset.errors, :password_confirmation, {})
+
+        email_taken? = {} != email_errors
+        passwd_short? = {} != passwd_errors
+        wrong_confirm? = {} != confirm_errors
+
+        cond do
+          email_taken? -> {:error, :email_taken}
+          passwd_short? -> {:error, :password_too_short}
+          wrong_confirm? -> {:error, :wrong_password_confirmation}
+          true -> {:error, :internal}
         end
-    end
-  end
-
-  defp do_delete(account) do
-    case Repo.delete(account) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
-    end
-  end
-
-  defp do_login({:ok, account}) do
-    Broker.call("jwt:create", account.account_id)
-  end
-
-  defp do_login({:error, err}) do
-    case err do
-      :notfound ->
-        {:error, Error.format_reply(:unauthorized, "Account not found.")}
-      _ ->
-        {:error, Error.format_reply(:unspecified, "oh god")}
     end
   end
 end
