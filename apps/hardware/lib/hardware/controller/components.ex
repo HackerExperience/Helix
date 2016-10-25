@@ -1,30 +1,31 @@
-defmodule HELM.Hardware.Component.Controller do
+defmodule HELM.Hardware.Controller.Components do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Hardware.Repo
-  alias HELM.Hardware.Component.Schema, as: CompSchema
+  alias HELM.Hardware.Model.Repo
+  alias HELM.Hardware.Model.Components, as: MdlComps
 
-  def create(component_type, spec_id) do
-    %{component_type: component_type, spec_id: spec_id}
-    |> CompSchema.create_changeset
+  def create(params) do
+    MdlComps.create_changeset(params)
     |> do_create
   end
 
   def find(component_id) do
-    case Repo.get_by(CompSchema, component_id: component_id) do
-      nil -> {:error, "Component not found."}
+    case Repo.get_by(MdlComps, component_id: component_id) do
+      nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
 
   def delete(component_id) do
-    case find(component_id) do
-      {:ok, component} -> do_delete(component)
-      error -> error
+    with {:ok, component} <- find(component_id),
+         {:ok, _} <- Repo.delete(component) do
+      :ok
+    else
+      {:error, :notfound} -> :ok
     end
   end
-  
+
   defp do_create(changeset) do
     case Repo.insert(changeset) do
       {:ok, schema} ->
@@ -32,13 +33,6 @@ defmodule HELM.Hardware.Component.Controller do
         {:ok, schema}
       {:error, changeset} ->
         {:error, changeset}
-    end
-  end
-
-  defp do_delete(component) do
-    case Repo.delete(component) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
     end
   end
 end

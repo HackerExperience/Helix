@@ -1,11 +1,11 @@
-defmodule HELM.Hardware.Component.Spec.Schema do
+defmodule HELM.Hardware.Model.ComponentSpecs do
   use Ecto.Schema
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
 
-  alias HELM.Hardware.Component.Schema, as: CompSchema
+  alias HELM.Hardware.Model.Components, as: MdlComps
 
   @primary_key {:spec_id, :string, autogenerate: false}
   @creation_fields ~w/spec component_type/a
@@ -14,7 +14,7 @@ defmodule HELM.Hardware.Component.Spec.Schema do
     field :component_type, :string
     field :spec, :map
 
-    has_many :components, CompSchema,
+    has_many :components, MdlComps,
       foreign_key: :spec_id,
       references: :spec_id
 

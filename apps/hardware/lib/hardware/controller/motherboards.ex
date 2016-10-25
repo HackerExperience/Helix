@@ -1,13 +1,29 @@
-defmodule HELM.Hardware.Motherboard.Controller do
+defmodule HELM.Hardware.Controller.Motherboards do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Hardware.Repo
-  alias HELM.Hardware.Motherboard.Schema, as: MoboSchema
+  alias HELM.Hardware.Model.Repo
+  alias HELM.Hardware.Model.Motherboards, as: MdlMobos
 
   def create do
-    MoboSchema.create_changeset
-    |> do_create
+    MdlMobos.create_changeset()
+    |> do_create()
+  end
+
+  def find(motherboard_id) do
+    case Repo.get_by(MdlMobos, motherboard_id: motherboard_id) do
+      nil -> {:error, :notfound}
+      res -> {:ok, res}
+    end
+  end
+
+  def delete(motherboard_id) do
+    with {:ok, mobo} <- find(motherboard_id),
+         {:ok, _} <- Repo.delete(mobo) do
+      :ok
+    else
+      {:error, :notfound} -> :ok
+    end
   end
 
   def do_create(changeset) do
@@ -17,27 +33,6 @@ defmodule HELM.Hardware.Motherboard.Controller do
         {:ok, schema}
       {:error, msg} ->
         {:error, msg}
-    end
-  end
-
-  def find(motherboard_id) do
-    case Repo.get_by(MoboSchema, motherboard_id: motherboard_id) do
-      nil -> {:error, "Motherboard not found."}
-      res -> {:ok, res}
-    end
-  end
-
-  def delete(motherboard_id) do
-    case find(motherboard_id) do
-      {:ok, mobo} -> do_delete(mobo)
-      error -> error
-    end
-  end
-
-  defp do_delete(motherboard) do
-    case Repo.delete(motherboard) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
     end
   end
 end

@@ -1,14 +1,15 @@
 defmodule HELM.Hardware.App do
   use Application
 
-  alias HELM.Hardware
+  alias HELM.Hardware.Model.Repo, as: HardwareRepo
+  alias HELM.Hardware.Controller.HardwareService, as: HardwareSvc
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Hardware.Repo, []),
-      worker(Hardware.Service, []),
+      worker(HardwareRepo, []),
+      worker(HardwareSvc, []),
     ]
 
     opts = [strategy: :one_for_one, name: HELM.Hardware.Supervisor]

@@ -1,27 +1,28 @@
-defmodule HELM.Hardware.Component.Spec.Controller do
+defmodule HELM.Hardware.Controller.ComponentSpecs do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Hardware.Repo
-  alias HELM.Hardware.Component.Spec.Schema, as: CompSpecSchema
+  alias HELM.Hardware.Model.Repo
+  alias HELM.Hardware.Model.ComponentSpecs, as: MdlCompSpecs
 
-  def create(component_type, spec) do
-    %{component_type: component_type, spec: spec}
-    |> CompSpecSchema.create_changeset
-    |> do_create
+  def create(payload) do
+    MdlCompSpecs.create_changeset(payload)
+    |> do_create()
   end
 
   def find(spec_id) do
-    case Repo.get_by(CompSpecSchema, spec_id: spec_id) do
-      nil -> {:error, "Component.Spec not found."}
+    case Repo.get_by(MdlCompSpecs, spec_id: spec_id) do
+      nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
 
   def delete(spec_id) do
-    case find(spec_id) do
-      {:ok, spec} -> do_delete(spec)
-      error -> error
+    with {:ok, comp_spec} <- find(spec_id),
+         {:ok, _} <- Repo.delete(comp_spec) do
+      :ok
+    else
+      {:error, :notfound} -> :ok
     end
   end
 

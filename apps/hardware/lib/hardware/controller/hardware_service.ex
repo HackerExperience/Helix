@@ -1,14 +1,14 @@
-defmodule HELM.Hardware.Service do
+defmodule HELM.Hardware.Controller.HardwareService do
   use GenServer
 
   alias HELM.Hardware, warn: false
   alias HELF.Broker
 
-  alias HELM.Hardware.Motherboard.Controller, as: MoboCtrl
-  alias HELM.Hardware.Motherboard.Slot.Controller, as: MoboSlotCtrl
-  alias HELM.Hardware.Component.Controller, as: CompCtrl
-  alias HELM.Hardware.Component.Spec.Controller, as: CompSpecCtrl
-  alias HELM.Hardware.Component.Type.Controller, as: CompTypeCtrl
+  alias HELM.Hardware.Controller.Motherboards, as: CtrlMobos
+  alias HELM.Hardware.Controller.MotherboardSlots, as: CtrlMoboSlots
+  alias HELM.Hardware.Controller.Components, as: CtrlComps
+  alias HELM.Hardware.Controller.ComponentSpecs, as: CtrlCompSpecs
+  alias HELM.Hardware.Controller.ComponentTypes, as: CtrlCompTypes
 
   def start_link(state \\ []) do
     GenServer.start_link(__MODULE__, state, name: :hardware)
@@ -36,34 +36,34 @@ defmodule HELM.Hardware.Service do
   end
 
   def handle_call({:motherboard, :create, _params}, _from, state) do
-    case MoboCtrl.create() do
+    case CtrlMobos.create() do
       {:ok, mobo} -> {:reply, {:ok, mobo.motherboard_id}, state}
       {:error, _} -> {:reply, :error, state}
     end
   end
 
   def handle_call({:motherboard, :get, id}, _from, state) do
-    response = MoboCtrl.find(id)
+    response = CtrlMobos.find(id)
     {:reply, response, state}
   end
 
   def handle_call({:motherboard_slot, :get, id}, _from, state) do
-    response = MoboSlotCtrl.find(id)
+    response = CtrlMoboSlots.find(id)
     {:reply, response, state}
   end
 
   def handle_call({:component, :get, id}, _from, state) do
-    response = CompCtrl.find(id)
+    response = CtrlComps.find(id)
     {:reply, response, state}
   end
 
   def handle_call({:component_spec, :get, id}, _from, state) do
-    response = CompSpecCtrl.find(id)
+    response = CtrlCompSpecs.find(id)
     {:reply, response, state}
   end
 
   def handle_call({:component_types, :get}, _from, state) do
-    response = CompTypeCtrl.all()
+    response = CtrlCompTypes.all()
     {:reply, response, state}
   end
 end

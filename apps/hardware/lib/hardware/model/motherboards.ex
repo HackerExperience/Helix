@@ -1,15 +1,15 @@
-defmodule HELM.Hardware.Motherboard.Schema do
+defmodule HELM.Hardware.Model.Motherboards do
   use Ecto.Schema
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELM.Hardware.Motherboard.Slot.Schema, as: MoboSlotSchema
+  alias HELM.Hardware.Model.MotherboardSlots, as: MdlMoboSlot
 
   @primary_key {:motherboard_id, :string, autogenerate: false}
 
   schema "motherboards" do
-    has_many :slots, MoboSlotSchema,
+    has_many :slots, MdlMoboSlot,
       foreign_key: :motherboard_id,
       references: :motherboard_id
 

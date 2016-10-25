@@ -1,3 +1,3 @@
-defmodule HELM.Hardware.Repo do
+defmodule HELM.Hardware.Model.Repo do
   use Ecto.Repo, otp_app: :hardware
 end
