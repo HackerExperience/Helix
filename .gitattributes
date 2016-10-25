@@ -1,4 +1,0 @@
-text eol=lf
-*.ex    eol=lf
-*.exs   eol=lf
-*.md    eol=lf
