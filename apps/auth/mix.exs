@@ -21,8 +21,7 @@ defmodule HELM.Auth.Mixfile do
       mod: {HELM.Auth.App, []}]
   end
 
-  defp applications(_),
-    do: [:logger, :helf_broker]
+  defp applications(_), do: [:logger, :helf_broker]
 
   defp deps do
     [
