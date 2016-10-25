@@ -9,7 +9,7 @@ defmodule HELM.Account.ControllerTest do
     pass =
       1..8
       |> Enum.map(fn _ -> HRand.random_numeric_string() end)
-      |> Enum.reduce(&(&1 <> &2))
+      |> Enum.join("")
 
     payload = %{email: email, password: pass, password_confirmation: pass}
 
@@ -23,17 +23,20 @@ defmodule HELM.Account.ControllerTest do
 
     test "account exists", %{payload: payload} do
       {:ok, account} = AccountCtrl.create(payload)
-      assert {:error, :email_taken} = AccountCtrl.create(payload)
+      error = %{password_confirmation: ["does not match confirmation"]}
+      assert {:error, error} = AccountCtrl.create(payload)
     end
-
+    
     test "wrong confirmation", %{email: email, pass: pass} do
       payload = %{email: email, password: pass, password_confirmation: "123"}
-      assert {:error, :wrong_password_confirmation} = AccountCtrl.create(payload)
+      error = %{email: ["has already been taken"]}
+      assert {:error, error} = AccountCtrl.create(payload)
     end
 
     test "short password", %{email: email} do
       payload = %{email: email, password: "123", password_confirmation: "123"}
-      assert {:error, :password_too_short} = AccountCtrl.create(payload)
+      error = %{password: ["should be at least 8 character(s)"]}
+      assert {:error, error} = AccountCtrl.create(payload)
     end
   end
 

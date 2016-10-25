@@ -51,20 +51,16 @@ defmodule HELM.Account.Controller do
         Broker.cast("event:account:created", struct.account_id)
         {:ok, struct}
       {:error, changeset} ->
-        email_errors = Keyword.get(changeset.errors, :email, {})
-        passwd_errors = Keyword.get(changeset.errors, :password, {})
-        confirm_errors = Keyword.get(changeset.errors, :password_confirmation, {})
-
-        email_taken? = {} != email_errors
-        passwd_short? = {} != passwd_errors
-        wrong_confirm? = {} != confirm_errors
-
-        cond do
-          email_taken? -> {:error, :email_taken}
-          passwd_short? -> {:error, :password_too_short}
-          wrong_confirm? -> {:error, :wrong_password_confirmation}
-          true -> {:error, :internal}
-        end
+        errors = do_check_errors(changeset)
+        {:error, errors}
     end
+  end
+
+  defp do_check_errors(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Enum.reduce(opts, msg, fn {key, value}, acc ->
+        String.replace(msg, "%{#{key}}", to_string(value))
+      end)
+    end)
   end
 end
