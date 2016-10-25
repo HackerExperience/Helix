@@ -6,12 +6,6 @@ defmodule HELM.Account.Controller do
   alias HELM.Account.Repo
   alias HELM.Account.Schema, as: AccountSchema
 
-  def create(email, password, confirmation) do
-    %{email: email, password: password,
-      password_confirmation: confirmation}
-    |> create()
-  end
-
   def create(account) do
     AccountSchema.create_changeset(account)
     |> do_create()
@@ -33,7 +27,11 @@ defmodule HELM.Account.Controller do
 
   def delete(account_id) do
     with {:ok, account} <- find(account_id),
-      do: Repo.delete(account)
+         {:ok, _} <- Repo.delete(account) do
+      :ok
+    else
+      {:error, :notfound} -> :ok
+    end
   end
 
   def login(email: email, password: password) do

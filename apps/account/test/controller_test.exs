@@ -11,68 +11,59 @@ defmodule HELM.Account.ControllerTest do
       |> Enum.map(fn _ -> HRand.random_numeric_string() end)
       |> Enum.reduce(&(&1 <> &2))
 
-    {:ok, email: email, pass: pass}
+    payload = %{email: email, password: pass, password_confirmation: pass}
+
+    {:ok, email: email, pass: pass, payload: payload}
   end
 
-  describe "create/3" do
-    test "success", data do
-      assert {:ok, account} =
-        AccountCtrl.create(data.email, data.pass, data.pass)
+  describe "create/1" do
+    test "success", %{payload: payload} do
+      assert {:ok, account} = AccountCtrl.create(payload)
     end
 
-    test "account exists", data do
-      {:ok, account} = AccountCtrl.create(data.email, data.pass, data.pass)
-      assert {:error, :email_taken} =
-        AccountCtrl.create(data.email, data.pass, data.pass)
+    test "account exists", %{payload: payload} do
+      {:ok, account} = AccountCtrl.create(payload)
+      assert {:error, :email_taken} = AccountCtrl.create(payload)
     end
 
-    test "wrong confirmation", data do
-      assert {:error, :wrong_password_confirmation} =
-        AccountCtrl.create(data.email, data.pass, "123")
+    test "wrong confirmation", %{email: email, pass: pass} do
+      payload = %{email: email, password: pass, password_confirmation: "123"}
+      assert {:error, :wrong_password_confirmation} = AccountCtrl.create(payload)
     end
 
-    test "short password", data do
-      assert {:error, :password_too_short} =
-        AccountCtrl.create(data.email, "", "")
+    test "short password", %{email: email} do
+      payload = %{email: email, password: "123", password_confirmation: "123"}
+      assert {:error, :password_too_short} = AccountCtrl.create(payload)
     end
   end
 
   describe "find/1" do
-    test "success", data do
-      {:ok, account} = AccountCtrl.create(data.email, data.pass, data.pass)
+    test "success", %{payload: payload} do
+      {:ok, account} = AccountCtrl.create(payload)
       assert {:ok, account} = AccountCtrl.find(account.account_id)
     end
 
-    test "failure", data do
-      {:ok, account} = AccountCtrl.create(data.email, data.pass, data.pass)
+    test "failure", %{payload: payload} do
+      {:ok, account} = AccountCtrl.create(payload)
       assert {:error, :notfound} = AccountCtrl.find("")
     end
   end
 
   describe "find_by/1" do
-    test "success with email", data do
-      {:ok, account} = AccountCtrl.create(data.email, data.pass, data.pass)
-      assert {:ok, acount} = AccountCtrl.find_by email: data.email
+    test "success with email", %{payload: payload} do
+      {:ok, account} = AccountCtrl.create(payload)
+      assert {:ok, acount} = AccountCtrl.find_by email: payload.email
     end
 
-    test "failure with email", data do
-      {:ok, account} = AccountCtrl.create(data.email, data.pass, data.pass)
+    test "failure with email", %{payload: payload} do
+      {:ok, account} = AccountCtrl.create(payload)
       assert {:error, :notfound} = AccountCtrl.find_by email: ""
     end
   end
 
-  describe "delete/1" do
-    test "success", data do
-      {:ok, account} = AccountCtrl.create(data.email, data.pass, data.pass)
-      assert {:ok, _} =
-        AccountCtrl.delete(account.account_id)
-    end
-
-    test "failure", data do
-      {:ok, account} = AccountCtrl.create(data.email, data.pass, data.pass)
-      {:ok, _} = AccountCtrl.delete(account.account_id)
-      assert {:error, :notfound} =
-        AccountCtrl.delete(account.account_id)
-    end
+  test "delete/1 idempotency", %{payload: payload} do
+    {:ok, account} = AccountCtrl.create(payload)
+    assert :ok = AccountCtrl.delete(account.account_id)
+    assert :ok = AccountCtrl.delete(account.account_id)
   end
 end
