@@ -26,7 +26,7 @@ defmodule HELM.Account.ControllerTest do
       error = %{password_confirmation: ["does not match confirmation"]}
       assert {:error, error} = AccountCtrl.create(payload)
     end
-    
+
     test "wrong confirmation", %{email: email, pass: pass} do
       payload = %{email: email, password: pass, password_confirmation: "123"}
       error = %{email: ["has already been taken"]}
@@ -68,5 +68,21 @@ defmodule HELM.Account.ControllerTest do
     {:ok, account} = AccountCtrl.create(payload)
     assert :ok = AccountCtrl.delete(account.account_id)
     assert :ok = AccountCtrl.delete(account.account_id)
+  end
+
+  describe "login/2" do
+    test "success", %{payload: payload, email: email, pass: pass} do
+      {:ok, account} = AccountCtrl.create(payload)
+      assert :ok = AccountCtrl.login(email, pass)
+    end
+
+    test "user not found", %{payload: payload, email: email, pass: pass} do
+      assert {:error, :notfound} = AccountCtrl.login(";", "")
+    end
+
+    test "wrong password", %{payload: payload, email: email, pass: pass} do
+      {:ok, account} = AccountCtrl.create(payload)
+      assert {:error, :notfound} = AccountCtrl.login(email, "")
+    end
   end
 end

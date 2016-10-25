@@ -1,6 +1,7 @@
 defmodule HELM.Account.Schema do
   use Ecto.Schema
 
+  alias Comeonin.Bcrypt, as: Crypt
   import Ecto.Changeset
 
   @primary_key {:account_id, :string, autogenerate: false}
@@ -46,5 +47,6 @@ defmodule HELM.Account.Schema do
     |> validate_required(:email)
     |> validate_required(:password)
     |> validate_length(:password, min: 8)
+    |> update_change(:password, &Crypt.hashpwsalt/1)
   end
 end

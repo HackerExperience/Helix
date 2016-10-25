@@ -2,6 +2,8 @@ defmodule HELM.Account.Controller do
   import Ecto.Changeset
   import Ecto.Query
 
+  alias Comeonin.Bcrypt, as: Crypt
+
   alias HELF.{Broker, Error}
   alias HELM.Account.Repo
   alias HELM.Account.Schema, as: AccountSchema
@@ -34,14 +36,17 @@ defmodule HELM.Account.Controller do
     end
   end
 
-  def login(email: email, password: password) do
+  def login(email, password) do
     AccountSchema
-    |> where([a], a.email == ^email and a.password == ^password)
-    |> select([a], map(a, [:account_id, :confirmed, :email]))
+    |> where([a], a.email == ^email)
+    |> select([a], map(a, [:password]))
     |> Repo.one()
     |> case do
       nil -> {:error, :notfound}
-      account -> {:ok, account}
+      account ->
+        if Crypt.checkpw(password, account.password),
+          do: :ok,
+          else: {:error, :notfound}
     end
   end
 
