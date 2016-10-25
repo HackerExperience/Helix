@@ -7,21 +7,20 @@ defmodule HELM.Entity.Type.Controller do
 
   def create(type_name) do
     %{entity_type: type_name}
-    |> EntityTypeSchema.create_changeset
-    |> do_create
+    |> EntityTypeSchema.create_changeset()
+    |> do_create()
   end
 
   def find(type_name) do
     case Repo.get_by(EntityTypeSchema, entity_type: type_name) do
-      nil -> {:error, "Entity.Type not found."}
-      res -> {:ok, res}
+      nil -> {:error, :notfound}
+      entity_type -> {:ok, entity_type}
     end
   end
 
   def delete(type_name) do
-    case find(type_name) do
-      {:ok, entity_type} -> do_delete(entity_type)
-      error -> error
+    with {:ok, entity_type} <- find(type_name) do
+      Repo.delete(entity_type)
     end
   end
 
@@ -31,13 +30,6 @@ defmodule HELM.Entity.Type.Controller do
         {:ok, schema}
       {:error, changeset} ->
         {:error, changeset}
-    end
-  end
-
-  defp do_delete(changeset) do
-    case Repo.delete(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
     end
   end
 end

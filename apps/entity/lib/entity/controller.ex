@@ -24,23 +24,21 @@ defmodule HELM.Entity.Controller do
 
   def find(entity_id) do
     case Repo.get_by(EntitySchema, entity_id: entity_id) do
-      nil -> {:error, Error.format_reply(:not_found, "Entity not found")}
-      res -> {:ok, res}
+      nil -> {:error, :notfound}
+      entity -> {:ok, entity}
     end
   end
 
   def find_by(struct) do
     case Repo.get_by(EntitySchema, struct) do
-      nil -> {:error, Error.format_reply(:not_found, "Entity not found")}
-      res -> {:ok, res}
+      nil -> {:error, :notfound}
+      entity -> {:ok, entity}
     end
   end
 
   def delete(entity_id) do
-    case find(entity_id) do
-      {:ok, entity} -> do_delete(entity)
-      error -> error
-    end
+    with {:ok, entity} <- find(entity_id),
+      do: Repo.delete(entity)
   end
 
   defp do_create(changeset) do
@@ -50,13 +48,6 @@ defmodule HELM.Entity.Controller do
         {:ok, schema}
       {:error, changeset} ->
         {:error, changeset}
-    end
-  end
-
-  def do_delete(entity) do
-    case Repo.delete(entity) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
     end
   end
 end
