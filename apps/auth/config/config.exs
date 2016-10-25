@@ -12,3 +12,5 @@ config :guardian, Guardian,
     "y" => "ALdxLuo6oKLoQ-xLSkShv_TA0di97I9V92sg1MKFava5hKGST1EKiVQnZMrN3HO8LtLT78SNTgwJSQHAXIUaA-lV"
   },
   serializer: HELM.Auth.GuardianSerializer
+
+import_config "#{Mix.env}.exs"

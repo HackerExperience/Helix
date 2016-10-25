@@ -1,7 +1,5 @@
-defmodule Account.Mixfile do
+defmodule HELM.Account.Mixfile do
   use Mix.Project
-
-  alias HELM.Account
 
   def project do
     [
@@ -20,7 +18,7 @@ defmodule Account.Mixfile do
   def application do
     [
       applications: applications(Mix.env),
-      mod: {Account.App, []}]
+      mod: {HELM.Account.App, []}]
   end
 
   defp applications(_),

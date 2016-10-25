@@ -20,10 +20,10 @@ defmodule HELL.Mixfile do
     [applications: applications(Mix.env)]
   end
 
+  defp applications(:dev),
+    do: default_applications() ++ [:remix]
   defp applications(_),
     do: default_applications()
-  defp applications(:test),
-    do: default_applications() ++ [:remix]
   defp default_applications,
     do: [:logger]
 

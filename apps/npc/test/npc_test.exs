@@ -13,7 +13,7 @@ defmodule HELM.NPCTest do
   end
 
   test "npc creation using the broker" do
-    {:ok, _} = Broker.call("npc:create", %{})
+    {_request, _} = Broker.call("npc:create", %{})
   end
 
   test "npc removal" do
@@ -22,7 +22,7 @@ defmodule HELM.NPCTest do
   end
 
   test "npc removal using the broker" do
-    {:ok, npc} = Broker.call("npc:create", %{})
-    {:ok, _} = Broker.call("npc:remove", %{npc_id: npc.npc_id})
+    {_request, npc} = Broker.call("npc:create", %{})
+    {_request, _} = Broker.call("npc:remove", %{npc_id: npc.npc_id})
   end
 end

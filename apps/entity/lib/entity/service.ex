@@ -8,32 +8,31 @@ defmodule HELM.Entity.Service do
     GenServer.start_link(__MODULE__, state, name: :entity_service)
   end
 
-  def init(_args) do
-    Broker.subscribe(:entity_service, "event:account:created", cast:
-      fn pid,_,id ->
-        GenServer.cast(pid, {:account_created, id})
-      end)
+  @doc false
+  def handle_broker_cast(pid, "event:account:created", id, _request),
+    do: GenServer.cast(pid, {:account, :created, id})
 
-    Broker.subscribe(:entity_service, "entity:create", call:
-      fn pid,_,struct,timeout ->
-        case GenServer.call(pid, {:entity_create, struct}, timeout) do
-          {:ok, entity} -> {:reply, {:ok, entity}}
-          error -> error
-        end
-      end)
-
-    {:ok, %{}}
+  @doc false
+  def handle_broker_call(pid, "entity:create", struct, _request) do
+    reply = GenServer.call(pid, {:entity, :create, struct})
+    {:reply, reply}
   end
 
-  def handle_cast({:account_created, id}, state) do
+  def init(_args) do
+    Broker.subscribe("event:account:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("entity:create", call: &handle_broker_call/4)
+
+    {:ok, nil}
+  end
+
+  def handle_cast({:account, :created, id}, state) do
     Entity.Controller.new_entity(%{account_id: id})
     {:noreply, state}
   end
 
-  def handle_call({:entity_create, struct}, _from, state) do
-    case Entity.Controller.new_entity(struct) do
-      {:ok, schema} -> {:reply, {:ok, schema}, state}
-      {:error, msg} -> {:reply, {:error, msg}, state}
-    end
+  def handle_call({:entity, :create, struct}, _from, state) do
+    return = Entity.Controller.new_entity(struct)
+
+    {:reply, return, state}
   end
 end

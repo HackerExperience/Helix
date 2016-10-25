@@ -23,7 +23,7 @@ defmodule HELM.Server.Mixfile do
 
   defp applications(_),
     do: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity, :hardware]
-    
+
   defp deps do
     [
       {:helf_broker, in_umbrella: true},

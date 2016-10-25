@@ -8,62 +8,71 @@ defmodule HELM.Server.Service do
     GenServer.start_link(__MODULE__, state, name: :server)
   end
 
-  def init(_args) do
-    Broker.subscribe(:server, "event:entity:created", cast:
-      fn pid,_,id ->
-        response = GenServer.cast(pid, {:entity_created, id})
-        {:noreply, :ok}
-      end)
+  @doc false
+  def handle_broker_cast(pid, "event:entity:created", id, _request),
+    do: GenServer.cast(pid, {:entity, :created, id})
 
-    Broker.subscribe(:server, "server:create", call:
-      fn pid,_,struct,timeout ->
-        case GenServer.call(pid, {:create, struct}, timeout) do
-          {:ok, server_id} -> {:reply, {:ok, server_id}}
-          error -> error
-        end
-      end)
-
-    Broker.subscribe(:server, "server:attach", call:
-      fn pid,_,{server, mobo},timeout ->
-        case GenServer.call(pid, {:attach, server, mobo}, timeout) do
-          {:ok, server_id} -> {:reply, {:ok, server_id}}
-          error -> error
-        end
-      end)
-
-    Broker.subscribe(:server, "server:detach", call:
-      fn pid,_,server,timeout ->
-        case GenServer.call(pid, {:detach, server}, timeout) do
-          {:ok, server_id} -> {:reply, {:ok, server_id}}
-          error -> error
-        end
-      end)
-    {:ok, %{}}
+  @doc false
+  def handle_broker_call(pid, "server:create", struct, _request) do
+    reply = GenServer.call(pid, {:server, :create, struct})
+    {:reply, reply}
+  end
+  def handle_broker_call(pid, "server:attach", {server, mobo}, _request) do
+    reply = GenServer.call(pid, {:server, server, :attach, mobo})
+    {:reply, reply}
+  end
+  def handle_broker_call(pid, "server:detach", server, _request) do
+    reply = GenServer.call(pid, {:server, server, :detach})
+    {:reply, reply}
   end
 
-  def handle_cast({:entity_created, id}, state) do
+  @doc false
+  def init(_args) do
+    Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("server:create", call: &handle_broker_call/4)
+    Broker.subscribe("server:attach", call: &handle_broker_call/4)
+    Broker.subscribe("server:detach", call: &handle_broker_call/4)
+
+    {:ok, nil}
+  end
+
+  @doc false
+  def handle_cast({:entity, :created, id}, state) do
     #Server.Controller.create(%{entity_id: id, poi_id: "", motherboard_id: ""})
     {:noreply, state}
   end
 
-  def handle_call({:create, struct}, _from, state) do
-    case Server.Controller.create(struct) do
-      {:ok, schema} -> {:reply, {:ok, schema.server_id}, state}
-      {:error, _} -> {:reply, :error, state}
+  @doc false
+  def handle_call({:server, :create, struct}, _from, state) do
+    reply = case Server.Controller.create(struct) do
+      {:ok, schema} ->
+        {:ok, schema.server_id}
+      {:error, _} ->
+        :error
     end
+
+    {:reply, reply, state}
   end
 
-  def handle_call({:attach, server, mobo}, _from, state) do
-    case Server.Controller.attach(server, mobo) do
-      {:ok, schema} -> {:reply, :ok, state}
-      {:error, _} -> {:reply, :error, state}
+  def handle_call({:server, server, :attach, mobo}, _from, state) do
+    reply = case Server.Controller.attach(server, mobo) do
+      {:ok, schema} ->
+        :ok
+      {:error, _} ->
+        :error
     end
+
+    {:reply, reply, state}
   end
 
-  def handle_call({:detach, server}, _from, state) do
-    case Server.Controller.detach(server) do
-      {:ok, schema} -> {:reply, :ok, state}
-      {:error, _} -> {:reply, :error, state}
+  def handle_call({:server, server, :detach}, _from, state) do
+    reply = case Server.Controller.detach(server) do
+      {:ok, schema} ->
+        :ok
+      {:error, _} ->
+        :error
     end
+
+    {:reply, reply, state}
   end
 end

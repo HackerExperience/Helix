@@ -22,11 +22,11 @@ defmodule HELM.HELFBroker.Mixfile do
   end
 
   defp applications(_),
-    do: [:logger, :he_broker]
+    do: [:logger, :hebroker]
 
   defp deps do
     [
       {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},
-      {:he_broker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git"}]
+      {:hebroker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git", ref: "v0.1"}]
   end
 end
