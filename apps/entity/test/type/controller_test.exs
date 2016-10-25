@@ -9,23 +9,22 @@ defmodule HELM.Entity.Type.ControllerTest do
   end
 
   describe "create/1" do
-    test "success", data do
-      assert {:ok, _} = EntityTypeCtrl.create(data.id)
+    test "success", %{id: id} do
+      assert {:ok, _} = EntityTypeCtrl.create(id)
     end
 
-    test "failure", data do
-      {:ok, _} = EntityTypeCtrl.create(data.id)
+    test "failure", %{id: id} do
+      {:ok, _} = EntityTypeCtrl.create(id)
       assert_raise Ecto.ConstraintError, fn ->
-        EntityTypeCtrl.create(data.id)
+        EntityTypeCtrl.create(id)
       end
     end
   end
 
   describe "find/1" do
-    test "success", data do
-      {:ok, type} = EntityTypeCtrl.create(data.id)
-      assert {:ok, type} =
-        EntityTypeCtrl.find(type.entity_type)
+    test "success", %{id: id} do
+      {:ok, type} = EntityTypeCtrl.create(id)
+      assert {:ok, type} = EntityTypeCtrl.find(type.entity_type)
     end
 
     test "failure" do
@@ -33,18 +32,9 @@ defmodule HELM.Entity.Type.ControllerTest do
     end
   end
 
-  describe "delete/1" do
-    test "success", data do
-      {:ok, type} = EntityTypeCtrl.create(data.id)
-      assert {:ok, _} =
-        EntityTypeCtrl.delete(type.entity_type)
-    end
-
-    test "failure", data do
-      {:ok, type} = EntityTypeCtrl.create(data.id)
-      {:ok, _} = EntityTypeCtrl.delete(type.entity_type)
-      assert {:error, :notfound} =
-        EntityTypeCtrl.delete(type.entity_type)
-    end
+  test "delete/1 idempotency", %{id: id} do
+    {:ok, type} = EntityTypeCtrl.create(id)
+    assert :ok = EntityTypeCtrl.delete(type.entity_type)
+    assert :ok == EntityTypeCtrl.delete(type.entity_type)
   end
 end

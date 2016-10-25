@@ -8,7 +8,7 @@ defmodule HELM.Entity.Type.Controller do
   def create(type_name) do
     %{entity_type: type_name}
     |> EntityTypeSchema.create_changeset()
-    |> do_create()
+    |> Repo.insert()
   end
 
   def find(type_name) do
@@ -19,17 +19,11 @@ defmodule HELM.Entity.Type.Controller do
   end
 
   def delete(type_name) do
-    with {:ok, entity_type} <- find(type_name) do
-      Repo.delete(entity_type)
-    end
-  end
-
-  defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
+    with {:ok, entity_type} <- find(type_name),
+         {:ok, _} <- Repo.delete(entity_type) do
+      :ok
+    else
+      {:error, :notfound} -> :ok
     end
   end
 end

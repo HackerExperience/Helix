@@ -8,36 +8,22 @@ defmodule HELM.Entity.Server.Controller do
   def create(server_id, entity_id) do
     %{server_id: server_id, entity_id: entity_id}
     |> EntityServerSchema.create_changeset
-    |> do_create
+    |> Repo.insert()
   end
 
   def find(server_id) do
     case Repo.get_by(EntityServerSchema, server_id: server_id) do
-      nil -> {:error, "Entity.Server not found."}
+      nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
 
   def delete(server_id) do
-    case find(server_id) do
-      {:ok, server} -> do_delete(server)
-      error -> error
-    end
-  end
-
-  def do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
-  end
-
-  def do_delete(changeset) do
-    case Repo.delete(changeset) do
-      {:ok, result} -> {:ok, result}
-      {:error, msg} -> {:error, msg}
+    with {:ok, server} <- find(server_id),
+         {:ok, _} <- Repo.delete(server) do
+      :ok
+    else
+      {:error, :notfound} -> :ok
     end
   end
 end
