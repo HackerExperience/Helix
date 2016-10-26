@@ -24,7 +24,7 @@ defmodule HELM.Entity.Controller.EntityTypesTest do
   describe "find/1" do
     test "success", %{id: id} do
       {:ok, type} = CtrlEntityTypes.create(id)
-      assert {:ok, type} = CtrlEntityTypes.find(type.entity_type)
+      assert {:ok, ^type} = CtrlEntityTypes.find(type.entity_type)
     end
 
     test "failure" do

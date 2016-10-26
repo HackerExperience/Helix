@@ -13,15 +13,15 @@ defmodule HELM.Entity.Controller.EntitiesTest do
   end
 
   test "create/1", %{type: type, payload: payload} do
-    {:ok, enty_type} = CtrlEntityTypes.create(type)
+    {:ok, _} = CtrlEntityTypes.create(type)
     assert {:ok, _} = CtrlEntities.create(payload)
   end
 
   describe "find/1" do
     test "success", %{type: type, payload: payload} do
-      {:ok, enty_type} = CtrlEntityTypes.create(type)
+      {:ok, _} = CtrlEntityTypes.create(type)
       {:ok, enty} = CtrlEntities.create(payload)
-      assert {:ok, enty} = CtrlEntities.find(enty.entity_id)
+      assert {:ok, ^enty} = CtrlEntities.find(enty.entity_id)
     end
 
     test "failure" do
@@ -30,7 +30,7 @@ defmodule HELM.Entity.Controller.EntitiesTest do
   end
 
   test "delete/1 idempotency", %{type: type, payload: payload} do
-    {:ok, enty_type} = CtrlEntityTypes.create(type)
+    {:ok, _} = CtrlEntityTypes.create(type)
     {:ok, enty} = CtrlEntities.create(payload)
     assert :ok = CtrlEntities.delete(enty.entity_id)
     assert :ok = CtrlEntities.delete(enty.entity_id)
