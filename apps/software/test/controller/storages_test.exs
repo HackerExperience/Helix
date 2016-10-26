@@ -1,4 +1,4 @@
-defmodule HELM.Software.Storage.ControllerTest do
+defmodule HELM.Software.Controller.StoragesTest do
   use ExUnit.Case
   alias HELM.Software.Storage.Controller, as: StorageCtrl
 

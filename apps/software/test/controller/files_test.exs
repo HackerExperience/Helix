@@ -1,4 +1,4 @@
-defmodule HELM.Software.File.ControllerTest do
+defmodule HELM.Software.Controller.FilesTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand

@@ -1,4 +1,4 @@
-defmodule HELM.Software.Module.Role.ControllerTest do
+defmodule HELM.Software.Controller.ModuleRolesTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand

@@ -1,4 +1,4 @@
-defmodule HELM.Software.Storage.Drive.ControllerTest do
+defmodule HELM.Software.Controller.StorageDrivesTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
