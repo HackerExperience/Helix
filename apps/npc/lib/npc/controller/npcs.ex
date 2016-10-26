@@ -1,29 +1,26 @@
-defmodule HELM.NPC.Controller do
+defmodule HELM.NPC.Controller.NPCs do
   import Ecto.Query
 
-  alias HELF.Broker
-  alias HELM.NPC
+  alias HELM.NPC.Model.Repo
+  alias HELM.NPC.Model.NPCs, as: MdlNPCs
 
-  def find_npc(npc_id) do
-    NPC.Repo.get(NPC.Schema, npc_id)
+  def create(npc) do
+    MdlNPCs.create_changeset(npc)
+    |> Repo.insert()
   end
 
-  def new_npc(npc) do
-    changeset = NPC.Schema.create_changeset(npc)
-
-    case NPC.Repo.insert(changeset) do
-      {:ok, operation} -> {:ok, operation}
-      {:error, msg} -> {:error, msg}
+  def find(npc_id) do
+    case Repo.get(MdlNPCs, npc_id) do
+      nil -> {:error, :notfound}
+      npc -> {:ok, npc}
     end
   end
 
-  def remove_npc(npc_id) do
-    with npc when not is_nil(npc) <- find_npc(npc_id),
-         {:ok, result} <- NPC.Repo.delete(npc) do
-      {:ok, "The NPC was removed."}
-    else
-      :error -> {:error, "Shit Happens"}
-    end
-  end
+  def delete(npc_id) do
+    MdlNPCs
+    |> where([s], s.npc_id == ^npc_id)
+    |> Repo.delete_all()
 
+    :ok
+  end
 end

@@ -1,28 +1,26 @@
-defmodule HELM.NPCTest do
+defmodule HELM.NPC.Controller.NPCsTest do
   use ExUnit.Case
 
-  alias HELF.Broker
-  alias HELM.NPC
+  alias HELM.NPC.Controller.NPCs, as: CtrlNPCs
 
-  test "the truth" do
-    assert 1 + 1 == 2
+  test "create/1" do
+    assert {:ok, _} = CtrlNPCs.create(%{})
   end
 
-  test "npc creation" do
-    {:ok, _} = NPC.Controller.new_npc(%{})
+  describe "find/1" do
+    test "success" do
+      {:ok, npc} = CtrlNPCs.create(%{})
+      assert {:ok, ^npc} = CtrlNPCs.find(npc.npc_id)
+    end
+
+    test "failure" do
+      assert {:error, :notfound} = CtrlNPCs.find("")
+    end
   end
 
-  test "npc creation using the broker" do
-    {_request, _} = Broker.call("npc:create", %{})
-  end
-
-  test "npc removal" do
-    {:ok, npc} = NPC.Controller.new_npc(%{})
-    {:ok, _} = NPC.Controller.remove_npc(npc.npc_id)
-  end
-
-  test "npc removal using the broker" do
-    {_request, npc} = Broker.call("npc:create", %{})
-    {_request, _} = Broker.call("npc:remove", %{npc_id: npc.npc_id})
+  test "delete/1 idempotency" do
+    {:ok, npc} = CtrlNPCs.create(%{})
+    assert :ok = CtrlNPCs.delete(npc.npc_id)
+    assert :ok = CtrlNPCs.delete(npc.npc_id)
   end
 end

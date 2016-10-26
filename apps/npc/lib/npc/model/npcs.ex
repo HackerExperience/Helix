@@ -1,10 +1,8 @@
-defmodule HELM.NPC.Schema do
+defmodule HELM.NPC.Model.NPCs do
   use Ecto.Schema
 
   import Ecto.Changeset
-
-  alias HELM.NPC
-
+  
   @primary_key {:npc_id, :string, autogenerate: false}
 
   schema "npcs" do
