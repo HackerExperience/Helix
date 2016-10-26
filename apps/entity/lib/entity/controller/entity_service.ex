@@ -8,7 +8,6 @@ defmodule HELM.Controller.EntityService do
   end
 
   def init(_args) do
-    Broker.subscribe("entity:create", call: &handle_broker_call/4)
     {:ok, nil}
   end
 
