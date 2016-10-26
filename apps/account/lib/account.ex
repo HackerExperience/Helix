@@ -1,14 +1,15 @@
 defmodule HELM.Account.App do
   use Application
 
-  alias HELM.Account
+  alias HELM.Account.Controller.AccountService
+  alias HELM.Account.Model.Repo
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Account.Repo, []),
-      worker(Account.Service, [])
+      worker(AccountService, []),
+      worker(Repo, [])
     ]
 
     opts = [strategy: :one_for_one, name: Account.Supervisor]

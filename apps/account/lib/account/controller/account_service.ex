@@ -1,8 +1,8 @@
-defmodule HELM.Account.Service do
+defmodule HELM.Account.Controller.AccountService do
 
   use GenServer
 
-  alias HELM.Account.Controller, as: AccountCtrl
+  alias HELM.Account.Controller.Accounts, as: CtrlAccounts
   alias HELF.Broker
   alias HELF.Router
 
@@ -29,7 +29,7 @@ defmodule HELM.Account.Service do
   end
 
   def handle_call({:account, :create, account}, _from, state) do
-    response = AccountCtrl.create(account)
+    response = CtrlAccounts.create(account)
     {:reply, response, state}
   end
 end

@@ -1,43 +1,42 @@
-defmodule HELM.Account.Controller do
+defmodule HELM.Account.Controller.Accounts do
   import Ecto.Changeset
   import Ecto.Query
 
   alias Comeonin.Bcrypt, as: Crypt
 
   alias HELF.{Broker, Error}
-  alias HELM.Account.Repo
-  alias HELM.Account.Schema, as: AccountSchema
+  alias HELM.Account.Model.Repo
+  alias HELM.Account.Model.Accounts, as: MdlAccount
 
   def create(account) do
-    AccountSchema.create_changeset(account)
+    MdlAccount.create_changeset(account)
     |> do_create()
   end
 
   def find(account_id) do
-    case Repo.get_by(AccountSchema, account_id: account_id) do
+    case Repo.get_by(MdlAccount, account_id: account_id) do
       nil -> {:error, :notfound}
       account -> {:ok, account}
     end
   end
 
   def find_by(email: email) do
-    case Repo.get_by(AccountSchema, email: email) do
+    case Repo.get_by(MdlAccount, email: email) do
       nil -> {:error, :notfound}
       account -> {:ok, account}
     end
   end
 
   def delete(account_id) do
-    with {:ok, account} <- find(account_id),
-         {:ok, _} <- Repo.delete(account) do
-      :ok
-    else
-      {:error, :notfound} -> :ok
-    end
+    MdlAccount
+    |> where([s], s.account_id == ^account_id)
+    |> Repo.delete_all()
+
+    :ok
   end
 
   def login(email, password) do
-    AccountSchema
+    MdlAccount
     |> where([a], a.email == ^email)
     |> select([a], map(a, [:password]))
     |> Repo.one()
@@ -56,16 +55,7 @@ defmodule HELM.Account.Controller do
         Broker.cast("event:account:created", struct.account_id)
         {:ok, struct}
       {:error, changeset} ->
-        errors = do_check_errors(changeset)
-        {:error, errors}
+        {:error, changeset.errors}
     end
-  end
-
-  defp do_check_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(msg, "%{#{key}}", to_string(value))
-      end)
-    end)
   end
 end
