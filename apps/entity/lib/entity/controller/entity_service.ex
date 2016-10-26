@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Service do
+defmodule HELM.Controller.EntityService do
   use GenServer
 
   alias HELM.Entity
