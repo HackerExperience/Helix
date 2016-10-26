@@ -16,18 +16,16 @@ defmodule HELM.Server.Controller do
 
   def find(server_id) do
     case Repo.get_by(ServerSchema, server_id: server_id) do
-      res when not is_nil(res) -> {:ok, res}
-      error -> {:error, :notfound}
+      nil -> {:error, :notfound}
+      server -> {:ok, server}
     end
   end
 
   def delete(server_id) do
-    with {:ok, server} <- find(server_id),
-         {:ok, _} <- Repo.delete(server) do
-      :ok
-    else
-      {:error, :notfound} -> :ok
-    end
+    ServerSchema
+    |> where([s], s.server_id == ^server_id)
+    |> Repo.delete_all()
+    :ok
   end
 
   def attach(server_id, mobo_id) do
