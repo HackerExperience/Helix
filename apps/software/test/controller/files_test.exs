@@ -23,7 +23,7 @@ defmodule HELM.Software.Controller.FilesTest do
       {:ok, file_type} = CtrlFileTypes.create(file_type_name, ".test")
       {:ok, storage} = CtrlStorages.create()
       {:ok, file} = CtrlFiles.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
-      assert {:ok, file} = CtrlFiles.find(file.file_id)
+      assert {:ok, ^file} = CtrlFiles.find(file.file_id)
     end
   end
 

@@ -37,7 +37,7 @@ defmodule HELM.Software.Controller.ModulesTest do
       {:ok, file} = CtrlFiles.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
       {:ok, module} = CtrlModules.create(role.module_role, file.file_id, module_version)
 
-      assert {:ok, module} = CtrlModules.find(role.module_role, file.file_id)
+      assert {:ok, ^module} = CtrlModules.find(role.module_role, file.file_id)
     end
   end
 
@@ -52,7 +52,7 @@ defmodule HELM.Software.Controller.ModulesTest do
       {:ok, role} = CtrlModuleRoles.create(role_name, file_type.file_type)
       {:ok, storage} = CtrlStorages.create()
       {:ok, file} = CtrlFiles.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
-      {:ok, module} = CtrlModules.create(role.module_role, file.file_id, module_version)
+      {:ok, _} = CtrlModules.create(role.module_role, file.file_id, module_version)
 
       assert {:ok, _} = CtrlModules.delete(role.module_role, file.file_id)
     end

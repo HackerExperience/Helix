@@ -17,7 +17,7 @@ defmodule HELM.Software.Controller.StorageDrivesTest do
     test "success" do
       {:ok, storage} = CtrlStorages.create()
       {:ok, drive} = CtrlStorageDrives.create(HRand.random_number, storage.storage_id)
-      assert {:ok, drive} = CtrlStorageDrives.find(drive.drive_id)
+      assert {:ok, ^drive} = CtrlStorageDrives.find(drive.drive_id)
     end
   end
 

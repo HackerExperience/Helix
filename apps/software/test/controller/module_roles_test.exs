@@ -20,7 +20,7 @@ defmodule HELM.Software.Controller.ModuleRolesTest do
       role_name = HRand.random_numeric_string()
       {:ok, ftype} = CtrlFileTypes.create(file_type, ".test")
       {:ok, role} = CtrlModuleRoles.create(role_name, ftype.file_type)
-      assert {:ok, role} = CtrlModuleRoles.find(role.module_role, role.file_type)
+      assert {:ok, ^role} = CtrlModuleRoles.find(role.module_role, role.file_type)
     end
   end
 

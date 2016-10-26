@@ -15,7 +15,7 @@ defmodule HELM.Software.Controller.FileTypesTest do
     test "success" do
       file_type = HRand.random_numeric_string()
       {:ok, file} = CtrlFileTypes.create(file_type, ".test")
-      assert {:ok, file} = CtrlFileTypes.find(file.file_type)
+      assert {:ok, ^file} = CtrlFileTypes.find(file.file_type)
     end
   end
 
