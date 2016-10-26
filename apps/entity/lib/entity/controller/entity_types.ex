@@ -18,12 +18,11 @@ defmodule HELM.Entity.Controller.EntityTypes do
     end
   end
 
-  def delete(type_name) do
-    with {:ok, entity_type} <- find(type_name),
-         {:ok, _} <- Repo.delete(entity_type) do
-      :ok
-    else
-      {:error, :notfound} -> :ok
-    end
+  def delete(entity_type) do
+    MdlEntityTypes
+    |> where([s], s.entity_type == ^entity_type)
+    |> Repo.delete_all()
+
+    :ok
   end
 end

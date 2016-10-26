@@ -7,7 +7,7 @@ defmodule HELM.Entity.Controller.EntityServers do
 
   def create(server_id, entity_id) do
     %{server_id: server_id, entity_id: entity_id}
-    |> MdlEntityServers.create_changeset
+    |> MdlEntityServers.create_changeset()
     |> Repo.insert()
   end
 
@@ -19,11 +19,10 @@ defmodule HELM.Entity.Controller.EntityServers do
   end
 
   def delete(server_id) do
-    with {:ok, server} <- find(server_id),
-         {:ok, _} <- Repo.delete(server) do
-      :ok
-    else
-      {:error, :notfound} -> :ok
-    end
+    MdlEntityServers
+    |> where([s], s.server_id == ^server_id)
+    |> Repo.delete_all()
+
+    :ok
   end
 end

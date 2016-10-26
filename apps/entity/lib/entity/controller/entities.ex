@@ -7,8 +7,8 @@ defmodule HELM.Entity.Controller.Entities do
 
   def create(struct) do
     %{entity_type: struct.entity_type, reference_id: struct.reference_id}
-    |> MdlEntities.create_changeset
-    |> do_create
+    |> MdlEntities.create_changeset()
+    |> do_create()
   end
 
   def find(entity_id) do
@@ -19,12 +19,11 @@ defmodule HELM.Entity.Controller.Entities do
   end
 
   def delete(entity_id) do
-    with {:ok, entity} <- find(entity_id),
-         {:ok, _} <- Repo.delete(entity) do
-      :ok
-    else
-      {:error, :notfound} -> :ok
-    end
+    MdlEntities
+    |> where([s], s.entity_id == ^entity_id)
+    |> Repo.delete_all()
+
+    :ok
   end
 
   defp do_create(changeset) do
