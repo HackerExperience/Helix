@@ -1,4 +1,4 @@
-defmodule HELM.Server.Service do
+defmodule HELM.Server.Controller.ServerService do
   use GenServer
 
   alias HELM.Server
