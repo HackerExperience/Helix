@@ -33,8 +33,6 @@ defmodule HELM.Server.Controller.Servers do
          {:ok, _} <- Broker.call("hardware:get", {:motherboard, mobo_id}) do
       MdlServers.update_changeset(server, %{motherboard_id: mobo_id})
       |> Repo.update()
-    else
-      error -> error
     end
   end
 
@@ -43,7 +41,6 @@ defmodule HELM.Server.Controller.Servers do
       {:ok, server} ->
         MdlServers.update_changeset(server, %{motherboard_id: nil})
         |> Repo.update()
-      error -> error
     end
   end
 
