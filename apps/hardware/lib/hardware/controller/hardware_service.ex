@@ -3,7 +3,6 @@ defmodule HELM.Hardware.Controller.HardwareService do
 
   alias HELM.Hardware, warn: false
   alias HELF.Broker
-
   alias HELM.Hardware.Controller.Motherboards, as: CtrlMobos
   alias HELM.Hardware.Controller.MotherboardSlots, as: CtrlMoboSlots
   alias HELM.Hardware.Controller.Components, as: CtrlComps
@@ -19,13 +18,15 @@ defmodule HELM.Hardware.Controller.HardwareService do
     response = GenServer.call(pid, {subject, :get, id})
     {:reply, response}
   end
+
   def handle_broker_call(pid, "hardware:get", all_of_kind, _request) when is_atom(all_of_kind) do
     response = GenServer.call(pid, {all_of_kind, :get})
     {:reply, response}
   end
+
   def handle_broker_call(pid, "hardware:motherboard:create", params, _request) do
     response = GenServer.call(pid, {:motherboard, :create, params})
-        {:reply, response}
+    {:reply, response}
   end
 
   def init(_args) do

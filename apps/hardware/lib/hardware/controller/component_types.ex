@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.Controller.ComponentTypes do
   import Ecto.Query
 
-  alias HELF.{Broker, Error}
+  alias HELF.Broker
   alias HELM.Hardware.Model.Repo
   alias HELM.Hardware.Model.ComponentTypes, as: MdlCompTypes
 
@@ -20,22 +20,21 @@ defmodule HELM.Hardware.Controller.ComponentTypes do
   def all do
     MdlCompTypes
     |> select([t], t.component_type)
-    |> Repo.all
+    |> Repo.all()
   end
 
   def delete(component_type) do
-    with {:ok, comp_type} <- find(component_type),
-         {:ok, _} <- Repo.delete(comp_type) do
-      :ok
-    else
-      {:error, :notfound} -> :ok
-    end
+    MdlCompTypes
+    |> where([s], s.component_type == ^component_type)
+    |> Repo.delete_all()
+
+    :ok
   end
 
   defp do_create(changeset) do
     case Repo.insert(changeset) do
       {:ok, schema} ->
-        Broker.cast("event:component:type:created", changeset.changes.component_type)
+        Broker.cast("event:component:type:created", schema.component_type)
         {:ok, schema}
       {:error, changeset} ->
         {:error, changeset}

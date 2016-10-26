@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.Controller.Motherboards do
   import Ecto.Query
 
-  alias HELF.{Broker, Error}
+  alias HELF.Broker
   alias HELM.Hardware.Model.Repo
   alias HELM.Hardware.Model.Motherboards, as: MdlMobos
 
@@ -18,18 +18,17 @@ defmodule HELM.Hardware.Controller.Motherboards do
   end
 
   def delete(motherboard_id) do
-    with {:ok, mobo} <- find(motherboard_id),
-         {:ok, _} <- Repo.delete(mobo) do
-      :ok
-    else
-      {:error, :notfound} -> :ok
-    end
+    MdlMobos
+    |> where([s], s.motherboard_id == ^motherboard_id)
+    |> Repo.delete_all()
+
+    :ok
   end
 
   def do_create(changeset) do
     case Repo.insert(changeset) do
       {:ok, schema} ->
-        Broker.cast("event:component:motherboard:created", changeset.changes.motherboard_id)
+        Broker.cast("event:component:motherboard:created", schema.motherboard_id)
         {:ok, schema}
       {:error, msg} ->
         {:error, msg}
