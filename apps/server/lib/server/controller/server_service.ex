@@ -28,7 +28,6 @@ defmodule HELM.Server.Controller.ServerService do
 
   @doc false
   def init(_args) do
-    Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
     Broker.subscribe("server:create", call: &handle_broker_call/4)
     Broker.subscribe("server:attach", call: &handle_broker_call/4)
     Broker.subscribe("server:detach", call: &handle_broker_call/4)
