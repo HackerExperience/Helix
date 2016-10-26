@@ -1,18 +1,18 @@
-defmodule HELM.Entity.Controller do
+defmodule HELM.Entity.Controller.Entities do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
-  alias HELM.Entity.Schema, as: EntitySchema
-  alias HELM.Entity.Repo
+  alias HELM.Entity.Model.Entities, as: MdlEntities
+  alias HELM.Entity.Model.Repo
 
   def create(struct) do
     %{entity_type: struct.entity_type, reference_id: struct.reference_id}
-    |> EntitySchema.create_changeset
+    |> MdlEntities.create_changeset
     |> do_create
   end
 
   def find(entity_id) do
-    case Repo.get_by(EntitySchema, entity_id: entity_id) do
+    case Repo.get_by(MdlEntities, entity_id: entity_id) do
       nil -> {:error, :notfound}
       entity -> {:ok, entity}
     end

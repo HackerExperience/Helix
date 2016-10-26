@@ -5,7 +5,7 @@ defmodule HELM.Entity.App do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(HELM.Entity.Repo, []),
+      worker(HELM.Entity.Model.Repo, []),
       worker(HELM.Entity.Service, [])]
 
     opts = [strategy: :one_for_one, name: HELM.Entity.Supervisor]
