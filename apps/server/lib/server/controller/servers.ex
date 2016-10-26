@@ -30,7 +30,7 @@ defmodule HELM.Server.Controller.Servers do
 
   def attach(server_id, mobo_id) do
     with {:ok, server} <- find(server_id),
-         {:ok, _} <- Brokere.call("hardware:get", {:motherboard, mobo_id}) do
+         {:ok, _} <- Broker.call("hardware:get", {:motherboard, mobo_id}) do
       MdlServers.update_changeset(server, %{motherboard_id: mobo_id})
       |> Repo.update()
     else

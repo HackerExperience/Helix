@@ -1,7 +1,7 @@
 defmodule HELM.Server.Controller.ServerService do
   use GenServer
 
-  alias HELM.Server
+  alias HELM.Server.Controller.Servers, as: CtrlServers
   alias HELF.Broker
 
   def start_link(state \\ []) do
@@ -38,39 +38,33 @@ defmodule HELM.Server.Controller.ServerService do
 
   @doc false
   def handle_cast({:entity, :created, id}, state) do
-    #Server.Controller.create(%{entity_id: id, poi_id: "", motherboard_id: ""})
+    CtrlServers.create(%{entity_id: id, poi_id: "", motherboard_id: ""})
     {:noreply, state}
   end
 
   @doc false
   def handle_call({:server, :create, struct}, _from, state) do
-    reply = case Server.Controller.create(struct) do
-      {:ok, schema} ->
-        {:ok, schema.server_id}
-      {:error, _} ->
-        :error
+    reply = case CtrlServers.create(struct) do
+      {:ok, schema} -> {:ok, schema.server_id}
+      {:error, _} -> :error
     end
 
     {:reply, reply, state}
   end
 
   def handle_call({:server, server, :attach, mobo}, _from, state) do
-    reply = case Server.Controller.attach(server, mobo) do
-      {:ok, schema} ->
-        :ok
-      {:error, _} ->
-        :error
+    reply = case CtrlServers.attach(server, mobo) do
+      {:ok, _} -> :ok
+      {:error, _} -> :error
     end
 
     {:reply, reply, state}
   end
 
   def handle_call({:server, server, :detach}, _from, state) do
-    reply = case Server.Controller.detach(server) do
-      {:ok, schema} ->
-        :ok
-      {:error, _} ->
-        :error
+    reply = case CtrlServers.detach(server) do
+      {:ok, _} -> :ok
+      {:error, _} -> :error
     end
 
     {:reply, reply, state}

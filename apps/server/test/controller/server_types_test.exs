@@ -2,8 +2,6 @@ defmodule HELM.Server.Type.ControllerTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-
-  alias HELF.Broker
   alias HELM.Server.Controller.ServerTypes, as: CtrlServerTypes
 
   setup do
@@ -19,10 +17,10 @@ defmodule HELM.Server.Type.ControllerTest do
   describe "find/1" do
     test "success", %{type: type} do
       {:ok, serv_type} = CtrlServerTypes.create(type)
-      assert {:ok, serv_type} = CtrlServerTypes.find(serv_type.server_type)
+      assert {:ok, ^serv_type} = CtrlServerTypes.find(serv_type.server_type)
     end
 
-    test "failure", %{type: type} do
+    test "failure" do
       assert {:error, :notfound} = CtrlServerTypes.find("")
     end
   end
