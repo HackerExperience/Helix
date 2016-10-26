@@ -1,16 +1,16 @@
-defmodule HELM.Software.Storage.Controller do
+defmodule HELM.Software.Controller.Storages do
   import Ecto.Query
 
-  alias HELM.Software.Repo
-  alias HELM.Software.Storage.Schema, as: StorageSchema
+  alias HELM.Software.Model.Repo
+  alias HELM.Software.Model.Storages, as: MdlStorages
 
   def create do
-    StorageSchema.create_changeset()
+    MdlStorages.create_changeset()
     |> Repo.insert()
   end
 
   def find(storage_id) do
-    case Repo.get_by(StorageSchema, storage_id: storage_id) do
+    case Repo.get_by(MdlStorages, storage_id: storage_id) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end

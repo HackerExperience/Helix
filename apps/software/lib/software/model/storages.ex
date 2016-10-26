@@ -1,19 +1,19 @@
-defmodule HELM.Software.Storage.Schema do
+defmodule HELM.Software.Model.Storages do
   use Ecto.Schema
   import Ecto.Changeset
   alias Ecto.Changeset
 
-  alias HELM.Software.File.Schema, as: FileSchema
-  alias HELM.Software.Storage.Schema, as: StorageSchema
+  alias HELM.Software.Model.Files, as: MdlFiles
+  alias HELM.Software.Model.Storages, as: MdlStorages
 
   @primary_key {:storage_id, :string, autogenerate: false}
 
   schema "storages" do
-    has_many :drives, StorageSchema,
+    has_many :drives, MdlStorages,
       foreign_key: :storage_id,
       references: :storage_id
 
-    has_many :files, FileSchema,
+    has_many :files, MdlFiles,
       foreign_key: :storage_id,
       references: :storage_id
 

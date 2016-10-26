@@ -1,19 +1,19 @@
-defmodule HELM.Software.Module.Controller do
+defmodule HELM.Software.Controller.Modules do
   import Ecto.Query
 
-  alias HELM.Software.Repo
-  alias HELM.Software.Module.Schema, as: ModuleSchema
+  alias HELM.Software.Model.Repo
+  alias HELM.Software.Model.Modules, as: MdlModules
 
   def create(role, file_id, version) do
     %{module_role: role,
       file_id: file_id,
       module_version: version}
-    |> ModuleSchema.create_changeset()
+    |> MdlModules.create_changeset()
     |> Repo.insert()
   end
 
   def find(role, file_id) do
-    case Repo.get_by(ModuleSchema, module_role: role, file_id: file_id) do
+    case Repo.get_by(MdlModules, module_role: role, file_id: file_id) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end

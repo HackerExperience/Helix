@@ -3,29 +3,29 @@ defmodule HELM.Software.Controller.StorageDrivesTest do
 
   alias HELL.Random, as: HRand
 
-  alias HELM.Software.Storage.Controller, as: StorageCtrl
-  alias HELM.Software.Storage.Drive.Controller, as: StorageDriveCtrl
+  alias HELM.Software.Controller.Storages, as: CtrlStorages
+  alias HELM.Software.Controller.StorageDrives, as: CtrlStorageDrives
 
   describe "creation" do
     test "success" do
-      {:ok, storage} = StorageCtrl.create()
-      assert {:ok, _} = StorageDriveCtrl.create(HRand.random_number, storage.storage_id)
+      {:ok, storage} = CtrlStorages.create()
+      assert {:ok, _} = CtrlStorageDrives.create(HRand.random_number, storage.storage_id)
     end
   end
 
   describe "search" do
     test "success" do
-      {:ok, storage} = StorageCtrl.create()
-      {:ok, drive} = StorageDriveCtrl.create(HRand.random_number, storage.storage_id)
-      assert {:ok, drive} = StorageDriveCtrl.find(drive.drive_id)
+      {:ok, storage} = CtrlStorages.create()
+      {:ok, drive} = CtrlStorageDrives.create(HRand.random_number, storage.storage_id)
+      assert {:ok, drive} = CtrlStorageDrives.find(drive.drive_id)
     end
   end
 
   describe "removal" do
     test "success" do
-      {:ok, storage} = StorageCtrl.create()
-      {:ok, drive} = StorageDriveCtrl.create(HRand.random_number, storage.storage_id)
-      assert {:ok, _} = StorageDriveCtrl.delete(drive.drive_id)
+      {:ok, storage} = CtrlStorages.create()
+      {:ok, drive} = CtrlStorageDrives.create(HRand.random_number, storage.storage_id)
+      assert {:ok, _} = CtrlStorageDrives.delete(drive.drive_id)
     end
   end
 end

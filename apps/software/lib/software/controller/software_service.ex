@@ -1,4 +1,4 @@
-defmodule HELM.Software.Service do
+defmodule HELM.Software.Controller.SoftwareService do
   use GenServer
 
   alias HELF.Broker

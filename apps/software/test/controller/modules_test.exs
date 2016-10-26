@@ -2,11 +2,11 @@ defmodule HELM.Software.Controller.ModulesTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Software.File.Controller, as: FileCtrl
-  alias HELM.Software.Module.Controller, as: ModuleCtrl
-  alias HELM.Software.Storage.Controller, as: StorageCtrl
-  alias HELM.Software.File.Type.Controller, as: FileTypeCtrl
-  alias HELM.Software.Module.Role.Controller, as: ModuleRoleCtrl
+  alias HELM.Software.Controller.Files, as: CtrlFiles
+  alias HELM.Software.Controller.Modules, as: CtrlModules
+  alias HELM.Software.Controller.Storages, as: CtrlStorages
+  alias HELM.Software.Controller.FileTypes, as: CtrlFileTypes
+  alias HELM.Software.Controller.ModuleRoles, as: CtrlModuleRoles
 
   describe "creation" do
     test "success" do
@@ -15,12 +15,12 @@ defmodule HELM.Software.Controller.ModulesTest do
       file_size = HRand.random_number()
       module_version = HRand.random_number()
 
-      {:ok, file_type} = FileTypeCtrl.create(file_type_name, ".test")
-      {:ok, role} = ModuleRoleCtrl.create(role_name, file_type.file_type)
-      {:ok, storage} = StorageCtrl.create()
-      {:ok, file} = FileCtrl.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
+      {:ok, file_type} = CtrlFileTypes.create(file_type_name, ".test")
+      {:ok, role} = CtrlModuleRoles.create(role_name, file_type.file_type)
+      {:ok, storage} = CtrlStorages.create()
+      {:ok, file} = CtrlFiles.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
 
-      assert {:ok, _} = ModuleCtrl.create(role.module_role, file.file_id, module_version)
+      assert {:ok, _} = CtrlModules.create(role.module_role, file.file_id, module_version)
     end
   end
 
@@ -31,13 +31,13 @@ defmodule HELM.Software.Controller.ModulesTest do
       file_size = HRand.random_number()
       module_version = HRand.random_number()
 
-      {:ok, file_type} = FileTypeCtrl.create(file_type_name, ".test")
-      {:ok, role} = ModuleRoleCtrl.create(role_name, file_type.file_type)
-      {:ok, storage} = StorageCtrl.create()
-      {:ok, file} = FileCtrl.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
-      {:ok, module} = ModuleCtrl.create(role.module_role, file.file_id, module_version)
+      {:ok, file_type} = CtrlFileTypes.create(file_type_name, ".test")
+      {:ok, role} = CtrlModuleRoles.create(role_name, file_type.file_type)
+      {:ok, storage} = CtrlStorages.create()
+      {:ok, file} = CtrlFiles.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
+      {:ok, module} = CtrlModules.create(role.module_role, file.file_id, module_version)
 
-      assert {:ok, module} = ModuleCtrl.find(role.module_role, file.file_id)
+      assert {:ok, module} = CtrlModules.find(role.module_role, file.file_id)
     end
   end
 
@@ -48,13 +48,13 @@ defmodule HELM.Software.Controller.ModulesTest do
       file_size = HRand.random_number()
       module_version = HRand.random_number()
 
-      {:ok, file_type} = FileTypeCtrl.create(file_type_name, ".test")
-      {:ok, role} = ModuleRoleCtrl.create(role_name, file_type.file_type)
-      {:ok, storage} = StorageCtrl.create()
-      {:ok, file} = FileCtrl.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
-      {:ok, module} = ModuleCtrl.create(role.module_role, file.file_id, module_version)
+      {:ok, file_type} = CtrlFileTypes.create(file_type_name, ".test")
+      {:ok, role} = CtrlModuleRoles.create(role_name, file_type.file_type)
+      {:ok, storage} = CtrlStorages.create()
+      {:ok, file} = CtrlFiles.create(storage.storage_id, "/dev/null", "void", file_type.file_type, file_size)
+      {:ok, module} = CtrlModules.create(role.module_role, file.file_id, module_version)
 
-      assert {:ok, _} = ModuleCtrl.delete(role.module_role, file.file_id)
+      assert {:ok, _} = CtrlModules.delete(role.module_role, file.file_id)
     end
   end
 end

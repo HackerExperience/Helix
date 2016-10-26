@@ -1,17 +1,17 @@
-defmodule HELM.Software.File.Type.Controller do
+defmodule HELM.Software.Controller.FileTypes do
   import Ecto.Query
 
-  alias HELM.Software.Repo
-  alias HELM.Software.File.Type.Schema, as: FileTypeSchema
+  alias HELM.Software.Model.Repo
+  alias HELM.Software.Model.FileTypes, as: MdlFileTypes
 
   def create(file_type, extension) do
     %{file_type: file_type, extension: extension}
-    |> FileTypeSchema.create_changeset()
+    |> MdlFileTypes.create_changeset()
     |> Repo.insert()
   end
 
   def find(file_type) do
-    case Repo.get_by(FileTypeSchema, file_type: file_type) do
+    case Repo.get_by(MdlFileTypes, file_type: file_type) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end

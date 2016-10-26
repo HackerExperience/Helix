@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :software,
-  ecto_repos: [HELM.Software.Repo]
-config :software, HELM.Software.Repo,
+  ecto_repos: [HELM.Software.Model.Repo]
+config :software, HELM.Software.Model.Repo,
   size: 4,
   adapter: Ecto.Adapters.Postgres,
   database: "software_service",
