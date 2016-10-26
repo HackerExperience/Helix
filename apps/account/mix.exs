@@ -22,14 +22,13 @@ defmodule HELM.Account.Mixfile do
   end
 
   defp applications(_),
-    do: [:logger, :helf_broker, :helf_router, :ecto, :postgrex, :auth, :comeonin]
+    do: [:logger, :helf_broker, :helf_router, :ecto, :postgrex, :comeonin]
 
   defp deps do
     [
       {:helf_router, in_umbrella: true},
       {:helf_broker, in_umbrella: true},
       {:hell, in_umbrella: true},
-      {:auth, in_umbrella: true},
       {:comeonin, "~> 2.5"},
       {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.0"},
