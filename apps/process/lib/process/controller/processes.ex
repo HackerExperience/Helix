@@ -1,29 +1,26 @@
-defmodule HELM.Process.Controller do
+defmodule HELM.Process.Controller.Processes do
   import Ecto.Query
 
-  alias HELF.Broker
-  alias HELM.Process
+  alias HELM.Process.Model.Repo
+  alias HELM.Process.Model.Processes, as: MdlProcesses
 
-  def find_process(process_id) do
-    Process.Repo.get(Process.Schema, process_id)
+  def create(process) do
+    MdlProcesses.create_changeset(process)
+    |> Repo.insert()
   end
 
-  def new_process(process) do
-    changeset = Process.Schema.create_changeset(process)
-
-    case Process.Repo.insert(changeset) do
-      {:ok, operation} -> {:ok, operation}
-      {:error, msg} -> {:error, msg}
+  def find(process_id) do
+    case Repo.get(MdlProcesses, process_id) do
+      nil -> {:error, :notfound}
+      process -> {:ok, process}
     end
   end
 
-  def remove_process(process_id) do
-    with process when not is_nil(process) <- find_process(process_id),
-         {:ok, result} <- Process.Repo.delete(process) do
-      {:ok, "The Process was removed."}
-    else
-      :error -> {:error, "Shit Happens"}
-    end
-  end
+  def delete(process_id) do
+    MdlProcesses
+    |> where([s], s.process_id == ^process_id)
+    |> Repo.delete_all()
 
+    :ok
+  end
 end

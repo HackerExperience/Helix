@@ -1,14 +1,15 @@
 defmodule HELM.Process.App do
   use Application
 
-  alias HELM.Process
+  alias HELM.Process.Model.Repo
+  alias HELM.Process.Controller.ProcessService
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Process.Repo, []),
-      worker(Process.Service, []),
+      worker(Repo, []),
+      worker(ProcessService, []),
     ]
 
     opts = [strategy: :one_for_one, name: HELM.Process.Supervisor]

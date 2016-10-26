@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :process,
-  ecto_repos: [HELM.Process.Repo]
-config :process, HELM.Process.Repo,
+  ecto_repos: [HELM.Process.Model.Repo]
+config :process, HELM.Process.Model.Repo,
   size: 4,
   adapter: Ecto.Adapters.Postgres,
   database: "process_service",

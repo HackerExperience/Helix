@@ -1,9 +1,7 @@
-defmodule HELM.Process.Schema do
+defmodule HELM.Process.Model.Processes do
   use Ecto.Schema
 
   import Ecto.Changeset
-
-  alias HELM.Process
 
   @primary_key {:process_id, :string, autogenerate: false}
 
