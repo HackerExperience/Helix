@@ -5,7 +5,7 @@ defmodule HELM.Server.Model.Server do
 
   alias Ecto.Changeset
 
-  alias HELM.Server.Model.ServerType, as: MdlServerType
+  alias HELM.Server.Model.ServerType, as: MdlServerType, warn: false
 
   @primary_key {:server_id, :string, autogenerate: false}
 

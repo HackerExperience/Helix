@@ -1,7 +1,7 @@
 defmodule HELM.Server.Controller.ServerType do
   import Ecto.Query
 
-  alias HELF.{Broker, Error}
+  alias HELF.Broker
   alias HELM.Server.Model.Repo
   alias HELM.Server.Model.ServerType, as: MdlServerType
 

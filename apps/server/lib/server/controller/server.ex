@@ -4,7 +4,7 @@ defmodule HELM.Server.Controller.Server do
   alias HELF.Broker
 
   alias HELM.Server.Model.Repo
-  alias HELM.Server.Model.Server, as: MdlServer
+  alias HELM.Server.Model.Server, as: MdlServer, warn: false
 
   def create(params) do
     %{server_type: params.server_type,
