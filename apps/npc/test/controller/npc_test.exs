@@ -4,7 +4,7 @@ defmodule HELM.NPC.Controller.NPCTest do
   alias HELM.NPC.Controller.NPC, as: CtrlNPC
 
   test "create/1" do
-    assert {:ok, _} = CtrlNPCs.create(%{})
+    assert {:ok, _} = CtrlNPC.create(%{})
   end
 
   describe "find/1" do
