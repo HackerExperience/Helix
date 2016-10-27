@@ -1,7 +1,7 @@
 defmodule HELM.Process.App do
   use Application
 
-  alias HELM.Process.Model.Repo
+  alias HELM.Process.Repo
   alias HELM.Process.Controller.ProcessService
 
   def start(_type, _args) do

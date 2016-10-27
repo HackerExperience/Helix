@@ -3,7 +3,7 @@ defmodule HELM.Server.Controller.Server do
 
   alias HELF.Broker
 
-  alias HELM.Server.Model.Repo
+  alias HELM.Server.Repo
   alias HELM.Server.Model.Server, as: MdlServer, warn: false
 
   def create(params) do

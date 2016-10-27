@@ -1,7 +1,7 @@
 defmodule HELM.Software.Controller.Storage do
   import Ecto.Query
 
-  alias HELM.Software.Model.Repo
+  alias HELM.Software.Repo
   alias HELM.Software.Model.Storage, as: MdlStorage
 
   def create do

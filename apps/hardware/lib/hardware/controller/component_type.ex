@@ -2,7 +2,7 @@ defmodule HELM.Hardware.Controller.ComponentType do
   import Ecto.Query
 
   alias HELF.Broker
-  alias HELM.Hardware.Model.Repo
+  alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.ComponentType, as: MdlCompType
 
   def create(component_type) do

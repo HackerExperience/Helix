@@ -1,11 +1,10 @@
 defmodule HELM.Account.Controller.Account do
-  import Ecto.Changeset
   import Ecto.Query
 
   alias Comeonin.Bcrypt, as: Crypt
 
-  alias HELF.{Broker, Error}
-  alias HELM.Account.Model.Repo
+  alias HELF.Broker
+  alias HELM.Account.Repo
   alias HELM.Account.Model.Account, as: MdlAccount
 
   def action_create(params) do

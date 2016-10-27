@@ -1,9 +1,9 @@
 defmodule HELM.Entity.Controller.Entity do
   import Ecto.Query
 
-  alias HELF.{Broker, Error}
+  alias HELF.Broker
   alias HELM.Entity.Model.Entity, as: MdlEntity
-  alias HELM.Entity.Model.Repo
+  alias HELM.Entity.Repo
 
   def action_create(params) do
     with {:ok, entity} <- create(params) do

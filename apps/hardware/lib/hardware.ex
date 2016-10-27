@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.App do
   use Application
 
-  alias HELM.Hardware.Model.Repo, as: HardwareRepo
+  alias HELM.Hardware.Repo, as: HardwareRepo
   alias HELM.Hardware.Controller.HardwareService, as: HardwareSvc
 
   def start(_type, _args) do

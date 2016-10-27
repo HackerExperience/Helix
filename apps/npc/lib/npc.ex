@@ -1,7 +1,7 @@
 defmodule HELM.NPC.App do
   use Application
 
-  alias HELM.NPC.Model.Repo
+  alias HELM.NPC.Repo
   alias HELM.NPC.Controller.NPCService
 
   def start(_type, _args) do

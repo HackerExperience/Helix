@@ -1,7 +1,7 @@
 defmodule HELM.Software.Controller.Module do
   import Ecto.Query
 
-  alias HELM.Software.Model.Repo
+  alias HELM.Software.Repo
   alias HELM.Software.Model.Module, as: MdlModule
 
   def create(params) do

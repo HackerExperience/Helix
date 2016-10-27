@@ -1,8 +1,7 @@
 defmodule HELM.Software.App do
   use Application
-
-  alias HELM.Software
-  alias HELM.Software.Model.Repo
+  
+  alias HELM.Software.Repo
   alias HELM.Software.Controller.SoftwareService
 
   def start(_type, _args) do

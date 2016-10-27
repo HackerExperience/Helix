@@ -2,7 +2,7 @@ defmodule HELM.Hardware.Controller.Motherboard do
   import Ecto.Query
 
   alias HELF.Broker
-  alias HELM.Hardware.Model.Repo
+  alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.Motherboards, as: MdlMobo
 
   def create do

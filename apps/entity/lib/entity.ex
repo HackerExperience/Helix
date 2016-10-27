@@ -2,7 +2,7 @@ defmodule HELM.Entity.App do
   use Application
 
   alias HELM.Controller.EntityService, as: EntityService
-  alias HELM.Entity.Model.Repo
+  alias HELM.Entity.Repo
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false

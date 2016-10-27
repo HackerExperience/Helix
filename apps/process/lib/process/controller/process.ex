@@ -1,7 +1,7 @@
 defmodule HELM.Process.Controller.Process do
   import Ecto.Query
 
-  alias HELM.Process.Model.Repo
+  alias HELM.Process.Repo
   alias HELM.Process.Model.Process, as: MdlProcess
 
   def create(process) do

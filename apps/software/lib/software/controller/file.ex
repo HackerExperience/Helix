@@ -1,7 +1,7 @@
 defmodule HELM.Software.Controller.File do
   import Ecto.Query
 
-  alias HELM.Software.Model.Repo
+  alias HELM.Software.Repo
   alias HELM.Software.Model.File, as: MdlFile
 
   def create(file) do

@@ -2,7 +2,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
   import Ecto.Query
 
   alias HELF.Broker
-  alias HELM.Hardware.Model.Repo
+  alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
 
   def create(params) do

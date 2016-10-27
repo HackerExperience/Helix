@@ -2,7 +2,7 @@ defmodule HELM.Hardware.Controller.Component do
   import Ecto.Query
 
   alias HELF.Broker
-  alias HELM.Hardware.Model.Repo
+  alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.Component, as: MdlComp
 
   def create(params) do

@@ -1,8 +1,7 @@
 defmodule HELM.Entity.Controller.EntityServer do
   import Ecto.Query
 
-  alias HELF.{Broker, Error}
-  alias HELM.Entity.Model.Repo
+  alias HELM.Entity.Repo
   alias HELM.Entity.Model.EntityServer, as: MdlEntityServer
 
   def create(server_id, entity_id) do

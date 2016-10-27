@@ -1,7 +1,7 @@
 defmodule HELM.NPC.Controller.NPC do
   import Ecto.Query
 
-  alias HELM.NPC.Model.Repo
+  alias HELM.NPC.Repo
   alias HELM.NPC.Model.NPC, as: MdlNPC
 
   def create(npc) do
