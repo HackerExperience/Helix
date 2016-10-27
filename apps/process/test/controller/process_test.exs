@@ -1,4 +1,4 @@
-defmodule HELM.Controller.ProcessesTest do
+defmodule HELM.Process.Controller.ProcessTest do
   use ExUnit.Case
 
   alias HELM.Process.Controller.Process, as: CtrlProcess

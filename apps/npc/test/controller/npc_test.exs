@@ -1,7 +1,7 @@
 defmodule HELM.NPC.Controller.NPCTest do
   use ExUnit.Case
 
-  alias HELM.NPC.Controller.NPC, as: CtrlNPCs
+  alias HELM.NPC.Controller.NPC, as: CtrlNPC
 
   test "create/1" do
     assert {:ok, _} = CtrlNPCs.create(%{})
@@ -9,18 +9,18 @@ defmodule HELM.NPC.Controller.NPCTest do
 
   describe "find/1" do
     test "success" do
-      {:ok, npc} = CtrlNPCs.create(%{})
-      assert {:ok, ^npc} = CtrlNPCs.find(npc.npc_id)
+      {:ok, npc} = CtrlNPC.create(%{})
+      assert {:ok, ^npc} = CtrlNPC.find(npc.npc_id)
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlNPCs.find("")
+      assert {:error, :notfound} = CtrlNPC.find("")
     end
   end
 
   test "delete/1 idempotency" do
-    {:ok, npc} = CtrlNPCs.create(%{})
-    assert :ok = CtrlNPCs.delete(npc.npc_id)
-    assert :ok = CtrlNPCs.delete(npc.npc_id)
+    {:ok, npc} = CtrlNPC.create(%{})
+    assert :ok = CtrlNPC.delete(npc.npc_id)
+    assert :ok = CtrlNPC.delete(npc.npc_id)
   end
 end
