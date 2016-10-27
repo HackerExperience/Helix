@@ -2,7 +2,7 @@ defmodule HELM.Server.Type.ControllerTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Server.Controller.ServerType, as: CtrlServerTypes
+  alias HELM.Server.Controller.ServerType, as: CtrlServerType
 
   setup do
     {:ok, type: HRand.random_numeric_string()}
@@ -10,28 +10,28 @@ defmodule HELM.Server.Type.ControllerTest do
 
   describe "create/1" do
     test "success", %{type: type} do
-      assert {:ok, _} = CtrlServerTypes.create(type)
+      assert {:ok, _} = CtrlServerType.create(type)
     end
   end
 
   describe "find/1" do
     test "success", %{type: type} do
-      {:ok, serv_type} = CtrlServerTypes.create(type)
-      assert {:ok, ^serv_type} = CtrlServerTypes.find(serv_type.server_type)
+      {:ok, serv_type} = CtrlServerType.create(type)
+      assert {:ok, ^serv_type} = CtrlServerType.find(serv_type.server_type)
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlServerTypes.find("")
+      assert {:error, :notfound} = CtrlServerType.find("")
     end
   end
 
   test "all/1 is always list" do
-    assert is_list(CtrlServerTypes.all())
+    assert is_list(CtrlServerType.all())
   end
 
   test "delete/1 idempotency", %{type: type} do
-    {:ok, serv_type} = CtrlServerTypes.create(type)
-    assert :ok = CtrlServerTypes.delete(serv_type.server_type)
-    assert :ok = CtrlServerTypes.delete(serv_type.server_type)
+    {:ok, serv_type} = CtrlServerType.create(type)
+    assert :ok = CtrlServerType.delete(serv_type.server_type)
+    assert :ok = CtrlServerType.delete(serv_type.server_type)
   end
 end

@@ -4,7 +4,6 @@ defmodule HELM.Server.App do
   alias HELM.Server.Model.Repo
   alias HELM.Server.Controller.ServerService
 
-
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
