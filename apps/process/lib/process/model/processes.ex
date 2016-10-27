@@ -11,7 +11,7 @@ defmodule HELM.Process.Model.Processes do
 
   @creation_fields ~w()
 
-  def create_changeset(params \\ :empty) do
+  def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> put_uuid()

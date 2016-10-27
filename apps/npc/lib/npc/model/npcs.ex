@@ -2,7 +2,7 @@ defmodule HELM.NPC.Model.NPCs do
   use Ecto.Schema
 
   import Ecto.Changeset
-  
+
   @primary_key {:npc_id, :string, autogenerate: false}
 
   schema "npcs" do
@@ -11,7 +11,7 @@ defmodule HELM.NPC.Model.NPCs do
 
   @creation_fields ~w()
 
-  def create_changeset(params \\ :empty) do
+  def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> put_uuid()

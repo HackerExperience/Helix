@@ -31,7 +31,7 @@ defmodule HELM.Server.Model.Servers do
     |> put_uuid
   end
 
-  def update_changeset(struct, params \\ :empty) do
+  def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
   end
