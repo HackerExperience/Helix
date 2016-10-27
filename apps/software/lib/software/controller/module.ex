@@ -4,10 +4,8 @@ defmodule HELM.Software.Controller.Module do
   alias HELM.Software.Model.Repo
   alias HELM.Software.Model.Module, as: MdlModule
 
-  def create(role, file_id, version) do
-    %{module_role: role,
-      file_id: file_id,
-      module_version: version}
+  def create(params) do
+    params
     |> MdlModule.create_changeset()
     |> Repo.insert()
   end
@@ -19,10 +17,11 @@ defmodule HELM.Software.Controller.Module do
     end
   end
 
-  def delete(role, file_id) do
-    case find(role, file_id) do
-      {:ok, file} -> Repo.delete(file)
-      error -> error
-    end
+  def delete(module_role, file_id) do
+    MdlModule
+    |> where([s], s.module_role == ^module_role and s.file_id == ^file_id)
+    |> Repo.delete_all()
+
+    :ok
   end
 end

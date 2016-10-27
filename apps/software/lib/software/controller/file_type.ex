@@ -4,8 +4,8 @@ defmodule HELM.Software.Controller.FileType do
   alias HELM.Software.Model.Repo
   alias HELM.Software.Model.FileType, as: MdlFileType
 
-  def create(file_type, extension) do
-    %{file_type: file_type, extension: extension}
+  def create(params) do
+    params
     |> MdlFileType.create_changeset()
     |> Repo.insert()
   end
@@ -18,9 +18,10 @@ defmodule HELM.Software.Controller.FileType do
   end
 
   def delete(file_type) do
-    case find(file_type) do
-      {:ok, drive} -> Repo.delete(drive)
-      error -> error
-    end
+    MdlFileType
+    |> where([s], s.file_type == ^file_type)
+    |> Repo.delete_all()
+
+    :ok
   end
 end

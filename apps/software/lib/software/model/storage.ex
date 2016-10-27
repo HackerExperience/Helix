@@ -3,8 +3,8 @@ defmodule HELM.Software.Model.Storage do
   import Ecto.Changeset
   alias Ecto.Changeset
 
-  alias HELM.Software.Model.File, as: MdlFile
-  alias HELM.Software.Model.Storage, as: MdlStorageDrive
+  alias HELM.Software.Model.StorageDrive, as: MdlStorageDrive, warn: false
+  alias HELM.Software.Model.File, as: MdlFile, warn: false
 
   @primary_key {:storage_id, :string, autogenerate: false}
 

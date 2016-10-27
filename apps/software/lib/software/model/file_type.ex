@@ -1,10 +1,9 @@
 defmodule HELM.Software.Model.FileType do
   use Ecto.Schema
   import Ecto.Changeset
-  alias Ecto.Changeset
-
-  alias HELM.Software.Model.File, as: MdlFile
-  alias HELM.Software.Model.ModuleRole, as: MdlModuleRole
+  
+  alias HELM.Software.Model.File, as: MdlFile, warn: false
+  alias HELM.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
 
   @primary_key {:file_type, :string, autogenerate: false}
   @creation_fields ~w/file_type extension/a

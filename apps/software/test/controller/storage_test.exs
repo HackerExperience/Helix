@@ -2,23 +2,27 @@ defmodule HELM.Software.Controller.StorageTest do
   use ExUnit.Case
   alias HELM.Software.Controller.Storage, as: CtrlStorage
 
-  describe "creation" do
-    test "success" do
-      assert {:ok, _} = CtrlStorage.create()
-    end
+  test "create/1" do
+    assert {:ok, _} = CtrlStorage.create()
   end
 
-  describe "search" do
+  describe "find/1" do
     test "success" do
       {:ok, storage} = CtrlStorage.create()
       assert {:ok, ^storage} = CtrlStorage.find(storage.storage_id)
     end
+
+    test "failure" do
+      assert {:error, :notfound} = CtrlStorage.find("")
+    end
   end
 
-  describe "removal" do
-    test "success" do
-      {:ok, storage} = CtrlStorage.create()
-      assert {:ok, _} = CtrlStorage.delete(storage.storage_id)
-    end
+  test "delete/2 idempotency" do
+    {:ok, storage} = CtrlStorage.create()
+
+    assert :ok = CtrlStorage.delete(storage.storage_id)
+    assert :ok = CtrlStorage.delete(storage.storage_id)
+
+    assert {:error, :notfound} = CtrlStorage.find(storage.storage_id)
   end
 end

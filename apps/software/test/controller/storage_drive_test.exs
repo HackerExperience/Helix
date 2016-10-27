@@ -6,26 +6,38 @@ defmodule HELM.Software.Controller.StorageDriveTest do
   alias HELM.Software.Controller.Storage, as: CtrlStorage
   alias HELM.Software.Controller.StorageDrive, as: CtrlStorageDrives
 
-  describe "creation" do
-    test "success" do
-      {:ok, storage} = CtrlStorage.create()
-      assert {:ok, _} = CtrlStorageDrives.create(HRand.random_number, storage.storage_id)
+  setup do
+    {:ok, storage} = CtrlStorage.create()
+
+    payload = %{
+      drive_id: HRand.random_number(),
+      storage_id: storage.storage_id
+    }
+
+    {:ok, payload: payload}
+  end
+
+  test "create/1", %{payload: payload} do
+    assert {:ok, _} = CtrlStorageDrives.create(payload)
+  end
+
+  describe "find/2" do
+    test "success", %{payload: payload} do
+      assert {:ok, drive} = CtrlStorageDrives.create(payload)
+      assert {:ok, ^drive} = CtrlStorageDrives.find(drive.storage_id, drive.drive_id)
+    end
+
+    test "failure" do
+      assert {:error, :notfound} = CtrlStorageDrives.find("", 0)
     end
   end
 
-  describe "search" do
-    test "success" do
-      {:ok, storage} = CtrlStorage.create()
-      {:ok, drive} = CtrlStorageDrives.create(HRand.random_number, storage.storage_id)
-      assert {:ok, ^drive} = CtrlStorageDrives.find(drive.drive_id)
-    end
-  end
+  test "delete/2 idempotency", %{payload: payload} do
+    assert {:ok, drive} = CtrlStorageDrives.create(payload)
 
-  describe "removal" do
-    test "success" do
-      {:ok, storage} = CtrlStorage.create()
-      {:ok, drive} = CtrlStorageDrives.create(HRand.random_number, storage.storage_id)
-      assert {:ok, _} = CtrlStorageDrives.delete(drive.drive_id)
-    end
+    assert :ok = CtrlStorageDrives.delete(drive.storage_id, drive.drive_id)
+    assert :ok = CtrlStorageDrives.delete(drive.storage_id, drive.drive_id)
+
+    assert {:error, :notfound} = CtrlStorageDrives.find(drive.storage_id, drive.drive_id)
   end
 end

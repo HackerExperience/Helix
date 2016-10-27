@@ -4,12 +4,8 @@ defmodule HELM.Software.Controller.File do
   alias HELM.Software.Model.Repo
   alias HELM.Software.Model.File, as: MdlFile
 
-  def create(storage, path, name, type, size) do
-    %{storage_id: storage,
-      file_path: path,
-      file_name: name,
-      file_type: type,
-      file_size: size}
+  def create(file) do
+    file
     |> MdlFile.create_changeset()
     |> Repo.insert()
   end
@@ -22,19 +18,18 @@ defmodule HELM.Software.Controller.File do
   end
 
   def update(file_id, params) do
-    case find(file_id) do
-      {:ok, file} ->
-        file
-        |> MdlFile.update_changeset(params)
-        |> Repo.update()
-      error -> error
+    with {:ok, file} <- find(file_id) do
+      file
+      |> MdlFile.update_changeset(params)
+      |> Repo.update()
     end
   end
 
   def delete(file_id) do
-    case find(file_id) do
-      {:ok, file} -> Repo.delete(file)
-      error -> error
-    end
+    MdlFile
+    |> where([s], s.file_id == ^file_id)
+    |> Repo.delete_all()
+
+    :ok
   end
 end

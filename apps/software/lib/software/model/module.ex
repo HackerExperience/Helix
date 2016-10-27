@@ -3,9 +3,8 @@ defmodule HELM.Software.Model.Module do
 
   import Ecto.Changeset
 
-  alias HELM.Software.Model.ModuleRole, as: MdlModuleRole
-  alias HELM.Software.Model.File, as: MdlFile
-  alias Ecto.Changeset
+  alias HELM.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
+  alias HELM.Software.Model.File, as: MdlFile, warn: false
 
   @primary_key false
   @creation_fields ~w/file_id module_role module_version/a
