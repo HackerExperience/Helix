@@ -8,9 +8,16 @@ defmodule HELM.Account.Controller.Account do
   alias HELM.Account.Model.Repo
   alias HELM.Account.Model.Account, as: MdlAccount
 
-  def create(account) do
-    MdlAccount.create_changeset(account)
-    |> do_create()
+  def action_create(params) do
+    with {:ok, account} <- create(params) do
+      Broker.cast("event:account:created", account.account_id)
+      {:ok, account}
+    end
+  end
+
+  def create(params) do
+    MdlAccount.create_changeset(params)
+    |> Repo.insert()
   end
 
   def find(account_id) do
@@ -46,16 +53,6 @@ defmodule HELM.Account.Controller.Account do
         if Crypt.checkpw(password, account.password),
           do: :ok,
           else: {:error, :notfound}
-    end
-  end
-
-  defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, struct} ->
-        Broker.cast("event:account:created", struct.account_id)
-        {:ok, struct}
-      {:error, changeset} ->
-        {:error, changeset.errors}
     end
   end
 end

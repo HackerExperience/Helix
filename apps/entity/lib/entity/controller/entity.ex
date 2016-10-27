@@ -5,10 +5,17 @@ defmodule HELM.Entity.Controller.Entity do
   alias HELM.Entity.Model.Entity, as: MdlEntity
   alias HELM.Entity.Model.Repo
 
-  def create(struct) do
-    %{entity_type: struct.entity_type, reference_id: struct.reference_id}
+  def action_create(params) do
+    with {:ok, entity} <- create(params) do
+      Broker.cast("event:entity:created", entity.entity_id)
+      {:ok, entity}
+    end
+  end
+
+  def create(params) do
+    params
     |> MdlEntity.create_changeset()
-    |> do_create()
+    |> Repo.insert()
   end
 
   def find(entity_id) do
@@ -24,15 +31,5 @@ defmodule HELM.Entity.Controller.Entity do
     |> Repo.delete_all()
 
     :ok
-  end
-
-  defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        Broker.cast("event:entity:created", changeset.changes.entity_id)
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
   end
 end

@@ -23,24 +23,22 @@ defmodule HELM.Account.Controller.AccountTest do
 
     test "account exists", %{payload: payload} do
       {:ok, _} = CtrlAccount.create(payload)
-      {:error, errors} = CtrlAccount.create(payload)
-      error = Keyword.fetch!(errors, :email)
+      {:error, changeset} = CtrlAccount.create(payload)
+      error = Keyword.fetch!(changeset.errors, :email)
       assert error == {"has already been taken", []}
     end
 
     test "wrong confirmation", %{email: email, pass: pass} do
       payload = %{email: email, password: pass, password_confirmation: "123"}
-
-      {:error, errors} = CtrlAccount.create(payload)
-      error = Keyword.fetch!(errors, :password_confirmation)
+      {:error, changeset} = CtrlAccount.create(payload)
+      error = Keyword.fetch!(changeset.errors, :password_confirmation)
       assert error == {"does not match confirmation", []}
     end
 
     test "short password", %{email: email} do
       payload = %{email: email, password: "123", password_confirmation: "123"}
-
-      {:error, errors} = CtrlAccount.create(payload)
-      error = Keyword.fetch!(errors, :password)
+      {:error, changeset} = CtrlAccount.create(payload)
+      error = Keyword.fetch!(changeset.errors, :password)
       assert error == {"should be at least %{count} character(s)", count: 8}
     end
   end

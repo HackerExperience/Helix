@@ -16,20 +16,19 @@ defmodule HELM.Account.Controller.AccountService do
     GenServer.start_link(__MODULE__, state, name: :account_service)
   end
 
-  @doc false
-  def handle_broker_call(pid, "account:create", account, _request) do
-    response = GenServer.call(pid, {:account, :create, account})
-    {:reply, response}
-  end
-
   def init(_args) do
     Broker.subscribe("account:create", call: &handle_broker_call/4)
 
     {:ok, nil}
   end
 
-  def handle_call({:account, :create, account}, _from, state) do
-    response = CtrlAccount.create(account)
-    {:reply, response, state}
+  @doc false
+  def handle_broker_call(pid, "account:create", account, _request),
+    do: GenServer.call(pid, {:account_create, account})
+
+  @doc false
+  def handle_call({:account_create, account}, _from, state) do
+    response = CtrlAccount.action_create(account)
+    {:reply, {:reply, response}, state}
   end
 end
