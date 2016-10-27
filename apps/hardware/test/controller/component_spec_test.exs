@@ -2,7 +2,7 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Hardware.Controller.ComponentType, as: CtrlCompTypes
+  alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
 
   setup do
@@ -12,13 +12,13 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
   end
 
   test "create/1", %{type_name: type_name, payload: payload} do
-    {:ok, _} = CtrlCompTypes.create(type_name)
+    {:ok, _} = CtrlCompType.create(type_name)
     assert {:ok, _} = CtrlCompSpec.create(payload)
   end
 
   describe "find/1" do
     test "success", %{type_name: type_name, payload: payload} do
-      {:ok, _} = CtrlCompTypes.create(type_name)
+      {:ok, _} = CtrlCompType.create(type_name)
       {:ok, comp_spec} = CtrlCompSpec.create(payload)
       assert {:ok, ^comp_spec} = CtrlCompSpec.find(comp_spec.spec_id)
     end
@@ -29,7 +29,7 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
   end
 
   test "delete/1 idempotency", %{type_name: type_name, payload: payload} do
-    {:ok, _} = CtrlCompTypes.create(type_name)
+    {:ok, _} = CtrlCompType.create(type_name)
     {:ok, comp_spec} = CtrlCompSpec.create(payload)
     assert :ok = CtrlCompSpec.delete(comp_spec.spec_id)
     assert :ok = CtrlCompSpec.delete(comp_spec.spec_id)
