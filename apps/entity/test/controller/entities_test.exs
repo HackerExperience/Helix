@@ -1,9 +1,9 @@
-defmodule HELM.Entity.Controller.EntitiesTest do
+defmodule HELM.Entity.Controller.EntityTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Entity.Controller.Entities, as: CtrlEntities
-  alias HELM.Entity.Controller.EntityTypes, as: CtrlEntityTypes
+  alias HELM.Entity.Controller.Entity, as: CtrlEntity
+  alias HELM.Entity.Controller.EntityType, as: CtrlEntityType
 
   setup do
     type = HRand.random_numeric_string()
@@ -13,26 +13,26 @@ defmodule HELM.Entity.Controller.EntitiesTest do
   end
 
   test "create/1", %{type: type, payload: payload} do
-    {:ok, _} = CtrlEntityTypes.create(type)
-    assert {:ok, _} = CtrlEntities.create(payload)
+    {:ok, _} = CtrlEntityType.create(type)
+    assert {:ok, _} = CtrlEntity.create(payload)
   end
 
   describe "find/1" do
     test "success", %{type: type, payload: payload} do
-      {:ok, _} = CtrlEntityTypes.create(type)
-      {:ok, enty} = CtrlEntities.create(payload)
-      assert {:ok, ^enty} = CtrlEntities.find(enty.entity_id)
+      {:ok, _} = CtrlEntityType.create(type)
+      {:ok, enty} = CtrlEntity.create(payload)
+      assert {:ok, ^enty} = CtrlEntity.find(enty.entity_id)
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlEntities.find("")
+      assert {:error, :notfound} = CtrlEntity.find("")
     end
   end
 
   test "delete/1 idempotency", %{type: type, payload: payload} do
-    {:ok, _} = CtrlEntityTypes.create(type)
-    {:ok, enty} = CtrlEntities.create(payload)
-    assert :ok = CtrlEntities.delete(enty.entity_id)
-    assert :ok = CtrlEntities.delete(enty.entity_id)
+    {:ok, _} = CtrlEntityType.create(type)
+    {:ok, enty} = CtrlEntity.create(payload)
+    assert :ok = CtrlEntity.delete(enty.entity_id)
+    assert :ok = CtrlEntity.delete(enty.entity_id)
   end
 end

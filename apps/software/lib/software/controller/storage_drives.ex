@@ -1,17 +1,17 @@
-defmodule HELM.Software.Controller.StorageDrives do
+defmodule HELM.Software.Controller.StorageDrive do
   import Ecto.Query
 
   alias HELM.Software.Model.Repo
-  alias HELM.Software.Model.StorageDrives, as: MdlStorageDrives
+  alias HELM.Software.Model.StorageDrive, as: MdlStorageDrive
 
   def create(drive_id, storage_id) do
     %{drive_id: drive_id, storage_id: storage_id}
-    |> MdlStorageDrives.create_changeset()
+    |> MdlStorageDrive.create_changeset()
     |> Repo.insert()
   end
 
   def find(drive_id) do
-    case Repo.get_by(MdlStorageDrives, drive_id: drive_id) do
+    case Repo.get_by(MdlStorageDrive, drive_id: drive_id) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end

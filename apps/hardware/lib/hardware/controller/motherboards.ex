@@ -1,24 +1,24 @@
-defmodule HELM.Hardware.Controller.Motherboards do
+defmodule HELM.Hardware.Controller.Motherboard do
   import Ecto.Query
 
   alias HELF.Broker
   alias HELM.Hardware.Model.Repo
-  alias HELM.Hardware.Model.Motherboards, as: MdlMobos
+  alias HELM.Hardware.Model.Motherboards, as: MdlMobo
 
   def create do
-    MdlMobos.create_changeset()
+    MdlMobo.create_changeset()
     |> do_create()
   end
 
   def find(motherboard_id) do
-    case Repo.get_by(MdlMobos, motherboard_id: motherboard_id) do
+    case Repo.get_by(MdlMobo, motherboard_id: motherboard_id) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
 
   def delete(motherboard_id) do
-    MdlMobos
+    MdlMobo
     |> where([s], s.motherboard_id == ^motherboard_id)
     |> Repo.delete_all()
 

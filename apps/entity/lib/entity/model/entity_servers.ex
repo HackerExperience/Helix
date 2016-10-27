@@ -1,15 +1,15 @@
-defmodule HELM.Entity.Model.EntityServers do
+defmodule HELM.Entity.Model.EntityServer do
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias HELM.Entity.Model.Entities, as: MdlEntities
+  alias HELM.Entity.Model.Entity, as: MdlEntity
 
   @primary_key {:server_id, :string, autogenerate: false}
   @creation_fields ~w/server_id entity_id/a
 
   schema "entity_servers" do
-    belongs_to :entities, MdlEntities,
+    belongs_to :entities, MdlEntity,
       foreign_key: :entity_id,
       references: :entity_id,
       type: :string

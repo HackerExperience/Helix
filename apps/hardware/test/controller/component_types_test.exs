@@ -1,8 +1,8 @@
-defmodule HELM.Hardware.Controller.ComponentTypesTest do
+defmodule HELM.Hardware.Controller.ComponentTypeTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Hardware.Controller.ComponentTypes, as: CtrlCompTypes
+  alias HELM.Hardware.Controller.ComponentType, as: CtrlCompTypes
 
   setup do
     {:ok, type_name: HRand.random_numeric_string()}

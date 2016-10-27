@@ -1,22 +1,22 @@
-defmodule HELM.Software.Model.ModuleRoles do
+defmodule HELM.Software.Model.ModuleRole do
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias HELM.Software.Model.FileTypes, as: MdlFileTypes
-  alias HELM.Software.Model.Modules, as: MdlModules
+  alias HELM.Software.Model.FileType, as: MdlFileType
+  alias HELM.Software.Model.Module, as: MdlModule
   alias Ecto.Changeset
 
   @primary_key {:module_role, :string, autogenerate: false}
   @creation_fields ~w/file_type module_role/a
 
   schema "module_roles" do
-    belongs_to :file_type_entity, MdlFileTypes,
+    belongs_to :file_type_entity, MdlFileType,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
 
-    has_many :modules, MdlModules,
+    has_many :modules, MdlModule,
       foreign_key: :module_role,
       references: :module_role
 

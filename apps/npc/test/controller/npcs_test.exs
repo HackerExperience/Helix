@@ -1,7 +1,7 @@
-defmodule HELM.NPC.Controller.NPCsTest do
+defmodule HELM.NPC.Controller.NPCTest do
   use ExUnit.Case
 
-  alias HELM.NPC.Controller.NPCs, as: CtrlNPCs
+  alias HELM.NPC.Controller.NPC, as: CtrlNPCs
 
   test "create/1" do
     assert {:ok, _} = CtrlNPCs.create(%{})

@@ -1,26 +1,26 @@
 defmodule HELM.Controller.ProcessesTest do
   use ExUnit.Case
 
-  alias HELM.Process.Controller.Processes, as: CtrlProcesses
+  alias HELM.Process.Controller.Process, as: CtrlProcess
 
   test "create/1" do
-    assert {:ok, _} = CtrlProcesses.create(%{})
+    assert {:ok, _} = CtrlProcess.create(%{})
   end
 
   describe "find/1" do
     test "success" do
-      {:ok, process} = CtrlProcesses.create(%{})
-      assert {:ok, ^process} = CtrlProcesses.find(process.process_id)
+      {:ok, process} = CtrlProcess.create(%{})
+      assert {:ok, ^process} = CtrlProcess.find(process.process_id)
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlProcesses.find("")
+      assert {:error, :notfound} = CtrlProcess.find("")
     end
   end
 
   test "delete/1 idempotency" do
-    {:ok, process} = CtrlProcesses.create(%{})
-    assert :ok = CtrlProcesses.delete(process.process_id)
-    assert :ok = CtrlProcesses.delete(process.process_id)
+    {:ok, process} = CtrlProcess.create(%{})
+    assert :ok = CtrlProcess.delete(process.process_id)
+    assert :ok = CtrlProcess.delete(process.process_id)
   end
 end

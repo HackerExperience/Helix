@@ -1,4 +1,4 @@
-defmodule HELM.NPC.Model.NPCs do
+defmodule HELM.NPC.Model.NPC do
   use Ecto.Schema
 
   import Ecto.Changeset

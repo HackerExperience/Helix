@@ -1,24 +1,24 @@
-defmodule HELM.Server.Controller.ServerTypes do
+defmodule HELM.Server.Controller.ServerType do
   import Ecto.Query
 
   alias HELF.{Broker, Error}
   alias HELM.Server.Model.Repo
-  alias HELM.Server.Model.ServerTypes, as: MdlServerTypes
+  alias HELM.Server.Model.ServerType, as: MdlServerType
 
   def create(server_type) do
-    MdlServerTypes.create_changeset(%{server_type: server_type})
+    MdlServerType.create_changeset(%{server_type: server_type})
     |> Repo.insert()
   end
 
   def find(server_type) do
-    case Repo.get_by(MdlServerTypes, server_type: server_type) do
+    case Repo.get_by(MdlServerType, server_type: server_type) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end
   end
 
   def delete(server_type) do
-    MdlServerTypes
+    MdlServerType
     |> where([s], s.server_type == ^server_type)
     |> Repo.delete_all()
 
@@ -26,7 +26,7 @@ defmodule HELM.Server.Controller.ServerTypes do
   end
 
   def all do
-    MdlServerTypes
+    MdlServerType
     |> select([t], t.server_type)
     |> Repo.all()
   end

@@ -4,7 +4,7 @@ defmodule HELM.Hardware.Model.Motherboards do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELM.Hardware.Model.MotherboardSlots, as: MdlMoboSlot
+  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
 
   @primary_key {:motherboard_id, :string, autogenerate: false}
 

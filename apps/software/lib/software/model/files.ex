@@ -1,10 +1,10 @@
-defmodule HELM.Software.Model.Files do
+defmodule HELM.Software.Model.File do
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias HELM.Software.Model.FileTypes, as: MdlFileTypes
-  alias HELM.Software.Model.Storages, as: MdlStorages
+  alias HELM.Software.Model.FileType, as: MdlFileType
+  alias HELM.Software.Model.Storage, as: MdlStorageDrive
   alias Ecto.Changeset
 
   @primary_key {:file_id, :string, autogenerate: false}
@@ -16,12 +16,12 @@ defmodule HELM.Software.Model.Files do
     field :file_path, :string
     field :file_size, :integer
 
-    belongs_to :file_type_entity, MdlFileTypes,
+    belongs_to :file_type_entity, MdlFileType,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
 
-    belongs_to :storage_entity, MdlStorages,
+    belongs_to :storage_entity, MdlStorageDrive,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :string

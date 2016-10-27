@@ -1,16 +1,16 @@
-defmodule HELM.Server.Model.Servers do
+defmodule HELM.Server.Model.Server do
   use Ecto.Schema
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
 
-  alias HELM.Server.Model.ServerTypes, as: MdlServerTypes
+  alias HELM.Server.Model.ServerType, as: MdlServerType
 
   @primary_key {:server_id, :string, autogenerate: false}
 
   schema "servers" do
-    belongs_to :server_types, MdlServerTypes,
+    belongs_to :server_types, MdlServerType,
       foreign_key: :server_type,
       references: :server_type,
       type: :string

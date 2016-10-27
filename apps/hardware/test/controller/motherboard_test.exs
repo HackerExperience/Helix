@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.Controller.MotherboardTest do
   use ExUnit.Case
 
-  alias HELM.Hardware.Controller.Motherboards, as: CtrlMobos
+  alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
 
   test "create/1" do
     assert {:ok, _} = CtrlMobos.create()

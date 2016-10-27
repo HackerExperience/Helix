@@ -1,4 +1,4 @@
-defmodule HELM.Account.Model.Accounts do
+defmodule HELM.Account.Model.Account do
   use Ecto.Schema
 
   alias Comeonin.Bcrypt, as: Crypt

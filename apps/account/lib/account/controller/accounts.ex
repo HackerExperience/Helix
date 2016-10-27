@@ -1,4 +1,4 @@
-defmodule HELM.Account.Controller.Accounts do
+defmodule HELM.Account.Controller.Account do
   import Ecto.Changeset
   import Ecto.Query
 
@@ -6,7 +6,7 @@ defmodule HELM.Account.Controller.Accounts do
 
   alias HELF.{Broker, Error}
   alias HELM.Account.Model.Repo
-  alias HELM.Account.Model.Accounts, as: MdlAccount
+  alias HELM.Account.Model.Account, as: MdlAccount
 
   def create(account) do
     MdlAccount.create_changeset(account)

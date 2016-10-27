@@ -2,7 +2,7 @@ defmodule HELM.Server.Type.ControllerTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Server.Controller.ServerTypes, as: CtrlServerTypes
+  alias HELM.Server.Controller.ServerType, as: CtrlServerTypes
 
   setup do
     {:ok, type: HRand.random_numeric_string()}

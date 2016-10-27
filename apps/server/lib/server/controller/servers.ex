@@ -1,28 +1,28 @@
-defmodule HELM.Server.Controller.Servers do
+defmodule HELM.Server.Controller.Server do
   import Ecto.Query
 
   alias HELF.Broker
 
   alias HELM.Server.Model.Repo
-  alias HELM.Server.Model.Servers, as: MdlServers
+  alias HELM.Server.Model.Server, as: MdlServer
 
   def create(params) do
     %{server_type: params.server_type,
       poi_id: params[:poi_id],
       motherboard_id: params[:motherboard_id]}
-    |> MdlServers.create_changeset()
+    |> MdlServer.create_changeset()
     |> do_create()
   end
 
   def find(server_id) do
-    case Repo.get_by(MdlServers, server_id: server_id) do
+    case Repo.get_by(MdlServer, server_id: server_id) do
       nil -> {:error, :notfound}
       server -> {:ok, server}
     end
   end
 
   def delete(server_id) do
-    MdlServers
+    MdlServer
     |> where([s], s.server_id == ^server_id)
     |> Repo.delete_all()
     :ok
@@ -31,7 +31,7 @@ defmodule HELM.Server.Controller.Servers do
   def attach(server_id, mobo_id) do
     with {:ok, server} <- find(server_id),
          {:ok, _} <- Broker.call("hardware:get", {:motherboard, mobo_id}) do
-      MdlServers.update_changeset(server, %{motherboard_id: mobo_id})
+      MdlServer.update_changeset(server, %{motherboard_id: mobo_id})
       |> Repo.update()
     end
   end
@@ -39,7 +39,7 @@ defmodule HELM.Server.Controller.Servers do
   def detach(server_id) do
     case find(server_id) do
       {:ok, server} ->
-        MdlServers.update_changeset(server, %{motherboard_id: nil})
+        MdlServer.update_changeset(server, %{motherboard_id: nil})
         |> Repo.update()
     end
   end

@@ -1,17 +1,17 @@
-defmodule HELM.Hardware.Controller.MotherboardSlots do
+defmodule HELM.Hardware.Controller.MotherboardSlot do
   import Ecto.Query
 
   alias HELF.Broker
   alias HELM.Hardware.Model.Repo
-  alias HELM.Hardware.Model.MotherboardSlots, as: MdlMoboSlots
+  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
 
   def create(params) do
-    MdlMoboSlots.create_changeset(params)
+    MdlMoboSlot.create_changeset(params)
     |> do_create()
   end
 
   def find(slot_id) do
-    case Repo.get_by(MdlMoboSlots, slot_id: slot_id) do
+    case Repo.get_by(MdlMoboSlot, slot_id: slot_id) do
       nil -> {:error, :notfound}
       res -> {:ok, res}
     end
@@ -19,7 +19,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlots do
 
   def link(slot_id, link_component_id) do
     with {:ok, slot} <- find(slot_id) do
-      MdlMoboSlots.update_changeset(slot, %{link_component_id: link_component_id})
+      MdlMoboSlot.update_changeset(slot, %{link_component_id: link_component_id})
       |> Repo.update()
     else
       _ -> {:error, :notfound}
@@ -31,7 +31,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlots do
   end
 
   def delete(slot_id) do
-    MdlMoboSlots
+    MdlMoboSlot
     |> where([s], s.slot_id == ^slot_id)
     |> Repo.delete_all()
 

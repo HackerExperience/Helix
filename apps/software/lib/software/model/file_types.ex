@@ -1,10 +1,10 @@
-defmodule HELM.Software.Model.FileTypes do
+defmodule HELM.Software.Model.FileType do
   use Ecto.Schema
   import Ecto.Changeset
   alias Ecto.Changeset
 
-  alias HELM.Software.Model.Files, as: MdlFiles
-  alias HELM.Software.Model.ModuleRoles, as: MdlModuleRoles
+  alias HELM.Software.Model.File, as: MdlFile
+  alias HELM.Software.Model.ModuleRole, as: MdlModuleRole
 
   @primary_key {:file_type, :string, autogenerate: false}
   @creation_fields ~w/file_type extension/a
@@ -12,11 +12,11 @@ defmodule HELM.Software.Model.FileTypes do
   schema "file_types" do
     field :extension, :string
 
-    has_many :files, MdlFiles,
+    has_many :files, MdlFile,
       foreign_key: :file_type,
       references: :file_type
 
-    has_many :module_roles, MdlModuleRoles,
+    has_many :module_roles, MdlModuleRole,
       foreign_key: :file_type,
       references: :file_type
 

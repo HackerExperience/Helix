@@ -1,10 +1,10 @@
-defmodule HELM.Hardware.Model.Components do
+defmodule HELM.Hardware.Model.Component do
   use Ecto.Schema
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELM.Hardware.Model.MotherboardSlots, as: MdlMoboSlots
+  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
 
   @primary_key {:component_id, :string, autogenerate: false}
   @creation_fields ~w/component_type spec_id/a
@@ -13,7 +13,7 @@ defmodule HELM.Hardware.Model.Components do
     field :component_type, :string
     field :spec_id, :string
 
-    has_many :slots, MdlMoboSlots,
+    has_many :slots, MdlMoboSlot,
       foreign_key: :link_component_id,
       references: :component_id
 

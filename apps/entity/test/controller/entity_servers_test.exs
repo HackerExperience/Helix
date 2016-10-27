@@ -1,10 +1,10 @@
-defmodule HELM.Entity.Controller.EntityServersTest do
+defmodule HELM.Entity.Controller.EntityServerTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Entity.Controller.Entities, as: CtrlEntities
-  alias HELM.Entity.Controller.EntityTypes, as: CtrlEntityTypes
-  alias HELM.Entity.Controller.EntityServers, as: CtrlEntityServers
+  alias HELM.Entity.Controller.Entity, as: CtrlEntity
+  alias HELM.Entity.Controller.EntityType, as: CtrlEntityType
+  alias HELM.Entity.Controller.EntityServer, as: CtrlEntityServer
 
   setup do
     type = HRand.random_numeric_string()
@@ -15,29 +15,29 @@ defmodule HELM.Entity.Controller.EntityServersTest do
   end
 
   test "create/1", %{type: type, payload: payload, id: id} do
-    {:ok, _} = CtrlEntityTypes.create(type)
-    {:ok, entity} = CtrlEntities.create(payload)
-    assert {:ok, _} = CtrlEntityServers.create(id, entity.entity_id)
+    {:ok, _} = CtrlEntityType.create(type)
+    {:ok, entity} = CtrlEntity.create(payload)
+    assert {:ok, _} = CtrlEntityServer.create(id, entity.entity_id)
   end
 
   describe "find/1" do
     test "success", %{type: type, payload: payload, id: id} do
-      {:ok, _} = CtrlEntityTypes.create(type)
-      {:ok, entity} = CtrlEntities.create(payload)
-      {:ok, entity_server} = CtrlEntityServers.create(id, entity.entity_id)
-      assert {:ok, ^entity_server} = CtrlEntityServers.find(entity_server.server_id)
+      {:ok, _} = CtrlEntityType.create(type)
+      {:ok, entity} = CtrlEntity.create(payload)
+      {:ok, entity_server} = CtrlEntityServer.create(id, entity.entity_id)
+      assert {:ok, ^entity_server} = CtrlEntityServer.find(entity_server.server_id)
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlEntityServers.find("")
+      assert {:error, :notfound} = CtrlEntityServer.find("")
     end
   end
 
   test "delete/1 idempotency", %{type: type, payload: payload, id: id} do
-    {:ok, _} = CtrlEntityTypes.create(type)
-    {:ok, entity} = CtrlEntities.create(payload)
-    {:ok, entity_server} = CtrlEntityServers.create(id, entity.entity_id)
-    assert :ok = CtrlEntityServers.delete(entity_server.server_id)
-    assert :ok = CtrlEntityServers.delete(entity_server.server_id)
+    {:ok, _} = CtrlEntityType.create(type)
+    {:ok, entity} = CtrlEntity.create(payload)
+    {:ok, entity_server} = CtrlEntityServer.create(id, entity.entity_id)
+    assert :ok = CtrlEntityServer.delete(entity_server.server_id)
+    assert :ok = CtrlEntityServer.delete(entity_server.server_id)
   end
 end

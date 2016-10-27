@@ -1,8 +1,8 @@
-defmodule HELM.Account.Controller.AccountsTest do
+defmodule HELM.Account.Controller.AccountTest do
   use ExUnit.Case
 
   alias HELL.Random, as: HRand
-  alias HELM.Account.Controller.Accounts, as: CtrlAccounts
+  alias HELM.Account.Controller.Account, as: CtrlAccount
 
   setup do
     email = HRand.random_numeric_string()
@@ -18,12 +18,12 @@ defmodule HELM.Account.Controller.AccountsTest do
 
   describe "create/1" do
     test "success", %{payload: payload} do
-      assert {:ok, _} = CtrlAccounts.create(payload)
+      assert {:ok, _} = CtrlAccount.create(payload)
     end
 
     test "account exists", %{payload: payload} do
-      {:ok, _} = CtrlAccounts.create(payload)
-      {:error, errors} = CtrlAccounts.create(payload)
+      {:ok, _} = CtrlAccount.create(payload)
+      {:error, errors} = CtrlAccount.create(payload)
       error = Keyword.fetch!(errors, :email)
       assert error == {"has already been taken", []}
     end
@@ -31,7 +31,7 @@ defmodule HELM.Account.Controller.AccountsTest do
     test "wrong confirmation", %{email: email, pass: pass} do
       payload = %{email: email, password: pass, password_confirmation: "123"}
 
-      {:error, errors} = CtrlAccounts.create(payload)
+      {:error, errors} = CtrlAccount.create(payload)
       error = Keyword.fetch!(errors, :password_confirmation)
       assert error == {"does not match confirmation", []}
     end
@@ -39,7 +39,7 @@ defmodule HELM.Account.Controller.AccountsTest do
     test "short password", %{email: email} do
       payload = %{email: email, password: "123", password_confirmation: "123"}
 
-      {:error, errors} = CtrlAccounts.create(payload)
+      {:error, errors} = CtrlAccount.create(payload)
       error = Keyword.fetch!(errors, :password)
       assert error == {"should be at least %{count} character(s)", count: 8}
     end
@@ -47,49 +47,49 @@ defmodule HELM.Account.Controller.AccountsTest do
 
   describe "find/1" do
     test "success", %{payload: payload} do
-      {:ok, account} = CtrlAccounts.create(payload)
-      {:ok, found} = CtrlAccounts.find(account.account_id)
+      {:ok, account} = CtrlAccount.create(payload)
+      {:ok, found} = CtrlAccount.find(account.account_id)
       assert account.account_id == found.account_id
     end
 
     test "failure", %{payload: payload} do
-      {:ok, _} = CtrlAccounts.create(payload)
-      assert {:error, :notfound} = CtrlAccounts.find("")
+      {:ok, _} = CtrlAccount.create(payload)
+      assert {:error, :notfound} = CtrlAccount.find("")
     end
   end
 
   describe "find_by/1" do
     test "success with email", %{payload: payload} do
-      {:ok, account} = CtrlAccounts.create(payload)
-      {:ok, found} = CtrlAccounts.find_by(email: payload.email)
+      {:ok, account} = CtrlAccount.create(payload)
+      {:ok, found} = CtrlAccount.find_by(email: payload.email)
       assert account.account_id == found.account_id
     end
 
     test "failure with email", %{payload: payload} do
-      {:ok, _} = CtrlAccounts.create(payload)
-      assert {:error, :notfound} = CtrlAccounts.find_by(email: "")
+      {:ok, _} = CtrlAccount.create(payload)
+      assert {:error, :notfound} = CtrlAccount.find_by(email: "")
     end
   end
 
   test "delete/1 idempotency", %{payload: payload} do
-    {:ok, account} = CtrlAccounts.create(payload)
-    assert :ok = CtrlAccounts.delete(account.account_id)
-    assert :ok = CtrlAccounts.delete(account.account_id)
+    {:ok, account} = CtrlAccount.create(payload)
+    assert :ok = CtrlAccount.delete(account.account_id)
+    assert :ok = CtrlAccount.delete(account.account_id)
   end
 
   describe "login/2" do
     test "success", %{payload: payload, email: email, pass: pass} do
-      {:ok, _} = CtrlAccounts.create(payload)
-      assert :ok = CtrlAccounts.login(email, pass)
+      {:ok, _} = CtrlAccount.create(payload)
+      assert :ok = CtrlAccount.login(email, pass)
     end
 
     test "user not found" do
-      assert {:error, :notfound} = CtrlAccounts.login(";", "")
+      assert {:error, :notfound} = CtrlAccount.login(";", "")
     end
 
     test "wrong password", %{payload: payload, email: email} do
-      {:ok, _} = CtrlAccounts.create(payload)
-      assert {:error, :notfound} = CtrlAccounts.login(email, "")
+      {:ok, _} = CtrlAccount.create(payload)
+      assert {:error, :notfound} = CtrlAccount.login(email, "")
     end
   end
 end
