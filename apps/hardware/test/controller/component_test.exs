@@ -32,7 +32,7 @@ defmodule HELM.Hardware.Controller.ComponentTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlComps.find("")
+      assert {:error, :notfound} = CtrlComps.find(UUID.uuid4())
     end
   end
 

@@ -13,7 +13,7 @@ defmodule HELM.Software.Controller.StorageTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlStorage.find("")
+      assert {:error, :notfound} = CtrlStorage.find(UUID.uuid4())
     end
   end
 

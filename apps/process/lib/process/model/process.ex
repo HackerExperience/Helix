@@ -1,9 +1,10 @@
 defmodule HELM.Process.Model.Process do
   use Ecto.Schema
-
   import Ecto.Changeset
 
-  @primary_key {:process_id, :string, autogenerate: false}
+  alias HELL.UUID, as: HUUID
+
+  @primary_key {:process_id, :binary_id, autogenerate: false}
 
   schema "processes" do
     timestamps
@@ -19,7 +20,10 @@ defmodule HELM.Process.Model.Process do
 
   defp put_uuid(changeset) do
     if changeset.valid?,
-      do: Ecto.Changeset.put_change(changeset, :process_id, HELL.ID.generate("PROCESS")),
+      do: put_change(changeset, :process_id, uuid()),
       else: changeset
   end
+
+  defp uuid,
+    do: HUUID.create!("04")
 end

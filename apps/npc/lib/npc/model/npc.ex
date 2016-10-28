@@ -1,9 +1,10 @@
 defmodule HELM.NPC.Model.NPC do
   use Ecto.Schema
-
   import Ecto.Changeset
 
-  @primary_key {:npc_id, :string, autogenerate: false}
+  alias HELL.UUID, as: HUUID
+
+  @primary_key {:npc_id, :binary_id, autogenerate: false}
 
   schema "npcs" do
     timestamps
@@ -19,7 +20,10 @@ defmodule HELM.NPC.Model.NPC do
 
   defp put_uuid(changeset) do
     if changeset.valid?,
-      do: Ecto.Changeset.put_change(changeset, :npc_id, HELL.ID.generate("NPC")),
+      do: put_change(changeset, :npc_id, uuid()),
       else: changeset
   end
+
+  defp uuid,
+    do: HUUID.create!("03")
 end

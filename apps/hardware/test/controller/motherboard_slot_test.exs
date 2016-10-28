@@ -53,7 +53,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlMoboSlots.find("")
+      assert {:error, :notfound} = CtrlMoboSlots.find(UUID.uuid4())
     end
   end
 

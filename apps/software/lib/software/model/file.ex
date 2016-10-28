@@ -1,12 +1,12 @@
 defmodule HELM.Software.Model.File do
   use Ecto.Schema
   import Ecto.Changeset
-  alias Ecto.Changeset
 
+  alias HELL.UUID, as: HUUID
   alias HELM.Software.Model.FileType, as: MdlFileType, warn: false
   alias HELM.Software.Model.Storage, as: MdlStorage, warn: false
 
-  @primary_key {:file_id, :string, autogenerate: false}
+  @primary_key {:file_id, :binary_id, autogenerate: false}
   @creation_fields ~w/name file_path file_size file_type storage_id/a
   @update_fields ~w/name file_path storage_id/a
 
@@ -23,7 +23,7 @@ defmodule HELM.Software.Model.File do
     belongs_to :storage_entity, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: :string
+      type: :binary_id
 
     timestamps
   end
@@ -41,11 +41,11 @@ defmodule HELM.Software.Model.File do
   end
 
   defp put_uuid(changeset) do
-    if changeset.valid? do
-      file_id = HELL.ID.generate("FILE")
-      Changeset.put_change(changeset, :file_id, file_id)
-    else
-      changeset
-    end
+    if changeset.valid?,
+      do: put_change(changeset, :file_id, uuid()),
+      else: changeset
   end
+
+  defp uuid,
+    do: HUUID.create!("05")
 end

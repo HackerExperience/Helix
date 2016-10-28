@@ -7,7 +7,7 @@ defmodule HELM.Entity.Controller.EntityTest do
 
   setup do
     type = HRand.random_numeric_string()
-    ref_id = HRand.random_numeric_string()
+    ref_id = UUID.uuid4()
     payload = %{entity_type: type, reference_id: ref_id}
     {:ok, type: type, payload: payload}
   end
@@ -25,7 +25,7 @@ defmodule HELM.Entity.Controller.EntityTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlEntity.find("")
+      assert {:error, :notfound} = CtrlEntity.find(UUID.uuid4())
     end
   end
 

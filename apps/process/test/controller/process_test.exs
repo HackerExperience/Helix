@@ -14,7 +14,7 @@ defmodule HELM.Process.Controller.ProcessTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlProcess.find("")
+      assert {:error, :notfound} = CtrlProcess.find(UUID.uuid4())
     end
   end
 

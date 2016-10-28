@@ -1,6 +1,5 @@
 defmodule HELM.Software.Model.Module do
   use Ecto.Schema
-
   import Ecto.Changeset
 
   alias HELM.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
@@ -10,10 +9,12 @@ defmodule HELM.Software.Model.Module do
   @creation_fields ~w/file_id module_role module_version/a
 
   schema "modules" do
+    field :module_version, :integer
+
     belongs_to :file_entity, MdlFile,
       foreign_key: :file_id,
       references: :file_id,
-      type: :string,
+      type: :binary_id,
       primary_key: true
 
     belongs_to :module_role_entity, MdlModuleRole,
@@ -21,8 +22,6 @@ defmodule HELM.Software.Model.Module do
       references: :module_role,
       type: :string,
       primary_key: true
-
-    field :module_version, :integer
 
     timestamps
   end

@@ -1,25 +1,28 @@
 defmodule HELM.Hardware.Model.MotherboardSlot do
   use Ecto.Schema
-
   import Ecto.Changeset
 
-  alias Ecto.Changeset
-
+  alias HELL.UUID, as: HUUID
   alias HELM.Hardware.Model.Component, as: MdlComp
+  alias HELM.Hardware.Model.Motherboard, as: MdlMobo
   alias HELM.Hardware.Model.ComponentType, as: MdlCompType
 
-  @primary_key {:slot_id, :string, autogenerate: false}
+  @primary_key {:slot_id, :binary_id, autogenerate: false}
   @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
   @update_fields ~w/link_component_id/a
 
   schema "motherboard_slots" do
-    field :motherboard_id, :string
     field :slot_internal_id, :integer
+
+    belongs_to :motherboards, MdlMobo,
+      foreign_key: :motherboard_id,
+      references: :motherboard_id,
+      type: :binary_id
 
     belongs_to :components, MdlComp,
       foreign_key: :link_component_id,
       references: :component_id,
-      type: :string
+      type: :binary_id
 
     belongs_to :component_types, MdlCompType,
       foreign_key: :link_component_type,
@@ -45,7 +48,10 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
 
   defp put_uid(changeset) do
     if changeset.valid?,
-      do: Changeset.put_change(changeset, :slot_id, HELL.ID.generate("SLOT")),
+      do: put_change(changeset, :slot_id, uuid()),
       else: changeset
   end
+
+  defp uuid,
+    do: HUUID.create!("02", meta1: "2")
 end

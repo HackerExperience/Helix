@@ -1,6 +1,7 @@
 defmodule HELM.NPC.Controller.NPCTest do
   use ExUnit.Case
 
+  alias HELL.UUID, as: HUUID
   alias HELM.NPC.Controller.NPC, as: CtrlNPC
 
   test "create/1" do
@@ -14,7 +15,7 @@ defmodule HELM.NPC.Controller.NPCTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlNPC.find("")
+      assert {:error, :notfound} = CtrlNPC.find(UUID.uuid4())
     end
   end
 

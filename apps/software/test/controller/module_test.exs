@@ -54,7 +54,7 @@ defmodule HELM.Software.Controller.ModuleTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlModule.find("", "")
+      assert {:error, :notfound} = CtrlModule.find("", UUID.uuid4())
     end
   end
 

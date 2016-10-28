@@ -52,7 +52,7 @@ defmodule HELM.Account.Controller.AccountTest do
 
     test "failure", %{payload: payload} do
       {:ok, _} = CtrlAccount.create(payload)
-      assert {:error, :notfound} = CtrlAccount.find("")
+      assert {:error, :notfound} = CtrlAccount.find(UUID.uuid4())
     end
   end
 

@@ -25,7 +25,7 @@ defmodule HELM.Server.ControllerTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlServer.find("")
+      assert {:error, :notfound} = CtrlServer.find(UUID.uuid4())
     end
   end
 

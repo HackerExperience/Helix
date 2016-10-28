@@ -28,7 +28,7 @@ defmodule HELM.Software.Controller.StorageDriveTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlStorageDrives.find("", 0)
+      assert {:error, :notfound} = CtrlStorageDrives.find(UUID.uuid4(), 0)
     end
   end
 

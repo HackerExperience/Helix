@@ -6,7 +6,7 @@ defmodule HELL.UUID do
   """
 
   # allowed hex characters, hex is case sensitive, always use lowercased letters
-  @hex_chars ?0..9
+  @hex_chars ?0..?9
     |> Enum.to_list()
     |> Kernel.++(Enum.to_list(?a..?f))
     |> Enum.map(&List.wrap/1)

@@ -37,7 +37,7 @@ defmodule HELM.Software.Controller.FileTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlFile.find("")
+      assert {:error, :notfound} = CtrlFile.find(UUID.uuid4())
     end
   end
 
@@ -61,7 +61,7 @@ defmodule HELM.Software.Controller.FileTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlFile.update("", %{})
+      assert {:error, :notfound} = CtrlFile.update(UUID.uuid4(), %{})
     end
   end
 

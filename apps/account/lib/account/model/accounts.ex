@@ -1,10 +1,11 @@
 defmodule HELM.Account.Model.Account do
   use Ecto.Schema
 
+  alias HELL.UUID, as: HUUID
   alias Comeonin.Bcrypt, as: Crypt
   import Ecto.Changeset
 
-  @primary_key {:account_id, :string, autogenerate: false}
+  @primary_key {:account_id, :binary_id, autogenerate: false}
   @derive {Poison.Encoder, only: [:email, :account_id]}
 
   schema "accounts" do
@@ -38,9 +39,12 @@ defmodule HELM.Account.Model.Account do
 
   defp put_uuid(changeset) do
     if changeset.valid?,
-      do: Ecto.Changeset.put_change(changeset, :account_id, HELL.ID.generate("ACCT")),
+      do: Ecto.Changeset.put_change(changeset, :account_id, uuid()),
       else: changeset
   end
+
+  defp uuid(),
+    do: HUUID.create!("00")
 
   defp generic_validations(changeset) do
     changeset

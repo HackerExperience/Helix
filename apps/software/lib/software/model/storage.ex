@@ -1,12 +1,12 @@
 defmodule HELM.Software.Model.Storage do
   use Ecto.Schema
   import Ecto.Changeset
-  alias Ecto.Changeset
 
+  alias HELL.UUID, as: HUUID
   alias HELM.Software.Model.StorageDrive, as: MdlStorageDrive, warn: false
   alias HELM.Software.Model.File, as: MdlFile, warn: false
 
-  @primary_key {:storage_id, :string, autogenerate: false}
+  @primary_key {:storage_id, :binary_id, autogenerate: false}
 
   schema "storages" do
     has_many :drives, MdlStorageDrive,
@@ -27,11 +27,11 @@ defmodule HELM.Software.Model.Storage do
   end
 
   defp put_uuid(changeset) do
-    if changeset.valid? do
-      storage_id = HELL.ID.generate("STRG")
-      Changeset.put_change(changeset, :storage_id, storage_id)
-    else
-      changeset
-    end
+    if changeset.valid?,
+      do: put_change(changeset, :storage_id, uuid()),
+      else: changeset
   end
+
+  defp uuid,
+    do: HUUID.create!("05", meta1: "2")
 end

@@ -1,13 +1,11 @@
 defmodule HELM.Server.Model.Server do
   use Ecto.Schema
-
   import Ecto.Changeset
 
-  alias Ecto.Changeset
-
+  alias HELL.UUID, as: HUUID
   alias HELM.Server.Model.ServerType, as: MdlServerType, warn: false
 
-  @primary_key {:server_id, :string, autogenerate: false}
+  @primary_key {:server_id, :binary_id, autogenerate: false}
 
   schema "servers" do
     belongs_to :server_types, MdlServerType,
@@ -15,8 +13,8 @@ defmodule HELM.Server.Model.Server do
       references: :server_type,
       type: :string
 
-    field :poi_id, :string
-    field :motherboard_id, :string
+    field :poi_id, :binary_id
+    field :motherboard_id, :binary_id
 
     timestamps
   end
@@ -37,11 +35,11 @@ defmodule HELM.Server.Model.Server do
   end
 
   defp put_uuid(changeset) do
-    if changeset.valid? do
-      server_id = HELL.ID.generate("SRVR")
-      Changeset.put_change(changeset, :server_id, server_id)
-    else
-      changeset
-    end
+    if changeset.valid?,
+      do: put_change(changeset, :server_id, uuid()),
+      else: changeset
   end
+
+  defp uuid,
+    do: HUUID.create!("04")
 end

@@ -14,7 +14,7 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlMobos.find("")
+      assert {:error, :notfound} = CtrlMobos.find(UUID.uuid4())
     end
   end
 
