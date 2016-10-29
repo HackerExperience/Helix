@@ -12,7 +12,7 @@ defmodule HELM.Hardware.Model.Component do
   schema "components" do
     field :component_type, :string
 
-    belongs_to :component_specs, MdlCompSpec,
+    belongs_to :component_spec, MdlCompSpec,
       foreign_key: :spec_id,
       references: :spec_id,
       type: :binary_id

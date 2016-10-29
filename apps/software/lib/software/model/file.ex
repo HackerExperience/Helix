@@ -47,5 +47,5 @@ defmodule HELM.Software.Model.File do
   end
 
   defp uuid,
-    do: HUUID.create!("05")
+    do: HUUID.create!("06", meta1: "0")
 end

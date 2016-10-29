@@ -34,7 +34,7 @@ defmodule HELM.Hardware.Model.ComponentSpec do
       do: Changeset.put_change(changeset, :spec_id, uuid()),
       else: changeset
   end
-
+  
   defp uuid,
-    do: HUUID.create!("02")
+    do: HUUID.create!("02", meta1: "0")
 end

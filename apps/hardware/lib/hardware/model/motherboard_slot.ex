@@ -14,17 +14,17 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
   schema "motherboard_slots" do
     field :slot_internal_id, :integer
 
-    belongs_to :motherboards, MdlMobo,
+    belongs_to :motherboard, MdlMobo,
       foreign_key: :motherboard_id,
       references: :motherboard_id,
       type: :binary_id
 
-    belongs_to :components, MdlComp,
+    belongs_to :component, MdlComp,
       foreign_key: :link_component_id,
       references: :component_id,
       type: :binary_id
 
-    belongs_to :component_types, MdlCompType,
+    belongs_to :component_type, MdlCompType,
       foreign_key: :link_component_type,
       references: :component_type,
       type: :string

@@ -41,5 +41,5 @@ defmodule HELM.Server.Model.Server do
   end
 
   defp uuid,
-    do: HUUID.create!("04")
+    do: HUUID.create!("05")
 end

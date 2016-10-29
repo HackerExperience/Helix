@@ -33,5 +33,5 @@ defmodule HELM.Software.Model.Storage do
   end
 
   defp uuid,
-    do: HUUID.create!("05", meta1: "2")
+    do: HUUID.create!("06", meta1: "1")
 end

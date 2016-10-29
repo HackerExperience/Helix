@@ -1,7 +1,7 @@
 defmodule HELM.Software.Model.StorageDrive do
   use Ecto.Schema
   import Ecto.Changeset
-  
+
   alias HELM.Software.Model.Storage, as: MdlStorage, warn: false
 
   @primary_key false

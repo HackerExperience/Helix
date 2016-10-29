@@ -9,7 +9,7 @@ defmodule HELM.Entity.Model.EntityServer do
   @creation_fields ~w/server_id entity_id/a
 
   schema "entity_servers" do
-    belongs_to :entities, MdlEntity,
+    belongs_to :entity, MdlEntity,
       foreign_key: :entity_id,
       references: :entity_id,
       type: :binary_id
