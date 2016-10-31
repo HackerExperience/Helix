@@ -20,17 +20,17 @@ defmodule HELM.Server.Controller.ServerService do
 
   @doc false
   def handle_broker_cast(pid, "event:entity:created", id, _request),
-    do: GenServer.cast(pid, {:server, :from_entity, id})
+    do: GenServer.cast(pid, {:server, :create, :entity, id})
 
   @doc false
-  def handle_cast({:server, :from_entity, id}, state) do
-    CtrlServers.create(%{entity_id: id})
+  def handle_cast({:server, :create, :entity, id}, state) do
+    create_server(%{entity_id: id})
     {:noreply, state}
   end
 
   @doc false
-  def handle_broker_call(pid, "server:create", struct, _request) do
-    response = GenServer.call(pid, {:server, :create, struct})
+  def handle_broker_call(pid, "server:create", params, _request) do
+    response = GenServer.call(pid, {:server, :create, params})
     {:reply, response}
   end
   def handle_broker_call(pid, "server:attach", {server, mobo}, _request) do
@@ -44,10 +44,8 @@ defmodule HELM.Server.Controller.ServerService do
 
   @doc false
   def handle_call({:server, :create, params}, _from, state) do
-    with {:ok, server} <- CtrlServers.create(params) do
-      Broker.cast("event:server:created", server.server_id)
-      {:reply, {:ok, server.server_id}, state}
-    else
+    case create_server(params) do
+      {:ok, server} -> {:reply, {:ok, server.server_id}, state}
       error -> {:reply, error, state}
     end
   end
@@ -61,6 +59,13 @@ defmodule HELM.Server.Controller.ServerService do
     case CtrlServers.detach(server) do
       {:ok, _} -> {:reply, :ok, state}
       {:error, _} -> {:reply, :error, state}
+    end
+  end
+
+  defp create_server(params) do
+    with {:ok, server} <- CtrlServers.create(params) do
+      Broker.cast("event:server:created", server.server_id)
+      {:ok, server}
     end
   end
 end
