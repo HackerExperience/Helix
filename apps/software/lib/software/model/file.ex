@@ -15,12 +15,12 @@ defmodule HELM.Software.Model.File do
     field :file_path, :string
     field :file_size, :integer
 
-    belongs_to :file_type_entity, MdlFileType,
+    belongs_to :type, MdlFileType,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
 
-    belongs_to :storage_entity, MdlStorage,
+    belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :binary_id

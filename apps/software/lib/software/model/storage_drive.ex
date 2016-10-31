@@ -8,7 +8,7 @@ defmodule HELM.Software.Model.StorageDrive do
   @creation_fields ~w/drive_id storage_id/a
 
   schema "storage_drives" do
-    belongs_to :storage_entity, MdlStorage,
+    belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
       type: :binary_id,

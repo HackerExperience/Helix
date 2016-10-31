@@ -8,7 +8,7 @@ defmodule HELM.Server.Model.Server do
   @primary_key {:server_id, :binary_id, autogenerate: false}
 
   schema "servers" do
-    belongs_to :server_types, MdlServerType,
+    belongs_to :type, MdlServerType,
       foreign_key: :server_type,
       references: :server_type,
       type: :string

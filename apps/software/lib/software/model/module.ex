@@ -11,13 +11,13 @@ defmodule HELM.Software.Model.Module do
   schema "modules" do
     field :module_version, :integer
 
-    belongs_to :file_entity, MdlFile,
+    belongs_to :file, MdlFile,
       foreign_key: :file_id,
       references: :file_id,
       type: :binary_id,
       primary_key: true
 
-    belongs_to :module_role_entity, MdlModuleRole,
+    belongs_to :role, MdlModuleRole,
       foreign_key: :module_role,
       references: :module_role,
       type: :string,

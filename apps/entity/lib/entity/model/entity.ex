@@ -17,7 +17,7 @@ defmodule HELM.Entity.Model.Entity do
       foreign_key: :entity_id,
       references: :entity_id
 
-    belongs_to :entity_types, MdlEntityType,
+    belongs_to :type, MdlEntityType,
       foreign_key: :entity_type,
       references: :entity_type,
       type: :string
