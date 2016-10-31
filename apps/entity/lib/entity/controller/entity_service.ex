@@ -16,24 +16,38 @@ defmodule HELM.Controller.EntityService do
   end
 
   @doc false
-  def handle_broker_cast(pid, "event:account:created", id, _request),
-    do: GenServer.cast(pid, {:account_created, id})
+  def handle_broker_cast(pid, "event:account:created", id, _request) do
+    response = GenServer.cast(pid, {:entity, :from_account, id})
+    {:reply, response}
+  end
 
   @doc false
-  def handle_cast({:account_created, id}, state) do
-    CtrlEntity.action_create(%{account_id: id})
+  def handle_cast({:entity, :from_account, id}, state) do
+    CtrlEntity.create(%{account_id: id})
     {:noreply, state}
   end
 
   @doc false
-  def handle_broker_call(pid, "entity:create", params, _request),
-    do: GenServer.call(pid, {:entity_create, params})
-  def handle_broker_call(pid, "entity:find", id, _request),
-    do: GenServer.call(pid, {:entity_find, id})
+  def handle_broker_call(pid, "entity:create", params, _request) do
+    response = GenServer.call(pid, {:entity, :create, params})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "entity:find", id, _request) do
+    response = GenServer.call(pid, {:entity, :find, id})
+    {:reply, response}
+  end
 
   @doc false
-  def handle_call({:entity_create, params}, _from, state) do
-    return = CtrlEntity.action_create(params)
-    {:reply, {:reply, return}, state}
+  def handle_call({:entity, :create, params}, _from, state) do
+    with {:ok, entity} <- CtrlEntity.create(params) do
+      Broker.cast("event:entity:created", entity.entity_id)
+      {:reply, {:ok, entity}, state}
+    else
+      error -> {:reply, error, state}
+    end
+  end
+  def handle_call({:entity, :find, id}, _from, state) do
+    response = CtrlEntity.create(id)
+    {:reply, response, state}
   end
 end

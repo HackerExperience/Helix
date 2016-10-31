@@ -20,42 +20,47 @@ defmodule HELM.Server.Controller.ServerService do
 
   @doc false
   def handle_broker_cast(pid, "event:entity:created", id, _request),
-    do: GenServer.cast(pid, {:entity_created, id})
+    do: GenServer.cast(pid, {:server, :from_entity, id})
 
   @doc false
-  def handle_cast({:entity_created, id}, state) do
+  def handle_cast({:server, :from_entity, id}, state) do
     CtrlServers.create(%{entity_id: id})
     {:noreply, state}
   end
 
   @doc false
-  def handle_broker_call(pid, "server:create", struct, _request),
-    do: GenServer.call(pid, {:server_create, struct})
-  def handle_broker_call(pid, "server:attach", {server, mobo}, _request),
-    do: GenServer.call(pid, {:server_attach, server, mobo})
-  def handle_broker_call(pid, "server:detach", server, _request),
-    do: GenServer.call(pid, {:server_detach, server})
+  def handle_broker_call(pid, "server:create", struct, _request) do
+    response = GenServer.call(pid, {:server, :create, struct})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server:attach", {server, mobo}, _request) do
+    response = GenServer.call(pid, {:server, :attach, server, mobo})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server:detach", server, _request) do
+    response = GenServer.call(pid, {:server, :detach, server})
+    {:reply, response}
+  end
 
   @doc false
-  def handle_call({:server_create, struct}, _from, state) do
-    reply = case CtrlServers.create(struct) do
-      {:ok, schema} -> {:ok, schema.server_id}
-      {:error, _} -> :error
+  def handle_call({:server, :create, params}, _from, state) do
+    with {:ok, server} <- CtrlServers.create(params) do
+      Broker.cast("event:server:created", server.server_id)
+      {:reply, {:ok, server.server_id}, state}
+    else
+      error -> {:reply, error, state}
     end
-    {:reply, {:reply, reply}, state}
   end
-  def handle_call({:server_attach, server, mobo}, _from, state) do
-    reply = case CtrlServers.attach(server, mobo) do
-      {:ok, _} -> :ok
-      {:error, _} -> :error
+  def handle_call({:server, :attach, server, mobo}, _from, state) do
+    case CtrlServers.attach(server, mobo) do
+      {:ok, _} -> {:reply, :ok, state}
+      {:error, _} -> {:reply, :error, state}
     end
-    {:reply, {:reply, reply}, state}
   end
-  def handle_call({:server_detach, server}, _from, state) do
-    reply = case CtrlServers.detach(server) do
-      {:ok, _} -> :ok
-      {:error, _} -> :error
+  def handle_call({:server, :detach, server}, _from, state) do
+    case CtrlServers.detach(server) do
+      {:ok, _} -> {:reply, :ok, state}
+      {:error, _} -> {:reply, :error, state}
     end
-    {:reply, {:reply, reply}, state}
   end
 end

@@ -37,9 +37,11 @@ defmodule HELM.Hardware.Controller.HardwareService do
   end
 
   def handle_call({:motherboard, :create, _params}, _from, state) do
-    case CtrlMobos.create() do
-      {:ok, mobo} -> {:reply, {:ok, mobo.motherboard_id}, state}
-      {:error, _} -> {:reply, :error, state}
+    with {:ok, mobo} <- CtrlMobos.create() do
+      Broker.cast("hardware:motherboard:created", mobo.motherboard_id)
+      {:reply, {:ok, mobo.motherboard_id}, state}
+    else
+      error -> {:reply, error, state}
     end
   end
 

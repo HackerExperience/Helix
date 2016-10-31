@@ -39,5 +39,5 @@ defmodule HELM.Entity.Model.Entity do
   end
 
   defp uuid(),
-    do: HUUID.create!("bd")
+    do: HUUID.create!("01")
 end

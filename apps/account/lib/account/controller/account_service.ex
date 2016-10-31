@@ -23,12 +23,18 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @doc false
-  def handle_broker_call(pid, "account:create", account, _request),
-    do: GenServer.call(pid, {:account_create, account})
+  def handle_broker_call(pid, "account:create", account, _request) do
+    response = GenServer.call(pid, {:account, :create, account})
+    {:reply, response}
+  end
 
   @doc false
-  def handle_call({:account_create, account}, _from, state) do
-    response = CtrlAccount.action_create(account)
-    {:reply, {:reply, response}, state}
+  def handle_call({:account, :create, account}, _from, state) do
+    with {:ok, account} <- CtrlAccount.create(account) do
+      Broker.cast("event:account:created", account.account_id)
+      {:reply, {:ok, account}, state}
+    else
+      error -> {:reply, error, state}
+    end
   end
 end

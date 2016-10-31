@@ -1,7 +1,6 @@
 defmodule HELM.NPC.Controller.NPCTest do
   use ExUnit.Case
-
-  alias HELL.UUID, as: HUUID
+  
   alias HELM.NPC.Controller.NPC, as: CtrlNPC
 
   test "create/1" do
