@@ -7,7 +7,7 @@ defmodule HELM.Hardware.Controller.Motherboard do
 
   def create do
     MdlMobo.create_changeset()
-    |> do_create()
+    |> Repo.insert()
   end
 
   def find(motherboard_id) do
@@ -23,15 +23,5 @@ defmodule HELM.Hardware.Controller.Motherboard do
     |> Repo.delete_all()
 
     :ok
-  end
-
-  def do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        Broker.cast("event:component:motherboard:created", schema.motherboard_id)
-        {:ok, schema}
-      {:error, msg} ->
-        {:error, msg}
-    end
   end
 end

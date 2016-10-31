@@ -3,9 +3,9 @@ defmodule HELM.Hardware.Model.ComponentType do
 
   import Ecto.Changeset
 
-  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
-  alias HELM.Hardware.Model.Component, as: MdlComp
-  alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec
+  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
+  alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
+  alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec, warn: false
 
   @primary_key {:component_type, :string, autogenerate: false}
   @creation_fields ~w/component_type/a

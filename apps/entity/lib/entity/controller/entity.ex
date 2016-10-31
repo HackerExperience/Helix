@@ -5,13 +5,6 @@ defmodule HELM.Entity.Controller.Entity do
   alias HELM.Entity.Model.Entity, as: MdlEntity
   alias HELM.Entity.Repo
 
-  def action_create(params) do
-    with {:ok, entity} <- create(params) do
-      Broker.cast("event:entity:created", entity.entity_id)
-      {:ok, entity}
-    end
-  end
-
   def create(params) do
     params
     |> MdlEntity.create_changeset()

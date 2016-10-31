@@ -1,9 +1,8 @@
 defmodule HELM.Server.Model.ServerType do
   use Ecto.Schema
-
   import Ecto.Changeset
 
-  alias HELM.Server.Model.Server, as: MdlServer
+  alias HELM.Server.Model.Server, as: MdlServer, warn: false
 
   @primary_key {:server_type, :string, autogenerate: false}
   @creation_fields ~w/server_type/a

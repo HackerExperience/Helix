@@ -3,8 +3,8 @@ defmodule HELM.Hardware.Model.Component do
   import Ecto.Changeset
 
   alias HELL.UUID, as: HUUID
-  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
-  alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec
+  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
+  alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec, warn: false
 
   @primary_key {:component_id, :binary_id, autogenerate: false}
   @creation_fields ~w/component_type spec_id/a

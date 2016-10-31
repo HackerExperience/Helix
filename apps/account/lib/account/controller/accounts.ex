@@ -3,16 +3,8 @@ defmodule HELM.Account.Controller.Account do
 
   alias Comeonin.Bcrypt, as: Crypt
 
-  alias HELF.Broker
   alias HELM.Account.Repo
   alias HELM.Account.Model.Account, as: MdlAccount
-
-  def action_create(params) do
-    with {:ok, account} <- create(params) do
-      Broker.cast("event:account:created", account.account_id)
-      {:ok, account}
-    end
-  end
 
   def create(params) do
     MdlAccount.create_changeset(params)

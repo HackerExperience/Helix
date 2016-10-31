@@ -11,7 +11,7 @@ defmodule HELM.Server.Controller.Server do
       poi_id: params[:poi_id],
       motherboard_id: params[:motherboard_id]}
     |> MdlServer.create_changeset()
-    |> do_create()
+    |> Repo.insert()
   end
 
   def find(server_id) do
@@ -41,13 +41,6 @@ defmodule HELM.Server.Controller.Server do
       {:ok, server} ->
         MdlServer.update_changeset(server, %{motherboard_id: nil})
         |> Repo.update()
-    end
-  end
-
-  defp do_create(changeset) do
-    with {:ok, result} <- Repo.insert(changeset) do
-      Broker.cast("event:server:created", result.server_id)
-      {:ok, result}
     end
   end
 end

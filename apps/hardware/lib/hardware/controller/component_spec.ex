@@ -7,7 +7,7 @@ defmodule HELM.Hardware.Controller.ComponentSpec do
 
   def create(payload) do
     MdlCompSpec.create_changeset(payload)
-    |> do_create()
+    |> Repo.insert()
   end
 
   def find(spec_id) do
@@ -23,15 +23,5 @@ defmodule HELM.Hardware.Controller.ComponentSpec do
     |> Repo.delete_all()
 
     :ok
-  end
-
-  def do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        Broker.cast("event:component:spec:created", schema.spec_id)
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
   end
 end

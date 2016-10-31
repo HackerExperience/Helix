@@ -4,8 +4,8 @@ defmodule HELM.Entity.Model.Entity do
   import Ecto.Changeset
 
   alias HELL.UUID, as: HUUID
-  alias HELM.Entity.Model.EntityServer, as: MdlEntityServer
-  alias HELM.Entity.Model.EntityType, as: MdlEntityType
+  alias HELM.Entity.Model.EntityServer, as: MdlEntityServer, warn: false
+  alias HELM.Entity.Model.EntityType, as: MdlEntityType, warn: false
 
   @primary_key {:entity_id, :binary_id, autogenerate: false}
   @creation_fields ~w(entity_type reference_id)a
@@ -39,5 +39,5 @@ defmodule HELM.Entity.Model.Entity do
   end
 
   defp uuid(),
-    do: HUUID.create!("bd")
+    do: HUUID.create!("01")
 end

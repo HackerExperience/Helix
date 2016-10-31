@@ -7,7 +7,7 @@ defmodule HELM.Hardware.Controller.ComponentType do
 
   def create(component_type) do
     MdlCompType.create_changeset(%{component_type: component_type})
-    |> do_create
+    |> Repo.insert()
   end
 
   def find(component_type) do
@@ -29,15 +29,5 @@ defmodule HELM.Hardware.Controller.ComponentType do
     |> Repo.delete_all()
 
     :ok
-  end
-
-  defp do_create(changeset) do
-    case Repo.insert(changeset) do
-      {:ok, schema} ->
-        Broker.cast("event:component:type:created", schema.component_type)
-        {:ok, schema}
-      {:error, changeset} ->
-        {:error, changeset}
-    end
   end
 end

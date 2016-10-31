@@ -6,7 +6,7 @@ defmodule HELM.Hardware.Model.ComponentSpec do
   alias Ecto.Changeset
 
   alias HELL.UUID, as: HUUID
-  alias HELM.Hardware.Model.Component, as: MdlComp
+  alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
 
   @primary_key {:spec_id, :binary_id, autogenerate: false}
   @creation_fields ~w/spec component_type/a
@@ -26,7 +26,7 @@ defmodule HELM.Hardware.Model.ComponentSpec do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:spec)
-    |> put_id
+    |> put_id()
   end
 
   defp put_id(changeset) do
@@ -34,7 +34,7 @@ defmodule HELM.Hardware.Model.ComponentSpec do
       do: Changeset.put_change(changeset, :spec_id, uuid()),
       else: changeset
   end
-  
+
   defp uuid,
     do: HUUID.create!("02", meta1: "0")
 end

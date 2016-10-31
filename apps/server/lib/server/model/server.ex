@@ -26,7 +26,7 @@ defmodule HELM.Server.Model.Server do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
-    |> put_uuid
+    |> put_uuid()
   end
 
   def update_changeset(struct, params) do

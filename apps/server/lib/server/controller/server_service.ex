@@ -19,43 +19,48 @@ defmodule HELM.Server.Controller.ServerService do
   end
 
   @doc false
-  def handle_broker_cast(pid, "event:entity:created", id, _request),
-    do: GenServer.cast(pid, {:entity_created, id})
+  def handle_broker_cast(pid, "event:entity:created", entity_id, _request),
+    do: GenServer.cast(pid, {:server, :create, entity_id})
 
   @doc false
-  def handle_cast({:entity_created, id}, state) do
-    CtrlServers.create(%{entity_id: id})
+  def handle_broker_call(pid, "server:create", entity_id, _request) do
+    response = GenServer.call(pid, {:server, :create, entity_id})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server:attach", {id, mobo}, _request) do
+    response = GenServer.call(pid, {:server, :attach, id, mobo})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server:detach", id, _request) do
+    response = GenServer.call(pid, {:server, :detach, id})
+    {:reply, response}
+  end
+
+  @doc false
+  def handle_cast({:server, :create, entity_id}, state) do
+    create_server(entity_id)
     {:noreply, state}
   end
 
   @doc false
-  def handle_broker_call(pid, "server:create", struct, _request),
-    do: GenServer.call(pid, {:server_create, struct})
-  def handle_broker_call(pid, "server:attach", {server, mobo}, _request),
-    do: GenServer.call(pid, {:server_attach, server, mobo})
-  def handle_broker_call(pid, "server:detach", server, _request),
-    do: GenServer.call(pid, {:server_detach, server})
+  def handle_call({:server, :create, entity_id}, _from, state) do
+    return = create_server(entity_id)
+    {:reply, return, state}
+  end
+  def handle_call({:server, :attach, id, mobo}, _from, state) do
+    {status, _} = CtrlServers.attach(id, mobo)
+    {:reply, status, state}
+  end
+  def handle_call({:server, :detach, id}, _from, state) do
+    {status, _} = CtrlServers.detach(id)
+    {:reply, status, state}
+    end
+  end
 
-  @doc false
-  def handle_call({:server_create, struct}, _from, state) do
-    reply = case CtrlServers.create(struct) do
-      {:ok, schema} -> {:ok, schema.server_id}
-      {:error, _} -> :error
+  defp create_server(entity_id) do
+    with {:ok, server} <- CtrlServers.create(%{entity_id: entity_id}) do
+      Broker.cast("event:server:created", server.server_id)
+      {:ok, server.server_id}
     end
-    {:reply, {:reply, reply}, state}
-  end
-  def handle_call({:server_attach, server, mobo}, _from, state) do
-    reply = case CtrlServers.attach(server, mobo) do
-      {:ok, _} -> :ok
-      {:error, _} -> :error
-    end
-    {:reply, {:reply, reply}, state}
-  end
-  def handle_call({:server_detach, server}, _from, state) do
-    reply = case CtrlServers.detach(server) do
-      {:ok, _} -> :ok
-      {:error, _} -> :error
-    end
-    {:reply, {:reply, reply}, state}
   end
 end
