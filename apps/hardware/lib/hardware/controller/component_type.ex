@@ -7,7 +7,7 @@ defmodule HELM.Hardware.Controller.ComponentType do
 
   def create(component_type) do
     MdlCompType.create_changeset(%{component_type: component_type})
-    |> do_create
+    |> do_create()
   end
 
   def find(component_type) do

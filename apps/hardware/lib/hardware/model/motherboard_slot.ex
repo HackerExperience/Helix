@@ -3,9 +3,9 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
   import Ecto.Changeset
 
   alias HELL.UUID, as: HUUID
-  alias HELM.Hardware.Model.Component, as: MdlComp
-  alias HELM.Hardware.Model.Motherboard, as: MdlMobo
-  alias HELM.Hardware.Model.ComponentType, as: MdlCompType
+  alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
+  alias HELM.Hardware.Model.Motherboard, as: MdlMobo, warn: false
+  alias HELM.Hardware.Model.ComponentType, as: MdlCompType, warn: false
 
   @primary_key {:slot_id, :binary_id, autogenerate: false}
   @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
@@ -38,7 +38,7 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     |> validate_required(:motherboard_id)
     |> validate_required(:link_component_type)
     |> validate_required(:slot_internal_id)
-    |> put_uid
+    |> put_uid()
   end
 
   def update_changeset(struct, params \\ %{}) do

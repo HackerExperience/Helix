@@ -3,7 +3,7 @@ defmodule HELM.Entity.Model.EntityServer do
 
   import Ecto.Changeset
 
-  alias HELM.Entity.Model.Entity, as: MdlEntity
+  alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
 
   @primary_key {:server_id, :binary_id, autogenerate: false}
   @creation_fields ~w/server_id entity_id/a

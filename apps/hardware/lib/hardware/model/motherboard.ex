@@ -3,7 +3,7 @@ defmodule HELM.Hardware.Model.Motherboards do
   import Ecto.Changeset
 
   alias HELL.UUID, as: HUUID
-  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
+  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
 
   @primary_key {:motherboard_id, :binary_id, autogenerate: false}
 
@@ -18,7 +18,7 @@ defmodule HELM.Hardware.Model.Motherboards do
   def create_changeset do
     %__MODULE__{}
     |> cast(%{}, [])
-    |> put_uid
+    |> put_uid()
   end
 
   defp put_uid(changeset) do

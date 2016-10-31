@@ -3,8 +3,7 @@ defmodule HELM.Entity.Model.EntityType do
 
   import Ecto.Changeset
 
-  alias HELM.Entity.Model.Entity, as: MdlEntity
-  alias HELM.Entity.Model.EntityType, as: MdlEntityType
+  alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
 
   @primary_key {:entity_type, :string, autogenerate: false}
   @creation_fields ~w/entity_type/a

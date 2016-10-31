@@ -32,7 +32,7 @@ defmodule HELM.Software.Model.File do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_number(:file_size, greater_than: 0)
-    |> put_uuid
+    |> put_uuid()
   end
 
   def update_changeset(model, params) do

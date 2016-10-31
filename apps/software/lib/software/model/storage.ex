@@ -23,7 +23,7 @@ defmodule HELM.Software.Model.Storage do
   def create_changeset do
     %__MODULE__{}
     |> cast(%{}, [])
-    |> put_uuid
+    |> put_uuid()
   end
 
   defp put_uuid(changeset) do
