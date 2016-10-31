@@ -22,19 +22,15 @@ defmodule HELM.Controller.EntityService do
   end
 
   @doc false
-  def handle_cast({:entity, :create, :account, id}, state) do
-    create_entity(%{account_id: id})
-    {:noreply, state}
-  end
-
-  @doc false
-  def handle_broker_call(pid, "entity:create", params, _request) do
-    response = GenServer.call(pid, {:entity, :create, params})
-    {:reply, response}
-  end
   def handle_broker_call(pid, "entity:find", id, _request) do
     response = GenServer.call(pid, {:entity, :find, id})
     {:reply, response}
+  end
+
+  @doc false
+  def handle_cast({:entity, :create, :account, id}, state) do
+    create_entity(%{account_id: id})
+    {:noreply, state}
   end
 
   @doc false
