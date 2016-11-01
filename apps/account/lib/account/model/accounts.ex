@@ -18,16 +18,14 @@ defmodule HELM.Account.Model.Account do
   end
 
   @creation_fields ~w(email password password_confirmation)
-  @update_fields ~w(email password confirmation)
+  @update_fields ~w(email password confirmed)
 
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(:password_confirmation)
-    |> validate_confirmation(:password)
-    |> update_change(:email, &String.downcase/1)
     |> unique_constraint(:email, name: :unique_account_email)
     |> generic_validations()
+    |> prepare_changes()
     |> put_uuid()
   end
 
@@ -35,6 +33,7 @@ defmodule HELM.Account.Model.Account do
     schema
     |> cast(params, @update_fields)
     |> generic_validations()
+    |> prepare_changes()
   end
 
   defp put_uuid(changeset) do
@@ -43,7 +42,7 @@ defmodule HELM.Account.Model.Account do
       else: changeset
   end
 
-  defp uuid(),
+  defp uuid,
     do: HUUID.create!("00")
 
   defp generic_validations(changeset) do
@@ -51,6 +50,12 @@ defmodule HELM.Account.Model.Account do
     |> validate_required(:email)
     |> validate_required(:password)
     |> validate_length(:password, min: 8)
+    |> validate_confirmation(:password, required: true)
+  end
+
+  defp prepare_changes(changeset) do
+    changeset
+    |> update_change(:email, &String.downcase/1)
     |> update_change(:password, &Crypt.hashpwsalt/1)
   end
 end

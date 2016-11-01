@@ -19,6 +19,8 @@ defmodule HELM.Account.Controller.Account do
   end
 
   def find_by(email: email) do
+    email = String.downcase(email)
+
     case Repo.get_by(MdlAccount, email: email) do
       nil -> {:error, :notfound}
       account -> {:ok, account}
@@ -34,6 +36,8 @@ defmodule HELM.Account.Controller.Account do
   end
 
   def login(email, password) do
+    email = String.downcase(email)
+
     MdlAccount
     |> where([a], a.email == ^email)
     |> select([a], map(a, [:password]))
