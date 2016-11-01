@@ -54,7 +54,6 @@ defmodule HELM.Server.Controller.ServerService do
   def handle_call({:server, :detach, id}, _from, state) do
     {status, _} = CtrlServers.detach(id)
     {:reply, status, state}
-    end
   end
 
   defp create_server(entity_id) do
