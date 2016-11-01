@@ -1,11 +1,11 @@
 defmodule HELM.Entity.Controller.EntityTypeTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Entity.Controller.EntityType, as: CtrlEntityType
 
   setup do
-    {:ok, id: HRand.random_numeric_string()}
+    {:ok, id: HRand.string()}
   end
 
   describe "create/1" do

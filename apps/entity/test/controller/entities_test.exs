@@ -1,12 +1,12 @@
 defmodule HELM.Entity.Controller.EntityTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Entity.Controller.Entity, as: CtrlEntity
   alias HELM.Entity.Controller.EntityType, as: CtrlEntityType
 
   setup do
-    type = HRand.random_numeric_string()
+    type = HRand.string()
     ref_id = UUID.uuid4()
     payload = %{entity_type: type, reference_id: ref_id}
     {:ok, type: type, payload: payload}

@@ -1,13 +1,13 @@
 defmodule HELM.Hardware.Controller.ComponentTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
   alias HELM.Hardware.Controller.Component, as: CtrlComps
 
   setup do
-    type_name = HRand.random_numeric_string()
+    type_name = HRand.string()
     spec_payload = %{component_type: type_name, spec: %{}}
 
     {:ok, comp_type} = CtrlCompType.create(type_name)

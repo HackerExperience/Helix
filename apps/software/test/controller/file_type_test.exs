@@ -1,12 +1,12 @@
 defmodule HELM.Software.Controller.FileTypeTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Software.Controller.FileType, as: CtrlFileType
 
   setup do
     payload = %{
-      file_type: HRand.random_numeric_string(),
+      file_type: HRand.string(),
       extension: ".test"
     }
 

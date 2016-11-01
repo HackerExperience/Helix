@@ -1,7 +1,7 @@
 defmodule HELM.Software.Controller.ModuleTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Software.Controller.File, as: CtrlFile
   alias HELM.Software.Controller.Module, as: CtrlModule
   alias HELM.Software.Controller.Storage, as: CtrlStorage
@@ -10,14 +10,14 @@ defmodule HELM.Software.Controller.ModuleTest do
 
   setup do
     file_type_payload = %{
-      file_type: HRand.random_numeric_string(),
+      file_type: HRand.string(),
       extension: ".test"
     }
 
     {:ok, file_type} = CtrlFileType.create(file_type_payload)
 
     module_role_payload = %{
-      module_role: HRand.random_numeric_string(),
+      module_role: HRand.string(),
       file_type: file_type.file_type
     }
 
@@ -28,7 +28,7 @@ defmodule HELM.Software.Controller.ModuleTest do
       name: "void",
       file_path: "/dev/null",
       file_type: file_type.file_type,
-      file_size: HRand.random_number(),
+      file_size: HRand.number(min: 1),
       storage_id: storage.storage_id
     }
 
@@ -37,7 +37,7 @@ defmodule HELM.Software.Controller.ModuleTest do
     payload = %{
       module_role: role.module_role,
       file_id: file.file_id,
-      module_version: HRand.random_number()
+      module_version: HRand.number(min: 1)
     }
 
     {:ok, payload: payload}

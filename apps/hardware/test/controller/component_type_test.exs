@@ -1,11 +1,11 @@
 defmodule HELM.Hardware.Controller.ComponentTypeTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
 
   setup do
-    {:ok, type_name: HRand.random_numeric_string()}
+    {:ok, type_name: HRand.string()}
   end
 
   test "create/1", %{type_name: type_name} do

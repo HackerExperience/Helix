@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.Controller.MotherboardSlotTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
   alias HELM.Hardware.Controller.Component, as: CtrlComps
@@ -9,7 +9,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
   alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
 
   setup do
-    type_name = HRand.random_numeric_string()
+    type_name = HRand.string()
     spec_payload = %{component_type: type_name, spec: %{}}
 
     {:ok, comp_type} = CtrlCompType.create(type_name)
@@ -21,14 +21,14 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
     {:ok, mobo} = CtrlMobos.create()
 
     payload = %{
-      slot_internal_id: HRand.random_number(),
+      slot_internal_id: HRand.number(1..1024),
       motherboard_id: mobo.motherboard_id,
       link_component_type: comp_type.component_type,
       link_component_id: comp.component_id
     }
 
     clean_payload = %{
-      slot_internal_id: HRand.random_number(),
+      slot_internal_id: HRand.number(1..1024),
       motherboard_id: mobo.motherboard_id,
       link_component_type: comp_type.component_type
     }

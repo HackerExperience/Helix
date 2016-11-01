@@ -1,7 +1,7 @@
 defmodule HELM.Software.Controller.StorageDriveTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
 
   alias HELM.Software.Controller.Storage, as: CtrlStorage
   alias HELM.Software.Controller.StorageDrive, as: CtrlStorageDrives
@@ -10,7 +10,7 @@ defmodule HELM.Software.Controller.StorageDriveTest do
     {:ok, storage} = CtrlStorage.create()
 
     payload = %{
-      drive_id: HRand.random_number(),
+      drive_id: HRand.number(),
       storage_id: storage.storage_id
     }
 

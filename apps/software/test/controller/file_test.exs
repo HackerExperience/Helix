@@ -1,14 +1,14 @@
 defmodule HELM.Software.Controller.FileTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Software.Controller.FileType, as: CtrlFileType
   alias HELM.Software.Controller.Storage, as: CtrlStorage
   alias HELM.Software.Controller.File, as: CtrlFile
 
   setup do
-    file_type_name = HRand.random_numeric_string()
-    file_size = HRand.random_number()
+    file_type_name = HRand.string()
+    file_size = HRand.number(min: 1)
 
     file_type_payload = %{file_type: file_type_name, extension: ".test"}
 

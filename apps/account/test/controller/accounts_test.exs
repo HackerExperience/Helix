@@ -1,15 +1,12 @@
 defmodule HELM.Account.Controller.AccountTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Account.Controller.Account, as: CtrlAccount
 
   setup do
-    email = HRand.random_numeric_string()
-    pass =
-      1..8
-      |> Enum.map(fn _ -> HRand.random_numeric_string() end)
-      |> Enum.join("")
+    email = HRand.email()
+    pass = HRand.string(min: 8, max: 16)
 
     payload = %{email: email, password: pass, password_confirmation: pass}
 

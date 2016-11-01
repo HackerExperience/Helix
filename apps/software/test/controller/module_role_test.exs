@@ -1,20 +1,20 @@
 defmodule HELM.Software.Controller.ModuleRoleTest do
   use ExUnit.Case
 
-  alias HELL.Random, as: HRand
+  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Software.Controller.FileType, as: CtrlFileType
   alias HELM.Software.Controller.ModuleRole, as: CtrlModuleRole
 
   setup do
     file_type_payload = %{
-      file_type: HRand.random_numeric_string(),
+      file_type: HRand.string(),
       extension: ".test"
     }
 
     {:ok, file_type} = CtrlFileType.create(file_type_payload)
 
     payload = %{
-      module_role: HRand.random_numeric_string(),
+      module_role: HRand.string(),
       file_type: file_type.file_type
     }
 
