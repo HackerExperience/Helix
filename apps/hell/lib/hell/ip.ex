@@ -19,10 +19,9 @@ defmodule HELL.IPv6 do
     int
     |> Integer.to_string(16)
     |> String.downcase()
-    |> String.rjust(4, ?0)
   end
   defp to_hex(int),
-    do: raise ArgumentError, "IP octets must be <= 0xffff"
+    do: raise ArgumentError, "Invalid IPv6 octet"
 
   @spec generate_octet_groups(pos_integer) :: [0..65535]
   defp generate_octet_groups(groups) do

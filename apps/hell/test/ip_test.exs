@@ -9,7 +9,8 @@ defmodule HELL.IPv6Test do
       assert "3456:" <> _ = HELL.IPv6.generate([0x3456])
       assert "ef01:3456:" <> _ = HELL.IPv6.generate([0xef01, 0x3456])
       assert "abcd:ef01:3456:" <> _ = HELL.IPv6.generate([0xabcd, 0xef01, 0x3456])
-      assert "abcd:00ef:0003:" <> _ = HELL.IPv6.generate([0xabcd, 0xef, 0x3])
+      assert "abcd:ef:3:" <> _ = HELL.IPv6.generate([0xabcd, 0xef, 0x3])
+      assert "abcd:0:abcd:" <> _ = HELL.IPv6.generate([0xabcd, 0x0, 0xabcd])
     end
 
     test "it generates a valid ipv6" do
