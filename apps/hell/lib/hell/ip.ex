@@ -15,12 +15,11 @@ defmodule HELL.IPv6 do
   end
 
   @spec to_hex(non_neg_integer) :: String.t
-  defp to_hex(0x0000),
-    do: ""
   defp to_hex(int) when int <= 0xffff do
     int
     |> Integer.to_string(16)
     |> String.downcase()
+    |> String.rjust(4, ?0)
   end
   defp to_hex(int),
     do: raise ArgumentError, "IP octets must be <= 0xffff"
