@@ -12,8 +12,8 @@ defmodule HELL.IP do
   The default value for metas is `00`.
   """
   def create(domain, object, opts \\ []) do
-    with {:ok, header} <- ip_head(domain, object, opts) do
-      {:ok, "#{header}:#{ip_tail()}"}
+    with {:ok, header} <- header_groups(domain, object, opts) do
+      {:ok, "#{header}:#{random_groups()}"}
     end
   end
 
@@ -40,14 +40,14 @@ defmodule HELL.IP do
   @docp """
   Validates and generates the header.
   """
-  defp ip_head(domain, object, opts) do
+  defp header_groups(domain, object, opts) do
     meta_a = Keyword.get(opts, :meta1, "00")
     meta_b = Keyword.get(opts, :meta2, "00")
 
-    with true <- valid_info?(domain),
-         true <- valid_info?(object),
-         true <- valid_info?(meta_a),
-         true <- valid_info?(meta_b) do
+    with true <- valid_data?(domain),
+         true <- valid_data?(object),
+         true <- valid_data?(meta_a),
+         true <- valid_data?(meta_b) do
       {:ok, "#{domain}#{object}:#{meta_a}#{meta_b}"}
     else
       _ -> :error
@@ -55,29 +55,41 @@ defmodule HELL.IP do
   end
 
   @docp """
-  Generates a true random IPv6 tail.
+  Generates a string with 6 hexadecimal characters divided by colons.
+  This string composes the IPv6 tail.
   """
-  defp ip_tail() do
-    "#{ip_hex()}:#{ip_hex()}:#{ip_hex()}:#{ip_hex()}:#{ip_hex()}:#{ip_hex()}"
+  defp random_groups() do
+    "#{group()}:#{group()}:#{group()}:#{group()}:#{group()}:#{group()}"
   end
 
   @docp """
-  Generates a string with four random hex digits.
+  Generates a string that will compose a group from `random_groups/0`.
+  The string is composed of four random hexadecimal digits.
+
+  This function will primarily try to use `:crypto.strong_rand_bytes/1` and fallbacks to
+  `:crypto.rand_uniform/2` when system entropy is too low.
   """
-  defp ip_hex() do
-    :crypto.strong_rand_bytes(4)
-    |> :erlang.binary_to_list()
-    |> Enum.map(&(Enum.at(@hex_chars, rem(&1, 16))))
-    |> List.to_string()
+  defp group() do
+    try do
+      :crypto.strong_rand_bytes(4)
+      |> :erlang.binary_to_list()
+      |> Enum.map(&(Enum.at(@hex_chars, rem(&1, 16))))
+      |> List.to_string()
+    rescue
+      :low_entropy ->
+        1..4
+        |> Enum.map(fn _ -> Enum.at(@hex_chars, :crypto.rand_uniform(0, 16)) end)
+        |> List.to_string()
+    end
   end
 
   @docp """
   Validates header information.
   """
   for x <- @hex_chars, y <- @hex_chars do
-    defp valid_info?("#{unquote(x)}#{unquote(y)}"),
+    defp valid_data?("#{unquote(x)}#{unquote(y)}"),
       do: true
   end
-  defp valid_info?(_),
+  defp valid_data?(_),
     do: false
 end
