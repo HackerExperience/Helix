@@ -35,7 +35,6 @@ defmodule HELL.Mixfile do
   defp deps do
     [
       {:uuid, "~> 1.1"},
-      {:remix, "~> 0.0.1", only: :dev},
-      {:cidr, "~> 1.0.0"}]
+      {:remix, "~> 0.0.1", only: :dev}]
   end
 end
