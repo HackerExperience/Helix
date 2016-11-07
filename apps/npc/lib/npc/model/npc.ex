@@ -2,9 +2,9 @@ defmodule HELM.NPC.Model.NPC do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
 
-  @primary_key {:npc_id, :binary_id, autogenerate: false}
+  @primary_key {:npc_id, EctoNetwork.INET, autogenerate: false}
 
   schema "npcs" do
     timestamps
@@ -15,15 +15,17 @@ defmodule HELM.NPC.Model.NPC do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> put_uuid()
+    |> put_primary_key()
   end
 
-  defp put_uuid(changeset) do
-    if changeset.valid?,
-      do: put_change(changeset, :npc_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0003])
 
-  defp uuid,
-    do: HUUID.create!("03")
+      changeset
+      |> cast(%{npc_id: ip}, ~w(npc_id))
+    else
+      changeset
+    end
+  end
 end
