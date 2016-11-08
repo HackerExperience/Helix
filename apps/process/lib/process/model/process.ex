@@ -2,9 +2,9 @@ defmodule HELM.Process.Model.Process do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
 
-  @primary_key {:process_id, :binary_id, autogenerate: false}
+  @primary_key {:process_id, EctoNetwork.INET, autogenerate: false}
 
   schema "processes" do
     timestamps
@@ -15,15 +15,17 @@ defmodule HELM.Process.Model.Process do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> put_uuid()
+    |> put_primary_key()
   end
 
-  defp put_uuid(changeset) do
-    if changeset.valid?,
-      do: put_change(changeset, :process_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0005, 0x0000, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("04")
+      changeset
+      |> cast(%{process_id: ip}, ~w(process_id))
+    else
+      changeset
+    end
+  end
 end

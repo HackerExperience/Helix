@@ -3,15 +3,15 @@ defmodule HELM.Entity.Model.Entity do
   alias Ecto.Changeset
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias HELM.Entity.Model.EntityServer, as: MdlEntityServer, warn: false
   alias HELM.Entity.Model.EntityType, as: MdlEntityType, warn: false
 
-  @primary_key {:entity_id, :binary_id, autogenerate: false}
+  @primary_key {:entity_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w(entity_type reference_id)a
 
   schema "entities" do
-    field :reference_id, :binary_id
+    field :reference_id, EctoNetwork.INET
 
     has_many :servers, MdlEntityServer,
       foreign_key: :entity_id,
@@ -29,15 +29,17 @@ defmodule HELM.Entity.Model.Entity do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> unique_constraint(:reference_id)
-    |> put_uuid()
+    |> put_primary_key()
   end
 
-  defp put_uuid(changeset) do
-    if changeset.valid?,
-      do: Changeset.put_change(changeset, :entity_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0001, 0x0000, 0x0000])
 
-  defp uuid(),
-    do: HUUID.create!("01")
+      changeset
+      |> cast(%{entity_id: ip}, ~w(entity_id))
+    else
+      changeset
+    end
+  end
 end

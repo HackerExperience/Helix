@@ -2,11 +2,11 @@ defmodule HELM.Hardware.Model.Component do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
   alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec, warn: false
 
-  @primary_key {:component_id, :binary_id, autogenerate: false}
+  @primary_key {:component_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/component_type spec_id/a
 
   schema "components" do
@@ -15,7 +15,7 @@ defmodule HELM.Hardware.Model.Component do
     belongs_to :component_spec, MdlCompSpec,
       foreign_key: :spec_id,
       references: :spec_id,
-      type: :binary_id
+      type: EctoNetwork.INET
 
     has_many :slots, MdlMoboSlot,
       foreign_key: :link_component_id,
@@ -29,15 +29,17 @@ defmodule HELM.Hardware.Model.Component do
     |> cast(params, @creation_fields)
     |> validate_required(:component_type)
     |> validate_required(:spec_id)
-    |> put_uid()
+    |> put_primary_key()
   end
 
-  defp put_uid(changeset) do
-    if changeset.valid?,
-      do: put_change(changeset, :component_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0003, 0x0001, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("02", meta1: "1")
+      changeset
+      |> cast(%{component_id: ip}, ~w(component_id))
+    else
+      changeset
+    end
+  end
 end

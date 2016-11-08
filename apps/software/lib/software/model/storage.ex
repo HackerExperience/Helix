@@ -2,11 +2,11 @@ defmodule HELM.Software.Model.Storage do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias HELM.Software.Model.StorageDrive, as: MdlStorageDrive, warn: false
   alias HELM.Software.Model.File, as: MdlFile, warn: false
 
-  @primary_key {:storage_id, :binary_id, autogenerate: false}
+  @primary_key {:storage_id, EctoNetwork.INET, autogenerate: false}
 
   schema "storages" do
     has_many :drives, MdlStorageDrive,
@@ -23,15 +23,17 @@ defmodule HELM.Software.Model.Storage do
   def create_changeset do
     %__MODULE__{}
     |> cast(%{}, [])
-    |> put_uuid()
+    |> put_primary_key()
   end
 
-  defp put_uuid(changeset) do
-    if changeset.valid?,
-      do: put_change(changeset, :storage_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0004, 0x0001, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("06", meta1: "1")
+      changeset
+      |> cast(%{storage_id: ip}, ~w(storage_id))
+    else
+      changeset
+    end
+  end
 end

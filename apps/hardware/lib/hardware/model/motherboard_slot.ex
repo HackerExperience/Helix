@@ -2,12 +2,12 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
   alias HELM.Hardware.Model.Motherboard, as: MdlMobo, warn: false
   alias HELM.Hardware.Model.ComponentType, as: MdlCompType, warn: false
 
-  @primary_key {:slot_id, :binary_id, autogenerate: false}
+  @primary_key {:slot_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
   @update_fields ~w/link_component_id/a
 
@@ -17,12 +17,12 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     belongs_to :motherboard, MdlMobo,
       foreign_key: :motherboard_id,
       references: :motherboard_id,
-      type: :binary_id
+      type: EctoNetwork.INET
 
     belongs_to :component, MdlComp,
       foreign_key: :link_component_id,
       references: :component_id,
-      type: :binary_id
+      type: EctoNetwork.INET
 
     belongs_to :component_type, MdlCompType,
       foreign_key: :link_component_type,
@@ -38,7 +38,7 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     |> validate_required(:motherboard_id)
     |> validate_required(:link_component_type)
     |> validate_required(:slot_internal_id)
-    |> put_uid()
+    |> put_primary_key()
   end
 
   def update_changeset(struct, params \\ %{}) do
@@ -46,12 +46,14 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     |> cast(params, @update_fields)
   end
 
-  defp put_uid(changeset) do
-    if changeset.valid?,
-      do: put_change(changeset, :slot_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0003, 0x0002, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("02", meta1: "2")
+      changeset
+      |> cast(%{slot_id: ip}, ~w(slot_id))
+    else
+      changeset
+    end
+  end
 end

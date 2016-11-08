@@ -1,11 +1,11 @@
 defmodule HELM.Account.Model.Account do
   use Ecto.Schema
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias Comeonin.Bcrypt, as: Crypt
   import Ecto.Changeset
 
-  @primary_key {:account_id, :binary_id, autogenerate: false}
+  @primary_key {:account_id, EctoNetwork.INET, autogenerate: false}
   @derive {Poison.Encoder, only: [:email, :account_id]}
 
   schema "accounts" do
@@ -26,7 +26,7 @@ defmodule HELM.Account.Model.Account do
     |> unique_constraint(:email, name: :unique_account_email)
     |> generic_validations()
     |> prepare_changes()
-    |> put_uuid()
+    |> put_primary_key()
   end
 
   def update_changeset(schema, params) do
@@ -36,14 +36,16 @@ defmodule HELM.Account.Model.Account do
     |> prepare_changes()
   end
 
-  defp put_uuid(changeset) do
-    if changeset.valid?,
-      do: Ecto.Changeset.put_change(changeset, :account_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0000, 0x0000, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("00")
+      changeset
+      |> cast(%{account_id: ip}, ~w(account_id))
+    else
+      changeset
+    end
+  end
 
   defp generic_validations(changeset) do
     changeset

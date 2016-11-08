@@ -5,10 +5,10 @@ defmodule HELM.Hardware.Model.ComponentSpec do
 
   alias Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
 
-  @primary_key {:spec_id, :binary_id, autogenerate: false}
+  @primary_key {:spec_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/spec component_type/a
 
   schema "component_specs" do
@@ -26,15 +26,17 @@ defmodule HELM.Hardware.Model.ComponentSpec do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:spec)
-    |> put_id()
+    |> put_primary_key()
   end
 
-  defp put_id(changeset) do
-    if changeset.valid?,
-      do: Changeset.put_change(changeset, :spec_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0003, 0x0000, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("02", meta1: "0")
+      changeset
+      |> cast(%{spec_id: ip}, ~w(spec_id))
+    else
+      changeset
+    end
+  end
 end

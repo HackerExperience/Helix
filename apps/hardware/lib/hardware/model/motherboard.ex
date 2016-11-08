@@ -2,10 +2,10 @@ defmodule HELM.Hardware.Model.Motherboards do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
 
-  @primary_key {:motherboard_id, :binary_id, autogenerate: false}
+  @primary_key {:motherboard_id, EctoNetwork.INET, autogenerate: false}
 
   schema "motherboards" do
     has_many :slots, MdlMoboSlot,
@@ -18,15 +18,17 @@ defmodule HELM.Hardware.Model.Motherboards do
   def create_changeset do
     %__MODULE__{}
     |> cast(%{}, [])
-    |> put_uid()
+    |> put_primary_key()
   end
 
-  defp put_uid(changeset) do
-    if changeset.valid?,
-      do: put_change(changeset, :motherboard_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    if changeset.valid? do
+      ip = IPv6.generate([0x0003, 0x0003, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("02", meta1: "3")
+      changeset
+      |> cast(%{motherboard_id: ip}, ~w(motherboard_id))
+    else
+      changeset
+    end
+  end
 end

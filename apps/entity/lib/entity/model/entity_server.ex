@@ -5,14 +5,14 @@ defmodule HELM.Entity.Model.EntityServer do
 
   alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
 
-  @primary_key {:server_id, :binary_id, autogenerate: false}
+  @primary_key {:server_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/server_id entity_id/a
 
   schema "entity_servers" do
     belongs_to :entity, MdlEntity,
       foreign_key: :entity_id,
       references: :entity_id,
-      type: :binary_id
+      type: EctoNetwork.INET
 
     timestamps
   end
