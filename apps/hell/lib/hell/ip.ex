@@ -53,6 +53,6 @@ defmodule HELL.IPv6 do
     do: []
   defp fill_metadata([h| t], n),
     do: [h| fill_metadata(t, n + 1)]
-  defp fill_metadata([], n),
+  defp fill_metadata([], n) when n < @meta_groups,
     do: [0x0000 | fill_metadata([], n + 1)]
 end
