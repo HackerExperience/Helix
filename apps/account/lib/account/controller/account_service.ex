@@ -3,6 +3,7 @@ defmodule HELM.Account.Controller.AccountService do
   use GenServer
 
   alias HELM.Account.Controller.Account, as: CtrlAccount
+  alias HELM.Account.Controller.Session, as: CtrlSession
   alias HELF.Broker
   alias HELF.Router
 
@@ -48,7 +49,7 @@ defmodule HELM.Account.Controller.AccountService do
   @doc false
   def handle_call({:account, :login, %{email: email, password: password}}, _from, state) do
     with {:ok, account_id} <- CtrlAccount.login(email, password),
-         {_, {:ok, token}} <- Broker.call("auth:create", account_id) do
+         {:ok, token} <- CtrlSession.create(account_id) do
       {:reply, {:ok, token}, state}
     else
       error -> {:reply, error, state}
