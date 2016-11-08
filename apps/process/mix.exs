@@ -29,6 +29,7 @@ defmodule HELM.Process.Mixfile do
       {:helf_broker, in_umbrella: true},
       {:hell, in_umbrella: true},
       {:postgrex, ">= 0.0.0"},
-      {:ecto, "~> 2.0"}]
+      {:ecto, "~> 2.0"},
+      {:ecto_network, "~> 0.4.0"}]
   end
 end
