@@ -76,7 +76,7 @@ defmodule HELM.Account.Controller.AccountTest do
   describe "login/2" do
     test "success", %{payload: payload, email: email, pass: pass} do
       {:ok, _} = CtrlAccount.create(payload)
-      assert :ok = CtrlAccount.login(email, pass)
+      assert {:ok, _} = CtrlAccount.login(email, pass)
     end
 
     test "user not found" do
