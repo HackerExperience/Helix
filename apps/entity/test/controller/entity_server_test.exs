@@ -1,6 +1,7 @@
 defmodule HELM.Entity.Controller.EntityServerTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Entity.Controller.Entity, as: CtrlEntity
   alias HELM.Entity.Controller.EntityType, as: CtrlEntityType
@@ -8,8 +9,8 @@ defmodule HELM.Entity.Controller.EntityServerTest do
 
   setup do
     type = HRand.string()
-    ref_id = UUID.uuid4()
-    id = UUID.uuid4()
+    ref_id = IPv6.generate([])
+    id = IPv6.generate([])
     payload = %{entity_type: type, reference_id: ref_id}
     {:ok, type: type, id: id, payload: payload}
   end
@@ -29,7 +30,7 @@ defmodule HELM.Entity.Controller.EntityServerTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlEntityServer.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlEntityServer.find(IPv6.generate([]))
     end
   end
 

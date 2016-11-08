@@ -1,6 +1,7 @@
 defmodule HELM.Account.Controller.AccountTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Account.Controller.Account, as: CtrlAccount
 
@@ -49,7 +50,7 @@ defmodule HELM.Account.Controller.AccountTest do
 
     test "failure", %{payload: payload} do
       {:ok, _} = CtrlAccount.create(payload)
-      assert {:error, :notfound} = CtrlAccount.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlAccount.find(IPv6.generate([]))
     end
   end
 

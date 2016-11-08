@@ -1,8 +1,8 @@
 defmodule HELM.Software.Controller.StorageDriveTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-
   alias HELM.Software.Controller.Storage, as: CtrlStorage
   alias HELM.Software.Controller.StorageDrive, as: CtrlStorageDrives
 
@@ -28,7 +28,7 @@ defmodule HELM.Software.Controller.StorageDriveTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlStorageDrives.find(UUID.uuid4(), 0)
+      assert {:error, :notfound} = CtrlStorageDrives.find(IPv6.generate([]), 0)
     end
   end
 

@@ -1,6 +1,7 @@
 defmodule HELM.Process.Controller.ProcessTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELM.Process.Controller.Process, as: CtrlProcess
 
   test "create/1" do
@@ -14,7 +15,7 @@ defmodule HELM.Process.Controller.ProcessTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlProcess.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlProcess.find(IPv6.generate([]))
     end
   end
 
