@@ -14,7 +14,7 @@ defmodule HELM.Software.Model.Module do
     belongs_to :file, MdlFile,
       foreign_key: :file_id,
       references: :file_id,
-      type: :binary_id,
+      type: EctoNetwork.INET,
       primary_key: true
 
     belongs_to :role, MdlModuleRole,

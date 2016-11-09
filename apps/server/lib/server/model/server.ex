@@ -2,10 +2,10 @@ defmodule HELM.Server.Model.Server do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias HELL.UUID, as: HUUID
+  alias HELL.IPv6
   alias HELM.Server.Model.ServerType, as: MdlServerType, warn: false
 
-  @primary_key {:server_id, :binary_id, autogenerate: false}
+  @primary_key {:server_id, EctoNetwork.INET, autogenerate: false}
 
   schema "servers" do
     belongs_to :type, MdlServerType,
@@ -13,8 +13,8 @@ defmodule HELM.Server.Model.Server do
       references: :server_type,
       type: :string
 
-    field :poi_id, :binary_id
-    field :motherboard_id, :binary_id
+    field :poi_id, EctoNetwork.INET
+    field :motherboard_id, EctoNetwork.INET
 
     timestamps
   end
@@ -26,7 +26,7 @@ defmodule HELM.Server.Model.Server do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
-    |> put_uuid()
+    |> put_primary_key()
   end
 
   def update_changeset(struct, params) do
@@ -34,12 +34,10 @@ defmodule HELM.Server.Model.Server do
     |> cast(params, @update_fields)
   end
 
-  defp put_uuid(changeset) do
-    if changeset.valid?,
-      do: put_change(changeset, :server_id, uuid()),
-      else: changeset
-  end
+  defp put_primary_key(changeset) do
+    ip = IPv6.generate([0x0002, 0x0000, 0x0000])
 
-  defp uuid,
-    do: HUUID.create!("05")
+    changeset
+    |> cast(%{server_id: ip}, ~w(server_id))
+  end
 end

@@ -31,6 +31,7 @@ defmodule HELM.Hardware.Mixfile do
       {:account, in_umbrella: true},
       {:entity, in_umbrella: true},
       {:postgrex, ">= 0.0.0"},
-      {:ecto, "~> 2.0"}]
+      {:ecto, "~> 2.0"},
+      {:ecto_network, "~> 0.4.0"}]
   end
 end

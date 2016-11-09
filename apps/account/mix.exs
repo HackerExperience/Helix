@@ -32,6 +32,7 @@ defmodule HELM.Account.Mixfile do
       {:comeonin, "~> 2.5"},
       {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.0"},
+      {:ecto_network, "~> 0.4.0"},
       {:poison, "~> 2.0"}]
   end
 end

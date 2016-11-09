@@ -1,6 +1,7 @@
 defmodule HELM.Software.Controller.ModuleTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Software.Controller.File, as: CtrlFile
   alias HELM.Software.Controller.Module, as: CtrlModule
@@ -54,7 +55,7 @@ defmodule HELM.Software.Controller.ModuleTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlModule.find("", UUID.uuid4())
+      assert {:error, :notfound} = CtrlModule.find("", IPv6.generate([]))
     end
   end
 

@@ -1,6 +1,7 @@
 defmodule HELM.Hardware.Controller.ComponentSpecTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
@@ -24,7 +25,7 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlCompSpec.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlCompSpec.find(IPv6.generate([]))
     end
   end
 

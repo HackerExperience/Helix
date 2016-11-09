@@ -11,7 +11,7 @@ defmodule HELM.Software.Model.StorageDrive do
     belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: :binary_id,
+      type: EctoNetwork.INET,
       primary_key: true
 
     field :drive_id, :integer, primary_key: true

@@ -1,6 +1,7 @@
 defmodule HELM.Software.Controller.FileTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Software.Controller.FileType, as: CtrlFileType
   alias HELM.Software.Controller.Storage, as: CtrlStorage
@@ -37,7 +38,7 @@ defmodule HELM.Software.Controller.FileTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlFile.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlFile.find(IPv6.generate([]))
     end
   end
 
@@ -61,7 +62,7 @@ defmodule HELM.Software.Controller.FileTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlFile.update(UUID.uuid4(), %{})
+      assert {:error, :notfound} = CtrlFile.update(IPv6.generate([]), %{})
     end
   end
 
