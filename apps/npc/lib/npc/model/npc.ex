@@ -19,13 +19,9 @@ defmodule HELM.NPC.Model.NPC do
   end
 
   defp put_primary_key(changeset) do
-    if changeset.valid? do
-      ip = IPv6.generate([0x0006, 0x0000, 0x0000])
+    ip = IPv6.generate([0x0006, 0x0000, 0x0000])
 
-      changeset
-      |> cast(%{npc_id: ip}, ~w(npc_id))
-    else
-      changeset
-    end
+    changeset
+    |> cast(%{npc_id: ip}, ~w(npc_id))
   end
 end

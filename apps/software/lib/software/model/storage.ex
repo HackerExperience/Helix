@@ -27,13 +27,9 @@ defmodule HELM.Software.Model.Storage do
   end
 
   defp put_primary_key(changeset) do
-    if changeset.valid? do
-      ip = IPv6.generate([0x0004, 0x0001, 0x0000])
+    ip = IPv6.generate([0x0004, 0x0001, 0x0000])
 
-      changeset
-      |> cast(%{storage_id: ip}, ~w(storage_id))
-    else
-      changeset
-    end
+    changeset
+    |> cast(%{storage_id: ip}, ~w(storage_id))
   end
 end

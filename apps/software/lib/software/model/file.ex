@@ -41,13 +41,9 @@ defmodule HELM.Software.Model.File do
   end
 
   defp put_primary_key(changeset) do
-    if changeset.valid? do
-      ip = IPv6.generate([0x0004, 0x0000, 0x0000])
+    ip = IPv6.generate([0x0004, 0x0000, 0x0000])
 
-      changeset
-      |> cast(%{file_id: ip}, ~w(file_id))
-    else
-      changeset
-    end
+    changeset
+    |> cast(%{file_id: ip}, ~w(file_id))
   end
 end

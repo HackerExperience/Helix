@@ -30,13 +30,9 @@ defmodule HELM.Hardware.Model.ComponentSpec do
   end
 
   defp put_primary_key(changeset) do
-    if changeset.valid? do
-      ip = IPv6.generate([0x0003, 0x0000, 0x0000])
+    ip = IPv6.generate([0x0003, 0x0000, 0x0000])
 
-      changeset
-      |> cast(%{spec_id: ip}, ~w(spec_id))
-    else
-      changeset
-    end
+    changeset
+    |> cast(%{spec_id: ip}, ~w(spec_id))
   end
 end

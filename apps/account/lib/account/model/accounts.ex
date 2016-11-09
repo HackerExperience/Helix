@@ -37,14 +37,10 @@ defmodule HELM.Account.Model.Account do
   end
 
   defp put_primary_key(changeset) do
-    if changeset.valid? do
-      ip = IPv6.generate([0x0000, 0x0000, 0x0000])
+    ip = IPv6.generate([0x0000, 0x0000, 0x0000])
 
-      changeset
-      |> cast(%{account_id: ip}, ~w(account_id))
-    else
-      changeset
-    end
+    changeset
+    |> cast(%{account_id: ip}, ~w(account_id))
   end
 
   defp generic_validations(changeset) do

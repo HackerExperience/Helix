@@ -33,13 +33,9 @@ defmodule HELM.Entity.Model.Entity do
   end
 
   defp put_primary_key(changeset) do
-    if changeset.valid? do
-      ip = IPv6.generate([0x0001, 0x0000, 0x0000])
+    ip = IPv6.generate([0x0001, 0x0000, 0x0000])
 
-      changeset
-      |> cast(%{entity_id: ip}, ~w(entity_id))
-    else
-      changeset
-    end
+    changeset
+    |> cast(%{entity_id: ip}, ~w(entity_id))
   end
 end

@@ -47,13 +47,9 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
   end
 
   defp put_primary_key(changeset) do
-    if changeset.valid? do
-      ip = IPv6.generate([0x0003, 0x0002, 0x0000])
+    ip = IPv6.generate([0x0003, 0x0002, 0x0000])
 
-      changeset
-      |> cast(%{slot_id: ip}, ~w(slot_id))
-    else
-      changeset
-    end
+    changeset
+    |> cast(%{slot_id: ip}, ~w(slot_id))
   end
 end
