@@ -1,5 +1,7 @@
 defmodule HELM.Software.Controller.StorageTest do
   use ExUnit.Case
+
+  alias HELL.IPv6
   alias HELM.Software.Controller.Storage, as: CtrlStorage
 
   test "create/1" do
@@ -13,7 +15,7 @@ defmodule HELM.Software.Controller.StorageTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlStorage.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlStorage.find(IPv6.generate([]))
     end
   end
 

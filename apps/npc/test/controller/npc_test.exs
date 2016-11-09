@@ -1,6 +1,7 @@
 defmodule HELM.NPC.Controller.NPCTest do
   use ExUnit.Case
-  
+
+  alias HELL.IPv6
   alias HELM.NPC.Controller.NPC, as: CtrlNPC
 
   test "create/1" do
@@ -14,7 +15,7 @@ defmodule HELM.NPC.Controller.NPCTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlNPC.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlNPC.find(IPv6.generate([]))
     end
   end
 

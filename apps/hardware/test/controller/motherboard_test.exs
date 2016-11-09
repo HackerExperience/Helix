@@ -1,6 +1,7 @@
 defmodule HELM.Hardware.Controller.MotherboardTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
 
   test "create/1" do
@@ -14,7 +15,7 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlMobos.find(UUID.uuid4())
+      assert {:error, :notfound} = CtrlMobos.find(IPv6.generate([]))
     end
   end
 

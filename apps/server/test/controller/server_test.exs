@@ -1,6 +1,7 @@
 defmodule HELM.Server.ControllerTest do
   use ExUnit.Case
 
+  alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Server.Controller.ServerType, as: CtrlServerType
   alias HELM.Server.Controller.Server, as: CtrlServer
@@ -28,7 +29,7 @@ defmodule HELM.Server.ControllerTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} === CtrlServer.find(UUID.uuid4())
+      assert {:error, :notfound} === CtrlServer.find(IPv6.generate([]))
     end
   end
 
