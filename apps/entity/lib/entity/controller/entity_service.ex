@@ -17,8 +17,7 @@ defmodule HELM.Controller.EntityService do
 
   @doc false
   def handle_broker_cast(pid, "event:account:created", id, _request) do
-    response = GenServer.cast(pid, {:entity, :create, :account, id})
-    {:reply, response}
+    GenServer.cast(pid, {:entity, :create, :account, id})
   end
 
   @doc false
