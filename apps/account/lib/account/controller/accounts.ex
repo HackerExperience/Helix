@@ -40,13 +40,13 @@ defmodule HELM.Account.Controller.Account do
 
     MdlAccount
     |> where([a], a.email == ^email)
-    |> select([a], map(a, [:password]))
+    |> select([a], map(a, [:password, :account_id]))
     |> Repo.one()
     |> case do
       nil -> {:error, :notfound}
       account ->
         if Crypt.checkpw(password, account.password),
-          do: :ok,
+          do: {:ok, account.account_id},
           else: {:error, :notfound}
     end
   end
