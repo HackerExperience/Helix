@@ -25,8 +25,8 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @doc false
-  def handle_broker_call(pid, "account:login", params, _request) do
-    response = GenServer.call(pid, {:account, :login, params})
+  def handle_broker_call(pid, "account:login", %{email: email, password: password}, _request) do
+    response = GenServer.call(pid, {:account, :login, email, password})
     {:reply, response}
   end
 
@@ -47,8 +47,8 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @doc false
-  def handle_call({:account, :login, params}, _from, state) do
-    with {:ok, account_id} <- CtrlAccount.login(params[:email], params[:password]),
+  def handle_call({:account, :login, email, password}, _from, state) do
+    with {:ok, account_id} <- CtrlAccount.login(email, password),
          {:ok, token} <- CtrlSession.create(account_id) do
       {:reply, {:ok, token}, state}
     else

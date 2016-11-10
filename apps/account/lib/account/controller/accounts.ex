@@ -35,10 +35,6 @@ defmodule HELM.Account.Controller.Account do
     :ok
   end
 
-  def login(nil, _),
-    do: {:error, :notfound}
-  def login(_, nil),
-    do: {:error, :notfound}
   def login(email, password) do
     email = String.downcase(email)
 
