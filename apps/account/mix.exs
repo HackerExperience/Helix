@@ -34,6 +34,6 @@ defmodule HELM.Account.Mixfile do
       {:ecto, "~> 2.0"},
       {:ecto_network, "~> 0.4.0"},
       {:poison, "~> 2.0"},
-      {:guardian, "~> 0.12.0"}]
+      {:guardian, "~> 0.13.0"}]
   end
 end
