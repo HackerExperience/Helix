@@ -5,6 +5,9 @@ defmodule HELM.Account.Model.Account do
   alias Comeonin.Bcrypt, as: Crypt
   import Ecto.Changeset
 
+  @type create_params :: %{email: String.t, password: String.t, confirmation: String.t}
+  @type update_params :: %{email: String.t, password: String.t, confirmed: boolean}
+
   @primary_key {:account_id, EctoNetwork.INET, autogenerate: false}
   @derive {Poison.Encoder, only: [:email, :account_id]}
 
@@ -20,6 +23,7 @@ defmodule HELM.Account.Model.Account do
   @creation_fields ~w(email password password_confirmation)
   @update_fields ~w(email password confirmed)
 
+  @spec create_changeset(params :: create_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -29,6 +33,7 @@ defmodule HELM.Account.Model.Account do
     |> put_primary_key()
   end
 
+  @spec update_changeset(schema :: Ecto.Schema.t, params :: update_params) :: Ecto.Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
@@ -36,6 +41,7 @@ defmodule HELM.Account.Model.Account do
     |> prepare_changes()
   end
 
+  @spec put_primary_key
   defp put_primary_key(changeset) do
     ip = IPv6.generate([0x0000, 0x0000, 0x0000])
 
