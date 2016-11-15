@@ -6,10 +6,11 @@ defmodule HELM.Account.Model.Account do
   alias Ecto.Changeset
   import Ecto.Changeset
 
-  alias HELM.Account.Model.Account, as : MdlAccount
+  alias HELM.Account.Model.Account, as: MdlAccount
 
+  @type t :: %__MODULE__{}
   @type create_params :: %{email: String.t, password: String.t, confirmation: String.t}
-  @type update_params :: %{email: String.t, optional(:password) => String.t, optional(:confirmed) => boolean}
+  @type update_params :: %{:email => String.t, optional(:password) => String.t, optional(:confirmed) => boolean}
 
   @primary_key {:account_id, EctoNetwork.INET, autogenerate: false}
   @derive {Poison.Encoder, only: [:email, :account_id]}
@@ -36,7 +37,7 @@ defmodule HELM.Account.Model.Account do
     |> put_primary_key()
   end
 
-  @spec update_changeset(schema :: MdlAccount.t, params :: update_params) :: Changeset.t
+  @spec update_changeset(schema :: t, params :: update_params) :: Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)

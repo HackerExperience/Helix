@@ -13,7 +13,7 @@ defmodule HELM.Account.Controller.Account do
     |> Repo.insert()
   end
 
-  @spec find(account_id :: Account.id) :: {:ok, MdlAccount.t} | {:error, :notfound}
+  @spec find(account_id :: Account.account_id) :: {:ok, MdlAccount.t} | {:error, :notfound}
   def find(account_id) do
     case Repo.get_by(MdlAccount, account_id: account_id) do
       nil -> {:error, :notfound}
@@ -21,7 +21,7 @@ defmodule HELM.Account.Controller.Account do
     end
   end
 
-  @spec find_by([email: String.t]) :: {:ok, MdlAccount.t} | {:error, :notfound}
+  @spec find_by([email: Account.email]) :: {:ok, MdlAccount.t} | {:error, :notfound}
   def find_by(email: email) do
     email = String.downcase(email)
 
@@ -31,7 +31,7 @@ defmodule HELM.Account.Controller.Account do
     end
   end
 
-  @spec delete(account_id :: String.t) :: :ok
+  @spec delete(account_id :: Account.account_id) :: :ok
   def delete(account_id) do
     MdlAccount
     |> where([s], s.account_id == ^account_id)
@@ -40,7 +40,7 @@ defmodule HELM.Account.Controller.Account do
     :ok
   end
 
-  @spec login(email :: String.t, password :: String.t) :: {:ok, String.t} | {:error, :notfound}
+  @spec login(email :: Account.email, password :: Account.password) :: {:ok, Account.account_id} | {:error, :notfound}
   def login(email, password) do
     email = String.downcase(email)
 
