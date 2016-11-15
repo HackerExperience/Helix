@@ -1,8 +1,7 @@
 defmodule HELM.Entity.Model.EntityType do
   use Ecto.Schema
-
   import Ecto.Changeset
-
+  alias Ecto.Changeset
   alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
 
   @primary_key {:entity_type, :string, autogenerate: false}
@@ -16,6 +15,7 @@ defmodule HELM.Entity.Model.EntityType do
     timestamps
   end
 
+  @spec create_changeset(params :: %{entity_type: String.t}) :: Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

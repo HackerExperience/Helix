@@ -4,6 +4,7 @@ defmodule HELM.Entity.App do
   alias HELM.Controller.EntityService, as: EntityService
   alias HELM.Entity.Repo
 
+  @spec start(Application.start_type, term) :: {:ok, pid} | {:error, reason :: term}
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 

@@ -2,12 +2,15 @@ defmodule HELM.Controller.EntityService do
   use GenServer
 
   alias HELF.Broker
+  alias HELM.Entity.Model.Entity, as: MdlEntity
   alias HELM.Entity.Controller.Entity, as: CtrlEntity
 
+  @spec start_link() :: GenServer.start
   def start_link(state \\ []) do
     GenServer.start_link(__MODULE__, state, name: :entity_service)
   end
 
+  @spec init(_args :: []) :: {:ok, nil}
   def init(_args) do
     Broker.subscribe("event:account:created", cast: &handle_broker_cast/4)
     Broker.subscribe("entity:create", call: &handle_broker_call/4)
@@ -26,17 +29,20 @@ defmodule HELM.Controller.EntityService do
     {:reply, response}
   end
 
+  @spec handle_cast({:entity, :create, :account, id :: MdlAccount.account_id}, nil) :: {:noreply, nil}
   @doc false
   def handle_cast({:entity, :create, :account, id}, state) do
     create_entity(%{account_id: id})
     {:noreply, state}
   end
 
+  @spec handle_call({:entity, :create, params :: MdlEntity.create_params}, GenServer.from, nil) :: {:reply, CtrlEntity.create, nil}
+  @spec handle_call({:entity, :find, id :: MdlEntity.entity_id}, GenServer.from, nil) :: {:reply, CtrlEntity.find, nil}
   @doc false
   def handle_call({:entity, :create, params}, _from, state) do
     case create_entity(params) do
       {:ok, entity} -> {:reply, {:ok, entity}, state}
-      error -> {:reply, {:ok, error}, state}
+      error -> {:reply, {:error, error}, state}
     end
   end
   def handle_call({:entity, :find, id}, _from, state) do
@@ -44,6 +50,7 @@ defmodule HELM.Controller.EntityService do
     {:reply, response, state}
   end
 
+  @spec create_entity(params :: MdlEntity.create_params) :: CtrlEntity.create
   defp create_entity(params) do
     with {:ok, entity} <- CtrlEntity.create(params) do
       Broker.cast("event:entity:created", entity.entity_id)
