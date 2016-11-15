@@ -27,9 +27,6 @@ defmodule HELM.Account.Controller.AccountService do
     {:ok, nil}
   end
 
-  @spec handle_broker_call(pid, "account:create", account :: MdlAccount.create_params) :: {:reply, response :: {:ok, Ecto.Schema.t}}
-  @spec handle_broker_call(pid, "account:login", %{email: String.t, password: String.t}) :: GenServer.start
-
   @doc false
   def handle_broker_call(pid, "account:create", account, _request) do
     response = GenServer.call(pid, {:account, :create, account})
@@ -42,10 +39,8 @@ defmodule HELM.Account.Controller.AccountService do
     {:reply, response}
   end
 
-
-  @spec handle_call({:account, :create, account}, _from :: pid, state :: term) :: {:reply, create_t :: CtrlAccount.create_t, state}
-  @spec handle_call({:account, :login, email, password}, _from :: pid, state :: term) :: {:reply, create_t :: CtrlAccount.create_t, state}
-
+  @spec handle_call({:account, :create, account :: MdlAccount.create_params}, GenServer.from, nil) :: {:reply, CtrlAccount.create, nil}
+  @spec handle_call({:account, :login, email :: String.t, password :: String.t}, GenServer.from, nil) :: {:reply, CtrlAccount.login, nil}
   @doc false
   def handle_call({:account, :create, account}, _from, state) do
     with {:ok, account} <- CtrlAccount.create(account) do
@@ -55,8 +50,6 @@ defmodule HELM.Account.Controller.AccountService do
       error -> {:reply, error, state}
     end
   end
-
-  @doc false
   def handle_call({:account, :login, email, password}, _from, state) do
     with {:ok, account_id} <- CtrlAccount.login(email, password),
          {:ok, token} <- CtrlSession.create(account_id) do

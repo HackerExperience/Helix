@@ -4,7 +4,7 @@ defmodule HELM.Account.App do
   alias HELM.Account.Controller.AccountService
   alias HELM.Account.Repo
 
-  @spec start(_type :: Application.start_type, _args :: []) :: {:ok, pid} | {:error, term}
+  @spec start(Application.start_type, term) :: {:ok, pid} | {:error, reason :: term}
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
