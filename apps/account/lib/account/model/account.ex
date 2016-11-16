@@ -5,7 +5,6 @@ defmodule HELM.Account.Model.Account do
 
   alias HELL.IPv6
   alias Comeonin.Bcrypt, as: Crypt
-  alias HELM.Account.Model.Account, as: MdlAccount
 
   @type t :: %__MODULE__{}
 

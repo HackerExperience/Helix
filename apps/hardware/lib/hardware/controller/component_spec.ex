@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.Controller.ComponentSpec do
+
   import Ecto.Query
 
-  alias HELF.Broker
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec
 
