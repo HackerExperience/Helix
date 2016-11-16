@@ -1,8 +1,9 @@
 defmodule HELM.Server.Controller.ServerService do
+
   use GenServer
 
-  alias HELM.Server.Controller.Server, as: CtrlServers
   alias HELF.Broker
+  alias HELM.Server.Controller.Server, as: CtrlServers
 
   def start_link(state \\ []) do
     GenServer.start_link(__MODULE__, state, name: :server)

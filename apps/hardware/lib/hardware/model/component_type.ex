@@ -1,6 +1,6 @@
 defmodule HELM.Hardware.Model.ComponentType do
-  use Ecto.Schema
 
+  use Ecto.Schema
   import Ecto.Changeset
 
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false

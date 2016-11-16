@@ -1,6 +1,7 @@
 defmodule HELM.Server.Controller.ServerType do
-  import Ecto.Query
-  
+
+  import Ecto.Query, only: [where: 3, select: 3]
+
   alias HELM.Server.Repo
   alias HELM.Server.Model.ServerType, as: MdlServerType
 

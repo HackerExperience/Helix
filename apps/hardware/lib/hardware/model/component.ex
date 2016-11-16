@@ -1,4 +1,5 @@
 defmodule HELM.Hardware.Model.Component do
+
   use Ecto.Schema
   import Ecto.Changeset
 

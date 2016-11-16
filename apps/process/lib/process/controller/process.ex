@@ -1,5 +1,6 @@
 defmodule HELM.Process.Controller.Process do
-  import Ecto.Query
+
+  import Ecto.Query, only: [where: 3]
 
   alias HELM.Process.Repo
   alias HELM.Process.Model.Process, as: MdlProcess

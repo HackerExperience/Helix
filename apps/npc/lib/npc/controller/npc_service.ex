@@ -1,7 +1,7 @@
 defmodule HELM.NPC.Controller.NPCService do
+
   use GenServer
 
-  alias HELM.NPC, warn: false
   alias HELF.Broker
 
   def start_link(state \\ []) do

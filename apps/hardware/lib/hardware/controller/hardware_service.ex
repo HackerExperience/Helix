@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.Controller.HardwareService do
+
   use GenServer
 
-  alias HELM.Hardware, warn: false
   alias HELF.Broker
   alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
   alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots

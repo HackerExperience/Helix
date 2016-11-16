@@ -1,6 +1,6 @@
 defmodule HELM.Hardware.Controller.ComponentSpec do
 
-  import Ecto.Query
+  import Ecto.Query, only: [where: 3]
 
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec

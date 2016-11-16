@@ -1,4 +1,5 @@
 defmodule HELM.Server.Model.Server do
+
   use Ecto.Schema
   import Ecto.Changeset
 

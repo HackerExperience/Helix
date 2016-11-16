@@ -1,5 +1,6 @@
 defmodule HELM.NPC.Controller.NPC do
-  import Ecto.Query
+
+  import Ecto.Query, only: [where: 3]
 
   alias HELM.NPC.Repo
   alias HELM.NPC.Model.NPC, as: MdlNPC
