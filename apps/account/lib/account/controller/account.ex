@@ -1,19 +1,18 @@
 defmodule HELM.Account.Controller.Account do
+
   import Ecto.Query
 
   alias Comeonin.Bcrypt, as: Crypt
-
-  alias Ecto.Changeset
   alias HELM.Account.Repo
   alias HELM.Account.Model.Account, as: MdlAccount
 
-  @spec create(params :: MdlAccount.create_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlAccount.create_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     MdlAccount.create_changeset(params)
     |> Repo.insert()
   end
 
-  @spec find(account_id :: Account.account_id) :: {:ok, MdlAccount.t} | {:error, :notfound}
+  @spec find(MdlAccount.id) :: {:ok, MdlAccount.t} | {:error, :notfound}
   def find(account_id) do
     case Repo.get_by(MdlAccount, account_id: account_id) do
       nil -> {:error, :notfound}
@@ -21,7 +20,7 @@ defmodule HELM.Account.Controller.Account do
     end
   end
 
-  @spec find_by([email: Account.email]) :: {:ok, MdlAccount.t} | {:error, :notfound}
+  @spec find_by([email: MdlAccount.email]) :: {:ok, MdlAccount.t} | {:error, :notfound}
   def find_by(email: email) do
     email = String.downcase(email)
 
@@ -31,7 +30,7 @@ defmodule HELM.Account.Controller.Account do
     end
   end
 
-  @spec delete(account_id :: Account.account_id) :: :ok
+  @spec delete(MdlAccount.id) :: :ok
   def delete(account_id) do
     MdlAccount
     |> where([s], s.account_id == ^account_id)
@@ -40,7 +39,7 @@ defmodule HELM.Account.Controller.Account do
     :ok
   end
 
-  @spec login(email :: Account.email, password :: Account.password) :: {:ok, Account.account_id} | {:error, :notfound}
+  @spec login(MdlAccount.email, MdlAccount.password) :: {:ok, MdlAccount.id} | {:error, :notfound}
   def login(email, password) do
     email = String.downcase(email)
 

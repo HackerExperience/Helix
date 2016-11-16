@@ -1,5 +1,10 @@
 defmodule HELM.Account.Controller.Session do
-  @spec create(account_id :: String.t) :: {:ok, String.t} | {:error, :unauthorized}
+
+  alias HELMF.Account.Model.Account, as: MdlAccount
+
+  @type jwt :: String.t
+
+  @spec create(MdlAccount.id) :: {:ok, jwt} | {:error, :unauthorized}
   def create(account_id) do
     session = %{account_id: account_id}
     with {:ok, jwt, _claims} <- Guardian.encode_and_sign(session, :access) do
@@ -9,7 +14,7 @@ defmodule HELM.Account.Controller.Session do
     end
   end
 
-  @spec verify(jwt :: String.t) :: :ok | {:error, :unauthorized}
+  @spec verify(jwt :: jwt) :: :ok | {:error, :unauthorized}
   def verify(jwt) do
     case Guardian.decode_and_verify(jwt) do
       {:ok, _claims} -> :ok

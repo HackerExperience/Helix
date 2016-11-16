@@ -1,4 +1,5 @@
 defmodule HELM.Account.Model.Session do
+
   @behaviour Guardian.Serializer
 
   @enforce_keys [:account_id]

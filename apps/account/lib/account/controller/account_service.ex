@@ -2,11 +2,11 @@ defmodule HELM.Account.Controller.AccountService do
 
   use GenServer
 
+  alias HELF.Broker
+  alias HELF.Router
   alias HELM.Account.Model.Account, as: MdlAccount
   alias HELM.Account.Controller.Account, as: CtrlAccount
   alias HELM.Account.Controller.Session, as: CtrlSession
-  alias HELF.Broker
-  alias HELF.Router
 
   # TODO: Refactor this and add meaning
 
@@ -19,7 +19,7 @@ defmodule HELM.Account.Controller.AccountService do
     GenServer.start_link(__MODULE__, [], name: :account_service)
   end
 
-  @spec init(_args :: []) :: {:ok, nil}
+  @spec init([]) :: {:ok, nil}
   def init(_args) do
     Broker.subscribe("account:create", call: &handle_broker_call/4)
     Broker.subscribe("account:login", call: &handle_broker_call/4)
@@ -39,11 +39,11 @@ defmodule HELM.Account.Controller.AccountService do
     {:reply, response}
   end
 
-  @spec handle_call({:account, :create, account :: MdlAccount.create_params}, GenServer.from, nil) :: {:reply, CtrlAccount.create, nil}
-  @spec handle_call({:account, :login, email :: String.t, password :: String.t}, GenServer.from, nil) :: {:reply, CtrlAccount.login, nil}
+  @spec handle_call({:account, :create, MdlAccount.create_params}, GenServer.from, nil) :: {:reply, {:ok, MdlAccount.t}, nil} | {:reply, {:error, Ecto.Changeset.t}, nil}
+  @spec handle_call({:account, :login, MdlAccount.email, MdlAccount.password}, GenServer.from, nil) :: {:reply, {:ok, MdlAccount.id}, nil} | {:reply, {:error, :notfound}, nil}
   @doc false
-  def handle_call({:account, :create, account}, _from, state) do
-    with {:ok, account} <- CtrlAccount.create(account) do
+  def handle_call({:account, :create, params}, _from, state) do
+    with {:ok, account} <- CtrlAccount.create(params) do
       Broker.cast("event:account:created", account.account_id)
       {:reply, {:ok, account}, state}
     else
