@@ -1,12 +1,12 @@
 defmodule HELM.Account.Controller.Account do
 
-  import Ecto.Query
+  import Ecto.Query, only: [where: 3, select: 3]
 
   alias Comeonin.Bcrypt, as: Crypt
   alias HELM.Account.Repo
   alias HELM.Account.Model.Account, as: MdlAccount
 
-  @spec create(MdlAccount.create_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlAccount.creation_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     MdlAccount.create_changeset(params)
     |> Repo.insert()

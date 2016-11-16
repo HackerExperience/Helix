@@ -7,7 +7,7 @@ defmodule HELM.Entity.Model.EntityServer do
 
   @type t :: %__MODULE__{}
   @type server_id :: String.t
-  @type create_params :: %{server_id: server_id, entity_id: MdlEntity.id}
+  @type creation_params :: %{server_id: server_id, entity_id: MdlEntity.id}
 
   @primary_key {:server_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/server_id entity_id/a
@@ -21,7 +21,7 @@ defmodule HELM.Entity.Model.EntityServer do
     timestamps
   end
 
-  @spec create_changeset(create_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

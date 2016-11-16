@@ -1,11 +1,11 @@
 defmodule HELM.Entity.Controller.Entity do
 
-  import Ecto.Query
+  import Ecto.Query, only: [where: 3]
 
   alias HELM.Entity.Model.Entity, as: MdlEntity
   alias HELM.Entity.Repo
 
-  @spec create(MdlEntity.create_params) :: {:ok, MdlEntity.t} | {:error,  Ecto.Changeset.t}
+  @spec create(MdlEntity.creation_params) :: {:ok, MdlEntity.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> MdlEntity.create_changeset()

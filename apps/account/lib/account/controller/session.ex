@@ -14,7 +14,7 @@ defmodule HELM.Account.Controller.Session do
     end
   end
 
-  @spec verify(jwt :: jwt) :: :ok | {:error, :unauthorized}
+  @spec verify(jwt) :: :ok | {:error, :unauthorized}
   def verify(jwt) do
     case Guardian.decode_and_verify(jwt) do
       {:ok, _claims} -> :ok

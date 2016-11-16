@@ -1,6 +1,6 @@
 defmodule HELM.Entity.Controller.EntityServer do
 
-  import Ecto.Query
+  import Ecto.Query, only: [where: 3]
 
   alias HELM.Entity.Repo
   alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false

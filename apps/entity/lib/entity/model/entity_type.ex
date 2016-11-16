@@ -6,7 +6,7 @@ defmodule HELM.Entity.Model.EntityType do
   alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
 
   @type t :: %__MODULE__{}
-  @type type :: String.t
+  @type name :: String.t
 
   @primary_key {:entity_type, :string, autogenerate: false}
   @creation_fields ~w/entity_type/a
@@ -19,7 +19,7 @@ defmodule HELM.Entity.Model.EntityType do
     timestamps
   end
 
-  @spec create_changeset(params :: %{entity_type: type}) :: Ecto.Changeset.t
+  @spec create_changeset(params :: %{entity_type: name}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

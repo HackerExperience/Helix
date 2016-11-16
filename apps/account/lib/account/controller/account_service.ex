@@ -39,8 +39,10 @@ defmodule HELM.Account.Controller.AccountService do
     {:reply, response}
   end
 
-  @spec handle_call({:account, :create, MdlAccount.create_params}, GenServer.from, nil) :: {:reply, {:ok, MdlAccount.t}, nil} | {:reply, {:error, Ecto.Changeset.t}, nil}
-  @spec handle_call({:account, :login, MdlAccount.email, MdlAccount.password}, GenServer.from, nil) :: {:reply, {:ok, MdlAccount.id}, nil} | {:reply, {:error, :notfound}, nil}
+  @spec handle_call({:account, :create, MdlAccount.creation_params}, GenServer.from, nil) ::
+    {:reply, {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}, nil}
+  @spec handle_call({:account, :login, MdlAccount.email, MdlAccount.password}, GenServer.from, nil) ::
+    {:reply, {:ok, MdlAccount.id} | {:error, :notfound}, nil}
   @doc false
   def handle_call({:account, :create, params}, _from, state) do
     with {:ok, account} <- CtrlAccount.create(params) do

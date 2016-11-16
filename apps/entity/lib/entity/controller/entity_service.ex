@@ -37,12 +37,10 @@ defmodule HELM.Controller.EntityService do
     {:noreply, state}
   end
 
-  @spec handle_call({:entity, :create, MdlEntity.create_params}, GenServer.from, nil) ::
-    {:reply, {:ok, MdlEntity.t}, nil} |
-    {:reply, {:error,  Ecto.Changeset.t}, nil}
+  @spec handle_call({:entity, :create, MdlEntity.creation_params}, GenServer.from, nil) ::
+    {:reply, {:ok, MdlEntity.t} | {:error, Ecto.Changeset.t}, nil}
   @spec handle_call({:entity, :find, MdlEntity.id}, GenServer.from, nil) ::
-    {:reply, {:ok, MdlEntity.t}, nil} |
-    {:reply, {:error, :notfound}, nil}
+    {:reply, {:ok, MdlEntity.t} | {:error, :notfound}, nil}
   @doc false
   def handle_call({:entity, :create, params}, _from, state) do
     case create_entity(params) do
@@ -55,7 +53,7 @@ defmodule HELM.Controller.EntityService do
     {:reply, response, state}
   end
 
-  @spec create_entity(MdlEntity.create_params) :: {:ok, MdlEntity.t} | {:error,  Ecto.Changeset.t}
+  @spec create_entity(MdlEntity.creation_params) :: {:ok, MdlEntity.t} | {:error,  Ecto.Changeset.t}
   defp create_entity(params) do
     with {:ok, entity} <- CtrlEntity.create(params) do
       Broker.cast("event:entity:created", entity.entity_id)
