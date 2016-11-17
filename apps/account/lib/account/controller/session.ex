@@ -5,10 +5,11 @@ defmodule HELM.Account.Controller.Session do
   @spec create(MdlAccount.id) :: {:ok, String.t} | {:error, :unauthorized}
   def create(account_id) do
     session = %{account_id: account_id}
-    with {:ok, jwt, _claims} <- Guardian.encode_and_sign(session, :access) do
-      {:ok, jwt}
-    else
-      _ -> {:error, :unauthorized}
+    case Guardian.encode_and_sign(session, :access) do
+      {:ok, jwt, _claims} ->
+        {:ok, jwt}
+      _ ->
+        {:error, :unauthorized}
     end
   end
 

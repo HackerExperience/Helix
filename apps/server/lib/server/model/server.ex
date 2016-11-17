@@ -6,6 +6,7 @@ defmodule HELM.Server.Model.Server do
   alias HELL.IPv6
   alias HELM.Server.Model.ServerType, as: MdlServerType, warn: false
 
+  @type id :: String.t
   @primary_key {:server_id, EctoNetwork.INET, autogenerate: false}
 
   schema "servers" do

@@ -18,27 +18,27 @@ defmodule HELM.Entity.Controller.EntityServerTest do
   test "create/1", %{type: type, payload: payload, id: id} do
     {:ok, _} = CtrlEntityType.create(type)
     {:ok, entity} = CtrlEntity.create(payload)
-    assert {:ok, _} = CtrlEntityServer.create(id, entity.entity_id)
+    assert {:ok, _} = CtrlEntityServer.create(entity.entity_id, id)
   end
 
-  describe "find/1" do
+  describe "find/2" do
     test "success", %{type: type, payload: payload, id: id} do
       {:ok, _} = CtrlEntityType.create(type)
       {:ok, entity} = CtrlEntity.create(payload)
-      {:ok, entity_server} = CtrlEntityServer.create(id, entity.entity_id)
-      assert {:ok, ^entity_server} = CtrlEntityServer.find(entity_server.server_id)
+      {:ok, entity_server} = CtrlEntityServer.create(entity.entity_id, id)
+      assert {:ok, ^entity_server} = CtrlEntityServer.find(entity.entity_id, id)
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlEntityServer.find(IPv6.generate([]))
+      assert {:error, :notfound} = CtrlEntityServer.find(IPv6.generate([]), IPv6.generate([]))
     end
   end
 
   test "delete/1 idempotency", %{type: type, payload: payload, id: id} do
     {:ok, _} = CtrlEntityType.create(type)
     {:ok, entity} = CtrlEntity.create(payload)
-    {:ok, entity_server} = CtrlEntityServer.create(id, entity.entity_id)
-    assert :ok = CtrlEntityServer.delete(entity_server.server_id)
-    assert :ok = CtrlEntityServer.delete(entity_server.server_id)
+    {:ok, entity_server} = CtrlEntityServer.create(entity.entity_id, id)
+    assert :ok = CtrlEntityServer.delete(entity.entity_id, id)
+    assert :ok = CtrlEntityServer.delete(entity.entity_id, id)
   end
 end

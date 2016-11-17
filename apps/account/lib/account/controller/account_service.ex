@@ -10,7 +10,7 @@ defmodule HELM.Account.Controller.AccountService do
 
   # TODO: Refactor this and add meaning
 
-  @spec start_link() :: GenServer.start
+  @spec start_link() :: GenServer.on_start
   def start_link() do
     Router.register("account.create", "account:create")
     Router.register("account.login", "account:login")
@@ -28,8 +28,8 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @doc false
-  def handle_broker_call(pid, "account:create", account, _request) do
-    response = GenServer.call(pid, {:account, :create, account})
+  def handle_broker_call(pid, "account:create", params, _request) do
+    response = GenServer.call(pid, {:account, :create, params})
     {:reply, response}
   end
 

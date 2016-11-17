@@ -6,8 +6,7 @@ defmodule HELM.Entity.Model.EntityServer do
   alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
 
   @type t :: %__MODULE__{}
-  @type server_id :: String.t
-  @type creation_params :: %{server_id: server_id, entity_id: MdlEntity.id}
+  @type creation_params :: %{server_id: MdlServer.id, entity_id: MdlEntity.id}
 
   @primary_key {:server_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/server_id entity_id/a
