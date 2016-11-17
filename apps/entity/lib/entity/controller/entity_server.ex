@@ -14,12 +14,11 @@ defmodule HELM.Entity.Controller.EntityServer do
     |> Repo.insert()
   end
 
-  @spec find(MdlEntity.id, MdlServer.id) :: {:ok, MdlEntityServer.t} | {:error, :notfound}
-  def find(entity_id, server_id) do
-    case Repo.get_by(MdlEntityServer, server_id: server_id, entity_id: entity_id) do
-      nil -> {:error, :notfound}
-      res -> {:ok, res}
-    end
+  @spec find(MdlEntity.id) :: [] | [MdlEntity.t, ...]
+  def find(entity_id) do
+    MdlEntityServer
+    |> where([s], s.entity_id == ^entity_id)
+    |> Repo.all()
   end
 
   @spec delete(MdlEntity.id, MdlServer.id) :: :ok

@@ -13,8 +13,8 @@ defmodule HELM.Account.Controller.Session do
     end
   end
 
-  @spec validate(String.t) :: boolean
-  def validate(jwt) do
+  @spec valid?(String.t) :: boolean
+  def valid?(jwt) do
     case Guardian.decode_and_verify(jwt) do
       {:ok, _claims} -> true
       {:error, _reason} -> false
