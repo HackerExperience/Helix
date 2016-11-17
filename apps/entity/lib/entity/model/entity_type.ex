@@ -19,7 +19,7 @@ defmodule HELM.Entity.Model.EntityType do
     timestamps
   end
 
-  @spec create_changeset(params :: %{entity_type: name}) :: Ecto.Changeset.t
+  @spec create_changeset(%{entity_type: name}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

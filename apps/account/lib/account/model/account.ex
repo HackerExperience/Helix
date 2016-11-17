@@ -7,13 +7,11 @@ defmodule HELM.Account.Model.Account do
   alias Comeonin.Bcrypt, as: Crypt
 
   @type t :: %__MODULE__{}
-
   @type id :: String.t
   @type email :: String.t
   @type password :: String.t
-
   @type creation_params :: %{email: email, password: password, password_confirmation: password}
-  @type update_params :: %{:email => email, optional(:password) => password, optional(:confirmed) => boolean}
+  @type update_params :: %{optional(:email) => email, optional(:password) => password, optional(:confirmed) => boolean}
 
   @primary_key {:account_id, EctoNetwork.INET, autogenerate: false}
   @derive {Poison.Encoder, only: [:email, :account_id]}
