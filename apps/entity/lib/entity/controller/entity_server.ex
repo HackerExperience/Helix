@@ -14,7 +14,7 @@ defmodule HELM.Entity.Controller.EntityServer do
     |> Repo.insert()
   end
 
-  @spec find(MdlEntity.id) :: [] | [MdlEntity.t, ...]
+  @spec find(MdlEntity.id) :: [MdlEntityServer.t]
   def find(entity_id) do
     MdlEntityServer
     |> where([s], s.entity_id == ^entity_id)

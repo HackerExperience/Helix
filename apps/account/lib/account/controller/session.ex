@@ -14,10 +14,6 @@ defmodule HELM.Account.Controller.Session do
   end
 
   @spec valid?(String.t) :: boolean
-  def valid?(jwt) do
-    case Guardian.decode_and_verify(jwt) do
-      {:ok, _claims} -> true
-      {:error, _reason} -> false
-    end
-  end
+  def valid?(jwt),
+    do: match?({:ok, _}, Guardian.decode_and_verify(jwt))
 end
