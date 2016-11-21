@@ -15,8 +15,6 @@ defmodule HELM.Entity.Model.EntityType do
     has_many :entities, MdlEntity,
       foreign_key: :entity_type,
       references: :entity_type
-
-    timestamps
   end
 
   @spec create_changeset(%{entity_type: name}) :: Ecto.Changeset.t

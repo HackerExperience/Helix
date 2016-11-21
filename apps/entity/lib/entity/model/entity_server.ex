@@ -19,9 +19,6 @@ defmodule HELM.Entity.Model.EntityServer do
       references: :entity_id,
       type: EctoNetwork.INET,
       primary_key: true
-
-
-    timestamps
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -29,5 +26,6 @@ defmodule HELM.Entity.Model.EntityServer do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:entity_id)
+    |> validate_required(:server_id)
   end
 end
