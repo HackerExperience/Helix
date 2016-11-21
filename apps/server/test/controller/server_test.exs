@@ -11,17 +11,17 @@ defmodule HELM.Server.ControllerTest do
     id = HRand.string()
     payload = %{server_type: type}
 
-    {:ok, type: type, id: id, payload: payload}
+    {:ok, server_type: type, id: id, payload: payload}
   end
 
-  test "create/2", %{type: type, payload: payload} do
+  test "create/2", %{server_type: type, payload: payload} do
     {:ok, _} = CtrlServerType.create(type)
 
     assert {:ok, _} = CtrlServer.create(payload)
   end
 
   describe "find/1" do
-    test "success", %{type: type, payload: payload} do
+    test "success", %{server_type: type, payload: payload} do
       {:ok, _} = CtrlServerType.create(type)
       {:ok, serv} = CtrlServer.create(payload)
 
@@ -33,7 +33,7 @@ defmodule HELM.Server.ControllerTest do
     end
   end
 
-  test "delete/1 idempotency", %{type: type, payload: payload} do
+  test "delete/1 idempotency", %{server_type: type, payload: payload} do
     {:ok, _} = CtrlServerType.create(type)
     {:ok, serv} = CtrlServer.create(payload)
     assert :ok === CtrlServer.delete(serv.server_id)

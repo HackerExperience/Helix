@@ -10,16 +10,16 @@ defmodule HELM.Entity.Controller.EntityTest do
     type = HRand.string()
     ref_id = IPv6.generate([])
     payload = %{entity_type: type, reference_id: ref_id}
-    {:ok, type: type, payload: payload}
+    {:ok, entity_type: type, payload: payload}
   end
 
-  test "create/1", %{type: type, payload: payload} do
+  test "create/1", %{entity_type: type, payload: payload} do
     {:ok, _} = CtrlEntityType.create(type)
     assert {:ok, _} = CtrlEntity.create(payload)
   end
 
   describe "find/1" do
-    test "success", %{type: type, payload: payload} do
+    test "success", %{entity_type: type, payload: payload} do
       {:ok, _} = CtrlEntityType.create(type)
       {:ok, enty} = CtrlEntity.create(payload)
       assert {:ok, ^enty} = CtrlEntity.find(enty.entity_id)
@@ -30,7 +30,7 @@ defmodule HELM.Entity.Controller.EntityTest do
     end
   end
 
-  test "delete/1 idempotency", %{type: type, payload: payload} do
+  test "delete/1 idempotency", %{entity_type: type, payload: payload} do
     {:ok, _} = CtrlEntityType.create(type)
     {:ok, enty} = CtrlEntity.create(payload)
     assert :ok = CtrlEntity.delete(enty.entity_id)

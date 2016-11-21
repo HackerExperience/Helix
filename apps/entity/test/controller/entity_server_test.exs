@@ -12,17 +12,17 @@ defmodule HELM.Entity.Controller.EntityServerTest do
     ref_id = IPv6.generate([])
     id = IPv6.generate([])
     payload = %{entity_type: type, reference_id: ref_id}
-    {:ok, type: type, id: id, payload: payload}
+    {:ok, entity_type: type, id: id, payload: payload}
   end
 
-  test "create/1", %{type: type, payload: payload, id: id} do
+  test "create/1", %{entity_type: type, payload: payload, id: id} do
     {:ok, _} = CtrlEntityType.create(type)
     {:ok, entity} = CtrlEntity.create(payload)
     assert {:ok, _} = CtrlEntityServer.create(entity.entity_id, id)
   end
 
   describe "find/1" do
-    test "found servers", %{type: type, payload: payload, id: id} do
+    test "found servers", %{entity_type: type, payload: payload, id: id} do
       {:ok, _} = CtrlEntityType.create(type)
       {:ok, entity} = CtrlEntity.create(payload)
       {:ok, entry1} = CtrlEntityServer.create(entity.entity_id, id)
@@ -35,7 +35,7 @@ defmodule HELM.Entity.Controller.EntityServerTest do
     end
   end
 
-  test "delete/1 idempotency", %{type: type, payload: payload, id: id} do
+  test "delete/1 idempotency", %{entity_type: type, payload: payload, id: id} do
     {:ok, _} = CtrlEntityType.create(type)
     {:ok, entity} = CtrlEntity.create(payload)
     {:ok, _} = CtrlEntityServer.create(entity.entity_id, id)
