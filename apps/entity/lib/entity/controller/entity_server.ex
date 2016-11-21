@@ -24,7 +24,8 @@ defmodule HELM.Entity.Controller.EntityServer do
   @spec delete(MdlEntity.id, MdlServer.id) :: :ok
   def delete(entity_id, server_id) do
     MdlEntityServer
-    |> where([s], s.entity_id == ^entity_id and s.server_id == ^server_id)
+    |> where([s], s.entity_id == ^entity_id)
+    |> where([s], s.server_id == ^server_id)
     |> Repo.delete_all()
 
     :ok

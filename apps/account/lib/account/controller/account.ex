@@ -8,7 +8,8 @@ defmodule HELM.Account.Controller.Account do
 
   @spec create(MdlAccount.creation_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
   def create(params) do
-    MdlAccount.create_changeset(params)
+    params
+    |> MdlAccount.create_changeset()
     |> Repo.insert()
   end
 
