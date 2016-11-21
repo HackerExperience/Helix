@@ -24,5 +24,6 @@ defmodule HELM.Software.Model.FileType do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:file_type)
+    |> unique_constraint(:file_type)
   end
 end

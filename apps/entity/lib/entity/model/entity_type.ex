@@ -22,5 +22,6 @@ defmodule HELM.Entity.Model.EntityType do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:entity_type)
+    |> unique_constraint(:entity_type)
   end
 end

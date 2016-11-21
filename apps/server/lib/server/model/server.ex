@@ -21,8 +21,8 @@ defmodule HELM.Server.Model.Server do
     timestamps
   end
 
-  @creation_fields ~w(server_type poi_id motherboard_id)
-  @update_fields ~w(poi_id motherboard_id)
+  @creation_fields ~w/server_type poi_id motherboard_id/a
+  @update_fields ~w/poi_id motherboard_id/a
 
   def create_changeset(params) do
     %__MODULE__{}
@@ -40,6 +40,6 @@ defmodule HELM.Server.Model.Server do
     ip = IPv6.generate([0x0002, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{server_id: ip}, ~w(server_id))
+    |> cast(%{server_id: ip}, ~w/server_id/a)
   end
 end

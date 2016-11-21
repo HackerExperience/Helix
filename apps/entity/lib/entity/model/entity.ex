@@ -10,9 +10,10 @@ defmodule HELM.Entity.Model.Entity do
   @type t :: %__MODULE__{}
   @type id :: String.t
   @type creation_params :: %{entity_type: MdlEntityType.name, reference_id: String.t}
+  @type update_params :: %{optional(:reference_id) => String.t}
 
   @primary_key {:entity_id, EctoNetwork.INET, autogenerate: false}
-  @creation_fields ~w(entity_type reference_id)a
+  @creation_fields ~w/entity_type reference_id/a
 
   schema "entities" do
     field :reference_id, EctoNetwork.INET
@@ -42,6 +43,6 @@ defmodule HELM.Entity.Model.Entity do
     ip = IPv6.generate([0x0001, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{entity_id: ip}, ~w(entity_id))
+    |> cast(%{entity_id: ip}, ~w/entity_id/a)
   end
 end

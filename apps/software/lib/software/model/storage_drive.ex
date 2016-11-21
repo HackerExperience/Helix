@@ -22,6 +22,6 @@ defmodule HELM.Software.Model.StorageDrive do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> unique_constraint(:storage_id)
+    |> validate_required(@creation_fields)
   end
 end

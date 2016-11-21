@@ -31,6 +31,6 @@ defmodule HELM.Hardware.Model.ComponentSpec do
     ip = IPv6.generate([0x0003, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{spec_id: ip}, ~w(spec_id))
+    |> cast(%{spec_id: ip}, ~w/spec_id/a)
   end
 end

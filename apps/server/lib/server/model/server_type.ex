@@ -18,5 +18,6 @@ defmodule HELM.Server.Model.ServerType do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
+    |> unique_constraint(:server_type)
   end
 end

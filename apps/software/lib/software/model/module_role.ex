@@ -24,5 +24,6 @@ defmodule HELM.Software.Model.ModuleRole do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:module_role)
+    |> unique_constraint(:module_role)
   end
 end

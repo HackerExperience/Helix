@@ -36,9 +36,7 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(:motherboard_id)
-    |> validate_required(:link_component_type)
-    |> validate_required(:slot_internal_id)
+    |> validate_required(~w/motherboard_id link_component_type slot_internal_id/a)
     |> put_primary_key()
   end
 
@@ -51,6 +49,6 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     ip = IPv6.generate([0x0003, 0x0002, 0x0000])
 
     changeset
-    |> cast(%{slot_id: ip}, ~w(slot_id))
+    |> cast(%{slot_id: ip}, ~w/slot_id/a)
   end
 end

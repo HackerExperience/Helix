@@ -30,6 +30,6 @@ defmodule HELM.Software.Model.Storage do
     ip = IPv6.generate([0x0004, 0x0001, 0x0000])
 
     changeset
-    |> cast(%{storage_id: ip}, ~w(storage_id))
+    |> cast(%{storage_id: ip}, ~w/storage_id/a)
   end
 end
