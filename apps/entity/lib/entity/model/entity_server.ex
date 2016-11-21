@@ -8,14 +8,18 @@ defmodule HELM.Entity.Model.EntityServer do
   @type t :: %__MODULE__{}
   @type creation_params :: %{server_id: MdlServer.id, entity_id: MdlEntity.id}
 
-  @primary_key {:server_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key false
   @creation_fields ~w/server_id entity_id/a
 
   schema "entity_servers" do
+    field :server_id, EctoNetwork.INET, primary_key: true
+
     belongs_to :entity, MdlEntity,
       foreign_key: :entity_id,
       references: :entity_id,
-      type: EctoNetwork.INET
+      type: EctoNetwork.INET,
+      primary_key: true
+
 
     timestamps
   end
