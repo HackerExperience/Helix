@@ -4,7 +4,7 @@ defmodule HELM.Software.Repo.Migrations.FixCompositePks do
   def change do
     drop unique_index(:storage_drives, [:storage_id])
 
-    alter table(:storage_drives, primary_key: false) do
+    alter table(:storage_drives) do
       remove :drive_id
       remove :storage_id
 

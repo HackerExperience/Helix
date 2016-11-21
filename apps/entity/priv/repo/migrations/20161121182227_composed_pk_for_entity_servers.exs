@@ -2,7 +2,7 @@ defmodule HELM.Entity.Repo.Migrations.ComposedPkForEntityServers do
   use Ecto.Migration
 
   def change do
-    alter table(:entity_servers, primary_key: false) do
+    alter table(:entity_servers) do
       remove :server_id
       remove :entity_id
       add :server_id, :inet, primary_key: true
