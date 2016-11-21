@@ -64,9 +64,4 @@ defmodule HELM.Hardware.Controller.HardwareService do
     response = CtrlCompSpec.find(id)
     {:reply, response, state}
   end
-
-  def handle_call({:component_types, :get}, _from, state) do
-    response = CtrlCompType.all()
-    {:reply, response, state}
-  end
 end
