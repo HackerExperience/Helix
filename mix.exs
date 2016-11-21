@@ -13,6 +13,7 @@ defmodule HELM.Mixfile do
     [
       {:earmark, "~> 1.0", only: :dev},
       {:ex_doc, "~> 0.14", only: :dev},
-      {:credo, "~> 0.4", only: :dev}]
+      {:credo, "~> 0.5", only: [:dev, :test]},
+      {:dialyze, "~> 0.2", only: [:dev, :test]}]
   end
 end

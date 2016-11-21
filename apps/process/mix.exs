@@ -12,6 +12,7 @@ defmodule HELM.Process.Mixfile do
       elixir: "~> 1.3",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
+      elixirc_options: [warnings_as_errors: true],
       deps: deps]
   end
 
@@ -22,12 +23,13 @@ defmodule HELM.Process.Mixfile do
   end
 
   defp applications(_),
-    do: [:logger, :helf_broker, :ecto, :postgrex]
+    do: [:logger, :helf_broker, :ecto, :postgrex, :timex]
 
   defp deps do
     [
       {:helf_broker, in_umbrella: true},
       {:hell, in_umbrella: true},
+      {:timex, "~> 3.0"},
       {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.0"},
       {:ecto_network, "~> 0.4.0"}]

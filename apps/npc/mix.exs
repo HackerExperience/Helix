@@ -12,6 +12,7 @@ defmodule HELM.NPC.Mixfile do
       elixir: "~> 1.3",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
+      elixirc_options: [warnings_as_errors: true],
       deps: deps]
   end
 
