@@ -12,7 +12,7 @@ defmodule HELM.Server.Mixfile do
       elixir: "~> 1.3",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      elixirc_options: [warnings_as_errors: true],
+      elixirc_options: elixirc_options(Mix.env),
       deps: deps]
   end
 
@@ -24,6 +24,11 @@ defmodule HELM.Server.Mixfile do
 
   defp applications(_),
     do: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity, :hardware]
+
+  defp elixirc_options(:dev),
+    do: []
+  defp elixirc_options(_),
+    do: [warnings_as_errors: true]
 
   defp deps do
     [

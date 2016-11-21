@@ -12,7 +12,7 @@ defmodule HELL.Mixfile do
       elixir: "~> 1.3",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      elixirc_options: [warnings_as_errors: true],
+      elixirc_options: elixirc_options(Mix.env),
       elixirc_paths: compile_paths(Mix.env),
       deps: deps]
   end
@@ -27,6 +27,11 @@ defmodule HELL.Mixfile do
     do: default_applications()
   defp default_applications,
     do: [:logger]
+
+  defp elixirc_options(:dev),
+    do: []
+  defp elixirc_options(_),
+    do: [warnings_as_errors: true]
 
   defp compile_paths(:test),
     do: ["lib", "test/helper"]

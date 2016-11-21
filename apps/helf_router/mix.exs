@@ -12,7 +12,7 @@ defmodule HELM.HELFRouter.Mixfile do
       elixir: "~> 1.3",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      elixirc_options: [warnings_as_errors: true],
+      elixirc_options: elixirc_options(Mix.env),
       deps: deps]
   end
 
@@ -22,8 +22,13 @@ defmodule HELM.HELFRouter.Mixfile do
       mod: {HELM.HELFRouter.App, []}]
   end
 
-defp applications(_),
-  do: [:logger, :cowboy]
+  defp applications(_),
+    do: [:logger, :cowboy]
+
+  defp elixirc_options(:dev),
+    do: []
+  defp elixirc_options(_),
+    do: [warnings_as_errors: true]
 
   defp deps do
     [
