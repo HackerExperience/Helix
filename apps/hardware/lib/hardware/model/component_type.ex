@@ -22,8 +22,6 @@ defmodule HELM.Hardware.Model.ComponentType do
     has_many :specs, MdlCompSpec,
       foreign_key: :component_type,
       references: :component_type
-
-    timestamps
   end
 
   def create_changeset(params) do

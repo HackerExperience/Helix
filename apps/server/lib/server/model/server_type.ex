@@ -12,8 +12,6 @@ defmodule HELM.Server.Model.ServerType do
     has_many :servers, MdlServer,
       foreign_key: :server_type,
       references: :server_type
-
-    timestamps
   end
 
   def create_changeset(params) do

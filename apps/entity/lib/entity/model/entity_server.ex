@@ -25,7 +25,6 @@ defmodule HELM.Entity.Model.EntityServer do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(:entity_id)
-    |> validate_required(:server_id)
+    |> validate_required(@creation_fields)
   end
 end
