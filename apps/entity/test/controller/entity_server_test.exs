@@ -25,13 +25,13 @@ defmodule HELM.Entity.Controller.EntityServerTest do
     test "found servers", %{type: type, payload: payload, id: id} do
       {:ok, _} = CtrlEntityType.create(type)
       {:ok, entity} = CtrlEntity.create(payload)
-      {:ok, entity_server_a} = CtrlEntityServer.create(entity.entity_id, id)
-      {:ok, entity_server_b} = CtrlEntityServer.create(entity.entity_id, IPv6.generate([]))
-      assert [^entity_server_a | [^entity_server_b | _]] = CtrlEntityServer.find(entity.entity_id)
+      {:ok, entry1} = CtrlEntityServer.create(entity.entity_id, id)
+      {:ok, entry2} = CtrlEntityServer.create(entity.entity_id, IPv6.generate([]))
+      assert Enum.sort([entry1, entry2]) == Enum.sort(CtrlEntityServer.find(entity.entity_id))
     end
 
     test "no servers found" do
-      assert [] = CtrlEntityServer.find(IPv6.generate([]))
+      assert [] == CtrlEntityServer.find(IPv6.generate([]))
     end
   end
 
@@ -41,5 +41,6 @@ defmodule HELM.Entity.Controller.EntityServerTest do
     {:ok, _} = CtrlEntityServer.create(entity.entity_id, id)
     assert :ok = CtrlEntityServer.delete(entity.entity_id, id)
     assert :ok = CtrlEntityServer.delete(entity.entity_id, id)
+    assert [] == CtrlEntityServer.find(entity.entity_id)
   end
 end
