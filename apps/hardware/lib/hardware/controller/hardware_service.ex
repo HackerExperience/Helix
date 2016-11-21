@@ -7,7 +7,6 @@ defmodule HELM.Hardware.Controller.HardwareService do
   alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
   alias HELM.Hardware.Controller.Component, as: CtrlComps
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
-  alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
 
   def start_link(state \\ []) do
     GenServer.start_link(__MODULE__, state, name: :hardware)

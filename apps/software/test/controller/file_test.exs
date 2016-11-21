@@ -3,24 +3,29 @@ defmodule HELM.Software.Controller.FileTest do
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Software.Controller.FileType, as: CtrlFileType
+  alias HELM.Software.Repo
+  alias HELM.Software.Model.FileType, as: MdlFileType
   alias HELM.Software.Controller.Storage, as: CtrlStorage
   alias HELM.Software.Controller.File, as: CtrlFile
 
+  @file_type HRand.string(min: 20)
+
+  setup_all do
+    %{file_type: @file_type, extension: ".test"}
+    |> MdlFileType.create_changeset()
+    |> Repo.insert!()
+
+    :ok
+  end
+
   setup do
-    file_type_name = HRand.string()
-    file_size = HRand.number(min: 1)
-
-    file_type_payload = %{file_type: file_type_name, extension: ".test"}
-
-    {:ok, file_type} = CtrlFileType.create(file_type_payload)
     {:ok, storage} = CtrlStorage.create()
 
     payload = %{
       name: "void",
       file_path: "/dev/null",
-      file_type: file_type.file_type,
-      file_size: file_size,
+      file_type: @file_type,
+      file_size: HRand.number(min: 1),
       storage_id: storage.storage_id
     }
 

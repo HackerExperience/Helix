@@ -2,25 +2,33 @@ defmodule HELM.Entity.Controller.EntityTest do
   use ExUnit.Case
 
   alias HELL.IPv6
+  alias HELM.Entity.Repo
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Entity.Controller.Entity, as: CtrlEntity
-  alias HELM.Entity.Controller.EntityType, as: CtrlEntityType
+  alias HELM.Entity.Model.EntityType, as: MdlEntityType
 
-  setup do
-    type = HRand.string()
-    ref_id = IPv6.generate([])
-    payload = %{entity_type: type, reference_id: ref_id}
-    {:ok, entity_type: type, payload: payload}
+  @entity_type HRand.string(min: 20)
+
+  setup_all do
+    %{entity_type: @entity_type}
+    |> MdlEntityType.create_changeset()
+    |> Repo.insert!()
+
+    :ok
   end
 
-  test "create/1", %{entity_type: type, payload: payload} do
-    {:ok, _} = CtrlEntityType.create(type)
+  setup do
+    reference_id = IPv6.generate([])
+    payload = %{entity_type: @entity_type, reference_id: reference_id}
+    {:ok, payload: payload}
+  end
+
+  test "create/1", %{payload: payload} do
     assert {:ok, _} = CtrlEntity.create(payload)
   end
 
   describe "find/1" do
-    test "success", %{entity_type: type, payload: payload} do
-      {:ok, _} = CtrlEntityType.create(type)
+    test "success", %{payload: payload} do
       {:ok, enty} = CtrlEntity.create(payload)
       assert {:ok, ^enty} = CtrlEntity.find(enty.entity_id)
     end
@@ -30,10 +38,10 @@ defmodule HELM.Entity.Controller.EntityTest do
     end
   end
 
-  test "delete/1 idempotency", %{entity_type: type, payload: payload} do
-    {:ok, _} = CtrlEntityType.create(type)
+  test "delete/1 idempotency", %{payload: payload} do
     {:ok, enty} = CtrlEntity.create(payload)
     assert :ok = CtrlEntity.delete(enty.entity_id)
     assert :ok = CtrlEntity.delete(enty.entity_id)
+    assert {:error, :notfound} = CtrlEntity.find(enty.entity_id)
   end
 end

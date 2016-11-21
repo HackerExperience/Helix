@@ -3,32 +3,35 @@ defmodule HELM.Software.Controller.ModuleTest do
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
+  alias HELM.Software.Repo
+  alias HELM.Software.Model.FileType, as: MdlFileType
+  alias HELM.Software.Model.ModuleRole, as: MdlModuleRole
   alias HELM.Software.Controller.File, as: CtrlFile
   alias HELM.Software.Controller.Module, as: CtrlModule
   alias HELM.Software.Controller.Storage, as: CtrlStorage
-  alias HELM.Software.Controller.FileType, as: CtrlFileType
-  alias HELM.Software.Controller.ModuleRole, as: CtrlModuleRole
+
+  @file_type HRand.string(min: 20)
+  @module_role HRand.string(min: 20)
+
+  setup_all do
+    %{file_type: @file_type, extension: ".test"}
+    |> MdlFileType.create_changeset()
+    |> Repo.insert!()
+
+    %{module_role: @module_role, file_type: @file_type}
+    |> MdlModuleRole.create_changeset()
+    |> Repo.insert!()
+
+    :ok
+  end
 
   setup do
-    file_type_payload = %{
-      file_type: HRand.string(),
-      extension: ".test"
-    }
-
-    {:ok, file_type} = CtrlFileType.create(file_type_payload)
-
-    module_role_payload = %{
-      module_role: HRand.string(),
-      file_type: file_type.file_type
-    }
-
     {:ok, storage} = CtrlStorage.create()
-    {:ok, role} = CtrlModuleRole.create(module_role_payload)
 
     file_payload = %{
       name: "void",
       file_path: "/dev/null",
-      file_type: file_type.file_type,
+      file_type: @file_type,
       file_size: HRand.number(min: 1),
       storage_id: storage.storage_id
     }
@@ -36,7 +39,7 @@ defmodule HELM.Software.Controller.ModuleTest do
     {:ok, file} = CtrlFile.create(file_payload)
 
     payload = %{
-      module_role: role.module_role,
+      module_role: @module_role,
       file_id: file.file_id,
       module_version: HRand.number(min: 1)
     }

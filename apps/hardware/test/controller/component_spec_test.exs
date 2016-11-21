@@ -3,23 +3,31 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
+  alias HELM.Hardware.Repo
+  alias HELM.Hardware.Model.ComponentType, as: MdlCompType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
 
-  setup do
-    type_name = HRand.string()
-    payload = %{component_type: type_name, spec: %{}}
-    {:ok, type_name: type_name, payload: payload}
+  @component_type HRand.string(min: 20)
+
+  setup_all do
+    %{component_type: @component_type}
+    |> MdlCompType.create_changeset()
+    |> Repo.insert!()
+
+    :ok
   end
 
-  test "create/1", %{type_name: type_name, payload: payload} do
-    {:ok, _} = CtrlCompType.create(type_name)
+  setup do
+    payload = %{component_type: @component_type, spec: %{}}
+    {:ok, payload: payload}
+  end
+
+  test "create/1", %{payload: payload} do
     assert {:ok, _} = CtrlCompSpec.create(payload)
   end
 
   describe "find/1" do
-    test "success", %{type_name: type_name, payload: payload} do
-      {:ok, _} = CtrlCompType.create(type_name)
+    test "success", %{payload: payload} do
       {:ok, comp_spec} = CtrlCompSpec.create(payload)
       assert {:ok, ^comp_spec} = CtrlCompSpec.find(comp_spec.spec_id)
     end
@@ -29,8 +37,7 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
     end
   end
 
-  test "delete/1 idempotency", %{type_name: type_name, payload: payload} do
-    {:ok, _} = CtrlCompType.create(type_name)
+  test "delete/1 idempotency", %{payload: payload} do
     {:ok, comp_spec} = CtrlCompSpec.create(payload)
     assert :ok = CtrlCompSpec.delete(comp_spec.spec_id)
     assert :ok = CtrlCompSpec.delete(comp_spec.spec_id)
