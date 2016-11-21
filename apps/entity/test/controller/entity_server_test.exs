@@ -18,27 +18,29 @@ defmodule HELM.Entity.Controller.EntityServerTest do
   test "create/1", %{type: type, payload: payload, id: id} do
     {:ok, _} = CtrlEntityType.create(type)
     {:ok, entity} = CtrlEntity.create(payload)
-    assert {:ok, _} = CtrlEntityServer.create(id, entity.entity_id)
+    assert {:ok, _} = CtrlEntityServer.create(entity.entity_id, id)
   end
 
   describe "find/1" do
-    test "success", %{type: type, payload: payload, id: id} do
+    test "found servers", %{type: type, payload: payload, id: id} do
       {:ok, _} = CtrlEntityType.create(type)
       {:ok, entity} = CtrlEntity.create(payload)
-      {:ok, entity_server} = CtrlEntityServer.create(id, entity.entity_id)
-      assert {:ok, ^entity_server} = CtrlEntityServer.find(entity_server.server_id)
+      {:ok, entry1} = CtrlEntityServer.create(entity.entity_id, id)
+      {:ok, entry2} = CtrlEntityServer.create(entity.entity_id, IPv6.generate([]))
+      assert Enum.sort([entry1, entry2]) == Enum.sort(CtrlEntityServer.find(entity.entity_id))
     end
 
-    test "failure" do
-      assert {:error, :notfound} = CtrlEntityServer.find(IPv6.generate([]))
+    test "no servers found" do
+      assert [] == CtrlEntityServer.find(IPv6.generate([]))
     end
   end
 
   test "delete/1 idempotency", %{type: type, payload: payload, id: id} do
     {:ok, _} = CtrlEntityType.create(type)
     {:ok, entity} = CtrlEntity.create(payload)
-    {:ok, entity_server} = CtrlEntityServer.create(id, entity.entity_id)
-    assert :ok = CtrlEntityServer.delete(entity_server.server_id)
-    assert :ok = CtrlEntityServer.delete(entity_server.server_id)
+    {:ok, _} = CtrlEntityServer.create(entity.entity_id, id)
+    assert :ok = CtrlEntityServer.delete(entity.entity_id, id)
+    assert :ok = CtrlEntityServer.delete(entity.entity_id, id)
+    assert [] == CtrlEntityServer.find(entity.entity_id)
   end
 end

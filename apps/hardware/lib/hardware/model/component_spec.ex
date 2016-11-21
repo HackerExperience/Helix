@@ -1,9 +1,7 @@
 defmodule HELM.Hardware.Model.ComponentSpec do
+
   use Ecto.Schema
-
   import Ecto.Changeset
-
-  alias Ecto.Changeset
 
   alias HELL.IPv6
   alias HELM.Hardware.Model.Component, as: MdlComp, warn: false

@@ -1,8 +1,8 @@
 defmodule HELM.Server.Controller.Server do
-  import Ecto.Query
+
+  import Ecto.Query, only: [where: 3]
 
   alias HELF.Broker
-
   alias HELM.Server.Repo
   alias HELM.Server.Model.Server, as: MdlServer, warn: false
 

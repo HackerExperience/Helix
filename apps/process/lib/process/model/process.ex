@@ -1,4 +1,5 @@
 defmodule HELM.Process.Model.Process do
+
   use Ecto.Schema
   import Ecto.Changeset
 

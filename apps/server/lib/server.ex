@@ -1,4 +1,5 @@
 defmodule HELM.Server.App do
+
   use Application
 
   alias HELM.Server.Repo

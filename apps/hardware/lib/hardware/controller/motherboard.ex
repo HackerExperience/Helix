@@ -1,7 +1,7 @@
 defmodule HELM.Hardware.Controller.Motherboard do
-  import Ecto.Query
 
-  alias HELF.Broker
+  import Ecto.Query, only: [where: 3]
+
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.Motherboards, as: MdlMobo
 

@@ -1,9 +1,17 @@
 defmodule HELM.Account.Model.Account do
+
   use Ecto.Schema
+  import Ecto.Changeset
 
   alias HELL.IPv6
   alias Comeonin.Bcrypt, as: Crypt
-  import Ecto.Changeset
+
+  @type t :: %__MODULE__{}
+  @type id :: String.t
+  @type email :: String.t
+  @type password :: String.t
+  @type creation_params :: %{email: email, password: password, password_confirmation: password}
+  @type update_params :: %{optional(:email) => email, optional(:password) => password, optional(:confirmed) => boolean}
 
   @primary_key {:account_id, EctoNetwork.INET, autogenerate: false}
   @derive {Poison.Encoder, only: [:email, :account_id]}
@@ -20,6 +28,7 @@ defmodule HELM.Account.Model.Account do
   @creation_fields ~w(email password password_confirmation)
   @update_fields ~w(email password confirmed)
 
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -29,6 +38,7 @@ defmodule HELM.Account.Model.Account do
     |> put_primary_key()
   end
 
+  @spec update_changeset(t, update_params) :: Ecto.Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
@@ -36,6 +46,7 @@ defmodule HELM.Account.Model.Account do
     |> prepare_changes()
   end
 
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
     ip = IPv6.generate([0x0000, 0x0000, 0x0000])
 
@@ -43,6 +54,7 @@ defmodule HELM.Account.Model.Account do
     |> cast(%{account_id: ip}, ~w(account_id))
   end
 
+  @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp generic_validations(changeset) do
     changeset
     |> validate_required(:email)
@@ -51,6 +63,7 @@ defmodule HELM.Account.Model.Account do
     |> validate_confirmation(:password, required: true)
   end
 
+  @spec prepare_changes(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp prepare_changes(changeset) do
     changeset
     |> update_change(:email, &String.downcase/1)

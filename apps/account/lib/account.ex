@@ -1,4 +1,5 @@
 defmodule HELM.Account.App do
+
   use Application
 
   alias HELM.Account.Controller.AccountService

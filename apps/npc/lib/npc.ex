@@ -1,4 +1,5 @@
 defmodule HELM.NPC.App do
+
   use Application
 
   alias HELM.NPC.Repo

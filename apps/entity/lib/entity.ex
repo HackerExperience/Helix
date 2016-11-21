@@ -1,4 +1,5 @@
 defmodule HELM.Entity.App do
+
   use Application
 
   alias HELM.Controller.EntityService, as: EntityService

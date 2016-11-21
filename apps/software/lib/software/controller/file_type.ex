@@ -1,5 +1,6 @@
 defmodule HELM.Software.Controller.FileType do
-  import Ecto.Query
+
+  import Ecto.Query, only: [where: 3]
 
   alias HELM.Software.Repo
   alias HELM.Software.Model.FileType, as: MdlFileType
