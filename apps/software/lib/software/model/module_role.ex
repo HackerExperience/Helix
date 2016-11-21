@@ -23,7 +23,7 @@ defmodule HELM.Software.Model.ModuleRole do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(:module_role)
+    |> validate_required(~w/module_role file_type/a)
     |> unique_constraint(:module_role)
   end
 end
