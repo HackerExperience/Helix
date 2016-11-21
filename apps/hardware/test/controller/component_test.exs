@@ -3,19 +3,27 @@ defmodule HELM.Hardware.Controller.ComponentTest do
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
+  alias HELM.Hardware.Repo
+  alias HELM.Hardware.Model.ComponentType, as: MdlCompType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
   alias HELM.Hardware.Controller.Component, as: CtrlComps
 
-  setup do
-    type_name = HRand.string()
-    spec_payload = %{component_type: type_name, spec: %{}}
+  @component_type HRand.string(min: 20)
 
-    {:ok, comp_type} = CtrlCompType.create(type_name)
+  setup_all do
+    %{component_type: @component_type}
+    |> MdlCompType.create_changeset()
+    |> Repo.insert!()
+
+    :ok
+  end
+
+  setup do
+    spec_payload = %{component_type: @component_type, spec: %{}}
     {:ok, comp_spec} = CtrlCompSpec.create(spec_payload)
 
     payload = %{
-      component_type: comp_type.component_type,
+      component_type: @component_type,
       spec_id: comp_spec.spec_id
     }
 

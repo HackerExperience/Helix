@@ -25,8 +25,8 @@ defmodule HELM.Account.Model.Account do
     timestamps
   end
 
-  @creation_fields ~w(email password password_confirmation)
-  @update_fields ~w(email password confirmed)
+  @creation_fields ~w/email password password_confirmation/a
+  @update_fields ~w/email password confirmed/a
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
@@ -51,14 +51,13 @@ defmodule HELM.Account.Model.Account do
     ip = IPv6.generate([0x0000, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{account_id: ip}, ~w(account_id))
+    |> cast(%{account_id: ip}, ~w/account_id/a)
   end
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp generic_validations(changeset) do
     changeset
-    |> validate_required(:email)
-    |> validate_required(:password)
+    |> validate_required(~w/email password/a)
     |> validate_length(:password, min: 8)
     |> validate_confirmation(:password, required: true)
   end

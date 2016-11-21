@@ -3,35 +3,42 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Hardware.Controller.ComponentType, as: CtrlCompType
+  alias HELM.Hardware.Repo
+  alias HELM.Hardware.Model.ComponentType, as: MdlCompType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
   alias HELM.Hardware.Controller.Component, as: CtrlComps
   alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
   alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
 
-  setup do
-    type_name = HRand.string()
-    spec_payload = %{component_type: type_name, spec: %{}}
+  @component_type HRand.string(min: 20)
 
-    {:ok, comp_type} = CtrlCompType.create(type_name)
+  setup_all do
+    %{component_type: @component_type}
+    |> MdlCompType.create_changeset()
+    |> Repo.insert!()
+
+    :ok
+  end
+
+  setup do
+    spec_payload = %{component_type: @component_type, spec: %{}}
     {:ok, comp_spec} = CtrlCompSpec.create(spec_payload)
 
-    comp_payload = %{component_type: comp_type.component_type, spec_id: comp_spec.spec_id}
-
+    comp_payload = %{component_type: @component_type, spec_id: comp_spec.spec_id}
     {:ok, comp} = CtrlComps.create(comp_payload)
     {:ok, mobo} = CtrlMobos.create()
 
     payload = %{
       slot_internal_id: HRand.number(1..1024),
       motherboard_id: mobo.motherboard_id,
-      link_component_type: comp_type.component_type,
+      link_component_type: @component_type,
       link_component_id: comp.component_id
     }
 
     clean_payload = %{
       slot_internal_id: HRand.number(1..1024),
       motherboard_id: mobo.motherboard_id,
-      link_component_type: comp_type.component_type
+      link_component_type: @component_type
     }
 
     locals = [

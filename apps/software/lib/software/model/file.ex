@@ -44,6 +44,6 @@ defmodule HELM.Software.Model.File do
     ip = IPv6.generate([0x0004, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{file_id: ip}, ~w(file_id))
+    |> cast(%{file_id: ip}, ~w/file_id/a)
   end
 end

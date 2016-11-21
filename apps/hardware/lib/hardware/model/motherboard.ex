@@ -26,6 +26,6 @@ defmodule HELM.Hardware.Model.Motherboards do
     ip = IPv6.generate([0x0003, 0x0003, 0x0000])
 
     changeset
-    |> cast(%{motherboard_id: ip}, ~w(motherboard_id))
+    |> cast(%{motherboard_id: ip}, ~w/motherboard_id/a)
   end
 end

@@ -29,6 +29,7 @@ defmodule HELM.Software.Model.Module do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
+    |> validate_required(~w/file_id module_role/a)
     |> validate_number(:module_version, greater_than: 0)
   end
 end

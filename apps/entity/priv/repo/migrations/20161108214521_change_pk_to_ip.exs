@@ -4,7 +4,7 @@ defmodule HELM.Entity.Repo.Migrations.ChangePkToIp do
   def change do
     drop table(:entity_servers)
 
-    alter table(:entities, primary_key: false) do
+    alter table(:entities) do
       remove :reference_id
       remove :entity_id
       add :entity_id, :inet, primary_key: true

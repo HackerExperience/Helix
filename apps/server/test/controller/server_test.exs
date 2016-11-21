@@ -3,40 +3,44 @@ defmodule HELM.Server.ControllerTest do
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Server.Controller.ServerType, as: CtrlServerType
+  alias HELM.Server.Repo
   alias HELM.Server.Controller.Server, as: CtrlServer
+  alias HELM.Server.Model.ServerType, as: MdlServerType
 
-  setup do
-    type = HRand.string()
-    id = HRand.string()
-    payload = %{server_type: type}
+  @server_type HRand.string(min: 20)
 
-    {:ok, server_type: type, id: id, payload: payload}
+  setup_all do
+    %{server_type: @server_type}
+    |> MdlServerType.create_changeset()
+    |> Repo.insert!()
+
+    :ok
   end
 
-  test "create/2", %{server_type: type, payload: payload} do
-    {:ok, _} = CtrlServerType.create(type)
+  setup do
+    payload = %{server_type: @server_type}
+    {:ok, payload: payload}
+  end
 
+  test "create/2", %{payload: payload} do
     assert {:ok, _} = CtrlServer.create(payload)
   end
 
   describe "find/1" do
-    test "success", %{server_type: type, payload: payload} do
-      {:ok, _} = CtrlServerType.create(type)
+    test "success", %{payload: payload} do
       {:ok, serv} = CtrlServer.create(payload)
-
-      assert {:ok, serv} === CtrlServer.find(serv.server_id)
+      assert {:ok, serv} == CtrlServer.find(serv.server_id)
     end
 
     test "failure" do
-      assert {:error, :notfound} === CtrlServer.find(IPv6.generate([]))
+      assert {:error, :notfound} == CtrlServer.find(IPv6.generate([]))
     end
   end
 
-  test "delete/1 idempotency", %{server_type: type, payload: payload} do
-    {:ok, _} = CtrlServerType.create(type)
+  test "delete/1 idempotency", %{payload: payload} do
     {:ok, serv} = CtrlServer.create(payload)
-    assert :ok === CtrlServer.delete(serv.server_id)
-    assert :ok === CtrlServer.delete(serv.server_id)
+    assert :ok == CtrlServer.delete(serv.server_id)
+    assert :ok == CtrlServer.delete(serv.server_id)
+    assert {:error, :notfound} = CtrlServer.find(serv.server_id)
   end
 end

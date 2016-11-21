@@ -11,7 +11,7 @@ defmodule HELM.NPC.Model.NPC do
     timestamps
   end
 
-  @creation_fields ~w()
+  @creation_fields ~w//a
 
   def create_changeset(params) do
     %__MODULE__{}
@@ -23,6 +23,6 @@ defmodule HELM.NPC.Model.NPC do
     ip = IPv6.generate([0x0006, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{npc_id: ip}, ~w(npc_id))
+    |> cast(%{npc_id: ip}, ~w/npc_id/a)
   end
 end

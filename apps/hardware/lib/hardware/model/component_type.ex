@@ -22,13 +22,12 @@ defmodule HELM.Hardware.Model.ComponentType do
     has_many :specs, MdlCompSpec,
       foreign_key: :component_type,
       references: :component_type
-
-    timestamps
   end
 
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:component_type)
+    |> unique_constraint(:component_type)
   end
 end
