@@ -21,15 +21,6 @@ defmodule HELM.Hardware.Controller.Component do
     end
   end
 
-  @spec update(HELL.PK.t, MdlComp.update_fields) :: {:ok, MdlComp.t} | {:error, :notfound | Ecto.Changeset.t}
-  def update(component_id, params) do
-    with {:ok, comp} <- find(component_id) do
-      comp
-      |> MdlComp.update_changeset(params)
-      |> Repo.update()
-    end
-  end
-
   @spec delete(HELL.PK.t) :: no_return
   def delete(component_id) do
     MdlComp

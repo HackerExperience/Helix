@@ -30,18 +30,16 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     end
   end
 
-  @spec link(slot :: HELL.PK.t, component :: HELL.PK.t | nil) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t} | {:error, :notfound}
+  @spec link(slot :: HELL.PK.t, component :: HELL.PK.t | nil) :: {:ok, MdlMoboSlot.t} | {:error, :notfound | Ecto.Changeset.t}
   def link(slot_id, link_component_id) do
-    with {:ok, slot} <- find(slot_id) do
-      slot
-      |> MdlMoboSlot.update_changeset(%{link_component_id: link_component_id})
-      |> Repo.update()
-    end
+    params = %{link_component_id: link_component_id}
+    update(slot_id, params)
   end
 
-  @spec unlink(HELL.PK.t) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t} | {:error, :notfound}
+  @spec unlink(HELL.PK.t) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t} | {:error, :notfound | Ecto.Changeset.t}
   def unlink(slot_id) do
-    link(slot_id, nil)
+    params = %{link_component_id: nil}
+    update(slot_id, params)
   end
 
   @spec delete(HELL.PK.t) :: no_return
