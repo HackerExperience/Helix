@@ -1,22 +1,27 @@
 defmodule HELM.Hardware.Controller.Component do
 
-  import Ecto.Query, only: [where: 3]
-
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.Component, as: MdlComp
+  import Ecto.Query, only: [where: 3]
 
+  @spec create(%{}) :: {:ok, MdlComp.t} | {:error, Ecto.Changeset.t}
   def create(params) do
-    MdlComp.create_changeset(params)
+    params
+    |> MdlComp.create_changeset()
     |> Repo.insert()
   end
 
+  @spec find(HELL.PK.t) :: {:ok, MdlComp.t} | {:error, :notfound}
   def find(component_id) do
     case Repo.get_by(MdlComp, component_id: component_id) do
-      nil -> {:error, :notfound}
-      res -> {:ok, res}
+      nil ->
+        {:error, :notfound}
+      res ->
+        {:ok, res}
     end
   end
 
+  @spec delete(HELL.PK.t) :: no_return
   def delete(component_id) do
     MdlComp
     |> where([s], s.component_id == ^component_id)

@@ -1,4 +1,4 @@
-defmodule HELM.Hardware.Model.Motherboards do
+defmodule HELM.Hardware.Model.Motherboard do
 
   use Ecto.Schema
 

@@ -1,4 +1,5 @@
 defmodule HELM.Hardware.App do
+
   use Application
 
   alias HELM.Hardware.Repo, as: HardwareRepo
@@ -9,7 +10,7 @@ defmodule HELM.Hardware.App do
 
     children = [
       worker(HardwareRepo, []),
-      worker(HardwareSvc, []),
+      worker(HardwareSvc, [])
     ]
 
     opts = [strategy: :one_for_one, name: HELM.Hardware.Supervisor]
