@@ -27,6 +27,11 @@ defmodule HELM.Software.Model.File do
     file_type: String.t,
     storage_id: PK.t
   }
+  @type update_params :: %{
+    name: String.t,
+    file_path: String.t,
+    storage_id: PK.t
+  }
 
   @creation_fields ~w/name file_path file_size file_type storage_id/a
   @update_fields ~w/name file_path storage_id/a
@@ -35,7 +40,6 @@ defmodule HELM.Software.Model.File do
   schema "files" do
     field :file_id, EctoNetwork.INET,
       primary_key: true
-
     field :name, :string
     field :file_path, :string
     field :file_size, :integer
@@ -60,12 +64,7 @@ defmodule HELM.Software.Model.File do
     |> put_primary_key()
   end
 
-  @spec update_changeset(
-    t | Ecto.Changeset.t,
-    %{
-      name: String.t,
-      file_path: String.t,
-      storage_id: PK.t}) :: Ecto.Changeset.t
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(model, params) do
     model
     |> cast(params, @update_fields)

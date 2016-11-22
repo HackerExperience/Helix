@@ -27,6 +27,7 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     :slot_internal_id => integer,
     optional(:link_component_id) => PK.t
   }
+  @type update_params :: %{link_component_id: PK.t}
 
   @creation_fields ~w/
     motherboard_id
@@ -67,7 +68,7 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     |> put_primary_key()
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{link_component_id: PK.t}) :: Ecto.Changeset.t
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)

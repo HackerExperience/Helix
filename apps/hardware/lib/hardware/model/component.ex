@@ -17,7 +17,11 @@ defmodule HELM.Hardware.Model.Component do
     updated_at: Ecto.DateTime.t
   }
 
+  @type creation_params :: %{component_type: String.t, spec_id: PK.t}
+  @type update_params :: %{spec_id: PK.t}
+
   @creation_fields ~w/component_type spec_id/a
+  @update_fields ~w/spec_id/a
 
   @primary_key false
   schema "components" do
@@ -37,12 +41,18 @@ defmodule HELM.Hardware.Model.Component do
     timestamps
   end
 
-  @spec create_changeset(%{component_type: String.t, spec_id: PK.t}) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required([:component_type, :spec_id])
     |> put_primary_key()
+  end
+
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  def update_changeset(schema, params) do
+    schema
+    |> cast(params, @update_fields)
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
