@@ -1,10 +1,19 @@
 defmodule HELM.Software.Model.Storage do
-  use Ecto.Schema
-  import Ecto.Changeset
 
-  alias HELL.IPv6
+  use Ecto.Schema
+
+  alias HELL.PK
   alias HELM.Software.Model.StorageDrive, as: MdlStorageDrive, warn: false
   alias HELM.Software.Model.File, as: MdlFile, warn: false
+  import Ecto.Changeset
+
+  @type t :: %__MODULE__{
+    storage_id: PK.t,
+    drives: [MdlStorageDrive.t],
+    files: [MdlFile.t],
+    inserted_at: Ecto.DateTime.t,
+    updated_at: Ecto.DateTime.t
+  }
 
   @primary_key {:storage_id, EctoNetwork.INET, autogenerate: false}
 
@@ -20,16 +29,18 @@ defmodule HELM.Software.Model.Storage do
     timestamps
   end
 
+  @spec create_changeset() :: Ecto.Changeset.t
   def create_changeset do
     %__MODULE__{}
     |> cast(%{}, [])
     |> put_primary_key()
   end
 
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = IPv6.generate([0x0004, 0x0001, 0x0000])
+    ip = PK.generate([0x0004, 0x0001, 0x0000])
 
     changeset
-    |> cast(%{storage_id: ip}, ~w/storage_id/a)
+    |> cast(%{storage_id: ip}, [:storage_id])
   end
 end

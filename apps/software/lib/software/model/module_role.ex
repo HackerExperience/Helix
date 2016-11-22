@@ -1,9 +1,16 @@
 defmodule HELM.Software.Model.ModuleRole do
+
   use Ecto.Schema
   import Ecto.Changeset
 
   alias HELM.Software.Model.FileType, as: MdlFileType, warn: false
   alias HELM.Software.Model.Module, as: MdlModule, warn: false
+
+  @type t :: %__MODULE__{
+    module_role: String.t,
+    type: MdlFileType.t,
+    modules: [MdlModule.t]
+  }
 
   @primary_key {:module_role, :string, autogenerate: false}
   @creation_fields ~w/file_type module_role/a
@@ -20,10 +27,11 @@ defmodule HELM.Software.Model.ModuleRole do
       references: :module_role
   end
 
+  @spec create_changeset(%{file_type: String.t, module_role: String.t}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(~w/module_role file_type/a)
+    |> validate_required([:module_role, :file_type])
     |> unique_constraint(:module_role)
   end
 end
