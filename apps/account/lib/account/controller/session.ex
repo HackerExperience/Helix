@@ -1,6 +1,6 @@
 defmodule HELM.Account.Controller.Session do
 
-  alias HELMF.Account.Model.Account, as: MdlAccount
+  alias HELM.Account.Model.Account, as: MdlAccount
 
   @spec create(MdlAccount.id) :: {:ok, String.t} | {:error, :unauthorized}
   def create(account_id) do

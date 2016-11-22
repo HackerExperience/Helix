@@ -5,7 +5,9 @@ defmodule HELM.Account.Model.Session do
   @enforce_keys [:account_id]
   defstruct [:account_id]
 
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+    account_id: String.t
+  }
 
   @spec for_token(t) :: {:ok, String.t}
   def for_token(%__MODULE__{account_id: account_id}),

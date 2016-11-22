@@ -1,10 +1,9 @@
 defmodule HELM.Account.Controller.Account do
 
-  import Ecto.Query, only: [where: 3, select: 3]
-
-  alias Comeonin.Bcrypt, as: Crypt
+  alias Comeonin.Bcrypt
   alias HELM.Account.Repo
   alias HELM.Account.Model.Account, as: MdlAccount
+  import Ecto.Query, only: [where: 3, select: 3]
 
   @spec create(MdlAccount.creation_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
   def create(params) do
@@ -16,8 +15,10 @@ defmodule HELM.Account.Controller.Account do
   @spec find(MdlAccount.id) :: {:ok, MdlAccount.t} | {:error, :notfound}
   def find(account_id) do
     case Repo.get_by(MdlAccount, account_id: account_id) do
-      nil -> {:error, :notfound}
-      account -> {:ok, account}
+      nil ->
+        {:error, :notfound}
+      account ->
+        {:ok, account}
     end
   end
 
@@ -26,15 +27,17 @@ defmodule HELM.Account.Controller.Account do
     email = String.downcase(email)
 
     case Repo.get_by(MdlAccount, email: email) do
-      nil -> {:error, :notfound}
-      account -> {:ok, account}
+      nil ->
+        {:error, :notfound}
+      account ->
+        {:ok, account}
     end
   end
 
-  @spec delete(MdlAccount.id) :: :ok
+  @spec delete(MdlAccount.id) :: no_return
   def delete(account_id) do
     MdlAccount
-    |> where([s], s.account_id == ^account_id)
+    |> where([a], a.account_id == ^account_id)
     |> Repo.delete_all()
 
     :ok
@@ -52,7 +55,7 @@ defmodule HELM.Account.Controller.Account do
       nil ->
         {:error, :notfound}
       account ->
-        if Crypt.checkpw(password, account.password),
+        if Bcrypt.checkpw(password, account.password),
           do: {:ok, account.account_id},
           else: {:error, :notfound}
     end
