@@ -49,25 +49,36 @@ defmodule HELM.Software.Controller.FileTest do
   end
 
   describe "update/2" do
-    test "success", %{payload: payload} do
-      {:ok, update_storage} = CtrlStorage.create()
-
-      update_payload = %{
-        name: "null",
-        file_path: "/dev/urandom",
-        storage_id: update_storage.storage_id
-      }
+    test "rename file", %{payload: payload} do
+      payload2 = %{name: "null"}
 
       assert {:ok, file} = CtrlFile.create(payload)
-      assert {:ok, _} = CtrlFile.update(file.file_id, update_payload)
-      assert {:ok, updated_file} = CtrlFile.find(file.file_id)
+      assert {:ok, file} = CtrlFile.update(file.file_id, payload2)
 
-      assert updated_file.name == update_payload.name
-      assert updated_file.file_path == update_payload.file_path
-      assert updated_file.storage_id == update_payload.storage_id
+      assert file.name == payload2.name
     end
 
-    test "failure" do
+    test "move file", %{payload: payload} do
+      payload2 = %{file_path: "/dev/urandom"}
+
+      assert {:ok, file} = CtrlFile.create(payload)
+      assert {:ok, file} = CtrlFile.update(file.file_id, payload2)
+
+      assert file.file_path == payload2.file_path
+    end
+
+    test "change storage", %{payload: payload} do
+      {:ok, update_storage} = CtrlStorage.create()
+
+      payload2 = %{storage_id: update_storage.storage_id}
+
+      assert {:ok, file} = CtrlFile.create(payload)
+      assert {:ok, file} = CtrlFile.update(file.file_id, payload2)
+
+      assert file.storage_id == payload2.storage_id
+    end
+
+    test "not found" do
       assert {:error, :notfound} = CtrlFile.update(IPv6.generate([]), %{})
     end
   end

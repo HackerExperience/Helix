@@ -51,6 +51,20 @@ defmodule HELM.Software.Controller.ModuleTest do
     end
   end
 
+  describe "update/3" do
+    test "update module version", %{payload: payload} do
+      assert {:ok, module} = CtrlModule.create(payload)
+
+      payload2 = %{module_version: 2}
+      assert {:ok, module} = CtrlModule.update(module.module_role, module.file_id, payload2)
+      assert module.module_version == payload2.module_version
+    end
+
+    test "module not found" do
+      assert {:error, :notfound} = CtrlModule.update(HRand.string(min: 20), IPv6.generate([]), %{})
+    end
+  end
+
   test "delete/2 idempotency", %{payload: payload} do
     assert {:ok, module} = CtrlModule.create(payload)
 
