@@ -56,12 +56,12 @@ defmodule HELM.Software.Controller.ModuleTest do
       assert {:ok, module} = CtrlModule.create(payload)
 
       payload2 = %{module_version: 2}
-      assert {:ok, module} = CtrlModule.update(module.module_role, module.file_id, payload2)
+      assert {:ok, module} = CtrlModule.update(module.file_id, module.module_role, payload2)
       assert module.module_version == payload2.module_version
     end
 
     test "module not found" do
-      assert {:error, :notfound} = CtrlModule.update(HRand.string(min: 20), IPv6.generate([]), %{})
+      assert {:error, :notfound} = CtrlModule.update(IPv6.generate([]), HRand.string(min: 20), %{})
     end
   end
 
