@@ -1,25 +1,30 @@
 defmodule HELM.NPC.Controller.NPC do
 
-  import Ecto.Query, only: [where: 3]
-
   alias HELM.NPC.Repo
   alias HELM.NPC.Model.NPC, as: MdlNPC
+  import Ecto.Query, only: [where: 3]
 
-  def create(npc) do
-    MdlNPC.create_changeset(npc)
+  @spec create(%{}) :: {:ok, MdlNPC.t} | {:error, Ecto.Changeset.t}
+  def create(params) do
+    params
+    |> MdlNPC.create_changeset()
     |> Repo.insert()
   end
 
+  @spec find(HELL.PK.t) :: {:ok, MdlNPC.t} | {:error, :notfound}
   def find(npc_id) do
-    case Repo.get(MdlNPC, npc_id) do
-      nil -> {:error, :notfound}
-      npc -> {:ok, npc}
+    case Repo.get_by(MdlNPC, npc_id: npc_id) do
+      nil ->
+        {:error, :notfound}
+      npc ->
+        {:ok, npc}
     end
   end
 
+  @spec delete(HELL.PK.t) :: no_return
   def delete(npc_id) do
     MdlNPC
-    |> where([s], s.npc_id == ^npc_id)
+    |> where([n], n.npc_id == ^npc_id)
     |> Repo.delete_all()
 
     :ok

@@ -1,28 +1,35 @@
 defmodule HELM.NPC.Model.NPC do
 
   use Ecto.Schema
+
+  alias HELL.PK
   import Ecto.Changeset
 
-  alias HELL.IPv6
+  @type t :: %__MODULE__{
+    npc_id: PK.t,
+    inserted_at: Ecto.DateTime.t,
+    updated_at: Ecto.DateTime.t
+  }
+
+  @creation_fields ~w//a
 
   @primary_key {:npc_id, EctoNetwork.INET, autogenerate: false}
-
   schema "npcs" do
     timestamps
   end
 
-  @creation_fields ~w//a
-
+  @spec create_changeset(%{}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> put_primary_key()
   end
 
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = IPv6.generate([0x0006, 0x0000, 0x0000])
+    ip = PK.generate([0x0006, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{npc_id: ip}, ~w/npc_id/a)
+    |> cast(%{npc_id: ip}, [:npc_id])
   end
 end

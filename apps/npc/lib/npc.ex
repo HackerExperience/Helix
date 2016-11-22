@@ -10,7 +10,7 @@ defmodule HELM.NPC.App do
 
     children = [
       worker(Repo, []),
-      worker(NPCService, []),
+      worker(NPCService, [])
     ]
 
     opts = [strategy: :one_for_one, name: HELM.NPC.Supervisor]
