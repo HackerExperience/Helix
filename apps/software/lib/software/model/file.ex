@@ -1,11 +1,11 @@
 defmodule HELM.Software.Model.File do
 
   use Ecto.Schema
-  import Ecto.Changeset
 
   alias HELL.PK
   alias HELM.Software.Model.FileType, as: MdlFileType, warn: false
   alias HELM.Software.Model.Storage, as: MdlStorage, warn: false
+  import Ecto.Changeset
 
   @type t :: %__MODULE__{
     file_id: PK.t,

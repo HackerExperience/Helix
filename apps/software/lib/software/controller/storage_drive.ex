@@ -2,7 +2,6 @@ defmodule HELM.Software.Controller.StorageDrive do
 
   alias HELM.Software.Repo
   alias HELM.Software.Model.StorageDrive, as: MdlStorageDrive
-
   import Ecto.Query, only: [where: 3]
 
   @spec create(%{}) :: {:ok, MdlStorageDrive.t} | {:error, Ecto.Changeset.t}

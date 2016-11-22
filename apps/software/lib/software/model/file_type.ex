@@ -1,10 +1,10 @@
 defmodule HELM.Software.Model.FileType do
 
   use Ecto.Schema
-  import Ecto.Changeset
 
   alias HELM.Software.Model.File, as: MdlFile, warn: false
   alias HELM.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
+  import Ecto.Changeset
 
   @type t :: %__MODULE__{
     file_type: String.t,

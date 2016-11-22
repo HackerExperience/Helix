@@ -1,11 +1,11 @@
 defmodule HELM.Software.Model.Module do
 
   use Ecto.Schema
-  import Ecto.Changeset
 
   alias HELL.PK
   alias HELM.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
   alias HELM.Software.Model.File, as: MdlFile, warn: false
+  import Ecto.Changeset
 
   @type t :: %__MODULE__{
     module_version: non_neg_integer,
