@@ -25,11 +25,4 @@ defmodule Helix.Process.Model.Process.Limitations do
     |> validate_number(:dlk, greater_than_or_equal_to: 0)
     |> validate_number(:ulk, greater_than_or_equal_to: 0)
   end
-
-  defp validate_value(_, nil),
-    do: []
-  defp validate_value(_, val) when val >= 0,
-    do: []
-  defp validate_value(field, _),
-    do: [{field, "invalid value"}]
 end

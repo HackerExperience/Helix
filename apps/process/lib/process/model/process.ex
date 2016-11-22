@@ -1,4 +1,4 @@
-defmodule HELM.Process.Model.Process do
+defmodule Helix.Process.Model.Process do
 
   use Ecto.Schema
 
@@ -24,7 +24,7 @@ defmodule HELM.Process.Model.Process do
     priority: 0..5
   }
 
-  @type id :: String.t
+  @opaque id :: String.t
 
   @primary_key {:process_id, EctoNetwork.INET, autogenerate: false}
 
@@ -52,9 +52,15 @@ defmodule HELM.Process.Model.Process do
     field :estimated_time, Ecto.DateTime, virtual: true
   end
 
-  @creation_fields ~w/gateway_id software target_server_id/a
+  @creation_fields ~w/gateway_id file_id software target_server_id/a
   @update_fields ~w/state priority creation_time updated_time estimated_time/a
 
+  @spec create_changeset(%{
+    gateway_id: String.t,
+    target_server_id: String.t,
+    file_id: String.t,
+    software: SoftwareType.t,
+    objective: %{}}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -71,7 +77,17 @@ defmodule HELM.Process.Model.Process do
     |> put_defaults()
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{}) :: Ecto.Changeset.t
+  @spec update_changeset(
+    t | Ecto.Changeset.t,
+    %{
+      state: State.states,
+      priority: 0..5,
+      creation_time: DateTime.t,
+      updated_time: DateTime.t,
+      estimated_time: DateTime.t,
+      objective: %{},
+      processed: %{},
+      allocated: %{}}) :: Ecto.Changeset.t
   def update_changeset(process, params) do
     process
     |> cast(params, @update_fields)
@@ -81,11 +97,11 @@ defmodule HELM.Process.Model.Process do
     |> cast_embed(:allocated)
   end
 
-  @spec calculate_work(t | Ecto.Changeset.t, DateTime.t) :: t
+  @spec calculate_work(t | Ecto.Changeset.t, DateTime.t) :: Ecto.Changeset.t
   def calculate_work(process, time_now) do
     case process do
       %Ecto.Changeset{} ->
-        new_data = process.data |> calculate_work(time_now) |> change()
+        new_data = process.data |> calculate_work(time_now)
 
         merge(process, new_data)
 
@@ -100,7 +116,7 @@ defmodule HELM.Process.Model.Process do
         update_changeset(process, changes)
 
       %__MODULE__{} ->
-        process
+        update_changeset(process, %{updated_time: time_now})
     end
   end
 
@@ -114,15 +130,30 @@ defmodule HELM.Process.Model.Process do
     end
 
     conclusion =
-      struct.software
-      |> SoftwareType.allocation_handler()
-      |> apply(:estimate_conclusion, [struct])
+      struct.objective
+      |> Resources.sub(struct.processed)
+      |> Resources.div(struct.allocated)
+      |> Resources.to_list()
+      |> Enum.filter_map(fn {_, x} -> x != 0 end, &elem(&1, 1))
+      |> Enum.reduce(0, &max/2)
+      |> case do
+        0 ->
+          # Exceptional case when all resources are "0" (ie: nothing to do)
+          nil
+        nil ->
+          nil
+        x ->
+          struct.updated_time
+          |> ecto_conversion_workaround()
+          |> Timex.shift(seconds: x)
+      end
 
+    changeset = cast(process, %{estimated_time: conclusion}, [:estimated_time])
     case process do
       %__MODULE__{} ->
-        %__MODULE__{process| estimated_time: conclusion}
+        apply_changes(changeset)
       %Ecto.Changeset{} ->
-        cast(process, %{estimated_time: conclusion}, ~w/estimated_time/a)
+        changeset
     end
   end
 
@@ -136,9 +167,28 @@ defmodule HELM.Process.Model.Process do
     |> Resources.sub(process.processed)
     |> Resources.div(process.allocated)
     |> Resources.to_list()
-    |> Enum.min_by(fn {_, v} -> v end)
+    |> Enum.filter_map(fn {_, x} -> is_integer(x) and x > 0 end, &elem(&1, 1))
+    |> Enum.reduce(nil, &min/2)
   end
 
+  @spec can_allocate?(t, atom | [atom]) :: boolean
+  def can_allocate?(process, resource \\ [:cpu, :ram, :dlk, :ulk]) do
+    remaining = Resources.sub(process.objective, process.processed)
+
+    # TODO: Check if the allocation strategy allows dynamic allocation
+
+    resource
+    |> List.wrap()
+    |> Enum.any?(fn resource ->
+      v = Map.get(remaining, resource)
+
+      is_integer(v)
+      and v > 0
+      and Map.get(process.limitations, resource) > Map.get(process.allocated, resource)
+    end)
+  end
+
+  @spec from_list(Ecto.Queryable.t, [id]) :: Ecto.Queryable.t
   def from_list(query, process_ids) do
     query
     |> where([p], p.process_id in ^process_ids)
@@ -154,7 +204,7 @@ defmodule HELM.Process.Model.Process do
 
   @spec put_defaults(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_defaults(changeset) do
-    put_default(changeset, ~w/objective processed allocated limitations/a)
+    put_default(changeset, [:objective, :processed, :allocated, :limitations])
   end
 
   @spec put_default(Ecto.Changeset.t, [atom]) :: Ecto.Changeset.t
@@ -194,20 +244,22 @@ defmodule HELM.Process.Model.Process do
     changeset
   end
 
-  @spec diff_in_seconds(DateTime.t | Ecto.DateTime.t, DateTime.t) :: non_neg_integer
+  @spec diff_in_seconds(DateTime.t | Ecto.DateTime.t, DateTime.t) :: non_neg_integer | nil
   @docp """
   Returns the difference in seconds from `start` to `finish`
 
   This assumes that both the inputs are using UTC. This implementation might and
   should be replaced by a calendar library diff function
   """
-  defp diff_in_seconds(start = %Ecto.DateTime{}, finish) do
+  defp diff_in_seconds(%Ecto.DateTime{}, nil),
+    do: nil
+  defp diff_in_seconds(start = %Ecto.DateTime{}, finish = %DateTime{}) do
     start
     |> ecto_conversion_workaround()
     |> diff_in_seconds(finish)
   end
 
-  defp diff_in_seconds(start, finish) do
+  defp diff_in_seconds(start = %DateTime{}, finish = %DateTime{}) do
     Timex.diff(start, finish, :seconds)
   end
 
@@ -224,7 +276,7 @@ defmodule HELM.Process.Model.Process do
     |> Ecto.DateTime.to_erl()
     |> :calendar.datetime_to_gregorian_seconds()
     |> Kernel.-(62_167_219_200) # EPOCH in seconds
-    |> DateTime.from_unix()
+    |> DateTime.from_unix!()
   end
 
   @spec calculate_processed(t, non_neg_integer) :: Resources.t
