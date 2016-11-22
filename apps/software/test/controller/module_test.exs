@@ -54,20 +54,20 @@ defmodule HELM.Software.Controller.ModuleTest do
   describe "find/2" do
     test "success", %{payload: payload} do
       assert {:ok, module} = CtrlModule.create(payload)
-      assert {:ok, ^module} = CtrlModule.find(module.module_role, module.file_id)
+      assert {:ok, ^module} = CtrlModule.find(module.file_id, module.module_role)
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlModule.find("", IPv6.generate([]))
+      assert {:error, :notfound} = CtrlModule.find(IPv6.generate([]), "")
     end
   end
 
   test "delete/2 idempotency", %{payload: payload} do
     assert {:ok, module} = CtrlModule.create(payload)
 
-    assert :ok = CtrlModule.delete(module.module_role, module.file_id)
-    assert :ok = CtrlModule.delete(module.module_role, module.file_id)
+    assert :ok = CtrlModule.delete(module.file_id, module.module_role)
+    assert :ok = CtrlModule.delete(module.file_id, module.module_role)
 
-    assert {:error, :notfound} = CtrlModule.find(module.module_role, module.file_id)
+    assert {:error, :notfound} = CtrlModule.find(module.file_id, module.module_role)
   end
 end
