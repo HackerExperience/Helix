@@ -6,12 +6,15 @@ defmodule HELM.Controller.EntityService do
   alias HELM.Entity.Model.Entity, as: MdlEntity
   alias HELM.Entity.Controller.Entity, as: CtrlEntity
 
-  @spec start_link([]) :: GenServer.on_start
-  def start_link(state \\ []) do
-    GenServer.start_link(__MODULE__, state, name: :entity_service)
+  @typep state :: nil
+
+  @spec start_link() :: GenServer.on_start
+  def start_link do
+    GenServer.start_link(__MODULE__, [], name: :entity_service)
   end
 
-  @spec init([]) :: {:ok, nil}
+  @spec init(any) :: {:ok, state}
+  @doc false
   def init(_args) do
     Broker.subscribe("event:account:created", cast: &handle_broker_cast/4)
     Broker.subscribe("entity:find", call: &handle_broker_call/4)
@@ -29,10 +32,14 @@ defmodule HELM.Controller.EntityService do
     {:reply, response}
   end
 
-  @spec handle_call({:entity, :create, MdlEntity.creation_params}, GenServer.from, nil) ::
-    {:reply, {:ok, MdlEntity.t} | {:error, Ecto.Changeset.t}, nil}
-  @spec handle_call({:entity, :find, MdlEntity.id}, GenServer.from, nil) ::
-    {:reply, {:ok, MdlEntity.t} | {:error, :notfound}, nil}
+  @spec handle_call(
+    {:entity, :create, MdlEntity.creation_params},
+    GenServer.from,
+    state) :: {:reply, {:ok, MdlEntity.t} | {:error, Ecto.Changeset.t}, state}
+  @spec handle_call(
+    {:entity, :find, MdlEntity.id},
+    GenServer.from,
+    state) :: {:reply, {:ok, MdlEntity.t} | {:error, :notfound}, state}
   @doc false
   def handle_call({:entity, :create, params}, _from, state) do
     case CtrlEntity.create(params) do

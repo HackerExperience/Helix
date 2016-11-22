@@ -1,20 +1,29 @@
 defmodule HELM.Entity.Model.Entity do
 
   use Ecto.Schema
-  import Ecto.Changeset
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias HELM.Entity.Model.EntityServer, as: MdlEntityServer, warn: false
   alias HELM.Entity.Model.EntityType, as: MdlEntityType, warn: false
+  import Ecto.Changeset
 
-  @type t :: %__MODULE__{}
   @type id :: String.t
+  @type t :: %__MODULE__{
+    entity_id: id,
+    reference_id: PK.t,
+    servers: [MdlEntityServer.t],
+    type: MdlEntityType.t,
+    entity_type: String.t,
+    inserted_at: Ecto.DateTime.t,
+    updated_at: Ecto.DateTime.t
+  }
+
   @type creation_params :: %{entity_type: MdlEntityType.name, reference_id: String.t}
   @type update_params :: %{optional(:reference_id) => String.t}
 
-  @primary_key {:entity_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/entity_type reference_id/a
 
+  @primary_key {:entity_id, EctoNetwork.INET, autogenerate: false}
   schema "entities" do
     field :reference_id, EctoNetwork.INET
 
@@ -40,9 +49,9 @@ defmodule HELM.Entity.Model.Entity do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = IPv6.generate([0x0001, 0x0000, 0x0000])
+    ip = PK.generate([0x0001, 0x0000, 0x0000])
 
     changeset
-    |> cast(%{entity_id: ip}, ~w/entity_id/a)
+    |> cast(%{entity_id: ip}, [:entity_id])
   end
 end

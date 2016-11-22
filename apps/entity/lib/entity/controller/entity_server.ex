@@ -1,11 +1,10 @@
 defmodule HELM.Entity.Controller.EntityServer do
 
-  import Ecto.Query, only: [where: 3]
-
   alias HELM.Entity.Repo
   alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
   alias HELM.Server.Model.Server, as: MdlServer
   alias HELM.Entity.Model.EntityServer, as: MdlEntityServer
+  import Ecto.Query, only: [where: 3]
 
   @spec create(MdlEntity.id, MdlServer.id) :: {:ok, MdlEntityServer.t} | {:error, Ecto.Changeset.t}
   def create(entity_id, server_id) do
@@ -21,7 +20,7 @@ defmodule HELM.Entity.Controller.EntityServer do
     |> Repo.all()
   end
 
-  @spec delete(MdlEntity.id, MdlServer.id) :: :ok
+  @spec delete(MdlEntity.id, MdlServer.id) :: no_return
   def delete(entity_id, server_id) do
     MdlEntityServer
     |> where([s], s.entity_id == ^entity_id)
