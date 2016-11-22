@@ -1,17 +1,30 @@
 defmodule HELM.Hardware.Model.MotherboardSlot do
 
   use Ecto.Schema
-  import Ecto.Changeset
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
   alias HELM.Hardware.Model.Motherboard, as: MdlMobo, warn: false
   alias HELM.Hardware.Model.ComponentType, as: MdlCompType, warn: false
+  import Ecto.Changeset
 
-  @primary_key {:slot_id, EctoNetwork.INET, autogenerate: false}
+  @type t :: %__MODULE__{
+    slot_id: PK.t,
+    slot_internal_id: integer,
+    motherboard: MdlMobo.t,
+    motherboard_id: PK.t,
+    component: MdlComp.t,
+    link_component_id: PK.t,
+    type: MdlCompType.t,
+    link_component_type: String.t,
+    inserted_at: Ecto.DateTime.t,
+    updated_at: Ecto.DateTime.t
+  }
+
   @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
   @update_fields ~w/link_component_id/a
 
+  @primary_key {:slot_id, EctoNetwork.INET, autogenerate: false}
   schema "motherboard_slots" do
     field :slot_internal_id, :integer
 
@@ -25,7 +38,7 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
       references: :component_id,
       type: EctoNetwork.INET
 
-    belongs_to :component_type, MdlCompType,
+    belongs_to :type, MdlCompType,
       foreign_key: :link_component_type,
       references: :component_type,
       type: :string
@@ -33,22 +46,29 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     timestamps
   end
 
+  @spec create_changeset(%{
+    motherboard_id: PK.t,
+    link_component_type: String.t,
+    link_component_id: PK.t,
+    slot_internal_id: integer}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(~w/motherboard_id link_component_type slot_internal_id/a)
+    |> validate_required([:motherboard_id, :link_component_type, :slot_internal_id])
     |> put_primary_key()
   end
 
-  def update_changeset(struct, params \\ %{}) do
+  @spec update_changeset(t | Ecto.Changeset.t, %{link_component_id: PK.t}) :: Ecto.Changeset.t
+  def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
   end
 
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = IPv6.generate([0x0003, 0x0002, 0x0000])
+    ip = PK.generate([0x0003, 0x0002, 0x0000])
 
     changeset
-    |> cast(%{slot_id: ip}, ~w/slot_id/a)
+    |> cast(%{slot_id: ip}, [:slot_id])
   end
 end
