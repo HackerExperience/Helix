@@ -4,7 +4,7 @@ defmodule HELM.Hardware.Controller.ComponentSpec do
   alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec
   import Ecto.Query, only: [where: 3]
 
-  @spec create(%{}) :: {:ok, MdlCompSpec.t} | {:error, Ecto.Changeset.t}
+  @spec create(%{component_type: String.t, spec: %{}}) :: {:ok, MdlCompSpec.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> MdlCompSpec.create_changeset()

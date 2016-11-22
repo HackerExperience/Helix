@@ -4,7 +4,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
   import Ecto.Query, only: [where: 3]
 
-  @spec create(%{}) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlMoboSlot.creation_params) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> MdlMoboSlot.create_changeset()
@@ -21,7 +21,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     end
   end
 
-  @spec link(slot :: HELL.PK.t, component :: HELL.PK.t) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t} | {:error, :notfound}
+  @spec link(slot :: HELL.PK.t, component :: HELL.PK.t | nil) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t} | {:error, :notfound}
   def link(slot_id, link_component_id) do
     with {:ok, slot} <- find(slot_id) do
       slot

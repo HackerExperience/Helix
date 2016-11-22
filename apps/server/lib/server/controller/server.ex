@@ -5,7 +5,7 @@ defmodule HELM.Server.Controller.Server do
   alias HELM.Server.Model.Server, as: MdlServer, warn: false
   import Ecto.Query, only: [where: 3]
 
-  @spec create(%{}) :: {:ok, MdlServer.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlServer.creation_params) :: {:ok, MdlServer.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> MdlServer.create_changeset()

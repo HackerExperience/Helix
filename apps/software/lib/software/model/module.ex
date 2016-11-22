@@ -17,6 +17,12 @@ defmodule HELM.Software.Model.Module do
     updated_at: Ecto.DateTime.t
   }
 
+  @type creation_params :: %{
+    file_id: PK.t,
+    module_role: String.t,
+    module_version: non_neg_integer
+  }
+
   @primary_key false
   @creation_fields ~w/file_id module_role module_version/a
 
@@ -38,14 +44,11 @@ defmodule HELM.Software.Model.Module do
     timestamps
   end
 
-  @spec create_changeset(%{
-    file_id: PK.t,
-    module_role: String.t,
-    module_version: non_neg_integer}) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:file_id, :module_role])
+    |> validate_required([:file_id, :module_role, :module_version])
     |> validate_number(:module_version, greater_than: 0)
   end
 end

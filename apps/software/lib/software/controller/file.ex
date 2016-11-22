@@ -4,7 +4,7 @@ defmodule HELM.Software.Controller.File do
   alias HELM.Software.Model.File, as: MdlFile
   import Ecto.Query, only: [where: 3]
 
-  @spec create(%{}) :: {:ok, MdlFile.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlFile.creation_params) :: {:ok, MdlFile.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> MdlFile.create_changeset()

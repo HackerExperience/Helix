@@ -29,7 +29,7 @@ defmodule HELM.Software.Model.StorageDrive do
     timestamps
   end
 
-  @spec create_changeset(%{drive_id: PK.t, storage_id: PK.t}) :: Ecto.Changeset.t
+  @spec create_changeset(%{optional(:drive_id) => PK.t, optional(:storage_id) => PK.t}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

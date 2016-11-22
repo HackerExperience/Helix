@@ -4,7 +4,7 @@ defmodule HELM.Software.Controller.Module do
   alias HELM.Software.Model.Module, as: MdlModule
   import Ecto.Query, only: [where: 3]
 
-  @spec create(%{}) :: {:ok, MdlModule.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlModule.creation_params) :: {:ok, MdlModule.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> MdlModule.create_changeset()

@@ -21,6 +21,13 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     updated_at: Ecto.DateTime.t
   }
 
+  @type creation_params :: %{
+    :motherboard_id => PK.t,
+    :link_component_type => String.t,
+    :slot_internal_id => integer,
+    optional(:link_component_id) => PK.t
+  }
+
   @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
   @update_fields ~w/link_component_id/a
 
@@ -46,11 +53,7 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     timestamps
   end
 
-  @spec create_changeset(%{
-    motherboard_id: PK.t,
-    link_component_type: String.t,
-    link_component_id: PK.t,
-    slot_internal_id: integer}) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

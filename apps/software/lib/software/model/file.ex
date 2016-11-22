@@ -20,6 +20,14 @@ defmodule HELM.Software.Model.File do
     updated_at: Ecto.DateTime.t
   }
 
+  @type creation_params :: %{
+    name: String.t,
+    file_path: String.t,
+    file_size: pos_integer,
+    file_type: String.t,
+    storage_id: PK.t
+  }
+
   @primary_key {:file_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/name file_path file_size file_type storage_id/a
   @update_fields ~w/name file_path storage_id/a
@@ -42,12 +50,7 @@ defmodule HELM.Software.Model.File do
     timestamps
   end
 
-  @spec create_changeset(%{
-    name: String.t,
-    file_path: String.t,
-    file_size: pos_integer,
-    file_type: String.t,
-    storage_id: PK.t}) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
