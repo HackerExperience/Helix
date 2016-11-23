@@ -11,22 +11,19 @@ defmodule HELL.IPv6 do
     metadata
     |> fill_metadata()
     |> Enum.concat(generate_octet_groups(@rand_groups))
-    |> Enum.map(&to_hex/1)
-    |> Enum.join(":")
-  end
-
-  @spec to_hex(non_neg_integer) :: String.t
-  defp to_hex(int) do
-    int
-    |> Integer.to_string(16)
-    |> String.downcase()
+    |> List.to_tuple()
+    |> :inet.ntoa()
+    |> List.to_string()
   end
 
   @spec generate_octet_groups(pos_integer) :: [0..65535]
   defp generate_octet_groups(groups) do
     try do
       # Each group is comprised of 2 octets
-      :crypto.strong_rand_bytes(groups * 2)
+      bytes = groups * 2
+
+      bytes
+      |> :crypto.strong_rand_bytes()
       |> partition_binary()
     rescue
       ErlangError ->

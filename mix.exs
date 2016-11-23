@@ -18,7 +18,6 @@ defmodule HELM.Mixfile do
   end
 
   defp aliases do
-    [
-      test: ["ecto.drop", "ecto.create --quiet", "ecto.migrate --quiet", "test"]]
+    [test: ["helix.test"]]
   end
 end
