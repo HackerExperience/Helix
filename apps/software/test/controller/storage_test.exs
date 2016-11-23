@@ -1,5 +1,6 @@
 defmodule HELM.Software.Controller.StorageTest do
-  use ExUnit.Case
+
+  use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELM.Software.Controller.Storage, as: CtrlStorage

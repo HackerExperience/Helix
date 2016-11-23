@@ -1,5 +1,6 @@
 defmodule HELM.Entity.Controller.EntityServerTest do
-  use ExUnit.Case
+
+  use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELM.Entity.Repo

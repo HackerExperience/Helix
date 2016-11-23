@@ -1,5 +1,6 @@
 defmodule HELM.NPC.Controller.NPCTest do
-  use ExUnit.Case
+
+  use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELM.NPC.Controller.NPC, as: CtrlNPC

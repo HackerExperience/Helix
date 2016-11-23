@@ -1,5 +1,6 @@
 defmodule HELM.Hardware.Controller.MotherboardTest do
-  use ExUnit.Case
+
+  use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
