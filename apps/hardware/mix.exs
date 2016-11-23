@@ -23,7 +23,7 @@ defmodule HELM.Hardware.Mixfile do
   end
 
   defp applications(_),
-    do: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity]
+    do: [:helix_core, :account, :entity]
 
   defp elixirc_options(:dev),
     do: []
@@ -32,12 +32,8 @@ defmodule HELM.Hardware.Mixfile do
 
   defp deps do
     [
-      {:helf_broker, in_umbrella: true},
-      {:hell, in_umbrella: true},
+      {:helix_core, in_umbrella: true},
       {:account, in_umbrella: true},
-      {:entity, in_umbrella: true},
-      {:postgrex, ">= 0.0.0"},
-      {:ecto, "~> 2.0"},
-      {:ecto_network, "~> 0.4.0"}]
+      {:entity, in_umbrella: true}]
   end
 end

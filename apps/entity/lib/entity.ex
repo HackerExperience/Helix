@@ -2,7 +2,7 @@ defmodule HELM.Entity.App do
 
   use Application
 
-  alias HELM.Controller.EntityService, as: EntityService
+  alias HELM.Controller.EntityService
   alias HELM.Entity.Repo
 
   def start(_type, _args) do
@@ -10,7 +10,8 @@ defmodule HELM.Entity.App do
 
     children = [
       worker(EntityService, []),
-      worker(Repo, [])]
+      worker(Repo, [])
+    ]
 
     opts = [strategy: :one_for_one, name: HELM.Entity.Supervisor]
     Supervisor.start_link(children, opts)

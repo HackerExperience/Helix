@@ -18,15 +18,8 @@ defmodule HELL.Mixfile do
   end
 
   def application do
-    [applications: applications(Mix.env)]
+    []
   end
-
-  defp applications(:dev),
-    do: default_applications() ++ [:remix]
-  defp applications(_),
-    do: default_applications()
-  defp default_applications,
-    do: [:logger]
 
   defp elixirc_options(:dev),
     do: []
@@ -40,7 +33,6 @@ defmodule HELL.Mixfile do
 
   defp deps do
     [
-      {:uuid, "~> 1.1"},
-      {:remix, "~> 0.0.1", only: :dev}]
+      {:uuid, "~> 1.1"}]
   end
 end

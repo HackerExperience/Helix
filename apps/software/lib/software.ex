@@ -1,6 +1,7 @@
 defmodule HELM.Software.App do
+
   use Application
-  
+
   alias HELM.Software.Repo
   alias HELM.Software.Controller.SoftwareService
 
@@ -9,7 +10,7 @@ defmodule HELM.Software.App do
 
     children = [
       worker(Repo, []),
-      worker(SoftwareService, []),
+      worker(SoftwareService, [])
     ]
 
     opts = [strategy: :one_for_one, name: HELM.Software.Supervisor]

@@ -1,17 +1,23 @@
 defmodule HELM.Entity.Model.EntityType do
 
   use Ecto.Schema
-  import Ecto.Changeset
 
   alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
+  import Ecto.Changeset
 
-  @type t :: %__MODULE__{}
   @type name :: String.t
+  @type t :: %__MODULE__{
+    entity_type: name,
+    entities: [MdlEntity.t]
+  }
 
-  @primary_key {:entity_type, :string, autogenerate: false}
   @creation_fields ~w/entity_type/a
 
+  @primary_key false
   schema "entity_types" do
+    field :entity_type, :string,
+      primary_key: true
+
     has_many :entities, MdlEntity,
       foreign_key: :entity_type,
       references: :entity_type

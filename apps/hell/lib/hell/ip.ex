@@ -1,4 +1,5 @@
 defmodule HELL.IPv6 do
+
   use Bitwise
 
   @twooctet 0xffff

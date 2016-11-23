@@ -1,19 +1,25 @@
 defmodule HELM.Entity.Model.EntityServer do
 
   use Ecto.Schema
+
+  alias HELM.Server.Model.Server
+  alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
   import Ecto.Changeset
 
-  alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
+  @type t :: %__MODULE__{
+    server_id: Server.id,
+    entity_id: MdlEntity.id,
+    entity: MdlEntity
+  }
 
-  @type t :: %__MODULE__{}
-  @type creation_params :: %{server_id: MdlServer.id, entity_id: MdlEntity.id}
+  @type creation_params :: %{server_id: Server.id, entity_id: MdlEntity.id}
 
-  @primary_key false
   @creation_fields ~w/server_id entity_id/a
 
+  @primary_key false
   schema "entity_servers" do
-    field :server_id, EctoNetwork.INET, primary_key: true
-
+    field :server_id, EctoNetwork.INET,
+      primary_key: true
     belongs_to :entity, MdlEntity,
       foreign_key: :entity_id,
       references: :entity_id,

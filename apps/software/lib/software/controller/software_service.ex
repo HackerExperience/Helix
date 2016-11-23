@@ -1,11 +1,15 @@
 defmodule HELM.Software.Controller.SoftwareService do
+
   use GenServer
 
-  def start_link(state \\ []) do
-    GenServer.start_link(__MODULE__, state, name: :software)
+  @spec start_link() :: GenServer.on_start
+  def start_link do
+    GenServer.start_link(__MODULE__, [], name: :software)
   end
 
-  def init(_args) do
+  @spec init(any) :: {:ok, term}
+  @doc false
+  def init(_) do
     {:ok, %{}}
   end
 end

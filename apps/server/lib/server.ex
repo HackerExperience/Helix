@@ -10,7 +10,7 @@ defmodule HELM.Server.App do
 
     children = [
       worker(Repo, []),
-      worker(ServerService, []),
+      worker(ServerService, [])
     ]
 
     opts = [strategy: :one_for_one, name: HELM.Server.Supervisor]
