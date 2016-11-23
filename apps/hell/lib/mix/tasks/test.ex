@@ -31,6 +31,12 @@ defmodule Mix.Tasks.Helix.Test do
       Mix.Task.rerun("run", ["apps/server/priv/repo/seeds/server_type.exs"])
     end
 
-    Mix.Task.run("test", test_argv)
+    additional_opts = if "umbrella" in List.wrap(Keyword.get(switches, :exclude, [])) do
+      []
+    else
+      ["--include", "umbrella"]
+    end
+
+    Mix.Task.run("test", additional_opts ++ test_argv)
   end
 end
