@@ -23,23 +23,22 @@ defmodule HELM.Software.Model.Module do
     module_version: non_neg_integer
   }
 
-  @primary_key false
   @creation_fields ~w/file_id module_role module_version/a
 
+  @primary_key false
   schema "modules" do
-    field :module_version, :integer
-
     belongs_to :file, MdlFile,
       foreign_key: :file_id,
       references: :file_id,
       type: EctoNetwork.INET,
       primary_key: true
-
     belongs_to :role, MdlModuleRole,
       foreign_key: :module_role,
       references: :module_role,
       type: :string,
       primary_key: true
+
+    field :module_version, :integer
 
     timestamps
   end

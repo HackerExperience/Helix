@@ -17,8 +17,11 @@ defmodule HELM.Hardware.Model.ComponentSpec do
 
   @creation_fields ~w/spec component_type/a
 
-  @primary_key {:spec_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key false
   schema "component_specs" do
+    field :spec_id, EctoNetwork.INET,
+      primary_key: true
+
     field :component_type, :string
     field :spec, :map
 

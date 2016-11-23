@@ -13,16 +13,18 @@ defmodule HELM.Software.Model.FileType do
     module_roles: [MdlModuleRole.t]
   }
 
-  @primary_key {:file_type, :string, autogenerate: false}
   @creation_fields ~w/file_type extension/a
 
+  @primary_key false
   schema "file_types" do
+    field :file_type, :string,
+      primary_key: true
+
     field :extension, :string
 
     has_many :files, MdlFile,
       foreign_key: :file_type,
       references: :file_type
-
     has_many :module_roles, MdlModuleRole,
       foreign_key: :file_type,
       references: :file_type

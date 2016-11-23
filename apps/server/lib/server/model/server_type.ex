@@ -10,10 +10,13 @@ defmodule HELM.Server.Model.ServerType do
     servers: [MdlServer.t]
   }
 
-  @primary_key {:server_type, :string, autogenerate: false}
   @creation_fields ~w/server_type/a
 
+  @primary_key false
   schema "server_types" do
+    field :server_type, :string,
+      primary_key: true
+
     has_many :servers, MdlServer,
       foreign_key: :server_type,
       references: :server_type

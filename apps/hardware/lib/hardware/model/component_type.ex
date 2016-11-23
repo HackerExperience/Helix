@@ -16,16 +16,17 @@ defmodule HELM.Hardware.Model.ComponentType do
 
   @creation_fields ~w/component_type/a
 
-  @primary_key {:component_type, :string, autogenerate: false}
+  @primary_key false
   schema "component_types" do
+    field :component_type, :string,
+      primary_key: true
+
     has_many :slots, MdlMoboSlot,
       foreign_key: :link_component_type,
       references: :component_type
-
     has_many :components, MdlComp,
       foreign_key: :component_type,
       references: :component_type
-
     has_many :specs, MdlCompSpec,
       foreign_key: :component_type,
       references: :component_type

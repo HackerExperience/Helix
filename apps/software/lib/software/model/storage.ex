@@ -15,13 +15,14 @@ defmodule HELM.Software.Model.Storage do
     updated_at: Ecto.DateTime.t
   }
 
-  @primary_key {:storage_id, EctoNetwork.INET, autogenerate: false}
-
+  @primary_key false
   schema "storages" do
+    field :storage_id, EctoNetwork.INET,
+      primary_key: true
+
     has_many :drives, MdlStorageDrive,
       foreign_key: :storage_id,
       references: :storage_id
-
     has_many :files, MdlFile,
       foreign_key: :storage_id,
       references: :storage_id

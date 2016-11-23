@@ -12,16 +12,18 @@ defmodule HELM.Software.Model.ModuleRole do
     modules: [MdlModule.t]
   }
 
-  @primary_key {:module_role, :string, autogenerate: false}
   @creation_fields ~w/file_type module_role/a
 
+  @primary_key false
   schema "module_roles" do
+    field :module_role, :string,
+      primary_key: true
+
     # FIXME: this name must change soon
     belongs_to :type, MdlFileType,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
-
     has_many :modules, MdlModule,
       foreign_key: :module_role,
       references: :module_role

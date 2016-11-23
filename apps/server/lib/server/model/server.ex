@@ -20,23 +20,27 @@ defmodule HELM.Server.Model.Server do
   @type creation_params :: %{
     :server_type => String.t,
     optional(:motherboard_id) => PK.t,
-    optional(:poi_id) => PK.t}
+    optional(:poi_id) => PK.t
+  }
 
-  @primary_key {:server_id, EctoNetwork.INET, autogenerate: false}
+  @creation_fields ~w/server_type poi_id motherboard_id/a
+  @update_fields ~w/poi_id motherboard_id/a
+
+  @primary_key false
   schema "servers" do
+    field :server_id, EctoNetwork.INET,
+      primary_key: true
+
+    field :poi_id, EctoNetwork.INET
+    field :motherboard_id, EctoNetwork.INET
+
     belongs_to :type, MdlServerType,
       foreign_key: :server_type,
       references: :server_type,
       type: :string
 
-    field :poi_id, EctoNetwork.INET
-    field :motherboard_id, EctoNetwork.INET
-
     timestamps
   end
-
-  @creation_fields ~w/server_type poi_id motherboard_id/a
-  @update_fields ~w/poi_id motherboard_id/a
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do

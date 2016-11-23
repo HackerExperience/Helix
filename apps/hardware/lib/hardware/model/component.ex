@@ -19,15 +19,17 @@ defmodule HELM.Hardware.Model.Component do
 
   @creation_fields ~w/component_type spec_id/a
 
-  @primary_key {:component_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key false
   schema "components" do
+    field :component_id, EctoNetwork.INET,
+      primary_key: true
+
     field :component_type, :string
 
     belongs_to :component_spec, MdlCompSpec,
       foreign_key: :spec_id,
       references: :spec_id,
       type: EctoNetwork.INET
-
     has_one :slot, MdlMoboSlot,
       foreign_key: :link_component_id,
       references: :component_id

@@ -31,20 +31,21 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
   @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
   @update_fields ~w/link_component_id/a
 
-  @primary_key {:slot_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key false
   schema "motherboard_slots" do
+    field :slot_id, EctoNetwork.INET,
+      primary_key: true
+
     field :slot_internal_id, :integer
 
     belongs_to :motherboard, MdlMobo,
       foreign_key: :motherboard_id,
       references: :motherboard_id,
       type: EctoNetwork.INET
-
     belongs_to :component, MdlComp,
       foreign_key: :link_component_id,
       references: :component_id,
       type: EctoNetwork.INET
-
     belongs_to :type, MdlCompType,
       foreign_key: :link_component_type,
       references: :component_type,

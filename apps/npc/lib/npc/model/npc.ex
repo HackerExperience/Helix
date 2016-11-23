@@ -13,8 +13,11 @@ defmodule HELM.NPC.Model.NPC do
 
   @creation_fields ~w//a
 
-  @primary_key {:npc_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key false
   schema "npcs" do
+    field :npc_id, EctoNetwork.INET,
+      primary_key: true
+
     timestamps
   end
 

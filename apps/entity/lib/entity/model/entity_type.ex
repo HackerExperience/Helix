@@ -13,8 +13,11 @@ defmodule HELM.Entity.Model.EntityType do
 
   @creation_fields ~w/entity_type/a
 
-  @primary_key {:entity_type, :string, autogenerate: false}
+  @primary_key false
   schema "entity_types" do
+    field :entity_type, :string,
+      primary_key: true
+
     has_many :entities, MdlEntity,
       foreign_key: :entity_type,
       references: :entity_type

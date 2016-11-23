@@ -14,9 +14,9 @@ defmodule HELM.Software.Model.StorageDrive do
     updated_at: Ecto.DateTime.t
   }
 
-  @primary_key false
   @creation_fields ~w/drive_id storage_id/a
 
+  @primary_key false
   schema "storage_drives" do
     belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
@@ -24,7 +24,8 @@ defmodule HELM.Software.Model.StorageDrive do
       type: EctoNetwork.INET,
       primary_key: true
 
-    field :drive_id, :integer, primary_key: true
+    field :drive_id, :integer,
+      primary_key: true
 
     timestamps
   end

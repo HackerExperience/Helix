@@ -28,11 +28,14 @@ defmodule HELM.Software.Model.File do
     storage_id: PK.t
   }
 
-  @primary_key {:file_id, EctoNetwork.INET, autogenerate: false}
   @creation_fields ~w/name file_path file_size file_type storage_id/a
   @update_fields ~w/name file_path storage_id/a
 
+  @primary_key false
   schema "files" do
+    field :file_id, EctoNetwork.INET,
+      primary_key: true
+
     field :name, :string
     field :file_path, :string
     field :file_size, :integer
@@ -41,7 +44,6 @@ defmodule HELM.Software.Model.File do
       foreign_key: :file_type,
       references: :file_type,
       type: :string
-
     belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,

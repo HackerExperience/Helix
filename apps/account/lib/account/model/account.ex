@@ -18,19 +18,30 @@ defmodule HELM.Account.Model.Account do
     updated_at: Ecto.DateTime.t
   }
 
-  @type creation_params :: %{email: email, password: password, password_confirmation: password}
-  @type update_params :: %{optional(:email) => email, optional(:password) => password, optional(:confirmed) => boolean}
+  @type creation_params :: %{
+    email: email,
+    password: password,
+    password_confirmation: password}
+  @type update_params :: %{
+    optional(:email) => email,
+    optional(:password) => password,
+    optional(:confirmed) => boolean}
 
   @creation_fields ~w/email password password_confirmation/a
   @update_fields ~w/email password confirmed/a
 
   @derive {Poison.Encoder, only: [:email, :account_id]}
-  @primary_key {:account_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key false
   schema "accounts" do
+    field :account_id, EctoNetwork.INET,
+      primary_key: true
+
     field :email, :string
-    field :confirmed, :boolean, default: false
+    field :confirmed, :boolean,
+      default: false
     field :password, :string
-    field :password_confirmation, :string, virtual: true
+    field :password_confirmation, :string,
+      virtual: true
 
     timestamps
   end

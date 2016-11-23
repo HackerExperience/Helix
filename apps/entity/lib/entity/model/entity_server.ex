@@ -18,8 +18,8 @@ defmodule HELM.Entity.Model.EntityServer do
 
   @primary_key false
   schema "entity_servers" do
-    field :server_id, EctoNetwork.INET, primary_key: true
-
+    field :server_id, EctoNetwork.INET,
+      primary_key: true
     belongs_to :entity, MdlEntity,
       foreign_key: :entity_id,
       references: :entity_id,

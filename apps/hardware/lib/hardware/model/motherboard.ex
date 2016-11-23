@@ -13,8 +13,11 @@ defmodule HELM.Hardware.Model.Motherboard do
     updated_at: Ecto.DateTime.t
   }
 
-  @primary_key {:motherboard_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key false
   schema "motherboards" do
+    field :motherboard_id, EctoNetwork.INET,
+      primary_key: true
+
     has_many :slots, MdlMoboSlot,
       foreign_key: :motherboard_id,
       references: :motherboard_id
