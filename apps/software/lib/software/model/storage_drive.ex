@@ -18,13 +18,12 @@ defmodule HELM.Software.Model.StorageDrive do
 
   @primary_key false
   schema "storage_drives" do
+    field :drive_id, :integer,
+      primary_key: true
     belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
       type: EctoNetwork.INET,
-      primary_key: true
-
-    field :drive_id, :integer,
       primary_key: true
 
     timestamps

@@ -26,7 +26,6 @@ defmodule Helix.Core.Mixfile do
       {:helf_router, in_umbrella: true},
       {:hell, in_umbrella: true},
       {:postgrex, "~> 1.0-rc", override: true},
-      # {:ecto, "~> 2.1.0-rc.4", git: "https://github.com/elixir-ecto/ecto.git", tag: "v2.1.0-rc.4"},
       {:ecto, "~> 2.1.0-rc.4", override: true},
       {:ecto_network, "~> 0.4.0"}]
   end

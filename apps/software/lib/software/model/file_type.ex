@@ -8,9 +8,7 @@ defmodule HELM.Software.Model.FileType do
 
   @type t :: %__MODULE__{
     file_type: String.t,
-    extension: String.t,
-    files: [MdlFile.t],
-    module_roles: [MdlModuleRole.t]
+    extension: String.t
   }
 
   @creation_fields ~w/file_type extension/a
@@ -21,13 +19,6 @@ defmodule HELM.Software.Model.FileType do
       primary_key: true
 
     field :extension, :string
-
-    has_many :files, MdlFile,
-      foreign_key: :file_type,
-      references: :file_type
-    has_many :module_roles, MdlModuleRole,
-      foreign_key: :file_type,
-      references: :file_type
   end
 
   @spec create_changeset(%{file_type: String.t, extension: String.t}) :: Ecto.Changeset.t

@@ -6,8 +6,7 @@ defmodule HELM.Server.Model.ServerType do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    server_type: String.t,
-    servers: [MdlServer.t]
+    server_type: String.t
   }
 
   @creation_fields ~w/server_type/a
@@ -16,10 +15,6 @@ defmodule HELM.Server.Model.ServerType do
   schema "server_types" do
     field :server_type, :string,
       primary_key: true
-
-    has_many :servers, MdlServer,
-      foreign_key: :server_type,
-      references: :server_type
   end
 
   @spec create_changeset(%{server_type: String.t}) :: Ecto.Changeset.t

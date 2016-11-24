@@ -40,23 +40,31 @@ defmodule HELM.Hardware.Controller.HardwareService do
     {:ok, nil}
   end
 
-  @spec handle_call({:motherboard, :create, any}, GenServer.from, state) :: {:reply, {:ok, HELL.PK.t} | error :: term, state}
+  @spec handle_call(
+    {:motherboard, :create, any},
+    GenServer.from,
+    state) :: {:reply, {:ok, HELL.PK.t}
+              | error :: term, state}
   @spec handle_call(
     {:motherboard, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.Motherboard.t} | {:error, :notfound}, state}
+    state) :: {:reply, {:ok, HELM.Hardware.Model.Motherboard.t}
+              | {:error, :notfound}, state}
   @spec handle_call(
     {:motherboard_slot, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.MotherboardSlot.t} | {:error, :notfound}, state}
+    state) :: {:reply, {:ok, HELM.Hardware.Model.MotherboardSlot.t}
+              | {:error, :notfound}, state}
   @spec handle_call(
     {:component, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.Component.t} | {:error, :notfound}, state}
+    state) :: {:reply, {:ok, HELM.Hardware.Model.Component.t}
+              | {:error, :notfound}, state}
   @spec handle_call(
     {:component_spec, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.ComponentSpec.t} | {:error, :notfound}, state}
+    state) :: {:reply, {:ok, HELM.Hardware.Model.ComponentSpec.t}
+              | {:error, :notfound}, state}
   @doc false
   def handle_call({:motherboard, :create, _params}, _from, state) do
     with {:ok, mobo} <- CtrlMobos.create() do

@@ -18,7 +18,9 @@ defmodule HELM.Entity.Model.Entity do
     updated_at: Ecto.DateTime.t
   }
 
-  @type creation_params :: %{entity_type: MdlEntityType.name, reference_id: String.t}
+  @type creation_params :: %{
+    entity_type: MdlEntityType.name,
+    reference_id: String.t}
   @type update_params :: %{optional(:reference_id) => String.t}
 
   @creation_fields ~w/entity_type reference_id/a

@@ -45,7 +45,8 @@ defmodule HELM.Server.Controller.ServerService do
   # @spec handle_call(
   #   {:server, :create, HELL.PK.t},
   #   GenServer.from,
-  #   state) :: {:reply, {:ok, server :: term} | {:error, reason :: term}, state}
+  #   state) :: {:reply, {:ok, server :: term}
+  #             | {:error, reason :: term}, state}
   @spec handle_call(
     {:server, :attach, server :: HELL.PK.t, motherboard :: HELL.PK.t},
     GenServer.from,
@@ -68,7 +69,8 @@ defmodule HELM.Server.Controller.ServerService do
     {:reply, status, state}
   end
 
-  # @spec create_server(entity :: HELL.PK.t) :: {:ok, server :: HELL.PK.t} | {:error, reason :: term}
+  # @spec create_server(entity :: HELL.PK.t) :: {:ok, server :: HELL.PK.t}
+  #                                             | {:error, reason :: term}
   # defp create_server(entity_id) do
   #   with {:ok, server} <- CtrlServers.create(%{entity_id: entity_id}) do
   #     Broker.cast("event:server:created", server.server_id)

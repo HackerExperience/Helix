@@ -32,7 +32,6 @@ defmodule HELL.Mixfile do
     do: ["lib"]
 
   defp deps do
-    [
-      {:uuid, "~> 1.1"}]
+    []
   end
 end

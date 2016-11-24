@@ -8,10 +8,7 @@ defmodule HELM.Hardware.Model.ComponentType do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    component_type: String.t,
-    slots: [MdlMoboSlot.t],
-    components: [MdlComp.t],
-    specs: [MdlCompSpec.t]
+    component_type: String.t
   }
 
   @creation_fields ~w/component_type/a
@@ -20,16 +17,6 @@ defmodule HELM.Hardware.Model.ComponentType do
   schema "component_types" do
     field :component_type, :string,
       primary_key: true
-
-    has_many :slots, MdlMoboSlot,
-      foreign_key: :link_component_type,
-      references: :component_type
-    has_many :components, MdlComp,
-      foreign_key: :component_type,
-      references: :component_type
-    has_many :specs, MdlCompSpec,
-      foreign_key: :component_type,
-      references: :component_type
   end
 
   @spec create_changeset(%{component_type: String.t}) :: Ecto.Changeset.t
