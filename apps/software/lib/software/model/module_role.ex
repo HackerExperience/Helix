@@ -8,8 +8,7 @@ defmodule HELM.Software.Model.ModuleRole do
 
   @type t :: %__MODULE__{
     module_role: String.t,
-    type: MdlFileType.t,
-    modules: [MdlModule.t]
+    type: MdlFileType.t
   }
 
   @creation_fields ~w/file_type module_role/a
@@ -24,9 +23,6 @@ defmodule HELM.Software.Model.ModuleRole do
       foreign_key: :file_type,
       references: :file_type,
       type: :string
-    has_many :modules, MdlModule,
-      foreign_key: :module_role,
-      references: :module_role
   end
 
   @spec create_changeset(%{file_type: String.t, module_role: String.t}) :: Ecto.Changeset.t

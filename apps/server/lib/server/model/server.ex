@@ -52,7 +52,9 @@ defmodule HELM.Server.Model.Server do
 
   @spec update_changeset(
     t | Ecto.Changeset.t,
-    %{optional(:poi_id) => PK.t | nil, optional(:motherboard_id) => PK.t | nil}) :: Ecto.Changeset.t
+    %{
+      optional(:poi_id) => PK.t | nil,
+      optional(:motherboard_id) => PK.t | nil}) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)

@@ -13,7 +13,8 @@ defmodule HELM.Software.Controller.StorageDrive do
 
   @spec find(HELL.PK.t, integer) :: {:ok, MdlStorageDrive.t} | {:error, :notfound}
   def find(storage_id, drive_id) do
-    case Repo.get_by(MdlStorageDrive, storage_id: storage_id, drive_id: drive_id) do
+    query = [storage_id: storage_id, drive_id: drive_id]
+    case Repo.get_by(MdlStorageDrive, query) do
       nil ->
         {:error, :notfound}
       drive ->

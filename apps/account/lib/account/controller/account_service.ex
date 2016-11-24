@@ -13,7 +13,7 @@ defmodule HELM.Account.Controller.AccountService do
   # TODO: Refactor this and add meaning
 
   @spec start_link() :: GenServer.on_start
-  def start_link() do
+  def start_link do
     Router.register("account.create", "account:create")
     Router.register("account.login", "account:login")
     Router.register("account.get", "account:get")

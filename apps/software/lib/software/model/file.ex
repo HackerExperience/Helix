@@ -75,7 +75,8 @@ defmodule HELM.Software.Model.File do
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp generic_validations(changeset) do
     changeset
-    |> validate_required([:name, :file_path, :file_size, :file_type, :storage_id])
+    |> validate_required(
+      [:name, :file_path, :file_size, :file_type, :storage_id])
     |> validate_number(:file_size, greater_than: 0)
   end
 

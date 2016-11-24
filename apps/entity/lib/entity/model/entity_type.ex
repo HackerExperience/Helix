@@ -7,8 +7,7 @@ defmodule HELM.Entity.Model.EntityType do
 
   @type name :: String.t
   @type t :: %__MODULE__{
-    entity_type: name,
-    entities: [MdlEntity.t]
+    entity_type: name
   }
 
   @creation_fields ~w/entity_type/a
@@ -17,10 +16,6 @@ defmodule HELM.Entity.Model.EntityType do
   schema "entity_types" do
     field :entity_type, :string,
       primary_key: true
-
-    has_many :entities, MdlEntity,
-      foreign_key: :entity_type,
-      references: :entity_type
   end
 
   @spec create_changeset(%{entity_type: name}) :: Ecto.Changeset.t

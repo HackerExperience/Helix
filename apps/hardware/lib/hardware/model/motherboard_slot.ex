@@ -28,7 +28,11 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     optional(:link_component_id) => PK.t
   }
 
-  @creation_fields ~w/motherboard_id link_component_type link_component_id slot_internal_id/a
+  @creation_fields ~w/
+    motherboard_id
+    link_component_type
+    link_component_id
+    slot_internal_id/a
   @update_fields ~w/link_component_id/a
 
   @primary_key false
@@ -58,7 +62,8 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:motherboard_id, :link_component_type, :slot_internal_id])
+    |> validate_required(
+      [:motherboard_id, :link_component_type, :slot_internal_id])
     |> put_primary_key()
   end
 

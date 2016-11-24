@@ -16,7 +16,7 @@ defmodule HELL.IPv6 do
     |> List.to_string()
   end
 
-  @spec generate_octet_groups(pos_integer) :: [0..65535]
+  @spec generate_octet_groups(pos_integer) :: [0..0xffff]
   defp generate_octet_groups(groups) do
     try do
       # Each group is comprised of 2 octets

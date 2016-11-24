@@ -10,7 +10,6 @@ defmodule HELM.Hardware.Model.ComponentSpec do
     spec_id: PK.t,
     component_type: String.t,
     spec: %{},
-    components: [MdlComp.t],
     inserted_at: Ecto.DateTime.t,
     updated_at: Ecto.DateTime.t
   }
@@ -24,10 +23,6 @@ defmodule HELM.Hardware.Model.ComponentSpec do
 
     field :component_type, :string
     field :spec, :map
-
-    has_many :components, MdlComp,
-      foreign_key: :spec_id,
-      references: :spec_id
 
     timestamps
   end
