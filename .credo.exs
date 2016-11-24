@@ -11,7 +11,7 @@
       checks: [
         {Credo.Check.Consistency.ExceptionNames, priority: :normal},
         {Credo.Check.Consistency.LineEndings, priority: :low},
-        # {Credo.Check.Consistency.ParameterPatternMatching}, # WONT WORK
+        {Credo.Check.Consistency.ParameterPatternMatching, priority: :normal},
         {Credo.Check.Consistency.SpaceAroundOperators, priority: :high},
         {Credo.Check.Consistency.SpaceInParentheses, priority: :high},
         {Credo.Check.Consistency.TabsOrSpaces, priority: :high},
@@ -30,7 +30,7 @@
         {Credo.Check.Readability.NoParenthesesWhenZeroArity, priority: :low},
         {Credo.Check.Readability.ParenthesesInCondition, priority: :normal},
         {Credo.Check.Readability.PredicateFunctionNames, priority: :high},
-        # {Credo.Check.Readability.RedundantBlankLines}, # WONT WORK
+        {Credo.Check.Readability.RedundantBlankLines, priority: :normal},
         {Credo.Check.Readability.TrailingBlankLine, false},
         {Credo.Check.Readability.TrailingWhiteSpace, priority: :high},
         {Credo.Check.Readability.VariableNames, priority: :high},
@@ -83,7 +83,7 @@
       checks: [
         {Credo.Check.Consistency.ExceptionNames, priority: :normal},
         {Credo.Check.Consistency.LineEndings, priority: :low},
-        # {Credo.Check.Consistency.ParameterPatternMatching}, # WONT WORK
+        {Credo.Check.Consistency.ParameterPatternMatching, priority: :normal},
         {Credo.Check.Consistency.SpaceAroundOperators, priority: :high},
         {Credo.Check.Consistency.SpaceInParentheses, priority: :high},
         {Credo.Check.Consistency.TabsOrSpaces, priority: :high},
@@ -96,7 +96,7 @@
         {Credo.Check.Readability.NoParenthesesWhenZeroArity, priority: :low},
         {Credo.Check.Readability.ParenthesesInCondition, priority: :normal},
         {Credo.Check.Readability.PredicateFunctionNames, priority: :high},
-        # {Credo.Check.Readability.RedundantBlankLines}, # WONT WORK
+        {Credo.Check.Readability.RedundantBlankLines, priority: :normal},
         {Credo.Check.Readability.TrailingBlankLine, false},
         {Credo.Check.Readability.TrailingWhiteSpace, priority: :high},
         {Credo.Check.Readability.VariableNames, priority: :high},
