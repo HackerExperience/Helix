@@ -1,6 +1,7 @@
 %{"bamboo": {:hex, :bamboo, "0.7.0", "2722e395a396dfedc12d300c900f65b216f7d7bf9d430c5dd0235690997878b7", [:mix], [{:httpoison, "~> 0.9", [hex: :httpoison, optional: false]}, {:plug, "~> 1.0", [hex: :plug, optional: false]}, {:poison, ">= 1.5.0", [hex: :poison, optional: false]}]},
   "base64url": {:hex, :base64url, "0.0.1", "36a90125f5948e3afd7be97662a1504b934dd5dac78451ca6e9abf85a10286be", [:rebar], []},
   "bunt": {:hex, :bunt, "0.1.6", "5d95a6882f73f3b9969fdfd1953798046664e6f77ec4e486e6fafc7caad97c6f", [:mix], []},
+  "burette": {:git, "https://github.com/HackerExperience/burette", "f44c71c5fcca23a3086b68efc32c7c6196ad1bf5", []},
   "certifi": {:hex, :certifi, "0.7.0", "861a57f3808f7eb0c2d1802afeaae0fa5de813b0df0979153cbafcd853ababaf", [:rebar3], []},
   "combine": {:hex, :combine, "0.9.3", "192e609b48b3f2210494e26f85db1712657be1a8f15795656710317ea43fc449", [:mix], []},
   "comeonin": {:hex, :comeonin, "2.6.0", "74c288338b33205f9ce97e2117bb9a2aaab103a1811d243443d76fdb62f904ac", [:make, :make, :mix], []},

@@ -35,6 +35,10 @@ defmodule HELM.Account.Mixfile do
       {:helix_core, in_umbrella: true},
       {:comeonin, "~> 2.5"},
       {:poison, "~> 2.0"},
-      {:guardian, "~> 0.13.0"}]
+      {:guardian, "~> 0.13.0"},
+      {:postgrex, "~> 1.0-rc", override: true},
+      {:ecto, "~> 2.1.0-rc.4", override: true},
+      {:ecto_network, "~> 0.4.0"},
+      {:burette, git: "https://github.com/HackerExperience/burette", only: :test}]
   end
 end

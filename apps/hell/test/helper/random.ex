@@ -19,6 +19,10 @@ defmodule HELL.TestHelper.Random do
     .ελ .blackfriday .cam .club .codes .coffee .download .email .moe .ninja
     .international .scholarships .travelersinsurance .vermögensberatung/
 
+  def pk do
+    Burette.Network.ipv6()
+  end
+
   @spec number() :: integer
   @doc """
   Returns a random number between `-#{@default_number}` and `#{@default_number}`
