@@ -4,9 +4,10 @@ defmodule HELM.Hardware.Controller.Motherboard do
   alias HELM.Hardware.Model.Motherboard, as: MdlMobo
   import Ecto.Query, only: [where: 3]
 
-  @spec create() :: {:ok, MdlMobo.t} | {:error, Ecto.Changeset.t}
-  def create do
-    MdlMobo.create_changeset()
+  @spec create(MdlMobo.creation_params) :: {:ok, MdlMobo.t} | {:error, Ecto.Changeset.t}
+  def create(params) do
+    params
+    |> MdlMobo.create_changeset()
     |> Repo.insert()
   end
 

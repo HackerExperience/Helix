@@ -13,9 +13,16 @@ defmodule HELM.Hardware.Model.Motherboard do
     updated_at: Ecto.DateTime.t
   }
 
+  @type creation_params :: %{motherboard_id: PK.t}
+
+  @creation_fields ~w/motherboard_id/a
+
   @primary_key false
   schema "motherboards" do
-    field :motherboard_id, EctoNetwork.INET,
+    belongs_to :component, MdlComp,
+      foreign_key: :motherboard_id,
+      references: :component_id,
+      type: EctoNetwork.INET,
       primary_key: true
 
     has_many :slots, MdlMoboSlot,
@@ -25,18 +32,11 @@ defmodule HELM.Hardware.Model.Motherboard do
     timestamps
   end
 
-  @spec create_changeset() :: Ecto.Changeset.t
-  def create_changeset do
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  def create_changeset(params) do
     %__MODULE__{}
-    |> cast(%{}, [])
-    |> put_primary_key()
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    ip = PK.generate([0x0003, 0x0003, 0x0000])
-
-    changeset
-    |> cast(%{motherboard_id: ip}, [:motherboard_id])
+    |> cast(params, @creation_fields)
+    |> validate_required(:motherboard_id)
+    |> unique_constraint(:motherboard_id)
   end
 end
