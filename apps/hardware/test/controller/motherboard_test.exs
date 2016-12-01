@@ -2,7 +2,6 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
   alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
 
   test "create/1" do
@@ -10,19 +9,21 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
   end
 
   describe "find/1" do
-    test "success" do
+    test "fetches the model by it's id" do
       {:ok, mobo} = CtrlMobos.create()
       assert {:ok, ^mobo} = CtrlMobos.find(mobo.motherboard_id)
     end
 
-    test "failure" do
-      assert {:error, :notfound} = CtrlMobos.find(IPv6.generate([]))
+    test "returns error when motherboard doesn't exists" do
+      assert {:error, :notfound} === CtrlMobos.find(HELL.TestHelper.Random.pk())
     end
   end
 
-  test "delete/1 idempotency" do
+  test "delete is idempotent" do
     {:ok, mobo} = CtrlMobos.create()
-    assert :ok = CtrlMobos.delete(mobo.motherboard_id)
-    assert :ok = CtrlMobos.delete(mobo.motherboard_id)
+    assert {:ok, _} = CtrlMobos.find(mobo.motherboard_id)
+    assert CtrlMobos.delete(mobo.motherboard_id)
+    assert CtrlMobos.delete(mobo.motherboard_id)
+    assert {:error, :notfound} === CtrlMobos.find(mobo.motherboard_id)
   end
 end
