@@ -40,6 +40,7 @@ defmodule HELM.Software.Model.File do
   schema "files" do
     field :file_id, EctoNetwork.INET,
       primary_key: true
+
     field :name, :string
     field :file_path, :string
     field :file_size, :integer

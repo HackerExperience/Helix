@@ -45,9 +45,7 @@ defmodule HELM.Server.ControllerTest do
       poi = IPv6.generate([])
       payload2 = %{poi_id: poi}
       assert {:ok, server} = CtrlServer.update(server.server_id, payload2)
-
-      {:ok, poi} = EctoNetwork.INET.cast(poi)
-      assert server.poi_id == poi
+      assert poi == to_string(server.poi_id)
     end
 
     test "change motherboard id", %{payload: payload} do
@@ -56,13 +54,11 @@ defmodule HELM.Server.ControllerTest do
       mobo = IPv6.generate([])
       payload2 = %{motherboard_id: mobo}
       assert {:ok, server} = CtrlServer.update(server.server_id, payload2)
-
-      {:ok, mobo} = EctoNetwork.INET.cast(mobo)
-      assert server.motherboard_id == mobo
+      assert mobo == to_string(server.motherboard_id)
     end
 
     test "server not found" do
-      assert {:error, :notfound} = CtrlServer.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == CtrlServer.update(IPv6.generate([]), %{})
     end
   end
 
@@ -70,6 +66,6 @@ defmodule HELM.Server.ControllerTest do
     {:ok, serv} = CtrlServer.create(payload)
     assert :ok == CtrlServer.delete(serv.server_id)
     assert :ok == CtrlServer.delete(serv.server_id)
-    assert {:error, :notfound} = CtrlServer.find(serv.server_id)
+    assert {:error, :notfound} == CtrlServer.find(serv.server_id)
   end
 end

@@ -16,7 +16,7 @@ defmodule HELM.Software.Controller.StorageTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlStorage.find(IPv6.generate([]))
+      assert {:error, :notfound} == CtrlStorage.find(IPv6.generate([]))
     end
   end
 
@@ -26,6 +26,6 @@ defmodule HELM.Software.Controller.StorageTest do
     assert :ok = CtrlStorage.delete(storage.storage_id)
     assert :ok = CtrlStorage.delete(storage.storage_id)
 
-    assert {:error, :notfound} = CtrlStorage.find(storage.storage_id)
+    assert {:error, :notfound} == CtrlStorage.find(storage.storage_id)
   end
 end

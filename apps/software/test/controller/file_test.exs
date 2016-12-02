@@ -44,7 +44,7 @@ defmodule HELM.Software.Controller.FileTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlFile.find(IPv6.generate([]))
+      assert {:error, :notfound} == CtrlFile.find(IPv6.generate([]))
     end
   end
 
@@ -55,7 +55,7 @@ defmodule HELM.Software.Controller.FileTest do
       assert {:ok, file} = CtrlFile.create(payload)
       assert {:ok, file} = CtrlFile.update(file.file_id, payload2)
 
-      assert file.name == payload2.name
+      assert payload2.name == file.name
     end
 
     test "move file", %{payload: payload} do
@@ -64,7 +64,7 @@ defmodule HELM.Software.Controller.FileTest do
       assert {:ok, file} = CtrlFile.create(payload)
       assert {:ok, file} = CtrlFile.update(file.file_id, payload2)
 
-      assert file.file_path == payload2.file_path
+      assert payload2.file_path == file.file_path
     end
 
     test "change storage", %{payload: payload} do
@@ -75,11 +75,11 @@ defmodule HELM.Software.Controller.FileTest do
       assert {:ok, file} = CtrlFile.create(payload)
       assert {:ok, file} = CtrlFile.update(file.file_id, payload2)
 
-      assert file.storage_id == payload2.storage_id
+      assert payload2.storage_id == file.storage_id
     end
 
     test "not found" do
-      assert {:error, :notfound} = CtrlFile.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == CtrlFile.update(IPv6.generate([]), %{})
     end
   end
 
@@ -87,6 +87,6 @@ defmodule HELM.Software.Controller.FileTest do
     assert {:ok, file} = CtrlFile.create(payload)
     assert :ok = CtrlFile.delete(file.file_id)
     assert :ok = CtrlFile.delete(file.file_id)
-    assert {:error, :notfound} = CtrlFile.find(file.file_id)
+    assert {:error, :notfound} == CtrlFile.find(file.file_id)
   end
 end

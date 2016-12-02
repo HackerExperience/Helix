@@ -40,7 +40,7 @@ defmodule HELM.Hardware.Model.ComponentSpec do
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
-  def update_changeset(schema, params \\ %{}) do
+  def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
     |> validate_required(:spec)

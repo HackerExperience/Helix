@@ -26,13 +26,13 @@ defmodule HELM.Entity.Model.Entity do
 
   @primary_key false
   schema "entities" do
-    field :entity_id, EctoNetwork.INET, primary_key: true
+    field :entity_id, EctoNetwork.INET,
+      primary_key: true
     field :reference_id, EctoNetwork.INET
 
     has_many :servers, MdlEntityServer,
       foreign_key: :entity_id,
       references: :entity_id
-
     belongs_to :type, MdlEntityType,
       foreign_key: :entity_type,
       references: :entity_type,

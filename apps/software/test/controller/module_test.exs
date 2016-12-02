@@ -47,7 +47,7 @@ defmodule HELM.Software.Controller.ModuleTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlModule.find(IPv6.generate([]), IPv6.generate([]))
+      assert {:error, :notfound} == CtrlModule.find(IPv6.generate([]), "")
     end
   end
 
@@ -57,20 +57,20 @@ defmodule HELM.Software.Controller.ModuleTest do
 
       payload2 = %{module_version: 2}
       assert {:ok, module} = CtrlModule.update(module.file_id, module.module_role, payload2)
-      assert module.module_version == payload2.module_version
+      assert payload2.module_version == module.module_version
     end
 
     test "module not found" do
-      assert {:error, :notfound} = CtrlModule.update(IPv6.generate([]), HRand.string(min: 20), %{})
+      assert {:error, :notfound} == CtrlModule.update(IPv6.generate([]), HRand.string(min: 20), %{})
     end
   end
 
   test "delete/2 idempotency", %{payload: payload} do
-    assert {:ok, module} = CtrlModule.create(payload)
+    {:ok, module} = CtrlModule.create(payload)
 
-    assert :ok = CtrlModule.delete(module.file_id, module.module_role_id)
-    assert :ok = CtrlModule.delete(module.file_id, module.module_role_id)
+    :ok = CtrlModule.delete(module.file_id, module.module_role_id)
+    :ok = CtrlModule.delete(module.file_id, module.module_role_id)
 
-    assert {:error, :notfound} = CtrlModule.find(module.file_id, module.module_role_id)
+    assert {:error, :notfound} == CtrlModule.find(module.file_id, module.module_role_id)
   end
 end

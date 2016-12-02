@@ -87,15 +87,15 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
       comp_payload = %{component_type: @component_type, spec_id: spec_id}
       {:ok, comp} = CtrlComps.create(comp_payload)
 
-      assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
+      assert {:ok, mobo_slot} = CtrlMoboSlots.create(payload)
 
       payload2 = %{link_component_id: comp.component_id}
-      assert {:ok, mobo_slots} = CtrlMoboSlots.update(mobo_slots.slot_id, payload2)
-      assert mobo_slots.link_component_id == comp.component_id
+      assert {:ok, mobo_slot} = CtrlMoboSlots.update(mobo_slot.slot_id, payload2)
+      assert comp.component_id == mobo_slot.link_component_id
     end
 
     test "slot not found" do
-      assert {:error, :notfound} = CtrlMoboSlots.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == CtrlMoboSlots.update(IPv6.generate([]), %{})
     end
   end
 

@@ -59,11 +59,11 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
       payload2 = %{spec: spec_data}
 
       assert {:ok, spec} = CtrlCompSpec.update(spec.spec_id, payload2)
-      assert spec.spec == spec_data
+      assert spec_data == spec.spec
     end
 
     test "spec not found" do
-      assert {:error, :notfound} = CtrlCompSpec.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == CtrlCompSpec.update(IPv6.generate([]), %{})
     end
   end
 end

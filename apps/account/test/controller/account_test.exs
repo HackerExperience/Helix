@@ -96,9 +96,9 @@ defmodule HELM.Account.Controller.AccountTest do
       assert {:ok, account1} = CtrlAccount.create(payload)
       assert {:ok, account2} = CtrlAccount.update(account1.account_id, payload2)
 
-      assert account2.email == payload2.email
-      refute account2.password == account1.password
-      assert account2.confirmed == payload2.confirmed
+      assert payload2.email == account2.email
+      refute account1.password == account2.password
+      assert payload2.confirmed == account2.confirmed
     end
 
     test "email exists", %{payload: payload} do
@@ -116,7 +116,7 @@ defmodule HELM.Account.Controller.AccountTest do
     end
 
     test "account not found" do
-      assert {:error, :notfound} = CtrlAccount.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == CtrlAccount.update(IPv6.generate([]), %{})
     end
   end
 
@@ -139,6 +139,10 @@ defmodule HELM.Account.Controller.AccountTest do
     test "fails when password doesn't match", %{account: account} do
       xs = CtrlAccount.login(account.email, "not_actually_the_correct_password")
       assert {:error, :notfound} === xs
+    end
+
+    test "user not found" do
+      assert {:error, :notfound} == CtrlAccount.login(";", "")
     end
   end
 end
