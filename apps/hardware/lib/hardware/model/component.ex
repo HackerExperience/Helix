@@ -11,14 +11,13 @@ defmodule HELM.Hardware.Model.Component do
     component_id: PK.t,
     component_type: String.t,
     component_spec: MdlCompSpec.t,
-    spec_id: PK.t,
+    spec_id: String.t,
     slot: MdlMoboSlot.t,
     inserted_at: Ecto.DateTime.t,
     updated_at: Ecto.DateTime.t
   }
 
-  @type creation_params :: %{component_type: String.t, spec_id: PK.t}
-  @type update_params :: %{spec_id: PK.t}
+  @type creation_params :: %{component_type: String.t, spec_id: String.t}
 
   @creation_fields ~w/component_type spec_id/a
 
@@ -32,7 +31,7 @@ defmodule HELM.Hardware.Model.Component do
     belongs_to :component_spec, MdlCompSpec,
       foreign_key: :spec_id,
       references: :spec_id,
-      type: EctoNetwork.INET
+      type: :string
     has_one :slot, MdlMoboSlot,
       foreign_key: :link_component_id,
       references: :component_id

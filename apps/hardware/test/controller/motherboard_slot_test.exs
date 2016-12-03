@@ -41,9 +41,8 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
     locals = [
       slot: slot
       payload: payload,
-      clean_payload: clean_payload,
-      comp_id: comp.component_id,
-      spec_id: comp_spec.spec_id
+      update_payload: update_payload,
+      comp_id: component.component_id
     ]
 
     {:ok, locals}
@@ -94,12 +93,11 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
       assert comp.component_id == mobo_slot.link_component_id
     end
 
-    test "slot not found" do
-      assert {:error, :notfound} == CtrlMoboSlots.update(IPv6.generate([]), %{})
+    test "motherboard slot is not found" do
+      assert {:error, :notfound} == CtrlMoboSlot.update(IPv6.generate([]), %{})
     end
   end
 
-  # Link/1 should not be idempotent, this is error prone
   # test "link/1 idempotency", %{clean_payload: payload, comp_id: comp_id} do
   #   assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
   #   assert {:ok, _} = CtrlMoboSlots.link(mobo_slots.slot_id, comp_id)

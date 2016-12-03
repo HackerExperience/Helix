@@ -21,6 +21,13 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     end
   end
 
+  @spec find_by([{:motherboard_id, HELL.PK.t}]) :: [MdlMoboSlot.t]
+  def find_by(motherboard_id: motherboard_id) do
+    MdlMoboSlot
+    |> where([s], s.motherboard_id == ^motherboard_id)
+    |> Repo.all()
+  end
+
   @spec update(HELL.PK.t, MdlMoboSlot.update_params) :: {:ok, MdlMoboSlot.t} | {:error, :notfound | Ecto.Changeset.t}
   def update(slot_id, params) do
     with {:ok, mobo_slot} <- find(slot_id) do
@@ -46,6 +53,15 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
   def delete(slot_id) do
     MdlMoboSlot
     |> where([s], s.slot_id == ^slot_id)
+    |> Repo.delete_all()
+
+    :ok
+  end
+
+  @spec delete_by([{:motherboard_id, HELL.PK.t}]) :: no_return
+  def delete_by(motherboard_id: motherboard_id) do
+    MdlMoboSlot
+    |> where([s], s.motherboard_id == ^motherboard_id)
     |> Repo.delete_all()
 
     :ok

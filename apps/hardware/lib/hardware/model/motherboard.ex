@@ -3,6 +3,7 @@ defmodule HELM.Hardware.Model.Motherboard do
   use Ecto.Schema
 
   alias HELL.PK
+  alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
   import Ecto.Changeset
 
@@ -24,6 +25,8 @@ defmodule HELM.Hardware.Model.Motherboard do
       references: :component_id,
       type: EctoNetwork.INET,
       primary_key: true
+
+    has_one :component_spec, through: [:component, :component_spec]
 
     has_many :slots, MdlMoboSlot,
       foreign_key: :motherboard_id,
