@@ -37,15 +37,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
     }
 
     {:ok, slot} = MotherboardSlotController.create(params)
-
-    locals = [
-      slot: slot
-      payload: payload,
-      update_payload: update_payload,
-      comp_id: component.component_id
-    ]
-
-    {:ok, locals}
+    {:ok, slot: slot}
   end
 
   defp component_for(slot) do
@@ -60,7 +52,6 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
       spec_id: comp_spec.spec_id
     }
     {:ok, comp} = ComponentController.create(p)
-
     comp
   end
 
@@ -79,23 +70,6 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
     MotherboardSlotController.delete(slot.slot_id)
     MotherboardSlotController.delete(slot.slot_id)
     refute Repo.get_by(MotherboardSlot, slot_id: slot.slot_id)
-  end
-
-  describe "update/2" do
-    test "change slot component", %{payload: payload, spec_id: spec_id} do
-      comp_payload = %{component_type: @component_type, spec_id: spec_id}
-      {:ok, comp} = CtrlComps.create(comp_payload)
-
-      assert {:ok, mobo_slot} = CtrlMoboSlots.create(payload)
-
-      payload2 = %{link_component_id: comp.component_id}
-      assert {:ok, mobo_slot} = CtrlMoboSlots.update(mobo_slot.slot_id, payload2)
-      assert comp.component_id == mobo_slot.link_component_id
-    end
-
-    test "motherboard slot is not found" do
-      assert {:error, :notfound} == CtrlMoboSlot.update(IPv6.generate([]), %{})
-    end
   end
 
   # test "link/1 idempotency", %{clean_payload: payload, comp_id: comp_id} do

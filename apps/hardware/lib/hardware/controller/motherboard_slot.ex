@@ -37,7 +37,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     end
   end
 
-  @spec link(slot_id :: HELL.PK.t, component :: HELL.PK.t | nil) ::
+  @spec link(slot_id :: HELL.PK.t, component :: HELL.PK.t) ::
     {:ok, MdlMoboSlot.t}
     | {:error, :linked_component | :linked_slot | :notfound | Ecto.Changeset.t}
   def link(slot_id, link_component_id) do
