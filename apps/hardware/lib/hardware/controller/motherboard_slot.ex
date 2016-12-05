@@ -66,4 +66,14 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
 
     :ok
   end
+
+  @spec parse_motherboard_spec(%{String.t => any}) ::
+    [%{slot_internal_id: non_neg_integer, link_component_type: String.t}]
+  def parse_motherboard_spec(component_spec) do
+    Enum.map(component_spec.spec["slots"], fn {id, spec} ->
+      %{
+        slot_internal_id: id,
+        link_component_type: spec["type"]}
+    end)
+  end
 end

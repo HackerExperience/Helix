@@ -15,14 +15,10 @@ defmodule HELM.Hardware.Controller.Motherboard do
         |> Repo.insert!()
         |> Repo.preload(:component_spec)
 
-      Enum.each(motherboard.component_spec.spec["slots"], fn {id, slot_spec} ->
-        slot = %{
-          motherboard_id: motherboard.motherboard_id,
-          slot_internal_id: id,
-          link_component_type: slot_spec["type"]
-        }
-        {:ok, _} = CtrlMoboSlot.create(slot)
-      end)
+      motherboard.component_spec
+      |> CtrlMoboSlot.parse_motherboard_spec()
+      |> Enum.map(&Map.put(&1, :motherboard_id, motherboard.motherboard_id))
+      |> Enum.each(&CtrlMoboSlot.create/1)
 
       motherboard
     end
