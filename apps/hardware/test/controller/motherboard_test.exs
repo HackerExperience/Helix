@@ -4,7 +4,6 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
 
   alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
   alias HELL.IPv6, warn: false
-  alias HELL.TestHelper.Random, as: HRand
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Controller.Component, as: CtrlComp
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
@@ -13,9 +12,7 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
   import Ecto.Query, only: [where: 3]
 
   @motherboard_spec %{
-    spec_id: HRand.string(min: 8, max: 8),
     spec_type: "MOBO",
-    name: HRand.string(min: 16, max: 20),
     slots: %{
       "0" => %{
         type: "CPU"
@@ -48,20 +45,22 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
   }
 
   setup_all do
-    payload = %{
-      spec_id: @motherboard_spec.spec_id,
-      component_type: @motherboard_spec.spec_type,
-      spec: @motherboard_spec
-    }
-    {:ok, _} = CtrlCompSpec.create(payload)
     :ok
   end
 
   setup do
     payload = %{
       component_type: @motherboard_spec.spec_type,
-      spec_id: @motherboard_spec.spec_id
+      spec: @motherboard_spec
     }
+
+    {:ok, spec} = CtrlCompSpec.create(payload)
+
+    payload = %{
+      component_type: @motherboard_spec.spec_type,
+      spec_id: spec.spec_id
+    }
+
     {:ok, component} = CtrlComp.create(payload)
     {:ok, payload: %{motherboard_id: component.component_id}}
   end

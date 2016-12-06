@@ -1,7 +1,6 @@
 defmodule HELM.Hardware.Controller.ComponentSpecTest do
 
   use ExUnit.Case, async: true
-
   alias HELL.TestHelper.Random
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.ComponentSpec
