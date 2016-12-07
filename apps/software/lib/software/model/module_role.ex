@@ -2,11 +2,13 @@ defmodule HELM.Software.Model.ModuleRole do
 
   use Ecto.Schema
 
+  alias HELL.PK
   alias HELM.Software.Model.FileType, as: MdlFileType, warn: false
   alias HELM.Software.Model.Module, as: MdlModule, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
+    module_role_id: PK.t,
     module_role: String.t,
     type: MdlFileType.t
   }
@@ -15,8 +17,10 @@ defmodule HELM.Software.Model.ModuleRole do
 
   @primary_key false
   schema "module_roles" do
-    field :module_role, :string,
+    field :module_role_id, EctoNetwork.INET,
       primary_key: true
+
+    field :module_role, :string
 
     # FIXME: this name must change soon
     belongs_to :type, MdlFileType,
@@ -30,6 +34,15 @@ defmodule HELM.Software.Model.ModuleRole do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required([:module_role, :file_type])
-    |> unique_constraint(:module_role)
+    |> unique_constraint(:module_role, name: :file_type_module_role_unique_constraint)
+    |> put_primary_key()
+  end
+
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
+  defp put_primary_key(changeset) do
+    pk = PK.generate([0x0004, 0x0002, 0x0000])
+
+    changeset
+    |> cast(%{module_role_id: pk}, [:module_role_id])
   end
 end
