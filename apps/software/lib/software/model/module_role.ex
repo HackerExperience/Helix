@@ -40,9 +40,9 @@ defmodule HELM.Software.Model.ModuleRole do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = PK.generate([0x0004, 0x0002, 0x0000])
+    pk = PK.generate([0x0004, 0x0002, 0x0000])
 
     changeset
-    |> cast(%{module_role_id: ip}, [:module_role_id])
+    |> cast(%{module_role_id: pk}, [:module_role_id])
   end
 end

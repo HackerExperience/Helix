@@ -4,29 +4,9 @@ alias HELM.Software.Model.ModuleRole
 
 types = [
   %{
-    file_type: "bitcoin_miner",
-    extension: "bim",
-    roles: ["efficiency", "install_speed"]
-  },
-  %{
-    file_type: "spammer",
-    extension: "spmr",
-    roles: ["efficiency", "install_speed"]
-  },
-  %{
-    file_type: "torrent",
-    extension: "trr",
-    roles: ["efficiency", "install_speed"]
-  },
-  %{
-    file_type: "botnet",
-    extension: "bot",
-    roles: []
-  },
-  %{
     file_type: "cracker",
     extension: "crc",
-    roles: []
+    roles: ["password"]
   },
   %{
     file_type: "exploit",
@@ -36,37 +16,37 @@ types = [
   %{
     file_type: "firewall",
     extension: "fwl",
-    roles: ["protect", "retaliate"]
+    roles: ["active", "passive"]
   },
   %{
-    file_type: "password_hasher",
-    extension: "hsh",
-    roles: ["protect"]
+    file_type: "hasher",
+    extension: "hash",
+    roles: ["password"]
   },
   %{
-    file_type: "hider", # RENAME ME PL0X
-    extension: "hdr",
-    roles: ["file", "log", "process"]
-  },
-  %{
-    file_type: "seeker", # RENAME ME TOO
-    extension: "skr",
-    roles: ["file", "log", "process"]
-  },
-  %{
-    file_type: "hmap",
-    extension: "hmap",
-    roles: ["geo", "inbound", "outbound"]
-  },
-  %{
-    file_type: "log_forge",
-    extension: "lfg",
-    roles: ["forge"]
+    file_type: "log_forger",
+    extension: "logf",
+    roles: ["forge", "delete"]
   },
   %{
     file_type: "log_recover",
-    extension: "lrcv",
+    extension: "logr",
     roles: ["recover"]
+  },
+  %{
+    file_type: "encryptor",
+    extension: "enc",
+    roles: ["file", "log", "connection", "process"]
+  },
+  %{
+    file_type: "decryptor",
+    extension: "dec",
+    roles: ["file", "log", "connection", "process"]
+  }
+  %{
+    file_type: "anymap",
+    extension: "map",
+    roles: ["geo", "inbound", "outbound"]
   }
 ]
 
