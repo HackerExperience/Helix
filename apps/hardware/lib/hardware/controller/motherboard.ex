@@ -38,7 +38,7 @@ defmodule HELM.Hardware.Controller.Motherboard do
   def delete(motherboard_id) do
     {status, _} =
       Repo.transaction fn ->
-        CtrlMoboSlot.delete_by(motherboard_id: motherboard_id)
+        :ok = CtrlMoboSlot.delete_all_from_motherboard(motherboard_id)
 
         MdlMobo
         |> where([m], m.motherboard_id == ^motherboard_id)

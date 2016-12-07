@@ -68,17 +68,8 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     end
   end
 
-  @spec delete(HELL.PK.t) :: no_return
-  def delete(slot_id) do
-    MdlMoboSlot
-    |> where([s], s.slot_id == ^slot_id)
-    |> Repo.delete_all()
-
-    :ok
-  end
-
-  @spec delete_by([{:motherboard_id, HELL.PK.t}]) :: no_return
-  def delete_by(motherboard_id: motherboard_id) do
+  @spec delete_all_from_motherboard(HELL.PK.t) :: no_return
+  def delete_all_from_motherboard(motherboard_id) do
     MdlMoboSlot
     |> where([s], s.motherboard_id == ^motherboard_id)
     |> Repo.delete_all()
