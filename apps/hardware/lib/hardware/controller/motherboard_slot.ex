@@ -39,30 +39,35 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
 
   @spec link(slot_id :: HELL.PK.t, component :: HELL.PK.t) ::
     {:ok, MdlMoboSlot.t}
-    | {:error, :linked_component | :linked_slot | :notfound | Ecto.Changeset.t}
+    | {:error, :component_already_linked | :slot_already_used | :notfound | Ecto.Changeset.t}
   def link(slot_id, link_component_id) do
-    with \
-      :unused_component <- unused_component?(link_component_id),
-      :empty_slot <- empty_slot?(slot_id)
-    do
-      update(slot_id, %{link_component_id: link_component_id})
+    if unused_component?(link_component_id) do
+      case find(slot_id) do
+        {:ok, slot} ->
+          if slot.link_component_id == nil do
+            update(slot_id, %{link_component_id: link_component_id})
+          else
+            {:error, :slot_already_used}
+          end
+        error ->
+          error
+      end
     else
-      {:error, msg} ->
-        {:error, msg}
-      msg ->
-        {:error, msg}
+      {:error, :component_already_linked}
     end
   end
 
   @spec unlink(HELL.PK.t) ::
     {:ok, MdlMoboSlot.t}
-    | {:error, :empty_slot | :notfound | Ecto.Changeset.t}
+    | {:error, :slot_already_empty | :notfound | Ecto.Changeset.t}
   def unlink(slot_id) do
-    case empty_slot?(slot_id) do
-      :linked_slot ->
-        update(slot_id, %{link_component_id: nil})
-      :empty_slot ->
-        {:error, :empty_slot}
+    case find(slot_id) do
+      {:ok, slot} ->
+        if slot.link_component_id != nil do
+          update(slot_id, %{link_component_id: nil})
+        else
+          {:error, :slot_already_empty}
+        end
       error ->
         error
     end
@@ -87,31 +92,11 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     end)
   end
 
-  @spec unused_component?(HELL.PK.t) :: :unused_component | :linked_component
+  @spec unused_component?(HELL.PK.t) :: boolean
   defp unused_component?(component_id) do
     MdlMoboSlot
     |> where([s], s.link_component_id == ^component_id)
     |> Repo.all()
     |> Enum.empty?()
-    |> case do
-      true ->
-        :unused_component
-      false ->
-        :linked_component
-    end
-  end
-
-  @spec empty_slot?(HELL.PK.t) :: :empty_slot | :linked_slot | {:error, :notfound}
-  defp empty_slot?(slot_id) do
-    case find(slot_id) do
-      {:ok, slot} ->
-        if slot.link_component_id == nil do
-          :empty_slot
-        else
-          :linked_slot
-        end
-      error ->
-        error
-    end
   end
 end
