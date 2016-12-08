@@ -21,7 +21,7 @@ defmodule Helix.Process.Model.Process.Resources do
 
   def changeset(resource, params) do
     resource
-    |> cast(params, ~w/cpu ram dlk ulk/a)
+    |> cast(params, [:cpu, :ram, :dlk, :ulk])
     |> validate_number(:cpu, greater_than_or_equal_to: 0)
     |> validate_number(:ram, greater_than_or_equal_to: 0)
     |> validate_number(:dlk, greater_than_or_equal_to: 0)
@@ -47,8 +47,8 @@ defmodule Helix.Process.Model.Process.Resources do
   @doc """
   Divides each resource from `x` by the value passed.
 
-  Alternatively, another Resources struct can be passed as argument and the value
-  of each resource will be divided by that struct's resources.
+  Alternatively, another Resources struct can be passed as argument and the
+  value of each resource will be divided by that struct's resources.
 
   To simplify and avoid errors, on the case of div'ing one struct by another, if
   the second value is 0 and the first is 0, 0 is set for that resource; if the

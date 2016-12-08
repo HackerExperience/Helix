@@ -19,7 +19,7 @@ defmodule Helix.Process.Model.Process.Limitations do
 
   def changeset(limitations, params) do
     limitations
-    |> cast(params, ~w/cpu dlk ulk/a)
+    |> cast(params, [:cpu, :ram, :dlk, :ulk])
     |> validate_number(:cpu, greater_than_or_equal_to: 0)
     |> validate_number(:ram, greater_than_or_equal_to: 0)
     |> validate_number(:dlk, greater_than_or_equal_to: 0)

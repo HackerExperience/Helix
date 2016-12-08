@@ -34,7 +34,8 @@ defmodule Helix.Process.Model.Process do
     field :target_server_id, :string
     field :file_id, :string
 
-    # Data that is used by the specific implementation of the process side-effects
+    # Data that is used by the specific implementation of the process
+    # side-effects
     field :software, NaiveStruct
 
     # Which state in the process FSM the process is currently on
@@ -101,7 +102,7 @@ defmodule Helix.Process.Model.Process do
   def calculate_work(process, time_now) do
     case process do
       %Ecto.Changeset{} ->
-        new_data = process.data |> calculate_work(time_now)
+        new_data = calculate_work(process.data, time_now)
 
         merge(process, new_data)
 
@@ -180,11 +181,11 @@ defmodule Helix.Process.Model.Process do
     resource
     |> List.wrap()
     |> Enum.any?(fn resource ->
-      v = Map.get(remaining, resource)
+      r = Map.get(remaining, resource)
+      l = Map.get(process.limitations, resource)
+      a = Map.get(process.allocated, resource)
 
-      is_integer(v)
-      and v > 0
-      and Map.get(process.limitations, resource) > Map.get(process.allocated, resource)
+      is_integer(r) and r > 0 and l > a
     end)
   end
 
