@@ -13,7 +13,7 @@ defmodule HELM.Software.Controller.Module do
 
   @spec find(HELL.PK.t, String.t) :: {:ok, MdlModule.t} | {:error, :notfound}
   def find(file_id, role) do
-    case Repo.get_by(MdlModule, module_role: role, file_id: file_id) do
+    case Repo.get_by(MdlModule, module_role_id: role, file_id: file_id) do
       nil ->
         {:error, :notfound}
       res ->
@@ -27,7 +27,7 @@ defmodule HELM.Software.Controller.Module do
   @spec delete(HELL.PK.t, String.t) :: no_return
   def delete(file_id, role) do
     MdlModule
-    |> where([m], m.module_role == ^role)
+    |> where([m], m.module_role_id == ^role)
     |> where([m], m.file_id == ^file_id)
     |> Repo.delete_all()
 

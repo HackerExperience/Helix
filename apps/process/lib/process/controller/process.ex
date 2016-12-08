@@ -3,7 +3,7 @@ defmodule HELM.Process.Controller.Process do
   import Ecto.Query, only: [where: 3]
 
   alias HELM.Process.Repo
-  alias HELM.Process.Model.Process, as: MdlProcess
+  alias Helix.Process.Model.Process, as: MdlProcess
 
   def create(process) do
     MdlProcess.create_changeset(process)

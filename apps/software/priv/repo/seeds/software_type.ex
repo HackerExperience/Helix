@@ -42,7 +42,7 @@ types = [
     file_type: "decryptor",
     extension: "dec",
     roles: ["file", "log", "connection", "process"]
-  }
+  },
   %{
     file_type: "anymap",
     extension: "map",

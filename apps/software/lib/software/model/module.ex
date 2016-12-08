@@ -35,7 +35,7 @@ defmodule HELM.Software.Model.Module do
     belongs_to :role, MdlModuleRole,
       foreign_key: :module_role_id,
       references: :module_role_id,
-      type: :string,
+      type: EctoNetwork.INET,
       primary_key: true
 
     field :module_version, :integer
