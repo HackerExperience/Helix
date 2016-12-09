@@ -2,85 +2,94 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
-  alias HELL.TestHelper.Random, as: HRand
+  alias HELL.TestHelper.Random
   alias HELM.Hardware.Repo
-  alias HELM.Hardware.Model.ComponentType, as: MdlCompType
-  alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
-  alias HELM.Hardware.Controller.Component, as: CtrlComps
+  alias HELM.Hardware.Model.ComponentType
+  alias HELM.Hardware.Model.MotherboardSlot
+  alias HELM.Hardware.Controller.ComponentSpec, as: SpecController
+  alias HELM.Hardware.Controller.Component, as: ComponentController
   alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
-  alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
-
-  @component_type HRand.string(min: 20)
+  alias HELM.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
   setup_all do
-    %{component_type: @component_type}
-    |> MdlCompType.create_changeset()
-    |> Repo.insert!()
+    # FIXME
+    types = case Repo.all(ComponentType) do
+      [] ->
+        1..5
+        |> Enum.map(fn _ -> Burette.Color.name() end)
+        |> Enum.uniq()
+        |> Enum.map(&ComponentType.create_changeset(%{component_type: &1}))
+        |> Enum.map(&Repo.insert!/1)
+      ct = [_|_] ->
+        ct
+    end
 
-    :ok
+    [component_types: types]
   end
 
-  setup do
-    spec_payload = %{component_type: @component_type, spec: %{}}
-    {:ok, comp_spec} = CtrlCompSpec.create(spec_payload)
-
-    comp_payload = %{component_type: @component_type, spec_id: comp_spec.spec_id}
-    {:ok, comp} = CtrlComps.create(comp_payload)
+  setup context do
     {:ok, mobo} = CtrlMobos.create()
 
-    payload = %{
-      slot_internal_id: HRand.number(1..1024),
+    params = %{
+      slot_internal_id: Burette.Number.number(1..1024),
       motherboard_id: mobo.motherboard_id,
-      link_component_type: @component_type,
-      link_component_id: comp.component_id
+      link_component_type: Enum.random(context.component_types).component_type
     }
 
-    clean_payload = %{
-      slot_internal_id: HRand.number(1..1024),
-      motherboard_id: mobo.motherboard_id,
-      link_component_type: @component_type
-    }
+    {:ok, slot} = MotherboardSlotController.create(params)
 
-    locals = [
-      payload: payload,
-      clean_payload: clean_payload,
-      comp_id: comp.component_id
-    ]
-
-    {:ok, locals}
+    {:ok, slot: slot}
   end
 
-  test "create/1", %{payload: payload} do
-    assert {:ok, _} = CtrlMoboSlots.create(payload)
+  defp component_for(slot) do
+    p = %{
+      component_type: slot.link_component_type,
+      spec: %{}
+    }
+    {:ok, comp_spec} = SpecController.create(p)
+
+    p = %{
+      component_type: slot.link_component_type,
+      spec_id: comp_spec.spec_id
+    }
+    {:ok, comp} = ComponentController.create(p)
+
+    comp
   end
 
   describe "find/1" do
-    test "success", %{payload: payload} do
-      assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
-      assert {:ok, ^mobo_slots} = CtrlMoboSlots.find(mobo_slots.slot_id)
+    test "fetching a slot by it's id", %{slot: slot} do
+      assert {:ok, _} = MotherboardSlotController.find(slot.slot_id)
     end
 
-    test "failure" do
-      assert {:error, :notfound} = CtrlMoboSlots.find(IPv6.generate([]))
+    test "failure to retrieve a slot when it doesn't exists" do
+      assert {:error, :notfound} === MotherboardSlotController.find(Random.pk())
     end
   end
 
-  test "delete/1 idempotency", %{payload: payload} do
-    assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
-    assert :ok = CtrlMoboSlots.delete(mobo_slots.slot_id)
-    assert :ok = CtrlMoboSlots.delete(mobo_slots.slot_id)
+  test "delete is idempotent", %{slot: slot} do
+    assert Repo.get_by(MotherboardSlot, slot_id: slot.slot_id)
+    MotherboardSlotController.delete(slot.slot_id)
+    MotherboardSlotController.delete(slot.slot_id)
+    refute Repo.get_by(MotherboardSlot, slot_id: slot.slot_id)
   end
 
-  test "link/1 idempotency", %{clean_payload: payload, comp_id: comp_id} do
-    assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
-    assert {:ok, _} = CtrlMoboSlots.link(mobo_slots.slot_id, comp_id)
-    assert {:ok, _} = CtrlMoboSlots.link(mobo_slots.slot_id, comp_id)
-  end
+  # Link/1 should not be idempotent, this is error prone
+  # test "link/1 idempotency", %{clean_payload: payload, comp_id: comp_id} do
+  #   assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
+  #   assert {:ok, _} = CtrlMoboSlots.link(mobo_slots.slot_id, comp_id)
+  #   assert {:ok, _} = CtrlMoboSlots.link(mobo_slots.slot_id, comp_id)
+  # end
 
-  test "unlink/1 idempotency", %{payload: payload} do
-    assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
-    assert {:ok, _} = CtrlMoboSlots.unlink(mobo_slots.slot_id)
-    assert {:ok, _} = CtrlMoboSlots.unlink(mobo_slots.slot_id)
+  test "unlink is idempotent", %{slot: slot} do
+    component = component_for(slot)
+
+    # I think we should make the controllers use the actual structs for all
+    # actions but find/fetch/get/search
+    MotherboardSlotController.link(slot.slot_id, component.component_id)
+    assert Repo.get_by(MotherboardSlot, slot_id: slot.slot_id).link_component_id
+    assert {:ok, _} = MotherboardSlotController.unlink(slot.slot_id)
+    assert {:ok, _} = MotherboardSlotController.unlink(slot.slot_id)
+    refute Repo.get_by(MotherboardSlot, slot_id: slot.slot_id).link_component_id
   end
 end

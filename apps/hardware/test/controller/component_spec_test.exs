@@ -2,19 +2,21 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Random
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.ComponentSpec
   alias HELM.Hardware.Model.ComponentType
   alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
 
   setup_all do
+    # FIXME
     type = case Repo.all(ComponentType) do
       [] ->
         %{component_type: Burette.Color.name()}
         |> ComponentType.create_changeset()
         |> Repo.insert!()
-      [component_type| _] ->
-        component_type
+      ct = [_|_] ->
+        Enum.random(ct)
     end
 
     [component_type: type]
@@ -37,15 +39,15 @@ defmodule HELM.Hardware.Controller.ComponentSpecTest do
     end
 
     test "returns error when spec doesn't exists" do
-      assert {:error, :notfound} === CtrlCompSpec.find(HELL.TestHelper.Random.pk())
+      assert {:error, :notfound} === CtrlCompSpec.find(Random.pk())
     end
   end
 
   test "delete is idempotent", %{component_spec: cs} do
     assert Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
-    assert CtrlCompSpec.delete(cs.spec_id)
-    assert CtrlCompSpec.delete(cs.spec_id)
-    assert CtrlCompSpec.delete(cs.spec_id)
+    CtrlCompSpec.delete(cs.spec_id)
+    CtrlCompSpec.delete(cs.spec_id)
+    CtrlCompSpec.delete(cs.spec_id)
     refute Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
   end
 end
