@@ -2,6 +2,7 @@ defmodule HELM.Entity.Controller.EntityTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Random
   alias HELM.Entity.Repo
   alias HELM.Entity.Model.Entity
   alias HELM.Entity.Model.EntityType
@@ -14,8 +15,8 @@ defmodule HELM.Entity.Controller.EntityTest do
         %{entity_type: Burette.Color.name()}
         |> EntityType.create_changeset()
         |> Repo.insert!()
-      [entity_type| _] ->
-        entity_type
+      et = [_|_] ->
+        Enum.random(et)
     end
 
     [entity_type: type]
@@ -25,7 +26,7 @@ defmodule HELM.Entity.Controller.EntityTest do
     entity =
       %{
         entity_type: context.entity_type.entity_type,
-        reference_id: HELL.TestHelper.Random.pk()}
+        reference_id: Random.pk()}
       |> Entity.create_changeset()
       |> Repo.insert!()
 
@@ -38,13 +39,14 @@ defmodule HELM.Entity.Controller.EntityTest do
     end
 
     test "fails when no entity exists" do
-      assert {:error, :notfound} === CtrlEntity.find(HELL.TestHelper.Random.pk())
+      assert {:error, :notfound} === CtrlEntity.find(Random.pk())
     end
   end
 
   test "delete is idempotent", %{entity: entity} do
-    assert CtrlEntity.delete(entity.entity_id)
-    assert CtrlEntity.delete(entity.entity_id)
+    assert Repo.get_by(Entity, entity_id: entity.entity_id)
+    CtrlEntity.delete(entity.entity_id)
+    CtrlEntity.delete(entity.entity_id)
     refute Repo.get_by(Entity, entity_id: entity.entity_id)
   end
 end

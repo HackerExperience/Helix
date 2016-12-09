@@ -2,6 +2,7 @@ defmodule HELM.Account.Controller.AccountTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Random
   alias HELM.Account.Model.Account
   alias HELM.Account.Repo
   alias HELM.Account.Controller.Account, as: CtrlAccount
@@ -60,7 +61,7 @@ defmodule HELM.Account.Controller.AccountTest do
     end
 
     test "fails when account doesn't exists" do
-      assert {:error, :notfound} === CtrlAccount.find(HELL.TestHelper.Random.pk())
+      assert {:error, :notfound} === CtrlAccount.find(Random.pk())
     end
   end
 
@@ -76,15 +77,16 @@ defmodule HELM.Account.Controller.AccountTest do
   end
 
   test "delete/1 is idempotent", %{account: account} do
-    assert CtrlAccount.delete(account.account_id)
-    assert CtrlAccount.delete(account.account_id)
-    assert CtrlAccount.delete(account.account_id)
+    assert Repo.get_by(Account, account_id: account.account_id)
+    CtrlAccount.delete(account.account_id)
+    CtrlAccount.delete(account.account_id)
     refute Repo.get_by(Account, account_id: account.account_id)
   end
 
   describe "login/2" do
     test "succeeds with correct email/password", %{account: account} do
       pass = "!!!foobar1234"
+
       account
       |> Account.update_changeset(%{password: pass, password_confirmation: pass})
       |> Repo.update!()
@@ -93,11 +95,13 @@ defmodule HELM.Account.Controller.AccountTest do
     end
 
     test "fails when email is invalid" do
-      assert {:error, :notfound} === CtrlAccount.login("invalid@email.eita", "password")
+      xs = CtrlAccount.login("invalid@email.eita", "password")
+      assert {:error, :notfound} === xs
     end
 
     test "fails when password doesn't match", %{account: account} do
-      assert {:error, :notfound} === CtrlAccount.login(account.email, "not_actually_the_correct_password")
+      xs = CtrlAccount.login(account.email, "not_actually_the_correct_password")
+      assert {:error, :notfound} === xs
     end
   end
 end

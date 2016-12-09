@@ -9,8 +9,6 @@ defmodule Mix.Tasks.Helix.Test do
   @command IO.ANSI.yellow() <> "mix test --no-prune" <> IO.ANSI.default_color()
 
   def run(argv \\ []) do
-    Mix.Task.run("compile", [])
-
     {switches, _, _} = OptionParser.parse(argv, switches: [prune: :boolean])
     test_argv = argv -- ["--prune", "--no-prune"]
 
@@ -25,7 +23,7 @@ defmodule Mix.Tasks.Helix.Test do
       Mix.Task.run("ecto.migrate", ["--quiet"])
 
       # HACK: FIXME: Temporary hack to automatically install seed data
-      Mix.Task.rerun("run", ["apps/software/priv/repo/seeds/software_type.ex"])
+      Mix.Task.rerun("run", ["apps/software/priv/repo/seeds/software_type.exs"])
       Mix.Task.rerun("run", ["apps/hardware/priv/repo/seeds/component_type.exs"])
       Mix.Task.rerun("run", ["apps/entity/priv/repo/seeds/entity_type.exs"])
       Mix.Task.rerun("run", ["apps/server/priv/repo/seeds/server_type.exs"])

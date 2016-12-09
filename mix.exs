@@ -18,6 +18,6 @@ defmodule HELM.Mixfile do
   end
 
   defp aliases do
-    [test: ["helix.test"]]
+    [test: ["compile", "helix.test"]]
   end
 end

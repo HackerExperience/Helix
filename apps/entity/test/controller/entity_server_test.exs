@@ -2,6 +2,7 @@ defmodule HELM.Entity.Controller.EntityServerTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Random
   alias HELM.Entity.Repo
   alias HELM.Entity.Model.Entity
   alias HELM.Entity.Model.EntityType
@@ -14,8 +15,8 @@ defmodule HELM.Entity.Controller.EntityServerTest do
         %{entity_type: Burette.Color.name()}
         |> EntityType.create_changeset()
         |> Repo.insert!()
-      [entity_type| _] ->
-        entity_type
+      et = [_|_] ->
+        Enum.random(et)
     end
 
     [entity_type: type]
@@ -25,7 +26,7 @@ defmodule HELM.Entity.Controller.EntityServerTest do
     entity =
       %{
         entity_type: context.entity_type.entity_type,
-        reference_id: HELL.TestHelper.Random.pk()}
+        reference_id: Random.pk()}
       |> Entity.create_changeset()
       |> Repo.insert!()
 
@@ -33,25 +34,21 @@ defmodule HELM.Entity.Controller.EntityServerTest do
   end
 
   test "create/1", %{entity: entity} do
-    server_id = HELL.TestHelper.Random.pk()
+    server_id = Random.pk()
 
     assert {:ok, _} = CtrlEntityServer.create(entity.entity_id, server_id)
   end
 
   describe "find/1" do
     test "fetching linked servers", %{entity: entity} do
-      servers = [
-        HELL.TestHelper.Random.pk(),
-        HELL.TestHelper.Random.pk(),
-        HELL.TestHelper.Random.pk()
-      ]
+      servers = [Random.pk(), Random.pk(), Random.pk()]
 
       Enum.each(servers, &CtrlEntityServer.create(entity.entity_id, &1))
 
       found_servers =
         entity.entity_id
         |> CtrlEntityServer.find()
-        |> Enum.map(&(&1 |> Map.get(:server_id) |> to_string()))
+        |> Enum.map(&to_string(&1.server_id))
         |> Enum.sort()
 
       assert Enum.sort(servers) === found_servers
@@ -67,8 +64,8 @@ defmodule HELM.Entity.Controller.EntityServerTest do
     CtrlEntityServer.create(entity.entity_id, server_id)
 
     refute [] == CtrlEntityServer.find(entity.entity_id)
-    assert CtrlEntityServer.delete(entity.entity_id, server_id)
-    assert CtrlEntityServer.delete(entity.entity_id, server_id)
+    CtrlEntityServer.delete(entity.entity_id, server_id)
+    CtrlEntityServer.delete(entity.entity_id, server_id)
     assert [] == CtrlEntityServer.find(entity.entity_id)
   end
 end
