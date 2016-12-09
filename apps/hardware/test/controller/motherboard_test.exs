@@ -12,33 +12,33 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
   import Ecto.Query, only: [where: 3]
 
   @motherboard_spec %{
-    spec_type: "MOBO",
+    spec_type: "mobo",
     slots: %{
       "0" => %{
-        type: "CPU"
+        type: "cpu"
       },
       "1" => %{
-        type: "HDD",
+        type: "hdd",
         limit: 2000
       },
       "2" => %{
-        type: "HDD",
+        type: "hdd",
         limit: 2000
       },
       "3" => %{
-        type: "RAM",
+        type: "ram",
         limit: 4096
       },
       "4" => %{
-        type: "RAM",
+        type: "ram",
         limit: 4096
       },
       "5" => %{
-        type: "NIC",
+        type: "nic",
         limit: 1000
       },
       "6" => %{
-        type: "NIC",
+        type: "nic",
         limit: 1000
       }
     }
