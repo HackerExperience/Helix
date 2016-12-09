@@ -1,5 +1,6 @@
 defmodule HELM.Software.Controller.ModuleTest do
-  use ExUnit.Case
+
+  use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand

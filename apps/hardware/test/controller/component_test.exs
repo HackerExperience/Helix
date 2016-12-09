@@ -1,53 +1,59 @@
 defmodule HELM.Hardware.Controller.ComponentTest do
-  use ExUnit.Case
 
-  alias HELL.IPv6
-  alias HELL.TestHelper.Random, as: HRand
+  use ExUnit.Case, async: true
+
+  alias HELL.TestHelper.Random
   alias HELM.Hardware.Repo
-  alias HELM.Hardware.Model.ComponentType, as: MdlCompType
-  alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
-  alias HELM.Hardware.Controller.Component, as: CtrlComps
-
-  @component_type HRand.string(min: 20)
+  alias HELM.Hardware.Model.Component
+  alias HELM.Hardware.Model.ComponentType
+  alias HELM.Hardware.Controller.ComponentSpec, as: SpecController
+  alias HELM.Hardware.Controller.Component, as: ComponentController
 
   setup_all do
-    %{component_type: @component_type}
-    |> MdlCompType.create_changeset()
-    |> Repo.insert!()
+    # FIXME
+    type = case Repo.all(ComponentType) do
+      [] ->
+        %{component_type: Burette.Color.name()}
+        |> ComponentType.create_changeset()
+        |> Repo.insert!()
+      ct = [_|_] ->
+        Enum.random(ct)
+    end
 
-    :ok
+    p = %{
+      component_type: type.component_type,
+      spec: %{}}
+
+    {:ok, comp_spec} = SpecController.create(p)
+
+    [component_type: type, component_spec: comp_spec]
   end
 
-  setup do
-    spec_payload = %{component_type: @component_type, spec: %{}}
-    {:ok, comp_spec} = CtrlCompSpec.create(spec_payload)
-
-    payload = %{
-      component_type: @component_type,
-      spec_id: comp_spec.spec_id
+  setup context do
+    params = %{
+      component_type: context.component_type.component_type,
+      spec_id: context.component_spec.spec_id
     }
 
-    {:ok, payload: payload}
+    {:ok, c} = ComponentController.create(params)
+
+    {:ok, component: c}
   end
 
-  test "create/1", %{payload: payload} do
-    assert {:ok, _} = CtrlComps.create(payload)
-  end
-
-  describe "find/1" do
-    test "success", %{payload: payload} do
-      assert {:ok, comp} = CtrlComps.create(payload)
-      assert {:ok, ^comp} = CtrlComps.find(comp.component_id)
+  describe "find" do
+    test "fetching a component by id", %{component: component} do
+      assert {:ok, _} = ComponentController.find(component.component_id)
     end
 
-    test "failure" do
-      assert {:error, :notfound} = CtrlComps.find(IPv6.generate([]))
+    test "fails if component doesn't exists" do
+      assert {:error, :notfound} === ComponentController.find(Random.pk())
     end
   end
 
-  test "delete/1 idempotency", %{payload: payload} do
-    assert {:ok, comp} = CtrlComps.create(payload)
-    assert :ok = CtrlComps.delete(comp.component_id)
-    assert :ok = CtrlComps.delete(comp.component_id)
+  test "delete is idempotent", %{component: component} do
+    assert Repo.get_by(Component, component_id: component.component_id)
+    ComponentController.delete(component.component_id)
+    ComponentController.delete(component.component_id)
+    refute Repo.get_by(Component, component_id: component.component_id)
   end
 end

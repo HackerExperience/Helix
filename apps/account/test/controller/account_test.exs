@@ -1,91 +1,107 @@
 defmodule HELM.Account.Controller.AccountTest do
-  use ExUnit.Case
 
-  alias HELL.IPv6
-  alias HELL.TestHelper.Random, as: HRand
+  use ExUnit.Case, async: true
+
+  alias HELL.TestHelper.Random
+  alias HELM.Account.Model.Account
+  alias HELM.Account.Repo
   alias HELM.Account.Controller.Account, as: CtrlAccount
 
   setup do
-    email = HRand.email()
-    pass = HRand.string(min: 8, max: 16)
+    account =
+      payload()
+      |> Account.create_changeset()
+      |> Repo.insert!()
 
-    payload = %{email: email, password: pass, password_confirmation: pass}
-
-    {:ok, email: email, pass: pass, payload: payload}
+    {:ok, account: account}
   end
 
-  describe "create/1" do
-    test "success", %{payload: payload} do
-      assert {:ok, _} = CtrlAccount.create(payload)
+  # Funnily enough, the very same params can be use to create an account through
+  # the controller and the model
+  defp payload do
+    email = Burette.Internet.email()
+    password = Burette.Internet.password()
+    %{email: email, password_confirmation: password, password: password}
+  end
+
+  describe "account creation" do
+    test "succeeds with proper data" do
+      assert {:ok, _} = CtrlAccount.create(payload())
     end
 
-    test "account exists", %{payload: payload} do
-      {:ok, _} = CtrlAccount.create(payload)
-      {:error, changeset} = CtrlAccount.create(payload)
-      error = Keyword.fetch!(changeset.errors, :email)
-      assert error == {"has already been taken", []}
+    test "fails when email is already in use", %{account: account} do
+      payload = %{
+        email: account.email,
+        password: "toptoptop123",
+        password_confirmation: "toptoptop123"}
+
+      assert {:error, changeset} = CtrlAccount.create(payload)
+      assert :email in Keyword.keys(changeset.errors)
     end
 
-    test "wrong confirmation", %{email: email, pass: pass} do
-      payload = %{email: email, password: pass, password_confirmation: "123"}
-      {:error, changeset} = CtrlAccount.create(payload)
-      error = Keyword.fetch!(changeset.errors, :password_confirmation)
-      assert {"does not match confirmation", _} = error
+    test "fails when password confirmation doesn't match" do
+      payload = %{payload()| password_confirmation: "toptoper123"}
+
+      assert {:error, changeset} = CtrlAccount.create(payload)
+      assert :password_confirmation in Keyword.keys(changeset.errors)
     end
 
-    test "short password", %{email: email} do
-      payload = %{email: email, password: "123", password_confirmation: "123"}
-      {:error, changeset} = CtrlAccount.create(payload)
-      error = Keyword.fetch!(changeset.errors, :password)
-      assert {"should be at least %{count} character(s)", _} = error
+    test "fails when password is too short" do
+      payload = %{payload()| password: "123", password_confirmation: "123"}
+
+      assert {:error, changeset} = CtrlAccount.create(payload)
+      assert :password in Keyword.keys(changeset.errors)
     end
   end
 
   describe "find/1" do
-    test "success", %{payload: payload} do
-      {:ok, account} = CtrlAccount.create(payload)
-      {:ok, found} = CtrlAccount.find(account.account_id)
+    test "succeeds when account exists", %{account: account} do
+      assert {:ok, found} = CtrlAccount.find(account.account_id)
       assert account.account_id == found.account_id
     end
 
-    test "failure", %{payload: payload} do
-      {:ok, _} = CtrlAccount.create(payload)
-      assert {:error, :notfound} = CtrlAccount.find(IPv6.generate([]))
+    test "fails when account doesn't exists" do
+      assert {:error, :notfound} === CtrlAccount.find(Random.pk())
     end
   end
 
   describe "find_by/1" do
-    test "success with email", %{payload: payload} do
-      {:ok, account} = CtrlAccount.create(payload)
-      {:ok, found} = CtrlAccount.find_by(email: payload.email)
+    test "using email", %{account: account} do
+      assert {:ok, found} = CtrlAccount.find_by(email: account.email)
       assert account.account_id == found.account_id
     end
 
-    test "failure with email", %{payload: payload} do
-      {:ok, _} = CtrlAccount.create(payload)
-      assert {:error, :notfound} = CtrlAccount.find_by(email: "")
+    test "failing with invalid email" do
+      assert {:error, :notfound} = CtrlAccount.find_by(email: "invalid@email.eita")
     end
   end
 
-  test "delete/1 idempotency", %{payload: payload} do
-    {:ok, account} = CtrlAccount.create(payload)
-    assert :ok = CtrlAccount.delete(account.account_id)
-    assert :ok = CtrlAccount.delete(account.account_id)
+  test "delete/1 is idempotent", %{account: account} do
+    assert Repo.get_by(Account, account_id: account.account_id)
+    CtrlAccount.delete(account.account_id)
+    CtrlAccount.delete(account.account_id)
+    refute Repo.get_by(Account, account_id: account.account_id)
   end
 
   describe "login/2" do
-    test "success", %{payload: payload, email: email, pass: pass} do
-      {:ok, _} = CtrlAccount.create(payload)
-      assert {:ok, _} = CtrlAccount.login(email, pass)
+    test "succeeds with correct email/password", %{account: account} do
+      pass = "!!!foobar1234"
+
+      account
+      |> Account.update_changeset(%{password: pass, password_confirmation: pass})
+      |> Repo.update!()
+
+      assert {:ok, _} = CtrlAccount.login(account.email, pass)
     end
 
-    test "user not found" do
-      assert {:error, :notfound} = CtrlAccount.login(";", "")
+    test "fails when email is invalid" do
+      xs = CtrlAccount.login("invalid@email.eita", "password")
+      assert {:error, :notfound} === xs
     end
 
-    test "wrong password", %{payload: payload, email: email} do
-      {:ok, _} = CtrlAccount.create(payload)
-      assert {:error, :notfound} = CtrlAccount.login(email, "")
+    test "fails when password doesn't match", %{account: account} do
+      xs = CtrlAccount.login(account.email, "not_actually_the_correct_password")
+      assert {:error, :notfound} === xs
     end
   end
 end

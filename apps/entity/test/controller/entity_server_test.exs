@@ -1,54 +1,71 @@
 defmodule HELM.Entity.Controller.EntityServerTest do
-  use ExUnit.Case
 
-  alias HELL.IPv6
+  use ExUnit.Case, async: true
+
+  alias HELL.TestHelper.Random
   alias HELM.Entity.Repo
-  alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Entity.Controller.Entity, as: CtrlEntity
-  alias HELM.Entity.Model.EntityType, as: MdlEntityType
+  alias HELM.Entity.Model.Entity
+  alias HELM.Entity.Model.EntityType
   alias HELM.Entity.Controller.EntityServer, as: CtrlEntityServer
 
-  @entity_type HRand.string(min: 20)
-
   setup_all do
-    %{entity_type: @entity_type}
-    |> MdlEntityType.create_changeset()
-    |> Repo.insert!()
+    # FIXME
+    type = case Repo.all(EntityType) do
+      [] ->
+        %{entity_type: Burette.Color.name()}
+        |> EntityType.create_changeset()
+        |> Repo.insert!()
+      et = [_|_] ->
+        Enum.random(et)
+    end
 
-    :ok
+    [entity_type: type]
   end
 
-  setup do
-    reference_id = IPv6.generate([])
-    server_id = IPv6.generate([])
+  setup context do
+    entity =
+      %{
+        entity_type: context.entity_type.entity_type,
+        reference_id: Random.pk()}
+      |> Entity.create_changeset()
+      |> Repo.insert!()
 
-    payload = %{entity_type: @entity_type, reference_id: reference_id}
-    {:ok, payload: payload, server_id: server_id}
+    {:ok, entity: entity}
   end
 
-  test "create/1", %{payload: payload, server_id: server_id} do
-    {:ok, entity} = CtrlEntity.create(payload)
+  test "create/1", %{entity: entity} do
+    server_id = Random.pk()
+
     assert {:ok, _} = CtrlEntityServer.create(entity.entity_id, server_id)
   end
 
   describe "find/1" do
-    test "found servers", %{payload: payload, server_id: server_id} do
-      {:ok, entity} = CtrlEntity.create(payload)
-      {:ok, entry1} = CtrlEntityServer.create(entity.entity_id, server_id)
-      {:ok, entry2} = CtrlEntityServer.create(entity.entity_id, IPv6.generate([]))
-      assert Enum.sort([entry1, entry2]) == Enum.sort(CtrlEntityServer.find(entity.entity_id))
+    test "fetching linked servers", %{entity: entity} do
+      servers = [Random.pk(), Random.pk(), Random.pk()]
+
+      Enum.each(servers, &CtrlEntityServer.create(entity.entity_id, &1))
+
+      found_servers =
+        entity.entity_id
+        |> CtrlEntityServer.find()
+        |> Enum.map(&to_string(&1.server_id))
+        |> Enum.sort()
+
+      assert Enum.sort(servers) === found_servers
     end
 
-    test "no servers found" do
-      assert [] == CtrlEntityServer.find(IPv6.generate([]))
+    test "returns empty list if entity has no server", %{entity: entity} do
+      assert [] === CtrlEntityServer.find(entity.entity_id)
     end
   end
 
-  test "delete/1 idempotency", %{payload: payload, server_id: server_id} do
-    {:ok, entity} = CtrlEntity.create(payload)
-    {:ok, _} = CtrlEntityServer.create(entity.entity_id, server_id)
-    assert :ok = CtrlEntityServer.delete(entity.entity_id, server_id)
-    assert :ok = CtrlEntityServer.delete(entity.entity_id, server_id)
+  test "delete is idempotent", %{entity: entity} do
+    server_id = HELL.TestHelper.Random.pk()
+    CtrlEntityServer.create(entity.entity_id, server_id)
+
+    refute [] == CtrlEntityServer.find(entity.entity_id)
+    CtrlEntityServer.delete(entity.entity_id, server_id)
+    CtrlEntityServer.delete(entity.entity_id, server_id)
     assert [] == CtrlEntityServer.find(entity.entity_id)
   end
 end
