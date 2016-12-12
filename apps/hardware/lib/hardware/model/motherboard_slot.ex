@@ -81,4 +81,10 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     changeset
     |> cast(%{slot_id: ip}, [:slot_id])
   end
+
+  @spec linked?(t) :: boolean
+  def linked?(%__MODULE__{link_component_id: nil}),
+    do: false
+  def linked?(%__MODULE__{link_component_id: _}),
+    do: true
 end

@@ -1,8 +1,9 @@
 defmodule HELM.Hardware.Controller.MotherboardSlot do
 
   alias HELM.Hardware.Repo
+  alias HELM.Hardware.Controller.Component, as: CtrlComp
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
-  import Ecto.Query, only: [where: 3, select: 2]
+  import Ecto.Query, only: [where: 3]
 
   @spec create(MdlMoboSlot.creation_params) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t}
   def create(params) do
@@ -39,18 +40,29 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
 
   @spec link(slot_id :: HELL.PK.t, component :: HELL.PK.t) ::
     {:ok, MdlMoboSlot.t}
-    | {:error, :component_already_linked | :slot_already_used | :notfound | Ecto.Changeset.t}
-  def link(slot_id, link_component_id) do
-    available_component? = unused_component?(link_component_id)
-    available_slot? = empty_slot?(slot_id)
+    | {:error, :component_already_linked | :slot_already_linked | :notfound | Ecto.Changeset.t}
+  def link(slot_id, component_id) do
+    slot_linked? = fn slot ->
+      MdlMoboSlot.linked?(slot)
+      && {:error, :slot_already_linked}
+      || false
+    end
 
-    cond do
-      available_component? and available_slot? ->
-        update(slot_id, %{link_component_id: link_component_id})
-      not available_component? ->
-        {:error, :component_already_linked}
-      not available_slot? ->
-        {:error, :slot_already_used}
+    component_used? = fn component ->
+      component_used?(component.component_id)
+      && {:error, :component_already_linked}
+      || false
+    end
+
+    with \
+      {:ok, slot} <- find(slot_id),
+      {:ok, component} <- CtrlComp.find(component_id),
+      false <- slot_linked?.(slot),
+      false <- component_used?.(component)
+    do
+      slot
+      |> MdlMoboSlot.update_changeset(%{link_component_id: component_id})
+      |> Repo.update()
     end
   end
 
@@ -70,8 +82,8 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
 
   @spec parse_motherboard_spec(%{String.t => any}) ::
     [%{
-       slot_internal_id: non_neg_integer,
-       link_component_type: String.t}]
+      slot_internal_id: non_neg_integer,
+      link_component_type: String.t}]
   def parse_motherboard_spec(component_spec) do
     component_spec.spec["slots"]
     |> Enum.map(fn {id, spec} ->
@@ -82,18 +94,10 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     end)
   end
 
-  @spec empty_slot?(HELL.PK.t) :: boolean
-  defp empty_slot?(slot_id) do
-    component =
-      MdlMoboSlot
-      |> where([s], s.slot_id == ^slot_id)
-      |> select([:link_component_id])
-      |> Repo.one()
-
-    nil == component
+  @spec component_used?(HELL.PK.t) :: boolean
+  defp component_used?(component_id) do
+    Repo.get_by(MdlMoboSlot, link_component_id: component_id)
+    && true
+    || false
   end
-
-  @spec unused_component?(HELL.PK.t) :: boolean
-  defp unused_component?(component_id),
-    do: nil == Repo.get_by(MdlMoboSlot, link_component_id: component_id)
 end

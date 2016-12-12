@@ -30,10 +30,6 @@ defmodule HELM.Hardware.Model.ComponentSpec do
     field :component_type, :string
     field :spec, :map
 
-    has_many :components, MdlComp,
-      foreign_key: :spec_id,
-      references: :spec_id
-
     timestamps
   end
 
