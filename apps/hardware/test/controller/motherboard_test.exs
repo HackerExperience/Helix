@@ -44,10 +44,6 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
     }
   }
 
-  setup_all do
-    :ok
-  end
-
   setup do
     payload = %{
       component_type: @motherboard_spec.spec_type,

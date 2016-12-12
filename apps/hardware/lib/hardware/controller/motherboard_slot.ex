@@ -80,20 +80,6 @@ defmodule HELM.Hardware.Controller.MotherboardSlot do
     :ok
   end
 
-  @spec parse_motherboard_spec(%{String.t => any}) ::
-    [%{
-      slot_internal_id: non_neg_integer,
-      link_component_type: String.t}]
-  def parse_motherboard_spec(component_spec) do
-    component_spec.spec["slots"]
-    |> Enum.map(fn {id, spec} ->
-      %{
-        slot_internal_id: id,
-        link_component_type: spec["type"]
-      }
-    end)
-  end
-
   @spec component_used?(HELL.PK.t) :: boolean
   defp component_used?(component_id) do
     Repo.get_by(MdlMoboSlot, link_component_id: component_id)

@@ -82,6 +82,20 @@ defmodule HELM.Hardware.Model.MotherboardSlot do
     |> cast(%{slot_id: ip}, [:slot_id])
   end
 
+  @spec parse_motherboard_spec(%{String.t => any}) ::
+    [%{
+      slot_internal_id: non_neg_integer,
+      link_component_type: String.t}]
+  def parse_motherboard_spec(component_spec) do
+    component_spec.spec["slots"]
+    |> Enum.map(fn {id, spec} ->
+      %{
+        slot_internal_id: id,
+        link_component_type: spec["type"]
+       }
+    end)
+  end
+
   @spec linked?(t) :: boolean
   def linked?(%__MODULE__{link_component_id: nil}),
     do: false
