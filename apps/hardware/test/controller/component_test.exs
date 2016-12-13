@@ -36,7 +36,6 @@ defmodule HELM.Hardware.Controller.ComponentTest do
     }
 
     {:ok, c} = ComponentController.create(params)
-
     {:ok, component: c}
   end
 

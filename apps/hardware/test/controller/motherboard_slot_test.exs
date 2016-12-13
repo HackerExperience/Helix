@@ -6,9 +6,9 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.ComponentType
   alias HELM.Hardware.Model.MotherboardSlot
-  alias HELM.Hardware.Controller.ComponentSpec, as: SpecController
   alias HELM.Hardware.Controller.Component, as: ComponentController
-  alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
+  alias HELM.Hardware.Controller.ComponentSpec, as: SpecController
+  alias HELM.Hardware.Controller.Motherboard, as: MotherboardController
   alias HELM.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
   setup_all do
@@ -28,16 +28,39 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
   end
 
   setup context do
-    {:ok, mobo} = CtrlMobos.create()
+    slot_type = Enum.random(context.component_types).component_type
 
-    params = %{
-      slot_internal_id: Burette.Number.number(1..1024),
-      motherboard_id: mobo.motherboard_id,
-      link_component_type: Enum.random(context.component_types).component_type
+    mobo_name = "Motherboard_" <> Burette.Number.digits(8)
+    mobo_type =
+      ComponentType.create_changeset(%{component_type: mobo_name})
+      |> Repo.insert!()
+
+    slot_number = Burette.Number.digits(4)
+    spec_params = %{
+      component_type: mobo_type.component_type,
+      spec: %{
+        spec_type: mobo_type.component_type,
+        slots: %{
+          slot_number => %{type: slot_type}
+        }
+      }
     }
 
-    {:ok, slot} = MotherboardSlotController.create(params)
-    {:ok, slot: slot}
+    {:ok, spec} = SpecController.create(spec_params)
+
+    comp_params = %{
+      component_type: mobo_name,
+      spec_id: spec.spec_id}
+    {:ok, comp} = ComponentController.create(comp_params)
+
+    mobo_params = %{motherboard_id: comp.component_id}
+    {:ok, mobo} = MotherboardController.create(mobo_params)
+
+    slot =
+      MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
+      |> List.first()
+
+    {:ok, slot: slot, mobo: mobo, comp: comp}
   end
 
   defp component_for(slot) do
@@ -52,10 +75,11 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
       spec_id: comp_spec.spec_id
     }
     {:ok, comp} = ComponentController.create(p)
+
     comp
   end
 
-  describe "find/1" do
+  describe "find" do
     test "fetching a slot by it's id", %{slot: slot} do
       assert {:ok, _} = MotherboardSlotController.find(slot.slot_id)
     end
@@ -65,18 +89,41 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
     end
   end
 
-  test "delete is idempotent", %{slot: slot} do
+  test "delete is idempotent and removes every slot", %{slot: slot, mobo: mobo} do
     assert Repo.get_by(MotherboardSlot, slot_id: slot.slot_id)
-    MotherboardSlotController.delete(slot.slot_id)
-    MotherboardSlotController.delete(slot.slot_id)
-    refute Repo.get_by(MotherboardSlot, slot_id: slot.slot_id)
+    MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
+    MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
+    assert [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
   end
 
-  # test "link/1 idempotency", %{clean_payload: payload, comp_id: comp_id} do
-  #   assert {:ok, mobo_slots} = CtrlMoboSlots.create(payload)
-  #   assert {:ok, _} = CtrlMoboSlots.link(mobo_slots.slot_id, comp_id)
-  #   assert {:ok, _} = CtrlMoboSlots.link(mobo_slots.slot_id, comp_id)
-  # end
+  describe "link" do
+    test "connecting a component into slot", %{slot: slot} do
+      component = component_for(slot)
+      {:ok, slot} = MotherboardSlotController.link(slot.slot_id, component.component_id)
+      assert component.component_id === slot.link_component_id
+    end
+
+    test "failure when slot is already used", %{slot: slot} do
+      component = component_for(slot)
+      MotherboardSlotController.link(slot.slot_id, component.component_id)
+      assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
+    end
+
+    test "failure when component is already used", %{slot: slot, mobo: mobo} do
+      component = component_for(slot)
+
+      slot_params = %{
+        motherboard_id: mobo.motherboard_id,
+        link_component_type: mobo.component_spec.component_type,
+        slot_internal_id: Burette.Number.digits(8),
+        link_component_id: component.component_id
+      }
+
+      MotherboardSlotController.create(slot_params)
+
+      assert {:error, :component_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
+    end
+  end
 
   test "unlink is idempotent", %{slot: slot} do
     component = component_for(slot)
