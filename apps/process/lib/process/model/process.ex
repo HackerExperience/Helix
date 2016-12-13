@@ -27,9 +27,10 @@ defmodule Helix.Process.Model.Process do
 
   @opaque id :: String.t
 
-  @primary_key {:process_id, HELL.PK, autogenerate: false}
-
+  @primary_key false
   schema "processes" do
+    field :process_id, HELL.PK,
+      primary_key: true
     # The gateway that started the process
     field :gateway_id, :string
     field :target_server_id, :string
@@ -103,6 +104,68 @@ defmodule Helix.Process.Model.Process do
     |> cast_embed(:allocated)
   end
 
+  @spec complete?(t) :: boolean
+  def complete?(_p) do
+    # TODO
+    false
+  end
+
+  @spec handle_complete(t) :: t | nil
+  def handle_complete(p) do
+    # TODO
+    p
+  end
+
+  def allocate_minimum(process) do
+    # TODO
+    process
+  end
+
+  def allocate(process, _amount, _kind) do
+    # TODO
+    process
+  end
+
+  def deallocate(process, _kind) do
+    # TODO
+    process
+  end
+
+  def allocation_shares(_process) do
+    0
+  end
+
+  @spec pause(t | Ecto.Changeset.t) :: Ecto.Changeset.t
+  def pause(p = %__MODULE__{state: :paused}),
+    do: p
+  def pause(p) do
+    allocated = Resources.changeset(p.allocated, %{cpu: 0, dlk: 0, ulk: 0})
+
+    p
+    |> calculate_work(DateTime.utc_now())
+    |> update_changeset(%{allocated: allocated, state: :paused})
+  end
+
+  @spec resume(t | Ecto.Changeset.t) :: Ecto.Changeset.t
+  def resume(p = %__MODULE__{state: :paused}) do
+    p
+    |> Ecto.Changeset.change()
+    |> resume()
+  end
+
+  def resume(p = %__MODULE__{state: _}) do
+    p
+  end
+
+  def resume(p = %Ecto.Changeset{}) do
+    if :paused === Ecto.Changeset.get_field(p, :state) do
+      # FIXME: state can be "standby" on some cases
+      update_changeset(p, %{state: :running, updated_time: DateTime.utc_now()})
+    else
+      p
+    end
+  end
+
   @spec calculate_work(t | Ecto.Changeset.t, DateTime.t) :: Ecto.Changeset.t
   def calculate_work(process, time_now) do
     case process do
@@ -171,7 +234,8 @@ defmodule Helix.Process.Model.Process do
     |> Resources.sub(process.processed)
     |> Resources.div(process.allocated)
     |> Resources.to_list()
-    |> Enum.filter_map(fn {_, x} -> is_integer(x) and x > 0 end, &elem(&1, 1))
+    |> Keyword.values()
+    |> Enum.filter(&(is_integer(&1) and &1 > 0))
     |> Enum.reduce(nil, &min/2)
   end
 

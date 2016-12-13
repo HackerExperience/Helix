@@ -101,6 +101,19 @@ defmodule Helix.Process.Model.Process.Resources do
     |> :maps.to_list()
   end
 
+  @spec from_server_resources(term) :: {:ok, t}
+  def from_server_resources(_server_resources) do
+    r = %__MODULE__{}
+
+    {:ok, r}
+  end
+
+  @spec compare(t, t) :: :eq | :lt | :gt | :divergent
+  def compare(_a, _b) do
+    # FIXME: this interface is pure garbage
+    :eq
+  end
+
   defp safe_div(x1, x2) when is_integer(x2) and x2 > 0,
     do: Kernel.div(x1, x2)
   defp safe_div(0, 0),
