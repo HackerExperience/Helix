@@ -29,17 +29,13 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
 
   setup context do
     slot_type = Enum.random(context.component_types).component_type
-
-    mobo_name = "Motherboard_" <> Burette.Number.digits(8)
-    mobo_type =
-      ComponentType.create_changeset(%{component_type: mobo_name})
-      |> Repo.insert!()
+    mobo_type = Enum.random(context.component_types).component_type
 
     slot_number = Burette.Number.digits(4)
     spec_params = %{
-      component_type: mobo_type.component_type,
+      component_type: mobo_type,
       spec: %{
-        spec_type: mobo_type.component_type,
+        spec_type: mobo_type,
         slots: %{
           slot_number => %{type: slot_type}
         }
@@ -49,7 +45,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
     {:ok, spec} = SpecController.create(spec_params)
 
     comp_params = %{
-      component_type: mobo_name,
+      component_type: mobo_type,
       spec_id: spec.spec_id}
     {:ok, comp} = ComponentController.create(comp_params)
 
@@ -60,7 +56,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
       MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
       |> List.first()
 
-    {:ok, slot: slot, mobo: mobo, comp: comp}
+    {:ok, slot: slot, mobo: mobo}
   end
 
   defp component_for(slot) do

@@ -2,7 +2,6 @@ defmodule HELM.Hardware.Controller.Motherboard do
 
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.Motherboard, as: MdlMobo
-  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
   alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlot
 
   import Ecto.Query, only: [where: 3]
@@ -17,9 +16,9 @@ defmodule HELM.Hardware.Controller.Motherboard do
         |> Repo.preload(:component_spec)
 
       motherboard.component_spec
-      |> MdlMoboSlot.parse_motherboard_spec()
+      |> MdlMobo.parse_motherboard_spec()
       |> Enum.map(&Map.put(&1, :motherboard_id, motherboard.motherboard_id))
-      |> Enum.each(&CtrlMoboSlot.create/1)
+      |> Enum.each(fn params -> {:ok, _} = CtrlMoboSlot.create(params) end)
 
       motherboard
     end
@@ -38,14 +37,14 @@ defmodule HELM.Hardware.Controller.Motherboard do
   @spec delete(HELL.PK.t) :: no_return
   def delete(motherboard_id) do
     {status, _} = Repo.transaction fn ->
-        CtrlMoboSlot.delete_all_from_motherboard(motherboard_id)
+      CtrlMoboSlot.delete_all_from_motherboard(motherboard_id)
 
-        MdlMobo
-        |> where([m], m.motherboard_id == ^motherboard_id)
-        |> Repo.delete_all()
+      MdlMobo
+      |> where([m], m.motherboard_id == ^motherboard_id)
+      |> Repo.delete_all()
 
-        :ok
-      end
+      :ok
+    end
     status
   end
 end

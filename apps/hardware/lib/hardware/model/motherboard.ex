@@ -42,4 +42,18 @@ defmodule HELM.Hardware.Model.Motherboard do
     |> validate_required(:motherboard_id)
     |> unique_constraint(:motherboard_id)
   end
+
+  @spec parse_motherboard_spec(%{String.t => any}) ::
+  [%{
+      slot_internal_id: non_neg_integer,
+      link_component_type: String.t}]
+  def parse_motherboard_spec(component_spec) do
+    slots = component_spec.spec["slots"]
+    Enum.map(slots, fn {id, spec} ->
+      %{
+        slot_internal_id: id,
+        link_component_type: spec["type"]
+  }
+    end)
+  end
 end
