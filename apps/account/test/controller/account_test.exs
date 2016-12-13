@@ -84,39 +84,37 @@ defmodule HELM.Account.Controller.AccountTest do
   end
 
   describe "update/2" do
-    test "update account", %{payload: payload} do
-      password = HRand.string(min: 8, max: 16)
-      payload2 = %{
-        email: HRand.email() |> String.downcase(),
+    test "update account", %{account: account} do
+      password = Burette.Internet.password()
+      payload = %{
+        email: Burette.Internet.email() |> String.downcase(),
         password: password,
         password_confirmation: password,
         confirmed: true
       }
 
-      assert {:ok, account1} = CtrlAccount.create(payload)
-      assert {:ok, account2} = CtrlAccount.update(account1.account_id, payload2)
+      assert {:ok, account2} = CtrlAccount.update(account.account_id, payload)
 
-      assert payload2.email == account2.email
-      refute account1.password == account2.password
-      assert payload2.confirmed == account2.confirmed
+      assert payload.email == account2.email
+      refute account.password == account2.password
+      assert payload.confirmed == account2.confirmed
     end
 
-    test "email exists", %{payload: payload} do
-      password = HRand.string(min: 8, max: 16)
-      payload2 = %{
-        email: HRand.email(),
+    test "email exists", %{account: account} do
+      password = Burette.Internet.password()
+      payload = %{
+        email: Burette.Internet.email(),
         password: password,
-        password_confirmation: password,
-        confirmed: true
+        password_confirmation: password
       }
+      payload2 = Map.put(payload, :email, account.email)
 
-      assert {:ok, account1} = CtrlAccount.create(payload)
-      assert {:ok, _} = CtrlAccount.create(payload2)
-      assert {:error, _}    = CtrlAccount.update(account1.account_id, payload2)
+      assert {:ok, account2} = CtrlAccount.create(payload)
+      assert {:error, _} = CtrlAccount.update(account2.account_id, payload2)
     end
 
     test "account not found" do
-      assert {:error, :notfound} == CtrlAccount.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == CtrlAccount.update(HELL.TestHelper.Random.pk(), %{})
     end
   end
 
@@ -139,10 +137,6 @@ defmodule HELM.Account.Controller.AccountTest do
     test "fails when password doesn't match", %{account: account} do
       xs = CtrlAccount.login(account.email, "not_actually_the_correct_password")
       assert {:error, :notfound} === xs
-    end
-
-    test "user not found" do
-      assert {:error, :notfound} == CtrlAccount.login(";", "")
     end
   end
 end
