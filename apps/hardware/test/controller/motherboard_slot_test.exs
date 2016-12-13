@@ -105,8 +105,12 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
 
   test "delete is idempotent and removes every slot", %{slot: slot, mobo: mobo} do
     assert Repo.get_by(MotherboardSlot, slot_id: slot.slot_id)
+    refute [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
+
     MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
     MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
+
+    refute Repo.get_by(MotherboardSlot, slot_id: slot.slot_id)
     assert [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
   end
 
