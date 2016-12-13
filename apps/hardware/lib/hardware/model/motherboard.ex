@@ -53,7 +53,7 @@ defmodule HELM.Hardware.Model.Motherboard do
       %{
         slot_internal_id: id,
         link_component_type: spec["type"]
-  }
+      }
     end)
   end
 end

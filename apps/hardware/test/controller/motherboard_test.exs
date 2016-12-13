@@ -11,18 +11,40 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
   alias HELM.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
   setup_all do
-    mobo_type = component_type(Burette.Color.name())
-    slot_type = component_type(Burette.Color.name())
+    slot_type = "MotherboardSlot Type"
+    mobo_type = "Motherboard Type"
 
-    {:ok, mobo_type: mobo_type, slot_type: slot_type}
+    component_type(slot_type)
+    component_type(mobo_type)
+
+    slot_a = Burette.Number.digits(4)
+    slot_b = Burette.Number.digits(4)
+
+    spec_for_motherboard = %{
+      spec_type: mobo_type,
+      slots: %{
+        slot_a => %{type: slot_type},
+        slot_b => %{type: slot_type}
+      }
+    }
+
+    spec_params = %{
+      component_type: mobo_type,
+      spec: spec_for_motherboard
+    }
+
+    {:ok, spec} = ComponentSpecController.create(spec_params)
+
+    [
+      mobo_type: mobo_type,
+      slot_type: slot_type,
+      spec_id: spec.spec_id]
   end
 
-  setup %{mobo_type: mobo_type, slot_type: slot_type} do
-    mobo_spec = spec_for(mobo_type, slot_type: slot_type)
-
+  setup context do
     mobo_component_params = %{
-      component_type: mobo_type.component_type,
-      spec_id: mobo_spec.spec_id
+      component_type: context.mobo_type,
+      spec_id: context.spec_id
     }
 
     {:ok, mobo_component} = ComponentController.create(mobo_component_params)
@@ -32,6 +54,7 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
     }
 
     {:ok, motherboard} = MotherboardController.create(motherboard_params)
+
     {:ok, mobo: motherboard}
   end
 
@@ -39,32 +62,12 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
   defp component_type(name) do
     case Repo.get_by(ComponentType, component_type: name) do
       nil ->
-        ComponentType.create_changeset(%{component_type: name})
+        %{component_type: name}
+        |> ComponentType.create_changeset()
         |> Repo.insert!()
       component_type ->
         component_type
     end
-  end
-
-  defp spec_for(component_type, slot_type: slot_type) do
-    slot_a = Burette.Number.digits(4)
-    slot_b = Burette.Number.digits(4)
-
-    spec_for_motherboard = %{
-      spec_type: component_type.component_type,
-      slots: %{
-        slot_a => %{type: slot_type.component_type},
-        slot_b => %{type: slot_type.component_type}
-      }
-    }
-
-    spec_params = %{
-      component_type: component_type.component_type,
-      spec: spec_for_motherboard
-    }
-
-    {:ok, spec} = ComponentSpecController.create(spec_params)
-    spec
   end
 
   describe "find" do

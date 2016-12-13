@@ -6,7 +6,7 @@ defmodule HELM.Hardware.Controller.Motherboard do
 
   import Ecto.Query, only: [where: 3]
 
-  @spec create(MdlMobo.creation_params) :: {:ok, MdlMobo.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlMobo.creation_params) :: {:ok, MdlMobo.t} | no_return
   def create(params) do
     Repo.transaction fn ->
       motherboard =
