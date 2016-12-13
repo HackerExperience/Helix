@@ -11,8 +11,8 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
   alias HELM.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
   setup_all do
-    slot_type = "MotherboardSlot Type"
-    mobo_type = "Motherboard Type"
+    slot_type = Enum.random(["ram", "cpu", "hdd"])
+    mobo_type = "mobo"
 
     component_type(slot_type)
     component_type(mobo_type)
