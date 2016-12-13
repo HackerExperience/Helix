@@ -34,6 +34,17 @@ defmodule HELM.Account.Controller.Account do
     end
   end
 
+  @spec update(MdlAccount.id, MdlAccount.update_params) :: {:ok, MdlAccount}
+    | {:error, Ecto.Changeset.t}
+    | {:error, :notfound}
+  def update(account_id, params) do
+    with {:ok, account} <- find(account_id) do
+      account
+      |> MdlAccount.update_changeset(params)
+      |> Repo.update()
+    end
+  end
+
   @spec delete(MdlAccount.id) :: no_return
   def delete(account_id) do
     MdlAccount

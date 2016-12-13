@@ -16,7 +16,7 @@ defmodule HELM.NPC.Controller.NPCTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlNPC.find(IPv6.generate([]))
+      assert {:error, :notfound} == CtrlNPC.find(IPv6.generate([]))
     end
   end
 

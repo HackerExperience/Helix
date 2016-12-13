@@ -21,7 +21,7 @@ defmodule HELM.Software.Controller.File do
     end
   end
 
-  @spec update(HELL.PK.t, %{}) :: {:ok, MdlFile.t} | {:error, Ecto.Changeset.t} | {:error, :notfound}
+  @spec update(HELL.PK.t, MdlFile.update_params) :: {:ok, MdlFile.t} | {:error, :notfound | Ecto.Changeset.t}
   def update(file_id, params) do
     with {:ok, file} <- find(file_id) do
       file

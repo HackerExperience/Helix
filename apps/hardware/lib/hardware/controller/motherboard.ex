@@ -2,12 +2,26 @@ defmodule HELM.Hardware.Controller.Motherboard do
 
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.Motherboard, as: MdlMobo
+  alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlot
+
   import Ecto.Query, only: [where: 3]
 
-  @spec create() :: {:ok, MdlMobo.t} | {:error, Ecto.Changeset.t}
-  def create do
-    MdlMobo.create_changeset()
-    |> Repo.insert()
+  @spec create(MdlMobo.creation_params) :: {:ok, MdlMobo.t} | no_return
+  def create(params) do
+    Repo.transaction fn ->
+      motherboard =
+        params
+        |> MdlMobo.create_changeset()
+        |> Repo.insert!()
+        |> Repo.preload(:component_spec)
+
+      motherboard.component_spec
+      |> MdlMobo.parse_motherboard_spec()
+      |> Enum.map(&Map.put(&1, :motherboard_id, motherboard.motherboard_id))
+      |> Enum.each(fn params -> {:ok, _} = CtrlMoboSlot.create(params) end)
+
+      motherboard
+    end
   end
 
   @spec find(HELL.PK.t) :: {:ok, MdlMobo.t} | {:error, :notfound}
@@ -22,10 +36,15 @@ defmodule HELM.Hardware.Controller.Motherboard do
 
   @spec delete(HELL.PK.t) :: no_return
   def delete(motherboard_id) do
-    MdlMobo
-    |> where([m], m.motherboard_id == ^motherboard_id)
-    |> Repo.delete_all()
+    {status, _} = Repo.transaction fn ->
+      CtrlMoboSlot.delete_all_from_motherboard(motherboard_id)
 
-    :ok
+      MdlMobo
+      |> where([m], m.motherboard_id == ^motherboard_id)
+      |> Repo.delete_all()
+
+      :ok
+    end
+    status
   end
 end

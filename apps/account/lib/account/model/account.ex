@@ -50,7 +50,6 @@ defmodule HELM.Account.Model.Account do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> unique_constraint(:email, name: :unique_account_email)
     |> generic_validations()
     |> prepare_changes()
     |> put_primary_key()
@@ -78,6 +77,7 @@ defmodule HELM.Account.Model.Account do
     |> validate_required([:email, :password])
     |> validate_length(:password, min: 8)
     |> validate_confirmation(:password, required: true)
+    |> unique_constraint(:email, name: :unique_account_email)
     |> validate_change(:email, &validate_email/2)
   end
 

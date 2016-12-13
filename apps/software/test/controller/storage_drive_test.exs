@@ -29,7 +29,7 @@ defmodule HELM.Software.Controller.StorageDriveTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlStorageDrives.find(IPv6.generate([]), 0)
+      assert {:error, :notfound} == CtrlStorageDrives.find(IPv6.generate([]), 0)
     end
   end
 
@@ -39,6 +39,6 @@ defmodule HELM.Software.Controller.StorageDriveTest do
     assert :ok = CtrlStorageDrives.delete(drive.storage_id, drive.drive_id)
     assert :ok = CtrlStorageDrives.delete(drive.storage_id, drive.drive_id)
 
-    assert {:error, :notfound} = CtrlStorageDrives.find(drive.storage_id, drive.drive_id)
+    assert {:error, :notfound} == CtrlStorageDrives.find(drive.storage_id, drive.drive_id)
   end
 end

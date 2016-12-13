@@ -22,6 +22,15 @@ defmodule HELM.Server.Controller.Server do
     end
   end
 
+  @spec update(HELL.PK.t, MdlServer.update_params) :: {:ok, MdlServer.t} | {:error, :notfound | Ecto.Changeset.t}
+  def update(server_id, params) do
+    with {:ok, server} <- find(server_id) do
+      server
+      |> MdlServer.update_changeset(params)
+      |> Repo.update()
+    end
+  end
+
   @spec delete(HELL.PK.t) :: no_return
   def delete(server_id) do
     MdlServer

@@ -3,6 +3,7 @@ defmodule HELM.Hardware.Model.Motherboard do
   use Ecto.Schema
 
   alias HELL.PK
+  alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
   alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
   import Ecto.Changeset
 
@@ -13,10 +14,19 @@ defmodule HELM.Hardware.Model.Motherboard do
     updated_at: Ecto.DateTime.t
   }
 
+  @type creation_params :: %{motherboard_id: PK.t}
+
+  @creation_fields ~w/motherboard_id/a
+
   @primary_key false
   schema "motherboards" do
-    field :motherboard_id, EctoNetwork.INET,
+    belongs_to :component, MdlComp,
+      foreign_key: :motherboard_id,
+      references: :component_id,
+      type: EctoNetwork.INET,
       primary_key: true
+
+    has_one :component_spec, through: [:component, :component_spec]
 
     has_many :slots, MdlMoboSlot,
       foreign_key: :motherboard_id,
@@ -25,18 +35,25 @@ defmodule HELM.Hardware.Model.Motherboard do
     timestamps
   end
 
-  @spec create_changeset() :: Ecto.Changeset.t
-  def create_changeset do
+  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  def create_changeset(params) do
     %__MODULE__{}
-    |> cast(%{}, [])
-    |> put_primary_key()
+    |> cast(params, @creation_fields)
+    |> validate_required(:motherboard_id)
+    |> unique_constraint(:motherboard_id)
   end
 
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    ip = PK.generate([0x0003, 0x0003, 0x0000])
-
-    changeset
-    |> cast(%{motherboard_id: ip}, [:motherboard_id])
+  @spec parse_motherboard_spec(%{String.t => any}) ::
+  [%{
+      slot_internal_id: non_neg_integer,
+      link_component_type: String.t}]
+  def parse_motherboard_spec(component_spec) do
+    slots = component_spec.spec["slots"]
+    Enum.map(slots, fn {id, spec} ->
+      %{
+        slot_internal_id: id,
+        link_component_type: spec["type"]
+      }
+    end)
   end
 end

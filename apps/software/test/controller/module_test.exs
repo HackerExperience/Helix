@@ -2,7 +2,7 @@ defmodule HELM.Software.Controller.ModuleTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
   alias HELM.Software.Repo
   alias HELM.Software.Model.FileType
@@ -47,16 +47,30 @@ defmodule HELM.Software.Controller.ModuleTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} = CtrlModule.find(IPv6.generate([]), IPv6.generate([]))
+      assert {:error, :notfound} == CtrlModule.find(PK.generate([]), PK.generate([]))
+    end
+  end
+
+  describe "update/3" do
+    test "update module version", %{payload: payload} do
+      assert {:ok, module} = CtrlModule.create(payload)
+
+      payload2 = %{module_version: 2}
+      assert {:ok, module} = CtrlModule.update(module.file_id, module.module_role_id, payload2)
+      assert payload2.module_version == module.module_version
+    end
+
+    test "module not found" do
+      assert {:error, :notfound} == CtrlModule.update(PK.generate([]), PK.generate([]), %{})
     end
   end
 
   test "delete/2 idempotency", %{payload: payload} do
-    assert {:ok, module} = CtrlModule.create(payload)
+    {:ok, module} = CtrlModule.create(payload)
 
-    assert :ok = CtrlModule.delete(module.file_id, module.module_role_id)
-    assert :ok = CtrlModule.delete(module.file_id, module.module_role_id)
+    :ok = CtrlModule.delete(module.file_id, module.module_role_id)
+    :ok = CtrlModule.delete(module.file_id, module.module_role_id)
 
-    assert {:error, :notfound} = CtrlModule.find(module.file_id, module.module_role_id)
+    assert {:error, :notfound} == CtrlModule.find(module.file_id, module.module_role_id)
   end
 end

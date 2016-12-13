@@ -83,6 +83,41 @@ defmodule HELM.Account.Controller.AccountTest do
     refute Repo.get_by(Account, account_id: account.account_id)
   end
 
+  describe "update/2" do
+    test "update account", %{account: account} do
+      password = Burette.Internet.password()
+      payload = %{
+        email: Burette.Internet.email() |> String.downcase(),
+        password: password,
+        password_confirmation: password,
+        confirmed: true
+      }
+
+      assert {:ok, account2} = CtrlAccount.update(account.account_id, payload)
+
+      assert payload.email == account2.email
+      refute account.password == account2.password
+      assert payload.confirmed == account2.confirmed
+    end
+
+    test "email exists", %{account: account} do
+      password = Burette.Internet.password()
+      payload = %{
+        email: Burette.Internet.email(),
+        password: password,
+        password_confirmation: password
+      }
+      payload2 = Map.put(payload, :email, account.email)
+
+      assert {:ok, account2} = CtrlAccount.create(payload)
+      assert {:error, _} = CtrlAccount.update(account2.account_id, payload2)
+    end
+
+    test "account not found" do
+      assert {:error, :notfound} == CtrlAccount.update(HELL.TestHelper.Random.pk(), %{})
+    end
+  end
+
   describe "login/2" do
     test "succeeds with correct email/password", %{account: account} do
       pass = "!!!foobar1234"

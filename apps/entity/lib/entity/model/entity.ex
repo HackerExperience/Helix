@@ -21,7 +21,6 @@ defmodule HELM.Entity.Model.Entity do
   @type creation_params :: %{
     entity_type: MdlEntityType.name,
     reference_id: String.t}
-  @type update_params :: %{optional(:reference_id) => String.t}
 
   @creation_fields ~w/entity_type reference_id/a
 
@@ -29,7 +28,6 @@ defmodule HELM.Entity.Model.Entity do
   schema "entities" do
     field :entity_id, EctoNetwork.INET,
       primary_key: true
-
     field :reference_id, EctoNetwork.INET
 
     has_many :servers, MdlEntityServer,
@@ -47,6 +45,7 @@ defmodule HELM.Entity.Model.Entity do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
+    |> validate_required([:reference_id, :entity_type])
     |> unique_constraint(:reference_id)
     |> put_primary_key()
   end

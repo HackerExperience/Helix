@@ -38,10 +38,34 @@ defmodule HELM.Server.ControllerTest do
     end
   end
 
+  describe "update/2" do
+    test "change server location", %{payload: payload} do
+      assert {:ok, server} = CtrlServer.create(payload)
+
+      poi = IPv6.generate([])
+      payload2 = %{poi_id: poi}
+      assert {:ok, server} = CtrlServer.update(server.server_id, payload2)
+      assert poi == to_string(server.poi_id)
+    end
+
+    test "change motherboard id", %{payload: payload} do
+      assert {:ok, server} = CtrlServer.create(payload)
+
+      mobo = IPv6.generate([])
+      payload2 = %{motherboard_id: mobo}
+      assert {:ok, server} = CtrlServer.update(server.server_id, payload2)
+      assert mobo == to_string(server.motherboard_id)
+    end
+
+    test "server not found" do
+      assert {:error, :notfound} == CtrlServer.update(IPv6.generate([]), %{})
+    end
+  end
+
   test "delete/1 idempotency", %{payload: payload} do
     {:ok, serv} = CtrlServer.create(payload)
     assert :ok == CtrlServer.delete(serv.server_id)
     assert :ok == CtrlServer.delete(serv.server_id)
-    assert {:error, :notfound} = CtrlServer.find(serv.server_id)
+    assert {:error, :notfound} == CtrlServer.find(serv.server_id)
   end
 end

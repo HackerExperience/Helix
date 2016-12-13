@@ -22,8 +22,10 @@ defmodule HELM.Software.Model.Module do
     module_role_id: PK.t,
     module_version: non_neg_integer
   }
+  @type update_params :: %{module_version: non_neg_integer}
 
   @creation_fields ~w/file_id module_role_id module_version/a
+  @update_fields ~w/module_version/a
 
   @primary_key false
   schema "modules" do
@@ -48,6 +50,19 @@ defmodule HELM.Software.Model.Module do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required([:file_id, :module_role_id, :module_version])
+    |> generic_validations()
+  end
+
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  def update_changeset(schema, params) do
+    schema
+    |> cast(params, @update_fields)
+    |> generic_validations()
+  end
+
+  @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
+  def generic_validations(changeset) do
+    changeset
     |> validate_number(:module_version, greater_than: 0)
   end
 end

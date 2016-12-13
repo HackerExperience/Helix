@@ -22,6 +22,10 @@ defmodule HELM.Server.Model.Server do
     optional(:motherboard_id) => PK.t,
     optional(:poi_id) => PK.t
   }
+  @type update_params :: %{
+    optional(:poi_id) => PK.t | nil,
+    optional(:motherboard_id) => PK.t | nil
+  }
 
   @creation_fields ~w/server_type poi_id motherboard_id/a
   @update_fields ~w/poi_id motherboard_id/a
@@ -50,11 +54,7 @@ defmodule HELM.Server.Model.Server do
     |> put_primary_key()
   end
 
-  @spec update_changeset(
-    t | Ecto.Changeset.t,
-    %{
-      optional(:poi_id) => PK.t | nil,
-      optional(:motherboard_id) => PK.t | nil}) :: Ecto.Changeset.t
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
