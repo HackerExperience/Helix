@@ -19,6 +19,7 @@ defmodule HELM.Account.Model.Account do
   }
 
   @type creation_params :: %{
+    account_id: PK.t,
     email: email,
     password: password,
     password_confirmation: password}
@@ -27,7 +28,7 @@ defmodule HELM.Account.Model.Account do
     optional(:password) => password,
     optional(:confirmed) => boolean}
 
-  @creation_fields ~w/email password password_confirmation/a
+  @creation_fields ~w/account_id email password password_confirmation/a
   @update_fields ~w/email password confirmed/a
 
   @derive {Poison.Encoder, only: [:email, :account_id]}
@@ -52,7 +53,6 @@ defmodule HELM.Account.Model.Account do
     |> cast(params, @creation_fields)
     |> generic_validations()
     |> prepare_changes()
-    |> put_primary_key()
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
@@ -61,14 +61,6 @@ defmodule HELM.Account.Model.Account do
     |> cast(params, @update_fields)
     |> generic_validations()
     |> prepare_changes()
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    ip = PK.generate([0x0000, 0x0000, 0x0000])
-
-    changeset
-    |> cast(%{account_id: ip}, [:account_id])
   end
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
