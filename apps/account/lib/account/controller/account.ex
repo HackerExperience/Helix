@@ -5,7 +5,10 @@ defmodule HELM.Account.Controller.Account do
   alias HELM.Account.Model.Account, as: MdlAccount
   import Ecto.Query, only: [where: 3, select: 3]
 
+  @spec create(Ecto.Changeset.t) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
   @spec create(MdlAccount.creation_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
+  def create(changeset = %Ecto.Changeset{}),
+    do: Repo.insert(changeset)
   def create(params) do
     params
     |> MdlAccount.create_changeset()

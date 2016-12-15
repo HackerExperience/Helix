@@ -3,6 +3,7 @@ defmodule HELM.Account.App do
   use Application
 
   alias HELM.Account.Controller.AccountService
+  alias Helix.Account.Controller.EntityObserver
   alias HELM.Account.Repo
 
   def start(_type, _args) do
@@ -10,6 +11,7 @@ defmodule HELM.Account.App do
 
     children = [
       worker(AccountService, []),
+      worker(EntityObserver, []),
       worker(Repo, [])
     ]
 

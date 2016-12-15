@@ -55,7 +55,14 @@ defmodule HELM.Account.Model.Account do
     |> prepare_changes()
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  @spec put_primary_key(Ecto.Changeset.t, PK.t) :: Ecto.Changeset.t
+  def put_primary_key(changeset, account_id) do
+    changeset
+    |> cast(%{account_id: account_id}, [:account_id])
+    |> validate_required(:account_id)
+  end
+
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.f
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)

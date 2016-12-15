@@ -5,6 +5,7 @@ defmodule HELM.Account.Controller.AccountService do
   alias HELF.Broker
   alias HELF.Router
   alias HELM.Account.Controller.Account, as: AccountController
+  alias Helix.Account.Controller.EntityObserver
   alias HELM.Account.Controller.Session, as: SessionController
   alias HELM.Account.Model.Account, as: Account
 
@@ -28,9 +29,9 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @doc false
-  def handle_broker_call(_pid, "account:create", _params, _request) do
-    # FIXME: implement topic
-    {:reply, :unimplemented}
+  def handle_broker_call(pid, "account:create", params, request) do
+    response = GenServer.call(pid, {:account, :create, params, request})
+    {:reply, response}
   end
   def handle_broker_call(pid, "account:login", %{email: email, password: password}, _request) do
     response = GenServer.call(pid, {:account, :login, email, password})
@@ -43,7 +44,7 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @spec handle_call(
-    {:account, :create, Account.creation_params},
+    {:account, :create, Account.creation_params, HeBroker.Request.t},
     GenServer.from,
     state) :: {:reply, {:ok, Account.t} | {:error, Ecto.Changeset.t}, state}
   @spec handle_call(
@@ -51,13 +52,20 @@ defmodule HELM.Account.Controller.AccountService do
     GenServer.from,
     state) :: {:reply, {:ok, Account.id} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:account, :create, params}, _from, state) do
-    case AccountController.create(params) do
-      {:ok, account} ->
-        Broker.cast("event:account:created", account.account_id)
-        {:reply, {:ok, account}, state}
+  def handle_call({:account, :create, params, request}, _from, state) do
+    with \
+      changeset = %Ecto.Changeset{valid?: true} <- Account.create_changeset(params),
+      {:ok, entity_id} <- EntityObserver.observe(request),
+      changeset = %Ecto.Changeset{valid?: true} <- Account.put_primary_key(changeset, entity_id),
+      {:ok, account} <- AccountController.create(changeset)
+    do
+      Broker.cast("event:account:created", account.account_id, request: request)
+      {:reply, {:ok, account}, state}
+    else
+      {:error, error} ->
+        {:reply, {:error, error}, state}
       error ->
-        {:reply, error, state}
+        {:error, {:error, error}, state}
     end
   end
   def handle_call({:account, :login, email, password}, _from, state) do

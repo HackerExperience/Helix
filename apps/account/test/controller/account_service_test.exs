@@ -16,9 +16,10 @@ defmodule HELM.Account.Controller.AccountServiceTest do
     %{email: email, password_confirmation: password, password: password}
   end
 
-  @tag :pending
-  test "create account", %{params: params} do
-    {:ok, account} = Broker.call("account:create", params)
-    assert params.email === account.email
+  describe "account creation" do
+    test "succeeds with proper data", %{params: params} do
+      {_, {:ok, account}} = Broker.call("account:create", params)
+      assert params.email === account.email
+    end
   end
 end
