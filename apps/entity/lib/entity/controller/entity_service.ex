@@ -15,13 +15,19 @@ defmodule HELM.Controller.EntityService do
   @spec init(any) :: {:ok, state}
   @doc false
   def init(_args) do
-    Broker.subscribe("entity:create", cast: &handle_broker_call/4)
+    Broker.subscribe("entity:create", call: &handle_broker_call/4)
+    Broker.subscribe("entity:create", cast: &handle_broker_cast/4)
     Broker.subscribe("entity:find", call: &handle_broker_call/4)
     {:ok, nil}
   end
 
   @doc false
   def handle_broker_call(pid, "entity:create", :account, req) do
+    GenServer.call(pid, {:entity, :create, :account, req})
+  end
+
+  @doc false
+  def handle_broker_cast(pid, "entity:create", :account, req) do
     GenServer.call(pid, {:entity, :create, :account, req})
   end
 
