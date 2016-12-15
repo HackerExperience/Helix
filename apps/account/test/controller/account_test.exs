@@ -105,16 +105,11 @@ defmodule HELM.Account.Controller.AccountTest do
     end
 
     test "email exists", %{account: account} do
-      password = Burette.Internet.password()
-      payload = %{
-        email: Burette.Internet.email(),
-        password: password,
-        password_confirmation: password
-      }
-      payload2 = Map.put(payload, :email, account.email)
+      params = payload()
+      params2 = Map.put(params, :email, account.email)
 
-      assert {:ok, account2} = CtrlAccount.create(payload)
-      assert {:error, _} = CtrlAccount.update(account2.account_id, payload2)
+      assert {:ok, account2} = CtrlAccount.create(params)
+      assert {:error, _} = CtrlAccount.update(account2.account_id, params2)
     end
 
     test "account not found" do

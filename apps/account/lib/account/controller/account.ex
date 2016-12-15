@@ -9,9 +9,11 @@ defmodule HELM.Account.Controller.Account do
   @spec create(MdlAccount.creation_params) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}
   def create(changeset = %Ecto.Changeset{}),
     do: Repo.insert(changeset)
+
   def create(params) do
     params
     |> MdlAccount.create_changeset()
+    |> MdlAccount.put_primary_key(params)
     |> Repo.insert()
   end
 

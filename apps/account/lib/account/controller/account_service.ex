@@ -47,9 +47,9 @@ defmodule HELM.Account.Controller.AccountService do
   @doc false
   def handle_call({:account, :create, params, request}, _from, state) do
     with \
-      changeset = %Ecto.Changeset{valid?: true} <- Account.create_changeset(params),
+      changeset = %{valid?: true} <- Account.create_changeset(params),
       {_, {:ok, entity}} <- Broker.call("entity:create", "account", request: request),
-      changeset = %Ecto.Changeset{valid?: true} <- Account.put_primary_key(changeset, entity.entity_id),
+      changeset = %{valid?: true} <- Account.put_primary_key(changeset, %{account_id: entity.entity_id}),
       {:ok, account} <- AccountController.create(changeset)
     do
       Broker.cast("event:account:created", account.account_id, request: request)
