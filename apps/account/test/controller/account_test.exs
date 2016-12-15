@@ -6,6 +6,7 @@ defmodule HELM.Account.Controller.AccountTest do
   alias HELM.Account.Model.Account
   alias HELM.Account.Repo
   alias HELM.Account.Controller.Account, as: CtrlAccount
+  alias HELM.Entity.Controller.Entity, as: EntityController
 
   setup do
     account =
@@ -19,9 +20,16 @@ defmodule HELM.Account.Controller.AccountTest do
   # Funnily enough, the very same params can be use to create an account through
   # the controller and the model
   defp payload do
+    {:ok, entity} = EntityController.create(%{entity_type: "account"})
     email = Burette.Internet.email()
     password = Burette.Internet.password()
-    %{email: email, password_confirmation: password, password: password}
+    account_id = entity.entity_id
+
+    %{
+      email: email,
+      password_confirmation: password,
+      password: password,
+      account_id: account_id}
   end
 
   describe "account creation" do
@@ -30,12 +38,8 @@ defmodule HELM.Account.Controller.AccountTest do
     end
 
     test "fails when email is already in use", %{account: account} do
-      payload = %{
-        email: account.email,
-        password: "toptoptop123",
-        password_confirmation: "toptoptop123"}
-
-      assert {:error, changeset} = CtrlAccount.create(payload)
+      params = Map.put(payload(), :email, account.email)
+      assert {:error, changeset} = CtrlAccount.create(params)
       assert :email in Keyword.keys(changeset.errors)
     end
 

@@ -59,4 +59,8 @@ defmodule HELM.Entity.Model.Entity do
   @spec generate_pk(String.t) :: PK.t
   defp generate_pk("account"),
     do: PK.generate([0x0000, 0x0000, 0x0000])
+  defp generate_pk("npc"),
+    do: PK.generate([0x0006, 0x0000, 0x0000])
+  defp generate_pk("clan"),
+    do: PK.generate([0x0007, 0x0000, 0x0000])
 end

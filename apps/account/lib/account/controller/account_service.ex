@@ -5,7 +5,6 @@ defmodule HELM.Account.Controller.AccountService do
   alias HELF.Broker
   alias HELF.Router
   alias HELM.Account.Controller.Account, as: AccountController
-  alias Helix.Account.Controller.EntityObserver
   alias HELM.Account.Controller.Session, as: SessionController
   alias HELM.Account.Model.Account, as: Account
 
@@ -23,7 +22,6 @@ defmodule HELM.Account.Controller.AccountService do
   def init(_args) do
     Broker.subscribe("account:create", call: &handle_broker_call/4)
     Broker.subscribe("account:login", call: &handle_broker_call/4)
-    Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
 
     {:ok, nil}
   end
@@ -38,11 +36,6 @@ defmodule HELM.Account.Controller.AccountService do
     {:reply, response}
   end
 
-  @doc false
-  def handle_broker_cast(_pid, "event:entity:created", _entity_id, _request) do
-    # FIXME: implement topic
-  end
-
   @spec handle_call(
     {:account, :create, Account.creation_params, HeBroker.Request.t},
     GenServer.from,
@@ -55,8 +48,8 @@ defmodule HELM.Account.Controller.AccountService do
   def handle_call({:account, :create, params, request}, _from, state) do
     with \
       changeset = %Ecto.Changeset{valid?: true} <- Account.create_changeset(params),
-      {:ok, entity_id} <- EntityObserver.observe(request),
-      changeset = %Ecto.Changeset{valid?: true} <- Account.put_primary_key(changeset, entity_id),
+      {_, {:ok, entity}} <- Broker.call("entity:create", "account", request: request),
+      changeset = %Ecto.Changeset{valid?: true} <- Account.put_primary_key(changeset, entity.entity_id),
       {:ok, account} <- AccountController.create(changeset)
     do
       Broker.cast("event:account:created", account.account_id, request: request)
@@ -65,7 +58,7 @@ defmodule HELM.Account.Controller.AccountService do
       {:error, error} ->
         {:reply, {:error, error}, state}
       error ->
-        {:error, {:error, error}, state}
+        {:reply, {:error, error}, state}
     end
   end
   def handle_call({:account, :login, email, password}, _from, state) do
