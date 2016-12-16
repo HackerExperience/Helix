@@ -4,7 +4,7 @@ defmodule HELM.Entity.Controller.Entity do
   alias HELM.Entity.Repo
   import Ecto.Query, only: [where: 3]
 
-  @spec create(MdlEntity.creation_params) :: {:ok, MdlEntity.t} | {:error, Ecto.Changeset.t}
+  @spec create(MdlEntity.creation_params) :: {:ok, MdlEntity.t} | no_return
   def create(params) do
     params
     |> MdlEntity.create_changeset()

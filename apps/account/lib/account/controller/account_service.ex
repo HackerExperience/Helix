@@ -4,19 +4,16 @@ defmodule HELM.Account.Controller.AccountService do
 
   alias HELF.Broker
   alias HELF.Router
-  alias HELM.Account.Model.Account, as: MdlAccount
-  alias HELM.Account.Controller.Account, as: CtrlAccount
-  alias HELM.Account.Controller.Session, as: CtrlSession
+  alias HELM.Account.Controller.Account, as: AccountController
+  alias HELM.Account.Controller.Session, as: SessionController
+  alias HELM.Account.Model.Account
 
   @typep state :: nil
-
-  # TODO: Refactor this and add meaning
 
   @spec start_link() :: GenServer.on_start
   def start_link do
     Router.register("account.create", "account:create")
     Router.register("account.login", "account:login")
-    Router.register("account.get", "account:get")
 
     GenServer.start_link(__MODULE__, [], name: :account_service)
   end
@@ -30,8 +27,8 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @doc false
-  def handle_broker_call(pid, "account:create", params, _request) do
-    response = GenServer.call(pid, {:account, :create, params})
+  def handle_broker_call(pid, "account:create", params, request) do
+    response = GenServer.call(pid, {:account, :create, params, request})
     {:reply, response}
   end
   def handle_broker_call(pid, "account:login", %{email: email, password: password}, _request) do
@@ -40,27 +37,34 @@ defmodule HELM.Account.Controller.AccountService do
   end
 
   @spec handle_call(
-    {:account, :create, MdlAccount.creation_params},
+    {:account, :create, Account.creation_params, HeBroker.Request.t},
     GenServer.from,
-    state) :: {:reply, {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}, state}
+    state) :: {:reply, {:ok, Account.t} | {:error, Ecto.Changeset.t}, state}
   @spec handle_call(
-    {:account, :login, MdlAccount.email, MdlAccount.password},
+    {:account, :login, Account.email, Account.password},
     GenServer.from,
-    state) :: {:reply, {:ok, MdlAccount.id} | {:error, :notfound}, state}
+    state) :: {:reply, {:ok, Account.id} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:account, :create, params}, _from, state) do
-    case CtrlAccount.create(params) do
-      {:ok, account} ->
-        Broker.cast("event:account:created", account.account_id)
-        {:reply, {:ok, account}, state}
+  def handle_call({:account, :create, params, request}, _from, state) do
+    with \
+      changeset = %{valid?: true} <- Account.create_changeset(params),
+      {_, {:ok, entity}} <- Broker.call("entity:create", "account", request: request),
+      changeset = %{valid?: true} <- Account.put_primary_key(changeset, entity.entity_id),
+      {:ok, account} <- AccountController.create(changeset)
+    do
+      Broker.cast("event:account:created", account.account_id, request: request)
+      {:reply, {:ok, account}, state}
+    else
+      {:error, error} ->
+        {:reply, {:error, error}, state}
       error ->
-        {:reply, error, state}
+        {:reply, {:error, error}, state}
     end
   end
   def handle_call({:account, :login, email, password}, _from, state) do
     with \
-      {:ok, account_id} <- CtrlAccount.login(email, password),
-      {:ok, token} <- CtrlSession.create(account_id)
+      {:ok, account_id} <- AccountController.login(email, password),
+      {:ok, token} <- SessionController.create(account_id)
     do
       {:reply, {:ok, token}, state}
     else
