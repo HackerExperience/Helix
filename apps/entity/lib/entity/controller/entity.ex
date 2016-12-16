@@ -2,6 +2,8 @@ defmodule HELM.Entity.Controller.Entity do
 
   alias HELM.Entity.Model.Entity, as: MdlEntity
   alias Helix.Entity.Model.EntityAccount
+  alias Helix.Entity.Model.EntityNPC
+  alias Helix.Entity.Model.EntityClan
   alias HELM.Entity.Repo
   import Ecto.Query, only: [where: 3]
 
@@ -43,11 +45,17 @@ defmodule HELM.Entity.Controller.Entity do
     entity
   end
   defp create_specialization(entity = %{entity_type: "npc"}) do
-    # FIXME
+    %{entity_id: entity.entity_id}
+    |> EntityNPC.create_changeset()
+    |> Repo.insert!()
+
     entity
   end
   defp create_specialization(entity = %{entity_type: "clan"}) do
-    # FIXME
+    %{entity_id: entity.entity_id}
+    |> EntityClan.create_changeset()
+    |> Repo.insert!()
+
     entity
   end
 end

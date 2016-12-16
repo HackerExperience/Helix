@@ -1,4 +1,4 @@
-defmodule Helix.Entity.Model.EntityAccount do
+defmodule Helix.Entity.Model.EntityNPC do
 
   use Ecto.Schema
 
@@ -15,7 +15,7 @@ defmodule Helix.Entity.Model.EntityAccount do
   @creation_fields ~w/entity_id/a
 
   @primary_key false
-  schema "entity_accounts" do
+  schema "entity_npcs" do
     belongs_to :entity, Entity,
       foreign_key: :entity_id,
       references: :entity_id,
