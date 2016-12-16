@@ -6,7 +6,7 @@ defmodule HELM.Account.Controller.AccountService do
   alias HELF.Router
   alias HELM.Account.Controller.Account, as: AccountController
   alias HELM.Account.Controller.Session, as: SessionController
-  alias HELM.Account.Model.Account, as: Account
+  alias HELM.Account.Model.Account
 
   @typep state :: nil
 
@@ -49,7 +49,7 @@ defmodule HELM.Account.Controller.AccountService do
     with \
       changeset = %{valid?: true} <- Account.create_changeset(params),
       {_, {:ok, entity}} <- Broker.call("entity:create", "account", request: request),
-      changeset = %{valid?: true} <- Account.put_primary_key(changeset, %{account_id: entity.entity_id}),
+      changeset = %{valid?: true} <- Account.put_primary_key(changeset, entity.entity_id),
       {:ok, account} <- AccountController.create(changeset)
     do
       Broker.cast("event:account:created", account.account_id, request: request)

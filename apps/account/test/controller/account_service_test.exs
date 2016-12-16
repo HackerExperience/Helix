@@ -7,13 +7,10 @@ defmodule HELM.Account.Controller.AccountServiceTest do
   @moduletag :umbrella
 
   setup do
-    {:ok, params: account_create_params()}
-  end
-
-  defp account_create_params do
     email = Burette.Internet.email()
     password = Burette.Internet.password()
-    %{email: email, password_confirmation: password, password: password}
+    params = %{email: email, password_confirmation: password, password: password}
+    {:ok, params: params}
   end
 
   describe "account creation" do

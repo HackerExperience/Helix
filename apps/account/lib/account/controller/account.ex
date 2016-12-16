@@ -13,7 +13,6 @@ defmodule HELM.Account.Controller.Account do
   def create(params) do
     params
     |> MdlAccount.create_changeset()
-    |> MdlAccount.put_primary_key(params)
     |> Repo.insert()
   end
 
