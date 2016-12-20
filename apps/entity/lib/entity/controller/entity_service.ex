@@ -40,10 +40,10 @@ defmodule HELM.Controller.EntityService do
     GenServer.from,
     state) :: {:reply, {:ok, Entity.t} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:entity, :create, params, _request}, _from, state) do
+  def handle_call({:entity, :create, params, request}, _from, state) do
     case EntityController.create(params) do
       {:ok, entity} ->
-        #Broker.cast("event:entity:created", entity, request: request)
+        Broker.cast("event:entity:created", entity, request: request)
         {:reply, {:ok, entity}, state}
       error ->
         {:reply, error, state}
