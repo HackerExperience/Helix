@@ -22,8 +22,9 @@ defmodule HELM.Controller.EntityService do
   end
 
   @doc false
-  def handle_broker_call(pid, "entity:find", entity_id, req) do
-    GenServer.cast(pid, {:entity, :find, entity_id, req})
+  def handle_broker_call(pid, "entity:find", entity_id, _req) do
+    response = GenServer.call(pid, {:entity, :find, entity_id})
+    {:reply, response}
   end
   def handle_broker_call(pid, "entity:create", entity_type, req) do
     params = %{entity_type: entity_type}
