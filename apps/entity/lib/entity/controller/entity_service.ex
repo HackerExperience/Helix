@@ -2,9 +2,11 @@ defmodule HELM.Controller.EntityService do
 
   use GenServer
 
+  alias HELL.PK
   alias HELF.Broker
   alias HELM.Entity.Model.Entity, as: Entity
   alias HELM.Entity.Controller.Entity, as: EntityController
+  alias HELM.Entity.Controller.EntityServer, as: EntityServerController
 
   @typep state :: nil
 
@@ -18,6 +20,7 @@ defmodule HELM.Controller.EntityService do
   def init(_args) do
     Broker.subscribe("entity:create", call: &handle_broker_call/4)
     Broker.subscribe("entity:find", call: &handle_broker_call/4)
+    Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
     {:ok, nil}
   end
 
@@ -32,6 +35,11 @@ defmodule HELM.Controller.EntityService do
     {:reply, response}
   end
 
+  @doc false
+  def handle_broker_cast(pid, "event:server:created", {server_id, entity_id}, _req) do
+    GenServer.cast(pid, {:server, :created, server_id, entity_id})
+  end
+
   @spec handle_call(
     {:entity, :create, Entity.creation_params, HeBroker.Request.t},
     GenServer.from,
@@ -44,7 +52,7 @@ defmodule HELM.Controller.EntityService do
   def handle_call({:entity, :create, params, request}, _from, state) do
     case EntityController.create(params) do
       {:ok, entity} ->
-        Broker.cast("event:entity:created", entity, request: request)
+        Broker.cast("event:entity:created", entity.entity_id, request: request)
         {:reply, {:ok, entity}, state}
       error ->
         {:reply, error, state}
@@ -53,5 +61,14 @@ defmodule HELM.Controller.EntityService do
   def handle_call({:entity, :find, id}, _from, state) do
     response = EntityController.find(id)
     {:reply, response, state}
+  end
+
+  @spec handle_cast(
+    {:server, :created, {PK.t, PK.t}, HeBroker.Request.t},
+    state) :: {:noreply, state}
+  def handle_cast({:server, :created, server_id, entity_id}, state) do
+    params = %{server_id: server_id, entity_id: entity_id}
+    EntityServerController.create(params)
+    {:noreply, state}
   end
 end

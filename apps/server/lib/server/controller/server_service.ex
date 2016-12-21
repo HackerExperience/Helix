@@ -3,6 +3,7 @@ defmodule HELM.Server.Controller.ServerService do
   use GenServer
 
   alias HELF.Broker
+  alias HELL.PK
   alias HELM.Server.Model.Server, as: ServerModel
   alias HELM.Server.Controller.Server, as: ServerController
   alias HELM.Server.Controller.Server, as: CtrlServers
@@ -22,11 +23,12 @@ defmodule HELM.Server.Controller.ServerService do
 
     Broker.subscribe("server:attach", call: &handle_broker_call/4)
     Broker.subscribe("server:detach", call: &handle_broker_call/4)
+    Broker.subscribe("server:find", call: &handle_broker_call/4)
 
     {:ok, nil}
   end
 
-  @spec handle_broker_cast(pid, String.t, term, term) :: no_return
+  @spec handle_broker_cast(pid, PK.t, term, term) :: no_return
   @doc false
   def handle_broker_cast(pid, "event:entity:created", entity_id, request) do
     params = %{
@@ -50,6 +52,10 @@ defmodule HELM.Server.Controller.ServerService do
     response = GenServer.call(pid, {:server, :detach, id})
     {:reply, response}
   end
+  def handle_broker_call(pid, "server:find", id, _request) do
+    response = GenServer.call(pid, {:server, :find, id})
+    {:reply, response}
+  end
 
   @spec handle_call(
     {:server, :create, ServerModel.creation_params, HeBroker.Request.t},
@@ -68,7 +74,7 @@ defmodule HELM.Server.Controller.ServerService do
   def handle_call({:server, :create, params, request}, _from, state) do
     case ServerController.create(params) do
       {:ok, server} ->
-        Broker.cast("event:server:created", {server.server_id, server.server_type}, request: request)
+        Broker.cast("event:server:created", {server.server_id, params.entity_id}, request: request)
         {:reply, {:ok, server}, state}
       error ->
         {:reply, error, state}
@@ -81,5 +87,9 @@ defmodule HELM.Server.Controller.ServerService do
   def handle_call({:server, :detach, id}, _from, state) do
     {status, _} = CtrlServers.detach(id)
     {:reply, status, state}
+  end
+  def handle_call({:server, :find, id}, _from, state) do
+    reply = CtrlServers.find(id)
+    {:reply, reply, state}
   end
 end
