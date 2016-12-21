@@ -18,9 +18,6 @@ defmodule HELM.Entity.Controller.EntityServiceTest do
       {_, {:ok, account}} = Broker.call("account:create", params)
       assert params.email === account.email
 
-      # FIXME
-      :timer.sleep(100)
-
       {_, {:ok, entity}} = Broker.call("entity:find", account.account_id)
       assert "account" === entity.entity_type
     end
