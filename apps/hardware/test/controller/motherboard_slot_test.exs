@@ -35,6 +35,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
       component_type: mobo_type,
       spec: %{
         spec_type: mobo_type,
+        spec_code: Random.string(min: 20, max: 20),
         slots: %{
           slot_number => %{type: slot_type}
         }
@@ -53,7 +54,7 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
   setup context do
     comp_params = %{
       component_type: context.mobo_type,
-      spec_id: context.spec.spec_id}
+      spec_code: context.spec.spec_code}
     {:ok, comp} = ComponentController.create(comp_params)
 
     mobo_params = %{motherboard_id: comp.component_id}
@@ -80,13 +81,13 @@ defmodule HELM.Hardware.Controller.MotherboardSlotTest do
   defp component_for(slot) do
     p = %{
       component_type: slot.link_component_type,
-      spec: %{}
+      spec: %{spec_code: Random.string(min: 20, max: 20)}
     }
     {:ok, comp_spec} = SpecController.create(p)
 
     p = %{
       component_type: slot.link_component_type,
-      spec_id: comp_spec.spec_id
+      spec_code: comp_spec.spec_code
     }
     {:ok, comp} = ComponentController.create(p)
 

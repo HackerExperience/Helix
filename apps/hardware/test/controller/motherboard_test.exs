@@ -2,6 +2,7 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Random
   alias HELM.Hardware.Repo
   alias HELM.Hardware.Model.ComponentType
   alias HELM.Hardware.Model.Motherboard
@@ -21,6 +22,7 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
     slot_b = Burette.Number.digits(4)
 
     spec_for_motherboard = %{
+      spec_code: Random.string(min: 20, max: 20),
       spec_type: mobo_type,
       slots: %{
         slot_a => %{type: slot_type},
@@ -38,13 +40,13 @@ defmodule HELM.Hardware.Controller.MotherboardTest do
     [
       mobo_type: mobo_type,
       slot_type: slot_type,
-      spec_id: spec.spec_id]
+      spec_code: spec.spec_code]
   end
 
   setup context do
     mobo_component_params = %{
       component_type: context.mobo_type,
-      spec_id: context.spec_id
+      spec_code: context.spec_code
     }
 
     {:ok, mobo_component} = ComponentController.create(mobo_component_params)

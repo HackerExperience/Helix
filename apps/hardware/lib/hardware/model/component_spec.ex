@@ -2,12 +2,11 @@ defmodule HELM.Hardware.Model.ComponentSpec do
 
   use Ecto.Schema
 
-  alias HELL.PK
   alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    spec_id: PK.t,
+    spec_code: String.t,
     component_type: String.t,
     spec: %{},
     inserted_at: Ecto.DateTime.t,
@@ -24,7 +23,7 @@ defmodule HELM.Hardware.Model.ComponentSpec do
 
   @primary_key false
   schema "component_specs" do
-    field :spec_id, EctoNetwork.INET,
+    field :spec_code, :string,
       primary_key: true
 
     field :component_type, :string
@@ -45,14 +44,17 @@ defmodule HELM.Hardware.Model.ComponentSpec do
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
-    |> validate_required(:spec)
+    |> validate_required([:spec, :spec_code])
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = PK.generate([0x0003, 0x0000, 0x0000])
+    spec_code =
+      changeset
+      |> get_field(:spec)
+      |> Map.fetch!(:spec_code)
 
     changeset
-    |> cast(%{spec_id: ip}, [:spec_id])
+    |> cast(%{spec_code: spec_code}, [:spec_code])
   end
 end

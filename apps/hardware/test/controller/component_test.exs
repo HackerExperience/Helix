@@ -22,7 +22,8 @@ defmodule HELM.Hardware.Controller.ComponentTest do
 
     p = %{
       component_type: type.component_type,
-      spec: %{}}
+      spec: %{
+        spec_code: Random.string(min: 20, max: 20)}}
 
     {:ok, comp_spec} = SpecController.create(p)
 
@@ -32,7 +33,7 @@ defmodule HELM.Hardware.Controller.ComponentTest do
   setup context do
     params = %{
       component_type: context.component_type.component_type,
-      spec_id: context.component_spec.spec_id
+      spec_code: context.component_spec.spec_code
     }
 
     {:ok, c} = ComponentController.create(params)
