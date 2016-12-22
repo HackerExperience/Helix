@@ -3,7 +3,6 @@ defmodule HELM.Server.Controller.ServerServiceTest do
   use ExUnit.Case, async: true
 
   alias HELF.Broker
-  alias HELM.Entity.Controller.EntityServer, as: EntityServerController
 
   @moduletag :umbrella
 
@@ -17,20 +16,15 @@ defmodule HELM.Server.Controller.ServerServiceTest do
   describe "server creation" do
     test "after account creation", %{params: params} do
       {_, {:ok, account}} = Broker.call("account:create", params)
-      assert params.email === account.email
 
-      # FIXME
-      :timer.sleep(100)
+      ref = make_ref()
+      Broker.subscribe("event:server:created", cast: fn pid, _, data, _ ->
+        send pid, {ref, data}
+      end)
 
-      entity_server =
-        account.account_id
-        |> EntityServerController.find()
-        |> List.first()
-
-      {_, {:ok, server}} = Broker.call("server:find", entity_server.server_id)
-
-      assert account.account_id === entity_server.entity_id
-      assert entity_server.server_id === server.server_id
+      assert_receive {^ref, {server_id, entity_id}}
+      assert account.account_id == entity_id
+      assert {_, {:ok, _}} = Broker.call("server:query", server_id)
     end
   end
 end

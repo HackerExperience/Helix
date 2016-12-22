@@ -16,10 +16,9 @@ defmodule HELM.Entity.Controller.EntityServiceTest do
   describe "entity creation" do
     test "after account creation", %{params: params} do
       {_, {:ok, account}} = Broker.call("account:create", params)
-      assert params.email === account.email
-
       {_, {:ok, entity}} = Broker.call("entity:find", account.account_id)
       assert "account" === entity.entity_type
+      assert account.account_id === entity.entity_id
     end
   end
 end

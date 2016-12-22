@@ -20,10 +20,9 @@ defmodule HELM.Server.Controller.ServerService do
   def init(_) do
     Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
     Broker.subscribe("server:create", call: &handle_broker_call/4)
-
     Broker.subscribe("server:attach", call: &handle_broker_call/4)
     Broker.subscribe("server:detach", call: &handle_broker_call/4)
-    Broker.subscribe("server:find", call: &handle_broker_call/4)
+    Broker.subscribe("server:query", call: &handle_broker_call/4)
 
     {:ok, nil}
   end
@@ -52,7 +51,7 @@ defmodule HELM.Server.Controller.ServerService do
     response = GenServer.call(pid, {:server, :detach, id})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:find", id, _request) do
+  def handle_broker_call(pid, "server:query", id, _request) do
     response = GenServer.call(pid, {:server, :find, id})
     {:reply, response}
   end

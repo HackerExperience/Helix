@@ -6,9 +6,9 @@ defmodule HELM.Entity.Controller.EntityServer do
   alias HELM.Entity.Model.EntityServer, as: MdlEntityServer
   import Ecto.Query, only: [where: 3]
 
-  @spec create(MdlEntityServer.creation_params) :: {:ok, MdlEntityServer.t} | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
+  @spec create(MdlEntity.id, MdlServer.id) :: {:ok, MdlEntityServer.t} | {:error, Ecto.Changeset.t}
+  def create(entity_id, server_id) do
+    %{entity_id: entity_id, server_id: server_id}
     |> MdlEntityServer.create_changeset()
     |> Repo.insert()
   end

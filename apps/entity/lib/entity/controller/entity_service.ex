@@ -67,8 +67,7 @@ defmodule HELM.Controller.EntityService do
     {:server, :created, {PK.t, PK.t}, HeBroker.Request.t},
     state) :: {:noreply, state}
   def handle_cast({:server, :created, server_id, entity_id}, state) do
-    params = %{server_id: server_id, entity_id: entity_id}
-    EntityServerController.create(params)
+    EntityServerController.create(entity_id, server_id)
     {:noreply, state}
   end
 end
