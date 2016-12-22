@@ -22,7 +22,7 @@ defmodule Helix.Server.Controller.ServerServiceTest do
         send pid, {ref, data}
       end)
 
-      assert_receive {^ref, {server_id, entity_id}}
+      assert_receive {^ref, {server_id, entity_id}}, 200
       assert account.account_id == entity_id
       assert {_, {:ok, _}} = Broker.call("server:query", server_id)
     end
