@@ -3,6 +3,9 @@ defmodule HELM.Server.Controller.ServerService do
   use GenServer
 
   alias HELF.Broker
+  alias HELL.PK
+  alias HELM.Server.Model.Server, as: ServerModel
+  alias HELM.Server.Controller.Server, as: ServerController
   alias HELM.Server.Controller.Server, as: CtrlServers
 
   @typep state :: nil
@@ -15,24 +18,31 @@ defmodule HELM.Server.Controller.ServerService do
   @spec init(any) :: {:ok, state}
   @doc false
   def init(_) do
-    # Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
-    # Broker.subscribe("server:create", call: &handle_broker_call/4)
+    Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("server:create", call: &handle_broker_call/4)
     Broker.subscribe("server:attach", call: &handle_broker_call/4)
     Broker.subscribe("server:detach", call: &handle_broker_call/4)
+    Broker.subscribe("server:query", call: &handle_broker_call/4)
 
     {:ok, nil}
   end
 
-  # @spec handle_broker_cast(pid, String.t, term, term) :: no_return
-  # @doc false
-  # def handle_broker_cast(pid, "event:entity:created", entity_id, _request),
-  #   do: GenServer.call(pid, {:server, :create, entity_id})
+  @spec handle_broker_cast(pid, PK.t, term, term) :: no_return
+  @doc false
+  def handle_broker_cast(pid, "event:entity:created", entity_id, request) do
+    params = %{
+      entity_id: entity_id,
+      server_type: "desktop"
+    }
+
+    GenServer.call(pid, {:server, :create, params, request})
+  end
 
   @doc false
-  # def handle_broker_call(pid, "server:create", entity_id, _request) do
-  #   response = GenServer.call(pid, {:server, :create, entity_id})
-  #   {:reply, response}
-  # end
+  def handle_broker_call(pid, "server:create", params, request) do
+    response = GenServer.call(pid, {:server, :create, params, request})
+    {:reply, response}
+  end
   def handle_broker_call(pid, "server:attach", {id, mobo}, _request) do
     response = GenServer.call(pid, {:server, :attach, id, mobo})
     {:reply, response}
@@ -41,12 +51,16 @@ defmodule HELM.Server.Controller.ServerService do
     response = GenServer.call(pid, {:server, :detach, id})
     {:reply, response}
   end
+  def handle_broker_call(pid, "server:query", id, _request) do
+    response = GenServer.call(pid, {:server, :find, id})
+    {:reply, response}
+  end
 
-  # @spec handle_call(
-  #   {:server, :create, HELL.PK.t},
-  #   GenServer.from,
-  #   state) :: {:reply, {:ok, server :: term}
-  #             | {:error, reason :: term}, state}
+  @spec handle_call(
+    {:server, :create, ServerModel.creation_params, HeBroker.Request.t},
+    GenServer.from,
+    state) :: {:reply, {:ok, server :: term}
+              | {:error, reason :: term}, state}
   @spec handle_call(
     {:server, :attach, server :: HELL.PK.t, motherboard :: HELL.PK.t},
     GenServer.from,
@@ -56,10 +70,15 @@ defmodule HELM.Server.Controller.ServerService do
     GenServer.from,
     state) :: {:reply, :ok | :error, state}
   @doc false
-  # def handle_call({:server, :create, entity_id}, _from, state) do
-  #   return = create_server(entity_id)
-  #   {:reply, return, state}
-  # end
+  def handle_call({:server, :create, params, request}, _from, state) do
+    case ServerController.create(params) do
+      {:ok, server} ->
+        Broker.cast("event:server:created", {server.server_id, params.entity_id}, request: request)
+        {:reply, {:ok, server}, state}
+      error ->
+        {:reply, error, state}
+    end
+  end
   def handle_call({:server, :attach, id, mobo}, _from, state) do
     {status, _} = CtrlServers.attach(id, mobo)
     {:reply, status, state}
@@ -68,13 +87,8 @@ defmodule HELM.Server.Controller.ServerService do
     {status, _} = CtrlServers.detach(id)
     {:reply, status, state}
   end
-
-  # @spec create_server(entity :: HELL.PK.t) :: {:ok, server :: HELL.PK.t}
-  #                                             | {:error, reason :: term}
-  # defp create_server(entity_id) do
-  #   with {:ok, server} <- CtrlServers.create(%{entity_id: entity_id}) do
-  #     Broker.cast("event:server:created", server.server_id)
-  #     {:ok, server.server_id}
-  #   end
-  # end
+  def handle_call({:server, :find, id}, _from, state) do
+    reply = CtrlServers.find(id)
+    {:reply, reply, state}
+  end
 end

@@ -8,7 +8,7 @@ defmodule HELM.Entity.Controller.EntityServer do
 
   @spec create(MdlEntity.id, MdlServer.id) :: {:ok, MdlEntityServer.t} | {:error, Ecto.Changeset.t}
   def create(entity_id, server_id) do
-    %{server_id: server_id, entity_id: entity_id}
+    %{entity_id: entity_id, server_id: server_id}
     |> MdlEntityServer.create_changeset()
     |> Repo.insert()
   end
