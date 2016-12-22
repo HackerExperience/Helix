@@ -11,9 +11,9 @@ defmodule HELM.Hardware.Controller.ComponentSpec do
     |> Repo.insert()
   end
 
-  @spec find(HELL.PK.t) :: {:ok, MdlCompSpec.t} | {:error, :notfound}
-  def find(spec_id) do
-    case Repo.get_by(MdlCompSpec, spec_id: spec_id) do
+  @spec find(String.t) :: {:ok, MdlCompSpec.t} | {:error, :notfound}
+  def find(spec_code) do
+    case Repo.get_by(MdlCompSpec, spec_code: spec_code) do
       nil ->
         {:error, :notfound}
       res ->
@@ -21,19 +21,19 @@ defmodule HELM.Hardware.Controller.ComponentSpec do
     end
   end
 
-  @spec update(HELL.PK.t, MdlCompSpec.update_params) :: {:ok, MdlCompSpec.t} | {:error, :notfound | Ecto.Changeset.t}
-  def update(spec_id, params) do
-    with {:ok, comp_spec} <- find(spec_id) do
+  @spec update(String.t, MdlCompSpec.update_params) :: {:ok, MdlCompSpec.t} | {:error, :notfound | Ecto.Changeset.t}
+  def update(spec_code, params) do
+    with {:ok, comp_spec} <- find(spec_code) do
       comp_spec
       |> MdlCompSpec.update_changeset(params)
       |> Repo.update()
     end
   end
 
-  @spec delete(HELL.PK.t) :: no_return
-  def delete(spec_id) do
+  @spec delete(String.t) :: no_return
+  def delete(spec_code) do
     MdlCompSpec
-    |> where([s], s.spec_id == ^spec_id)
+    |> where([s], s.spec_code == ^spec_code)
     |> Repo.delete_all()
 
     :ok

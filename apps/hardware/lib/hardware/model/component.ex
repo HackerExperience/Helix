@@ -11,15 +11,15 @@ defmodule HELM.Hardware.Model.Component do
     component_id: PK.t,
     component_type: String.t,
     component_spec: MdlCompSpec.t,
-    spec_id: PK.t,
+    spec_code: Strint.t,
     slot: MdlMoboSlot.t,
     inserted_at: Ecto.DateTime.t,
     updated_at: Ecto.DateTime.t
   }
 
-  @type creation_params :: %{component_type: String.t, spec_id: PK.t}
+  @type creation_params :: %{component_type: String.t, spec_code: String.t}
 
-  @creation_fields ~w/component_type spec_id/a
+  @creation_fields ~w/component_type spec_code/a
 
   @primary_key false
   schema "components" do
@@ -29,9 +29,9 @@ defmodule HELM.Hardware.Model.Component do
     field :component_type, :string
 
     belongs_to :component_spec, MdlCompSpec,
-      foreign_key: :spec_id,
-      references: :spec_id,
-      type: EctoNetwork.INET
+      foreign_key: :spec_code,
+      references: :spec_code,
+      type: :string
     has_one :slot, MdlMoboSlot,
       foreign_key: :link_component_id,
       references: :component_id
@@ -43,7 +43,7 @@ defmodule HELM.Hardware.Model.Component do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:component_type, :spec_id])
+    |> validate_required([:component_type, :spec_code])
     |> put_primary_key()
   end
 
