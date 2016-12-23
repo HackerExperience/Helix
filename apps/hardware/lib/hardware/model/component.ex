@@ -11,7 +11,7 @@ defmodule Helix.Hardware.Model.Component do
     component_id: PK.t,
     component_type: String.t,
     component_spec: MdlCompSpec.t,
-    spec_id: Strint.t,
+    spec_id: String.t,
     slot: MdlMoboSlot.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t

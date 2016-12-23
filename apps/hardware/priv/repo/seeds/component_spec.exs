@@ -18,9 +18,6 @@ Repo.transaction fn ->
           type: "hdd"
         },
         "3" => %{
-          type: "usb"
-        },
-        "4" => %{
           type: "nic"
         }
       }
@@ -51,14 +48,6 @@ Repo.transaction fn ->
     }
   }
 
-  usb_params = %{
-    component_type: "usb",
-    spec: %{
-      spec_code: "USB01",
-      spec_type: "usb"
-    }
-  }
-
   nic_params = %{
     component_type: "nic",
     spec: %{
@@ -72,7 +61,6 @@ Repo.transaction fn ->
     cpu_params,
     ram_params,
     hdd_params,
-    usb_params,
     nic_params
   ]
 

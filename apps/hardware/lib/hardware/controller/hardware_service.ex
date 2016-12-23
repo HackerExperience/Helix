@@ -115,7 +115,6 @@ defmodule Helix.Hardware.Controller.HardwareService do
           {"cpu", "CPU01"},
           {"ram", "RAM01"},
           {"hdd", "HDD01"},
-          {"usb", "USB01"},
           {"nic", "NIC01"}]
         |> Enum.map(fn {component_type, spec_code} ->
             create_component(component_type, spec_code, request)
