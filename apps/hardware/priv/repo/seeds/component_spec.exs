@@ -1,11 +1,11 @@
-alias HELM.Hardware.Repo
-alias HELM.Hardware.Controller.ComponentSpec, as: ComponentSpecController
-alias HELM.Hardware.Model.ComponentType
+alias Helix.Hardware.Repo
+alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
 
 Repo.transaction fn ->
   mobo_params = %{
     component_type: "mobo",
     spec: %{
+      spec_code: "MOBO01",
       spec_type: "mobo",
       slots: %{
         "0" => %{
@@ -30,6 +30,7 @@ Repo.transaction fn ->
   cpu_params = %{
     component_type: "cpu",
     spec: %{
+      spec_code: "CPU01",
       spec_type: "cpu",
     }
   }
@@ -37,6 +38,7 @@ Repo.transaction fn ->
   ram_params = %{
     component_type: "ram",
     spec: %{
+      spec_code: "RAM01",
       spec_type: "ram"
     }
   }
@@ -44,6 +46,7 @@ Repo.transaction fn ->
   hdd_params = %{
     component_type: "hdd",
     spec: %{
+      spec_code: "HDD01",
       spec_type: "hdd"
     }
   }
@@ -51,6 +54,7 @@ Repo.transaction fn ->
   usb_params = %{
     component_type: "usb",
     spec: %{
+      spec_code: "USB01",
       spec_type: "usb"
     }
   }
@@ -58,6 +62,7 @@ Repo.transaction fn ->
   nic_params = %{
     component_type: "nic",
     spec: %{
+      spec_code: "NIC01",
       spec_type: "nic"
     }
   }

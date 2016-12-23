@@ -35,7 +35,7 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   describe "find" do
     test "fetching component_spec by id", %{component_spec: cs} do
-      assert {:ok, _} = SpecController.find(cs.spec_code)
+      assert {:ok, _} = SpecController.find(cs.spec_id)
     end
 
     test "returns error when spec doesn't exists" do
@@ -46,7 +46,7 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
   describe "update" do
     test "overrides the spec", %{component_spec: cs} do
       update_params = %{spec: %{test: Burette.Color.name()}}
-      {:ok, spec} = SpecController.update(cs.spec_code, update_params)
+      {:ok, spec} = SpecController.update(cs.spec_id, update_params)
 
       assert update_params.spec === spec.spec
     end
@@ -57,10 +57,10 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
   end
 
   test "delete is idempotent", %{component_spec: cs} do
-    assert Repo.get_by(ComponentSpec, spec_code: cs.spec_code)
-    SpecController.delete(cs.spec_code)
-    SpecController.delete(cs.spec_code)
-    SpecController.delete(cs.spec_code)
-    refute Repo.get_by(ComponentSpec, spec_code: cs.spec_code)
+    assert Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
+    SpecController.delete(cs.spec_id)
+    SpecController.delete(cs.spec_id)
+    SpecController.delete(cs.spec_id)
+    refute Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
   end
 end

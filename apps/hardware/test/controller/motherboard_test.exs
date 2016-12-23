@@ -40,13 +40,13 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     [
       mobo_type: mobo_type,
       slot_type: slot_type,
-      spec_code: spec.spec_code]
+      spec_id: spec.spec_id]
   end
 
   setup context do
     mobo_component_params = %{
       component_type: context.mobo_type,
-      spec_code: context.spec_code
+      spec_id: context.spec_id
     }
 
     {:ok, mobo_component} = ComponentController.create(mobo_component_params)

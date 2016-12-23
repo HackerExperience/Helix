@@ -33,7 +33,7 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   setup context do
     params = %{
       component_type: context.component_type.component_type,
-      spec_code: context.component_spec.spec_code
+      spec_id: context.component_spec.spec_id
     }
 
     {:ok, c} = ComponentController.create(params)
