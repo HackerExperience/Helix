@@ -106,61 +106,49 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response, state}
   end
 
-  def handle_call({:setup, _server_id, _request}, _from, state) do
+  def handle_call({:setup, server_id, request}, _from, state) do
     response =
       Repo.transaction(fn ->
-        motherboard = motherboard_create("MOBO01")
+        motherboard = motherboard_create("MOBO01", request)
         slots = CtrlMoboSlots.find_by(motherboard_id: motherboard.motherboard_id)
-
-        cpu = cpu_create("CPU01")
-        ram = ram_create("RAM01")
-        hdd = hdd_create("HDD01")
-        nic = nic_create("NIC01")
-
-        link_all(slots, [cpu, ram, hdd, nic])
+        [
+          {"cpu", "CPU01"},
+          {"ram", "RAM01"},
+          {"hdd", "HDD01"},
+          {"usb", "USB01"},
+          {"nic", "NIC01"}]
+        |> Enum.map(fn {component_type, spec_code} ->
+            create_component(component_type, spec_code, request)
+          end)
+        |> link_all(slots)
         motherboard
       end)
 
     case response do
       {:ok, motherboard} ->
-        Broker.cast("event:motherboard:created", motherboard.motherboard_id)
+        Broker.cast("event:motherboard:setup", {motherboard.motherboard_id, server_id}, request: request)
         {:reply, {:ok, motherboard}, state}
       error ->
         {:reply, error, state}
     end
   end
 
-  @spec motherboard_create(PK.t) :: Motherboard.t
-  defp motherboard_create(spec_id) do
-    component = create_component("mobo", spec_id)
+  @spec motherboard_create(PK.t, HeBroker.Request.t) :: Motherboard.t
+  defp motherboard_create(spec_id, request) do
+    component = create_component("mobo", spec_id, request)
     params = %{motherboard_id: component.component_id}
 
     case CtrlMobos.create(params) do
       {:ok, motherboard} ->
+        Broker.cast("event:motherboard:created", motherboard.motherboard_id, request: request)
         motherboard
       {:error, error} ->
         Repo.rollback(error)
     end
   end
 
-  @spec cpu_create(String.T) :: Component.t
-  defp cpu_create(spec_id),
-    do: create_component("cpu", spec_id)
-
-  @spec ram_create(String.T) :: Component.t
-  defp ram_create(spec_id),
-    do: create_component("ram", spec_id)
-
-  @spec hdd_create(String.T) :: Component.t
-  defp hdd_create(spec_id),
-    do: create_component("hdd", spec_id)
-
-  @spec nic_create(String.T) :: Component.t
-  defp nic_create(spec_id),
-    do: create_component("nic", spec_id)
-
-  @spec create_component(String.t, String.t) :: Component.t
-  defp create_component(component_type, spec_id) do
+  @spec create_component(String.t, PK.t, HeBroker.Request.t) :: Component.t
+  defp create_component(component_type, spec_id, request) do
     params = %{
       component_type: component_type,
       spec_id: spec_id
@@ -168,14 +156,14 @@ defmodule Helix.Hardware.Controller.HardwareService do
 
     case CtrlComps.create(params) do
       {:ok, component} ->
-        Broker.cast("event:component:created", component.component_id)
+        Broker.cast("event:component:created", component.component_id, request: request)
         component
       {:error, error} ->
         Repo.rollback(error)
     end
   end
 
-  defp link_all(slot_list, components) do
+  defp link_all(components, slot_list) do
     # FIXME: refactor this method
     slots =
       slot_list
