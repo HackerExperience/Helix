@@ -3,7 +3,21 @@ defmodule Helix.Process.Model.ProcessTest do
   use ExUnit.Case
 
   alias Ecto.Changeset
+  alias HELL.TestHelper.Random
   alias Helix.Process.Model.Process
+
+  setup do
+    process =
+      %{
+        gateway_id: Random.pk(),
+        target_server_id: Random.pk(),
+        software: %{} # TODO
+      }
+      |> Process.create_changeset()
+      |> Changeset.apply_changes()
+
+    {:ok, process: process}
+  end
 
   defp error_fields(changeset) do
     changeset
@@ -105,6 +119,61 @@ defmodule Helix.Process.Model.ProcessTest do
       future = DateTime.from_unix!(1470000050)
 
       assert :eq === DateTime.compare(future, p2.estimated_time)
+    end
+  end
+
+  describe "allocation_shares" do
+    test "returns 0 when paused", %{process: process} do
+      process = process |> Process.pause() |> Changeset.apply_changes()
+
+      assert 0 === Process.allocation_shares(process)
+    end
+
+    test \
+      "returns the priority value when the process still requires resources",
+      %{process: process}
+    do
+      priority = 2
+      process =
+        process
+        |> Changeset.cast(%{priority: priority}, [:priority])
+        |> Changeset.put_embed(:objective, %{cpu: 1_000})
+        |> Changeset.apply_changes()
+
+      assert 2 === Process.allocation_shares(process)
+    end
+  end
+
+  describe "pause" do
+    test "pause changes the state of the process", %{process: process} do
+      process =
+        process
+        |> Process.update_changeset(%{state: :running})
+        |> Changeset.apply_changes()
+        |> Process.pause()
+        |> Changeset.apply_changes()
+
+      assert :paused === process.state
+    end
+
+    test "on pause allocates minimum", %{process: process} do
+      params = %{
+        objective: %{cpu: 1_000},
+        allocated: %{cpu: 100, ram: 200},
+        minimum: %{paused: %{ram: 155}}
+      }
+
+      process =
+        process
+        |> Changeset.cast(params, [:minimum])
+        |> Changeset.cast_embed(:objective)
+        |> Changeset.cast_embed(:allocated)
+        |> Changeset.apply_changes()
+        |> Process.pause()
+        |> Changeset.apply_changes()
+
+      assert 0 === process.allocated.cpu
+      assert 155 === process.allocated.ram
     end
   end
 end

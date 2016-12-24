@@ -10,6 +10,8 @@ defmodule Helix.Process.Model.Process.Limitations do
     ulk: non_neg_integer | nil
   }
 
+  @fields ~w/cpu ram dlk ulk/a
+
   embedded_schema do
     field :cpu, :integer
     field :ram, :integer
@@ -24,5 +26,11 @@ defmodule Helix.Process.Model.Process.Limitations do
     |> validate_number(:ram, greater_than_or_equal_to: 0)
     |> validate_number(:dlk, greater_than_or_equal_to: 0)
     |> validate_number(:ulk, greater_than_or_equal_to: 0)
+  end
+
+  def to_list(lim) do
+    lim
+    |> Map.take(@fields)
+    |> :maps.to_list()
   end
 end

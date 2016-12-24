@@ -50,7 +50,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     do: GenServer.call(pid, {:resume, process_id})
 
   @spec apply_update([Ecto.Changeset.t]) :: ProcessModel.t
-  @spec apply_update({:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}) :: ProcessModel.t
+  @spec apply_update(
+    {:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}) :: ProcessModel.t
   @docp """
   Asynchronously stores the changes from `changeset_list` into the database and
   immediately returns all the changesets applied as models
@@ -61,10 +62,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     {changeset_list, deleted_list} = case input do
       {:update_and_delete, changeset, deleted} ->
         {changeset, deleted}
-      [_|_] ->
-        {input, []}
-      [] ->
-        {[], []}
+      changeset_list when is_list(changeset_list) ->
+        {changeset_list, []}
     end
 
     spawn fn ->
@@ -84,27 +83,32 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   defp request_server_resources(server_id) do
     with \
       params = %{server_id: server_id},
-      {_, return = %{}} <- Broker.call("server:hardware:get_resources", params),
-      {:ok, res} <- Resources.from_server_resources(return)
+      {_, {:ok, return}} <- Broker.call("server:hardware:resources:get", params)
     do
-      {:ok, res}
+      Resources.from_server_resources(return)
     end
   end
 
   @spec request_server_processes(server_id) :: {:ok, [ProcessModel.t]} | {:error, reason :: term}
   @docp """
   Requests the list of in-game processes running on this server
+
+  Does so by querying the Server service, receiving the list of process id's
+  that the server has and then fetching them from database
   """
   defp request_server_processes(server_id) do
-    {_, process_list} = Broker.call("server:processes", %{server_id: server_id})
+    with \
+      params = %{server_id: server_id},
+      {_, {:ok, process_list}} <- Broker.call("server:processes:get", params)
+    do
+      processes =
+        ProcessModel
+        |> ProcessModel.from_list(process_list)
+        |> Repo.all()
+        |> Enum.map(&ProcessModel.estimate_conclusion/1)
 
-    processes =
-      ProcessModel
-      |> ProcessModel.from_list(process_list)
-      |> Repo.all()
-      |> Enum.map(&ProcessModel.estimate_conclusion/1)
-
-    {:ok, processes}
+      {:ok, processes}
+    end
   end
 
   @spec notify(atom, ProcessModel.t) :: no_return
@@ -131,6 +135,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
         server_id: server_id,
         timer: update_timer(processes, nil)
       }
+
+      # TODO: enqueue request to fetch the "minimum" of each process
 
       {:ok, state, @hibernate_after}
     else
@@ -173,7 +179,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     |> case do
       {:error, :insufficient_resources} ->
         {:reply, {:error, :insufficient_resources}, state, @hibernate_after}
-      changeset_list = [_|_] ->
+
+      changeset_list when is_list(changeset_list) ->
         processes = apply_update(changeset_list)
         timer = update_timer(processes, state.timer)
 
@@ -316,10 +323,10 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       processes
       |> Enum.map(&Resources.mul(share, &1.priority))
       |> Enum.zip(processes)
-      |> Enum.map(fn {a, p} -> ProcessModel.allocate(p, a, :dynamic) end)
+      |> Enum.map(fn {a, p} -> ProcessModel.allocate(p, a) end)
 
     filter = fn {p2, p1} ->
-      p2 !== p1 and ProcessModel.can_allocate?(p2, :dynamic)
+      p2 !== p1 and ProcessModel.can_allocate?(p2)
     end
 
     zipped = Enum.zip(allocated_processes, processes)

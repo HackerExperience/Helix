@@ -95,6 +95,20 @@ defmodule Helix.Process.Model.Process.Resources do
       ulk: res.ulk * val}
   end
 
+  @spec min(t | nil, t | nil) :: t | nil
+  def min(x = %__MODULE__{}, xs = %__MODULE__{}) do
+    %__MODULE__{x|
+      cpu: Kernel.min(x.cpu, xs.cpu),
+      ram: Kernel.min(x.ram, xs.ram),
+      dlk: Kernel.min(x.dlk, xs.dlk),
+      ulk: Kernel.min(x.ulk, xs.ulk)}
+  end
+
+  def min(nil, b),
+    do: b
+  def min(a, nil),
+    do: a
+
   def to_list(res) do
     res
     |> Map.take(@fields)
