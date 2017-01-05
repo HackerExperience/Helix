@@ -28,6 +28,11 @@ defmodule HELM.Process.Mixfile do
   defp elixirc_options(_),
     do: [warnings_as_errors: true]
 
+  defp compile_paths(:test),
+    do: ["lib", "test/test_helper"]
+  defp compile_paths(_),
+    do: ["lib"]
+
   defp deps do
     [
       {:helix_core, in_umbrella: true},

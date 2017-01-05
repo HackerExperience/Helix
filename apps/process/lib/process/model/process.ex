@@ -157,6 +157,7 @@ defmodule Helix.Process.Model.Process do
       cs
       |> get_field(:allocated)
       |> Resources.sum(amount)
+      |> Map.from_struct() # HACK: ecto cast doesn't accept structs
 
     allocated =
       cs
@@ -197,7 +198,7 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec resume(t | Ecto.Changeset.t) :: Ecto.Changeset.t
-  def resume(p = %Ecto.Changeset{}) do
+  def resume(p) do
     state = p |> change() |> get_field(:state)
 
     if :paused === state do
@@ -207,7 +208,7 @@ defmodule Helix.Process.Model.Process do
       |> allocate_minimum()
       |> estimate_conclusion()
     else
-      p
+      change(p)
     end
   end
 
@@ -226,6 +227,7 @@ defmodule Helix.Process.Model.Process do
     end
   end
 
+  # REVIEW: FIXME: Maybe return as a changeset because life is a disaster
   @spec estimate_conclusion(elem) :: elem when elem: t | Ecto.Changeset.t
   def estimate_conclusion(process) do
     struct = case process do
@@ -235,7 +237,7 @@ defmodule Helix.Process.Model.Process do
         apply_changes(process)
     end
 
-    conclusion =
+    conclusion = if struct.objective do
       struct.objective
       |> Resources.sub(struct.processed)
       |> Resources.div(struct.allocated)
@@ -251,6 +253,7 @@ defmodule Helix.Process.Model.Process do
           # completed
           nil
       end
+    end
 
     changeset = cast(process, %{estimated_time: conclusion}, [:estimated_time])
     case process do

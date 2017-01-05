@@ -5,6 +5,7 @@ defmodule Helix.Process.Model.ProcessTest do
   alias Ecto.Changeset
   alias HELL.TestHelper.Random
   alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Process.Resources
 
   setup do
     process =
@@ -38,9 +39,9 @@ defmodule Helix.Process.Model.ProcessTest do
       assert :software in error_fields(p)
     end
 
-    @tag :pending
     test "as long as the struct implements SoftwareType, everything will be alright" do
-      p = Process.create_changeset(%{software: %{}})
+      params = %{software: %Helix.Process.TestHelper.SoftwareTypeExample{}}
+      p = Process.create_changeset(params)
 
       refute :software in error_fields(p)
     end
@@ -174,6 +175,158 @@ defmodule Helix.Process.Model.ProcessTest do
 
       assert 0 === process.allocated.cpu
       assert 155 === process.allocated.ram
+    end
+  end
+
+  describe "completeness" do
+    test "is complete if state is :complete", %{process: process} do
+      process =
+        process
+        |> Process.update_changeset(%{state: :complete})
+        |> Changeset.apply_changes()
+
+      assert Process.complete?(process)
+    end
+
+    test "is complete if objective has been reached", %{process: process} do
+      params = %{
+        objective: %{cpu: 100, dlk: 20},
+        processed: %{cpu: 100, dlk: 20}
+      }
+
+      process =
+        process
+        |> Process.update_changeset(params)
+        |> Changeset.apply_changes()
+
+      assert Process.complete?(process)
+    end
+
+    test \
+      "is not complete if state is not complete and objective not reached",
+      %{process: process}
+    do
+      params = %{
+        state: :running,
+        processed: %{cpu: 10},
+        objective: %{cpu: 500}
+      }
+
+      process =
+        process
+        |> Process.update_changeset(params)
+        |> Changeset.apply_changes()
+
+      refute Process.complete?(process)
+    end
+  end
+
+  describe "minimum allocation" do
+    test \
+      "defaults to 0 when a value is not specified for the state",
+      %{process: process}
+    do
+      resources = %Resources{cpu: 100}
+
+      process =
+        process
+        |> Process.allocate(resources)
+        |> Process.update_changeset(%{minimum: %{}})
+        |> Changeset.apply_changes()
+
+      assert 100 === process.allocated.cpu
+
+      process =
+        process
+        |> Process.allocate_minimum()
+        |> Changeset.apply_changes()
+
+      assert 0 === process.allocated.cpu
+    end
+
+    test "uses the values for each specified state", %{process: process} do
+      resources = %Resources{cpu: 900, ram: 600}
+      minimum = %{paused: %{ram: 300}, running: %{cpu: 100, ram: 600}}
+
+      process =
+        process
+        |> Process.allocate(resources)
+        |> Process.update_changeset(%{state: :running, minimum: minimum})
+        |> Changeset.apply_changes()
+
+      assert 900 === process.allocated.cpu
+      assert 600 === process.allocated.ram
+
+      process =
+        process
+        |> Process.allocate_minimum()
+        |> Changeset.apply_changes()
+
+      assert 100 === process.allocated.cpu
+      assert 600 === process.allocated.ram
+
+      process =
+        process
+        |> Process.update_changeset(%{state: :paused})
+        |> Process.allocate_minimum()
+        |> Changeset.apply_changes()
+
+      assert 0 === process.allocated.cpu
+      assert 300 === process.allocated.ram
+
+      process =
+        process
+        |> Process.update_changeset(%{state: :complete})
+        |> Process.allocate_minimum()
+        |> Changeset.apply_changes()
+
+      # When a value is not specified for a certain state, it assumes that
+      # everything should be 0
+      assert 0 === process.allocated.cpu
+      assert 0 === process.allocated.ram
+    end
+  end
+
+  describe "resume" do
+    test "doesn't change when process is not paused", %{process: process} do
+      changeset =
+        process
+        |> Process.update_changeset(%{state: :running, allocated: %{cpu: 100}})
+        |> Changeset.apply_changes()
+        |> Process.resume()
+
+      # IE: no changes on the changeset
+      assert 0 === map_size(changeset.changes)
+    end
+
+    test \
+      "changes state and updated_time and allocates minimum",
+      %{process: process}
+    do
+      resources = %Resources{ram: 300}
+      minimum = %{running: %{ram: 600}}
+      last_updated = Ecto.DateTime.from_erl({{2000, 01, 01}, {01, 01, 01}})
+      params = %{state: :paused, minimum: minimum, updated_time: last_updated}
+      now = DateTime.utc_now()
+
+      process =
+        process
+        |> Process.allocate(resources)
+        |> Process.update_changeset(params)
+        |> Changeset.apply_changes()
+
+      assert :paused === process.state
+      assert 300 === process.allocated.ram
+      assert 2000 === process.updated_time.year
+
+      process =
+        process
+        |> Process.resume()
+        |> Changeset.apply_changes()
+
+      assert :running === process.state
+      assert 600 === process.allocated.ram
+      assert now.year === process.updated_time.year
     end
   end
 end

@@ -8,7 +8,7 @@ defmodule Helix.Process.Model.Process.State do
     0 => :standby,
     1 => :paused,
     2 => :running,
-    3 => :completed
+    3 => :complete
   }
 
   def type, do: :integer
