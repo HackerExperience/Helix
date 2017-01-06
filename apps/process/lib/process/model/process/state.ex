@@ -2,7 +2,7 @@ defmodule Helix.Process.Model.Process.State do
 
   @behaviour Ecto.Type
 
-  @type states :: :standby | :paused | :running | :completed
+  @type states :: :standby | :paused | :running | :complete
 
   @mappings %{
     0 => :standby,

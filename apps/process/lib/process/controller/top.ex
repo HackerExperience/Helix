@@ -49,6 +49,25 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   def resume(pid, process_id),
     do: GenServer.call(pid, {:resume, process_id})
 
+  @spec kill(pid, ProcessModel.id) :: no_return
+  @doc """
+  Kills an in-game process
+  """
+  def kill(pid, process_id),
+    do: GenServer.cast(pid, {:kill, process_id})
+
+  @spec state(pid) :: %__MODULE__{}
+  @doc false
+  def state(pid),
+    do: GenServer.call(pid, :state)
+
+  @spec resources(
+    pid,
+    %{cpu: integer, ram: integer, dlk: integer, ulk: integer}) :: no_return
+  @doc false
+  def resources(pid, resources),
+    do: GenServer.cast(pid, {:resources, resources})
+
   @spec apply_update([Ecto.Changeset.t]) :: ProcessModel.t
   @spec apply_update(
     {:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}) :: ProcessModel.t
@@ -172,8 +191,20 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     {:noreply, %{state| processes: p2, timer: timer}, @hibernate_after}
   end
 
+  def handle_cast({:kill, process_id}, state) do
+    p2 = Enum.reject(state.processes, &(&1.process_id == process_id))
+
+    handle_info(:allocate, %{state| processes: p2})
+  end
+
+  def handle_cast({:resources, resources}, state) do
+    {:ok, r2} = Resources.from_server_resources(resources)
+
+    handle_info(:allocate, %{state| resources: r2})
+  end
+
   @doc false
-  def handle_call({:resume, process_id}, state) do
+  def handle_call({:resume, process_id}, _, state) do
     state.processes
     |> update_one(process_id, state.resources, &ProcessModel.resume/1)
     |> case do
@@ -190,6 +221,9 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     end
   end
 
+  def handle_call(:state, _, state),
+    do: {:reply, state, state, @hibernate_after}
+
   @doc false
   def handle_info(:allocate, state) do
     # REVIEW: I don't like the code of this handler but the choice of using
@@ -200,7 +234,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     {complete, running} =
       state.processes
       |> calculate_work()
-      |> Enum.partition(&ProcessModel.complete?/1)
+      |> Enum.split_with(&ProcessModel.complete?/1)
 
     Enum.each(complete, &notify(:complete, &1))
 
@@ -211,8 +245,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       |> Enum.map(&ProcessModel.handle_complete/1)
       |> Enum.reject(&is_nil/1)
       |> Kernel.++(running)
-      # |> allocate(state.resources)
-      |> fake_it_till_you_make_it(state.resources)
+      |> allocate_dropping(state.resources)
       |> apply_update()
 
     state2 = %{state|
@@ -254,16 +287,19 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     [ProcessModel.t],
     ProcessModel.id,
     Resources.t,
-    ((Ecto.Changeset.t) -> Ecto.Changeset.t)) :: [Ecto.Changeset.t]
+    ((Ecto.Changeset.t) -> Ecto.Changeset.t)) ::
+      [Ecto.Changeset.t]
+      | {:error, :insufficient_resources}
+  @docp """
+  Updates process with `process_id` from `processes` using `mapper`
+  """
   defp update_one(processes, process_id, resources, mapper) do
     processes
     |> calculate_work()
-    |> Enum.map(fn
-      # HACK: FIXME
-      p = %Ecto.Changeset{data: %{process_id: ^process_id}} ->
-        mapper.(p)
-      p ->
-        p
+    |> Enum.map(fn p ->
+      Ecto.Changeset.get_field(p, :process_id) === process_id
+      && mapper.(p)
+      || p
     end)
     |> allocate(resources)
   end
@@ -352,26 +388,30 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   # TODO: (dont) rename me
-  @spec fake_it_till_you_make_it(
+  @spec allocate_dropping(
     [ProcessModel.t],
     Resources.t) :: {:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}
-  defp fake_it_till_you_make_it(processes, resources) do
+  @docp """
+  Tries to allocate `resources` into `processes` and will drop randomly as many
+  `processes` as needed to fit
+  """
+  defp allocate_dropping(processes, resources) do
     # Keeps randomly dropping processes from the TOP until the server can handle
     # the load
     processes
     |> Enum.shuffle()
-    |> fake_it_till_you_make_it(resources, [])
+    |> allocate_dropping(resources, [])
   end
 
-  defp fake_it_till_you_make_it([p| t], resources, acc) do
+  defp allocate_dropping([p| t], resources, acc) do
     case allocate(t, resources) do
       {:error, :insufficient_resources} ->
-        fake_it_till_you_make_it(t, resources, [p| acc])
+        allocate_dropping(t, resources, [p| acc])
       changeset_list ->
         {:update_and_delete, changeset_list, [p| acc]}
     end
   end
-  defp fake_it_till_you_make_it([], _, acc),
+  defp allocate_dropping([], _, acc),
     do: {:update_and_delete, [], acc}
 
   @spec update_timer([ProcessModel.t], timer) :: timer
