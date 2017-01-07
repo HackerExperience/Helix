@@ -1,12 +1,12 @@
-defmodule HELM.Server.ControllerTest do
+defmodule Helix.Server.ControllerTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Server.Repo
-  alias HELM.Server.Controller.Server, as: CtrlServer
-  alias HELM.Server.Model.ServerType, as: MdlServerType
+  alias Helix.Server.Repo
+  alias Helix.Server.Controller.Server, as: CtrlServer
+  alias Helix.Server.Model.ServerType, as: MdlServerType
 
   @server_type HRand.string(min: 20)
 

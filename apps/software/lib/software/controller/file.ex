@@ -1,7 +1,7 @@
-defmodule HELM.Software.Controller.File do
+defmodule Helix.Software.Controller.File do
 
-  alias HELM.Software.Repo
-  alias HELM.Software.Model.File, as: MdlFile
+  alias Helix.Software.Repo
+  alias Helix.Software.Model.File, as: MdlFile
   import Ecto.Query, only: [where: 3]
 
   @spec create(MdlFile.creation_params) :: {:ok, MdlFile.t} | {:error, Ecto.Changeset.t}

@@ -1,4 +1,4 @@
-defmodule HELM.Hardware.Repo.Migrations.TurnMoboPkIntoFk do
+defmodule Helix.Hardware.Repo.Migrations.TurnMoboPkIntoFk do
   use Ecto.Migration
 
   def change do

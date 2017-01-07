@@ -1,4 +1,4 @@
-defmodule HELM.Server.Repo.Migrations.CreateServerFields do
+defmodule Helix.Server.Repo.Migrations.CreateServerFields do
   use Ecto.Migration
 
   def change do

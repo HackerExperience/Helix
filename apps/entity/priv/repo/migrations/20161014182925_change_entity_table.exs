@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Repo.Migrations.ChangeEntityTable do
+defmodule Helix.Entity.Repo.Migrations.ChangeEntityTable do
   use Ecto.Migration
 
   def change do
@@ -8,13 +8,13 @@ defmodule HELM.Entity.Repo.Migrations.ChangeEntityTable do
       add :server_id, :string, primary_key: true
       add :entity_id, references(:entities, column: :entity_id, type: :string)
 
-      timestamps
+      timestamps()
     end
 
     create table(:entity_types, primary_key: false) do
       add :entity_type, :string, primary_key: true
 
-      timestamps
+      timestamps()
     end
 
     alter table(:entities) do

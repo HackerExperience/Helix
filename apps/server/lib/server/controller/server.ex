@@ -1,8 +1,8 @@
-defmodule HELM.Server.Controller.Server do
+defmodule Helix.Server.Controller.Server do
 
   alias HELF.Broker
-  alias HELM.Server.Repo
-  alias HELM.Server.Model.Server, as: MdlServer, warn: false
+  alias Helix.Server.Repo
+  alias Helix.Server.Model.Server, as: MdlServer, warn: false
   import Ecto.Query, only: [where: 3]
 
   @spec create(MdlServer.creation_params) :: {:ok, MdlServer.t} | {:error, Ecto.Changeset.t}

@@ -1,4 +1,4 @@
-defmodule HELM.Server.Repo.Migrations.AddServerType do
+defmodule Helix.Server.Repo.Migrations.AddServerType do
   use Ecto.Migration
 
   def change do

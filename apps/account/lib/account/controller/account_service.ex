@@ -1,12 +1,12 @@
-defmodule HELM.Account.Controller.AccountService do
+defmodule Helix.Account.Controller.AccountService do
 
   use GenServer
 
   alias HELF.Broker
   alias HELF.Router
-  alias HELM.Account.Controller.Account, as: AccountController
-  alias HELM.Account.Controller.Session, as: SessionController
-  alias HELM.Account.Model.Account
+  alias Helix.Account.Controller.Account, as: AccountController
+  alias Helix.Account.Controller.Session, as: SessionController
+  alias Helix.Account.Model.Account
 
   @typep state :: nil
 

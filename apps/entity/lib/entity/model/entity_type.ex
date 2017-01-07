@@ -1,8 +1,8 @@
-defmodule HELM.Entity.Model.EntityType do
+defmodule Helix.Entity.Model.EntityType do
 
   use Ecto.Schema
 
-  alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
+  alias Helix.Entity.Model.Entity, as: MdlEntity, warn: false
   import Ecto.Changeset
 
   @type name :: String.t

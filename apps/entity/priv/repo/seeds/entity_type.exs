@@ -1,5 +1,5 @@
-alias HELM.Entity.Repo
-alias HELM.Entity.Model.EntityType
+alias Helix.Entity.Repo
+alias Helix.Entity.Model.EntityType
 
 Repo.transaction fn ->
   ["account", "npc", "clan"]

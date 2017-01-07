@@ -1,13 +1,13 @@
-defmodule HELM.Software.Controller.FileTest do
+defmodule Helix.Software.Controller.FileTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Software.Repo
-  alias HELM.Software.Model.FileType, as: MdlFileType
-  alias HELM.Software.Controller.Storage, as: CtrlStorage
-  alias HELM.Software.Controller.File, as: CtrlFile
+  alias Helix.Software.Repo
+  alias Helix.Software.Model.FileType, as: MdlFileType
+  alias Helix.Software.Controller.Storage, as: CtrlStorage
+  alias Helix.Software.Controller.File, as: CtrlFile
 
   @file_type HRand.string(min: 20)
 

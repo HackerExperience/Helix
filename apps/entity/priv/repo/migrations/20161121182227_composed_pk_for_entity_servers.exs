@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Repo.Migrations.ComposedPkForEntityServers do
+defmodule Helix.Entity.Repo.Migrations.ComposedPkForEntityServers do
   use Ecto.Migration
 
   def change do

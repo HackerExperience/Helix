@@ -11,6 +11,7 @@ defmodule Helix.Process.Model.Process do
 
   import Ecto.Changeset
   import Ecto.Query, only: [where: 3]
+  import HELL.MacroHelpers
 
   @type t :: %__MODULE__{
     process_id: id,
@@ -246,7 +247,7 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec diff_in_seconds(DateTime.t | Ecto.DateTime.t, DateTime.t) :: non_neg_integer | nil
-  @docp """
+  docp """
   Returns the difference in seconds from `start` to `finish`
 
   This assumes that both the inputs are using UTC. This implementation might and
@@ -265,7 +266,7 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec ecto_conversion_workaround(Ecto.DateTime.t) :: DateTime.t
-  @docp """
+  docp """
   Right now Ecto.DateTime doesn't have an easy and clear way to be converted to
   calendar types, albeit this is going to be implemented in the near future.
 

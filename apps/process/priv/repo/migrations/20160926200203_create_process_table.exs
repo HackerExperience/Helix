@@ -5,7 +5,7 @@ defmodule HELM.Process.Repo.Migrations.CreateProcessTable do
     create table(:processes, primary_key: false) do
       add :process_id, :string, primary_key: true
 
-      timestamps
+      timestamps()
     end
     create unique_index(:processes, [:process_id], name: :unique_process_id)
   end

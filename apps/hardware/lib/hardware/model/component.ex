@@ -1,10 +1,10 @@
-defmodule HELM.Hardware.Model.Component do
+defmodule Helix.Hardware.Model.Component do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
-  alias HELM.Hardware.Model.ComponentSpec, as: MdlCompSpec, warn: false
+  alias Helix.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
+  alias Helix.Hardware.Model.ComponentSpec, as: MdlCompSpec, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -36,7 +36,7 @@ defmodule HELM.Hardware.Model.Component do
       foreign_key: :link_component_id,
       references: :component_id
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t

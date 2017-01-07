@@ -1,4 +1,4 @@
-defmodule HELM.NPC.Repo.Migrations.ChangePkToIp do
+defmodule Helix.NPC.Repo.Migrations.ChangePkToIp do
   use Ecto.Migration
 
   def change do

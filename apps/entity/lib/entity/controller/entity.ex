@@ -1,7 +1,7 @@
-defmodule HELM.Entity.Controller.Entity do
+defmodule Helix.Entity.Controller.Entity do
 
-  alias HELM.Entity.Model.Entity, as: MdlEntity
-  alias HELM.Entity.Repo
+  alias Helix.Entity.Model.Entity, as: MdlEntity
+  alias Helix.Entity.Repo
   import Ecto.Query, only: [where: 3]
 
   @spec create(MdlEntity.creation_params) :: {:ok, MdlEntity.t} | no_return

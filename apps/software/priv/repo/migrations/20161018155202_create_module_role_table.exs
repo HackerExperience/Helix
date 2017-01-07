@@ -1,4 +1,4 @@
-defmodule HELM.Software.Repo.Migrations.CreateModuleRoleTable do
+defmodule Helix.Software.Repo.Migrations.CreateModuleRoleTable do
   use Ecto.Migration
 
   def change do
@@ -6,7 +6,7 @@ defmodule HELM.Software.Repo.Migrations.CreateModuleRoleTable do
       add :file_type, references(:file_types, column: :file_type, type: :string), primary_key: true
       add :module_role, :string, primary_key: true
 
-      timestamps
+      timestamps()
     end
   end
 end

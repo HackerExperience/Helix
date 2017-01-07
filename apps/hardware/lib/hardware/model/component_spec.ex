@@ -1,8 +1,8 @@
-defmodule HELM.Hardware.Model.ComponentSpec do
+defmodule Helix.Hardware.Model.ComponentSpec do
 
   use Ecto.Schema
 
-  alias HELM.Hardware.Model.Component, as: MdlComp, warn: false
+  alias Helix.Hardware.Model.Component, as: MdlComp, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -29,7 +29,7 @@ defmodule HELM.Hardware.Model.ComponentSpec do
     field :component_type, :string
     field :spec, :map
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t

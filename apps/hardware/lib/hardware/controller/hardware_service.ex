@@ -1,12 +1,12 @@
-defmodule HELM.Hardware.Controller.HardwareService do
+defmodule Helix.Hardware.Controller.HardwareService do
 
   use GenServer
 
   alias HELF.Broker
-  alias HELM.Hardware.Controller.Motherboard, as: CtrlMobos
-  alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
-  alias HELM.Hardware.Controller.Component, as: CtrlComps
-  alias HELM.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
+  alias Helix.Hardware.Controller.Motherboard, as: CtrlMobos
+  alias Helix.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
+  alias Helix.Hardware.Controller.Component, as: CtrlComps
+  alias Helix.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
 
   @typep state :: nil
 
@@ -48,22 +48,22 @@ defmodule HELM.Hardware.Controller.HardwareService do
   @spec handle_call(
     {:motherboard, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.Motherboard.t}
+    state) :: {:reply, {:ok, Helix.Hardware.Model.Motherboard.t}
               | {:error, :notfound}, state}
   @spec handle_call(
     {:motherboard_slot, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.MotherboardSlot.t}
+    state) :: {:reply, {:ok, Helix.Hardware.Model.MotherboardSlot.t}
               | {:error, :notfound}, state}
   @spec handle_call(
     {:component, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.Component.t}
+    state) :: {:reply, {:ok, Helix.Hardware.Model.Component.t}
               | {:error, :notfound}, state}
   @spec handle_call(
     {:component_spec, :get, HELL.PK.t},
     GenServer.from,
-    state) :: {:reply, {:ok, HELM.Hardware.Model.ComponentSpec.t}
+    state) :: {:reply, {:ok, Helix.Hardware.Model.ComponentSpec.t}
               | {:error, :notfound}, state}
   @doc false
   def handle_call({:motherboard, :create, params}, _from, state) do

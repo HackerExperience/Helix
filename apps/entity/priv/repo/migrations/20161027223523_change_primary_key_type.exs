@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Repo.Migrations.ChangePrimaryKeyType do
+defmodule Helix.Entity.Repo.Migrations.ChangePrimaryKeyType do
   use Ecto.Migration
 
   def change do
@@ -15,7 +15,7 @@ defmodule HELM.Entity.Repo.Migrations.ChangePrimaryKeyType do
       add :server_id, :binary_id, primary_key: true
       add :entity_id, references(:entities, column: :entity_id, type: :binary_id)
 
-      timestamps
+      timestamps()
     end
   end
 end

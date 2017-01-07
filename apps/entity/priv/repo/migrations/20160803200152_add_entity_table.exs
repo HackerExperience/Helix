@@ -7,7 +7,7 @@ defmodule Entity.Repo.Migrations.AddEntityTable do
       add :npc_id, :string
       add :clan_id, :string
 
-      timestamps
+      timestamps()
     end
   end
 end

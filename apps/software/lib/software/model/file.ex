@@ -1,10 +1,10 @@
-defmodule HELM.Software.Model.File do
+defmodule Helix.Software.Model.File do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Software.Model.FileType, as: MdlFileType, warn: false
-  alias HELM.Software.Model.Storage, as: MdlStorage, warn: false
+  alias Helix.Software.Model.FileType, as: MdlFileType, warn: false
+  alias Helix.Software.Model.Storage, as: MdlStorage, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -54,7 +54,7 @@ defmodule HELM.Software.Model.File do
       references: :storage_id,
       type: EctoNetwork.INET
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t

@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Mixfile do
+defmodule Helix.Entity.Mixfile do
   use Mix.Project
 
   def project do
@@ -19,7 +19,7 @@ defmodule HELM.Entity.Mixfile do
   def application do
     [
       applications: applications(Mix.env),
-      mod: {HELM.Entity.App, []}]
+      mod: {Helix.Entity.App, []}]
   end
 
   defp applications(_),

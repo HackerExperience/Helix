@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Repo.Migrations.CreateEntityAccountsTable do
+defmodule Helix.Entity.Repo.Migrations.CreateEntityAccountsTable do
   use Ecto.Migration
 
   def change do

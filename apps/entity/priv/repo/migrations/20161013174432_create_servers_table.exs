@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Repo.Migrations.CreateServersTable do
+defmodule Helix.Entity.Repo.Migrations.CreateServersTable do
   use Ecto.Migration
 
   def change do
@@ -6,7 +6,7 @@ defmodule HELM.Entity.Repo.Migrations.CreateServersTable do
       add :server_id, :string, primary_key: true
       add :entity_id, references(:entities, column: :entity_id, type: :string)
 
-      timestamps
+      timestamps()
     end
   end
 end

@@ -1,9 +1,9 @@
-defmodule HELM.NPC.Controller.NPCTest do
+defmodule Helix.NPC.Controller.NPCTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.IPv6
-  alias HELM.NPC.Controller.NPC, as: CtrlNPC
+  alias Helix.NPC.Controller.NPC, as: CtrlNPC
 
   test "create/1" do
     assert {:ok, _} = CtrlNPC.create(%{})

@@ -1,12 +1,12 @@
-defmodule HELM.Entity.Controller.EntityServerTest do
+defmodule Helix.Entity.Controller.EntityServerTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias HELM.Entity.Repo
-  alias HELM.Entity.Model.Entity
-  alias HELM.Entity.Model.EntityType
-  alias HELM.Entity.Controller.EntityServer, as: CtrlEntityServer
+  alias Helix.Entity.Repo
+  alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Model.EntityType
+  alias Helix.Entity.Controller.EntityServer, as: CtrlEntityServer
 
   setup_all do
     # FIXME

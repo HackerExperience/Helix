@@ -1,4 +1,4 @@
-defmodule HELM.Hardware.Repo.Migrations.RemoveUselessTimestamps do
+defmodule Helix.Hardware.Repo.Migrations.RemoveUselessTimestamps do
   use Ecto.Migration
 
   def change do

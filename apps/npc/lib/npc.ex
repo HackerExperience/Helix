@@ -1,9 +1,9 @@
-defmodule HELM.NPC.App do
+defmodule Helix.NPC.App do
 
   use Application
 
-  alias HELM.NPC.Repo
-  alias HELM.NPC.Controller.NPCService
+  alias Helix.NPC.Repo
+  alias Helix.NPC.Controller.NPCService
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -13,7 +13,7 @@ defmodule HELM.NPC.App do
       worker(NPCService, [])
     ]
 
-    opts = [strategy: :one_for_one, name: HELM.NPC.Supervisor]
+    opts = [strategy: :one_for_one, name: Helix.NPC.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

@@ -1,10 +1,11 @@
-defmodule HELM.Account.Model.Account do
+defmodule Helix.Account.Model.Account do
 
   use Ecto.Schema
 
   alias HELL.PK
   alias Comeonin.Bcrypt
   import Ecto.Changeset
+  import HELL.MacroHelpers
 
   @type id :: String.t
   @type email :: String.t
@@ -44,7 +45,7 @@ defmodule HELM.Account.Model.Account do
     field :password_confirmation, :string,
       virtual: true
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -88,7 +89,7 @@ defmodule HELM.Account.Model.Account do
   end
 
   @spec validate_email(:email, String.t) :: [] | [email: String.t]
-  @docp """
+  docp """
   Validates that the email is a valid email address
 
   TODO: Remove this regex and use something better

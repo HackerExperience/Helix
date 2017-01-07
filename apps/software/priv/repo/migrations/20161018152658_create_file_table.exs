@@ -1,4 +1,4 @@
-defmodule HELM.Software.Repo.Migrations.CreateFileTable do
+defmodule Helix.Software.Repo.Migrations.CreateFileTable do
   use Ecto.Migration
 
   def change do
@@ -10,7 +10,7 @@ defmodule HELM.Software.Repo.Migrations.CreateFileTable do
       add :file_type, references(:file_types, column: :file_type, type: :string)
       add :storage_id, references(:storages, column: :storage_id, type: :string)
 
-      timestamps
+      timestamps()
     end
   end
 end

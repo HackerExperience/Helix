@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Repo.Migrations.ChangePkToIp do
+defmodule Helix.Entity.Repo.Migrations.ChangePkToIp do
   use Ecto.Migration
 
   def change do
@@ -15,7 +15,7 @@ defmodule HELM.Entity.Repo.Migrations.ChangePkToIp do
       add :server_id, :inet, primary_key: true
       add :entity_id, references(:entities, column: :entity_id, type: :inet)
 
-      timestamps
+      timestamps()
     end
   end
 end

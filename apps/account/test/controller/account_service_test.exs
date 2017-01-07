@@ -1,4 +1,4 @@
-defmodule HELM.Account.Controller.AccountServiceTest do
+defmodule Helix.Account.Controller.AccountServiceTest do
 
   use ExUnit.Case, async: true
 

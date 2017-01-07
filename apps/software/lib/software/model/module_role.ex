@@ -1,10 +1,10 @@
-defmodule HELM.Software.Model.ModuleRole do
+defmodule Helix.Software.Model.ModuleRole do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Software.Model.FileType, as: MdlFileType, warn: false
-  alias HELM.Software.Model.Module, as: MdlModule, warn: false
+  alias Helix.Software.Model.FileType, as: MdlFileType, warn: false
+  alias Helix.Software.Model.Module, as: MdlModule, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

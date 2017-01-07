@@ -1,4 +1,4 @@
 use Mix.Config
 
-config :software, HELM.Software.Repo,
+config :software, Helix.Software.Repo,
   pool: Ecto.Adapters.SQL.Sandbox

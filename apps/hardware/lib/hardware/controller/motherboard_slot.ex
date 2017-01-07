@@ -1,8 +1,8 @@
-defmodule HELM.Hardware.Controller.MotherboardSlot do
+defmodule Helix.Hardware.Controller.MotherboardSlot do
 
-  alias HELM.Hardware.Repo
-  alias HELM.Hardware.Controller.Component, as: CtrlComp
-  alias HELM.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
+  alias Helix.Hardware.Repo
+  alias Helix.Hardware.Controller.Component, as: CtrlComp
+  alias Helix.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
   import Ecto.Query, only: [where: 3]
 
   @spec create(MdlMoboSlot.creation_params) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t}

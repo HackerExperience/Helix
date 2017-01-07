@@ -3,6 +3,7 @@ defmodule HELL.TestHelper.Random do
   alias HELL.TestHelper.Random.Alphabet
   alias HELL.TestHelper.Random.Alphabet.Digits
   alias HELL.TestHelper.Random.Alphabet.Alphanum
+  import HELL.MacroHelpers
 
   @type string_params :: [
     {:min, integer},
@@ -151,8 +152,6 @@ defmodule HELL.TestHelper.Random do
     email_part <> "@" <> hostname
   end
 
-  # REVIEW: What about RTL ?
-  @hostname_sep_alphabet Alphabet.build_alphabet("._-")
   @doc """
   Generates a random hostname
   """
@@ -224,7 +223,7 @@ defmodule HELL.TestHelper.Random do
     end
   end
 
-  @docp """
+  docp """
   Fetches a random letter from an alphabet
   """
   defp random_char(%Alphabet{size: s, characters: c}),

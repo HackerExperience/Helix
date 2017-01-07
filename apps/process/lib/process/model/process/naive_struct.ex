@@ -1,6 +1,9 @@
 defmodule Helix.Process.Model.Process.NaiveStruct do
   @moduledoc false
-  @moduledocp """
+
+  import HELL.MacroHelpers
+
+  docp """
   This module is a converter that transforms any struct into a non-struct map
   (while keeping the metadata of which struct that map was) and transforms that
   map back into it's original struct on runtime.

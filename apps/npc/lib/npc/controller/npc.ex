@@ -1,7 +1,7 @@
-defmodule HELM.NPC.Controller.NPC do
+defmodule Helix.NPC.Controller.NPC do
 
-  alias HELM.NPC.Repo
-  alias HELM.NPC.Model.NPC, as: MdlNPC
+  alias Helix.NPC.Repo
+  alias Helix.NPC.Model.NPC, as: MdlNPC
   import Ecto.Query, only: [where: 3]
 
   @spec create(%{}) :: {:ok, MdlNPC.t} | {:error, Ecto.Changeset.t}

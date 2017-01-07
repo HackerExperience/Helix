@@ -1,11 +1,11 @@
-defmodule HELM.Software.Controller.StorageDriveTest do
+defmodule Helix.Software.Controller.StorageDriveTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Software.Controller.Storage, as: CtrlStorage
-  alias HELM.Software.Controller.StorageDrive, as: CtrlStorageDrives
+  alias Helix.Software.Controller.Storage, as: CtrlStorage
+  alias Helix.Software.Controller.StorageDrive, as: CtrlStorageDrives
 
   setup do
     {:ok, storage} = CtrlStorage.create()

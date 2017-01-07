@@ -1,12 +1,12 @@
-defmodule HELM.Controller.EntityService do
+defmodule Helix.Controller.EntityService do
 
   use GenServer
 
   alias HELL.PK
   alias HELF.Broker
-  alias HELM.Entity.Model.Entity, as: Entity
-  alias HELM.Entity.Controller.Entity, as: EntityController
-  alias HELM.Entity.Controller.EntityServer, as: EntityServerController
+  alias Helix.Entity.Model.Entity, as: Entity
+  alias Helix.Entity.Controller.Entity, as: EntityController
+  alias Helix.Entity.Controller.EntityServer, as: EntityServerController
 
   @typep state :: nil
 

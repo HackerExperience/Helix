@@ -1,7 +1,7 @@
-defmodule HELM.Software.Controller.Storage do
+defmodule Helix.Software.Controller.Storage do
 
-  alias HELM.Software.Repo
-  alias HELM.Software.Model.Storage, as: MdlStorage
+  alias Helix.Software.Repo
+  alias Helix.Software.Model.Storage, as: MdlStorage
   import Ecto.Query, only: [where: 3]
 
   @spec create() :: {:ok, MdlStorage.t} | {:error, Ecto.Changeset.t}

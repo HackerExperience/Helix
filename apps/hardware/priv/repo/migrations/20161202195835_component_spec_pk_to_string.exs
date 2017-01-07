@@ -1,4 +1,4 @@
-defmodule HELM.Hardware.Repo.Migrations.ComponentSpecPkToString do
+defmodule Helix.Hardware.Repo.Migrations.ComponentSpecPkToString do
   use Ecto.Migration
 
   def change do

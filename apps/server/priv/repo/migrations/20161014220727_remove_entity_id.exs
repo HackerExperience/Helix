@@ -1,4 +1,4 @@
-defmodule HELM.Server.Repo.Migrations.RemoveEntityID do
+defmodule Helix.Server.Repo.Migrations.RemoveEntityID do
   use Ecto.Migration
 
   def change do

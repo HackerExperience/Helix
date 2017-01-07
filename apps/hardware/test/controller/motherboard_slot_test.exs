@@ -1,15 +1,15 @@
-defmodule HELM.Hardware.Controller.MotherboardSlotTest do
+defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias HELM.Hardware.Repo
-  alias HELM.Hardware.Model.ComponentType
-  alias HELM.Hardware.Model.MotherboardSlot
-  alias HELM.Hardware.Controller.Component, as: ComponentController
-  alias HELM.Hardware.Controller.ComponentSpec, as: SpecController
-  alias HELM.Hardware.Controller.Motherboard, as: MotherboardController
-  alias HELM.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
+  alias Helix.Hardware.Repo
+  alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Controller.Component, as: ComponentController
+  alias Helix.Hardware.Controller.ComponentSpec, as: SpecController
+  alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
+  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
   setup_all do
     # FIXME

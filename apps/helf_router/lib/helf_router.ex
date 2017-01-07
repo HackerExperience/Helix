@@ -1,4 +1,4 @@
-defmodule HELM.HELFRouter.App do
+defmodule Helix.HELFRouter.App do
   use Application
 
   @port Application.get_env(:helf_router, :port)

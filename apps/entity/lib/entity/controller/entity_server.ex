@@ -1,9 +1,9 @@
-defmodule HELM.Entity.Controller.EntityServer do
+defmodule Helix.Entity.Controller.EntityServer do
 
-  alias HELM.Entity.Repo
-  alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
-  alias HELM.Server.Model.Server, as: MdlServer
-  alias HELM.Entity.Model.EntityServer, as: MdlEntityServer
+  alias Helix.Entity.Repo
+  alias Helix.Entity.Model.Entity, as: MdlEntity, warn: false
+  alias Helix.Server.Model.Server, as: MdlServer
+  alias Helix.Entity.Model.EntityServer, as: MdlEntityServer
   import Ecto.Query, only: [where: 3]
 
   @spec create(MdlEntity.id, MdlServer.id) :: {:ok, MdlEntityServer.t} | {:error, Ecto.Changeset.t}

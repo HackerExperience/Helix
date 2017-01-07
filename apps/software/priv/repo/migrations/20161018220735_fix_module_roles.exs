@@ -1,4 +1,4 @@
-defmodule HELM.Software.Repo.Migrations.FixModuleRoles do
+defmodule Helix.Software.Repo.Migrations.FixModuleRoles do
   use Ecto.Migration
 
   def change do

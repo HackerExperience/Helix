@@ -1,4 +1,4 @@
-defmodule HELM.NPC.Model.NPC do
+defmodule Helix.NPC.Model.NPC do
 
   use Ecto.Schema
 
@@ -18,7 +18,7 @@ defmodule HELM.NPC.Model.NPC do
     field :npc_id, EctoNetwork.INET,
       primary_key: true
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(%{}) :: Ecto.Changeset.t

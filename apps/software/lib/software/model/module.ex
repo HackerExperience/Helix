@@ -1,10 +1,10 @@
-defmodule HELM.Software.Model.Module do
+defmodule Helix.Software.Model.Module do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
-  alias HELM.Software.Model.File, as: MdlFile, warn: false
+  alias Helix.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
+  alias Helix.Software.Model.File, as: MdlFile, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -42,7 +42,7 @@ defmodule HELM.Software.Model.Module do
 
     field :module_version, :integer
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t

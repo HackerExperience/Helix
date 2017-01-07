@@ -1,4 +1,4 @@
-defmodule HELM.HELFRouter.Mixfile do
+defmodule Helix.HELFRouter.Mixfile do
   use Mix.Project
 
   def project do
@@ -13,13 +13,13 @@ defmodule HELM.HELFRouter.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       elixirc_options: elixirc_options(Mix.env),
-      deps: deps]
+      deps: deps()]
   end
 
   def application do
     [
       applications: applications(Mix.env),
-      mod: {HELM.HELFRouter.App, []}]
+      mod: {Helix.HELFRouter.App, []}]
   end
 
   defp applications(_),

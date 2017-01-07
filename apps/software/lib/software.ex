@@ -1,9 +1,9 @@
-defmodule HELM.Software.App do
+defmodule Helix.Software.App do
 
   use Application
 
-  alias HELM.Software.Repo
-  alias HELM.Software.Controller.SoftwareService
+  alias Helix.Software.Repo
+  alias Helix.Software.Controller.SoftwareService
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -13,7 +13,7 @@ defmodule HELM.Software.App do
       worker(SoftwareService, [])
     ]
 
-    opts = [strategy: :one_for_one, name: HELM.Software.Supervisor]
+    opts = [strategy: :one_for_one, name: Helix.Software.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end
