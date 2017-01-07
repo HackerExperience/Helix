@@ -23,7 +23,7 @@ defmodule Helix.Software.Model.StorageDrive do
     belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
 
     timestamps()

@@ -38,7 +38,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
 
   @primary_key false
   schema "motherboard_slots" do
-    field :slot_id, EctoNetwork.INET,
+    field :slot_id, HELL.PK,
       primary_key: true
 
     field :slot_internal_id, :integer
@@ -46,11 +46,11 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     belongs_to :motherboard, MdlMobo,
       foreign_key: :motherboard_id,
       references: :motherboard_id,
-      type: EctoNetwork.INET
+      type: HELL.PK
     belongs_to :component, MdlComp,
       foreign_key: :link_component_id,
       references: :component_id,
-      type: EctoNetwork.INET
+      type: HELL.PK
     belongs_to :type, MdlCompType,
       foreign_key: :link_component_type,
       references: :component_type,

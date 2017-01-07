@@ -15,7 +15,7 @@ defmodule Helix.NPC.Model.NPC do
 
   @primary_key false
   schema "npcs" do
-    field :npc_id, EctoNetwork.INET,
+    field :npc_id, HELL.PK,
       primary_key: true
 
     timestamps()

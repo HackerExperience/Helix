@@ -23,7 +23,7 @@ defmodule Helix.Hardware.Model.Component do
 
   @primary_key false
   schema "components" do
-    field :component_id, EctoNetwork.INET,
+    field :component_id, HELL.PK,
       primary_key: true
 
     field :component_type, :string

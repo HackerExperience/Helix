@@ -15,8 +15,8 @@ defmodule Helix.Account.Model.Account do
     email: email,
     password: password,
     password_confirmation: password,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
@@ -35,7 +35,7 @@ defmodule Helix.Account.Model.Account do
   @derive {Poison.Encoder, only: [:email, :account_id]}
   @primary_key false
   schema "accounts" do
-    field :account_id, EctoNetwork.INET,
+    field :account_id, HELL.PK,
       primary_key: true
 
     field :email, :string

@@ -32,12 +32,12 @@ defmodule Helix.Software.Model.Module do
     belongs_to :file, MdlFile,
       foreign_key: :file_id,
       references: :file_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
     belongs_to :role, MdlModuleRole,
       foreign_key: :module_role_id,
       references: :module_role_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
 
     field :module_version, :integer

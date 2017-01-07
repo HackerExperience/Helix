@@ -32,12 +32,9 @@ defmodule Helix.Server.Mixfile do
 
   defp deps do
     [
-      {:helf_broker, in_umbrella: true},
-      {:hell, in_umbrella: true},
+      {:helix_core, in_umbrella: true},
       {:account, in_umbrella: true},
       {:entity, in_umbrella: true},
-      {:hardware, in_umbrella: true},
-      {:ecto, "~> 2.1.0-rc.4", override: true},
-      {:ecto_network, "~> 0.4.0"}]
+      {:hardware, in_umbrella: true}]
   end
 end

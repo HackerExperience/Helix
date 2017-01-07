@@ -38,7 +38,7 @@ defmodule Helix.Software.Model.File do
 
   @primary_key false
   schema "files" do
-    field :file_id, EctoNetwork.INET,
+    field :file_id, HELL.PK,
       primary_key: true
 
     field :name, :string
@@ -52,7 +52,7 @@ defmodule Helix.Software.Model.File do
     belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: EctoNetwork.INET
+      type: HELL.PK
 
     timestamps()
   end

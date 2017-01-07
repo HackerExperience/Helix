@@ -17,7 +17,7 @@ defmodule Helix.Software.Model.Storage do
 
   @primary_key false
   schema "storages" do
-    field :storage_id, EctoNetwork.INET,
+    field :storage_id, HELL.PK,
       primary_key: true
 
     has_many :drives, MdlStorageDrive,

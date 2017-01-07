@@ -27,7 +27,7 @@ defmodule Helix.Process.Model.Process do
 
   @opaque id :: String.t
 
-  @primary_key {:process_id, EctoNetwork.INET, autogenerate: false}
+  @primary_key {:process_id, HELL.PK, autogenerate: false}
 
   schema "processes" do
     # The gateway that started the process

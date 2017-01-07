@@ -24,7 +24,7 @@ defmodule Helix.Entity.Model.Entity do
 
   @primary_key false
   schema "entities" do
-    field :entity_id, EctoNetwork.INET,
+    field :entity_id, HELL.PK,
       primary_key: true
 
     has_many :servers, MdlEntityServer,

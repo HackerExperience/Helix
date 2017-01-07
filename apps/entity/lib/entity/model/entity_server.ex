@@ -18,12 +18,12 @@ defmodule Helix.Entity.Model.EntityServer do
 
   @primary_key false
   schema "entity_servers" do
-    field :server_id, EctoNetwork.INET,
+    field :server_id, HELL.PK,
       primary_key: true
     belongs_to :entity, MdlEntity,
       foreign_key: :entity_id,
       references: :entity_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
   end
 

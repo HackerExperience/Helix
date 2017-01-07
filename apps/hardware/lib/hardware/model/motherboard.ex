@@ -23,7 +23,7 @@ defmodule Helix.Hardware.Model.Motherboard do
     belongs_to :component, MdlComp,
       foreign_key: :motherboard_id,
       references: :component_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
 
     has_one :component_spec, through: [:component, :component_spec]
