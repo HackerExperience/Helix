@@ -49,9 +49,9 @@ defmodule Helix.Process.Model.Process do
     embeds_one :allocated, Resources
     embeds_one :limitations, Limitations
 
-    field :creation_time, Ecto.DateTime, autogenerate: true
-    field :updated_time, Ecto.DateTime, autogenerate: true
-    field :estimated_time, Ecto.DateTime, virtual: true
+    field :creation_time, :utc_datetime
+    field :updated_time, :utc_datetime
+    field :estimated_time, :utc_datetime, virtual: true
   end
 
   @creation_fields ~w/gateway_id file_id software target_server_id/a
@@ -64,6 +64,9 @@ defmodule Helix.Process.Model.Process do
     software: SoftwareType.t,
     objective: %{}}) :: Ecto.Changeset.t
   def create_changeset(params) do
+    now = DateTime.utc_now()
+    default_datetime = %{creation_time: now, updated_time: now}
+
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> cast_embed(:objective)
@@ -77,6 +80,7 @@ defmodule Helix.Process.Model.Process do
     end)
     |> put_primary_key()
     |> put_defaults()
+    |> cast(default_datetime, [:creation_time, :updated_time])
   end
 
   @spec update_changeset(
@@ -145,9 +149,7 @@ defmodule Helix.Process.Model.Process do
         nil ->
           nil
         x ->
-          struct.updated_time
-          |> ecto_conversion_workaround()
-          |> Timex.shift(seconds: x)
+          Timex.shift(struct.updated_time, seconds: x)
       end
 
     changeset = cast(process, %{estimated_time: conclusion}, [:estimated_time])
@@ -246,40 +248,17 @@ defmodule Helix.Process.Model.Process do
     changeset
   end
 
-  @spec diff_in_seconds(DateTime.t | Ecto.DateTime.t, DateTime.t) :: non_neg_integer | nil
+  @spec diff_in_seconds(DateTime.t, DateTime.t) :: non_neg_integer | nil
   docp """
   Returns the difference in seconds from `start` to `finish`
 
   This assumes that both the inputs are using UTC. This implementation might and
   should be replaced by a calendar library diff function
   """
-  defp diff_in_seconds(%Ecto.DateTime{}, nil),
+  defp diff_in_seconds(%DateTime{}, nil),
     do: nil
-  defp diff_in_seconds(start = %Ecto.DateTime{}, finish = %DateTime{}) do
-    start
-    |> ecto_conversion_workaround()
-    |> diff_in_seconds(finish)
-  end
-
-  defp diff_in_seconds(start = %DateTime{}, finish = %DateTime{}) do
-    Timex.diff(start, finish, :seconds)
-  end
-
-  @spec ecto_conversion_workaround(Ecto.DateTime.t) :: DateTime.t
-  docp """
-  Right now Ecto.DateTime doesn't have an easy and clear way to be converted to
-  calendar types, albeit this is going to be implemented in the near future.
-
-  Meanwhile, this workaround will convert it to the DateTime type by passing it
-  through a pipeline of transformations
-  """
-  defp ecto_conversion_workaround(datetime) do
-    datetime
-    |> Ecto.DateTime.to_erl()
-    |> :calendar.datetime_to_gregorian_seconds()
-    |> Kernel.-(62_167_219_200) # EPOCH in seconds
-    |> DateTime.from_unix!()
-  end
+  defp diff_in_seconds(start = %DateTime{}, finish = %DateTime{}),
+    do: Timex.diff(start, finish, :seconds)
 
   @spec calculate_processed(t, non_neg_integer) :: Resources.t
   defp calculate_processed(process, diff) do

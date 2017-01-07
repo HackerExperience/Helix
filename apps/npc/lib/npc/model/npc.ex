@@ -7,8 +7,8 @@ defmodule Helix.NPC.Model.NPC do
 
   @type t :: %__MODULE__{
     npc_id: PK.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @creation_fields ~w//a

@@ -17,8 +17,8 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     link_component_id: PK.t,
     type: MdlCompType.t,
     link_component_type: String.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{

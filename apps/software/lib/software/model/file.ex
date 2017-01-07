@@ -16,8 +16,8 @@ defmodule Helix.Software.Model.File do
     file_type: String.t,
     storage: MdlStorage.t,
     storage_id: PK.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{

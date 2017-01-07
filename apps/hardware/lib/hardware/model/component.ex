@@ -13,8 +13,8 @@ defmodule Helix.Hardware.Model.Component do
     component_spec: MdlCompSpec.t,
     spec_code: Strint.t,
     slot: MdlMoboSlot.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{component_type: String.t, spec_code: String.t}

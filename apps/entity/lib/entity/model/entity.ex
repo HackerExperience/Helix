@@ -13,8 +13,8 @@ defmodule Helix.Entity.Model.Entity do
     servers: [MdlEntityServer.t],
     type: MdlEntityType.t,
     entity_type: String.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{

@@ -13,8 +13,8 @@ defmodule Helix.Software.Model.Module do
     file_id: PK.t,
     role: MdlModuleRole.t,
     module_role_id: PK.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{

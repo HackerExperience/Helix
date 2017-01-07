@@ -11,8 +11,8 @@ defmodule Helix.Software.Model.Storage do
     storage_id: PK.t,
     drives: [MdlStorageDrive.t],
     files: [MdlFile.t],
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @primary_key false
