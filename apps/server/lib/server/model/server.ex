@@ -13,8 +13,8 @@ defmodule Helix.Server.Model.Server do
     server_type: String.t,
     poi_id: PK.t,
     motherboard_id: PK.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
@@ -32,11 +32,11 @@ defmodule Helix.Server.Model.Server do
 
   @primary_key false
   schema "servers" do
-    field :server_id, EctoNetwork.INET,
+    field :server_id, HELL.PK,
       primary_key: true
 
-    field :poi_id, EctoNetwork.INET
-    field :motherboard_id, EctoNetwork.INET
+    field :poi_id, HELL.PK
+    field :motherboard_id, HELL.PK
 
     belongs_to :type, MdlServerType,
       foreign_key: :server_type,

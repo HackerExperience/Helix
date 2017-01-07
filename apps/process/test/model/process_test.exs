@@ -102,9 +102,9 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Changeset.apply_changes()
         |> Process.estimate_conclusion()
 
-      future = DateTime.from_unix!(1470000050) |> Ecto.DateTime.cast!()
+      future = DateTime.from_unix!(1470000050)
 
-      assert :eq === Ecto.DateTime.compare(future, p2.estimated_time)
+      assert :eq === DateTime.compare(future, p2.estimated_time)
     end
   end
 end

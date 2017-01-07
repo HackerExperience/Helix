@@ -10,8 +10,8 @@ defmodule Helix.Hardware.Model.Motherboard do
   @type t :: %__MODULE__{
     motherboard_id: PK.t,
     slots: [MdlMoboSlot.t],
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{motherboard_id: PK.t}
@@ -23,7 +23,7 @@ defmodule Helix.Hardware.Model.Motherboard do
     belongs_to :component, MdlComp,
       foreign_key: :motherboard_id,
       references: :component_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
 
     has_one :component_spec, through: [:component, :component_spec]

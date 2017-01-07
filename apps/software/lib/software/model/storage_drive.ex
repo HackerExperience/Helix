@@ -10,8 +10,8 @@ defmodule Helix.Software.Model.StorageDrive do
     storage_id: PK.t,
     storage: MdlStorage.t,
     drive_id: integer,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @creation_fields ~w/drive_id storage_id/a
@@ -23,7 +23,7 @@ defmodule Helix.Software.Model.StorageDrive do
     belongs_to :storage, MdlStorage,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
 
     timestamps()

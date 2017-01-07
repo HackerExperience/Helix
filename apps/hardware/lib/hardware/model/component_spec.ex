@@ -9,8 +9,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     spec_code: String.t,
     component_type: String.t,
     spec: %{},
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{

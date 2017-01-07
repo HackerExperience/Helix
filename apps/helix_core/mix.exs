@@ -25,9 +25,8 @@ defmodule Helix.Core.Mixfile do
       {:helf_broker, in_umbrella: true},
       {:helf_router, in_umbrella: true},
       {:hell, in_umbrella: true},
-      {:postgrex, "~> 1.0-rc", override: true},
-      {:ecto, "~> 2.1.0-rc.4", override: true},
-      {:ecto_network, "~> 0.4.0"},
+      {:postgrex, "~> 0.13", override: true},
+      {:ecto, "~> 2.1", override: true},
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test}]
   end
 end

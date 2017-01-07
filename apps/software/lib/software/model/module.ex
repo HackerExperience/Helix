@@ -13,8 +13,8 @@ defmodule Helix.Software.Model.Module do
     file_id: PK.t,
     role: MdlModuleRole.t,
     module_role_id: PK.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
@@ -32,12 +32,12 @@ defmodule Helix.Software.Model.Module do
     belongs_to :file, MdlFile,
       foreign_key: :file_id,
       references: :file_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
     belongs_to :role, MdlModuleRole,
       foreign_key: :module_role_id,
       references: :module_role_id,
-      type: EctoNetwork.INET,
+      type: HELL.PK,
       primary_key: true
 
     field :module_version, :integer

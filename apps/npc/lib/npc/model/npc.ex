@@ -7,15 +7,15 @@ defmodule Helix.NPC.Model.NPC do
 
   @type t :: %__MODULE__{
     npc_id: PK.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @creation_fields ~w//a
 
   @primary_key false
   schema "npcs" do
-    field :npc_id, EctoNetwork.INET,
+    field :npc_id, HELL.PK,
       primary_key: true
 
     timestamps()

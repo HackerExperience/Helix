@@ -13,8 +13,8 @@ defmodule Helix.Hardware.Model.Component do
     component_spec: MdlCompSpec.t,
     spec_code: Strint.t,
     slot: MdlMoboSlot.t,
-    inserted_at: Ecto.DateTime.t,
-    updated_at: Ecto.DateTime.t
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{component_type: String.t, spec_code: String.t}
@@ -23,7 +23,7 @@ defmodule Helix.Hardware.Model.Component do
 
   @primary_key false
   schema "components" do
-    field :component_id, EctoNetwork.INET,
+    field :component_id, HELL.PK,
       primary_key: true
 
     field :component_type, :string

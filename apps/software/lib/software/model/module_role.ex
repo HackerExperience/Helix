@@ -17,7 +17,7 @@ defmodule Helix.Software.Model.ModuleRole do
 
   @primary_key false
   schema "module_roles" do
-    field :module_role_id, EctoNetwork.INET,
+    field :module_role_id, HELL.PK,
       primary_key: true
 
     field :module_role, :string

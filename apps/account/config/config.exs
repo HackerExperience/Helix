@@ -9,10 +9,7 @@ config :account, Helix.Account.Repo,
   database: "account_service",
   username: System.get_env("HELIX_DB_USER") || "postgres",
   password: System.get_env("HELIX_DB_PASS") || "postgres",
-  hostname: System.get_env("HELIX_DB_HOST") || "localhost",
-  extensions: [
-    {Postgrex.Extensions.Network, nil}
-  ]
+  hostname: System.get_env("HELIX_DB_HOST") || "localhost"
 
 config :guardian, Guardian,
   issuer: "account",
