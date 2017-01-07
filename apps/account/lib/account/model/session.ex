@@ -1,4 +1,4 @@
-defmodule HELM.Account.Model.Session do
+defmodule Helix.Account.Model.Session do
 
   @behaviour Guardian.Serializer
 

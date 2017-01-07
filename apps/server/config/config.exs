@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :server,
-  ecto_repos: [HELM.Server.Repo]
-config :server, HELM.Server.Repo,
+  ecto_repos: [Helix.Server.Repo]
+config :server, Helix.Server.Repo,
   size: 4,
   adapter: Ecto.Adapters.Postgres,
   database: "server_service",

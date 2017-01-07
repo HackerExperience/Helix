@@ -1,9 +1,9 @@
-defmodule HELM.Server.Model.Server do
+defmodule Helix.Server.Model.Server do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Server.Model.ServerType, as: MdlServerType, warn: false
+  alias Helix.Server.Model.ServerType, as: MdlServerType, warn: false
   import Ecto.Changeset
 
   @type id :: PK.t
@@ -43,7 +43,7 @@ defmodule HELM.Server.Model.Server do
       references: :server_type,
       type: :string
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t

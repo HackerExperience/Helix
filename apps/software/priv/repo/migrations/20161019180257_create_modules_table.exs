@@ -1,4 +1,4 @@
-defmodule HELM.Software.Repo.Migrations.CreateModulesTable do
+defmodule Helix.Software.Repo.Migrations.CreateModulesTable do
   use Ecto.Migration
 
   def change do
@@ -7,7 +7,7 @@ defmodule HELM.Software.Repo.Migrations.CreateModulesTable do
       add :module_role, references(:module_roles, column: :module_role, type: :string), primary_key: true
       add :module_version, :integer
 
-      timestamps
+      timestamps()
     end
   end
 end

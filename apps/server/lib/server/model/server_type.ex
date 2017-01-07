@@ -1,8 +1,8 @@
-defmodule HELM.Server.Model.ServerType do
+defmodule Helix.Server.Model.ServerType do
 
   use Ecto.Schema
 
-  alias HELM.Server.Model.Server, as: MdlServer, warn: false
+  alias Helix.Server.Model.Server, as: MdlServer, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

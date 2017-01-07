@@ -1,4 +1,4 @@
-defmodule HELM.Software.Repo.Migrations.CreateFileTypeTable do
+defmodule Helix.Software.Repo.Migrations.CreateFileTypeTable do
   use Ecto.Migration
 
   def change do
@@ -6,7 +6,7 @@ defmodule HELM.Software.Repo.Migrations.CreateFileTypeTable do
       add :file_type, :string, primary_key: true
       add :extension, :string
 
-      timestamps
+      timestamps()
     end
   end
 end

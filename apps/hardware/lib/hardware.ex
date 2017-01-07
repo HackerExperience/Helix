@@ -1,9 +1,9 @@
-defmodule HELM.Hardware.App do
+defmodule Helix.Hardware.App do
 
   use Application
 
-  alias HELM.Hardware.Repo, as: HardwareRepo
-  alias HELM.Hardware.Controller.HardwareService, as: HardwareSvc
+  alias Helix.Hardware.Repo, as: HardwareRepo
+  alias Helix.Hardware.Controller.HardwareService, as: HardwareSvc
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -13,7 +13,7 @@ defmodule HELM.Hardware.App do
       worker(HardwareSvc, [])
     ]
 
-    opts = [strategy: :one_for_one, name: HELM.Hardware.Supervisor]
+    opts = [strategy: :one_for_one, name: Helix.Hardware.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

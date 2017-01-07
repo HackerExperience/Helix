@@ -1,8 +1,8 @@
-defmodule HELM.Account.Controller.Account do
+defmodule Helix.Account.Controller.Account do
 
   alias Comeonin.Bcrypt
-  alias HELM.Account.Repo
-  alias HELM.Account.Model.Account, as: MdlAccount
+  alias Helix.Account.Repo
+  alias Helix.Account.Model.Account, as: MdlAccount
   import Ecto.Query, only: [where: 3, select: 3]
 
   @spec create(Ecto.Changeset.t) :: {:ok, MdlAccount.t} | {:error, Ecto.Changeset.t}

@@ -1,9 +1,9 @@
-defmodule HELM.Server.App do
+defmodule Helix.Server.App do
 
   use Application
 
-  alias HELM.Server.Repo
-  alias HELM.Server.Controller.ServerService
+  alias Helix.Server.Repo
+  alias Helix.Server.Controller.ServerService
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -13,7 +13,7 @@ defmodule HELM.Server.App do
       worker(ServerService, [])
     ]
 
-    opts = [strategy: :one_for_one, name: HELM.Server.Supervisor]
+    opts = [strategy: :one_for_one, name: Helix.Server.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

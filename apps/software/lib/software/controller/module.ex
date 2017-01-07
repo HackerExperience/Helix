@@ -1,7 +1,7 @@
-defmodule HELM.Software.Controller.Module do
+defmodule Helix.Software.Controller.Module do
 
-  alias HELM.Software.Repo
-  alias HELM.Software.Model.Module, as: MdlModule
+  alias Helix.Software.Repo
+  alias Helix.Software.Model.Module, as: MdlModule
   import Ecto.Query, only: [where: 3]
 
   @spec create(MdlModule.creation_params) :: {:ok, MdlModule.t} | {:error, Ecto.Changeset.t}

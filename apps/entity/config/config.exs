@@ -1,9 +1,9 @@
 use Mix.Config
 
 config :entity,
-  ecto_repos: [HELM.Entity.Repo]
+  ecto_repos: [Helix.Entity.Repo]
 
-config :entity, HELM.Entity.Repo,
+config :entity, Helix.Entity.Repo,
   size: 4,
   adapter: Ecto.Adapters.Postgres,
   database: "entity_service",

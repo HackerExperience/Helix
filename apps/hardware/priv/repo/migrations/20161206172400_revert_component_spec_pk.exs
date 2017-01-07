@@ -1,4 +1,4 @@
-defmodule HELM.Hardware.Repo.Migrations.RevertComponentSpecPk do
+defmodule Helix.Hardware.Repo.Migrations.RevertComponentSpecPk do
   use Ecto.Migration
 
   def change do

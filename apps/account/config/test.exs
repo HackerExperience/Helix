@@ -2,5 +2,5 @@ use Mix.Config
 
 config :comeonin, :bcrypt_log_rounds, 2
 
-config :account, HELM.Account.Repo,
+config :account, Helix.Account.Repo,
   pool: Ecto.Adapters.SQL.Sandbox

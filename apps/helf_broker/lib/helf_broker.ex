@@ -1,4 +1,4 @@
-defmodule HELM.HELFBroker.App do
+defmodule Helix.HELFBroker.App do
   use Application
 
   def start(_type, _args) do

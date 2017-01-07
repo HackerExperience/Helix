@@ -1,4 +1,4 @@
 use Mix.Config
 
-config :npc, HELM.NPC.Repo,
+config :npc, Helix.NPC.Repo,
   pool: Ecto.Adapters.SQL.Sandbox

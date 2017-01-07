@@ -1,15 +1,15 @@
-defmodule HELM.Software.Controller.ModuleTest do
+defmodule Helix.Software.Controller.ModuleTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
-  alias HELM.Software.Repo
-  alias HELM.Software.Model.FileType
-  alias HELM.Software.Model.ModuleRole
-  alias HELM.Software.Controller.File, as: CtrlFile
-  alias HELM.Software.Controller.Module, as: CtrlModule
-  alias HELM.Software.Controller.Storage, as: CtrlStorage
+  alias Helix.Software.Repo
+  alias Helix.Software.Model.FileType
+  alias Helix.Software.Model.ModuleRole
+  alias Helix.Software.Controller.File, as: CtrlFile
+  alias Helix.Software.Controller.Module, as: CtrlModule
+  alias Helix.Software.Controller.Storage, as: CtrlStorage
 
   setup do
     file_type = FileType |> Repo.all() |> Enum.random() |> Map.fetch!(:file_type)

@@ -1,4 +1,4 @@
-defmodule HELM.Server.Repo.Migrations.RemoveUselessTimestamps do
+defmodule Helix.Server.Repo.Migrations.RemoveUselessTimestamps do
   use Ecto.Migration
 
   def change do

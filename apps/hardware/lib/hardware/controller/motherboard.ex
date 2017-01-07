@@ -1,8 +1,8 @@
-defmodule HELM.Hardware.Controller.Motherboard do
+defmodule Helix.Hardware.Controller.Motherboard do
 
-  alias HELM.Hardware.Repo
-  alias HELM.Hardware.Model.Motherboard, as: MdlMobo
-  alias HELM.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlot
+  alias Helix.Hardware.Repo
+  alias Helix.Hardware.Model.Motherboard, as: MdlMobo
+  alias Helix.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlot
 
   import Ecto.Query, only: [where: 3]
 

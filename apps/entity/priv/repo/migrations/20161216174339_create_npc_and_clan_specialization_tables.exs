@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Repo.Migrations.CreateNpcAndClanSpecializationTables do
+defmodule Helix.Entity.Repo.Migrations.CreateNpcAndClanSpecializationTables do
   use Ecto.Migration
 
   def change do

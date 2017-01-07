@@ -1,9 +1,9 @@
-defmodule HELM.Software.Controller.StorageTest do
+defmodule Helix.Software.Controller.StorageTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.IPv6
-  alias HELM.Software.Controller.Storage, as: CtrlStorage
+  alias Helix.Software.Controller.Storage, as: CtrlStorage
 
   test "create/1" do
     assert {:ok, _} = CtrlStorage.create()

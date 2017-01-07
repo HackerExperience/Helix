@@ -1,5 +1,5 @@
-alias HELM.Server.Repo
-alias HELM.Server.Model.ServerType
+alias Helix.Server.Repo
+alias Helix.Server.Model.ServerType
 
 Repo.transaction fn ->
   ["desktop", "mobile", "vps"]

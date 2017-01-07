@@ -1,4 +1,4 @@
-defmodule HELM.Server.Repo.Migrations.CreateRenameMoboToMotherboard do
+defmodule Helix.Server.Repo.Migrations.CreateRenameMoboToMotherboard do
   use Ecto.Migration
 
   def change do

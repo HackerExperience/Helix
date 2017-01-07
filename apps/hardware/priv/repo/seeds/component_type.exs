@@ -1,5 +1,5 @@
-alias HELM.Hardware.Repo
-alias HELM.Hardware.Model.ComponentType
+alias Helix.Hardware.Repo
+alias Helix.Hardware.Model.ComponentType
 
 Repo.transaction fn ->
   component_types = ["mobo", "cpu", "ram", "hdd", "usb", "nic"]

@@ -1,11 +1,11 @@
-defmodule HELM.Server.Repo.Migrations.CreateServerTypeTable do
+defmodule Helix.Server.Repo.Migrations.CreateServerTypeTable do
   use Ecto.Migration
 
   def change do
     create table(:server_types, primary_key: false) do
       add :server_type, :string, primary_key: true
 
-      timestamps
+      timestamps()
     end
 
     alter table(:servers) do

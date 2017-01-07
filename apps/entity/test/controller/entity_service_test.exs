@@ -1,4 +1,4 @@
-defmodule HELM.Entity.Controller.EntityServiceTest do
+defmodule Helix.Entity.Controller.EntityServiceTest do
 
   use ExUnit.Case, async: true
 

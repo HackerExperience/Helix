@@ -1,4 +1,4 @@
-defmodule HELM.Software.Repo.Migrations.FixCompositePks do
+defmodule Helix.Software.Repo.Migrations.FixCompositePks do
   use Ecto.Migration
 
   def change do

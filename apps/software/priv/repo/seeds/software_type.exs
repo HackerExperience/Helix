@@ -1,6 +1,6 @@
-alias HELM.Software.Repo
-alias HELM.Software.Model.FileType
-alias HELM.Software.Model.ModuleRole
+alias Helix.Software.Repo
+alias Helix.Software.Model.FileType
+alias Helix.Software.Model.ModuleRole
 
 types = [
   %{

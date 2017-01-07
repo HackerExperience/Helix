@@ -1,4 +1,4 @@
-defmodule HELM.NPC.Repo.Migrations.ChangePrimaryKeyType do
+defmodule Helix.NPC.Repo.Migrations.ChangePrimaryKeyType do
   use Ecto.Migration
 
   def change do

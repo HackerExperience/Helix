@@ -1,4 +1,4 @@
-defmodule HELM.Software.Controller.SoftwareService do
+defmodule Helix.Software.Controller.SoftwareService do
 
   use GenServer
 

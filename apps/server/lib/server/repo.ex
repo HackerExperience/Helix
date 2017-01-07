@@ -1,3 +1,3 @@
-defmodule HELM.Server.Repo do
+defmodule Helix.Server.Repo do
   use Ecto.Repo, otp_app: :server
 end

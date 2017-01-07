@@ -1,10 +1,10 @@
-defmodule HELM.Entity.Model.Entity do
+defmodule Helix.Entity.Model.Entity do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Entity.Model.EntityServer, as: MdlEntityServer, warn: false
-  alias HELM.Entity.Model.EntityType, as: MdlEntityType, warn: false
+  alias Helix.Entity.Model.EntityServer, as: MdlEntityServer, warn: false
+  alias Helix.Entity.Model.EntityType, as: MdlEntityType, warn: false
   import Ecto.Changeset
 
   @type id :: String.t
@@ -35,7 +35,7 @@ defmodule HELM.Entity.Model.Entity do
       references: :entity_type,
       type: :string
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t

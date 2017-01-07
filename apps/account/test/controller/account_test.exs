@@ -1,12 +1,12 @@
-defmodule HELM.Account.Controller.AccountTest do
+defmodule Helix.Account.Controller.AccountTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias HELM.Account.Model.Account
-  alias HELM.Account.Repo
-  alias HELM.Account.Controller.Account, as: CtrlAccount
-  alias HELM.Entity.Controller.Entity, as: EntityController
+  alias Helix.Account.Model.Account
+  alias Helix.Account.Repo
+  alias Helix.Account.Controller.Account, as: CtrlAccount
+  alias Helix.Entity.Controller.Entity, as: EntityController
 
   setup do
     account =

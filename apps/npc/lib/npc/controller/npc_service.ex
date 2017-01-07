@@ -1,4 +1,4 @@
-defmodule HELM.NPC.Controller.NPCService do
+defmodule Helix.NPC.Controller.NPCService do
 
   use GenServer
 

@@ -1,12 +1,12 @@
-defmodule HELM.Server.Controller.ServerService do
+defmodule Helix.Server.Controller.ServerService do
 
   use GenServer
 
   alias HELF.Broker
   alias HELL.PK
-  alias HELM.Server.Model.Server, as: ServerModel
-  alias HELM.Server.Controller.Server, as: ServerController
-  alias HELM.Server.Controller.Server, as: CtrlServers
+  alias Helix.Server.Model.Server, as: ServerModel
+  alias Helix.Server.Controller.Server, as: ServerController
+  alias Helix.Server.Controller.Server, as: CtrlServers
 
   @typep state :: nil
 

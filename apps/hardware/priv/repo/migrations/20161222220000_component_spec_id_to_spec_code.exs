@@ -1,4 +1,4 @@
-defmodule HELM.Hardware.Repo.Migrations.ComponentSpecIdToSpecCode do
+defmodule Helix.Hardware.Repo.Migrations.ComponentSpecIdToSpecCode do
   use Ecto.Migration
 
   def change do

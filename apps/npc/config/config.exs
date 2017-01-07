@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :npc,
-  ecto_repos: [HELM.NPC.Repo]
-config :npc, HELM.NPC.Repo,
+  ecto_repos: [Helix.NPC.Repo]
+config :npc, Helix.NPC.Repo,
   size: 4,
   adapter: Ecto.Adapters.Postgres,
   database: "npc_service",

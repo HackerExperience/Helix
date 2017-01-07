@@ -1,10 +1,10 @@
-defmodule HELM.Software.Model.Storage do
+defmodule Helix.Software.Model.Storage do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Software.Model.StorageDrive, as: MdlStorageDrive, warn: false
-  alias HELM.Software.Model.File, as: MdlFile, warn: false
+  alias Helix.Software.Model.StorageDrive, as: MdlStorageDrive, warn: false
+  alias Helix.Software.Model.File, as: MdlFile, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -27,7 +27,7 @@ defmodule HELM.Software.Model.Storage do
       foreign_key: :storage_id,
       references: :storage_id
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset() :: Ecto.Changeset.t

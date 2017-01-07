@@ -1,4 +1,4 @@
-defmodule HELM.Account.Repo.Migrations.CreateAccountDatabase do
+defmodule Helix.Account.Repo.Migrations.CreateAccountDatabase do
   use Ecto.Migration
 
   def change do
@@ -8,7 +8,7 @@ defmodule HELM.Account.Repo.Migrations.CreateAccountDatabase do
       add :email, :string
       add :confirmed, :boolean, default: false
 
-      timestamps
+      timestamps()
     end
 
     create unique_index(:accounts, [:account_id], name: :unique_account_id)

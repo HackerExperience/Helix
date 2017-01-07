@@ -1,7 +1,7 @@
-defmodule HELM.Hardware.Controller.Component do
+defmodule Helix.Hardware.Controller.Component do
 
-  alias HELM.Hardware.Repo
-  alias HELM.Hardware.Model.Component, as: MdlComp
+  alias Helix.Hardware.Repo
+  alias Helix.Hardware.Model.Component, as: MdlComp
   import Ecto.Query, only: [where: 3]
 
   @spec create(MdlComp.creation_params) :: {:ok, MdlComp.t} | {:error, Ecto.Changeset.t}

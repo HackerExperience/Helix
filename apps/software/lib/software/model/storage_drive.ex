@@ -1,9 +1,9 @@
-defmodule HELM.Software.Model.StorageDrive do
+defmodule Helix.Software.Model.StorageDrive do
 
   use Ecto.Schema
 
   alias HELL.PK
-  alias HELM.Software.Model.Storage, as: MdlStorage, warn: false
+  alias Helix.Software.Model.Storage, as: MdlStorage, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -26,7 +26,7 @@ defmodule HELM.Software.Model.StorageDrive do
       type: EctoNetwork.INET,
       primary_key: true
 
-    timestamps
+    timestamps()
   end
 
   @spec create_changeset(%{optional(:drive_id) => PK.t, optional(:storage_id) => PK.t}) :: Ecto.Changeset.t

@@ -1,9 +1,9 @@
-defmodule HELM.Entity.Model.EntityServer do
+defmodule Helix.Entity.Model.EntityServer do
 
   use Ecto.Schema
 
-  alias HELM.Server.Model.Server
-  alias HELM.Entity.Model.Entity, as: MdlEntity, warn: false
+  alias Helix.Server.Model.Server
+  alias Helix.Entity.Model.Entity, as: MdlEntity, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

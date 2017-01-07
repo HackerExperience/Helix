@@ -1,4 +1,4 @@
-defmodule HELM.Software.Repo.Migrations.ModuleRoleRequiresFileType do
+defmodule Helix.Software.Repo.Migrations.ModuleRoleRequiresFileType do
   use Ecto.Migration
 
   def change do
