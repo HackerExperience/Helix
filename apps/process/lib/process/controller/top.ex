@@ -13,6 +13,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
 
+  import HELL.MacroHelpers
+
   defstruct [:server_id, :processes, :resources, :timer]
 
   @type server_id :: String.t
@@ -71,7 +73,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   @spec apply_update([Ecto.Changeset.t]) :: ProcessModel.t
   @spec apply_update(
     {:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}) :: ProcessModel.t
-  @docp """
+  docp """
   Asynchronously stores the changes from `changeset_list` into the database and
   immediately returns all the changesets applied as models
 
@@ -96,7 +98,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   @spec request_server_resources(server_id) :: {:ok, Resources.t} | {:error, reason :: term}
-  @docp """
+  docp """
   Requests the amount of in-game hardware related to the `server_id` server
   """
   defp request_server_resources(server_id) do
@@ -109,7 +111,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   @spec request_server_processes(server_id) :: {:ok, [ProcessModel.t]} | {:error, reason :: term}
-  @docp """
+  docp """
   Requests the list of in-game processes running on this server
 
   Does so by querying the Server service, receiving the list of process id's
@@ -290,7 +292,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     ((Ecto.Changeset.t) -> Ecto.Changeset.t)) ::
       [Ecto.Changeset.t]
       | {:error, :insufficient_resources}
-  @docp """
+  docp """
   Updates process with `process_id` from `processes` using `mapper`
   """
   defp update_one(processes, process_id, resources, mapper) do
@@ -312,7 +314,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   @spec allocate([ProcessModel.t], Resources.t) :: [Ecto.Changeset.t]
-  @docp """
+  docp """
   Allocates dynamic resources to the `processes` as long as the total does not
   exceed `resources`
   """
@@ -391,7 +393,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   @spec allocate_dropping(
     [ProcessModel.t],
     Resources.t) :: {:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}
-  @docp """
+  docp """
   Tries to allocate `resources` into `processes` and will drop randomly as many
   `processes` as needed to fit
   """
@@ -415,7 +417,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     do: {:update_and_delete, [], acc}
 
   @spec update_timer([ProcessModel.t], timer) :: timer
-  @docp """
+  docp """
   Traverses the table of process and updates the timer to notify the process
   when the next estimated change will happen.
   """
@@ -435,7 +437,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     do: nil
   defp start_timer(seconds) do
     date = Timex.shift(DateTime.utc_now(), seconds: seconds)
-    tref = :erlang.send_after(seconds * 1_000, self, :allocate)
+    tref = :erlang.send_after(seconds * 1_000, self(), :allocate)
 
     {date, tref}
   end

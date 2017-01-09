@@ -305,7 +305,10 @@ defmodule Helix.Process.Model.ProcessTest do
     do
       resources = %Resources{ram: 300}
       minimum = %{running: %{ram: 600}}
-      last_updated = Ecto.DateTime.from_erl({{2000, 01, 01}, {01, 01, 01}})
+      last_updated =
+        {{2000, 01, 01}, {01, 01, 01}}
+        |> NaiveDateTime.from_erl!()
+        |> DateTime.from_naive!("Etc/UTC")
       params = %{state: :paused, minimum: minimum, updated_time: last_updated}
       now = DateTime.utc_now()
 

@@ -33,11 +33,11 @@ defmodule Helix.Process.Model.Process do
       primary_key: true
 
     # The gateway that started the process
-    field :gateway_id, EctoNetwork.INET
+    field :gateway_id, HELL.PK
     # The server where the target object of this process action is
-    field :target_server_id, EctoNetwork.INET
+    field :target_server_id, HELL.PK
     # Which file (if any) contains the "executable" of this process
-    field :file_id, EctoNetwork.INET
+    field :file_id, HELL.PK
 
     # Data that is used by the specific implementation of the process
     # side-effects

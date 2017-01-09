@@ -1,6 +1,6 @@
 defmodule Helix.Process.TestHelper.SoftwareTypeExample do
 
-  defstruct [:foo, :bar]
+  defstruct []
 
   defimpl Helix.Process.Model.Process.SoftwareType do
     def allocation_handler(_),
