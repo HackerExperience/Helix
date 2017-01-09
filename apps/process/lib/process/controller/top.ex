@@ -8,14 +8,14 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   require Logger
 
-  alias HELF.Broker
   alias HELM.Process.Repo
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
+  alias Helix.Process.Model.Process.SoftwareType
 
   import HELL.MacroHelpers
 
-  defstruct [:server_id, :processes, :resources, :timer]
+  defstruct [:server_id, :processes, :resources, :timer, :broker]
 
   @type server_id :: String.t
   @type timer :: {DateTime.t, tref :: reference} | nil
@@ -27,8 +27,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   @doc """
   Starts a process to hold the state of a _Table Of Processes_
   """
-  def start_link(server_id),
-    do: GenServer.start_link(__MODULE__, server_id)
+  def start_link(server_id, params \\ []),
+    do: GenServer.start_link(__MODULE__, {server_id, params})
 
   @spec priority(pid, ProcessModel.id, 0..5) :: no_return
   @doc """
@@ -97,30 +97,30 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     Enum.map(changeset_list, &Ecto.Changeset.apply_changes/1)
   end
 
-  @spec request_server_resources(server_id) :: {:ok, Resources.t} | {:error, reason :: term}
+  @spec request_server_resources(module, server_id) :: {:ok, Resources.t} | {:error, reason :: term}
   docp """
   Requests the amount of in-game hardware related to the `server_id` server
   """
-  defp request_server_resources(server_id) do
+  defp request_server_resources(broker, server_id) do
     with \
       params = %{server_id: server_id},
-      {_, {:ok, return}} <- Broker.call("server:hardware:resources:get", params)
+      {_, {:ok, return}} <- broker.call("server:hardware:resources:get", params)
     do
       Resources.from_server_resources(return)
     end
   end
 
-  @spec request_server_processes(server_id) :: {:ok, [ProcessModel.t]} | {:error, reason :: term}
+  @spec request_server_processes(module, server_id) :: {:ok, [ProcessModel.t]} | {:error, reason :: term}
   docp """
   Requests the list of in-game processes running on this server
 
   Does so by querying the Server service, receiving the list of process id's
   that the server has and then fetching them from database
   """
-  defp request_server_processes(server_id) do
+  defp request_server_processes(broker, server_id) do
     with \
       params = %{server_id: server_id},
-      {_, {:ok, process_list}} <- Broker.call("server:processes:get", params)
+      {_, {:ok, process_list}} <- broker.call("server:processes:get", params)
     do
       processes =
         ProcessModel
@@ -132,17 +132,28 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     end
   end
 
-  @spec notify(atom, ProcessModel.t) :: no_return
-  defp notify(:complete, _process) do
-    # TODO
-    :ok
+  @spec notify(module, ProcessModel.t, atom) :: no_return
+  defp notify(broker, process, :complete) do
+    namespace = SoftwareType.event_namespace(process.software)
+    message = %{
+      process_id: process.process_id,
+      target_server_id: process.target_server_id,
+      software: process.software
+    }
+
+    # Should become something like 'event:process:cracker:completed'
+    topic = namespace <> ":completed"
+
+    broker.cast(topic, message)
   end
 
   @doc false
-  def init(server_id) do
+  def init({server_id, params}) do
+    broker = Keyword.get(params, :broker, HELF.Broker)
+
     with \
-      {:ok, resources} <- request_server_resources(server_id),
-      {:ok, process_list} <- request_server_processes(server_id)
+      {:ok, resources} <- request_server_resources(broker, server_id),
+      {:ok, process_list} <- request_server_processes(broker, server_id)
     do
       processes =
         process_list
@@ -154,7 +165,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
         processes: processes,
         resources: resources,
         server_id: server_id,
-        timer: update_timer(processes, nil)
+        timer: update_timer(processes, nil),
+        broker: broker
       }
 
       # TODO: enqueue request to fetch the "minimum" of each process
@@ -238,7 +250,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       |> calculate_work()
       |> Enum.split_with(&ProcessModel.complete?/1)
 
-    Enum.each(complete, &notify(:complete, &1))
+    Enum.each(complete, &notify(state.broker, &1, :complete))
 
     processes =
       complete
