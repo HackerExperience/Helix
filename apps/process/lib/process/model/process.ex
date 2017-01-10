@@ -17,7 +17,7 @@ defmodule Helix.Process.Model.Process do
     process_id: id,
     gateway_id: String.t,
     software: SoftwareType.t,
-    state: State.states,
+    state: State.state,
     limitations: Limitations.t,
     objective: Resources.t,
     processed: Resources.t,

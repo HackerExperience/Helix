@@ -395,13 +395,12 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       |> Enum.map(fn {p2, p1} -> Resources.sub(p2.allocated, p1.allocated) end)
       |> Enum.reduce(&Resources.sum/2)
 
-    # How much resource is left for next round
+    # How many resources are left for next round
     r2 = Resources.sub(resources, r_delta)
 
     allocate(realloc, r2, s2, nalloc ++ acc)
   end
 
-  # TODO: (dont) rename me
   @spec allocate_dropping(
     [ProcessModel.t],
     Resources.t) :: {:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}
@@ -417,12 +416,12 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     |> allocate_dropping(resources, [])
   end
 
-  defp allocate_dropping([p| t], resources, acc) do
-    case allocate(t, resources) do
+  defp allocate_dropping(p = [h| t], resources, acc) do
+    case allocate(p, resources) do
       {:error, :insufficient_resources} ->
-        allocate_dropping(t, resources, [p| acc])
+        allocate_dropping(t, resources, [h| acc])
       changeset_list ->
-        {:update_and_delete, changeset_list, [p| acc]}
+        {:update_and_delete, changeset_list, acc}
     end
   end
   defp allocate_dropping([], _, acc),
@@ -440,7 +439,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
     processes
     |> Enum.map(&ProcessModel.seconds_to_change/1)
-    |> Enum.reduce(nil, &min/2)
+    |> Enum.reduce(&min/2)
     |> start_timer()
   end
 
