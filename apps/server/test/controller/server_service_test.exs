@@ -20,7 +20,9 @@ defmodule Helix.Server.Controller.ServerServiceTest do
         send pid, {ref, data}
       end)
 
-      {_, {:ok, account}} = Broker.call("account:create", params)
+      {_, {:ok, account}} =
+        Broker.call("account:create", params)
+
       assert_receive {^ref, {server_id, entity_id}}
       assert account.account_id == entity_id
       assert {_, {:ok, _}} = Broker.call("server:query", server_id)

@@ -2,7 +2,7 @@ defmodule Helix.Hardware.Controller.Motherboard do
 
   alias Helix.Hardware.Repo
   alias Helix.Hardware.Model.Motherboard
-
+  alias Helix.Hardware.Model.MotherboardSlot, as: MotherboardSlot
   import Ecto.Query, only: [where: 3]
 
   @spec create(Motherboard.creation_params) :: {:ok, Motherboard.t} | no_return
@@ -28,6 +28,13 @@ defmodule Helix.Hardware.Controller.Motherboard do
       res ->
         {:ok, res}
     end
+  end
+
+  @spec get_slots(HELL.PK.t) :: [MotherboardSlot.t]
+  def get_slots(motherboard_id) do
+    MotherboardSlot
+    |> where([s], s.motherboard_id == ^motherboard_id)
+    |> Repo.all()
   end
 
   @spec delete(HELL.PK.t) :: no_return

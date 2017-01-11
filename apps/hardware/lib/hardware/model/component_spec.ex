@@ -36,8 +36,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:component_type, :spec])
     |> put_primary_key()
+    |> validate_required([:component_type, :spec, :spec_id])
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
@@ -52,7 +52,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     spec_code =
       changeset
       |> get_field(:spec)
-      |> Map.fetch!(:spec_code)
+      |> Map.get(:spec_code)
 
     changeset
     |> cast(%{spec_id: spec_code}, [:spec_id])
