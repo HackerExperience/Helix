@@ -15,14 +15,13 @@ defmodule Helix.Server.Controller.ServerServiceTest do
 
   describe "server creation" do
     test "after account creation", %{params: params} do
-      {_, {:ok, account}} = Broker.call("account:create", params)
-
       ref = make_ref()
       Broker.subscribe("event:server:created", cast: fn pid, _, data, _ ->
         send pid, {ref, data}
       end)
 
-      assert_receive {^ref, {server_id, entity_id}}, 200
+      {_, {:ok, account}} = Broker.call("account:create", params)
+      assert_receive {^ref, {server_id, entity_id}}
       assert account.account_id == entity_id
       assert {_, {:ok, _}} = Broker.call("server:query", server_id)
     end
