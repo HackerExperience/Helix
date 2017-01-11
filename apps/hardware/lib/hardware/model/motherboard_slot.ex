@@ -76,10 +76,12 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = PK.generate([0x0003, 0x0002, 0x0000])
-
-    changeset
-    |> cast(%{slot_id: ip}, [:slot_id])
+    if get_field(changeset, :slot_id) do
+      changeset
+    else
+      pk = PK.generate([0x0003, 0x0002, 0x0000])
+      cast(changeset, %{slot_id: pk}, [:slot_id])
+    end
   end
 
   @spec linked?(t) :: boolean

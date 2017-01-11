@@ -1,32 +1,28 @@
 defmodule Helix.Hardware.Controller.Motherboard do
 
   alias Helix.Hardware.Repo
-  alias Helix.Hardware.Model.Motherboard, as: MdlMobo
-  alias Helix.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlot
+  alias Helix.Hardware.Model.Motherboard
 
   import Ecto.Query, only: [where: 3]
 
-  @spec create(MdlMobo.creation_params) :: {:ok, MdlMobo.t} | no_return
+  @spec create(Motherboard.creation_params) :: {:ok, Motherboard.t} | no_return
   def create(params) do
     Repo.transaction fn ->
-      motherboard =
-        params
-        |> MdlMobo.create_changeset()
-        |> Repo.insert!()
-        |> Repo.preload(:component_spec)
+      motherboard = Motherboard.create_changeset(params)
 
-      motherboard.component_spec
-      |> MdlMobo.parse_motherboard_spec()
-      |> Enum.map(&Map.put(&1, :motherboard_id, motherboard.motherboard_id))
-      |> Enum.each(fn params -> {:ok, _} = CtrlMoboSlot.create(params) end)
-
-      motherboard
+      case Repo.insert(motherboard) do
+        {:ok, mb} ->
+          mb
+        _ ->
+          # TODO: Proper error message
+          Repo.rollback(:internal_error)
+      end
     end
   end
 
-  @spec find(HELL.PK.t) :: {:ok, MdlMobo.t} | {:error, :notfound}
+  @spec find(HELL.PK.t) :: {:ok, Motherboard.t} | {:error, :notfound}
   def find(motherboard_id) do
-    case Repo.get_by(MdlMobo, motherboard_id: motherboard_id) do
+    case Repo.get_by(Motherboard, motherboard_id: motherboard_id) do
       nil ->
         {:error, :notfound}
       res ->
@@ -37,14 +33,11 @@ defmodule Helix.Hardware.Controller.Motherboard do
   @spec delete(HELL.PK.t) :: no_return
   def delete(motherboard_id) do
     {status, _} = Repo.transaction fn ->
-      CtrlMoboSlot.delete_all_from_motherboard(motherboard_id)
-
-      MdlMobo
+      Motherboard
       |> where([m], m.motherboard_id == ^motherboard_id)
       |> Repo.delete_all()
-
-      :ok
     end
+
     status
   end
 end
