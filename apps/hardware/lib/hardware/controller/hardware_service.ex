@@ -136,7 +136,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, {:ok, motherboard}, state}
   end
 
-  @spec create_motherboard(PK.t, HeBroker.Request.t) :: Motherboard.t
+  @spec create_motherboard(PK.t, HeBroker.Request.t) :: {:ok, Motherboard.t} | {:error, Ecto.Changeset.t}
   defp create_motherboard(spec_id, request) do
     case create_component("mobo", spec_id, request) do
       {:ok, component} ->
@@ -185,7 +185,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  @spec create_component(String.t, PK.t, HeBroker.Request.t) :: Component.t
+  @spec create_component(String.t, PK.t, HeBroker.Request.t) :: {:ok, Component.t} | {:error, Ecto.Changeset.t}
   defp create_component(component_type, spec_id, request) do
     params = %{
       component_type: component_type,
@@ -202,7 +202,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  @spec slots_map(PK.t) :: %{optional(String.t) => MotherboardSlot.t}
+  @spec slots_map(PK.t) :: %{optional(String.t) => [MotherboardSlot.t]}
   defp slots_map(motherboard_id) do
     slots = CtrlMoboSlots.find_by(motherboard_id: motherboard_id)
     Enum.reduce(slots, %{}, fn slot, acc ->
