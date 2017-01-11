@@ -74,14 +74,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     |> cast(params, @update_fields)
   end
 
-  def changeset(schema, params) do
-    schema
-    |> cast(params, @creation_fields ++ @update_fields)
-    |> validate_required(
-      [:motherboard_id, :link_component_type, :slot_internal_id])
-    |> put_primary_key()
-  end
-
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
     if get_field(changeset, :slot_id) do

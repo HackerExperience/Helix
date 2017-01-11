@@ -105,6 +105,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     end
   end
 
+  # REVIEW: Related to T409; move to motherboard tests
   test "delete is idempotent and removes every slot", %{mobo: mobo} do
     refute [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
 
@@ -128,6 +129,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
     end
 
+    # REVIEW: T409
     # test "failure when component is already used", %{slot: slot, mobo: mobo} do
     #   component = component_for(slot)
 
