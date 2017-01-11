@@ -36,7 +36,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
 
   def handle_broker_cast(pid, "event:server:created", {server_id, _entity_id}, request) do
     # FIXME: remove hardcoded data
-    hardware = %{
+    bundle = %{
       motherboard: "MOBO01",
       components:  [
         {"cpu", "CPU01"},
@@ -46,7 +46,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
       ]
     }
 
-    GenServer.call(pid, {:setup, server_id, hardware, request})
+    GenServer.call(pid, {:setup, server_id, bundle, request})
   end
 
   @spec init(any) :: {:ok, state}
@@ -119,13 +119,13 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response, state}
   end
 
-  def handle_call({:setup, server_id, hardware, request}, _from, state) do
+  def handle_call({:setup, server_id, bundle, request}, _from, state) do
     result =
       Repo.transaction(fn ->
         with \
-          {:ok, motherboard, ev0} <- create_motherboard(hardware.motherboard),
-          {:ok, components, ev1} <- create_components(hardware.components),
-          {:ok, ev2} <- setup_motherboard(motherboard, components)
+          {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard),
+          {:ok, components, ev1} <- create_components(bundle.components),
+          {:ok, motherboard, ev2} <- setup_motherboard(motherboard, components)
         do
           {motherboard, ev0 ++ ev1 ++ ev2}
         else
@@ -135,9 +135,9 @@ defmodule Helix.Hardware.Controller.HardwareService do
       end)
 
     case result do
-      {:ok, {motherboard, events}} ->
+      {:ok, {motherboard, deferred_events}} ->
         # FIXME: this should be handled by Eventually.flush(events)
-        Enum.each(events, fn {topic, params} ->
+        Enum.each(deferred_events, fn {topic, params} ->
           Broker.cast(topic, params, request: request)
         end)
 
@@ -153,7 +153,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
   end
 
   @spec create_motherboard(HELL.PK.t) ::
-    {:ok, Motherboard.t, events :: [{String.t, map}]}
+    {:ok, Motherboard.t, deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
   defp create_motherboard(spec_id) do
     with \
@@ -172,14 +172,14 @@ defmodule Helix.Hardware.Controller.HardwareService do
   end
 
   @spec create_components([{String.t, String.t}]) ::
-    {:ok, [Component.t], events :: [{String.t, map}]}
+    {:ok, [Component.t], deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
   defp create_components(components) do
     components
     |> create_components({[], []})
     |> case do
-      {:ok, components, events} ->
-        {:ok, components, events}
+      {:ok, components, deferred_events} ->
+        {:ok, components, deferred_events}
       {:error, error} ->
         {:error, error}
     end
@@ -188,23 +188,23 @@ defmodule Helix.Hardware.Controller.HardwareService do
   @spec create_components(
     [{String.t, String.t}],
     {[Component.t], [{String.t, map}]}) ::
-      {:ok, [Component.t], events :: {String.t, map}}
+      {:ok, [Component.t], deferred_events :: {String.t, map}}
       | {:error, Ecto.Changeset.t}
-  defp create_components([{type, id} | rest], {components, events}) do
+  defp create_components([{type, id} | rest], {components, deferred_events}) do
     case create_component(type, id) do
       {:ok, component, event} ->
-        accum = {[component | components], [event | events]}
+        accum = {[component | components], [event | deferred_events]}
         create_components(rest, accum)
       {:error, error} ->
         {:error, error}
     end
   end
-  defp create_components([], {components, events}) do
-    {:ok, components, events}
+  defp create_components([], {components, deferred_events}) do
+    {:ok, components, deferred_events}
   end
 
   @spec create_component(String.t, String.t) ::
-    {:ok, Component.t, event :: {String.t, map}}
+    {:ok, Component.t, deferred_event :: {String.t, map}}
     | {:error, Ecto.Changeset.t}
   defp create_component(component_type, spec_id) do
     params = %{
@@ -214,16 +214,16 @@ defmodule Helix.Hardware.Controller.HardwareService do
     case CtrlComps.create(params) do
       {:ok, component} ->
         msg = %{component_id: component.component_id}
-        event = {"event:component:created", msg}
+        deferred_event = {"event:component:created", msg}
 
-        {:ok, component, event}
+        {:ok, component, deferred_event}
       {:error, error} ->
         {:error, error}
     end
   end
 
   @spec setup_motherboard(Motherboard.t, [Component.t]) ::
-    {:ok, events :: [{String.t, map}]}
+    {:ok, Motherboard.t, deferred_events :: [{String.t, map}]}
     | {:error, :no_slots_available | Ecto.Changeset.t}
   defp setup_motherboard(motherboard, components) do
     grouped_slots =
@@ -252,7 +252,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
         {:error, error}
       _ ->
         msg = %{motherboard_id: motherboard.motherboard_id}
-        {:ok, [{"event:motherboard:created", msg}]}
+        {:ok, motherboard, [{"event:motherboard:created", msg}]}
     end
   end
 end
