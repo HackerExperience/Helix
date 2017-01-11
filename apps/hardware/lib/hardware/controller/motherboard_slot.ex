@@ -5,13 +5,6 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
   alias Helix.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
   import Ecto.Query, only: [where: 3]
 
-  @spec create(MdlMoboSlot.creation_params) :: {:ok, MdlMoboSlot.t} | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
-    |> MdlMoboSlot.create_changeset()
-    |> Repo.insert()
-  end
-
   @spec find(HELL.PK.t) :: {:ok, MdlMoboSlot.t} | {:error, :notfound}
   def find(slot_id) do
     case Repo.get_by(MdlMoboSlot, slot_id: slot_id) do
@@ -69,15 +62,6 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
   @spec unlink(HELL.PK.t) :: {:ok, MdlMoboSlot.t} | {:error, :notfound | Ecto.Changeset.t}
   def unlink(slot_id) do
     update(slot_id, %{link_component_id: nil})
-  end
-
-  @spec delete_all_from_motherboard(HELL.PK.t) :: no_return
-  def delete_all_from_motherboard(motherboard_id) do
-    MdlMoboSlot
-    |> where([s], s.motherboard_id == ^motherboard_id)
-    |> Repo.delete_all()
-
-    :ok
   end
 
   @spec component_used?(HELL.PK.t) :: boolean
