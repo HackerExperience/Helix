@@ -9,21 +9,19 @@ defmodule Helix.HELFRouter.Mixfile do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.3",
+      elixir: "~> 1.4",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       elixirc_options: elixirc_options(Mix.env),
-      deps: deps()]
+      deps: deps()
+    ]
   end
 
   def application do
     [
-      applications: applications(Mix.env),
-      mod: {Helix.HELFRouter.App, []}]
+      mod: {Helix.HELFRouter.App, []}
+    ]
   end
-
-  defp applications(_),
-    do: [:logger, :cowboy]
 
   defp elixirc_options(:dev),
     do: []
@@ -33,6 +31,7 @@ defmodule Helix.HELFRouter.Mixfile do
   defp deps do
     [
       {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},
-      {:cowboy,"~> 1.0"}]
+      {:cowboy,"~> 1.0"}
+    ]
   end
 end

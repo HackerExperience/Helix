@@ -5,7 +5,8 @@ defmodule Helix.HELFBroker.App do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(HELF.Broker, [])]
+      # worker(HELF.Broker, [])
+    ]
 
     opts = [strategy: :one_for_one, name: HELFBroker.Supervisor]
     Supervisor.start_link(children, opts)
