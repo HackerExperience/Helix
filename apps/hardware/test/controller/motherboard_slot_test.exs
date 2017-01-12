@@ -51,7 +51,9 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       spec: spec]
   end
 
-  setup context do
+  setup [:create_motherboard]
+
+  defp create_motherboard(context) do
     comp_params = %{
       component_type: context.mobo_type,
       spec_id: context.spec.spec_id}
@@ -105,17 +107,6 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     end
   end
 
-  # REVIEW: Related to T409; move to motherboard tests
-  test "delete is idempotent and removes every slot", %{mobo: mobo} do
-    refute [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
-
-    # MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
-    # MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
-    MotherboardController.delete(mobo.motherboard_id)
-
-    assert [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
-  end
-
   describe "link" do
     test "connecting a component into slot", %{slot: slot} do
       component = component_for(slot)
@@ -129,21 +120,16 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
     end
 
-    # REVIEW: T409
-    # test "failure when component is already used", %{slot: slot, mobo: mobo} do
-    #   component = component_for(slot)
+    test "failure when component is already used", context0 do
+       {:ok, keywords} = create_motherboard(context0)
 
-    #   slot_params = %{
-    #     motherboard_id: mobo.motherboard_id,
-    #     link_component_type: mobo.component_spec.component_type,
-    #     slot_internal_id: Burette.Number.digits(8),
-    #     link_component_id: component.component_id
-    #   }
+       slot0 = context0.slot
+       slot1 = Keyword.get(keywords, :slot)
+       component = component_for(slot0)
+       MotherboardSlotController.link(slot0.slot_id, component.component_id)
 
-    #   MotherboardSlotController.create(slot_params)
-
-    #   assert {:error, :component_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
-    # end
+       assert {:error, :component_already_linked} === MotherboardSlotController.link(slot1.slot_id, component.component_id)
+    end
   end
 
   test "unlink is idempotent", %{slot: slot} do
