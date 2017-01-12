@@ -51,9 +51,12 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       spec: spec]
   end
 
-  setup [:create_motherboard]
+  setup %{mobo_type: mobo_type, spec: spec} do
+    {:ok, slot, mobo} = create_motherboard(mobo_type, spec.spec_code)
+    {:ok, slot: slot, mobo: mobo}
+  end
 
-  defp create_motherboard(context) do
+  defp create_motherboard(motherboard_type, spec_code) do
     comp_params = %{
       component_type: context.mobo_type,
       spec_id: context.spec.spec_id}
@@ -67,7 +70,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
       |> List.first()
 
-    {:ok, slot: slot, mobo: mobo}
+    {:ok, slot, mobo}
   end
 
   defp component_type(name) do
@@ -120,11 +123,10 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
     end
 
-    test "failure when component is already used", context0 do
-       {:ok, keywords} = create_motherboard(context0)
+    test "failure when component is already used", context do
+      %{slot: slot0, spec: spec, mobo_type: mobo_type} = context
+      {:ok, slot1, _} = create_motherboard(mobo_type, spec.spec_code)
 
-       slot0 = context0.slot
-       slot1 = Keyword.get(keywords, :slot)
        component = component_for(slot0)
        MotherboardSlotController.link(slot0.slot_id, component.component_id)
 
