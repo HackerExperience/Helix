@@ -52,25 +52,26 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   end
 
   setup %{mobo_type: mobo_type, spec: spec} do
-    {:ok, slot, mobo} = create_motherboard(mobo_type, spec.spec_code)
+    {:ok, mobo} = create_motherboard(mobo_type, spec.spec_id)
+    slot =
+      mobo.motherboard_id
+      |> MotherboardController.get_slots()
+      |> List.first()
+
     {:ok, slot: slot, mobo: mobo}
   end
 
-  defp create_motherboard(motherboard_type, spec_code) do
+  defp create_motherboard(motherboard_type, spec_id) do
     comp_params = %{
-      component_type: context.mobo_type,
-      spec_id: context.spec.spec_id}
+      component_type: motherboard_type,
+      spec_id: spec_id}
     {:ok, comp} = ComponentController.create(comp_params)
 
     mobo_params = %{motherboard_id: comp.component_id}
     {:ok, mobo} = MotherboardController.create(mobo_params)
     mobo = Repo.preload(mobo, :component_spec)
 
-    slot =
-      MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
-      |> List.first()
-
-    {:ok, slot, mobo}
+    {:ok, mobo}
   end
 
   defp component_type(name) do
@@ -125,7 +126,12 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
     test "failure when component is already used", context do
       %{slot: slot0, spec: spec, mobo_type: mobo_type} = context
-      {:ok, slot1, _} = create_motherboard(mobo_type, spec.spec_code)
+      {:ok, mobo} = create_motherboard(mobo_type, spec.spec_id)
+
+      slot1 =
+        mobo.motherboard_id
+        |> MotherboardController.get_slots()
+        |> List.first()
 
        component = component_for(slot0)
        MotherboardSlotController.link(slot0.slot_id, component.component_id)
