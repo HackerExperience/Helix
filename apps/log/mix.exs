@@ -1,9 +1,9 @@
-defmodule Helix.Entity.Mixfile do
+defmodule Helix.Log.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :entity,
+      app: :log,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -19,7 +19,7 @@ defmodule Helix.Entity.Mixfile do
 
   def application do
     [
-      mod: {Helix.Entity.App, []}
+      mod: {Helix.Log.Application, []}
     ]
   end
 
@@ -30,8 +30,7 @@ defmodule Helix.Entity.Mixfile do
 
   defp deps do
     [
-      {:helix_core, in_umbrella: true},
-      {:account, in_umbrella: true}
+      {:helix_core, in_umbrella: true}
     ]
   end
 end
