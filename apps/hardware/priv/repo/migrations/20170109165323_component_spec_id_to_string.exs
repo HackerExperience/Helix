@@ -1,4 +1,4 @@
-defmodule Helix.Hardware.Repo.Migrations.ComponentSpecIdToSpecCode do
+defmodule Helix.Hardware.Repo.Migrations.ComponentSpecIdToString do
   use Ecto.Migration
 
   def change do
@@ -8,11 +8,11 @@ defmodule Helix.Hardware.Repo.Migrations.ComponentSpecIdToSpecCode do
 
     alter table(:component_specs) do
       remove :spec_id
-      add :spec_code, :string, primary_key: true
+      add :spec_id, :string, primary_key: true
     end
 
     alter table(:components) do
-      add :spec_code, references(:component_specs, column: :spec_code, type: :string)
+      add :spec_id, references(:component_specs, column: :spec_id, type: :string)
     end
   end
 end

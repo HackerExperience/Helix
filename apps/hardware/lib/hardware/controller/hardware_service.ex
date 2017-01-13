@@ -7,6 +7,9 @@ defmodule Helix.Hardware.Controller.HardwareService do
   alias Helix.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
   alias Helix.Hardware.Controller.Component, as: CtrlComps
   alias Helix.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
+  alias Helix.Hardware.Model.MotherboardSlot, as: MotherboardSlot
+  alias Helix.Hardware.Model.Component, as: Component
+  alias Helix.Hardware.Repo
 
   @typep state :: nil
 
@@ -31,11 +34,27 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response}
   end
 
+  def handle_broker_cast(pid, "event:server:created", {server_id, _entity_id}, request) do
+    # FIXME: remove hardcoded data
+    bundle = %{
+      motherboard: "MOBO01",
+      components:  [
+        {"cpu", "CPU01"},
+        {"ram", "RAM01"},
+        {"hdd", "HDD01"},
+        {"nic", "NIC01"}
+      ]
+    }
+
+    GenServer.call(pid, {:setup, server_id, bundle, request})
+  end
+
   @spec init(any) :: {:ok, state}
   @doc false
   def init(_args) do
     Broker.subscribe("hardware:get", call: &handle_broker_call/4)
     Broker.subscribe("hardware:motherboard:create", call: &handle_broker_call/4)
+    Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
 
     {:ok, nil}
   end
@@ -65,6 +84,11 @@ defmodule Helix.Hardware.Controller.HardwareService do
     GenServer.from,
     state) :: {:reply, {:ok, Helix.Hardware.Model.ComponentSpec.t}
               | {:error, :notfound}, state}
+  @spec handle_call(
+    {:setup, HELL.PK.t, %{motherboard: String.t, components: [{String.t, String.t}]}},
+    GenServer.from,
+    state) :: {:reply, {:ok, Helix.Hardware.Model.Motherboard.t}
+              | {:error, :internal_error}, state}
   @doc false
   def handle_call({:motherboard, :create, params}, _from, state) do
     with {:ok, mobo} <- CtrlMobos.create(params) do
@@ -94,5 +118,121 @@ defmodule Helix.Hardware.Controller.HardwareService do
   def handle_call({:component_spec, :get, id}, _from, state) do
     response = CtrlCompSpec.find(id)
     {:reply, response, state}
+  end
+
+  def handle_call({:setup, server_id, bundle, request}, _from, state) do
+    create_components = fn components ->
+      Enum.reduce_while(components, {:ok, [], []}, fn {type, id}, {:ok, acc0, acc1} ->
+        case create_component(type, id) do
+          {:ok, c, e} ->
+            {:cont, {:ok, [c| acc0], e ++ acc1}}
+          error ->
+            {:halt, error}
+        end
+      end)
+    end
+
+    result =
+      Repo.transaction(fn ->
+        with \
+          {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard),
+          {:ok, components, ev1} <- create_components.(bundle.components),
+          {:ok, motherboard, ev2} <- setup_motherboard(motherboard, components)
+        do
+          {motherboard, ev0 ++ ev1 ++ ev2}
+        else
+          {:error, _} ->
+            Repo.rollback(:internal_error)
+        end
+      end)
+
+    case result do
+      {:ok, {motherboard, deferred_events}} ->
+        # FIXME: this should be handled by Eventually.flush(events)
+        Enum.each(deferred_events, fn {topic, params} ->
+          Broker.cast(topic, params, request: request)
+        end)
+
+        msg = %{
+          motherboard_id: motherboard.motherboard_id,
+          server_id: server_id}
+        Broker.cast("event:motherboard:setup", msg, request: request)
+
+        {:reply, {:ok, motherboard}, state}
+      {:error, error} ->
+        {:reply, {:error, error}, state}
+    end
+  end
+
+  @spec create_motherboard(HELL.PK.t) ::
+    {:ok, Motherboard.t, deferred_events :: [{String.t, map}]}
+    | {:error, Ecto.Changeset.t}
+  defp create_motherboard(spec_id) do
+    with \
+      {:ok, component, ev0} <- create_component("mobo", spec_id),
+      params = %{motherboard_id: component.component_id},
+      {:ok, motherboard} <- CtrlMobos.create(params)
+    do
+      msg = %{motherboard_id: motherboard.motherboard_id}
+      ev1 = [{"event:motherboard:created", msg}]
+
+      {:ok, motherboard, ev0 ++ ev1}
+    else
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  @spec create_component(String.t, String.t) ::
+    {:ok, Component.t, deferred_events :: [{String.t, map}]}
+    | {:error, Ecto.Changeset.t}
+  defp create_component(component_type, spec_id) do
+    params = %{
+      component_type: component_type,
+      spec_id: spec_id}
+
+    case CtrlComps.create(params) do
+      {:ok, component} ->
+        msg = %{component_id: component.component_id}
+        deferred_events = [{"event:component:created", msg}]
+
+        {:ok, component, deferred_events}
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  @spec setup_motherboard(Motherboard.t, [Component.t]) ::
+    {:ok, Motherboard.t, deferred_events :: [{String.t, map}]}
+    | {:error, :no_slots_available | Ecto.Changeset.t}
+  defp setup_motherboard(motherboard, components) do
+    grouped_slots =
+      motherboard.motherboard_id
+      |> CtrlMobos.get_slots()
+      |> Enum.reject(&MotherboardSlot.linked?/1)
+      |> Enum.group_by(&(&1.link_component_type))
+
+    components
+    |> Enum.reduce_while(grouped_slots, fn comp, slots ->
+      with \
+        [slot | rest] <- Map.get(slots, comp.component_type, []),
+        {:ok, _} <- CtrlMoboSlots.link(slot.slot_id, comp.component_id)
+      do
+        available_slots = Map.put(slots, comp.component_type, rest)
+        {:cont, available_slots}
+      else
+        [] ->
+          {:halt, {:error, :no_slots_available}}
+        {:error, error} ->
+          {:halt, {:error, error}}
+      end
+    end)
+    |> case do
+      {:error, error} ->
+        {:error, error}
+      _ ->
+        msg = %{motherboard_id: motherboard.motherboard_id}
+        {:ok, motherboard, [{"event:motherboard:created", msg}]}
+    end
   end
 end

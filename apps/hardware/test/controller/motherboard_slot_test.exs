@@ -54,7 +54,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   setup context do
     comp_params = %{
       component_type: context.mobo_type,
-      spec_code: context.spec.spec_code}
+      spec_id: context.spec.spec_id}
     {:ok, comp} = ComponentController.create(comp_params)
 
     mobo_params = %{motherboard_id: comp.component_id}
@@ -88,7 +88,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
     p = %{
       component_type: slot.link_component_type,
-      spec_code: comp_spec.spec_code
+      spec_id: comp_spec.spec_id
     }
     {:ok, comp} = ComponentController.create(p)
 

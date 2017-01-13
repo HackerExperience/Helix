@@ -19,6 +19,7 @@ defmodule Helix.Server.Controller.ServerService do
   @doc false
   def init(_) do
     Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("event:motherboard:setup", cast: &handle_broker_cast/4)
     Broker.subscribe("server:create", call: &handle_broker_call/4)
     Broker.subscribe("server:attach", call: &handle_broker_call/4)
     Broker.subscribe("server:detach", call: &handle_broker_call/4)
@@ -37,18 +38,22 @@ defmodule Helix.Server.Controller.ServerService do
 
     GenServer.call(pid, {:server, :create, params, request})
   end
+  def handle_broker_cast(pid, "event:motherboard:setup", msg, req) do
+    %{server_id: server_id, motherboard_id: mobo_id} = msg
+    GenServer.call(pid, {:server, :attach, server_id, mobo_id, req})
+  end
 
   @doc false
   def handle_broker_call(pid, "server:create", params, request) do
     response = GenServer.call(pid, {:server, :create, params, request})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:attach", {id, mobo}, _request) do
-    response = GenServer.call(pid, {:server, :attach, id, mobo})
+  def handle_broker_call(pid, "server:attach", {server_id, mobo_id}, req) do
+    response = GenServer.call(pid, {:server, :attach, server_id, mobo_id, req})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:detach", id, _request) do
-    response = GenServer.call(pid, {:server, :detach, id})
+  def handle_broker_call(pid, "server:detach", server_id, req) do
+    response = GenServer.call(pid, {:server, :detach, server_id, req})
     {:reply, response}
   end
   def handle_broker_call(pid, "server:query", id, _request) do
@@ -70,22 +75,37 @@ defmodule Helix.Server.Controller.ServerService do
     GenServer.from,
     state) :: {:reply, :ok | :error, state}
   @doc false
-  def handle_call({:server, :create, params, request}, _from, state) do
+  def handle_call({:server, :create, params, req}, _from, state) do
     case ServerController.create(params) do
       {:ok, server} ->
-        Broker.cast("event:server:created", {server.server_id, params.entity_id}, request: request)
+        # FIXME: always use maps on events
+        Broker.cast("event:server:created", {server.server_id, params.entity_id}, request: req)
         {:reply, {:ok, server}, state}
       error ->
         {:reply, error, state}
     end
   end
-  def handle_call({:server, :attach, id, mobo}, _from, state) do
-    {status, _} = CtrlServers.attach(id, mobo)
-    {:reply, status, state}
+  def handle_call({:server, :attach, server_id, mobo_id, req}, _from, state) do
+    case CtrlServers.attach(server_id, mobo_id) do
+      {:ok, _} ->
+        msg = %{
+          server_id: server_id,
+          motherboard_id: mobo_id}
+        Broker.cast("event:server:attached", msg, request: req)
+        {:reply, :ok, state}
+      {:error, _} ->
+        {:reply, :error, state}
+    end
   end
-  def handle_call({:server, :detach, id}, _from, state) do
-    {status, _} = CtrlServers.detach(id)
-    {:reply, status, state}
+  def handle_call({:server, :detach, server_id, req}, _from, state) do
+    case CtrlServers.detach(server_id) do
+      {:ok, _} ->
+        msg = %{server_id: server_id}
+        Broker.cast("event:server:detached", msg, request: req)
+        {:reply, :ok, state}
+      {:error, _} ->
+        {:reply, :error, state}
+    end
   end
   def handle_call({:server, :find, id}, _from, state) do
     reply = CtrlServers.find(id)

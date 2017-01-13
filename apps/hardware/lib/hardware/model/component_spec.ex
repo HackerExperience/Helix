@@ -6,7 +6,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    spec_code: String.t,
+    spec_id: String.t,
     component_type: String.t,
     spec: %{},
     inserted_at: NaiveDateTime.t,
@@ -23,7 +23,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   @primary_key false
   schema "component_specs" do
-    field :spec_code, :string,
+    field :spec_id, :string,
       primary_key: true
 
     field :component_type, :string
@@ -36,15 +36,15 @@ defmodule Helix.Hardware.Model.ComponentSpec do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:component_type, :spec])
     |> put_primary_key()
+    |> validate_required([:component_type, :spec, :spec_id])
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
-    |> validate_required([:spec, :spec_code])
+    |> validate_required([:spec, :spec_id])
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
@@ -52,9 +52,9 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     spec_code =
       changeset
       |> get_field(:spec)
-      |> Map.fetch!(:spec_code)
+      |> Map.get(:spec_code)
 
     changeset
-    |> cast(%{spec_code: spec_code}, [:spec_code])
+    |> cast(%{spec_id: spec_code}, [:spec_id])
   end
 end

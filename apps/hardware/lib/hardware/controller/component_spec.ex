@@ -12,8 +12,8 @@ defmodule Helix.Hardware.Controller.ComponentSpec do
   end
 
   @spec find(String.t) :: {:ok, MdlCompSpec.t} | {:error, :notfound}
-  def find(spec_code) do
-    case Repo.get_by(MdlCompSpec, spec_code: spec_code) do
+  def find(spec_id) do
+    case Repo.get_by(MdlCompSpec, spec_id: spec_id) do
       nil ->
         {:error, :notfound}
       res ->
@@ -22,8 +22,8 @@ defmodule Helix.Hardware.Controller.ComponentSpec do
   end
 
   @spec update(String.t, MdlCompSpec.update_params) :: {:ok, MdlCompSpec.t} | {:error, :notfound | Ecto.Changeset.t}
-  def update(spec_code, params) do
-    with {:ok, comp_spec} <- find(spec_code) do
+  def update(spec_id, params) do
+    with {:ok, comp_spec} <- find(spec_id) do
       comp_spec
       |> MdlCompSpec.update_changeset(params)
       |> Repo.update()
@@ -31,9 +31,9 @@ defmodule Helix.Hardware.Controller.ComponentSpec do
   end
 
   @spec delete(String.t) :: no_return
-  def delete(spec_code) do
+  def delete(spec_id) do
     MdlCompSpec
-    |> where([s], s.spec_code == ^spec_code)
+    |> where([s], s.spec_id == ^spec_id)
     |> Repo.delete_all()
 
     :ok
