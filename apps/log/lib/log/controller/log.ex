@@ -92,10 +92,15 @@ defmodule Helix.Log.Controller.Log do
       |> Map.fetch!(:revisions)
 
     case Enum.split_with(revisions, &(&1.revision_id == revision_id)) do
-      {[revision], r = [%{message: msg}]} ->
-        Repo.delete(revision)
+      # YEP, i know that this is not the ideal order for a pattern but othewise
+      # i would have to match the forge_version and guard agains nil value
+      # everywhere
+      {[%{forge_version: nil}], _} ->
+        {:error, :raw}
+      {[x], xs = [%{message: msg}]} ->
+        Repo.delete(x)
 
-        %{log| revisions: r}
+        %{log| revisions: xs}
         |> Log.update_changeset(%{message: msg})
         |> Repo.update()
       {[_], []} ->

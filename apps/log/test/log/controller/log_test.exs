@@ -27,5 +27,21 @@ defmodule Helix.Log.Controller.LogTest do
 
       refute Repo.get_by(Log, log_id: log.log_id)
     end
+
+    test "fails when the only revision is the original" do
+      {:ok, log} = Controller.create(Random.pk(), Random.pk(), "???")
+
+      assert Repo.get_by(Log, log_id: log.log_id)
+
+      revision =
+        log
+        |> Repo.preload(:revisions)
+        |> Map.fetch!(:revisions)
+        |> List.first()
+
+      refute revision.forge_version
+
+      assert {:error, :raw} === Controller.recover(log, revision.revision_id)
+    end
   end
 end
