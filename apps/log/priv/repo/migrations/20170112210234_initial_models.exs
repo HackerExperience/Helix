@@ -6,7 +6,7 @@ defmodule Helix.Log.Repo.Migrations.InitialModels do
       add :log_id, :inet, primary_key: true
 
       add :server_id, :inet, null: false
-      add :player_id, :inet, null: false
+      add :entity_id, :inet, null: false
 
       add :message, :string, null: false
       add :crypto_version, :integer
@@ -19,7 +19,7 @@ defmodule Helix.Log.Repo.Migrations.InitialModels do
 
       add :log_id, references(:logs, column: :log_id, type: :inet, on_delete: :delete_all)
 
-      add :player_id, :inet, null: false
+      add :entity_id, :inet, null: false
 
       add :message, :string, null: false
       add :forge_version, :integer

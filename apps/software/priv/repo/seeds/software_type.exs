@@ -26,7 +26,7 @@ types = [
   %{
     file_type: "log_forger",
     extension: "logf",
-    roles: ["forge", "delete"]
+    roles: ["create", "edit"]
   },
   %{
     file_type: "log_recover",

@@ -15,10 +15,10 @@ defmodule Helix.Log.Controller.Log do
     PK.t,
     String.t,
     non_neg_integer) :: {:ok, Log.t} | {:error, reason :: term}
-  def create(server_id, player_id, message, forge_version \\ nil) do
+  def create(server_id, entity_id, message, forge_version \\ nil) do
     params = %{
       server_id: server_id,
-      player_id: player_id,
+      entity_id: entity_id,
       message: message,
       forge_version: forge_version
     }
@@ -34,8 +34,8 @@ defmodule Helix.Log.Controller.Log do
     end
   end
 
-  def create!(server_id, player_id, message, forge_version \\ nil) do
-    case create(server_id, player_id, message, forge_version) do
+  def create!(server_id, entity_id, message, forge_version \\ nil) do
+    case create(server_id, entity_id, message, forge_version) do
       {:ok, log} ->
         log
       _ ->
@@ -53,10 +53,10 @@ defmodule Helix.Log.Controller.Log do
     PK.t,
     String.t,
     non_neg_integer) :: {:ok, Log.t} | {:error, reason :: term}
-  def revise(log, player_id, message, forge_version) do
+  def revise(log, entity_id, message, forge_version) do
     params = %{
       log_id: log.log_id,
-      player_id: player_id,
+      entity_id: entity_id,
       message: message,
       forge_version: forge_version
     }
@@ -66,15 +66,14 @@ defmodule Helix.Log.Controller.Log do
     case Repo.insert(revision) do
       {:ok, _revision} ->
         {:ok, log}
-      {:error, changeset} ->
-        IO.inspect(changeset)
+      {:error, _changeset} ->
         # TODO: Traverse changeset to provide proper error message
         {:error, :internal_error}
     end
   end
 
-  def revise!(log, player_id, message, forge_version) do
-    case revise(log, player_id, message, forge_version) do
+  def revise!(log, entity_id, message, forge_version) do
+    case revise(log, entity_id, message, forge_version) do
       {:ok, log} ->
         log
       _ ->
@@ -82,31 +81,32 @@ defmodule Helix.Log.Controller.Log do
     end
   end
 
-  @spec recover(Log.t) :: {:ok, :deleted | Log.t} | {:error, reason :: term}
-  def recover(log) do
-    case Repo.preload(log, :revisions) do
-      %{revisions: [%{forge_version: nil}]} ->
-        # Log is in it's original form
-        {:error, :cannot_recover}
-      log = %{revisions: [%{forge_version: _}]} ->
-        # Log was forged and can be deleted
+  @spec recover(
+    Log.t,
+    PK.t) :: {:ok, :deleted | Log.t} | {:error, reason :: term}
+  def recover(log, revision_id) do
+    # TODO: Ensure revision order
+    revisions =
+      log
+      |> Repo.preload(:revisions)
+      |> Map.fetch!(:revisions)
 
+    case Enum.split_with(revisions, &(&1.revision_id == revision_id)) do
+      {[revision], r = [%{message: msg}]} ->
+        Repo.delete(revision)
+
+        %{log| revisions: r}
+        |> Log.update_changeset(%{message: msg})
+        |> Repo.update()
+      {[_], []} ->
         case Repo.delete(log) do
           {:ok, _} ->
             {:ok, :deleted}
           e ->
             e
         end
-      log = %{revisions: revisions} ->
-        # Log still has revisions left and can be recovered to another version
-        [h| t] = Enum.sort_by(revisions, &(&1.forge_version))
-
-        Repo.delete(h)
-
-        [%{message: msg} | _] = t
-        %{log| revisions: t}
-        |> Log.update_changeset(%{message: msg})
-        |> Repo.update()
+      {[], _} ->
+        {:ok, log}
     end
   end
 

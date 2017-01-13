@@ -10,7 +10,7 @@ defmodule Helix.Log.Model.Log do
   @type t :: %__MODULE__{
     log_id: PK.t,
     server_id: PK.t,
-    player_id: PK.t,
+    entity_id: PK.t,
     message: String.t,
     crypto_version: non_neg_integer | nil,
     revisions: [Revision.t],
@@ -20,7 +20,7 @@ defmodule Helix.Log.Model.Log do
 
   @type creation_params :: %{
     :server_id => PK.t,
-    :player_id => PK.t,
+    :entity_id => PK.t,
     :message => String.t,
     optional(:crypto_version) => non_neg_integer,
     optional(:forge_version) => non_neg_integer
@@ -31,10 +31,10 @@ defmodule Helix.Log.Model.Log do
     optional(:message) => non_neg_integer
   }
 
-  @creation_fields ~w/server_id player_id message/a
+  @creation_fields ~w/server_id entity_id message/a
   @update_fields ~w/message crypto_version/a
 
-  @required_fields ~w/server_id player_id message/a
+  @required_fields ~w/server_id entity_id message/a
 
   @primary_key false
   schema "logs" do
@@ -42,7 +42,7 @@ defmodule Helix.Log.Model.Log do
       primary_key: true
 
     field :server_id, PK
-    field :player_id, PK
+    field :entity_id, PK
 
     field :message, :string
     field :crypto_version, :integer
@@ -66,7 +66,7 @@ defmodule Helix.Log.Model.Log do
       revisions = [
         %{
           log_id: get_field(changeset, :log_id),
-          player_id: params[:player_id],
+          entity_id: params[:entity_id],
           message: params[:message],
           forge_version: params[:forge_version]
         }

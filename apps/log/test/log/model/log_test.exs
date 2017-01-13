@@ -10,7 +10,7 @@ defmodule Helix.Log.Model.LogTest do
     test "creates a revision" do
       params = %{
         server_id: Random.pk(),
-        player_id: Random.pk(),
+        entity_id: Random.pk(),
         message: """
           - I'll now dial an incorrect number
           - Hello. Yes, this is dog
@@ -26,22 +26,22 @@ defmodule Helix.Log.Model.LogTest do
       assert [revision] = log.revisions
       assert params.message == log.message
       assert log.message == revision.message
-      assert log.player_id == revision.player_id
+      assert log.entity_id == revision.entity_id
       refute log.crypto_version
       refute revision.forge_version
     end
 
-    test "requires player_id and server_id" do
+    test "requires entity_id and server_id" do
       log = Log.create_changeset(%{})
 
-      assert :player_id in Keyword.keys(log.errors)
+      assert :entity_id in Keyword.keys(log.errors)
       assert :server_id in Keyword.keys(log.errors)
     end
 
     test "can be forged" do
       params = %{
         server_id: Random.pk(),
-        player_id: Random.pk(),
+        entity_id: Random.pk(),
         message: "All your base are belong to us",
         forge_version: 12
       }

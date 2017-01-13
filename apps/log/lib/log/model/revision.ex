@@ -6,9 +6,8 @@ defmodule Helix.Log.Model.Revision do
   alias Helix.Log.Model.Log
 
   import Ecto.Changeset
-  import Ecto.Query, only: [where: 3]
 
-  @creation_fields ~w/player_id message forge_version log_id/a
+  @creation_fields ~w/entity_id message forge_version log_id/a
 
   @primary_key false
   schema "revisions" do
@@ -16,7 +15,7 @@ defmodule Helix.Log.Model.Revision do
       primary_key: true
 
 
-    field :player_id, PK
+    field :entity_id, PK
 
     field :message, :string
     field :forge_version, :integer
@@ -30,30 +29,21 @@ defmodule Helix.Log.Model.Revision do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:player_id, :message, :log_id])
+    |> validate_required([:entity_id, :message, :log_id])
     |> validate_number(:forge_version, greater_than: 0)
     |> put_primary_key()
     |> prepare_changes(fn changeset ->
-      forge_version = get_field(changeset, :forge_version)
+      # REVIEW: This callback is executed even if this is the revision that
+      #   created the log entry
 
-      if forge_version do
-        log_id = get_field(changeset, :log_id)
-        message = get_field(changeset, :message)
+      message = get_field(changeset, :message)
 
-        # Log Revision are a pyramidal stack structure. So all and any log
-        # revision that is "smaller" than this revision should be removed
-        __MODULE__
-        |> where([r], r.log_id == ^log_id)
-        |> where([r], r.forge_version <= ^forge_version)
-        |> changeset.repo.delete_all()
-
-        # The Log entity should be properly updated to reflect the lastest
-        # revision
-        changeset
-        |> apply_changes()
-        |> Ecto.assoc(:log)
-        |> changeset.repo.update_all(set: [message: message])
-      end
+      # The Log entity should be properly updated to reflect the lastest
+      # revision
+      changeset
+      |> apply_changes()
+      |> Ecto.assoc(:log)
+      |> changeset.repo.update_all(set: [message: message])
 
       changeset
     end)
