@@ -25,16 +25,15 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     end
 
     slot_type = Enum.random(["ram", "cpu", "hdd"])
-    mobo_type = "mobo"
 
     component_type(slot_type)
-    component_type(mobo_type)
+    component_type("mobo")
 
     slot_number = Burette.Number.digits(4)
     spec_params = %{
-      component_type: mobo_type,
+      component_type: "mobo",
       spec: %{
-        spec_type: mobo_type,
+        spec_type: "mobo",
         spec_code: Random.string(min: 20, max: 20),
         slots: %{
           slot_number => %{type: slot_type}
@@ -47,12 +46,11 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     [
       component_types: types,
       slot_type: slot_type,
-      mobo_type: mobo_type,
       spec: spec]
   end
 
-  setup %{mobo_type: mobo_type, spec: spec} do
-    {:ok, mobo} = create_motherboard(mobo_type, spec.spec_id)
+  setup %{spec: spec} do
+    {:ok, mobo} = create_motherboard(spec.spec_id)
     slot =
       mobo.motherboard_id
       |> MotherboardController.get_slots()
@@ -61,9 +59,9 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     {:ok, slot: slot, mobo: mobo}
   end
 
-  defp create_motherboard(motherboard_type, spec_id) do
+  defp create_motherboard(spec_id) do
     comp_params = %{
-      component_type: motherboard_type,
+      component_type: "mobo",
       spec_id: spec_id}
     {:ok, comp} = ComponentController.create(comp_params)
 
@@ -125,13 +123,13 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     end
 
     test "failure when component is already used", context do
-      %{slot: slot0, spec: spec, mobo_type: mobo_type} = context
-      {:ok, mobo} = create_motherboard(mobo_type, spec.spec_id)
+      %{slot: slot0, mobo: mobo} = context
+      {:ok, mobo} = create_motherboard(mobo.component.spec_id)
 
       slot1 =
         mobo.motherboard_id
         |> MotherboardController.get_slots()
-        |> List.first()
+        |> Enum.find(&(&1.link_component_type == slot0.link_component_type))
 
        component = component_for(slot0)
        MotherboardSlotController.link(slot0.slot_id, component.component_id)
