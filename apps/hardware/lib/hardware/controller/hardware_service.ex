@@ -85,9 +85,10 @@ defmodule Helix.Hardware.Controller.HardwareService do
     state) :: {:reply, {:ok, Helix.Hardware.Model.ComponentSpec.t}
               | {:error, :notfound}, state}
   @spec handle_call(
-    {:setup, PK.t, HeBroker.Request.t},
+    {:setup, HELL.PK.t, HeBroker.Request.t},
     GenServer.from,
-    state) :: {:reply, {:ok | :error}, state}
+    state) :: {:reply, {:ok, Helix.Hardware.Model.Motherboard.t}
+              | {:error, :internal_error}, state}
   @doc false
   def handle_call({:motherboard, :create, params}, _from, state) do
     with {:ok, mobo} <- CtrlMobos.create(params) do
@@ -120,11 +121,22 @@ defmodule Helix.Hardware.Controller.HardwareService do
   end
 
   def handle_call({:setup, server_id, bundle, request}, _from, state) do
+    create_components = fn components ->
+      Enum.reduce_while(components, {:ok, [], []}, fn {type, id}, {:ok, acc0, acc1} ->
+        case create_component(type, id) do
+          {:ok, c, e} ->
+            {:cont, {:ok, [c| acc0], e ++ acc1}}
+          error ->
+            {:halt, error}
+        end
+      end)
+    end
+
     result =
       Repo.transaction(fn ->
         with \
           {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard),
-          {:ok, components, ev1} <- create_components(bundle.components),
+          {:ok, components, ev1} <- create_components.(bundle.components),
           {:ok, motherboard, ev2} <- setup_motherboard(motherboard, components)
         do
           {motherboard, ev0 ++ ev1 ++ ev2}
@@ -162,49 +174,17 @@ defmodule Helix.Hardware.Controller.HardwareService do
       {:ok, motherboard} <- CtrlMobos.create(params)
     do
       msg = %{motherboard_id: motherboard.motherboard_id}
-      ev1 = {"event:motherboard:created", msg}
+      ev1 = [{"event:motherboard:created", msg}]
 
-      {:ok, motherboard, [ev0, ev1]}
+      {:ok, motherboard, ev0 ++ ev1}
     else
       {:error, error} ->
         {:error, error}
     end
   end
 
-  @spec create_components([{String.t, String.t}]) ::
-    {:ok, [Component.t], deferred_events :: [{String.t, map}]}
-    | {:error, Ecto.Changeset.t}
-  defp create_components(components) do
-    components
-    |> create_components({[], []})
-    |> case do
-      {:ok, components, deferred_events} ->
-        {:ok, components, deferred_events}
-      {:error, error} ->
-        {:error, error}
-    end
-  end
-
-  @spec create_components(
-    [{String.t, String.t}],
-    {[Component.t], [{String.t, map}]}) ::
-      {:ok, [Component.t], deferred_events :: {String.t, map}}
-      | {:error, Ecto.Changeset.t}
-  defp create_components([{type, id} | rest], {components, deferred_events}) do
-    case create_component(type, id) do
-      {:ok, component, event} ->
-        accum = {[component | components], [event | deferred_events]}
-        create_components(rest, accum)
-      {:error, error} ->
-        {:error, error}
-    end
-  end
-  defp create_components([], {components, deferred_events}) do
-    {:ok, components, deferred_events}
-  end
-
   @spec create_component(String.t, String.t) ::
-    {:ok, Component.t, deferred_event :: {String.t, map}}
+    {:ok, Component.t, deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
   defp create_component(component_type, spec_id) do
     params = %{
@@ -214,9 +194,9 @@ defmodule Helix.Hardware.Controller.HardwareService do
     case CtrlComps.create(params) do
       {:ok, component} ->
         msg = %{component_id: component.component_id}
-        deferred_event = {"event:component:created", msg}
+        deferred_events = [{"event:component:created", msg}]
 
-        {:ok, component, deferred_event}
+        {:ok, component, deferred_events}
       {:error, error} ->
         {:error, error}
     end

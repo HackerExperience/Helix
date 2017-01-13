@@ -86,16 +86,6 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
     :ok
   end
 
-  defp forward_broker_cast(topic) do
-    ref = make_ref()
-
-    Broker.subscribe(topic, cast: fn pid, _, data, _ ->
-      send pid, {ref, data}
-    end)
-
-    ref
-  end
-
   defp create_account do
     email = Burette.Internet.email()
     password = Burette.Internet.password()
@@ -112,38 +102,58 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
     end
   end
 
+  defp motherboard_of_account(account_id) do
+    # entity has a list of servers
+    with \
+      [entity_server] <- Helix.Entity.Controller.EntityServer.find(account_id),
+      {:ok, server} <- Helix.Server.Controller.Server.find(entity_server.server_id),
+      {:ok, motherboard} <- Helix.Hardware.Controller.Motherboard.find(server.motherboard_id)
+    do
+      {:ok, motherboard}
+    else
+      _ ->
+        {:error, :not_found}
+    end
+  end
 
   describe "after account creation" do
     test "motherboard is created" do
-      ref = forward_broker_cast("event:motherboard:created")
-      create_account()
-      assert_receive {^ref, %{motherboard_id: motherboard_id}}
+      {:ok, account} = create_account()
 
-      assert {:ok, _} = MotherboardController.find(motherboard_id)
+      # TODO: removing this sleep depends on T412
+      :timer.sleep(100)
+
+      assert {:ok, _} = motherboard_of_account(account.account_id)
     end
 
     test "motherboard slots are created" do
-      ref = forward_broker_cast("event:motherboard:created")
-      create_account()
-      assert_receive {^ref, event}
+      {:ok, account} = create_account()
 
-      slots = MotherboardController.get_slots(event.motherboard_id)
+      # TODO: removing this sleep depends on T412
+      :timer.sleep(100)
+
+      {:ok, motherboard} = motherboard_of_account(account.account_id)
+      slots = MotherboardController.get_slots(motherboard.motherboard_id)
+
       refute Enum.empty?(slots)
     end
 
     test "motherboard linked at least a single of each slot type" do
-      ref = forward_broker_cast("event:motherboard:created")
-      create_account()
-      assert_receive {^ref, event}
-      slots = MotherboardController.get_slots(event.motherboard_id)
+      {:ok, account} = create_account()
 
-      possible_types = MapSet.new(slots, &(&1.link_component_type))
-      linked_types =
-        slots
-        |> Enum.filter(&MotherboardSlot.linked?/1)
-        |> MapSet.new(&(&1.link_component_type))
+      # TODO: removing this sleep depends on T412
+      :timer.sleep(100)
 
-      assert MapSet.equal?(possible_types, linked_types)
+      {:ok, motherboard} = motherboard_of_account(account.account_id)
+      slots = MotherboardController.get_slots(motherboard.motherboard_id)
+
+       possible_types = MapSet.new(slots, &(&1.link_component_type))
+       linked_types =
+         slots
+         |> Enum.filter(&MotherboardSlot.linked?/1)
+         |> MapSet.new(&(&1.link_component_type))
+
+       assert MapSet.equal?(possible_types, linked_types)
     end
   end
 end
