@@ -25,16 +25,15 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     end
 
     slot_type = Enum.random(["ram", "cpu", "hdd"])
-    mobo_type = "mobo"
 
     component_type(slot_type)
-    component_type(mobo_type)
+    component_type("mobo")
 
     slot_number = Burette.Number.digits(4)
     spec_params = %{
-      component_type: mobo_type,
+      component_type: "mobo",
       spec: %{
-        spec_type: mobo_type,
+        spec_type: "mobo",
         spec_code: Random.string(min: 20, max: 20),
         slots: %{
           slot_number => %{type: slot_type}
@@ -47,25 +46,30 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     [
       component_types: types,
       slot_type: slot_type,
-      mobo_type: mobo_type,
       spec: spec]
   end
 
-  setup context do
+  setup %{spec: spec} do
+    {:ok, mobo} = create_motherboard(spec.spec_id)
+    slot =
+      mobo.motherboard_id
+      |> MotherboardController.get_slots()
+      |> List.first()
+
+    {:ok, slot: slot, mobo: mobo}
+  end
+
+  defp create_motherboard(spec_id) do
     comp_params = %{
-      component_type: context.mobo_type,
-      spec_id: context.spec.spec_id}
+      component_type: "mobo",
+      spec_id: spec_id}
     {:ok, comp} = ComponentController.create(comp_params)
 
     mobo_params = %{motherboard_id: comp.component_id}
     {:ok, mobo} = MotherboardController.create(mobo_params)
     mobo = Repo.preload(mobo, :component_spec)
 
-    slot =
-      MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
-      |> List.first()
-
-    {:ok, slot: slot, mobo: mobo}
+    {:ok, mobo}
   end
 
   defp component_type(name) do
@@ -105,17 +109,6 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     end
   end
 
-  # REVIEW: Related to T409; move to motherboard tests
-  test "delete is idempotent and removes every slot", %{mobo: mobo} do
-    refute [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
-
-    # MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
-    # MotherboardSlotController.delete_all_from_motherboard(mobo.motherboard_id)
-    MotherboardController.delete(mobo.motherboard_id)
-
-    assert [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
-  end
-
   describe "link" do
     test "connecting a component into slot", %{slot: slot} do
       component = component_for(slot)
@@ -129,21 +122,20 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
     end
 
-    # REVIEW: T409
-    # test "failure when component is already used", %{slot: slot, mobo: mobo} do
-    #   component = component_for(slot)
+    test "failure when component is already used", context do
+      %{slot: slot0, mobo: mobo} = context
+      {:ok, mobo} = create_motherboard(mobo.component.spec_id)
 
-    #   slot_params = %{
-    #     motherboard_id: mobo.motherboard_id,
-    #     link_component_type: mobo.component_spec.component_type,
-    #     slot_internal_id: Burette.Number.digits(8),
-    #     link_component_id: component.component_id
-    #   }
+      slot1 =
+        mobo.motherboard_id
+        |> MotherboardController.get_slots()
+        |> Enum.find(&(&1.link_component_type == slot0.link_component_type))
 
-    #   MotherboardSlotController.create(slot_params)
+       component = component_for(slot0)
+       MotherboardSlotController.link(slot0.slot_id, component.component_id)
 
-    #   assert {:error, :component_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
-    # end
+       assert {:error, :component_already_linked} === MotherboardSlotController.link(slot1.slot_id, component.component_id)
+    end
   end
 
   test "unlink is idempotent", %{slot: slot} do
