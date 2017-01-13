@@ -6,14 +6,18 @@ defmodule Helix.Server.Controller.ServerServiceTest do
 
   @moduletag :umbrella
 
-  defp forward_broker_cast(topic) do
-    ref = make_ref()
-
-    Broker.subscribe(topic, cast: fn pid, _, data, _ ->
-      send pid, {ref, data}
-    end)
-
-    ref
+  # HACK: this method is calling methods from another domain instead of Broker
+  defp server_of_account(account_id) do
+    # entity has a list of servers
+    with \
+      [entity_server] <- Helix.Entity.Controller.EntityServer.find(account_id),
+      {:ok, server} <- Helix.Server.Controller.Server.find(entity_server.server_id)
+    do
+      {:ok, server}
+    else
+      _ ->
+        {:error, :not_found}
+    end
   end
 
   describe "after account creation" do
@@ -25,23 +29,23 @@ defmodule Helix.Server.Controller.ServerServiceTest do
     end
 
     test "server is created", %{params: params} do
-      ref = forward_broker_cast("event:server:created")
+      {_, {:ok, account}} = Broker.call("account:create", params)
 
-      {_, {:ok, account}} =
-        Broker.call("account:create", params)
-      assert_receive {^ref, {server_id, entity_id}}
-      assert account.account_id == entity_id
-      assert {_, {:ok, _}} = Broker.call("server:query", server_id)
+      # TODO: removing this sleep depends on T412
+      :timer.sleep(100)
+
+      assert {:ok, _} = server_of_account(account.account_id)
     end
 
     test "server attaches a motherboard", %{params: params} do
-      ref = forward_broker_cast("event:server:attached")
+      {_, {:ok, account}} = Broker.call("account:create", params)
 
-      {_, {:ok, _}} =
-        Broker.call("account:create", params)
-      assert_receive {^ref, msg}
-      assert {_, {:ok, server}} = Broker.call("server:query", msg.server_id)
-      assert server.motherboard_id === msg.motherboard_id
+      # TODO: removing this sleep depends on T412
+      :timer.sleep(100)
+
+      {:ok, server} = server_of_account(account.account_id)
+
+      assert server.motherboard_id
     end
   end
 end

@@ -102,6 +102,7 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
     end
   end
 
+  # HACK: this method is calling methods from another domain instead of Broker
   defp motherboard_of_account(account_id) do
     # entity has a list of servers
     with \

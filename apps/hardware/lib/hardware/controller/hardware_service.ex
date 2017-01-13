@@ -85,7 +85,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     state) :: {:reply, {:ok, Helix.Hardware.Model.ComponentSpec.t}
               | {:error, :notfound}, state}
   @spec handle_call(
-    {:setup, HELL.PK.t, HeBroker.Request.t},
+    {:setup, HELL.PK.t, %{motherboard: String.t, components: [{String.t, String.t}]}},
     GenServer.from,
     state) :: {:reply, {:ok, Helix.Hardware.Model.Motherboard.t}
               | {:error, :internal_error}, state}
