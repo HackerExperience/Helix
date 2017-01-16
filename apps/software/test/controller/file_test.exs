@@ -148,6 +148,28 @@ defmodule Helix.Software.Controller.FileTest do
     end
   end
 
+  describe "copying a file" do
+    test "copies the file", %{payload: payload0} do
+      {:ok, file} = FileController.create(payload0)
+      payload1 = %{
+        storage_id: file.storage_id,
+        file_path: file.file_path,
+        name: Burette.Color.name()}
+
+      assert {:ok, _} = FileController.copy(file, payload1)
+    end
+
+    test "fails to copy when file exists", %{payload: payload0} do
+      {:ok, file} = FileController.create(payload0)
+      payload1 = %{
+        storage_id: file.storage_id,
+        file_path: file.file_path,
+        name: file.name}
+
+      assert {:error, :file_exists} == FileController.copy(file, payload1)
+    end
+  end
+
   test "delete/1 idempotency", %{payload: payload} do
     assert {:ok, file} = FileController.create(payload)
     assert :ok = FileController.delete(file.file_id)
