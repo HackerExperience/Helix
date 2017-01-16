@@ -1,4 +1,4 @@
-defmodule HELM.Process.Repo.Migrations.ChangePrimaryKeyType do
+defmodule Helix.Process.Repo.Migrations.ChangePrimaryKeyType do
   use Ecto.Migration
 
   def change do

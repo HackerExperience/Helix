@@ -1,4 +1,4 @@
-defmodule HELM.Process.Controller.ProcessService do
+defmodule Helix.Process.Controller.ProcessService do
 
   use GenServer
 

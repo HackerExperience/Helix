@@ -1,4 +1,4 @@
-defmodule HELM.Process.Repo.Migrations.CreateProcessTable do
+defmodule Helix.Process.Repo.Migrations.CreateProcessTable do
   use Ecto.Migration
 
   def change do

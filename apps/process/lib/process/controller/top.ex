@@ -8,7 +8,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   require Logger
 
-  alias HELM.Process.Repo
+  alias Helix.Process.Repo
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.SoftwareType

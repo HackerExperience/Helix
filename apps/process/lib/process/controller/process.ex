@@ -1,8 +1,8 @@
-defmodule HELM.Process.Controller.Process do
+defmodule Helix.Process.Controller.Process do
 
   import Ecto.Query, only: [where: 3]
 
-  alias HELM.Process.Repo
+  alias Helix.Process.Repo
   alias Helix.Process.Model.Process, as: MdlProcess
 
   def create(process) do

@@ -1,4 +1,4 @@
-defmodule HELM.Process.Mixfile do
+defmodule Helix.Process.Mixfile do
   use Mix.Project
 
   def project do
@@ -19,7 +19,7 @@ defmodule HELM.Process.Mixfile do
 
   def application do
     [
-      mod: {HELM.Process.App, []}
+      mod: {Helix.Process.App, []}
     ]
   end
 
