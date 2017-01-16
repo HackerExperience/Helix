@@ -42,7 +42,7 @@ defmodule Helix.Process.Model.ProcessTest do
     end
 
     test "as long as the struct implements SoftwareType, everything will be alright" do
-      params = %{software: %Helix.Process.TestHelper.SoftwareTypeExample{}}
+      params = %{software: %TestHelper.SoftwareTypeExample{}}
       p = Process.create_changeset(params)
 
       refute :software in error_fields(p)

@@ -13,6 +13,7 @@ defmodule Helix.Process.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       elixirc_options: elixirc_options(Mix.env),
+      elixirc_paths: compile_paths(Mix.env),
       deps: deps()
     ]
   end
