@@ -12,6 +12,7 @@ defmodule Helix.Process.Model.Process.Resources do
 
   @fields ~w/cpu ram dlk ulk/a
 
+  @primary_key false
   embedded_schema do
     field :cpu, :integer, default: 0
     field :ram, :integer, default: 0

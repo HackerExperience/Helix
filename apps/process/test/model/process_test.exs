@@ -4,15 +4,17 @@ defmodule Helix.Process.Model.ProcessTest do
 
   alias Ecto.Changeset
   alias HELL.TestHelper.Random
+  alias Helix.Process.TestHelper
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
+  alias Helix.Process.Model.Process.SoftwareType
 
   setup do
     process =
       %{
         gateway_id: Random.pk(),
         target_server_id: Random.pk(),
-        software: %{} # TODO
+        software: %TestHelper.SoftwareTypeExample{}
       }
       |> Process.create_changeset()
       |> Changeset.apply_changes()
@@ -142,6 +144,21 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Changeset.apply_changes()
 
       assert 2 === Process.allocation_shares(process)
+    end
+
+    test "can only allocate if the SoftwareType allows", %{process: process} do
+      priority = 2
+      process =
+        process
+        |> Changeset.cast(%{priority: priority}, [:priority])
+        |> Changeset.put_embed(:objective, %{cpu: 1_000})
+        |> Changeset.apply_changes()
+
+      assert 2 === Process.allocation_shares(process)
+      p2 = %{process| software: %TestHelper.StaticSoftwareTypeExample{}}
+
+      assert [] === SoftwareType.dynamic_resources(%TestHelper.StaticSoftwareTypeExample{})
+      assert 0 === Process.allocation_shares(p2)
     end
   end
 

@@ -10,7 +10,6 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Process.Model.Process.SoftwareType
 
   import Ecto.Changeset
-  import Ecto.Query, only: [where: 3]
   import HELL.MacroHelpers
 
   @type t :: %__MODULE__{
@@ -284,27 +283,29 @@ defmodule Helix.Process.Model.Process do
 
   def can_allocate?(process = %Ecto.Changeset{}, resources),
     do: can_allocate?(apply_changes(process), resources)
-  def can_allocate?(%__MODULE__{objective: nil}, _),
-    do: true
   def can_allocate?(process = %__MODULE__{}, resource) do
-    remaining = Resources.sub(process.objective, process.processed)
-
-    # TODO: Check if the allocation strategy allows dynamic allocation
+    objective_allows? = case process.objective do
+      nil ->
+        fn _ ->
+          true
+        end
+      objective ->
+        remaining = Resources.sub(objective, process.processed)
+        fn resource ->
+          r = Map.get(remaining, resource)
+          is_integer(r) and r > 0
+        end
+    end
 
     resource
     |> List.wrap()
+    |> Enum.filter(&(&1 in SoftwareType.dynamic_resources(process.software)))
     |> Enum.any?(fn resource ->
-      r = Map.get(remaining, resource)
       l = Map.get(process.limitations, resource)
       a = Map.get(process.allocated, resource)
 
-      is_integer(r) and r > 0 and l > a
+      objective_allows?.(resource) and l > a
     end)
-  end
-
-  @spec from_list(Ecto.Queryable.t, [id]) :: Ecto.Queryable.t
-  def from_list(query, process_ids) do
-    where(query, [p], p.process_id in ^process_ids)
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
@@ -350,5 +351,28 @@ defmodule Helix.Process.Model.Process do
     |> get_field(:processed)
     |> Resources.sum(diff)
     |> Resources.min(get_field(cs, :objective))
+  end
+
+  defmodule Query do
+    import Ecto.Query, only: [where: 3]
+
+    @spec from_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    @doc """
+    Filter processes that are running on `server_id`
+    """
+    def from_server(query, server_id) do
+      where(query, [p], p.server_id == ^server_id)
+    end
+
+    @spec related_to_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    @doc """
+    Filter processes that are running on `server_id` or affect it
+    """
+    def related_to_server(query, server_id) do
+      where(
+        query,
+        [p],
+        p.server_id == ^server_id or p.target_server_id == ^server_id)
+    end
   end
 end

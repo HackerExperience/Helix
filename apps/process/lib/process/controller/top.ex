@@ -94,6 +94,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       end
     end
 
+    # Returns the processes that are still "running"
     Enum.map(changeset_list, &Ecto.Changeset.apply_changes/1)
   end
 
@@ -110,26 +111,18 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     end
   end
 
-  @spec request_server_processes(module, server_id) :: {:ok, [ProcessModel.t]} | {:error, reason :: term}
+  @spec request_server_processes(server_id) :: {:ok, [ProcessModel.t]} | {:error, reason :: term}
   docp """
-  Requests the list of in-game processes running on this server
-
-  Does so by querying the Server service, receiving the list of process id's
-  that the server has and then fetching them from database
+  Fetches the list of in-game processes running on this server
   """
-  defp request_server_processes(broker, server_id) do
-    with \
-      params = %{server_id: server_id},
-      {_, {:ok, process_list}} <- broker.call("server:processes:get", params)
-    do
-      processes =
-        ProcessModel
-        |> ProcessModel.from_list(process_list)
-        |> Repo.all()
-        |> Enum.map(&ProcessModel.estimate_conclusion/1)
+  defp request_server_processes(server_id) do
+    processes =
+      ProcessModel
+      |> ProcessModel.Query.from_server(server_id)
+      |> Repo.all()
+      |> Enum.map(&ProcessModel.estimate_conclusion/1)
 
-      {:ok, processes}
-    end
+    {:ok, processes}
   end
 
   @spec notify(module, ProcessModel.t, atom) :: no_return
@@ -137,6 +130,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     namespace = SoftwareType.event_namespace(process.software)
     message = %{
       process_id: process.process_id,
+      server_id: process.server_id,
       target_server_id: process.target_server_id,
       software: process.software
     }
@@ -153,7 +147,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
     with \
       {:ok, resources} <- request_server_resources(broker, server_id),
-      {:ok, process_list} <- request_server_processes(broker, server_id)
+      {:ok, process_list} <- request_server_processes(server_id)
     do
       processes =
         process_list
@@ -325,7 +319,9 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     Enum.map(process_list, &ProcessModel.calculate_work(&1, now))
   end
 
-  @spec allocate([ProcessModel.t], Resources.t) :: [Ecto.Changeset.t]
+  @spec allocate(
+    [ProcessModel.t],
+    Resources.t) :: [Ecto.Changeset.t] | {:error, :insufficient_resources}
   docp """
   Allocates dynamic resources to the `processes` as long as the total does not
   exceed `resources`
@@ -381,7 +377,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
     zipped = Enum.zip(allocated_processes, processes)
 
-    # A group_by is used instead of a partition here because group_by allow
+    # A group_by is used instead of a split_with here because group_by allows
     # 1-pass mapping
     %{false: nalloc, true: realloc} = Enum.group_by(zipped, filter, &elem(&1, 0))
 
@@ -389,7 +385,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     # allocation round
     s2 = realloc |> Enum.map(&(&1.priority)) |> Enum.sum()
 
-    # How much resource was allocated on this round
+    # How many resources were allocated on this round
     r_delta =
       zipped
       |> Enum.map(fn {p2, p1} -> Resources.sub(p2.allocated, p1.allocated) end)

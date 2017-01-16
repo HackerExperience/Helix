@@ -12,6 +12,7 @@ defmodule Helix.Process.Model.Process.Limitations do
 
   @fields ~w/cpu ram dlk ulk/a
 
+  @primary_key false
   embedded_schema do
     field :cpu, :integer
     field :ram, :integer
