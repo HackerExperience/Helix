@@ -1,8 +1,8 @@
-defmodule HELM.Process.Controller.ProcessTest do
+defmodule Helix.Process.Controller.ProcessTest do
   use ExUnit.Case
 
   alias HELL.IPv6
-  alias HELM.Process.Controller.Process, as: CtrlProcess
+  alias Helix.Process.Controller.Process, as: CtrlProcess
 
   @tag :pending
   test "create/1" do

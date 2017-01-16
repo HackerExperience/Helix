@@ -1,9 +1,9 @@
-defmodule HELM.Process.App do
+defmodule Helix.Process.App do
 
   use Application
 
-  alias HELM.Process.Repo
-  alias HELM.Process.Controller.ProcessService
+  alias Helix.Process.Repo
+  alias Helix.Process.Controller.ProcessService
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -13,7 +13,7 @@ defmodule HELM.Process.App do
       worker(ProcessService, []),
     ]
 
-    opts = [strategy: :one_for_one, name: HELM.Process.Supervisor]
+    opts = [strategy: :one_for_one, name: Helix.Process.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

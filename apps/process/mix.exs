@@ -1,4 +1,4 @@
-defmodule HELM.Process.Mixfile do
+defmodule Helix.Process.Mixfile do
   use Mix.Project
 
   def project do
@@ -13,13 +13,14 @@ defmodule HELM.Process.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       elixirc_options: elixirc_options(Mix.env),
+      elixirc_paths: compile_paths(Mix.env),
       deps: deps()
     ]
   end
 
   def application do
     [
-      mod: {HELM.Process.App, []}
+      mod: {Helix.Process.App, []}
     ]
   end
 
@@ -27,6 +28,11 @@ defmodule HELM.Process.Mixfile do
     do: []
   defp elixirc_options(_),
     do: [warnings_as_errors: true]
+
+  defp compile_paths(:test),
+    do: ["lib", "test/test_helper"]
+  defp compile_paths(_),
+    do: ["lib"]
 
   defp deps do
     [

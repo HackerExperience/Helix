@@ -12,6 +12,7 @@ defmodule Helix.Process.Model.Process.Resources do
 
   @fields ~w/cpu ram dlk ulk/a
 
+  @primary_key false
   embedded_schema do
     field :cpu, :integer, default: 0
     field :ram, :integer, default: 0
@@ -95,10 +96,37 @@ defmodule Helix.Process.Model.Process.Resources do
       ulk: res.ulk * val}
   end
 
+  @spec min(t | nil, t | nil) :: t | nil
+  def min(x = %__MODULE__{}, xs = %__MODULE__{}) do
+    %__MODULE__{x|
+      cpu: Kernel.min(x.cpu, xs.cpu),
+      ram: Kernel.min(x.ram, xs.ram),
+      dlk: Kernel.min(x.dlk, xs.dlk),
+      ulk: Kernel.min(x.ulk, xs.ulk)}
+  end
+
+  def min(nil, b),
+    do: b
+  def min(a, nil),
+    do: a
+
   def to_list(res) do
     res
     |> Map.take(@fields)
     |> :maps.to_list()
+  end
+
+  @spec from_server_resources(term) :: {:ok, t}
+  def from_server_resources(_server_resources) do
+    r = %__MODULE__{}
+
+    {:ok, r}
+  end
+
+  @spec compare(t, t) :: :eq | :lt | :gt | :divergent
+  def compare(_a, _b) do
+    # FIXME: this interface is pure garbage
+    :eq
   end
 
   defp safe_div(x1, x2) when is_integer(x2) and x2 > 0,
