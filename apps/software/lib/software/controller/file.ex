@@ -31,6 +31,20 @@ defmodule Helix.Software.Controller.File do
     end
   end
 
+  @spec move(File.t, String.t) :: {:ok, File.t} | {:error, Ecto.Changeset.t}
+  def move(file, file_path) do
+    file
+    |> File.update_changeset(%{file_path: file_path})
+    |> Repo.update()
+  end
+
+  @spec rename(File.t, String.t) :: {:ok, File.t} | {:error, Ecto.Changeset.t}
+  def rename(file, file_name) do
+    file
+    |> File.update_changeset(%{name: file_name})
+    |> Repo.update()
+  end
+
   @spec delete(HELL.PK.t) :: no_return
   def delete(file_id) do
     File

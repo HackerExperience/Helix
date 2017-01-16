@@ -83,6 +83,22 @@ defmodule Helix.Software.Controller.FileTest do
     end
   end
 
+  test "rename file", %{payload: payload} do
+    {:ok, file} = FileController.create(payload)
+    new_name = Burette.Color.name()
+    {:ok, renamed_file} = FileController.rename(file, new_name)
+
+    assert new_name == renamed_file.name
+  end
+
+  test "move file", %{payload: payload} do
+    {:ok, file} = FileController.create(payload)
+    new_path = Burette.Color.name()
+    {:ok, moved_file} = FileController.move(file, new_path)
+
+    assert new_path == moved_file.file_path
+  end
+
   test "delete/1 idempotency", %{payload: payload} do
     assert {:ok, file} = FileController.create(payload)
     assert :ok = FileController.delete(file.file_id)
