@@ -170,10 +170,17 @@ defmodule Helix.Software.Controller.FileTest do
     end
   end
 
-  test "delete/1 idempotency", %{payload: payload} do
-    assert {:ok, file} = FileController.create(payload)
-    assert :ok = FileController.delete(file.file_id)
-    assert :ok = FileController.delete(file.file_id)
-    assert {:error, :notfound} == FileController.find(file.file_id)
+  describe "deleting a file" do
+    test "deletes the file", %{payload: payload} do
+      {:ok, file} = FileController.create(payload)
+      assert {:ok, _} = FileController.delete(file)
+    end
+
+    test "deleting the file by it's id is idempotency", %{payload: payload} do
+      assert {:ok, file} = FileController.create(payload)
+      assert :ok = FileController.delete(file.file_id)
+      assert :ok = FileController.delete(file.file_id)
+      assert {:error, :notfound} == FileController.find(file.file_id)
+    end
   end
 end
