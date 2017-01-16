@@ -9,32 +9,40 @@ defmodule Helix.Software.Controller.FileTest do
   alias Helix.Software.Model.FileType
   alias Helix.Software.Repo
 
-  @file_type HRand.string(min: 20)
-
   setup_all do
-    %{file_type: @file_type, extension: ".test"}
+    file_type = HRand.string(min: 20)
+    %{file_type: file_type, extension: ".test"}
     |> FileType.create_changeset()
     |> Repo.insert!()
 
-    :ok
+    {:ok, file_type: file_type}
   end
 
-  setup do
-    {:ok, storage} = StorageController.create()
-
-    payload = %{
-      name: "void",
-      file_path: "/dev/null",
-      file_type: @file_type,
-      file_size: HRand.number(min: 1),
-      storage_id: storage.storage_id
-    }
-
+  setup %{file_type: file_type} do
+    {:ok, s} = StorageController.create()
+    payload = create_params(%{file_type: file_type, storage_id: s.storage_id})
     {:ok, payload: payload}
   end
 
-  test "create/1", %{payload: payload} do
-    assert {:ok, _} = FileController.create(payload)
+  defp create_params(%{file_type: file_type, storage_id: storage_id}) do
+    %{
+      name: HRand.digits(min: 20),
+      file_path: "/dev/null",
+      file_type: file_type,
+      file_size: HRand.number(min: 1),
+      storage_id: storage_id
+    }
+  end
+
+  describe "file creation" do
+    test "creates the file", %{payload: payload} do
+      assert {:ok, _} = FileController.create(payload)
+    end
+
+    test "failure when file exists", %{payload: payload} do
+      FileController.create(payload)
+      assert {:error, :file_exists} == FileController.create(payload)
+    end
   end
 
   describe "find/1" do
@@ -81,22 +89,63 @@ defmodule Helix.Software.Controller.FileTest do
     test "not found" do
       assert {:error, :notfound} == FileController.update(PK.generate([]), %{})
     end
+
+    test "fails when file exists", %{payload: payload0} do
+      FileController.create(payload0)
+
+      p = %{file_type: payload0.file_type, storage_id: payload0.storage_id}
+      payload1 = create_params(p)
+      {:ok, file1} = FileController.create(payload1)
+
+      assert {:error, :file_exists} == FileController.update(file1.file_id, payload0)
+    end
   end
 
-  test "rename file", %{payload: payload} do
-    {:ok, file} = FileController.create(payload)
-    new_name = Burette.Color.name()
-    {:ok, renamed_file} = FileController.rename(file, new_name)
+  describe "renaming a file" do
+    test "renames the file", %{payload: payload} do
+      {:ok, file} = FileController.create(payload)
+      new_name = Burette.Color.name()
+      {:ok, renamed_file} = FileController.rename(file, new_name)
 
-    assert new_name == renamed_file.name
+      assert new_name == renamed_file.name
+    end
+
+    test "fails to rename when file exists", %{payload: payload0} do
+      {:ok, file0} = FileController.create(payload0)
+
+      payload1 =
+        %{file_type: payload0.file_type, storage_id: payload0.storage_id}
+        |> create_params()
+        |> Map.put(:file_path, payload0.file_path)
+
+      {:ok, file1} = FileController.create(payload1)
+
+      assert {:error, :file_exists} == FileController.rename(file1, file0.name)
+    end
   end
 
-  test "move file", %{payload: payload} do
-    {:ok, file} = FileController.create(payload)
-    new_path = Burette.Color.name()
-    {:ok, moved_file} = FileController.move(file, new_path)
+  describe "moving a file" do
+    test "moves the file", %{payload: payload} do
+      {:ok, file} = FileController.create(payload)
+      new_path = Burette.Color.name()
+      {:ok, moved_file} = FileController.move(file, new_path)
 
-    assert new_path == moved_file.file_path
+      assert new_path == moved_file.file_path
+    end
+
+    test "fails to move when file exists", %{payload: payload0} do
+      {:ok, file0} = FileController.create(payload0)
+
+      payload1 =
+        %{file_type: payload0.file_type, storage_id: payload0.storage_id}
+        |> create_params()
+        |> Map.put(:name, payload0.name)
+        |> Map.put(:file_path, payload0.name)
+
+      {:ok, file1} = FileController.create(payload1)
+
+      assert {:error, :file_exists} == FileController.move(file1, file0.file_path)
+    end
   end
 
   test "delete/1 idempotency", %{payload: payload} do

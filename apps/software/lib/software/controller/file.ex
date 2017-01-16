@@ -25,7 +25,7 @@ defmodule Helix.Software.Controller.File do
     end
   end
 
-  @spec update(HELL.PK.t, v.update_params) ::
+  @spec update(HELL.PK.t, File.update_params) ::
     {:ok, File.t}
     | {:error, :file_exists | :notfound | Ecto.Changeset.t}
   def update(file_id, params) do
