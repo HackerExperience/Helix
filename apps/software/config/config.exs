@@ -2,9 +2,11 @@ use Mix.Config
 
 config :software,
   ecto_repos: [Helix.Software.Repo]
+
 config :software, Helix.Software.Repo,
   size: 4,
   adapter: Ecto.Adapters.Postgres,
+  types: HELL.PostgresTypes,
   database: "software_service",
   username: System.get_env("HELIX_DB_USER") || "postgres",
   password: System.get_env("HELIX_DB_PASS") || "postgres",
