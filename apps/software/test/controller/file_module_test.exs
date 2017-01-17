@@ -41,7 +41,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
   defp create_file(file_type, storage_id) do
     params = %{
       name: Random.string(min: 20),
-      file_path: "dev.null",
+      file_path: Random.digits(min: 20),
       file_type: file_type,
       file_size: Random.number(min: 1),
       storage_id: storage_id

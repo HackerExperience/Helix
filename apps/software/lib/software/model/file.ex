@@ -2,6 +2,7 @@ defmodule Helix.Software.Model.File do
 
   use Ecto.Schema
 
+  alias HELL.LTree
   alias HELL.PK
   alias Helix.Software.Model.FileType
   alias Helix.Software.Model.Storage
@@ -11,7 +12,7 @@ defmodule Helix.Software.Model.File do
   @type t :: %__MODULE__{
     file_id: PK.t,
     name: String.t,
-    file_path: String.t,
+    file_path: LTree.t,
     file_size: pos_integer,
     type: FileType.t,
     file_type: String.t,
@@ -23,7 +24,7 @@ defmodule Helix.Software.Model.File do
 
   @type creation_params :: %{
     name: String.t,
-    file_path: String.t,
+    file_path: LTree.t,
     file_size: pos_integer,
     file_type: String.t,
     storage_id: PK.t
@@ -43,7 +44,7 @@ defmodule Helix.Software.Model.File do
       primary_key: true
 
     field :name, :string
-    field :file_path, :string
+    field :file_path, LTree
     field :file_size, :integer
 
     belongs_to :type, FileType,
