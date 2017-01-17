@@ -86,8 +86,33 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   end
 
   @spec linked?(t) :: boolean
-  def linked?(%__MODULE__{link_component_id: nil}),
-    do: false
-  def linked?(%__MODULE__{link_component_id: _}),
-    do: true
+  def linked?(%__MODULE__{link_component_id: xs}),
+    do: !is_nil(xs)
+
+  defmodule Query do
+
+    alias Helix.Hardware.Model.MotherboardSlot
+
+    import Ecto.Query, only: [select: 3, where: 3]
+
+    @spec from_motherboard(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def from_motherboard(query \\ MotherboardSlot, motherboard_id) do
+      where(query, [ms], ms.motherboard_id == ^motherboard_id)
+    end
+
+    @spec by_component_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_component_id(query \\ MotherboardSlot, component_id) do
+      where(query, [ms], ms.link_component_id == ^component_id)
+    end
+
+    @spec only_linked_slots(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def only_linked_slots(query \\ MotherboardSlot) do
+      where(query, [ms], not is_nil(ms.link_component_id))
+    end
+
+    @spec select_component_id(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def select_component_id(query \\ MotherboardSlot) do
+      select(query, [ms], ms.link_component_id)
+    end
+  end
 end
