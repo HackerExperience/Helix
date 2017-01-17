@@ -46,9 +46,8 @@ defmodule Helix.Software.Controller.FileTest do
       length = Random.number(1..10)
       Random.string(length: length, alphabet: alphabet)
     end
-    0..size
-    |> Enum.map(random_str)
-    |> Enum.join(".")
+
+    Enum.map(0..size, random_str)
   end
 
   describe "file creation" do
