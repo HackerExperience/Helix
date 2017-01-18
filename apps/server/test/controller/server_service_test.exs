@@ -3,6 +3,7 @@ defmodule Helix.Server.Controller.ServerServiceTest do
   use ExUnit.Case, async: true
 
   alias HELF.Broker
+  alias HELL.TestHelper.Random
 
   @moduletag :umbrella
 
@@ -46,6 +47,20 @@ defmodule Helix.Server.Controller.ServerServiceTest do
       {:ok, server} = server_of_account(account.account_id)
 
       assert server.motherboard_id
+    end
+  end
+
+  describe "hardware resources" do
+
+    @tag skip: "pending"
+    test "can be retrieved from hardware service" do
+      server_id = Random.pk()
+
+      topic = "server:hardware:resources"
+      msg = %{server_id: server_id}
+
+      assert {_, {:ok, res}} = Broker.call(topic, msg)
+      assert %{cpu: _, ram: _, dlk: _, ulk: _} = res
     end
   end
 end

@@ -17,7 +17,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
   @spec find_by([{:motherboard_id, HELL.PK.t}]) :: [MotherboardSlot.t]
   def find_by(motherboard_id: motherboard_id) do
     motherboard_id
-    |> MotherboardSlot.Query.from_motherboard()
+    |> MotherboardSlot.Query.by_motherboard_id()
     |> Repo.all()
   end
 

@@ -34,6 +34,12 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response}
   end
 
+  def handle_broker_call(pid, "hardware:motherboard:resources", %{motherboard_id: mid}, _) do
+    response = GenServer.call(pid, {:motherboard, :resources, mid})
+
+    {:reply, response}
+  end
+
   def handle_broker_cast(pid, "event:server:created", {server_id, _entity_id}, request) do
     # FIXME: remove hardcoded data
     bundle = %{
@@ -54,6 +60,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
   def init(_args) do
     Broker.subscribe("hardware:get", call: &handle_broker_call/4)
     Broker.subscribe("hardware:motherboard:create", call: &handle_broker_call/4)
+    Broker.subscribe("hardware:motherboard:resources", call: &handle_broker_call/4)
     Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
 
     {:ok, nil}
@@ -89,6 +96,10 @@ defmodule Helix.Hardware.Controller.HardwareService do
     GenServer.from,
     state) :: {:reply, {:ok, Helix.Hardware.Model.Motherboard.t}
               | {:error, :internal_error}, state}
+  @spec handle_call(
+    {:motherboard, :resources, HELL.PK.t},
+    GenServer.from,
+    state) :: {:reply, {:ok, %{any => any}} | {:error, :notfound}, state}
   @doc false
   def handle_call({:motherboard, :create, params}, _from, state) do
     with {:ok, mobo} <- MotherboardController.create(params) do
@@ -161,6 +172,19 @@ defmodule Helix.Hardware.Controller.HardwareService do
         {:reply, {:ok, motherboard}, state}
       {:error, error} ->
         {:reply, {:error, error}, state}
+    end
+  end
+
+  def handle_call({:motherboard, :resources, mib}, _from, state) do
+    with \
+      {:ok, mb} <- CtrlMobos.find(mib)
+    do
+      resources = CtrlMobos.resources(mb)
+
+      {:reply, {:ok, resources}, state}
+    else
+      _ ->
+        {:reply, {:error, :notfound}, state}
     end
   end
 

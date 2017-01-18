@@ -91,12 +91,23 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
 
   defmodule Query do
 
+    alias Helix.Hardware.Model.Motherboard
     alias Helix.Hardware.Model.MotherboardSlot
 
     import Ecto.Query, only: [select: 3, where: 3]
 
-    @spec from_motherboard(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def from_motherboard(query \\ MotherboardSlot, motherboard_id) do
+    @spec from_motherboard(Ecto.Queryable.t, Motherboard.t) :: Ecto.Queryable.t
+    def from_motherboard(query \\ MotherboardSlot, m = %Motherboard{}) do
+      by_motherboard_id(query, m.motherboard_id)
+    end
+
+    @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_id(query \\ MotherboardSlot, slot_id) do
+      where(query, [ms], ms.slot_id == ^slot_id)
+    end
+
+    @spec by_motherboard_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_motherboard_id(query \\ MotherboardSlot, motherboard_id) do
       where(query, [ms], ms.motherboard_id == ^motherboard_id)
     end
 

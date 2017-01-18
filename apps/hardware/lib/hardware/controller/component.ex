@@ -3,8 +3,6 @@ defmodule Helix.Hardware.Controller.Component do
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Repo
 
-  import Ecto.Query, only: [where: 3]
-
   @spec create(Component.creation_params) :: {:ok, Component.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
@@ -24,8 +22,8 @@ defmodule Helix.Hardware.Controller.Component do
 
   @spec delete(HELL.PK.t) :: no_return
   def delete(component_id) do
-    Component
-    |> where([s], s.component_id == ^component_id)
+    component_id
+    |> Component.Query.by_id()
     |> Repo.delete_all()
 
     :ok

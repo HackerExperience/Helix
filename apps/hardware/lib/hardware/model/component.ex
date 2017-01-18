@@ -50,9 +50,23 @@ defmodule Helix.Hardware.Model.Component do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = PK.generate([0x0003, 0x0001, 0x0000])
+    if get_field(changeset, :component_id) do
+      changeset
+    else
+      pk = PK.generate([0x0003, 0x0001, 0x0000])
 
-    changeset
-    |> cast(%{component_id: ip}, [:component_id])
+      cast(changeset, %{component_id: pk}, [:component_id])
+    end
+  end
+
+  defmodule Query do
+
+    alias Helix.Hardware.Model.Component
+
+    import Ecto.Query, only: [where: 3]
+
+    def by_id(query \\ Component, component_id) do
+      where(query, [c], c.component_id == ^component_id)
+    end
   end
 end

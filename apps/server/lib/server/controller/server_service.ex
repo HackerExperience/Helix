@@ -23,6 +23,7 @@ defmodule Helix.Server.Controller.ServerService do
     Broker.subscribe("server:attach", call: &handle_broker_call/4)
     Broker.subscribe("server:detach", call: &handle_broker_call/4)
     Broker.subscribe("server:query", call: &handle_broker_call/4)
+    Broker.subscribe("server:hardware:resources", call: &handle_broker_call/4)
 
     {:ok, nil}
   end
@@ -59,6 +60,10 @@ defmodule Helix.Server.Controller.ServerService do
     response = GenServer.call(pid, {:server, :find, id})
     {:reply, response}
   end
+  def handle_broker_call(pid, "server:hardware:resources", %{server_id: sid}, _) do
+    response = GenServer.call(pid, {:server, :resources, sid})
+    {:reply, response}
+  end
 
   @spec handle_call(
     {:server, :create, Server.creation_params, HeBroker.Request.t},
@@ -73,6 +78,10 @@ defmodule Helix.Server.Controller.ServerService do
     {:server, :detach, HELL.PK.t},
     GenServer.from,
     state) :: {:reply, :ok | :error, state}
+  @spec handle_call(
+    {:server, :resources, HELL.PK.t},
+    GenServer.from,
+    state) :: {:reply, {:ok, %{any => any}} | {:error, :notfound}, state}
   @doc false
   def handle_call({:server, :create, params, req}, _from, state) do
     case ServerController.create(params) do
@@ -84,6 +93,7 @@ defmodule Helix.Server.Controller.ServerService do
         {:reply, error, state}
     end
   end
+
   def handle_call({:server, :attach, server_id, mobo_id, req}, _from, state) do
     case ServerController.attach(server_id, mobo_id) do
       {:ok, _} ->
@@ -96,6 +106,7 @@ defmodule Helix.Server.Controller.ServerService do
         {:reply, :error, state}
     end
   end
+
   def handle_call({:server, :detach, server_id, req}, _from, state) do
     case ServerController.detach(server_id) do
       {:ok, _} ->
@@ -106,8 +117,24 @@ defmodule Helix.Server.Controller.ServerService do
         {:reply, :error, state}
     end
   end
+
   def handle_call({:server, :find, id}, _from, state) do
     reply = ServerController.find(id)
     {:reply, reply, state}
+  end
+
+  def handle_call({:server, :resources, sid}, _from, state) do
+    with \
+      {:ok, server} <- ServerController.find(sid),
+      %{motherboard_id: mib} when not is_nil(mib) <- server,
+      request = %{motherboard_id: mib},
+      topic = "hardware:motherboard:resources",
+      {_, {:ok, resources}} <- Broker.call(topic, request)
+    do
+      {:reply, {:ok, resources}, state}
+    else
+      _ ->
+        {:reply, {:error, :notfound}, state}
+    end
   end
 end

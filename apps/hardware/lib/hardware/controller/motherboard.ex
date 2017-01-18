@@ -23,7 +23,7 @@ defmodule Helix.Hardware.Controller.Motherboard do
   @spec resources(Motherboard.t) :: %{cpu: non_neg_integer, ram: non_neg_integer, dlk: non_neg_integer, ulk: non_neg_integer}
   def resources(motherboard) do
     cids =
-      motherboard.motherboard_id
+      motherboard
       |> MotherboardSlot.Query.from_motherboard()
       |> MotherboardSlot.Query.only_linked_slots()
       |> MotherboardSlot.Query.select_component_id()
@@ -78,7 +78,7 @@ defmodule Helix.Hardware.Controller.Motherboard do
   @spec get_slots(HELL.PK.t) :: [MotherboardSlot.t]
   def get_slots(motherboard_id) do
     motherboard_id
-    |> MotherboardSlot.Query.from_motherboard()
+    |> MotherboardSlot.Query.by_motherboard_id()
     |> Repo.all()
   end
 
