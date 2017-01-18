@@ -3,14 +3,13 @@ defmodule Helix.Software.Model.ModuleRole do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Software.Model.FileType, as: MdlFileType, warn: false
-  alias Helix.Software.Model.Module, as: MdlModule, warn: false
+  alias Helix.Software.Model.FileType
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
     module_role_id: PK.t,
     module_role: String.t,
-    type: MdlFileType.t
+    type: FileType.t
   }
 
   @creation_fields ~w/file_type module_role/a
@@ -23,7 +22,7 @@ defmodule Helix.Software.Model.ModuleRole do
     field :module_role, :string
 
     # FIXME: this name must change soon
-    belongs_to :type, MdlFileType,
+    belongs_to :type, FileType,
       foreign_key: :file_type,
       references: :file_type,
       type: :string

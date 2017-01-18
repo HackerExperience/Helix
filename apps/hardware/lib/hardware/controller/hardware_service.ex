@@ -3,12 +3,12 @@ defmodule Helix.Hardware.Controller.HardwareService do
   use GenServer
 
   alias HELF.Broker
-  alias Helix.Hardware.Controller.Motherboard, as: CtrlMobos
-  alias Helix.Hardware.Controller.MotherboardSlot, as: CtrlMoboSlots
-  alias Helix.Hardware.Controller.Component, as: CtrlComps
-  alias Helix.Hardware.Controller.ComponentSpec, as: CtrlCompSpec
-  alias Helix.Hardware.Model.MotherboardSlot, as: MotherboardSlot
-  alias Helix.Hardware.Model.Component, as: Component
+  alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
+  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
+  alias Helix.Hardware.Controller.Component, as: ComponentController
+  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
+  alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Repo
 
   @typep state :: nil
@@ -91,7 +91,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
               | {:error, :internal_error}, state}
   @doc false
   def handle_call({:motherboard, :create, params}, _from, state) do
-    with {:ok, mobo} <- CtrlMobos.create(params) do
+    with {:ok, mobo} <- MotherboardController.create(params) do
       Broker.cast("hardware:motherboard:created", mobo.motherboard_id)
       {:reply, {:ok, mobo.motherboard_id}, state}
     else
@@ -101,22 +101,22 @@ defmodule Helix.Hardware.Controller.HardwareService do
   end
 
   def handle_call({:motherboard, :get, id}, _from, state) do
-    response = CtrlMobos.find(id)
+    response = MotherboardController.find(id)
     {:reply, response, state}
   end
 
   def handle_call({:motherboard_slot, :get, id}, _from, state) do
-    response = CtrlMoboSlots.find(id)
+    response = MotherboardSlotController.find(id)
     {:reply, response, state}
   end
 
   def handle_call({:component, :get, id}, _from, state) do
-    response = CtrlComps.find(id)
+    response = ComponentController.find(id)
     {:reply, response, state}
   end
 
   def handle_call({:component_spec, :get, id}, _from, state) do
-    response = CtrlCompSpec.find(id)
+    response = ComponentSpecController.find(id)
     {:reply, response, state}
   end
 
@@ -171,7 +171,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     with \
       {:ok, component, ev0} <- create_component("mobo", spec_id),
       params = %{motherboard_id: component.component_id},
-      {:ok, motherboard} <- CtrlMobos.create(params)
+      {:ok, motherboard} <- MotherboardController.create(params)
     do
       msg = %{motherboard_id: motherboard.motherboard_id}
       ev1 = [{"event:motherboard:created", msg}]
@@ -191,7 +191,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
       component_type: component_type,
       spec_id: spec_id}
 
-    case CtrlComps.create(params) do
+    case ComponentController.create(params) do
       {:ok, component} ->
         msg = %{component_id: component.component_id}
         deferred_events = [{"event:component:created", msg}]
@@ -208,7 +208,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
   defp setup_motherboard(motherboard, components) do
     grouped_slots =
       motherboard.motherboard_id
-      |> CtrlMobos.get_slots()
+      |> MotherboardController.get_slots()
       |> Enum.reject(&MotherboardSlot.linked?/1)
       |> Enum.group_by(&(&1.link_component_type))
 
@@ -216,7 +216,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     |> Enum.reduce_while(grouped_slots, fn comp, slots ->
       with \
         [slot | rest] <- Map.get(slots, comp.component_type, []),
-        {:ok, _} <- CtrlMoboSlots.link(slot.slot_id, comp.component_id)
+        {:ok, _} <- MotherboardSlotController.link(slot.slot_id, comp.component_id)
       do
         available_slots = Map.put(slots, comp.component_type, rest)
         {:cont, available_slots}

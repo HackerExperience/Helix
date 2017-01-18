@@ -4,11 +4,11 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   alias HELL.IPv6
   alias HELL.TestHelper.Random, as: HRand
-  alias Helix.Software.Controller.Storage, as: CtrlStorage
-  alias Helix.Software.Controller.StorageDrive, as: CtrlStorageDrives
+  alias Helix.Software.Controller.Storage, as: StorageController
+  alias Helix.Software.Controller.StorageDrive, as: StorageDriveController
 
   setup do
-    {:ok, storage} = CtrlStorage.create()
+    {:ok, storage} = StorageController.create()
 
     payload = %{
       drive_id: HRand.number(),
@@ -19,26 +19,26 @@ defmodule Helix.Software.Controller.StorageDriveTest do
   end
 
   test "create/1", %{payload: payload} do
-    assert {:ok, _} = CtrlStorageDrives.create(payload)
+    assert {:ok, _} = StorageDriveController.create(payload)
   end
 
   describe "find/2" do
     test "success", %{payload: payload} do
-      assert {:ok, drive} = CtrlStorageDrives.create(payload)
-      assert {:ok, ^drive} = CtrlStorageDrives.find(drive.storage_id, drive.drive_id)
+      assert {:ok, drive} = StorageDriveController.create(payload)
+      assert {:ok, ^drive} = StorageDriveController.find(drive.storage_id, drive.drive_id)
     end
 
     test "failure" do
-      assert {:error, :notfound} == CtrlStorageDrives.find(IPv6.generate([]), 0)
+      assert {:error, :notfound} == StorageDriveController.find(IPv6.generate([]), 0)
     end
   end
 
   test "delete/2 idempotency", %{payload: payload} do
-    assert {:ok, drive} = CtrlStorageDrives.create(payload)
+    assert {:ok, drive} = StorageDriveController.create(payload)
 
-    assert :ok = CtrlStorageDrives.delete(drive.storage_id, drive.drive_id)
-    assert :ok = CtrlStorageDrives.delete(drive.storage_id, drive.drive_id)
+    assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
+    assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
 
-    assert {:error, :notfound} == CtrlStorageDrives.find(drive.storage_id, drive.drive_id)
+    assert {:error, :notfound} == StorageDriveController.find(drive.storage_id, drive.drive_id)
   end
 end

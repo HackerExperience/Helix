@@ -3,22 +3,22 @@ defmodule Helix.Entity.Model.Entity do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Entity.Model.EntityServer, as: MdlEntityServer, warn: false
-  alias Helix.Entity.Model.EntityType, as: MdlEntityType, warn: false
+  alias Helix.Entity.Model.EntityServer
+  alias Helix.Entity.Model.EntityType
   import Ecto.Changeset
 
   @type id :: String.t
   @type t :: %__MODULE__{
     entity_id: id,
-    servers: [MdlEntityServer.t],
-    type: MdlEntityType.t,
+    servers: [EntityServer.t],
+    type: EntityType.t,
     entity_type: String.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
-    entity_type: MdlEntityType.name}
+    entity_type: EntityType.name}
 
   @creation_fields ~w/entity_type/a
 
@@ -27,10 +27,10 @@ defmodule Helix.Entity.Model.Entity do
     field :entity_id, HELL.PK,
       primary_key: true
 
-    has_many :servers, MdlEntityServer,
+    has_many :servers, EntityServer,
       foreign_key: :entity_id,
       references: :entity_id
-    belongs_to :type, MdlEntityType,
+    belongs_to :type, EntityType,
       foreign_key: :entity_type,
       references: :entity_type,
       type: :string

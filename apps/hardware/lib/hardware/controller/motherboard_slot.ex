@@ -1,13 +1,13 @@
 defmodule Helix.Hardware.Controller.MotherboardSlot do
 
   alias Helix.Hardware.Repo
-  alias Helix.Hardware.Controller.Component, as: CtrlComp
-  alias Helix.Hardware.Model.MotherboardSlot, as: MdlMoboSlot
+  alias Helix.Hardware.Controller.Component, as: ComponentController
+  alias Helix.Hardware.Model.MotherboardSlot
   import Ecto.Query, only: [where: 3]
 
-  @spec find(HELL.PK.t) :: {:ok, MdlMoboSlot.t} | {:error, :notfound}
+  @spec find(HELL.PK.t) :: {:ok, MotherboardSlot.t} | {:error, :notfound}
   def find(slot_id) do
-    case Repo.get_by(MdlMoboSlot, slot_id: slot_id) do
+    case Repo.get_by(MotherboardSlot, slot_id: slot_id) do
       nil ->
         {:error, :notfound}
       res ->
@@ -15,28 +15,28 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
     end
   end
 
-  @spec find_by([{:motherboard_id, HELL.PK.t}]) :: [MdlMoboSlot.t]
+  @spec find_by([{:motherboard_id, HELL.PK.t}]) :: [MotherboardSlot.t]
   def find_by(motherboard_id: motherboard_id) do
-    MdlMoboSlot
+    MotherboardSlot
     |> where([s], s.motherboard_id == ^motherboard_id)
     |> Repo.all()
   end
 
-  @spec update(HELL.PK.t, MdlMoboSlot.update_params) :: {:ok, MdlMoboSlot.t} | {:error, :notfound | Ecto.Changeset.t}
+  @spec update(HELL.PK.t, MotherboardSlot.update_params) :: {:ok, MotherboardSlot.t} | {:error, :notfound | Ecto.Changeset.t}
   def update(slot_id, params) do
     with {:ok, mobo_slot} <- find(slot_id) do
       mobo_slot
-      |> MdlMoboSlot.update_changeset(params)
+      |> MotherboardSlot.update_changeset(params)
       |> Repo.update()
     end
   end
 
   @spec link(slot_id :: HELL.PK.t, component :: HELL.PK.t) ::
-    {:ok, MdlMoboSlot.t}
+    {:ok, MotherboardSlot.t}
     | {:error, :component_already_linked | :slot_already_linked | :notfound | Ecto.Changeset.t}
   def link(slot_id, component_id) do
     slot_linked? = fn slot ->
-      MdlMoboSlot.linked?(slot)
+      MotherboardSlot.linked?(slot)
       && {:error, :slot_already_linked}
       || false
     end
@@ -49,24 +49,24 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
 
     with \
       {:ok, slot} <- find(slot_id),
-      {:ok, component} <- CtrlComp.find(component_id),
+      {:ok, component} <- ComponentController.find(component_id),
       false <- slot_linked?.(slot),
       false <- component_used?.(component)
     do
       slot
-      |> MdlMoboSlot.update_changeset(%{link_component_id: component_id})
+      |> MotherboardSlot.update_changeset(%{link_component_id: component_id})
       |> Repo.update()
     end
   end
 
-  @spec unlink(HELL.PK.t) :: {:ok, MdlMoboSlot.t} | {:error, :notfound | Ecto.Changeset.t}
+  @spec unlink(HELL.PK.t) :: {:ok, MotherboardSlot.t} | {:error, :notfound | Ecto.Changeset.t}
   def unlink(slot_id) do
     update(slot_id, %{link_component_id: nil})
   end
 
   @spec component_used?(HELL.PK.t) :: boolean
   defp component_used?(component_id) do
-    Repo.get_by(MdlMoboSlot, link_component_id: component_id)
+    Repo.get_by(MotherboardSlot, link_component_id: component_id)
     && true
     || false
   end

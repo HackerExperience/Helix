@@ -4,7 +4,7 @@ defmodule Helix.Controller.EntityService do
 
   alias HELL.PK
   alias HELF.Broker
-  alias Helix.Entity.Model.Entity, as: Entity
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Controller.Entity, as: EntityController
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
 

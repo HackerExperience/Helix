@@ -6,7 +6,7 @@ defmodule Helix.Entity.App do
   alias Helix.Entity.Repo
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
+    import Supervisor.Spec
 
     children = [
       worker(EntityService, []),

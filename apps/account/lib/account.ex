@@ -6,7 +6,7 @@ defmodule Helix.Account.App do
   alias Helix.Account.Repo
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
+    import Supervisor.Spec
 
     children = [
       worker(AccountService, []),

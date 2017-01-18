@@ -3,26 +3,26 @@ defmodule Helix.NPC.Controller.NPCTest do
   use ExUnit.Case, async: true
 
   alias HELL.IPv6
-  alias Helix.NPC.Controller.NPC, as: CtrlNPC
+  alias Helix.NPC.Controller.NPC, as: NPCController
 
   test "create/1" do
-    assert {:ok, _} = CtrlNPC.create(%{})
+    assert {:ok, _} = NPCController.create(%{})
   end
 
   describe "find/1" do
     test "success" do
-      {:ok, npc} = CtrlNPC.create(%{})
-      assert {:ok, ^npc} = CtrlNPC.find(npc.npc_id)
+      {:ok, npc} = NPCController.create(%{})
+      assert {:ok, ^npc} = NPCController.find(npc.npc_id)
     end
 
     test "failure" do
-      assert {:error, :notfound} == CtrlNPC.find(IPv6.generate([]))
+      assert {:error, :notfound} == NPCController.find(IPv6.generate([]))
     end
   end
 
   test "delete/1 idempotency" do
-    {:ok, npc} = CtrlNPC.create(%{})
-    assert :ok = CtrlNPC.delete(npc.npc_id)
-    assert :ok = CtrlNPC.delete(npc.npc_id)
+    {:ok, npc} = NPCController.create(%{})
+    assert :ok = NPCController.delete(npc.npc_id)
+    assert :ok = NPCController.delete(npc.npc_id)
   end
 end

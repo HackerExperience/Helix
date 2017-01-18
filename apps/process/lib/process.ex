@@ -6,7 +6,7 @@ defmodule Helix.Process.App do
   alias Helix.Process.Controller.ProcessService
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
+    import Supervisor.Spec
 
     children = [
       worker(Repo, []),

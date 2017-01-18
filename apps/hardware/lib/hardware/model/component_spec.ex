@@ -2,7 +2,6 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   use Ecto.Schema
 
-  alias Helix.Hardware.Model.Component, as: MdlComp, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

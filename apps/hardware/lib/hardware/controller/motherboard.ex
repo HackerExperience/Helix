@@ -2,7 +2,7 @@ defmodule Helix.Hardware.Controller.Motherboard do
 
   alias Helix.Hardware.Repo
   alias Helix.Hardware.Model.Motherboard
-  alias Helix.Hardware.Model.MotherboardSlot, as: MotherboardSlot
+  alias Helix.Hardware.Model.MotherboardSlot
   import Ecto.Query, only: [where: 3]
 
   @spec create(Motherboard.creation_params) :: {:ok, Motherboard.t} | no_return

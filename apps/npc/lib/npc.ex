@@ -6,7 +6,7 @@ defmodule Helix.NPC.App do
   alias Helix.NPC.Controller.NPCService
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
+    import Supervisor.Spec
 
     children = [
       worker(Repo, []),

@@ -1,8 +1,8 @@
 defmodule Helix.Account.Controller.Session do
 
-  alias Helix.Account.Model.Account, as: MdlAccount
+  alias Helix.Account.Model.Account
 
-  @spec create(MdlAccount.id) :: {:ok, String.t} | {:error, :unauthorized}
+  @spec create(Account.id) :: {:ok, String.t} | {:error, :unauthorized}
   def create(account_id) do
     session = %{account_id: account_id}
     case Guardian.encode_and_sign(session, :access) do

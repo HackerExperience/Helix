@@ -6,7 +6,7 @@ defmodule Helix.Software.App do
   alias Helix.Software.Controller.SoftwareService
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
+    import Supervisor.Spec
 
     children = [
       worker(Repo, []),

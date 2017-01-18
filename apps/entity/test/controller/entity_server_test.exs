@@ -6,7 +6,7 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   alias Helix.Entity.Repo
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityType
-  alias Helix.Entity.Controller.EntityServer, as: CtrlEntityServer
+  alias Helix.Entity.Controller.EntityServer, as: EntityServerController
 
   setup_all do
     # FIXME
@@ -36,18 +36,18 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   test "create/1", %{entity: entity} do
     server_id = Random.pk()
 
-    assert {:ok, _} = CtrlEntityServer.create(entity.entity_id, server_id)
+    assert {:ok, _} = EntityServerController.create(entity.entity_id, server_id)
   end
 
   describe "find/1" do
     test "fetching linked servers", %{entity: entity} do
       servers = [Random.pk(), Random.pk(), Random.pk()]
 
-      Enum.each(servers, &CtrlEntityServer.create(entity.entity_id, &1))
+      Enum.each(servers, &EntityServerController.create(entity.entity_id, &1))
 
       found_servers =
         entity.entity_id
-        |> CtrlEntityServer.find()
+        |> EntityServerController.find()
         |> Enum.map(&to_string(&1.server_id))
         |> Enum.sort()
 
@@ -55,17 +55,17 @@ defmodule Helix.Entity.Controller.EntityServerTest do
     end
 
     test "returns empty list if entity has no server", %{entity: entity} do
-      assert [] === CtrlEntityServer.find(entity.entity_id)
+      assert [] === EntityServerController.find(entity.entity_id)
     end
   end
 
   test "delete is idempotent", %{entity: entity} do
     server_id = HELL.TestHelper.Random.pk()
-    CtrlEntityServer.create(entity.entity_id, server_id)
+    EntityServerController.create(entity.entity_id, server_id)
 
-    refute [] == CtrlEntityServer.find(entity.entity_id)
-    CtrlEntityServer.delete(entity.entity_id, server_id)
-    CtrlEntityServer.delete(entity.entity_id, server_id)
-    assert [] == CtrlEntityServer.find(entity.entity_id)
+    refute [] == EntityServerController.find(entity.entity_id)
+    EntityServerController.delete(entity.entity_id, server_id)
+    EntityServerController.delete(entity.entity_id, server_id)
+    assert [] == EntityServerController.find(entity.entity_id)
   end
 end

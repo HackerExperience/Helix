@@ -2,7 +2,6 @@ defmodule Helix.Entity.Model.EntityType do
 
   use Ecto.Schema
 
-  alias Helix.Entity.Model.Entity, as: MdlEntity, warn: false
   import Ecto.Changeset
 
   @type name :: String.t

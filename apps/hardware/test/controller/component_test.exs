@@ -6,7 +6,7 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   alias Helix.Hardware.Repo
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentType
-  alias Helix.Hardware.Controller.ComponentSpec, as: SpecController
+  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Controller.Component, as: ComponentController
 
   setup_all do
@@ -25,7 +25,7 @@ defmodule Helix.Hardware.Controller.ComponentTest do
       spec: %{
         spec_code: Random.string(min: 20, max: 20)}}
 
-    {:ok, comp_spec} = SpecController.create(p)
+    {:ok, comp_spec} = ComponentSpecController.create(p)
 
     [component_type: type, component_spec: comp_spec]
   end
