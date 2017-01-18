@@ -14,8 +14,6 @@ defmodule Helix.Log.Repo.Migrations.InitialModels do
       timestamps()
     end
 
-    create index(:logs, [:server_id, :entity_id])
-
     create table(:revisions, primary_key: false) do
       add :revision_id, :inet, primary_key: true
 
