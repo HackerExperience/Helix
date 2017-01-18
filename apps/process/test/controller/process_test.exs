@@ -1,7 +1,7 @@
 defmodule Helix.Process.Controller.ProcessTest do
   use ExUnit.Case
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias Helix.Process.Controller.Process, as: ProcessController
 
   @tag :pending
@@ -18,7 +18,7 @@ defmodule Helix.Process.Controller.ProcessTest do
 
     @tag :pending
     test "failure" do
-      assert {:error, :notfound} = ProcessController.find(IPv6.generate([]))
+      assert {:error, :notfound} = ProcessController.find(PK.generate([]))
     end
   end
 

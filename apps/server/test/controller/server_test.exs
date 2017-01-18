@@ -2,7 +2,7 @@ defmodule Helix.Server.Controller.ServerTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
   alias Helix.Server.Repo
   alias Helix.Server.Controller.Server, as: ServerController
@@ -34,7 +34,7 @@ defmodule Helix.Server.Controller.ServerTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} == ServerController.find(IPv6.generate([]))
+      assert {:error, :notfound} == ServerController.find(PK.generate([]))
     end
   end
 
@@ -42,7 +42,7 @@ defmodule Helix.Server.Controller.ServerTest do
     test "change server location", %{payload: payload} do
       assert {:ok, server} = ServerController.create(payload)
 
-      poi = IPv6.generate([])
+      poi = PK.generate([])
       payload2 = %{poi_id: poi}
       assert {:ok, server} = ServerController.update(server.server_id, payload2)
       assert poi == to_string(server.poi_id)
@@ -51,14 +51,14 @@ defmodule Helix.Server.Controller.ServerTest do
     test "change motherboard id", %{payload: payload} do
       assert {:ok, server} = ServerController.create(payload)
 
-      mobo = IPv6.generate([])
+      mobo = PK.generate([])
       payload2 = %{motherboard_id: mobo}
       assert {:ok, server} = ServerController.update(server.server_id, payload2)
       assert mobo == to_string(server.motherboard_id)
     end
 
     test "server not found" do
-      assert {:error, :notfound} == ServerController.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == ServerController.update(PK.generate([]), %{})
     end
   end
 

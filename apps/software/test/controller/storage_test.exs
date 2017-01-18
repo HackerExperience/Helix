@@ -2,7 +2,7 @@ defmodule Helix.Software.Controller.StorageTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias Helix.Software.Controller.Storage, as: StorageController
 
   test "create/1" do
@@ -16,7 +16,7 @@ defmodule Helix.Software.Controller.StorageTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} == StorageController.find(IPv6.generate([]))
+      assert {:error, :notfound} == StorageController.find(PK.generate([]))
     end
   end
 

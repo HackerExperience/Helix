@@ -2,7 +2,7 @@ defmodule Helix.NPC.Controller.NPCTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias Helix.NPC.Controller.NPC, as: NPCController
 
   test "create/1" do
@@ -16,7 +16,7 @@ defmodule Helix.NPC.Controller.NPCTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} == NPCController.find(IPv6.generate([]))
+      assert {:error, :notfound} == NPCController.find(PK.generate([]))
     end
   end
 

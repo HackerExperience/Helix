@@ -2,7 +2,7 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
   alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Controller.StorageDrive, as: StorageDriveController
@@ -29,7 +29,8 @@ defmodule Helix.Software.Controller.StorageDriveTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} == StorageDriveController.find(IPv6.generate([]), 0)
+
+      assert {:error, :notfound} == StorageDriveController.find(PK.generate([]), 0)
     end
   end
 

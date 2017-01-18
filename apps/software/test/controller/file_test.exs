@@ -2,7 +2,7 @@ defmodule Helix.Software.Controller.FileTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.IPv6
+  alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
   alias Helix.Software.Repo
   alias Helix.Software.Model.FileType
@@ -44,7 +44,7 @@ defmodule Helix.Software.Controller.FileTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} == FileController.find(IPv6.generate([]))
+      assert {:error, :notfound} == FileController.find(PK.generate([]))
     end
   end
 
@@ -79,7 +79,7 @@ defmodule Helix.Software.Controller.FileTest do
     end
 
     test "not found" do
-      assert {:error, :notfound} == FileController.update(IPv6.generate([]), %{})
+      assert {:error, :notfound} == FileController.update(PK.generate([]), %{})
     end
   end
 
