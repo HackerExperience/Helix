@@ -93,7 +93,7 @@ defmodule Helix.Log.Model.Log do
     if get_field(changeset, :log_id) do
       changeset
     else
-      pk = PK.generate([])
+      pk = PK.generate([0x0008, 0x0000, 0x0000])
       cast(changeset, %{log_id: pk}, [:log_id])
     end
   end

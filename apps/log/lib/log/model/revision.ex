@@ -54,7 +54,7 @@ defmodule Helix.Log.Model.Revision do
     if get_field(changeset, :revision_id) do
       changeset
     else
-      pk = PK.generate([])
+      pk = PK.generate([0x0008, 0x0001, 0x0000])
       cast(changeset, %{revision_id: pk}, [:revision_id])
     end
   end
