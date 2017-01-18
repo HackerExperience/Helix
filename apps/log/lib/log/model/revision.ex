@@ -4,6 +4,7 @@ defmodule Helix.Log.Model.Revision do
 
   alias HELL.PK
   alias Helix.Log.Model.Log
+  alias Helix.Log.Model.LogTouch
 
   import Ecto.Changeset
 
@@ -37,6 +38,8 @@ defmodule Helix.Log.Model.Revision do
       #   created the log entry
 
       message = get_field(changeset, :message)
+      log_id = get_field(changeset, :log_id)
+      entity_id = get_field(changeset, :entity_id)
 
       # The Log entity should be properly updated to reflect the lastest
       # revision
@@ -44,6 +47,10 @@ defmodule Helix.Log.Model.Revision do
       |> apply_changes()
       |> Ecto.assoc(:log)
       |> changeset.repo.update_all(set: [message: message])
+
+      %LogTouch{}
+      |> LogTouch.changeset(%{log_id: log_id, entity_id: entity_id})
+      |> changeset.repo.insert(on_conflict: :nothing)
 
       changeset
     end)
@@ -54,7 +61,7 @@ defmodule Helix.Log.Model.Revision do
     if get_field(changeset, :revision_id) do
       changeset
     else
-      pk = PK.generate([])
+      pk = PK.generate([0x0008, 0x0001, 0x0000])
       cast(changeset, %{revision_id: pk}, [:revision_id])
     end
   end

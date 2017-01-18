@@ -4,6 +4,23 @@ defmodule HELL.PK do
 
   @behaviour Ecto.Type
 
+  # PK namespaces being used
+  # 0x0000  *       *       -> [Account]
+  # 0x0002  *       *       -> [Server]
+  # 0x0003  *       *       -> [Hardware]
+  #         0x0001  *         -> Component
+  #         0x0002  *         -> MotherboardSlot
+  # 0x0004  *       *       -> [Software]
+  #         0x0000  *         -> File
+  #         0x0001  *         -> Storage
+  #         0x0002  *         -> ModuleRole
+  # 0x0005  *       *       -> [Process]
+  # *       0x0000  *         -> Process
+  # 0x0006  *       *       -> [NPC]
+  # 0x0007  *       *       -> [Clan]
+  # 0x0008  *       *       -> [Log]
+  #         0x0000  *         -> Log
+  #         0x0001  *         -> Revision
   @spec generate([non_neg_integer]) :: t
   defdelegate generate(params),
     to: HELL.IPv6

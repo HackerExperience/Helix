@@ -93,8 +93,38 @@ defmodule Helix.Log.Model.Log do
     if get_field(changeset, :log_id) do
       changeset
     else
-      pk = PK.generate([])
+      pk = PK.generate([0x0008, 0x0000, 0x0000])
       cast(changeset, %{log_id: pk}, [:log_id])
+    end
+  end
+
+  defmodule Query do
+
+    alias Helix.Log.Model.Log
+    alias Helix.Log.Model.LogTouch
+
+    import Ecto.Query, only: [join: 5, order_by: 3, select: 3, where: 3]
+
+    @spec edited_by_entity(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def edited_by_entity(query \\ Log, entity_id) do
+      query
+      |> join(:inner, [l], lt in LogTouch, lt.log_id == l.log_id)
+      |> where([l, lt], lt.entity_id == ^entity_id)
+    end
+
+    @spec by_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_server(query \\ Log, server_id) do
+      where(query, [l], l.server_id == ^server_id)
+    end
+
+    @spec select_id(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def select_id(query \\ Log) do
+      select(query, [l], l.log_id)
+    end
+
+    @spec order_by_newest(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def order_by_newest(query \\ Log) do
+      order_by(query, [l], desc: l.inserted_at)
     end
   end
 end
