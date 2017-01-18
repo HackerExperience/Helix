@@ -4,12 +4,12 @@ defmodule Helix.Software.Controller.ModuleTest do
 
   alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
-  alias Helix.Software.Repo
-  alias Helix.Software.Model.FileType
-  alias Helix.Software.Model.ModuleRole
   alias Helix.Software.Controller.File, as: FileController
   alias Helix.Software.Controller.Module, as: ModuleController
   alias Helix.Software.Controller.Storage, as: StorageController
+  alias Helix.Software.Model.FileType
+  alias Helix.Software.Model.ModuleRole
+  alias Helix.Software.Repo
 
   setup do
     file_type = FileType |> Repo.all() |> Enum.random() |> Map.fetch!(:file_type)

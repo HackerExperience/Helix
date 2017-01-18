@@ -3,6 +3,7 @@ defmodule Helix.NPC.Model.NPC do
   use Ecto.Schema
 
   alias HELL.PK
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

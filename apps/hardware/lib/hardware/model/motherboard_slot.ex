@@ -4,8 +4,9 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
 
   alias HELL.PK
   alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.Motherboard
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

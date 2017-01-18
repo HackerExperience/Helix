@@ -3,10 +3,10 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Entity.Repo
+  alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityType
-  alias Helix.Entity.Controller.EntityServer, as: EntityServerController
+  alias Helix.Entity.Repo
 
   setup_all do
     # FIXME

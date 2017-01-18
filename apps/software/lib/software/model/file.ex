@@ -5,6 +5,7 @@ defmodule Helix.Software.Model.File do
   alias HELL.PK
   alias Helix.Software.Model.FileType
   alias Helix.Software.Model.Storage
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

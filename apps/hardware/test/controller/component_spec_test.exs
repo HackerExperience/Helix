@@ -3,10 +3,10 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Repo
+  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.ComponentType
-  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
+  alias Helix.Hardware.Repo
 
   setup_all do
     # FIXME

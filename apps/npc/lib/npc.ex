@@ -2,8 +2,8 @@ defmodule Helix.NPC.App do
 
   use Application
 
-  alias Helix.NPC.Repo
   alias Helix.NPC.Controller.NPCService
+  alias Helix.NPC.Repo
 
   def start(_type, _args) do
     import Supervisor.Spec

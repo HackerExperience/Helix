@@ -1,9 +1,10 @@
 defmodule Helix.Entity.Controller.EntityServer do
 
-  alias Helix.Entity.Repo
-  alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityServer
+  alias Helix.Entity.Repo
+
   import Ecto.Query, only: [where: 3]
 
   @spec create(Entity.id, Server.id) :: {:ok, EntityServer.t} | {:error, Ecto.Changeset.t}

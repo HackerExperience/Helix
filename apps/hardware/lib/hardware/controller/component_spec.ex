@@ -1,7 +1,8 @@
 defmodule Helix.Hardware.Controller.ComponentSpec do
 
-  alias Helix.Hardware.Repo
   alias Helix.Hardware.Model.ComponentSpec
+  alias Helix.Hardware.Repo
+
   import Ecto.Query, only: [where: 3]
 
   @spec create(ComponentSpec.creation_params) :: {:ok, ComponentSpec.t} | {:error, Ecto.Changeset.t}

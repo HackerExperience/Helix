@@ -3,9 +3,9 @@ defmodule Helix.Account.Controller.AccountTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
+  alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
-  alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Entity.Controller.Entity, as: EntityController
 
   setup do

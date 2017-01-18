@@ -2,6 +2,7 @@ defmodule Helix.Entity.Controller.Entity do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
+
   import Ecto.Query, only: [where: 3]
 
   @spec create(Entity.creation_params) :: {:ok, Entity.t} | no_return

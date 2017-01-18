@@ -2,6 +2,7 @@ defmodule Helix.NPC.Controller.NPC do
 
   alias Helix.NPC.Repo
   alias Helix.NPC.Model.NPC
+
   import Ecto.Query, only: [where: 3]
 
   @spec create(%{}) :: {:ok, NPC.t} | {:error, Ecto.Changeset.t}

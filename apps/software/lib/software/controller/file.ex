@@ -1,7 +1,8 @@
 defmodule Helix.Software.Controller.File do
 
-  alias Helix.Software.Repo
   alias Helix.Software.Model.File
+  alias Helix.Software.Repo
+
   import Ecto.Query, only: [where: 3]
 
   @spec create(File.creation_params) :: {:ok, File.t} | {:error, Ecto.Changeset.t}

@@ -4,9 +4,9 @@ defmodule Helix.Server.Controller.ServerTest do
 
   alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
-  alias Helix.Server.Repo
   alias Helix.Server.Controller.Server, as: ServerController
   alias Helix.Server.Model.ServerType
+  alias Helix.Server.Repo
 
   @server_type HRand.string(min: 20)
 

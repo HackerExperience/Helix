@@ -3,12 +3,12 @@ defmodule Helix.Hardware.Controller.HardwareService do
   use GenServer
 
   alias HELF.Broker
-  alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
-  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
-  alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
+  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
   @typep state :: nil

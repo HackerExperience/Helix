@@ -3,8 +3,9 @@ defmodule Helix.Software.Model.Module do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Software.Model.ModuleRole
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.ModuleRole
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

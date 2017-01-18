@@ -5,6 +5,7 @@ defmodule Helix.Entity.Model.Entity do
   alias HELL.PK
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Model.EntityType
+
   import Ecto.Changeset
 
   @type id :: String.t

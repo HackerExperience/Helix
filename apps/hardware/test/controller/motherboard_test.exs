@@ -3,13 +3,13 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Repo
+  alias Helix.Hardware.Controller.Component, as: ComponentController
+  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
+  alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
+  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.Motherboard
-  alias Helix.Hardware.Controller.Component, as: ComponentController
-  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentComponentSpecController
-  alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
-  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardMotherboardSlotController
+  alias Helix.Hardware.Repo
 
   setup_all do
     slot_type = Enum.random(["ram", "cpu", "hdd"])
@@ -35,7 +35,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
       spec: spec_for_motherboard
     }
 
-    {:ok, spec} = ComponentComponentSpecController.create(spec_params)
+    {:ok, spec} = ComponentSpecController.create(spec_params)
 
     [
       mobo_type: mobo_type,
@@ -85,12 +85,12 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
   test "delete is idempotent and removes every slot", %{mobo: mobo} do
     assert Repo.get_by(Motherboard, motherboard_id: mobo.motherboard_id)
-    refute [] === MotherboardMotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
+    refute [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
 
     MotherboardController.delete(mobo.motherboard_id)
     MotherboardController.delete(mobo.motherboard_id)
 
     refute Repo.get_by(Motherboard, motherboard_id: mobo.motherboard_id)
-    assert [] === MotherboardMotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
+    assert [] === MotherboardSlotController.find_by(motherboard_id: mobo.motherboard_id)
   end
 end

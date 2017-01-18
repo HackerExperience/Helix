@@ -1,8 +1,9 @@
 defmodule Helix.Server.Controller.Server do
 
   alias HELF.Broker
-  alias Helix.Server.Repo
   alias Helix.Server.Model.Server
+  alias Helix.Server.Repo
+
   import Ecto.Query, only: [where: 3]
 
   @spec create(Server.creation_params) :: {:ok, Server.t} | {:error, Ecto.Changeset.t}

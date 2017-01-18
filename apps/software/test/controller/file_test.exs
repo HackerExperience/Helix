@@ -4,10 +4,10 @@ defmodule Helix.Software.Controller.FileTest do
 
   alias HELL.PK
   alias HELL.TestHelper.Random, as: HRand
-  alias Helix.Software.Repo
-  alias Helix.Software.Model.FileType
-  alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Controller.File, as: FileController
+  alias Helix.Software.Controller.Storage, as: StorageController
+  alias Helix.Software.Model.FileType
+  alias Helix.Software.Repo
 
   @file_type HRand.string(min: 20)
 

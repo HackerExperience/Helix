@@ -4,9 +4,8 @@ defmodule Helix.Server.Controller.ServerService do
 
   alias HELF.Broker
   alias HELL.PK
+  alias Helix.Server.Controller.Server, as: ServerController
   alias Helix.Server.Model.Server
-  alias Helix.Server.Controller.Server, as: ServerController
-  alias Helix.Server.Controller.Server, as: ServerController
 
   @typep state :: nil
 

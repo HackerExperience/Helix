@@ -1,8 +1,9 @@
 defmodule Helix.Hardware.Controller.MotherboardSlot do
 
-  alias Helix.Hardware.Repo
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Repo
+
   import Ecto.Query, only: [where: 3]
 
   @spec find(HELL.PK.t) :: {:ok, MotherboardSlot.t} | {:error, :notfound}

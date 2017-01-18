@@ -4,6 +4,7 @@ defmodule Helix.Server.Model.Server do
 
   alias HELL.PK
   alias Helix.Server.Model.ServerType
+
   import Ecto.Changeset
 
   @type id :: PK.t

@@ -2,8 +2,8 @@ defmodule Helix.Software.App do
 
   use Application
 
-  alias Helix.Software.Repo
   alias Helix.Software.Controller.SoftwareService
+  alias Helix.Software.Repo
 
   def start(_type, _args) do
     import Supervisor.Spec

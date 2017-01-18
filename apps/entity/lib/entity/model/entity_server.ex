@@ -2,8 +2,9 @@ defmodule Helix.Entity.Model.EntityServer do
 
   use Ecto.Schema
 
-  alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

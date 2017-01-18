@@ -3,8 +3,9 @@ defmodule Helix.Software.Model.Storage do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.StorageDrive
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

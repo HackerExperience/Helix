@@ -1,7 +1,8 @@
 defmodule Helix.Software.Controller.Storage do
 
-  alias Helix.Software.Repo
   alias Helix.Software.Model.Storage
+  alias Helix.Software.Repo
+
   import Ecto.Query, only: [where: 3]
 
   @spec create() :: {:ok, Storage.t} | {:error, Ecto.Changeset.t}

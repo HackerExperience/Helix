@@ -3,13 +3,13 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Repo
-  alias Helix.Hardware.Model.ComponentType
-  alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
-  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardMotherboardSlotController
+  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
+  alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Repo
 
   setup_all do
     # FIXME
@@ -101,25 +101,25 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
   describe "find" do
     test "fetching a slot by it's id", %{slot: slot} do
-      assert {:ok, _} = MotherboardMotherboardSlotController.find(slot.slot_id)
+      assert {:ok, _} = MotherboardSlotController.find(slot.slot_id)
     end
 
     test "failure to retrieve a slot when it doesn't exists" do
-      assert {:error, :notfound} === MotherboardMotherboardSlotController.find(Random.pk())
+      assert {:error, :notfound} === MotherboardSlotController.find(Random.pk())
     end
   end
 
   describe "link" do
     test "connecting a component into slot", %{slot: slot} do
       component = component_for(slot)
-      {:ok, slot} = MotherboardMotherboardSlotController.link(slot.slot_id, component.component_id)
+      {:ok, slot} = MotherboardSlotController.link(slot.slot_id, component.component_id)
       assert component.component_id === slot.link_component_id
     end
 
     test "failure when slot is already used", %{slot: slot} do
       component = component_for(slot)
-      MotherboardMotherboardSlotController.link(slot.slot_id, component.component_id)
-      assert {:error, :slot_already_linked} === MotherboardMotherboardSlotController.link(slot.slot_id, component.component_id)
+      MotherboardSlotController.link(slot.slot_id, component.component_id)
+      assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
     end
 
     test "failure when component is already used", context do
@@ -132,9 +132,9 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
         |> Enum.find(&(&1.link_component_type == slot0.link_component_type))
 
        component = component_for(slot0)
-       MotherboardMotherboardSlotController.link(slot0.slot_id, component.component_id)
+       MotherboardSlotController.link(slot0.slot_id, component.component_id)
 
-       assert {:error, :component_already_linked} === MotherboardMotherboardSlotController.link(slot1.slot_id, component.component_id)
+       assert {:error, :component_already_linked} === MotherboardSlotController.link(slot1.slot_id, component.component_id)
     end
   end
 
@@ -143,10 +143,10 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
     # I think we should make the controllers use the actual structs for all
     # actions but find/fetch/get/search
-    MotherboardMotherboardSlotController.link(slot.slot_id, component.component_id)
+    MotherboardSlotController.link(slot.slot_id, component.component_id)
     assert Repo.get_by(MotherboardSlot, slot_id: slot.slot_id).link_component_id
-    assert {:ok, _} = MotherboardMotherboardSlotController.unlink(slot.slot_id)
-    assert {:ok, _} = MotherboardMotherboardSlotController.unlink(slot.slot_id)
+    assert {:ok, _} = MotherboardSlotController.unlink(slot.slot_id)
+    assert {:ok, _} = MotherboardSlotController.unlink(slot.slot_id)
     refute Repo.get_by(MotherboardSlot, slot_id: slot.slot_id).link_component_id
   end
 end
