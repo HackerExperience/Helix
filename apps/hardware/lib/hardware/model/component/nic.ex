@@ -19,6 +19,7 @@ defmodule Helix.Hardware.Model.Component.NIC do
     field :nic_id, PK,
       primary_key: true
 
+    field :mac_address, HELL.MacAddress
     field :downlink, :integer
     field :uplink, :integer
 
@@ -46,6 +47,8 @@ defmodule Helix.Hardware.Model.Component.NIC do
     struct
     |> cast(params, [:downlink, :uplink])
     |> validate()
+    |> foreign_key_constraint(:nic_id, name: :nics_nic_id_fkey)
+    |> unique_constraint(:mac_address, name: :nics_mac_address_index)
   end
 
   @spec validate(Ecto.Changeset.t) :: Ecto.Changeset.t

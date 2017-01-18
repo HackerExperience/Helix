@@ -67,12 +67,14 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     |> validate_required(
       [:motherboard_id, :link_component_type, :slot_internal_id])
     |> put_primary_key()
+    |> unique_constraint(:link_component_id, name: :motherboard_slots_link_component_id_index)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
+    |> unique_constraint(:link_component_id, name: :motherboard_slots_link_component_id_index)
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t

@@ -44,6 +44,7 @@ defmodule Helix.Hardware.Model.Component.RAM do
     struct
     |> cast(params, [:ram_size])
     |> validate()
+    |> foreign_key_constraint(:ram_id, name: :rams_ram_id_fkey)
   end
 
   @spec validate(Ecto.Changeset.t) :: Ecto.Changeset.t

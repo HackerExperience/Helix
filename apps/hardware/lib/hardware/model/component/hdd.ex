@@ -44,6 +44,7 @@ defmodule Helix.Hardware.Model.Component.HDD do
     struct
     |> cast(params, [:hdd_size])
     |> validate()
+    |> foreign_key_constraint(:hdd_id, name: :hdds_hdd_id_fkey)
   end
 
   @spec validate(Ecto.Changeset.t) :: Ecto.Changeset.t

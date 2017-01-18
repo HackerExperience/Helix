@@ -47,6 +47,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
     struct
     |> cast(params, [:clock, :cores])
     |> validate()
+    |> foreign_key_constraint(:cpu_id, name: :cpus_cpu_id_fkey)
   end
 
   @spec validate(Ecto.Changeset.t) :: Ecto.Changeset.t
