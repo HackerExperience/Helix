@@ -2,8 +2,6 @@ defmodule Helix.Software.Model.FileType do
 
   use Ecto.Schema
 
-  alias Helix.Software.Model.File, as: MdlFile, warn: false
-  alias Helix.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

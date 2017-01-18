@@ -1,19 +1,20 @@
 defmodule Helix.Hardware.Controller.Component do
 
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Repo
-  alias Helix.Hardware.Model.Component, as: MdlComp
+
   import Ecto.Query, only: [where: 3]
 
-  @spec create(MdlComp.creation_params) :: {:ok, MdlComp.t} | {:error, Ecto.Changeset.t}
+  @spec create(Component.creation_params) :: {:ok, Component.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
-    |> MdlComp.create_changeset()
+    |> Component.create_changeset()
     |> Repo.insert()
   end
 
-  @spec find(HELL.PK.t) :: {:ok, MdlComp.t} | {:error, :notfound}
+  @spec find(HELL.PK.t) :: {:ok, Component.t} | {:error, :notfound}
   def find(component_id) do
-    case Repo.get_by(MdlComp, component_id: component_id) do
+    case Repo.get_by(Component, component_id: component_id) do
       nil ->
         {:error, :notfound}
       res ->
@@ -23,7 +24,7 @@ defmodule Helix.Hardware.Controller.Component do
 
   @spec delete(HELL.PK.t) :: no_return
   def delete(component_id) do
-    MdlComp
+    Component
     |> where([s], s.component_id == ^component_id)
     |> Repo.delete_all()
 

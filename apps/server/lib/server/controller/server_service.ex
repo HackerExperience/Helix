@@ -4,9 +4,8 @@ defmodule Helix.Server.Controller.ServerService do
 
   alias HELF.Broker
   alias HELL.PK
-  alias Helix.Server.Model.Server, as: ServerModel
   alias Helix.Server.Controller.Server, as: ServerController
-  alias Helix.Server.Controller.Server, as: CtrlServers
+  alias Helix.Server.Model.Server
 
   @typep state :: nil
 
@@ -62,7 +61,7 @@ defmodule Helix.Server.Controller.ServerService do
   end
 
   @spec handle_call(
-    {:server, :create, ServerModel.creation_params, HeBroker.Request.t},
+    {:server, :create, Server.creation_params, HeBroker.Request.t},
     GenServer.from,
     state) :: {:reply, {:ok, server :: term}
               | {:error, reason :: term}, state}
@@ -86,7 +85,7 @@ defmodule Helix.Server.Controller.ServerService do
     end
   end
   def handle_call({:server, :attach, server_id, mobo_id, req}, _from, state) do
-    case CtrlServers.attach(server_id, mobo_id) do
+    case ServerController.attach(server_id, mobo_id) do
       {:ok, _} ->
         msg = %{
           server_id: server_id,
@@ -98,7 +97,7 @@ defmodule Helix.Server.Controller.ServerService do
     end
   end
   def handle_call({:server, :detach, server_id, req}, _from, state) do
-    case CtrlServers.detach(server_id) do
+    case ServerController.detach(server_id) do
       {:ok, _} ->
         msg = %{server_id: server_id}
         Broker.cast("event:server:detached", msg, request: req)
@@ -108,7 +107,7 @@ defmodule Helix.Server.Controller.ServerService do
     end
   end
   def handle_call({:server, :find, id}, _from, state) do
-    reply = CtrlServers.find(id)
+    reply = ServerController.find(id)
     {:reply, reply, state}
   end
 end

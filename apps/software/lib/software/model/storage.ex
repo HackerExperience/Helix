@@ -3,14 +3,15 @@ defmodule Helix.Software.Model.Storage do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Software.Model.StorageDrive, as: MdlStorageDrive, warn: false
-  alias Helix.Software.Model.File, as: MdlFile, warn: false
+  alias Helix.Software.Model.File
+  alias Helix.Software.Model.StorageDrive
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
     storage_id: PK.t,
-    drives: [MdlStorageDrive.t],
-    files: [MdlFile.t],
+    drives: [StorageDrive.t],
+    files: [File.t],
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
@@ -20,10 +21,10 @@ defmodule Helix.Software.Model.Storage do
     field :storage_id, HELL.PK,
       primary_key: true
 
-    has_many :drives, MdlStorageDrive,
+    has_many :drives, StorageDrive,
       foreign_key: :storage_id,
       references: :storage_id
-    has_many :files, MdlFile,
+    has_many :files, File,
       foreign_key: :storage_id,
       references: :storage_id
 

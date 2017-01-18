@@ -3,15 +3,16 @@ defmodule Helix.Software.Model.Module do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Software.Model.ModuleRole, as: MdlModuleRole, warn: false
-  alias Helix.Software.Model.File, as: MdlFile, warn: false
+  alias Helix.Software.Model.File
+  alias Helix.Software.Model.ModuleRole
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
     module_version: non_neg_integer,
-    file: MdlFile.t,
+    file: File.t,
     file_id: PK.t,
-    role: MdlModuleRole.t,
+    role: ModuleRole.t,
     module_role_id: PK.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
@@ -29,12 +30,12 @@ defmodule Helix.Software.Model.Module do
 
   @primary_key false
   schema "modules" do
-    belongs_to :file, MdlFile,
+    belongs_to :file, File,
       foreign_key: :file_id,
       references: :file_id,
       type: HELL.PK,
       primary_key: true
-    belongs_to :role, MdlModuleRole,
+    belongs_to :role, ModuleRole,
       foreign_key: :module_role_id,
       references: :module_role_id,
       type: HELL.PK,

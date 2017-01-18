@@ -2,7 +2,6 @@ defmodule Helix.Server.Model.ServerType do
 
   use Ecto.Schema
 
-  alias Helix.Server.Model.Server, as: MdlServer, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

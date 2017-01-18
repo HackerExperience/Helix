@@ -3,13 +3,13 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Repo
-  alias Helix.Hardware.Model.ComponentType
-  alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Controller.Component, as: ComponentController
-  alias Helix.Hardware.Controller.ComponentSpec, as: SpecController
+  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
+  alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Repo
 
   setup_all do
     # FIXME
@@ -41,7 +41,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       }
     }
 
-    {:ok, spec} = SpecController.create(spec_params)
+    {:ok, spec} = ComponentSpecController.create(spec_params)
 
     [
       component_types: types,
@@ -88,7 +88,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       component_type: slot.link_component_type,
       spec: %{spec_code: Random.string(min: 20, max: 20)}
     }
-    {:ok, comp_spec} = SpecController.create(p)
+    {:ok, comp_spec} = ComponentSpecController.create(p)
 
     p = %{
       component_type: slot.link_component_type,

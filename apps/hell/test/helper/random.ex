@@ -1,8 +1,9 @@
 defmodule HELL.TestHelper.Random do
 
   alias HELL.TestHelper.Random.Alphabet
-  alias HELL.TestHelper.Random.Alphabet.Digits
   alias HELL.TestHelper.Random.Alphabet.Alphanum
+  alias HELL.TestHelper.Random.Alphabet.Digits
+
   import HELL.MacroHelpers
 
   @type string_params :: [

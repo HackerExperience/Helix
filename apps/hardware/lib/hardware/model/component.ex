@@ -3,16 +3,17 @@ defmodule Helix.Hardware.Model.Component do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
-  alias Helix.Hardware.Model.ComponentSpec, as: MdlCompSpec, warn: false
+  alias Helix.Hardware.Model.ComponentSpec
+  alias Helix.Hardware.Model.MotherboardSlot
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
     component_id: PK.t,
     component_type: String.t,
-    component_spec: MdlCompSpec.t,
+    component_spec: ComponentSpec.t,
     spec_id: String.t,
-    slot: MdlMoboSlot.t,
+    slot: MotherboardSlot.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
@@ -28,11 +29,11 @@ defmodule Helix.Hardware.Model.Component do
 
     field :component_type, :string
 
-    belongs_to :component_spec, MdlCompSpec,
+    belongs_to :component_spec, ComponentSpec,
       foreign_key: :spec_id,
       references: :spec_id,
       type: :string
-    has_one :slot, MdlMoboSlot,
+    has_one :slot, MotherboardSlot,
       foreign_key: :link_component_id,
       references: :component_id
 

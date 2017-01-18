@@ -4,6 +4,7 @@ defmodule Helix.Account.Model.Account do
 
   alias HELL.PK
   alias Comeonin.Bcrypt
+
   import Ecto.Changeset
   import HELL.MacroHelpers
 

@@ -3,8 +3,9 @@ defmodule Helix.Hardware.Model.Motherboard do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Hardware.Model.Component, as: MdlComp, warn: false
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.MotherboardSlot
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -20,7 +21,7 @@ defmodule Helix.Hardware.Model.Motherboard do
 
   @primary_key false
   schema "motherboards" do
-    belongs_to :component, MdlComp,
+    belongs_to :component, Component,
       foreign_key: :motherboard_id,
       references: :component_id,
       type: HELL.PK,

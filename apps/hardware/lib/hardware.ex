@@ -2,15 +2,15 @@ defmodule Helix.Hardware.App do
 
   use Application
 
-  alias Helix.Hardware.Repo, as: HardwareRepo
-  alias Helix.Hardware.Controller.HardwareService, as: HardwareSvc
+  alias Helix.Hardware.Controller.HardwareService
+  alias Helix.Hardware.Repo
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
+    import Supervisor.Spec
 
     children = [
-      worker(HardwareRepo, []),
-      worker(HardwareSvc, [])
+      worker(Repo, []),
+      worker(HardwareService, [])
     ]
 
     opts = [strategy: :one_for_one, name: Helix.Hardware.Supervisor]

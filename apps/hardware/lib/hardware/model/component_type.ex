@@ -2,9 +2,6 @@ defmodule Helix.Hardware.Model.ComponentType do
 
   use Ecto.Schema
 
-  alias Helix.Hardware.Model.MotherboardSlot, as: MdlMoboSlot, warn: false
-  alias Helix.Hardware.Model.Component, as: MdlComp, warn: false
-  alias Helix.Hardware.Model.ComponentSpec, as: MdlCompSpec, warn: false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

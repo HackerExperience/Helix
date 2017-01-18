@@ -3,9 +3,9 @@ defmodule Helix.Account.Controller.AccountTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
+  alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
-  alias Helix.Account.Controller.Account, as: CtrlAccount
   alias Helix.Entity.Controller.Entity, as: EntityController
 
   setup do
@@ -34,56 +34,56 @@ defmodule Helix.Account.Controller.AccountTest do
 
   describe "account creation" do
     test "succeeds with proper data" do
-      assert {:ok, _} = CtrlAccount.create(payload())
+      assert {:ok, _} = AccountController.create(payload())
     end
 
     test "fails when email is already in use", %{account: account} do
       params = Map.put(payload(), :email, account.email)
-      assert {:error, changeset} = CtrlAccount.create(params)
+      assert {:error, changeset} = AccountController.create(params)
       assert :email in Keyword.keys(changeset.errors)
     end
 
     test "fails when password confirmation doesn't match" do
       payload = %{payload()| password_confirmation: "toptoper123"}
 
-      assert {:error, changeset} = CtrlAccount.create(payload)
+      assert {:error, changeset} = AccountController.create(payload)
       assert :password_confirmation in Keyword.keys(changeset.errors)
     end
 
     test "fails when password is too short" do
       payload = %{payload()| password: "123", password_confirmation: "123"}
 
-      assert {:error, changeset} = CtrlAccount.create(payload)
+      assert {:error, changeset} = AccountController.create(payload)
       assert :password in Keyword.keys(changeset.errors)
     end
   end
 
   describe "find/1" do
     test "succeeds when account exists", %{account: account} do
-      assert {:ok, found} = CtrlAccount.find(account.account_id)
+      assert {:ok, found} = AccountController.find(account.account_id)
       assert account.account_id == found.account_id
     end
 
     test "fails when account doesn't exists" do
-      assert {:error, :notfound} === CtrlAccount.find(Random.pk())
+      assert {:error, :notfound} === AccountController.find(Random.pk())
     end
   end
 
   describe "find_by/1" do
     test "using email", %{account: account} do
-      assert {:ok, found} = CtrlAccount.find_by(email: account.email)
+      assert {:ok, found} = AccountController.find_by(email: account.email)
       assert account.account_id == found.account_id
     end
 
     test "failing with invalid email" do
-      assert {:error, :notfound} = CtrlAccount.find_by(email: "invalid@email.eita")
+      assert {:error, :notfound} = AccountController.find_by(email: "invalid@email.eita")
     end
   end
 
   test "delete/1 is idempotent", %{account: account} do
     assert Repo.get_by(Account, account_id: account.account_id)
-    CtrlAccount.delete(account.account_id)
-    CtrlAccount.delete(account.account_id)
+    AccountController.delete(account.account_id)
+    AccountController.delete(account.account_id)
     refute Repo.get_by(Account, account_id: account.account_id)
   end
 
@@ -97,7 +97,7 @@ defmodule Helix.Account.Controller.AccountTest do
         confirmed: true
       }
 
-      assert {:ok, account2} = CtrlAccount.update(account.account_id, payload)
+      assert {:ok, account2} = AccountController.update(account.account_id, payload)
 
       assert payload.email == account2.email
       refute account.password == account2.password
@@ -108,12 +108,12 @@ defmodule Helix.Account.Controller.AccountTest do
       params = payload()
       params2 = Map.put(params, :email, account.email)
 
-      assert {:ok, account2} = CtrlAccount.create(params)
-      assert {:error, _} = CtrlAccount.update(account2.account_id, params2)
+      assert {:ok, account2} = AccountController.create(params)
+      assert {:error, _} = AccountController.update(account2.account_id, params2)
     end
 
     test "account not found" do
-      assert {:error, :notfound} == CtrlAccount.update(HELL.TestHelper.Random.pk(), %{})
+      assert {:error, :notfound} == AccountController.update(HELL.TestHelper.Random.pk(), %{})
     end
   end
 
@@ -125,16 +125,16 @@ defmodule Helix.Account.Controller.AccountTest do
       |> Account.update_changeset(%{password: pass, password_confirmation: pass})
       |> Repo.update!()
 
-      assert {:ok, _} = CtrlAccount.login(account.email, pass)
+      assert {:ok, _} = AccountController.login(account.email, pass)
     end
 
     test "fails when email is invalid" do
-      xs = CtrlAccount.login("invalid@email.eita", "password")
+      xs = AccountController.login("invalid@email.eita", "password")
       assert {:error, :notfound} === xs
     end
 
     test "fails when password doesn't match", %{account: account} do
-      xs = CtrlAccount.login(account.email, "not_actually_the_correct_password")
+      xs = AccountController.login(account.email, "not_actually_the_correct_password")
       assert {:error, :notfound} === xs
     end
   end

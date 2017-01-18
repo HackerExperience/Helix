@@ -3,13 +3,13 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Repo
-  alias Helix.Hardware.Model.ComponentType
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
+  alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.Motherboard
+  alias Helix.Hardware.Repo
 
   setup_all do
     slot_type = Enum.random(["ram", "cpu", "hdd"])

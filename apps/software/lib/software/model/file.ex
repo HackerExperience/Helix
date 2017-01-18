@@ -3,8 +3,9 @@ defmodule Helix.Software.Model.File do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Software.Model.FileType, as: MdlFileType, warn: false
-  alias Helix.Software.Model.Storage, as: MdlStorage, warn: false
+  alias Helix.Software.Model.FileType
+  alias Helix.Software.Model.Storage
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -12,9 +13,9 @@ defmodule Helix.Software.Model.File do
     name: String.t,
     file_path: String.t,
     file_size: pos_integer,
-    type: MdlFileType.t,
+    type: FileType.t,
     file_type: String.t,
-    storage: MdlStorage.t,
+    storage: Storage.t,
     storage_id: PK.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
@@ -45,11 +46,11 @@ defmodule Helix.Software.Model.File do
     field :file_path, :string
     field :file_size, :integer
 
-    belongs_to :type, MdlFileType,
+    belongs_to :type, FileType,
       foreign_key: :file_type,
       references: :file_type,
       type: :string
-    belongs_to :storage, MdlStorage,
+    belongs_to :storage, Storage,
       foreign_key: :storage_id,
       references: :storage_id,
       type: HELL.PK

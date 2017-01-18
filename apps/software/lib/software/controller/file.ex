@@ -1,19 +1,20 @@
 defmodule Helix.Software.Controller.File do
 
+  alias Helix.Software.Model.File
   alias Helix.Software.Repo
-  alias Helix.Software.Model.File, as: MdlFile
+
   import Ecto.Query, only: [where: 3]
 
-  @spec create(MdlFile.creation_params) :: {:ok, MdlFile.t} | {:error, Ecto.Changeset.t}
+  @spec create(File.creation_params) :: {:ok, File.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
-    |> MdlFile.create_changeset()
+    |> File.create_changeset()
     |> Repo.insert()
   end
 
-  @spec find(HELL.PK.t) :: {:ok, MdlFile.t} | {:error, :notfound}
+  @spec find(HELL.PK.t) :: {:ok, File.t} | {:error, :notfound}
   def find(file_id) do
-    case Repo.get_by(MdlFile, file_id: file_id) do
+    case Repo.get_by(File, file_id: file_id) do
       nil ->
         {:error, :notfound}
       file ->
@@ -21,18 +22,18 @@ defmodule Helix.Software.Controller.File do
     end
   end
 
-  @spec update(HELL.PK.t, MdlFile.update_params) :: {:ok, MdlFile.t} | {:error, :notfound | Ecto.Changeset.t}
+  @spec update(HELL.PK.t, File.update_params) :: {:ok, File.t} | {:error, :notfound | Ecto.Changeset.t}
   def update(file_id, params) do
     with {:ok, file} <- find(file_id) do
       file
-      |> MdlFile.update_changeset(params)
+      |> File.update_changeset(params)
       |> Repo.update()
     end
   end
 
   @spec delete(HELL.PK.t) :: no_return
   def delete(file_id) do
-    MdlFile
+    File
     |> where([f], f.file_id == ^file_id)
     |> Repo.delete_all()
 
