@@ -1,4 +1,12 @@
 defmodule Helix.Log.Model.LogTouch do
+  @moduledoc """
+  Links entities to logs
+
+  This model caches the relationship of entities that edited (or created) a log.
+
+  Does so to allow the client to display all logs that a certain user edited at
+  some point of history (even if their revision was removed)
+  """
 
   use Ecto.Schema
 
