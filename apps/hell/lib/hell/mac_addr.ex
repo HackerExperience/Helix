@@ -42,21 +42,30 @@ defmodule HELL.MacAddress do
     {:ok, %Postgrex.MACADDR{address: addr}}
   end
 
-  def valid_addr?(string),
-    do: valid_addr?(string, :one, 17)
+  # The binary pattern ensures that the string contains 136 bits (ie: 17 ASCII
+  # chars)
+  def valid_addr?(string = <<_ :: size(136)>>),
+    do: valid_addr?(string, :one)
+  def valid_addr?(_),
+    do: false
 
-  @hex Enum.to_list(?0..?9) ++ Enum.to_list(?A..?F)
-  defp valid_addr?("", :colon, 0),
-    do: true
-  for x <- @hex do
-    defp valid_addr?(unquote(<<x>>) <> t, :one, n),
-      do: valid_addr?(t, :two, n - 1)
-    defp valid_addr?(unquote(<<x>>) <> t, :two, n),
-      do: valid_addr?(t, :colon, n - 1)
+  @hex ~w/0 1 2 3 4 5 6 7 8 9 A B C D E F/
+  @permutations for x <- @hex, {y, z} <- [{:one, :two}, {:two, :colon}], do: {x, y, z}
+  @permutations [{":", :colon, :one}| @permutations]
+
+  for {char, from, to} <- @permutations do
+    # If the current `char` is in the range of `@hex` and the state is :one, it
+    # moves to :two; if the state is :two, it moves to :colon;
+    # If the current char is `":"` and the state is :colon, it moves to :one
+    # If there is no char left, the input string is a valid maccaddr
+    # Otherwise it is not a valid macaddr
+    defp valid_addr?(unquote(char) <> t, unquote(from)),
+      do: valid_addr?(t, unquote(to))
   end
-  defp valid_addr?(":" <> t, :colon, n),
-    do: valid_addr?(t, :one, n - 1)
-  defp valid_addr?(_, _, _),
+
+  defp valid_addr?("", :colon),
+    do: true
+  defp valid_addr?(_, _),
     do: false
 end
 
