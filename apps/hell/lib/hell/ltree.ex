@@ -24,45 +24,45 @@ defmodule HELL.LTree do
   def dump(ltree) when is_binary(ltree),
     do: {:ok, ltree}
   def dump(ltree) when is_list(ltree),
-    do: from_list(ltree)
+    do: from_string(ltree)
   def dump(_),
     do: :error
 
   defp to_list(str),
     do: {:ok, String.split(str, ".")}
 
-  defp from_list(list),
-    do: from_list(list, "")
+  defp from_string(list),
+    do: from_string(list, "")
 
-  defp from_list([], accum),
-    do: {:ok, accum}
-  defp from_list([head | tail], accum) do
-    case from_list(head, accum) do
-      {:ok, accum} ->
-        accum = if Enum.empty?(tail), do: accum, else: accum <> "."
-        from_list(tail, accum)
-      :error ->
-        :error
+  defp from_string([head | []], acc) do
+    if acc != "" and is_valid?(head) do
+      {:ok, acc <> head}
+    else
+      :error
     end
   end
-  defp from_list("", _),
-    do: :error
-  defp from_list(str, accum),
-    do: merge_valid(str, accum)
-
-  defp merge_valid("", accum),
-    do: {:ok, accum}
-
-  valid_chars =
-    [?_..?_, ?a..?z, ?A..?Z, ?0..?9]
-    |> Enum.map(&Enum.to_list/1)
-    |> Enum.reduce([], &(&2 ++ &1))
-
-  for c <- valid_chars do
-    defp merge_valid(<<unquote(c), tail::binary>>, accum),
-      do: merge_valid(tail, accum <> <<unquote(c)>>)
+  defp from_string([head | tail], acc) do
+    if is_valid?(head) do
+      acc = if acc != "", do: acc <> head <> ".", else: head <> "."
+      from_string(tail, acc)
+    else
+      :error
+    end
   end
 
-  defp merge_valid(_, _),
-    do: :error
+  valid_chars =
+    [?a..?z, ?A..?Z, ?0..?9]
+    |> Enum.map(&Enum.to_list/1)
+    |> Enum.reduce([], &(&2 ++ &1))
+    |> Kernel.++([?_])
+
+  for c <- valid_chars do
+    defp is_valid?(<<unquote(c)>>),
+      do: true
+    defp is_valid?(<<unquote(c), tail::binary>>),
+      do: is_valid?(tail)
+  end
+
+  defp is_valid?(_),
+    do: false
 end
