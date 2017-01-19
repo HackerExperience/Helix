@@ -48,12 +48,27 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    spec_code =
+    if get_field(changeset, :spec_id) do
       changeset
-      |> get_field(:spec)
-      |> Map.get(:spec_code)
+    else
+      spec_code =
+        changeset
+        |> get_field(:spec)
+        |> Map.get(:spec_code)
 
-    changeset
-    |> cast(%{spec_id: spec_code}, [:spec_id])
+      cast(changeset, %{spec_id: spec_code}, [:spec_id])
+    end
+  end
+
+  defmodule Query do
+
+    alias Helix.Hardware.Model.ComponentSpec
+
+    import Ecto.Query, only: [where: 3]
+
+    @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_id(query \\ ComponentSpec, spec_id) do
+      where(query, [s], s.spec_id == ^spec_id)
+    end
   end
 end

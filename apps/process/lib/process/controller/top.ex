@@ -105,7 +105,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   defp request_server_resources(broker, server_id) do
     with \
       params = %{server_id: server_id},
-      {_, {:ok, return}} <- broker.call("server:hardware:resources:get", params)
+      {_, {:ok, return}} <- broker.call("server:hardware:resources", params)
     do
       Resources.from_server_resources(return)
     end

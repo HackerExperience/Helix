@@ -72,4 +72,15 @@ defmodule Helix.Hardware.Model.Motherboard do
         []
     end
   end
+
+  defmodule Query do
+
+    alias Helix.Hardware.Model.Motherboard
+
+    import Ecto.Query, only: [where: 3]
+
+    def by_id(query \\ Motherboard, motherboard_id) do
+      where(query, [m], m.motherboard_id == ^motherboard_id)
+    end
+  end
 end

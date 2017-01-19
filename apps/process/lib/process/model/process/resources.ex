@@ -117,8 +117,8 @@ defmodule Helix.Process.Model.Process.Resources do
   end
 
   @spec from_server_resources(term) :: {:ok, t}
-  def from_server_resources(_server_resources) do
-    r = %__MODULE__{}
+  def from_server_resources(server_resources) do
+    r = struct(__MODULE__, server_resources)
 
     {:ok, r}
   end

@@ -4,8 +4,6 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
-  import Ecto.Query, only: [where: 3]
-
   @spec find(HELL.PK.t) :: {:ok, MotherboardSlot.t} | {:error, :notfound}
   def find(slot_id) do
     case Repo.get_by(MotherboardSlot, slot_id: slot_id) do
@@ -18,8 +16,8 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
 
   @spec find_by([{:motherboard_id, HELL.PK.t}]) :: [MotherboardSlot.t]
   def find_by(motherboard_id: motherboard_id) do
-    MotherboardSlot
-    |> where([s], s.motherboard_id == ^motherboard_id)
+    motherboard_id
+    |> MotherboardSlot.Query.by_motherboard_id()
     |> Repo.all()
   end
 
@@ -67,8 +65,16 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
 
   @spec component_used?(HELL.PK.t) :: boolean
   defp component_used?(component_id) do
-    Repo.get_by(MotherboardSlot, link_component_id: component_id)
-    && true
-    || false
+    component_id
+    |> MotherboardSlot.Query.by_component_id()
+    # We are selecting only the component_id to reduce the query time as this
+    # query uses a single indexed field and nothing else
+    |> MotherboardSlot.Query.select_component_id()
+    |> Repo.one()
+    |> to_boolean()
   end
+
+  @spec to_boolean(term) :: boolean
+  defp to_boolean(v),
+    do: !!v
 end
