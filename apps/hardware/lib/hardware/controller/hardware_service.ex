@@ -177,9 +177,9 @@ defmodule Helix.Hardware.Controller.HardwareService do
 
   def handle_call({:motherboard, :resources, mib}, _from, state) do
     with \
-      {:ok, mb} <- CtrlMobos.find(mib)
+      {:ok, mb} <- MotherboardController.find(mib)
     do
-      resources = CtrlMobos.resources(mb)
+      resources = MotherboardController.resources(mb)
 
       {:reply, {:ok, resources}, state}
     else
