@@ -4,7 +4,7 @@ defmodule HELL.LTreeTest do
   alias HELL.TestHelper.Random
   alias HELL.LTree
 
-  defp random_path() do
+  defp generate_random_path() do
     size = Random.number(1..20)
     alphabet = HELL.TestHelper.Random.Alphabet.Alphanum.alphabet
     Enum.map(0..size, fn _ ->
@@ -13,45 +13,60 @@ defmodule HELL.LTreeTest do
     end)
   end
 
-  describe "cast" do
-    test "yielding identity when is_list" do
-      input = random_path()
-      assert {:ok, ^input} = LTree.cast(input)
+  defp generate_random_repeat(content) do
+    length = 0..Random.number(1..10)
+    Enum.map(length, fn _ -> content end)
+  end
+
+  describe "casting" do
+    test "is identity when list is a list" do
+      list = generate_random_path()
+
+      assert {:ok, ^list} = LTree.cast(list)
     end
 
-    test "converting to list when is_binary" do
-      input = random_path()
-      {:ok, str_input} = LTree.dump(input)
-      assert {:ok, ^input} = LTree.cast(str_input)
+    test "converts binary to list" do
+      list = generate_random_path()
+      {:ok, str} = LTree.dump(list)
+
+      assert {:ok, ^list} = LTree.cast(str)
     end
   end
 
-  describe "load" do
-    test "yielding identity when is_list" do
-      input = random_path()
-      assert {:ok, ^input} = LTree.load(input)
-    end
+  test "loading converts binary to list" do
+    list = generate_random_path()
+    {:ok, str} = LTree.dump(list)
 
-    test "converting to list when is_binary" do
-      input = random_path()
-      {:ok, str_input} = LTree.dump(input)
-      assert {:ok, ^input} = LTree.load(str_input)
-    end
+    assert {:ok, ^list} = LTree.load(str)
   end
 
-  describe "dump" do
-    test "rejecting whitespace" do
-      assert :error == LTree.dump([" "])
-    end
+  describe "dumping" do
+    test "accepts lists containing valid binaries" do
+      for _ <- 0..Random.number(0..20) do
+        list = generate_random_path()
 
-    test "rejecting empty strings" do
-      assert :error == LTree.dump([""])
-    end
-
-    test "accepting valid structures" do
-      for _ <- 0..Random.number(0..200) do
-        assert {:ok, _} = LTree.dump(random_path())
+        assert {:ok, _} = LTree.dump(list)
       end
+    end
+
+    test "rejects lists containing whitespaces" do
+      for _ <- 0..Random.number(0..20) do
+        list = generate_random_repeat(" ")
+
+        assert :error == LTree.dump(list)
+      end
+    end
+
+    test "rejects lists containing empty binaries" do
+      for _ <- 0..Random.number(0..20) do
+        list = generate_random_repeat("")
+
+        assert :error == LTree.dump(list)
+      end
+    end
+
+    test "rejects empty lists" do
+      assert :error == LTree.dump([])
     end
   end
 end
