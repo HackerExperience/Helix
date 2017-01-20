@@ -4,6 +4,7 @@ defmodule Helix.Hardware.Model.Component.RAM do
 
   alias HELL.PK
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.ComponentSpec
 
   import Ecto.Changeset
 
@@ -28,11 +29,15 @@ defmodule Helix.Hardware.Model.Component.RAM do
       on_replace: :delete
   end
 
-  @spec create_changeset(%{any => any}) :: Ecto.Changeset.t
-  def create_changeset(params) do
+  def create_from_spec(cs = %ComponentSpec{spec: spec}) do
+    params = Map.take(spec, ["ram_size"])
+    ram_id = PK.generate([0x0003, 0x0001, 0x0003])
+    component = Component.create_from_spec(cs, ram_id)
+
     %__MODULE__{}
-    |> cast(params, [:ram_id])
     |> changeset(params)
+    |> put_change(:ram_id, ram_id)
+    |> put_assoc(:component, component)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
@@ -43,15 +48,9 @@ defmodule Helix.Hardware.Model.Component.RAM do
   def changeset(struct, params) do
     struct
     |> cast(params, [:ram_size])
-    |> validate()
-    |> foreign_key_constraint(:ram_id, name: :rams_ram_id_fkey)
-  end
-
-  @spec validate(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp validate(changeset) do
-    changeset
     |> validate_required(:ram_size)
     |> validate_number(:ram_size, greater_than_or_equal_to: 0)
+    |> foreign_key_constraint(:ram_id, name: :rams_ram_id_fkey)
   end
 
   defmodule Query do

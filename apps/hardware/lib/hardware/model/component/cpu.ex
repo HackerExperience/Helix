@@ -4,6 +4,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
 
   alias HELL.PK
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.ComponentSpec
 
   import Ecto.Changeset
 
@@ -31,11 +32,16 @@ defmodule Helix.Hardware.Model.Component.CPU do
       on_replace: :delete
   end
 
-  @spec create_changeset(%{any => any}) :: Ecto.Changeset.t
-  def create_changeset(params) do
+  def create_from_spec(cs = %ComponentSpec{spec: spec}) do
+    cpu_id = PK.generate([0x0003, 0x0001, 0x0002])
+    params = Map.take(spec, ["clock", "cores"])
+
+    component = Component.create_from_spec(cs, cpu_id)
+
     %__MODULE__{}
-    |> cast(params, [:cpu_id])
     |> changeset(params)
+    |> put_change(:cpu_id, cpu_id)
+    |> put_assoc(:component, component)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
@@ -46,16 +52,10 @@ defmodule Helix.Hardware.Model.Component.CPU do
   def changeset(struct, params) do
     struct
     |> cast(params, [:clock, :cores])
-    |> validate()
-    |> foreign_key_constraint(:cpu_id, name: :cpus_cpu_id_fkey)
-  end
-
-  @spec validate(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp validate(changeset) do
-    changeset
     |> validate_required([:clock, :cores])
     |> validate_number(:clock, greater_than_or_equal_to: 0)
     |> validate_number(:cores, greater_than_or_equal_to: 1)
+    |> foreign_key_constraint(:cpu_id, name: :cpus_cpu_id_fkey)
   end
 
   defmodule Query do

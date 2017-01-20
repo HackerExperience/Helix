@@ -9,7 +9,13 @@ defmodule HELL.PK do
   # 0x0002  *       *       -> [Server]
   # 0x0003  *       *       -> [Hardware]
   #         0x0001  *         -> Component
+  #         *       0x0000      -> Motherboard
+  #         *       0x0001      -> HDD
+  #         *       0x0002      -> CPU
+  #         *       0x0003      -> RAM
+  #         *       0x0004      -> NIC
   #         0x0002  *         -> MotherboardSlot
+  #         0x0003  *         -> NetworkConnection
   # 0x0004  *       *       -> [Software]
   #         0x0000  *         -> File
   #         0x0001  *         -> Storage

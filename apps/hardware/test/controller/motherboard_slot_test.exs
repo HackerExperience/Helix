@@ -7,100 +7,30 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
-  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
   setup_all do
-    # FIXME
-    types = case Repo.all(ComponentType) do
-      [] ->
-        1..5
-        |> Enum.map(fn _ -> Burette.Color.name() end)
-        |> Enum.uniq()
-        |> Enum.map(&ComponentType.create_changeset(%{component_type: &1}))
-        |> Enum.map(&Repo.insert!/1)
-      ct = [_|_] ->
-        ct
-    end
-
-    slot_type = Enum.random(["ram", "cpu", "hdd"])
-
-    component_type(slot_type)
-    component_type("mobo")
-
-    slot_number = Burette.Number.digits(4)
     spec_params = %{
       component_type: "mobo",
-      spec: %{
-        spec_type: "mobo",
-        spec_code: Random.string(min: 20, max: 20),
-        slots: %{
-          slot_number => %{type: slot_type}
-        }
-      }
+      spec: motherboard_spec()
     }
 
     {:ok, spec} = ComponentSpecController.create(spec_params)
 
-    [
-      component_types: types,
-      slot_type: slot_type,
-      spec: spec]
+    {:ok, motherboard_spec: spec}
   end
 
-  setup %{spec: spec} do
-    {:ok, mobo} = create_motherboard(spec.spec_id)
-    slot =
-      mobo.motherboard_id
-      |> MotherboardController.get_slots()
-      |> List.first()
+  setup context do
+    {:ok, mobo} = MotherboardController.create_from_spec(context.motherboard_spec)
 
-    {:ok, slot: slot, mobo: mobo}
-  end
-
-  defp create_motherboard(spec_id) do
-    comp_params = %{
-      component_type: "mobo",
-      spec_id: spec_id}
-    {:ok, comp} = ComponentController.create(comp_params)
-
-    mobo_params = %{motherboard_id: comp.component_id}
-    {:ok, mobo} = MotherboardController.create(mobo_params)
-    mobo = Repo.preload(mobo, :component_spec)
-
-    {:ok, mobo}
-  end
-
-  defp component_type(name) do
-    case Repo.get_by(ComponentType, component_type: name) do
-      nil ->
-        %{component_type: name}
-        |> ComponentType.create_changeset()
-        |> Repo.insert!()
-      component_type ->
-        component_type
-    end
-  end
-
-  defp component_for(slot) do
-    p = %{
-      component_type: slot.link_component_type,
-      spec: %{spec_code: Random.string(min: 20, max: 20)}
-    }
-    {:ok, comp_spec} = ComponentSpecController.create(p)
-
-    p = %{
-      component_type: slot.link_component_type,
-      spec_id: comp_spec.spec_id
-    }
-    {:ok, comp} = ComponentController.create(p)
-
-    comp
+    {:ok, mobo: Repo.preload(mobo, :slots)}
   end
 
   describe "find" do
-    test "fetching a slot by it's id", %{slot: slot} do
+    test "fetching a slot by it's id", %{mobo: mobo} do
+      slot = Enum.random(mobo.slots)
       assert {:ok, _} = MotherboardSlotController.find(slot.slot_id)
     end
 
@@ -110,43 +40,83 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   end
 
   describe "link" do
-    test "connecting a component into slot", %{slot: slot} do
-      component = component_for(slot)
-      {:ok, slot} = MotherboardSlotController.link(slot.slot_id, component.component_id)
+    test "connecting a component into slot", %{mobo: mobo} do
+      slot = Enum.random(mobo.slots)
+
+      component = component_for_slot(slot)
+
+      {:ok, slot} = MotherboardSlotController.link(slot, component)
       assert component.component_id === slot.link_component_id
     end
 
-    test "failure when slot is already used", %{slot: slot} do
-      component = component_for(slot)
-      MotherboardSlotController.link(slot.slot_id, component.component_id)
-      assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot.slot_id, component.component_id)
+    test "failure when slot is already used", %{mobo: mobo} do
+      slot = Enum.random(mobo.slots)
+
+      component0 = component_for_slot(slot)
+      component1 = component_for_slot(slot)
+
+      {:ok, slot} = MotherboardSlotController.link(slot, component0)
+
+      assert {:error, :slot_already_linked} === MotherboardSlotController.link(slot, component1)
     end
 
-    test "failure when component is already used", context do
-      %{slot: slot0, mobo: mobo} = context
-      {:ok, mobo} = create_motherboard(mobo.component.spec_id)
+    test "failure when component is already used", %{mobo: mobo} do
+      slot0 = Enum.random(mobo.slots)
+      slot1 = Enum.find(mobo.slots, fn e ->
+        e.link_component_type == slot0.link_component_type
+        and e.slot_id != slot0.slot_id
+      end)
 
-      slot1 =
-        mobo.motherboard_id
-        |> MotherboardController.get_slots()
-        |> Enum.find(&(&1.link_component_type == slot0.link_component_type))
+      component = component_for_slot(slot0)
 
-       component = component_for(slot0)
-       MotherboardSlotController.link(slot0.slot_id, component.component_id)
+       MotherboardSlotController.link(slot0, component)
 
-       assert {:error, :component_already_linked} === MotherboardSlotController.link(slot1.slot_id, component.component_id)
+       assert {:error, :component_already_linked} === MotherboardSlotController.link(slot1, component)
     end
   end
 
-  test "unlink is idempotent", %{slot: slot} do
-    component = component_for(slot)
+  test "unlink is idempotent", %{mobo: mobo} do
+    slot = Enum.random(mobo.slots)
+
+    component = component_for_slot(slot)
 
     # I think we should make the controllers use the actual structs for all
     # actions but find/fetch/get/search
-    MotherboardSlotController.link(slot.slot_id, component.component_id)
+    {:ok, slot} = MotherboardSlotController.link(slot, component)
+
     assert Repo.get_by(MotherboardSlot, slot_id: slot.slot_id).link_component_id
-    assert {:ok, _} = MotherboardSlotController.unlink(slot.slot_id)
-    assert {:ok, _} = MotherboardSlotController.unlink(slot.slot_id)
+    assert {:ok, _} = MotherboardSlotController.unlink(slot)
+    assert {:ok, _} = MotherboardSlotController.unlink(slot)
     refute Repo.get_by(MotherboardSlot, slot_id: slot.slot_id).link_component_id
+  end
+
+  defp component_for_slot(slot) do
+    import Ecto.Query
+
+    ComponentSpec
+    |> where([cs], cs.component_type == ^slot.link_component_type)
+    |> Repo.all()
+    |> Enum.random()
+    |> ComponentController.create_from_spec()
+    |> elem(1)
+  end
+
+  defp motherboard_spec do
+    xs =
+      ["CPU", "RAM", "HDD", "NIC"]
+      |> List.duplicate(3)
+      |> Enum.flat_map(&(&1))
+      |> Enum.with_index()
+
+    slots = for {component, index} <- xs, into: %{} do
+      {to_string(index), %{"type" => component}}
+    end
+
+    %{
+      "spec_code" => String.upcase(Random.string(min: 12)),
+      "spec_type" => "MOBO",
+      "name" => Random.string(),
+      "slots" => slots
+    }
   end
 end

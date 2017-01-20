@@ -4,6 +4,7 @@ defmodule Helix.Hardware.Model.Motherboard do
 
   alias HELL.PK
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.MotherboardSlot
 
   import Ecto.Changeset
@@ -15,17 +16,17 @@ defmodule Helix.Hardware.Model.Motherboard do
     updated_at: NaiveDateTime.t
   }
 
-  @type creation_params :: %{motherboard_id: PK.t}
-
-  @creation_fields ~w/motherboard_id/a
-
   @primary_key false
   schema "motherboards" do
+    field :motherboard_id, PK,
+      primary_key: true
+
     belongs_to :component, Component,
       foreign_key: :motherboard_id,
       references: :component_id,
-      type: HELL.PK,
-      primary_key: true
+      type: PK,
+      define_field: false,
+      on_replace: :delete
 
     has_one :component_spec, through: [:component, :component_spec]
 
@@ -37,40 +38,26 @@ defmodule Helix.Hardware.Model.Motherboard do
     timestamps()
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
-  def create_changeset(params) do
-    %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> validate_required(:motherboard_id)
-    |> unique_constraint(:motherboard_id)
-    |> prepare_changes(fn changeset ->
-      slots =
-        changeset
-        |> apply_changes()
-        |> changeset.repo.preload(:component_spec)
-        |> prepare_slots_for_new_motherboard()
+  def create_from_spec(cs = %ComponentSpec{spec: spec = %{"slots" => _}}) do
+    motherboard_id = PK.generate([0x0003, 0x0001, 0x0000])
 
-      changeset
-      |> cast(%{slots: slots}, [])
-      |> cast_assoc(:slots, with: fn _, params ->
-        MotherboardSlot.create_changeset(params)
-      end)
+    slots = Enum.map(Map.get(spec, "slots"), fn {id, spec} ->
+      params = %{
+        motherboard_id: motherboard_id,
+        slot_internal_id: String.to_integer(id),
+        link_component_type: String.downcase(spec["type"])
+      }
+
+      MotherboardSlot.create_changeset(params)
     end)
-  end
 
-  defp prepare_slots_for_new_motherboard(motherboard) do
-    case motherboard do
-      %__MODULE__{motherboard_id: mid, component_spec: %{spec: %{"slots" => slots}}} ->
-        Enum.map(slots, fn {id, spec} ->
-          %{
-            motherboard_id: mid,
-            slot_internal_id: String.to_integer(id),
-            link_component_type: spec["type"]
-          }
-        end)
-      %__MODULE__{component_spec: %{spec: _}} ->
-        []
-    end
+    component = Component.create_from_spec(cs, motherboard_id)
+
+    %__MODULE__{}
+    |> change()
+    |> put_change(:motherboard_id, motherboard_id)
+    |> put_assoc(:slots, slots)
+    |> put_assoc(:component, component)
   end
 
   defmodule Query do

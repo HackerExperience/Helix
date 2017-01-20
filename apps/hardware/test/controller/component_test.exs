@@ -6,37 +6,34 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
   setup_all do
-    # FIXME
-    type = case Repo.all(ComponentType) do
+    cs = case Repo.all(ComponentSpec) do
       [] ->
-        %{component_type: Burette.Color.name()}
-        |> ComponentType.create_changeset()
-        |> Repo.insert!()
-      ct = [_|_] ->
-        Enum.random(ct)
+        p = %{
+          "spec_code": "SMPCPU1",
+          "spec_type": "CPU",
+          "name": "Sample CPU 1",
+          "clock": 3000,
+          "cores": 7
+        }
+
+
+        {:ok, comp_spec} = ComponentSpecController.create(p)
+
+        comp_spec
+      cs = [_|_] ->
+        Enum.random(cs)
     end
 
-    p = %{
-      component_type: type.component_type,
-      spec: %{
-        spec_code: Random.string(min: 20, max: 20)}}
-
-    {:ok, comp_spec} = ComponentSpecController.create(p)
-
-    [component_type: type, component_spec: comp_spec]
+    {:ok, component_spec: cs}
   end
 
   setup context do
-    params = %{
-      component_type: context.component_type.component_type,
-      spec_id: context.component_spec.spec_id
-    }
+    {:ok, c} = ComponentController.create_from_spec(context.component_spec)
 
-    {:ok, c} = ComponentController.create(params)
     {:ok, component: c}
   end
 

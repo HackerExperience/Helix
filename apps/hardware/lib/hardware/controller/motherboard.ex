@@ -1,26 +1,20 @@
 defmodule Helix.Hardware.Controller.Motherboard do
 
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
-  @spec create(Motherboard.creation_params) :: {:ok, Motherboard.t} | no_return
-  def create(params) do
-    Repo.transaction fn ->
-      motherboard = Motherboard.create_changeset(params)
-
-      case Repo.insert(motherboard) do
-        {:ok, mb} ->
-          mb
-        _ ->
-          # TODO: Proper error message
-          Repo.rollback(:internal_error)
-      end
-    end
+  @spec create_from_spec(ComponentSpec.t) :: {:ok, Motherboard.t} | {:error, Ecto.Changeset.t}
+  def create_from_spec(component_spec) do
+    component_spec
+    |> Motherboard.create_from_spec()
+    |> Repo.insert()
   end
 
-  @spec resources(Motherboard.t) :: %{cpu: non_neg_integer, ram: non_neg_integer, dlk: non_neg_integer, ulk: non_neg_integer}
+  # REVIEW: refactor this
+  @spec resources(Motherboard.t) :: %{cpu: non_neg_integer, ram: non_neg_integer, net: %{any => %{uplink: non_neg_integer, downlink: non_neg_integer}}}
   def resources(motherboard) do
     cids =
       motherboard
@@ -49,19 +43,19 @@ defmodule Helix.Hardware.Controller.Motherboard do
     nic =
       cids
       |> Component.NIC.Query.from_component_ids()
+      |> Component.NIC.Query.inner_join_network_connection()
       |> Repo.all()
-      |> Enum.reduce(%{uplink: 0, downlink: 0}, fn el, acc ->
-        Map.merge(
-          acc,
-          Map.take(el, [:uplink, :downlink]),
-          fn _, v1, v2 -> v1 + v2 end)
+      |> Enum.reduce(%{}, fn el, acc ->
+        network = el.network_connection.network_id
+        value = Map.take(el.network_connection, [:uplink, :downlink])
+
+        Map.update(acc, network, value, &Map.merge(&1, value, fn _, v1, v2 -> v1 + v2 end))
       end)
 
     %{
       cpu: cpu,
       ram: ram,
-      dlk: nic.downlink,
-      ulk: nic.uplink
+      net: nic
     }
   end
 
@@ -75,21 +69,23 @@ defmodule Helix.Hardware.Controller.Motherboard do
     end
   end
 
-  @spec get_slots(HELL.PK.t) :: [MotherboardSlot.t]
+  @spec get_slots(Motherboard.t | HELL.PK.t) :: [MotherboardSlot.t]
+  def get_slots(%Motherboard{motherboard_id: mid}),
+    do: get_slots(mid)
   def get_slots(motherboard_id) do
     motherboard_id
     |> MotherboardSlot.Query.by_motherboard_id()
     |> Repo.all()
   end
 
-  @spec delete(HELL.PK.t) :: no_return
+  @spec delete(Motherboard.t | HELL.PK.t) :: no_return
+  def delete(%Motherboard{motherboard_id: mid}),
+    do: delete(mid)
   def delete(motherboard_id) do
-    {status, _} = Repo.transaction fn ->
-      motherboard_id
-      |> Motherboard.Query.by_id()
-      |> Repo.delete_all()
-    end
+    motherboard_id
+    |> Motherboard.Query.by_id()
+    |> Repo.delete_all()
 
-    status
+    :ok
   end
 end
