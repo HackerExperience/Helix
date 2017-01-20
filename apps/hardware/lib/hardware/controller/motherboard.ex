@@ -20,7 +20,7 @@ defmodule Helix.Hardware.Controller.Motherboard do
     end
   end
 
-  @spec resources(Motherboard.t) :: %{cpu: non_neg_integer, ram: non_neg_integer, dlk: non_neg_integer, ulk: non_neg_integer}
+  @spec resources(Motherboard.t) :: %{cpu: non_neg_integer, ram: non_neg_integer, net: %{any => %{uplink: non_neg_integer, downlink: non_neg_integer}}}
   def resources(motherboard) do
     cids =
       motherboard
@@ -49,19 +49,19 @@ defmodule Helix.Hardware.Controller.Motherboard do
     nic =
       cids
       |> Component.NIC.Query.from_component_ids()
+      |> Component.NIC.Query.inner_join_network_connection()
       |> Repo.all()
-      |> Enum.reduce(%{uplink: 0, downlink: 0}, fn el, acc ->
-        Map.merge(
-          acc,
-          Map.take(el, [:uplink, :downlink]),
-          fn _, v1, v2 -> v1 + v2 end)
+      |> Enum.reduce(%{}, fn el, acc ->
+        network = el.network_connection.network_id
+        value = Map.take(el.network_connection, [:uplink, :downlink])
+
+        Map.update(acc, network, value, &Map.merge(&1, value, fn _, v1, v2 -> v1 + v2 end))
       end)
 
     %{
       cpu: cpu,
       ram: ram,
-      dlk: nic.downlink,
-      ulk: nic.uplink
+      net: nic
     }
   end
 

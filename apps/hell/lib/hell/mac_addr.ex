@@ -4,6 +4,13 @@ defmodule HELL.MacAddress do
 
   @behaviour Ecto.Type
 
+  def generate do
+    6
+    |> generate_octets()
+    |> Enum.map(&Integer.to_string(&1, 16))
+    |> Enum.map_join(":", &String.pad_leading(&1, 2, "0"))
+  end
+
   def type,
     do: :macaddr
 
@@ -67,6 +74,23 @@ defmodule HELL.MacAddress do
     do: true
   defp valid_addr?(_, _),
     do: false
+
+  @spec generate_octets(pos_integer) :: [0..0xff]
+  defp generate_octets(octets) do
+    try do
+      octets
+      |> :crypto.strong_rand_bytes()
+      |> :erlang.binary_to_list()
+    rescue
+      ErlangError ->
+        for _ <- 1..octets do
+          # Generates a random number between 0x00 and 0xff
+          ((0xff + 1) * :rand.uniform())
+          |> Float.floor()
+          |> trunc()
+        end
+    end
+  end
 end
 
 defimpl String.Chars, for: Postgrex.MACADDR do

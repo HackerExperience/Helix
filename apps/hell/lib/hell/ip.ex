@@ -54,3 +54,57 @@ defmodule HELL.IPv6 do
   defp fill_metadata([], n) when n < @meta_groups,
     do: [0x0000 | fill_metadata([], n + 1)]
 end
+
+defmodule HELL.IPv4 do
+
+  def autogenerate do
+    Enum.map_join(1..4, ".", fn _ ->
+      (256 * :rand.uniform())
+      |> Float.floor()
+      |> trunc()
+    end)
+  end
+
+  def type,
+    do: :inet
+
+  def cast(inet = %Postgrex.INET{}),
+    do: {:ok, to_string(inet)}
+  def cast(string) when is_binary(string) do
+    case parse_address(string) do
+      {:ok, _} ->
+        {:ok, string}
+      _ ->
+        :error
+    end
+  end
+
+  def cast(_) do
+    :error
+  end
+
+  def load(inet = %Postgrex.INET{}),
+    do: {:ok, to_string(inet)}
+  def load(_),
+    do: :error
+
+  def dump(inet = %Postgrex.INET{}),
+    do: {:ok, inet}
+  def dump(string) when is_binary(string),
+    do: parse_address(string)
+  def dump(_),
+    do: :error
+
+  @spec parse_address(String.t) :: {:ok, Postgrex.INET.t} | :error
+  defp parse_address(string) when is_binary(string) do
+    string
+    |> String.to_char_list()
+    |> :inet.parse_ipv4strict_address()
+    |> case do
+      {:ok, address_tuple} ->
+        {:ok, %Postgrex.INET{address: address_tuple}}
+      {:error, :einval} ->
+        :error
+    end
+  end
+end
