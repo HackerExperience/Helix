@@ -79,6 +79,7 @@ defmodule Helix.Software.Model.File do
     |> validate_required(
       [:name, :file_path, :file_size, :file_type, :storage_id])
     |> validate_number(:file_size, greater_than: 0)
+    |> unique_constraint(:file_path, name: :unique_file_path_index)
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
