@@ -52,50 +52,71 @@ defmodule Helix.Software.Controller.FileTest do
   end
 
   describe "file creation" do
-    test "holds the correct name", context do
+    test "creates a file with the correct name", context do
       params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert params.file_path == file.file_path
+      # file got the correct name
+      assert params.name == file1.name
+
+      # found file is identical to the one yielded by create
+      assert file1 == file2
     end
 
-    test "uses the correct path", context do
+    test "creates a file with the correct path", context do
       params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert params.file_path == file.file_path
+      # file got the correct file_path
+      assert params.file_path == file2.file_path
+
+      # found file is identical to the one yielded by create
+      assert file1 == file2
     end
 
-    test "uses the correct size", context do
+    test "creates a file with the correct size", context do
       params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert params.file_size == file.file_size
+      # file got the correct file_size
+      assert params.file_size == file2.file_size
+
+      # found file is identical to the one yielded by create
+      assert file1 == file2
     end
 
-    test "uses the correct type", context do
+    test "creates a file with the correct type", context do
       params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert params.file_type == file.file_type
+      # file got the correct file_type
+      assert params.file_type == file1.file_type
+
+      # found file is identical to the one yielded by create
+      assert file1 == file2
     end
 
-    test "is bound to storage", context do
+    test "creates a file bound to the correct storage", context do
       params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert context.storage.storage_id == file.storage_id
+      # file got the correct storage
+      assert context.storage.storage_id == file1.storage_id
+
+      # found file is identical to the one yielded by create
+      assert file1 == file2
     end
 
-    test "fails when file exists", context do
+    test "create fails on path identity conflict", context do
       params = generate_payload(context.file_type, context.storage)
       {:ok, _} = FileController.create(params)
 
+      # got expected error
       assert {:error, :file_exists} == FileController.create(params)
     end
   end
@@ -103,11 +124,15 @@ defmodule Helix.Software.Controller.FileTest do
   describe "file fetching" do
     test "fetches an existent file", context do
       params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
-      assert {:ok, ^file} = FileController.find(file.file_id)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.find(file1.file_id)
+
+      # found the same previously created file
+      assert file1 == file2
     end
 
-    test "fails when files is not found" do
+    test "find fails when files is not found" do
+      # got expected error
       assert {:error, :notfound} == FileController.find(PK.generate([]))
     end
   end
@@ -116,42 +141,59 @@ defmodule Helix.Software.Controller.FileTest do
     test "updates the name", context do
       params1 = generate_payload(context.file_type, context.storage)
       params2 = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params1)
-      {:ok, file} = FileController.update(file, params2)
+      {:ok, file1} = FileController.create(params1)
+      {:ok, file1} = FileController.update(file1, params2)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert params2.file_path == file.file_path
+      # file updates to the correct name
+      assert params2.name == file1.name
+
+      # file is identical to the one yielded by update
+      assert file1 == file2
     end
 
     test "updates the path", context do
       params1 = generate_payload(context.file_type, context.storage)
       params2 = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params1)
-      {:ok, file} = FileController.update(file, params2)
+      {:ok, file1} = FileController.create(params1)
+      {:ok, file1} = FileController.update(file1, params2)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert params2.file_path == file.file_path
+      # file updates to the correct file_path
+      assert params2.file_path == file1.file_path
+
+      # file is identical to the one yielded by update
+      assert file1 == file2
     end
 
     test "updates the storage", context do
       {:ok, storage} = StorageController.create()
       params1 = generate_payload(context.file_type, context.storage)
       params2 = generate_payload(context.file_type, storage)
-      {:ok, file} = FileController.create(params1)
-      {:ok, file} = FileController.update(file, params2)
+      {:ok, file1} = FileController.create(params1)
+      {:ok, file1} = FileController.update(file1, params2)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert storage.storage_id == file.storage_id
+      # file updates to the correct storage_id
+      assert storage.storage_id == file1.storage_id
+
+      # file is identical to the one yielded by update
+      assert file1 == file2
     end
 
-    test "fails when file exists", context do
+    test "update fails on path identity conflict", context do
       params1 = generate_payload(context.file_type, context.storage)
       params2 = generate_payload(context.file_type, context.storage)
       {:ok, _} = FileController.create(params1)
-      {:ok, file} = FileController.create(params2)
+      {:ok, file1} = FileController.create(params2)
 
-      assert {:error, :file_exists} == FileController.update(file, params1)
-      assert {:ok, ^file} = FileController.find(file.file_id)
+      # got expected error
+      assert {:error, :file_exists} == FileController.update(file1, params1)
+
+      {:ok, file2} = FileController.find(file1.file_id)
+
+      # file is unchanged
+      assert file1 == file2
     end
   end
 
@@ -160,24 +202,40 @@ defmodule Helix.Software.Controller.FileTest do
       params = generate_payload(context.file_type, context.storage)
       file_path = generate_path()
       storage_id = context.storage.storage_id
-      {:ok, file} = FileController.create(params)
-      {:ok, file} = FileController.copy(file, file_path, storage_id)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.copy(file1, file_path, storage_id)
+      {:ok, file3} = FileController.find(file1.file_id)
+      {:ok, file4} = FileController.find(file2.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert file_path == file.file_path
+      # original file remains unchanged
+      assert file1 == file3
+
+      # the new file was copied to the correct file_path
+      assert file_path == file2.file_path
+
+      # found file is identical to the one yielded by copy
+      assert file2 == file4
     end
 
     test "copies to another storage", context do
       params = generate_payload(context.file_type, context.storage)
       {:ok, s} = StorageController.create()
-      {:ok, file} = FileController.create(params)
-      {:ok, file} = FileController.copy(file, file.file_path, s.storage_id)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file2} = FileController.copy(file1, file1.file_path, s.storage_id)
+      {:ok, file3} = FileController.find(file1.file_id)
+      {:ok, file4} = FileController.find(file2.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert s.storage_id == file.storage_id
+      # original file remains unchanged
+      assert file1 == file3
+
+      # the new file was copied to the correct file_path
+      assert s.storage_id == file2.storage_id
+
+      # found file is identical to the one yielded by copy
+      assert file2 == file4
     end
 
-    test "fails when file exists", context do
+    test "copy fails on path identity conflict", context do
       params1 = generate_payload(context.file_type, context.storage)
       params2 =
         context.file_type
@@ -187,10 +245,16 @@ defmodule Helix.Software.Controller.FileTest do
       storage_id = params1.storage_id
 
       {:ok, _} = FileController.create(params1)
-      {:ok, file} = FileController.create(params2)
+      {:ok, file1} = FileController.create(params2)
 
-      assert {:error, :file_exists} =
-        FileController.copy(file, file_path, storage_id)
+      # got expected error
+      assert {:error, :file_exists} ==
+        FileController.copy(file1, file_path, storage_id)
+
+      {:ok, file2} = FileController.find(file1.file_id)
+
+      # file is unchanged
+      assert file1 == file2
     end
   end
 
@@ -199,24 +263,32 @@ defmodule Helix.Software.Controller.FileTest do
       params = generate_payload(context.file_type, context.storage)
       file_path = generate_path()
       storage_id = context.storage.storage_id
-      {:ok, file} = FileController.create(params)
-      {:ok, file} = FileController.move(file, file_path, storage_id)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file1} = FileController.move(file1, file_path, storage_id)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert file_path == file.file_path
+      # moved to the correct file_path
+      assert file_path == file1.file_path
+
+      # found file is identical to the one yielded by move
+      assert file1 == file2
     end
 
     test "moves to to another storage", context do
       params = generate_payload(context.file_type, context.storage)
       {:ok, s} = StorageController.create()
-      {:ok, file} = FileController.create(params)
-      {:ok, file} = FileController.move(file, file.file_path, s.storage_id)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file1} = FileController.move(file1, file1.file_path, s.storage_id)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert s.storage_id == file.storage_id
+      # moved to the correct storage_id
+      assert s.storage_id == file1.storage_id
+
+      # found file is identical to the one yielded by move
+      assert file1 == file2
     end
 
-    test "fails when file exists", context do
+    test "move fails on path identity conflict", context do
       params1 = generate_payload(context.file_type, context.storage)
       params2 =
         context.file_type
@@ -226,10 +298,16 @@ defmodule Helix.Software.Controller.FileTest do
       storage_id = params1.storage_id
 
       {:ok, _} = FileController.create(params1)
-      {:ok, file} = FileController.create(params2)
+      {:ok, file1} = FileController.create(params2)
 
-      assert {:error, :file_exists} =
-        FileController.move(file, file_path, storage_id)
+      # move yields expected error
+      assert {:error, :file_exists} ==
+        FileController.move(file1, file_path, storage_id)
+
+      {:ok, file2} = FileController.find(file1.file_id)
+
+      # file remains unchanged
+      assert file1 == file2
     end
   end
 
@@ -237,40 +315,60 @@ defmodule Helix.Software.Controller.FileTest do
     test "ranames the file", context do
       params = generate_payload(context.file_type, context.storage)
       name = generate_name()
-      {:ok, file} = FileController.create(params)
-      {:ok, file} = FileController.rename(file, name)
+      {:ok, file1} = FileController.create(params)
+      {:ok, file1} = FileController.rename(file1, name)
+      {:ok, file2} = FileController.find(file1.file_id)
 
-      assert {:ok, ^file} = FileController.find(file.file_id)
-      assert name == file.name
+      # renamed the file correctly
+      assert name == file1.name
+
+      # found file is identical to the one yielded by rename
+      assert file1 == file2
     end
 
-    test "fails when file exits", context do
+    test "rename fails on path identity conflict", context do
       params1 = generate_payload(context.file_type, context.storage)
       params2 = Map.put(params1, :name, generate_name())
-      {:ok, _} = FileController.create(params1)
-      {:ok, file} = FileController.create(params2)
 
-      assert {:error, :file_exists} == FileController.rename(file, params1.name)
-      assert {:ok, ^file} = FileController.find(file.file_id)
+      {:ok, _} = FileController.create(params1)
+      {:ok, file1} = FileController.create(params2)
+
+      # got expected error
+      assert {:error, :file_exists} == FileController.rename(file1, params1.name)
+
+      {:ok, file2} = FileController.find(file1.file_id)
+
+      # file remains unchanged
+      assert file1 == file2
     end
   end
 
   describe "file deleting" do
-    test "is idempotent by id", context do
+    test "delete is idempotent", context do
       params = generate_payload(context.file_type, context.storage)
       {:ok, file} = FileController.create(params)
-      :ok = FileController.delete(file.file_id)
+      :ok = FileController.delete(file)
       :ok = FileController.delete(file.file_id)
 
+      # no file is found
       assert {:error, :notfound} == FileController.find(file.file_id)
     end
 
-    test "is idempotent by struct", context do
+    test "deletes the file by id", context do
+      params = generate_payload(context.file_type, context.storage)
+      {:ok, file} = FileController.create(params)
+      :ok = FileController.delete(file.file_id)
+
+      # no file is found
+      assert {:error, :notfound} == FileController.find(file.file_id)
+    end
+
+    test "deletes the file by struct", context do
       params = generate_payload(context.file_type, context.storage)
       {:ok, file} = FileController.create(params)
       :ok = FileController.delete(file)
-      :ok = FileController.delete(file)
 
+      # no file is found
       assert {:error, :notfound} == FileController.find(file.file_id)
     end
   end
