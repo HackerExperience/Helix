@@ -44,7 +44,7 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
       {:ok, account} = create_account()
 
       # TODO: removing this sleep depends on T412
-      :timer.sleep(100)
+      :timer.sleep(200)
 
       assert {:ok, _} = motherboard_of_account(account.account_id)
     end
@@ -53,10 +53,10 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
       {:ok, account} = create_account()
 
       # TODO: removing this sleep depends on T412
-      :timer.sleep(100)
+      :timer.sleep(200)
 
       {:ok, motherboard} = motherboard_of_account(account.account_id)
-      slots = MotherboardController.get_slots(motherboard.motherboard_id)
+      slots = MotherboardController.get_slots(motherboard)
 
       refute Enum.empty?(slots)
     end
@@ -65,10 +65,10 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
       {:ok, account} = create_account()
 
       # TODO: removing this sleep depends on T412
-      :timer.sleep(100)
+      :timer.sleep(200)
 
       {:ok, motherboard} = motherboard_of_account(account.account_id)
-      slots = MotherboardController.get_slots(motherboard.motherboard_id)
+      slots = MotherboardController.get_slots(motherboard)
 
        possible_types = MapSet.new(slots, &(&1.link_component_type))
        linked_types =

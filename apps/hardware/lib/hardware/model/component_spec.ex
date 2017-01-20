@@ -51,10 +51,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     if get_field(changeset, :spec_id) do
       changeset
     else
-      spec_code =
-        changeset
-        |> get_field(:spec)
-        |> Map.get(:spec_code)
+      spec = get_field(changeset, :spec)
+      spec_code = spec[:spec_code] || spec["spec_code"]
 
       cast(changeset, %{spec_id: spec_code}, [:spec_id])
     end

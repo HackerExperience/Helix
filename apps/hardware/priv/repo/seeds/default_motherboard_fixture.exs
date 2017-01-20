@@ -5,54 +5,81 @@ Repo.transaction fn ->
   mobo_params = %{
     component_type: "mobo",
     spec: %{
-      spec_code: "MOBO01",
-      spec_type: "mobo",
-      slots: %{
+      "spec_code" => "MOBO01",
+      "spec_type" => "MOBO",
+      "name" => "Sample Motherboard 1",
+      "slots" => %{
         "0" => %{
-          type: "cpu"
+          "type" => "CPU"
         },
         "1" => %{
-          type: "ram"
+          "type" => "HDD",
+          "limit" => 2000
         },
         "2" => %{
-          type: "hdd"
+          "type" => "HDD",
+          "limit" => 2000
         },
         "3" => %{
-          type: "nic"
+          "type" => "RAM",
+          "limit" => 4096
+        },
+        "4" => %{
+          "type" => "RAM",
+          "limit" => 4096
+        },
+        "5" => %{
+          "type" => "NIC",
+          "limit" => 1000
+        },
+        "6" => %{
+          "type" => "NIC",
+          "limit" => 1000
         }
-      }
+      },
+      "display" => "xml-esque description of the mobo gateway"
     }
   }
 
   cpu_params = %{
     component_type: "cpu",
     spec: %{
-      spec_code: "CPU01",
-      spec_type: "cpu",
+      "spec_code" => "CPU01",
+      "spec_type" => "CPU",
+      "name" => "Sample CPU 1",
+      "clock" => 3000,
+      "cores" => 7
     }
   }
 
   ram_params = %{
     component_type: "ram",
     spec: %{
-      spec_code: "RAM01",
-      spec_type: "ram"
+      "spec_code" => "RAM01",
+      "spec_type" => "RAM",
+      "name" => "Sample RAM 1",
+      "clock" => 1666,
+      "ram_size" => 2048
     }
   }
 
   hdd_params = %{
     component_type: "hdd",
     spec: %{
-      spec_code: "HDD01",
-      spec_type: "hdd"
+      "spec_code" => "HDD01",
+      "spec_type" => "HDD",
+      "name" => "Sample HDD 1",
+      "hdd_size" => 2000
     }
   }
 
   nic_params = %{
     component_type: "nic",
     spec: %{
-      spec_code: "NIC01",
-      spec_type: "nic"
+     "spec_code" => "NIC01",
+      "spec_type" => "NIC",
+      "name" => "Sample NIC 1",
+      "link" => 1000
     }
   }
 

@@ -5,6 +5,7 @@ defmodule Helix.Hardware.Model.Component.NIC do
   alias HELL.PK
   alias HELL.MacAddress
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.NetworkConnection
 
   import Ecto.Changeset
@@ -37,15 +38,17 @@ defmodule Helix.Hardware.Model.Component.NIC do
       on_replace: :nilify
   end
 
-  # REVIEW: have a service that provides unique MacAddresses or just
-  #   autogenerate them hoping for no conflict ?
-  @spec create_changeset(%{any => any}) :: Ecto.Changeset.t
-  def create_changeset(params) do
+  def create_from_spec(cs = %ComponentSpec{spec: _}) do
+    nic_id = PK.generate([0x0003, 0x0001, 0x0004])
+    component = Component.create_from_spec(cs, nic_id)
+
     %__MODULE__{}
-    |> cast(params, [:nic_id])
+    |> changeset(%{})
+    # REVIEW: have a service that provides unique MacAddresses or just
+    #   autogenerate them hoping for no conflict ?
     |> put_change(:mac_address, MacAddress.generate())
-    |> validate_required([:nic_id, :mac_address])
-    |> changeset(params)
+    |> put_change(:nic_id, nic_id)
+    |> put_assoc(:component, component)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t

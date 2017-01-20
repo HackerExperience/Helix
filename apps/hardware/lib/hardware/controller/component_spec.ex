@@ -20,16 +20,16 @@ defmodule Helix.Hardware.Controller.ComponentSpec do
     end
   end
 
-  @spec update(String.t, ComponentSpec.update_params) :: {:ok, ComponentSpec.t} | {:error, :notfound | Ecto.Changeset.t}
-  def update(spec_id, params) do
-    with {:ok, comp_spec} <- find(spec_id) do
-      comp_spec
-      |> ComponentSpec.update_changeset(params)
-      |> Repo.update()
-    end
+  @spec update(ComponentSpec.t, ComponentSpec.update_params) :: {:ok, ComponentSpec.t} | {:error, Ecto.Changeset.t}
+  def update(component_spec, params) do
+    component_spec
+    |> ComponentSpec.update_changeset(params)
+    |> Repo.update()
   end
 
-  @spec delete(String.t) :: no_return
+  @spec delete(ComponentSpec.t | String.t) :: no_return
+  def delete(%ComponentSpec{spec_id: sid}),
+    do: delete(sid)
   def delete(spec_id) do
     spec_id
     |> ComponentSpec.Query.by_id()

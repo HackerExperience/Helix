@@ -5,28 +5,16 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Model.ComponentSpec
-  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Repo
 
-  setup_all do
-    # FIXME
-    type = case Repo.all(ComponentType) do
-      [] ->
-        %{component_type: Burette.Color.name()}
-        |> ComponentType.create_changeset()
-        |> Repo.insert!()
-      ct = [_|_] ->
-        Enum.random(ct)
-    end
-
-    [component_type: type]
-  end
-
-  setup context do
+  setup do
+    type = Enum.random(["cpu", "ram", "hdd", "nic"])
+    params = %{
+      component_type: type,
+      spec: spec_for(type)
+    }
     component_spec =
-      %{
-        component_type: context.component_type.component_type,
-        spec: %{spec_code: Random.string(min: 20, max: 20)}}
+      params
       |> ComponentSpec.create_changeset()
       |> Repo.insert!()
 
@@ -45,14 +33,11 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   describe "update" do
     test "overrides the spec", %{component_spec: cs} do
-      update_params = %{spec: %{test: Burette.Color.name()}}
-      {:ok, spec} = ComponentSpecController.update(cs.spec_id, update_params)
+      update_params = %{spec: %{"test" => Burette.Color.name()}}
+      {:ok, spec} = ComponentSpecController.update(cs, update_params)
 
       assert update_params.spec === spec.spec
-    end
-
-    test "returns error when spec doesn't exists" do
-      assert {:error, :notfound} === ComponentSpecController.update(HELL.TestHelper.Random.pk(), %{})
+      Repo.delete(spec)
     end
   end
 
@@ -62,5 +47,42 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
     ComponentSpecController.delete(cs.spec_id)
     ComponentSpecController.delete(cs.spec_id)
     refute Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
+  end
+
+  defp spec_for("cpu") do
+    %{
+      "spec_code": String.upcase(Random.string(min: 12)),
+      "spec_type": "CPU",
+      "name": Random.string(min: 12),
+      "clock": Random.number(66..3200),
+      "cores": Random.number(1..4)
+    }
+  end
+
+  defp spec_for("ram") do
+    %{
+      "spec_code": String.upcase(Random.string(min: 12)),
+      "spec_type": "RAM",
+      "name": Random.string(min: 12),
+      "clock": Random.number(66..3200),
+      "ram_size": Random.number(256..8192)
+    }
+  end
+
+  defp spec_for("hdd") do
+    %{
+      "spec_code": String.upcase(Random.string(min: 12)),
+      "spec_type": "HDD",
+      "name": Random.string(min: 12),
+      "hdd_size": Random.number(256..8192)
+    }
+  end
+
+  defp spec_for("nic") do
+    %{
+      "spec_code": String.upcase(Random.string(min: 12)),
+      "spec_type": "NIC",
+      "name": Random.string(min: 12)
+    }
   end
 end
