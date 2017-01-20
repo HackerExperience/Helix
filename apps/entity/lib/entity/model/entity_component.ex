@@ -1,25 +1,25 @@
-defmodule Helix.Entity.Model.EntityServer do
+defmodule Helix.Entity.Model.EntityComponent do
 
   use Ecto.Schema
 
-  alias Helix.Server.Model.Server
+  alias Helix.Hardware.Model.Component
   alias Helix.Entity.Model.Entity
 
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    server_id: Server.id,
+    component_id: Component.id,
     entity_id: Entity.id,
     entity: Entity
   }
 
-  @type creation_params :: %{server_id: Server.id, entity_id: Entity.id}
+  @type creation_params :: %{component_id: Component.id, entity_id: Entity.id}
 
-  @creation_fields ~w/server_id entity_id/a
+  @creation_fields ~w/component_id entity_id/a
 
   @primary_key false
-  schema "entity_servers" do
-    field :server_id, HELL.PK,
+  schema "entity_components" do
+    field :component_id, HELL.PK,
       primary_key: true
     belongs_to :entity, Entity,
       foreign_key: :entity_id,

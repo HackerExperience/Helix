@@ -159,7 +159,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
         # TODO: Create and install Network connection
         {:ok, motherboard, ev2} <- setup_motherboard(motherboard, components)
       do
-        {motherboard, ev0 ++ ev1 ++ ev2}
+        {motherboard, components, ev0 ++ ev1 ++ ev2}
       else
         {:error, _} ->
           Repo.rollback(:internal_error)
@@ -167,14 +167,16 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end)
 
     case result do
-      {:ok, {motherboard, deferred_events}} ->
+      {:ok, {motherboard, components, deferred_events}} ->
         # FIXME: this should be handled by Eventually.flush(events)
         Enum.each(deferred_events, fn {topic, params} ->
           Broker.cast(topic, params, request: request)
         end)
 
+        components = Enum.map(components, &(&1.component_id))
         msg = %{
           motherboard_id: motherboard.motherboard_id,
+          components: components,
           server_id: server_id
         }
         Broker.cast("event:motherboard:setup", msg, request: request)

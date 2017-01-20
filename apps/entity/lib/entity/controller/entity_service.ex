@@ -5,8 +5,10 @@ defmodule Helix.Controller.EntityService do
   alias HELF.Broker
   alias HELL.PK
   alias Helix.Entity.Controller.Entity, as: EntityController
+  alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Repo
 
   @typep state :: nil
 
@@ -21,6 +23,8 @@ defmodule Helix.Controller.EntityService do
     Broker.subscribe("entity:create", call: &handle_broker_call/4)
     Broker.subscribe("entity:find", call: &handle_broker_call/4)
     Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
+    # FIXME: should subscribe to event:component:created instead
+    Broker.subscribe("event:motherboard:setup", cast: &handle_broker_cast/4)
     {:ok, nil}
   end
 
@@ -38,6 +42,13 @@ defmodule Helix.Controller.EntityService do
   @doc false
   def handle_broker_cast(pid, "event:server:created", {server_id, entity_id}, _req) do
     GenServer.cast(pid, {:server, :created, server_id, entity_id})
+  end
+
+  # FIXME: should subscribe to event:component:created instead
+  def handle_broker_cast(pid, "event:motherboard:setup", msg, _req) do
+    server_id = msg.server_id
+    components = msg.components
+    GenServer.cast(pid, {:entity, :add, :components, server_id, components})
   end
 
   @spec handle_call(
@@ -68,6 +79,25 @@ defmodule Helix.Controller.EntityService do
     state) :: {:noreply, state}
   def handle_cast({:server, :created, server_id, entity_id}, state) do
     EntityServerController.create(entity_id, server_id)
+    {:noreply, state}
+  end
+
+  # FIXME: receiving entity_id looks more correct than server_id
+  @spec handle_cast(
+    {:entity, :add, :components, PK.t, [PK.t]}, state) :: {:noreply, state}
+  def handle_cast({:entity, :add, :components, server_id, components}, state) do
+    entity = EntityServerController.get_entity(server_id)
+    Repo.transaction(fn ->
+      Enum.each(components, fn component_id ->
+        case EntityComponentController.create(entity.entity_id, component_id) do
+          {:ok, _} ->
+            :ok
+          {:error, _} ->
+            Repo.rollback(:internal_error)
+        end
+      end)
+    end)
+
     {:noreply, state}
   end
 end

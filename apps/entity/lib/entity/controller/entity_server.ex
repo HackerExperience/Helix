@@ -14,6 +14,14 @@ defmodule Helix.Entity.Controller.EntityServer do
     |> Repo.insert()
   end
 
+  # FIXME: choose a better function name
+  @spec get_entity(Server.id) :: Entity.t
+  def get_entity(server_id) do
+    EntityServer
+    |> where([s], s.server_id == ^server_id)
+    |> Repo.one()
+  end
+
   @spec find(Entity.id) :: [EntityServer.t]
   def find(entity_id) do
     EntityServer
