@@ -86,8 +86,11 @@ defmodule Helix.Server.Controller.ServerService do
   def handle_call({:server, :create, params, req}, _from, state) do
     case ServerController.create(params) do
       {:ok, server} ->
-        # FIXME: always use maps on events
-        Broker.cast("event:server:created", {server.server_id, params.entity_id}, request: req)
+        msg = %{
+          server_id: server.server_id,
+          entity_id: params.entity_id
+        }
+        Broker.cast("event:server:created", msg, request: req)
         {:reply, {:ok, server}, state}
       error ->
         {:reply, error, state}

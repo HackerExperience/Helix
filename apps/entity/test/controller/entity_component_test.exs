@@ -18,9 +18,9 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
     {:ok, entity_type: entity_type.entity_type}
   end
 
-  defp create_entity(context) do
+  defp create_entity(entity_type) do
     params = %{
-      entity_type: context.entity_type,
+      entity_type: entity_type,
       reference_id: Random.pk()
     }
 
@@ -32,20 +32,17 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
     entity.entity_id
   end
 
-  defp create_components(entity_id, components) do
+  defp create_components(entity_id) do
+    components = Enum.map(0..Random.number(1..10), fn _ -> Random.pk() end)
     Enum.each(components, fn component_id ->
       {:ok, _} = EntityComponentController.create(entity_id, component_id)
     end)
-  end
-
-  defp generate_components() do
-    Enum.map(0..Random.number(1..10), fn _ -> Random.pk() end)
+    components
   end
 
   test "creating adds entity ownership over components", context do
-    entity_id = create_entity(context)
-    components = generate_components()
-    create_components(entity_id, components)
+    entity_id = create_entity(context.entity_type)
+    components = create_components(entity_id)
 
     components1 = Enum.into(components, MapSet.new())
     components2 =
@@ -55,18 +52,17 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
       |> Enum.into(MapSet.new())
 
     # components are linked
-    assert components1 == components2
+    assert MapSet.equal?(components1, components2)
   end
 
   test "fetching yields an empty list when no component is owned", context do
-    entity_id = create_entity(context)
+    entity_id = create_entity(context.entity_type)
     assert [] == EntityComponentController.find(entity_id)
   end
 
   test "deleting the entity removes it's component ownership", context do
-    entity_id = create_entity(context)
-    components = generate_components()
-    create_components(entity_id, components)
+    entity_id = create_entity(context.entity_type)
+    create_components(entity_id)
 
     # components are owned
     refute [] == EntityComponentController.find(entity_id)
@@ -78,7 +74,7 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   end
 
   test "deleting is idempotent", context do
-    entity_id = create_entity(context)
+    entity_id = create_entity(context.entity_type)
     component_id = Random.pk()
 
     {:ok, _} = EntityComponentController.create(entity_id, component_id)

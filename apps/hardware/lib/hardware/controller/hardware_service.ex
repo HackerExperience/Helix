@@ -46,7 +46,11 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response}
   end
 
-  def handle_broker_cast(pid, "event:server:created", {server_id, entity_id}, request) do
+  def handle_broker_cast(pid, "event:server:created", msg, request) do
+    %{
+      entity_id: entity_id,
+      server_id: server_id} = msg
+
     # FIXME: remove hardcoded data
     bundle = %{
       motherboard: "MOBO01",
@@ -154,7 +158,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
 
     result = Repo.transaction(fn ->
       with \
-        {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard),
+        {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard, entity_id),
         {:ok, components, ev1} <- create_components.(bundle.components),
         # TODO: Create and install Network connection
         {:ok, motherboard, ev2} <- setup_motherboard(motherboard, components)
@@ -167,16 +171,14 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end)
 
     case result do
-      {:ok, {motherboard, components, deferred_events}} ->
+      {:ok, {motherboard, _, deferred_events}} ->
         # FIXME: this should be handled by Eventually.flush(events)
         Enum.each(deferred_events, fn {topic, params} ->
           Broker.cast(topic, params, request: request)
         end)
 
-        components = Enum.map(components, &(&1.component_id))
         msg = %{
           motherboard_id: motherboard.motherboard_id,
-          components: components,
           server_id: server_id
         }
         Broker.cast("event:motherboard:setup", msg, request: request)
@@ -200,16 +202,27 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  @spec create_motherboard(HELL.PK.t) ::
+  @spec create_motherboard(String.t, HELL.PK.t) ::
     {:ok, Motherboard.t, deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
-  defp create_motherboard(spec_id) do
+  defp create_motherboard(spec_id, entity_id) do
     with \
       {:ok, cs} <- ComponentSpecController.find(spec_id),
       {:ok, motherboard} <- MotherboardController.create_from_spec(cs)
     do
-      msg = %{motherboard_id: motherboard.motherboard_id}
-      ev = [{"event:motherboard:created", msg}]
+      msg_motherboard = %{
+        motherboard_id: motherboard.motherboard_id,
+        entity_id: entity_id
+      }
+      msg_component = %{
+        component_id: motherboard.motherboard_id,
+        entity_id: entity_id
+      }
+
+      ev = [
+        {"event:motherboard:created", msg_motherboard},
+        {"event:component:created", msg_component}
+      ]
 
       {:ok, motherboard, ev}
     else
@@ -218,7 +231,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  @spec create_component(String.t, HELL.PK.id) ::
+  @spec create_component(String.t, HELL.PK.t) ::
     {:ok, Component.t, deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
   defp create_component(spec_id, entity_id) do

@@ -15,7 +15,7 @@ defmodule Helix.Entity.Controller.EntityServer do
   end
 
   # FIXME: choose a better function name
-  @spec get_entity(Server.id) :: Entity.t
+  @spec get_entity(Server.id) :: EntityServer.t
   def get_entity(server_id) do
     EntityServer
     |> where([s], s.server_id == ^server_id)

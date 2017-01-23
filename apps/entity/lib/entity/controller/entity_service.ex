@@ -38,14 +38,18 @@ defmodule Helix.Controller.EntityService do
   end
 
   @doc false
-  def handle_broker_cast(pid, "event:server:created", {server_id, entity_id}, _req) do
+  def handle_broker_cast(pid, "event:server:created", msg, _req) do
+    %{
+      server_id: server_id,
+      entity_id: entity_id} = msg
     GenServer.cast(pid, {:server, :created, server_id, entity_id})
   end
 
   def handle_broker_cast(pid, "event:component:created", msg, _req) do
-    entity_id = msg.entity_id
-    component_id = msg.component_id
-    GenServer.call(pid, {:entity, :component, :add, entity_id, component_id})
+    %{
+      entity_id: entity_id,
+      component_id: component_id} = msg
+    GenServer.cast(pid, {:entity, :component, :add, entity_id, component_id})
   end
 
   @spec handle_call(
@@ -56,10 +60,6 @@ defmodule Helix.Controller.EntityService do
     {:entity, :find, PK.t},
     GenServer.from,
     state) :: {:reply, {:ok, Entity.t} | {:error, :notfound}, state}
-  @spec handle_call(
-    {:entity, :component, :add, Entity.id, PK.t},
-    GenServer.from,
-    state) :: {:reply, :ok | {:error, :internal}, state}
   @doc false
   def handle_call({:entity, :create, params, request}, _from, state) do
     case EntityController.create(params) do
@@ -74,20 +74,19 @@ defmodule Helix.Controller.EntityService do
     response = EntityController.find(id)
     {:reply, response, state}
   end
-  def handle_call({:entity, :component, :add, entity_id, comp_id}, _, state) do
-    case EntityComponentController.create(entity_id, comp_id) do
-      {:ok, _} ->
-        {:reply, :ok, state}
-      {:error, _} ->
-        {:reply, {:error, :internal}, state}
-    end
-  end
 
   @spec handle_cast(
     {:server, :created, {PK.t, PK.t}, HeBroker.Request.t},
     state) :: {:noreply, state}
+  @spec handle_cast(
+    {:entity, :component, :add, Entity.id, PK.t},
+    state) :: {:noreply, state}
   def handle_cast({:server, :created, server_id, entity_id}, state) do
     EntityServerController.create(entity_id, server_id)
+    {:noreply, state}
+  end
+  def handle_cast({:entity, :component, :add, entity_id, comp_id}, state) do
+    EntityComponentController.create(entity_id, comp_id)
     {:noreply, state}
   end
 end
