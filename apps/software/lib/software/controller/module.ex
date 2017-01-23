@@ -1,46 +1,67 @@
 defmodule Helix.Software.Controller.Module do
 
+  #alias Helix.Software.Model.ModuleRole
   alias Helix.Software.Model.Module
+  alias Helix.Software.Model.File
   alias Helix.Software.Repo
 
-  import Ecto.Query, only: [where: 3]
+  @type module_roles :: %{role :: HELL.PK.t => version :: non_neg_integer}
 
-  @spec create(Module.creation_params) :: {:ok, Module.t} | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
-    |> Module.create_changeset()
-    |> Repo.insert()
+  @spec create(File.t, module_roles) ::
+    {:ok, module_roles}
+    | {:error, :internal}
+  def create(file, roles) do
+    Repo.transaction(fn ->
+      roles
+      |> Enum.map(fn {module_role_id, version} ->
+        %{
+          file_id: file.file_id,
+          module_role_id: module_role_id,
+          module_version: version
+        }
+        |> Module.create_changeset()
+        |> Repo.insert()
+        |> case do
+          {:ok, _} ->
+            {module_role_id, version}
+          {:error, _} ->
+            Repo.rollback(:internal)
+        end
+      end)
+      |> Enum.into(%{})
+    end)
   end
 
-  @spec find(HELL.PK.t, String.t) :: {:ok, Module.t} | {:error, :notfound}
-  def find(file_id, role) do
-    case Repo.get_by(Module, module_role_id: role, file_id: file_id) do
+  @spec find(File.t) :: module_roles
+  def find(file) do
+    file.file_id
+    |> Module.Query.by_file()
+    |> Repo.all()
+    |> Enum.map(&({&1.module_role_id, &1.module_version}))
+    |> Enum.into(%{})
+  end
+
+  @spec update(File.t, HELL.PK.t, version :: non_neg_integer) ::
+    {:ok, Module.t}
+    | {:error, :notfound | :internal}
+  def update(file, module_role, version) do
+    file.file_id
+    |> Module.Query.by_file()
+    |> Module.Query.by_role(module_role)
+    |> Repo.one()
+    |> case do
       nil ->
         {:error, :notfound}
-      res ->
-        {:ok, res}
+      file_module ->
+        file_module
+        |> Module.update_changeset(%{module_version: version})
+        |> Repo.update()
+        |> case do
+          {:ok, file_module} ->
+            {:ok, file_module}
+          {:error, _} ->
+            {:error, :internal}
+        end
     end
-  end
-
-  @spec update(HELL.PK.t, String.t, Module.update_fields) :: {:ok, Module.t} | {:error, Ecto.Changeset.t}
-  def update(file_id, module_role, params) do
-    with {:ok, module} <- find(file_id, module_role) do
-      module
-      |> Module.update_changeset(params)
-      |> Repo.update()
-    end
-  end
-
-  # REVIEW: I don't think this function is of any use. A file _should always_
-  #   have all modules linked (even if at "0" version). Meanwhile, a "cascade
-  #   delete" function could be useful
-  @spec delete(HELL.PK.t, String.t) :: no_return
-  def delete(file_id, module_role) do
-    Module
-    |> where([m], m.module_role_id == ^module_role)
-    |> where([m], m.file_id == ^file_id)
-    |> Repo.delete_all()
-
-    :ok
   end
 end

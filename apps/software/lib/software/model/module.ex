@@ -66,4 +66,21 @@ defmodule Helix.Software.Model.Module do
     changeset
     |> validate_number(:module_version, greater_than: 0)
   end
+
+  defmodule Query do
+
+    alias Helix.Software.Model.Module
+
+    import Ecto.Query, only: [where: 3]
+
+    @spec by_file(HELL.PK.t) :: Ecto.Queryable.t
+    @spec by_file(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_file(query \\ Module, file_id),
+      do: where(query, [m], m.file_id == ^file_id)
+
+    @spec by_role(HELL.PK.t) :: Ecto.Queryable.t
+    @spec by_role(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_role(query \\ Module, module_role_id),
+      do: where(query, [m], m.module_role_id == ^module_role_id)
+  end
 end

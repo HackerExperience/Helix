@@ -2,8 +2,7 @@ defmodule Helix.Software.Controller.ModuleTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
-  alias HELL.TestHelper.Random, as: HRand
+  alias HELL.TestHelper.Random, as: Random
   alias Helix.Software.Controller.File, as: FileController
   alias Helix.Software.Controller.Module, as: ModuleController
   alias Helix.Software.Controller.Storage, as: StorageController
@@ -11,66 +10,115 @@ defmodule Helix.Software.Controller.ModuleTest do
   alias Helix.Software.Model.ModuleRole
   alias Helix.Software.Repo
 
-  setup do
-    file_type = FileType |> Repo.all() |> Enum.random() |> Map.fetch!(:file_type)
-    role = ModuleRole |> Repo.all() |> Enum.random() |> Map.fetch!(:module_role_id)
+  defp create_file(file_type, storage_id) do
+    params = %{
+      name: Random.string(min: 20),
+      file_path: "dev.null",
+      file_type: file_type,
+      file_size: Random.number(min: 1),
+      storage_id: storage_id
+    }
+    {:ok, file} = FileController.create(params)
+    file
+  end
+
+  defp generate_module_roles(file_type) do
+    file_type
+    |> ModuleRole.Query.by_type()
+    |> Repo.all()
+    |> Enum.shuffle()
+    |> Enum.take(Random.number(min: 1, max: 8))
+    |> Enum.map(&({&1.module_role_id, Random.number(min: 1, max: 8000)}))
+    |> Enum.into(%{})
+  end
+
+  setup_all do
+    file_type =
+      FileType
+      |> Repo.all()
+      |> Enum.reject(fn file_type ->
+        roles =
+          file_type.file_type
+          |> ModuleRole.Query.by_type()
+          |> Repo.all()
+
+        length(roles) < 3
+      end)
+      |> Enum.random()
+      |> Map.fetch!(:file_type)
 
     {:ok, storage} = StorageController.create()
-
-    file_payload = %{
-      name: "void",
-      file_path: "/dev/null",
-      file_type: file_type,
-      file_size: HRand.number(min: 1),
-      storage_id: storage.storage_id
-    }
-
-    {:ok, file} = FileController.create(file_payload)
-
-    payload = %{
-      module_role_id: role,
-      file_id: file.file_id,
-      module_version: HRand.number(min: 1)
-    }
-
-    {:ok, payload: payload}
+    {:ok, file_type: file_type, storage_id: storage.storage_id}
   end
 
-  test "create/1", %{payload: payload} do
-    assert {:ok, _} = ModuleController.create(payload)
+  test "file modules creation creates the correct roles", context do
+    file = create_file(context.file_type, context.storage_id)
+    module_roles = generate_module_roles(context.file_type)
+
+    {:ok, file_modules1} = ModuleController.create(file, module_roles)
+    file_modules2 = ModuleController.find(file)
+
+    # created roles from module_roles
+    assert module_roles == file_modules1
+
+    # roles found are the same as those yielded by create
+    assert file_modules1 == file_modules2
   end
 
-  describe "find/2" do
-    test "success", %{payload: payload} do
-      assert {:ok, module} = ModuleController.create(payload)
-      assert {:ok, ^module} = ModuleController.find(module.file_id, module.module_role_id)
+  describe "file modules fetching" do
+    test "fetches existing file modules", context do
+      file = create_file(context.file_type, context.storage_id)
+      module_roles = generate_module_roles(context.file_type)
+
+      {:ok, file_modules1} = ModuleController.create(file, module_roles)
+      file_modules2 = ModuleController.find(file)
+
+      # fetched a non empty list
+      refute Enum.empty?(file_modules2)
+
+      # fetched the same data yielded by create
+      assert file_modules1 == file_modules2
     end
 
-    test "failure" do
-      assert {:error, :notfound} == ModuleController.find(PK.generate([]), PK.generate([]))
-    end
-  end
+    test "yields empty list when nothing is found", context do
+      file = create_file(context.file_type, context.storage_id)
+      file_modules = ModuleController.find(file)
 
-  describe "update/3" do
-    test "update module version", %{payload: payload} do
-      assert {:ok, module} = ModuleController.create(payload)
-
-      payload2 = %{module_version: 2}
-      assert {:ok, module} = ModuleController.update(module.file_id, module.module_role_id, payload2)
-      assert payload2.module_version == module.module_version
-    end
-
-    test "module not found" do
-      assert {:error, :notfound} == ModuleController.update(PK.generate([]), PK.generate([]), %{})
+      # nothing could be fetched
+      assert Enum.empty?(file_modules)
     end
   end
 
-  test "delete/2 idempotency", %{payload: payload} do
-    {:ok, module} = ModuleController.create(payload)
+  describe "file modules updating" do
+    test "updates module version", context do
+      file = create_file(context.file_type, context.storage_id)
+      module_roles = generate_module_roles(context.file_type)
+      {:ok, file_modules} = ModuleController.create(file, module_roles)
 
-    :ok = ModuleController.delete(module.file_id, module.module_role_id)
-    :ok = ModuleController.delete(module.file_id, module.module_role_id)
+      module_id =
+        file_modules
+        |> Map.keys()
+        |> Enum.random()
 
-    assert {:error, :notfound} == ModuleController.find(module.file_id, module.module_role_id)
+      version = Random.number(min: 1, max: 8000)
+      {:ok, file_module} = ModuleController.update(file, module_id, version)
+      file_modules = ModuleController.find(file)
+
+      # version yielded by update is the same obtained from find
+      assert file_module.module_version == file_modules[module_id]
+
+      # module version was changed to the expected value
+      assert version == file_module.module_version
+    end
+
+    test "module not found", context do
+      file = create_file(context.file_type, context.storage_id)
+      module_id = HELL.PK.generate([])
+      version = Random.number(min: 1, max: 8000)
+
+      # got expected error
+      assert {:error, :notfound} ==
+        ModuleController.update(file, module_id, version)
+    end
   end
 end
