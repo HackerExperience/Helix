@@ -63,7 +63,7 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
     assert [] == EntityComponentController.find(entity_id)
   end
 
-  test "deleting the entity removes it's componente ownership", context do
+  test "deleting the entity removes it's component ownership", context do
     entity_id = create_entity(context)
     components = generate_components()
     create_components(entity_id, components)

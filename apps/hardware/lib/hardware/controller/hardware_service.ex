@@ -46,7 +46,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response}
   end
 
-  def handle_broker_cast(pid, "event:server:created", {server_id, _entity_id}, request) do
+  def handle_broker_cast(pid, "event:server:created", {server_id, entity_id}, request) do
     # FIXME: remove hardcoded data
     bundle = %{
       motherboard: "MOBO01",
@@ -61,7 +61,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
       ]
     }
 
-    GenServer.call(pid, {:setup, server_id, bundle, request})
+    GenServer.call(pid, {:setup, server_id, entity_id, bundle, request})
   end
 
   @spec init(any) :: {:ok, state}
@@ -140,10 +140,10 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response, state}
   end
 
-  def handle_call({:setup, server_id, bundle, request}, _from, state) do
+  def handle_call({:setup, server_id, entity_id, bundle, request}, _from, state) do
     create_components = fn components ->
       Enum.reduce_while(components, {:ok, [], []}, fn {_type, id}, {:ok, acc0, acc1} ->
-        case create_component(id) do
+        case create_component(id, entity_id) do
           {:ok, c, e} ->
             {:cont, {:ok, [c| acc0], e ++ acc1}}
           error ->
@@ -218,15 +218,15 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  @spec create_component(String.t) ::
+  @spec create_component(String.t, HELL.PK.id) ::
     {:ok, Component.t, deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
-  defp create_component(spec_id) do
+  defp create_component(spec_id, entity_id) do
     component_spec = Repo.get_by(ComponentSpec, spec_id: spec_id)
 
     case ComponentController.create_from_spec(component_spec) do
       {:ok, component} ->
-        msg = %{component_id: component.component_id}
+        msg = %{component_id: component.component_id, entity_id: entity_id}
         deferred_events = [{"event:component:created", msg}]
 
         {:ok, component, deferred_events}

@@ -8,7 +8,6 @@ defmodule Helix.Controller.EntityService do
   alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Repo
 
   @typep state :: nil
 
@@ -23,8 +22,7 @@ defmodule Helix.Controller.EntityService do
     Broker.subscribe("entity:create", call: &handle_broker_call/4)
     Broker.subscribe("entity:find", call: &handle_broker_call/4)
     Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
-    # FIXME: should subscribe to event:component:created instead
-    Broker.subscribe("event:motherboard:setup", cast: &handle_broker_cast/4)
+    Broker.subscribe("event:component:created", cast: &handle_broker_cast/4)
     {:ok, nil}
   end
 
@@ -44,11 +42,10 @@ defmodule Helix.Controller.EntityService do
     GenServer.cast(pid, {:server, :created, server_id, entity_id})
   end
 
-  # FIXME: should subscribe to event:component:created instead
-  def handle_broker_cast(pid, "event:motherboard:setup", msg, _req) do
-    server_id = msg.server_id
-    components = msg.components
-    GenServer.cast(pid, {:entity, :add, :components, server_id, components})
+  def handle_broker_cast(pid, "event:component:created", msg, _req) do
+    entity_id = msg.entity_id
+    component_id = msg.component_id
+    GenServer.call(pid, {:entity, :component, :add, entity_id, component_id})
   end
 
   @spec handle_call(
@@ -59,6 +56,10 @@ defmodule Helix.Controller.EntityService do
     {:entity, :find, PK.t},
     GenServer.from,
     state) :: {:reply, {:ok, Entity.t} | {:error, :notfound}, state}
+  @spec handle_call(
+    {:entity, :component, :add, Entity.id, PK.t},
+    GenServer.from,
+    state) :: {:reply, :ok | {:error, :internal}, state}
   @doc false
   def handle_call({:entity, :create, params, request}, _from, state) do
     case EntityController.create(params) do
@@ -73,31 +74,20 @@ defmodule Helix.Controller.EntityService do
     response = EntityController.find(id)
     {:reply, response, state}
   end
+  def handle_call({:entity, :component, :add, entity_id, comp_id}, _, state) do
+    case EntityComponentController.create(entity_id, comp_id) do
+      {:ok, _} ->
+        {:reply, :ok, state}
+      {:error, _} ->
+        {:reply, {:error, :internal}, state}
+    end
+  end
 
   @spec handle_cast(
     {:server, :created, {PK.t, PK.t}, HeBroker.Request.t},
     state) :: {:noreply, state}
   def handle_cast({:server, :created, server_id, entity_id}, state) do
     EntityServerController.create(entity_id, server_id)
-    {:noreply, state}
-  end
-
-  # FIXME: receiving entity_id looks more correct than server_id
-  @spec handle_cast(
-    {:entity, :add, :components, PK.t, [PK.t]}, state) :: {:noreply, state}
-  def handle_cast({:entity, :add, :components, server_id, components}, state) do
-    entity = EntityServerController.get_entity(server_id)
-    Repo.transaction(fn ->
-      Enum.each(components, fn component_id ->
-        case EntityComponentController.create(entity.entity_id, component_id) do
-          {:ok, _} ->
-            :ok
-          {:error, _} ->
-            Repo.rollback(:internal_error)
-        end
-      end)
-    end)
-
     {:noreply, state}
   end
 end
