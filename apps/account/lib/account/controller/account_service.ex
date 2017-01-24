@@ -52,7 +52,8 @@ defmodule Helix.Account.Controller.AccountService do
       changeset = %{valid?: true} <- Account.put_primary_key(changeset, entity.entity_id),
       {:ok, account} <- AccountController.create(changeset)
     do
-      Broker.cast("event:account:created", account.account_id, request: request)
+      msg = %{account_id: account.account_id}
+      Broker.cast("event:account:created", msg, request: request)
       {:reply, {:ok, account}, state}
     else
       {:error, error} ->

@@ -27,7 +27,8 @@ defmodule Helix.Controller.EntityService do
   end
 
   @doc false
-  def handle_broker_call(pid, "entity:find", entity_id, _req) do
+  def handle_broker_call(pid, "entity:find", msg, _req) do
+    %{entity_id: entity_id} = msg
     response = GenServer.call(pid, {:entity, :find, entity_id})
     {:reply, response}
   end
