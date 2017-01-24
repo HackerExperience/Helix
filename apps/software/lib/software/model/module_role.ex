@@ -52,14 +52,9 @@ defmodule Helix.Software.Model.ModuleRole do
 
     import Ecto.Query, only: [where: 3]
 
-    @spec by_name(String.t) :: Ecto.Queryable.t
-    @spec by_name(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
-    def by_name(query \\ ModuleRole, module_role),
-      do: where(query, [m], m.module_role == ^module_role)
-
-    @spec by_type(String.t) :: Ecto.Queryable.t
-    @spec by_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
-    def by_type(query \\ ModuleRole, file_type),
+    @spec by_file_type(String.t) :: Ecto.Queryable.t
+    @spec by_file_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    def by_file_type(query \\ ModuleRole, file_type),
       do: where(query, [m], m.file_type == ^file_type)
   end
 end

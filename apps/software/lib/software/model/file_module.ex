@@ -1,4 +1,4 @@
-defmodule Helix.Software.Model.Module do
+defmodule Helix.Software.Model.FileModule do
 
   use Ecto.Schema
 
@@ -13,9 +13,7 @@ defmodule Helix.Software.Model.Module do
     file: File.t,
     file_id: PK.t,
     role: ModuleRole.t,
-    module_role_id: PK.t,
-    inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t
+    module_role_id: PK.t
   }
 
   @type creation_params :: %{
@@ -29,7 +27,7 @@ defmodule Helix.Software.Model.Module do
   @update_fields ~w/module_version/a
 
   @primary_key false
-  schema "modules" do
+  schema "file_modules" do
     belongs_to :file, File,
       foreign_key: :file_id,
       references: :file_id,
@@ -42,8 +40,6 @@ defmodule Helix.Software.Model.Module do
       primary_key: true
 
     field :module_version, :integer
-
-    timestamps()
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -69,18 +65,24 @@ defmodule Helix.Software.Model.Module do
 
   defmodule Query do
 
-    alias Helix.Software.Model.Module
+    alias Helix.Software.Model.FileModule
 
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query, only: [where: 3, select: 3]
 
-    @spec by_file(HELL.PK.t) :: Ecto.Queryable.t
-    @spec by_file(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_file(query \\ Module, file_id),
-      do: where(query, [m], m.file_id == ^file_id)
+    @spec from_file(HELL.PK.t) :: Ecto.Queryable.t
+    @spec from_file(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def from_file(query \\ FileModule, file_id),
+      do: where(query, [fm], fm.file_id == ^file_id)
 
-    @spec by_role(HELL.PK.t) :: Ecto.Queryable.t
-    @spec by_role(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_role(query \\ Module, module_role_id),
-      do: where(query, [m], m.module_role_id == ^module_role_id)
+    @spec by_module_role_id(HELL.PK.t) :: Ecto.Queryable.t
+    @spec by_module_role_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_module_role_id(query \\ FileModule, module_role_id),
+      do: where(query, [fm], fm.module_role_id == ^module_role_id)
+
+    @spec select_module_role_id_and_module_version() :: Ecto.Queryable.t
+    @spec select_module_role_id_and_module_version(Ecto.Queryable.t) ::
+      Ecto.Queryable.t
+    def select_module_role_id_and_module_version(query \\ FileModule),
+      do: select(query, [fm], {fm.module_role_id, fm.module_version})
   end
 end
