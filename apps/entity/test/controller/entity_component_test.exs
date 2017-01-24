@@ -60,6 +60,10 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
     assert [] == EntityComponentController.find(entity_id)
   end
 
+  test "fetching components from a non existent entity yields an empty list" do
+    assert [] == EntityComponentController.find(Random.pk())
+  end
+
   test "deleting the entity removes it's component ownership", context do
     entity_id = create_entity(context.entity_type)
     create_components(entity_id)
@@ -78,9 +82,14 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
     component_id = Random.pk()
 
     {:ok, _} = EntityComponentController.create(entity_id, component_id)
+
+    # components are owned
+    refute [] == EntityComponentController.find(entity_id)
+
     :ok = EntityComponentController.delete(entity_id, component_id)
     :ok = EntityComponentController.delete(entity_id, component_id)
 
+    # components aren't owned anymore
     assert [] == EntityComponentController.find(entity_id)
   end
 end

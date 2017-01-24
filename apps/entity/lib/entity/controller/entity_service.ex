@@ -42,6 +42,7 @@ defmodule Helix.Controller.EntityService do
     %{
       server_id: server_id,
       entity_id: entity_id} = msg
+
     GenServer.cast(pid, {:server, :created, server_id, entity_id})
   end
 
@@ -49,6 +50,7 @@ defmodule Helix.Controller.EntityService do
     %{
       entity_id: entity_id,
       component_id: component_id} = msg
+
     GenServer.cast(pid, {:entity, :component, :add, entity_id, component_id})
   end
 

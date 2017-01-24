@@ -2,18 +2,17 @@ defmodule Helix.Entity.Model.EntityServer do
 
   use Ecto.Schema
 
-  alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
 
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    server_id: Server.id,
+    server_id: HELL.PK.t,
     entity_id: Entity.id,
-    entity: Entity
+    entity: Entity.t
   }
 
-  @type creation_params :: %{server_id: Server.id, entity_id: Entity.id}
+  @type creation_params :: %{server_id: HELL.PK.t, entity_id: Entity.id}
 
   @creation_fields ~w/server_id entity_id/a
 
