@@ -30,7 +30,8 @@ defmodule Helix.Server.Controller.ServerService do
 
   @spec handle_broker_cast(pid, PK.t, term, term) :: no_return
   @doc false
-  def handle_broker_cast(pid, "event:entity:created", entity_id, request) do
+  def handle_broker_cast(pid, "event:entity:created", msg, request) do
+    %{entity_id: entity_id} = msg
     params = %{
       entity_id: entity_id,
       server_type: "desktop"
@@ -86,8 +87,11 @@ defmodule Helix.Server.Controller.ServerService do
   def handle_call({:server, :create, params, req}, _from, state) do
     case ServerController.create(params) do
       {:ok, server} ->
-        # FIXME: always use maps on events
-        Broker.cast("event:server:created", {server.server_id, params.entity_id}, request: req)
+        msg = %{
+          server_id: server.server_id,
+          entity_id: params.entity_id
+        }
+        Broker.cast("event:server:created", msg, request: req)
         {:reply, {:ok, server}, state}
       error ->
         {:reply, error, state}

@@ -46,7 +46,11 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response}
   end
 
-  def handle_broker_cast(pid, "event:server:created", {server_id, _entity_id}, request) do
+  def handle_broker_cast(pid, "event:server:created", msg, request) do
+    %{
+      entity_id: entity_id,
+      server_id: server_id} = msg
+
     # FIXME: remove hardcoded data
     bundle = %{
       motherboard: "MOBO01",
@@ -61,7 +65,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
       ]
     }
 
-    GenServer.call(pid, {:setup, server_id, bundle, request})
+    GenServer.call(pid, {:setup, server_id, entity_id, bundle, request})
   end
 
   @spec init(any) :: {:ok, state}
@@ -140,10 +144,10 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:reply, response, state}
   end
 
-  def handle_call({:setup, server_id, bundle, request}, _from, state) do
+  def handle_call({:setup, server_id, entity_id, bundle, request}, _from, state) do
     create_components = fn components ->
       Enum.reduce_while(components, {:ok, [], []}, fn {_type, id}, {:ok, acc0, acc1} ->
-        case create_component(id) do
+        case create_component(id, entity_id) do
           {:ok, c, e} ->
             {:cont, {:ok, [c| acc0], e ++ acc1}}
           error ->
@@ -154,12 +158,12 @@ defmodule Helix.Hardware.Controller.HardwareService do
 
     result = Repo.transaction(fn ->
       with \
-        {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard),
+        {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard, entity_id),
         {:ok, components, ev1} <- create_components.(bundle.components),
         # TODO: Create and install Network connection
         {:ok, motherboard, ev2} <- setup_motherboard(motherboard, components)
       do
-        {motherboard, ev0 ++ ev1 ++ ev2}
+        {motherboard, components, ev0 ++ ev1 ++ ev2}
       else
         {:error, _} ->
           Repo.rollback(:internal_error)
@@ -167,7 +171,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end)
 
     case result do
-      {:ok, {motherboard, deferred_events}} ->
+      {:ok, {motherboard, _, deferred_events}} ->
         # FIXME: this should be handled by Eventually.flush(events)
         Enum.each(deferred_events, fn {topic, params} ->
           Broker.cast(topic, params, request: request)
@@ -198,16 +202,27 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  @spec create_motherboard(HELL.PK.t) ::
+  @spec create_motherboard(String.t, HELL.PK.t) ::
     {:ok, Motherboard.t, deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
-  defp create_motherboard(spec_id) do
+  defp create_motherboard(spec_id, entity_id) do
     with \
       {:ok, cs} <- ComponentSpecController.find(spec_id),
       {:ok, motherboard} <- MotherboardController.create_from_spec(cs)
     do
-      msg = %{motherboard_id: motherboard.motherboard_id}
-      ev = [{"event:motherboard:created", msg}]
+      msg_motherboard = %{
+        motherboard_id: motherboard.motherboard_id,
+        entity_id: entity_id
+      }
+      msg_component = %{
+        component_id: motherboard.motherboard_id,
+        entity_id: entity_id
+      }
+
+      ev = [
+        {"event:motherboard:created", msg_motherboard},
+        {"event:component:created", msg_component}
+      ]
 
       {:ok, motherboard, ev}
     else
@@ -216,15 +231,15 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  @spec create_component(String.t) ::
+  @spec create_component(String.t, HELL.PK.t) ::
     {:ok, Component.t, deferred_events :: [{String.t, map}]}
     | {:error, Ecto.Changeset.t}
-  defp create_component(spec_id) do
+  defp create_component(spec_id, entity_id) do
     component_spec = Repo.get_by(ComponentSpec, spec_id: spec_id)
 
     case ComponentController.create_from_spec(component_spec) do
       {:ok, component} ->
-        msg = %{component_id: component.component_id}
+        msg = %{component_id: component.component_id, entity_id: entity_id}
         deferred_events = [{"event:component:created", msg}]
 
         {:ok, component, deferred_events}
