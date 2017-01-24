@@ -30,7 +30,8 @@ defmodule Helix.Server.Controller.ServerService do
 
   @spec handle_broker_cast(pid, PK.t, term, term) :: no_return
   @doc false
-  def handle_broker_cast(pid, "event:entity:created", entity_id, request) do
+  def handle_broker_cast(pid, "event:entity:created", msg, request) do
+    %{entity_id: entity_id} = msg
     params = %{
       entity_id: entity_id,
       server_type: "desktop"

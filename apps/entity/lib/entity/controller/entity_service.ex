@@ -64,7 +64,8 @@ defmodule Helix.Controller.EntityService do
   def handle_call({:entity, :create, params, request}, _from, state) do
     case EntityController.create(params) do
       {:ok, entity} ->
-        Broker.cast("event:entity:created", entity.entity_id, request: request)
+        msg = %{entity_id: entity.entity_id}
+        Broker.cast("event:entity:created", msg, request: request)
         {:reply, {:ok, entity}, state}
       error ->
         {:reply, error, state}
