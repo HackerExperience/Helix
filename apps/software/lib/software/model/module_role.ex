@@ -45,4 +45,16 @@ defmodule Helix.Software.Model.ModuleRole do
     changeset
     |> cast(%{module_role_id: pk}, [:module_role_id])
   end
+
+  defmodule Query do
+
+    alias Helix.Software.Model.ModuleRole
+
+    import Ecto.Query, only: [where: 3]
+
+    @spec by_file_type(String.t) :: Ecto.Queryable.t
+    @spec by_file_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    def by_file_type(query \\ ModuleRole, file_type),
+      do: where(query, [m], m.file_type == ^file_type)
+  end
 end
