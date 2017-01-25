@@ -4,7 +4,7 @@ defmodule Helix.Software.Controller.FileModule do
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Repo
 
-  @type module_roles :: %{role :: HELL.PK.t => version :: non_neg_integer}
+  @type module_roles :: %{role :: HELL.PK.t => version :: pos_integer}
 
   @spec create(File.t, module_roles) ::
     {:ok, module_roles}
@@ -31,19 +31,19 @@ defmodule Helix.Software.Controller.FileModule do
 
   @spec find(File.t) :: module_roles
   def find(file) do
-    file.file_id
+    file
     |> FileModule.Query.from_file()
     |> FileModule.Query.select_module_role_id_and_module_version()
     |> Repo.all()
-    |> Enum.into(%{})
+    |> :maps.from_list()
   end
 
-  @spec update(File.t, HELL.PK.t, version :: non_neg_integer) ::
+  @spec update(File.t, HELL.PK.t, version :: pos_integer) ::
     {:ok, FileModule.t}
     | {:error, :notfound | Ecto.Changeset.t}
   def update(file, module_role, version) do
     file_module =
-      file.file_id
+      file
       |> FileModule.Query.from_file()
       |> FileModule.Query.by_module_role_id(module_role)
       |> Repo.one()

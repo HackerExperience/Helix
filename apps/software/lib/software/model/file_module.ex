@@ -9,7 +9,7 @@ defmodule Helix.Software.Model.FileModule do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    module_version: non_neg_integer,
+    module_version: pos_integer,
     file: File.t,
     file_id: PK.t,
     role: ModuleRole.t,
@@ -19,9 +19,9 @@ defmodule Helix.Software.Model.FileModule do
   @type creation_params :: %{
     file_id: PK.t,
     module_role_id: PK.t,
-    module_version: non_neg_integer
+    module_version: pos_integer
   }
-  @type update_params :: %{module_version: non_neg_integer}
+  @type update_params :: %{module_version: pos_integer}
 
   @creation_fields ~w/file_id module_role_id module_version/a
   @update_fields ~w/module_version/a
@@ -65,13 +65,19 @@ defmodule Helix.Software.Model.FileModule do
 
   defmodule Query do
 
+    alias Helix.Software.Model.File
     alias Helix.Software.Model.FileModule
 
     import Ecto.Query, only: [where: 3, select: 3]
 
-    @spec from_file(HELL.PK.t) :: Ecto.Queryable.t
-    @spec from_file(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def from_file(query \\ FileModule, file_id),
+    @spec from_file(File.t | HELL.PK.t) :: Ecto.Queryable.t
+    def from_file(file_or_file_id),
+      do: from_file(FileModule, file_or_file_id)
+
+    @spec from_file(Ecto.Queryable.t, File.t | HELL.PK.t) :: Ecto.Queryable.t
+    def from_file(query, file = %File{}),
+      do: from_file(query, file.file_id)
+    def from_file(query, file_id),
       do: where(query, [fm], fm.file_id == ^file_id)
 
     @spec by_module_role_id(HELL.PK.t) :: Ecto.Queryable.t
