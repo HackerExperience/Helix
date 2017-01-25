@@ -16,7 +16,8 @@ defmodule Helix.Entity.Controller.EntityServiceTest do
   describe "entity creation" do
     test "after account creation", %{params: params} do
       {_, {:ok, account}} = Broker.call("account:create", params)
-      {_, {:ok, entity}} = Broker.call("entity:find", account.account_id)
+      msg = %{entity_id: account.account_id}
+      {_, {:ok, entity}} = Broker.call("entity:find", msg)
       assert "account" === entity.entity_type
       assert account.account_id === entity.entity_id
     end

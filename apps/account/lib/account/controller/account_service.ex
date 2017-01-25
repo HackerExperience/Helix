@@ -45,14 +45,16 @@ defmodule Helix.Account.Controller.AccountService do
     GenServer.from,
     state) :: {:reply, {:ok, Account.id} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:account, :create, params, request}, _from, state) do
+  def handle_call({:account, :create, params, req}, _from, state) do
     with \
       changeset = %{valid?: true} <- Account.create_changeset(params),
-      {_, {:ok, entity}} <- Broker.call("entity:create", "account", request: request),
+      params = %{entity_type: "account"},
+      {_, {:ok, entity}} <- Broker.call("entity:create", params, request: req),
       changeset = %{valid?: true} <- Account.put_primary_key(changeset, entity.entity_id),
       {:ok, account} <- AccountController.create(changeset)
     do
-      Broker.cast("event:account:created", account.account_id, request: request)
+      msg = %{account_id: account.account_id}
+      Broker.cast("event:account:created", msg, request: req)
       {:reply, {:ok, account}, state}
     else
       {:error, error} ->

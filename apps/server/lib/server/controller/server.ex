@@ -45,7 +45,8 @@ defmodule Helix.Server.Controller.Server do
   def attach(server_id, mobo_id) do
     with \
       {:ok, server} <- find(server_id),
-      {_, {:ok, _}} <- Broker.call("hardware:get", {:motherboard, mobo_id})
+      msg = %{component_type: :motherboard, component_id: mobo_id},
+      {_, {:ok, _}} <- Broker.call("hardware:component:get", msg)
     do
       server
       |> Server.update_changeset(%{motherboard_id: mobo_id})

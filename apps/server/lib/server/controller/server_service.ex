@@ -49,15 +49,18 @@ defmodule Helix.Server.Controller.ServerService do
     response = GenServer.call(pid, {:server, :create, params, request})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:attach", {server_id, mobo_id}, req) do
+  def handle_broker_call(pid, "server:attach", msg, req) do
+    %{server_id: server_id, motherboard_id: mobo_id} = msg
     response = GenServer.call(pid, {:server, :attach, server_id, mobo_id, req})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:detach", server_id, req) do
+  def handle_broker_call(pid, "server:detach", msg, req) do
+    %{server_id: server_id} = msg
     response = GenServer.call(pid, {:server, :detach, server_id, req})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:query", id, _request) do
+  def handle_broker_call(pid, "server:query", msg, _request) do
+    %{server_id: id} = msg
     response = GenServer.call(pid, {:server, :find, id})
     {:reply, response}
   end

@@ -20,13 +20,9 @@ defmodule Helix.Hardware.Controller.HardwareService do
   end
 
   @doc false
-  def handle_broker_call(pid, "hardware:get", {subject, id}, _request) when is_atom(subject) do
-    response = GenServer.call(pid, {subject, :get, id})
-    {:reply, response}
-  end
-
-  def handle_broker_call(pid, "hardware:get", all_of_kind, _request) when is_atom(all_of_kind) do
-    response = GenServer.call(pid, {all_of_kind, :get})
+  def handle_broker_call(pid, "hardware:component:get", msg, _request) do
+    %{component_type: component_type, component_id: component_id} = msg
+    response = GenServer.call(pid, {component_type, :get, component_id})
     {:reply, response}
   end
 
@@ -71,7 +67,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
   @spec init(any) :: {:ok, state}
   @doc false
   def init(_args) do
-    Broker.subscribe("hardware:get", call: &handle_broker_call/4)
+    Broker.subscribe("hardware:component:get", call: &handle_broker_call/4)
     Broker.subscribe("hardware:motherboard:create", call: &handle_broker_call/4)
     Broker.subscribe("hardware:motherboard:resources", call: &handle_broker_call/4)
     Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
