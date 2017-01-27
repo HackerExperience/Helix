@@ -18,6 +18,17 @@ defmodule Helix.Account.Controller.AccountService do
     GenServer.start_link(__MODULE__, [], name: :account_service)
   end
 
+  @doc false
+  def handle_broker_call(pid, "account:create", params, _) do
+    response = GenServer.call(pid, {:account, :create, params})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "account:login", params, _) do
+    %{email: email, password: password} = params
+    response = GenServer.call(pid, {:account, :login, email, password})
+    {:reply, response}
+  end
+
   @spec init(any) :: {:ok, state}
   def init(_args) do
     Broker.subscribe("account:create", call: &handle_broker_call/4)
@@ -26,18 +37,8 @@ defmodule Helix.Account.Controller.AccountService do
     {:ok, nil}
   end
 
-  @doc false
-  def handle_broker_call(pid, "account:create", params, request) do
-    response = GenServer.call(pid, {:account, :create, params, request})
-    {:reply, response}
-  end
-  def handle_broker_call(pid, "account:login", %{email: email, password: password}, _request) do
-    response = GenServer.call(pid, {:account, :login, email, password})
-    {:reply, response}
-  end
-
   @spec handle_call(
-    {:account, :create, Account.creation_params, HeBroker.Request.t},
+    {:account, :create, Account.creation_params},
     GenServer.from,
     state) :: {:reply, {:ok, Account.t} | {:error, Ecto.Changeset.t}, state}
   @spec handle_call(
@@ -45,15 +46,13 @@ defmodule Helix.Account.Controller.AccountService do
     GenServer.from,
     state) :: {:reply, {:ok, Account.id} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:account, :create, params, req}, _from, state) do
+  def handle_call({:account, :create, params}, _from, state) do
     case AccountController.create(params) do
       {:ok, account} ->
         msg = %{account_id: account.account_id}
-        Broker.cast("event:account:created", msg, request: req)
+        Broker.cast("event:account:created", msg)
         {:reply, {:ok, account}, state}
       {:error, error} ->
-        {:reply, {:error, error}, state}
-      error ->
         {:reply, {:error, error}, state}
     end
   end
