@@ -46,14 +46,11 @@ defmodule Helix.Account.Controller.AccountService do
     state) :: {:reply, {:ok, Account.id} | {:error, :notfound}, state}
   @doc false
   def handle_call({:account, :create, params, req}, _from, state) do
-    with \
-      changeset = %{valid?: true} <- Account.create_changeset(params),
-      {:ok, account} <- AccountController.create(changeset)
-    do
-      msg = %{account_id: account.account_id}
-      Broker.cast("event:account:created", msg, request: req)
-      {:reply, {:ok, account}, state}
-    else
+    case AccountController.create(params) do
+      {:ok, account} ->
+        msg = %{account_id: account.account_id}
+        Broker.cast("event:account:created", msg, request: req)
+        {:reply, {:ok, account}, state}
       {:error, error} ->
         {:reply, {:error, error}, state}
       error ->
