@@ -9,10 +9,7 @@ defmodule Helix.Server.Controller.ServerTest do
   alias Helix.Server.Repo
 
   setup_all do
-    server_types =
-      ServerType
-      |> Repo.all()
-
+    server_types = Repo.all(ServerType)
     {:ok, server_types: server_types}
   end
 

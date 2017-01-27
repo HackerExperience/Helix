@@ -9,9 +9,7 @@ defmodule Helix.Entity.Controller.EntityTest do
   alias Helix.Entity.Repo
 
   setup_all do
-    entity_types =
-      EntityType
-      |> Repo.all()
+    entity_types = Repo.all(EntityType)
     [entity_types: entity_types]
   end
 
