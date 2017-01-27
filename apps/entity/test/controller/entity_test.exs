@@ -9,55 +9,81 @@ defmodule Helix.Entity.Controller.EntityTest do
   alias Helix.Entity.Repo
 
   setup_all do
-    types = Repo.all(EntityType)
-    [entity_types: types]
+    entity_types =
+      EntityType
+      |> Repo.all()
+    [entity_types: entity_types]
   end
 
   setup context do
-    type = Enum.random(context.entity_types)
-    {:ok, entity} = create_entity(type)
-    {:ok, entity: entity}
+    entity_type = Enum.random(context.entity_types)
+    {:ok, entity_type: entity_type.entity_type}
   end
 
-  defp create_entity(params_or_schema) do
-    entity_id = Random.pk()
-
-    params = %{
-      entity_type: params_or_schema.entity_type,
-      entity_id: entity_id
+  defp generate_params(entity_type) do
+    %{
+      entity_id: Random.pk(),
+      entity_type: entity_type
     }
-
-    EntityController.create(params)
   end
 
-  test "fails to create when entity_type is invalid" do
-    entity_type = Burette.Color.name()
-    entity_id = Random.pk()
+  describe "entity creation" do
+    test "creates entity of given type", context do
+      params = generate_params(context.entity_type)
+      {:ok, entity} = EntityController.create(params)
+      {:ok, found_entity} = EntityController.find(params.entity_id)
 
-    refute Repo.get_by(Entity, entity_type: entity_type)
+      # created entity includes given id
+      assert params.entity_id == entity.entity_id
 
-    assert_raise(Ecto.ConstraintError, fn ->
-      params = %{entity_type: entity_type, entity_id: entity_id}
-      EntityController.create(params)
-    end)
-
-    refute Repo.get_by(Entity, entity_type: entity_type)
-  end
-
-  describe "find/1" do
-    test "succeeds when entity exists", %{entity: entity} do
-      assert {:ok, _} = EntityController.find(entity.entity_id)
+      # find yields the same previously created entity
+      assert entity.entity_id == found_entity.entity_id
     end
 
-    test "fails when no entity exists" do
-      assert {:error, :notfound} === EntityController.find(Random.pk())
+    test "fails when entity_type is invalid" do
+      params = %{
+        entity_id: Random.pk(),
+        entity_type: Burette.Color.name()
+      }
+
+      # assert that creating an entity with invalid type raises Ecto.ConstraintError
+      assert_raise(Ecto.ConstraintError, fn ->
+        EntityController.create(params)
+      end)
+
+      # no entity was created
+      refute Repo.get_by(Entity, entity_type: params.entity_type)
     end
   end
 
-  test "delete is idempotent", %{entity: entity} do
+  describe "entity fetching" do
+    test "fetches existing entity", context do
+      params = generate_params(context.entity_type)
+      {:ok, entity} = EntityController.create(params)
+
+      # an entity is found
+      assert {:ok, found_entity} = EntityController.find(entity.entity_id)
+
+      # the entity is identical to the created one
+      assert entity.entity_id == found_entity.entity_id
+    end
+
+    test "fails to fetch when entity is not found" do
+      assert {:error, :notfound} == EntityController.find(Random.pk())
+    end
+  end
+
+  test "delete is idempotent", context do
+    params = generate_params(context.entity_type)
+    {:ok, entity} = EntityController.create(params)
+
+    # entity exists before deleting
     assert Repo.get_by(Entity, entity_id: entity.entity_id)
-    EntityController.delete(entity.entity_id)
-    EntityController.delete(entity.entity_id)
+
+    :ok = EntityController.delete(entity.entity_id)
+    :ok = EntityController.delete(entity.entity_id)
+
+    # entity was deleted
     refute Repo.get_by(Entity, entity_id: entity.entity_id)
   end
 end
