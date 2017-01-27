@@ -20,17 +20,25 @@ defmodule Helix.Entity.Controller.EntityTest do
   end
 
   defp create_entity(params_or_schema) do
-    params = %{entity_type: params_or_schema.entity_type}
+    entity_id = Random.pk()
+
+    params = %{
+      entity_type: params_or_schema.entity_type,
+      entity_id: entity_id
+    }
+
     EntityController.create(params)
   end
 
   test "fails to create when entity_type is invalid" do
     entity_type = Burette.Color.name()
+    entity_id = Random.pk()
 
     refute Repo.get_by(Entity, entity_type: entity_type)
 
-    assert_raise(FunctionClauseError, fn ->
-      EntityController.create(%{entity_type: entity_type})
+    assert_raise(Ecto.ConstraintError, fn ->
+      params = %{entity_type: entity_type, entity_id: entity_id}
+      EntityController.create(params)
     end)
 
     refute Repo.get_by(Entity, entity_type: entity_type)

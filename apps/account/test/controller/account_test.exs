@@ -6,7 +6,6 @@ defmodule Helix.Account.Controller.AccountTest do
   alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
-  alias Helix.Entity.Controller.Entity, as: EntityController
 
   setup do
     account =
@@ -20,16 +19,13 @@ defmodule Helix.Account.Controller.AccountTest do
   # Funnily enough, the very same params can be use to create an account through
   # the controller and the model
   defp payload do
-    {:ok, entity} = EntityController.create(%{entity_type: "account"})
     email = Burette.Internet.email()
     password = Burette.Internet.password()
-    account_id = entity.entity_id
 
     %{
       email: email,
       password_confirmation: password,
-      password: password,
-      account_id: account_id}
+      password: password}
   end
 
   describe "account creation" do

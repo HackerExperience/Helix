@@ -26,7 +26,7 @@ defmodule Helix.Entity.Controller.EntityServerTest do
     entity =
       %{
         entity_type: context.entity_type.entity_type,
-        reference_id: Random.pk()}
+        entity_id: Random.pk()}
       |> Entity.create_changeset()
       |> Repo.insert!()
 

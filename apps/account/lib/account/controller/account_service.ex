@@ -48,9 +48,6 @@ defmodule Helix.Account.Controller.AccountService do
   def handle_call({:account, :create, params, req}, _from, state) do
     with \
       changeset = %{valid?: true} <- Account.create_changeset(params),
-      params = %{entity_type: "account"},
-      {_, {:ok, entity}} <- Broker.call("entity:create", params, request: req),
-      changeset = %{valid?: true} <- Account.put_primary_key(changeset, entity.entity_id),
       {:ok, account} <- AccountController.create(changeset)
     do
       msg = %{account_id: account.account_id}
