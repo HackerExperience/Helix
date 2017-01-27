@@ -16,91 +16,72 @@ defmodule Helix.Controller.EntityService do
     GenServer.start_link(__MODULE__, [], name: :entity_service)
   end
 
-  @spec init(any) :: {:ok, state}
-  @doc false
-  def init(_args) do
-    Broker.subscribe("entity:create", call: &handle_broker_call/4)
-    Broker.subscribe("entity:find", call: &handle_broker_call/4)
-    Broker.subscribe("event:account:created", cast: &handle_broker_cast/4)
-    Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
-    Broker.subscribe("event:component:created", cast: &handle_broker_cast/4)
-    {:ok, nil}
-  end
-
   @doc false
   def handle_broker_call(pid, "entity:find", msg, _req) do
     %{entity_id: entity_id} = msg
     response = GenServer.call(pid, {:entity, :find, entity_id})
     {:reply, response}
   end
-  def handle_broker_call(pid, "entity:create", params, req) do
-    response = GenServer.call(pid, {:entity, :create, params, req})
-    {:reply, response}
-  end
 
   @doc false
-  def handle_broker_cast(pid, "event:account:created", msg, req) do
-    %{account_id: account_id} = msg
-
-    params = %{
-      entity_type: "account",
-      entity_id: account_id
-    }
-
-    GenServer.call(pid, {:entity, :create, params, req})
+  def handle_broker_cast(pid, "event:account:created", msg, _) do
+    %{account_id: entity_id} = msg
+    GenServer.cast(pid, {:entity, :create, entity_id, "account"})
   end
-  def handle_broker_cast(pid, "event:server:created", msg, _req) do
-    %{
-      server_id: server_id,
-      entity_id: entity_id} = msg
-
-    GenServer.cast(pid, {:server, :created, server_id, entity_id})
+  def handle_broker_cast(pid, "event:server:created", msg, _) do
+    %{server_id: server_id, entity_id: entity_id} = msg
+    GenServer.cast(pid, {:entity, :server, :add, entity_id, server_id})
   end
-
-  def handle_broker_cast(pid, "event:component:created", msg, _req) do
-    %{
-      entity_id: entity_id,
-      component_id: component_id} = msg
-
+  def handle_broker_cast(pid, "event:component:created", msg, _) do
+    %{entity_id: entity_id, component_id: component_id} = msg
     GenServer.cast(pid, {:entity, :component, :add, entity_id, component_id})
   end
 
-  @spec handle_call(
-    {:entity, :create, Entity.creation_params, HeBroker.Request.t},
-    GenServer.from,
-    state) :: {:reply, {:ok, Entity.t} | {:error, Ecto.Changeset.t}, state}
+  @spec init(any) :: {:ok, state}
+  @doc false
+  def init(_args) do
+    Broker.subscribe("entity:find", call: &handle_broker_call/4)
+    Broker.subscribe("event:account:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("event:component:created", cast: &handle_broker_cast/4)
+
+    {:ok, nil}
+  end
+
   @spec handle_call(
     {:entity, :find, PK.t},
     GenServer.from,
     state) :: {:reply, {:ok, Entity.t} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:entity, :create, params, request}, _from, state) do
-    case EntityController.create(params) do
-      {:ok, entity} ->
-        msg = %{entity_id: entity.entity_id}
-        Broker.cast("event:entity:created", msg, request: request)
-        {:reply, {:ok, entity}, state}
-      error ->
-        {:reply, error, state}
-    end
-  end
   def handle_call({:entity, :find, id}, _from, state) do
     response = EntityController.find(id)
     {:reply, response, state}
   end
 
-  @spec handle_cast(
-    {:server, :created, {PK.t, PK.t}, HeBroker.Request.t},
-    state) :: {:noreply, state}
-  @spec handle_cast(
-    {:entity, :component, :add, Entity.id, PK.t},
-    state) :: {:noreply, state}
-  def handle_cast({:server, :created, server_id, entity_id}, state) do
-    EntityServerController.create(entity_id, server_id)
+  @spec handle_cast({:entity, :create, PK.t, String.t}, state) ::
+    {:noreply, state}
+  @spec handle_cast({:entity, :server, :add, PK.t, PK.t}, state) ::
+    {:noreply, state}
+  @spec handle_cast({:entity, :component, :add, PK.t, PK.t}, state) ::
+    {:noreply, state}
+  def handle_cast({:entity, :create, id, entity_type}, state) do
+    params = %{
+      entity_id: id,
+      entity_type: entity_type
+    }
+
+    with {:ok, entity} <- EntityController.create(params) do
+      Broker.cast("event:entity:created", %{entity_id: entity.entity_id})
+    end
+
     {:noreply, state}
   end
-  def handle_cast({:entity, :component, :add, entity_id, comp_id}, state) do
-    EntityComponentController.create(entity_id, comp_id)
+  def handle_cast({:entity, :server, :add, id, server_id}, state) do
+    EntityServerController.create(id, server_id)
+    {:noreply, state}
+  end
+  def handle_cast({:entity, :component, :add, id, component_id}, state) do
+    EntityComponentController.create(id, component_id)
     {:noreply, state}
   end
 end
