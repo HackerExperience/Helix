@@ -55,13 +55,13 @@ defmodule Helix.Account.Model.Account do
     |> cast(params, @creation_fields)
     |> generic_validations()
     |> prepare_changes()
+    |> put_primary_key()
   end
 
-  @spec put_primary_key(Ecto.Changeset.t, PK.t) :: Ecto.Changeset.t
-  def put_primary_key(changeset, pk) do
-    changeset
-    |> cast(%{account_id: pk}, [:account_id])
-    |> validate_required(:account_id)
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
+  def put_primary_key(changeset) do
+    pk = PK.generate([0x0000, 0x0000, 0x0000])
+    cast(changeset, %{account_id: pk}, [:account_id])
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.f

@@ -21,6 +21,7 @@ defmodule Helix.Controller.EntityService do
   def init(_args) do
     Broker.subscribe("entity:create", call: &handle_broker_call/4)
     Broker.subscribe("entity:find", call: &handle_broker_call/4)
+    Broker.subscribe("event:account:created", cast: &handle_broker_cast/4)
     Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
     Broker.subscribe("event:component:created", cast: &handle_broker_cast/4)
     {:ok, nil}
@@ -38,6 +39,16 @@ defmodule Helix.Controller.EntityService do
   end
 
   @doc false
+  def handle_broker_cast(pid, "event:account:created", msg, req) do
+    %{account_id: account_id} = msg
+
+    params = %{
+      entity_type: "account",
+      entity_id: account_id
+    }
+
+    GenServer.call(pid, {:entity, :create, params, req})
+  end
   def handle_broker_cast(pid, "event:server:created", msg, _req) do
     %{
       server_id: server_id,

@@ -21,7 +21,7 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   defp create_entity(entity_type) do
     params = %{
       entity_type: entity_type,
-      reference_id: Random.pk()
+      entity_id: Random.pk()
     }
 
     entity =
