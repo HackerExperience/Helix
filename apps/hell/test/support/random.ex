@@ -177,6 +177,15 @@ defmodule HELL.TestHelper.Random do
   def username(),
     do: String.slice(Burette.Internet.username(), 0..14)
 
+  @doc """
+  Generates a random setting_id
+  """
+  def setting_id() do
+    [min: 20, max: 20]
+    |> string()
+    |> String.downcase()
+  end
+
   docp """
   Fetches a random letter from an alphabet
   """
