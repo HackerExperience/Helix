@@ -11,6 +11,13 @@ defmodule Helix.Software.Factory do
     |> Map.put(:storage, build(:storage))
   end
 
+  def file_text_factory do
+    %Helix.Software.Model.FileText{
+      file: build(:file),
+      contents: Burette.Color.name()
+    }
+  end
+
   def storage_factory do
     pk = PK.generate([0x0004, 0x0001, 0x0000])
 
