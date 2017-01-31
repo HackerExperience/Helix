@@ -21,6 +21,8 @@ defmodule Helix.Software.Model.File do
     updated_at: NaiveDateTime.t
   }
 
+  @type id :: PK.t
+
   @type creation_params :: %{
     name: String.t,
     file_path: String.t,
