@@ -17,22 +17,22 @@ defmodule Helix.Controller.EntityService do
   end
 
   @doc false
-  def handle_broker_call(pid, "entity:find", msg, _req) do
+  def handle_broker_call(pid, "entity.find", msg, _req) do
     %{entity_id: entity_id} = msg
     response = GenServer.call(pid, {:entity, :find, entity_id})
     {:reply, response}
   end
 
   @doc false
-  def handle_broker_cast(pid, "event:account:created", msg, _) do
+  def handle_broker_cast(pid, "event.account.created", msg, _) do
     %{account_id: entity_id} = msg
     GenServer.cast(pid, {:entity, :create, entity_id, "account"})
   end
-  def handle_broker_cast(pid, "event:server:created", msg, _) do
+  def handle_broker_cast(pid, "event.server.created", msg, _) do
     %{server_id: server_id, entity_id: entity_id} = msg
     GenServer.cast(pid, {:entity, :server, :add, entity_id, server_id})
   end
-  def handle_broker_cast(pid, "event:component:created", msg, _) do
+  def handle_broker_cast(pid, "event.component.created", msg, _) do
     %{entity_id: entity_id, component_id: component_id} = msg
     GenServer.cast(pid, {:entity, :component, :add, entity_id, component_id})
   end
@@ -40,10 +40,10 @@ defmodule Helix.Controller.EntityService do
   @spec init(any) :: {:ok, state}
   @doc false
   def init(_args) do
-    Broker.subscribe("entity:find", call: &handle_broker_call/4)
-    Broker.subscribe("event:account:created", cast: &handle_broker_cast/4)
-    Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
-    Broker.subscribe("event:component:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("entity.find", call: &handle_broker_call/4)
+    Broker.subscribe("event.account.created", cast: &handle_broker_cast/4)
+    Broker.subscribe("event.server.created", cast: &handle_broker_cast/4)
+    Broker.subscribe("event.component.created", cast: &handle_broker_cast/4)
 
     {:ok, nil}
   end
@@ -71,7 +71,7 @@ defmodule Helix.Controller.EntityService do
     }
 
     with {:ok, entity} <- EntityController.create(params) do
-      Broker.cast("event:entity:created", %{entity_id: entity.entity_id})
+      Broker.cast("event.entity.created", %{entity_id: entity.entity_id})
     end
 
     {:noreply, state}

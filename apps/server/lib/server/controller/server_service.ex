@@ -15,33 +15,33 @@ defmodule Helix.Server.Controller.ServerService do
   end
 
   @doc false
-  def handle_broker_call(pid, "server:create", params, _) do
+  def handle_broker_call(pid, "server.create", params, _) do
     response = GenServer.call(pid, {:server, :create, params})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:attach", msg, _) do
+  def handle_broker_call(pid, "server.attach", msg, _) do
     %{server_id: id, motherboard_id: motherboard_id} = msg
     response = GenServer.call(pid, {:server, :attach, id, motherboard_id})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:detach", msg, _) do
+  def handle_broker_call(pid, "server.detach", msg, _) do
     %{server_id: id} = msg
     response = GenServer.call(pid, {:server, :detach, id})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:query", msg, _) do
+  def handle_broker_call(pid, "server.query", msg, _) do
     %{server_id: id} = msg
     response = GenServer.call(pid, {:server, :find, id})
     {:reply, response}
   end
-  def handle_broker_call(pid, "server:hardware:resources", msg, _) do
+  def handle_broker_call(pid, "server.hardware.resources", msg, _) do
     %{server_id: id} = msg
     response = GenServer.call(pid, {:server, :resources, id})
     {:reply, response}
   end
 
   @doc false
-  def handle_broker_cast(pid, "event:entity:created", msg, _) do
+  def handle_broker_cast(pid, "event.entity.created", msg, _) do
     %{entity_id: entity_id} = msg
 
     params = %{
@@ -51,7 +51,7 @@ defmodule Helix.Server.Controller.ServerService do
 
     GenServer.call(pid, {:server, :create, params})
   end
-  def handle_broker_cast(pid, "event:motherboard:setup", msg, _) do
+  def handle_broker_cast(pid, "event.motherboard.setup", msg, _) do
     %{server_id: id, motherboard_id: motherboard_id} = msg
     GenServer.call(pid, {:server, :attach, id, motherboard_id})
   end
@@ -59,13 +59,13 @@ defmodule Helix.Server.Controller.ServerService do
   @spec init(any) :: {:ok, state}
   @doc false
   def init(_) do
-    Broker.subscribe("server:create", call: &handle_broker_call/4)
-    Broker.subscribe("server:attach", call: &handle_broker_call/4)
-    Broker.subscribe("server:detach", call: &handle_broker_call/4)
-    Broker.subscribe("server:query", call: &handle_broker_call/4)
-    Broker.subscribe("server:hardware:resources", call: &handle_broker_call/4)
-    Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
-    Broker.subscribe("event:motherboard:setup", cast: &handle_broker_cast/4)
+    Broker.subscribe("server.create", call: &handle_broker_call/4)
+    Broker.subscribe("server.attach", call: &handle_broker_call/4)
+    Broker.subscribe("server.detach", call: &handle_broker_call/4)
+    Broker.subscribe("server.query", call: &handle_broker_call/4)
+    Broker.subscribe("server.hardware.resources", call: &handle_broker_call/4)
+    Broker.subscribe("event.entity.created", cast: &handle_broker_cast/4)
+    Broker.subscribe("event.motherboard.setup", cast: &handle_broker_cast/4)
 
     {:ok, nil}
   end
@@ -95,7 +95,7 @@ defmodule Helix.Server.Controller.ServerService do
           server_id: server.server_id,
           entity_id: params.entity_id
         }
-        Broker.cast("event:server:created", msg)
+        Broker.cast("event.server.created", msg)
         {:reply, {:ok, server}, state}
       error ->
         {:reply, error, state}
@@ -108,7 +108,7 @@ defmodule Helix.Server.Controller.ServerService do
           server_id: id,
           motherboard_id: motherboard_id
         }
-        Broker.cast("event:server:attached", msg)
+        Broker.cast("event.server.attached", msg)
         {:reply, :ok, state}
       {:error, _} ->
         {:reply, :error, state}
@@ -118,7 +118,7 @@ defmodule Helix.Server.Controller.ServerService do
     case ServerController.detach(id) do
       {:ok, _} ->
         msg = %{server_id: id}
-        Broker.cast("event:server:detached", msg)
+        Broker.cast("event.server.detached", msg)
         {:reply, :ok, state}
       {:error, _} ->
         {:reply, :error, state}
@@ -133,7 +133,7 @@ defmodule Helix.Server.Controller.ServerService do
       {:ok, server} <- ServerController.find(id),
       %{motherboard_id: mib} when not is_nil(mib) <- server,
       msg = %{motherboard_id: mib},
-      topic = "hardware:motherboard:resources",
+      topic = "hardware.motherboard.resources",
       {_, {:ok, resources}} <- Broker.call(topic, msg)
     do
       {:reply, {:ok, resources}, state}

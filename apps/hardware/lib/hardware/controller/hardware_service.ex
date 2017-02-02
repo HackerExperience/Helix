@@ -20,13 +20,13 @@ defmodule Helix.Hardware.Controller.HardwareService do
   end
 
   @doc false
-  def handle_broker_call(pid, "hardware:component:get", msg, _) do
+  def handle_broker_call(pid, "hardware.component.get", msg, _) do
     %{component_type: component_type, component_id: component_id} = msg
     response = GenServer.call(pid, {component_type, :get, component_id})
     {:reply, response}
   end
 
-  def handle_broker_call(pid, "hardware:motherboard:create", params = %{}, _) do
+  def handle_broker_call(pid, "hardware.motherboard.create", params = %{}, _) do
     case params do
       %{spec_id: sid} ->
         response = GenServer.call(pid, {:motherboard, :create, {:component_spec, :id, sid}})
@@ -36,13 +36,13 @@ defmodule Helix.Hardware.Controller.HardwareService do
     end
   end
 
-  def handle_broker_call(pid, "hardware:motherboard:resources", %{motherboard_id: mid}, _) do
+  def handle_broker_call(pid, "hardware.motherboard.resources", %{motherboard_id: mid}, _) do
     response = GenServer.call(pid, {:motherboard, :resources, mid})
 
     {:reply, response}
   end
 
-  def handle_broker_cast(pid, "event:server:created", msg, _) do
+  def handle_broker_cast(pid, "event.server.created", msg, _) do
     %{
       entity_id: entity_id,
       server_id: server_id} = msg
@@ -67,10 +67,10 @@ defmodule Helix.Hardware.Controller.HardwareService do
   @spec init(any) :: {:ok, state}
   @doc false
   def init(_args) do
-    Broker.subscribe("hardware:component:get", call: &handle_broker_call/4)
-    Broker.subscribe("hardware:motherboard:create", call: &handle_broker_call/4)
-    Broker.subscribe("hardware:motherboard:resources", call: &handle_broker_call/4)
-    Broker.subscribe("event:server:created", cast: &handle_broker_cast/4)
+    Broker.subscribe("hardware.component.get", call: &handle_broker_call/4)
+    Broker.subscribe("hardware.motherboard.create", call: &handle_broker_call/4)
+    Broker.subscribe("hardware.motherboard.resources", call: &handle_broker_call/4)
+    Broker.subscribe("event.server.created", cast: &handle_broker_cast/4)
 
     {:ok, nil}
   end
@@ -111,7 +111,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     do
       message = %{motherboard_id: mobo.motherboard_id}
 
-      Broker.cast("hardware:motherboard:created", message)
+      Broker.cast("hardware.motherboard.created", message)
 
       {:reply, {:ok, mobo}, state}
     else
@@ -177,7 +177,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
           motherboard_id: motherboard.motherboard_id,
           server_id: server_id
         }
-        Broker.cast("event:motherboard:setup", msg)
+        Broker.cast("event.motherboard.setup", msg)
 
         {:reply, {:ok, motherboard}, state}
       {:error, error} ->
@@ -216,8 +216,8 @@ defmodule Helix.Hardware.Controller.HardwareService do
       }
 
       ev = [
-        {"event:motherboard:created", msg_motherboard},
-        {"event:component:created", msg_component}
+        {"event.motherboard.created", msg_motherboard},
+        {"event.component.created", msg_component}
       ]
 
       {:ok, motherboard, ev}
@@ -236,7 +236,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
     case ComponentController.create_from_spec(component_spec) do
       {:ok, component} ->
         msg = %{component_id: component.component_id, entity_id: entity_id}
-        deferred_events = [{"event:component:created", msg}]
+        deferred_events = [{"event.component.created", msg}]
 
         {:ok, component, deferred_events}
       {:error, error} ->

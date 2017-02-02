@@ -10,7 +10,7 @@ defmodule Helix.NPC.Controller.NPCService do
   end
 
   @doc false
-  def handle_broker_call(pid, "npc:create", params, _request) do
+  def handle_broker_call(pid, "npc.create", params, _request) do
     reply = GenServer.call(pid, {:npc, :create, params})
     {:reply, reply}
   end
@@ -18,7 +18,7 @@ defmodule Helix.NPC.Controller.NPCService do
   @spec init(any) :: {:ok, nil}
   @doc false
   def init(_args) do
-    Broker.subscribe("npc:create", call: &handle_broker_call/4)
+    Broker.subscribe("npc.create", call: &handle_broker_call/4)
     {:ok, nil}
   end
 

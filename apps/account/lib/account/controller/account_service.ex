@@ -12,18 +12,18 @@ defmodule Helix.Account.Controller.AccountService do
 
   @spec start_link() :: GenServer.on_start
   def start_link do
-    Router.register("account.create", "account:create")
-    Router.register("account.login", "account:login")
+    Router.register("account.create", "account.create")
+    Router.register("account.login", "account.login")
 
     GenServer.start_link(__MODULE__, [], name: :account_service)
   end
 
   @doc false
-  def handle_broker_call(pid, "account:create", params, _) do
+  def handle_broker_call(pid, "account.create", params, _) do
     response = GenServer.call(pid, {:account, :create, params})
     {:reply, response}
   end
-  def handle_broker_call(pid, "account:login", params, _) do
+  def handle_broker_call(pid, "account.login", params, _) do
     %{email: email, password: password} = params
     response = GenServer.call(pid, {:account, :login, email, password})
     {:reply, response}
@@ -31,8 +31,8 @@ defmodule Helix.Account.Controller.AccountService do
 
   @spec init(any) :: {:ok, state}
   def init(_args) do
-    Broker.subscribe("account:create", call: &handle_broker_call/4)
-    Broker.subscribe("account:login", call: &handle_broker_call/4)
+    Broker.subscribe("account.create", call: &handle_broker_call/4)
+    Broker.subscribe("account.login", call: &handle_broker_call/4)
 
     {:ok, nil}
   end
@@ -50,7 +50,7 @@ defmodule Helix.Account.Controller.AccountService do
     case AccountController.create(params) do
       {:ok, account} ->
         msg = %{account_id: account.account_id}
-        Broker.cast("event:account:created", msg)
+        Broker.cast("event.account.created", msg)
         {:reply, {:ok, account}, state}
       {:error, error} ->
         {:reply, {:error, error}, state}
