@@ -16,7 +16,7 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
       password_confirmation: password,
       password: password}
 
-    case Broker.call("account:create", params) do
+    case Broker.call("account.create", params) do
       {_, {:ok, account}} ->
         {:ok, account}
       {_, {:error, error}} ->

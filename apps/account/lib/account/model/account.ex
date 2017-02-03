@@ -58,18 +58,18 @@ defmodule Helix.Account.Model.Account do
     |> put_primary_key()
   end
 
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  def put_primary_key(changeset) do
-    pk = PK.generate([0x0000, 0x0000, 0x0000])
-    cast(changeset, %{account_id: pk}, [:account_id])
-  end
-
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.f
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
     |> generic_validations()
     |> prepare_changes()
+  end
+
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
+  defp put_primary_key(changeset) do
+    pk = PK.generate([0x0000, 0x0000, 0x0000])
+    cast(changeset, %{account_id: pk}, [:account_id])
   end
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t

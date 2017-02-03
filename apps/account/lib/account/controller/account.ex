@@ -6,11 +6,9 @@ defmodule Helix.Account.Controller.Account do
 
   import Ecto.Query, only: [where: 3, select: 3]
 
-  @spec create(Ecto.Changeset.t) :: {:ok, Account.t} | {:error, Ecto.Changeset.t}
-  @spec create(Account.creation_params) :: {:ok, Account.t} | {:error, Ecto.Changeset.t}
-  def create(changeset = %Ecto.Changeset{}),
-    do: Repo.insert(changeset)
-
+  @spec create(Account.creation_params) ::
+    {:ok, Account.t}
+    | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> Account.create_changeset()

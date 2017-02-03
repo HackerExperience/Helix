@@ -15,7 +15,7 @@ defmodule Helix.Account.Controller.AccountServiceTest do
 
   describe "account creation" do
     test "succeeds with proper data", %{params: params} do
-      {_, {:ok, account}} = Broker.call("account:create", params)
+      {_, {:ok, account}} = Broker.call("account.create", params)
       assert params.email === account.email
     end
   end

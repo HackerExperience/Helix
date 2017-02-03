@@ -30,7 +30,7 @@ defmodule Helix.Server.Controller.ServerServiceTest do
     end
 
     test "server is created", %{params: params} do
-      {_, {:ok, account}} = Broker.call("account:create", params)
+      {_, {:ok, account}} = Broker.call("account.create", params)
 
       # TODO: removing this sleep depends on T412
       :timer.sleep(100)
@@ -39,7 +39,7 @@ defmodule Helix.Server.Controller.ServerServiceTest do
     end
 
     test "server attaches a motherboard", %{params: params} do
-      {_, {:ok, account}} = Broker.call("account:create", params)
+      {_, {:ok, account}} = Broker.call("account.create", params)
 
       # TODO: removing this sleep depends on T412
       :timer.sleep(100)
@@ -56,7 +56,7 @@ defmodule Helix.Server.Controller.ServerServiceTest do
     test "can be retrieved from hardware service" do
       server_id = Random.pk()
 
-      topic = "server:hardware:resources"
+      topic = "server.hardware.resources"
       msg = %{server_id: server_id}
 
       assert {_, {:ok, res}} = Broker.call(topic, msg)

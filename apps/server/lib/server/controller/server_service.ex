@@ -14,72 +14,73 @@ defmodule Helix.Server.Controller.ServerService do
     GenServer.start_link(__MODULE__, [], name: :server)
   end
 
-  @spec init(any) :: {:ok, state}
   @doc false
-  def init(_) do
-    Broker.subscribe("event:entity:created", cast: &handle_broker_cast/4)
-    Broker.subscribe("event:motherboard:setup", cast: &handle_broker_cast/4)
-    Broker.subscribe("server:create", call: &handle_broker_call/4)
-    Broker.subscribe("server:attach", call: &handle_broker_call/4)
-    Broker.subscribe("server:detach", call: &handle_broker_call/4)
-    Broker.subscribe("server:query", call: &handle_broker_call/4)
-    Broker.subscribe("server:hardware:resources", call: &handle_broker_call/4)
-
-    {:ok, nil}
+  def handle_broker_call(pid, "server.create", params, _) do
+    response = GenServer.call(pid, {:server, :create, params})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server.attach", msg, _) do
+    %{server_id: id, motherboard_id: motherboard_id} = msg
+    response = GenServer.call(pid, {:server, :attach, id, motherboard_id})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server.detach", msg, _) do
+    %{server_id: id} = msg
+    response = GenServer.call(pid, {:server, :detach, id})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server.query", msg, _) do
+    %{server_id: id} = msg
+    response = GenServer.call(pid, {:server, :find, id})
+    {:reply, response}
+  end
+  def handle_broker_call(pid, "server.hardware.resources", msg, _) do
+    %{server_id: id} = msg
+    response = GenServer.call(pid, {:server, :resources, id})
+    {:reply, response}
   end
 
-  @spec handle_broker_cast(pid, PK.t, term, term) :: no_return
   @doc false
-  def handle_broker_cast(pid, "event:entity:created", msg, request) do
+  def handle_broker_cast(pid, "event.entity.created", msg, _) do
     %{entity_id: entity_id} = msg
+
     params = %{
       entity_id: entity_id,
       server_type: "desktop"
     }
 
-    GenServer.call(pid, {:server, :create, params, request})
+    GenServer.call(pid, {:server, :create, params})
   end
-  def handle_broker_cast(pid, "event:motherboard:setup", msg, req) do
-    %{server_id: server_id, motherboard_id: mobo_id} = msg
-    GenServer.call(pid, {:server, :attach, server_id, mobo_id, req})
+  def handle_broker_cast(pid, "event.motherboard.setup", msg, _) do
+    %{server_id: id, motherboard_id: motherboard_id} = msg
+    GenServer.call(pid, {:server, :attach, id, motherboard_id})
   end
 
+  @spec init(any) :: {:ok, state}
   @doc false
-  def handle_broker_call(pid, "server:create", params, request) do
-    response = GenServer.call(pid, {:server, :create, params, request})
-    {:reply, response}
-  end
-  def handle_broker_call(pid, "server:attach", msg, req) do
-    %{server_id: server_id, motherboard_id: mobo_id} = msg
-    response = GenServer.call(pid, {:server, :attach, server_id, mobo_id, req})
-    {:reply, response}
-  end
-  def handle_broker_call(pid, "server:detach", msg, req) do
-    %{server_id: server_id} = msg
-    response = GenServer.call(pid, {:server, :detach, server_id, req})
-    {:reply, response}
-  end
-  def handle_broker_call(pid, "server:query", msg, _request) do
-    %{server_id: id} = msg
-    response = GenServer.call(pid, {:server, :find, id})
-    {:reply, response}
-  end
-  def handle_broker_call(pid, "server:hardware:resources", %{server_id: sid}, _) do
-    response = GenServer.call(pid, {:server, :resources, sid})
-    {:reply, response}
+  def init(_) do
+    Broker.subscribe("server.create", call: &handle_broker_call/4)
+    Broker.subscribe("server.attach", call: &handle_broker_call/4)
+    Broker.subscribe("server.detach", call: &handle_broker_call/4)
+    Broker.subscribe("server.query", call: &handle_broker_call/4)
+    Broker.subscribe("server.hardware.resources", call: &handle_broker_call/4)
+    Broker.subscribe("event.entity.created", cast: &handle_broker_cast/4)
+    Broker.subscribe("event.motherboard.setup", cast: &handle_broker_cast/4)
+
+    {:ok, nil}
   end
 
   @spec handle_call(
-    {:server, :create, Server.creation_params, HeBroker.Request.t},
+    {:server, :create, Server.creation_params},
     GenServer.from,
     state) :: {:reply, {:ok, server :: term}
               | {:error, reason :: term}, state}
   @spec handle_call(
-    {:server, :attach, server :: HELL.PK.t, motherboard :: HELL.PK.t},
+    {:server, :attach, Server.id, PK.t},
     GenServer.from,
     state) :: {:reply, :ok | :error, state}
   @spec handle_call(
-    {:server, :detach, HELL.PK.t},
+    {:server, :detach, Server.id},
     GenServer.from,
     state) :: {:reply, :ok | :error, state}
   @spec handle_call(
@@ -87,56 +88,56 @@ defmodule Helix.Server.Controller.ServerService do
     GenServer.from,
     state) :: {:reply, {:ok, %{any => any}} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:server, :create, params, req}, _from, state) do
+  def handle_call({:server, :create, params}, _from, state) do
     case ServerController.create(params) do
       {:ok, server} ->
         msg = %{
           server_id: server.server_id,
           entity_id: params.entity_id
         }
-        Broker.cast("event:server:created", msg, request: req)
+        Broker.cast("event.server.created", msg)
+
         {:reply, {:ok, server}, state}
       error ->
         {:reply, error, state}
     end
   end
-
-  def handle_call({:server, :attach, server_id, mobo_id, req}, _from, state) do
-    case ServerController.attach(server_id, mobo_id) do
+  def handle_call({:server, :attach, id, motherboard_id}, _from, state) do
+    case ServerController.attach(id, motherboard_id) do
       {:ok, _} ->
         msg = %{
-          server_id: server_id,
-          motherboard_id: mobo_id}
-        Broker.cast("event:server:attached", msg, request: req)
+          server_id: id,
+          motherboard_id: motherboard_id
+        }
+        Broker.cast("event.server.attached", msg)
+
         {:reply, :ok, state}
       {:error, _} ->
         {:reply, :error, state}
     end
   end
-
-  def handle_call({:server, :detach, server_id, req}, _from, state) do
-    case ServerController.detach(server_id) do
+  def handle_call({:server, :detach, id}, _from, state) do
+    case ServerController.detach(id) do
       {:ok, _} ->
-        msg = %{server_id: server_id}
-        Broker.cast("event:server:detached", msg, request: req)
+        msg = %{server_id: id}
+        Broker.cast("event.server.detached", msg)
+
         {:reply, :ok, state}
       {:error, _} ->
         {:reply, :error, state}
     end
   end
-
   def handle_call({:server, :find, id}, _from, state) do
     reply = ServerController.find(id)
     {:reply, reply, state}
   end
-
-  def handle_call({:server, :resources, sid}, _from, state) do
+  def handle_call({:server, :resources, id}, _from, state) do
     with \
-      {:ok, server} <- ServerController.find(sid),
+      {:ok, server} <- ServerController.find(id),
       %{motherboard_id: mib} when not is_nil(mib) <- server,
-      request = %{motherboard_id: mib},
-      topic = "hardware:motherboard:resources",
-      {_, {:ok, resources}} <- Broker.call(topic, request)
+      msg = %{motherboard_id: mib},
+      topic = "hardware.motherboard.resources",
+      {_, {:ok, resources}} <- Broker.call(topic, msg)
     do
       {:reply, {:ok, resources}, state}
     else
