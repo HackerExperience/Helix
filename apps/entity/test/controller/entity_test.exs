@@ -66,7 +66,7 @@ defmodule Helix.Entity.Controller.EntityTest do
       assert entity.entity_id == found_entity.entity_id
     end
 
-    test "fails to fetch when entity is not found" do
+    test "fails when entity doesn't exists" do
       assert {:error, :notfound} == EntityController.find(Random.pk())
     end
   end

@@ -2,7 +2,7 @@ defmodule Helix.Server.Controller.ServerTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random, as: Random
+  alias HELL.TestHelper.Random
   alias Helix.Server.Controller.Server, as: ServerController
   alias Helix.Server.Model.Server
   alias Helix.Server.Model.ServerType
@@ -60,7 +60,7 @@ defmodule Helix.Server.Controller.ServerTest do
       assert server.server_id == found_server.server_id
     end
 
-    test "fails to fetch when server is not found" do
+    test "fails when server doesn't exists" do
       assert {:error, :notfound} == ServerController.find(Random.pk())
     end
   end

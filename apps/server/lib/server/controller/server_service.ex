@@ -96,6 +96,7 @@ defmodule Helix.Server.Controller.ServerService do
           entity_id: params.entity_id
         }
         Broker.cast("event.server.created", msg)
+
         {:reply, {:ok, server}, state}
       error ->
         {:reply, error, state}
@@ -109,6 +110,7 @@ defmodule Helix.Server.Controller.ServerService do
           motherboard_id: motherboard_id
         }
         Broker.cast("event.server.attached", msg)
+
         {:reply, :ok, state}
       {:error, _} ->
         {:reply, :error, state}
@@ -119,6 +121,7 @@ defmodule Helix.Server.Controller.ServerService do
       {:ok, _} ->
         msg = %{server_id: id}
         Broker.cast("event.server.detached", msg)
+
         {:reply, :ok, state}
       {:error, _} ->
         {:reply, :error, state}
