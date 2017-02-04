@@ -10,6 +10,13 @@ defmodule Helix.Process.Model.Process.Resources do
     ulk: non_neg_integer
   }
 
+  @type resourceable :: t | %{
+    optional(:cpu) => non_neg_integer,
+    optional(:ram) => non_neg_integer,
+    optional(:dlk) => non_neg_integer,
+    optional(:ulk) => non_neg_integer
+  }
+
   @fields ~w/cpu ram dlk ulk/a
 
   @primary_key false
@@ -20,6 +27,7 @@ defmodule Helix.Process.Model.Process.Resources do
     field :ulk, :integer, default: 0
   end
 
+  @spec changeset(t | Ecto.Changeset.t, resourceable) :: Ecto.Changeset.t
   def changeset(resource, params) do
     resource
     |> cast(params, [:cpu, :ram, :dlk, :ulk])
@@ -29,17 +37,17 @@ defmodule Helix.Process.Model.Process.Resources do
     |> validate_number(:ulk, greater_than_or_equal_to: 0)
   end
 
-  @spec cast(term) :: t
+  @spec cast(resourceable) :: t
   def cast(input) do
     struct(__MODULE__, input)
   end
 
-  @spec sum(t, t) :: t
+  @spec sum(t, resourceable) :: t
   def sum(res, b) do
     Map.merge(res, Map.take(b, @fields), fn _, v1, v2 -> v1 + v2 end)
   end
 
-  @spec sub(t, t) :: t
+  @spec sub(t, resourceable) :: t
   def sub(res, b) do
     Map.merge(res, Map.take(b, @fields), fn _, v1, v2 -> v1 - v2 end)
   end
@@ -110,17 +118,11 @@ defmodule Helix.Process.Model.Process.Resources do
   def min(a, nil),
     do: a
 
+  @spec to_list(resourceable) :: [{:cpu | :ram | :dlk | :ulk, non_neg_integer}]
   def to_list(res) do
     res
     |> Map.take(@fields)
     |> :maps.to_list()
-  end
-
-  @spec from_server_resources(term) :: {:ok, t}
-  def from_server_resources(server_resources) do
-    r = struct(__MODULE__, server_resources)
-
-    {:ok, r}
   end
 
   @spec compare(t, t) :: :eq | :lt | :gt | :divergent

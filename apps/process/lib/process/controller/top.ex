@@ -108,7 +108,6 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       params = %{server_id: server_id},
       {_, {:ok, return}} <- broker.call("server:hardware:resources", params)
     do
-      # Resources.from_server_resources(return)
       {:ok, return}
     end
   end
@@ -208,9 +207,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   def handle_cast({:resources, resources}, state) do
-    {:ok, r2} = Resources.from_server_resources(resources)
-
-    handle_info(:allocate, %{state| resources: r2})
+    handle_info(:allocate, %{state| resources: resources})
   end
 
   @doc false

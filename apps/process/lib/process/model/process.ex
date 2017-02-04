@@ -2,6 +2,7 @@ defmodule Helix.Process.Model.Process do
 
   use Ecto.Schema
 
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Process.Model.Process.Limitations
   alias Helix.Process.Model.Process.MapServerToProcess
@@ -32,6 +33,8 @@ defmodule Helix.Process.Model.Process do
     updated_time: DateTime.t,
     estimated_time: DateTime.t
   }
+
+  @type process :: t | %Changeset{data: t}
 
   @opaque id :: PK.t
 
@@ -106,7 +109,7 @@ defmodule Helix.Process.Model.Process do
     :process_type => String.t,
     optional(:file_id) => PK.t,
     optional(:network_id) => PK.t,
-    optional(:objective) => %{}}) :: Ecto.Changeset.t
+    optional(:objective) => %{}}) :: Changeset.t
   def create_changeset(params) do
     now = DateTime.utc_now()
     params =
@@ -130,9 +133,9 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec update_changeset(
-    t | Ecto.Changeset.t,
+    process,
     %{
-      optional(:state) => State.states,
+      optional(:state) => State.state,
       optional(:priority) => 0..5,
       optional(:creation_time) => DateTime.t,
       optional(:updated_time) => DateTime.t,
@@ -141,7 +144,7 @@ defmodule Helix.Process.Model.Process do
       optional(:objective) => %{},
       optional(:processed) => %{},
       optional(:allocated) => %{},
-      optional(:minimum) => %{}}) :: Ecto.Changeset.t
+      optional(:minimum) => %{}}) :: Changeset.t
   def update_changeset(process, params) do
     process
     |> cast(params, @update_fields)
@@ -151,6 +154,8 @@ defmodule Helix.Process.Model.Process do
     |> changeset(params)
   end
 
+  @spec changeset(process, %{any => any}) :: Changeset.t
+  @doc false
   def changeset(struct, params) do
     struct
     |> cast(params, [:updated_time])
@@ -172,21 +177,19 @@ defmodule Helix.Process.Model.Process do
     p
   end
 
-  @spec allocate_minimum(t | Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec allocate_minimum(process) :: Changeset.t
   def allocate_minimum(process) do
     process = change(process)
+
     minimum =
       process
       |> get_field(:minimum)
       |> Map.get(get_field(process, :state), %{})
 
-    # FIXME: HACK
-    allocate = Map.merge(%{cpu: 0, ram: 0, dlk: 0, ulk: 0}, minimum)
-
-    put_embed(process, :allocated, allocate)
+    put_embed(process, :allocated, minimum)
   end
 
-  @spec allocate(t | Ecto.Changeset.t, Resources.t) :: Ecto.Changeset.t
+  @spec allocate(process, Resources.resourceable) :: Changeset.t
   def allocate(process, amount) do
     cs = change(process)
 
@@ -209,7 +212,7 @@ defmodule Helix.Process.Model.Process do
     put_embed(cs, :allocated, allocated)
   end
 
-  @spec allocation_shares(t | Ecto.Changeset.t) :: non_neg_integer
+  @spec allocation_shares(process) :: non_neg_integer
   def allocation_shares(process) do
     case process do
       %__MODULE__{state: s, priority: p} when s in [:standby, :running] ->
@@ -223,19 +226,24 @@ defmodule Helix.Process.Model.Process do
     end
   end
 
-  @spec pause(t | Ecto.Changeset.t) :: Ecto.Changeset.t
-  def pause(p = %__MODULE__{state: :paused}),
-    do: change(p)
+  @spec pause(process) :: Changeset.t
+  def pause(p = %__MODULE__{}),
+    do: pause(change(p))
   def pause(p) do
-    p
-    |> calculate_work(DateTime.utc_now())
-    |> update_changeset(%{state: :paused, estimated_time: nil})
-    |> allocate_minimum()
+    if :paused == get_field(p, :state) do
+      p
+    else
+      p
+      |> calculate_work(DateTime.utc_now())
+      |> update_changeset(%{state: :paused, estimated_time: nil})
+      |> allocate_minimum()
+    end
   end
 
-  @spec resume(t | Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec resume(process) :: Changeset.t
   def resume(p) do
-    state = p |> change() |> get_field(:state)
+    cs = change(p)
+    state = get_field(cs, :state)
 
     if :paused === state do
       # FIXME: state can be "standby" on some cases
@@ -244,11 +252,11 @@ defmodule Helix.Process.Model.Process do
       |> allocate_minimum()
       |> estimate_conclusion()
     else
-      change(p)
+      cs
     end
   end
 
-  @spec calculate_work(t | Ecto.Changeset.t, DateTime.t) :: Ecto.Changeset.t
+  @spec calculate_work(process, DateTime.t) :: Changeset.t
   def calculate_work(process, time_now) do
     cs = change(process)
 
@@ -259,12 +267,12 @@ defmodule Helix.Process.Model.Process do
       |> update_changeset(%{updated_time: time_now})
       |> put_embed(:processed, calculate_processed(process, diff))
     else
-      process
+      cs
     end
   end
 
   # REVIEW: FIXME: Maybe return as a changeset because life is a disaster
-  @spec estimate_conclusion(elem) :: elem when elem: t | Ecto.Changeset.t
+  @spec estimate_conclusion(elem) :: elem when elem: process
   def estimate_conclusion(process) do
     struct = case process do
       %__MODULE__{} ->
@@ -312,16 +320,17 @@ defmodule Helix.Process.Model.Process do
     |> Resources.to_list()
     |> Keyword.values()
     |> Enum.filter(&(is_integer(&1) and &1 > 0))
-    |> Enum.reduce(nil, &min/2)
+    |> Enum.reduce(nil, &min/2) # Note that atom > int
   end
 
-  @spec can_allocate?(t | Ecto.Changeset.t, res | [res]) :: boolean when res: (:cpu | :ram | :dlk | :ulk)
+  @spec can_allocate?(process, res | [res]) :: boolean when res: (:cpu | :ram | :dlk | :ulk)
   def can_allocate?(processes, resources  \\ [:cpu, :ram, :dlk, :ulk]) do
     r = List.wrap(resources)
     Enum.any?(can_allocate(processes), &(&1 in r))
   end
 
-  @spec can_allocate(t | Ecto.Changeset.t) :: [:cpu | :ram | :dlk | :ulk]
+  # TODO: rename this
+  @spec can_allocate(process) :: [:cpu | :ram | :dlk | :ulk]
   def can_allocate(process = %Ecto.Changeset{}),
     do: can_allocate(apply_changes(process))
   def can_allocate(process = %__MODULE__{}) do
@@ -348,12 +357,12 @@ defmodule Helix.Process.Model.Process do
     end)
   end
 
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec put_primary_key(Changeset.t) :: Changeset.t
   defp put_primary_key(changeset) do
     put_change(changeset, :process_id, PK.generate([0x0005, 0x0000, 0x0000]))
   end
 
-  @spec put_defaults(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec put_defaults(Changeset.t) :: Changeset.t
   defp put_defaults(changeset) do
     cs =
       get_change(changeset, :limitations)
@@ -365,6 +374,7 @@ defmodule Helix.Process.Model.Process do
     |> put_embed(:allocated, %{})
   end
 
+  @spec server_to_process_map(Changeset.t) :: Changeset.t
   defp server_to_process_map(changeset) do
     gateway_id = get_field(changeset, :gateway_id)
     target_server_id = get_field(changeset, :target_server_id)
@@ -398,9 +408,7 @@ defmodule Helix.Process.Model.Process do
   defp diff_in_seconds(start = %DateTime{}, finish = %DateTime{}),
     do: Timex.diff(start, finish, :seconds)
 
-  @spec calculate_processed(
-    t | Ecto.Changeset.t,
-    non_neg_integer) :: Resources.t
+  @spec calculate_processed(process, non_neg_integer) :: Resources.t
   defp calculate_processed(process, delta_t) do
     cs = change(process)
 
@@ -413,13 +421,16 @@ defmodule Helix.Process.Model.Process do
   end
 
   defmodule Query do
-    import Ecto.Query, only: [where: 3]
+    alias Helix.Process.Model.Process
+    alias Helix.Process.Model.Process.MapServerToProcess
+
+    import Ecto.Query, only: [join: 5, where: 3]
 
     @spec from_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     @doc """
     Filter processes that are running on `server_id`
     """
-    def from_server(query, server_id) do
+    def from_server(query \\ Process, server_id) do
       where(query, [p], p.server_id == ^server_id)
     end
 
@@ -427,11 +438,18 @@ defmodule Helix.Process.Model.Process do
     @doc """
     Filter processes that are running on `server_id` or affect it
     """
-    def related_to_server(query, server_id) do
-      where(
-        query,
-        [p],
-        p.server_id == ^server_id or p.target_server_id == ^server_id)
+    def related_to_server(query \\ Process, server_id) do
+      query
+      |> join(:inner, [p], m in MapServerToProcess, m.process_id == p.process_id)
+      |> where([p, ..., m], m.server_id == ^server_id)
+    end
+
+    def related_to_server_and_of_types(query \\ Process, server_id, types) do
+      types = List.wrap(types)
+
+      query
+      |> related_to_server(server_id)
+      |> where([p, ..., m], m.process_type in ^types)
     end
   end
 end
