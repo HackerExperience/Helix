@@ -19,145 +19,117 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
   @type t :: plan :: %{
     current_plan: %{
       fragment: ServerResources.t,
-      processes: [{process_id, [:cpu | :ram | :dlk | :ulk]}]
+      processes: [{process, [:cpu | :ram | :dlk | :ulk]}]
     },
     next_plan: %{
       shares: shares_plan,
-      processes: [{process_id, [:cpu | :ram | :dlk | :ulk]}]
-    }
-  }
-
-  @typep process_map :: %{process_id => process}
-
-  defstruct [
-    current_plan: %{
-      fragment: %ServerResources{},
-      processes: []
+      processes: [{process, [:cpu | :ram | :dlk | :ulk]}]
     },
-    next_plan: %{
-      shares: %{
-        cpu: 0,
-        ram: 0,
-        net: %{}
-      },
-      processes: []
-    }
-  ]
-
-  # TODO: Refactor and comment this shit
+    acc: [process]
+  }
 
   @spec allocate([process], ServerResources.t) :: [Ecto.Changeset.t]
   def allocate(processes, resources) do
-    process_map =
-      processes
-      # Coherces all structs into changesets to ensure we can easily use the
-      # changeset functions
-      |> Enum.map(&({&1.process_id, Changeset.change(&1)}))
-      |> :maps.from_list()
-
     processes
     |> plan(resources)
-    |> execute_step(process_map, resources)
-    |> Map.values()
+    |> execute_step(resources)
+    |> Map.fetch!(:acc)
   end
 
   @spec plan([process], ServerResources.t) :: t
   defp plan(processes, resources) do
-    Enum.reduce(processes, %__MODULE__{}, fn el, acc ->
+    keikaku = %{
+      current_plan: %{fragment: %ServerResources{}, processes: []},
+      next_plan: %{shares: %{cpu: 0, ram: 0, net: %{}}, processes: []},
+      acc: []
+    }
+
+    Enum.reduce(processes, keikaku, fn el, acc ->
       el = Changeset.change(el)
 
       case allocable_resources(el, resources) do
         [] ->
-          acc
+          Map.update!(acc, :acc, &([el| &1]))
         res ->
-          %{next_plan: %{processes: p, shares: s}} = acc
           shares = Changeset.get_field(el, :priority)
           net = Changeset.get_field(el, :network_id)
-          process_id = Changeset.get_field(el, :process_id)
 
-          plan = %{
-            processes: [{process_id, res}| p],
-            shares: merge_share(s, res, shares, net)
-          }
-
-          %{acc| next_plan: plan}
+          acc
+          |> update_in([:next_plan, :processes], &([{el, res}| &1]))
+          |> update_in([:next_plan, :shares], &merge_share(&1, res, shares, net))
       end
     end)
   end
 
   defp allocable_resources(process, %{cpu: c, ram: r, net: n}) do
-    net = Changeset.get_field(process, :network_id)
-    n = n[net]
+    net_id = Changeset.get_field(process, :network_id)
+    net = Map.get(n, net_id, [dlk: 0, ulk: 0])
 
-    no = n && Enum.filter_map(n, fn {_, v} -> v == 0 end, &elem(&1, 0)) || []
-    no? = c == 0 && [:cpu| no] || no
-    no! = r == 0 && [:ram| no?] || no?
+    # Returns a list of resource types that the server can't allocate for the
+    # process so we can reject them from the resources the process ask
+    # This is done so we can avoid trying to allocate resources a process can't
+    # receive
+    shouldnt =
+      net
+      |> Enum.to_list()
+      |> Kernel.++([cpu: c, ram: r])
+      |> Enum.filter_map(fn {_, v} -> v == 0 end, &elem(&1, 0))
 
-    Process.can_allocate(process) -- no!
+    Process.can_allocate(process) -- shouldnt
   end
 
-  @spec execute_step(t, process_map, ServerResources.t) :: process_map
-  defp execute_step(plan = %__MODULE__{current_plan: %{fragment: f, processes: [{p, r}| t]}}, processes, resources) do
-    process = Map.fetch!(processes, p)
-    shares = Changeset.get_field(process, :priority)
-    net = Changeset.get_field(process, :network_id)
-
-    allo1 = Changeset.get_field(process, :allocated)
+  @spec execute_step(t, ServerResources.t) :: t
+  defp execute_step(plan = %{current_plan: %{fragment: f, processes: [{p0, r}| t]}}, resources) do
+    shares = Changeset.get_field(p0, :priority)
+    net_id = Changeset.get_field(p0, :network_id)
 
     allocate =
       f.net
-      |> Map.get(net, %{})
-      |> Enum.into(Map.take(f, [:cpu, :ram]))
-      |> Map.take(r)
+      |> Map.get(net_id, %{})
+      |> Enum.into(%{cpu: f.cpu, ram: f.ram}) # Prepare a map with resources that the process might want
+      |> Map.take(r) # Filter out those that it didn't request
       |> Enum.map(fn {k, v} -> {k, v * shares} end)
       |> :maps.from_list()
 
-    process = Process.allocate(process, allocate)
+    p1 = Process.allocate(p0, allocate)
 
-    allo2 = Changeset.get_field(process, :allocated)
+    allo0 = Changeset.get_field(p0, :allocated)
+    allo1 = Changeset.get_field(p1, :allocated)
 
-    if allo1 == allo2 do
+    if allo0 == allo1 do
       # Nothing was changed, so this process won't receive any more allocation
-      plan = %{plan| current_plan: %{plan.current_plan| processes: t}}
-
-      execute_step(plan, processes, resources)
+      plan
+      |> put_in([:current_plan, :processes], t)
+      |> Map.update!(:acc, &([p0| &1]))
+      |> execute_step(resources)
     else
-      can_allocate = Process.can_allocate(process)
+      can_allocate = Process.can_allocate(p1)
 
-      res_diff = Resources.sub(allo2, allo1)
-
+      res_diff = Resources.sub(allo1, allo0)
       resources = %{resources|
         cpu: resources.cpu - res_diff.cpu,
         ram: resources.ram - res_diff.ram,
         net: case resources.net do
-          n = %{^net => %{dlk: d1, ulk: u1}} ->
-            Map.put(n, net, %{dlk: d1 - res_diff.dlk, ulk: u1 - res_diff.ulk})
+          n = %{^net_id => %{dlk: d1, ulk: u1}} ->
+            Map.put(n, net_id, %{dlk: d1 - res_diff.dlk, ulk: u1 - res_diff.ulk})
           n ->
             n
         end
       }
 
-      processes = Map.put(processes, p, process)
-
-      plan = %{plan|
-        current_plan: %{plan.current_plan|
-          processes: t
-        },
-        next_plan:
-          plan.next_plan
-          |> Map.update!(:processes, &([{p, can_allocate}| &1]))
-          |> Map.update!(:shares, &merge_share(&1, can_allocate, shares, net))
-      }
-
-      execute_step(plan, processes, resources)
+      plan
+      |> put_in([:current_plan, :processes], t)
+      |> update_in([:next_plan, :processes], &([{p1, can_allocate}| &1]))
+      |> update_in([:next_plan, :shares], &merge_share(&1, can_allocate, shares, net_id))
+      |> execute_step(resources)
     end
   end
 
-  defp execute_step(%__MODULE__{current_plan: %{processes: []}, next_plan: %{processes: []}}, p, _) do
+  defp execute_step(p = %{current_plan: %{processes: []}, next_plan: %{processes: []}}, _) do
     p
   end
 
-  defp execute_step(%__MODULE__{current_plan: %{processes: []}, next_plan: np}, processes, resources) do
+  defp execute_step(plan = %{current_plan: %{processes: []}, next_plan: np}, resources) do
     %{processes: p, shares: s} = np
 
     # TODO: Maybe, instead of storing the shares the process asks for, just
@@ -187,9 +159,13 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
         |> :maps.from_list()
     }
 
-    plan2 = %__MODULE__{current_plan: %{processes: p, fragment: f}}
+    # Let's simply update it to avoid forgetting we should keep the acc :joy:
+    plan = %{plan|
+      current_plan: %{processes: p, fragment: f},
+      next_plan: %{shares: %{cpu: 0, ram: 0, net: %{}}, processes: []}
+    }
 
-    execute_step(plan2, processes, resources)
+    execute_step(plan, resources)
   end
 
   @spec merge_share(shares_plan, [:cpu | :ram | :dlk | :ulk], non_neg_integer, network_id) :: shares_plan
