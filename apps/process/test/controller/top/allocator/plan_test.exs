@@ -7,14 +7,14 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
   # alias Helix.Process.Controller.TableOfProcesses
   alias Helix.Process.Controller.TableOfProcesses.Allocator.Plan
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
-  alias Helix.Process.TestHelper.SoftwareTypeExample
-  alias Helix.Process.TestHelper.StaticSoftwareTypeExample
+  alias Helix.Process.TestHelper.ProcessTypeExample
+  alias Helix.Process.TestHelper.StaticProcessTypeExample
 
   test "allocating to a static process doesn't affects it" do
     pparams = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
-      software: %StaticSoftwareTypeExample{},
+      process_data: %StaticProcessTypeExample{},
       objective: %{
         cpu: 100_000
       }
@@ -52,7 +52,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       |> Enum.map(&Ecto.Changeset.apply_changes/1)
 
     # Static processes doesn't receive dynamic allocations.
-    # Note that with "static process" i mean a process whose software_type
+    # Note that with "static process" i mean a process whose process_type
     # doesn't allows dynamic allocation to any resources (unlike dynamic
     # processes that allow dynamic allocation to some or all of their resources)
     assert process.allocated === xs.allocated
@@ -62,7 +62,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     pparams = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
-      software: %SoftwareTypeExample{},
+      process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
       }
@@ -109,7 +109,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     pparams = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
-      software: %SoftwareTypeExample{},
+      process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
       }
@@ -157,7 +157,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     pparams = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
-      software: %SoftwareTypeExample{},
+      process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
       }
@@ -211,7 +211,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     pparams = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
-      software: %SoftwareTypeExample{},
+      process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
       }

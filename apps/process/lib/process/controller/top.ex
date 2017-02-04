@@ -11,7 +11,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   alias Helix.Process.Repo
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
-  alias Helix.Process.Model.Process.SoftwareType
+  alias Helix.Process.Model.Process.ProcessType
 
   import HELL.MacroHelpers
 
@@ -129,12 +129,12 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   @spec notify(module, ProcessModel.t, atom) :: no_return
   defp notify(broker, process, :complete) do
-    namespace = SoftwareType.event_namespace(process.software)
+    namespace = ProcessType.event_namespace(process.process_data)
     message = %{
       process_id: process.process_id,
       server_id: process.server_id,
       target_server_id: process.target_server_id,
-      software: process.software
+      process_data: process.process_data
     }
 
     # Should become something like 'event:process:cracker:completed'

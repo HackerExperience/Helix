@@ -1,8 +1,8 @@
-defmodule Helix.Process.TestHelper.SoftwareTypeExample do
+defmodule Helix.Process.TestHelper.ProcessTypeExample do
 
   defstruct []
 
-  defimpl Helix.Process.Model.Process.SoftwareType do
+  defimpl Helix.Process.Model.Process.ProcessType do
     def dynamic_resources(_),
       do: [:cpu, :dlk, :ulk]
     def event_namespace(_),
@@ -10,11 +10,11 @@ defmodule Helix.Process.TestHelper.SoftwareTypeExample do
   end
 end
 
-defmodule Helix.Process.TestHelper.StaticSoftwareTypeExample do
+defmodule Helix.Process.TestHelper.StaticProcessTypeExample do
 
   defstruct []
 
-  defimpl Helix.Process.Model.Process.SoftwareType do
+  defimpl Helix.Process.Model.Process.ProcessType do
     def dynamic_resources(_),
       do: []
     def event_namespace(_),

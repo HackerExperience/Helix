@@ -15,7 +15,7 @@ defmodule Helix.Process.Repo.Migrations.UpdateProcessAddNetworkId do
 
       add :software, :jsonb,
         null: false
-      add :software_type, :string,
+      add :process_type, :string,
         null: false
 
       add :state, :integer,
@@ -45,10 +45,10 @@ defmodule Helix.Process.Repo.Migrations.UpdateProcessAddNetworkId do
         primary_key: true
       add :process_id, references(:processes, column: :process_id, type: :inet, on_delete: :delete_all, on_update: :nothing),
         primary_key: true
-      add :software_type, :string,
+      add :process_type, :string,
         null: false
     end
 
-    create index(:server_process_maps, [:server_id, :software_type, :process_id], name: :server_process_maps_software_type_on_server_index)
+    create index(:server_process_maps, [:server_id, :process_type, :process_id], name: :server_process_maps_process_type_on_server_index)
   end
 end

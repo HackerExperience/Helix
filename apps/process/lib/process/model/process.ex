@@ -7,7 +7,7 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Process.Model.Process.MapServerToProcess
   alias Helix.Process.Model.Process.NaiveStruct
   alias Helix.Process.Model.Process.Resources
-  alias Helix.Process.Model.Process.SoftwareType
+  alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.Model.Process.State
 
   import Ecto.Changeset
@@ -19,8 +19,8 @@ defmodule Helix.Process.Model.Process do
     target_server_id: PK.t,
     file_id: PK.t | nil,
     network_id: PK.t | nil,
-    software: SoftwareType.t,
-    software_type: String.t,
+    process_data: ProcessType.t,
+    process_type: String.t,
     state: State.state,
     limitations: Limitations.t,
     objective: Resources.t,
@@ -51,14 +51,14 @@ defmodule Helix.Process.Model.Process do
 
     # Data that is used by the specific implementation of the process
     # side-effects
-    field :software, NaiveStruct
+    field :process_data, NaiveStruct
 
-    # The type of software that defines the process behaviour.
-    # This field might sound redundant when `:software` is a struct that might
-    # allow us to infer the type of software, but this field is included to
-    # allow filtering by software_type (and even blocking more than one process
-    # of certain software_type from running on a server)
-    field :software_type, :string
+    # The type of process that defines this process behaviour.
+    # This field might sound redundant when `:process_data` is a struct that
+    # might allow us to infer the type of process, but this field is included to
+    # allow filtering by process_type (and even blocking more than one process
+    # of certain process_type from running on a server) from the db
+    field :process_type, :string
 
     # Which state in the process FSM the process is currently on
     field :state, State,
@@ -96,13 +96,14 @@ defmodule Helix.Process.Model.Process do
       references: :process_id
   end
 
-  @creation_fields ~w/software software_type gateway_id target_server_id file_id network_id/a
+  @creation_fields ~w/process_data process_type gateway_id target_server_id file_id network_id/a
   @update_fields ~w/state priority updated_time estimated_time minimum/a
 
   @spec create_changeset(%{
     :gateway_id => PK.t,
     :target_server_id => PK.t,
-    :software => SoftwareType.t,
+    :process_data => ProcessType.t,
+    :process_type => String.t,
     optional(:file_id) => PK.t,
     optional(:network_id) => PK.t,
     optional(:objective) => %{}}) :: Ecto.Changeset.t
@@ -115,12 +116,12 @@ defmodule Helix.Process.Model.Process do
 
     %__MODULE__{}
     |> cast(params, [:creation_time| @creation_fields])
-    |> validate_change(:software, fn :software, value ->
-      # Only accepts as input structs that implement protocol SoftwareType to
+    |> validate_change(:process_data, fn :process_data, value ->
+      # Only accepts as input structs that implement protocol ProcessType to
       # ensure that they will be properly processed
-      if SoftwareType.impl_for(value),
+      if ProcessType.impl_for(value),
         do: [],
-        else: [software: "invalid value"]
+        else: [process_data: "invalid value"]
     end)
     |> put_primary_key()
     |> put_defaults()
@@ -154,7 +155,7 @@ defmodule Helix.Process.Model.Process do
     struct
     |> cast(params, [:updated_time])
     |> cast_embed(:objective)
-    |> validate_required([:gateway_id, :target_server_id, :software, :software_type])
+    |> validate_required([:gateway_id, :target_server_id, :process_data, :process_type])
     |> validate_inclusion(:priority, 0..5)
   end
 
@@ -337,8 +338,8 @@ defmodule Helix.Process.Model.Process do
         end
     end
 
-    process.software
-    |> SoftwareType.dynamic_resources()
+    process.process_data
+    |> ProcessType.dynamic_resources()
     |> Enum.filter(fn resource ->
       l = Map.get(process.limitations, resource)
       a = Map.get(process.allocated, resource)
@@ -368,9 +369,9 @@ defmodule Helix.Process.Model.Process do
     gateway_id = get_field(changeset, :gateway_id)
     target_server_id = get_field(changeset, :target_server_id)
     id = get_field(changeset, :process_id)
-    software_type = get_field(changeset, :software_type)
+    process_type = get_field(changeset, :process_type)
 
-    p1 = %{server_id: gateway_id, process_id: id, software_type: software_type}
+    p1 = %{server_id: gateway_id, process_id: id, process_type: process_type}
 
     records = if gateway_id == target_server_id do
       [MapServerToProcess.create_changeset(p1)]
