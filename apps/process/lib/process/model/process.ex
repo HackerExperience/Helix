@@ -3,82 +3,118 @@ defmodule Helix.Process.Model.Process do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.Limitations
-  alias Helix.Process.Model.Process.State
+  alias Helix.Process.Model.Process.MapServerToProcess
   alias Helix.Process.Model.Process.NaiveStruct
+  alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.SoftwareType
+  alias Helix.Process.Model.Process.State
 
   import Ecto.Changeset
   import HELL.MacroHelpers
 
   @type t :: %__MODULE__{
     process_id: id,
-    gateway_id: String.t,
+    gateway_id: PK.t,
+    target_server_id: PK.t,
+    file_id: PK.t | nil,
+    network_id: PK.t | nil,
     software: SoftwareType.t,
+    software_type: String.t,
     state: State.state,
     limitations: Limitations.t,
     objective: Resources.t,
     processed: Resources.t,
     allocated: Resources.t,
-    priority: 0..5
+    priority: 0..5,
+    minimum: %{},
+    creation_time: DateTime.t,
+    updated_time: DateTime.t,
+    estimated_time: DateTime.t
   }
 
-  @opaque id :: String.t
+  @opaque id :: PK.t
 
   @primary_key false
   schema "processes" do
-    field :process_id, HELL.PK,
+    field :process_id, PK,
       primary_key: true
 
     # The gateway that started the process
-    field :gateway_id, HELL.PK
+    field :gateway_id, PK
     # The server where the target object of this process action is
-    field :target_server_id, HELL.PK
+    field :target_server_id, PK
     # Which file (if any) contains the "executable" of this process
-    field :file_id, HELL.PK
+    field :file_id, PK
+    # Which network is this process bound to (if any)
+    field :network_id, PK
 
     # Data that is used by the specific implementation of the process
     # side-effects
     field :software, NaiveStruct
 
+    # The type of software that defines the process behaviour.
+    # This field might sound redundant when `:software` is a struct that might
+    # allow us to infer the type of software, but this field is included to
+    # allow filtering by software_type (and even blocking more than one process
+    # of certain software_type from running on a server)
+    field :software_type, :string
+
     # Which state in the process FSM the process is currently on
-    field :state, State, default: :standby
+    field :state, State,
+      default: :standby
     # What is the process priority on the Table of Processes (only affects
     # dynamic allocation)
-    field :priority, :integer, default: 3
+    field :priority, :integer,
+      default: 3
 
-    embeds_one :objective, Resources, on_replace: :delete
-    embeds_one :processed, Resources, on_replace: :delete
-    embeds_one :allocated, Resources, on_replace: :delete
-    embeds_one :limitations, Limitations, on_replace: :delete
+    embeds_one :objective, Resources,
+      on_replace: :delete
+    embeds_one :processed, Resources,
+      on_replace: :delete
+    embeds_one :allocated, Resources,
+      on_replace: :delete
+    embeds_one :limitations, Limitations,
+      on_replace: :delete
 
     # The minimum amount of resources this process requires (aka the static
     # amount of resources this process uses)
-    field :minimum, :map, default: %{}, virtual: true
+    field :minimum, :map,
+      default: %{},
+      virtual: true
 
     field :creation_time, :utc_datetime
     field :updated_time, :utc_datetime
-    field :estimated_time, :utc_datetime, virtual: true
+    field :estimated_time, :utc_datetime,
+      virtual: true
+
+    # Pretend this doesn't exists. This is included on the vschema solely to
+    # ensure with ease that those entries will be inserted in the same
+    # transaction but only after the process is inserted
+    has_many :server_to_process_map, MapServerToProcess,
+      foreign_key: :process_id,
+      references: :process_id
   end
 
-  @creation_fields ~w/gateway_id file_id software target_server_id/a
+  @creation_fields ~w/software software_type gateway_id target_server_id file_id network_id/a
   @update_fields ~w/state priority updated_time estimated_time minimum/a
 
   @spec create_changeset(%{
-    :gateway_id => String.t,
-    :target_server_id => String.t,
+    :gateway_id => PK.t,
+    :target_server_id => PK.t,
     :software => SoftwareType.t,
-    optional(:file_id) => String.t,
+    optional(:file_id) => PK.t,
+    optional(:network_id) => PK.t,
     optional(:objective) => %{}}) :: Ecto.Changeset.t
   def create_changeset(params) do
     now = DateTime.utc_now()
-    default_datetime = %{creation_time: now, updated_time: now}
+    params =
+      params
+      |> Map.put(:creation_time, now)
+      |> Map.put(:updated_time, now)
 
     %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> cast_embed(:objective)
-    |> validate_required([:gateway_id, :target_server_id, :software])
+    |> cast(params, [:creation_time| @creation_fields])
     |> validate_change(:software, fn :software, value ->
       # Only accepts as input structs that implement protocol SoftwareType to
       # ensure that they will be properly processed
@@ -88,7 +124,8 @@ defmodule Helix.Process.Model.Process do
     end)
     |> put_primary_key()
     |> put_defaults()
-    |> cast(default_datetime, [:creation_time, :updated_time])
+    |> changeset(params)
+    |> server_to_process_map()
   end
 
   @spec update_changeset(
@@ -107,25 +144,25 @@ defmodule Helix.Process.Model.Process do
   def update_changeset(process, params) do
     process
     |> cast(params, @update_fields)
-    |> validate_inclusion(:priority, 0..5)
-    |> cast_embed(:objective)
     |> cast_embed(:processed)
     |> cast_embed(:allocated)
     |> cast_embed(:limitations)
+    |> changeset(params)
+  end
+
+  def changeset(struct, params) do
+    struct
+    |> cast(params, [:updated_time])
+    |> cast_embed(:objective)
+    |> validate_required([:gateway_id, :target_server_id, :software, :software_type])
+    |> validate_inclusion(:priority, 0..5)
   end
 
   @spec complete?(t) :: boolean
   def complete?(p = %Ecto.Changeset{}),
     do: complete?(apply_changes(p))
-  def complete?(%__MODULE__{state: :complete}),
-    do: true
-  def complete?(%__MODULE__{
-    objective: %{cpu: c, ram: r, dlk: d, ulk: u},
-    processed: %{cpu: c, ram: r, dlk: d, ulk: u}
-  }),
-    do: true
-  def complete?(%__MODULE__{}),
-    do: false
+  def complete?(%__MODULE__{state: s, objective: o, processed: p}),
+    do: s == :complete or o == p
 
   @spec handle_complete(t) :: t | nil
   def handle_complete(p) do
@@ -156,7 +193,6 @@ defmodule Helix.Process.Model.Process do
       cs
       |> get_field(:allocated)
       |> Resources.sum(amount)
-      |> Map.from_struct() # HACK: ecto cast doesn't accept structs
 
     allocated =
       cs
@@ -169,7 +205,7 @@ defmodule Helix.Process.Model.Process do
           Map.update!(acc, field, &min(&1, value))
       end)
 
-    update_changeset(process, %{allocated: allocated})
+    put_embed(cs, :allocated, allocated)
   end
 
   @spec allocation_shares(t | Ecto.Changeset.t) :: non_neg_integer
@@ -278,12 +314,16 @@ defmodule Helix.Process.Model.Process do
     |> Enum.reduce(nil, &min/2)
   end
 
-  @spec can_allocate?(t | Ecto.Changeset.t, atom | [atom]) :: boolean
-  def can_allocate?(process, resource \\ [:cpu, :ram, :dlk, :ulk])
+  @spec can_allocate?(t | Ecto.Changeset.t, res | [res]) :: boolean when res: (:cpu | :ram | :dlk | :ulk)
+  def can_allocate?(processes, resources  \\ [:cpu, :ram, :dlk, :ulk]) do
+    r = List.wrap(resources)
+    Enum.any?(can_allocate(processes), &(&1 in r))
+  end
 
-  def can_allocate?(process = %Ecto.Changeset{}, resources),
-    do: can_allocate?(apply_changes(process), resources)
-  def can_allocate?(process = %__MODULE__{}, resource) do
+  @spec can_allocate(t | Ecto.Changeset.t) :: [:cpu | :ram | :dlk | :ulk]
+  def can_allocate(process = %Ecto.Changeset{}),
+    do: can_allocate(apply_changes(process))
+  def can_allocate(process = %__MODULE__{}) do
     objective_allows? = case process.objective do
       nil ->
         fn _ ->
@@ -297,10 +337,9 @@ defmodule Helix.Process.Model.Process do
         end
     end
 
-    resource
-    |> List.wrap()
-    |> Enum.filter(&(&1 in SoftwareType.dynamic_resources(process.software)))
-    |> Enum.any?(fn resource ->
+    process.software
+    |> SoftwareType.dynamic_resources()
+    |> Enum.filter(fn resource ->
       l = Map.get(process.limitations, resource)
       a = Map.get(process.allocated, resource)
 
@@ -310,9 +349,7 @@ defmodule Helix.Process.Model.Process do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    pk = PK.generate([0x0005, 0x0000, 0x0000])
-
-    cast(changeset, %{process_id: pk}, [:process_id])
+    put_change(changeset, :process_id, PK.generate([0x0005, 0x0000, 0x0000]))
   end
 
   @spec put_defaults(Ecto.Changeset.t) :: Ecto.Changeset.t
@@ -325,6 +362,27 @@ defmodule Helix.Process.Model.Process do
     cs
     |> put_embed(:processed, %{})
     |> put_embed(:allocated, %{})
+  end
+
+  defp server_to_process_map(changeset) do
+    gateway_id = get_field(changeset, :gateway_id)
+    target_server_id = get_field(changeset, :target_server_id)
+    id = get_field(changeset, :process_id)
+    software_type = get_field(changeset, :software_type)
+
+    p1 = %{server_id: gateway_id, process_id: id, software_type: software_type}
+
+    records = if gateway_id == target_server_id do
+      [MapServerToProcess.create_changeset(p1)]
+    else
+      p2 = %{p1| server_id: target_server_id}
+      [
+        MapServerToProcess.create_changeset(p1),
+        MapServerToProcess.create_changeset(p2)
+      ]
+    end
+
+    put_assoc(changeset, :server_to_process_map, records)
   end
 
   @spec diff_in_seconds(DateTime.t, DateTime.t) :: non_neg_integer | nil
