@@ -9,6 +9,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   require Logger
 
   alias Helix.Process.Repo
+  alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.ProcessType
@@ -108,7 +109,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       params = %{server_id: server_id},
       {_, {:ok, return}} <- broker.call("server:hardware:resources", params)
     do
-      {:ok, return}
+      res = ServerResources.cast(return)
+      {:ok, res}
     end
   end
 
@@ -207,7 +209,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   def handle_cast({:resources, resources}, state) do
-    handle_info(:allocate, %{state| resources: resources})
+    r = ServerResources.cast(resources)
+    handle_info(:allocate, %{state| resources: r})
   end
 
   @doc false

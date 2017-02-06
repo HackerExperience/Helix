@@ -99,9 +99,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       |> Plan.allocate(resources)
       |> Enum.map(&Ecto.Changeset.apply_changes/1)
 
-    # 100 were already allocated at the start, 9_000 were added by the
-    # allocation
-    assert 9_100 === xs.allocated.cpu
+    assert_in_delta xs.allocated.cpu, 9_000, 90
     assert 100 === xs.allocated.ram
   end
 
@@ -148,9 +146,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       |> Plan.allocate(resources)
       |> Enum.map(&Ecto.Changeset.apply_changes/1)
 
-    # Half of 9000 plus 100 already allocated
-    assert 4600 = xs0.allocated.cpu
-    assert 4600 = xs1.allocated.cpu
+    assert_in_delta xs0.allocated.cpu, 4500, 90
+    assert_in_delta xs1.allocated.cpu, 4500, 90
   end
 
   test "processes with higher priority receive bigger shares" do
@@ -203,8 +200,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     # Process0 has priority 1, process1 has priority 4, thus the resources will
     # be split in 5 parts, process0 receives 1/5 of the total resources and
     # process1 receives 4/5
-    assert 1_800 === processes[process0.process_id].allocated.cpu
-    assert 7_200 === processes[process1.process_id].allocated.cpu
+    assert_in_delta processes[process0.process_id].allocated.cpu, 1800, 90
+    assert_in_delta processes[process1.process_id].allocated.cpu, 7_200, 90
   end
 
   test "complex allocation using limits" do
@@ -263,5 +260,40 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     assert_in_delta processes[process0.process_id].allocated.cpu, 4_250, 90
     assert processes[process0.process_id].allocated.cpu == processes[process1.process_id].allocated.cpu
     assert 500 === processes[process2.process_id].allocated.cpu
+  end
+
+  test "returns error when resources can't handle processes at minimum" do
+    pparams = %{
+      gateway_id: Random.pk(),
+      target_server_id: Random.pk(),
+      process_data: %ProcessTypeExample{},
+      objective: %{
+        cpu: 100_000
+      }
+    }
+
+    process0 =
+      pparams
+      |> ProcessModel.create_changeset()
+      |> ProcessModel.update_changeset(%{state: :running})
+      |> ProcessModel.update_changeset(%{minimum: %{running: %{ram: 2_000}}})
+      |> Ecto.Changeset.apply_changes()
+
+    process1 =
+      %{pparams| gateway_id: Random.pk()}
+      |> ProcessModel.create_changeset()
+      |> ProcessModel.update_changeset(%{state: :running})
+      |> ProcessModel.update_changeset(%{minimum: %{running: %{ram: 2_000}}})
+      |> Ecto.Changeset.apply_changes()
+
+    resources = %ServerResources{
+      cpu: 9_000,
+      # Note that the server only has 3k Ram total and the processes together
+      # requires a minimum of 4k ram
+      ram: 3_000,
+      net: %{"::" => %{dlk: 9_000, ulk: 9_000}}
+    }
+
+    assert {:error, :insuficient_resources} === Plan.allocate([process0, process1], resources)
   end
 end

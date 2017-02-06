@@ -32,8 +32,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
   def allocate(processes, resources) do
     processes
     |> plan(resources)
-    |> execute_step(resources)
-    |> Map.fetch!(:acc)
+    |> execute()
   end
 
   @spec plan([process], ServerResources.t) :: t
@@ -44,22 +43,61 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
       acc: []
     }
 
-    Enum.reduce(processes, keikaku, fn el, acc ->
-      el = Changeset.change(el)
-
-      case allocable_resources(el, resources) do
-        [] ->
-          Map.update!(acc, :acc, &([el| &1]))
-        res ->
-          shares = Changeset.get_field(el, :priority)
-          net = Changeset.get_field(el, :network_id)
-
-          acc
-          |> update_in([:next_plan, :processes], &([{el, res}| &1]))
-          |> update_in([:next_plan, :shares], &merge_share(&1, res, shares, net))
-      end
-    end)
+    preallocate(processes, keikaku, resources)
   end
+
+  # REVIEW: I was pretty tired when i wrote this. It should be refactored later
+  @spec preallocate([process], t, ServerResources.t) :: {:ok, t} | {:error, :insuficient_resources}
+  defp preallocate([h| t], plan, resources = %{cpu: c, ram: r, net: n}) do
+    xs = Process.allocate_minimum(h)
+    net_id = Changeset.get_field(xs, :network_id)
+
+    rest =
+      n
+      |> Map.get(net_id, %{})
+      |> Map.merge(%{cpu: c, ram: r})
+      |> Resources.cast()
+      |> Resources.sub(Changeset.get_field(xs, :allocated))
+      |> Map.take([:cpu, :ram, :dlk, :ulk])
+
+    if Enum.all?(rest, &(elem(&1, 1) >= 0)) do
+      resources = if Map.has_key?(n, net_id) do
+        %{
+          resources|
+          cpu: rest.cpu,
+          ram: rest.ram,
+          net: Map.put(n, net_id, %{dlk: rest.dlk, ulk: rest.ulk})
+        }
+      else
+        %{resources| cpu: rest.cpu, ram: rest.ram}
+      end
+
+      case allocable_resources(xs, resources) do
+        [] ->
+          plan = Map.update!(plan, :acc, &([xs| &1]))
+
+          preallocate(t, plan, resources)
+        res ->
+          shares = Changeset.get_field(xs, :priority)
+
+          plan =
+            plan
+            |> update_in([:next_plan, :processes], &([{xs, res}| &1]))
+            |> update_in([:next_plan, :shares], &merge_share(&1, res, shares, net_id))
+
+          preallocate(t, plan, resources)
+      end
+    else
+      # REVIEW: TODO: return additional metadata to point out what was the
+      #   lacking resource because it doesn't make sense to drop a "log edit"
+      #   process because a "download" (ok, i know download doesn't enforce a
+      #   minimum) couldn't happen for the lack of resources
+      {:error, :insuficient_resources}
+    end
+  end
+
+  defp preallocate([], plan, r),
+    do: {plan, r}
 
   defp allocable_resources(process, %{cpu: c, ram: r, net: n}) do
     net_id = Changeset.get_field(process, :network_id)
@@ -76,6 +114,14 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
       |> Enum.filter_map(fn {_, v} -> v == 0 end, &elem(&1, 0))
 
     Process.can_allocate(process) -- shouldnt
+  end
+
+  defp execute(er = {:error, :insuficient_resources}),
+    do: er
+  defp execute({plan = %{}, resources = %{}}) do
+    plan
+    |> execute_step(resources)
+    |> Map.fetch!(:acc)
   end
 
   @spec execute_step(t, ServerResources.t) :: t
