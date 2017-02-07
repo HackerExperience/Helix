@@ -19,10 +19,12 @@ defmodule Helix.Account.Controller.AccountTest do
   # Funnily enough, the very same params can be use to create an account through
   # the controller and the model
   defp payload do
+    name = Random.username()
     email = Burette.Internet.email()
     password = Burette.Internet.password()
 
     %{
+      username: name,
       email: email,
       password_confirmation: password,
       password: password}
@@ -44,6 +46,12 @@ defmodule Helix.Account.Controller.AccountTest do
 
       assert {:error, changeset} = AccountController.create(payload)
       assert :password_confirmation in Keyword.keys(changeset.errors)
+    end
+
+    test "fails when username is already in use", %{account: account} do
+      params = Map.put(payload(), :username, account.username)
+      assert {:error, changeset} = AccountController.create(params)
+      assert :username in Keyword.keys(changeset.errors)
     end
 
     test "fails when password is too short" do
@@ -114,18 +122,18 @@ defmodule Helix.Account.Controller.AccountTest do
   end
 
   describe "login/2" do
-    test "succeeds with correct email/password", %{account: account} do
+    test "succeeds with correct username/password", %{account: account} do
       pass = "!!!foobar1234"
 
       account
       |> Account.update_changeset(%{password: pass, password_confirmation: pass})
       |> Repo.update!()
 
-      assert {:ok, _} = AccountController.login(account.email, pass)
+      assert {:ok, _} = AccountController.login(account.username, pass)
     end
 
-    test "fails when email is invalid" do
-      xs = AccountController.login("invalid@email.eita", "password")
+    test "fails when username is invalid" do
+      xs = AccountController.login("}<]=inv@líd+(usêr)-nämẽ=[>{#", "password")
       assert {:error, :notfound} === xs
     end
 

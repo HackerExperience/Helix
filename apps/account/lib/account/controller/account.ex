@@ -4,8 +4,6 @@ defmodule Helix.Account.Controller.Account do
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
 
-  import Ecto.Query, only: [where: 3, select: 3]
-
   @spec create(Account.creation_params) ::
     {:ok, Account.t}
     | {:error, Ecto.Changeset.t}
@@ -50,28 +48,27 @@ defmodule Helix.Account.Controller.Account do
 
   @spec delete(Account.id) :: no_return
   def delete(account_id) do
-    Account
-    |> where([a], a.account_id == ^account_id)
+    account_id
+    |> Account.Query.by_id()
     |> Repo.delete_all()
 
     :ok
   end
 
-  @spec login(Account.email, Account.password) :: {:ok, Account.id} | {:error, :notfound}
-  def login(email, password) do
-    email = String.downcase(email)
+  @spec login(Account.username, Account.password) ::
+  {:ok, Account.t}
+  | {:error, :notfound}
+  def login(username, password) do
+    account =
+      username
+      |> String.downcase()
+      |> Account.Query.by_username()
+      |> Repo.one()
 
-    Account
-    |> where([a], a.email == ^email)
-    |> select([a], map(a, [:password, :account_id]))
-    |> Repo.one()
-    |> case do
-      nil ->
-        {:error, :notfound}
-      account ->
-        if Bcrypt.checkpw(password, account.password),
-          do: {:ok, account.account_id},
-          else: {:error, :notfound}
+    if account && Bcrypt.checkpw(password, account.password) do
+      {:ok, account}
+    else
+      {:error, :notfound}
     end
   end
 end
