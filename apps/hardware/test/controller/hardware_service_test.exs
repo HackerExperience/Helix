@@ -3,18 +3,23 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
   use ExUnit.Case, async: false
 
   alias HELF.Broker
+  alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Model.MotherboardSlot
 
   @moduletag :umbrella
 
   defp create_account do
+    name = Random.username()
     email = Burette.Internet.email()
     password = Burette.Internet.password()
+
     params = %{
+      username: name,
       email: email,
       password_confirmation: password,
-      password: password}
+      password: password
+    }
 
     case Broker.call("account.create", params) do
       {_, {:ok, account}} ->

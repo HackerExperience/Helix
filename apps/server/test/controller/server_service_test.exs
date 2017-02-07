@@ -23,9 +23,17 @@ defmodule Helix.Server.Controller.ServerServiceTest do
 
   describe "after account creation" do
     setup do
+      name = Random.username()
       email = Burette.Internet.email()
       password = Burette.Internet.password()
-      params = %{email: email, password_confirmation: password, password: password}
+
+      params = %{
+        username: name,
+        email: email,
+        password_confirmation: password,
+        password: password
+      }
+
       {:ok, params: params}
     end
 

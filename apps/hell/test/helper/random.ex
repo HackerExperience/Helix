@@ -163,6 +163,12 @@ defmodule HELL.TestHelper.Random do
   end
 
   @doc """
+  Generates a random username
+  """
+  def username(),
+    do: String.slice(Burette.Internet.username(), 0..14)
+
+  @doc """
   Repeats `function` several times
 
   You can provide params like `min`, `max` and `times`.
