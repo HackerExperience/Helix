@@ -11,9 +11,7 @@ defmodule Helix.Software.Model.Storage do
   @type t :: %__MODULE__{
     storage_id: PK.t,
     drives: [StorageDrive.t],
-    files: [File.t],
-    inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t
+    files: [File.t]
   }
 
   @primary_key false
@@ -27,8 +25,6 @@ defmodule Helix.Software.Model.Storage do
     has_many :files, File,
       foreign_key: :storage_id,
       references: :storage_id
-
-    timestamps()
   end
 
   @spec create_changeset() :: Ecto.Changeset.t
@@ -40,9 +36,11 @@ defmodule Helix.Software.Model.Storage do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = PK.generate([0x0004, 0x0001, 0x0000])
-
-    changeset
-    |> cast(%{storage_id: ip}, [:storage_id])
+    if get_field(changeset, :storage_id) do
+      changeset
+    else
+      pk = PK.generate([0x0004, 0x0001, 0x0000])
+      put_change(changeset, :storage_id, pk)
+    end
   end
 end

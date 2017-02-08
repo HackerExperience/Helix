@@ -13,25 +13,35 @@ defmodule Helix.Software.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       elixirc_options: elixirc_options(Mix.env),
-      deps: deps()]
+      elixirc_paths: compile_paths(Mix.env),
+      deps: deps()
+    ]
   end
 
   def application do
     [
-      applications: applications(Mix.env),
-      mod: {Helix.Software.App, []}]
+      mod: {Helix.Software.App, []}
+    ]
   end
-
-  defp applications(_),
-    do: [:helix_core]
 
   defp elixirc_options(:dev),
     do: []
-  defp elixirc_options(_),
-    do: [warnings_as_errors: true]
+  defp elixirc_options(_) do
+    skip? = System.get_env("HELIX_SKIP_WARNINGS") == "true"
+    warnings? = !skip?
+
+    [warnings_as_errors: warnings?]
+  end
+
+  defp compile_paths(:test),
+    do: ["lib", "test/test_helper"]
+  defp compile_paths(_),
+    do: ["lib"]
 
   defp deps do
     [
-      {:helix_core, in_umbrella: true}]
+      {:helix_core, in_umbrella: true},
+      {:ex_machina, "~> 1.0", only: :test}
+    ]
   end
 end

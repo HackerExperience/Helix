@@ -11,26 +11,28 @@ defmodule Helix.Software.Model.StorageDrive do
     storage_id: PK.t,
     storage: Storage.t,
     drive_id: integer,
-    inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t
+    hardware_id: PK.t
   }
 
-  @creation_fields ~w/drive_id storage_id/a
+  @creation_fields ~w/drive_id hardware_id storage_id/a
 
   @primary_key false
   schema "storage_drives" do
+    field :storage_id, PK,
+      primary_key: true
     field :drive_id, :integer,
       primary_key: true
+
+    field :hardware_id, PK
+
     belongs_to :storage, Storage,
       foreign_key: :storage_id,
       references: :storage_id,
       type: HELL.PK,
-      primary_key: true
-
-    timestamps()
+      define_field: false
   end
 
-  @spec create_changeset(%{optional(:drive_id) => PK.t, optional(:storage_id) => PK.t}) :: Ecto.Changeset.t
+  @spec create_changeset(%{drive_id: PK.t, storage_id: PK.t, hardware_id: PK.t}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

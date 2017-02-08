@@ -84,9 +84,11 @@ defmodule Helix.Software.Model.File do
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp put_primary_key(changeset) do
-    ip = PK.generate([0x0004, 0x0000, 0x0000])
-
-    changeset
-    |> cast(%{file_id: ip}, [:file_id])
+    if get_field(changeset, :file_id) do
+      changeset
+    else
+      pk = PK.generate([0x0004, 0x0000, 0x0000])
+      put_change(changeset, :file_id, pk)
+    end
   end
 end
