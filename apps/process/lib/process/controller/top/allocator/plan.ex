@@ -35,7 +35,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
     |> execute()
   end
 
-  @spec plan([process], ServerResources.t) :: t
+  @spec plan([process], ServerResources.t) :: {t, ServerResources.t} | {:error, :insuficient_resources}
   defp plan(processes, resources) do
     keikaku = %{
       current_plan: %{fragment: %ServerResources{}, processes: []},
@@ -47,32 +47,20 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
   end
 
   # REVIEW: I was pretty tired when i wrote this. It should be refactored later
-  @spec preallocate([process], t, ServerResources.t) :: {:ok, t} | {:error, :insuficient_resources}
-  defp preallocate([h| t], plan, resources = %{cpu: c, ram: r, net: n}) do
+  @spec preallocate([process], t, ServerResources.t) :: {t, ServerResources.t} | {:error, :insuficient_resources}
+  defp preallocate([h| t], plan, resources) do
     xs = Process.allocate_minimum(h)
     net_id = Changeset.get_field(xs, :network_id)
 
-    rest =
-      n
-      |> Map.get(net_id, %{})
-      |> Map.merge(%{cpu: c, ram: r})
-      |> Resources.cast()
-      |> Resources.sub(Changeset.get_field(xs, :allocated))
-      # If network doesn't exists and the process doesn't require network alloc,
-      # it'll be returned as 0, and it's not a problem :)
-      |> Map.take([:cpu, :ram, :dlk, :ulk])
-
     # REVIEW: TODO: the return format still seems odd and this code is getting
     #   complicated
-    case Enum.find(rest, &(elem(&1, 1) < 0)) do
-      nil ->
-        resources = ServerResources.replace_network_if_exists(resources, net_id, rest.dlk, rest.ulk)
-
-        case allocable_resources(xs, resources) do
+    case ServerResources.sub_from_process(resources, xs) do
+      {:ok, r} ->
+        case allocable_resources(xs, r) do
           [] ->
             plan = Map.update!(plan, :acc, &([xs| &1]))
 
-            preallocate(t, plan, resources)
+            preallocate(t, plan, r)
           res ->
             shares = Changeset.get_field(xs, :priority)
 
@@ -81,20 +69,17 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
               |> update_in([:next_plan, :processes], &([{xs, res}| &1]))
               |> update_in([:next_plan, :shares], &merge_share(&1, res, shares, net_id))
 
-            preallocate(t, plan, resources)
+            preallocate(t, plan, r)
         end
-      {:ram, _} ->
-        {:error, {:resources, :lack, :ram}}
-      {:cpu, _} ->
-        {:error, {:resources, :lack, :cpu}}
-      {net, _} when net in [:dlk, :ulk] ->
-        {:error, {:resources, :lack, {:net, net, net_id}}}
+      error ->
+        error
     end
   end
 
   defp preallocate([], plan, r),
     do: {plan, r}
 
+  @spec allocable_resources(process, ServerResources.t) :: [:cpu | :ram | :dlk | :ulk]
   defp allocable_resources(process, %{cpu: c, ram: r, net: n}) do
     net_id = Changeset.get_field(process, :network_id)
     net = Map.get(n, net_id, [dlk: 0, ulk: 0])
@@ -112,6 +97,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
     Process.can_allocate(process) -- shouldnt
   end
 
+  @spec execute({t, ServerResources.t}) :: [Ecto.Changeset.t]
+  @spec execute({:error, any}) :: {:error, any}
   defp execute(er = {:error, _}),
     do: er
   defp execute({plan = %{}, resources = %{}}) do
@@ -148,16 +135,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
       can_allocate = Process.can_allocate(p1)
 
       res_diff = Resources.sub(allo1, allo0)
-      resources = %{resources|
-        cpu: resources.cpu - res_diff.cpu,
-        ram: resources.ram - res_diff.ram,
-        net: case resources.net do
-          n = %{^net_id => %{dlk: d1, ulk: u1}} ->
-            Map.put(n, net_id, %{dlk: d1 - res_diff.dlk, ulk: u1 - res_diff.ulk})
-          n ->
-            n
-        end
-      }
+      resources = ServerResources.sub_from_resources(resources, res_diff, net_id)
 
       plan
       |> put_in([:current_plan, :processes], t)
@@ -181,25 +159,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
     # denominator of the priority of the rest of processes to allocate more
     # properly the total amount of resources possible
 
-    f = %ServerResources{
-      cpu: s.cpu > 0 && div(resources.cpu, s.cpu) || 0,
-      ram: s.ram > 0 && div(resources.ram, s.ram) || 0,
-      net:
-        resources.net
-        |> Map.take(Map.keys(s.net))
-        |> Enum.map(fn {k, %{dlk: d, ulk: u}} ->
-          d2 = s.net[k].dlk
-          u2 = s.net[u].ulk
-
-          v2 = %{
-            dlk: d2 > 0 && div(d, d2) || 0,
-            ulk: u2 > 0 && div(u, u2) || 0
-          }
-
-          {k, v2}
-        end)
-        |> :maps.from_list()
-    }
+    f = ServerResources.part_from_shares(resources, s)
 
     # Let's simply update it to avoid forgetting we should keep the acc :joy:
     plan = %{plan|

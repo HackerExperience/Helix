@@ -98,8 +98,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       [process]
       |> Plan.allocate(resources)
       |> Enum.map(&Ecto.Changeset.apply_changes/1)
+      # |> IO.inspect
 
-    assert_in_delta xs.allocated.cpu, 9_000, 90
+    assert xs.allocated.cpu >= 8_900 and xs.allocated.cpu <= 9_000
     assert 100 === xs.allocated.ram
   end
 
