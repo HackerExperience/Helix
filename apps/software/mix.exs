@@ -34,7 +34,7 @@ defmodule Helix.Software.Mixfile do
   end
 
   defp compile_paths(:test),
-    do: ["lib", "test/test_helper"]
+    do: ["lib", "test/support"]
   defp compile_paths(_),
     do: ["lib"]
 

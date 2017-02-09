@@ -28,7 +28,7 @@ defmodule HELL.Mixfile do
     do: [warnings_as_errors: true]
 
   defp compile_paths(:test),
-    do: ["lib", "test/helper"]
+    do: ["lib", "test/support"]
   defp compile_paths(_),
     do: ["lib"]
 
