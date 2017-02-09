@@ -25,6 +25,17 @@ defmodule HELL.TestHelper.Random do
     Burette.Network.ipv6()
   end
 
+  def repeat(times, generator) when is_integer(times) and times > 0 do
+    for _ <- 1..times,
+      do: generator.()
+  end
+
+  def repeat(times = _.._, generator) do
+    times
+    |> number()
+    |> repeat(generator)
+  end
+
   @spec number() :: integer
   @doc """
   Returns a random number between `-#{@default_number}` and `#{@default_number}`
@@ -57,9 +68,7 @@ defmodule HELL.TestHelper.Random do
   ```
   """
   def number(m..n) do
-    ((n - m + 1) * :rand.uniform() + m)
-    |> Float.floor()
-    |> trunc()
+    Enum.random(m..n)
   end
 
   def number(params = [_|_]) do

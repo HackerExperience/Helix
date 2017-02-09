@@ -3,6 +3,7 @@ defmodule Helix.Software.Factory do
   use ExMachina.Ecto, repo: Helix.Software.Repo
 
   alias HELL.PK
+  alias HELL.TestHelper.Random
 
   def file_factory do
     :file
@@ -12,8 +13,8 @@ defmodule Helix.Software.Factory do
 
   def storage_factory do
     pk = PK.generate([0x0004, 0x0001, 0x0000])
-    file_amount = Burette.Number.number(1..3)
-    files = Enum.map(1..file_amount, fn _ ->
+
+    files = Random.repeat(1..3, fn ->
       :file
       |> prepare()
       |> Map.put(:storage_id, pk)
@@ -37,10 +38,9 @@ defmodule Helix.Software.Factory do
 
   defp prepare(:file) do
     # Maybe i need to add a generator for this in Burette
-    path_length = Burette.Number.number(1..5)
     path =
-      1..path_length
-      |> Enum.map(fn _ -> Burette.Internet.username() end)
+      1..5
+      |> Random.repeat(fn -> Burette.Internet.username() end)
       |> Enum.join("/")
 
     size = Burette.Number.number(1024..1_048_576)
