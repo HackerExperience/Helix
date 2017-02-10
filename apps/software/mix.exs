@@ -28,7 +28,7 @@ defmodule Helix.Software.Mixfile do
     do: []
   defp elixirc_options(_) do
     skip? = System.get_env("HELIX_SKIP_WARNINGS") == "true"
-    warnings? = !skip?
+    warnings? = not skip?
 
     [warnings_as_errors: warnings?]
   end

@@ -54,9 +54,7 @@ defmodule Helix.Software.Factory do
       #   maybe have a genserver that holds all possibilities be started with
       #   the test suite, that way simply fetching it is faster (and allows
       #   hacks) than fetching from DB every time
-      file_type: Enum.random(["firewall", "cracker", "exploit", "hasher"]),
-      inserted_at: NaiveDateTime.utc_now(),
-      updated_at: NaiveDateTime.utc_now()
+      file_type: Enum.random(["firewall", "cracker", "exploit", "hasher"])
     }
   end
 end
