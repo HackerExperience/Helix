@@ -12,12 +12,11 @@ defmodule Helix.Software.Controller.StorageDriveTest do
     highest_drive_id =
       storage.drives
       |> Enum.map(&(&1.drive_id))
-      |> Enum.reduce(&max/2)
+      |> Enum.reduce(0, &max/2)
 
     payload = %{
       drive_id: highest_drive_id + 1,
-      storage_id: storage.storage_id,
-      hardware_id: Random.pk()
+      storage_id: storage.storage_id
     }
 
     assert {:ok, _} = StorageDriveController.create(payload)

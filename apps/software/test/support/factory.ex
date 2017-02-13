@@ -21,13 +21,9 @@ defmodule Helix.Software.Factory do
     end)
 
     drive_amount = Burette.Number.number(1..3)
-    drives = Enum.map(1..drive_amount, fn i ->
-      %{
-        drive_id: i,
-        hardware_id: HELL.TestHelper.Random.pk(),
-        storage_id: pk
-      }
-    end)
+    drives = for i <- 1..drive_amount do
+      %{drive_id: i, storage_id: pk}
+    end
 
     %Helix.Software.Model.Storage{
       storage_id: pk,

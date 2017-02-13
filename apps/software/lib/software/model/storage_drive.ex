@@ -10,11 +10,10 @@ defmodule Helix.Software.Model.StorageDrive do
   @type t :: %__MODULE__{
     storage_id: PK.t,
     storage: Storage.t,
-    drive_id: integer,
-    hardware_id: PK.t
+    drive_id: integer
   }
 
-  @creation_fields ~w/drive_id hardware_id storage_id/a
+  @creation_fields ~w/drive_id storage_id/a
 
   @primary_key false
   schema "storage_drives" do
@@ -23,8 +22,6 @@ defmodule Helix.Software.Model.StorageDrive do
     field :drive_id, :integer,
       primary_key: true
 
-    field :hardware_id, PK
-
     belongs_to :storage, Storage,
       foreign_key: :storage_id,
       references: :storage_id,
@@ -32,7 +29,7 @@ defmodule Helix.Software.Model.StorageDrive do
       define_field: false
   end
 
-  @spec create_changeset(%{drive_id: PK.t, storage_id: PK.t, hardware_id: PK.t}) :: Ecto.Changeset.t
+  @spec create_changeset(%{drive_id: PK.t, storage_id: PK.t}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

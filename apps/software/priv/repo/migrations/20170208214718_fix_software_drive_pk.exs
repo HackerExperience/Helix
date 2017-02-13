@@ -15,9 +15,6 @@ defmodule Helix.Software.Repo.Migrations.FixSoftwareDrivePk do
 
       add :storage_id, references(:storages, column: :storage_id, type: :inet, on_delete: :delete_all), primary_key: true
       add :drive_id, :integer, primary_key: true
-      add :hardware_id, :inet
     end
-
-    create unique_index(:storage_drives, [:hardware_id], name: :storage_drives_hardware_id_unique_index)
   end
 end
