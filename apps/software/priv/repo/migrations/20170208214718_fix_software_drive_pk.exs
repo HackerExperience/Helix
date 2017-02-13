@@ -14,7 +14,7 @@ defmodule Helix.Software.Repo.Migrations.FixSoftwareDrivePk do
       remove :updated_at
 
       add :storage_id, references(:storages, column: :storage_id, type: :inet, on_delete: :delete_all), primary_key: true
-      add :drive_id, :integer, primary_key: true
+      add :drive_id, :inet, primary_key: true
     end
   end
 end

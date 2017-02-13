@@ -20,10 +20,9 @@ defmodule Helix.Software.Factory do
       |> Map.put(:storage_id, pk)
     end)
 
-    drive_amount = Burette.Number.number(1..3)
-    drives = for i <- 1..drive_amount do
-      %{drive_id: i, storage_id: pk}
-    end
+    drives = Random.repeat(1..3, fn ->
+      Helix.Software.Model.StorageDrive.create_changeset(%{storage_id: pk})
+    end)
 
     %Helix.Software.Model.Storage{
       storage_id: pk,

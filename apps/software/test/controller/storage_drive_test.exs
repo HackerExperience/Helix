@@ -9,13 +9,9 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   test "create/1" do
     storage = Factory.insert(:storage)
-    highest_drive_id =
-      storage.drives
-      |> Enum.map(&(&1.drive_id))
-      |> Enum.reduce(0, &max/2)
 
     payload = %{
-      drive_id: highest_drive_id + 1,
+      drive_id: Random.pk(),
       storage_id: storage.storage_id
     }
 
@@ -29,7 +25,7 @@ defmodule Helix.Software.Controller.StorageDriveTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} == StorageDriveController.find(Random.pk(), 1)
+      assert {:error, :notfound} == StorageDriveController.find(Random.pk(), Random.pk())
     end
   end
 

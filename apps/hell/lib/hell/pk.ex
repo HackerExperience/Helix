@@ -19,6 +19,7 @@ defmodule HELL.PK do
   # 0x0004  *       *       -> [Software]
   #         0x0000  *         -> File
   #         0x0001  *         -> Storage
+  #         *       0x0001      -> StorageDrive
   #         0x0002  *         -> ModuleRole
   # 0x0005  *       *       -> [Process]
   # *       0x0000  *         -> Process

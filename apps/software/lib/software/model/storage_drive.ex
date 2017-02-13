@@ -10,16 +10,16 @@ defmodule Helix.Software.Model.StorageDrive do
   @type t :: %__MODULE__{
     storage_id: PK.t,
     storage: Storage.t,
-    drive_id: integer
+    drive_id: PK.t
   }
 
-  @creation_fields ~w/drive_id storage_id/a
+  @creation_fields ~w/storage_id/a
 
   @primary_key false
   schema "storage_drives" do
     field :storage_id, PK,
       primary_key: true
-    field :drive_id, :integer,
+    field :drive_id, PK,
       primary_key: true
 
     belongs_to :storage, Storage,
@@ -29,10 +29,21 @@ defmodule Helix.Software.Model.StorageDrive do
       define_field: false
   end
 
-  @spec create_changeset(%{drive_id: PK.t, storage_id: PK.t}) :: Ecto.Changeset.t
+  @spec create_changeset(%{storage_id: PK.t}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
+    |> put_primary_key()
     |> validate_required(@creation_fields)
+  end
+
+  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
+  defp put_primary_key(changeset) do
+    if get_field(changeset, :drive_id) do
+      changeset
+    else
+      pk = PK.generate([0x0004, 0x0001, 0x0001])
+      put_change(changeset, :drive_id, pk)
+    end
   end
 end
