@@ -25,6 +25,17 @@ defmodule HELL.TestHelper.Random do
     Burette.Network.ipv6()
   end
 
+  def repeat(times, generator) when is_integer(times) and times > 0 do
+    for _ <- 1..times,
+      do: generator.()
+  end
+
+  def repeat(times = _.._, generator) do
+    times
+    |> number()
+    |> repeat(generator)
+  end
+
   @spec number() :: integer
   @doc """
   Returns a random number between `-#{@default_number}` and `#{@default_number}`
@@ -57,9 +68,7 @@ defmodule HELL.TestHelper.Random do
   ```
   """
   def number(m..n) do
-    ((n - m + 1) * :rand.uniform() + m)
-    |> Float.floor()
-    |> trunc()
+    Enum.random(m..n)
   end
 
   def number(params = [_|_]) do
@@ -167,68 +176,6 @@ defmodule HELL.TestHelper.Random do
   """
   def username(),
     do: String.slice(Burette.Internet.username(), 0..14)
-
-  @doc """
-  Repeats `function` several times
-
-  You can provide params like `min`, `max` and `times`.
-  - `times` means how many times you want the do block to be re-evaluated
-  - `min` is the minimum times the block should be re-evaluated (defaults
-  to 10 and is ignored if `times` is provided)
-  - `max` is the maximum times the block should be re-evaluated (defaults
-  to 20 and is ignored if `times` is provided)
-
-  Note that the code inside the function will be executed several times and it's
-  value is returned as a list at the end
-
-  ## Example
-  ```
-      function = fn ->
-        email = random_email()
-        assert valid_email?(email)
-      end
-      repeat function, times: 300
-
-
-      function = fn -> :ok end
-      repeat function, times: 100
-      # [:ok, :ok, :ok, :ok, ...]
-
-
-      function = fn ->
-        password = valid_password_including_cool_emoji()
-        assert valid_password?(password)
-      end
-      repeat function min: 100, max: 10_000
-
-      list_of_random_floats = repeat fn ->
-        :random.uniform()
-      end
-
-      assert Enum.all?(list_of_random_floats, &(&1 >= 0 and &1 <= 1))
-
-
-      emoji_alphabet = Alphabet.build_alphabet(["🔙", "🔚", "🔝"])
-      function = fn ->
-        user_name = string(alphabet: emoji_alphabet, min: 3, max: 100)
-        assert is_binary(user_name)
-      end
-      repeat function
-  ```
-  """
-  def repeat(function, params \\ []) do
-    min = Keyword.get(params, :min, 10)
-    max = Keyword.get(params, :min, 20)
-    times = Keyword.get(params, :times, number(min..max))
-
-    if 0 === times do
-      []
-    else
-      for _ <- 1..times do
-        function.()
-      end
-    end
-  end
 
   docp """
   Fetches a random letter from an alphabet

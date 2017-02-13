@@ -2,373 +2,207 @@ defmodule Helix.Software.Controller.FileTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.File, as: FileController
-  alias Helix.Software.Controller.Storage, as: StorageController
-  alias Helix.Software.Model.FileType
-  alias Helix.Software.Repo
 
-  setup_all do
-    file_type = Random.string(min: 20)
-    extension = Random.string(min: 1, max: 3)
+  alias Helix.Software.Factory
 
-    %{file_type: file_type, extension: "." <> extension}
-    |> FileType.create_changeset()
-    |> Repo.insert!()
+  def generate_params do
+    storage = Factory.insert(:storage)
 
-    {:ok, file_type: file_type}
-  end
-
-  setup do
-    {:ok, storage} = StorageController.create()
-    {:ok, storage: storage}
-  end
-
-  defp generate_payload(file_type, storage) do
-    %{
-      name: generate_name(),
-      file_path: generate_path(),
-      file_type: file_type,
-      file_size: Random.number(min: 1),
-      storage_id: storage.storage_id
-    }
-  end
-
-  defp generate_name() do
-    Random.digits(min: 20)
-  end
-
-  defp generate_path() do
-    size = Random.number(1..10)
-    alphabet = HELL.TestHelper.Random.Alphabet.Alphanum.alphabet
-    random_str = fn _ ->
-      length = Random.number(1..10)
-      Random.string(length: length, alphabet: alphabet)
-    end
-    0..size
-    |> Enum.map(random_str)
-    |> Enum.join(".")
+    :file
+    |> Factory.params_for()
+    |> Map.put(:storage_id, storage.storage_id)
+    |> Map.drop([:inserted_at, :updated_at])
   end
 
   describe "file creation" do
-    test "creates a file with the correct name", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.find(file1.file_id)
+    test "uses input as expected" do
+      params = generate_params()
 
-      # file got the correct name
-      assert params.name == file1.name
+      {:ok, file} = FileController.create(params)
 
-      # found file is identical to the one yielded by create
-      assert file1 == file2
+      got = Map.take(file, Map.keys(params))
+
+      assert params == got
     end
 
-    test "creates a file with the correct path", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.find(file1.file_id)
+    test "fails on path identity conflict" do
+      params = generate_params()
 
-      # file got the correct file_path
-      assert params.file_path == file2.file_path
-
-      # found file is identical to the one yielded by create
-      assert file1 == file2
-    end
-
-    test "creates a file with the correct size", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # file got the correct file_size
-      assert params.file_size == file2.file_size
-
-      # found file is identical to the one yielded by create
-      assert file1 == file2
-    end
-
-    test "creates a file with the correct type", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # file got the correct file_type
-      assert params.file_type == file1.file_type
-
-      # found file is identical to the one yielded by create
-      assert file1 == file2
-    end
-
-    test "creates a file bound to the correct storage", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # file got the correct storage
-      assert context.storage.storage_id == file1.storage_id
-
-      # found file is identical to the one yielded by create
-      assert file1 == file2
-    end
-
-    test "create fails on path identity conflict", context do
-      params = generate_payload(context.file_type, context.storage)
       {:ok, _} = FileController.create(params)
 
-      # got expected error
-      assert {:error, :file_exists} == FileController.create(params)
+      collision = Map.take(params, [:name, :file_path, :file_type, :storage_id])
+
+      params1 = Map.merge(generate_params(), collision)
+
+      assert {:error, :file_exists} == FileController.create(params1)
     end
   end
 
   describe "file fetching" do
-    test "fetches an existent file", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.find(file1.file_id)
+    test "succeeds when file exists" do
+      file = Factory.insert(:file)
+      {:ok, found} = FileController.find(file.file_id)
 
-      # found the same previously created file
-      assert file1 == file2
+      assert file.file_id == found.file_id
     end
 
-    test "find fails when files is not found" do
-      # got expected error
-      assert {:error, :notfound} == FileController.find(PK.generate([]))
+    test "fails when file doesn't exists" do
+      assert {:error, :notfound} == FileController.find(Random.pk())
     end
   end
 
-  describe "file updating" do
-    test "updates the name", context do
-      params1 = generate_payload(context.file_type, context.storage)
-      params2 = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params1)
-      {:ok, file1} = FileController.update(file1, params2)
-      {:ok, file2} = FileController.find(file1.file_id)
+  test "updating a file" do
+    file = Factory.insert(:file)
 
-      # file updates to the correct name
-      assert params2.name == file1.name
+    # Name
+    params = Map.take(Factory.params_for(:file), [:name])
 
-      # file is identical to the one yielded by update
-      assert file1 == file2
+    {:ok, updated} = FileController.update(file, params)
+
+    refute file.name == updated.name
+    assert params.name == updated.name
+
+    # File_path
+    params = Map.take(Factory.params_for(:file), [:file_path])
+
+    {:ok, updated} = FileController.update(file, params)
+
+    refute file.file_path == updated.file_path
+    assert params.file_path == updated.file_path
+
+    # Storage
+    # REVIEW: I think we should disallow this. A file should not be
+    #   moved/updated to another storage but should be copied to it
+    storage = Factory.insert(:storage)
+    params = %{storage_id: storage.storage_id}
+
+    {:ok, updated} = FileController.update(file, params)
+
+    refute file.storage_id == updated.storage_id
+    assert params.storage_id == updated.storage_id
+  end
+
+  test "update fails on path identity conflict" do
+    file0 = Factory.insert(:file)
+    similarities = Map.take(file0, [:file_type, :storage, :storage_id])
+    file1 =
+      :file
+      |> Factory.build()
+      |> Map.merge(similarities)
+      |> Factory.insert()
+
+    {:ok, file1} = FileController.find(file1.file_id)
+
+    params = %{file_path: file0.file_path, name: file0.name}
+
+    assert {:error, :file_exists} == FileController.update(file1, params)
+
+    {:ok, found} = FileController.find(file1.file_id)
+
+    assert file1 == found
+  end
+
+  describe "copying a file" do
+    test "to another path in the same storage" do
+      path = Factory.params_for(:file).file_path
+
+      origin = Factory.insert(:file)
+      {:ok, copy} = FileController.copy(origin, path, origin.storage_id)
+
+      assert {:ok, _} = FileController.find(origin.file_id)
+      assert {:ok, _} = FileController.find(copy.file_id)
+
+      assert path == copy.file_path
     end
 
-    test "updates the path", context do
-      params1 = generate_payload(context.file_type, context.storage)
-      params2 = generate_payload(context.file_type, context.storage)
-      {:ok, file1} = FileController.create(params1)
-      {:ok, file1} = FileController.update(file1, params2)
-      {:ok, file2} = FileController.find(file1.file_id)
+    test "to another storage" do
+      storage = Factory.insert(:storage)
 
-      # file updates to the correct file_path
-      assert params2.file_path == file1.file_path
+      origin = Factory.insert(:file)
+      {:ok, copy} = FileController.copy(origin, origin.file_path, storage.storage_id)
 
-      # file is identical to the one yielded by update
-      assert file1 == file2
+      assert {:ok, _} = FileController.find(origin.file_id)
+      assert {:ok, _} = FileController.find(copy.file_id)
+
+      assert storage.storage_id == copy.storage_id
     end
 
-    test "updates the storage", context do
-      {:ok, storage} = StorageController.create()
-      params1 = generate_payload(context.file_type, context.storage)
-      params2 = generate_payload(context.file_type, storage)
-      {:ok, file1} = FileController.create(params1)
-      {:ok, file1} = FileController.update(file1, params2)
-      {:ok, file2} = FileController.find(file1.file_id)
+    test "fails on path identity conflict" do
+      origin = Factory.insert(:file)
 
-      # file updates to the correct storage_id
-      assert storage.storage_id == file1.storage_id
-
-      # file is identical to the one yielded by update
-      assert file1 == file2
-    end
-
-    test "update fails on path identity conflict", context do
-      params1 = generate_payload(context.file_type, context.storage)
-      params2 = generate_payload(context.file_type, context.storage)
-      {:ok, _} = FileController.create(params1)
-      {:ok, file1} = FileController.create(params2)
-
-      # got expected error
-      assert {:error, :file_exists} == FileController.update(file1, params1)
-
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # file is unchanged
-      assert file1 == file2
+      assert {:error, :file_exists} == FileController.copy(origin, origin.file_path, origin.storage_id)
     end
   end
 
-  describe "file copying" do
-    test "copies to another path", context do
-      params = generate_payload(context.file_type, context.storage)
-      file_path = generate_path()
-      storage_id = context.storage.storage_id
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.copy(file1, file_path, storage_id)
-      {:ok, file3} = FileController.find(file1.file_id)
-      {:ok, file4} = FileController.find(file2.file_id)
+  describe "moving a file" do
+    test "to another path" do
+      file = Factory.insert(:file)
+      path = Factory.params_for(:file).file_path
 
-      # original file remains unchanged
-      assert file1 == file3
+      {:ok, file} = FileController.move(file, path, file.storage_id)
 
-      # the new file was copied to the correct file_path
-      assert file_path == file2.file_path
-
-      # found file is identical to the one yielded by copy
-      assert file2 == file4
+      assert path == file.file_path
     end
 
-    test "copies to another storage", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, s} = StorageController.create()
-      {:ok, file1} = FileController.create(params)
-      {:ok, file2} = FileController.copy(file1, file1.file_path, s.storage_id)
-      {:ok, file3} = FileController.find(file1.file_id)
-      {:ok, file4} = FileController.find(file2.file_id)
-
-      # original file remains unchanged
-      assert file1 == file3
-
-      # the new file was copied to the correct file_path
-      assert s.storage_id == file2.storage_id
-
-      # found file is identical to the one yielded by copy
-      assert file2 == file4
+    @tag :pending
+    test "to another storage" do
+      # REVIEW: I think this should not be allowed. You don't move a file to
+      #   another storage, you copy it and delete the original
     end
 
-    test "copy fails on path identity conflict", context do
-      params1 = generate_payload(context.file_type, context.storage)
-      params2 =
-        context.file_type
-        |> generate_payload(context.storage)
-        |> Map.put(:name, params1.name)
-      file_path = params1.file_path
-      storage_id = params1.storage_id
+    test "fails on path identity conflict" do
+      file0 = Factory.insert(:file)
+      similarities = Map.take(file0, [:name, :storage, :storage_id, :file_type])
+      file1 =
+        :file
+        |> Factory.build()
+        |> Map.merge(similarities)
+        |> Factory.insert()
 
-      {:ok, _} = FileController.create(params1)
-      {:ok, file1} = FileController.create(params2)
-
-      # got expected error
-      assert {:error, :file_exists} ==
-        FileController.copy(file1, file_path, storage_id)
-
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # file is unchanged
-      assert file1 == file2
+      assert {:error, :file_exists} == FileController.move(file1, file0.file_path, file0.storage_id)
     end
   end
 
-  describe "file moving" do
-    test "moves to another path", context do
-      params = generate_payload(context.file_type, context.storage)
-      file_path = generate_path()
-      storage_id = context.storage.storage_id
-      {:ok, file1} = FileController.create(params)
-      {:ok, file1} = FileController.move(file1, file_path, storage_id)
-      {:ok, file2} = FileController.find(file1.file_id)
+  test "renaming a file" do
+    file = Factory.insert(:file)
+    name = Factory.params_for(:file).name
 
-      # moved to the correct file_path
-      assert file_path == file1.file_path
+    {:ok, file} = FileController.rename(file, name)
 
-      # found file is identical to the one yielded by move
-      assert file1 == file2
-    end
-
-    test "moves to to another storage", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, s} = StorageController.create()
-      {:ok, file1} = FileController.create(params)
-      {:ok, file1} = FileController.move(file1, file1.file_path, s.storage_id)
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # moved to the correct storage_id
-      assert s.storage_id == file1.storage_id
-
-      # found file is identical to the one yielded by move
-      assert file1 == file2
-    end
-
-    test "move fails on path identity conflict", context do
-      params1 = generate_payload(context.file_type, context.storage)
-      params2 =
-        context.file_type
-        |> generate_payload(context.storage)
-        |> Map.put(:name, params1.name)
-      file_path = params1.file_path
-      storage_id = params1.storage_id
-
-      {:ok, _} = FileController.create(params1)
-      {:ok, file1} = FileController.create(params2)
-
-      # move yields expected error
-      assert {:error, :file_exists} ==
-        FileController.move(file1, file_path, storage_id)
-
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # file remains unchanged
-      assert file1 == file2
-    end
+    assert name == file.name
   end
 
-  describe "file renaming" do
-    test "ranames the file", context do
-      params = generate_payload(context.file_type, context.storage)
-      name = generate_name()
-      {:ok, file1} = FileController.create(params)
-      {:ok, file1} = FileController.rename(file1, name)
-      {:ok, file2} = FileController.find(file1.file_id)
+  test "renaming a file fails on path identity conflict" do
+    file0 = Factory.insert(:file)
+    similarities = Map.take(file0, [:file_path, :file_type, :storage, :storage_id])
+    file1 =
+      :file
+      |> Factory.build()
+      |> Map.merge(similarities)
+      |> Factory.insert()
 
-      # renamed the file correctly
-      assert name == file1.name
-
-      # found file is identical to the one yielded by rename
-      assert file1 == file2
-    end
-
-    test "rename fails on path identity conflict", context do
-      params1 = generate_payload(context.file_type, context.storage)
-      params2 = Map.put(params1, :name, generate_name())
-
-      {:ok, _} = FileController.create(params1)
-      {:ok, file1} = FileController.create(params2)
-
-      # got expected error
-      assert {:error, :file_exists} == FileController.rename(file1, params1.name)
-
-      {:ok, file2} = FileController.find(file1.file_id)
-
-      # file remains unchanged
-      assert file1 == file2
-    end
+    assert {:error, :file_exists} == FileController.rename(file1, file0.name)
   end
 
-  describe "file deleting" do
-    test "delete is idempotent", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
-      :ok = FileController.delete(file)
+  describe "deleting a file" do
+    test "is idempotent" do
+      file = Factory.insert(:file)
+
+      :ok = FileController.delete(file.file_id)
       :ok = FileController.delete(file.file_id)
 
-      # no file is found
       assert {:error, :notfound} == FileController.find(file.file_id)
     end
 
-    test "deletes the file by id", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
+    test "can be done by it's id or it's struct" do
+      file = Factory.insert(:file)
       :ok = FileController.delete(file.file_id)
-
-      # no file is found
       assert {:error, :notfound} == FileController.find(file.file_id)
-    end
 
-    test "deletes the file by struct", context do
-      params = generate_payload(context.file_type, context.storage)
-      {:ok, file} = FileController.create(params)
-      :ok = FileController.delete(file)
-
-      # no file is found
+      file = Factory.insert(:file)
+      :ok = FileController.delete(file.file_id)
       assert {:error, :notfound} == FileController.find(file.file_id)
     end
   end

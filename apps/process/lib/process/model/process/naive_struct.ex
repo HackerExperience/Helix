@@ -36,7 +36,7 @@ defmodule Helix.Process.Model.Process.NaiveStruct do
   def load(not_a_struct = %{"__module_name__": m}) do
     module = String.to_existing_atom(m)
 
-    {:ok, struct(not_a_struct, module)}
+    {:ok, struct(module, not_a_struct)}
   end
 
   def load(_),

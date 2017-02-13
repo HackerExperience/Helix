@@ -38,6 +38,9 @@ defmodule Helix.Software.Controller.FileModule do
     |> :maps.from_list()
   end
 
+  # REVIEW: on sucess return only :ok or {:ok, version}. I don't really see the
+  #   point in returning the FileModule struct as it's not even used for
+  #   anything
   @spec update(File.t, HELL.PK.t, version :: pos_integer) ::
     {:ok, FileModule.t}
     | {:error, :notfound | Ecto.Changeset.t}

@@ -2,44 +2,46 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
-  alias HELL.TestHelper.Random, as: HRand
-  alias Helix.Software.Controller.Storage, as: StorageController
+  alias HELL.TestHelper.Random
   alias Helix.Software.Controller.StorageDrive, as: StorageDriveController
 
-  setup do
-    {:ok, storage} = StorageController.create()
+  alias Helix.Software.Factory
+
+  test "create/1" do
+    storage = Factory.insert(:storage)
 
     payload = %{
-      drive_id: HRand.number(),
+      drive_id: Random.pk(),
       storage_id: storage.storage_id
     }
 
-    {:ok, payload: payload}
-  end
-
-  test "create/1", %{payload: payload} do
     assert {:ok, _} = StorageDriveController.create(payload)
   end
 
   describe "find/2" do
-    test "success", %{payload: payload} do
-      assert {:ok, drive} = StorageDriveController.create(payload)
+    test "success" do
+      drive = create_drive()
       assert {:ok, ^drive} = StorageDriveController.find(drive.storage_id, drive.drive_id)
     end
 
     test "failure" do
-
-      assert {:error, :notfound} == StorageDriveController.find(PK.generate([]), 0)
+      assert {:error, :notfound} == StorageDriveController.find(Random.pk(), Random.pk())
     end
   end
 
-  test "delete/2 idempotency", %{payload: payload} do
-    assert {:ok, drive} = StorageDriveController.create(payload)
+  test "delete/2 idempotency" do
+    drive = create_drive()
 
     assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
     assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
 
     assert {:error, :notfound} == StorageDriveController.find(drive.storage_id, drive.drive_id)
+  end
+
+  defp create_drive do
+    :storage
+    |> Factory.insert()
+    |> Map.fetch!(:drives)
+    |> Enum.random()
   end
 end
