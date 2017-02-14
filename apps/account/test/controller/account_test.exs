@@ -26,8 +26,8 @@ defmodule Helix.Account.Controller.AccountTest do
     %{
       username: name,
       email: email,
-      password_confirmation: password,
-      password: password}
+      password: password
+    }
   end
 
   describe "account creation" do
@@ -41,13 +41,6 @@ defmodule Helix.Account.Controller.AccountTest do
       assert :email in Keyword.keys(changeset.errors)
     end
 
-    test "fails when password confirmation doesn't match" do
-      payload = %{payload()| password_confirmation: "toptoper123"}
-
-      assert {:error, changeset} = AccountController.create(payload)
-      assert :password_confirmation in Keyword.keys(changeset.errors)
-    end
-
     test "fails when username is already in use", %{account: account} do
       params = Map.put(payload(), :username, account.username)
       assert {:error, changeset} = AccountController.create(params)
@@ -55,7 +48,7 @@ defmodule Helix.Account.Controller.AccountTest do
     end
 
     test "fails when password is too short" do
-      payload = %{payload()| password: "123", password_confirmation: "123"}
+      payload = %{payload()| password: "123"}
 
       assert {:error, changeset} = AccountController.create(payload)
       assert :password in Keyword.keys(changeset.errors)
@@ -97,7 +90,6 @@ defmodule Helix.Account.Controller.AccountTest do
       payload = %{
         email: Burette.Internet.email() |> String.downcase(),
         password: password,
-        password_confirmation: password,
         confirmed: true
       }
 
@@ -126,7 +118,7 @@ defmodule Helix.Account.Controller.AccountTest do
       pass = "!!!foobar1234"
 
       account
-      |> Account.update_changeset(%{password: pass, password_confirmation: pass})
+      |> Account.update_changeset(%{password: pass})
       |> Repo.update!()
 
       assert {:ok, _} = AccountController.login(account.username, pass)

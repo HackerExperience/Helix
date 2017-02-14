@@ -12,10 +12,10 @@ defmodule Helix.Account.Controller.AccountSettingTest do
     username = Random.username()
     email = Burette.Internet.email()
     password = Burette.Internet.password()
+
     params = %{
       username: username,
       email: email,
-      password_confirmation: password,
       password: password
     }
 
