@@ -7,14 +7,14 @@ defmodule Helix.Process.Model.ProcessTest do
   alias Helix.Process.TestHelper
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
-  alias Helix.Process.Model.Process.SoftwareType
+  alias Helix.Process.Model.Process.ProcessType
 
   setup do
     process =
       %{
         gateway_id: Random.pk(),
         target_server_id: Random.pk(),
-        software: %TestHelper.SoftwareTypeExample{}
+        process_data: %TestHelper.ProcessTypeExample{}
       }
       |> Process.create_changeset()
       |> Changeset.apply_changes()
@@ -28,24 +28,24 @@ defmodule Helix.Process.Model.ProcessTest do
     |> Map.keys()
   end
 
-  describe "software data" do
-    test "software data must be a struct" do
-      p = Process.create_changeset(%{software: %{foo: :bar}})
+  describe "process data" do
+    test "process data must be a struct" do
+      p = Process.create_changeset(%{process_data: %{foo: :bar}})
 
-      assert :software in error_fields(p)
+      assert :process_data in error_fields(p)
     end
 
-    test "a struct is only valid if it implements SoftwareType protocol" do
-      p = Process.create_changeset(%{software: %File.Stream{}})
+    test "a struct is only valid if it implements ProcessType protocol" do
+      p = Process.create_changeset(%{process_data: %File.Stream{}})
 
-      assert :software in error_fields(p)
+      assert :process_data in error_fields(p)
     end
 
-    test "as long as the struct implements SoftwareType, everything will be alright" do
-      params = %{software: %TestHelper.SoftwareTypeExample{}}
+    test "as long as the struct implements ProcessType, everything will be alright" do
+      params = %{process_data: %TestHelper.ProcessTypeExample{}}
       p = Process.create_changeset(params)
 
-      refute :software in error_fields(p)
+      refute :process_data in error_fields(p)
     end
   end
 
@@ -146,7 +146,7 @@ defmodule Helix.Process.Model.ProcessTest do
       assert 2 === Process.allocation_shares(process)
     end
 
-    test "can only allocate if the SoftwareType allows", %{process: process} do
+    test "can only allocate if the ProcessType allows", %{process: process} do
       priority = 2
       process =
         process
@@ -155,9 +155,9 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Changeset.apply_changes()
 
       assert 2 === Process.allocation_shares(process)
-      p2 = %{process| software: %TestHelper.StaticSoftwareTypeExample{}}
+      p2 = %{process| process_data: %TestHelper.StaticProcessTypeExample{}}
 
-      assert [] === SoftwareType.dynamic_resources(%TestHelper.StaticSoftwareTypeExample{})
+      assert [] === ProcessType.dynamic_resources(%TestHelper.StaticProcessTypeExample{})
       assert 0 === Process.allocation_shares(p2)
     end
   end

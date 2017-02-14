@@ -9,9 +9,10 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   require Logger
 
   alias Helix.Process.Repo
+  alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
-  alias Helix.Process.Model.Process.SoftwareType
+  alias Helix.Process.Model.Process.ProcessType
 
   import HELL.MacroHelpers
 
@@ -98,16 +99,18 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     Enum.map(changeset_list, &Ecto.Changeset.apply_changes/1)
   end
 
-  @spec request_server_resources(module, server_id) :: {:ok, Resources.t} | {:error, reason :: term}
+  @spec request_server_resources(module, server_id) :: {:ok, ServerResources.t} | {:error, reason :: term}
   docp """
   Requests the amount of in-game hardware related to the `server_id` server
   """
   defp request_server_resources(broker, server_id) do
     with \
       params = %{server_id: server_id},
-      {_, {:ok, return}} <- broker.call("server:hardware:resources", params)
+      {_, return} <- broker.call("server:hardware:resources", params),
+      {:ok, resources} <- return
     do
-      Resources.from_server_resources(return)
+      resources = ServerResources.cast(resources)
+      {:ok, resources}
     end
   end
 
@@ -127,12 +130,12 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   @spec notify(module, ProcessModel.t, atom) :: no_return
   defp notify(broker, process, :complete) do
-    namespace = SoftwareType.event_namespace(process.software)
+    namespace = ProcessType.event_namespace(process.process_data)
     message = %{
       process_id: process.process_id,
       server_id: process.server_id,
       target_server_id: process.target_server_id,
-      software: process.software
+      process_data: process.process_data
     }
 
     # Should become something like 'event:process:cracker:completed'
@@ -206,9 +209,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   def handle_cast({:resources, resources}, state) do
-    {:ok, r2} = Resources.from_server_resources(resources)
-
-    handle_info(:allocate, %{state| resources: r2})
+    handle_info(:allocate, %{state| resources: ServerResources.cast(resources)})
   end
 
   @doc false
@@ -319,83 +320,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     Enum.map(process_list, &ProcessModel.calculate_work(&1, now))
   end
 
-  @spec allocate(
-    [ProcessModel.t],
-    Resources.t) :: [Ecto.Changeset.t] | {:error, :insufficient_resources}
-  docp """
-  Allocates dynamic resources to the `processes` as long as the total does not
-  exceed `resources`
-  """
-  defp allocate(processes, resources) do
-    processes = Enum.map(processes, &ProcessModel.allocate_minimum/1)
-
-    allocated = Enum.reduce(processes, %Resources{}, fn p, acc ->
-      Resources.sum(acc, Ecto.Changeset.get_field(p, :allocated))
-    end)
-
-    free = Resources.sub(resources, allocated)
-
-    shares =
-      processes
-      |> Enum.map(&ProcessModel.allocation_shares/1)
-      |> Enum.sum()
-
-    if :lt == Resources.compare(resources, allocated) do
-      # When the minimum allocation of the process list is bigger
-      {:error, :insufficient_resources}
-    else
-      allocate(processes, free, shares, [])
-    end
-  end
-
-  @spec allocate(
-    [ProcessModel.t],
-    Resources.t,
-    shares :: non_neg_integer,
-    [ProcessModel.t]) :: [Ecto.Changeset.t]
-  defp allocate([], _, _, acc),
-    do: acc
-  defp allocate(processes, _, 0, acc),
-    do: processes ++ acc
-  defp allocate(processes, resources, shares, acc) do
-    # FIXME: tried to make it a bit more obvious but it's still a tadbit
-    #   impossible to understand how the allocation works without me explaining
-    #   (so it means that it's still smelly code)
-
-    # How many resources can be
-    share = Resources.div(resources, shares)
-
-    allocated_processes =
-      processes
-      |> Enum.map(&Resources.mul(share, &1.priority))
-      |> Enum.zip(processes)
-      |> Enum.map(fn {a, p} -> ProcessModel.allocate(p, a) end)
-
-    filter = fn {p2, p1} ->
-      p2 !== p1 and ProcessModel.can_allocate?(p2)
-    end
-
-    zipped = Enum.zip(allocated_processes, processes)
-
-    # A group_by is used instead of a split_with here because group_by allows
-    # 1-pass mapping
-    %{false: nalloc, true: realloc} = Enum.group_by(zipped, filter, &elem(&1, 0))
-
-    # How many shares should the rest of resources be divided by for the next
-    # allocation round
-    s2 = realloc |> Enum.map(&(&1.priority)) |> Enum.sum()
-
-    # How many resources were allocated on this round
-    r_delta =
-      zipped
-      |> Enum.map(fn {p2, p1} -> Resources.sub(p2.allocated, p1.allocated) end)
-      |> Enum.reduce(&Resources.sum/2)
-
-    # How many resources are left for next round
-    r2 = Resources.sub(resources, r_delta)
-
-    allocate(realloc, r2, s2, nalloc ++ acc)
-  end
+  defp allocate(processes, resources),
+    do: Helix.Process.Controller.TableOfProcesses.Allocator.Plan.allocate(processes, resources)
 
   @spec allocate_dropping(
     [ProcessModel.t],

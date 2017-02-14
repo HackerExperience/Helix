@@ -1,4 +1,4 @@
-defprotocol Helix.Process.Model.Process.SoftwareType do
+defprotocol Helix.Process.Model.Process.ProcessType do
 
   @type resource :: :cpu | :ram | :dlk | :ulk
 
