@@ -39,8 +39,7 @@ defmodule Helix.Process.Repo.Migrations.UpdateProcessAddNetworkId do
 
     create index(:processes, [:gateway_id])
 
-    # TODO: A better name would be nice i guess
-    create table(:server_process_maps, primary_key: false) do
+    create table(:process_servers, primary_key: false) do
       add :server_id, :inet,
         primary_key: true
       add :process_id, references(:processes, column: :process_id, type: :inet, on_delete: :delete_all, on_update: :nothing),
@@ -49,6 +48,6 @@ defmodule Helix.Process.Repo.Migrations.UpdateProcessAddNetworkId do
         null: false
     end
 
-    create index(:server_process_maps, [:server_id, :process_type, :process_id], name: :server_process_maps_process_type_on_server_index)
+    create index(:process_servers, [:server_id, :process_type, :process_id], name: :process_servers_process_type_on_server_index)
   end
 end

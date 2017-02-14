@@ -165,10 +165,10 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec complete?(t) :: boolean
-  def complete?(p = %Ecto.Changeset{}),
-    do: complete?(apply_changes(p))
-  def complete?(%__MODULE__{state: s, objective: o, processed: p}),
-    do: s == :complete or o == p
+  def complete?(process = %Ecto.Changeset{}),
+    do: complete?(apply_changes(process))
+  def complete?(%__MODULE__{state: state, objective: objective, processed: processed}),
+    do: state == :complete or objective == processed
 
   @spec handle_complete(t) :: t | nil
   def handle_complete(p) do
@@ -215,8 +215,12 @@ defmodule Helix.Process.Model.Process do
   @spec allocation_shares(process) :: non_neg_integer
   def allocation_shares(process) do
     case process do
-      %__MODULE__{state: s, priority: p} when s in [:standby, :running] ->
-        can_allocate?(process) && p || 0
+      %__MODULE__{state: state, priority: priority} when state in [:standby, :running] ->
+        if can_allocate?(process) do
+          priority
+        else
+          0
+        end
       %__MODULE__{} ->
         0
       %Ecto.Changeset{} ->
@@ -227,13 +231,13 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec pause(process) :: Changeset.t
-  def pause(p = %__MODULE__{}),
-    do: pause(change(p))
-  def pause(p) do
-    if :paused == get_field(p, :state) do
-      p
+  def pause(process = %__MODULE__{}),
+    do: pause(change(process))
+  def pause(process) do
+    if :paused == get_field(process, :state) do
+      process
     else
-      p
+      process
       |> calculate_work(DateTime.utc_now())
       |> update_changeset(%{state: :paused, estimated_time: nil})
       |> allocate_minimum()
@@ -241,13 +245,13 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec resume(process) :: Changeset.t
-  def resume(p) do
-    cs = change(p)
+  def resume(process) do
+    cs = change(process)
     state = get_field(cs, :state)
 
     if :paused === state do
       # FIXME: state can be "standby" on some cases
-      p
+      cs
       |> update_changeset(%{state: :running, updated_time: DateTime.utc_now()})
       |> allocate_minimum()
       |> estimate_conclusion()
@@ -324,13 +328,19 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec can_allocate?(process, res | [res]) :: boolean when res: (:cpu | :ram | :dlk | :ulk)
-  def can_allocate?(processes, resources  \\ [:cpu, :ram, :dlk, :ulk]) do
-    r = List.wrap(resources)
-    Enum.any?(can_allocate(processes), &(&1 in r))
+  @doc """
+  Checks if the `process` can allocate any of the specified `resources`
+  """
+  def can_allocate?(process, resources  \\ [:cpu, :ram, :dlk, :ulk]) do
+    resources = List.wrap(resources)
+    Enum.any?(can_allocate(process), &(&1 in resources))
   end
 
   # TODO: rename this
   @spec can_allocate(process) :: [:cpu | :ram | :dlk | :ulk]
+  @doc """
+  Returns a list with all resources that the `process` can allocate
+  """
   def can_allocate(process = %Ecto.Changeset{}),
     do: can_allocate(apply_changes(process))
   def can_allocate(process = %__MODULE__{}) do
@@ -342,18 +352,22 @@ defmodule Helix.Process.Model.Process do
       objective ->
         remaining = Resources.sub(objective, process.processed)
         fn resource ->
-          r = Map.get(remaining, resource)
-          is_integer(r) and r > 0
+          still_to_be_processed_amount = Map.get(remaining, resource)
+
+          is_integer(still_to_be_processed_amount)
+          and still_to_be_processed_amount > 0
         end
     end
 
     process.process_data
     |> ProcessType.dynamic_resources()
     |> Enum.filter(fn resource ->
-      l = Map.get(process.limitations, resource)
-      a = Map.get(process.allocated, resource)
+      # Note that this is `nil` unless a value is specified.
+      # Also note that nil is greater than any integer :)
+      limitations = Map.get(process.limitations, resource)
+      allocated = Map.get(process.allocated, resource)
 
-      objective_allows?.(resource) and l > a
+      objective_allows?.(resource) and limitations > allocated
     end)
   end
 
@@ -376,22 +390,22 @@ defmodule Helix.Process.Model.Process do
 
   @spec server_to_process_map(Changeset.t) :: Changeset.t
   defp server_to_process_map(changeset) do
-    gateway_id = get_field(changeset, :gateway_id)
-    target_server_id = get_field(changeset, :target_server_id)
     id = get_field(changeset, :process_id)
     process_type = get_field(changeset, :process_type)
 
-    p1 = %{server_id: gateway_id, process_id: id, process_type: process_type}
+    params1 = %{
+      server_id: get_field(changeset, :gateway_id),
+      process_id: id,
+      process_type: process_type
+    }
+    params2 = %{
+      server_id: get_field(changeset, :target_server_id),
+      process_id: id,
+      process_type: process_type
+    }
 
-    records = if gateway_id == target_server_id do
-      [MapServerToProcess.create_changeset(p1)]
-    else
-      p2 = %{p1| server_id: target_server_id}
-      [
-        MapServerToProcess.create_changeset(p1),
-        MapServerToProcess.create_changeset(p2)
-      ]
-    end
+    # Should both records be identical, dedup will remove one of them
+    records = Enum.dedup([params1, params2])
 
     put_assoc(changeset, :server_to_process_map, records)
   end

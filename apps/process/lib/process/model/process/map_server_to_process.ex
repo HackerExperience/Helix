@@ -7,7 +7,7 @@ defmodule Helix.Process.Model.Process.MapServerToProcess do
   import Ecto.Changeset
 
   @primary_key false
-  schema "server_process_maps" do
+  schema "process_servers" do
     field :server_id, PK,
       primary_key: true
     field :process_id, PK,

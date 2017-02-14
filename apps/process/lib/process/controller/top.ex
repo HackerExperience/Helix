@@ -99,18 +99,18 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     Enum.map(changeset_list, &Ecto.Changeset.apply_changes/1)
   end
 
-  # @spec request_server_resources(module, server_id) :: {:ok, Resources.t} | {:error, reason :: term}
-  @spec request_server_resources(module, server_id) :: {:ok, %{}} | {:error, reason :: term}
+  @spec request_server_resources(module, server_id) :: {:ok, ServerResources.t} | {:error, reason :: term}
   docp """
   Requests the amount of in-game hardware related to the `server_id` server
   """
   defp request_server_resources(broker, server_id) do
     with \
       params = %{server_id: server_id},
-      {_, {:ok, return}} <- broker.call("server:hardware:resources", params)
+      {_, return} <- broker.call("server:hardware:resources", params),
+      {:ok, resources} <- return
     do
-      res = ServerResources.cast(return)
-      {:ok, res}
+      resources = ServerResources.cast(resources)
+      {:ok, resources}
     end
   end
 
@@ -209,8 +209,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   def handle_cast({:resources, resources}, state) do
-    r = ServerResources.cast(resources)
-    handle_info(:allocate, %{state| resources: r})
+    handle_info(:allocate, %{state| resources: ServerResources.cast(resources)})
   end
 
   @doc false

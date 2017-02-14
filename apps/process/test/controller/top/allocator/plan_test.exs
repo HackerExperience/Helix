@@ -4,14 +4,18 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Process.Model.Process, as: ProcessModel
-  # alias Helix.Process.Controller.TableOfProcesses
   alias Helix.Process.Controller.TableOfProcesses.Allocator.Plan
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.TestHelper.ProcessTypeExample
   alias Helix.Process.TestHelper.StaticProcessTypeExample
 
+  # NOTE THAT MOST TESTS ASSERT THAT THE VALUE IS INSIDE A RANGE. THIS IS DONE
+  # BECAUSE THE ALLOCATION ALGORITHM MIGHT NOT ALLOCATE 100% OF THE RESOURCES
+  # BECAUSE IT'S ALLOCATION LOGIC IS NAIVE (i might fix it or worsen it in the
+  # future)
+
   test "allocating to a static process doesn't affects it" do
-    pparams = %{
+    params = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
       process_data: %StaticProcessTypeExample{},
@@ -20,7 +24,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       }
     }
 
-    pparams2 = %{
+    params2 = %{
       state: :running,
       allocated: %{
         cpu: 100,
@@ -35,9 +39,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     }
 
     process =
-      pparams
+      params
       |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(pparams2)
+      |> ProcessModel.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     resources = %ServerResources{
@@ -46,7 +50,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       net: %{"::" => %{dlk: 9_000, ulk: 9_000}}
     }
 
-    [xs] =
+    [allocated_process] =
       [process]
       |> Plan.allocate(resources)
       |> Enum.map(&Ecto.Changeset.apply_changes/1)
@@ -55,11 +59,11 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     # Note that with "static process" i mean a process whose process_type
     # doesn't allows dynamic allocation to any resources (unlike dynamic
     # processes that allow dynamic allocation to some or all of their resources)
-    assert process.allocated === xs.allocated
+    assert process.allocated === allocated_process.allocated
   end
 
   test "allocating to a dynamic process" do
-    pparams = %{
+    params = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
       process_data: %ProcessTypeExample{},
@@ -68,7 +72,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       }
     }
 
-    pparams2 = %{
+    params2 = %{
       state: :running,
       allocated: %{
         cpu: 100,
@@ -83,9 +87,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     }
 
     process =
-      pparams
+      params
       |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(pparams2)
+      |> ProcessModel.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     resources = %ServerResources{
@@ -94,18 +98,17 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       net: %{"::" => %{dlk: 9_000, ulk: 9_000}}
     }
 
-    [xs] =
+    [allocated_process] =
       [process]
       |> Plan.allocate(resources)
       |> Enum.map(&Ecto.Changeset.apply_changes/1)
-      # |> IO.inspect
 
-    assert xs.allocated.cpu >= 8_900 and xs.allocated.cpu <= 9_000
-    assert 100 === xs.allocated.ram
+    assert allocated_process.allocated.cpu in 8_950..9_000
+    assert 100 === allocated_process.allocated.ram
   end
 
   test "resources are divided between different dynamic processes" do
-    pparams = %{
+    params = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
       process_data: %ProcessTypeExample{},
@@ -114,7 +117,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       }
     }
 
-    pparams2 = %{
+    params2 = %{
       state: :running,
       allocated: %{
         cpu: 100,
@@ -129,9 +132,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     }
 
     process0 =
-      pparams
+      params
       |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(pparams2)
+      |> ProcessModel.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     process1 = %{process0| process_id: Random.pk()}
@@ -142,17 +145,17 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       net: %{"::" => %{dlk: 9_000, ulk: 9_000}}
     }
 
-    [xs0, xs1] =
+    [allocated_process0, allocated_process1] =
       [process0, process1]
       |> Plan.allocate(resources)
       |> Enum.map(&Ecto.Changeset.apply_changes/1)
 
-    assert_in_delta xs0.allocated.cpu, 4500, 90
-    assert_in_delta xs1.allocated.cpu, 4500, 90
+    assert allocated_process0.allocated.cpu in 4_450..4_500
+    assert allocated_process1.allocated.cpu in 4_450..4_500
   end
 
   test "processes with higher priority receive bigger shares" do
-    pparams = %{
+    params = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
       process_data: %ProcessTypeExample{},
@@ -161,7 +164,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       }
     }
 
-    pparams2 = %{
+    params2 = %{
       state: :running,
       priority: 1,
       allocated: %{
@@ -175,9 +178,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     }
 
     process0 =
-      pparams
+      params
       |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(pparams2)
+      |> ProcessModel.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     process1 =
@@ -201,12 +204,12 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     # Process0 has priority 1, process1 has priority 4, thus the resources will
     # be split in 5 parts, process0 receives 1/5 of the total resources and
     # process1 receives 4/5
-    assert_in_delta processes[process0.process_id].allocated.cpu, 1800, 90
-    assert_in_delta processes[process1.process_id].allocated.cpu, 7_200, 90
+    assert processes[process0.process_id].allocated.cpu in 1_750..1_800
+    assert processes[process1.process_id].allocated.cpu in 7_150..7_200
   end
 
   test "complex allocation using limits" do
-    pparams = %{
+    params = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
       process_data: %ProcessTypeExample{},
@@ -215,7 +218,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
       }
     }
 
-    pparams2 = %{
+    params2 = %{
       state: :running,
       allocated: %{
         ram: 100
@@ -228,9 +231,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     }
 
     process0 =
-      pparams
+      params
       |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(pparams2)
+      |> ProcessModel.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     process1 = %{process0| process_id: Random.pk()}
@@ -258,13 +261,13 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     # So, we expect process0 and process1 to have aproximately 4250, but since
     # there are several ways to execute the allocation algorithm, we should
     # expect allocator to fail to allocate a part of the resources left
-    assert_in_delta processes[process0.process_id].allocated.cpu, 4_250, 90
+    assert processes[process0.process_id].allocated.cpu in 4_200..4_250
     assert processes[process0.process_id].allocated.cpu == processes[process1.process_id].allocated.cpu
     assert 500 === processes[process2.process_id].allocated.cpu
   end
 
   test "returns error when resources can't handle processes at minimum" do
-    pparams = %{
+    params = %{
       gateway_id: Random.pk(),
       target_server_id: Random.pk(),
       process_data: %ProcessTypeExample{},
@@ -274,14 +277,14 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     }
 
     process0 =
-      pparams
+      params
       |> ProcessModel.create_changeset()
       |> ProcessModel.update_changeset(%{state: :running})
       |> ProcessModel.update_changeset(%{minimum: %{running: %{ram: 2_000}}})
       |> Ecto.Changeset.apply_changes()
 
     process1 =
-      %{pparams| gateway_id: Random.pk()}
+      %{params| gateway_id: Random.pk()}
       |> ProcessModel.create_changeset()
       |> ProcessModel.update_changeset(%{state: :running})
       |> ProcessModel.update_changeset(%{minimum: %{running: %{ram: 2_000}}})

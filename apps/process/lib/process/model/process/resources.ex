@@ -43,13 +43,13 @@ defmodule Helix.Process.Model.Process.Resources do
   end
 
   @spec sum(t, resourceable) :: t
-  def sum(res, b) do
-    Map.merge(res, Map.take(b, @fields), fn _, v1, v2 -> v1 + v2 end)
+  def sum(res, params) do
+    Map.merge(res, Map.take(params, @fields), fn _, v1, v2 -> v1 + v2 end)
   end
 
   @spec sub(t, resourceable) :: t
-  def sub(res, b) do
-    Map.merge(res, Map.take(b, @fields), fn _, v1, v2 -> v1 - v2 end)
+  def sub(res, params) do
+    Map.merge(res, Map.take(params, @fields), fn _, v1, v2 -> v1 - v2 end)
   end
 
   @spec div(t, t | non_neg_integer) :: t
@@ -79,20 +79,22 @@ defmodule Helix.Process.Model.Process.Resources do
       div(c, d)
       # %Resources{cpu: 5, ...}
   """
-  def div(x = %__MODULE__{}, xs = %__MODULE__{}) do
-    %__MODULE__{x|
-      cpu: safe_div(x.cpu, xs.cpu),
-      ram: safe_div(x.ram, xs.ram),
-      dlk: safe_div(x.dlk, xs.dlk),
-      ulk: safe_div(x.ulk, xs.ulk)}
+  def div(dividend = %__MODULE__{}, divisor = %__MODULE__{}) do
+    %__MODULE__{dividend|
+      cpu: safe_div(dividend.cpu, divisor.cpu),
+      ram: safe_div(dividend.ram, divisor.ram),
+      dlk: safe_div(dividend.dlk, divisor.dlk),
+      ulk: safe_div(dividend.ulk, divisor.ulk)
+    }
   end
 
-  def div(x = %__MODULE__{}, val) when is_integer(val) do
-    %__MODULE__{x|
-      cpu: Kernel.div(x.cpu, val),
-      ram: Kernel.div(x.ram, val),
-      dlk: Kernel.div(x.dlk, val),
-      ulk: Kernel.div(x.ulk, val)}
+  def div(dividend = %__MODULE__{}, divisor) when is_integer(divisor) do
+    %__MODULE__{dividend|
+      cpu: Kernel.div(dividend.cpu, divisor),
+      ram: Kernel.div(dividend.ram, divisor),
+      dlk: Kernel.div(dividend.dlk, divisor),
+      ulk: Kernel.div(dividend.ulk, divisor)
+    }
   end
 
   @spec mul(t, non_neg_integer) :: t
@@ -105,18 +107,18 @@ defmodule Helix.Process.Model.Process.Resources do
   end
 
   @spec min(t | nil, t | nil) :: t | nil
-  def min(x = %__MODULE__{}, xs = %__MODULE__{}) do
-    %__MODULE__{x|
-      cpu: Kernel.min(x.cpu, xs.cpu),
-      ram: Kernel.min(x.ram, xs.ram),
-      dlk: Kernel.min(x.dlk, xs.dlk),
-      ulk: Kernel.min(x.ulk, xs.ulk)}
+  def min(first = %__MODULE__{}, second = %__MODULE__{}) do
+    %__MODULE__{first|
+      cpu: Kernel.min(first.cpu, second.cpu),
+      ram: Kernel.min(first.ram, second.ram),
+      dlk: Kernel.min(first.dlk, second.dlk),
+      ulk: Kernel.min(first.ulk, second.ulk)}
   end
 
-  def min(nil, b),
-    do: b
-  def min(a, nil),
-    do: a
+  def min(nil, second),
+    do: second
+  def min(first, nil),
+    do: first
 
   @spec to_list(resourceable) :: [{:cpu | :ram | :dlk | :ulk, non_neg_integer}]
   def to_list(res) do
@@ -131,8 +133,8 @@ defmodule Helix.Process.Model.Process.Resources do
     :eq
   end
 
-  defp safe_div(x1, x2) when is_integer(x2) and x2 > 0,
-    do: Kernel.div(x1, x2)
+  defp safe_div(dividend, divisor) when is_integer(divisor) and divisor > 0,
+    do: Kernel.div(dividend, divisor)
   defp safe_div(0, 0),
     do: 0
   defp safe_div(_, _),

@@ -20,10 +20,14 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
 
   # TODO: FIXME: change symbols and fun names to things that make sense
 
-  def cast(resources) do
-    xs = struct(__MODULE__, resources)
-    net =
-      xs.net
+  @spec cast(%{}) :: t
+  def cast(params) do
+    server_resources = struct(__MODULE__, params)
+
+    # FIXME: This is hard to read, it basicaly ensures that all networks are
+    #   just maps %{dlk: term, ulk: term}
+    networks =
+      server_resources.net
       |> Enum.map(fn
         {k, v = %{dlk: _, ulk: _}} when map_size(v) == 2 ->
           {k, v}
@@ -32,82 +36,83 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
       end)
       |> :maps.from_list()
 
-    %{xs| net: net}
+    %{server_resources| net: networks}
   end
 
   @spec replace_network_if_exists(t, network_id :: HELL.PK.t, non_neg_integer, non_neg_integer) :: t
-  def replace_network_if_exists(r = %__MODULE__{}, n, dlk, ulk) when is_integer(dlk) and is_integer(ulk) do
-    case r.net do
-      %{^n => _} ->
-        %{r| net: Map.put(r.net, n, %{dlk: dlk, ulk: ulk})}
+  def replace_network_if_exists(server_resources = %__MODULE__{}, net_id, dlk, ulk) when is_integer(dlk) and is_integer(ulk) do
+    case server_resources.net do
+      %{^net_id => _} ->
+        %{server_resources| net: Map.put(server_resources.net, net_id, %{dlk: dlk, ulk: ulk})}
       _ ->
-        r
+        server_resources
     end
   end
 
   @spec update_network_if_exists(t, network_id :: HELL.PK.t, ((%{}) -> %{})) :: t
-  def update_network_if_exists(r = %__MODULE__{}, n, f) do
-    case r.net do
-      %{^n => v} ->
-        case f.(v) do
+  def update_network_if_exists(server_resources = %__MODULE__{}, net_id, fun) do
+    case server_resources.net do
+      %{^net_id => value} ->
+        case fun.(value) do
           # This is to ensure that the returned value complies with our contract
           # otherwise the error could happen later on the pipeline and just make
           # it harder to debug why it happened
-          xs = %{dlk: x0, ulk: x1} when map_size(xs) == 2 and is_integer(x0) and is_integer(x1) ->
-            %{r| net: Map.put(r.net, n, xs)}
+          value = %{dlk: dlk, ulk: ulk} when map_size(value) == 2 and is_integer(dlk) and is_integer(ulk) ->
+            %{server_resources| net: Map.put(server_resources.net, net_id, value)}
         end
       _ ->
-        r
+        server_resources
     end
   end
 
   @spec sub_from_process(t, ProcessModel.t) :: {:ok, t} | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, network_id :: HELL.PK.t}}}
-  def sub_from_process(resources = %__MODULE__{cpu: c, ram: r, net: n}, process) do
-    xs = Changeset.change(process)
-    net_id = Changeset.get_field(xs, :network_id)
+  def sub_from_process(server_resources = %__MODULE__{cpu: cpu, ram: ram, net: networks}, process) do
+    process = Changeset.change(process)
+    net_id = Changeset.get_field(process, :network_id)
 
+    # If network doesn't exists and the process doesn't require network alloc,
+    # it'll be returned as 0, and it's not a problem :)
+    # If the network doesn't exists but the process requires it, the values
+    # will be obviously negative
     rest =
-      n
+      networks
       |> Map.get(net_id, %{})
-      |> Map.merge(%{cpu: c, ram: r})
+      |> Map.merge(%{cpu: cpu, ram: ram})
       |> Resources.cast()
-      |> Resources.sub(Changeset.get_field(xs, :allocated))
-      # If network doesn't exists and the process doesn't require network alloc,
-      # it'll be returned as 0, and it's not a problem :)
-      # If the network doesn't exists but the process requires it, the values
-      # will be obviously negative
+      |> Resources.sub(Changeset.get_field(process, :allocated))
       |> Map.take([:cpu, :ram, :dlk, :ulk])
 
-    case Enum.find(rest, &(elem(&1, 1) < 0)) do
+    negative_resource = Enum.find(rest, fn {_, v} -> v < 0 end)
+    case negative_resource do
       nil ->
-        r0 = %{resources| cpu: rest.cpu, ram: rest.ram}
-        r1 = replace_network_if_exists(r0, net_id, rest.dlk, rest.ulk)
-        {:ok, r1}
+        server_resources = %{server_resources| cpu: rest.cpu, ram: rest.ram}
+        server_resources = replace_network_if_exists(server_resources, net_id, rest.dlk, rest.ulk)
+        {:ok, server_resources}
       {:cpu, _} ->
         {:error, {:resources, :lack, :cpu}}
       {:ram, _} ->
         {:error, {:resources, :lack, :ram}}
-      {res, _} when res in [:dlk, :ulk] ->
-        {:error, {:resources, :lack, {:net, res, net_id}}}
+      {resource_kind, _} when resource_kind in [:dlk, :ulk] ->
+        {:error, {:resources, :lack, {:net, resource_kind, net_id}}}
     end
   end
 
   @spec sub_from_resources(t, Resources.t, network_id :: HELL.PK.t) :: t
   @doc """
-  Subtracts `res` from `server`.
+  Subtracts `resources` from `server_resources`.
 
-  If network `n` exists for server resources `server`, subtracts `res`'s dlk and
+  If network `net_id` exists for server resources `server_resources`, subtracts `resources`'s dlk and
   ulk from it
   """
-  def sub_from_resources(server = %__MODULE__{}, res = %Resources{}, n) do
-    %{server|
-      cpu: server.cpu - res.cpu,
-      ram: server.ram - res.ram,
-      net: case server.net do
-        z = %{^n => %{dlk: d1, ulk: u1}} ->
-          Map.put(z, n, %{dlk: d1 - res.dlk, ulk: u1 - res.ulk})
-        z ->
-          z
+  def sub_from_resources(server_resources = %__MODULE__{}, resources = %Resources{}, net_id) do
+    %{server_resources|
+      cpu: server_resources.cpu - resources.cpu,
+      ram: server_resources.ram - resources.ram,
+      net: case server_resources.net do
+        networks = %{^net_id => %{dlk: dlk, ulk: ulk}} ->
+          Map.put(networks, net_id, %{dlk: dlk - resources.dlk, ulk: ulk - resources.ulk})
+        networks ->
+          networks
       end
     }
   end
@@ -116,24 +121,24 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
   @doc """
   Divides `x` by `shares` including dropping networks not requested by `shares`
   """
-  def part_from_shares(x = %__MODULE__{}, shares) do
+  def part_from_shares(server_resources = %__MODULE__{}, shares) do
     %__MODULE__{
-      cpu: shares.cpu > 0 && div(x.cpu, shares.cpu) || 0,
-      ram: shares.ram > 0 && div(x.ram, shares.ram) || 0,
+      cpu: shares.cpu > 0 && div(server_resources.cpu, shares.cpu) || 0,
+      ram: shares.ram > 0 && div(server_resources.ram, shares.ram) || 0,
       net:
-        x.net
+        server_resources.net
         |> Map.take(Map.keys(shares.net))
-        |> Enum.map(fn {k, %{dlk: d, ulk: u}} ->
-          s = shares.net[k]
-          d2 = s.dlk
-          u2 = s.ulk
+        |> Enum.map(fn {net_id, %{dlk: dlk, ulk: ulk}} ->
+          network_share = shares.net[net_id]
+          divide_dlk_by = network_share.dlk
+          divide_ulk_by = network_share.ulk
 
-          v2 = %{
-            dlk: d2 > 0 && div(d, d2) || 0,
-            ulk: u2 > 0 && div(u, u2) || 0
+          updated_value = %{
+            dlk: divide_dlk_by > 0 && div(dlk, divide_dlk_by) || 0,
+            ulk: divide_ulk_by > 0 && div(ulk, divide_ulk_by) || 0
           }
 
-          {k, v2}
+          {net_id, updated_value}
         end)
         |> :maps.from_list()
     }
