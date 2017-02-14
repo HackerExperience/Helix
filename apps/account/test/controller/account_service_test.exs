@@ -14,7 +14,6 @@ defmodule Helix.Account.Controller.AccountServiceTest do
     params = %{
       username: name,
       email: email,
-      password_confirmation: password,
       password: password
     }
     {:ok, params: params}

@@ -18,7 +18,6 @@ defmodule Helix.Account.Model.Account do
     username: username,
     display_name: String.t,
     password: password,
-    password_confirmation: password,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
@@ -27,14 +26,13 @@ defmodule Helix.Account.Model.Account do
     account_id: PK.t,
     email: email,
     username: username,
-    password: password,
-    password_confirmation: password}
+    password: password}
   @type update_params :: %{
     optional(:email) => email,
     optional(:password) => password,
     optional(:confirmed) => boolean}
 
-  @creation_fields ~w/account_id email username password password_confirmation/a
+  @creation_fields ~w/account_id email username password/a
   @update_fields ~w/email password confirmed/a
 
   @derive {Poison.Encoder, only: [:email, :username, :account_id]}
@@ -49,8 +47,6 @@ defmodule Helix.Account.Model.Account do
     field :confirmed, :boolean,
       default: false
     field :password, :string
-    field :password_confirmation, :string,
-      virtual: true
 
     timestamps()
   end
@@ -81,7 +77,6 @@ defmodule Helix.Account.Model.Account do
     |> validate_change(:username, &validate_username/2)
     |> unique_constraint(:email)
     |> unique_constraint(:username)
-    |> validate_confirmation(:password, required: true)
   end
 
   @spec prepare_changes(Ecto.Changeset.t) :: Ecto.Changeset.t
