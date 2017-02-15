@@ -7,67 +7,70 @@ defmodule Helix.Account.Controller.AccountTest do
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
 
-  setup do
-    account =
-      payload()
-      |> Account.create_changeset()
-      |> Repo.insert!()
+  alias Helix.Account.Factory
 
-    {:ok, account: account}
+  setup_all do
+    {:ok, account: create_account()}
+  end
+
+  defp create_account() do
+    generate_params()
+    |> Account.create_changeset()
+    |> Repo.insert!()
   end
 
   # Funnily enough, the very same params can be use to create an account through
   # the controller and the model
-  defp payload do
-    name = Random.username()
-    email = Burette.Internet.email()
-    password = Burette.Internet.password()
-
-    %{
-      username: name,
-      email: email,
-      password: password
-    }
+  defp generate_params do
+    :account
+    |> Factory.build()
+    |> Map.from_struct()
+    |> Map.drop([:display_name, :__meta__])
   end
 
   describe "account creation" do
     test "succeeds with proper data" do
-      assert {:ok, _} = AccountController.create(payload())
+      params = Factory.params_for(:account)
+      assert {:ok, _} = AccountController.create(params)
     end
 
-    test "fails when email is already in use", %{account: account} do
-      params = Map.put(payload(), :email, account.email)
+    test "fails when email is already in use", context do
+      account = context.account
+      params = Map.put(generate_params(), :email, account.email)
+
       assert {:error, changeset} = AccountController.create(params)
       assert :email in Keyword.keys(changeset.errors)
     end
 
-    test "fails when username is already in use", %{account: account} do
-      params = Map.put(payload(), :username, account.username)
+    test "fails when username is already in use", context do
+      account = context.account
+      params = Map.put(generate_params(), :username, account.username)
+
       assert {:error, changeset} = AccountController.create(params)
       assert :username in Keyword.keys(changeset.errors)
     end
 
     test "fails when password is too short" do
-      payload = %{payload()| password: "123"}
+      params = %{generate_params()| password: "123"}
 
-      assert {:error, changeset} = AccountController.create(payload)
+      assert {:error, changeset} = AccountController.create(params)
       assert :password in Keyword.keys(changeset.errors)
     end
   end
 
-  describe "find/1" do
-    test "succeeds when account exists", %{account: account} do
+  describe "account fetching" do
+    test "succeeds when account exists", context do
+      account = context.account
       assert {:ok, found} = AccountController.find(account.account_id)
       assert account.account_id == found.account_id
     end
 
     test "fails when account doesn't exists" do
-      assert {:error, :notfound} === AccountController.find(Random.pk())
+      assert {:error, :notfound} == AccountController.find(Random.pk())
     end
-  end
 
-  describe "find_by/1" do
-    test "using email", %{account: account} do
+    test "using email", context do
+      account = context.account
       assert {:ok, found} = AccountController.find_by(email: account.email)
       assert account.account_id == found.account_id
     end
@@ -77,31 +80,33 @@ defmodule Helix.Account.Controller.AccountTest do
     end
   end
 
-  test "delete/1 is idempotent", %{account: account} do
+  test "account deletion is idempotent" do
+    account = create_account()
+
     assert Repo.get_by(Account, account_id: account.account_id)
     AccountController.delete(account.account_id)
     AccountController.delete(account.account_id)
     refute Repo.get_by(Account, account_id: account.account_id)
   end
 
-  describe "update/2" do
-    test "update account", %{account: account} do
-      password = Burette.Internet.password()
-      payload = %{
-        email: Burette.Internet.email() |> String.downcase(),
-        password: password,
-        confirmed: true
-      }
+  describe "account updating" do
+    test "updates its fields" do
+      account = create_account()
+      params =
+        generate_params()
+        |> Map.drop([:username])
+        |> Map.put(:confirmed, true)
 
-      assert {:ok, account2} = AccountController.update(account.account_id, payload)
+      assert {:ok, account2} = AccountController.update(account.account_id, params)
 
-      assert payload.email == account2.email
+      assert params.email == account2.email
       refute account.password == account2.password
-      assert payload.confirmed == account2.confirmed
+      assert params.confirmed == account2.confirmed
     end
 
-    test "email exists", %{account: account} do
-      params = payload()
+    test "email exists" do
+      account = create_account()
+      params = generate_params()
       params2 = Map.put(params, :email, account.email)
 
       assert {:ok, account2} = AccountController.create(params)
@@ -109,12 +114,14 @@ defmodule Helix.Account.Controller.AccountTest do
     end
 
     test "account not found" do
-      assert {:error, :notfound} == AccountController.update(HELL.TestHelper.Random.pk(), %{})
+      pk = HELL.TestHelper.Random.pk()
+      assert {:error, :notfound} == AccountController.update(pk, %{})
     end
   end
 
-  describe "login/2" do
-    test "succeeds with correct username/password", %{account: account} do
+  describe "account login" do
+    test "succeeds with correct username/password" do
+      account = create_account()
       pass = "!!!foobar1234"
 
       account
@@ -125,13 +132,14 @@ defmodule Helix.Account.Controller.AccountTest do
     end
 
     test "fails when username is invalid" do
-      xs = AccountController.login("}<]=inv@líd+(usêr)-nämẽ=[>{#", "password")
-      assert {:error, :notfound} === xs
+      error = AccountController.login("}<]=inv@líd+(usêr)-nämẽ", "password")
+      assert {:error, :notfound} == error
     end
 
-    test "fails when password doesn't match", %{account: account} do
-      xs = AccountController.login(account.email, "not_actually_the_correct_password")
-      assert {:error, :notfound} === xs
+    test "fails when password doesn't match", context do
+      account = context.account
+      error = AccountController.login(account.email, "incorrect_password")
+      assert {:error, :notfound} == error
     end
   end
 end

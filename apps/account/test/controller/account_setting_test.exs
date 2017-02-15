@@ -2,131 +2,109 @@ defmodule Helix.Account.Controller.AccountSettingTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
-  alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Controller.AccountSetting, as: AccountSettingController
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
-  defp create_account() do
-    username = Random.username()
-    email = Burette.Internet.email()
-    password = Burette.Internet.password()
+  alias Helix.Account.Factory
 
-    params = %{
-      username: username,
-      email: email,
-      password: password
-    }
+  def generate_params() do
+    account_setting =
+      :account_setting
+      |> Factory.build()
+      |> Map.from_struct()
+      |> Map.drop([:__meta__])
 
-    {:ok, account} = AccountController.create(params)
-    account
-  end
+    Repo.insert!(account_setting.account)
+    Repo.insert!(account_setting.setting)
 
-  def create_setting() do
-    setting_id = Random.setting_id()
-    default_value = Burette.Color.name()
+    account = account_setting.account
+    setting_id = account_setting.setting.setting_id
+    setting_value = account_setting.setting_value
 
-    %{setting_id: setting_id, default_value: default_value}
-    |> Setting.create_changeset()
-    |> Repo.insert()
-
-    setting_id
-  end
-
-  setup_all do
-    setting_id = create_setting()
-    {:ok, setting_id: setting_id}
+    {account, setting_id, setting_value}
   end
 
   describe "configuring user settings" do
-    test "succeeds when setting exists", context do
-        id = context.setting_id
-        custom_val = Random.string(min: 10)
-        account = create_account()
+    test "succeeds when setting exists", _context do
+      {a, s_id, val} = generate_params()
+      {:ok, put_val} = AccountSettingController.put(a, s_id, val)
+      {:ok, get_val} = AccountSettingController.get(a, s_id)
 
-        {:ok, put_value} = AccountSettingController.put(account, id, custom_val)
-        {:ok, get_value} = AccountSettingController.get(account, id)
+      %{default_value: default} = Repo.get_by(Setting, setting_id: s_id)
 
-        %{default_value: default} = Repo.get_by(Setting, setting_id: id)
+      # got expected value from put
+      assert val == put_val
 
-        # got expected value from put
-        assert custom_val == put_value
+      # default value differs from put value
+      refute default == put_val
 
-        # default value differs from put value
-        refute default == put_value
-
-        # both values from put and get are equals
-        assert put_value == get_value
+      # both values from put and get are equals
+      assert put_val == get_val
     end
 
     test "fails when setting is invalid" do
-      id = Random.setting_id()
-      custom_val = Random.string(min: 10)
-      account = create_account()
+      {a, _, val} = generate_params()
+      %{setting_id: s_id} = Factory.build(:setting)
 
-      assert {:error, cs} = AccountSettingController.put(account, id, custom_val)
+      assert {:error, cs} = AccountSettingController.put(a, s_id, val)
       assert :setting_id in Keyword.keys(cs.errors)
     end
   end
 
   describe "fetching account settings" do
-    test "returns account's setting by account and setting id", context do
-      id = context.setting_id
-      custom_val = Random.string(min: 10)
+    test "returns account's setting by account and setting id" do
+      {a, s_id, val} = generate_params()
 
-      account = create_account()
-      {:ok, before_change} = AccountSettingController.get(account, id)
+      %{default_value: default} = Repo.get_by(Setting, setting_id: s_id)
+      {:ok, maybe_default} = AccountSettingController.get(a, s_id)
 
-      AccountSettingController.put(account, id, custom_val)
+      AccountSettingController.put(a, s_id, val)
 
-      {:ok, after_change} = AccountSettingController.get(account, id)
-
-      %{default_value: default} = Repo.get_by(Setting, setting_id: id)
+      {:ok, maybe_not_default} = AccountSettingController.get(a, s_id)
 
       # fetched default value prior to updating it
-      assert default == before_change
+      assert default == maybe_default
 
       # value changed
-      refute before_change == after_change
-
-      # value fecthed after change is the expected value
-      assert custom_val == after_change
+      assert val == maybe_not_default
     end
 
-    test "returns default value when setting is not defined for account", context do
-      id = context.setting_id
-
-      account = create_account()
-      {:ok, setting_value} = AccountSettingController.get(account, id)
-
-      %{default_value: default} = Repo.get_by(Setting, setting_id: id)
+    test "returns default value when setting is not defined for account" do
+      {a, s_id, _} = generate_params()
+      {:ok, setting_value} = AccountSettingController.get(a, s_id)
+      %{default_value: default} = Repo.get_by(Setting, setting_id: s_id)
 
       # fetched expected value
       assert default == setting_value
     end
 
     test "fails when setting doesn't exist" do
-      id = Random.setting_id()
-      account = create_account()
+      {a, _, _} = generate_params()
+      %{setting_id: s_id} = Factory.build(:setting)
 
-      assert {:error, :notfound} == AccountSettingController.get(account, id)
+      assert {:error, :notfound} == AccountSettingController.get(a, s_id)
     end
   end
 
   describe "fetching every setting" do
     test "fetches settings with custom values" do
-      a = create_account()
-      s = Enum.map(0..5, fn _ ->
-        id = create_setting()
-        custom_val = Random.string(min: 10)
+      a = Factory.insert(:account)
 
-        {id, custom_val}
-      end)
+      custom_settings =
+        0..5
+        |> Enum.map(fn _ ->
+          account_setting = Factory.build(:account_setting)
+          Repo.insert!(account_setting.setting)
 
-      Enum.each(s, fn {k, v} -> AccountSettingController.put(a, k, v) end)
+          s_id = account_setting.setting.setting_id
+          val = account_setting.setting_value
 
-      custom_settings = MapSet.new(s)
+          {:ok, _} = AccountSettingController.put(a, s_id, val)
+
+          {s_id, val}
+        end)
+        |> MapSet.new()
 
       settings =
         a
@@ -138,7 +116,8 @@ defmodule Helix.Account.Controller.AccountSettingTest do
     end
 
     test "fallbacks to default setting value" do
-      a = create_account()
+      a = Factory.insert(:account)
+
       defaults =
         Setting
         |> Repo.all()

@@ -2,17 +2,25 @@ defmodule Helix.Account.Model.SettingTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
   alias Helix.Account.Model.Setting
 
+  alias Helix.Account.Factory
+
+  def generate_params do
+    :setting
+    |> Factory.build()
+    |> Map.from_struct()
+    |> Map.drop([:__meta__])
+  end
+
   test "fields setting_id and default_value are required" do
-    params = %{
-      setting_id: Random.setting_id(),
-      default_value: Random.string()
-    }
+    params = generate_params()
+
+    IO.inspect(Factory.params_for(:setting))
 
     cs1 = Setting.create_changeset(params)
     cs2 = Setting.create_changeset(%{})
+
     errors = Enum.sort(Keyword.keys(cs2.errors))
     expected = Enum.sort([:setting_id, :default_value])
 

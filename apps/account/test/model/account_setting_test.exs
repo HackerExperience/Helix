@@ -2,15 +2,24 @@ defmodule Helix.Account.Model.AccountSettingTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
   alias Helix.Account.Model.AccountSetting
 
+  alias Helix.Account.Factory
+
+  def generate_params do
+    account_setting =
+      :account_setting
+      |> Factory.build()
+      |> Map.from_struct()
+      |> Map.drop([:__meta__])
+
+    account_setting
+    |> Map.put(:account_id, account_setting.account.account_id)
+    |> Map.put(:setting_id, account_setting.setting.setting_id)
+  end
+
   test "fields account_id, setting_id and setting_value are required" do
-    params = %{
-      account_id: Random.pk(),
-      setting_id: Random.string(),
-      setting_value: Random.string()
-    }
+    params = generate_params()
 
     cs1 = AccountSetting.create_changeset(params)
     cs2 = AccountSetting.create_changeset(%{})
