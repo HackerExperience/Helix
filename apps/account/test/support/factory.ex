@@ -8,7 +8,22 @@ defmodule Helix.Account.Factory do
   alias Helix.Account.Model.AccountSetting
   alias Helix.Account.Model.Setting
 
-  def params(:account) do
+  def params(:setting) do
+    %{
+      setting_id: setting_id(),
+      default_value: setting_value()
+    }
+  end
+
+  def params(:account_setting) do
+    account = insert(:account)
+    setting = insert(:setting)
+
+    %{
+      account_id: account.account_id,
+      setting_id: setting.setting_id,
+      setting_value: setting_value()
+    }
   end
 
   def account_factory do
@@ -26,13 +41,8 @@ defmodule Helix.Account.Factory do
   end
 
   def setting_factory do
-    setting_id =
-      [min: 20, max: 20]
-      |> Random.string()
-      |> String.downcase()
-
     %Setting{
-      setting_id: setting_id,
+      setting_id: setting_id(),
       default_value: Random.string()
     }
   end
@@ -41,7 +51,16 @@ defmodule Helix.Account.Factory do
     %AccountSetting{
       account: build(:account),
       setting: build(:setting),
-      setting_value: Random.string()
+      setting_value: setting_value()
     }
   end
+
+  defp setting_id do
+    [min: 20, max: 20]
+    |> Random.string()
+    |> String.downcase()
+  end
+
+  defp setting_value,
+    do: Random.string()
 end
