@@ -20,6 +20,7 @@ defmodule Helix.Account.Factory do
     setting = insert(:setting)
 
     %{
+      account: account,
       account_id: account.account_id,
       setting_id: setting.setting_id,
       setting_value: setting_value()
