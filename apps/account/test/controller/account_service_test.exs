@@ -9,7 +9,7 @@ defmodule Helix.Account.Controller.AccountServiceTest do
   @moduletag :umbrella
 
   describe "account creation" do
-    test "succeeds with proper data" do
+    test "succeeds with valid params" do
       params = Factory.params_for(:account)
       {_, {:ok, account}} = Broker.call("account.create", params)
 
