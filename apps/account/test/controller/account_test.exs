@@ -2,6 +2,7 @@ defmodule Helix.Account.Controller.AccountTest do
 
   use ExUnit.Case, async: true
 
+  alias Comeonin.Bcrypt
   alias HELL.TestHelper.Random
   alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
@@ -10,7 +11,7 @@ defmodule Helix.Account.Controller.AccountTest do
   alias Helix.Account.Factory
 
   describe "account creation" do
-    test "succeeds with proper data" do
+    test "succeeds with valid params" do
       params = Factory.params_for(:account)
 
       assert {:ok, _} = AccountController.create(params)
@@ -41,10 +42,25 @@ defmodule Helix.Account.Controller.AccountTest do
   end
 
   describe "account fetching" do
-    test "succeeds when account exists" do
+    test "succeeds by id" do
       account = Factory.insert(:account)
 
       assert {:ok, found} = AccountController.find(account.account_id)
+      assert account.account_id == found.account_id
+    end
+
+    test "succeeds by email" do
+      account = Factory.insert(:account)
+
+      assert {:ok, found} = AccountController.find_by(email: account.email)
+      assert account.account_id == found.account_id
+    end
+
+    test "succeeds by username" do
+      account = Factory.insert(:account)
+
+      assert {:ok, found} =
+        AccountController.find_by(username: account.username)
       assert account.account_id == found.account_id
     end
 
@@ -52,76 +68,80 @@ defmodule Helix.Account.Controller.AccountTest do
       assert {:error, :notfound} == AccountController.find(Random.pk())
     end
 
-    test "using email" do
-      account = Factory.insert(:account)
-
-      assert {:ok, found} = AccountController.find_by(email: account.email)
-      assert account.account_id == found.account_id
+    test "failing with invalid email" do
+      assert {:error, :notfound} = AccountController.find_by(email: "in@val.id")
     end
 
-    test "failing with invalid email" do
-      assert {:error, :notfound} = AccountController.find_by(email: "invalid@email.eita")
+    test "failing with invalid username" do
+      assert {:error, :notfound} = AccountController.find_by(email: "invalid")
     end
   end
 
-  test "account deletion is idempotent" do
-    account = Factory.insert(:account)
+  describe "account deleting" do
+    test "succeeds by struct and id" do
+      account1 = Factory.insert(:account)
+      account2 = Factory.insert(:account)
 
-    assert Repo.get_by(Account, account_id: account.account_id)
+      assert :ok == AccountController.delete(account1)
+      assert :ok == AccountController.delete(account2.account_id)
 
-    AccountController.delete(account.account_id)
-    AccountController.delete(account.account_id)
+      refute Repo.get_by(Account, account_id: account1.account_id)
+      refute Repo.get_by(Account, account_id: account2.account_id)
+    end
 
-    refute Repo.get_by(Account, account_id: account.account_id)
+    test "is idempotent" do
+      account = Factory.insert(:account)
+
+      assert Repo.get_by(Account, account_id: account.account_id)
+
+      AccountController.delete(account.account_id)
+      AccountController.delete(account.account_id)
+
+      refute Repo.get_by(Account, account_id: account.account_id)
+    end
   end
 
   describe "account updating" do
-    test "updates its fields" do
+    test "changes its fields" do
       account = Factory.insert(:account)
-      p = Factory.params_for(:account)
-
-      params = %{
-        email: p.email,
-        password: p.password,
+      params = Factory.params_for(:account)
+      update_params = %{
+        email: params.email,
+        password: params.password,
         confirmed: true
       }
 
-      assert {:ok, account2} = AccountController.update(account.account_id, params)
-      assert params.email == account2.email
-      refute account.password == account2.password
-      assert params.confirmed == account2.confirmed
+      {:ok, updated_account} = AccountController.update(account, update_params)
+
+      assert update_params.email == updated_account.email
+      assert Bcrypt.checkpw(update_params.password, updated_account.password)
+      assert update_params.confirmed == updated_account.confirmed
     end
 
-    test "email exists" do
-      a = Factory.insert(:account)
-      params1 = Factory.params_for(:account)
-      params2 = %{params1 | email: a.email}
+    test "fails when email is already in use" do
+      account1 = Factory.insert(:account)
+      account2 = Factory.insert(:account)
 
-      assert {:ok, account1} = AccountController.create(params1)
-      assert {:error, _} = AccountController.update(account1.account_id, params2)
-    end
+      params = %{email: account1.email}
 
-    test "account not found" do
-      pk = HELL.TestHelper.Random.pk()
+      {:error, cs} = AccountController.update(account2, params)
 
-      assert {:error, :notfound} == AccountController.update(pk, %{})
+      assert :email in Keyword.keys(cs.errors)
     end
   end
 
-  describe "account login" do
-    test "succeeds with correct username/password" do
-      account = Factory.insert(:account)
-      pass = "!!!foobar1234"
+  describe "account signing in" do
+    test "succeeds with correct username and password" do
+      params = Factory.params_for(:account)
+      pass = params.password
 
-      account
-      |> Account.update_changeset(%{password: pass})
-      |> Repo.update!()
+      {:ok, account} = AccountController.create(params)
 
       assert {:ok, _} = AccountController.login(account.username, pass)
     end
 
     test "fails when username is invalid" do
-      error = AccountController.login("}<]=inv@líd+(usêr)-nämẽ", "password")
+      error = AccountController.login("invalid_username", "any_password")
 
       assert {:error, :notfound} == error
     end
