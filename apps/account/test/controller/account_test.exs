@@ -68,12 +68,12 @@ defmodule Helix.Account.Controller.AccountTest do
       assert {:error, :notfound} == AccountController.find(Random.pk())
     end
 
-    test "failing with invalid email" do
-      assert {:error, :notfound} = AccountController.find_by(email: "in@val.id")
+    test "fails when email doesn't exists" do
+      assert {:error, :notfound} = AccountController.find_by(email: "a@bc.com")
     end
 
-    test "failing with invalid username" do
-      assert {:error, :notfound} = AccountController.find_by(email: "invalid")
+    test "fails when username doesn't exists" do
+      assert {:error, :notfound} = AccountController.find_by(username: "abcdef")
     end
   end
 
@@ -147,8 +147,9 @@ defmodule Helix.Account.Controller.AccountTest do
     end
 
     test "fails when password doesn't match" do
-      account = Factory.insert(:account)
-      error = AccountController.login(account.email, "incorrect_password")
+      params = Factory.params_for(:account)
+      {:ok, account} = AccountController.create(params)
+      error = AccountController.login(account.username, "incorrect_password")
 
       assert {:error, :notfound} == error
     end

@@ -14,12 +14,7 @@ defmodule Helix.Account.Controller.Account do
 
   @spec find(Account.id) :: {:ok, Account.t} | {:error, :notfound}
   def find(account_id) do
-    result =
-      account_id
-      |> Account.Query.by_id()
-      |> Repo.one()
-
-    case result do
+    case Repo.get_by(Account, account_id: account_id) do
       nil ->
         {:error, :notfound}
       account ->
@@ -29,11 +24,10 @@ defmodule Helix.Account.Controller.Account do
 
   @spec find_by([{:email, Account.email} | {:username, Account.username}]) ::
     {:ok, Account.t} | {:error, :notfound}
-  def find_by(email: email) do
+  def find_by(options) do
     result =
-      email
-      |> String.downcase()
-      |> Account.Query.by_email()
+      Account
+      |> find_by(options)
       |> Repo.one()
 
     case result do
@@ -43,20 +37,27 @@ defmodule Helix.Account.Controller.Account do
         {:ok, account}
     end
   end
-  def find_by(username: username) do
-    result =
-      username
-      |> String.downcase()
-      |> Account.Query.by_username()
-      |> Repo.one()
 
-    case result do
-      nil ->
-        {:error, :notfound}
-      account ->
-        {:ok, account}
-    end
+  @spec find_by(
+    Ecto.Queryable.t,
+    [{:email, Account.email} | {:username, Account.username}]) ::
+      Ecto.Queryable.t
+  defp find_by(query, [{:email, email} | t]) do
+    email = String.downcase(email)
+
+    query
+    |> Account.Query.by_email(email)
+    |> find_by(t)
   end
+  defp find_by(query, [{:username, username} | t]) do
+    username = String.downcase(username)
+
+    query
+    |> Account.Query.by_username(username)
+    |> find_by(t)
+  end
+  defp find_by(query, []),
+    do: query
 
   @spec update(Account.t, Account.update_params) ::
     {:ok, Account} | {:error, Ecto.Changeset.t | :notfound}

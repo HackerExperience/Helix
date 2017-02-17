@@ -9,19 +9,9 @@ defmodule Helix.Account.Controller.AccountSettingTest do
 
   alias Helix.Account.Factory
 
-  defp override_settings(account) do
-    account
-    |> AccountSettingController.get_settings()
-    |> Enum.map(fn {setting_id, _} ->
-      %{default_value: custom_value} = Factory.params(:setting)
-      AccountSettingController.put(account, setting_id, custom_value)
-
-      {setting_id, custom_value}
-    end)
-    |> Enum.into(%{})
-  end
-
-  defp default_settings?(account_settings) do
+  # returns a diff containing any custom setting, this is needed to test that
+  # fetching every setting from an account with no custom setting is valid
+  defp reject_unchanged_settings(account_settings) do
     account_kv_set =
       account_settings
       |> Enum.to_list()
@@ -33,7 +23,9 @@ defmodule Helix.Account.Controller.AccountSettingTest do
       |> Enum.map(&({&1.setting_id, &1.default_value}))
       |> MapSet.new()
 
-    default_kv_set == account_kv_set
+    default_kv_set
+    |> MapSet.difference(account_kv_set)
+    |> MapSet.to_list()
   end
 
   describe "changing specific settings" do
@@ -85,7 +77,7 @@ defmodule Helix.Account.Controller.AccountSettingTest do
   describe "fetching every setting" do
     test "fetches settings with custom values" do
       account = Factory.insert(:account)
-      custom_settings = override_settings(account)
+      custom_settings = Factory.settings_for(account)
 
       assert custom_settings == AccountSettingController.get_settings(account)
     end
@@ -94,7 +86,7 @@ defmodule Helix.Account.Controller.AccountSettingTest do
       account = Factory.insert(:account)
       account_settings = AccountSettingController.get_settings(account)
 
-      assert default_settings?(account_settings)
+      assert [] == reject_unchanged_settings(account_settings)
     end
   end
 end
