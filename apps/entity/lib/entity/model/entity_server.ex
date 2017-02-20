@@ -33,4 +33,29 @@ defmodule Helix.Entity.Model.EntityServer do
     |> cast(params, @creation_fields)
     |> validate_required(@creation_fields)
   end
+
+  defmodule Query do
+
+    alias HELL.PK
+    alias Helix.Entity.Model.Entity
+    alias Helix.Entity.Model.EntityServer
+
+    import Ecto.Query, only: [where: 3, select: 3]
+
+    @spec from_entity(Ecto.Queryable.t, Entity.t | Entity.id) ::
+      Ecto.Queryable.t
+    def from_entity(query \\ EntityServer, entity_or_entity_id)
+    def from_entity(query, entity = %Entity{}),
+      do: from_entity(query, entity.entity_id)
+    def from_entity(query, entity_id),
+      do: where(query, [es], es.entity_id == ^entity_id)
+
+    @spec by_server_id(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
+    def by_server_id(query \\ EntityServer, server_id),
+      do: where(query, [es], es.server_id == ^server_id)
+
+    @spec select_server_id(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def select_server_id(query \\ EntityServer),
+      do: select(query, [es], es.server_id)
+  end
 end

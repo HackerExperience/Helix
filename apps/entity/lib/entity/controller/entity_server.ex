@@ -5,27 +5,29 @@ defmodule Helix.Entity.Controller.EntityServer do
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
 
-  import Ecto.Query, only: [where: 3]
-
-  @spec create(Entity.id, Server.id) :: {:ok, EntityServer.t} | {:error, Ecto.Changeset.t}
+  @spec create(Entity.t | Entity.id, Server.id) ::
+    {:ok, EntityServer.t} | {:error, Ecto.Changeset.t}
+  def create(entity = %Entity{}, server_id),
+    do: create(entity.entity_id, server_id)
   def create(entity_id, server_id) do
     %{entity_id: entity_id, server_id: server_id}
     |> EntityServer.create_changeset()
     |> Repo.insert()
   end
 
-  @spec find(Entity.id) :: [EntityServer.t]
-  def find(entity_id) do
-    EntityServer
-    |> where([s], s.entity_id == ^entity_id)
+  @spec find(Entity.t | Entity.id) :: [PK.t]
+  def find(entity) do
+    entity
+    |> EntityServer.Query.from_entity()
+    |> EntityServer.Query.select_server_id()
     |> Repo.all()
   end
 
-  @spec delete(Entity.id, Server.id) :: no_return
-  def delete(entity_id, server_id) do
-    EntityServer
-    |> where([s], s.entity_id == ^entity_id)
-    |> where([s], s.server_id == ^server_id)
+  @spec delete(Entity.t | Entity.id, Server.id) :: no_return
+  def delete(entity, server_id) do
+    entity
+    |> EntityServer.Query.from_entity()
+    |> EntityServer.Query.by_server_id(server_id)
     |> Repo.delete_all()
 
     :ok

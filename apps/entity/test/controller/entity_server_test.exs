@@ -4,68 +4,80 @@ defmodule Helix.Entity.Controller.EntityServerTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
-  alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.EntityType
+  alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
 
-  setup_all do
-    # FIXME
-    type = case Repo.all(EntityType) do
-      [] ->
-        %{entity_type: Burette.Color.name()}
-        |> EntityType.create_changeset()
-        |> Repo.insert!()
-      et = [_|_] ->
-        Enum.random(et)
+  alias Helix.Entity.Factory
+
+  def generate_all_owned_servers(entity) do
+    servers = Enum.map(0..4, fn _ -> Random.pk() end)
+
+    Enum.each(servers, fn server ->
+      EntityServerController.create(entity, server)
+    end)
+
+    servers
+  end
+
+  def reject_owned_servers(owned, list) do
+    owned_set = MapSet.new(owned)
+
+    list
+    |> MapSet.new()
+    |> MapSet.difference(owned_set)
+    |> MapSet.to_list()
+  end
+
+  describe "adding entity ownership over servers" do
+    test "succeeds with entity_id" do
+      params = Factory.params(:entity_server)
+      %{entity_id: pk, server_id: server} = params
+
+      assert {:ok, _} = EntityServerController.create(pk, server)
     end
 
-    [entity_type: type]
-  end
+    test "succeeds with entity struct" do
+      params = Factory.params(:entity_server)
+      %{entity: entity, server_id: server} = params
 
-  setup context do
-    entity =
-      %{
-        entity_type: context.entity_type.entity_type,
-        entity_id: Random.pk()}
-      |> Entity.create_changeset()
-      |> Repo.insert!()
-
-    {:ok, entity: entity}
-  end
-
-  test "create/1", %{entity: entity} do
-    server_id = Random.pk()
-
-    assert {:ok, _} = EntityServerController.create(entity.entity_id, server_id)
-  end
-
-  describe "find/1" do
-    test "fetching linked servers", %{entity: entity} do
-      servers = [Random.pk(), Random.pk(), Random.pk()]
-
-      Enum.each(servers, &EntityServerController.create(entity.entity_id, &1))
-
-      found_servers =
-        entity.entity_id
-        |> EntityServerController.find()
-        |> Enum.map(&to_string(&1.server_id))
-        |> Enum.sort()
-
-      assert Enum.sort(servers) === found_servers
+      assert {:ok, _} = EntityServerController.create(entity, server)
     end
 
-    test "returns empty list if entity has no server", %{entity: entity} do
-      assert [] === EntityServerController.find(entity.entity_id)
+    test "fails when entity doesn't exist" do
+      pk = Random.pk()
+      %{server_id: server} = Factory.params(:entity_server)
+
+      assert_raise(Ecto.ConstraintError, fn ->
+        EntityServerController.create(pk, server)
+      end)
     end
   end
 
-  test "delete is idempotent", %{entity: entity} do
-    server_id = HELL.TestHelper.Random.pk()
-    EntityServerController.create(entity.entity_id, server_id)
+  describe "fetching servers owned by an entity" do
+    test "returns a list with owned servers" do
+      entity = Factory.insert(:entity)
+      servers = generate_all_owned_servers(entity)
+      fetched_servers = EntityServerController.find(entity)
 
-    refute [] == EntityServerController.find(entity.entity_id)
-    EntityServerController.delete(entity.entity_id, server_id)
-    EntityServerController.delete(entity.entity_id, server_id)
-    assert [] == EntityServerController.find(entity.entity_id)
+      assert [] == reject_owned_servers(servers, fetched_servers)
+    end
+
+    test "returns an empty list when no server is owned" do
+      entity = Factory.insert(:entity)
+      fetched_servers = EntityServerController.find(entity)
+
+      assert [] == fetched_servers
+    end
+  end
+
+  test "removing entity ownership over servers is idempotent" do
+    es = Factory.insert(:entity_server)
+
+    assert Repo.get_by(EntityServer, entity_id: es.entity_id)
+
+    EntityServerController.delete(es.entity_id, es.server_id)
+    EntityServerController.delete(es.entity_id, es.server_id)
+
+    refute Repo.get_by(EntityServer, entity_id: es.entity_id)
   end
 end
