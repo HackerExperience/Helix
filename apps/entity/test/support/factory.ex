@@ -17,6 +17,16 @@ defmodule Helix.Entity.Factory do
     }
   end
 
+  def params(:entity_component) do
+    entity = insert(:entity)
+
+    %{
+      entity: entity,
+      entity_id: entity.entity_id,
+      component_id: Random.pk()
+    }
+  end
+
   def entity_factory do
     entity_type = generate_entity_type()
 

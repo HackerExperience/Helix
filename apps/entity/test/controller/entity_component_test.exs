@@ -3,93 +3,81 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Entity.Controller.Entity, as: EntityController
   alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
-  alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.EntityType
+  alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Repo
 
-  setup_all do
-    entity_type =
-      EntityType
-      |> Repo.all()
-      |> Enum.random()
+  alias Helix.Entity.Factory
 
-    {:ok, entity_type: entity_type.entity_type}
-  end
+  def generate_all_owned_components(entity) do
+    components = Enum.map(0..4, fn _ -> Random.pk() end)
 
-  defp create_entity(entity_type) do
-    params = %{
-      entity_type: entity_type,
-      entity_id: Random.pk()
-    }
-
-    entity =
-      params
-      |> Entity.create_changeset()
-      |> Repo.insert!()
-
-    entity.entity_id
-  end
-
-  defp create_components(entity_id) do
-    components = Enum.map(0..Random.number(1..10), fn _ -> Random.pk() end)
-    Enum.each(components, fn component_id ->
-      {:ok, _} = EntityComponentController.create(entity_id, component_id)
+    Enum.each(components, fn component ->
+      EntityComponentController.create(entity, component)
     end)
+
     components
   end
 
-  test "creating adds entity ownership over components", context do
-    entity_id = create_entity(context.entity_type)
-    components = create_components(entity_id)
+  def reject_owned_components(owned, list) do
+    owned_set = MapSet.new(owned)
 
-    components1 = Enum.into(components, MapSet.new())
-    components2 =
-      entity_id
-      |> EntityComponentController.find()
-      |> Enum.map(&(&1.component_id))
-      |> Enum.into(MapSet.new())
-
-    # components are linked
-    assert MapSet.equal?(components1, components2)
+    list
+    |> MapSet.new()
+    |> MapSet.difference(owned_set)
+    |> MapSet.to_list()
   end
 
-  test "fetching yields an empty list when no component is owned", context do
-    entity_id = create_entity(context.entity_type)
-    assert [] == EntityComponentController.find(entity_id)
+  describe "adding entity ownership over components" do
+    test "succeeds with entity_id" do
+      params = Factory.params(:entity_component)
+      %{entity_id: pk, component_id: component} = params
+
+      assert {:ok, _} = EntityComponentController.create(pk, component)
+    end
+
+    test "succeeds with entity struct" do
+      params = Factory.params(:entity_component)
+      %{entity: entity, component_id: component} = params
+
+      assert {:ok, _} = EntityComponentController.create(entity, component)
+    end
+
+    test "fails when entity doesn't exist" do
+      pk = Random.pk()
+      %{component_id: component} = Factory.params(:entity_component)
+
+      assert_raise(Ecto.ConstraintError, fn ->
+        EntityComponentController.create(pk, component)
+      end)
+    end
   end
 
-  test "fetching components from a non existent entity yields an empty list" do
-    assert [] == EntityComponentController.find(Random.pk())
+  describe "fetching components owned by an entity" do
+    test "returns a list with owned components" do
+      entity = Factory.insert(:entity)
+      components = generate_all_owned_components(entity)
+      fetched_components = EntityComponentController.find(entity)
+
+      assert [] == reject_owned_components(components, fetched_components)
+    end
+
+    test "returns an empty list when no component is owned" do
+      entity = Factory.insert(:entity)
+      fetched_components = EntityComponentController.find(entity)
+
+      assert [] == fetched_components
+    end
   end
 
-  test "deleting the entity removes it's component ownership", context do
-    entity_id = create_entity(context.entity_type)
-    create_components(entity_id)
+  test "removing entity ownership over components is idempotent" do
+    ec = Factory.insert(:entity_component)
 
-    # components are owned
-    refute [] == EntityComponentController.find(entity_id)
+    assert Repo.get_by(EntityComponent, entity_id: ec.entity_id)
 
-    EntityController.delete(entity_id)
+    EntityComponentController.delete(ec.entity_id, ec.component_id)
+    EntityComponentController.delete(ec.entity_id, ec.component_id)
 
-    # components aren't owned anymore
-    assert [] == EntityComponentController.find(entity_id)
-  end
-
-  test "deleting is idempotent", context do
-    entity_id = create_entity(context.entity_type)
-    component_id = Random.pk()
-
-    {:ok, _} = EntityComponentController.create(entity_id, component_id)
-
-    # components are owned
-    refute [] == EntityComponentController.find(entity_id)
-
-    :ok = EntityComponentController.delete(entity_id, component_id)
-    :ok = EntityComponentController.delete(entity_id, component_id)
-
-    # components aren't owned anymore
-    assert [] == EntityComponentController.find(entity_id)
+    refute Repo.get_by(EntityComponent, entity_id: ec.entity_id)
   end
 end
