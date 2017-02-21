@@ -3,7 +3,6 @@ defmodule Helix.Hardware.Model.Component do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.MotherboardSlot
 
