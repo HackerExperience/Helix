@@ -4,6 +4,8 @@ defmodule Helix.Entity.Factory do
 
   alias HELL.PK
   alias HELL.TestHelper.Random
+  alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
+  alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
@@ -35,6 +37,26 @@ defmodule Helix.Entity.Factory do
       entity_id: entity.entity_id,
       server_id: Random.pk()
     }
+  end
+
+  def servers_for(entity) do
+    servers = Enum.map(0..4, fn _ -> Random.pk() end)
+
+    Enum.each(servers, fn server ->
+      EntityServerController.create(entity, server)
+    end)
+
+    servers
+  end
+
+  def components_for(entity) do
+    components = Enum.map(0..4, fn _ -> Random.pk() end)
+
+    Enum.each(components, fn component ->
+      EntityComponentController.create(entity, component)
+    end)
+
+    components
   end
 
   def entity_factory do

@@ -2,31 +2,13 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Helpers
   alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Repo
 
   alias Helix.Entity.Factory
-
-  def generate_all_owned_components(entity) do
-    components = Enum.map(0..4, fn _ -> Random.pk() end)
-
-    Enum.each(components, fn component ->
-      EntityComponentController.create(entity, component)
-    end)
-
-    components
-  end
-
-  def reject_owned_components(owned, list) do
-    owned_set = MapSet.new(owned)
-
-    list
-    |> MapSet.new()
-    |> MapSet.difference(owned_set)
-    |> MapSet.to_list()
-  end
 
   describe "adding entity ownership over components" do
     test "succeeds with entity_id" do
@@ -56,10 +38,10 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   describe "fetching components owned by an entity" do
     test "returns a list with owned components" do
       entity = Factory.insert(:entity)
-      components = generate_all_owned_components(entity)
+      components = Factory.components_for(entity)
       fetched_components = EntityComponentController.find(entity)
 
-      assert [] == reject_owned_components(components, fetched_components)
+      assert [] == Helpers.list_diff(components, fetched_components)
     end
 
     test "returns an empty list when no component is owned" do

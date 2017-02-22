@@ -2,31 +2,13 @@ defmodule Helix.Entity.Controller.EntityServerTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Helpers
   alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
 
   alias Helix.Entity.Factory
-
-  def generate_all_owned_servers(entity) do
-    servers = Enum.map(0..4, fn _ -> Random.pk() end)
-
-    Enum.each(servers, fn server ->
-      EntityServerController.create(entity, server)
-    end)
-
-    servers
-  end
-
-  def reject_owned_servers(owned, list) do
-    owned_set = MapSet.new(owned)
-
-    list
-    |> MapSet.new()
-    |> MapSet.difference(owned_set)
-    |> MapSet.to_list()
-  end
 
   describe "adding entity ownership over servers" do
     test "succeeds with entity_id" do
@@ -56,10 +38,10 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   describe "fetching servers owned by an entity" do
     test "returns a list with owned servers" do
       entity = Factory.insert(:entity)
-      servers = generate_all_owned_servers(entity)
+      servers = Factory.servers_for(entity)
       fetched_servers = EntityServerController.find(entity)
 
-      assert [] == reject_owned_servers(servers, fetched_servers)
+      assert [] == Helpers.list_diff(servers, fetched_servers)
     end
 
     test "returns an empty list when no server is owned" do
