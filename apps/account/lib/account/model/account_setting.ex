@@ -55,14 +55,20 @@ defmodule Helix.Account.Model.AccountSetting do
 
     import Ecto.Query, only: [where: 3, select: 3]
 
-    @spec by_account_id(Account.id) :: Ecto.Queryable.t
-    @spec by_account_id(Ecto.Queryable.t, Account.id) :: Ecto.Queryable.t
-    def by_account_id(query \\ AccountSetting, account_id),
+    @spec from_account(Ecto.Queryable.t, Account.t | Account.id) ::
+      Ecto.Queryable.t
+    def from_account(query \\ AccountSetting, account_or_account_id)
+    def from_account(query, account = %Account{}),
+      do: from_account(query, account.account_id)
+    def from_account(query, account_id),
       do: where(query, [as], as.account_id == ^account_id)
 
-    @spec by_setting_id(Setting.id) :: Ecto.Queryable.t
-    @spec by_setting_id(Ecto.Queryable.t, Setting.id) :: Ecto.Queryable.t
-    def by_setting_id(query \\ AccountSetting, setting_id),
+    @spec from_setting(Ecto.Queryable.t, Setting.t | Setting.id) ::
+      Ecto.Queryable.t
+    def from_setting(query \\ AccountSetting, setting_or_setting_id)
+    def from_setting(query, setting = %Setting{}),
+      do: from_setting(query, setting.setting_id)
+    def from_setting(query, setting_id),
       do: where(query, [as], as.setting_id == ^setting_id)
 
     @spec select_setting_id_and_setting_value() :: Ecto.Queryable.t

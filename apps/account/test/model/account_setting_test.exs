@@ -6,8 +6,18 @@ defmodule Helix.Account.Model.AccountSettingTest do
 
   alias Helix.Account.Factory
 
+  defp generate_params() do
+    s = Factory.build(:account_setting)
+
+    %{
+      account_id: s.account.account_id,
+      setting_id: s.setting.setting_id,
+      setting_value: s.setting_value
+    }
+  end
+
   test "fields account_id, setting_id and setting_value are required" do
-    params = Factory.params(:account_setting)
+    params = generate_params()
 
     cs1 = AccountSetting.create_changeset(params)
     cs2 = AccountSetting.create_changeset(%{})
