@@ -6,7 +6,7 @@ defmodule Helix.Account.Model.AccountSettingTest do
 
   alias Helix.Account.Factory
 
-  defp generate_params() do
+  defp generate_params do
     s = Factory.build(:account_setting)
 
     %{
