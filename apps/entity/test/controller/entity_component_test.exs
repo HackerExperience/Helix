@@ -2,8 +2,6 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Helpers
-  alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Repo
@@ -12,25 +10,25 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
 
   describe "adding entity ownership over components" do
     test "succeeds with entity_id" do
-      params = Factory.params(:entity_component)
-      %{entity_id: pk, component_id: component} = params
+      %{entity_id: entity_id} = Factory.insert(:entity)
+      %{component_id: comp_id} = Factory.build(:entity_component)
 
-      assert {:ok, _} = EntityComponentController.create(pk, component)
+      assert {:ok, _} = EntityComponentController.create(entity_id, comp_id)
     end
 
     test "succeeds with entity struct" do
-      params = Factory.params(:entity_component)
-      %{entity: entity, component_id: component} = params
+      entity = Factory.insert(:entity)
+      %{component_id: component_id} = Factory.build(:entity_component)
 
-      assert {:ok, _} = EntityComponentController.create(entity, component)
+      assert {:ok, _} = EntityComponentController.create(entity, component_id)
     end
 
     test "fails when entity doesn't exist" do
-      pk = Random.pk()
-      %{component_id: component} = Factory.params(:entity_component)
+      %{entity_id: entity_id} = Factory.build(:entity)
+      %{component_id: component} = Factory.build(:entity_component)
 
       assert_raise(Ecto.ConstraintError, fn ->
-        EntityComponentController.create(pk, component)
+        EntityComponentController.create(entity_id, component)
       end)
     end
   end
@@ -38,10 +36,10 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   describe "fetching components owned by an entity" do
     test "returns a list with owned components" do
       entity = Factory.insert(:entity)
-      components = Factory.components_for(entity)
+      components = Factory.build_list(5, :entity_component, %{entity: entity})
       fetched_components = EntityComponentController.find(entity)
 
-      assert [] == Helpers.list_diff(components, fetched_components)
+      assert [] == (fetched_components -- components)
     end
 
     test "returns an empty list when no component is owned" do

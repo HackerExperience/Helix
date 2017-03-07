@@ -40,7 +40,7 @@ defmodule Helix.Entity.Model.EntityServer do
     alias Helix.Entity.Model.Entity
     alias Helix.Entity.Model.EntityServer
 
-    import Ecto.Query, only: [where: 3, select: 3]
+    import Ecto.Query, only: [where: 3]
 
     @spec from_entity(Ecto.Queryable.t, Entity.t | Entity.id) ::
       Ecto.Queryable.t
@@ -53,9 +53,5 @@ defmodule Helix.Entity.Model.EntityServer do
     @spec by_server_id(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
     def by_server_id(query \\ EntityServer, server_id),
       do: where(query, [es], es.server_id == ^server_id)
-
-    @spec select_server_id(Ecto.Queryable.t) :: Ecto.Queryable.t
-    def select_server_id(query \\ EntityServer),
-      do: select(query, [es], es.server_id)
   end
 end

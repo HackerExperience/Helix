@@ -9,19 +9,26 @@ defmodule Helix.Entity.Controller.EntityTest do
 
   alias Helix.Entity.Factory
 
+  defp generate_params do
+    e = Factory.build(:entity)
+
+    %{
+      entity_id: e.entity_id,
+      entity_type: e.entity_type
+    }
+  end
+
   describe "entity creation" do
     test "succeeds with valid params" do
-      params = Factory.params(:entity)
-
+      params = generate_params()
       assert {:ok, _} = EntityController.create(params)
     end
 
     test "fails when entity_type is invalid" do
-      params = %{Factory.params(:entity) | entity_type: Burette.Color.name()}
+      params = %{generate_params() | entity_type: Random.number()}
 
-      assert_raise(Ecto.ConstraintError, fn ->
-        EntityController.create(params)
-      end)
+      assert {:error, cs} = EntityController.create(params)
+      assert :entity_type in Keyword.keys(cs.errors)
     end
   end
 

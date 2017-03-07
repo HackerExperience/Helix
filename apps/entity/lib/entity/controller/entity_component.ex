@@ -4,6 +4,8 @@ defmodule Helix.Entity.Controller.EntityComponent do
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Repo
 
+  import Ecto.Query, only: [select: 3]
+
   @spec create(Entity.t | Entity.id, HELL.PK.t) ::
     {:ok, EntityComponent.t}
     | {:error, Ecto.Changeset.t}
@@ -15,11 +17,11 @@ defmodule Helix.Entity.Controller.EntityComponent do
     |> Repo.insert()
   end
 
-  @spec find(Entity.t | Entity.id) :: [EntityComponent.t]
+  @spec find(Entity.t | Entity.id) :: [HELL.PK.t]
   def find(entity) do
     entity
     |> EntityComponent.Query.from_entity()
-    |> EntityComponent.Query.select_component_id()
+    |> select([ec], ec.component_id)
     |> Repo.all()
   end
 

@@ -2,8 +2,6 @@ defmodule Helix.Entity.Controller.EntityServerTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Helpers
-  alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
@@ -12,25 +10,25 @@ defmodule Helix.Entity.Controller.EntityServerTest do
 
   describe "adding entity ownership over servers" do
     test "succeeds with entity_id" do
-      params = Factory.params(:entity_server)
-      %{entity_id: pk, server_id: server} = params
+      %{entity_id: entity_id} = Factory.insert(:entity)
+      %{server_id: comp_id} = Factory.build(:entity_server)
 
-      assert {:ok, _} = EntityServerController.create(pk, server)
+      assert {:ok, _} = EntityServerController.create(entity_id, comp_id)
     end
 
     test "succeeds with entity struct" do
-      params = Factory.params(:entity_server)
-      %{entity: entity, server_id: server} = params
+      entity = Factory.insert(:entity)
+      %{server_id: server_id} = Factory.build(:entity_server)
 
-      assert {:ok, _} = EntityServerController.create(entity, server)
+      assert {:ok, _} = EntityServerController.create(entity, server_id)
     end
 
     test "fails when entity doesn't exist" do
-      pk = Random.pk()
-      %{server_id: server} = Factory.params(:entity_server)
+      %{entity_id: entity_id} = Factory.build(:entity)
+      %{server_id: server} = Factory.build(:entity_server)
 
       assert_raise(Ecto.ConstraintError, fn ->
-        EntityServerController.create(pk, server)
+        EntityServerController.create(entity_id, server)
       end)
     end
   end
@@ -38,10 +36,10 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   describe "fetching servers owned by an entity" do
     test "returns a list with owned servers" do
       entity = Factory.insert(:entity)
-      servers = Factory.servers_for(entity)
+      servers = Factory.build_list(5, :entity_server, %{entity: entity})
       fetched_servers = EntityServerController.find(entity)
 
-      assert [] == Helpers.list_diff(servers, fetched_servers)
+      assert [] == (fetched_servers -- servers)
     end
 
     test "returns an empty list when no server is owned" do
@@ -53,13 +51,13 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   end
 
   test "removing entity ownership over servers is idempotent" do
-    es = Factory.insert(:entity_server)
+    ec = Factory.insert(:entity_server)
 
-    assert Repo.get_by(EntityServer, entity_id: es.entity_id)
+    assert Repo.get_by(EntityServer, entity_id: ec.entity_id)
 
-    EntityServerController.delete(es.entity_id, es.server_id)
-    EntityServerController.delete(es.entity_id, es.server_id)
+    EntityServerController.delete(ec.entity_id, ec.server_id)
+    EntityServerController.delete(ec.entity_id, ec.server_id)
 
-    refute Repo.get_by(EntityServer, entity_id: es.entity_id)
+    refute Repo.get_by(EntityServer, entity_id: ec.entity_id)
   end
 end

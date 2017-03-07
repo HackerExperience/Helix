@@ -5,6 +5,8 @@ defmodule Helix.Entity.Controller.EntityServer do
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
 
+  import Ecto.Query, only: [select: 3]
+
   @spec create(Entity.t | Entity.id, Server.id) ::
     {:ok, EntityServer.t} | {:error, Ecto.Changeset.t}
   def create(entity = %Entity{}, server_id),
@@ -19,7 +21,7 @@ defmodule Helix.Entity.Controller.EntityServer do
   def find(entity) do
     entity
     |> EntityServer.Query.from_entity()
-    |> EntityServer.Query.select_server_id()
+    |> select([es], es.server_id)
     |> Repo.all()
   end
 

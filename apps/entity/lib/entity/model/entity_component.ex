@@ -40,7 +40,7 @@ defmodule Helix.Entity.Model.EntityComponent do
     alias Helix.Entity.Model.Entity
     alias Helix.Entity.Model.EntityComponent
 
-    import Ecto.Query, only: [where: 3, select: 3]
+    import Ecto.Query, only: [where: 3]
 
     @spec from_entity(Ecto.Queryable.t, Entity.t | Entity.id) ::
       Ecto.Queryable.t
@@ -53,9 +53,5 @@ defmodule Helix.Entity.Model.EntityComponent do
     @spec by_component_id(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
     def by_component_id(query \\ EntityComponent, component_id),
       do: where(query, [ec], ec.component_id == ^component_id)
-
-    @spec select_component_id(Ecto.Queryable.t) :: Ecto.Queryable.t
-    def select_component_id(query \\ EntityComponent),
-      do: select(query, [ec], ec.component_id)
   end
 end

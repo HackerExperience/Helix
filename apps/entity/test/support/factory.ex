@@ -4,60 +4,9 @@ defmodule Helix.Entity.Factory do
 
   alias HELL.PK
   alias HELL.TestHelper.Random
-  alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
-  alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
-
-  def params(:entity) do
-    entity_type = generate_entity_type()
-
-    %{
-      entity_id: generate_pk(entity_type),
-      entity_type: entity_type
-    }
-  end
-
-  def params(:entity_component) do
-    entity = insert(:entity)
-
-    %{
-      entity: entity,
-      entity_id: entity.entity_id,
-      component_id: Random.pk()
-    }
-  end
-
-  def params(:entity_server) do
-    entity = insert(:entity)
-
-    %{
-      entity: entity,
-      entity_id: entity.entity_id,
-      server_id: Random.pk()
-    }
-  end
-
-  def servers_for(entity) do
-    servers = Enum.map(0..4, fn _ -> Random.pk() end)
-
-    Enum.each(servers, fn server ->
-      EntityServerController.create(entity, server)
-    end)
-
-    servers
-  end
-
-  def components_for(entity) do
-    components = Enum.map(0..4, fn _ -> Random.pk() end)
-
-    Enum.each(components, fn component ->
-      EntityComponentController.create(entity, component)
-    end)
-
-    components
-  end
 
   def entity_factory do
     entity_type = generate_entity_type()
