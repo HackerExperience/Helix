@@ -8,6 +8,8 @@ defmodule Helix.Account.Controller.AccountSettingTest do
 
   alias Helix.Account.Factory
 
+  import Ecto.Query, only: [select: 3]
+
   defp diff_settings(account_settings, method) do
     diff =
       case method do
@@ -97,7 +99,8 @@ defmodule Helix.Account.Controller.AccountSettingTest do
       account = Factory.insert(:account)
 
       custom_settings =
-        Setting.Query.select_setting_id()
+        Setting
+        |> select([s], s.setting_id)
         |> Repo.all()
         |> to_custom_settings_map()
 

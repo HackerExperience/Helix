@@ -5,6 +5,8 @@ defmodule Helix.Account.Controller.AccountSetting do
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
+  import Ecto.Query, only: [select: 3]
+
   @spec put(Account.t | Account.id, Setting.t | Setting.id, String.t) ::
     {:ok, String.t} | {:error, Ecto.Changeset.t}
   def put(account = %Account{}, setting, setting_value),
@@ -62,14 +64,15 @@ defmodule Helix.Account.Controller.AccountSetting do
   @spec get_settings(Account.t | Account.id) :: %{Setting.id => String.t}
   def get_settings(account) do
     default_settings =
-      Setting.Query.select_setting_id_and_default_value()
+      Setting
+      |> select([s], {s.setting_id, s.default_value})
       |> Repo.all()
       |> :maps.from_list()
 
     custom_settings =
       account.account_id
       |> AccountSetting.Query.from_account()
-      |> AccountSetting.Query.select_setting_id_and_setting_value()
+      |> select([as], {as.setting_id, as.setting_value})
       |> Repo.all()
       |> :maps.from_list()
 
