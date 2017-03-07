@@ -4,6 +4,10 @@ defmodule Helix.Account.Controller.Account do
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
 
+  @type find_params ::
+    [{:email, Account.email}
+    | {:username, Account.username}]
+
   @spec create(Account.creation_params) ::
     {:ok, Account.t} | {:error, Ecto.Changeset.t}
   def create(params) do
@@ -22,42 +26,21 @@ defmodule Helix.Account.Controller.Account do
     end
   end
 
-  @spec find_by([{:email, Account.email} | {:username, Account.username}]) ::
-    {:ok, Account.t} | {:error, :notfound}
-  def find_by(options) do
-    result =
-      Account
-      |> find_by(options)
-      |> Repo.one()
+  @spec find_by(find_params) :: [Account.t]
+  def find_by(params) do
+    query = Enum.reduce(params, Account, &reduce_find_params/2)
 
-    case result do
-      nil ->
-        {:error, :notfound}
-      account ->
-        {:ok, account}
-    end
+    Repo.all(query)
   end
 
-  @spec find_by(
-    Ecto.Queryable.t,
-    [{:email, Account.email} | {:username, Account.username}]) ::
-      Ecto.Queryable.t
-  defp find_by(query, [{:email, email} | t]) do
-    email = String.downcase(email)
-
-    query
-    |> Account.Query.by_email(email)
-    |> find_by(t)
-  end
-  defp find_by(query, [{:username, username} | t]) do
-    username = String.downcase(username)
-
-    query
-    |> Account.Query.by_username(username)
-    |> find_by(t)
-  end
-  defp find_by(query, []),
-    do: query
+  @spec reduce_find_params({:email, String.t}, Ecto.Queryable.t) ::
+    Ecto.Queryable.t
+  @spec reduce_find_params({:username, String.t}, Ecto.Queryable.t) ::
+    Ecto.Queryable.t
+  defp reduce_find_params({:email, email}, query),
+    do: Account.Query.by_email(query, email)
+  defp reduce_find_params({:username, username}, query),
+    do: Account.Query.by_username(query, username)
 
   @spec update(Account.t, Account.update_params) ::
     {:ok, Account} | {:error, Ecto.Changeset.t | :notfound}
@@ -82,12 +65,12 @@ defmodule Helix.Account.Controller.Account do
     {:ok, Account.t} | {:error, :notfound}
   def login(username, password) do
     case find_by(username: username) do
-      {:ok, account} ->
+      [account] ->
         if Bcrypt.checkpw(password, account.password),
           do: {:ok, account},
           else: {:error, :notfound}
-      error ->
-        error
+      [] ->
+        {:error, :notfound}
     end
   end
 end

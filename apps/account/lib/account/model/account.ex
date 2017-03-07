@@ -142,12 +142,18 @@ defmodule Helix.Account.Model.Account do
 
     @spec by_email(Account.email) :: Ecto.Queryable.t
     @spec by_email(Ecto.Queryable.t, Account.email) :: Ecto.Queryable.t
-    def by_email(query \\ Account, email),
-      do: where(query, [a], a.email == ^email)
+    def by_email(query \\ Account, email) do
+      email = String.downcase(email)
+
+      where(query, [a], a.email == ^email)
+    end
 
     @spec by_username(Account.username) :: Ecto.Queryable.t
     @spec by_username(Ecto.Queryable.t, Account.username) :: Ecto.Queryable.t
-    def by_username(query \\ Account, username),
-      do: where(query, [a], a.username == ^username)
+    def by_username(query \\ Account, username) do
+      username = String.downcase(username)
+
+      where(query, [a], a.username == ^username)
+    end
   end
 end

@@ -52,28 +52,27 @@ defmodule Helix.Account.Controller.AccountTest do
     test "succeeds by email" do
       account = Factory.insert(:account)
 
-      assert {:ok, found} = AccountController.find_by(email: account.email)
+      assert [found] = AccountController.find_by(email: account.email)
       assert account.account_id == found.account_id
     end
 
     test "succeeds by username" do
       account = Factory.insert(:account)
 
-      assert {:ok, found} =
-        AccountController.find_by(username: account.username)
+      assert [found] = AccountController.find_by(username: account.username)
       assert account.account_id == found.account_id
+    end
+
+    test "returns empty list when email isn't used" do
+      assert [] = AccountController.find_by(email: "a@bc.com")
+    end
+
+    test "fails empty list when username isn't used" do
+      assert [] = AccountController.find_by(username: "abcdef")
     end
 
     test "fails when account doesn't exists" do
       assert {:error, :notfound} == AccountController.find(Random.pk())
-    end
-
-    test "fails when email doesn't exists" do
-      assert {:error, :notfound} = AccountController.find_by(email: "a@bc.com")
-    end
-
-    test "fails when username doesn't exists" do
-      assert {:error, :notfound} = AccountController.find_by(username: "abcdef")
     end
   end
 
