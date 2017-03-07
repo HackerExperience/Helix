@@ -1,4 +1,4 @@
-node {
+node('elixir') {
   stage('Build') {
     checkout scm
     sh "mix local.hex --force"
