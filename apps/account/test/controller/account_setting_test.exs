@@ -3,46 +3,34 @@ defmodule Helix.Account.Controller.AccountSettingTest do
   use ExUnit.Case, async: true
 
   alias Helix.Account.Controller.AccountSetting, as: AccountSettingController
+  alias Helix.Account.Model.AccountSetting
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
   alias Helix.Account.Factory
 
-  import Ecto.Query, only: [select: 3]
-
-  defp diff_settings(account_settings, method) do
-    diff =
-      case method do
-        :changed ->
-          &MapSet.difference/2
-        :unchanged ->
-          &MapSet.intersection/2
-      end
-
-    account_kv_set =
-      account_settings
-      |> Enum.to_list()
-      |> MapSet.new()
-
-    default_kv_set =
-      Setting
-      |> Repo.all()
-      |> Enum.map(&({&1.setting_id, &1.default_value}))
-      |> MapSet.new()
-
-    default_kv_set
-    |> diff.(account_kv_set)
-    |> Enum.map(fn {k, _} -> k end)
+  setup_all do
+    if Repo.all(Setting) == [],
+      do: Factory.insert_list(3, :setting)
+    :ok
   end
 
-  defp to_custom_settings_map(settings) do
-    custom_settings =
-      Enum.map(settings, fn setting ->
-        %{setting_value: value} = Factory.params_for(:account_setting)
-        {setting, value}
-      end)
+  defp format_settings(settings, mapper \\ nil) do
+    Enum.into(settings, %{}, fn setting ->
+      setting_tuple =
+        case setting do
+          setting = %Setting{} ->
+            {setting.setting_id, setting.default_value}
+          setting = %AccountSetting{} ->
+            {setting.setting_id, setting.setting_value}
+          {setting_id, setting_value} ->
+            {setting_id, setting_value}
+        end
 
-    :maps.from_list(custom_settings)
+      if mapper,
+        do: mapper.(setting_tuple),
+        else: setting_tuple
+    end)
   end
 
   describe "changing specific settings" do
@@ -98,25 +86,46 @@ defmodule Helix.Account.Controller.AccountSettingTest do
     test "includes modified settings" do
       account = Factory.insert(:account)
 
-      custom_settings =
+      default_settings =
         Setting
-        |> select([s], s.setting_id)
         |> Repo.all()
-        |> to_custom_settings_map()
+        |> format_settings()
 
-      Enum.each(custom_settings, fn {setting, value} ->
+      expected_settings =
+        Setting
+        |> Repo.all()
+        |> format_settings(fn {setting_id, _} ->
+          %{setting_value: value} = Factory.params_for(:account_setting)
+          {setting_id, value}
+        end)
+
+      Enum.each(expected_settings, fn {setting, value} ->
         AccountSettingController.put(account, setting, value)
       end)
 
-      assert custom_settings == AccountSettingController.get_settings(account)
-      assert [] == diff_settings(custom_settings, :unchanged)
+      received_settings =
+        account
+        |> AccountSettingController.get_settings()
+        |> format_settings()
+
+      assert expected_settings == received_settings
+      refute received_settings == default_settings
     end
 
     test "includes unchanged settings" do
       account = Factory.insert(:account)
-      account_settings = AccountSettingController.get_settings(account)
 
-      assert [] == diff_settings(account_settings, :changed)
+      account_settings =
+        account
+        |> AccountSettingController.get_settings()
+        |> format_settings()
+
+      default_settings =
+        Setting
+        |> Repo.all()
+        |> format_settings()
+
+      assert account_settings == default_settings
     end
   end
 end

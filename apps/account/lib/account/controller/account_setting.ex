@@ -45,16 +45,16 @@ defmodule Helix.Account.Controller.AccountSetting do
       |> AccountSetting.Query.from_setting(setting_id)
       |> Repo.one()
 
-    if account_setting != nil do
+    if account_setting do
       {:ok, account_setting.setting_value}
     else
-      defaults =
+      default =
         setting_id
         |> Setting.Query.by_id()
         |> Repo.one()
 
-      if defaults != nil do
-        {:ok, defaults.default_value}
+      if default do
+        {:ok, default.default_value}
       else
         {:error, :notfound}
       end
