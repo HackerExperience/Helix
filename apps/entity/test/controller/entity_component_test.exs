@@ -3,8 +3,6 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   use ExUnit.Case, async: true
 
   alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
-  alias Helix.Entity.Model.EntityComponent
-  alias Helix.Entity.Repo
 
   alias Helix.Entity.Factory
 
@@ -36,10 +34,11 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   describe "fetching components owned by an entity" do
     test "returns a list with owned components" do
       entity = Factory.insert(:entity)
-      components = Factory.build_list(5, :entity_component, %{entity: entity})
+      components = Factory.insert_list(5, :entity_component, %{entity: entity})
+      expected_components = Enum.map(components, &(&1.component_id))
       fetched_components = EntityComponentController.find(entity)
 
-      assert [] == (fetched_components -- components)
+      assert expected_components == fetched_components
     end
 
     test "returns an empty list when no component is owned" do
@@ -53,11 +52,11 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
   test "removing entity ownership over components is idempotent" do
     ec = Factory.insert(:entity_component)
 
-    assert Repo.get_by(EntityComponent, entity_id: ec.entity_id)
+    refute [] == EntityComponentController.find(ec.entity_id)
 
     EntityComponentController.delete(ec.entity_id, ec.component_id)
     EntityComponentController.delete(ec.entity_id, ec.component_id)
 
-    refute Repo.get_by(EntityComponent, entity_id: ec.entity_id)
+    assert [] == EntityComponentController.find(ec.entity_id)
   end
 end

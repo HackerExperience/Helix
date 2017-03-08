@@ -3,8 +3,6 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   use ExUnit.Case, async: true
 
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
-  alias Helix.Entity.Model.EntityServer
-  alias Helix.Entity.Repo
 
   alias Helix.Entity.Factory
 
@@ -36,10 +34,11 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   describe "fetching servers owned by an entity" do
     test "returns a list with owned servers" do
       entity = Factory.insert(:entity)
-      servers = Factory.build_list(5, :entity_server, %{entity: entity})
+      servers = Factory.insert_list(5, :entity_server, %{entity: entity})
+      expected_servers = Enum.map(servers, &(&1.server_id))
       fetched_servers = EntityServerController.find(entity)
 
-      assert [] == (fetched_servers -- servers)
+      assert expected_servers == fetched_servers
     end
 
     test "returns an empty list when no server is owned" do
@@ -51,13 +50,13 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   end
 
   test "removing entity ownership over servers is idempotent" do
-    ec = Factory.insert(:entity_server)
+    es = Factory.insert(:entity_server)
 
-    assert Repo.get_by(EntityServer, entity_id: ec.entity_id)
+    refute [] == EntityServerController.find(es.entity_id)
 
-    EntityServerController.delete(ec.entity_id, ec.server_id)
-    EntityServerController.delete(ec.entity_id, ec.server_id)
+    EntityServerController.delete(es.entity_id, es.server_id)
+    EntityServerController.delete(es.entity_id, es.server_id)
 
-    refute Repo.get_by(EntityServer, entity_id: ec.entity_id)
+    assert [] == EntityServerController.find(es.entity_id)
   end
 end
