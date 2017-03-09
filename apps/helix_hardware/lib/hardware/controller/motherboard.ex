@@ -72,12 +72,19 @@ defmodule Helix.Hardware.Controller.Motherboard do
   end
 
   @spec get_slots(Motherboard.t | HELL.PK.t) :: [MotherboardSlot.t]
-  def get_slots(%Motherboard{motherboard_id: mid}),
-    do: get_slots(mid)
-  def get_slots(motherboard_id) do
-    motherboard_id
-    |> MotherboardSlot.Query.by_motherboard_id()
+  def get_slots(motherboard_or_motherboard_id) do
+    motherboard_or_motherboard_id
+    |> MotherboardSlot.Query.from_motherboard()
     |> Repo.all()
+  end
+
+  @spec unlink_components_from_motherboard(Motherboard.t | HELL.PK.t) :: :ok
+  def unlink_components_from_motherboard(motherboard_or_motherboard_id) do
+    motherboard_or_motherboard_id
+    |> MotherboardSlot.Query.from_motherboard()
+    |> Repo.update_all(set: [link_component_id: nil])
+
+    :ok
   end
 
   @spec delete(Motherboard.t | HELL.PK.t) :: no_return
