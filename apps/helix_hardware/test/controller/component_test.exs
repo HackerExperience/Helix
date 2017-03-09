@@ -5,30 +5,11 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
 
   @moduletag :integration
-
-  setup_all do
-    cs = Enum.random(Repo.all(ComponentSpec))
-
-    {:ok, component_spec: cs}
-  end
-
-  setup context do
-    {:ok, c} = ComponentController.create_from_spec(context.component_spec)
-
-    {:ok, component: c}
-  end
-
-  describe "find" do
-    test "fetching a component by id", %{component: component} do
-      assert {:ok, _} = ComponentController.find(component.component_id)
-    end
-  end
 
   describe "fetching component" do
     test "succeeds by id" do

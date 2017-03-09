@@ -32,6 +32,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
     end
 
     with \
+      {:ok, slot} <- find(slot.slot_id),
       false <- slot_linked?.(slot),
       false <- component_used?.(component)
     do

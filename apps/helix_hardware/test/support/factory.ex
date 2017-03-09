@@ -225,7 +225,7 @@ defmodule Helix.Hardware.Factory do
   end
 
   defp random_component_type,
-    do: Enum.random(["cpu"])
+    do: Enum.random(["cpu", "hdd", "nic", "ram"])
 
   defp random_spec_code,
     do: String.upcase(Random.string(min: 12))
