@@ -4,6 +4,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
+  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
   alias Helix.Hardware.Factory
 
@@ -21,6 +22,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
       assert {:error, :notfound} === MotherboardController.find(Random.pk())
     end
   end
+
 
   describe "delete" do
     test "is idempotent" do

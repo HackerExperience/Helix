@@ -14,6 +14,22 @@ defmodule Helix.Hardware.Factory do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
 
+  def component_of_type(component_type) do
+    radical =
+      case component_type do
+        "cpu" ->
+          insert(:cpu)
+        "hdd" ->
+          insert(:hdd)
+        "nic" ->
+          insert(:nic)
+        "ram" ->
+          insert(:ram)
+      end
+
+    radical.component
+  end
+
   def motherboard_factory do
     spec = build(:mobo_spec)
     id = PK.pk_for(Motherboard)
