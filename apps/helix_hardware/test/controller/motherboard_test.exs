@@ -22,6 +22,23 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     end
   end
 
+  test "unlinking every linked component from a motherboard" do
+    mobo = Factory.insert(:motherboard)
+
+    mobo.slots
+    |> Enum.take_random(3)
+    |> Enum.each(&MotherboardSlotController.link(&1,
+      Factory.component_of_type(&1.link_component_type)))
+
+    MotherboardController.unlink_components_from_motherboard(mobo)
+
+    non_empty_slots =
+      mobo
+      |> MotherboardController.get_slots()
+      |> Enum.reject(&is_nil(&1.link_component_id))
+
+    assert [] == non_empty_slots
+  end
 
   describe "delete" do
     test "is idempotent" do
