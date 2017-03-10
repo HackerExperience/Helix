@@ -35,7 +35,7 @@ defmodule Helix.Software.Controller.File do
     |> parse_errors()
   end
 
-  @spec copy(FileModel.t, file_path :: String.t, storage_id :: HELL.PK.t) ::
+  @spec copy(File.t, file_path :: String.t, storage_id :: HELL.PK.t) ::
     {:ok, File.t}
     | {:error, :file_exists | Ecto.Changeset.t}
   def copy(file, file_path, storage_id) do
@@ -75,7 +75,7 @@ defmodule Helix.Software.Controller.File do
   def delete(file = %File{}),
     do: delete(file.file_id)
 
-  @spec delete(HELL.PK.t) :: no_return
+  @spec delete(File.id) :: no_return
   def delete(file_id) do
     File
     |> where([f], f.file_id == ^file_id)
@@ -84,20 +84,16 @@ defmodule Helix.Software.Controller.File do
     :ok
   end
 
-  @spec parse_errors(Ecto.Changeset.t) ::
+  @spec parse_errors({:ok | :error, Ecto.Changeset.t}) ::
     {:ok, Ecto.Changeset.t}
     | {:error, :file_exists | Ecto.Changeset.t}
-  defp parse_errors(changeset) do
-    # FIXME: use a proper error parsing method
-    case changeset do
-      {:ok, file} ->
-        {:ok, file}
-      {:error, changeset} ->
-        if Keyword.get(changeset.errors, :file_path) do
-          {:error, :file_exists}
-        else
-          {:error, changeset}
-        end
+  defp parse_errors({:ok, changeset}),
+    do: {:ok, changeset}
+  defp parse_errors({:error, changeset}) do
+    if Keyword.get(changeset.errors, :file_path) do
+      {:error, :file_exists}
+    else
+      {:error, changeset}
     end
   end
 end

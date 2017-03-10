@@ -5,7 +5,9 @@ defmodule Helix.Software.Controller.StorageDrive do
 
   import Ecto.Query, only: [where: 3]
 
-  @spec create(%{}) :: {:ok, StorageDrive.t} | {:error, Ecto.Changeset.t}
+  @spec create(StorageDrive.creation_params) ::
+    {:ok, StorageDrive.t}
+    | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> StorageDrive.create_changeset()
