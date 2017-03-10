@@ -4,7 +4,6 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
-  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
   alias Helix.Hardware.Factory
 
