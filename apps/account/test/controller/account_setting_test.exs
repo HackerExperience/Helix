@@ -2,8 +2,8 @@ defmodule Helix.Account.Controller.AccountSettingTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Random
   alias Helix.Account.Controller.AccountSetting, as: AccountSettingController
-  alias Helix.Account.Model.AccountSetting
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
@@ -13,24 +13,6 @@ defmodule Helix.Account.Controller.AccountSettingTest do
     if Repo.all(Setting) == [],
       do: Factory.insert_list(3, :setting)
     :ok
-  end
-
-  defp format_settings(settings, mapper \\ nil) do
-    Enum.into(settings, %{}, fn setting ->
-      setting_tuple =
-        case setting do
-          setting = %Setting{} ->
-            {setting.setting_id, setting.default_value}
-          setting = %AccountSetting{} ->
-            {setting.setting_id, setting.setting_value}
-          {setting_id, setting_value} ->
-            {setting_id, setting_value}
-        end
-
-      if mapper,
-        do: mapper.(setting_tuple),
-        else: setting_tuple
-    end)
   end
 
   describe "changing specific settings" do
@@ -83,47 +65,31 @@ defmodule Helix.Account.Controller.AccountSettingTest do
   end
 
   describe "fetching every setting" do
-    test "includes modified settings" do
+    test "includes default and modified settings" do
       account = Factory.insert(:account)
+      settings = Repo.all(Setting)
+      value = Random.string()
 
-      default_settings =
-        Setting
-        |> Repo.all()
-        |> format_settings()
+      settings
+      |> Enum.take_random(3)
+      |> Enum.each(&AccountSettingController.put(account, &1.setting_id, value))
 
-      expected_settings =
-        Setting
-        |> Repo.all()
-        |> format_settings(fn {setting_id, _} ->
-          %{setting_value: value} = Factory.params_for(:account_setting)
-          {setting_id, value}
-        end)
+      account_settings = AccountSettingController.get_settings(account)
+      defaults = Enum.into(settings, %{}, &{&1.setting_id, &1.default_value})
+      diff = Map.values(account_settings) -- Map.values(defaults)
 
-      Enum.each(expected_settings, fn {setting, value} ->
-        AccountSettingController.put(account, setting, value)
-      end)
-
-      received_settings =
-        account
-        |> AccountSettingController.get_settings()
-        |> format_settings()
-
-      assert expected_settings == received_settings
-      refute received_settings == default_settings
+      assert Map.keys(account_settings) == Map.keys(defaults)
+      assert 3 == Enum.count(diff)
     end
 
-    test "includes unchanged settings" do
+    test "includes every unchanged setting" do
       account = Factory.insert(:account)
 
-      account_settings =
-        account
-        |> AccountSettingController.get_settings()
-        |> format_settings()
-
+      account_settings = AccountSettingController.get_settings(account)
       default_settings =
         Setting
         |> Repo.all()
-        |> format_settings()
+        |> Enum.into(%{}, &{&1.setting_id, &1.default_value})
 
       assert account_settings == default_settings
     end
