@@ -20,6 +20,7 @@ defmodule Helix.Entity.Model.Entity do
   }
 
   @type creation_params :: %{
+    entity_id: id,
     entity_type: EntityType.name
   }
 

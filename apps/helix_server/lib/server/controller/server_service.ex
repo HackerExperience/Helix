@@ -15,8 +15,9 @@ defmodule Helix.Server.Controller.ServerService do
   end
 
   @doc false
-  def handle_broker_call(pid, "server.create", params, _) do
-    response = GenServer.call(pid, {:server, :create, params})
+  def handle_broker_call(pid, "server.create", msg, _) do
+    %{server_type: server_type, entity_id: entity_id} = msg
+    response = GenServer.call(pid, {:server, :create, server_type, entity_id})
     {:reply, response}
   end
   def handle_broker_call(pid, "server.attach", msg, _) do
@@ -71,7 +72,7 @@ defmodule Helix.Server.Controller.ServerService do
   end
 
   @spec handle_call(
-    {:server, :create, Server.creation_params},
+    {:server, :create, String.t, PK.t},
     GenServer.from,
     state) :: {:reply, {:ok, server :: term}
               | {:error, reason :: term}, state}
@@ -88,12 +89,12 @@ defmodule Helix.Server.Controller.ServerService do
     GenServer.from,
     state) :: {:reply, {:ok, %{any => any}} | {:error, :notfound}, state}
   @doc false
-  def handle_call({:server, :create, params}, _from, state) do
-    case ServerController.create(params) do
+  def handle_call({:server, :create, server_type, entity_id}, _from, state) do
+    case ServerController.create(%{server_type: server_type}) do
       {:ok, server} ->
         msg = %{
           server_id: server.server_id,
-          entity_id: params.entity_id
+          entity_id: entity_id
         }
         Broker.cast("event.server.created", msg)
 
