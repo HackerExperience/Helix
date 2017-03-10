@@ -31,9 +31,9 @@ defmodule Helix.Software.Model.File do
     storage_id: PK.t
   }
   @type update_params :: %{
-    name: String.t,
-    file_path: String.t,
-    storage_id: PK.t
+    optional(:name) => String.t,
+    optional(:file_path) => String.t,
+    optional(:storage_id) => PK.t
   }
 
   @creation_fields ~w/name file_path file_size file_type storage_id/a
