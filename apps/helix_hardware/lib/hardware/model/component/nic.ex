@@ -38,6 +38,7 @@ defmodule Helix.Hardware.Model.Component.NIC do
       on_replace: :nilify
   end
 
+  @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: _}) do
     nic_id = PK.pk_for(__MODULE__)
     component = Component.create_from_spec(cs, nic_id)
@@ -55,7 +56,8 @@ defmodule Helix.Hardware.Model.Component.NIC do
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec changeset(t | Ecto.Schema.t | Ecto.Changeset.t, %{any => any}) ::
+    Ecto.Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:network_connection_id])

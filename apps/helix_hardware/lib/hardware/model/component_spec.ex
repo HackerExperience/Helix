@@ -7,14 +7,14 @@ defmodule Helix.Hardware.Model.ComponentSpec do
   @type t :: %__MODULE__{
     spec_id: String.t,
     component_type: String.t,
-    spec: %{},
+    spec: %{any => any},
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
     component_type: String.t,
-    spec: %{}}
+    spec: %{any => any}}
   @type update_params :: %{spec: %{}}
 
   @creation_fields ~w/spec component_type/a
