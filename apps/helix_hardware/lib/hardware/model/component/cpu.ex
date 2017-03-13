@@ -32,6 +32,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
       on_replace: :delete
   end
 
+  @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
     cpu_id = PK.pk_for(__MODULE__)
     params = Map.take(spec, ["clock", "cores"])
@@ -44,11 +45,13 @@ defmodule Helix.Hardware.Model.Component.CPU do
     |> put_assoc(:component, component)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) ::
+    Ecto.Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec changeset(t | Ecto.Schema.t | Ecto.Changeset.t, %{any => any}) ::
+    Ecto.Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:clock, :cores])
