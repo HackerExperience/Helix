@@ -8,6 +8,22 @@ defmodule Helix.Log.Model.Revision do
 
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{
+    revision_id: PK.t,
+    entity_id: PK.t,
+    log_id: PK.t,
+    message: String.t,
+    forge_version: pos_integer | nil,
+    log: Log.t
+  }
+
+  @type creation_params :: %{
+    :entity_id => PK.t,
+    :message => String.t,
+    :log_id => PK.t,
+    optional(:forge_version) => pos_integer | nil
+  }
+
   @creation_fields ~w/entity_id message forge_version log_id/a
 
   @primary_key false
@@ -27,6 +43,7 @@ defmodule Helix.Log.Model.Revision do
       type: PK
   end
 
+  @spec create_changeset(creation_params) ::Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
