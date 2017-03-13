@@ -22,13 +22,13 @@ defmodule Helix.Log.Model.Log do
     :server_id => PK.t,
     :entity_id => PK.t,
     :message => String.t,
-    optional(:crypto_version) => non_neg_integer,
-    optional(:forge_version) => non_neg_integer
+    optional(:crypto_version) => non_neg_integer | nil,
+    optional(:forge_version) => non_neg_integer | nil
   }
 
   @type update_params :: %{
-    optional(:crypto_version) => non_neg_integer,
-    optional(:message) => non_neg_integer
+    optional(:crypto_version) => non_neg_integer | nil,
+    optional(:message) => non_neg_integer | nil
   }
 
   @creation_fields ~w/server_id entity_id message/a
