@@ -9,6 +9,7 @@ defmodule Helix.Hardware.Controller.HardwareService do
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
+  alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
