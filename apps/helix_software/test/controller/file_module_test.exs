@@ -24,7 +24,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
     module_roles = generate_module_roles(file.file_type)
 
     {:ok, file_modules1} = FileModuleController.create(file, module_roles)
-    file_modules2 = FileModuleController.find(file)
+    file_modules2 = FileModuleController.get_file_modules(file)
 
     # created roles from module_roles
     assert module_roles == file_modules1
@@ -39,14 +39,14 @@ defmodule Helix.Software.Controller.FileModuleTest do
       module_roles = generate_module_roles(file.file_type)
       FileModuleController.create(file, module_roles)
 
-      file_modules = FileModuleController.find(file)
+      file_modules = FileModuleController.get_file_modules(file)
 
       refute 0 == map_size(file_modules)
     end
 
     test "yields empty map when nothing is found" do
       file = Factory.insert(:file)
-      file_modules = FileModuleController.find(file)
+      file_modules = FileModuleController.get_file_modules(file)
 
       assert 0 === map_size(file_modules)
     end
@@ -62,7 +62,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
       version = Burette.Number.number(1..1024)
       {:ok, _} = FileModuleController.update(file, module_id, version)
-      file_modules = FileModuleController.find(file)
+      file_modules = FileModuleController.get_file_modules(file)
 
       assert version == file_modules[module_id]
     end
@@ -81,11 +81,11 @@ defmodule Helix.Software.Controller.FileModuleTest do
     module_roles = generate_module_roles(file.file_type)
     {:ok, _} = FileModuleController.create(file, module_roles)
 
-    file_modules1 = FileModuleController.find(file)
+    file_modules1 = FileModuleController.get_file_modules(file)
 
     Repo.delete(file)
 
-    file_modules2 = FileModuleController.find(file)
+    file_modules2 = FileModuleController.get_file_modules(file)
 
     # modules exist before deleting the file
     refute 0 === map_size(file_modules1)
