@@ -7,41 +7,63 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   alias Helix.Software.Factory
 
-  test "create/1" do
-    storage = Factory.insert(:storage)
+  describe "creating" do
+    test "succeeds with valid params" do
+      storage = Factory.insert(:storage)
 
-    payload = %{
-      drive_id: Random.pk(),
-      storage_id: storage.storage_id
-    }
+      params = %{
+        drive_id: Random.pk(),
+        storage_id: storage.storage_id
+      }
 
-    assert {:ok, _} = StorageDriveController.create(payload)
-  end
-
-  describe "find/2" do
-    test "success" do
-      drive = create_drive()
-      assert {:ok, ^drive} = StorageDriveController.find(drive.storage_id, drive.drive_id)
+      assert {:ok, _} = StorageDriveController.create(params)
     end
 
-    test "failure" do
-      assert {:error, :notfound} == StorageDriveController.find(Random.pk(), Random.pk())
+    test "fails if storage with id doesn't exist" do
+      storage = Factory.build(:storage)
+
+      bogus = %{
+        drive_id: Random.pk(),
+        storage_id: storage.storage_id
+      }
+
+      assert {:error, cs} = StorageDriveController.create(bogus)
+      assert :storage_id in Keyword.keys(cs.errors)
     end
   end
 
-  test "delete/2 idempotency" do
-    drive = create_drive()
+  describe "finding" do
+    test "returns a list containing records based on its relationship" do
+      storage = Factory.insert(:storage)
+      expected_drives = MapSet.new(storage.drives)
+      received_drives =
+        [storage: storage]
+        |> StorageDriveController.find()
+        |> MapSet.new()
 
-    assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
-    assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
+      assert MapSet.equal?(expected_drives, received_drives)
+    end
 
-    assert {:error, :notfound} == StorageDriveController.find(drive.storage_id, drive.drive_id)
+    test "returns an empty list when no relationship exists" do
+      storage = Factory.insert(:storage, drives: [])
+      assert [] == StorageDriveController.find(storage: storage)
+    end
   end
 
-  defp create_drive do
-    :storage
-    |> Factory.insert()
-    |> Map.fetch!(:drives)
-    |> Enum.random()
+  test "deleting is idempotent" do
+    drive =
+      :storage
+      |> Factory.insert()
+      |> Map.fetch!(:drives)
+      |> Enum.random()
+
+    drives = StorageDriveController.find(storage: drive.storage_id)
+    assert drive in drives
+
+    StorageDriveController.delete(drive.storage_id, drive.drive_id)
+    StorageDriveController.delete(drive.storage_id, drive.drive_id)
+
+    drives = StorageDriveController.find(storage: drive.storage_id)
+    refute drive in drives
   end
 end

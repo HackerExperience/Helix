@@ -1,33 +1,37 @@
 defmodule Helix.Software.Controller.StorageDrive do
 
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Repo
 
-  import Ecto.Query, only: [where: 3]
+  @type find_params :: [find_param]
+  @type find_param :: {:storage, Storage.t | Storage.id}
 
-  @spec create(%{}) :: {:ok, StorageDrive.t} | {:error, Ecto.Changeset.t}
+  @spec create(StorageDrive.creation_params) ::
+    {:ok, StorageDrive.t}
+    | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> StorageDrive.create_changeset()
     |> Repo.insert()
   end
 
-  @spec find(HELL.PK.t, integer) :: {:ok, StorageDrive.t} | {:error, :notfound}
-  def find(storage_id, drive_id) do
-    query = [storage_id: storage_id, drive_id: drive_id]
-    case Repo.get_by(StorageDrive, query) do
-      nil ->
-        {:error, :notfound}
-      drive ->
-        {:ok, drive}
-    end
+  @spec find(find_params) :: [StorageDrive.t]
+  def find(params) do
+    params
+    |> Enum.reduce(StorageDrive, &reduce_find_params/2)
+    |> Repo.all()
   end
 
-  @spec delete(HELL.PK.t, integer) :: no_return
-  def delete(storage_id, drive_id) do
-    StorageDrive
-    |> where([s], s.storage_id == ^storage_id)
-    |> where([s], s.drive_id == ^drive_id)
+  @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
+  defp reduce_find_params({:storage, storage}, query),
+    do: StorageDrive.Query.from_storage(query, storage)
+
+  @spec delete(Storage.t | HELL.PK.t, integer) :: no_return
+  def delete(storage, drive_id) do
+    storage
+    |> StorageDrive.Query.from_storage()
+    |> StorageDrive.Query.by_drive_id(drive_id)
     |> Repo.delete_all()
 
     :ok

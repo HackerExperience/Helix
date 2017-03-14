@@ -11,15 +11,9 @@ defmodule Helix.Software.Controller.Storage do
     |> Repo.insert()
   end
 
-  @spec find(HELL.PK.t) :: {:ok, Storage.t} | {:error, :notfound}
-  def find(storage_id) do
-    case Repo.get_by(Storage, storage_id: storage_id) do
-      nil ->
-        {:error, :notfound}
-      res ->
-        {:ok, res}
-    end
-  end
+  @spec fetch(HELL.PK.t) :: Storage.t | nil
+  def fetch(storage_id),
+    do: Repo.get(Storage, storage_id)
 
   @spec delete(HELL.PK.t) :: no_return
   def delete(storage_id) do

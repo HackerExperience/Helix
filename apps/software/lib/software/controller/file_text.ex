@@ -11,19 +11,11 @@ defmodule Helix.Software.Controller.FileText do
     |> Repo.insert()
   end
 
-  @spec find(File.t | File.id) :: {:ok, FileText.t} | {:error, :notfound}
-  def find(file) do
-    result =
-      file
-      |> FileText.Query.from_file()
-      |> Repo.one()
-
-    case result do
-      nil ->
-        {:error, :notfound}
-      file_text ->
-        {:ok, file_text}
-    end
+  @spec fetch(File.t | File.id) :: FileText.t | nil
+  def fetch(file) do
+    file
+    |> FileText.Query.from_file()
+    |> Repo.one()
   end
 
   @spec update_contents(FileText.t, String.t) ::
