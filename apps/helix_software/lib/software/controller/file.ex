@@ -15,15 +15,9 @@ defmodule Helix.Software.Controller.File do
     |> parse_errors()
   end
 
-  @spec find(HELL.PK.t) :: {:ok, File.t} | {:error, :notfound}
-  def find(file_id) do
-    case Repo.get_by(File, file_id: file_id) do
-      nil ->
-        {:error, :notfound}
-      file ->
-        {:ok, file}
-    end
-  end
+  @spec fetch(HELL.PK.t) :: File.t | nil
+  def fetch(file_id),
+    do: Repo.get(File, file_id)
 
   @spec update(File.t, File.update_params) ::
     {:ok, File.t}

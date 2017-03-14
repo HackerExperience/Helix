@@ -43,13 +43,13 @@ defmodule Helix.Software.Controller.FileTest do
   describe "file fetching" do
     test "succeeds when file exists" do
       file = Factory.insert(:file)
-      {:ok, found} = FileController.find(file.file_id)
+      {:ok, found} = FileController.fetch(file.file_id)
 
       assert file.file_id == found.file_id
     end
 
     test "fails when file doesn't exists" do
-      assert {:error, :notfound} == FileController.find(Random.pk())
+      assert {:error, :notfound} == FileController.fetch(Random.pk())
     end
   end
 
@@ -93,13 +93,13 @@ defmodule Helix.Software.Controller.FileTest do
       |> Map.merge(similarities)
       |> Factory.insert()
 
-    {:ok, file1} = FileController.find(file1.file_id)
+    {:ok, file1} = FileController.fetch(file1.file_id)
 
     params = %{file_path: file0.file_path, name: file0.name}
 
     assert {:error, :file_exists} == FileController.update(file1, params)
 
-    {:ok, found} = FileController.find(file1.file_id)
+    {:ok, found} = FileController.fetch(file1.file_id)
 
     assert file1 == found
   end
@@ -111,8 +111,8 @@ defmodule Helix.Software.Controller.FileTest do
       origin = Factory.insert(:file)
       {:ok, copy} = FileController.copy(origin, path, origin.storage_id)
 
-      assert {:ok, _} = FileController.find(origin.file_id)
-      assert {:ok, _} = FileController.find(copy.file_id)
+      assert {:ok, _} = FileController.fetch(origin.file_id)
+      assert {:ok, _} = FileController.fetch(copy.file_id)
 
       assert path == copy.file_path
     end
@@ -123,8 +123,8 @@ defmodule Helix.Software.Controller.FileTest do
       origin = Factory.insert(:file)
       {:ok, copy} = FileController.copy(origin, origin.file_path, storage.storage_id)
 
-      assert {:ok, _} = FileController.find(origin.file_id)
-      assert {:ok, _} = FileController.find(copy.file_id)
+      assert {:ok, _} = FileController.fetch(origin.file_id)
+      assert {:ok, _} = FileController.fetch(copy.file_id)
 
       assert storage.storage_id == copy.storage_id
     end
@@ -193,17 +193,17 @@ defmodule Helix.Software.Controller.FileTest do
       :ok = FileController.delete(file.file_id)
       :ok = FileController.delete(file.file_id)
 
-      assert {:error, :notfound} == FileController.find(file.file_id)
+      assert {:error, :notfound} == FileController.fetch(file.file_id)
     end
 
     test "can be done by it's id or it's struct" do
       file = Factory.insert(:file)
       :ok = FileController.delete(file.file_id)
-      assert {:error, :notfound} == FileController.find(file.file_id)
+      assert {:error, :notfound} == FileController.fetch(file.file_id)
 
       file = Factory.insert(:file)
       :ok = FileController.delete(file.file_id)
-      assert {:error, :notfound} == FileController.find(file.file_id)
+      assert {:error, :notfound} == FileController.fetch(file.file_id)
     end
   end
 end
