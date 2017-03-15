@@ -63,15 +63,15 @@ defmodule Helix.Account.Controller.AccountTest do
       assert account.account_id == found.account_id
     end
 
-    test "returns empty list when email isn't used" do
-      assert [] = AccountController.find_by(email: "a@bc.com")
+    test "returns empty list when email isn't in use" do
+      assert [] == AccountController.find_by(email: "a@bc.com")
     end
 
-    test "fails empty list when username isn't used" do
-      assert [] = AccountController.find_by(username: "abcdef")
+    test "returns empty list when username isn't in use" do
+      assert [] == AccountController.find_by(username: "abcdef")
     end
 
-    test "fails when account doesn't exists" do
+    test "fails when account doesn't exist" do
       assert {:error, :notfound} == AccountController.find(Random.pk())
     end
   end
@@ -81,8 +81,8 @@ defmodule Helix.Account.Controller.AccountTest do
       account1 = Factory.insert(:account)
       account2 = Factory.insert(:account)
 
-      assert :ok == AccountController.delete(account1)
-      assert :ok == AccountController.delete(account2.account_id)
+      AccountController.delete(account1)
+      AccountController.delete(account2.account_id)
 
       refute Repo.get_by(Account, account_id: account1.account_id)
       refute Repo.get_by(Account, account_id: account2.account_id)
