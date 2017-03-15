@@ -2,7 +2,6 @@ defmodule Helix.Hardware.Controller.ComponentTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Repo
@@ -14,11 +13,14 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   describe "fetching component" do
     test "succeeds by id" do
       c = Factory.insert(:component)
-      assert {:ok, _} = ComponentController.find(c.component_id)
+
+      assert {:ok, found} = ComponentController.find(c.component_id)
+      assert c.component_id == found.component_id
     end
 
     test "fails when component doesn't exists" do
-      assert {:error, :notfound} === ComponentController.find(Random.pk())
+      c = Factory.build(:component)
+      assert {:error, :notfound} == ComponentController.find(c.component_id)
     end
   end
 

@@ -2,7 +2,6 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
 
@@ -15,11 +14,13 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
       mobo = Factory.insert(:motherboard)
 
       assert {:ok, found} = MotherboardController.find(mobo.motherboard_id)
-      assert mobo.motherboard_id === found.motherboard_id
+      assert mobo.motherboard_id == found.motherboard_id
     end
 
     test "fails when motherboard doesn't exists" do
-      assert {:error, :notfound} === MotherboardController.find(Random.pk())
+      mobo = Factory.build(:motherboard)
+
+      assert {:error, :notfound} == MotherboardController.find(mobo.motherboard_id)
     end
   end
 
@@ -61,11 +62,11 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     test "removes its slots" do
       mobo = Factory.insert(:motherboard)
 
-      refute [] === MotherboardController.get_slots(mobo.motherboard_id)
+      refute [] == MotherboardController.get_slots(mobo.motherboard_id)
 
       MotherboardController.delete(mobo.motherboard_id)
 
-      assert [] === MotherboardController.get_slots(mobo.motherboard_id)
+      assert [] == MotherboardController.get_slots(mobo.motherboard_id)
     end
   end
 end
