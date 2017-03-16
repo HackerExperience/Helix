@@ -44,23 +44,17 @@ defmodule Helix.Account.Controller.AccountTest do
   describe "account fetching" do
     test "succeeds by id" do
       account = Factory.insert(:account)
-
-      assert {:ok, found} = AccountController.find(account.account_id)
-      assert account.account_id == found.account_id
+      assert {:ok, _} = AccountController.find(account.account_id)
     end
 
     test "succeeds by email" do
       account = Factory.insert(:account)
-
-      assert [found] = AccountController.find_by(email: account.email)
-      assert account.account_id == found.account_id
+      assert [_] = AccountController.find_by(email: account.email)
     end
 
     test "succeeds by username" do
       account = Factory.insert(:account)
-
-      assert [found] = AccountController.find_by(username: account.username)
-      assert account.account_id == found.account_id
+      assert [_] = AccountController.find_by(username: account.username)
     end
 
     test "returns empty list when email isn't in use" do

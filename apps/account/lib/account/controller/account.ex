@@ -4,9 +4,8 @@ defmodule Helix.Account.Controller.Account do
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
 
-  @type find_params ::
-    [{:email, Account.email}
-    | {:username, Account.username}]
+  @type find_params :: [find_param]
+  @type find_param :: {:email, Account.email} | {:username, Account.username}
 
   @spec create(Account.creation_params) ::
     {:ok, Account.t} | {:error, Ecto.Changeset.t}
@@ -33,17 +32,14 @@ defmodule Helix.Account.Controller.Account do
     Repo.all(query)
   end
 
-  @spec reduce_find_params({:email, String.t}, Ecto.Queryable.t) ::
-    Ecto.Queryable.t
-  @spec reduce_find_params({:username, String.t}, Ecto.Queryable.t) ::
-    Ecto.Queryable.t
+  @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
   defp reduce_find_params({:email, email}, query),
     do: Account.Query.by_email(query, email)
   defp reduce_find_params({:username, username}, query),
     do: Account.Query.by_username(query, username)
 
   @spec update(Account.t, Account.update_params) ::
-    {:ok, Account} | {:error, Ecto.Changeset.t | :notfound}
+    {:ok, Account.t} | {:error, Ecto.Changeset.t}
   def update(account, params) do
     account
     |> Account.update_changeset(params)
