@@ -29,9 +29,7 @@ node('helix') {
 node('elixir') {
   stage('Deploy') {
     if (env.BRANCH_NAME == 'master'){
-      sh "ls"
-    } else {
-      echo 'lol'
+      sh "ssh deployer deploy helix prod --branch master"
     }
   }
 }
