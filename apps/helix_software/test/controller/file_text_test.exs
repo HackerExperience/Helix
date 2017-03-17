@@ -2,7 +2,10 @@ defmodule Helix.Software.Controller.FileTextTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
   alias Helix.Software.Controller.FileText, as: FileTextController
+  alias Helix.Software.Model.File
+  alias Helix.Software.Model.FileText
 
   alias Helix.Software.Factory
 
@@ -33,12 +36,16 @@ defmodule Helix.Software.Controller.FileTextTest do
   describe "fetching" do
     test "returns a record based on its identification" do
       file_text = Factory.insert(:file_text)
-      assert FileTextController.fetch(file_text.file)
+      assert %FileText{} = FileTextController.fetch(file_text.file)
     end
 
     test "returns nil if file_text with id doesn't exists" do
-      bogus = Factory.build(:file_text)
-      refute FileTextController.fetch(bogus.file)
+      bogus =
+        :file
+        |> Factory.build()
+        |> Map.put(:file_id, PK.pk_for(File))
+
+      refute FileTextController.fetch(bogus)
     end
   end
 

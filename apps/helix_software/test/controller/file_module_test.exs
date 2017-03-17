@@ -48,7 +48,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
       file = Factory.insert(:file)
       file_modules = FileModuleController.get_file_modules(file)
 
-      assert 0 === map_size(file_modules)
+      assert Enum.empty?(file_modules)
     end
   end
 
@@ -87,10 +87,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
     file_modules2 = FileModuleController.get_file_modules(file)
 
-    # modules exist before deleting the file
-    refute 0 === map_size(file_modules1)
-
-    # no modules are found after deleting the file
-    assert 0 === map_size(file_modules2)
+    refute Enum.empty?(file_modules1)
+    assert Enum.empty?(file_modules2)
   end
 end
