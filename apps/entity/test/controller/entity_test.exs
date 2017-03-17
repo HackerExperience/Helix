@@ -36,8 +36,7 @@ defmodule Helix.Entity.Controller.EntityTest do
     test "succeeds by id" do
       entity = Factory.insert(:entity)
 
-      assert {:ok, found_entity} = EntityController.find(entity.entity_id)
-      assert entity.entity_id == found_entity.entity_id
+      assert {:ok, _} = EntityController.find(entity.entity_id)
     end
 
     test "fails when entity doesn't exists" do
@@ -46,26 +45,31 @@ defmodule Helix.Entity.Controller.EntityTest do
   end
 
   describe "entity deleting" do
-    test "succeeds by struct and id" do
-      entity1 = Factory.insert(:entity)
-      entity2 = Factory.insert(:entity)
+    test "succeeds by struct" do
+      entity = Factory.insert(:entity)
 
-      assert :ok == EntityController.delete(entity1)
-      assert :ok == EntityController.delete(entity2.entity_id)
+      assert Repo.get(Entity, entity.entity_id)
+      EntityController.delete(entity)
+      refute Repo.get(Entity, entity.entity_id)
+    end
 
-      refute Repo.get_by(Entity, entity_id: entity1.entity_id)
-      refute Repo.get_by(Entity, entity_id: entity2.entity_id)
+    test "succeeds by id" do
+      entity = Factory.insert(:entity)
+
+      assert Repo.get(Entity, entity.entity_id)
+      EntityController.delete(entity.entity_id)
+      refute Repo.get(Entity, entity.entity_id)
     end
 
     test "is idempotent" do
       entity = Factory.insert(:entity)
 
-      assert Repo.get_by(Entity, entity_id: entity.entity_id)
+      assert Repo.get(Entity, entity.entity_id)
 
       EntityController.delete(entity.entity_id)
       EntityController.delete(entity.entity_id)
 
-      refute Repo.get_by(Entity, entity_id: entity.entity_id)
+      refute Repo.get(Entity, entity.entity_id)
     end
   end
 end

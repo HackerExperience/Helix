@@ -45,18 +45,18 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
       entity = Factory.insert(:entity)
       fetched_components = EntityComponentController.find(entity)
 
-      assert [] == fetched_components
+      assert Enum.empty?(fetched_components)
     end
   end
 
   test "removing entity ownership over components is idempotent" do
     ec = Factory.insert(:entity_component)
 
-    refute [] == EntityComponentController.find(ec.entity_id)
+    refute Enum.empty?(EntityComponentController.find(ec.entity_id))
 
     EntityComponentController.delete(ec.entity_id, ec.component_id)
     EntityComponentController.delete(ec.entity_id, ec.component_id)
 
-    assert [] == EntityComponentController.find(ec.entity_id)
+    assert Enum.empty?(EntityComponentController.find(ec.entity_id))
   end
 end

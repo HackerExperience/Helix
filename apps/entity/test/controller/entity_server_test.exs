@@ -9,9 +9,9 @@ defmodule Helix.Entity.Controller.EntityServerTest do
   describe "adding entity ownership over servers" do
     test "succeeds with entity_id" do
       %{entity_id: entity_id} = Factory.insert(:entity)
-      %{server_id: comp_id} = Factory.build(:entity_server)
+      %{server_id: server_id} = Factory.build(:entity_server)
 
-      assert {:ok, _} = EntityServerController.create(entity_id, comp_id)
+      assert {:ok, _} = EntityServerController.create(entity_id, server_id)
     end
 
     test "succeeds with entity struct" do
@@ -45,18 +45,18 @@ defmodule Helix.Entity.Controller.EntityServerTest do
       entity = Factory.insert(:entity)
       fetched_servers = EntityServerController.find(entity)
 
-      assert [] == fetched_servers
+      assert Enum.empty?(fetched_servers)
     end
   end
 
   test "removing entity ownership over servers is idempotent" do
     es = Factory.insert(:entity_server)
 
-    refute [] == EntityServerController.find(es.entity_id)
+    refute Enum.empty?(EntityServerController.find(es.entity_id))
 
     EntityServerController.delete(es.entity_id, es.server_id)
     EntityServerController.delete(es.entity_id, es.server_id)
 
-    assert [] == EntityServerController.find(es.entity_id)
+    assert Enum.empty?(EntityServerController.find(es.entity_id))
   end
 end
