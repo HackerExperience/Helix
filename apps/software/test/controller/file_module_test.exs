@@ -40,7 +40,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
       file = Factory.insert(:file)
       file_modules = FileModuleController.get_file_modules(file)
 
-      assert 0 === map_size(file_modules)
+      assert Enum.empty?(file_modules)
     end
   end
 
@@ -82,7 +82,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
     file_modules = FileModuleController.get_file_modules(file)
 
-    refute 0 === map_size(module_roles)
-    assert 0 === map_size(file_modules)
+    refute Enum.empty?(module_roles)
+    assert Enum.empty?(file_modules)
   end
 end

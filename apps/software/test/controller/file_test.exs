@@ -2,8 +2,8 @@ defmodule Helix.Software.Controller.FileTest do
 
   use ExUnit.Case, async: true
 
-  # alias HELL.TestHelper.Random
   alias Helix.Software.Controller.File, as: FileController
+  alias Helix.Software.Model.File
 
   alias Helix.Software.Factory
 
@@ -39,7 +39,7 @@ defmodule Helix.Software.Controller.FileTest do
   describe "fetching" do
     test "returns a record based on its identification" do
       file = Factory.insert(:file)
-      assert FileController.fetch(file.file_id)
+      assert %File{} = FileController.fetch(file.file_id)
     end
 
     test "returns nil if file with id doesn't exist" do
@@ -78,11 +78,7 @@ defmodule Helix.Software.Controller.FileTest do
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
       similarities =  Map.take(file0, [:file_type, :storage, :storage_id])
-      file1 =
-        :file
-        |> Factory.build()
-        |> Map.merge(similarities)
-        |> Factory.insert()
+      file1 = Factory.insert(:file, similarities)
 
       file1 = FileController.fetch(file1.file_id)
 
