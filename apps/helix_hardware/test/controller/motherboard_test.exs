@@ -36,12 +36,9 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
     MotherboardController.unlink_components_from_motherboard(mobo)
 
-    non_empty_slots =
-      mobo
-      |> MotherboardController.get_slots()
-      |> Enum.reject(&is_nil(&1.link_component_id))
+    unused_slot? = &is_nil(&1.link_component_id)
 
-    assert [] == non_empty_slots
+    assert Enum.all?(MotherboardController.get_slots(mobo), unused_slot?)
   end
 
   describe "motherboard deleting" do
@@ -60,11 +57,11 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     test "removes its slots" do
       mobo = Factory.insert(:motherboard)
 
-      refute [] == MotherboardController.get_slots(mobo.motherboard_id)
+      refute Enum.empty?(MotherboardController.get_slots(mobo.motherboard_id))
 
       MotherboardController.delete(mobo.motherboard_id)
 
-      assert [] == MotherboardController.get_slots(mobo.motherboard_id)
+      assert Enum.empty?(MotherboardController.get_slots(mobo.motherboard_id))
     end
   end
 end

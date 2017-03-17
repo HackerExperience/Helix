@@ -25,27 +25,31 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
   end
 
   describe "deleting component_spec" do
+    test "succeeds by struct" do
+      cs = Factory.insert(:component_spec)
+
+      assert Repo.get(ComponentSpec, cs.spec_id)
+      ComponentSpecController.delete(cs)
+      refute Repo.get(ComponentSpec, cs.spec_id)
+    end
+
+    test "succeeds by id" do
+      cs = Factory.insert(:component_spec)
+
+      assert Repo.get(ComponentSpec, cs.spec_id)
+      ComponentSpecController.delete(cs.spec_id)
+      refute Repo.get(ComponentSpec, cs.spec_id)
+    end
+
     test "is idempotent" do
       cs = Factory.insert(:component_spec)
 
-      assert Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
+      assert Repo.get(ComponentSpec, cs.spec_id)
 
-      :ok = ComponentSpecController.delete(cs.spec_id)
-      :ok = ComponentSpecController.delete(cs.spec_id)
+      ComponentSpecController.delete(cs.spec_id)
+      ComponentSpecController.delete(cs.spec_id)
 
-      refute Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
-    end
-
-    test "works by id and by struct" do
-      cs = Factory.insert(:component_spec)
-      :ok = ComponentSpecController.delete(cs)
-
-      refute Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
-
-      cs = Factory.insert(:component_spec)
-      :ok = ComponentSpecController.delete(cs.spec_id)
-
-      refute Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
+      refute Repo.get(ComponentSpec, cs.spec_id)
     end
   end
 end
