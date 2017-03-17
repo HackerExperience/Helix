@@ -35,7 +35,7 @@ defmodule Helix.Software.Controller.FileModule do
   def get_file_modules(file) do
     file
     |> FileModule.Query.from_file()
-    |> select([m], {m.role_id, m.role_version})
+    |> select([m], {m.module_role_id, m.module_version})
     |> Repo.all()
     |> :maps.from_list()
   end
