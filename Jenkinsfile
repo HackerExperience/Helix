@@ -13,7 +13,7 @@ node('elixir') {
     sh "MIX_ENV=prod && mix release --env=prod"
 
     // Stash artifacts
-    stash excludes: '_build/' includes: '**', name: source
+    stash excludes: '_build/', includes: '**', name: source
     stash includes: '_build/prod/rel/helix/releases/0.1.0/helix.tar.gz', name: release
   }
 }
