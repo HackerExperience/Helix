@@ -131,19 +131,29 @@ defmodule Helix.Account.Model.Account do
 
   defmodule Query do
 
-    alias HELL.PK
     alias Helix.Account.Model.Account
 
     import Ecto.Query, only: [where: 3]
 
-    @spec by_id(PK.t) :: Ecto.Queryable.t
-    @spec by_id(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
+    @spec by_id(Account.id) :: Ecto.Queryable.t
+    @spec by_id(Ecto.Queryable.t, Account.id) :: Ecto.Queryable.t
     def by_id(query \\ Account, account_id),
       do: where(query, [a], a.account_id == ^account_id)
 
-    @spec by_username(String.t) :: Ecto.Queryable.t
-    @spec by_username(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
-    def by_username(query \\ Account, username),
-      do: where(query, [a], a.username == ^username)
+    @spec by_email(Account.email) :: Ecto.Queryable.t
+    @spec by_email(Ecto.Queryable.t, Account.email) :: Ecto.Queryable.t
+    def by_email(query \\ Account, email) do
+      email = String.downcase(email)
+
+      where(query, [a], a.email == ^email)
+    end
+
+    @spec by_username(Account.username) :: Ecto.Queryable.t
+    @spec by_username(Ecto.Queryable.t, Account.username) :: Ecto.Queryable.t
+    def by_username(query \\ Account, username) do
+      username = String.downcase(username)
+
+      where(query, [a], a.username == ^username)
+    end
   end
 end

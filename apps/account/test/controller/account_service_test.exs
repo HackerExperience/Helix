@@ -3,25 +3,16 @@ defmodule Helix.Account.Controller.AccountServiceTest do
   use ExUnit.Case, async: true
 
   alias HELF.Broker
-  alias HELL.TestHelper.Random
+
+  alias Helix.Account.Factory
 
   @moduletag :umbrella
 
-  setup do
-    name = Random.username()
-    email = Burette.Internet.email()
-    password = Burette.Internet.password()
-    params = %{
-      username: name,
-      email: email,
-      password: password
-    }
-    {:ok, params: params}
-  end
-
   describe "account creation" do
-    test "succeeds with proper data", %{params: params} do
+    test "succeeds with valid params" do
+      params = Factory.params_for(:account)
       {_, {:ok, account}} = Broker.call("account.create", params)
+
       assert params.email === account.email
     end
   end
