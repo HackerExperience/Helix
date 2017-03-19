@@ -4,29 +4,32 @@ defmodule Helix.Entity.Controller.EntityComponent do
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Repo
 
-  import Ecto.Query, only: [where: 3]
+  import Ecto.Query, only: [select: 3]
 
-  @spec create(Entity.id, HELL.PK.t) ::
+  @spec create(Entity.t | Entity.id, HELL.PK.t) ::
     {:ok, EntityComponent.t}
     | {:error, Ecto.Changeset.t}
+  def create(entity = %Entity{}, component_id),
+    do: create(entity.entity_id, component_id)
   def create(entity_id, component_id) do
     %{entity_id: entity_id, component_id: component_id}
     |> EntityComponent.create_changeset()
     |> Repo.insert()
   end
 
-  @spec find(Entity.id) :: [EntityComponent.t]
-  def find(entity_id) do
-    EntityComponent
-    |> where([s], s.entity_id == ^entity_id)
+  @spec find(Entity.t | Entity.id) :: [HELL.PK.t]
+  def find(entity) do
+    entity
+    |> EntityComponent.Query.from_entity()
+    |> select([ec], ec.component_id)
     |> Repo.all()
   end
 
-  @spec delete(Entity.id, HELL.PK.t) :: no_return
-  def delete(entity_id, component_id) do
-    EntityComponent
-    |> where([s], s.entity_id == ^entity_id)
-    |> where([s], s.component_id == ^component_id)
+  @spec delete(Entity.t | Entity.id, HELL.PK.t) :: no_return
+  def delete(entity, component_id) do
+    entity
+    |> EntityComponent.Query.from_entity()
+    |> EntityComponent.Query.by_component_id(component_id)
     |> Repo.delete_all()
 
     :ok

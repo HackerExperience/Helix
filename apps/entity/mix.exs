@@ -13,6 +13,7 @@ defmodule Helix.Entity.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       elixirc_options: elixirc_options(Mix.env),
+      elixirc_paths: compile_paths(Mix.env),
       deps: deps()
     ]
   end
@@ -28,10 +29,16 @@ defmodule Helix.Entity.Mixfile do
   defp elixirc_options(_),
     do: [warnings_as_errors: true]
 
+  defp compile_paths(:test),
+    do: ["lib", "test/support"]
+  defp compile_paths(_),
+    do: ["lib"]
+
   defp deps do
     [
       {:helix_core, in_umbrella: true},
-      {:account, in_umbrella: true}
+      {:account, in_umbrella: true},
+      {:ex_machina, "~> 1.0", only: :test}
     ]
   end
 end
