@@ -31,6 +31,9 @@ environment :prod do
   set include_erts: true
   set include_src: false
   set cookie: :prod_cookie
+  set commands: [
+    replace_migrations: "rel/commands/replace_migrations"
+  ]
 end
 
 # You may define one or more releases in this file.
