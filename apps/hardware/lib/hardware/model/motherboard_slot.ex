@@ -4,7 +4,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
 
   alias HELL.PK
   alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.Motherboard
 
   import Ecto.Changeset
@@ -16,7 +15,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     motherboard_id: PK.t,
     component: Component.t,
     link_component_id: PK.t,
-    type: ComponentType.t,
     link_component_type: String.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
@@ -52,10 +50,9 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
       foreign_key: :link_component_id,
       references: :component_id,
       type: HELL.PK
-    belongs_to :type, ComponentType,
-      foreign_key: :link_component_type,
-      references: :component_type,
-      type: :string
+
+    # FK to ComponentType
+    field :link_component_type, :string
 
     timestamps()
   end
@@ -64,8 +61,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(
-      [:motherboard_id, :link_component_type, :slot_internal_id])
+    |> validate_required([:motherboard_id, :link_component_type, :slot_internal_id])
     |> put_primary_key()
     |> unique_constraint(:link_component_id, name: :motherboard_slots_link_component_id_index)
   end

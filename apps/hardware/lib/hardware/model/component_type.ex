@@ -2,13 +2,9 @@ defmodule Helix.Hardware.Model.ComponentType do
 
   use Ecto.Schema
 
-  import Ecto.Changeset
-
   @type t :: %__MODULE__{
     component_type: String.t
   }
-
-  @creation_fields ~w/component_type/a
 
   @primary_key false
   schema "component_types" do
@@ -16,11 +12,8 @@ defmodule Helix.Hardware.Model.ComponentType do
       primary_key: true
   end
 
-  @spec create_changeset(%{component_type: String.t}) :: Ecto.Changeset.t
-  def create_changeset(params) do
-    %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> validate_required(:component_type)
-    |> unique_constraint(:component_type)
+  @doc false
+  def possible_types do
+    ~w/mobo cpu ram hdd usb nic/
   end
 end
