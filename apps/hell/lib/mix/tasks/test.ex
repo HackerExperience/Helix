@@ -22,9 +22,7 @@ defmodule Mix.Tasks.Helix.Test do
       Mix.Task.run("ecto.create", ["--quiet"])
       Mix.Task.run("ecto.migrate", ["--quiet"])
 
-      "apps/*/priv/repo/seeds.exs"
-      |> Path.wildcard()
-      |> Enum.each(&Mix.Task.rerun("run", [&1]))
+      Mix.Task.run("helix.seeds", [])
     end
 
     additional_opts = if "umbrella" in List.wrap(Keyword.get(switches, :exclude, [])) do

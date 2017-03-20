@@ -18,6 +18,10 @@ defmodule Helix.Mixfile do
   end
 
   defp aliases do
-    [test: ["compile", "helix.test"]]
+    [
+      "ecto.setup": ["ecto.create", "ecto.migrate", "helix.seeds"],
+      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      test: ["compile", "helix.test"]
+    ]
   end
 end
