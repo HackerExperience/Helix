@@ -78,7 +78,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     if get_field(changeset, :slot_id) do
       changeset
     else
-      pk = PK.generate([0x0003, 0x0002, 0x0000])
+      pk = PK.pk_for(__MODULE__)
       cast(changeset, %{slot_id: pk}, [:slot_id])
     end
   end

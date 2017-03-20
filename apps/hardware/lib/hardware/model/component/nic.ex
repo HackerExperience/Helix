@@ -39,7 +39,7 @@ defmodule Helix.Hardware.Model.Component.NIC do
   end
 
   def create_from_spec(cs = %ComponentSpec{spec: _}) do
-    nic_id = PK.generate([0x0003, 0x0001, 0x0004])
+    nic_id = PK.pk_for(__MODULE__)
     component = Component.create_from_spec(cs, nic_id)
 
     %__MODULE__{}

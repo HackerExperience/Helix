@@ -30,7 +30,7 @@ defmodule Helix.Hardware.Model.Component.HDD do
   end
 
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
-    hdd_id = PK.generate([0x0003, 0x0001, 0x0001])
+    hdd_id = PK.pk_for(__MODULE__)
     params = Map.take(spec, ["hdd_size"])
     component = Component.create_from_spec(cs, hdd_id)
 
