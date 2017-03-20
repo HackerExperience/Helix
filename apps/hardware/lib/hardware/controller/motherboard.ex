@@ -37,7 +37,7 @@ defmodule Helix.Hardware.Controller.Motherboard do
       |> Component.RAM.Query.from_component_ids()
       |> Repo.all()
       |> Enum.reduce(0, fn el, acc ->
-        acc.size + el.ram_size
+        acc + el.ram_size
       end)
 
     nic =
@@ -49,7 +49,9 @@ defmodule Helix.Hardware.Controller.Motherboard do
         network = el.network_connection.network_id
         value = Map.take(el.network_connection, [:uplink, :downlink])
 
-        Map.update(acc, network, value, &Map.merge(&1, value, fn _, v1, v2 -> v1 + v2 end))
+        sum_map_values = &Map.merge(&1, value, fn _, v1, v2 -> v1 + v2 end)
+
+        Map.update(acc, network, value, sum_map_values)
       end)
 
     %{

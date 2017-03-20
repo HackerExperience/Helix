@@ -67,10 +67,13 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
           res_types ->
             shares = Changeset.get_field(process, :priority)
 
+            enqueue_process = &([{process, res_types}| &1])
+            update_shares = &merge_share(&1, res_types, shares, net_id)
+
             plan =
               plan
-              |> update_in([:next_plan, :processes], &([{process, res_types}| &1]))
-              |> update_in([:next_plan, :shares], &merge_share(&1, res_types, shares, net_id))
+              |> update_in([:next_plan, :processes], enqueue_process)
+              |> update_in([:next_plan, :shares], update_shares)
 
             preallocate(t, plan, resources)
         end
@@ -118,8 +121,10 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
     allocate =
       fragment.net
       |> Map.get(net_id, %{})
-      |> Enum.into(%{cpu: fragment.cpu, ram: fragment.ram}) # Prepare a map with resources that the process might want
-      |> Map.take(required_resources) # Filter out those that it didn't request
+      # Prepare a map with resources that the process might want
+      |> Enum.into(%{cpu: fragment.cpu, ram: fragment.ram})
+      # Filter out those that it didn't request
+      |> Map.take(required_resources)
       |> Enum.map(fn {k, v} -> {k, v * shares} end)
       |> :maps.from_list()
 
@@ -138,12 +143,18 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
       can_allocate = Process.can_allocate(allocated_proccess)
 
       resources_diff = Resources.sub(allocated_after, allocated_before)
-      resources = ServerResources.sub_from_resources(resources, resources_diff, net_id)
+      resources = ServerResources.sub_from_resources(
+        resources,
+        resources_diff,
+        net_id)
+
+      enqueue_process = &([{allocated_proccess, can_allocate}| &1])
+      update_shares = &merge_share(&1, can_allocate, shares, net_id)
 
       plan
       |> put_in([:current_plan, :processes], t)
-      |> update_in([:next_plan, :processes], &([{allocated_proccess, can_allocate}| &1]))
-      |> update_in([:next_plan, :shares], &merge_share(&1, can_allocate, shares, net_id))
+      |> update_in([:next_plan, :processes], enqueue_process)
+      |> update_in([:next_plan, :shares], update_shares)
       |> execute_step(resources)
     end
   end
