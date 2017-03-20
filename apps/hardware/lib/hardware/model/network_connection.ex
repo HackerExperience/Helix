@@ -19,6 +19,7 @@ defmodule Helix.Hardware.Model.NetworkConnection do
   @one_ip_per_network_index :network_connections_network_id_ip_unique_index
 
   @primary_key false
+  @ecto_autogenerate {:network_conections, {PK, :pk_for, [__MODULE__]}}
   schema "network_connections" do
     field :network_connection_id, PK,
       primary_key: true
@@ -42,7 +43,6 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     |> cast(params, [:network_id])
     |> put_change(:ip, IPv4.autogenerate())
     |> changeset(params)
-    |> put_primary_key()
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, %{}) :: Ecto.Changeset.t
@@ -57,12 +57,5 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     |> validate_number(:downlink, greater_than_or_equal_to: 0)
     |> validate_number(:uplink, greater_than_or_equal_to: 0)
     |> unique_constraint(:ip, name: @one_ip_per_network_index)
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    pk = PK.generate([0x0003, 0x0003, 0x0000])
-
-    put_change(changeset, :network_connection_id, pk)
   end
 end
