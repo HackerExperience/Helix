@@ -4,6 +4,7 @@ defmodule Helix.NPC.Controller.NPCTest do
 
   alias HELL.PK
   alias Helix.NPC.Controller.NPC, as: NPCController
+  alias Helix.NPC.Model.NPC, as: NPC
 
   test "create/1" do
     assert {:ok, _} = NPCController.create(%{})
@@ -16,7 +17,7 @@ defmodule Helix.NPC.Controller.NPCTest do
     end
 
     test "failure" do
-      assert {:error, :notfound} == NPCController.find(PK.generate([]))
+      assert {:error, :notfound} == NPCController.find(PK.pk_for(NPC))
     end
   end
 

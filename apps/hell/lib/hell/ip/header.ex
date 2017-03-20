@@ -47,9 +47,6 @@ defmodule HELL.IPv6.Header do
   @spec pk_for(module) :: HELL.PK.t
   for {module, header} <- @mappings do
     def pk_for(unquote(module)),
-      do: HELL.PK.generate(unquote(header))
+      do: HELL.IPv6.generate(unquote(header))
   end
-
-  def pk_for(m),
-    do: raise RuntimeError, "primary key not available for #{m} module"
 end

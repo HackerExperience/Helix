@@ -4,10 +4,6 @@ defmodule HELL.PK do
 
   @behaviour Ecto.Type
 
-  @spec generate([non_neg_integer]) :: t
-  defdelegate generate(params),
-    to: HELL.IPv6
-
   @spec pk_for(module) :: t
   defdelegate pk_for(module),
     to: HELL.IPv6.Header
