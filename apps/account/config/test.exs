@@ -3,4 +3,8 @@ use Mix.Config
 config :comeonin, :bcrypt_log_rounds, 2
 
 config :account, Helix.Account.Repo,
-  pool: Ecto.Adapters.SQL.Sandbox
+  pool: Ecto.Adapters.SQL.Sandbox,
+  size: 2,
+  username: System.get_env("HELIX_DB_USER") || "postgres",
+  password: System.get_env("HELIX_DB_PASS") || "postgres",
+  hostname: System.get_env("HELIX_DB_HOST") || "localhost"

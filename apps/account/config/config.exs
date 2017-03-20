@@ -6,10 +6,7 @@ config :account,
 config :account, Helix.Account.Repo,
   size: 4,
   adapter: Ecto.Adapters.Postgres,
-  database: "account_service",
-  username: System.get_env("HELIX_DB_USER") || "postgres",
-  password: System.get_env("HELIX_DB_PASS") || "postgres",
-  hostname: System.get_env("HELIX_DB_HOST") || "localhost"
+  database: "account_service"
 
 config :guardian, Guardian,
   issuer: "account",
