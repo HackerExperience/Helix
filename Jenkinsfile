@@ -1,9 +1,5 @@
 #!/usr/bin/env groovy
 
-env.BUILD_VERSION = sh(scrit: 'date +%Y.%m.%d%H%M', returnStdout: true).trim()
-def ARTIFACT_PATH = "env.BRANCH_NAME + '/' + env.BUILD_VERSION" 
-println ${ARTIFACT_PATH}
-
 node('elixir') {
 
   stage('Pre-build') {
