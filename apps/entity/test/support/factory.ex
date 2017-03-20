@@ -8,6 +8,12 @@ defmodule Helix.Entity.Factory do
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
 
+  @entity_types %{
+    "account"                => Helix.Account.Model.Account,
+    "clan"                   => Helix.Clan.Model.Clan,
+    "npc"                    => Helix.NPC.Model.NPC
+  }
+
   def entity_factory do
     entity_type = generate_entity_type()
 
@@ -31,11 +37,11 @@ defmodule Helix.Entity.Factory do
     }
   end
 
-  def generate_entity_type,
+  defp generate_entity_type,
     do: Enum.random(["account", "clan", "npc"])
 
-  def generate_pk("account"),
-    do: PK.generate([0x0000, 0x0000, 0x0000])
-  def generate_pk(_),
-    do: Random.pk()
+  for {entity_type, module} <- @entity_types do
+    defp generate_pk(unquote(entity_type)),
+      do: PK.pk_for(unquote(module))
+  end
 end
