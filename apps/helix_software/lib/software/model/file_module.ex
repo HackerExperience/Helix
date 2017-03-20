@@ -28,18 +28,26 @@ defmodule Helix.Software.Model.FileModule do
 
   @primary_key false
   schema "file_modules" do
+    field :file_id, HELL.PK, primary_key: true
+
+    field :software_module, :string, primary_key: true
+
+    field :module_version, :integer, null: false
+
     belongs_to :file, File,
       foreign_key: :file_id,
       references: :file_id,
       type: HELL.PK,
+      define_field: false,
+      on_replace: :update,
       primary_key: true
+
     belongs_to :module, SoftwareModule,
       foreign_key: :software_module,
       references: :software_module,
       type: :string,
+      define_field: false,
       primary_key: true
-
-    field :module_version, :integer
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -63,6 +71,14 @@ defmodule Helix.Software.Model.FileModule do
     |> validate_number(:module_version, greater_than: 0)
   end
 
+  @spec changeset(t | Ecto.Changeset.t, creation_params) :: Ecto.Changeset.t
+  def changeset(struct, params) do
+    struct
+    |> cast(params, @creation_fields)
+    |> validate_required([:software_module, :module_version])
+    |> generic_validations()
+  end
+
   defmodule Query do
 
     alias Helix.Software.Model.File
@@ -81,8 +97,8 @@ defmodule Helix.Software.Model.FileModule do
     def from_file(query, file_id),
       do: where(query, [fm], fm.file_id == ^file_id)
 
-    @spec by_software_module(HELL.PK.t) :: Ecto.Queryable.t
-    @spec by_software_module(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    @spec by_software_module(String.t) :: Ecto.Queryable.t
+    @spec by_software_module(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
     def by_software_module(query \\ FileModule, software_module),
       do: where(query, [fm], fm.software_module == ^software_module)
   end

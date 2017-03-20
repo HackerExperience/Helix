@@ -62,7 +62,7 @@ Repo.transaction fn ->
     Enum.map(type.modules, fn module_name ->
       %{
         software_type: type.software_type,
-        software_module: type.software_type <> module_name
+        software_module: type.software_type <> "_" <> module_name
       }
     end)
   end)
