@@ -39,6 +39,7 @@ defmodule Helix.Process.Model.Process do
   @opaque id :: PK.t
 
   @primary_key false
+  @ecto_autogenerate {:process_id, {PK, :pk_for, [__MODULE__]}}
   schema "processes" do
     field :process_id, PK,
       primary_key: true
@@ -128,7 +129,6 @@ defmodule Helix.Process.Model.Process do
         do: [],
         else: [process_data: "invalid value"]
     end)
-    |> put_primary_key()
     |> put_defaults()
     |> changeset(params)
     |> server_to_process_map()
@@ -372,11 +372,6 @@ defmodule Helix.Process.Model.Process do
 
       objective_allows?.(resource) and limitations > allocated
     end)
-  end
-
-  @spec put_primary_key(Changeset.t) :: Changeset.t
-  defp put_primary_key(changeset) do
-    put_change(changeset, :process_id, PK.generate([0x0005, 0x0000, 0x0000]))
   end
 
   @spec put_defaults(Changeset.t) :: Changeset.t
