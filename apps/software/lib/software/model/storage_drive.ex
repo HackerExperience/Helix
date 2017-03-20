@@ -42,7 +42,7 @@ defmodule Helix.Software.Model.StorageDrive do
     if get_field(changeset, :drive_id) do
       changeset
     else
-      pk = PK.generate([0x0004, 0x0001, 0x0001])
+      pk = PK.pk_for(__MODULE__)
       put_change(changeset, :drive_id, pk)
     end
   end
