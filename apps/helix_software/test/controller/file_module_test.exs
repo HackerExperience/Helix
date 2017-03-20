@@ -4,37 +4,38 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.FileModule, as: FileModuleController
-  alias Helix.Software.Model.ModuleRole
+  alias Helix.Software.Model.SoftwareModule
   alias Helix.Software.Repo
 
   alias Helix.Software.Factory
 
   @moduletag :integration
 
-  defp generate_module_roles(software_type) do
+  defp generate_software_modules(software_type) do
     software_type
-    |> ModuleRole.Query.by_software_type()
+    |> SoftwareModule.Query.by_software_type()
     |> Repo.all()
-    |> Enum.map(&({&1.module_role_id, Burette.Number.number(1..1024)}))
+    |> Enum.map(&({&1.software_module, Burette.Number.number(1..1024)}))
     |> :maps.from_list()
   end
 
   test "creating succeeds with valid params" do
     f = Factory.insert(:file)
-    module_roles = generate_module_roles(f.software_type)
+    software_modules = generate_software_modules(f.software_type)
 
-    assert {:ok, ^module_roles} = FileModuleController.create(f, module_roles)
+    assert {:ok, file_modules} = FileModuleController.create(f, software_modules)
+    assert software_modules == file_modules
   end
 
   describe "getting" do
     test "returns file modules as a map" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.software_type)
+      software_modules = generate_software_modules(file.software_type)
 
-      FileModuleController.create(file, module_roles)
+      FileModuleController.create(file, software_modules)
       file_modules = FileModuleController.get_file_modules(file)
 
-      assert module_roles == file_modules
+      assert software_modules == file_modules
     end
 
     test "returns empty map when nothing is found" do
@@ -48,8 +49,8 @@ defmodule Helix.Software.Controller.FileModuleTest do
   describe "updating" do
     test "succeeds with valid params" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.software_type)
-      {:ok, file_modules} = FileModuleController.create(file, module_roles)
+      software_modules = generate_software_modules(file.software_type)
+      {:ok, file_modules} = FileModuleController.create(file, software_modules)
 
       version = Burette.Number.number(1..1024)
       module_id =
@@ -75,12 +76,10 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   test "deleting deletes every file modules" do
     file = Factory.insert(:file)
-    module_roles = generate_module_roles(file.software_type)
+    software_modules = generate_software_modules(file.software_type)
 
-    {:ok, _} = FileModuleController.create(file, module_roles)
-
+    {:ok, _} = FileModuleController.create(file, software_modules)
     Repo.delete(file)
-
     file_modules = FileModuleController.get_file_modules(file)
 
     assert Enum.empty?(file_modules)
