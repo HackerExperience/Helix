@@ -1,0 +1,3 @@
+#!/usr/local/bin/bash
+
+"{$SCRIPT}" command release_tasks migrate
