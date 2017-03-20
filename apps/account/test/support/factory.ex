@@ -9,7 +9,7 @@ defmodule Helix.Account.Factory do
   alias Helix.Account.Model.Setting
 
   def account_factory do
-    pk = PK.generate([0x0000, 0x0000, 0x0000])
+    pk = PK.pk_for(Account)
     display_name = Random.username()
     username = String.downcase(display_name)
 
