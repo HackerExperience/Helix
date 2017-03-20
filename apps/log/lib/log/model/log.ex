@@ -37,6 +37,7 @@ defmodule Helix.Log.Model.Log do
   @required_fields ~w/server_id entity_id message/a
 
   @primary_key false
+  @ecto_autogenerate {:log_id, {PK, :pk_for, [__MODULE__]}}
   schema "logs" do
     field :log_id, PK,
       primary_key: true
@@ -61,11 +62,9 @@ defmodule Helix.Log.Model.Log do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
-    |> put_change(:log_id, PK.pk_for(__MODULE__))
     |> prepare_changes(fn changeset ->
       revisions = [
         %{
-          log_id: get_field(changeset, :log_id),
           entity_id: params[:entity_id],
           message: params[:message],
           forge_version: params[:forge_version]

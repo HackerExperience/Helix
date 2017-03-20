@@ -40,6 +40,7 @@ defmodule Helix.Software.Model.File do
   @update_fields ~w/name file_path storage_id/a
 
   @primary_key false
+  @ecto_autogenerate {:file_id, {PK, :pk_for, [__MODULE__]}}
   schema "files" do
     field :file_id, HELL.PK,
       primary_key: true
@@ -65,7 +66,6 @@ defmodule Helix.Software.Model.File do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> generic_validations()
-    |> put_primary_key()
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
@@ -82,15 +82,5 @@ defmodule Helix.Software.Model.File do
       [:name, :file_path, :file_size, :file_type, :storage_id])
     |> validate_number(:file_size, greater_than: 0)
     |> unique_constraint(:file_path, name: :unique_file_path_index)
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    if get_field(changeset, :file_id) do
-      changeset
-    else
-      pk = PK.pk_for(__MODULE__)
-      put_change(changeset, :file_id, pk)
-    end
   end
 end

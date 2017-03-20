@@ -35,6 +35,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   @required_fields ~w/motherboard_id link_component_type slot_internal_id/a
 
   @primary_key false
+  @ecto_autogenerate {:slot_id, {PK, :pk_for, [__MODULE__]}}
   schema "motherboard_slots" do
     field :slot_id, HELL.PK,
       primary_key: true
@@ -61,7 +62,8 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> changeset(params)
-    |> put_primary_key()
+    |> validate_required([:motherboard_id, :link_component_type, :slot_internal_id])
+    |> unique_constraint(:link_component_id, name: :motherboard_slots_link_component_id_index)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
@@ -74,16 +76,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     |> cast(params, @accepted_fields)
     |> validate_required(@required_fields)
     |> unique_constraint(:link_component_id)
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    if get_field(changeset, :slot_id) do
-      changeset
-    else
-      pk = PK.pk_for(__MODULE__)
-      cast(changeset, %{slot_id: pk}, [:slot_id])
-    end
   end
 
   @spec linked?(t) :: boolean
