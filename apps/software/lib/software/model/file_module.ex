@@ -84,11 +84,5 @@ defmodule Helix.Software.Model.FileModule do
     @spec by_software_module_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     def by_software_module_id(query \\ FileModule, software_module_id),
       do: where(query, [fm], fm.software_module_id == ^software_module_id)
-
-    @spec select_software_module_id_and_module_version() :: Ecto.Queryable.t
-    @spec select_software_module_id_and_module_version(Ecto.Queryable.t) ::
-      Ecto.Queryable.t
-    def select_software_module_id_and_module_version(query \\ FileModule),
-      do: select(query, [fm], {fm.software_module_id, fm.module_version})
   end
 end
