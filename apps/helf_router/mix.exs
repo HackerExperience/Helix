@@ -46,7 +46,7 @@ defmodule Helix.HELFRouter.Mixfile do
 
   defp deps do
     [
-      {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},
+      {:helf, git: "https://github.com/HackerExperience/HELF.git"},
       {:cowboy,"~> 1.0"}
     ]
   end
