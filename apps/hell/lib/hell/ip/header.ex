@@ -24,7 +24,7 @@ defmodule HELL.IPv6.Header do
     Helix.Software.Model.File                      => [0x0004, 0x0000],
     Helix.Software.Model.Storage                   => [0x0004, 0x0001],
     Helix.Software.Model.StorageDrive              => [0x0004, 0x0001, 0x0001],
-    Helix.Software.Model.ModuleRole                => [0x0004, 0x0002],
+    Helix.Software.Model.SoftwareModule            => [0x0004, 0x0002],
 
     # Process
     Helix.Process.Model.Process                    => [0x0005, 0x0000],
