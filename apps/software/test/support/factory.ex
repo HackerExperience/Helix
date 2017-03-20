@@ -4,7 +4,8 @@ defmodule Helix.Software.Factory do
 
   alias HELL.PK
   alias HELL.TestHelper.Random
-  alias Helix.Software.Model.Storage
+  alias Helix.Hardware.Model.Component
+  alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Model.File
 
   def file_factory do
@@ -21,20 +22,12 @@ defmodule Helix.Software.Factory do
   end
 
   def storage_factory do
-    pk = PK.pk_for(Storage)
-
-    files = Random.repeat(1..3, fn ->
-      :file
-      |> prepare()
-      |> Map.put(:storage_id, pk)
-    end)
-
+    files = Random.repeat(1..3, fn -> prepare(:file) end)
     drives = Random.repeat(1..3, fn ->
-      Helix.Software.Model.StorageDrive.create_changeset(%{storage_id: pk})
+      %StorageDrive{drive_id: PK.pk_for(Component)}
     end)
 
     %Helix.Software.Model.Storage{
-      storage_id: pk,
       files: files,
       drives: drives
     }
