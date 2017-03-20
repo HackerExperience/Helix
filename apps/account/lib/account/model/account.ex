@@ -32,7 +32,7 @@ defmodule Helix.Account.Model.Account do
     optional(:password) => password,
     optional(:confirmed) => boolean}
 
-  @creation_fields ~w/account_id email username password/a
+  @creation_fields ~w/email username password/a
   @update_fields ~w/email password confirmed/a
 
   @derive {Poison.Encoder, only: [:email, :username, :account_id]}

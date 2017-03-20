@@ -2,19 +2,16 @@ defmodule Helix.Account.Factory do
 
   use ExMachina.Ecto, repo: Helix.Account.Repo
 
-  alias HELL.PK
   alias HELL.TestHelper.Random
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSetting
   alias Helix.Account.Model.Setting
 
   def account_factory do
-    pk = PK.pk_for(Account)
     display_name = Random.username()
     username = String.downcase(display_name)
 
     %Account{
-      account_id: pk,
       username: display_name,
       display_name: username,
       email: Burette.Internet.email(),

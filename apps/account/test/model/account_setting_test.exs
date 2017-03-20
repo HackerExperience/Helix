@@ -2,6 +2,8 @@ defmodule Helix.Account.Model.AccountSettingTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
+  alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSetting
 
   alias Helix.Account.Factory
@@ -10,7 +12,7 @@ defmodule Helix.Account.Model.AccountSettingTest do
     s = Factory.build(:account_setting)
 
     %{
-      account_id: s.account.account_id,
+      account_id: PK.pk_for(Account),
       setting_id: s.setting.setting_id,
       setting_value: s.setting_value
     }
