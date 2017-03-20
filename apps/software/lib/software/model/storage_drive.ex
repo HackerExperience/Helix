@@ -16,6 +16,7 @@ defmodule Helix.Software.Model.StorageDrive do
   @creation_fields ~w/storage_id/a
 
   @primary_key false
+  @ecto_autogenerate {:drive_id, {PK, :pk_for, [__MODULE__]}}
   schema "storage_drives" do
     field :storage_id, PK,
       primary_key: true
@@ -33,17 +34,6 @@ defmodule Helix.Software.Model.StorageDrive do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> put_primary_key()
     |> validate_required(@creation_fields)
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    if get_field(changeset, :drive_id) do
-      changeset
-    else
-      pk = PK.pk_for(__MODULE__)
-      put_change(changeset, :drive_id, pk)
-    end
   end
 end
