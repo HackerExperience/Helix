@@ -1,52 +1,52 @@
 alias Helix.Software.Repo
 alias Helix.Software.Model.FileType
-alias Helix.Software.Model.ModuleRole
+alias Helix.Software.Model.SoftwareModule
 
 types = [
   %{
     file_type: "cracker",
     extension: "crc",
-    roles: ["password"]
+    modules: ["password"]
   },
   %{
     file_type: "exploit",
     extension: "exp",
-    roles: ["ftp", "ssh"]
+    modules: ["ftp", "ssh"]
   },
   %{
     file_type: "firewall",
     extension: "fwl",
-    roles: ["active", "passive"]
+    modules: ["active", "passive"]
   },
   %{
     file_type: "hasher",
     extension: "hash",
-    roles: ["password"]
+    modules: ["password"]
   },
   %{
     file_type: "log_forger",
     extension: "logf",
-    roles: ["create", "edit"]
+    modules: ["create", "edit"]
   },
   %{
     file_type: "log_recover",
     extension: "logr",
-    roles: ["recover"]
+    modules: ["recover"]
   },
   %{
     file_type: "encryptor",
     extension: "enc",
-    roles: ["file", "log", "connection", "process"]
+    modules: ["file", "log", "connection", "process"]
   },
   %{
     file_type: "decryptor",
     extension: "dec",
-    roles: ["file", "log", "connection", "process"]
+    modules: ["file", "log", "connection", "process"]
   },
   %{
     file_type: "anymap",
     extension: "map",
-    roles: ["geo", "inbound", "outbound"]
+    modules: ["geo", "inbound", "outbound"]
   }
 ]
 
@@ -64,7 +64,7 @@ Repo.transaction fn ->
 
   Enum.each(roles, fn role ->
     role
-    |> ModuleRole.create_changeset()
+    |> SoftwareModule.create_changeset()
     |> Repo.insert!(on_conflict: :nothing)
   end)
 end

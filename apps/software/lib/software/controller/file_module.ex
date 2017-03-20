@@ -4,16 +4,16 @@ defmodule Helix.Software.Controller.FileModule do
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Repo
 
-  @type module_roles :: %{role :: HELL.PK.t => version :: pos_integer}
+  @type software_modules :: %{modules :: HELL.PK.t => version :: pos_integer}
 
-  @spec create(File.t, module_roles) ::
-    {:ok, module_roles}
+  @spec create(File.t, software_modules) ::
+    {:ok, software_modules}
     | {:error, :internal}
-  def create(file, roles) do
-    r = Enum.map(roles, fn {role, v} ->
+  def create(file, modules) do
+    r = Enum.map(modules, fn {module, v} ->
       p = %{
         file_id: file.file_id,
-        module_role_id: role,
+        software_module_id: module,
         module_version: v
       }
 
@@ -22,18 +22,18 @@ defmodule Helix.Software.Controller.FileModule do
 
     Repo.transaction(fn ->
       if Enum.all?(r, &match?({:ok, _}, Repo.insert(&1))) do
-        roles
+        modules
       else
         Repo.rollback(:internal)
       end
     end)
   end
 
-  @spec find(File.t) :: module_roles
+  @spec find(File.t) :: software_modules
   def find(file) do
     file
     |> FileModule.Query.from_file()
-    |> FileModule.Query.select_module_role_id_and_module_version()
+    |> FileModule.Query.select_software_module_id_and_module_version()
     |> Repo.all()
     |> :maps.from_list()
   end
@@ -44,11 +44,11 @@ defmodule Helix.Software.Controller.FileModule do
   @spec update(File.t, HELL.PK.t, version :: pos_integer) ::
     {:ok, FileModule.t}
     | {:error, :notfound | Ecto.Changeset.t}
-  def update(file, module_role, version) do
+  def update(file, software_module, version) do
     file_module =
       file
       |> FileModule.Query.from_file()
-      |> FileModule.Query.by_module_role_id(module_role)
+      |> FileModule.Query.by_software_module_id(software_module)
       |> Repo.one()
 
     if file_module do

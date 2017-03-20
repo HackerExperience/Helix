@@ -4,7 +4,7 @@ defmodule Helix.Software.Model.FileModule do
 
   alias HELL.PK
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.ModuleRole
+  alias Helix.Software.Model.SoftwareModule
 
   import Ecto.Changeset
 
@@ -12,18 +12,18 @@ defmodule Helix.Software.Model.FileModule do
     module_version: pos_integer,
     file: File.t,
     file_id: PK.t,
-    role: ModuleRole.t,
-    module_role_id: PK.t
+    software_module: SoftwareModule.t,
+    software_module_id: PK.t
   }
 
   @type creation_params :: %{
     file_id: PK.t,
-    module_role_id: PK.t,
+    software_module_id: PK.t,
     module_version: pos_integer
   }
   @type update_params :: %{module_version: pos_integer}
 
-  @creation_fields ~w/file_id module_role_id module_version/a
+  @creation_fields ~w/file_id software_module_id module_version/a
   @update_fields ~w/module_version/a
 
   @primary_key false
@@ -33,9 +33,9 @@ defmodule Helix.Software.Model.FileModule do
       references: :file_id,
       type: HELL.PK,
       primary_key: true
-    belongs_to :role, ModuleRole,
-      foreign_key: :module_role_id,
-      references: :module_role_id,
+    belongs_to :software_module, SoftwareModule,
+      foreign_key: :software_module_id,
+      references: :software_module_id,
       type: HELL.PK,
       primary_key: true
 
@@ -46,7 +46,7 @@ defmodule Helix.Software.Model.FileModule do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:file_id, :module_role_id, :module_version])
+    |> validate_required([:file_id, :software_module_id, :module_version])
     |> generic_validations()
   end
 
@@ -80,15 +80,15 @@ defmodule Helix.Software.Model.FileModule do
     def from_file(query, file_id),
       do: where(query, [fm], fm.file_id == ^file_id)
 
-    @spec by_module_role_id(HELL.PK.t) :: Ecto.Queryable.t
-    @spec by_module_role_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_module_role_id(query \\ FileModule, module_role_id),
-      do: where(query, [fm], fm.module_role_id == ^module_role_id)
+    @spec by_software_module_id(HELL.PK.t) :: Ecto.Queryable.t
+    @spec by_software_module_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_software_module_id(query \\ FileModule, software_module_id),
+      do: where(query, [fm], fm.software_module_id == ^software_module_id)
 
-    @spec select_module_role_id_and_module_version() :: Ecto.Queryable.t
-    @spec select_module_role_id_and_module_version(Ecto.Queryable.t) ::
+    @spec select_software_module_id_and_module_version() :: Ecto.Queryable.t
+    @spec select_software_module_id_and_module_version(Ecto.Queryable.t) ::
       Ecto.Queryable.t
-    def select_module_role_id_and_module_version(query \\ FileModule),
-      do: select(query, [fm], {fm.module_role_id, fm.module_version})
+    def select_software_module_id_and_module_version(query \\ FileModule),
+      do: select(query, [fm], {fm.software_module_id, fm.module_version})
   end
 end

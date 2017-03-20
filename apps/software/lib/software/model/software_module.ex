@@ -1,4 +1,4 @@
-defmodule Helix.Software.Model.ModuleRole do
+defmodule Helix.Software.Model.SoftwareModule do
 
   use Ecto.Schema
 
@@ -8,19 +8,19 @@ defmodule Helix.Software.Model.ModuleRole do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    module_role_id: PK.t,
-    module_role: String.t,
+    software_module_id: PK.t,
+    software_module: String.t,
     type: FileType.t
   }
 
-  @creation_fields ~w/file_type module_role/a
+  @creation_fields ~w/file_type software_module/a
 
   @primary_key false
-  schema "module_roles" do
-    field :module_role_id, HELL.PK,
+  schema "software_modules" do
+    field :software_module_id, HELL.PK,
       primary_key: true
 
-    field :module_role, :string
+    field :software_module, :string
 
     # FIXME: this name must change soon
     belongs_to :type, FileType,
@@ -29,12 +29,12 @@ defmodule Helix.Software.Model.ModuleRole do
       type: :string
   end
 
-  @spec create_changeset(%{file_type: String.t, module_role: String.t}) :: Ecto.Changeset.t
+  @spec create_changeset(%{file_type: String.t, software_module: String.t}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:module_role, :file_type])
-    |> unique_constraint(:module_role, name: :file_type_module_role_unique_constraint)
+    |> validate_required([:software_module, :file_type])
+    |> unique_constraint(:software_module, name: :file_type_software_module_unique_constraint)
     |> put_primary_key()
   end
 
@@ -43,18 +43,18 @@ defmodule Helix.Software.Model.ModuleRole do
     pk = PK.generate([0x0004, 0x0002, 0x0000])
 
     changeset
-    |> cast(%{module_role_id: pk}, [:module_role_id])
+    |> cast(%{software_module_id: pk}, [:software_module_id])
   end
 
   defmodule Query do
 
-    alias Helix.Software.Model.ModuleRole
+    alias Helix.Software.Model.SoftwareModule
 
     import Ecto.Query, only: [where: 3]
 
     @spec by_file_type(String.t) :: Ecto.Queryable.t
     @spec by_file_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
-    def by_file_type(query \\ ModuleRole, file_type),
+    def by_file_type(query \\ SoftwareModule, file_type),
       do: where(query, [m], m.file_type == ^file_type)
   end
 end

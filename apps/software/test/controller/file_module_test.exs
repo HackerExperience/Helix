@@ -4,38 +4,38 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.FileModule, as: FileModuleController
-  alias Helix.Software.Model.ModuleRole
+  alias Helix.Software.Model.SoftwareModule
   alias Helix.Software.Repo
 
   alias Helix.Software.Factory
 
-  defp generate_module_roles(file_type) do
+  defp generate_software_modules(file_type) do
     file_type
-    |> ModuleRole.Query.by_file_type()
+    |> SoftwareModule.Query.by_file_type()
     |> Repo.all()
-    |> Enum.map(&({&1.module_role_id, Burette.Number.number(1..1024)}))
+    |> Enum.map(&({&1.software_module_id, Burette.Number.number(1..1024)}))
     |> :maps.from_list()
   end
 
-  test "file modules creation creates the correct roles" do
+  test "file modules creation creates the correct modules" do
     file = Factory.insert(:file)
-    module_roles = generate_module_roles(file.file_type)
+    software_modules = generate_software_modules(file.file_type)
 
-    {:ok, file_modules1} = FileModuleController.create(file, module_roles)
+    {:ok, file_modules1} = FileModuleController.create(file, software_modules)
     file_modules2 = FileModuleController.find(file)
 
-    # created roles from module_roles
-    assert module_roles == file_modules1
+    # created modules from software_modules
+    assert software_modules == file_modules1
 
-    # roles found are the same as those yielded by create
+    # modules found are the same as those yielded by create
     assert file_modules1 == file_modules2
   end
 
   describe "file modules fetching" do
     test "returns file modules as a map" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.file_type)
-      FileModuleController.create(file, module_roles)
+      software_modules = generate_software_modules(file.file_type)
+      FileModuleController.create(file, software_modules)
 
       file_modules = FileModuleController.find(file)
 
@@ -53,8 +53,8 @@ defmodule Helix.Software.Controller.FileModuleTest do
   describe "file modules updating" do
     test "updates module version" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.file_type)
-      {:ok, file_modules} = FileModuleController.create(file, module_roles)
+      software_modules = generate_software_modules(file.file_type)
+      {:ok, file_modules} = FileModuleController.create(file, software_modules)
 
       module_id = file_modules |> Map.keys() |> Enum.random()
 
@@ -76,8 +76,8 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   test "deleting a file deletes it's modules" do
     file = Factory.insert(:file)
-    module_roles = generate_module_roles(file.file_type)
-    {:ok, _} = FileModuleController.create(file, module_roles)
+    software_modules = generate_software_modules(file.file_type)
+    {:ok, _} = FileModuleController.create(file, software_modules)
 
     file_modules1 = FileModuleController.find(file)
 
