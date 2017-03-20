@@ -14,7 +14,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     motherboard: Motherboard.t,
     motherboard_id: PK.t,
     component: Component.t,
-    link_component_id: PK.t,
+    link_component_id: PK.t | nil,
     link_component_type: String.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
@@ -26,14 +26,13 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     :slot_internal_id => integer,
     optional(:link_component_id) => PK.t
   }
-  @type update_params :: %{link_component_id: PK.t}
+  @type update_params :: %{
+    optional(:link_component_id) => PK.t | nil
+  }
 
-  @creation_fields ~w/
-    motherboard_id
-    link_component_type
-    link_component_id
-    slot_internal_id/a
-  @update_fields ~w/link_component_id/a
+  @creation_fields ~w/motherboard_id link_component_type slot_internal_id/a
+  @accepted_fields ~w/link_component_id/a
+  @required_fields ~w/motherboard_id link_component_type slot_internal_id/a
 
   @primary_key false
   schema "motherboard_slots" do
@@ -61,16 +60,19 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:motherboard_id, :link_component_type, :slot_internal_id])
     |> put_primary_key()
-    |> unique_constraint(:link_component_id, name: :motherboard_slots_link_component_id_index)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
+    changeset(struct, params)
+  end
+
+  def changeset(struct, params) do
     struct
-    |> cast(params, @update_fields)
-    |> unique_constraint(:link_component_id, name: :motherboard_slots_link_component_id_index)
+    |> cast(params, @accepted_fields)
+    |> validate_required(@required_fields)
+    |> unique_constraint(:link_component_id)
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
