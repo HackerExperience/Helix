@@ -8,7 +8,7 @@ if Code.ensure_loaded?(Credo) do
 
     use Credo.Check, base_priority: :low
 
-    def run(%SourceFile{lines: lines} = source_file, params \\ []) do
+    def run(source_file = %SourceFile{lines: lines}, params \\ []) do
       issue_meta = IssueMeta.for(source_file, params)
 
       {line_no, last_line} = List.last(lines)
