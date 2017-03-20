@@ -4,6 +4,7 @@ defmodule Helix.Software.Model.File do
 
   alias HELL.PK
   alias Helix.Software.Model.SoftwareType
+  alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
 
   import Ecto.Changeset
@@ -58,6 +59,10 @@ defmodule Helix.Software.Model.File do
       references: :storage_id,
       type: HELL.PK
 
+    has_many :file_modules, FileModule,
+      foreign_key: :file_id,
+      references: :file_id
+
     timestamps()
   end
 
@@ -68,8 +73,16 @@ defmodule Helix.Software.Model.File do
     |> generic_validations()
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) ::
-    Ecto.Changeset.t
+  @spec create_modules(File.t,
+    [%{software_module: String.t,
+    module_version: pos_integer}]) :: Ecto.Changeset.t
+  def create_modules(file, modules) do
+    file
+    |> cast(%{file_modules: modules}, [])
+    |> cast_assoc(:file_modules)
+  end
+
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(model, params) do
     model
     |> cast(params, @update_fields)
