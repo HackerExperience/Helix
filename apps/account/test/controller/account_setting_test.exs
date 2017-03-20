@@ -3,155 +3,95 @@ defmodule Helix.Account.Controller.AccountSettingTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Controller.AccountSetting, as: AccountSettingController
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
-  defp create_account() do
-    username = Random.username()
-    email = Burette.Internet.email()
-    password = Burette.Internet.password()
-    params = %{
-      username: username,
-      email: email,
-      password_confirmation: password,
-      password: password
-    }
-
-    {:ok, account} = AccountController.create(params)
-    account
-  end
-
-  def create_setting() do
-    setting_id = Random.setting_id()
-    default_value = Burette.Color.name()
-
-    %{setting_id: setting_id, default_value: default_value}
-    |> Setting.create_changeset()
-    |> Repo.insert()
-
-    setting_id
-  end
+  alias Helix.Account.Factory
 
   setup_all do
-    setting_id = create_setting()
-    {:ok, setting_id: setting_id}
+    if Repo.all(Setting) == [],
+      do: Factory.insert_list(3, :setting)
+    :ok
   end
 
-  describe "configuring user settings" do
-    test "succeeds when setting exists", context do
-        id = context.setting_id
-        custom_val = Random.string(min: 10)
-        account = create_account()
+  describe "changing specific settings" do
+    test "succeeds with valid params" do
+      account = Factory.insert(:account)
+      setting = Factory.insert(:setting)
+      %{setting_value: value} = Factory.params_for(:account_setting)
 
-        {:ok, put_value} = AccountSettingController.put(account, id, custom_val)
-        {:ok, get_value} = AccountSettingController.get(account, id)
+      {:ok, put_result} = AccountSettingController.put(account, setting, value)
+      {:ok, get_result} = AccountSettingController.get(account, setting)
 
-        %{default_value: default} = Repo.get_by(Setting, setting_id: id)
+      # put yields sent value
+      assert value == put_result
 
-        # got expected value from put
-        assert custom_val == put_value
-
-        # default value differs from put value
-        refute default == put_value
-
-        # both values from put and get are equals
-        assert put_value == get_value
+      # put and get yields the same value
+      assert get_result == put_result
     end
 
     test "fails when setting is invalid" do
-      id = Random.setting_id()
-      custom_val = Random.string(min: 10)
-      account = create_account()
+      account = Factory.insert(:account)
+      setting = Factory.build(:setting)
+      %{setting_value: val} = Factory.params_for(:account_setting)
 
-      assert {:error, cs} = AccountSettingController.put(account, id, custom_val)
+      assert {:error, cs} = AccountSettingController.put(account, setting, val)
       assert :setting_id in Keyword.keys(cs.errors)
     end
   end
 
-  describe "fetching account settings" do
-    test "returns account's setting by account and setting id", context do
-      id = context.setting_id
-      custom_val = Random.string(min: 10)
+  describe "fetching specific settings" do
+    test "returns custom value when setting is changed" do
+      account = Factory.insert(:account)
+      setting = Factory.insert(:setting)
+      %{setting_value: value} = Factory.params_for(:account_setting)
 
-      account = create_account()
-      {:ok, before_change} = AccountSettingController.get(account, id)
+      AccountSettingController.put(account, setting, value)
 
-      AccountSettingController.put(account, id, custom_val)
+      {:ok, return} = AccountSettingController.get(account, setting)
 
-      {:ok, after_change} = AccountSettingController.get(account, id)
-
-      %{default_value: default} = Repo.get_by(Setting, setting_id: id)
-
-      # fetched default value prior to updating it
-      assert default == before_change
-
-      # value changed
-      refute before_change == after_change
-
-      # value fecthed after change is the expected value
-      assert custom_val == after_change
+      assert value === return
     end
 
-    test "returns default value when setting is not defined for account", context do
-      id = context.setting_id
+    test "returns default value when setting is unchanged" do
+      account = Factory.insert(:account)
+      setting = Factory.insert(:setting)
 
-      account = create_account()
-      {:ok, setting_value} = AccountSettingController.get(account, id)
+      {:ok, setting_value} = AccountSettingController.get(account, setting)
 
-      %{default_value: default} = Repo.get_by(Setting, setting_id: id)
-
-      # fetched expected value
-      assert default == setting_value
-    end
-
-    test "fails when setting doesn't exist" do
-      id = Random.setting_id()
-      account = create_account()
-
-      assert {:error, :notfound} == AccountSettingController.get(account, id)
+      assert setting.default_value == setting_value
     end
   end
 
   describe "fetching every setting" do
-    test "fetches settings with custom values" do
-      a = create_account()
-      s = Enum.map(0..5, fn _ ->
-        id = create_setting()
-        custom_val = Random.string(min: 10)
+    test "includes default and modified settings" do
+      account = Factory.insert(:account)
+      settings = Repo.all(Setting)
+      value = Random.string()
 
-        {id, custom_val}
-      end)
+      settings
+      |> Enum.take_random(3)
+      |> Enum.each(&AccountSettingController.put(account, &1.setting_id, value))
 
-      Enum.each(s, fn {k, v} -> AccountSettingController.put(a, k, v) end)
+      account_settings = AccountSettingController.get_settings(account)
+      defaults = Enum.into(settings, %{}, &{&1.setting_id, &1.default_value})
+      diff = Map.values(account_settings) -- Map.values(defaults)
 
-      custom_settings = MapSet.new(s)
-
-      settings =
-        a
-        |> AccountSettingController.get_settings()
-        |> Enum.to_list()
-        |> MapSet.new()
-
-      assert MapSet.subset?(custom_settings, settings)
+      assert Map.keys(account_settings) == Map.keys(defaults)
+      assert 3 == Enum.count(diff)
     end
 
-    test "fallbacks to default setting value" do
-      a = create_account()
-      defaults =
+    test "includes every unchanged setting" do
+      account = Factory.insert(:account)
+
+      account_settings = AccountSettingController.get_settings(account)
+      default_settings =
         Setting
         |> Repo.all()
-        |> Enum.map(&({&1.setting_id, &1.default_value}))
-        |> MapSet.new()
+        |> Enum.into(%{}, &{&1.setting_id, &1.default_value})
 
-      fetched =
-        a
-        |> AccountSettingController.get_settings()
-        |> Enum.to_list()
-        |> MapSet.new()
-
-      assert MapSet.equal?(defaults, fetched)
+      assert account_settings == default_settings
     end
   end
 end

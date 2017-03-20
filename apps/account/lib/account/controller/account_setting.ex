@@ -5,12 +5,17 @@ defmodule Helix.Account.Controller.AccountSetting do
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
-  @spec put(Account.t, Setting.id, String.t) ::
-    {:ok, String.t}
-    | {:error, Ecto.Changeset.t}
-  def put(account, setting_id, setting_value) do
+  import Ecto.Query, only: [select: 3]
+
+  @spec put(Account.t | Account.id, Setting.t | Setting.id, String.t) ::
+    {:ok, String.t} | {:error, Ecto.Changeset.t}
+  def put(account = %Account{}, setting, setting_value),
+    do: put(account.account_id, setting, setting_value)
+  def put(account, setting = %Setting{}, setting_value),
+    do: put(account, setting.setting_id, setting_value)
+  def put(account_id, setting_id, setting_value) do
     params = %{
-      account_id: account.account_id,
+      account_id: account_id,
       setting_id: setting_id,
       setting_value: setting_value
     }
@@ -28,41 +33,46 @@ defmodule Helix.Account.Controller.AccountSetting do
     end
   end
 
-  @spec get(Account.t, Setting.id) :: {:ok, String.t} | {:error, :notfound}
+  @spec get(Account.t | Account.id, Setting.t | Setting.id) ::
+    {:ok, String.t}
+    | {:error, :notfound}
+  def get(account, setting = %Setting{}),
+    do: get(account, setting.setting_id)
   def get(account, setting_id) do
     account_setting =
-      account.account_id
-      |> AccountSetting.Query.by_account_id()
-      |> AccountSetting.Query.by_setting_id(setting_id)
+      account
+      |> AccountSetting.Query.from_account()
+      |> AccountSetting.Query.from_setting(setting_id)
       |> Repo.one()
 
-    if account_setting != nil do
+    if account_setting do
       {:ok, account_setting.setting_value}
     else
-      setting =
+      default =
         setting_id
         |> Setting.Query.by_id()
         |> Repo.one()
 
-      if setting != nil do
-        {:ok, setting.default_value}
+      if default do
+        {:ok, default.default_value}
       else
         {:error, :notfound}
       end
     end
   end
 
-  @spec get_settings(Account.t) :: %{Setting.id => String.t}
+  @spec get_settings(Account.t | Account.id) :: %{Setting.id => String.t}
   def get_settings(account) do
     default_settings =
-      Setting.Query.select_setting_id_and_default_value()
+      Setting
+      |> select([s], {s.setting_id, s.default_value})
       |> Repo.all()
       |> :maps.from_list()
 
     custom_settings =
       account.account_id
-      |> AccountSetting.Query.by_account_id()
-      |> AccountSetting.Query.select_setting_id_and_setting_value()
+      |> AccountSetting.Query.from_account()
+      |> select([as], {as.setting_id, as.setting_value})
       |> Repo.all()
       |> :maps.from_list()
 

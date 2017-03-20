@@ -33,8 +33,8 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
   defp motherboard_of_account(account_id) do
     # entity has a list of servers
     with \
-      [entity_server] <- Helix.Entity.Controller.EntityServer.find(account_id),
-      {:ok, server} <- Helix.Server.Controller.Server.find(entity_server.server_id),
+      [server_id] <- Helix.Entity.Controller.EntityServer.find(account_id),
+      {:ok, server} <- Helix.Server.Controller.Server.find(server_id),
       {:ok, motherboard} <- Helix.Hardware.Controller.Motherboard.find(server.motherboard_id)
     do
       {:ok, motherboard}

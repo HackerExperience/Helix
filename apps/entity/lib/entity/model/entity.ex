@@ -3,6 +3,7 @@ defmodule Helix.Entity.Model.Entity do
   use Ecto.Schema
 
   alias HELL.PK
+  alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Model.EntityType
 
@@ -11,6 +12,7 @@ defmodule Helix.Entity.Model.Entity do
   @type id :: PK.t
   @type t :: %__MODULE__{
     entity_id: id,
+    components: [EntityComponent.t],
     servers: [EntityServer.t],
     type: EntityType.t,
     entity_type: String.t,
@@ -28,6 +30,9 @@ defmodule Helix.Entity.Model.Entity do
     field :entity_id, PK,
       primary_key: true
 
+    has_many :components, EntityComponent,
+      foreign_key: :entity_id,
+      references: :entity_id
     has_many :servers, EntityServer,
       foreign_key: :entity_id,
       references: :entity_id

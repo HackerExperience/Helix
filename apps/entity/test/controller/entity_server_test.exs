@@ -2,70 +2,61 @@ defmodule Helix.Entity.Controller.EntityServerTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
-  alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.EntityType
-  alias Helix.Entity.Repo
 
-  setup_all do
-    # FIXME
-    type = case Repo.all(EntityType) do
-      [] ->
-        %{entity_type: Burette.Color.name()}
-        |> EntityType.create_changeset()
-        |> Repo.insert!()
-      et = [_|_] ->
-        Enum.random(et)
+  alias Helix.Entity.Factory
+
+  describe "adding entity ownership over servers" do
+    test "succeeds with entity_id" do
+      %{entity_id: entity_id} = Factory.insert(:entity)
+      %{server_id: server_id} = Factory.build(:entity_server)
+
+      assert {:ok, _} = EntityServerController.create(entity_id, server_id)
     end
 
-    [entity_type: type]
-  end
+    test "succeeds with entity struct" do
+      entity = Factory.insert(:entity)
+      %{server_id: server_id} = Factory.build(:entity_server)
 
-  setup context do
-    entity =
-      %{
-        entity_type: context.entity_type.entity_type,
-        entity_id: Random.pk()}
-      |> Entity.create_changeset()
-      |> Repo.insert!()
-
-    {:ok, entity: entity}
-  end
-
-  test "create/1", %{entity: entity} do
-    server_id = Random.pk()
-
-    assert {:ok, _} = EntityServerController.create(entity.entity_id, server_id)
-  end
-
-  describe "find/1" do
-    test "fetching linked servers", %{entity: entity} do
-      servers = [Random.pk(), Random.pk(), Random.pk()]
-
-      Enum.each(servers, &EntityServerController.create(entity.entity_id, &1))
-
-      found_servers =
-        entity.entity_id
-        |> EntityServerController.find()
-        |> Enum.map(&to_string(&1.server_id))
-        |> Enum.sort()
-
-      assert Enum.sort(servers) === found_servers
+      assert {:ok, _} = EntityServerController.create(entity, server_id)
     end
 
-    test "returns empty list if entity has no server", %{entity: entity} do
-      assert [] === EntityServerController.find(entity.entity_id)
+    test "fails when entity doesn't exist" do
+      %{entity_id: entity_id} = Factory.build(:entity)
+      %{server_id: server} = Factory.build(:entity_server)
+
+      assert_raise(Ecto.ConstraintError, fn ->
+        EntityServerController.create(entity_id, server)
+      end)
     end
   end
 
-  test "delete is idempotent", %{entity: entity} do
-    server_id = HELL.TestHelper.Random.pk()
-    EntityServerController.create(entity.entity_id, server_id)
+  describe "fetching servers owned by an entity" do
+    test "returns a list with owned servers" do
+      entity = Factory.insert(:entity)
+      servers = Factory.insert_list(5, :entity_server, %{entity: entity})
+      expected_servers = Enum.map(servers, &(&1.server_id))
+      fetched_servers = EntityServerController.find(entity)
 
-    refute [] == EntityServerController.find(entity.entity_id)
-    EntityServerController.delete(entity.entity_id, server_id)
-    EntityServerController.delete(entity.entity_id, server_id)
-    assert [] == EntityServerController.find(entity.entity_id)
+      assert expected_servers == fetched_servers
+    end
+
+    test "returns an empty list when no server is owned" do
+      entity = Factory.insert(:entity)
+      fetched_servers = EntityServerController.find(entity)
+
+      assert Enum.empty?(fetched_servers)
+    end
+  end
+
+  test "removing entity ownership over servers is idempotent" do
+    es = Factory.insert(:entity_server)
+
+    refute Enum.empty?(EntityServerController.find(es.entity_id))
+
+    EntityServerController.delete(es.entity_id, es.server_id)
+    EntityServerController.delete(es.entity_id, es.server_id)
+
+    assert Enum.empty?(EntityServerController.find(es.entity_id))
   end
 end

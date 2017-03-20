@@ -5,65 +5,38 @@ defmodule Helix.Entity.Controller.EntityTest do
   alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.Entity, as: EntityController
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.EntityType
   alias Helix.Entity.Repo
 
-  setup_all do
-    entity_types = Repo.all(EntityType)
-    [entity_types: entity_types]
-  end
+  alias Helix.Entity.Factory
 
-  setup context do
-    entity_type = Enum.random(context.entity_types)
-    {:ok, entity_type: entity_type.entity_type}
-  end
+  defp generate_params do
+    e = Factory.build(:entity)
 
-  defp generate_params(entity_type) do
     %{
-      entity_id: Random.pk(),
-      entity_type: entity_type
+      entity_id: e.entity_id,
+      entity_type: e.entity_type
     }
   end
 
   describe "entity creation" do
-    test "creates entity of given type", context do
-      params = generate_params(context.entity_type)
-      {:ok, entity} = EntityController.create(params)
-      {:ok, found_entity} = EntityController.find(params.entity_id)
-
-      # created entity includes given id
-      assert params.entity_id == entity.entity_id
-
-      # find yields the same previously created entity
-      assert entity.entity_id == found_entity.entity_id
+    test "succeeds with valid params" do
+      params = generate_params()
+      assert {:ok, _} = EntityController.create(params)
     end
 
     test "fails when entity_type is invalid" do
-      params = %{
-        entity_id: Random.pk(),
-        entity_type: Burette.Color.name()
-      }
+      params = %{generate_params() | entity_type: Random.number()}
 
-      # assert that creating an entity with invalid type raises Ecto.ConstraintError
-      assert_raise(Ecto.ConstraintError, fn ->
-        EntityController.create(params)
-      end)
-
-      # no entity was created
-      refute Repo.get_by(Entity, entity_type: params.entity_type)
+      assert {:error, cs} = EntityController.create(params)
+      assert :entity_type in Keyword.keys(cs.errors)
     end
   end
 
   describe "entity fetching" do
-    test "fetches existing entity", context do
-      params = generate_params(context.entity_type)
-      {:ok, entity} = EntityController.create(params)
+    test "succeeds by id" do
+      entity = Factory.insert(:entity)
 
-      # an entity is found
-      assert {:ok, found_entity} = EntityController.find(entity.entity_id)
-
-      # the entity is identical to the created one
-      assert entity.entity_id == found_entity.entity_id
+      assert {:ok, _} = EntityController.find(entity.entity_id)
     end
 
     test "fails when entity doesn't exists" do
@@ -71,17 +44,32 @@ defmodule Helix.Entity.Controller.EntityTest do
     end
   end
 
-  test "delete is idempotent", context do
-    params = generate_params(context.entity_type)
-    {:ok, entity} = EntityController.create(params)
+  describe "entity deleting" do
+    test "succeeds by struct" do
+      entity = Factory.insert(:entity)
 
-    # entity exists before deleting
-    assert Repo.get_by(Entity, entity_id: entity.entity_id)
+      assert Repo.get(Entity, entity.entity_id)
+      EntityController.delete(entity)
+      refute Repo.get(Entity, entity.entity_id)
+    end
 
-    :ok = EntityController.delete(entity.entity_id)
-    :ok = EntityController.delete(entity.entity_id)
+    test "succeeds by id" do
+      entity = Factory.insert(:entity)
 
-    # entity was deleted
-    refute Repo.get_by(Entity, entity_id: entity.entity_id)
+      assert Repo.get(Entity, entity.entity_id)
+      EntityController.delete(entity.entity_id)
+      refute Repo.get(Entity, entity.entity_id)
+    end
+
+    test "is idempotent" do
+      entity = Factory.insert(:entity)
+
+      assert Repo.get(Entity, entity.entity_id)
+
+      EntityController.delete(entity.entity_id)
+      EntityController.delete(entity.entity_id)
+
+      refute Repo.get(Entity, entity.entity_id)
+    end
   end
 end

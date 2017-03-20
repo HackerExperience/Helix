@@ -22,7 +22,9 @@ defmodule Helix.Entity.Controller.Entity do
     end
   end
 
-  @spec delete(Entity.id) :: no_return
+  @spec delete(Entity.t | Entity.id) :: no_return
+  def delete(entity = %Entity{}),
+    do: delete(entity.entity_id)
   def delete(entity_id) do
     Entity
     |> where([s], s.entity_id == ^entity_id)

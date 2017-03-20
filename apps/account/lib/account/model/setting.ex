@@ -41,17 +41,11 @@ defmodule Helix.Account.Model.Setting do
 
     alias Helix.Account.Model.Setting
 
-    import Ecto.Query, only: [where: 3, select: 3]
+    import Ecto.Query, only: [where: 3]
 
-    @spec by_id(Setting.id) :: Ecto.Queryable.t
-    @spec by_id(Ecto.Queryable.t, Setting.id) :: Ecto.Queryable.t
+    @spec by_id(Ecto.Queryable.t, Setting.id) ::
+      Ecto.Queryable.t
     def by_id(query \\ Setting, setting_id),
       do: where(query, [s], s.setting_id == ^setting_id)
-
-    @spec select_setting_id_and_default_value() :: Ecto.Queryable.t
-    @spec select_setting_id_and_default_value(Ecto.Queryable.t) ::
-      Ecto.Queryable.t
-    def select_setting_id_and_default_value(query \\ Setting),
-      do: select(query, [s], {s.setting_id, s.default_value})
   end
 end

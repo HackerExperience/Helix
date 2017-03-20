@@ -23,7 +23,7 @@ defmodule Helix.Software.Model.FileType do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(:file_type)
+    |> validate_required(@creation_fields)
     |> unique_constraint(:file_type)
   end
 end
