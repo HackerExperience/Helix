@@ -89,7 +89,7 @@ defmodule Helix.Software.Model.File do
     if get_field(changeset, :file_id) do
       changeset
     else
-      pk = PK.generate([0x0004, 0x0000, 0x0000])
+      pk = PK.pk_for(__MODULE__)
       put_change(changeset, :file_id, pk)
     end
   end

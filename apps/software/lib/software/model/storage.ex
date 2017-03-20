@@ -39,7 +39,7 @@ defmodule Helix.Software.Model.Storage do
     if get_field(changeset, :storage_id) do
       changeset
     else
-      pk = PK.generate([0x0004, 0x0001, 0x0000])
+      pk = PK.pk_for(__MODULE__)
       put_change(changeset, :storage_id, pk)
     end
   end
