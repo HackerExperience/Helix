@@ -17,10 +17,8 @@ defmodule Helix.Software.Model.SoftwareModule do
 
   @primary_key false
   schema "software_modules" do
-    field :software_module_id, HELL.PK,
+    field :software_module, :string,
       primary_key: true
-
-    field :software_module, :string
 
     # FIXME: this name must change soon
     belongs_to :type, FileType,
@@ -35,15 +33,6 @@ defmodule Helix.Software.Model.SoftwareModule do
     |> cast(params, @creation_fields)
     |> validate_required([:software_module, :file_type])
     |> unique_constraint(:software_module, name: :file_type_software_module_unique_constraint)
-    |> put_primary_key()
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    pk = PK.generate([0x0004, 0x0002, 0x0000])
-
-    changeset
-    |> cast(%{software_module_id: pk}, [:software_module_id])
   end
 
   defmodule Query do
