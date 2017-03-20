@@ -5,8 +5,15 @@ def ARTIFACT_PATH = "env.BRANCH_NAME + '/' + env.BUILD_VERSION"
 println ${ARTIFACT_PATH}
 
 node('elixir') {
-  stage('Build') {
+
+  stage('Pre-build') {
+    env.BUILD_VERSION = sh(script: 'date +%Y.%m.%d%H%M', returnStdout: true).trim()
+    def ARTIFACT_PATH = "${env.BRANCH_NAME}/${env.BUILD_VERSION}"
+
     checkout scm
+  }
+
+  stage('Build') {
     sh 'env | sort'
     sh 'mix local.hex --force'
     sh 'mix local.rebar --force'
