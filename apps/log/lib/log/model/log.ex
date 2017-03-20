@@ -61,7 +61,7 @@ defmodule Helix.Log.Model.Log do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
-    |> put_primary_key()
+    |> put_change(:log_id, PK.pk_for(__MODULE__))
     |> prepare_changes(fn changeset ->
       revisions = [
         %{
@@ -86,16 +86,6 @@ defmodule Helix.Log.Model.Log do
     |> cast(params, @update_fields)
     |> validate_required(@required_fields)
     |> validate_number(:crypto_version, greater_than: 0)
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    if get_field(changeset, :log_id) do
-      changeset
-    else
-      pk = PK.generate([0x0008, 0x0000, 0x0000])
-      cast(changeset, %{log_id: pk}, [:log_id])
-    end
   end
 
   defmodule Query do
