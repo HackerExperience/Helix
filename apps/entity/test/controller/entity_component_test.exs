@@ -2,31 +2,34 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
   alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
+  alias Helix.Entity.Model.Entity
+  alias Helix.Hardware.Model.Component
 
   alias Helix.Entity.Factory
 
   describe "adding entity ownership over components" do
     test "succeeds with entity_id" do
       %{entity_id: entity_id} = Factory.insert(:entity)
-      %{component_id: comp_id} = Factory.build(:entity_component)
+      comp_id = PK.pk_for(Component)
 
       assert {:ok, _} = EntityComponentController.create(entity_id, comp_id)
     end
 
     test "succeeds with entity struct" do
       entity = Factory.insert(:entity)
-      %{component_id: component_id} = Factory.build(:entity_component)
+      component_id = PK.pk_for(Component)
 
       assert {:ok, _} = EntityComponentController.create(entity, component_id)
     end
 
     test "fails when entity doesn't exist" do
-      %{entity_id: entity_id} = Factory.build(:entity)
-      %{component_id: component} = Factory.build(:entity_component)
+      entity_id = PK.pk_for(Entity)
+      component_id = PK.pk_for(Component)
 
       assert_raise(Ecto.ConstraintError, fn ->
-        EntityComponentController.create(entity_id, component)
+        EntityComponentController.create(entity_id, component_id)
       end)
     end
   end

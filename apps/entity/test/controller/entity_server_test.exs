@@ -2,31 +2,34 @@ defmodule Helix.Entity.Controller.EntityServerTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
   alias Helix.Entity.Controller.EntityServer, as: EntityServerController
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
 
   alias Helix.Entity.Factory
 
   describe "adding entity ownership over servers" do
     test "succeeds with entity_id" do
       %{entity_id: entity_id} = Factory.insert(:entity)
-      %{server_id: server_id} = Factory.build(:entity_server)
+      server_id = PK.pk_for(Server)
 
       assert {:ok, _} = EntityServerController.create(entity_id, server_id)
     end
 
     test "succeeds with entity struct" do
       entity = Factory.insert(:entity)
-      %{server_id: server_id} = Factory.build(:entity_server)
+      server_id = PK.pk_for(Server)
 
       assert {:ok, _} = EntityServerController.create(entity, server_id)
     end
 
     test "fails when entity doesn't exist" do
-      %{entity_id: entity_id} = Factory.build(:entity)
-      %{server_id: server} = Factory.build(:entity_server)
+      entity_id = PK.pk_for(Entity)
+      server_id = PK.pk_for(Server)
 
       assert_raise(Ecto.ConstraintError, fn ->
-        EntityServerController.create(entity_id, server)
+        EntityServerController.create(entity_id, server_id)
       end)
     end
   end
