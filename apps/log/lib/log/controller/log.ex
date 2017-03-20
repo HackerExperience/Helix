@@ -5,7 +5,6 @@ defmodule Helix.Log.Controller.Log do
   alias Helix.Log.Model.Revision
   alias Helix.Log.Repo
 
-
   @spec create(
     PK.t,
     PK.t,
