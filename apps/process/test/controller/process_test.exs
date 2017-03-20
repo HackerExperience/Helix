@@ -3,6 +3,7 @@ defmodule Helix.Process.Controller.ProcessTest do
 
   alias HELL.PK
   alias Helix.Process.Controller.Process, as: ProcessController
+  alias Helix.Process.Model.Process, as: ProcessModel
 
   @tag :pending
   test "create/1" do
@@ -18,7 +19,8 @@ defmodule Helix.Process.Controller.ProcessTest do
 
     @tag :pending
     test "failure" do
-      assert {:error, :notfound} = ProcessController.find(PK.generate([]))
+      assert {:error, :notfound} =
+        ProcessController.find(PK.pk_for(ProcessModel))
     end
   end
 

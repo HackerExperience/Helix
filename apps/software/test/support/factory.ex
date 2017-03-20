@@ -4,6 +4,8 @@ defmodule Helix.Software.Factory do
 
   alias HELL.PK
   alias HELL.TestHelper.Random
+  alias Helix.Software.Model.Storage
+  alias Helix.Software.Model.File
 
   def file_factory do
     :file
@@ -19,7 +21,7 @@ defmodule Helix.Software.Factory do
   end
 
   def storage_factory do
-    pk = PK.generate([0x0004, 0x0001, 0x0000])
+    pk = PK.pk_for(Storage)
 
     files = Random.repeat(1..3, fn ->
       :file
@@ -48,7 +50,7 @@ defmodule Helix.Software.Factory do
     size = Burette.Number.number(1024..1_048_576)
 
     %Helix.Software.Model.File{
-      file_id: PK.generate([0x0004, 0x0000, 0x0000]),
+      file_id: PK.pk_for(File),
       name: Burette.Color.name(),
       file_path: path,
       file_size: size,
