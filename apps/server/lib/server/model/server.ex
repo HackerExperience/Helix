@@ -3,14 +3,12 @@ defmodule Helix.Server.Model.Server do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Server.Model.ServerType
 
   import Ecto.Changeset
 
   @type id :: PK.t
   @type t :: %__MODULE__{
     server_id: id,
-    type: ServerType.t,
     server_type: String.t,
     poi_id: PK.t,
     motherboard_id: PK.t,
@@ -39,10 +37,8 @@ defmodule Helix.Server.Model.Server do
     field :poi_id, HELL.PK
     field :motherboard_id, HELL.PK
 
-    belongs_to :type, ServerType,
-      foreign_key: :server_type,
-      references: :server_type,
-      type: :string
+    # FK to ServerType
+    field :server_type, :string
 
     timestamps()
   end

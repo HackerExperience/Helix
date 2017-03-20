@@ -14,14 +14,14 @@ defmodule Helix.Entity.Model.Entity do
     entity_id: id,
     components: [EntityComponent.t],
     servers: [EntityServer.t],
-    type: EntityType.t,
-    entity_type: String.t,
+    entity_type: EntityType.name,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
-    entity_type: EntityType.name}
+    entity_type: EntityType.name
+  }
 
   @creation_fields ~w/entity_type entity_id/a
 
@@ -36,10 +36,9 @@ defmodule Helix.Entity.Model.Entity do
     has_many :servers, EntityServer,
       foreign_key: :entity_id,
       references: :entity_id
-    belongs_to :type, EntityType,
-      foreign_key: :entity_type,
-      references: :entity_type,
-      type: :string
+
+    # FK to EntityType
+    field :entity_type, :string
 
     timestamps()
   end
