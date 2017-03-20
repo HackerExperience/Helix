@@ -7,6 +7,9 @@ defmodule HELL.IPv6.Header do
     # Account
     Helix.Account.Model.Account                    => [0x0000],
 
+    # Entity
+    Helix.Entity.Model.Entity                      => [],
+
     # Server
     Helix.Server.Model.Server                      => [0x0002],
 
