@@ -44,13 +44,9 @@ defmodule Helix.Server.Controller.ServerService do
   @doc false
   def handle_broker_cast(pid, "event.entity.created", msg, _) do
     %{entity_id: entity_id} = msg
+    server_type = "desktop"
 
-    params = %{
-      entity_id: entity_id,
-      server_type: "desktop"
-    }
-
-    GenServer.call(pid, {:server, :create, params})
+    GenServer.call(pid, {:server, :create, server_type, entity_id})
   end
   def handle_broker_cast(pid, "event.motherboard.setup", msg, _) do
     %{server_id: id, motherboard_id: motherboard_id} = msg
