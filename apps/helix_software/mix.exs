@@ -1,9 +1,9 @@
-defmodule HELL.Mixfile do
+defmodule Helix.Software.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :hell,
+      app: :helix_software,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -20,7 +20,9 @@ defmodule HELL.Mixfile do
   end
 
   def application do
-    []
+    [
+      mod: {Helix.Software.App, []}
+    ]
   end
 
   defp elixirc_options(:dev) do
@@ -44,7 +46,8 @@ defmodule HELL.Mixfile do
 
   defp deps do
     [
-      {:postgrex, "~> 0.13", override: true}
+      {:helix_core, in_umbrella: true},
+      {:ex_machina, "~> 1.0", only: :test}
     ]
   end
 end
