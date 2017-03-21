@@ -17,6 +17,7 @@ defmodule Helix.Account.Model.SessionSerializer do
   # Well. i think that this module should not be inside the model folders
   # if it depends on external data, but let's leave it as is until we fix it
   @spec from_token(session) :: {:ok, Account.t}
-  def from_token(session),
-    do: {:ok, Helix.Account.Controller.Account.find_by(session)}
+  def from_token(account_id) do
+    Helix.Account.Controller.Account.find(account_id)
+  end
 end
