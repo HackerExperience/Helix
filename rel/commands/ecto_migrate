@@ -1,3 +1,12 @@
 #!/usr/local/bin/bash
 
-"{$SCRIPT}" command release_tasks migrate
+set -eu
+
+"$SCRIPT" command 'Elixir.Helix.Account.Release' migrate
+"$SCRIPT" command 'Elixir.Helix.Entity.Release' migrate
+"$SCRIPT" command 'Elixir.Helix.Hardware.Release' migrate
+"$SCRIPT" command 'Elixir.Helix.Log.Release' migrate
+"$SCRIPT" command 'Elixir.Helix.NPC.Release' migrate
+"$SCRIPT" command 'Elixir.Helix.Process.Release' migrate
+"$SCRIPT" command 'Elixir.Helix.Server.Release' migrate
+"$SCRIPT" command 'Elixir.Helix.Software.Release' migrate
