@@ -10,6 +10,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   alias Helix.Process.Repo
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
+  alias Helix.Process.Controller.TableOfProcesses.Allocator.Plan
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.ProcessType
@@ -275,7 +276,8 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     # There is a process near it's conclusion phase, thus we should stay alive
     # (but we might hibernate if it will still take too much time)
 
-    if Timex.now() |> Timex.diff(moment, :seconds) > div(@hibernate_after, 1_000) do
+    seconds_to_finish = Timex.diff(Timex.now(), moment, :seconds)
+    if seconds_to_finish > div(@hibernate_after, 1_000) do
       {:noreply, state, :hibernate}
     else
       {:noreply, state, @hibernate_after}
@@ -321,7 +323,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   defp allocate(processes, resources),
-    do: Helix.Process.Controller.TableOfProcesses.Allocator.Plan.allocate(processes, resources)
+    do: Plan.allocate(processes, resources)
 
   @spec allocate_dropping(
     [ProcessModel.t],

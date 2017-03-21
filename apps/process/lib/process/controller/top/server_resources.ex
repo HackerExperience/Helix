@@ -43,7 +43,12 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
   def replace_network_if_exists(server_resources = %__MODULE__{}, net_id, dlk, ulk) when is_integer(dlk) and is_integer(ulk) do
     case server_resources.net do
       %{^net_id => _} ->
-        %{server_resources| net: Map.put(server_resources.net, net_id, %{dlk: dlk, ulk: ulk})}
+        updated_net = Map.put(
+          server_resources.net,
+          net_id,
+          %{dlk: dlk, ulk: ulk})
+
+        %{server_resources| net: updated_net}
       _ ->
         server_resources
     end
@@ -57,8 +62,10 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
           # This is to ensure that the returned value complies with our contract
           # otherwise the error could happen later on the pipeline and just make
           # it harder to debug why it happened
-          value = %{dlk: dlk, ulk: ulk} when map_size(value) == 2 and is_integer(dlk) and is_integer(ulk) ->
-            %{server_resources| net: Map.put(server_resources.net, net_id, value)}
+          value = %{dlk: dlk, ulk: ulk}
+          when map_size(value) == 2 and is_integer(dlk) and is_integer(ulk) ->
+            updated_net = Map.put(server_resources.net, net_id, value)
+            %{server_resources| net: updated_net}
         end
       _ ->
         server_resources
@@ -85,8 +92,11 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
     negative_resource = Enum.find(rest, fn {_, v} -> v < 0 end)
     case negative_resource do
       nil ->
-        server_resources = %{server_resources| cpu: rest.cpu, ram: rest.ram}
-        server_resources = replace_network_if_exists(server_resources, net_id, rest.dlk, rest.ulk)
+        server_resources = replace_network_if_exists(
+          %{server_resources| cpu: rest.cpu, ram: rest.ram},
+          net_id,
+          rest.dlk,
+          rest.ulk)
         {:ok, server_resources}
       {:cpu, _} ->
         {:error, {:resources, :lack, :cpu}}
@@ -110,7 +120,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
       ram: server_resources.ram - resources.ram,
       net: case server_resources.net do
         networks = %{^net_id => %{dlk: dlk, ulk: ulk}} ->
-          Map.put(networks, net_id, %{dlk: dlk - resources.dlk, ulk: ulk - resources.ulk})
+          val = %{dlk: dlk - resources.dlk, ulk: ulk - resources.ulk}
+          Map.put(networks, net_id, val)
         networks ->
           networks
       end

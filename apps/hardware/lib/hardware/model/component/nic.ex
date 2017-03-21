@@ -59,9 +59,9 @@ defmodule Helix.Hardware.Model.Component.NIC do
   def changeset(struct, params) do
     struct
     |> cast(params, [:network_connection_id])
-    |> foreign_key_constraint(:nic_id, name: :nics_nic_id_fkey)
-    |> foreign_key_constraint(:network_connection_id, name: :nics_network_connection_id_fkey)
-    |> unique_constraint(:mac_address, name: :nics_mac_address_index)
+    |> foreign_key_constraint(:nic_id)
+    |> foreign_key_constraint(:network_connection_id)
+    |> unique_constraint(:mac_address)
   end
 
   defmodule Query do
