@@ -2,6 +2,7 @@ defmodule Helix.Account.Factory do
 
   use ExMachina.Ecto, repo: Helix.Account.Repo
 
+  alias Comeonin.Bcrypt
   alias HELL.TestHelper.Random
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSetting
@@ -15,7 +16,7 @@ defmodule Helix.Account.Factory do
       username: display_name,
       display_name: username,
       email: Burette.Internet.email(),
-      password: Burette.Internet.password()
+      password: Bcrypt.hashpwsalt(Burette.Internet.password())
     }
   end
 
