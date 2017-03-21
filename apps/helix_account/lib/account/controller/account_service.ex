@@ -3,7 +3,6 @@ defmodule Helix.Account.Controller.AccountService do
   use GenServer
 
   alias HELF.Broker
-  alias HELF.Router
   alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Controller.Session, as: SessionController
   alias Helix.Account.Model.Account
@@ -12,9 +11,6 @@ defmodule Helix.Account.Controller.AccountService do
 
   @spec start_link() :: GenServer.on_start
   def start_link do
-    Router.register("account.create", "account.create")
-    Router.register("account.login", "account.login")
-
     GenServer.start_link(__MODULE__, [], name: :account_service)
   end
 
