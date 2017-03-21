@@ -15,7 +15,6 @@ defmodule Helix.Log.Model.Revision do
     field :revision_id, PK,
       primary_key: true
 
-
     field :entity_id, PK
 
     field :message, :string

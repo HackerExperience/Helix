@@ -77,19 +77,17 @@ defmodule HELL.MacAddress do
 
   @spec generate_octets(pos_integer) :: [0..0xff]
   defp generate_octets(octets) do
-    try do
-      octets
-      |> :crypto.strong_rand_bytes()
-      |> :erlang.binary_to_list()
-    rescue
-      ErlangError ->
-        for _ <- 1..octets do
-          # Generates a random number between 0x00 and 0xff
-          ((0xff + 1) * :rand.uniform())
-          |> Float.floor()
-          |> trunc()
-        end
-    end
+    octets
+    |> :crypto.strong_rand_bytes()
+    |> :erlang.binary_to_list()
+  rescue
+    ErlangError ->
+      for _ <- 1..octets do
+        # Generates a random number between 0x00 and 0xff
+        ((0xff + 1) * :rand.uniform())
+        |> Float.floor()
+        |> trunc()
+      end
   end
 end
 

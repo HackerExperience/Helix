@@ -102,6 +102,8 @@ defmodule Helix.Process.Model.Process do
   @creation_fields ~w/process_data process_type gateway_id target_server_id file_id network_id/a
   @update_fields ~w/state priority updated_time estimated_time minimum/a
 
+  @required_fields ~w/gateway_id target_server_id process_data process_type/a
+
   @spec create_changeset(%{
     :gateway_id => PK.t,
     :target_server_id => PK.t,
@@ -160,7 +162,7 @@ defmodule Helix.Process.Model.Process do
     struct
     |> cast(params, [:updated_time])
     |> cast_embed(:objective)
-    |> validate_required([:gateway_id, :target_server_id, :process_data, :process_type])
+    |> validate_required(@required_fields)
     |> validate_inclusion(:priority, 0..5)
   end
 
@@ -215,7 +217,8 @@ defmodule Helix.Process.Model.Process do
   @spec allocation_shares(process) :: non_neg_integer
   def allocation_shares(process) do
     case process do
-      %__MODULE__{state: state, priority: priority} when state in [:standby, :running] ->
+      %__MODULE__{state: state, priority: priority}
+      when state in [:standby, :running] ->
         if can_allocate?(process) do
           priority
         else
@@ -454,7 +457,11 @@ defmodule Helix.Process.Model.Process do
     """
     def related_to_server(query \\ Process, server_id) do
       query
-      |> join(:inner, [p], m in MapServerToProcess, m.process_id == p.process_id)
+      |> join(
+        :inner,
+        [p],
+        m in MapServerToProcess,
+        m.process_id == p.process_id)
       |> where([p, ..., m], m.server_id == ^server_id)
     end
 

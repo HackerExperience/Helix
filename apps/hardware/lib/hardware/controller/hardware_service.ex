@@ -29,7 +29,8 @@ defmodule Helix.Hardware.Controller.HardwareService do
   def handle_broker_call(pid, "hardware.motherboard.create", params = %{}, _) do
     case params do
       %{spec_id: sid} ->
-        response = GenServer.call(pid, {:motherboard, :create, {:component_spec, :id, sid}})
+        msg = {:motherboard, :create, {:component_spec, :id, sid}}
+        response = GenServer.call(pid, msg)
         {:reply, response}
       _ ->
         {:reply, {:error, :invalid_request}}
@@ -142,22 +143,23 @@ defmodule Helix.Hardware.Controller.HardwareService do
 
   def handle_call({:setup, server_id, entity_id, bundle}, _from, state) do
     create_components = fn components ->
-      Enum.reduce_while(components, {:ok, [], []}, fn {_type, id}, {:ok, acc0, acc1} ->
-        case create_component(id, entity_id) do
-          {:ok, c, e} ->
-            {:cont, {:ok, [c| acc0], e ++ acc1}}
-          error ->
-            {:halt, error}
-        end
+      Enum.reduce_while(components, {:ok, [], []}, fn
+        {_type, id}, {:ok, acc0, acc1} ->
+          case create_component(id, entity_id) do
+            {:ok, c, e} ->
+              {:cont, {:ok, [c| acc0], e ++ acc1}}
+            error ->
+              {:halt, error}
+          end
       end)
     end
 
     result = Repo.transaction(fn ->
       with \
-        {:ok, motherboard, ev0} <- create_motherboard(bundle.motherboard, entity_id),
+        {:ok, mobo, ev0} <- create_motherboard(bundle.motherboard, entity_id),
         {:ok, components, ev1} <- create_components.(bundle.components),
         # TODO: Create and install Network connection
-        {:ok, motherboard, ev2} <- setup_motherboard(motherboard, components)
+        {:ok, motherboard, ev2} <- setup_motherboard(mobo, components)
       do
         {motherboard, components, ev0 ++ ev1 ++ ev2}
       else

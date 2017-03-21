@@ -18,22 +18,20 @@ defmodule HELL.IPv6 do
 
   @spec generate_octet_groups(pos_integer) :: [0..0xffff]
   defp generate_octet_groups(groups) do
-    try do
-      # Each group is comprised of 2 octets
-      bytes = groups * 2
+    # Each group is comprised of 2 octets
+    bytes = groups * 2
 
-      bytes
-      |> :crypto.strong_rand_bytes()
-      |> partition_binary()
-    rescue
-      ErlangError ->
-        for _ <- 1..groups do
-          # Generates a random number between 0x0000 and 0xffff
-          ((@twooctet + 1) * :rand.uniform())
-          |> Float.floor()
-          |> trunc()
-        end
-    end
+    bytes
+    |> :crypto.strong_rand_bytes()
+    |> partition_binary()
+  rescue
+    ErlangError ->
+      for _ <- 1..groups do
+        # Generates a random number between 0x0000 and 0xffff
+        ((@twooctet + 1) * :rand.uniform())
+        |> Float.floor()
+        |> trunc()
+      end
   end
 
   @spec partition_binary(String.t) :: [non_neg_integer]

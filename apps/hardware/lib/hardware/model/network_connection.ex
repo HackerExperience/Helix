@@ -16,6 +16,8 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     nic: NIC.t
   }
 
+  @one_ip_per_network_index :network_connections_network_id_ip_unique_index
+
   @primary_key false
   schema "network_connections" do
     field :network_connection_id, PK,
@@ -54,7 +56,7 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     |> validate_required([:ip, :network_id, :downlink, :uplink])
     |> validate_number(:downlink, greater_than_or_equal_to: 0)
     |> validate_number(:uplink, greater_than_or_equal_to: 0)
-    |> unique_constraint(:ip, name: :network_connections_network_id_ip_unique_index)
+    |> unique_constraint(:ip, name: @one_ip_per_network_index)
   end
 
   @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
