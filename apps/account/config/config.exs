@@ -5,8 +5,7 @@ config :account,
 
 config :account, Helix.Account.Repo,
   size: 4,
-  adapter: Ecto.Adapters.Postgres,
-  database: "account_service"
+  adapter: Ecto.Adapters.Postgres
 
 config :guardian, Guardian,
   issuer: "account",

@@ -51,23 +51,20 @@ types = [
 ]
 
 Repo.transaction fn ->
-  types
-  |> Enum.map(fn t ->
-    t
+  Enum.each(types, fn type ->
+    type
     |> Map.take([:file_type, :extension])
     |> FileType.create_changeset()
-    |> Repo.insert!()
-
-    t
+    |> Repo.insert!(on_conflict: :nothing)
   end)
-  |> Enum.each(fn t ->
-    t.roles
-    |> Enum.each(fn r ->
-      %{
-        file_type: t.file_type,
-        module_role: r}
-      |> ModuleRole.create_changeset()
-      |> Repo.insert!()
-    end)
+
+  roles = Enum.flat_map(types, fn type ->
+    Enum.map(type.roles, &(%{file_type: type.file_type, module_role: &1}))
+  end)
+
+  Enum.each(roles, fn role ->
+    role
+    |> ModuleRole.create_changeset()
+    |> Repo.insert!(on_conflict: :nothing)
   end)
 end
