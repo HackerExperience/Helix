@@ -6,3 +6,6 @@ config :helix_account, Helix.Account.Repo,
   password: "${HELIX_DB_PASS}",
   hostname: "${HELIX_DB_HOST}",
   database: "account_service"
+
+config :guardian, Guardian,
+  secret_key: System.get_env("HELIX_JWK_KEY")

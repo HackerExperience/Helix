@@ -59,7 +59,7 @@ defmodule Helix.Account.Controller.AccountService do
   def handle_call({:account, :login, email, password}, _from, state) do
     with \
       {:ok, account} <- AccountController.login(email, password),
-      {:ok, token} <- SessionController.create(account.account_id)
+      {:ok, token} <- SessionController.create(account)
     do
       {:reply, {:ok, token}, state}
     else
