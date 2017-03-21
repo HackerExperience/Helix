@@ -1,5 +1,7 @@
 use Mix.Config
 
+config :comeonin, :bcrypt_log_rounds, 14
+
 config :helix_account, Helix.Account.Repo,
   size: "${HELIX_DB_POOL_SIZE}",
   username: "${HELIX_DB_USER}",
