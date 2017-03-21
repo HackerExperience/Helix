@@ -10,7 +10,6 @@ node('elixir') {
   }
 
   stage('Build') {
-    sh 'env | sort'
     sh 'mix local.hex --force'
     sh 'mix local.rebar --force'
     sh 'mix clean'
@@ -18,33 +17,42 @@ node('elixir') {
 
     withEnv (['MIX_ENV=prod']) {
       sh 'mix release --env=prod'
+      //sh 'mix release --env=prod --warnings-as-errors'
     }
 
     // Stash artifacts
-    stash excludes: '_build/', '.git', includes: '**', name: 'source'
+    stash excludes: '_build/, .git', includes: '**', name: 'source'
+    stash excludes: '*', includes: "_build/prod/rel/helix/releases/**/helix.tar.gz", name: 'release'
   }
 }
 
 parallel (
-  node('elixir') {
-    stage('Lint') {
-      unstash 'source'
-      //sh "mix credo"
+  'Lint': {
+    node('elixir') {
+      stage('Lint') {
+        unstash 'source'
+        //sh "mix credo --strict"
+      }
     }
   },
-  node('elixir') {
-    stage('Unit tests') {
-      unstash 'source'
-      //sh "mix test --only unit"
+  'Unit tests': {
+    node('elixir') {
+      stage('Unit tests') {
+        unstash 'source'
+        //sh "mix test --only unit"
+      }
     }
   },
-  node('elixir') {
-    stage('Type validation') {
-      unstash 'source'
-      //sh "dialyzer"
+  'Type validation': {
+    node('elixir') {
+      stage('Type validation') {
+        unstash 'source'
+        //sh "mix dialyzer"
+      }
     }
   }
 )
+
 
 node('helix') {
   stage('Integration tests') {
@@ -54,10 +62,18 @@ node('helix') {
 }
 
 node('elixir') {
+
+  stage('Save artifacts') {
+
+    unstash 'release'
+    sh "aws s3 cp _build/prod/rel/helix/releases/*/helix.tar.gz s3://he2-releases/helix/${env.BRANCH_NAME}/${env.BUILD_VERSION}.tar.gz --storage-class REDUCED_REDUNDANCY"
+
+  }
+
   if (env.BRANCH_NAME == 'master'){
     lock(resource: 'production-deployment', inversePrecedence: true) {
       stage('Deploy') {
-        sh "ssh deployer deploy helix prod --branch master --version env.BUILD_VERSION"
+        sh "ssh deployer deploy helix prod --branch master --version ${env.BUILD_VERSION}"
       }
     }
     milestone()
