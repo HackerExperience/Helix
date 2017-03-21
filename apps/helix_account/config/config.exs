@@ -12,10 +12,10 @@ config :helix_account, Helix.Account.Repo,
   database: "account_service"
 
 config :guardian, Guardian,
-  issuer: "account",
+  issuer: "helix",
   ttl: {1, :days},
   allowed_algos: ["HS512"],
-  secret_key: System.get_env("HELIX_JWK_KEY"),
-  serializer: Helix.Account.Model.Session
+  allowed_drift: 2_000,
+  serializer: Helix.Account.Model.SessionSerializer
 
 import_config "#{Mix.env}.exs"

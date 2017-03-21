@@ -1,11 +1,11 @@
 defmodule Helix.Account.Controller.Session do
 
   alias Helix.Account.Model.Account
+  alias Helix.Account.Model.Session
 
-  @spec create(Account.id) :: {:ok, String.t} | {:error, :unauthorized}
-  def create(account_id) do
-    session = %{account_id: account_id}
-    case Guardian.encode_and_sign(session, :access) do
+  @spec create(Account.t) :: {:ok, Session.session} | {:error, :unauthorized}
+  def create(account) do
+    case Guardian.encode_and_sign(account, :access) do
       {:ok, jwt, _claims} ->
         {:ok, jwt}
       _ ->
@@ -13,7 +13,7 @@ defmodule Helix.Account.Controller.Session do
     end
   end
 
-  @spec valid?(String.t) :: boolean
+  @spec valid?(Session.session) :: boolean
   def valid?(jwt),
     do: match?({:ok, _}, Guardian.decode_and_verify(jwt))
 end
