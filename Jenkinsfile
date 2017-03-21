@@ -16,8 +16,7 @@ node('elixir') {
     sh 'mix deps.get'
 
     withEnv (['MIX_ENV=prod']) {
-      sh 'mix release --env=prod'
-      //sh 'mix release --env=prod --warnings-as-errors'
+      sh 'mix release --env=prod --warnings-as-errors'
     }
 
     // Stash artifacts
