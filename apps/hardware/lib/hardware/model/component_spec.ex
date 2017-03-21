@@ -25,6 +25,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     field :spec_id, :string,
       primary_key: true
 
+    # FK to ComponentType
     field :component_type, :string
     field :spec, :map
 

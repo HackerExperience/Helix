@@ -23,6 +23,7 @@ defmodule Helix.Hardware.Model.Component do
     field :component_id, HELL.PK,
       primary_key: true
 
+    # FK to ComponentType
     field :component_type, :string
 
     belongs_to :component_spec, ComponentSpec,

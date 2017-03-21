@@ -22,12 +22,7 @@ defmodule Mix.Tasks.Helix.Test do
       Mix.Task.run("ecto.create", ["--quiet"])
       Mix.Task.run("ecto.migrate", ["--quiet"])
 
-      # HACK: FIXME: Temporary hack to automatically install seed data
-      Mix.Task.rerun("run", ["apps/software/priv/repo/seeds/software_type.exs"])
-      Mix.Task.rerun("run", ["apps/hardware/priv/repo/seeds/component_type.exs"])
-      Mix.Task.rerun("run", ["apps/hardware/priv/repo/seeds/default_motherboard_fixture.exs"])
-      Mix.Task.rerun("run", ["apps/entity/priv/repo/seeds/entity_type.exs"])
-      Mix.Task.rerun("run", ["apps/server/priv/repo/seeds/server_type.exs"])
+      Mix.Task.run("helix.seeds", [])
     end
 
     additional_opts = if "umbrella" in List.wrap(Keyword.get(switches, :exclude, [])) do

@@ -1,4 +1,5 @@
 use Mix.Config
 
-config :account, Helix.Entity.Repo,
-  pool: Ecto.Adapters.SQL.Sandbox
+config :entity, Helix.Entity.Repo,
+  pool: Ecto.Adapters.SQL.Sandbox,
+  database: "entity_service_test"
