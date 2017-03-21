@@ -1,9 +1,9 @@
-defmodule Helix.HELFBroker.Mixfile do
+defmodule Helix.Log.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :helf_broker,
+      app: :helix_log,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -21,8 +21,7 @@ defmodule Helix.HELFBroker.Mixfile do
 
   def application do
     [
-      extra_applications: [:logger],
-      mod: {Helix.HELFBroker.App, []}
+      mod: {Helix.Log.Application, []}
     ]
   end
 
@@ -47,8 +46,7 @@ defmodule Helix.HELFBroker.Mixfile do
 
   defp deps do
     [
-      {:helf, git: "ssh://git@git.hackerexperience.com/diffusion/HELF/helf.git", ref: "dev_tester"},
-      {:hebroker, git: "ssh://git@git.hackerexperience.com/diffusion/BROKER/HEBroker.git", ref: "v0.1"}
+      {:helix_core, in_umbrella: true}
     ]
   end
 end
