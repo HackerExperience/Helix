@@ -7,6 +7,8 @@ defmodule Helix.Software.Model.FileTextTest do
 
   alias Helix.Software.Factory
 
+  @moduletag :unit
+
   defp generate_params do
     file = Factory.insert(:file)
 

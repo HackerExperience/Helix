@@ -9,6 +9,8 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
+  @moduletag :integration
+
   setup_all do
     cs = case Repo.all(ComponentSpec) do
       [] ->

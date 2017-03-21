@@ -9,6 +9,8 @@ defmodule Helix.Process.Model.ProcessTest do
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.ProcessType
 
+  @moduletag :unit
+
   setup do
     process =
       %{

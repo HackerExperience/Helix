@@ -18,6 +18,8 @@ defmodule Helix.Entity.Controller.EntityTest do
     }
   end
 
+  @moduletag :integration
+
   describe "entity creation" do
     test "succeeds with valid params" do
       params = generate_params()

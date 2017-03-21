@@ -5,6 +5,8 @@ defmodule Helix.Hardware.Model.NetworkConnectionTest do
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Model.NetworkConnection
 
+  @moduletag :unit
+
   test "requires network, downlink and uplink" do
     nc = NetworkConnection.create_changeset(%{})
 
