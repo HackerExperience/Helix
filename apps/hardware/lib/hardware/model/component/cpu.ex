@@ -33,7 +33,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
   end
 
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
-    cpu_id = PK.generate([0x0003, 0x0001, 0x0002])
+    cpu_id = PK.pk_for(__MODULE__)
     params = Map.take(spec, ["clock", "cores"])
 
     component = Component.create_from_spec(cs, cpu_id)

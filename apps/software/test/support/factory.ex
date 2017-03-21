@@ -4,6 +4,8 @@ defmodule Helix.Software.Factory do
 
   alias HELL.PK
   alias HELL.TestHelper.Random
+  alias Helix.Hardware.Model.Component
+  alias Helix.Software.Model.StorageDrive
 
   def file_factory do
     :file
@@ -19,20 +21,12 @@ defmodule Helix.Software.Factory do
   end
 
   def storage_factory do
-    pk = PK.generate([0x0004, 0x0001, 0x0000])
-
-    files = Random.repeat(1..3, fn ->
-      :file
-      |> prepare()
-      |> Map.put(:storage_id, pk)
-    end)
-
+    files = Random.repeat(1..3, fn -> prepare(:file) end)
     drives = Random.repeat(1..3, fn ->
-      Helix.Software.Model.StorageDrive.create_changeset(%{storage_id: pk})
+      %StorageDrive{drive_id: PK.pk_for(Component)}
     end)
 
     %Helix.Software.Model.Storage{
-      storage_id: pk,
       files: files,
       drives: drives
     }
@@ -48,7 +42,6 @@ defmodule Helix.Software.Factory do
     size = Burette.Number.number(1024..1_048_576)
 
     %Helix.Software.Model.File{
-      file_id: PK.generate([0x0004, 0x0000, 0x0000]),
       name: Burette.Color.name(),
       file_path: path,
       file_size: size,

@@ -30,6 +30,7 @@ defmodule Helix.Server.Model.Server do
   @update_fields ~w/poi_id motherboard_id/a
 
   @primary_key false
+  @ecto_autogenerate {:server_id, {PK, :pk_for, [__MODULE__]}}
   schema "servers" do
     field :server_id, HELL.PK,
       primary_key: true
@@ -48,20 +49,11 @@ defmodule Helix.Server.Model.Server do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
-    |> put_primary_key()
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    ip = PK.generate([0x0002, 0x0000, 0x0000])
-
-    changeset
-    |> cast(%{server_id: ip}, [:server_id])
   end
 end

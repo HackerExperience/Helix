@@ -32,11 +32,12 @@ defmodule Helix.Account.Model.Account do
     optional(:password) => password,
     optional(:confirmed) => boolean}
 
-  @creation_fields ~w/account_id email username password/a
+  @creation_fields ~w/email username password/a
   @update_fields ~w/email password confirmed/a
 
   @derive {Poison.Encoder, only: [:email, :username, :account_id]}
   @primary_key false
+  @ecto_autogenerate {:account_id, {PK, :pk_for, [__MODULE__]}}
   schema "accounts" do
     field :account_id, HELL.PK,
       primary_key: true
@@ -57,7 +58,6 @@ defmodule Helix.Account.Model.Account do
     |> cast(params, @creation_fields)
     |> generic_validations()
     |> prepare_changes()
-    |> put_primary_key()
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.f
@@ -86,12 +86,6 @@ defmodule Helix.Account.Model.Account do
     |> update_change(:email, &String.downcase/1)
     |> update_change(:username, &String.downcase/1)
     |> update_change(:password, &Bcrypt.hashpwsalt/1)
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    pk = PK.generate([0x0000, 0x0000, 0x0000])
-    put_change(changeset, :account_id, pk)
   end
 
   @spec put_display_name(Ecto.Changeset.t) :: Ecto.Changeset.t

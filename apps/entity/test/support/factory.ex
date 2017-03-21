@@ -12,7 +12,7 @@ defmodule Helix.Entity.Factory do
     entity_type = generate_entity_type()
 
     %Entity{
-      entity_id: generate_pk(entity_type),
+      entity_id: PK.pk_for(Entity),
       entity_type: entity_type
     }
   end
@@ -31,11 +31,6 @@ defmodule Helix.Entity.Factory do
     }
   end
 
-  def generate_entity_type,
+  defp generate_entity_type,
     do: Enum.random(["account", "clan", "npc"])
-
-  def generate_pk("account"),
-    do: PK.generate([0x0000, 0x0000, 0x0000])
-  def generate_pk(_),
-    do: Random.pk()
 end

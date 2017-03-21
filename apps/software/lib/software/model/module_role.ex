@@ -16,6 +16,7 @@ defmodule Helix.Software.Model.ModuleRole do
   @creation_fields ~w/file_type module_role/a
 
   @primary_key false
+  @ecto_autogenerate {:module_role_id, {PK, :pk_for, [__MODULE__]}}
   schema "module_roles" do
     field :module_role_id, HELL.PK,
       primary_key: true
@@ -35,15 +36,6 @@ defmodule Helix.Software.Model.ModuleRole do
     |> cast(params, @creation_fields)
     |> validate_required([:module_role, :file_type])
     |> unique_constraint(:module_role, name: :file_type_module_role_unique_constraint)
-    |> put_primary_key()
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    pk = PK.generate([0x0004, 0x0002, 0x0000])
-
-    changeset
-    |> cast(%{module_role_id: pk}, [:module_role_id])
   end
 
   defmodule Query do

@@ -31,7 +31,7 @@ defmodule Helix.Hardware.Model.Component.RAM do
 
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
     params = Map.take(spec, ["ram_size"])
-    ram_id = PK.generate([0x0003, 0x0001, 0x0003])
+    ram_id = PK.pk_for(__MODULE__)
     component = Component.create_from_spec(cs, ram_id)
 
     %__MODULE__{}

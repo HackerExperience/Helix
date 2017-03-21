@@ -15,6 +15,7 @@ defmodule Helix.Software.Model.Storage do
   }
 
   @primary_key false
+  @ecto_autogenerate {:storage_id, {PK, :pk_for, [__MODULE__]}}
   schema "storages" do
     field :storage_id, HELL.PK,
       primary_key: true
@@ -28,19 +29,6 @@ defmodule Helix.Software.Model.Storage do
   end
 
   @spec create_changeset() :: Ecto.Changeset.t
-  def create_changeset do
-    %__MODULE__{}
-    |> cast(%{}, [])
-    |> put_primary_key()
-  end
-
-  @spec put_primary_key(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp put_primary_key(changeset) do
-    if get_field(changeset, :storage_id) do
-      changeset
-    else
-      pk = PK.generate([0x0004, 0x0001, 0x0000])
-      put_change(changeset, :storage_id, pk)
-    end
-  end
+  def create_changeset,
+    do: cast(%__MODULE__{}, %{}, [])
 end
