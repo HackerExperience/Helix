@@ -44,7 +44,7 @@ defmodule Helix.Software.Controller.File do
       name: file.name,
       file_path: file_path,
       file_size: file.file_size,
-      file_type: file.file_type,
+      software_type: file.software_type,
       storage_id: storage_id}
     create(params)
   end

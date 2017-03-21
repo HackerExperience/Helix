@@ -32,7 +32,7 @@ defmodule Helix.Software.Controller.FileTest do
 
       {:ok, _} = FileController.create(params)
 
-      collision = Map.take(params, [:name, :file_path, :file_type, :storage_id])
+      collision = Map.take(params, [:name, :file_path, :software_type, :storage_id])
 
       params1 = Map.merge(generate_params(), collision)
 
@@ -86,7 +86,7 @@ defmodule Helix.Software.Controller.FileTest do
 
   test "update fails on path identity conflict" do
     file0 = Factory.insert(:file)
-    similarities = Map.take(file0, [:file_type, :storage, :storage_id])
+    similarities = Map.take(file0, [:software_type, :storage, :storage_id])
     file1 =
       :file
       |> Factory.build()
@@ -154,7 +154,7 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
-      similarities = Map.take(file0, [:name, :storage, :storage_id, :file_type])
+      similarities = Map.take(file0, [:name, :storage, :storage_id, :software_type])
       file1 =
         :file
         |> Factory.build()
@@ -176,7 +176,7 @@ defmodule Helix.Software.Controller.FileTest do
 
   test "renaming a file fails on path identity conflict" do
     file0 = Factory.insert(:file)
-    similarities = Map.take(file0, [:file_path, :file_type, :storage, :storage_id])
+    similarities = Map.take(file0, [:file_path, :software_type, :storage, :storage_id])
     file1 =
       :file
       |> Factory.build()

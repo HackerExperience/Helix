@@ -9,9 +9,9 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   alias Helix.Software.Factory
 
-  defp generate_module_roles(file_type) do
-    file_type
-    |> ModuleRole.Query.by_file_type()
+  defp generate_module_roles(software_type) do
+    software_type
+    |> ModuleRole.Query.by_software_type()
     |> Repo.all()
     |> Enum.map(&({&1.module_role_id, Burette.Number.number(1..1024)}))
     |> :maps.from_list()
@@ -19,7 +19,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   test "file modules creation creates the correct roles" do
     file = Factory.insert(:file)
-    module_roles = generate_module_roles(file.file_type)
+    module_roles = generate_module_roles(file.software_type)
 
     {:ok, file_modules1} = FileModuleController.create(file, module_roles)
     file_modules2 = FileModuleController.find(file)
@@ -34,7 +34,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
   describe "file modules fetching" do
     test "returns file modules as a map" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.file_type)
+      module_roles = generate_module_roles(file.software_type)
       FileModuleController.create(file, module_roles)
 
       file_modules = FileModuleController.find(file)
@@ -53,7 +53,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
   describe "file modules updating" do
     test "updates module version" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.file_type)
+      module_roles = generate_module_roles(file.software_type)
       {:ok, file_modules} = FileModuleController.create(file, module_roles)
 
       module_id = file_modules |> Map.keys() |> Enum.random()
@@ -76,7 +76,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   test "deleting a file deletes it's modules" do
     file = Factory.insert(:file)
-    module_roles = generate_module_roles(file.file_type)
+    module_roles = generate_module_roles(file.software_type)
     {:ok, _} = FileModuleController.create(file, module_roles)
 
     file_modules1 = FileModuleController.find(file)
