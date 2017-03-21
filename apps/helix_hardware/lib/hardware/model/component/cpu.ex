@@ -50,7 +50,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Schema.t | Ecto.Changeset.t, %{any => any}) ::
+  @spec changeset(t | Ecto.Changeset.t, %{any => any}) ::
     Ecto.Changeset.t
   def changeset(struct, params) do
     struct
