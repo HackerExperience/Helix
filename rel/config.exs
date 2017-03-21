@@ -44,19 +44,18 @@ end
 release :helix do
   set version: "0.1.0"
   set applications: [
-    account: :permanent,
-    entity: :permanent,
-    hardware: :permanent,
+    helix_account: :permanent,
+    helix_entity: :permanent,
+    helix_hardware: :permanent,
     helf_broker: :permanent,
     helf_router: :permanent,
     helix_core: :permanent,
     hell: :permanent,
-    log: :permanent,
-    master: :permanent,
-    npc: :permanent,
-    process: :permanent,
-    server: :permanent,
-    software: :permanent
+    helix_log: :permanent,
+    helix_npc: :permanent,
+    helix_process: :permanent,
+    helix_server: :permanent,
+    helix_software: :permanent
   ]
 end
 
