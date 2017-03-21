@@ -12,29 +12,41 @@ defmodule Helix.Server.Mixfile do
       elixir: "~> 1.4",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
+      consolidate_protocols: Mix.env == :prod,
       elixirc_options: elixirc_options(Mix.env),
-      deps: deps()]
+      elixirc_paths: compile_paths(Mix.env),
+      deps: deps()
+    ]
   end
 
   def application do
     [
-      applications: applications(Mix.env),
-      mod: {Helix.Server.App, []}]
+      mod: {Helix.Server.App, []}
+    ]
   end
 
-  defp applications(_),
-    do: [:logger, :helf_broker, :ecto, :postgrex, :account, :entity, :hardware]
+  defp elixirc_options(:dev) do
+    # On dev, by default, allow to compile even with warnings, unless explicitly
+    # required not to
+    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") == "false"
 
-  defp elixirc_options(:dev),
-    do: []
-  defp elixirc_options(_),
-    do: [warnings_as_errors: true]
+    [warnings_as_errors: warnings_as_errors?]
+  end
+  defp elixirc_options(_) do
+    # On test and prod, don't compile unless no warning is issued
+    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") != "true"
+
+    [warnings_as_errors: warnings_as_errors?]
+  end
+
+  defp compile_paths(:test),
+    do: ["lib", "test/support"]
+  defp compile_paths(_),
+    do: ["lib"]
 
   defp deps do
     [
-      {:helix_core, in_umbrella: true},
-      {:account, in_umbrella: true},
-      {:entity, in_umbrella: true},
-      {:hardware, in_umbrella: true}]
+      {:helix_core, in_umbrella: true}
+    ]
   end
 end
