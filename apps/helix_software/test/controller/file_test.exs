@@ -30,7 +30,7 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "fails on path identity conflict" do
       params = generate_params()
-      collision = Map.take(params, [:name, :file_path, :file_type, :storage_id])
+      collision = Map.take(params, [:name, :file_path, :software_type, :storage_id])
 
       {:ok, _} = FileController.create(params)
 
@@ -82,7 +82,7 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
-      similarities =  Map.take(file0, [:file_type, :storage, :storage_id])
+      similarities =  Map.take(file0, [:software_type, :storage, :storage_id])
       file1 = Factory.insert(:file, similarities)
 
       file1 = FileController.fetch(file1.file_id)
@@ -147,7 +147,7 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
-      similarities = Map.take(file0, [:name, :storage, :storage_id, :file_type])
+      similarities = Map.take(file0, [:name, :storage, :storage_id, :software_type])
       file1 = Factory.insert(:file, similarities)
 
       assert {:error, :file_exists} ==
@@ -168,7 +168,7 @@ defmodule Helix.Software.Controller.FileTest do
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
       similarities =
-        Map.take(file0, [:file_path, :file_type, :storage, :storage_id])
+        Map.take(file0, [:file_path, :software_type, :storage, :storage_id])
       file1 = Factory.insert(:file, similarities)
 
       assert {:error, :file_exists} == FileController.rename(file1, file0.name)

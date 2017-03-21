@@ -1,29 +1,29 @@
-defmodule Helix.Software.Model.FileType do
+defmodule Helix.Software.Model.SoftwareType do
 
   use Ecto.Schema
 
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    file_type: String.t,
+    software_type: String.t,
     extension: String.t
   }
 
-  @creation_fields ~w/file_type extension/a
+  @creation_fields ~w/software_type extension/a
 
   @primary_key false
-  schema "file_types" do
-    field :file_type, :string,
+  schema "software_types" do
+    field :software_type, :string,
       primary_key: true
 
     field :extension, :string
   end
 
-  @spec create_changeset(%{file_type: String.t, extension: String.t}) :: Ecto.Changeset.t
+  @spec create_changeset(%{software_type: String.t, extension: String.t}) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@creation_fields)
-    |> unique_constraint(:file_type)
+    |> unique_constraint(:software_type)
   end
 end

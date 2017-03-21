@@ -3,7 +3,7 @@ defmodule Helix.Software.Model.File do
   use Ecto.Schema
 
   alias HELL.PK
-  alias Helix.Software.Model.FileType
+  alias Helix.Software.Model.SoftwareType
   alias Helix.Software.Model.Storage
 
   import Ecto.Changeset
@@ -13,8 +13,8 @@ defmodule Helix.Software.Model.File do
     name: String.t,
     file_path: String.t,
     file_size: pos_integer,
-    type: FileType.t,
-    file_type: String.t,
+    type: SoftwareType.t,
+    software_type: String.t,
     storage: Storage.t,
     storage_id: PK.t,
     inserted_at: NaiveDateTime.t,
@@ -27,7 +27,7 @@ defmodule Helix.Software.Model.File do
     name: String.t,
     file_path: String.t,
     file_size: pos_integer,
-    file_type: String.t,
+    software_type: String.t,
     storage_id: PK.t
   }
   @type update_params :: %{
@@ -36,7 +36,7 @@ defmodule Helix.Software.Model.File do
     optional(:storage_id) => PK.t
   }
 
-  @creation_fields ~w/name file_path file_size file_type storage_id/a
+  @creation_fields ~w/name file_path file_size software_type storage_id/a
   @update_fields ~w/name file_path storage_id/a
 
   @primary_key false
@@ -49,9 +49,9 @@ defmodule Helix.Software.Model.File do
     field :file_path, :string
     field :file_size, :integer
 
-    belongs_to :type, FileType,
-      foreign_key: :file_type,
-      references: :file_type,
+    belongs_to :type, SoftwareType,
+      foreign_key: :software_type,
+      references: :software_type,
       type: :string
     belongs_to :storage, Storage,
       foreign_key: :storage_id,
@@ -79,8 +79,8 @@ defmodule Helix.Software.Model.File do
   defp generic_validations(changeset) do
     changeset
     |> validate_required(
-      [:name, :file_path, :file_size, :file_type, :storage_id])
+      [:name, :file_path, :file_size, :software_type, :storage_id])
     |> validate_number(:file_size, greater_than: 0)
-    |> unique_constraint(:file_path, name: :unique_file_path_index)
+    |> unique_constraint(:file_path, name: :files_storage_id_file_path_name_software_type_index)
   end
 end
