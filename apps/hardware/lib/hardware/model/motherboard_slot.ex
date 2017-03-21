@@ -60,6 +60,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
+    |> changeset(params)
     |> put_primary_key()
   end
 
