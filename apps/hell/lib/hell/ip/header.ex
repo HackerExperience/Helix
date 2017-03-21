@@ -1,7 +1,4 @@
 defmodule HELL.IPv6.Header do
-  @moduledoc """
-  Primary key generator for named modules, usually used with `Ecto` schemas.
-  """
 
   @mappings %{
     # Account
@@ -43,11 +40,11 @@ defmodule HELL.IPv6.Header do
     Helix.Log.Model.Revision                       => [0x0008, 0x0001]
   }
 
-  @doc """
-  Generates a PK for given module with a proper header, raises `RuntimeError`
-  when no header is available for the module.
-  """
   @spec pk_for(module) :: HELL.PK.t
+  @doc """
+  Generates a PK for given module with a proper header, raises
+  `FunctionClauseError` when no header is available for the module.
+  """
   for {module, header} <- @mappings do
     def pk_for(unquote(module)),
       do: HELL.IPv6.generate(unquote(header))

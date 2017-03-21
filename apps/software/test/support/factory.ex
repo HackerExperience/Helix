@@ -6,7 +6,6 @@ defmodule Helix.Software.Factory do
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.StorageDrive
-  alias Helix.Software.Model.File
 
   def file_factory do
     :file
@@ -43,7 +42,6 @@ defmodule Helix.Software.Factory do
     size = Burette.Number.number(1024..1_048_576)
 
     %Helix.Software.Model.File{
-      file_id: PK.pk_for(File),
       name: Burette.Color.name(),
       file_path: path,
       file_size: size,

@@ -28,7 +28,7 @@ defmodule Helix.Software.Model.Storage do
       references: :storage_id
   end
 
-  @spec create_changeset(map) :: Ecto.Changeset.t
-  def create_changeset(params \\ %{}),
-    do: cast(%__MODULE__{}, params, [:storage_id])
+  @spec create_changeset() :: Ecto.Changeset.t
+  def create_changeset,
+    do: cast(%__MODULE__{}, %{}, [])
 end
