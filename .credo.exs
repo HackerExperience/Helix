@@ -55,14 +55,14 @@
         {Credo.Check.Readability.RedundantBlankLines},
         {Credo.Check.Readability.TrailingBlankLine, false},
         {Credo.Check.Readability.TrailingWhiteSpace},
-        {Credo.Check.Readability.VariableNames, priority: :high},
+        {Credo.Check.Readability.VariableNames},
 
         {Credo.Check.Refactor.DoubleBooleanNegation, false},
         {Credo.Check.Refactor.ABCSize, false},
         {Credo.Check.Refactor.CondStatements},
         # TODO: Check if this is a good metric and tune the max complexity
         {Credo.Check.Refactor.CyclomaticComplexity},
-        {Credo.Check.Refactor.FunctionArity, max_arity: 6, ignore_defp: true, priority: :high},
+        {Credo.Check.Refactor.FunctionArity, max_arity: 6, ignore_defp: true},
         {Credo.Check.Refactor.MatchInCondition},
         {Credo.Check.Refactor.NegatedConditionsInUnless},
         {Credo.Check.Refactor.NegatedConditionsWithElse},
@@ -85,9 +85,6 @@
         {Credo.Check.Warning.UnusedRegexOperation},
         {Credo.Check.Warning.UnusedStringOperation},
         {Credo.Check.Warning.UnusedTupleOperation},
-
-        # CUSTOM CHECKS
-        {Credo.Check.Readability.RefuseTrailingBlankLine, priority: :normal},
 
         # Deprecated
         {Credo.Check.Readability.Specs, false},
