@@ -46,7 +46,11 @@ parallel (
     node('elixir') {
       stage('Type validation') {
         unstash 'source'
-        //sh "mix dialyzer"
+
+        withEnv (['MIX_ENV=prod']) {
+          //sh "mix compile"
+          //sh "mix dialyzer --halt-exit-status"
+        }
       }
     }
   }
