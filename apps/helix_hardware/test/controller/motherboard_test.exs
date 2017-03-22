@@ -9,6 +9,8 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Repo
 
+  @moduletag :integration
+
   setup_all do
     spec_params = %{
       component_type: "mobo",

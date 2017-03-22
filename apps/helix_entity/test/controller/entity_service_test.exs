@@ -5,7 +5,7 @@ defmodule Helix.Entity.Controller.EntityServiceTest do
   alias HELF.Broker
   alias HELL.TestHelper.Random
 
-  @moduletag :umbrella
+  @moduletag :integration
 
   setup do
     name = Random.username()

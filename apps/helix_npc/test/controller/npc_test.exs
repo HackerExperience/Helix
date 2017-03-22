@@ -6,6 +6,8 @@ defmodule Helix.NPC.Controller.NPCTest do
   alias Helix.NPC.Controller.NPC, as: NPCController
   alias Helix.NPC.Model.NPC, as: NPC
 
+  @moduletag :integration
+
   test "create/1" do
     assert {:ok, _} = NPCController.create(%{})
   end

@@ -5,6 +5,8 @@ defmodule Helix.Process.Controller.ProcessTest do
   alias Helix.Process.Controller.Process, as: ProcessController
   alias Helix.Process.Model.Process, as: ProcessModel
 
+  @moduletag :integration
+
   @tag :pending
   test "create/1" do
     assert {:ok, _} = ProcessController.create(%{})

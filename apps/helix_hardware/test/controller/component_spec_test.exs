@@ -7,6 +7,8 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
+  @moduletag :integration
+
   setup do
     type = Enum.random(["cpu", "ram", "hdd", "nic"])
     params = %{

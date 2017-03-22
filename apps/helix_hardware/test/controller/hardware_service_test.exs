@@ -7,7 +7,7 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Model.MotherboardSlot
 
-  @moduletag :umbrella
+  @moduletag :integration
 
   defp create_account do
     name = Random.username()

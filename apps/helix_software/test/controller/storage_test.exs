@@ -7,6 +7,8 @@ defmodule Helix.Software.Controller.StorageTest do
 
   alias Helix.Software.Factory
 
+  @moduletag :integration
+
   test "create/1" do
     assert {:ok, _} = StorageController.create()
   end

@@ -9,6 +9,8 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   alias Helix.Software.Factory
 
+  @moduletag :integration
+
   defp generate_module_roles(file_type) do
     file_type
     |> ModuleRole.Query.by_file_type()

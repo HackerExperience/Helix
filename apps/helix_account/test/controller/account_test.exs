@@ -10,6 +10,8 @@ defmodule Helix.Account.Controller.AccountTest do
 
   alias Helix.Account.Factory
 
+  @moduletag :integration
+
   describe "account creation" do
     test "succeeds with valid params" do
       params = Factory.params_for(:account)

@@ -2,16 +2,19 @@ defmodule Helix.Software.Model.FileTextTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
   alias Ecto.Changeset
+  alias Helix.Software.Model.File
   alias Helix.Software.Model.FileText
 
   alias Helix.Software.Factory
 
-  defp generate_params do
-    file = Factory.insert(:file)
+  @moduletag :unit
 
-    Factory.params_for(:file_text)
-    |> Map.put(:file_id, file.file_id)
+  defp generate_params do
+    :file_text
+    |> Factory.params_for()
+    |> Map.put(:file_id, PK.pk_for(File))
     |> Map.drop([:inserted_at, :updated_at])
   end
 

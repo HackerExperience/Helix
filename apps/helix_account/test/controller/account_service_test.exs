@@ -6,7 +6,7 @@ defmodule Helix.Account.Controller.AccountServiceTest do
 
   alias Helix.Account.Factory
 
-  @moduletag :umbrella
+  @moduletag :integration
 
   describe "account creation" do
     test "succeeds with valid params" do

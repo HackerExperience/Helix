@@ -5,6 +5,8 @@ defmodule HELL.IPv6Test do
   alias HELL.TestHelper.IP
   alias HELL.IPv6
 
+  @moduletag :unit
+
   describe "generate/1" do
     test "includes the header" do
       assert "3456:" <> _ = IPv6.generate([0x3456])

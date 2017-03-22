@@ -7,6 +7,7 @@ defmodule Helix.Log.Model.LogTest do
   alias Helix.Log.Model.Log
 
   describe "log creation" do
+    @tag :integration
     test "creates a revision" do
       params = %{
         server_id: Random.pk(),
@@ -31,6 +32,7 @@ defmodule Helix.Log.Model.LogTest do
       refute revision.forge_version
     end
 
+    @tag :unit
     test "requires entity_id and server_id" do
       log = Log.create_changeset(%{})
 
@@ -38,6 +40,7 @@ defmodule Helix.Log.Model.LogTest do
       assert :server_id in Keyword.keys(log.errors)
     end
 
+    @tag :integration
     test "can be forged" do
       params = %{
         server_id: Random.pk(),

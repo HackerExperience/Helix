@@ -9,6 +9,8 @@ defmodule Helix.Account.Controller.AccountSettingTest do
 
   alias Helix.Account.Factory
 
+  @moduletag :integration
+
   setup_all do
     if Repo.all(Setting) == [],
       do: Factory.insert_list(3, :setting)

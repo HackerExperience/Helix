@@ -7,6 +7,8 @@ defmodule Helix.Software.Controller.FileTest do
 
   alias Helix.Software.Factory
 
+  @moduletag :integration
+
   def generate_params do
     storage = Factory.insert(:storage)
 

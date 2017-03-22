@@ -8,6 +8,8 @@ defmodule Helix.Server.Controller.ServerTest do
   alias Helix.Server.Model.ServerType
   alias Helix.Server.Repo
 
+  @moduletag :integration
+
   setup_all do
     server_types = Repo.all(ServerType)
     {:ok, server_types: server_types}

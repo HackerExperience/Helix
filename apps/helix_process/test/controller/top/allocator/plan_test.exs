@@ -9,6 +9,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
   alias Helix.Process.TestHelper.ProcessTypeExample
   alias Helix.Process.TestHelper.StaticProcessTypeExample
 
+  @moduletag :unit
+
   # NOTE THAT MOST TESTS ASSERT THAT THE VALUE IS INSIDE A RANGE. THIS IS DONE
   # BECAUSE THE ALLOCATION ALGORITHM MIGHT NOT ALLOCATE 100% OF THE RESOURCES
   # BECAUSE IT'S ALLOCATION LOGIC IS NAIVE (i might fix it or worsen it in the

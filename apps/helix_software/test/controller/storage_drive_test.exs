@@ -7,6 +7,8 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   alias Helix.Software.Factory
 
+  @moduletag :integration
+
   test "create/1" do
     storage = Factory.insert(:storage)
 

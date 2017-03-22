@@ -7,6 +7,8 @@ defmodule Helix.Log.Controller.LogTest do
   alias Helix.Log.Repo
   alias Helix.Log.Model.Log
 
+  @moduletag :integration
+
   describe "log recovering" do
     test "removes the log if it was forged" do
       {:ok, log} = Controller.create(

@@ -9,6 +9,8 @@ defmodule Helix.Entity.Controller.EntityComponentTest do
 
   alias Helix.Entity.Factory
 
+  @moduletag :integration
+
   describe "adding entity ownership over components" do
     test "succeeds with entity_id" do
       %{entity_id: entity_id} = Factory.insert(:entity)
