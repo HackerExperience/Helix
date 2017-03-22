@@ -4,48 +4,41 @@ defmodule Helix.Account.Model.Setting do
 
   import Ecto.Changeset
 
-  @type id :: String.t
-  @type t :: %__MODULE__{
-    setting_id: String.t,
-    default_value: String.t
-  }
-
-  @type creation_params :: %{setting_id: String.t, default_value: String.t}
-
-  @creation_fields ~w/setting_id default_value/a
+  @update_fields ~w/is_beta/a
 
   @primary_key false
-  schema "settings" do
-    field :setting_id, :string, primary_key: true
-    field :default_value, :string
+  embedded_schema do
+    field :is_beta, :boolean, null: true
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
-  def create_changeset(params) do
-    %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> validate_required(@creation_fields)
-    |> validate_change(:setting_id, &validate_setting_id/2)
+  @spec changeset(Setting.t, map) :: Ecto.Changeset.t
+  def changeset(struct, params) do
+    cast(struct, params, @update_fields)
   end
 
-  @spec validate_setting_id(:setting_id, String.t) ::
-    [] | [setting_id: String.t]
-  def validate_setting_id(:setting_id, value) do
-    is_binary(value)
-    && Regex.match?(~r/^[a-z0-9-_.]{2,32}$/, value)
-    && []
-    || [setting_id: "invalid value"]
+  @spec default :: Setting.t
+  def default do
+    %__MODULE__{is_beta: false}
   end
 
-  defmodule Query do
+  @spec update_changeset(Setting.t, map) :: Ecto.Changeset.t
+  def update_changeset(settings, params) do
+    cast(settings, defaults_to_nil(params), @update_fields)
+  end
 
-    alias Helix.Account.Model.Setting
+  # TODO: review if this is alright
+  defp defaults_to_nil(params) do
+    unchanged = Map.from_struct(default())
 
-    import Ecto.Query, only: [where: 3]
+    nullify =
+      fn {k, v} ->
+        if v == unchanged[k],
+          do: {k, nil},
+          else: {k, v}
+      end
 
-    @spec by_id(Ecto.Queryable.t, Setting.id) ::
-      Ecto.Queryable.t
-    def by_id(query \\ Setting, setting_id),
-      do: where(query, [s], s.setting_id == ^setting_id)
+    params
+    |> Enum.map(nullify)
+    |> :maps.from_list()
   end
 end
