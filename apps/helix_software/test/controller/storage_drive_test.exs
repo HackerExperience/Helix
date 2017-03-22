@@ -2,70 +2,54 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
-  alias Helix.Software.Controller.StorageDrive, as: StorageDriveController
+  alias HELL.PK
+  alias Helix.Hardware.Model.Component
+  alias Helix.Software.Controller.StorageDrive, as: Controller
 
   alias Helix.Software.Factory
 
   @moduletag :integration
 
-  describe "creating" do
-    test "succeeds with valid params" do
-      storage = Factory.insert(:storage)
-
-      params = %{
-        drive_id: Random.pk(),
-        storage_id: storage.storage_id
-      }
-
-      assert {:ok, _} = StorageDriveController.create(params)
-    end
-
-    test "fails if storage with id doesn't exist" do
-      storage = Factory.build(:storage)
-
-      bogus = %{
-        drive_id: Random.pk(),
-        storage_id: storage.storage_id
-      }
-
-      assert {:error, cs} = StorageDriveController.create(bogus)
-      assert :storage_id in Keyword.keys(cs.errors)
-    end
+  defp create_storage do
+    :storage
+    |> Factory.build()
+    |> Map.put(:drives, [])
+    |> Factory.insert()
   end
 
-  describe "finding" do
-    test "returns a list containing records based on its relationship" do
-      storage = Factory.insert(:storage)
-      expected_drives = MapSet.new(storage.drives)
-      received_drives =
-        [storage: storage]
-        |> StorageDriveController.find()
-        |> MapSet.new()
+  test "linking succeeds with a valid storage" do
+    drive_id = PK.pk_for(Component)
+    storage = create_storage()
 
-      assert MapSet.equal?(expected_drives, received_drives)
-    end
+    Controller.link_drive(storage, drive_id)
 
-    test "returns an empty list when no relationship exists" do
-      storage = Factory.insert(:storage, drives: [])
-      assert [] == StorageDriveController.find(storage: storage)
-    end
+    assert drive_id in Controller.get_storage_drives(storage)
   end
 
-  test "deleting is idempotent" do
-    drive =
-      :storage
-      |> Factory.insert()
-      |> Map.fetch!(:drives)
-      |> Enum.random()
+  test "getting returns every drive of given storage" do
+    storage = create_storage()
+    expected_drives =
+      3
+      |> Factory.insert_list(:storage_drive, storage: storage)
+      |> Enum.map(&(&1.drive_id))
 
-    drives = StorageDriveController.find(storage: drive.storage_id)
-    assert drive in drives
+    got_drives = Controller.get_storage_drives(storage)
 
-    StorageDriveController.delete(drive.storage_id, drive.drive_id)
-    StorageDriveController.delete(drive.storage_id, drive.drive_id)
+    refute Enum.empty?(expected_drives)
+    assert Enum.empty?(expected_drives -- got_drives)
 
-    drives = StorageDriveController.find(storage: drive.storage_id)
-    refute drive in drives
+    driveless_storage = create_storage()
+    got_drives = Controller.get_storage_drives(driveless_storage)
+
+    assert Enum.empty?(got_drives)
+  end
+
+  test "unlinking is idempotent" do
+    %{storage: storage, drive_id: drive_id} = Factory.insert(:storage_drive)
+
+    Controller.unlink_drive(drive_id)
+    Controller.unlink_drive(drive_id)
+
+    refute drive_id in Controller.get_storage_drives(storage)
   end
 end
