@@ -1,5 +1,6 @@
 defmodule Helix.Software.Controller.FileText do
 
+  alias Helix.Software.Model.File
   alias Helix.Software.Model.FileText
   alias Helix.Software.Repo
 
@@ -11,7 +12,9 @@ defmodule Helix.Software.Controller.FileText do
     |> Repo.insert()
   end
 
-  @spec find(File.t | File.id) :: {:ok, FileText.t} | {:error, :notfound}
+  @spec find(File.t | File.id) ::
+    {:ok, FileText.t}
+    | {:error, :notfound}
   def find(file) do
     result =
       file

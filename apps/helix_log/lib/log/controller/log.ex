@@ -13,7 +13,7 @@ defmodule Helix.Log.Controller.Log do
     PK.t,
     PK.t,
     String.t,
-    non_neg_integer) :: {:ok, Log.t} | {:error, reason :: term}
+    non_neg_integer | nil) :: {:ok, Log.t} | {:error, reason :: term}
   def create(server_id, entity_id, message, forge_version \\ nil) do
     params = %{
       server_id: server_id,
@@ -116,7 +116,7 @@ defmodule Helix.Log.Controller.Log do
 
   @spec encrypt(
     Log.t,
-    non_neg_integer) :: {:ok, Log.t} | {:error, Ecto.Changeset.t}
+    non_neg_integer | nil) :: {:ok, Log.t} | {:error, Ecto.Changeset.t}
   def encrypt(log, crypto_version) do
     log
     |> Log.update_changeset(%{crypto_version: crypto_version})

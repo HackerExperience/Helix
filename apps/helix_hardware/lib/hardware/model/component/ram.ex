@@ -9,9 +9,6 @@ defmodule Helix.Hardware.Model.Component.RAM do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    ram_id: PK.t,
-    ram_size: non_neg_integer,
-    component: Component.t
   }
 
   @primary_key false
@@ -29,6 +26,7 @@ defmodule Helix.Hardware.Model.Component.RAM do
       on_replace: :delete
   end
 
+  @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
     params = Map.take(spec, ["ram_size"])
     ram_id = PK.pk_for(__MODULE__)
@@ -44,7 +42,8 @@ defmodule Helix.Hardware.Model.Component.RAM do
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec changeset(t | Ecto.Changeset.t, %{any => any}) ::
+    Ecto.Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:ram_size])

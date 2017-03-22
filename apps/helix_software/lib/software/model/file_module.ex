@@ -70,11 +70,12 @@ defmodule Helix.Software.Model.FileModule do
 
     import Ecto.Query, only: [where: 3, select: 3]
 
-    @spec from_file(File.t | HELL.PK.t) :: Ecto.Queryable.t
+    @spec from_file(File.t | File.id) :: Ecto.Queryable.t
     def from_file(file_or_file_id),
       do: from_file(FileModule, file_or_file_id)
 
-    @spec from_file(Ecto.Queryable.t, File.t | HELL.PK.t) :: Ecto.Queryable.t
+    @spec from_file(Ecto.Queryable.t, File.t | File.id) ::
+      Ecto.Queryable.t
     def from_file(query, file = %File{}),
       do: from_file(query, file.file_id)
     def from_file(query, file_id),

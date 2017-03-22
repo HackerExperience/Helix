@@ -7,7 +7,9 @@ defmodule Helix.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       aliases: aliases(),
-      deps: deps()]
+      deps: deps(),
+      dialyzer: [plt_add_apps: [:mix], remove_defaults: [:unknown]]
+    ]
   end
 
   defp deps do

@@ -56,8 +56,10 @@ defmodule HELL.MacAddress do
   def valid_addr?(_),
     do: false
 
+  # TODO: FIXME: REVIEW: refactor this into something less awful
   @hex ~w/0 1 2 3 4 5 6 7 8 9 A B C D E F/
-  @permutations for x <- @hex, {y, z} <- [{:one, :two}, {:two, :colon}], do: {x, y, z}
+  @permutations for x <- @hex, {y, z} <- [{:one, :two}, {:two, :colon}],
+    do: {x, y, z}
   @permutations [{":", :colon, :one}| @permutations]
 
   for {char, from, to} <- @permutations do

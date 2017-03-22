@@ -3,7 +3,6 @@ defmodule Helix.Account.Controller.AccountService do
   use GenServer
 
   alias HELF.Broker
-  alias HELF.Router
   alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Controller.Session, as: SessionController
   alias Helix.Account.Model.Account
@@ -12,9 +11,6 @@ defmodule Helix.Account.Controller.AccountService do
 
   @spec start_link() :: GenServer.on_start
   def start_link do
-    Router.register("account.create", "account.create")
-    Router.register("account.login", "account.login")
-
     GenServer.start_link(__MODULE__, [], name: :account_service)
   end
 
@@ -24,8 +20,8 @@ defmodule Helix.Account.Controller.AccountService do
     {:reply, response}
   end
   def handle_broker_call(pid, "account.login", params, _) do
-    %{email: email, password: password} = params
-    response = GenServer.call(pid, {:account, :login, email, password})
+    %{username: username, password: password} = params
+    response = GenServer.call(pid, {:account, :login, username, password})
     {:reply, response}
   end
 
@@ -42,7 +38,7 @@ defmodule Helix.Account.Controller.AccountService do
     GenServer.from,
     state) :: {:reply, {:ok, Account.t} | {:error, Ecto.Changeset.t}, state}
   @spec handle_call(
-    {:account, :login, Account.email, Account.password},
+    {:account, :login, Account.username, Account.password},
     GenServer.from,
     state) :: {:reply, {:ok, Account.id} | {:error, :notfound}, state}
   @doc false
@@ -56,10 +52,10 @@ defmodule Helix.Account.Controller.AccountService do
         {:reply, {:error, error}, state}
     end
   end
-  def handle_call({:account, :login, email, password}, _from, state) do
+  def handle_call({:account, :login, username, password}, _from, state) do
     with \
-      {:ok, account_id} <- AccountController.login(email, password),
-      {:ok, token} <- SessionController.create(account_id)
+      {:ok, account} <- AccountController.login(username, password),
+      {:ok, token} <- SessionController.create(account)
     do
       {:reply, {:ok, token}, state}
     else

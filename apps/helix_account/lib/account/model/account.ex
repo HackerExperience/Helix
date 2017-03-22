@@ -60,7 +60,7 @@ defmodule Helix.Account.Model.Account do
     |> prepare_changes()
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.f
+  @spec update_changeset(t, update_params) :: Ecto.Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)

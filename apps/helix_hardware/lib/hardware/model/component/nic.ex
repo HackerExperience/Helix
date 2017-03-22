@@ -11,11 +11,6 @@ defmodule Helix.Hardware.Model.Component.NIC do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    nic_id: PK.t,
-    mac_address: MacAddress.t,
-    component: Component.t,
-    network_connection: NetworkConnection.t,
-    network_connection_id: PK.t
   }
 
   @primary_key false
@@ -38,6 +33,7 @@ defmodule Helix.Hardware.Model.Component.NIC do
       on_replace: :nilify
   end
 
+  @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: _}) do
     nic_id = PK.pk_for(__MODULE__)
     component = Component.create_from_spec(cs, nic_id)
@@ -55,7 +51,8 @@ defmodule Helix.Hardware.Model.Component.NIC do
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec changeset(t | Ecto.Changeset.t, %{any => any}) ::
+    Ecto.Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:network_connection_id])
@@ -67,7 +64,6 @@ defmodule Helix.Hardware.Model.Component.NIC do
   defmodule Query do
 
     alias Helix.Hardware.Model.Component.NIC
-    alias Helix.Hardware.Model.NetworkConnection
 
     import Ecto.Query, only: [join: 4, preload: 3, where: 3]
 

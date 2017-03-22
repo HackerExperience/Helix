@@ -9,9 +9,6 @@ defmodule Helix.Hardware.Model.Component.HDD do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    hdd_id: PK.t,
-    hdd_size: non_neg_integer,
-    component: Component.t
   }
 
   @primary_key false
@@ -29,6 +26,7 @@ defmodule Helix.Hardware.Model.Component.HDD do
       on_replace: :delete
   end
 
+  @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
     hdd_id = PK.pk_for(__MODULE__)
     params = Map.take(spec, ["hdd_size"])
@@ -44,7 +42,8 @@ defmodule Helix.Hardware.Model.Component.HDD do
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec changeset(t | Ecto.Changeset.t, %{any => any}) ::
+    Ecto.Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:hdd_size])

@@ -1,5 +1,6 @@
 defmodule Helix.Hardware.Controller.MotherboardSlot do
 
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 

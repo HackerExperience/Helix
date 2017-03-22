@@ -30,7 +30,7 @@ parallel (
     node('elixir') {
       stage('Lint') {
         unstash 'source'
-        //sh "mix credo --strict"
+        sh "mix credo --strict"
       }
     }
   },
@@ -46,7 +46,12 @@ parallel (
     node('elixir') {
       stage('Type validation') {
         unstash 'source'
-        //sh "mix dialyzer"
+
+        withEnv (['MIX_ENV=prod']) {
+          sh "mix clean"
+          sh "mix compile"
+          sh "mix dialyzer --halt-exit-status"
+        }
       }
     }
   }
