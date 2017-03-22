@@ -30,7 +30,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
     acc: [process]
   }
 
-  @spec allocate([process], ServerResources.t) :: [Ecto.Changeset.t]
+  @spec allocate([process], ServerResources.t) ::
+    [Ecto.Changeset.t]
+    | {:error, :insufficient_resources}
   def allocate(processes, resources) do
     processes
     |> plan(resources)

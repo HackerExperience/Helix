@@ -31,10 +31,10 @@ defmodule Helix.Process.Model.Process do
     minimum: %{},
     creation_time: DateTime.t,
     updated_time: DateTime.t,
-    estimated_time: DateTime.t
+    estimated_time: DateTime.t | nil
   }
 
-  @type process :: t | %Changeset{data: t}
+  @type process :: t | %Ecto.Changeset{data: t}
 
   @opaque id :: PK.t
 
@@ -147,7 +147,7 @@ defmodule Helix.Process.Model.Process do
       optional(:priority) => 0..5,
       optional(:creation_time) => DateTime.t,
       optional(:updated_time) => DateTime.t,
-      optional(:estimated_time) => DateTime.t,
+      optional(:estimated_time) => DateTime.t | nil,
       optional(:limitations) => %{},
       optional(:objective) => %{},
       optional(:processed) => %{},
@@ -321,11 +321,13 @@ defmodule Helix.Process.Model.Process do
     end
   end
 
-  @spec seconds_to_change(t) :: non_neg_integer | nil
+  @spec seconds_to_change(t | Ecto.Changeset.t) :: non_neg_integer | nil
   @doc """
   How many seconds until the `process` change state or frees some resource from
   completing part of it's objective
   """
+  def seconds_to_change(p = %Ecto.Changeset{}),
+    do: seconds_to_change(apply_changes(p))
   def seconds_to_change(process) do
     process.objective
     |> Resources.sub(process.processed)
