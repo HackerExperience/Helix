@@ -72,8 +72,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   def resources(pid, resources),
     do: GenServer.cast(pid, {:resources, resources})
 
-  @spec apply_update([Ecto.Changeset.t]) :: ProcessModel.t
-  @spec apply_update({:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}) :: ProcessModel.t
+  @spec apply_update(term) :: [ProcessModel.t]
   docp """
   Asynchronously stores the changes from `changeset_list` into the database and
   immediately returns all the changesets applied as models
@@ -81,6 +80,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   Note that the database update function might fail
   """
   defp apply_update(input) do
+    # FIXME: This interface is pure garbage
     {changeset_list, deleted_list} = case input do
       {:update_and_delete, changeset, deleted} ->
         {changeset, deleted}
@@ -90,7 +90,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
     spawn fn ->
       Repo.transaction fn ->
-        Enum.each(changeset_list, &Repo.update!/1)
+        Enum.each(changeset_list, &Repo.update/1)
         Enum.each(deleted_list, &Repo.delete/1)
       end
     end
@@ -114,7 +114,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     end
   end
 
-  @spec request_server_processes(server_id) :: {:ok, [ProcessModel.t]} | {:error, reason :: term}
+  @spec request_server_processes(server_id) :: {:ok, [ProcessModel.t]}
   docp """
   Fetches the list of in-game processes running on this server
   """
@@ -128,7 +128,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     {:ok, processes}
   end
 
-  @spec notify(module, ProcessModel.t, atom) :: no_return
+  # TODO: Use HELF.Event
   defp notify(broker, process, :complete) do
     namespace = ProcessType.event_namespace(process.process_data)
     message = %{
@@ -172,8 +172,6 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     else
       {:error, reason} ->
         {:stop, reason}
-      _ ->
-        {:stop, "unexpected error"}
     end
   end
 
@@ -293,13 +291,9 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     {:noreply, state, @hibernate_after}
   end
 
-  @spec update_one(
-    [ProcessModel.t],
-    ProcessModel.id,
-    Resources.t,
-    ((Ecto.Changeset.t) -> Ecto.Changeset.t)) ::
-      [Ecto.Changeset.t]
-      | {:error, :insufficient_resources}
+  @spec update_one([ProcessModel.t], ProcessModel.id, ServerResources.t, ((Ecto.Changeset.t) -> Ecto.Changeset.t)) ::
+    [Ecto.Changeset.t]
+    | {:error, :insufficient_resources}
   docp """
   Updates process with `process_id` from `processes` using `mapper`
   """
@@ -355,14 +349,12 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   Traverses the table of process and updates the timer to notify the process
   when the next estimated change will happen.
   """
-  defp update_timer([], timer),
-    do: stop_timer(timer)
   defp update_timer(processes, timer) do
     stop_timer(timer)
 
     processes
     |> Enum.map(&ProcessModel.seconds_to_change/1)
-    |> Enum.reduce(&min/2)
+    |> Enum.reduce(nil, &min/2)
     |> start_timer()
   end
 
@@ -376,7 +368,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     {date, tref}
   end
 
-  @spec stop_timer(timer) :: no_return
+  @spec stop_timer(timer) :: any
   defp stop_timer(nil),
     do: nil
   defp stop_timer({_, tref}),

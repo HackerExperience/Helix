@@ -48,8 +48,9 @@ parallel (
         unstash 'source'
 
         withEnv (['MIX_ENV=prod']) {
-          //sh "mix compile"
-          //sh "mix dialyzer --halt-exit-status"
+          sh "mix clean"
+          sh "mix compile"
+          sh "mix dialyzer --halt-exit-status"
         }
       }
     }
