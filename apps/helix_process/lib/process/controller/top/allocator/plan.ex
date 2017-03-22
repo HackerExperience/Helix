@@ -18,7 +18,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
     }
   }
 
-  @type t :: plan :: %{
+  @type plan :: %{
     current_plan: %{
       fragment: ServerResources.t,
       processes: [{process, [:cpu | :ram | :dlk | :ulk]}]
@@ -40,19 +40,21 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
   # TODO: accumulate on the "plan" the amount of allocation rounds needed and
   #   return those changesets inside a map containing that debug info. That way
   #   we can metrify (?) the TOP and possibly optimize it
-  @spec plan([process], ServerResources.t) :: {t, ServerResources.t} | {:error, :insuficient_resources}
+  @spec plan([process], ServerResources.t) :: {plan, ServerResources.t} | {:error, any}
   defp plan(processes, resources) do
-    keikaku = %{
+    plan = %{
       current_plan: %{fragment: %ServerResources{}, processes: []},
       next_plan: %{shares: %{cpu: 0, ram: 0, net: %{}}, processes: []},
       acc: []
     }
 
-    preallocate(processes, keikaku, resources)
+    preallocate(processes, plan, resources)
   end
 
   # REVIEW: I was pretty tired when i wrote this. It should be refactored later
-  @spec preallocate([process], t, ServerResources.t) :: {t, ServerResources.t} | {:error, :insuficient_resources}
+  @spec preallocate([process], plan, ServerResources.t) ::
+    {plan, ServerResources.t}
+    | {:error, {:resources, :lack, :cpu | :ram | {:net, network_id}}}
   defp preallocate([h| t], plan, resources) do
     process = Process.allocate_minimum(h)
     net_id = Changeset.get_field(process, :network_id)
@@ -79,7 +81,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
 
             preallocate(t, plan, resources)
         end
-      error ->
+      error = {:error, {:resources, :lack, _}} ->
         error
     end
   end
@@ -105,17 +107,18 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
     Process.can_allocate(process) -- shouldnt
   end
 
-  @spec execute({t, ServerResources.t}) :: [Ecto.Changeset.t]
-  @spec execute({:error, any}) :: {:error, any}
-  defp execute(error = {:error, _}),
-    do: error
+  @spec execute({plan, ServerResources.t}) :: [Ecto.Changeset.t]
+  @spec execute({:error, any}) :: {:error, :insufficient_resources}
+  defp execute({:error, _}),
+    # FIXME: Return the resource that was insufficient
+    do: {:error, :insufficient_resources}
   defp execute({plan = %{}, resources = %{}}) do
     plan
     |> execute_step(resources)
     |> Map.fetch!(:acc)
   end
 
-  @spec execute_step(t, ServerResources.t) :: t
+  @spec execute_step(plan, ServerResources.t) :: plan
   defp execute_step(plan = %{current_plan: %{fragment: fragment, processes: [{process, required_resources}| t]}}, resources) do
     shares = Changeset.get_field(process, :priority)
     net_id = Changeset.get_field(process, :network_id)

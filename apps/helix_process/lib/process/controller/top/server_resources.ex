@@ -72,7 +72,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
     end
   end
 
-  @spec sub_from_process(t, ProcessModel.t) :: {:ok, t} | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, network_id :: HELL.PK.t}}}
+  @spec sub_from_process(t, ProcessModel.t | Ecto.Changeset.t) :: {:ok, t} | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, network_id :: HELL.PK.t}}}
   def sub_from_process(server_resources = %__MODULE__{cpu: cpu, ram: ram, net: networks}, process) do
     process = Changeset.change(process)
     net_id = Changeset.get_field(process, :network_id)
