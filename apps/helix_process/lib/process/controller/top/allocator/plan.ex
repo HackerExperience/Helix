@@ -13,7 +13,9 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.Plan do
   @type shares_plan :: %{
     cpu: non_neg_integer,
     ram: non_neg_integer,
-    net: %{optional(network_id) => %{dlk: non_neg_integer, ulk: non_neg_integer}}
+    net: %{
+      optional(network_id) => %{dlk: non_neg_integer, ulk: non_neg_integer}
+    }
   }
 
   @type t :: plan :: %{

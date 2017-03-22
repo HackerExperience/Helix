@@ -100,7 +100,13 @@ defmodule Helix.Process.Model.Process do
       references: :process_id
   end
 
-  @creation_fields ~w/process_data process_type gateway_id target_server_id file_id network_id/a
+  @creation_fields ~w/
+    process_data
+    process_type
+    gateway_id
+    target_server_id
+    file_id
+    network_id/a
   @update_fields ~w/state priority updated_time estimated_time minimum/a
 
   @required_fields ~w/gateway_id target_server_id process_data process_type/a

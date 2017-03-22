@@ -35,7 +35,6 @@ defmodule Helix.Software.Model.ModuleRole do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required([:module_role, :file_type])
-    |> unique_constraint(:module_role, name: :file_type_module_role_unique_constraint)
   end
 
   defmodule Query do

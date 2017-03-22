@@ -97,10 +97,9 @@ defmodule Helix.Hardware.Controller.HardwareService do
     {:component_spec, :get, HELL.PK.t},
     GenServer.from,
     state) :: {:reply, {:ok, ComponentSpec.t} | {:error, :notfound}, state}
-  @spec handle_call(
-    {:setup, HELL.PK.t, %{motherboard: String.t, components: [{String.t, String.t}]}},
-    GenServer.from,
-    state) :: {:reply, {:ok, Motherboard.t} | {:error, :internal_error}, state}
+  @spec handle_call({:setup, HELL.PK.t, %{motherboard: String.t, components: [{String.t, String.t}]}}, GenServer.from, state) ::
+    {:reply, {:ok, Motherboard.t}
+    | {:error, :internal_error}, state}
   @spec handle_call(
     {:motherboard, :resources, HELL.PK.t},
     GenServer.from,

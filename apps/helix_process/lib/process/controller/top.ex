@@ -73,8 +73,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     do: GenServer.cast(pid, {:resources, resources})
 
   @spec apply_update([Ecto.Changeset.t]) :: ProcessModel.t
-  @spec apply_update(
-    {:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}) :: ProcessModel.t
+  @spec apply_update({:update_and_delete, [Ecto.Changeset.t], [ProcessModel.t]}) :: ProcessModel.t
   docp """
   Asynchronously stores the changes from `changeset_list` into the database and
   immediately returns all the changesets applied as models
