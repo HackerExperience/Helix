@@ -9,9 +9,6 @@ defmodule Helix.Hardware.Model.Component.RAM do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    ram_id: PK.t,
-    ram_size: non_neg_integer,
-    component: Component.t
   }
 
   @primary_key false

@@ -9,10 +9,6 @@ defmodule Helix.Hardware.Model.Component.CPU do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    cpu_id: PK.t,
-    clock: non_neg_integer,
-    cores: pos_integer,
-    component: Component.t
   }
 
   @primary_key false
