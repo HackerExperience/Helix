@@ -9,9 +9,6 @@ defmodule Helix.Hardware.Model.Component.HDD do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    hdd_id: PK.t,
-    hdd_size: non_neg_integer,
-    component: Component.t
   }
 
   @primary_key false

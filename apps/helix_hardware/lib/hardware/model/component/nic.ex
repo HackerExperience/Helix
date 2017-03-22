@@ -11,11 +11,6 @@ defmodule Helix.Hardware.Model.Component.NIC do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    nic_id: PK.t,
-    mac_address: MacAddress.t,
-    component: Component.t,
-    network_connection: NetworkConnection.t,
-    network_connection_id: PK.t
   }
 
   @primary_key false
@@ -69,7 +64,6 @@ defmodule Helix.Hardware.Model.Component.NIC do
   defmodule Query do
 
     alias Helix.Hardware.Model.Component.NIC
-    alias Helix.Hardware.Model.NetworkConnection
 
     import Ecto.Query, only: [join: 4, preload: 3, where: 3]
 
