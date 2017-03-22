@@ -4,7 +4,11 @@ defmodule Mix.Tasks.Helix.Test do
 
   @content "Prunning database"
   @pad String.duplicate(" ", div(80 - String.length(@content), 2))
-  @line_div IO.ANSI.yellow() <> "⚡" <> String.duplicate("=", 78) <> "⚡" <> IO.ANSI.default_color()
+
+  @line_div IO.ANSI.yellow() <> "⚡" <>
+            String.duplicate("=", 78) <> "⚡" <>
+            IO.ANSI.default_color()
+
   @msg IO.ANSI.red() <> @pad <> @content <> @pad <> IO.ANSI.default_color()
   @command IO.ANSI.yellow() <> "mix test --no-prune" <> IO.ANSI.default_color()
 

@@ -30,7 +30,7 @@ parallel (
     node('elixir') {
       stage('Lint') {
         unstash 'source'
-        //sh "mix credo --strict"
+        sh "mix credo --strict"
       }
     }
   },
