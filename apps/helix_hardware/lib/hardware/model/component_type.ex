@@ -27,4 +27,8 @@ defmodule Helix.Hardware.Model.ComponentType do
       "mobo" => Helix.Hardware.Model.Motherboard
     }
   end
+
+  @spec type_implementation(String.t) :: module | nil
+  def type_implementation(type),
+    do: type_implementations()[type]
 end
