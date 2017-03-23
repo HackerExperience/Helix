@@ -54,7 +54,7 @@ defmodule Helix.Hardware.Model.Component.RAM do
     |> foreign_key_constraint(:ram_id, name: :rams_ram_id_fkey)
   end
 
-  @spec validate_spec(%{clock: non_neg_integer, size: non_neg_integer}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:clock => non_neg_integer, :ram_size => non_neg_integer, optional(any) => any}) :: Ecto.Changeset.t
   @doc false
   def validate_spec(params) do
     data = %{
@@ -67,24 +67,10 @@ defmodule Helix.Hardware.Model.Component.RAM do
     }
 
     {data, types}
-    |> cast(translate_from_spec_to_schema_keys(params), [:clock, :ram_size])
+    |> cast(params, [:clock, :ram_size])
     |> validate_required([:clock, :ram_size])
     |> validate_number(:clock, greater_than_or_equal_to: 0)
     |> validate_number(:ram_size, greater_than_or_equal_to: 0)
-  end
-
-  @spec translate_from_spec_to_schema_keys(map) :: %{ram_size: term}
-  defp translate_from_spec_to_schema_keys(params) do
-    params
-    |> Enum.map(fn
-      {:size, x} ->
-        {:ram_size, x}
-      {"size", x} ->
-        {"ram_size", x}
-      kv ->
-        kv
-    end)
-    |> :maps.from_list()
   end
 
   defmodule Query do

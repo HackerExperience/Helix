@@ -59,7 +59,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
     |> foreign_key_constraint(:cpu_id, name: :cpus_cpu_id_fkey)
   end
 
-  @spec validate_spec(%{clock: non_neg_integer, cores: pos_integer}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:clock => non_neg_integer, :cores => pos_integer, optional(any) => any}) :: Ecto.Changeset.t
   @doc false
   def validate_spec(params) do
     data = %{
