@@ -16,4 +16,11 @@ defmodule Helix.Hardware.Model.ComponentType do
   def possible_types do
     ~w/mobo cpu ram hdd usb nic/
   end
+
+  @doc false
+  def type_implementations do
+    %{
+      "cpu" => Helix.Hardware.Model.Component.CPU
+    }
+  end
 end
