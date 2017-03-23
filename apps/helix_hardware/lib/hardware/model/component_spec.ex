@@ -38,6 +38,10 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     timestamps()
   end
 
+  @doc false
+  def valid_spec_types,
+    do: @valid_spec_types
+
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
