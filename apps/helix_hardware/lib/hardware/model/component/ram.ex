@@ -59,18 +59,32 @@ defmodule Helix.Hardware.Model.Component.RAM do
   def validate_spec(params) do
     data = %{
       clock: nil,
-      size: nil
+      ram_size: nil
     }
     types = %{
       clock: :integer,
-      size: :integer
+      ram_size: :integer
     }
 
     {data, types}
-    |> cast(params, [:clock, :size])
-    |> validate_required([:clock, :size])
+    |> cast(translate_from_spec_to_schema_keys(params), [:clock, :ram_size])
+    |> validate_required([:clock, :ram_size])
     |> validate_number(:clock, greater_than_or_equal_to: 0)
-    |> validate_number(:size, greater_than_or_equal_to: 0)
+    |> validate_number(:ram_size, greater_than_or_equal_to: 0)
+  end
+
+  @spec translate_from_spec_to_schema_keys(map) :: %{ram_size: term}
+  defp translate_from_spec_to_schema_keys(params) do
+    params
+    |> Enum.map(fn
+      {:size, x} ->
+        {:ram_size, x}
+      {"size", x} ->
+        {"ram_size", x}
+      kv ->
+        kv
+    end)
+    |> :maps.from_list()
   end
 
   defmodule Query do

@@ -50,7 +50,7 @@ if Mix.env in [:dev, :test] do
         "spec_type" => "RAM",
         "name" => "Sample RAM 1",
         "clock" => 1666,
-        "ram_size" => 2048
+        "size" => 2048
       }
     }
 
@@ -60,7 +60,7 @@ if Mix.env in [:dev, :test] do
         "spec_code" => "HDD01",
         "spec_type" => "HDD",
         "name" => "Sample HDD 1",
-        "hdd_size" => 2000
+        "size" => 2000
       }
     }
 
