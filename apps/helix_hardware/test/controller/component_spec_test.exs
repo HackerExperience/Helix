@@ -9,15 +9,14 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   @moduletag :integration
 
+  # REVIEW: Refactor me, use factories
+
   setup do
     type = Enum.random(["cpu", "ram", "hdd", "nic"])
-    params = %{
-      component_type: type,
-      spec: spec_for(type)
-    }
     component_spec =
-      params
-      |> ComponentSpec.create_changeset()
+      type
+      |> spec_for()
+      |> ComponentSpec.create_from_spec()
       |> Repo.insert!()
 
     {:ok, component_spec: component_spec}

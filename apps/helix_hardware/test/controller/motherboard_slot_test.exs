@@ -14,11 +14,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   @moduletag :integration
 
   setup_all do
-    spec_params = %{
-      spec: motherboard_spec()
-    }
-
-    {:ok, spec} = ComponentSpecController.create(spec_params)
+    {:ok, spec} = ComponentSpecController.create(motherboard_spec())
 
     {:ok, motherboard_spec: spec}
   end

@@ -12,12 +12,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   @moduletag :integration
 
   setup_all do
-    spec_params = %{
-      component_type: "mobo",
-      spec: motherboard_spec()
-    }
-
-    {:ok, spec} = ComponentSpecController.create(spec_params)
+    {:ok, spec} = ComponentSpecController.create(motherboard_spec())
 
     {:ok, component_spec: spec}
   end

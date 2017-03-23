@@ -2,28 +2,16 @@ defmodule Helix.Hardware.Controller.Component do
 
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
-  alias Helix.Hardware.Model.Motherboard
+  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Repo
 
   @spec create_from_spec(ComponentSpec.t) :: {:ok, Component.t} | {:error, Ecto.Changeset.t}
-  def create_from_spec(component_spec) do
-    module = case component_spec.component_type do
-      "mobo" ->
-        Motherboard
-      "hdd" ->
-        Component.HDD
-      "cpu" ->
-        Component.CPU
-      "ram" ->
-        Component.RAM
-      "nic" ->
-        Component.NIC
-    end
+  def create_from_spec(spec = %ComponentSpec{}) do
+    module = ComponentType.type_implementation(spec.component_type)
 
-    component_spec
-    |> module.create_from_spec()
-    |> Repo.insert()
-    |> case do
+    changeset = module.create_from_spec(spec)
+
+    case Repo.insert(changeset) do
       {:ok, %{component: c}} ->
         {:ok, c}
       e ->

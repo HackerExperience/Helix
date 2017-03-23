@@ -3,10 +3,10 @@ defmodule Helix.Hardware.Controller.ComponentSpec do
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
-  @spec create(ComponentSpec.creation_params) :: {:ok, ComponentSpec.t} | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
-    |> ComponentSpec.create_changeset()
+  @spec create(ComponentSpec.spec) :: {:ok, ComponentSpec.t} | {:error, Ecto.Changeset.t}
+  def create(spec_params) do
+    spec_params
+    |> ComponentSpec.create_from_spec()
     |> Repo.insert()
   end
 
