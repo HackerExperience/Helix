@@ -68,9 +68,9 @@ defmodule Helix.Software.Controller.FileModuleTest do
       file = Factory.insert(:file)
       module_id = Random.pk()
       version = Burette.Number.number(1..1024)
+      result = FileModuleController.update(file, module_id, version)
 
-      assert {:error, :notfound} ==
-        FileModuleController.update(file, module_id, version)
+      assert {:error, :notfound} == result
     end
   end
 
@@ -84,7 +84,6 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
     file_modules = FileModuleController.get_file_modules(file)
 
-    refute Enum.empty?(module_roles)
     assert Enum.empty?(file_modules)
   end
 end

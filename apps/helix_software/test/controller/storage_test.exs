@@ -29,11 +29,7 @@ defmodule Helix.Software.Controller.StorageTest do
   test "deleting is idempotency" do
     # Create a Storage without any files being contained by it since (right now)
     # you can't directly delete an storage without deleting it's files
-    storage =
-      :storage
-      |> Factory.build()
-      |> Map.put(:files, [])
-      |> Factory.insert()
+    storage = Factory.insert(:storage, %{files: []})
 
     assert StorageController.fetch(storage.storage_id)
 

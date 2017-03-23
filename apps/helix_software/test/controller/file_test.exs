@@ -69,7 +69,9 @@ defmodule Helix.Software.Controller.FileTest do
       refute file.file_path == updated.file_path
       assert params.file_path == updated.file_path
 
-      # update storage
+      # Storage
+      # REVIEW: I think we should disallow this. A file should not be
+      #   moved/updated to another storage but should be copied to it
       storage = Factory.insert(:storage)
       params = %{storage_id: storage.storage_id}
       {:ok, updated} = FileController.update(file, params)
@@ -146,11 +148,7 @@ defmodule Helix.Software.Controller.FileTest do
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
       similarities = Map.take(file0, [:name, :storage, :storage_id, :file_type])
-      file1 =
-        :file
-        |> Factory.build()
-        |> Map.merge(similarities)
-        |> Factory.insert()
+      file1 = Factory.insert(:file, similarities)
 
       assert {:error, :file_exists} ==
         FileController.move(file1, file0.file_path, file0.storage_id)
@@ -171,11 +169,7 @@ defmodule Helix.Software.Controller.FileTest do
       file0 = Factory.insert(:file)
       similarities =
         Map.take(file0, [:file_path, :file_type, :storage, :storage_id])
-      file1 =
-        :file
-        |> Factory.build()
-        |> Map.merge(similarities)
-        |> Factory.insert()
+      file1 = Factory.insert(:file, similarities)
 
       assert {:error, :file_exists} == FileController.rename(file1, file0.name)
     end
@@ -193,13 +187,17 @@ defmodule Helix.Software.Controller.FileTest do
       refute FileController.fetch(file.file_id)
     end
 
-    test "can be done by its id or its struct" do
+    test "can be done by its id" do
       file = Factory.insert(:file)
+
       assert FileController.fetch(file.file_id)
       FileController.delete(file.file_id)
       refute FileController.fetch(file.file_id)
+    end
 
+    test "can be done by its struct" do
       file = Factory.insert(:file)
+
       assert FileController.fetch(file.file_id)
       FileController.delete(file.file_id)
       refute FileController.fetch(file.file_id)

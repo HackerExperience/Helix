@@ -17,6 +17,8 @@ defmodule Helix.Software.Controller.StorageDrive do
       {:ok, _} ->
         :ok
       {:error, _} ->
+        # TODO: check if the problem is an unique constraint violation and
+        # return an error like :already_in_use instead
         {:error, :internal}
     end
   end

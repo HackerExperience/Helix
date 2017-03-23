@@ -40,11 +40,7 @@ defmodule Helix.Software.Controller.FileTextTest do
     end
 
     test "returns nil if file_text with id doesn't exists" do
-      bogus =
-        :file
-        |> Factory.build()
-        |> Map.put(:file_id, PK.pk_for(File))
-
+      bogus = Factory.build(:file, %{file_id: PK.pk_for(File)})
       refute FileTextController.fetch(bogus)
     end
   end
