@@ -83,14 +83,14 @@ defmodule Helix.Hardware.Model.Motherboard do
       slots: :map
     }
 
-    changeset = cast({mobo_data, mobo_type}, params, [:slots])
+    slots = params[:slots] || params["slots"] || %{}
 
-    {slots, errors} = Enum.map_reduce(get_change(changeset, :slots), [], fn
+    {slots, errors} = Enum.map_reduce(slots, [], fn
       {i, params}, acc ->
         changeset =
           {slot_data, slot_types}
-          |> cast(params, [:slot_id, :type, :limit])
-          |> put_change(:slot_id, i)
+          |> cast(params, [:type, :limit])
+          |> cast(%{slot_id: i}, [:slot_id])
           |> validate_required([:slot_id, :type])
           |> validate_number(:limit, greater_than_or_equal_to: 1)
           |> validate_format(:slot_id, ~r/^[0-9]{1,3}$/)
@@ -115,8 +115,8 @@ defmodule Helix.Hardware.Model.Motherboard do
     end)
 
     changeset =
-      changeset
-      |> put_change(:slots, :maps.from_list(slots))
+      {mobo_data, mobo_type}
+      |> change(%{slots: :maps.from_list(slots)})
       |> validate_change(:slots, fn :slots, slots ->
         if map_size(slots) > 0 do
           []
