@@ -21,7 +21,8 @@ defmodule Helix.Hardware.Model.ComponentType do
   def type_implementations do
     %{
       "cpu" => Helix.Hardware.Model.Component.CPU,
-      "hdd" => Helix.Hardware.Model.Component.HDD
+      "hdd" => Helix.Hardware.Model.Component.HDD,
+      "ram" => Helix.Hardware.Model.Component.RAM
     }
   end
 end
