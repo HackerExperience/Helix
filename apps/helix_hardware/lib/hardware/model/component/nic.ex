@@ -10,6 +10,8 @@ defmodule Helix.Hardware.Model.Component.NIC do
 
   import Ecto.Changeset
 
+  @behaviour Helix.Hardware.Model.ComponentSpec
+
   @type t :: %__MODULE__{
   }
 
@@ -59,6 +61,22 @@ defmodule Helix.Hardware.Model.Component.NIC do
     |> foreign_key_constraint(:nic_id)
     |> foreign_key_constraint(:network_connection_id)
     |> unique_constraint(:mac_address)
+  end
+
+  @spec validate_spec(%{link: non_neg_integer}) :: Ecto.Changeset.t
+  @doc false
+  def validate_spec(params) do
+    data = %{
+      link: nil
+    }
+    types = %{
+      link: :integer
+    }
+
+    {data, types}
+    |> cast(params, [:link])
+    |> validate_required([:link])
+    |> validate_number(:link, greater_than_or_equal_to: 0)
   end
 
   defmodule Query do

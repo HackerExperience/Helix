@@ -22,7 +22,8 @@ defmodule Helix.Hardware.Model.ComponentType do
     %{
       "cpu" => Helix.Hardware.Model.Component.CPU,
       "hdd" => Helix.Hardware.Model.Component.HDD,
-      "ram" => Helix.Hardware.Model.Component.RAM
+      "ram" => Helix.Hardware.Model.Component.RAM,
+      "nic" => Helix.Hardware.Model.Component.NIC
     }
   end
 end
