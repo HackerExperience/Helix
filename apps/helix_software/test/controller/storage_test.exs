@@ -2,42 +2,40 @@ defmodule Helix.Software.Controller.StorageTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
+  alias HELL.PK
   alias Helix.Software.Controller.Storage, as: StorageController
+  alias Helix.Software.Model.Storage
 
   alias Helix.Software.Factory
 
   @moduletag :integration
 
-  test "create/1" do
+  test "creating always succeeds" do
     assert {:ok, _} = StorageController.create()
   end
 
-  describe "find/1" do
-    test "success" do
+  describe "fetching" do
+    test "returns a record based on its identification" do
       storage = Factory.insert(:storage)
-      {:ok, found} = StorageController.find(storage.storage_id)
-
-      assert storage.storage_id == found.storage_id
+      assert %Storage{} = StorageController.fetch(storage.storage_id)
     end
 
-    test "failure" do
-      assert {:error, :notfound} == StorageController.find(Random.pk())
+    test "returns nil if storage with id doesn't exists" do
+      storage_id = PK.pk_for(Storage)
+      refute StorageController.fetch(storage_id)
     end
   end
 
-  test "delete/2 idempotency" do
+  test "deleting is idempotency" do
     # Create a Storage without any files being contained by it since (right now)
     # you can't directly delete an storage without deleting it's files
-    storage =
-      :storage
-      |> Factory.build()
-      |> Map.put(:files, [])
-      |> Factory.insert()
+    storage = Factory.insert(:storage, %{files: []})
+
+    assert StorageController.fetch(storage.storage_id)
 
     assert :ok = StorageController.delete(storage.storage_id)
     assert :ok = StorageController.delete(storage.storage_id)
 
-    assert {:error, :notfound} == StorageController.find(storage.storage_id)
+    refute StorageController.fetch(storage.storage_id)
   end
 end

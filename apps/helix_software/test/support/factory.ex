@@ -20,11 +20,15 @@ defmodule Helix.Software.Factory do
     }
   end
 
+  def storage_drive_factory do
+    :storage_drive
+    |> prepare()
+    |> Map.put(:storage, build(:storage))
+  end
+
   def storage_factory do
     files = Random.repeat(1..3, fn -> prepare(:file) end)
-    drives = Random.repeat(1..3, fn ->
-      %StorageDrive{drive_id: PK.pk_for(Component)}
-    end)
+    drives = Random.repeat(1..3, fn -> prepare(:storage_drive) end)
 
     %Helix.Software.Model.Storage{
       files: files,
@@ -52,4 +56,7 @@ defmodule Helix.Software.Factory do
       file_type: Enum.random(["firewall", "cracker", "exploit", "hasher"])
     }
   end
+
+  defp prepare(:storage_drive),
+    do: %StorageDrive{drive_id: PK.pk_for(Component)}
 end

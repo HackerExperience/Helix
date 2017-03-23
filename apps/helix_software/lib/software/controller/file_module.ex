@@ -4,6 +4,8 @@ defmodule Helix.Software.Controller.FileModule do
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Repo
 
+  import Ecto.Query, only: [select: 3]
+
   @type module_roles :: %{role :: HELL.PK.t => version :: pos_integer}
 
   @spec create(File.t, module_roles) ::
@@ -29,11 +31,11 @@ defmodule Helix.Software.Controller.FileModule do
     end)
   end
 
-  @spec find(File.t) :: module_roles
-  def find(file) do
+  @spec get_file_modules(File.t | File.id) :: module_roles
+  def get_file_modules(file) do
     file
     |> FileModule.Query.from_file()
-    |> FileModule.Query.select_module_role_id_and_module_version()
+    |> select([m], {m.module_role_id, m.module_version})
     |> Repo.all()
     |> :maps.from_list()
   end

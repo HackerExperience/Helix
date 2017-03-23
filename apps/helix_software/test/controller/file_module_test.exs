@@ -19,50 +19,47 @@ defmodule Helix.Software.Controller.FileModuleTest do
     |> :maps.from_list()
   end
 
-  test "file modules creation creates the correct roles" do
-    file = Factory.insert(:file)
-    module_roles = generate_module_roles(file.file_type)
+  test "creating succeeds with valid params" do
+    f = Factory.insert(:file)
+    module_roles = generate_module_roles(f.file_type)
 
-    {:ok, file_modules1} = FileModuleController.create(file, module_roles)
-    file_modules2 = FileModuleController.find(file)
-
-    # created roles from module_roles
-    assert module_roles == file_modules1
-
-    # roles found are the same as those yielded by create
-    assert file_modules1 == file_modules2
+    assert {:ok, file_modules} = FileModuleController.create(f, module_roles)
+    assert module_roles == file_modules
   end
 
-  describe "file modules fetching" do
+  describe "getting" do
     test "returns file modules as a map" do
       file = Factory.insert(:file)
       module_roles = generate_module_roles(file.file_type)
+
       FileModuleController.create(file, module_roles)
+      file_modules = FileModuleController.get_file_modules(file)
 
-      file_modules = FileModuleController.find(file)
-
-      refute 0 == map_size(file_modules)
+      assert module_roles == file_modules
     end
 
-    test "yields empty map when nothing is found" do
+    test "returns empty map when nothing is found" do
       file = Factory.insert(:file)
-      file_modules = FileModuleController.find(file)
+      file_modules = FileModuleController.get_file_modules(file)
 
-      assert 0 === map_size(file_modules)
+      assert Enum.empty?(file_modules)
     end
   end
 
-  describe "file modules updating" do
-    test "updates module version" do
+  describe "updating" do
+    test "succeeds with valid params" do
       file = Factory.insert(:file)
       module_roles = generate_module_roles(file.file_type)
       {:ok, file_modules} = FileModuleController.create(file, module_roles)
 
-      module_id = file_modules |> Map.keys() |> Enum.random()
-
       version = Burette.Number.number(1..1024)
+      module_id =
+        file_modules
+        |> Map.keys()
+        |> Enum.random()
+
       {:ok, _} = FileModuleController.update(file, module_id, version)
-      file_modules = FileModuleController.find(file)
+      file_modules = FileModuleController.get_file_modules(file)
 
       assert version == file_modules[module_id]
     end
@@ -71,26 +68,22 @@ defmodule Helix.Software.Controller.FileModuleTest do
       file = Factory.insert(:file)
       module_id = Random.pk()
       version = Burette.Number.number(1..1024)
+      result = FileModuleController.update(file, module_id, version)
 
-      assert {:error, :notfound} == FileModuleController.update(file, module_id, version)
+      assert {:error, :notfound} == result
     end
   end
 
-  test "deleting a file deletes it's modules" do
+  test "deleting deletes every file modules" do
     file = Factory.insert(:file)
     module_roles = generate_module_roles(file.file_type)
-    {:ok, _} = FileModuleController.create(file, module_roles)
 
-    file_modules1 = FileModuleController.find(file)
+    {:ok, _} = FileModuleController.create(file, module_roles)
 
     Repo.delete(file)
 
-    file_modules2 = FileModuleController.find(file)
+    file_modules = FileModuleController.get_file_modules(file)
 
-    # modules exist before deleting the file
-    refute 0 === map_size(file_modules1)
-
-    # no modules are found after deleting the file
-    assert 0 === map_size(file_modules2)
+    assert Enum.empty?(file_modules)
   end
 end

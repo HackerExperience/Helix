@@ -2,48 +2,50 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
-  alias Helix.Software.Controller.StorageDrive, as: StorageDriveController
+  alias HELL.PK
+  alias Helix.Hardware.Model.Component
+  alias Helix.Software.Controller.StorageDrive, as: Controller
 
   alias Helix.Software.Factory
 
   @moduletag :integration
 
-  test "create/1" do
-    storage = Factory.insert(:storage)
+  test "linking succeeds with a valid storage" do
+    drive_id = PK.pk_for(Component)
+    storage = Factory.insert(:storage, %{drives: []})
 
-    payload = %{
-      drive_id: Random.pk(),
-      storage_id: storage.storage_id
-    }
+    Controller.link_drive(storage, drive_id)
 
-    assert {:ok, _} = StorageDriveController.create(payload)
+    assert drive_id in Controller.get_storage_drives(storage)
   end
 
-  describe "find/2" do
-    test "success" do
-      drive = create_drive()
-      assert {:ok, ^drive} = StorageDriveController.find(drive.storage_id, drive.drive_id)
+  describe "getting" do
+    test "returns every drive of given storage" do
+      storage = Factory.insert(:storage, %{drives: []})
+      expected_drives =
+        3
+        |> Factory.insert_list(:storage_drive, storage: storage)
+        |> Enum.map(&(&1.drive_id))
+
+      got_drives = Controller.get_storage_drives(storage)
+
+      assert Enum.sort(expected_drives) == Enum.sort(got_drives)
     end
 
-    test "failure" do
-      assert {:error, :notfound} == StorageDriveController.find(Random.pk(), Random.pk())
+    test " returns an empty list when storage has no drives" do
+      driveless_storage = Factory.insert(:storage, %{drives: []})
+      got_drives = Controller.get_storage_drives(driveless_storage)
+
+      assert Enum.empty?(got_drives)
     end
   end
 
-  test "delete/2 idempotency" do
-    drive = create_drive()
+  test "unlinking is idempotent" do
+    %{storage: storage, drive_id: drive_id} = Factory.insert(:storage_drive)
 
-    assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
-    assert :ok = StorageDriveController.delete(drive.storage_id, drive.drive_id)
+    Controller.unlink_drive(drive_id)
+    Controller.unlink_drive(drive_id)
 
-    assert {:error, :notfound} == StorageDriveController.find(drive.storage_id, drive.drive_id)
-  end
-
-  defp create_drive do
-    :storage
-    |> Factory.insert()
-    |> Map.fetch!(:drives)
-    |> Enum.random()
+    refute drive_id in Controller.get_storage_drives(storage)
   end
 end
