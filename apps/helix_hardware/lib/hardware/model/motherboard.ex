@@ -62,7 +62,7 @@ defmodule Helix.Hardware.Model.Motherboard do
     |> put_assoc(:component, component)
   end
 
-  @spec validate_spec(%{slots: %{optional(String.t) => map}}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:slots => %{optional(String.t) => map}, optional(any) => any}) :: Ecto.Changeset.t
   @doc false
   def validate_spec(params) do
     slot_data = %{

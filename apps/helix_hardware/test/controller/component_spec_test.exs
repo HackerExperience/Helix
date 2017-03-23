@@ -57,7 +57,7 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
       spec_type: "RAM",
       name: Random.string(min: 12),
       clock: Random.number(66..3200),
-      size: Random.number(256..8192)
+      ram_size: Random.number(256..8192)
     }
   end
 
@@ -66,7 +66,7 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
       spec_code: String.upcase(Random.string(min: 12)),
       spec_type: "HDD",
       name: Random.string(min: 12),
-      size: Random.number(256..8192)
+      hdd_size: Random.number(256..8192)
     }
   end
 

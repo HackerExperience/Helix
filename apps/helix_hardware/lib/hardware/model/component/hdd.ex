@@ -54,7 +54,7 @@ defmodule Helix.Hardware.Model.Component.HDD do
     |> foreign_key_constraint(:hdd_id, name: :hdds_hdd_id_fkey)
   end
 
-  @spec validate_spec(%{size: non_neg_integer}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:hdd_size => non_neg_integer, optional(any) => any}) :: Ecto.Changeset.t
   @doc false
   def validate_spec(params) do
     data = %{
@@ -65,23 +65,9 @@ defmodule Helix.Hardware.Model.Component.HDD do
     }
 
     {data, types}
-    |> cast(translate_from_spec_to_schema_keys(params), [:hdd_size])
+    |> cast(params, [:hdd_size])
     |> validate_required([:hdd_size])
     |> validate_number(:hdd_size, greater_than_or_equal_to: 0)
-  end
-
-  @spec translate_from_spec_to_schema_keys(map) :: %{hdd_size: term}
-  defp translate_from_spec_to_schema_keys(params) do
-    params
-    |> Enum.map(fn
-      {:size, x} ->
-        {:hdd_size, x}
-      {"size", x} ->
-        {"hdd_size", x}
-      kv ->
-        kv
-    end)
-    |> :maps.from_list()
   end
 
   defmodule Query do

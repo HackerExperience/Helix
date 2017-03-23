@@ -62,7 +62,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     %{
       "spec_code" => String.upcase(Random.string(min: 10)),
       "spec_type" => "MOBO",
-      "name" => Random.string(),
+      "name" => Random.string(min: 9),
       "slots" => slots
     }
   end

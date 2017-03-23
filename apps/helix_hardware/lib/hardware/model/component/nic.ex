@@ -63,7 +63,7 @@ defmodule Helix.Hardware.Model.Component.NIC do
     |> unique_constraint(:mac_address)
   end
 
-  @spec validate_spec(%{link: non_neg_integer}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:link => non_neg_integer, optional(any) => any}) :: Ecto.Changeset.t
   @doc false
   def validate_spec(params) do
     data = %{
