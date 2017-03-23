@@ -33,7 +33,14 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
     # FK to ComponentType
     field :component_type, :string
-    field :spec, :map
+    field :spec, :map,
+      # HACK: Yes, this is totally unnecessary, but the `spec` field after
+      #   applying our changeset validation logic is returned with keys as atoms
+      #   while when you fetch it from the database the keys will be strings
+      #   so this will use a `returning` statement that will parse the return
+      #   and it'll be get with keys as strings. Yes, this sucks, i might fix
+      #   it in the future
+      read_after_writes: true
 
     timestamps()
   end
@@ -59,7 +66,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     spec = Map.get(params, :spec, %{})
 
     base_cs = prevalidate_spec(spec)
-    impl_cs = validate_spec_by_type(spec)
+    impl_cs = validate_spec_by_type(base_cs, spec)
 
     final_spec = Map.merge(apply_changes(base_cs), apply_changes(impl_cs))
 
@@ -95,9 +102,10 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     |> validate_length(:name, min: 3, max: 64)
   end
 
-  @spec validate_spec_by_type(map) :: Ecto.Changeset.t
-  defp validate_spec_by_type(params) do
-    implementation = Map.get(@spec_type_implementation, params[:spec_type])
+  @spec validate_spec_by_type(Ecto.Changeset.t, map) :: Ecto.Changeset.t
+  defp validate_spec_by_type(base_changeset, params) do
+    spec_type = get_change(base_changeset, :spec_type)
+    implementation = Map.get(@spec_type_implementation, spec_type)
 
     if implementation do
       implementation.validate_spec(params)

@@ -58,16 +58,30 @@ defmodule Helix.Hardware.Model.Component.HDD do
   @doc false
   def validate_spec(params) do
     data = %{
-      size: nil
+      hdd_size: nil
     }
     types = %{
-      size: :integer
+      hdd_size: :integer
     }
 
     {data, types}
-    |> cast(params, [:size])
-    |> validate_required([:size])
-    |> validate_number(:size, greater_than_or_equal_to: 0)
+    |> cast(translate_from_spec_to_schema_keys(params), [:hdd_size])
+    |> validate_required([:hdd_size])
+    |> validate_number(:hdd_size, greater_than_or_equal_to: 0)
+  end
+
+  @spec translate_from_spec_to_schema_keys(map) :: %{hdd_size: term}
+  defp translate_from_spec_to_schema_keys(params) do
+    params
+    |> Enum.map(fn
+      {:size, x} ->
+        {:hdd_size, x}
+      {"size", x} ->
+        {"hdd_size", x}
+      kv ->
+        kv
+    end)
+    |> :maps.from_list()
   end
 
   defmodule Query do
