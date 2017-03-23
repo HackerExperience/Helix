@@ -20,13 +20,6 @@ defmodule Helix.Hardware.Controller.ComponentSpec do
     end
   end
 
-  @spec update(ComponentSpec.t, ComponentSpec.update_params) :: {:ok, ComponentSpec.t} | {:error, Ecto.Changeset.t}
-  def update(component_spec, params) do
-    component_spec
-    |> ComponentSpec.update_changeset(params)
-    |> Repo.update()
-  end
-
   @spec delete(ComponentSpec.t | String.t) :: no_return
   def delete(%ComponentSpec{spec_id: sid}),
     do: delete(sid)
