@@ -22,9 +22,20 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   @callback validate_spec(map) :: Ecto.Changeset.t
 
-  @valid_spec_types ComponentType.type_implementations() |> Map.keys() |> Enum.map(&String.upcase/1)
-  @spec_type_implementation ComponentType.type_implementations() |> Enum.map(fn {k, v} -> {String.upcase(k), v} end) |> :maps.from_list()
-  @spec_type_to_component_type ComponentType.type_implementations() |> Enum.map(fn {k, _} -> {String.upcase(k), k} end) |> :maps.from_list()
+  @valid_spec_types (
+    ComponentType.type_implementations()
+    |> Map.keys()
+    |> Enum.map(&String.upcase/1))
+
+  @spec_type_implementation (
+    ComponentType.type_implementations()
+    |> Enum.map(fn {k, v} -> {String.upcase(k), v} end)
+    |> :maps.from_list())
+
+  @spec_type_to_component_type (
+    ComponentType.type_implementations()
+    |> Enum.map(fn {k, _} -> {String.upcase(k), k} end)
+    |> :maps.from_list())
 
   @primary_key false
   schema "component_specs" do
@@ -97,7 +108,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     {data, types}
     |> cast(params, [:spec_code, :spec_type, :name])
     |> validate_required([:spec_code, :spec_type, :name])
-    |> validate_format(:spec_code, ~r/^[A-Z0-9_]{4,64}$/)
+    |> validate_format(:spec_code, ~r/^[A-Z0-9_]{4,32}$/)
     |> validate_inclusion(:spec_type, @valid_spec_types)
     |> validate_length(:name, min: 3, max: 64)
   end

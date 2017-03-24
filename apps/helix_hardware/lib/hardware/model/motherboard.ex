@@ -62,7 +62,7 @@ defmodule Helix.Hardware.Model.Motherboard do
     |> put_assoc(:component, component)
   end
 
-  @spec validate_spec(%{:slots => %{optional(String.t) => map}, optional(any) => any}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:slots => %{String.t => map}, optional(any) => any}) :: Ecto.Changeset.t
   @doc false
   def validate_spec(params) do
     slot_data = %{
@@ -97,7 +97,7 @@ defmodule Helix.Hardware.Model.Motherboard do
           |> validate_inclusion(:type, ComponentSpec.valid_spec_types())
 
         # REVIEW: maybe normalize it like a struct (ie: leave nil fields) and
-        #   just ensure that models properly know how not to shoot themselves
+        #   just ensure that models properly know how not to shot themselves
         #   in the foot
         {slot_id, slot} =
           changeset
@@ -121,7 +121,7 @@ defmodule Helix.Hardware.Model.Motherboard do
         if map_size(slots) > 0 do
           []
         else
-          [slots: "cannot be blank"]
+          [slots: "cannot be empty"]
         end
       end)
 

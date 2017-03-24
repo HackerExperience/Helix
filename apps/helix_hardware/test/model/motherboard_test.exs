@@ -72,7 +72,7 @@ defmodule Helix.Hardware.Model.MotherboardTest do
       refute Enum.any?(valid_types, &(:slots in check_spec.(%{"type" => &1})))
     end
 
-    test "allows limit as a post_integer" do
+    test "allows limit as a pos_integer" do
       check_spec = fn params ->
         slot = %{
           "type" => Enum.random(ComponentSpec.valid_spec_types()),
