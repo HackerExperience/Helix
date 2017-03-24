@@ -8,6 +8,8 @@ defmodule Helix.Hardware.Model.Component.RAM do
 
   import Ecto.Changeset
 
+  @behaviour Helix.Hardware.Model.ComponentSpec
+
   @type t :: %__MODULE__{
   }
 
@@ -50,6 +52,25 @@ defmodule Helix.Hardware.Model.Component.RAM do
     |> validate_required(:ram_size)
     |> validate_number(:ram_size, greater_than_or_equal_to: 0)
     |> foreign_key_constraint(:ram_id, name: :rams_ram_id_fkey)
+  end
+
+  @spec validate_spec(%{:clock => non_neg_integer, :ram_size => non_neg_integer, optional(any) => any}) :: Ecto.Changeset.t
+  @doc false
+  def validate_spec(params) do
+    data = %{
+      clock: nil,
+      ram_size: nil
+    }
+    types = %{
+      clock: :integer,
+      ram_size: :integer
+    }
+
+    {data, types}
+    |> cast(params, [:clock, :ram_size])
+    |> validate_required([:clock, :ram_size])
+    |> validate_number(:clock, greater_than_or_equal_to: 0)
+    |> validate_number(:ram_size, greater_than_or_equal_to: 0)
   end
 
   defmodule Query do

@@ -8,6 +8,8 @@ defmodule Helix.Hardware.Model.Component.CPU do
 
   import Ecto.Changeset
 
+  @behaviour Helix.Hardware.Model.ComponentSpec
+
   @type t :: %__MODULE__{
   }
 
@@ -55,6 +57,25 @@ defmodule Helix.Hardware.Model.Component.CPU do
     |> validate_number(:clock, greater_than_or_equal_to: 0)
     |> validate_number(:cores, greater_than_or_equal_to: 1)
     |> foreign_key_constraint(:cpu_id, name: :cpus_cpu_id_fkey)
+  end
+
+  @spec validate_spec(%{:clock => non_neg_integer, :cores => pos_integer, optional(any) => any}) :: Ecto.Changeset.t
+  @doc false
+  def validate_spec(params) do
+    data = %{
+      clock: nil,
+      cores: nil
+    }
+    types = %{
+      clock: :integer,
+      cores: :integer
+    }
+
+    {data, types}
+    |> cast(params, [:clock, :cores])
+    |> validate_required([:clock, :cores])
+    |> validate_number(:clock, greater_than_or_equal_to: 0)
+    |> validate_number(:cores, greater_than_or_equal_to: 1)
   end
 
   defmodule Query do

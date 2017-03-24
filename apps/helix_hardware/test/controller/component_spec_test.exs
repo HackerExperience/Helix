@@ -9,15 +9,14 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   @moduletag :integration
 
+  # REVIEW: Refactor me, use factories
+
   setup do
     type = Enum.random(["cpu", "ram", "hdd", "nic"])
-    params = %{
-      component_type: type,
-      spec: spec_for(type)
-    }
     component_spec =
-      params
-      |> ComponentSpec.create_changeset()
+      type
+      |> spec_for()
+      |> ComponentSpec.create_from_spec()
       |> Repo.insert!()
 
     {:ok, component_spec: component_spec}
@@ -33,16 +32,6 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
     end
   end
 
-  describe "update" do
-    test "overrides the spec", %{component_spec: cs} do
-      update_params = %{spec: %{"test" => Burette.Color.name()}}
-      {:ok, spec} = ComponentSpecController.update(cs, update_params)
-
-      assert update_params.spec === spec.spec
-      Repo.delete(spec)
-    end
-  end
-
   test "delete is idempotent", %{component_spec: cs} do
     assert Repo.get_by(ComponentSpec, spec_id: cs.spec_id)
     ComponentSpecController.delete(cs.spec_id)
@@ -53,38 +42,39 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   defp spec_for("cpu") do
     %{
-      "spec_code": String.upcase(Random.string(min: 12)),
-      "spec_type": "CPU",
-      "name": Random.string(min: 12),
-      "clock": Random.number(66..3200),
-      "cores": Random.number(1..4)
+      spec_code: String.upcase(Random.string(min: 12)),
+      spec_type: "CPU",
+      name: Random.string(min: 12),
+      clock: Random.number(66..3200),
+      cores: Random.number(1..4)
     }
   end
 
   defp spec_for("ram") do
     %{
-      "spec_code": String.upcase(Random.string(min: 12)),
-      "spec_type": "RAM",
-      "name": Random.string(min: 12),
-      "clock": Random.number(66..3200),
-      "ram_size": Random.number(256..8192)
+      spec_code: String.upcase(Random.string(min: 12)),
+      spec_type: "RAM",
+      name: Random.string(min: 12),
+      clock: Random.number(66..3200),
+      ram_size: Random.number(256..8192)
     }
   end
 
   defp spec_for("hdd") do
     %{
-      "spec_code": String.upcase(Random.string(min: 12)),
-      "spec_type": "HDD",
-      "name": Random.string(min: 12),
-      "hdd_size": Random.number(256..8192)
+      spec_code: String.upcase(Random.string(min: 12)),
+      spec_type: "HDD",
+      name: Random.string(min: 12),
+      hdd_size: Random.number(256..8192)
     }
   end
 
   defp spec_for("nic") do
     %{
-      "spec_code": String.upcase(Random.string(min: 12)),
-      "spec_type": "NIC",
-      "name": Random.string(min: 12)
+      spec_code: String.upcase(Random.string(min: 12)),
+      spec_type: "NIC",
+      name: Random.string(min: 12),
+      link: Random.number(1024..2048)
     }
   end
 end

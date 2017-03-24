@@ -3,7 +3,6 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
@@ -12,23 +11,7 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   @moduletag :integration
 
   setup_all do
-    cs = case Repo.all(ComponentSpec) do
-      [] ->
-        p = %{
-          "spec_code": "SMPCPU1",
-          "spec_type": "CPU",
-          "name": "Sample CPU 1",
-          "clock": 3000,
-          "cores": 7
-        }
-
-
-        {:ok, comp_spec} = ComponentSpecController.create(p)
-
-        comp_spec
-      cs = [_|_] ->
-        Enum.random(cs)
-    end
+    cs = Enum.random(Repo.all(ComponentSpec))
 
     {:ok, component_spec: cs}
   end

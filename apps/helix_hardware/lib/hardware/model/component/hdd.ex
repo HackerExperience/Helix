@@ -8,6 +8,8 @@ defmodule Helix.Hardware.Model.Component.HDD do
 
   import Ecto.Changeset
 
+  @behaviour Helix.Hardware.Model.ComponentSpec
+
   @type t :: %__MODULE__{
   }
 
@@ -50,6 +52,22 @@ defmodule Helix.Hardware.Model.Component.HDD do
     |> validate_required([:hdd_size])
     |> validate_number(:hdd_size, greater_than_or_equal_to: 0)
     |> foreign_key_constraint(:hdd_id, name: :hdds_hdd_id_fkey)
+  end
+
+  @spec validate_spec(%{:hdd_size => non_neg_integer, optional(any) => any}) :: Ecto.Changeset.t
+  @doc false
+  def validate_spec(params) do
+    data = %{
+      hdd_size: nil
+    }
+    types = %{
+      hdd_size: :integer
+    }
+
+    {data, types}
+    |> cast(params, [:hdd_size])
+    |> validate_required([:hdd_size])
+    |> validate_number(:hdd_size, greater_than_or_equal_to: 0)
   end
 
   defmodule Query do

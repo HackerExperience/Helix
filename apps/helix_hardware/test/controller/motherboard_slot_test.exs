@@ -14,12 +14,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   @moduletag :integration
 
   setup_all do
-    spec_params = %{
-      component_type: "mobo",
-      spec: motherboard_spec()
-    }
-
-    {:ok, spec} = ComponentSpecController.create(spec_params)
+    {:ok, spec} = ComponentSpecController.create(motherboard_spec())
 
     {:ok, motherboard_spec: spec}
   end
@@ -117,7 +112,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     %{
       "spec_code" => String.upcase(Random.string(min: 12)),
       "spec_type" => "MOBO",
-      "name" => Random.string(),
+      "name" => Random.string(min: 9),
       "slots" => slots
     }
   end
