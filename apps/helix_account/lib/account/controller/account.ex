@@ -64,50 +64,39 @@ defmodule Helix.Account.Controller.Account do
     :ok
   end
 
-  @spec put_settings(Account.t | Account.id, map) ::
+  @spec put_settings(Account.t, map) ::
     {:ok, Setting.t}
     | {:error, reason :: term}
-  def put_settings(account, changes) do
-    fetch_settings = fn ->
+  def put_settings(account, params) do
+    settings_changeset =
+      account
+      |> AccountSetting.Query.from_account()
+      |> select([as], as.settings)
+      |> Repo.one()
+      |> Kernel.||(Setting.default())
+      |> Setting.changeset(params)
+
+    if settings_changeset.valid? do
+      settings =
+        settings_changeset
+        |> Ecto.Changeset.apply_changes()
+        |> Map.from_struct()
+
       result =
-        account
-        |> AccountSetting.Query.from_account()
-        |> Repo.one()
+        %{account_id: account.account_id, settings: settings}
+        |> AccountSetting.changeset()
+        |> Repo.insert_or_update()
 
-      if is_nil(result),
-        do: Setting.default(),
-        else: result.settings
-    end
-
-    merge_settings = fn settings, params ->
-      changeset = Setting.update_changeset(settings, params)
-
-      if changeset.valid?,
-        do: Ecto.Changeset.apply_changes(changeset),
-        else: changeset
-    end
-
-    update_settings = fn account, settings ->
-      settings = Map.from_struct(settings)
-
-      %{account_id: account.account_id, settings: settings}
-      |> AccountSetting.create_changeset()
-      |> Repo.insert_or_update()
-    end
-
-    with \
-      account_setting <- fetch_settings.(),
-      settings = %Setting{} <- merge_settings.(account_setting, changes),
-      {:ok, _} <- update_settings.(account, settings)
-    do
-      {:ok, settings}
+      case result do
+        {:ok, _} ->
+          {:ok, settings}
+        # FIXME: add account not found error here
+        {:error, _} ->
+          {:error, :internal}
+      end
     else
-      nil ->
-        {:error, :notfound}
-      %Ecto.Changeset{valid?: false} ->
-        {:error, :invalid_settings}
-      _ ->
-        {:error, :internal}
+      # FIXME: be more descriptive
+      {:error, :invalid_settings}
     end
   end
 

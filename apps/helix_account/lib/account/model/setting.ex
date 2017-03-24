@@ -12,8 +12,8 @@ defmodule Helix.Account.Model.Setting do
   end
 
   @spec changeset(Setting.t, map) :: Ecto.Changeset.t
-  def changeset(struct, params) do
-    cast(struct, params, @update_fields)
+  def changeset(struct \\ %__MODULE__{}, params) do
+    cast(struct, defaults_to_nil(params), @update_fields)
   end
 
   @spec default :: Setting.t
@@ -21,12 +21,7 @@ defmodule Helix.Account.Model.Setting do
     %__MODULE__{is_beta: false}
   end
 
-  @spec update_changeset(Setting.t, map) :: Ecto.Changeset.t
-  def update_changeset(settings, params) do
-    cast(settings, defaults_to_nil(params), @update_fields)
-  end
-
-  # TODO: review if this is alright
+  # TODO: this might not be needed with an specialized type for settings
   defp defaults_to_nil(params) do
     unchanged = Map.from_struct(default())
 
