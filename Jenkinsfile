@@ -1,43 +1,78 @@
 #!/usr/bin/env groovy
 
 node('elixir') {
-
   stage('Pre-build') {
+    step([$class: 'WsCleanup'])
+
     env.BUILD_VERSION = sh(script: 'date +%Y.%m.%d%H%M', returnStdout: true).trim()
     def ARTIFACT_PATH = "${env.BRANCH_NAME}/${env.BUILD_VERSION}"
 
     checkout scm
-  }
 
-  stage('Build') {
     sh 'mix local.hex --force'
     sh 'mix local.rebar --force'
     sh 'mix clean'
     sh 'mix deps.get'
 
-    withEnv (['MIX_ENV=prod']) {
-      sh 'mix release --env=prod --warnings-as-errors'
-    }
-
-    // Stash artifacts
-    stash excludes: '_build/, .git', includes: '**', name: 'source'
-    stash excludes: '*', includes: "_build/prod/rel/helix/releases/**/helix.tar.gz", name: 'release'
+    stash name: 'source', useDefaultExcludes: false
   }
 }
+
+parallel (
+  'Build [test]': {
+    node('elixir') {
+      stage('Build [dev]') {
+        step([$class: 'WsCleanup'])
+
+        unstash 'source'
+
+        withEnv (['MIX_ENV=test']) {
+          sh 'mix compile'
+        }
+
+        stash 'build-test'
+      }
+    }
+  },
+  'Build [prod]': {
+    node('elixir') {
+      stage('Build [prod]') {
+        step([$class: 'WsCleanup'])
+
+        unstash 'source'
+
+        withEnv (['MIX_ENV=prod']) {
+          sh 'mix compile'
+          sh 'mix release --env=prod --warnings-as-errors'
+        }
+
+        stash 'build-prod'
+      }
+    }
+  }
+)
 
 parallel (
   'Lint': {
     node('elixir') {
       stage('Lint') {
+        step([$class: 'WsCleanup'])
+
         unstash 'source'
+        unstash 'build-prod'
+
         sh "mix credo --strict"
       }
     }
   },
-  'Unit tests': {
+  'Tests': {
     node('elixir') {
-      stage('Unit tests') {
+      stage('Tests') {
+        step([$class: 'WsCleanup'])
+
         unstash 'source'
+        unstash 'build-test'
+
         //sh "mix test --only unit"
       }
     }
@@ -45,31 +80,37 @@ parallel (
   'Type validation': {
     node('elixir') {
       stage('Type validation') {
-        unstash 'source'
+        step([$class: 'WsCleanup'])
+
+        unstash 'build-prod'
+
+        // HACK: mix complains if I don't run deps.get again, not sure why
+        sh "mix deps.get"
+
+        // Reuse existing plt
+        sh "cp ~/.mix/*prod*.plt* _build/prod || :"
 
         withEnv (['MIX_ENV=prod']) {
-          sh "mix clean"
-          sh "mix compile"
           sh "mix dialyzer --halt-exit-status"
         }
+
+        // Store newly generated plt
+        // Do it on two commands because we want it failing if .plt is not found
+        sh "cp _build/prod/*.plt ~/.mix/"
+        sh "cp _build/prod/*.plt.hash ~/.mix/"
       }
+
     }
   }
 )
 
-
-node('helix') {
-  stage('Integration tests') {
-    unstash 'source'
-    //sh 'mix test --only integration'
-  }
-}
-
 node('elixir') {
 
   stage('Save artifacts') {
+    step([$class: 'WsCleanup'])
 
-    unstash 'release'
+    unstash 'build-prod'
+
     sh "aws s3 cp _build/prod/rel/helix/releases/*/helix.tar.gz s3://he2-releases/helix/${env.BRANCH_NAME}/${env.BUILD_VERSION}.tar.gz --storage-class REDUCED_REDUNDANCY"
 
   }
