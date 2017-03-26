@@ -32,7 +32,8 @@ environment :prod do
   set include_src: false
   set cookie: :prod_cookie
   set commands: [
-    ecto_migrate: "rel/commands/ecto_migrate"
+    ecto_create: "rel/commands/ecto_create.sh",
+    ecto_migrate: "rel/commands/ecto_migrate.sh"
   ]
 end
 

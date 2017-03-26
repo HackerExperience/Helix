@@ -1,7 +1,25 @@
 defmodule Helix.Account.Release do
   alias Helix.Account.Repo
 
-  def migrate do
+  def ecto_create do
+    Application.load(:helix_account)
+    {:ok, _} = Application.ensure_all_started(:ecto)
+
+    case Repo.__adapter__.storage_up(Repo.config) do
+      :ok ->
+        IO.puts "created"
+      {:error, :already_up} ->
+        IO.puts "already created"
+      {:error, term} when is_binary(term) ->
+        raise "error: #{term}"
+      {:error, term} ->
+        raise "error: #{inspect term}"
+    end
+
+    :init.stop()
+  end
+
+  def ecto_migrate do
     Application.load(:helix_account)
     {:ok, _} = Application.ensure_all_started(:ecto)
     {:ok, _} = Repo.__adapter__.ensure_all_started(Repo, :temporary)
