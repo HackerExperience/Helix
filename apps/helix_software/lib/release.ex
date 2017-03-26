@@ -10,10 +10,8 @@ defmodule Helix.Software.Release do
         IO.puts "created"
       {:error, :already_up} ->
         IO.puts "already created"
-      {:error, term} when is_binary(term) ->
-        raise "error: #{term}"
       {:error, term} ->
-        raise "error: #{inspect term}"
+        raise "error: #{term}"
     end
 
     :init.stop()
