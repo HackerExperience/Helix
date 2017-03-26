@@ -10,4 +10,4 @@ config :helix_account, Helix.Account.Repo,
   database: "account_service"
 
 config :guardian, Guardian,
-  secret_key: System.get_env("HELIX_JWK_KEY")
+  secret_key: "${HELIX_JWT_KEY}"
