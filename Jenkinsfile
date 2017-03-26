@@ -21,7 +21,7 @@ node('elixir') {
 parallel (
   'Build [test]': {
     node('elixir') {
-      stage('Build [dev]') {
+      stage('Build [test]') {
         step([$class: 'WsCleanup'])
 
         unstash 'source'
@@ -59,9 +59,11 @@ parallel (
         step([$class: 'WsCleanup'])
 
         unstash 'source'
-        unstash 'build-prod'
+        unstash 'build-test'
 
-        sh "mix credo --strict"
+        withEnv (['MIX_ENV=test']) {
+          sh "mix credo --strict"
+        }
       }
     }
   },
