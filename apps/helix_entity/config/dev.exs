@@ -1,4 +1,6 @@
 use Mix.Config
 
+prefix = System.get_env("HELIX_DB_PREFIX") || "helix"
+
 config :helix_entity, Helix.Entity.Repo,
-  database: "entity_service_dev"
+  database: prefix <> "_dev_entity"
