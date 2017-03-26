@@ -67,18 +67,6 @@ parallel (
       }
     }
   },
-  'Tests': {
-    node('elixir') {
-      stage('Tests') {
-        step([$class: 'WsCleanup'])
-
-        unstash 'source'
-        unstash 'build-test'
-
-        //sh "mix test --only unit"
-      }
-    }
-  },
   'Type validation': {
     node('elixir') {
       stage('Type validation') {
@@ -102,6 +90,21 @@ parallel (
         sh "cp _build/prod/*.plt.hash ~/.mix/"
       }
 
+    }
+  },
+  'Tests': {
+    node('helix') {
+      stage('Tests') {
+        step([$class: 'WsCleanup'])
+
+        unstash 'source'
+        unstash 'build-test'
+
+        withEnv (['MIX_ENV=test']) {
+          // Unset debug flag, load env vars on ~/.profile & run mix test
+          sh '#!/bin/sh -e\n' + '. ~/.profile && mix test'
+        }
+      }
     }
   }
 )
