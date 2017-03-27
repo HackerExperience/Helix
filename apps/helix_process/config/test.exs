@@ -1,5 +1,7 @@
 use Mix.Config
 
+prefix = System.get_env("HELIX_DB_PREFIX") || "helix"
+
 config :helix_process, Helix.Process.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
-  database: "process_service_test"
+  database: prefix <> "_test_process"
