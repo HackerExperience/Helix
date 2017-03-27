@@ -2,12 +2,23 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
+  alias Helix.Hardware.Model.Motherboard
 
   alias Helix.Hardware.Factory
 
   @moduletag :integration
+
+  defp component_of_type(type) do
+    specialized_component =
+      type
+      |> String.to_atom()
+      |> Factory.insert()
+
+    specialized_component.component
+  end
 
   describe "motherboard fetching" do
     test "succeeds by id" do
@@ -16,9 +27,8 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     end
 
     test "fails when motherboard doesn't exists" do
-      mobo = Factory.build(:motherboard)
-      assert {:error, :notfound} ==
-        MotherboardController.find(mobo.motherboard_id)
+      bogus = PK.pk_for(Motherboard)
+      assert {:error, :notfound} == MotherboardController.find(bogus)
     end
   end
 
@@ -29,7 +39,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     |> Enum.take_random(3)
     |> Enum.each(fn slot ->
       type = slot.link_component_type
-      component = Factory.component_of_type(type)
+      component = component_of_type(type)
 
       MotherboardSlotController.link(slot, component)
     end)
@@ -38,7 +48,8 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
     unused_slot? = &is_nil(&1.link_component_id)
 
-    assert Enum.all?(MotherboardController.get_slots(mobo), unused_slot?)
+    slots = MotherboardController.get_slots(mobo)
+    assert Enum.all?(slots, unused_slot?)
   end
 
   describe "motherboard deleting" do
@@ -57,11 +68,13 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     test "removes its slots" do
       mobo = Factory.insert(:motherboard)
 
-      refute Enum.empty?(MotherboardController.get_slots(mobo.motherboard_id))
+      slots = MotherboardController.get_slots(mobo.motherboard_id)
+      refute Enum.empty?(slots)
 
       MotherboardController.delete(mobo.motherboard_id)
 
-      assert Enum.empty?(MotherboardController.get_slots(mobo.motherboard_id))
+      slots = MotherboardController.get_slots(mobo.motherboard_id)
+      assert Enum.empty?(slots)
     end
   end
 end
