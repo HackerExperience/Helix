@@ -21,6 +21,8 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   end
 
   describe "motherboard fetching" do
+    # REVIEW: Refactor me, use fetch instead of find
+
     test "succeeds by id" do
       mobo = Factory.insert(:motherboard)
       assert {:ok, _} = MotherboardController.find(mobo.motherboard_id)

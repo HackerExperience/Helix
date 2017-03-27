@@ -2,9 +2,12 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
+  alias Helix.Hardware.Model.MotherboardSlot
 
   alias Helix.Hardware.Factory
+
   @moduletag :integration
 
   defp slot_for(motherboard, component) do
@@ -13,14 +16,21 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     |> Enum.random()
   end
 
-  describe "motherboard slot fetching" do
+  describe "fetching" do
+    # REVIEW: Refactor me, use fetch instead of find
+
     test "succeeds by id" do
       slot = Factory.insert(:motherboard_slot)
       assert {:ok, _} = MotherboardSlotController.find(slot.slot_id)
     end
+
+    test "fails when slot doesn't exists" do
+      bogus = PK.pk_for(MotherboardSlot)
+      assert {:error, :notfound} == MotherboardSlotController.find(bogus)
+    end
   end
 
-  describe "motherboard slot linking" do
+  describe "linking" do
     test "links a component to slot" do
       component = Factory.insert(:component)
       slot =

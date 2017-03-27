@@ -10,21 +10,21 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   @moduletag :integration
 
-  # REVIEW: Refactor me, use factories
+  describe "fetching" do
+    # REVIEW: Refactor me, use fetch instead of find
 
-  describe "fetching component_spec" do
     test "succeeds by id" do
       cs = Factory.insert(:component_spec)
       assert {:ok, _} = ComponentSpecController.find(cs.spec_id)
     end
 
     test "fails when spec doesn't exists" do
-      cs = Factory.build(:component_spec)
-      assert {:error, :notfound} == ComponentSpecController.find(cs.spec_id)
+      bogus = Factory.build(:component_spec)
+      assert {:error, :notfound} == ComponentSpecController.find(bogus.spec_id)
     end
   end
 
-  describe "deleting component_spec" do
+  describe "deleting" do
     test "succeeds by struct" do
       cs = Factory.insert(:component_spec)
 
@@ -45,10 +45,8 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
       cs = Factory.insert(:component_spec)
 
       assert Repo.get(ComponentSpec, cs.spec_id)
-
       ComponentSpecController.delete(cs.spec_id)
       ComponentSpecController.delete(cs.spec_id)
-
       refute Repo.get(ComponentSpec, cs.spec_id)
     end
   end

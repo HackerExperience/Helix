@@ -4,16 +4,17 @@ defmodule Helix.Hardware.Factory do
 
   alias HELL.MacAddress
   alias HELL.PK
-  alias HELL.TestHelper.Random
-  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.Component.CPU
   alias Helix.Hardware.Model.Component.HDD
   alias Helix.Hardware.Model.Component.NIC
   alias Helix.Hardware.Model.Component.RAM
+  alias Helix.Hardware.Model.ComponentSpec
+  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
+
+  alias HELL.TestHelper.Random
 
   def motherboard_slot_factory do
     motherboard = build(:motherboard, slots: [])
@@ -41,7 +42,6 @@ defmodule Helix.Hardware.Factory do
       end)
 
     %Motherboard{
-      motherboard_id: component.component_id,
       component: component,
       slots: motherboard_slots
     }

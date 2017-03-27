@@ -2,6 +2,7 @@ defmodule Helix.Hardware.Controller.ComponentTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.PK
   alias Helix.Hardware.Controller.Component, as: ComponentController
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Repo
@@ -10,24 +11,26 @@ defmodule Helix.Hardware.Controller.ComponentTest do
 
   @moduletag :integration
 
-  describe "fetching component" do
+  describe "fetching" do
+    # REVIEW: Refactor me, use fetch instead of find
+
     test "succeeds by id" do
       c = Factory.insert(:component)
       assert {:ok, _} = ComponentController.find(c.component_id)
     end
 
     test "fails when component doesn't exists" do
-      c = Factory.build(:component)
-      assert {:error, :notfound} == ComponentController.find(c.component_id)
+      bogus = PK.pk_for(Component)
+      assert {:error, :notfound} == ComponentController.find(bogus)
     end
   end
 
-  test "delete is idempotent" do
+  test "deleting is idempotent" do
     component = Factory.insert(:component)
 
-    assert Repo.get_by(Component, component_id: component.component_id)
+    assert Repo.get(Component, component.component_id)
     ComponentController.delete(component.component_id)
     ComponentController.delete(component.component_id)
-    refute Repo.get_by(Component, component_id: component.component_id)
+    refute Repo.get(Component, component.component_id)
   end
 end
