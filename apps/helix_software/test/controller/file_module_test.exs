@@ -23,8 +23,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
     f = Factory.insert(:file)
     module_roles = generate_module_roles(f.software_type)
 
-    assert {:ok, file_modules} = FileModuleController.create(f, module_roles)
-    assert module_roles == file_modules
+    assert {:ok, ^module_roles} = FileModuleController.create(f, module_roles)
   end
 
   describe "getting" do

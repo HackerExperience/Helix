@@ -30,12 +30,14 @@ defmodule Helix.Software.Model.ModuleRole do
       type: :string
   end
 
-  @spec create_changeset(%{software_type: String.t, module_role: String.t}) :: Ecto.Changeset.t
+  @spec create_changeset(%{software_type: String.t, module_role: String.t}) ::
+    Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required([:module_role, :software_type])
-    |> unique_constraint(:module_role, name: :module_roles_module_role_software_type_index)
+    |> unique_constraint(:module_role,
+      name: :module_roles_module_role_software_type_index)
   end
 
   defmodule Query do

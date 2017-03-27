@@ -68,7 +68,8 @@ defmodule Helix.Software.Model.File do
     |> generic_validations()
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) ::
+    Ecto.Changeset.t
   def update_changeset(model, params) do
     model
     |> cast(params, @update_fields)
@@ -81,6 +82,7 @@ defmodule Helix.Software.Model.File do
     |> validate_required(
       [:name, :file_path, :file_size, :software_type, :storage_id])
     |> validate_number(:file_size, greater_than: 0)
-    |> unique_constraint(:file_path, name: :files_storage_id_file_path_name_software_type_index)
+    |> unique_constraint(:file_path, name:
+      :files_storage_id_file_path_name_software_type_index)
   end
 end
