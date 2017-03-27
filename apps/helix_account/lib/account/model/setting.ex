@@ -8,32 +8,18 @@ defmodule Helix.Account.Model.Setting do
 
   @primary_key false
   embedded_schema do
-    field :is_beta, :boolean, null: true
+    field :is_beta, :boolean, default: false
   end
 
   @spec changeset(Setting.t, map) :: Ecto.Changeset.t
   def changeset(struct \\ %__MODULE__{}, params) do
-    cast(struct, defaults_to_nil(params), @update_fields)
+    struct
+    |> cast(params, @update_fields)
+    |> validate_required(:is_beta)
   end
 
   @spec default :: Setting.t
   def default do
-    %__MODULE__{is_beta: false}
-  end
-
-  # TODO: this might not be needed with an specialized type for settings
-  defp defaults_to_nil(params) do
-    unchanged = Map.from_struct(default())
-
-    nullify =
-      fn {k, v} ->
-        if v == unchanged[k],
-          do: {k, nil},
-          else: {k, v}
-      end
-
-    params
-    |> Enum.map(nullify)
-    |> :maps.from_list()
+    %__MODULE__{}
   end
 end

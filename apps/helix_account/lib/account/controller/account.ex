@@ -77,64 +77,29 @@ defmodule Helix.Account.Controller.Account do
   @spec put_settings(Account.t, map) ::
     {:ok, Setting.t}
     | {:error, reason :: term}
-  def put_settings(account, params) do
-    settings_changeset =
-      account
-      |> AccountSetting.Query.from_account()
-      |> select([as], as.settings)
-      |> Repo.one()
-      |> Kernel.||(Setting.default())
-      |> Setting.changeset(params)
+  def put_settings(account, settings) do
+    id = account.account_id
+    account_settings = Repo.get(AccountSetting, id) || %AccountSetting{}
+    params = %{account_id: account.account_id, settings: settings}
 
-    if settings_changeset.valid? do
-      settings =
-        settings_changeset
-        |> Ecto.Changeset.apply_changes()
-        |> Map.from_struct()
+    changeset = AccountSetting.changeset(account_settings, params)
 
-      result =
-        %{account_id: account.account_id, settings: settings}
-        |> AccountSetting.changeset()
-        |> Repo.insert_or_update()
-
-      case result do
-        {:ok, _} ->
-          {:ok, settings}
-        # FIXME: add account not found error here
-        {:error, _} ->
-          {:error, :internal}
-      end
-    else
-      # FIXME: be more descriptive
-      {:error, :invalid_settings}
+    case Repo.insert_or_update(changeset) do
+      {:ok, %{settings: settings}} ->
+        {:ok, settings}
+      error = {:error, _} ->
+        error
     end
   end
 
   @spec get_settings(Account.t | Account.id) :: Setting.t
   def get_settings(account) do
-    custom_settings =
+    settings =
       account
       |> AccountSetting.Query.from_account()
       |> select([as], as.settings)
       |> Repo.one()
 
-    if not is_nil(custom_settings) do
-      custom_settings = Map.from_struct(custom_settings)
-
-      on_conflict = fn _, default_value, custom_value ->
-        if is_nil(custom_value),
-          do: default_value,
-          else: custom_value
-      end
-
-      merged_map =
-        Setting.default()
-        |> Map.from_struct()
-        |> Map.merge(custom_settings, on_conflict)
-
-      struct(Setting, merged_map)
-    else
-      Setting.default()
-    end
+    settings || %Setting{}
   end
 end
