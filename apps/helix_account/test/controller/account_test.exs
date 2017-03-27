@@ -130,10 +130,7 @@ defmodule Helix.Account.Controller.AccountTest do
   describe "putting settings" do
     test "succeeds with valid params" do
       account = Factory.insert(:account)
-      settings =
-        :setting
-        |> Factory.build()
-        |> Map.from_struct()
+      settings = %{is_beta: true}
 
       AccountController.put_settings(account, settings)
       %{settings: got} = Repo.get(AccountSetting, account.account_id)
@@ -153,7 +150,7 @@ defmodule Helix.Account.Controller.AccountTest do
   describe "getting settings" do
     test "includes modified settings" do
       defaults =
-        Setting.default()
+        %Setting{}
         |> Map.from_struct()
         |> MapSet.new()
 
@@ -179,7 +176,7 @@ defmodule Helix.Account.Controller.AccountTest do
       account = Factory.insert(:account)
       settings = AccountController.get_settings(account)
 
-      assert Setting.default() == settings
+      assert %Setting{} == settings
     end
   end
 end
