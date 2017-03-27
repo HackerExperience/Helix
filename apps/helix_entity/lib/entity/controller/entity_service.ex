@@ -5,8 +5,8 @@ defmodule Helix.Controller.EntityService do
   alias HELF.Broker
   alias HELL.PK
   alias Helix.Entity.Controller.Entity, as: EntityController
-  alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
-  alias Helix.Entity.Controller.EntityServer, as: EntityServerController
+  # alias Helix.Entity.Controller.EntityComponent, as: EntityComponentController
+  # alias Helix.Entity.Controller.EntityServer, as: EntityServerController
   alias Helix.Entity.Model.Entity
 
   @typep state :: nil
@@ -76,12 +76,12 @@ defmodule Helix.Controller.EntityService do
 
     {:noreply, state}
   end
-  def handle_cast({:entity, :server, :add, id, server_id}, state) do
-    EntityServerController.create(id, server_id)
+  def handle_cast({:entity, :server, :add, _id, _server_id}, state) do
+    # EntityServerController.create(id, server_id)
     {:noreply, state}
   end
-  def handle_cast({:entity, :component, :add, id, component_id}, state) do
-    EntityComponentController.create(id, component_id)
+  def handle_cast({:entity, :component, :add, _id, _component_id}, state) do
+    # EntityComponentController.create(id, component_id)
     {:noreply, state}
   end
 end
