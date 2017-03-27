@@ -8,7 +8,10 @@ defmodule Helix.Account.Model.AccountSetting do
 
   import Ecto.Changeset
 
-  @type changeset_params :: %{account_id: Account.id, settings: map}
+  @type changeset_params :: %{
+    optional(:account_id) => Account.id,
+    :settings => map
+  }
 
   @primary_key false
   schema "account_settings" do

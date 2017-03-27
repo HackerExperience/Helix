@@ -130,12 +130,15 @@ defmodule Helix.Account.Controller.AccountTest do
   describe "putting settings" do
     test "succeeds with valid params" do
       account = Factory.insert(:account)
+      settings =
+        :setting
+        |> Factory.build()
+        |> Map.from_struct()
 
-      %{settings: expected} = Factory.params_for(:account_setting)
-      AccountController.put_settings(account, expected)
+      AccountController.put_settings(account, settings)
       %{settings: got} = Repo.get(AccountSetting, account.account_id)
 
-      assert expected == Map.from_struct(got)
+      assert settings == Map.from_struct(got)
     end
 
     test "fails with contract violating params" do
@@ -143,15 +146,7 @@ defmodule Helix.Account.Controller.AccountTest do
       bogus = %{is_beta: "uhe"}
       result = AccountController.put_settings(account, bogus)
 
-      assert {:error, :invalid_settings} = result
-    end
-
-    test "ignores unknown fields" do
-      account = Factory.insert(:account)
-      bogus = %{unknown_field: "example"}
-      {:ok, result} = AccountController.put_settings(account, bogus)
-
-      refute :unknown_field in Map.keys(result)
+      assert {:error, _} = result
     end
   end
 

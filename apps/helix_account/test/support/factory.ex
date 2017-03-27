@@ -6,6 +6,7 @@ defmodule Helix.Account.Factory do
   alias HELL.TestHelper.Random
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSetting
+  alias Helix.Account.Model.Setting
 
   def account_factory do
     display_name = Random.username()
@@ -20,11 +21,18 @@ defmodule Helix.Account.Factory do
   end
 
   def account_setting_factory do
-    settings = %{is_beta: true}
+    settings =
+      :setting
+      |> build()
+      |> Map.from_struct()
 
     %AccountSetting{
       account: build(:account),
       settings: settings
     }
+  end
+
+  def setting_factory do
+    %Setting{is_beta: true}
   end
 end
