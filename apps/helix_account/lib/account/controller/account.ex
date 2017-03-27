@@ -1,6 +1,5 @@
 defmodule Helix.Account.Controller.Account do
 
-  alias Comeonin.Bcrypt
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
 
@@ -14,6 +13,10 @@ defmodule Helix.Account.Controller.Account do
     |> Account.create_changeset()
     |> Repo.insert()
   end
+
+  @spec fetch_by_username(Account.username) :: Account.t | nil
+  def fetch_by_username(username),
+    do: Repo.get_by(Account, username: String.downcase(username))
 
   @spec find(Account.id) :: {:ok, Account.t} | {:error, :notfound}
   def find(account_id) do
@@ -55,18 +58,5 @@ defmodule Helix.Account.Controller.Account do
     |> Repo.delete_all()
 
     :ok
-  end
-
-  @spec login(Account.username, Account.password) ::
-    {:ok, Account.t} | {:error, :notfound}
-  def login(username, password) do
-    case find_by(username: username) do
-      [account] ->
-        if Bcrypt.checkpw(password, account.password),
-          do: {:ok, account},
-          else: {:error, :notfound}
-      [] ->
-        {:error, :notfound}
-    end
   end
 end

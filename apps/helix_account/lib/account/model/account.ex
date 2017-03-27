@@ -23,17 +23,20 @@ defmodule Helix.Account.Model.Account do
   }
 
   @type creation_params :: %{
-    account_id: PK.t,
     email: email,
     username: username,
-    password: password}
+    password: password
+  }
   @type update_params :: %{
     optional(:email) => email,
     optional(:password) => password,
-    optional(:confirmed) => boolean}
+    optional(:confirmed) => boolean
+  }
 
   @creation_fields ~w/email username password/a
   @update_fields ~w/email password confirmed/a
+
+  @default_pass_for_timing_attacks Bcrypt.hashpwsalt("I am ready!")
 
   @derive {Poison.Encoder, only: [:email, :username, :account_id]}
   @primary_key false
@@ -67,6 +70,30 @@ defmodule Helix.Account.Model.Account do
     |> generic_validations()
     |> prepare_changes()
   end
+
+  @spec check_password(t | nil, password) :: boolean
+  @doc """
+  Checks if `pass` matches with `account`'s password
+
+  This function is safe against timing attacks by having a default clause for
+  when the input account is nil that will still compare hash of a potential
+  password thus taking the same time to be executed
+
+  ## Examples
+
+      iex> check_password(account, "correct password")
+      true
+
+      iex> check_password(nil, "some password")
+      false
+
+      iex> check_password(account, "incorrect password")
+      false
+  """
+  def check_password(account = %__MODULE__{}, pass) when is_binary(pass),
+    do: Bcrypt.checkpw(pass, account.password)
+  def check_password(nil, pass) when is_binary(pass),
+    do: Bcrypt.checkpw("this is to avoid", @default_pass_for_timing_attacks)
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp generic_validations(changeset) do

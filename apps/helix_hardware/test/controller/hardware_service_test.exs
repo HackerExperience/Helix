@@ -8,6 +8,9 @@ defmodule Helix.Hardware.Controller.HardwareServiceTest do
   alias Helix.Hardware.Model.MotherboardSlot
 
   @moduletag :integration
+  @moduletag :pending
+
+  # FIXME: #40
 
   defp create_account do
     name = Random.username()
