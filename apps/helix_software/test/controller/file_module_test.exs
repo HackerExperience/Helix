@@ -11,9 +11,9 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   @moduletag :integration
 
-  defp generate_module_roles(file_type) do
-    file_type
-    |> ModuleRole.Query.by_file_type()
+  defp generate_module_roles(software_type) do
+    software_type
+    |> ModuleRole.Query.by_software_type()
     |> Repo.all()
     |> Enum.map(&({&1.module_role_id, Burette.Number.number(1..1024)}))
     |> :maps.from_list()
@@ -21,16 +21,15 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   test "creating succeeds with valid params" do
     f = Factory.insert(:file)
-    module_roles = generate_module_roles(f.file_type)
+    module_roles = generate_module_roles(f.software_type)
 
-    assert {:ok, file_modules} = FileModuleController.create(f, module_roles)
-    assert module_roles == file_modules
+    assert {:ok, ^module_roles} = FileModuleController.create(f, module_roles)
   end
 
   describe "getting" do
     test "returns file modules as a map" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.file_type)
+      module_roles = generate_module_roles(file.software_type)
 
       FileModuleController.create(file, module_roles)
       file_modules = FileModuleController.get_file_modules(file)
@@ -49,7 +48,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
   describe "updating" do
     test "succeeds with valid params" do
       file = Factory.insert(:file)
-      module_roles = generate_module_roles(file.file_type)
+      module_roles = generate_module_roles(file.software_type)
       {:ok, file_modules} = FileModuleController.create(file, module_roles)
 
       version = Burette.Number.number(1..1024)
@@ -76,7 +75,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
 
   test "deleting deletes every file modules" do
     file = Factory.insert(:file)
-    module_roles = generate_module_roles(file.file_type)
+    module_roles = generate_module_roles(file.software_type)
 
     {:ok, _} = FileModuleController.create(file, module_roles)
 
