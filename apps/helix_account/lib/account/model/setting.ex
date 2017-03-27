@@ -8,7 +8,8 @@ defmodule Helix.Account.Model.Setting do
 
   @primary_key false
   embedded_schema do
-    field :is_beta, :boolean, default: false
+    field :is_beta, :boolean,
+      default: false
   end
 
   @spec changeset(Setting.t, map) :: Ecto.Changeset.t
@@ -16,10 +17,5 @@ defmodule Helix.Account.Model.Setting do
     struct
     |> cast(params, @update_fields)
     |> validate_required(:is_beta)
-  end
-
-  @spec default :: Setting.t
-  def default do
-    %__MODULE__{}
   end
 end
