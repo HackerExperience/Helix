@@ -26,11 +26,12 @@ defmodule Helix.Software.Model.FileModule do
 
   @primary_key false
   schema "file_modules" do
-    field :file_id, HELL.PK, primary_key: true
-
-    field :software_module, :string, primary_key: true
-
-    field :module_version, :integer, null: false
+    field :file_id, HELL.PK,
+      primary_key: true
+    field :software_module, :string,
+      primary_key: true
+    field :module_version, :integer,
+      null: false
 
     belongs_to :file, File,
       foreign_key: :file_id,

@@ -27,8 +27,6 @@ defmodule Helix.Software.Model.SoftwareModule do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required([:software_module, :software_type])
-    |> unique_constraint(:software_module,
-      name: :software_modules_software_type_software_module_index)
   end
 
   defmodule Query do
