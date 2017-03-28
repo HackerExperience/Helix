@@ -10,11 +10,9 @@ defmodule Helix.Software.Controller.FileModule do
     software_module :: String.t => version :: pos_integer
   }
 
-  @spec create(File.t,
-    [%{software_module: String.t,
-    module_version: pos_integer}]) ::
-      {:ok, [FileModule.t]}
-      | {:error, :internal}
+  @spec create(File.t, File.create_modules_params) ::
+    {:ok, [FileModule.t]}
+    | {:error, reason :: term}
   def create(file, modules) do
     result =
       file

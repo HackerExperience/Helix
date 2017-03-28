@@ -10,6 +10,7 @@ defmodule Helix.Software.Controller.StorageTest do
 
   @moduletag :integration
 
+  # REVIEW: Is this is a good test name, it's weird?
   test "creating always succeeds" do
     assert {:ok, _} = StorageController.create()
   end
@@ -32,10 +33,8 @@ defmodule Helix.Software.Controller.StorageTest do
     storage = Factory.insert(:storage, %{files: []})
 
     assert StorageController.fetch(storage.storage_id)
-
     assert :ok = StorageController.delete(storage.storage_id)
     assert :ok = StorageController.delete(storage.storage_id)
-
     refute StorageController.fetch(storage.storage_id)
   end
 end

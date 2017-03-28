@@ -4,7 +4,6 @@ defmodule Helix.Software.Model.FileModule do
 
   alias HELL.PK
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareModule
 
   import Ecto.Changeset
 
@@ -12,7 +11,6 @@ defmodule Helix.Software.Model.FileModule do
     module_version: pos_integer,
     file: File.t,
     file_id: PK.t,
-    module: SoftwareModule.t,
     software_module: String.t
   }
 
@@ -41,13 +39,6 @@ defmodule Helix.Software.Model.FileModule do
       define_field: false,
       on_replace: :update,
       primary_key: true
-
-    belongs_to :module, SoftwareModule,
-      foreign_key: :software_module,
-      references: :software_module,
-      type: :string,
-      define_field: false,
-      primary_key: true
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -67,8 +58,7 @@ defmodule Helix.Software.Model.FileModule do
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   def generic_validations(changeset) do
-    changeset
-    |> validate_number(:module_version, greater_than: 0)
+    validate_number(changeset, :module_version, greater_than: 0)
   end
 
   @spec changeset(t | Ecto.Changeset.t, creation_params) :: Ecto.Changeset.t
