@@ -6,56 +6,34 @@ defmodule Helix.Software.Controller.FileModule do
 
   import Ecto.Query, only: [select: 3]
 
-  @type software_modules :: %{
-    software_module :: String.t => version :: pos_integer
-  }
-
-  @spec create(File.t, File.create_modules_params) ::
-    {:ok, [FileModule.t]}
+  @spec set_modules(File.t, File.modules) ::
+    {:ok, File.modules}
     | {:error, reason :: term}
-  def create(file, modules) do
-    result =
+  def set_modules(file, modules) do
+    changeset =
       file
       |> Repo.preload(:file_modules)
-      |> File.create_modules(modules)
-      |> Repo.update()
+      |> File.set_modules(modules)
 
-    case result do
+    case Repo.update(changeset) do
       {:ok, file} ->
-        {:ok, file.file_modules}
+        modules =
+          file.file_modules
+          |> Enum.map(&{&1.software_module, &1.module_version})
+          |> :maps.from_list()
+
+        {:ok, modules}
       error ->
         error
     end
   end
 
-  @spec get_file_modules(File.t) :: software_modules
+  @spec get_file_modules(File.t) :: File.modules
   def get_file_modules(file) do
     file
     |> FileModule.Query.from_file()
     |> select([fm], {fm.software_module, fm.module_version})
     |> Repo.all()
     |> :maps.from_list()
-  end
-
-  # REVIEW: on sucess return only :ok or {:ok, version}. I don't really see the
-  #   point in returning the FileModule struct as it's not even used for
-  #   anything
-  @spec update(File.t, String.t, version :: pos_integer) ::
-    {:ok, FileModule.t}
-    | {:error, :notfound | Ecto.Changeset.t}
-  def update(file, software_module, version) do
-    file_module =
-      file
-      |> FileModule.Query.from_file()
-      |> FileModule.Query.by_software_module(software_module)
-      |> Repo.one()
-
-    if file_module do
-      file_module
-      |> FileModule.update_changeset(%{module_version: version})
-      |> Repo.update()
-    else
-      {:error, :notfound}
-    end
   end
 end
