@@ -7,9 +7,6 @@ defmodule Helix.Account.Controller.Account do
 
   import Ecto.Query, only: [select: 3]
 
-  @type find_params :: [find_param]
-  @type find_param :: {:email, Account.email} | {:username, Account.username}
-
   @spec create(Account.creation_params) ::
     {:ok, Account.t} | {:error, Ecto.Changeset.t}
   def create(params) do
@@ -18,32 +15,17 @@ defmodule Helix.Account.Controller.Account do
     |> Repo.insert()
   end
 
+  @spec fetch(Account.id) :: Account.t | nil
+  def fetch(account_id),
+    do: Repo.get(Account, account_id)
+
+  @spec fetch_by_email(Account.email) :: Account.t | nil
+  def fetch_by_email(email),
+    do: Repo.get_by(Account, email: String.downcase(email))
+
   @spec fetch_by_username(Account.username) :: Account.t | nil
   def fetch_by_username(username),
     do: Repo.get_by(Account, username: String.downcase(username))
-
-  @spec find(Account.id) :: {:ok, Account.t} | {:error, :notfound}
-  def find(account_id) do
-    case Repo.get_by(Account, account_id: account_id) do
-      nil ->
-        {:error, :notfound}
-      account ->
-        {:ok, account}
-    end
-  end
-
-  @spec find_by(find_params) :: [Account.t]
-  def find_by(params) do
-    query = Enum.reduce(params, Account, &reduce_find_params/2)
-
-    Repo.all(query)
-  end
-
-  @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
-  defp reduce_find_params({:email, email}, query),
-    do: Account.Query.by_email(query, email)
-  defp reduce_find_params({:username, username}, query),
-    do: Account.Query.by_username(query, username)
 
   @spec update(Account.t, Account.update_params) ::
     {:ok, Account.t} | {:error, Ecto.Changeset.t}

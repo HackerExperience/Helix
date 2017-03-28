@@ -14,7 +14,7 @@ defmodule Helix.Account.Controller.AccountTest do
 
   @moduletag :integration
 
-  describe "account creation" do
+  describe "creation" do
     test "succeeds with valid params" do
       params = Factory.params_for(:account)
 
@@ -45,32 +45,34 @@ defmodule Helix.Account.Controller.AccountTest do
     end
   end
 
-  describe "account fetching" do
+  describe "fetching" do
     test "succeeds by id" do
       account = Factory.insert(:account)
-      assert {:ok, _} = AccountController.find(account.account_id)
+      assert %Account{} = AccountController.fetch(account.account_id)
     end
 
     test "succeeds by email" do
       account = Factory.insert(:account)
-      assert [_] = AccountController.find_by(email: account.email)
+      assert %Account{} = AccountController.fetch_by_email(account.email)
     end
 
     test "succeeds by username" do
       account = Factory.insert(:account)
-      assert [_] = AccountController.find_by(username: account.username)
+      assert %Account{} = AccountController.fetch_by_username(account.username)
     end
 
-    test "returns empty list when email isn't in use" do
-      assert [] == AccountController.find_by(email: "a@bc.com")
+    test "fails when account with id doesn't exist" do
+      refute AccountController.fetch(Random.pk())
     end
 
-    test "returns empty list when username isn't in use" do
-      assert [] == AccountController.find_by(username: "abcdef")
+    test "fails when account with email doesn't exist" do
+      bogus = Factory.build(:account)
+      refute AccountController.fetch_by_email(bogus.email)
     end
 
-    test "fails when account doesn't exist" do
-      assert {:error, :notfound} == AccountController.find(Random.pk())
+    test "fails when account with username doesn't exist" do
+      bogus = Factory.build(:account)
+      refute AccountController.fetch_by_username(bogus.username)
     end
   end
 
