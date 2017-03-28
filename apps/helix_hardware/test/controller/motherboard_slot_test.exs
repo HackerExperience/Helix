@@ -2,9 +2,9 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
 
@@ -17,20 +17,6 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
       |> Factory.insert()
 
     specialization.component
-  end
-
-  describe "fetching" do
-    # REVIEW: Refactor me, use fetch instead of find
-
-    test "succeeds by id" do
-      slot = Factory.insert(:motherboard_slot)
-      assert {:ok, _} = MotherboardSlotController.find(slot.slot_id)
-    end
-
-    test "fails when slot doesn't exists" do
-      bogus = PK.pk_for(MotherboardSlot)
-      assert {:error, :notfound} == MotherboardSlotController.find(bogus)
-    end
   end
 
   describe "linking" do
@@ -107,7 +93,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
     assert {:ok, _} = MotherboardSlotController.unlink(slot)
     assert {:ok, _} = MotherboardSlotController.unlink(slot)
 
-    {:ok, slot} = MotherboardSlotController.find(slot.slot_id)
+    slot = Repo.get(MotherboardSlot, slot.slot_id)
 
     refute slot.link_component_id
   end
