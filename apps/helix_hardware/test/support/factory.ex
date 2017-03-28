@@ -22,7 +22,6 @@ defmodule Helix.Hardware.Factory do
 
     %MotherboardSlot{
       motherboard: motherboard,
-      slot_id: PK.pk_for(MotherboardSlot),
       slot_internal_id: String.to_integer(id),
       link_component_type: String.downcase(slot.type)
     }
@@ -35,7 +34,6 @@ defmodule Helix.Hardware.Factory do
     motherboard_slots =
       Enum.map(specs, fn {id, spec} ->
         %MotherboardSlot{
-          slot_id: PK.pk_for(MotherboardSlot),
           slot_internal_id: String.to_integer(id),
           link_component_type: String.downcase(spec.type)
         }
@@ -108,8 +106,8 @@ defmodule Helix.Hardware.Factory do
   defp prepare(thing, params \\ [])
 
   defp prepare(:component, params) do
-    spec = Keyword.get(params, :component_spec,
-      prepare(:component_spec, params))
+    spec =
+      Keyword.get(params, :component_spec, prepare(:component_spec, params))
 
     component_id =
       ComponentType.type_implementations()
@@ -137,7 +135,6 @@ defmodule Helix.Hardware.Factory do
   defp random_component_type do
     ComponentType.type_implementations()
     |> Map.keys()
-    |> Enum.reject(&(&1 == "mobo"))
     |> Enum.random()
   end
 

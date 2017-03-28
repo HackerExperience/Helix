@@ -10,10 +10,13 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
   @moduletag :integration
 
-  defp slot_for(motherboard, component) do
-    motherboard.slots
-    |> Enum.filter(&(&1.link_component_type == component.component_type))
-    |> Enum.random()
+  def component_for(slot) do
+    specialization =
+      slot.link_component_type
+      |> String.to_atom()
+      |> Factory.insert()
+
+    specialization.component
   end
 
   describe "fetching" do
@@ -32,54 +35,71 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
   describe "linking" do
     test "links a component to slot" do
-      component = Factory.insert(:component)
       slot =
         :motherboard
         |> Factory.insert()
-        |> slot_for(component)
+        |> Map.fetch!(:slots)
+        |> Enum.random()
+
+      component = component_for(slot)
 
       {:ok, slot} = MotherboardSlotController.link(slot, component)
       assert component.component_id == slot.link_component_id
     end
 
     test "fails when slot is already in use" do
-      cpu1 = Factory.insert(:cpu)
-      cpu2 = Factory.insert(:cpu)
       slot =
         :motherboard
         |> Factory.insert()
-        |> slot_for(cpu1.component)
+        |> Map.fetch!(:slots)
+        |> Enum.random()
 
-      {:ok, slot} = MotherboardSlotController.link(slot, cpu1.component)
+      component1 = component_for(slot)
+      component2 = component_for(slot)
 
-      assert {:error, :slot_already_linked} ==
-        MotherboardSlotController.link(slot, cpu2.component)
+      {:ok, slot} = MotherboardSlotController.link(slot, component1)
+
+      result = MotherboardSlotController.link(slot, component2)
+      assert {:error, :slot_already_linked} == result
     end
 
     test "fails when component is already in use" do
-      component = Factory.insert(:component)
+      slot_for = fn motherboard, component ->
+        motherboard.slots
+        |> Enum.filter(&(&1.link_component_type == component.component_type))
+        |> Enum.random()
+      end
+
+      component =
+        :cpu
+        |> Factory.insert()
+        |> Map.fetch!(:component)
+
       slot1 =
         :motherboard
         |> Factory.insert()
-        |> slot_for(component)
+        |> slot_for.(component)
+
       slot2 =
         :motherboard
         |> Factory.insert()
-        |> slot_for(component)
+        |> slot_for.(component)
 
-      {:ok, _} = MotherboardSlotController.link(slot1, component)
+      MotherboardSlotController.link(slot1, component)
 
-      assert {:error, :component_already_linked} ==
-        MotherboardSlotController.link(slot2, component)
+      result = MotherboardSlotController.link(slot2, component)
+      assert {:error, :component_already_linked} == result
     end
   end
 
   test "unlink is idempotent" do
-    component = Factory.insert(:component)
     slot =
       :motherboard
       |> Factory.insert()
-      |> slot_for(component)
+      |> Map.fetch!(:slots)
+      |> Enum.random()
+
+    component = component_for(slot)
 
     {:ok, slot} = MotherboardSlotController.link(slot, component)
 
