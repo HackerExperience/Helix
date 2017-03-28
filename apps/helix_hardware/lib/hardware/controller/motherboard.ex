@@ -61,13 +61,13 @@ defmodule Helix.Hardware.Controller.Motherboard do
     }
   end
 
-  @spec find(HELL.PK.t) :: {:ok, Motherboard.t} | {:error, :notfound}
-  def find(motherboard_id) do
-    case Repo.get_by(Motherboard, motherboard_id: motherboard_id) do
+  @spec fetch!(Component.t) :: Motherboard.t
+  def fetch!(component) do
+    case Repo.get(Motherboard, component.component_id) do
       nil ->
-        {:error, :notfound}
-      res ->
-        {:ok, res}
+        raise RuntimeError
+      motherboard ->
+        motherboard
     end
   end
 

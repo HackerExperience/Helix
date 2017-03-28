@@ -2,10 +2,10 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.Motherboard
+  alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
 
@@ -20,17 +20,18 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     specialized_component.component
   end
 
-  describe "motherboard fetching" do
-    # REVIEW: Refactor me, use fetch instead of find
-
+  describe "fetching" do
     test "succeeds by id" do
       mobo = Factory.insert(:motherboard)
-      assert {:ok, _} = MotherboardController.find(mobo.motherboard_id)
+      assert %Motherboard{} = MotherboardController.fetch!(mobo.component)
     end
 
-    test "fails when motherboard doesn't exists" do
-      bogus = PK.pk_for(Motherboard)
-      assert {:error, :notfound} == MotherboardController.find(bogus)
+    test "raises RuntimeError when motherboard doesn't exists" do
+      bogus = Factory.build(:motherboard)
+
+      assert_raise RuntimeError, fn ->
+        MotherboardController.fetch!(bogus.component)
+      end
     end
   end
 
@@ -58,13 +59,12 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     test "is idempotent" do
       mobo = Factory.insert(:motherboard)
 
-      assert {:ok, _} = MotherboardController.find(mobo.motherboard_id)
+      assert Repo.get(Motherboard, mobo.motherboard_id)
 
       MotherboardController.delete(mobo.motherboard_id)
       MotherboardController.delete(mobo.motherboard_id)
 
-      assert {:error, :notfound} ==
-        MotherboardController.find(mobo.motherboard_id)
+      refute Repo.get(Motherboard, mobo.motherboard_id)
     end
 
     test "removes its slots" do
