@@ -22,6 +22,7 @@ defmodule Helix.Core.Mixfile do
 
   def application do
     [
+      mod: {Helix.Core.Application, []},
       extra_applications: [:logger, :plug]
     ]
   end
@@ -47,11 +48,11 @@ defmodule Helix.Core.Mixfile do
 
   defp deps do
     [
-      {:helf_broker, in_umbrella: true},
-      {:helf_router, in_umbrella: true},
       {:hell, in_umbrella: true},
       {:postgrex, "~> 0.13", override: true},
       {:ecto, "~> 2.1", override: true},
-      {:burette, git: "https://github.com/HackerExperience/burette", only: :test}]
+      {:helf, github: "HackerExperience/HELF"},
+      {:burette, git: "https://github.com/HackerExperience/burette", only: :test}
+    ]
   end
 end
