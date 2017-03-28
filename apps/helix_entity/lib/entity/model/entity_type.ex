@@ -17,4 +17,13 @@ defmodule Helix.Entity.Model.EntityType do
   def possible_types do
     ~w/account clan npc/
   end
+
+  @doc false
+  def type_implementations do
+    %{
+      "account" => Helix.Account.Model.Account,
+      "clan" => Helix.Clan.Model.Clan,
+      "npc" => Helix.NPC.Model.NPC
+    }
+  end
 end

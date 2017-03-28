@@ -6,7 +6,7 @@ defmodule HELL.PK do
 
   @spec pk_for(module) :: t
   defdelegate pk_for(module),
-    to: HELL.IPv6.Header
+    to: HELL.PK.Header
 
   def type,
     do: :inet
