@@ -23,7 +23,7 @@ defmodule Helix.Software.Controller.FileModuleTest do
     end)
   end
 
-  test "file modules creation creates the correct modules" do
+  test "creation creates the correct modules" do
     file = Factory.insert(:file)
     software_modules = generate_software_modules(file.software_type)
 
@@ -83,8 +83,8 @@ defmodule Helix.Software.Controller.FileModuleTest do
       file = Factory.insert(:file)
       software_module = Random.string()
       version = Burette.Number.number(1..1024)
-      result = FileModuleController.update(file, software_module, version)
 
+      result = FileModuleController.update(file, software_module, version)
       assert {:error, :notfound} == result
     end
   end
@@ -94,9 +94,10 @@ defmodule Helix.Software.Controller.FileModuleTest do
     software_module = generate_software_modules(file.software_type)
 
     {:ok, _} = FileModuleController.create(file, software_module)
-    Repo.delete(file)
-    file_modules = FileModuleController.get_file_modules(file)
 
+    Repo.delete(file)
+
+    file_modules = FileModuleController.get_file_modules(file)
     assert Enum.empty?(file_modules)
   end
 end

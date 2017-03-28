@@ -12,11 +12,15 @@ defmodule Helix.Software.Controller.FileTest do
 
   def generate_params do
     storage = Factory.insert(:storage)
+    file = Factory.build(:file)
 
-    :file
-    |> Factory.params_for()
-    |> Map.put(:storage_id, storage.storage_id)
-    |> Map.drop([:inserted_at, :updated_at])
+    %{
+      file_path: file.file_path,
+      file_size: file.file_size,
+      name: file.name,
+      software_type: file.software_type,
+      storage_id: storage.storage_id
+    }
   end
 
   describe "creating" do
@@ -91,7 +95,6 @@ defmodule Helix.Software.Controller.FileTest do
       assert {:error, :file_exists} == FileController.update(file1, params)
 
       found = FileController.fetch(file1.file_id)
-
       assert file1 == found
     end
   end
@@ -105,7 +108,6 @@ defmodule Helix.Software.Controller.FileTest do
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
-
       assert path == copy.file_path
     end
 
@@ -118,7 +120,6 @@ defmodule Helix.Software.Controller.FileTest do
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
-
       assert storage.storage_id == copy.storage_id
     end
 
@@ -150,8 +151,8 @@ defmodule Helix.Software.Controller.FileTest do
       similarities = Map.take(file0, [:name, :storage, :storage_id, :software_type])
       file1 = Factory.insert(:file, similarities)
 
-      assert {:error, :file_exists} ==
-        FileController.move(file1, file0.file_path, file0.storage_id)
+      result = FileController.move(file1, file0.file_path, file0.storage_id)
+      assert {:error, :file_exists} == result
     end
   end
 
@@ -180,10 +181,8 @@ defmodule Helix.Software.Controller.FileTest do
       file = Factory.insert(:file)
 
       assert FileController.fetch(file.file_id)
-
       FileController.delete(file.file_id)
       FileController.delete(file.file_id)
-
       refute FileController.fetch(file.file_id)
     end
 

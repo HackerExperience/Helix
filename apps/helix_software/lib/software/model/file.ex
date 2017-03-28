@@ -31,6 +31,10 @@ defmodule Helix.Software.Model.File do
     software_type: String.t,
     storage_id: PK.t
   }
+
+  @type create_modules_params ::
+    [%{software_module: String.t, module_version: pos_integer}]
+
   @type update_params :: %{
     optional(:name) => String.t,
     optional(:file_path) => String.t,
@@ -73,9 +77,7 @@ defmodule Helix.Software.Model.File do
     |> generic_validations()
   end
 
-  @spec create_modules(File.t,
-    [%{software_module: String.t,
-    module_version: pos_integer}]) :: Ecto.Changeset.t
+  @spec create_modules(File.t, create_modules_params) :: Ecto.Changeset.t
   def create_modules(file, modules) do
     file
     |> cast(%{file_modules: modules}, [])
