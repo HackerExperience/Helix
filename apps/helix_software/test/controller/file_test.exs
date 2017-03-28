@@ -5,6 +5,8 @@ defmodule Helix.Software.Controller.FileTest do
   alias HELL.PK
   alias Helix.Software.Controller.File, as: FileController
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.SoftwareModule
+  alias Helix.Software.Repo
 
   alias Helix.Software.Factory
 
@@ -12,11 +14,23 @@ defmodule Helix.Software.Controller.FileTest do
 
   def generate_params do
     storage = Factory.insert(:storage)
+    file = Factory.build(:file)
 
-    :file
-    |> Factory.params_for()
-    |> Map.put(:storage_id, storage.storage_id)
-    |> Map.drop([:inserted_at, :updated_at])
+    %{
+      file_path: file.file_path,
+      file_size: file.file_size,
+      name: file.name,
+      software_type: file.software_type,
+      storage_id: storage.storage_id
+    }
+  end
+
+  defp generate_software_modules(software_type) do
+    software_type
+    |> SoftwareModule.Query.by_software_type()
+    |> Repo.all()
+    |> Enum.map(&{&1.software_module, Burette.Number.number(1..1024)})
+    |> :maps.from_list()
   end
 
   describe "creating" do
@@ -91,7 +105,6 @@ defmodule Helix.Software.Controller.FileTest do
       assert {:error, :file_exists} == FileController.update(file1, params)
 
       found = FileController.fetch(file1.file_id)
-
       assert file1 == found
     end
   end
@@ -105,7 +118,6 @@ defmodule Helix.Software.Controller.FileTest do
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
-
       assert path == copy.file_path
     end
 
@@ -118,7 +130,6 @@ defmodule Helix.Software.Controller.FileTest do
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
-
       assert storage.storage_id == copy.storage_id
     end
 
@@ -150,8 +161,8 @@ defmodule Helix.Software.Controller.FileTest do
       similarities = Map.take(file0, [:name, :storage, :storage_id, :software_type])
       file1 = Factory.insert(:file, similarities)
 
-      assert {:error, :file_exists} ==
-        FileController.move(file1, file0.file_path, file0.storage_id)
+      result = FileController.move(file1, file0.file_path, file0.storage_id)
+      assert {:error, :file_exists} == result
     end
   end
 
@@ -175,15 +186,42 @@ defmodule Helix.Software.Controller.FileTest do
     end
   end
 
+  test "setting modules" do
+    file = Factory.insert(:file)
+    modules = generate_software_modules(file.software_type)
+
+    {:ok, file_modules} = FileController.set_modules(file, modules)
+
+    # created modules from `modules`
+    assert modules == file_modules
+  end
+
+  describe "getting modules" do
+    test "returns file modules as a map" do
+      file = Factory.insert(:file)
+      modules = generate_software_modules(file.software_type)
+
+      FileController.set_modules(file, modules)
+
+      file_modules = FileController.get_modules(file)
+      assert modules == file_modules
+    end
+
+    test "returns empty map when nothing is found" do
+      file = Factory.insert(:file)
+      file_modules = FileController.get_modules(file)
+
+      assert Enum.empty?(file_modules)
+    end
+  end
+
   describe "deleting" do
     test "is idempotent" do
       file = Factory.insert(:file)
 
       assert FileController.fetch(file.file_id)
-
       FileController.delete(file.file_id)
       FileController.delete(file.file_id)
-
       refute FileController.fetch(file.file_id)
     end
 
@@ -201,6 +239,18 @@ defmodule Helix.Software.Controller.FileTest do
       assert FileController.fetch(file.file_id)
       FileController.delete(file.file_id)
       refute FileController.fetch(file.file_id)
+    end
+
+    test "deletes every module" do
+      file = Factory.insert(:file)
+      software_module = generate_software_modules(file.software_type)
+
+      {:ok, _} = FileController.set_modules(file, software_module)
+
+      Repo.delete(file)
+
+      file_modules = FileController.get_modules(file)
+      assert Enum.empty?(file_modules)
     end
   end
 end

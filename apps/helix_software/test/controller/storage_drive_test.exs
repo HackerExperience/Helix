@@ -28,7 +28,6 @@ defmodule Helix.Software.Controller.StorageDriveTest do
         |> Enum.map(&(&1.drive_id))
 
       got_drives = Controller.get_storage_drives(storage)
-
       assert Enum.sort(expected_drives) == Enum.sort(got_drives)
     end
 
@@ -43,9 +42,9 @@ defmodule Helix.Software.Controller.StorageDriveTest do
   test "unlinking is idempotent" do
     %{storage: storage, drive_id: drive_id} = Factory.insert(:storage_drive)
 
+    assert drive_id in Controller.get_storage_drives(storage)
     Controller.unlink_drive(drive_id)
     Controller.unlink_drive(drive_id)
-
     refute drive_id in Controller.get_storage_drives(storage)
   end
 end

@@ -1,9 +1,10 @@
 defmodule Helix.Software.Controller.File do
 
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.FileModule
   alias Helix.Software.Repo
 
-  import Ecto.Query, only: [where: 3]
+  import Ecto.Query, only: [where: 3, select: 3]
 
   @spec create(File.creation_params) ::
     {:ok, File.t}
@@ -76,6 +77,37 @@ defmodule Helix.Software.Controller.File do
     |> Repo.delete_all()
 
     :ok
+  end
+
+  @spec set_modules(File.t, File.modules) ::
+    {:ok, File.modules}
+    | {:error, reason :: term}
+  def set_modules(file, modules) do
+    changeset =
+      file
+      |> Repo.preload(:file_modules)
+      |> File.set_modules(modules)
+
+    case Repo.update(changeset) do
+      {:ok, file} ->
+        modules =
+          file.file_modules
+          |> Enum.map(&{&1.software_module, &1.module_version})
+          |> :maps.from_list()
+
+        {:ok, modules}
+      error ->
+        error
+    end
+  end
+
+  @spec get_modules(File.t) :: File.modules
+  def get_modules(file) do
+    file
+    |> FileModule.Query.from_file()
+    |> select([fm], {fm.software_module, fm.module_version})
+    |> Repo.all()
+    |> :maps.from_list()
   end
 
   @spec parse_errors({:ok | :error, Ecto.Changeset.t}) ::
