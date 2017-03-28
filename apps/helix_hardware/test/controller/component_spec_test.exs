@@ -4,6 +4,7 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Model.ComponentSpec
+  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
@@ -11,17 +12,26 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
   @moduletag :integration
 
   describe "fetching" do
-    # REVIEW: Refactor me, use fetch instead of find
-
     test "succeeds by id" do
       cs = Factory.insert(:component_spec)
-      assert {:ok, _} = ComponentSpecController.find(cs.spec_id)
+      assert %ComponentSpec{} = ComponentSpecController.fetch(cs.spec_id)
     end
 
     test "fails when spec doesn't exists" do
       bogus = Factory.build(:component_spec)
-      assert {:error, :notfound} == ComponentSpecController.find(bogus.spec_id)
+      refute ComponentSpecController.fetch(bogus.spec_id)
     end
+  end
+
+  test "finding every spec of given type" do
+    type = Enum.random(ComponentType.possible_types())
+
+    specs = Factory.insert_list(4, :component_spec, component_type: type)
+    found = ComponentSpecController.find(type: type)
+    found_ids = Enum.map(found, &(&1.spec_id))
+
+    assert Enum.all?(specs, &(&1.spec_id in found_ids))
+    assert Enum.all?(found, &(&1.component_type == type))
   end
 
   describe "deleting" do
