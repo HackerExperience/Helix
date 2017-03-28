@@ -2,6 +2,7 @@ defmodule Helix.Account.Model.SessionSerializer do
 
   @behaviour Guardian.Serializer
 
+  alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
 
   @opaque session :: String.t
@@ -18,6 +19,12 @@ defmodule Helix.Account.Model.SessionSerializer do
   # if it depends on external data, but let's leave it as is until we fix it
   @spec from_token(session) :: {:ok, Account.t}
   def from_token(account_id) do
-    Helix.Account.Controller.Account.find(account_id)
+    case AccountController.fetch(account_id) do
+      nil ->
+        # FIXME: use a better error message
+        {:error, "notfound"}
+      account ->
+        {:ok, account}
+    end
   end
 end
