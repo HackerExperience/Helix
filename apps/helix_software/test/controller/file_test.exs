@@ -10,8 +10,6 @@ defmodule Helix.Software.Controller.FileTest do
 
   alias Helix.Software.Factory
 
-  import Ecto.Query, only: [select: 3]
-
   @moduletag :integration
 
   def generate_params do
@@ -30,9 +28,8 @@ defmodule Helix.Software.Controller.FileTest do
   defp generate_software_modules(software_type) do
     software_type
     |> SoftwareModule.Query.by_software_type()
-    |> select([sm], sm.software_module)
     |> Repo.all()
-    |> Enum.map(&{&1, Burette.Number.number(1..1024)})
+    |> Enum.map(&{&1.software_module, Burette.Number.number(1..1024)})
     |> :maps.from_list()
   end
 

@@ -30,8 +30,7 @@ defmodule Helix.Software.Model.FileModule do
       primary_key: true
     field :software_module, :string,
       primary_key: true
-    field :module_version, :integer,
-      null: false
+    field :module_version, :integer
 
     belongs_to :file, File,
       foreign_key: :file_id,
