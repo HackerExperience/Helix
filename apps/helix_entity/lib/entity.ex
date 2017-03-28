@@ -2,14 +2,12 @@ defmodule Helix.Entity.App do
 
   use Application
 
-  alias Helix.Controller.EntityService
   alias Helix.Entity.Repo
 
   def start(_type, _args) do
     import Supervisor.Spec
 
     children = [
-      worker(EntityService, []),
       worker(Repo, [])
     ]
 

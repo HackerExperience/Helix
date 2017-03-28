@@ -1,6 +1,8 @@
 defmodule Helix.Entity.Controller.Entity do
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Model.EntityServer
+  alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Repo
 
   import Ecto.Query, only: [where: 3]
@@ -12,13 +14,41 @@ defmodule Helix.Entity.Controller.Entity do
     |> Repo.insert()
   end
 
-  @spec find(Entity.id) :: {:ok, Entity.t} | {:error, :notfound}
-  def find(entity_id) do
-    case Repo.get_by(Entity, entity_id: entity_id) do
-      nil ->
-        {:error, :notfound}
-      entity ->
-        {:ok, entity}
+  @spec fetch(Entity.id) :: Entity.t | nil
+  @doc """
+  Fetches the entity
+
+  ## Examples
+
+      iex> fetch("1::3F23:6EB2:72C6:426C:588E")
+      %Entity{}
+
+      iex> fetch("1::fff")
+      nil
+  """
+  def fetch(id),
+    do: Repo.get(Entity, id)
+
+  @spec fetch_server_owner(HELL.PK.t) :: Entity.t | nil
+  @doc """
+  Fetches the entity that owns `server`
+
+  Returns nil if server is not owned
+
+  ## Examples
+
+      iex> fetch_server_owner("10::478F:8BF:D47B:D04E:8190")
+      %Entity{}
+
+      iex> fetch_server_owner("aa:bbbb::ccc")
+      nil
+  """
+  def fetch_server_owner(server) do
+    with \
+      es = %EntityServer{} <- Repo.get_by(EntityServer, server_id: server),
+      %EntityServer{entity: entity = %Entity{}} <- Repo.preload(es, :entity)
+    do
+      entity
     end
   end
 
@@ -28,6 +58,40 @@ defmodule Helix.Entity.Controller.Entity do
   def delete(entity_id) do
     Entity
     |> where([s], s.entity_id == ^entity_id)
+    |> Repo.delete_all()
+
+    :ok
+  end
+
+  @spec link_component(Entity.t, HELL.PK.t) :: :ok | {:error, Ecto.Changeset.t}
+  def link_component(%Entity{entity_id: id}, component) do
+    params = %{entity_id: id, component_id: component}
+    changeset = EntityComponent.create_changeset(params)
+
+    Repo.insert(changeset)
+  end
+
+  @spec unlink_component(HELL.PK.t) :: :ok
+  def unlink_component(component) do
+    component
+    |> EntityComponent.Query.by_component_id()
+    |> Repo.delete_all()
+
+    :ok
+  end
+
+  @spec link_server(Entity.t, HELL.PK.t) :: :ok | {:error, Ecto.Changeset.t}
+  def link_server(%Entity{entity_id: id}, server) do
+    params = %{entity_id: id, server_id: server}
+    changeset = EntityServer.create_changeset(params)
+
+    Repo.insert(changeset)
+  end
+
+  @spec unlink_server(HELL.PK.t) :: :ok
+  def unlink_server(server) do
+    server
+    |> EntityServer.Query.by_server_id()
     |> Repo.delete_all()
 
     :ok
