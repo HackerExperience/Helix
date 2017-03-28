@@ -57,8 +57,16 @@ defmodule Helix.Hardware.Model.Component do
 
     import Ecto.Query, only: [where: 3]
 
-    def by_id(query \\ Component, component_id) do
-      where(query, [c], c.component_id == ^component_id)
-    end
+    @spec by_id(Ecto.Queryable.t, [HELL.PK.t] | HELL.PK.t) :: Ecto.Queryable.t
+    def by_id(query \\ Component, id_or_id_list)
+    def by_id(query, id_list) when is_list(id_list),
+      do: where(query, [c], c.component_id in ^id_list)
+    def by_id(query, component_id),
+      do: where(query, [c], c.component_id == ^component_id)
+
+    @spec by_type(Ecto.Queryable.t, [String.t]) :: Ecto.Queryable.t
+    def by_type(query \\ Component, type_or_type_list)
+    def by_type(query, type_list) when is_list(type_list),
+      do: where(query, [c], c.component_type in ^type_list)
   end
 end
