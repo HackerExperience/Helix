@@ -1,7 +1,11 @@
 defmodule Helix.Account.Controller.Account do
 
   alias Helix.Account.Model.Account
+  alias Helix.Account.Model.AccountSetting
+  alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
+
+  import Ecto.Query, only: [select: 3]
 
   @type find_params :: [find_param]
   @type find_param :: {:email, Account.email} | {:username, Account.username}
@@ -58,5 +62,34 @@ defmodule Helix.Account.Controller.Account do
     |> Repo.delete_all()
 
     :ok
+  end
+
+  @spec put_settings(Account.t, map) ::
+    {:ok, Setting.t}
+    | {:error, reason :: term}
+  def put_settings(account, settings) do
+    id = account.account_id
+    account_settings = Repo.get(AccountSetting, id) || %AccountSetting{}
+    params = %{account_id: account.account_id, settings: settings}
+
+    changeset = AccountSetting.changeset(account_settings, params)
+
+    case Repo.insert_or_update(changeset) do
+      {:ok, %{settings: settings}} ->
+        {:ok, settings}
+      error = {:error, _} ->
+        error
+    end
+  end
+
+  @spec get_settings(Account.t | Account.id) :: Setting.t
+  def get_settings(account) do
+    settings =
+      account
+      |> AccountSetting.Query.from_account()
+      |> select([as], as.settings)
+      |> Repo.one()
+
+    settings || %Setting{}
   end
 end

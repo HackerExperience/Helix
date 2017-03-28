@@ -6,6 +6,8 @@ defmodule Helix.Account.Controller.AccountTest do
   alias HELL.TestHelper.Random
   alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
+  alias Helix.Account.Model.AccountSetting
+  alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
   alias Helix.Account.Factory
@@ -122,6 +124,59 @@ defmodule Helix.Account.Controller.AccountTest do
       {:error, cs} = AccountController.update(account2, params)
 
       assert :email in Keyword.keys(cs.errors)
+    end
+  end
+
+  describe "putting settings" do
+    test "succeeds with valid params" do
+      account = Factory.insert(:account)
+      settings = %{is_beta: true}
+
+      AccountController.put_settings(account, settings)
+      %{settings: got} = Repo.get(AccountSetting, account.account_id)
+
+      assert settings == Map.from_struct(got)
+    end
+
+    test "fails with contract violating params" do
+      account = Factory.insert(:account)
+      bogus = %{is_beta: "uhe"}
+      result = AccountController.put_settings(account, bogus)
+
+      assert {:error, _} = result
+    end
+  end
+
+  describe "getting settings" do
+    test "includes modified settings" do
+      defaults =
+        %Setting{}
+        |> Map.from_struct()
+        |> MapSet.new()
+
+      custom_keys = fn settings ->
+        settings
+        |> Map.from_struct()
+        |> Enum.reject(&MapSet.member?(defaults, &1))
+        |> Keyword.keys()
+      end
+
+      %{account: account, settings: settings} = Factory.insert(:account_setting)
+
+      result =
+        account
+        |> AccountController.get_settings()
+        |> custom_keys.()
+
+      assert custom_keys.(settings) == result
+    end
+
+    # FIXME: add some custom settings and filter like on previous test
+    test "includes every unchanged setting" do
+      account = Factory.insert(:account)
+      settings = AccountController.get_settings(account)
+
+      assert %Setting{} == settings
     end
   end
 end

@@ -20,27 +20,19 @@ defmodule Helix.Account.Factory do
     }
   end
 
-  def setting_factory do
-    %Setting{
-      setting_id: setting_id(),
-      default_value: Random.string()
-    }
-  end
-
   def account_setting_factory do
+    settings =
+      :setting
+      |> build()
+      |> Map.from_struct()
+
     %AccountSetting{
       account: build(:account),
-      setting: build(:setting),
-      setting_value: setting_value()
+      settings: settings
     }
   end
 
-  defp setting_id do
-    [min: 20, max: 20]
-    |> Random.string()
-    |> String.downcase()
+  def setting_factory do
+    %Setting{is_beta: true}
   end
-
-  defp setting_value,
-    do: Random.string()
 end
