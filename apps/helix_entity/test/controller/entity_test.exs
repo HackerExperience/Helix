@@ -37,15 +37,27 @@ defmodule Helix.Entity.Controller.EntityTest do
     end
   end
 
-  describe "entity fetching" do
-    test "succeeds by id" do
+  describe "fetch/1" do
+    test "returns entity on success" do
       entity = Factory.insert(:entity)
 
-      assert {:ok, _} = EntityController.find(entity.entity_id)
+      assert %Entity{} = EntityController.fetch(entity.entity_id)
     end
 
-    test "fails when entity doesn't exists" do
-      assert {:error, :notfound} == EntityController.find(Random.pk())
+    test "returns nil if entity doesn't exists" do
+      refute EntityController.fetch(Random.pk())
+    end
+  end
+
+  describe "fetch_server_owner/1" do
+    test "returns entity if server is owned" do
+      %{server_id: id} = Factory.insert(:entity_server)
+
+      assert %Entity{} = EntityController.fetch_server_owner(id)
+    end
+
+    test "returns nil if server is not owned" do
+      refute EntityController.fetch_server_owner(Random.pk())
     end
   end
 

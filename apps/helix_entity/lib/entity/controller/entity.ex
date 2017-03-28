@@ -14,13 +14,41 @@ defmodule Helix.Entity.Controller.Entity do
     |> Repo.insert()
   end
 
-  @spec find(Entity.id) :: {:ok, Entity.t} | {:error, :notfound}
-  def find(entity_id) do
-    case Repo.get_by(Entity, entity_id: entity_id) do
-      nil ->
-        {:error, :notfound}
-      entity ->
-        {:ok, entity}
+  @spec fetch(Entity.id) :: Entity.t | nil
+  @doc """
+  Fetches the entity
+
+  ## Examples
+
+      iex> fetch("1::3F23:6EB2:72C6:426C:588E")
+      %Entity{}
+
+      iex> fetch("1::fff")
+      nil
+  """
+  def fetch(id),
+    do: Repo.get(Entity, id)
+
+  @spec fetch_server_owner(HELL.PK.t) :: Entity.t | nil
+  @doc """
+  Fetches the entity that owns `server`
+
+  Returns nil if server is not owned
+
+  ## Examples
+
+      iex> fetch_server_owner("10::478F:8BF:D47B:D04E:8190")
+      %Entity{}
+
+      iex> fetch_server_owner("aa:bbbb::ccc")
+      nil
+  """
+  def fetch_server_owner(server) do
+    with \
+      es = %EntityServer{} <- Repo.get_by(EntityServer, server_id: server),
+      %EntityServer{entity: entity = %Entity{}} <- Repo.preload(es, :entity)
+    do
+      entity
     end
   end
 

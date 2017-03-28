@@ -6,6 +6,16 @@ defmodule Helix.Entity.Service.API.Entity do
   # Note that Entity API has no create function because it should be created
   # through reactions to events
 
+  @spec fetch(HELL.PK.t) :: Entity.t | nil
+  def fetch(id) do
+    EntityController.fetch(id)
+  end
+
+  @spec fetch_server_owner(HELL.PK.t) :: Entity.t | nil
+  def fetch_server_owner(server) do
+    EntityController.fetch_server_owner(server)
+  end
+
   @spec link_component(Entity.t, HELL.PK.t) :: :ok | {:error, reason :: term}
   def link_component(entity, component) do
     EntityController.link_component(entity, component)
