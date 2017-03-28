@@ -5,8 +5,12 @@ defmodule Helix.Software.Controller.FileTest do
   alias HELL.PK
   alias Helix.Software.Controller.File, as: FileController
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.SoftwareModule
+  alias Helix.Software.Repo
 
   alias Helix.Software.Factory
+
+  import Ecto.Query, only: [select: 3]
 
   @moduletag :integration
 
@@ -21,6 +25,15 @@ defmodule Helix.Software.Controller.FileTest do
       software_type: file.software_type,
       storage_id: storage.storage_id
     }
+  end
+
+  defp generate_software_modules(software_type) do
+    software_type
+    |> SoftwareModule.Query.by_software_type()
+    |> select([sm], sm.software_module)
+    |> Repo.all()
+    |> Enum.map(&{&1, Burette.Number.number(1..1024)})
+    |> :maps.from_list()
   end
 
   describe "creating" do
@@ -176,6 +189,35 @@ defmodule Helix.Software.Controller.FileTest do
     end
   end
 
+  test "setting modules" do
+    file = Factory.insert(:file)
+    modules = generate_software_modules(file.software_type)
+
+    {:ok, file_modules} = FileController.set_modules(file, modules)
+
+    # created modules from `modules`
+    assert modules == file_modules
+  end
+
+  describe "getting modules" do
+    test "returns file modules as a map" do
+      file = Factory.insert(:file)
+      modules = generate_software_modules(file.software_type)
+
+      FileController.set_modules(file, modules)
+
+      file_modules = FileController.get_modules(file)
+      assert modules == file_modules
+    end
+
+    test "returns empty map when nothing is found" do
+      file = Factory.insert(:file)
+      file_modules = FileController.get_modules(file)
+
+      assert Enum.empty?(file_modules)
+    end
+  end
+
   describe "deleting" do
     test "is idempotent" do
       file = Factory.insert(:file)
@@ -200,6 +242,18 @@ defmodule Helix.Software.Controller.FileTest do
       assert FileController.fetch(file.file_id)
       FileController.delete(file.file_id)
       refute FileController.fetch(file.file_id)
+    end
+
+    test "deletes every module" do
+      file = Factory.insert(:file)
+      software_module = generate_software_modules(file.software_type)
+
+      {:ok, _} = FileController.set_modules(file, software_module)
+
+      Repo.delete(file)
+
+      file_modules = FileController.get_modules(file)
+      assert Enum.empty?(file_modules)
     end
   end
 end
