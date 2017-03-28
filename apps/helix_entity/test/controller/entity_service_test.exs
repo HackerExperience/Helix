@@ -5,7 +5,10 @@ defmodule Helix.Entity.Controller.EntityServiceTest do
   alias HELF.Broker
   alias HELL.TestHelper.Random
 
+  # FIXME: #12
+
   @moduletag :integration
+  @moduletag :pending
 
   setup do
     name = Random.username()

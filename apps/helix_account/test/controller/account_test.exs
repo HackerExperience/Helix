@@ -124,29 +124,4 @@ defmodule Helix.Account.Controller.AccountTest do
       assert :email in Keyword.keys(cs.errors)
     end
   end
-
-  describe "account signing in" do
-    test "succeeds with correct username and password" do
-      params = Factory.params_for(:account)
-      pass = params.password
-
-      {:ok, account} = AccountController.create(params)
-
-      assert {:ok, _} = AccountController.login(account.username, pass)
-    end
-
-    test "fails when username is invalid" do
-      error = AccountController.login("invalid_username", "any_password")
-
-      assert {:error, :notfound} == error
-    end
-
-    test "fails when password doesn't match" do
-      params = Factory.params_for(:account)
-      {:ok, account} = AccountController.create(params)
-      error = AccountController.login(account.username, "incorrect_password")
-
-      assert {:error, :notfound} == error
-    end
-  end
 end

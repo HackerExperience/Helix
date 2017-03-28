@@ -2,7 +2,6 @@ defmodule Helix.Account.App do
 
   use Application
 
-  alias Helix.Account.Controller.AccountService
   alias Helix.Account.Repo
   alias Helix.Account.WS.Routes
 
@@ -10,7 +9,6 @@ defmodule Helix.Account.App do
     import Supervisor.Spec
 
     children = [
-      worker(AccountService, []),
       worker(Repo, [])
     ]
 

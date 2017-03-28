@@ -6,6 +6,9 @@ defmodule Helix.Server.Controller.ServerServiceTest do
   alias HELL.TestHelper.Random
 
   @moduletag :integration
+  @moduletag :pending
+
+  # FIXME: #43
 
   # HACK: this method is calling methods from another domain instead of Broker
   defp server_of_account(account_id) do
