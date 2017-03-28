@@ -2,63 +2,81 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
-  alias Helix.Hardware.Controller.Component, as: ComponentController
-  alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
+  alias HELL.PK
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
+  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.Motherboard
-  alias Helix.Hardware.Repo
+
+  alias Helix.Hardware.Factory
 
   @moduletag :integration
 
-  setup_all do
-    {:ok, spec} = ComponentSpecController.create(motherboard_spec())
+  defp component_of_type(type) do
+    specialized_component =
+      type
+      |> String.to_atom()
+      |> Factory.insert()
 
-    {:ok, component_spec: spec}
+    specialized_component.component
   end
 
-  setup context do
-    {:ok, component} = ComponentController.create_from_spec(context.component_spec)
+  describe "motherboard fetching" do
+    # REVIEW: Refactor me, use fetch instead of find
 
-    mobo = Repo.get_by(Motherboard, motherboard_id: component.component_id)
-
-    {:ok, mobo: mobo}
-  end
-
-  describe "find" do
-    test "fetching the model by it's id", %{mobo: mobo} do
-      {:ok, found} = MotherboardController.find(mobo.motherboard_id)
-      assert mobo.motherboard_id === found.motherboard_id
+    test "succeeds by id" do
+      mobo = Factory.insert(:motherboard)
+      assert {:ok, _} = MotherboardController.find(mobo.motherboard_id)
     end
 
-    test "returns error when motherboard doesn't exists" do
-      assert {:error, :notfound} === MotherboardController.find(Random.pk())
+    test "fails when motherboard doesn't exists" do
+      bogus = PK.pk_for(Motherboard)
+      assert {:error, :notfound} == MotherboardController.find(bogus)
     end
   end
 
-  test "delete is idempotent and removes every slot", %{mobo: mobo} do
-    assert Repo.get_by(Motherboard, motherboard_id: mobo.motherboard_id)
-    refute [] === MotherboardController.get_slots(mobo.motherboard_id)
+  test "unlinking every component from a motherboard" do
+    mobo = Factory.insert(:motherboard)
 
-    MotherboardController.delete(mobo.motherboard_id)
-    MotherboardController.delete(mobo.motherboard_id)
+    mobo.slots
+    |> Enum.take_random(3)
+    |> Enum.each(fn slot ->
+      type = slot.link_component_type
+      component = component_of_type(type)
 
-    refute Repo.get_by(Motherboard, motherboard_id: mobo.motherboard_id)
-    assert [] === MotherboardController.get_slots(mobo.motherboard_id)
+      MotherboardSlotController.link(slot, component)
+    end)
+
+    MotherboardController.unlink_components_from_motherboard(mobo)
+
+    unused_slot? = &is_nil(&1.link_component_id)
+
+    slots = MotherboardController.get_slots(mobo)
+    assert Enum.all?(slots, unused_slot?)
   end
 
-  defp motherboard_spec do
-    total_slots = Random.number(1..20)
-    slots = for x <- 0..(total_slots - 1), into: %{} do
-      xs = %{"type" => Enum.random(["CPU", "HDD", "RAM", "NIC"])}
-      {to_string(x), xs}
+  describe "motherboard deleting" do
+    test "is idempotent" do
+      mobo = Factory.insert(:motherboard)
+
+      assert {:ok, _} = MotherboardController.find(mobo.motherboard_id)
+
+      MotherboardController.delete(mobo.motherboard_id)
+      MotherboardController.delete(mobo.motherboard_id)
+
+      assert {:error, :notfound} ==
+        MotherboardController.find(mobo.motherboard_id)
     end
 
-    %{
-      "spec_code" => String.upcase(Random.string(min: 10)),
-      "spec_type" => "MOBO",
-      "name" => Random.string(min: 9),
-      "slots" => slots
-    }
+    test "removes its slots" do
+      mobo = Factory.insert(:motherboard)
+
+      slots = MotherboardController.get_slots(mobo.motherboard_id)
+      refute Enum.empty?(slots)
+
+      MotherboardController.delete(mobo.motherboard_id)
+
+      slots = MotherboardController.get_slots(mobo.motherboard_id)
+      assert Enum.empty?(slots)
+    end
   end
 end

@@ -21,7 +21,9 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
     |> Repo.update()
   end
 
-  @spec link(MotherboardSlot.t, Component.t) :: {:ok, MotherboardSlot.t} | {:error, :component_already_linked | :slot_already_linked | Ecto.Changeset.t}
+  @spec link(MotherboardSlot.t, Component.t) ::
+    {:ok, MotherboardSlot.t} | {:error, :component_already_linked} |
+    {:error, :slot_already_linked} | {:error, Ecto.Changeset.t}
   def link(slot, component) do
     slot_linked? = fn slot ->
       MotherboardSlot.linked?(slot) && {:error, :slot_already_linked}
