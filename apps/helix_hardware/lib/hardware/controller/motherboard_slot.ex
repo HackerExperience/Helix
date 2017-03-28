@@ -4,17 +4,9 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
-  @spec find(HELL.PK.t) :: {:ok, MotherboardSlot.t} | {:error, :notfound}
-  def find(slot_id) do
-    case Repo.get_by(MotherboardSlot, slot_id: slot_id) do
-      nil ->
-        {:error, :notfound}
-      res ->
-        {:ok, res}
-    end
-  end
-
-  @spec update(MotherboardSlot.t, MotherboardSlot.update_params) :: {:ok, MotherboardSlot.t} | {:error, Ecto.Changeset.t}
+  @spec update(MotherboardSlot.t, MotherboardSlot.update_params) ::
+    {:ok, MotherboardSlot.t}
+    | {:error, Ecto.Changeset.t}
   def update(slot, params) do
     slot
     |> MotherboardSlot.update_changeset(params)
@@ -45,7 +37,9 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
     end
   end
 
-  @spec unlink(MotherboardSlot.t) :: {:ok, MotherboardSlot.t} | {:error, Ecto.Changeset.t}
+  @spec unlink(MotherboardSlot.t) ::
+    {:ok, MotherboardSlot.t}
+    | {:error, Ecto.Changeset.t}
   def unlink(slot) do
     update(slot, %{link_component_id: nil})
   end
