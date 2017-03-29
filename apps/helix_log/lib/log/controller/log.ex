@@ -5,6 +5,11 @@ defmodule Helix.Log.Controller.Log do
   alias Helix.Log.Model.Revision
   alias Helix.Log.Repo
 
+  @type find_param ::
+    {:server_id, PK.t}
+    | {:crypto_version, non_neg_integer | nil}
+    | {:message, String.t}
+
   @spec create(
     PK.t,
     PK.t,
@@ -43,8 +48,14 @@ defmodule Helix.Log.Controller.Log do
   end
 
   @spec fetch(PK.t) :: Log.t | nil
-  def fetch(log_id) do
-    Repo.get_by(Log, log_id: log_id)
+  def fetch(log_id),
+    do: Repo.get_by(Log, log_id: log_id)
+
+  @spec find([find_param], meta :: []) :: [Log.t]
+  def find(params, _meta \\ []) do
+    params
+    |> Enum.reduce(Log, &reduce_find_params/2)
+    |> Repo.all()
   end
 
   @spec revise(
@@ -128,4 +139,12 @@ defmodule Helix.Log.Controller.Log do
     # Yep, a decrypted log is a log encrypted without a crypto (WHAT?)
     encrypt(log, nil)
   end
+
+  @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
+  defp reduce_find_params({:server_id, server_id}, query),
+    do: Log.Query.by_server(query, server_id)
+  defp reduce_find_params({:crypto_version, version}, query),
+    do: Log.Query.by_crypto_version(query, version)
+  defp reduce_find_params({:message, message}, query),
+    do: Log.Query.by_message(query, message)
 end
