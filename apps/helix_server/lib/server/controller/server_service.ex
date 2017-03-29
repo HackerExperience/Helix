@@ -3,9 +3,9 @@ defmodule Helix.Server.Controller.ServerService do
   use GenServer
 
   alias HELF.Broker
-  alias HELL.PK
-  alias Helix.Server.Controller.Server, as: ServerController
-  alias Helix.Server.Model.Server
+  # alias HELL.PK
+  # alias Helix.Server.Controller.Server, as: ServerController
+  # alias Helix.Server.Model.Server
 
   @typep state :: nil
 
@@ -67,79 +67,79 @@ defmodule Helix.Server.Controller.ServerService do
     {:ok, nil}
   end
 
-  @spec handle_call(
-    {:server, :create, String.t, PK.t},
-    GenServer.from,
-    state) :: {:reply, {:ok, server :: term}
-              | {:error, reason :: term}, state}
-  @spec handle_call(
-    {:server, :attach, Server.id, PK.t},
-    GenServer.from,
-    state) :: {:reply, :ok | :error, state}
-  @spec handle_call(
-    {:server, :detach, Server.id},
-    GenServer.from,
-    state) :: {:reply, :ok | :error, state}
-  @spec handle_call(
-    {:server, :resources, HELL.PK.t},
-    GenServer.from,
-    state) :: {:reply, {:ok, %{any => any}} | {:error, :notfound}, state}
-  @doc false
-  def handle_call({:server, :create, server_type, entity_id}, _from, state) do
-    case ServerController.create(%{server_type: server_type}) do
-      {:ok, server} ->
-        msg = %{
-          server_id: server.server_id,
-          entity_id: entity_id
-        }
-        Broker.cast("event.server.created", msg)
+#   @spec handle_call(
+#     {:server, :create, String.t, PK.t},
+#     GenServer.from,
+#     state) :: {:reply, {:ok, server :: term}
+#               | {:error, reason :: term}, state}
+#   @spec handle_call(
+#     {:server, :attach, Server.id, PK.t},
+#     GenServer.from,
+#     state) :: {:reply, :ok | :error, state}
+#   @spec handle_call(
+#     {:server, :detach, Server.id},
+#     GenServer.from,
+#     state) :: {:reply, :ok | :error, state}
+#   @spec handle_call(
+#     {:server, :resources, HELL.PK.t},
+#     GenServer.from,
+#     state) :: {:reply, {:ok, %{any => any}} | {:error, :notfound}, state}
+#   @doc false
+#   def handle_call({:server, :create, server_type, entity_id}, _from, state) do
+#     case ServerController.create(%{server_type: server_type}) do
+#       {:ok, server} ->
+#         msg = %{
+#           server_id: server.server_id,
+#           entity_id: entity_id
+#         }
+#         Broker.cast("event.server.created", msg)
 
-        {:reply, {:ok, server}, state}
-      error ->
-        {:reply, error, state}
-    end
-  end
-  def handle_call({:server, :attach, id, motherboard_id}, _from, state) do
-    case ServerController.attach(id, motherboard_id) do
-      {:ok, _} ->
-        msg = %{
-          server_id: id,
-          motherboard_id: motherboard_id
-        }
-        Broker.cast("event.server.attached", msg)
+#         {:reply, {:ok, server}, state}
+#       error ->
+#         {:reply, error, state}
+#     end
+#   end
+#   def handle_call({:server, :attach, id, motherboard_id}, _from, state) do
+#     case ServerController.attach(id, motherboard_id) do
+#       {:ok, _} ->
+#         msg = %{
+#           server_id: id,
+#           motherboard_id: motherboard_id
+#         }
+#         Broker.cast("event.server.attached", msg)
 
-        {:reply, :ok, state}
-      {:error, _} ->
-        {:reply, :error, state}
-    end
-  end
-  def handle_call({:server, :detach, id}, _from, state) do
-    case ServerController.detach(id) do
-      {:ok, _} ->
-        msg = %{server_id: id}
-        Broker.cast("event.server.detached", msg)
+#         {:reply, :ok, state}
+#       {:error, _} ->
+#         {:reply, :error, state}
+#     end
+#   end
+#   def handle_call({:server, :detach, id}, _from, state) do
+#     case ServerController.detach(id) do
+#       {:ok, _} ->
+#         msg = %{server_id: id}
+#         Broker.cast("event.server.detached", msg)
 
-        {:reply, :ok, state}
-      {:error, _} ->
-        {:reply, :error, state}
-    end
-  end
-  def handle_call({:server, :find, id}, _from, state) do
-    reply = ServerController.find(id)
-    {:reply, reply, state}
-  end
-  def handle_call({:server, :resources, id}, _from, state) do
-    with \
-      {:ok, server} <- ServerController.find(id),
-      %{motherboard_id: mib} when not is_nil(mib) <- server,
-      msg = %{motherboard_id: mib},
-      topic = "hardware.motherboard.resources",
-      {_, {:ok, resources}} <- Broker.call(topic, msg)
-    do
-      {:reply, {:ok, resources}, state}
-    else
-      _ ->
-        {:reply, {:error, :notfound}, state}
-    end
-  end
+#         {:reply, :ok, state}
+#       {:error, _} ->
+#         {:reply, :error, state}
+#     end
+#   end
+#   def handle_call({:server, :find, id}, _from, state) do
+#     reply = ServerController.find(id)
+#     {:reply, reply, state}
+#   end
+#   def handle_call({:server, :resources, id}, _from, state) do
+#     with \
+#       {:ok, server} <- ServerController.find(id),
+#       %{motherboard_id: mib} when not is_nil(mib) <- server,
+#       msg = %{motherboard_id: mib},
+#       topic = "hardware.motherboard.resources",
+#       {_, {:ok, resources}} <- Broker.call(topic, msg)
+#     do
+#       {:reply, {:ok, resources}, state}
+#     else
+#       _ ->
+#         {:reply, {:error, :notfound}, state}
+#     end
+#   end
 end
