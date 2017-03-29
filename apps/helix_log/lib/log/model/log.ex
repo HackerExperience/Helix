@@ -106,6 +106,10 @@ defmodule Helix.Log.Model.Log do
       where(query, [l], l.server_id == ^server_id)
     end
 
+    @spec by_message(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    def by_message(query \\ Log, message),
+      do: where(query, [l], like(l.message, ^message))
+
     @spec order_by_newest(Ecto.Queryable.t) :: Ecto.Queryable.t
     def order_by_newest(query \\ Log) do
       order_by(query, [l], desc: l.inserted_at)
