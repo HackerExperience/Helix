@@ -2,6 +2,7 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
 
   use ExUnit.Case, async: true
 
+  alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.ComponentSpec, as: ComponentSpecController
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.ComponentType
@@ -18,8 +19,7 @@ defmodule Helix.Hardware.Controller.ComponentSpecTest do
     end
 
     test "fails when spec doesn't exists" do
-      bogus = Factory.build(:component_spec)
-      refute ComponentSpecController.fetch(bogus.spec_id)
+      refute ComponentSpecController.fetch(Random.pk())
     end
   end
 
