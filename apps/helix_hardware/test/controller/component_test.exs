@@ -23,6 +23,13 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   end
 
   describe "finding" do
+    test "by id" do
+      component = Factory.insert(:component)
+      [found] = ComponentController.find(id: component.component_id)
+
+      assert component.component_id == found.component_id
+    end
+
     test "by id list" do
       id_list =
         4
