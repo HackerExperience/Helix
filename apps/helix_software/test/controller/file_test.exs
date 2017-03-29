@@ -82,16 +82,6 @@ defmodule Helix.Software.Controller.FileTest do
 
       refute file.file_path == updated.file_path
       assert params.file_path == updated.file_path
-
-      # Storage
-      # REVIEW: I think we should disallow this. A file should not be
-      #   moved/updated to another storage but should be copied to it
-      storage = Factory.insert(:storage)
-      params = %{storage_id: storage.storage_id}
-      {:ok, updated} = FileController.update(file, params)
-
-      refute file.storage_id == updated.storage_id
-      assert params.storage_id == updated.storage_id
     end
 
     test "fails on path identity conflict" do
