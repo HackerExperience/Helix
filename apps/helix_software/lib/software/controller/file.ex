@@ -30,25 +30,25 @@ defmodule Helix.Software.Controller.File do
     |> parse_errors()
   end
 
-  @spec copy(File.t, file_path :: String.t, storage_id :: HELL.PK.t) ::
+  @spec copy(File.t, path :: String.t, storage_id :: HELL.PK.t) ::
     {:ok, File.t}
     | {:error, :file_exists | Ecto.Changeset.t}
-  def copy(file, file_path, storage_id) do
+  def copy(file, path, storage_id) do
     # TODO: allow copying to the same folder
     params = %{
       name: file.name,
-      file_path: file_path,
+      path: path,
       file_size: file.file_size,
       software_type: file.software_type,
       storage_id: storage_id}
     create(params)
   end
 
-  @spec move(File.t, file_path :: String.t, storage_id :: HELL.PK.t) ::
+  @spec move(File.t, path :: String.t, storage_id :: HELL.PK.t) ::
     {:ok, File.t}
     | {:error, :file_exists | Ecto.Changeset.t}
-  def move(file, file_path, storage_id) do
-    params = %{file_path: file_path, storage_id: storage_id}
+  def move(file, path, storage_id) do
+    params = %{path: path, storage_id: storage_id}
     file
     |> File.update_changeset(params)
     |> Repo.update()
@@ -116,7 +116,7 @@ defmodule Helix.Software.Controller.File do
   defp parse_errors({:ok, changeset}),
     do: {:ok, changeset}
   defp parse_errors({:error, changeset}) do
-    if Keyword.get(changeset.errors, :file_path) do
+    if Keyword.get(changeset.errors, :full_path) do
       {:error, :file_exists}
     else
       {:error, changeset}
