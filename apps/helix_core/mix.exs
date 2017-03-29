@@ -49,7 +49,7 @@ defmodule Helix.Core.Mixfile do
   defp deps do
     [
       {:hell, in_umbrella: true},
-      {:postgrex, "~> 0.13", override: true},
+      {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true},
       {:ecto, "~> 2.1", override: true},
       {:helf, github: "HackerExperience/HELF"},
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test}
