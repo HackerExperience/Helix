@@ -92,7 +92,7 @@ defmodule Helix.Log.Model.Log do
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.LogTouch
 
-    import Ecto.Query, only: [join: 5, order_by: 3, select: 3, where: 3]
+    import Ecto.Query, only: [join: 5, order_by: 3, where: 3]
 
     @spec edited_by_entity(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     def edited_by_entity(query \\ Log, entity_id) do
@@ -104,11 +104,6 @@ defmodule Helix.Log.Model.Log do
     @spec by_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     def by_server(query \\ Log, server_id) do
       where(query, [l], l.server_id == ^server_id)
-    end
-
-    @spec select_id(Ecto.Queryable.t) :: Ecto.Queryable.t
-    def select_id(query \\ Log) do
-      select(query, [l], l.log_id)
     end
 
     @spec order_by_newest(Ecto.Queryable.t) :: Ecto.Queryable.t
