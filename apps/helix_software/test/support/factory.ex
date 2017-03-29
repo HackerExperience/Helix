@@ -6,6 +6,7 @@ defmodule Helix.Software.Factory do
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.StorageDrive
+  alias Helix.Software.Model.SoftwareType
 
   def file_factory do
     :file
@@ -44,16 +45,19 @@ defmodule Helix.Software.Factory do
       |> Enum.join("/")
 
     size = Burette.Number.number(1024..1_048_576)
+    name = Burette.Color.name()
+
+    {software_type, _type_meta} = Enum.random(SoftwareType.possible_types())
 
     %Helix.Software.Model.File{
-      name: Burette.Color.name(),
+      name: name,
       file_path: "/" <> path,
       file_size: size,
       # FIXME: Think about a better way than hardcoding or fetching every time
       #   maybe have a genserver that holds all possibilities be started with
       #   the test suite, that way simply fetching it is faster (and allows
       #   hacks) than fetching from DB every time
-      software_type: Enum.random(["firewall", "cracker", "exploit", "hasher"])
+      software_type: software_type
     }
   end
 
