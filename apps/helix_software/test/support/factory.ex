@@ -47,11 +47,13 @@ defmodule Helix.Software.Factory do
     size = Burette.Number.number(1024..1_048_576)
     name = Burette.Color.name()
 
-    {software_type, _type_meta} = Enum.random(SoftwareType.possible_types())
+    {software_type, type_meta} = Enum.random(SoftwareType.possible_types())
+    extension = type_meta.extension
 
     %Helix.Software.Model.File{
       name: name,
-      file_path: "/" <> path,
+      path: "/" <> path,
+      full_path: "/" <> path <> "/" <> name <> "." <> extension,
       file_size: size,
       # FIXME: Think about a better way than hardcoding or fetching every time
       #   maybe have a genserver that holds all possibilities be started with
