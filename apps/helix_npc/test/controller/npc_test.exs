@@ -8,24 +8,28 @@ defmodule Helix.NPC.Controller.NPCTest do
 
   @moduletag :integration
 
-  test "create/1" do
+  # FIXME: add factories as soon as this get more fields
+
+  test "creation" do
     assert {:ok, _} = NPCController.create(%{})
   end
 
-  describe "find/1" do
-    test "success" do
+  describe "fetching" do
+    test "success by id" do
       {:ok, npc} = NPCController.create(%{})
-      assert {:ok, ^npc} = NPCController.find(npc.npc_id)
+      assert %NPC{} = NPCController.fetch(npc.npc_id)
     end
 
-    test "failure" do
-      assert {:error, :notfound} == NPCController.find(PK.pk_for(NPC))
+    test "fails when npc with id doesn't exist" do
+      bogus = PK.pk_for(NPC)
+      refute NPCController.fetch(bogus)
     end
   end
 
-  test "delete/1 idempotency" do
+  test "deleting is idempotent" do
     {:ok, npc} = NPCController.create(%{})
-    assert :ok = NPCController.delete(npc.npc_id)
-    assert :ok = NPCController.delete(npc.npc_id)
+    NPCController.delete(npc.npc_id)
+    NPCController.delete(npc.npc_id)
+    refute NPCController.fetch(npc.npc_id)
   end
 end

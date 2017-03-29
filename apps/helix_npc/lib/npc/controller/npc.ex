@@ -12,15 +12,9 @@ defmodule Helix.NPC.Controller.NPC do
     |> Repo.insert()
   end
 
-  @spec find(HELL.PK.t) :: {:ok, NPC.t} | {:error, :notfound}
-  def find(npc_id) do
-    case Repo.get_by(NPC, npc_id: npc_id) do
-      nil ->
-        {:error, :notfound}
-      npc ->
-        {:ok, npc}
-    end
-  end
+  @spec fetch(HELL.PK.t) :: NPC.t | nil
+  def fetch(npc_id),
+    do: Repo.get(NPC, npc_id)
 
   @spec delete(HELL.PK.t) :: no_return
   def delete(npc_id) do
