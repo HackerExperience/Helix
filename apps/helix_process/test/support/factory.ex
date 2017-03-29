@@ -1,11 +1,11 @@
 defmodule Helix.Process.Factory do
   use ExMachina.Ecto, repo: Helix.Process.Repo
 
-  alias HELL.PK
+  alias HELL.TestHelper.Random
   alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Process.Limitations
   alias Helix.Process.Model.Process.ProcessType
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.File
+  alias Helix.Process.Model.Process.Resources
 
   alias HELL.TestHelper.Random
 
@@ -22,22 +22,39 @@ defmodule Helix.Process.Factory do
   end
 
   def process_factory do
-    now = DateTime.utc_now()
-
     %Process{
-      gateway_id: PK.pk_for(Process),
-      target_server_id: PK.pk_for(Server),
-      file_id: PK.pk_for(File),
+      gateway_id: Random.pk(),
+      target_server_id: Random.pk(),
+      process_data: %NaiveProcessType{},
+      file_id: Random.pk(),
       network_id: Random.pk(),
-      software: %{},
       process_type: Random.string(min: 20, max: 20),
       state: random_process_state(),
-      priority: Random.number(0..3),
-      processed: %{},
-      allocated: %{},
-      limitations: %{},
-      creation_time: now,
-      updated_time: now
+      priority: Random.number(0..5),
+      objective: build(:resources),
+      processed: build(:resources),
+      allocated: build(:resources),
+      limitations: build(:limitations),
+      creation_time: Burette.Calendar.datetime(),
+      updated_time: DateTime.utc_now()
+    }
+  end
+
+  def resources_factory do
+    %Resources{
+      cpu: Random.number(0..100),
+      ram: Random.number(0..1024),
+      dlk: Random.number(0..100),
+      ulk: Random.number(0..100)
+    }
+  end
+
+  def limitations_factory do
+    %Limitations{
+      cpu: Random.number(100..200),
+      ram: Random.number(1024..4096),
+      dlk: Random.number(100..1000),
+      ulk: Random.number(100..1000)
     }
   end
 
