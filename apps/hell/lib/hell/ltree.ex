@@ -62,8 +62,9 @@ defmodule HELL.Postgrex.LTree do
   @behaviour Postgrex.Extension
 
   # This implementation is based on the example code by fishcakez that can be
-  # found on https://github.com/elixir-ecto/postgrex/commit/a417a6525280654ab33b6502eee7008bf8ed16ad
-  # and on https://github.com/elixir-ecto/postgrex/commit/547fa505c86d22e130ec17622d9a753a91811cee
+  # found on commit a417a6525280654ab33b6502eee7008bf8ed16ad on postgrex repo
+  # (no link provided thanks to credo . . .) and also on commit
+  # 547fa505c86d22e130ec17622d9a753a91811cee on postgrex repo
 
   def init(opts),
     do: Keyword.get(opts, :decode_copy, :copy)
