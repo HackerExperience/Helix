@@ -47,7 +47,7 @@ defmodule Helix.Software.Factory do
 
     %Helix.Software.Model.File{
       name: Burette.Color.name(),
-      file_path: path,
+      file_path: "/" <> path,
       file_size: size,
       # FIXME: Think about a better way than hardcoding or fetching every time
       #   maybe have a genserver that holds all possibilities be started with

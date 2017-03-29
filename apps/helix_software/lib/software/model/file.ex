@@ -40,8 +40,11 @@ defmodule Helix.Software.Model.File do
     optional(:storage_id) => PK.t
   }
 
-  @creation_fields ~w/name file_path file_size software_type storage_id/a
-  @update_fields ~w/name file_path storage_id/a
+  @creation_fields ~w/file_size software_type storage_id/a
+  @update_fields ~w//a
+  @castable_fields ~w/name file_path/a
+
+  @required_fields ~w/name file_path file_size software_type storage_id/a
 
   @primary_key false
   @ecto_autogenerate {:file_id, {PK, :pk_for, [__MODULE__]}}
@@ -50,8 +53,9 @@ defmodule Helix.Software.Model.File do
       primary_key: true
 
     field :name, :string
-    field :file_path, :string
     field :file_size, :integer
+    field :file_path, :string,
+      default: "/"
 
     belongs_to :type, SoftwareType,
       foreign_key: :software_type,
@@ -73,7 +77,14 @@ defmodule Helix.Software.Model.File do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> generic_validations()
+    |> changeset(params)
+  end
+
+  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  def update_changeset(struct, params) do
+    struct
+    |> cast(params, @update_fields)
+    |> changeset(params)
   end
 
   @spec set_modules(File.t, modules) :: Ecto.Changeset.t
@@ -88,20 +99,33 @@ defmodule Helix.Software.Model.File do
     |> cast_assoc(:file_modules)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
-  def update_changeset(model, params) do
-    model
-    |> cast(params, @update_fields)
-    |> generic_validations()
-  end
-
-  @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
-  defp generic_validations(changeset) do
-    changeset
-    |> validate_required(
-      [:name, :file_path, :file_size, :software_type, :storage_id])
+  defp changeset(struct, params) do
+    struct
+    |> cast(params, @castable_fields)
+    |> validate_required(@required_fields)
     |> validate_number(:file_size, greater_than: 0)
     |> unique_constraint(:file_path, name:
       :files_storage_id_file_path_name_software_type_index)
+    |> update_change(:file_path, &add_leading_slash/1)
+    |> update_change(:file_path, &remove_leading_slash/1)
+  end
+
+  defp add_leading_slash(path = "/" <> _),
+    do: path
+  defp add_leading_slash(path),
+    do: "/" <> path
+
+  # Removes the leading slash of a string if any unless it is the only char
+  defp remove_leading_slash("/"),
+    do: "/"
+  defp remove_leading_slash(path) do
+    path_size = (byte_size(path) - 1) * 8
+
+    case path do
+      <<path::bits-size(path_size)>> <> "/" ->
+        <<path::bits-size(path_size)>>
+      path ->
+        path
+    end
   end
 end
