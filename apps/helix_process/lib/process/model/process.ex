@@ -53,6 +53,9 @@ defmodule Helix.Process.Model.Process do
     # Which network is this process bound to (if any)
     field :network_id, PK
 
+    # FIXME: this was just added to allow producing the factory
+    field :software, :map
+
     # Data that is used by the specific implementation of the process
     # side-effects
     field :process_data, NaiveStruct
@@ -106,6 +109,7 @@ defmodule Helix.Process.Model.Process do
     gateway_id
     target_server_id
     file_id
+    software
     network_id/a
   @update_fields ~w/state priority updated_time estimated_time minimum/a
 
