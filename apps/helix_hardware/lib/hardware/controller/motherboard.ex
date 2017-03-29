@@ -62,9 +62,8 @@ defmodule Helix.Hardware.Controller.Motherboard do
   end
 
   @spec fetch!(Component.t) :: Motherboard.t
-  def fetch!(component = %{component_type: "mobo"}) do
-    Repo.get!(Motherboard, component.component_id)
-  end
+  def fetch!(component = %Component{component_type: "mobo"}),
+    do: Repo.get!(Motherboard, component.component_id)
 
   @spec get_slots(Motherboard.t | HELL.PK.t) :: [MotherboardSlot.t]
   def get_slots(motherboard_or_motherboard_id) do
