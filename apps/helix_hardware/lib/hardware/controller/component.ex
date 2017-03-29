@@ -6,7 +6,7 @@ defmodule Helix.Hardware.Controller.Component do
   alias Helix.Hardware.Repo
 
   @type find_param ::
-    {:id, [HELL.PK.t] | HELL.PK.t}
+    {:id, [HELL.PK.t]}
     | {:type, [String.t] | String.t}
 
   @spec create_from_spec(ComponentSpec.t) ::
@@ -46,14 +46,10 @@ defmodule Helix.Hardware.Controller.Component do
   end
 
   @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
-  defp reduce_find_params({:id, several_ids}, query)
-  when is_list(several_ids),
-    do: Component.Query.from_id_list(query, several_ids)
-  defp reduce_find_params({:id, id}, query),
-    do: Component.Query.from_id_list(query, id)
-  defp reduce_find_params({:type, several_types}, query)
-  when is_list(several_types),
-    do: Component.Query.from_type_list(query, several_types)
+  defp reduce_find_params({:id, id_list}, query) when is_list(id_list),
+    do: Component.Query.from_id_list(query, id_list)
+  defp reduce_find_params({:type, type_list}, query) when is_list(type_list),
+    do: Component.Query.from_type_list(query, type_list)
   defp reduce_find_params({:type, type}, query),
     do: Component.Query.by_type(query, type)
 end

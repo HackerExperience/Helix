@@ -39,21 +39,26 @@ defmodule Helix.Hardware.Controller.ComponentTest do
       assert id_list == found
     end
 
+    test "by type" do
+      type = Factory.random_component_type()
+      components = Factory.insert_list(3, :component, component_type: type)
+
+      found = ComponentController.find(type: type)
+      found_ids = Enum.map(found, &(&1.component_id))
+
+      assert Enum.all?(components, &(&1.component_id in found_ids))
+      assert Enum.all?(found, &(&1.component_type == type))
+    end
+
     test "by type list" do
       components = Factory.insert_list(4, :component)
       type_list = Enum.map(components, &(&1.component_type))
 
-      found =
-        [type: type_list]
-        |> ComponentController.find()
-        |> Enum.map(&(&1.component_id))
+      found = ComponentController.find(type: type_list)
+      found_ids = Enum.map(found, &(&1.component_id))
 
-      result =
-        components
-        |> Enum.map(&(&1.component_id))
-        |> Enum.all?(&(&1 in found))
-
-      assert result
+      assert Enum.all?(components, &(&1.component_id in found_ids))
+      assert Enum.all?(found, &(&1.component_type in type_list))
     end
   end
 
