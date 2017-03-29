@@ -43,6 +43,9 @@ defmodule Helix.Process.Factory do
     build(:resources, params)
   end
 
+  def random_process_state,
+    do: Enum.random([:standby, :paused, :running, :complete])
+
   def process_factory do
     %Process{
       gateway_id: Random.pk(),
@@ -79,7 +82,4 @@ defmodule Helix.Process.Factory do
       ulk: nil
     }
   end
-
-  defp random_process_state,
-    do: Enum.random([:standby, :paused, :running, :complete])
 end
