@@ -4,6 +4,7 @@ defmodule Helix.Software.Controller.FileTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.File, as: FileController
+  alias Helix.Software.Controller.CryptoKey, as: CryptoKeyController
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareModule
   alias Helix.Software.Repo
@@ -56,6 +57,51 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "returns nil if file doesn't exist" do
       refute FileController.fetch(Random.pk())
+    end
+  end
+
+  describe "get_files_on_target_storage/2" do
+    test "returns non-encrypted files" do
+      origin_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, %{files: []})
+
+      Factory.insert_list(5, :file, %{storage: target_storage})
+      Factory.insert_list(5, :file, %{storage: target_storage, crypto_version: 1})
+
+      files = FileController.get_files_on_target_storage(
+        origin_storage,
+        target_storage)
+
+      assert 5 == Enum.count(files)
+      assert Enum.all?(files, &is_nil(&1.crypto_version))
+    end
+
+    test "returns additively files for which the origin storage has a key" do
+      origin_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, %{files: []})
+      server_id = Random.pk()
+
+      Factory.insert_list(5, :file, %{storage: target_storage})
+      encrypted_files = Factory.insert_list(
+        5,
+        :file,
+        %{storage: target_storage, crypto_version: 1})
+
+      create_key = &CryptoKeyController.create(origin_storage, server_id, &1)
+      Enum.each(encrypted_files, create_key)
+
+      files = FileController.get_files_on_target_storage(
+        origin_storage,
+        target_storage)
+
+      unencrypted_returned_files = Enum.filter(
+        files,
+        &is_nil(&1.crypto_version))
+      encrypted_returned_files = Enum.filter(files, &(&1.crypto_version == 1))
+
+      assert 10 == Enum.count(files)
+      assert 5 == Enum.count(unencrypted_returned_files)
+      assert 5 == Enum.count(encrypted_returned_files)
     end
   end
 
@@ -126,7 +172,7 @@ defmodule Helix.Software.Controller.FileTest do
       file = Factory.insert(:file)
       path = Factory.params_for(:file).path
 
-      {:ok, file} = FileController.move(file, path, file.storage_id)
+      {:ok, file} = FileController.move(file, path)
 
       assert path == file.path
     end
@@ -136,7 +182,7 @@ defmodule Helix.Software.Controller.FileTest do
       similarities = Map.take(file0, [:name, :storage, :software_type])
       file1 = Factory.insert(:file, similarities)
 
-      result = FileController.move(file1, file0.path, file0.storage_id)
+      result = FileController.move(file1, file0.path)
       assert {:error, :file_exists} == result
     end
   end
