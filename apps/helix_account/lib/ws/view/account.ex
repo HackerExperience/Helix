@@ -16,4 +16,8 @@ defmodule Helix.Account.WS.View.Account do
       message
     end)
   end
+
+  def format(value) do
+    value
+  end
 end

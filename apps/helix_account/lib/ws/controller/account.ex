@@ -29,8 +29,8 @@ defmodule Helix.Account.WS.Controller.Account do
     json_response
   def login(_request, %{username: username, password: password}) do
     case AccountAPI.login(username, password) do
-      {:ok, account} ->
-        {:ok, Helix.Account.WS.View.Account.format(account)}
+      {:ok, jwt} ->
+        {:ok, Helix.Account.WS.View.Account.format(%{:token => jwt})}
       {:error, :notfound} ->
         {:error, :notfound}
     end
