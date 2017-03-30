@@ -12,7 +12,7 @@ defmodule Helix.Account.App do
       worker(Repo, [])
     ]
 
-    ensure_guardian_key_is_set()
+    validate_guardian_config()
     Routes.register_routes()
     Routes.register_topics()
 
@@ -20,9 +20,16 @@ defmodule Helix.Account.App do
     Supervisor.start_link(children, opts)
   end
 
-  defp ensure_guardian_key_is_set do
+  defp validate_guardian_config do
+    # Make sure we aren't accidentally using an empty secret key
     unless Application.get_env(:guardian, Guardian)[:secret_key] do
       raise "Guardian secret key not set"
+    end
+
+    # Make sure we aren't using JWT'S "none" encryption algorithm
+    allowed_algos = Application.get_env(:guardian, Guardian)[:allowed_algos]
+    if "none" in allowed_algos do
+      raise "Can't use 'none' as JWT algorithm"
     end
   end
 end

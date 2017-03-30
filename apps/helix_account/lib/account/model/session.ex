@@ -10,7 +10,7 @@ defmodule Helix.Account.Model.SessionSerializer do
   # REVIEW: What is this expecting to receive exactly ? I'll make it temporarily
   #   just store the account's id
   @spec for_token(Account.t) :: {:ok, session}
-  def for_token(%Account{account_id: account_id}),
+  def for_token(%Account{account_id: account_id}) when is_binary(account_id),
     do: {:ok, to_string(account_id)}
   def for_token(_),
     do: {:error, "invalid input"}

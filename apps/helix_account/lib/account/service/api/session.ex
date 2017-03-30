@@ -4,10 +4,10 @@ defmodule Helix.Account.Service.API.Session do
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.Session
 
-  @spec generate_token(Account.t) :: Session.session
+  @spec generate_token(Account.t) :: {Session.session, claims :: map}
   def generate_token(account) do
-    {:ok, jwt} = SessionController.create(account)
-    jwt
+    {:ok, jwt, claims} = SessionController.create(account)
+    {jwt, claims}
   end
 
   @spec validate_token(Session.session) ::

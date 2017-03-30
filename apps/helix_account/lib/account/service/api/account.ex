@@ -73,7 +73,7 @@ defmodule Helix.Account.Service.API.Account do
     account = AccountController.fetch_by_username(username)
 
     if Account.check_password(account, password) do
-      token = Helix.Account.Service.API.Session.generate_token(account)
+      {token, _} = Helix.Account.Service.API.Session.generate_token(account)
       {:ok, token}
     else
       {:error, :notfound}

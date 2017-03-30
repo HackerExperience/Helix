@@ -3,10 +3,9 @@ defmodule Helix.Account.Controller.Session do
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.Session
 
-  @spec create(Account.t) :: {:ok, Session.session}
+  @spec create(Account.t) :: {:ok, Session.session, claims :: map}
   def create(account) do
-    {:ok, jwt, _claims} = Guardian.encode_and_sign(account, :access)
-    {:ok, jwt}
+    Guardian.encode_and_sign(account, :access)
   end
 
   @spec validate(Session.session) ::

@@ -5,6 +5,7 @@ defmodule Helix.Account.Service.API.AccountTest do
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
   alias Helix.Account.Service.API.Account, as: API
+  alias Helix.Account.Service.API.Session, as: SessionAPI
 
   alias Helix.Account.Factory
 
@@ -55,9 +56,9 @@ defmodule Helix.Account.Service.API.AccountTest do
         |> Account.update_changeset(%{password: password})
         |> Repo.update!()
 
-      assert {:ok, acc} = API.login(account.username, password)
-      assert %Account{} = acc
-      assert account.account_id == acc.account_id
+      assert {:ok, token} = API.login(account.username, password)
+      assert {:ok, claims} = SessionAPI.validate_token(token)
+      assert account.account_id == claims["sub"]
     end
 
     test "fails when provided with incorrect password" do
