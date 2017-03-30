@@ -56,4 +56,22 @@ defmodule Helix.Server.Model.Server do
     struct
     |> cast(params, @update_fields)
   end
+
+  defmodule Query do
+    alias Helix.Server.Model.Server
+
+    import Ecto.Query, only: [where: 3]
+
+    @spec from_id_list(Ecto.Queryable.t, [HELL.PK.t]) :: Ecto.Queryable.t
+    def from_id_list(query \\ Server, id_list),
+      do: where(query, [s], s.server_id in ^id_list)
+
+    @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_id(query \\ Server, server_id),
+      do: where(query, [s], s.server_id == ^server_id)
+
+    @spec by_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    def by_type(query \\ Server, server_type),
+      do: where(query, [s], s.server_type == ^server_type)
+  end
 end

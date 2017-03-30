@@ -8,76 +8,99 @@ defmodule Helix.Server.Controller.ServerTest do
   alias Helix.Server.Model.ServerType
   alias Helix.Server.Repo
 
+  alias Helix.Server.Factory
+
   @moduletag :integration
 
-  setup_all do
-    server_types = Repo.all(ServerType)
-    {:ok, server_types: server_types}
-  end
+  # FIXME: add more tests
 
-  setup context do
-    server_type = Enum.random(context.server_types)
-    {:ok, server_type: server_type.server_type}
-  end
-
-  defp generate_params(server_type) do
-    %{server_type: server_type}
-  end
-
-  describe "server creating" do
-    test "creates server of given type", context do
-      params = generate_params(context.server_type)
-      {:ok, server} = ServerController.create(params)
-      {:ok, found_server} = ServerController.find(server.server_id)
-
-      # created server includes given id
-      assert params.server_type == server.server_type
-
-      # find yields the same previously created server
-      assert server.server_type == found_server.server_type
+  describe "creating" do
+    test "succeeds with valid server_type" do
+      params = %{server_type: Factory.random_server_type()}
+      assert {:ok, _} = ServerController.create(params)
     end
 
-    test "fails when server_type is invalid" do
+    test "fails with invalid server_type" do
       params = %{server_type: Burette.Color.name()}
 
-      # assert that creating an server with invalid type raises Ecto.ConstraintError
       assert_raise(Ecto.ConstraintError, fn ->
         ServerController.create(params)
       end)
 
-      # no server was created
       refute Repo.get_by(Server, server_type: params.server_type)
     end
   end
 
-  describe "server fetching" do
-    test "fetches existing server", context do
-      params = generate_params(context.server_type)
-      {:ok, server} = ServerController.create(params)
+  describe "fetching" do
+    test "succeeds by id" do
+      server = Factory.insert(:server)
+      assert %Server{} = ServerController.fetch(server.server_id)
+    end
 
-      # an server is found
-      assert {:ok, found_server} = ServerController.find(server.server_id)
-
-      # the server is identical to the created one
-      assert server.server_id == found_server.server_id
+    test "succeeds by poi_id" do
+      server = Factory.insert(:server)
+      assert %Server{} = ServerController.fetch_by_poi(server.poi_id)
     end
 
     test "fails when server doesn't exists" do
-      assert {:error, :notfound} == ServerController.find(Random.pk())
+      refute ServerController.fetch(Random.pk())
+    end
+
+    test "fails when server with poi_id doesn't exists" do
+      refute ServerController.fetch_by_poi(Random.pk())
     end
   end
 
-  test "delete is idempotent", context do
-    params = generate_params(context.server_type)
-    {:ok, server} = ServerController.create(params)
+  describe "finding" do
+    test "succeeds by id list" do
+      server_list =
+        3
+        |> Factory.insert_list(:server)
+        |> Enum.map(&(&1.server_id))
+        |> Enum.sort()
 
-    # server exists before deleting
-    assert Repo.get_by(Server, server_id: server.server_id)
+      found =
+        [id: server_list]
+        |> ServerController.find()
+        |> Enum.map(&(&1.server_id))
+        |> Enum.sort()
 
-    :ok = ServerController.delete(server.server_id)
-    :ok = ServerController.delete(server.server_id)
+      assert server_list == found
+    end
 
-    # server was deleted
-    refute Repo.get_by(Server, server_id: server.server_id)
+    test "succeeds by type" do
+      server_type = Enum.random(ServerType.possible_types())
+      expected =
+        3
+        |> Factory.insert_list(:server, server_type: server_type)
+        |> Enum.map(&(&1.server_id))
+
+      found =
+        [type: server_type]
+        |> ServerController.find()
+        |> Enum.map(&(&1.server_id))
+
+      assert Enum.all?(expected, &(&1 in found))
+    end
+
+    test "returns an empty list when no server is found by id" do
+      bogus =
+        3
+        |> Factory.build_list(:server)
+        |> Enum.map(&(&1.server_id))
+
+      result = ServerController.find(id: bogus)
+      assert Enum.empty?(result)
+    end
+  end
+
+  test "deleting is idempotent" do
+    server = Factory.insert(:server)
+    assert Repo.get(Server, server.server_id)
+
+    ServerController.delete(server.server_id)
+    ServerController.delete(server.server_id)
+
+    refute Repo.get(Server, server.server_id)
   end
 end
