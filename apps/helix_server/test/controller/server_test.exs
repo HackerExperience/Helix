@@ -103,8 +103,7 @@ defmodule Helix.Server.Controller.ServerTest do
         |> ServerController.find()
         |> Enum.map(&(&1.server_id))
 
-      result = Enum.all?(expected, &(&1 in found))
-      assert result
+      assert Enum.all?(expected, &(&1 in found))
     end
 
     test "returns an empty list when no server is found by id" do
