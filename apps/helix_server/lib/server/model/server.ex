@@ -11,7 +11,7 @@ defmodule Helix.Server.Model.Server do
     server_id: id,
     server_type: String.t,
     poi_id: PK.t,
-    motherboard_id: PK.t,
+    motherboard_id: PK.t |  nil,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
