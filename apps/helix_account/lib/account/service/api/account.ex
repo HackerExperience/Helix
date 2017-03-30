@@ -55,7 +55,7 @@ defmodule Helix.Account.Service.API.Account do
   end
 
   @spec login(Account.username, Account.password) ::
-    {:ok, Session.session}
+    {:ok, Session.t}
     | {:error, reason :: atom}
   @doc """
   Checks if `password` logs into `username`'s account
