@@ -1,5 +1,6 @@
 defmodule Helix.Software.Controller.CryptoKey do
 
+  alias Helix.Core.EventDispatcher
   alias Helix.Software.Model.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
@@ -8,7 +9,8 @@ defmodule Helix.Software.Controller.CryptoKey do
   import Ecto.Query, only: [select: 3]
 
   @spec create(Storage.t, HELL.PK.t, File.t) ::
-    {:ok, CryptoKey.t} | {:error, Ecto.Changeset.t}
+    {:ok, CryptoKey.t}
+    | {:error, Ecto.Changeset.t}
   @doc """
   Creates a key on `storage` to decrypt `target_file` that is on `server_id`
   """
@@ -53,5 +55,17 @@ defmodule Helix.Software.Controller.CryptoKey do
     |> CryptoKey.Query.target_files_on_storage(target_storage)
     |> select([k], k.target_file_id)
     |> Repo.all()
+  end
+
+  @spec invalidate_keys_for_file(File.t) :: [EventDispatcher.t]
+  @doc """
+  Invalidates all keys that affect `file`
+  """
+  def invalidate_keys_for_file(file = %File{}) do
+    file
+    |> CryptoKey.Query.target_file()
+    |> Repo.update_all([set: [target_file_id: nil]], returning: [:file_id])
+    |> elem(1) # First element on tuple is the amount of affected records
+    |> Enum.map(&CryptoKey.InvalidatedEvent.event/1)
   end
 end
