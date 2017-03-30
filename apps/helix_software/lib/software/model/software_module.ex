@@ -2,16 +2,10 @@ defmodule Helix.Software.Model.SoftwareModule do
 
   use Ecto.Schema
 
-  import Ecto.Changeset
-
   @type t :: %__MODULE__{
     software_module: String.t,
     software_type: String.t
   }
-
-  @type creation_params :: %{software_type: String.t, software_module: String.t}
-
-  @creation_fields ~w/software_type software_module/a
 
   @primary_key false
   schema "software_modules" do
@@ -20,13 +14,6 @@ defmodule Helix.Software.Model.SoftwareModule do
 
     # FK to SoftwareType
     field :software_type, :string
-  end
-
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
-  def create_changeset(params) do
-    %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> validate_required([:software_module, :software_type])
   end
 
   defmodule Query do
