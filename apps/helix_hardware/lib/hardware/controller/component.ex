@@ -1,5 +1,6 @@
 defmodule Helix.Hardware.Controller.Component do
 
+  alias HELL.Constant
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.ComponentType
@@ -7,7 +8,7 @@ defmodule Helix.Hardware.Controller.Component do
 
   @type find_param ::
     {:id, [HELL.PK.t]}
-    | {:type, [String.t] | String.t}
+    | {:type, [Constant.t] | Constant.t}
 
   @spec create_from_spec(ComponentSpec.t) ::
     {:ok, Component.t}
@@ -36,7 +37,9 @@ defmodule Helix.Hardware.Controller.Component do
     |> Repo.all()
   end
 
-  @spec delete(HELL.PK.t) :: no_return
+  @spec delete(Component.t | HELL.PK.t) :: no_return
+  def delete(component = %Component{}),
+    do: delete(component.component_id)
   def delete(component_id) do
     component_id
     |> Component.Query.by_id()

@@ -67,7 +67,8 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
-    changeset(struct, params)
+    struct
+    |> changeset(params)
   end
 
   def changeset(struct, params) do
@@ -75,8 +76,27 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     |> cast(params, @accepted_fields)
     |> validate_required(@required_fields)
     |> unique_constraint(:link_component_id)
+    |> validate_linking()
   end
 
+  defp validate_linking(changeset) do
+    empty_slot? = is_nil(changeset.data.link_component_id)
+    linking? =
+      case fetch_field(changeset, :link_component_id) do
+        {:changes, value} when not is_nil(value) ->
+          true
+        _ ->
+          false
+      end
+
+    if empty_slot? or not linking? do
+      changeset
+    else
+      add_error(changeset, :link_component_id, "component already attached")
+    end
+  end
+
+  # REVIEW: this function usefulness, it's not being used anywhere anymore
   @spec linked?(t) :: boolean
   def linked?(%__MODULE__{link_component_id: xs}),
     do: !is_nil(xs)

@@ -14,27 +14,14 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
   end
 
   @spec link(MotherboardSlot.t, Component.t) ::
-    {:ok, MotherboardSlot.t} | {:error, :component_already_linked} |
-    {:error, :slot_already_linked} | {:error, Ecto.Changeset.t}
+    {:ok, MotherboardSlot.t}
+    | {:error, Ecto.Changeset.t}
   def link(slot, component) do
-    slot_linked? = fn slot ->
-      MotherboardSlot.linked?(slot) && {:error, :slot_already_linked}
-    end
+    params = %{link_component_id: component.component_id}
 
-    component_used? = fn component ->
-      component_used?(component) && {:error, :component_already_linked}
-    end
-
-    with \
-      false <- slot_linked?.(slot),
-      false <- component_used?.(component)
-    do
-      params = %{link_component_id: component.component_id}
-
-      slot
-      |> MotherboardSlot.update_changeset(params)
-      |> Repo.update()
-    end
+    slot
+    |> MotherboardSlot.update_changeset(params)
+    |> Repo.update()
   end
 
   @spec unlink(MotherboardSlot.t) ::
@@ -43,16 +30,4 @@ defmodule Helix.Hardware.Controller.MotherboardSlot do
   def unlink(slot) do
     update(slot, %{link_component_id: nil})
   end
-
-  @spec component_used?(Component.t) :: boolean
-  defp component_used?(component) do
-    component
-    |> Repo.preload(:slot)
-    |> Map.fetch!(:slot)
-    |> to_boolean()
-  end
-
-  @spec to_boolean(term) :: boolean
-  defp to_boolean(v),
-    do: !!v
 end
