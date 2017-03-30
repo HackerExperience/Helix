@@ -11,7 +11,6 @@ defmodule Helix.Server.Model.Server do
   @type id :: PK.t
   @type t :: %__MODULE__{
     server_id: id,
-    server_type: Constant.t,
     poi_id: PK.t,
     motherboard_id: PK.t |  nil,
     inserted_at: NaiveDateTime.t,
@@ -20,8 +19,8 @@ defmodule Helix.Server.Model.Server do
 
   @type creation_params :: %{
     :server_type => Constant.t,
-    optional(:motherboard_id) => PK.t,
-    optional(:poi_id) => PK.t
+    optional(:poi_id) => PK.t | nil,
+    optional(:motherboard_id) => PK.t | nil
   }
   @type update_params :: %{
     optional(:poi_id) => PK.t | nil,
@@ -50,12 +49,32 @@ defmodule Helix.Server.Model.Server do
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
     |> validate_inclusion(:server_type, ServerType.possible_types())
+    |> unique_constraint(:motherboard_id)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
+    |> unique_constraint(:motherboard_id)
+    |> validate_attachment()
+  end
+
+  defp validate_attachment(changeset) do
+    empty_slot? = is_nil(changeset.data.motherboard_id)
+    linking? =
+      case fetch_field(changeset, :motherboard_id) do
+        {:changes, value} when not is_nil(value) ->
+          true
+        _ ->
+          false
+      end
+
+    if empty_slot? or not linking? do
+      changeset
+    else
+      add_error(changeset, :motherboard_id, "motherboard already attached")
+    end
   end
 
   defmodule Query do
