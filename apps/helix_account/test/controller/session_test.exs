@@ -12,12 +12,11 @@ defmodule Helix.Account.Controller.SessionTest do
 
   describe "token generation" do
     test "succeeds with valid account" do
-      params = Factory.account_factory()
+      params = Factory.build(:account)
       account = Map.merge(params, %{account_id: Random.pk()})
 
       {:ok, token, claims} = SessionController.create(account)
 
-      # REVIEW: Is this assert necessary when we have type specs?
       assert is_binary(token)
       assert account.account_id == claims["sub"]
     end
