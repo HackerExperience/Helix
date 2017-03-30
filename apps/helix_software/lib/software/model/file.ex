@@ -38,14 +38,14 @@ defmodule Helix.Software.Model.File do
   @type update_params :: %{
     optional(:name) => String.t,
     optional(:path) => String.t,
-    optional(:storage_id) => PK.t
+    optional(:crypto_version) => non_neg_integer | nil
   }
 
-  @creation_fields ~w/file_size software_type storage_id/a
-  @update_fields ~w//a
+  @creation_fields ~w/file_size software_type/a
+  @update_fields ~w/crypto_version/a
   @castable_fields ~w/name path/a
 
-  @required_fields ~w/name path file_size software_type storage_id/a
+  @required_fields ~w/name path file_size software_type/a
 
   @primary_key false
   @ecto_autogenerate {:file_id, {PK, :pk_for, [__MODULE__]}}
@@ -54,18 +54,23 @@ defmodule Helix.Software.Model.File do
       primary_key: true
 
     field :name, :string
-    field :file_size, :integer
     field :path, :string
+    field :software_type, :string
+    field :file_size, :integer
+    field :storage_id, HELL.PK
+
+    field :crypto_version, :integer
+
     field :full_path, :string
 
     belongs_to :type, SoftwareType,
       foreign_key: :software_type,
       references: :software_type,
-      type: :string
+      define_field: false
     belongs_to :storage, Storage,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: HELL.PK
+      define_field: false
 
     has_many :file_modules, FileModule,
       foreign_key: :file_id,
@@ -74,10 +79,20 @@ defmodule Helix.Software.Model.File do
     timestamps()
   end
 
+  @spec create(Storage.t, map) :: Ecto.Changeset.t
+  def create(storage = %Storage{}, params) do
+    %__MODULE__{}
+    |> cast(params, @creation_fields)
+    |> put_assoc(:storage, storage)
+    |> changeset(params)
+  end
+
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
+    |> cast(params, [:storage_id])
+    |> validate_required([:storage_id])
     |> changeset(params)
   end
 
@@ -86,6 +101,7 @@ defmodule Helix.Software.Model.File do
     struct
     |> cast(params, @update_fields)
     |> changeset(params)
+    |> validate_number(:crypto_version, greater_than: 0)
   end
 
   @spec set_modules(File.t, modules) :: Ecto.Changeset.t
@@ -137,5 +153,29 @@ defmodule Helix.Software.Model.File do
       path ->
         path
     end
+  end
+
+  defmodule Query do
+
+    alias Ecto.Queryable
+    alias Helix.Software.Model.File
+    alias Helix.Software.Model.Storage
+
+    import Ecto.Query, only: [or_where: 3, where: 3]
+
+    @spec from_id_list(Queryable.t, [HELL.PK.t]) :: Queryable.t
+    def from_id_list(query \\ File, id_list, comparison_operator \\ :and)
+    def from_id_list(query, id_list, :and),
+      do: where(query, [f], f.file_id in ^id_list)
+    def from_id_list(query, id_list, :or),
+      do: or_where(query, [f], f.file_id in ^id_list)
+
+    @spec from_storage(Queryable.t, Storage.t) :: Queryable.t
+    def from_storage(query \\ File, %Storage{storage_id: id}),
+      do: where(query, [f], f.storage_id == ^id)
+
+    @spec not_encrypted(Queryable.t) :: Queryable.t
+    def not_encrypted(query \\ File),
+      do: where(query, [f], is_nil(f.crypto_version))
   end
 end
