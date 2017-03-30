@@ -12,6 +12,7 @@ defmodule Helix.Server.Controller.Server do
 
   @spec create(Server.creation_params) ::
     {:ok, Server.t}
+    | {:error, Ecto.Changeset.t}
     | {:error, reason :: term}
   def create(params) do
     params
@@ -36,6 +37,7 @@ defmodule Helix.Server.Controller.Server do
 
   @spec update(Server.t, Server.update_params) ::
     {:ok, Server.t}
+    | {:error, Ecto.Changeset.t}
     | {:error, reason :: term}
   def update(server, params) do
     server
@@ -54,6 +56,7 @@ defmodule Helix.Server.Controller.Server do
 
   @spec attach(Server.t, motherboard :: HELL.PK.t) ::
     {:ok, Server.t}
+    | {:error, Ecto.Changeset.t}
     | {:error, reason :: term}
   def attach(server, mobo_id) do
     msg = %{component_type: :motherboard, component_id: mobo_id}
@@ -71,6 +74,7 @@ defmodule Helix.Server.Controller.Server do
 
   @spec detach(Server.t) ::
     {:ok, Server.t}
+    | {:error, Ecto.Changeset.t}
     | {:error, reason ::term}
   def detach(server) do
     server
@@ -79,8 +83,8 @@ defmodule Helix.Server.Controller.Server do
   end
 
   @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
-  defp reduce_find_params({:id, several_ids}, query),
-    do: Server.Query.from_id_list(query, several_ids)
+  defp reduce_find_params({:id, id_list}, query),
+    do: Server.Query.from_id_list(query, id_list)
   defp reduce_find_params({:type, type}, query),
     do: Server.Query.by_type(query, type)
 end
