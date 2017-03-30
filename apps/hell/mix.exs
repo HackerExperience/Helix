@@ -44,7 +44,7 @@ defmodule HELL.Mixfile do
 
   defp deps do
     [
-      {:postgrex, "~> 0.13", override: true}
+      {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true}
     ]
   end
 end
