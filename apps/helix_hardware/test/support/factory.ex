@@ -16,6 +16,12 @@ defmodule Helix.Hardware.Factory do
 
   alias HELL.TestHelper.Random
 
+  def random_component_type do
+    ComponentType.type_implementations()
+    |> Map.keys()
+    |> Enum.random()
+  end
+
   def motherboard_slot_factory do
     motherboard = build(:motherboard, slots: [])
     {id, slot} = Enum.random(motherboard.component.component_spec.spec.slots)
@@ -130,12 +136,6 @@ defmodule Helix.Hardware.Factory do
       component_type: spec_type,
       spec: spec
     }
-  end
-
-  defp random_component_type do
-    ComponentType.type_implementations()
-    |> Map.keys()
-    |> Enum.random()
   end
 
   defp spec_struct_for(component_type) do

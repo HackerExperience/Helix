@@ -5,7 +5,13 @@ defmodule Helix.Hardware.Controller.Component do
   alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Repo
 
-  @spec create_from_spec(ComponentSpec.t) :: {:ok, Component.t} | {:error, Ecto.Changeset.t}
+  @type find_param ::
+    {:id, [HELL.PK.t]}
+    | {:type, [String.t] | String.t}
+
+  @spec create_from_spec(ComponentSpec.t) ::
+    {:ok, Component.t}
+    | {:error, Ecto.Changeset.t}
   def create_from_spec(spec = %ComponentSpec{}) do
     module = ComponentType.type_implementation(spec.component_type)
 
@@ -19,14 +25,15 @@ defmodule Helix.Hardware.Controller.Component do
     end
   end
 
-  @spec find(HELL.PK.t) :: {:ok, Component.t} | {:error, :notfound}
-  def find(component_id) do
-    case Repo.get_by(Component, component_id: component_id) do
-      nil ->
-        {:error, :notfound}
-      res ->
-        {:ok, res}
-    end
+  @spec fetch(HELL.PK.t) :: Component.t | nil
+  def fetch(component_id),
+    do: Repo.get(Component, component_id)
+
+  @spec find([find_param], meta :: []) :: [Component.t]
+  def find(params, _meta \\ []) do
+    params
+    |> Enum.reduce(Component, &reduce_find_params/2)
+    |> Repo.all()
   end
 
   @spec delete(HELL.PK.t) :: no_return
@@ -37,4 +44,12 @@ defmodule Helix.Hardware.Controller.Component do
 
     :ok
   end
+
+  @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
+  defp reduce_find_params({:id, id_list}, query) when is_list(id_list),
+    do: Component.Query.from_id_list(query, id_list)
+  defp reduce_find_params({:type, type_list}, query) when is_list(type_list),
+    do: Component.Query.from_type_list(query, type_list)
+  defp reduce_find_params({:type, type}, query),
+    do: Component.Query.by_type(query, type)
 end

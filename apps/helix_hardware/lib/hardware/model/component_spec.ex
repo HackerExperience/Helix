@@ -143,5 +143,9 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     def by_id(query \\ ComponentSpec, spec_id) do
       where(query, [s], s.spec_id == ^spec_id)
     end
+
+    @spec by_component_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    def by_component_type(query \\ ComponentSpec, component_type),
+      do: where(query, [cs], cs.component_type == ^component_type)
   end
 end

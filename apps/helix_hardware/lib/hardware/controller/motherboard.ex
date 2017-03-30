@@ -61,15 +61,9 @@ defmodule Helix.Hardware.Controller.Motherboard do
     }
   end
 
-  @spec find(HELL.PK.t) :: {:ok, Motherboard.t} | {:error, :notfound}
-  def find(motherboard_id) do
-    case Repo.get_by(Motherboard, motherboard_id: motherboard_id) do
-      nil ->
-        {:error, :notfound}
-      res ->
-        {:ok, res}
-    end
-  end
+  @spec fetch!(Component.t) :: Motherboard.t
+  def fetch!(component = %Component{component_type: "mobo"}),
+    do: Repo.get!(Motherboard, component.component_id)
 
   @spec get_slots(Motherboard.t | HELL.PK.t) :: [MotherboardSlot.t]
   def get_slots(motherboard_or_motherboard_id) do
