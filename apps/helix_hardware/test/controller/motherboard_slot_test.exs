@@ -42,8 +42,8 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
       {:ok, slot} = MotherboardSlotController.link(slot, component1)
 
-      result = MotherboardSlotController.link(slot, component2)
-      assert {:error, :slot_already_linked} == result
+      {:error, cs} = MotherboardSlotController.link(slot, component2)
+      assert :link_component_id in Keyword.keys(cs.errors)
     end
 
     test "fails when component is already in use" do
@@ -70,8 +70,8 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
 
       MotherboardSlotController.link(slot1, component)
 
-      result = MotherboardSlotController.link(slot2, component)
-      assert {:error, :component_already_linked} == result
+      {:error, cs} = MotherboardSlotController.link(slot2, component)
+      assert :link_component_id in Keyword.keys(cs.errors)
     end
   end
 
