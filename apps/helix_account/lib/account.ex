@@ -14,6 +14,7 @@ defmodule Helix.Account.App do
 
     ensure_guardian_key_is_set()
     Routes.register_routes()
+    Routes.register_topics()
 
     opts = [strategy: :one_for_one, name: Account.Supervisor]
     Supervisor.start_link(children, opts)

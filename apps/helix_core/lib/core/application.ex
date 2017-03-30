@@ -7,8 +7,8 @@ defmodule Helix.Core.Application do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(HELF.Router, [@port]),
-      worker(HELF.Broker, [])
+      worker(HELF.Broker, []),
+      worker(HELF.Router, [@port])
     ]
 
     opts = [strategy: :one_for_one, name: Helix.Core.Supervisor]
