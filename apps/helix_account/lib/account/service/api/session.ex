@@ -11,8 +11,8 @@ defmodule Helix.Account.Service.API.Session do
   end
 
   @spec validate_token(Session.t) ::
-  {:ok, claims :: map}
-  | {:error, :unauthorized}
+    {:ok, claims :: map}
+    | {:error, :unauthorized}
   def validate_token(token) do
     SessionController.validate(token)
   end

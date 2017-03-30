@@ -33,8 +33,8 @@ defmodule Helix.Account.Controller.Session do
   end
 
   @spec validate(Session.t) ::
-  {:ok, claims :: map}
-  | {:error, :unauthorized}
+    {:ok, claims :: map}
+    | {:error, :unauthorized}
   def validate(jwt) do
     case Guardian.decode_and_verify(jwt) do
       {:ok, claims} ->

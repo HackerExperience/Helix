@@ -27,7 +27,6 @@ defmodule Helix.Account.Controller.SessionTest do
       assert {:error, _} = SessionController.create(%Account{})
     end
 
-
   end
 
   describe "token validation" do
@@ -48,5 +47,4 @@ defmodule Helix.Account.Controller.SessionTest do
       assert {:error, :token_expired} = Guardian.decode_and_verify(token)
     end
   end
-
 end
