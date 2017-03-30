@@ -1,6 +1,5 @@
 defmodule Helix.Server.Controller.Server do
 
-  alias HELF.Broker
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
@@ -55,19 +54,14 @@ defmodule Helix.Server.Controller.Server do
   @spec attach(Server.t, motherboard :: HELL.PK.t) ::
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}
-  def attach(server, mobo_id) do
-    msg = %{component_type: :motherboard, component_id: mobo_id}
-    {_, result} = Broker.call("hardware.component.get", msg)
-
-    case result do
-      {:ok, _} ->
-        server
-        |> Server.update_changeset(%{motherboard_id: mobo_id})
-        |> Repo.update()
-      _ ->
-        {:error, :internal}
-    end
+    | {:error, reason :: term}
+  def attach(server = %Server{motherboard_id: nil}, mobo_id) do
+    server
+    |> Server.update_changeset(%{motherboard_id: mobo_id})
+    |> Repo.update()
   end
+  def attach(%Server{}, _),
+    do: {:error, :motherboard_already_attached}
 
   @spec detach(Server.t) ::
     {:ok, Server.t}

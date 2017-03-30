@@ -18,7 +18,7 @@ defmodule Helix.Server.Model.Server do
 
   @type creation_params :: %{
     :server_type => String.t,
-    optional(:motherboard_id) => PK.t,
+    optional(:motherboard_id) => PK.t | nil,
     optional(:poi_id) => PK.t
   }
   @type update_params :: %{
@@ -49,12 +49,14 @@ defmodule Helix.Server.Model.Server do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
+    |> unique_constraint(:motherboard_id)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
+    |> unique_constraint(:motherboard_id)
   end
 
   defmodule Query do
