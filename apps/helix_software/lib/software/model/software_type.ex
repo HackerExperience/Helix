@@ -53,6 +53,10 @@ defmodule Helix.Software.Model.SoftwareType do
       "anymap" => %{
         extension: "map",
         modules: ["geo", "inbound", "outbound"]
+      },
+      "crypto_key" => %{
+        extension: "key",
+        modules: []
       }
     }
   end

@@ -1,5 +1,6 @@
 defmodule Helix.Software.Controller.File do
 
+  alias Helix.Software.Controller.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Repo
@@ -19,6 +20,23 @@ defmodule Helix.Software.Controller.File do
   @spec fetch(HELL.PK.t) :: File.t | nil
   def fetch(file_id),
     do: Repo.get(File, file_id)
+
+  @spec get_files_on_target_storage(Storage.t, Storage.t) :: [File.t]
+  @doc """
+  Gets all files on `target_storage` that are not encrypted or for whom is there
+  a key on `origin_storage`
+  """
+  def get_files_on_target_storage(origin_storage, target_storage) do
+    keyed_files = CryptoKey.get_files_targeted_on_storage(
+      origin_storage,
+      target_storage)
+
+    target_storage
+    |> File.Query.from_storage()
+    |> File.Query.not_encrypted()
+    |> File.Query.from_id_list(keyed_files, :or)
+    |> Repo.all()
+  end
 
   @spec update(File.t, File.update_params) ::
     {:ok, File.t}
@@ -44,13 +62,12 @@ defmodule Helix.Software.Controller.File do
     create(params)
   end
 
-  @spec move(File.t, path :: String.t, storage_id :: HELL.PK.t) ::
+  @spec move(File.t, path :: String.t) ::
     {:ok, File.t}
     | {:error, :file_exists | Ecto.Changeset.t}
-  def move(file, path, storage_id) do
-    params = %{path: path, storage_id: storage_id}
+  def move(file, path) do
     file
-    |> File.update_changeset(params)
+    |> File.update_changeset(%{path: path})
     |> Repo.update()
     |> parse_errors()
   end
