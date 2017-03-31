@@ -32,7 +32,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   }
 
   @creation_fields ~w/motherboard_id link_component_type slot_internal_id/a
-  @accepted_fields ~w/link_component_id/a
   @required_fields ~w/motherboard_id link_component_type slot_internal_id/a
 
   @primary_key false
@@ -67,16 +66,32 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
-    changeset(struct, params)
+    struct
+    |> changeset(params)
+    |> link_component(params)
   end
 
   def changeset(struct, params) do
     struct
-    |> cast(params, @accepted_fields)
+    |> cast(params, [])
     |> validate_required(@required_fields)
     |> unique_constraint(:link_component_id)
   end
 
+  defp link_component(changeset, params) do
+    previous = get_field(changeset, :link_component_id)
+    changeset = cast(changeset, params, [:link_component_id])
+    next = get_change(changeset, :link_component_id)
+
+    # Already has component and is trying to override it
+    if previous && next do
+      add_error(changeset, :link_component_id, "is already set")
+    else
+      changeset
+    end
+  end
+
+  # REVIEW: this function usefulness, it's not being used anywhere anymore
   @spec linked?(t) :: boolean
   def linked?(%__MODULE__{link_component_id: xs}),
     do: !is_nil(xs)
