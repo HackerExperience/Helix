@@ -3,6 +3,7 @@ defmodule Helix.Software.Controller.File do
   alias Helix.Software.Controller.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
   import Ecto.Query, only: [where: 3, select: 3]
@@ -81,6 +82,24 @@ defmodule Helix.Software.Controller.File do
     |> File.update_changeset(params)
     |> Repo.update()
     |> parse_errors()
+  end
+
+  @spec encrypt(File.t, pos_integer) ::
+    {:ok, Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
+  def encrypt(file = %File{}, version) when version >= 1 do
+    file
+    |> File.update_changeset(%{crypto_version: version})
+    |> Repo.update()
+  end
+
+  @spec decrypt(File.t) ::
+    {:ok, Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
+  def decrypt(file = %File{}) do
+    file
+    |> File.update_changeset(%{crypto_version: nil})
+    |> Repo.update()
   end
 
   @spec delete(File.t) :: no_return

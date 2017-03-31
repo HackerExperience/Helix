@@ -4,6 +4,8 @@ defmodule Helix.Account.Model.Setting do
 
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{}
+
   @update_fields ~w/is_beta/a
 
   @primary_key false
@@ -12,7 +14,7 @@ defmodule Helix.Account.Model.Setting do
       default: false
   end
 
-  @spec changeset(Setting.t, map) :: Ecto.Changeset.t
+  @spec changeset(t, map) :: Ecto.Changeset.t
   def changeset(struct \\ %__MODULE__{}, params) do
     struct
     |> cast(params, @update_fields)

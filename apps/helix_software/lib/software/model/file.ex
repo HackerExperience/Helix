@@ -4,6 +4,7 @@ defmodule Helix.Software.Model.File do
 
   alias HELL.PK
   alias Helix.Software.Model.SoftwareType
+  alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
 

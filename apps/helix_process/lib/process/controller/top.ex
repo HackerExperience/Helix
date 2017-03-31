@@ -8,6 +8,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   require Logger
 
+  alias Helix.Event
   alias Helix.Process.Repo
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.Controller.TableOfProcesses.Allocator.Plan
@@ -128,20 +129,12 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     {:ok, processes}
   end
 
-  # TODO: Use HELF.Event
-  defp notify(broker, process, :complete) do
-    namespace = ProcessType.event_namespace(process.process_data)
-    message = %{
-      process_id: process.process_id,
-      server_id: process.server_id,
-      target_server_id: process.target_server_id,
-      process_data: process.process_data
-    }
-
-    # Should become something like 'event:process:cracker:completed'
-    topic = namespace <> ":completed"
-
-    broker.cast(topic, message)
+  @spec notify(ProcessModel.t, :completed) :: :ok
+  defp notify(process, circumstance) do
+    process.process_data
+    |> ProcessType.event(process, circumstance)
+    |> List.wrap()
+    |> Enum.each(&Event.emit/1)
   end
 
   @doc false
@@ -243,7 +236,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       |> calculate_work()
       |> Enum.split_with(&ProcessModel.complete?/1)
 
-    Enum.each(complete, &notify(state.broker, &1, :complete))
+    Enum.each(complete, &notify(&1, :completed))
 
     processes =
       complete

@@ -89,5 +89,9 @@ defmodule Helix.Software.Model.CryptoKey do
       |> join(:inner, [k], t in File, k.target_file_id == t.file_id)
       |> where([k, ..., t], t.storage_id == ^id)
     end
+
+    @spec target_file(Queryable.t, File.t) :: Queryable.t
+    def target_file(query \\ CryptoKey, %File{file_id: id}),
+      do: where(query, [k], k.target_file_id == ^id)
   end
 end
