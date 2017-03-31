@@ -443,6 +443,7 @@ defmodule Helix.Process.Model.Process do
   defmodule Query do
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.MapServerToProcess
+    alias Helix.Process.Model.Process.State
 
     import Ecto.Query, only: [join: 5, where: 3]
 
@@ -453,6 +454,42 @@ defmodule Helix.Process.Model.Process do
     def from_server(query \\ Process, server_id) do
       where(query, [p], p.server_id == ^server_id)
     end
+
+    @spec from_type_list(Ecto.Queryable.t, [String.t]) :: Ecto.Queryable.t
+    def from_type_list(query \\ Process, type_list),
+      do: where(query, [p], p.process_type in ^type_list)
+
+    @spec from_state_list(Ecto.Queryable.t, [State.state]) :: Ecto.Queryable.t
+    def from_state_list(query \\ Process, state_list),
+      do: where(query, [p], p.state in ^state_list)
+
+    @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_id(query \\ Process, process_id),
+      do: where(query, [p], p.process_id == ^process_id)
+
+    @spec by_gateway(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_gateway(query \\ Process, gateway_id),
+      do: where(query, [p], p.gateway_id == ^gateway_id)
+
+    @spec by_target(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_target(query \\ Process, target_server_id),
+      do: where(query, [p], p.target_server_id == ^target_server_id)
+
+    @spec by_file(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_file(query \\ Process, file_id),
+      do: where(query, [p], p.file_id == ^file_id)
+
+    @spec by_network(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_network(query \\ Process, network_id),
+      do: where(query, [p], p.network_id == ^network_id)
+
+    @spec by_type(Ecto.Queryable.t,String.t) :: Ecto.Queryable.t
+    def by_type(query \\ Process, process_type),
+      do: where(query, [p], p.process_type == ^process_type)
+
+    @spec by_state(Ecto.Queryable.t, State.state) :: Ecto.Queryable.t
+    def by_state(query \\ Process, state),
+      do: where(query, [p], p.state == ^state)
 
     @spec related_to_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     @doc """

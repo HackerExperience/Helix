@@ -33,7 +33,7 @@ defmodule Helix.Process.Model.Process.NaiveStruct do
   def dump(_),
     do: :error
 
-  def load(not_a_struct = %{"__module_name__": m}) do
+  def load(not_a_struct = %{"__module_name__" => m}) do
     module = String.to_existing_atom(m)
 
     {:ok, struct(module, not_a_struct)}
