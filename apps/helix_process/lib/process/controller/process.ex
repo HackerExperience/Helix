@@ -17,6 +17,8 @@ defmodule Helix.Process.Controller.Process do
     end
   end
 
+  def delete(process = %ProcessModel{}),
+    do: delete(process.process_id)
   def delete(process_id) do
     ProcessModel
     |> where([s], s.process_id == ^process_id)
