@@ -3,7 +3,7 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Controller.ComponentSpec, as: API
+  alias Helix.Hardware.Service.API.ComponentSpec, as: API
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
@@ -26,10 +26,11 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
       assert {:ok, %ComponentSpec{}} = API.create(spec_map)
     end
 
-    test "returns changeset when input is invalid" do
+    test "fails when input is invalid" do
       params = %{}
 
-      assert {:error, %Ecto.Changeset{}} = API.create(params)
+      assert {:error, cs} = API.create(params)
+      refute cs.valid?
 
       spec_map = %{
         spec_code: "invalid",
@@ -37,7 +38,8 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
         name: "non invalid, but whatever"
       }
 
-      assert {:error, %Ecto.Changeset{}} = API.create(spec_map)
+      assert {:error, cs} = API.create(spec_map)
+      refute cs.valid?
     end
   end
 
@@ -47,7 +49,7 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
       assert %ComponentSpec{} = API.fetch(cs.spec_id)
     end
 
-    test "fails with inexistent id" do
+    test "fails when it doesn't exist'" do
       refute API.fetch(Random.pk())
     end
   end
@@ -67,6 +69,7 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
       cs = Factory.insert(:component_spec)
 
       assert Repo.get(ComponentSpec, cs.spec_id)
+
       API.delete(cs)
 
       refute Repo.get(ComponentSpec, cs.spec_id)
@@ -76,6 +79,7 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
       cs = Factory.insert(:component_spec)
 
       assert Repo.get(ComponentSpec, cs.spec_id)
+
       API.delete(cs.spec_id)
 
       refute Repo.get(ComponentSpec, cs.spec_id)
@@ -85,6 +89,7 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
       cs = Factory.insert(:component_spec)
 
       assert Repo.get(ComponentSpec, cs.spec_id)
+
       API.delete(cs.spec_id)
       API.delete(cs.spec_id)
 

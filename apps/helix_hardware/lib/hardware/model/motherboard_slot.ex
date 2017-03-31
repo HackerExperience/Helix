@@ -32,7 +32,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   }
 
   @creation_fields ~w/motherboard_id link_component_type slot_internal_id/a
-  @accepted_fields ~w/link_component_id/a
   @required_fields ~w/motherboard_id link_component_type slot_internal_id/a
 
   @primary_key false
@@ -69,30 +68,26 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   def update_changeset(struct, params) do
     struct
     |> changeset(params)
+    |> link_component(params)
   end
 
   def changeset(struct, params) do
     struct
-    |> cast(params, @accepted_fields)
+    |> cast(params, [])
     |> validate_required(@required_fields)
     |> unique_constraint(:link_component_id)
-    |> validate_linking()
   end
 
-  defp validate_linking(changeset) do
-    empty_slot? = is_nil(changeset.data.link_component_id)
-    linking? =
-      case fetch_field(changeset, :link_component_id) do
-        {:changes, value} when not is_nil(value) ->
-          true
-        _ ->
-          false
-      end
+  defp link_component(changeset, params) do
+    previous = get_field(changeset, :link_component_id)
+    changeset = cast(changeset, params, [:link_component_id])
+    next = get_change(changeset, :link_component_id)
 
-    if empty_slot? or not linking? do
-      changeset
+    # Already has component and is trying to override it
+    if previous && next do
+      add_error(changeset, :link_component_id, "is already set")
     else
-      add_error(changeset, :link_component_id, "component already attached")
+      changeset
     end
   end
 

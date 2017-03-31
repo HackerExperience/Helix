@@ -28,8 +28,8 @@ defmodule Helix.Hardware.Service.API.Component do
 
   ## Params
 
-    * `:id` - filters by ids within a list
-    * `:type` - filters by specification type or list
+    * `:id` - search with a list of component id
+    * `:type` - filters by `component_type` or `[component_type]`
   """
   def find(params, meta \\ []) do
     ComponentController.find(params, meta)

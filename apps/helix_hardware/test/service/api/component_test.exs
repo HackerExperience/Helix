@@ -5,6 +5,7 @@ defmodule Helix.Hardware.Service.API.ComponentTest do
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Service.API.Component, as: API
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
@@ -12,18 +13,25 @@ defmodule Helix.Hardware.Service.API.ComponentTest do
   @moduletag :integration
 
   describe "create_from_spec/1" do
-    defp random_spec do
-      Enum.random([:cpu_spec, :hdd_spec, :nic_spec, :ram_spec])
-    end
-
     test "succeeds with valid input" do
-      spec = Factory.insert(random_spec())
+      spec = Factory.insert(:component_spec)
       assert {:ok, %Component{}} = API.create_from_spec(spec)
     end
 
-    test "returns changeset when input is invalid" do
-      bogus_spec = Factory.build(random_spec())
-      assert {:error, %Ecto.Changeset{}} = API.create_from_spec(bogus_spec)
+    test "fails when input is invalid" do
+      bogus_spec = %ComponentSpec{
+        component_type: :cpu,
+        spec: %{
+          "spec_code" => "CPU01",
+          "spec_type" => "CPU",
+          "name" => "Sample CPU 1",
+          "clock" => 3000,
+          "cores" => 7
+        }
+      }
+
+      assert {:error, cs} = API.create_from_spec(bogus_spec)
+      refute cs.valid?
     end
   end
 
@@ -33,7 +41,7 @@ defmodule Helix.Hardware.Service.API.ComponentTest do
       assert %Component{} = API.fetch(component.component_id)
     end
 
-    test "fails with inexistent id" do
+    test "fails when component doesn't exist'" do
       refute API.fetch(Random.pk())
     end
   end
