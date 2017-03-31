@@ -2,7 +2,6 @@ defmodule Helix.Entity.Factory do
 
   use ExMachina.Ecto, repo: Helix.Entity.Repo
 
-  alias HELL.PK
   alias HELL.TestHelper.Random
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent
@@ -11,13 +10,9 @@ defmodule Helix.Entity.Factory do
 
   def entity_factory do
     entity_type = Enum.random(EntityType.possible_types())
-    pk =
-      EntityType.type_implementations()
-      |> Map.fetch!(entity_type)
-      |> PK.pk_for()
 
     %Entity{
-      entity_id: pk,
+      entity_id: Random.pk(),
       entity_type: entity_type
     }
   end

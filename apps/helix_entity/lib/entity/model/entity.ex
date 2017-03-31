@@ -3,6 +3,7 @@ defmodule Helix.Entity.Model.Entity do
   use Ecto.Schema
 
   alias HELL.PK
+  alias HELL.Constant
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Model.EntityType
@@ -14,14 +15,14 @@ defmodule Helix.Entity.Model.Entity do
     entity_id: id,
     components: [EntityComponent.t],
     servers: [EntityServer.t],
-    entity_type: EntityType.name,
+    entity_type: Constant.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
     entity_id: id,
-    entity_type: EntityType.name
+    entity_type: Constant.t
   }
 
   @creation_fields ~w/entity_type entity_id/a
@@ -31,15 +32,14 @@ defmodule Helix.Entity.Model.Entity do
     field :entity_id, PK,
       primary_key: true
 
+    field :entity_type, Constant
+
     has_many :components, EntityComponent,
       foreign_key: :entity_id,
       references: :entity_id
     has_many :servers, EntityServer,
       foreign_key: :entity_id,
       references: :entity_id
-
-    # FK to EntityType
-    field :entity_type, :string
 
     timestamps()
   end
@@ -49,5 +49,6 @@ defmodule Helix.Entity.Model.Entity do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@creation_fields)
+    |> validate_inclusion(:entity_type, EntityType.possible_types())
   end
 end
