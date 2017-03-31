@@ -21,13 +21,8 @@ defmodule Helix.Server.Controller.ServerTest do
     end
 
     test "fails with invalid server_type" do
-      params = %{server_type: Burette.Color.name()}
-
-      assert_raise(Ecto.ConstraintError, fn ->
-        ServerController.create(params)
-      end)
-
-      refute Repo.get_by(Server, server_type: params.server_type)
+      {:error, cs} = ServerController.create(%{server_type: :foobar})
+      assert :server_type in Keyword.keys(cs.errors)
     end
   end
 
