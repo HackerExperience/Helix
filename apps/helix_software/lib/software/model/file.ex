@@ -4,7 +4,6 @@ defmodule Helix.Software.Model.File do
 
   alias HELL.PK
   alias Helix.Software.Model.SoftwareType
-  alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
 
@@ -105,7 +104,7 @@ defmodule Helix.Software.Model.File do
     |> validate_number(:crypto_version, greater_than: 0)
   end
 
-  @spec set_modules(File.t, modules) :: Ecto.Changeset.t
+  @spec set_modules(t, modules) :: Ecto.Changeset.t
   def set_modules(file, modules) do
     modules =
       Enum.map(modules, fn {module, version} ->
