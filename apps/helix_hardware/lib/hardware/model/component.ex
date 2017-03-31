@@ -3,14 +3,16 @@ defmodule Helix.Hardware.Model.Component do
   use Ecto.Schema
 
   alias HELL.PK
+  alias HELL.Constant
   alias Helix.Hardware.Model.ComponentSpec
+  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.MotherboardSlot
 
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
     component_id: PK.t,
-    component_type: String.t,
+    component_type: Constant.t,
     component_spec: ComponentSpec.t,
     spec_id: String.t,
     slot: MotherboardSlot.t,
@@ -24,7 +26,7 @@ defmodule Helix.Hardware.Model.Component do
       primary_key: true
 
     # FK to ComponentType
-    field :component_type, :string
+    field :component_type, Constant
 
     belongs_to :component_spec, ComponentSpec,
       foreign_key: :spec_id,
@@ -49,6 +51,7 @@ defmodule Helix.Hardware.Model.Component do
     %__MODULE__{}
     |> cast(params, [:component_type, :spec_id, :component_id])
     |> validate_required([:component_type, :spec_id, :component_id])
+    |> validate_inclusion(:component_type, ComponentType.possible_types())
   end
 
   defmodule Query do

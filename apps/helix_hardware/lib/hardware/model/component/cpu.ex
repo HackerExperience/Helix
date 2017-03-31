@@ -10,8 +10,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
-  @type t :: %__MODULE__{
-  }
+  @type t :: %__MODULE__{}
 
   @primary_key false
   schema "cpus" do
@@ -84,7 +83,6 @@ defmodule Helix.Hardware.Model.Component.CPU do
 
     import Ecto.Query, only: [where: 3]
 
-    @spec from_component_ids([HELL.PK.t]) :: Ecto.Queryable.t
     @spec from_component_ids(Ecto.Queryable.t, [HELL.PK.t]) :: Ecto.Queryable.t
     def from_component_ids(query \\ CPU, component_ids) do
       where(query, [c], c.cpu_id in ^component_ids)

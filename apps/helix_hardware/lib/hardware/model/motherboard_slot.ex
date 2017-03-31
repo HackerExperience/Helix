@@ -3,6 +3,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   use Ecto.Schema
 
   alias HELL.PK
+  alias HELL.Constant
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
 
@@ -15,14 +16,14 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     motherboard_id: PK.t,
     component: Component.t,
     link_component_id: PK.t | nil,
-    link_component_type: String.t,
+    link_component_type: Constant.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
     :motherboard_id => PK.t,
-    :link_component_type => String.t,
+    :link_component_type => Constant.t,
     :slot_internal_id => integer,
     optional(:link_component_id) => PK.t
   }
@@ -37,22 +38,22 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   @primary_key false
   @ecto_autogenerate {:slot_id, {PK, :pk_for, [__MODULE__]}}
   schema "motherboard_slots" do
-    field :slot_id, HELL.PK,
+    field :slot_id, PK,
       primary_key: true
 
     field :slot_internal_id, :integer
+    field :motherboard_id, PK
+    field :link_component_id, PK
+    field :link_component_type, Constant
 
     belongs_to :motherboard, Motherboard,
       foreign_key: :motherboard_id,
       references: :motherboard_id,
-      type: HELL.PK
+      define_field: false
     belongs_to :component, Component,
       foreign_key: :link_component_id,
       references: :component_id,
-      type: HELL.PK
-
-    # FK to ComponentType
-    field :link_component_type, :string
+      define_field: false
 
     timestamps()
   end

@@ -44,10 +44,16 @@ defmodule Helix.Hardware.Model.Motherboard do
     motherboard_id = PK.pk_for(__MODULE__)
 
     slots = Enum.map(slots, fn {id, spec} ->
+      component_type =
+        spec
+        |> Map.fetch!("type")
+        |> String.downcase()
+        |> String.to_existing_atom()
+
       params = %{
         motherboard_id: motherboard_id,
         slot_internal_id: String.to_integer(id),
-        link_component_type: String.downcase(spec["type"])
+        link_component_type: component_type
       }
 
       MotherboardSlot.create_changeset(params)

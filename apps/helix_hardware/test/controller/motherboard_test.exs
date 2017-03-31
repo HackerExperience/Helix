@@ -13,10 +13,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   @moduletag :integration
 
   defp component_of_type(type) do
-    specialized_component =
-      type
-      |> String.to_atom()
-      |> Factory.insert()
+    specialized_component = Factory.insert(type)
 
     specialized_component.component
   end
@@ -37,9 +34,8 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
 
     test "raises FunctionClauseError if component is not of a motherboard" do
       bogus =
-        ComponentType.type_implementations()
-        |> Map.keys()
-        |> Enum.reject(&(&1 == "mobo"))
+        ComponentType.possible_types()
+        |> Enum.reject(&(&1 == :mobo))
         |> Enum.random()
         |> component_of_type()
 
