@@ -3,13 +3,15 @@ defmodule Helix.Server.Model.Server do
   use Ecto.Schema
 
   alias HELL.PK
+  alias HELL.Constant
+  alias Helix.Server.Model.ServerType
 
   import Ecto.Changeset
 
   @type id :: PK.t
   @type t :: %__MODULE__{
     server_id: id,
-    server_type: String.t,
+    server_type: Constant.t,
     poi_id: PK.t,
     motherboard_id: PK.t,
     inserted_at: NaiveDateTime.t,
@@ -17,7 +19,7 @@ defmodule Helix.Server.Model.Server do
   }
 
   @type creation_params :: %{
-    :server_type => String.t,
+    :server_type => Constant.t,
     optional(:motherboard_id) => PK.t,
     optional(:poi_id) => PK.t
   }
@@ -37,9 +39,7 @@ defmodule Helix.Server.Model.Server do
 
     field :poi_id, HELL.PK
     field :motherboard_id, HELL.PK
-
-    # FK to ServerType
-    field :server_type, :string
+    field :server_type, Constant
 
     timestamps()
   end
@@ -49,6 +49,7 @@ defmodule Helix.Server.Model.Server do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
+    |> validate_inclusion(:server_type, ServerType.possible_types())
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t

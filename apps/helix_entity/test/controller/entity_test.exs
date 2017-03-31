@@ -30,9 +30,7 @@ defmodule Helix.Entity.Controller.EntityTest do
     end
 
     test "fails when entity_type is invalid" do
-      params = %{generate_params() | entity_type: Random.number()}
-
-      assert {:error, cs} = EntityController.create(params)
+      {:error, cs} = EntityController.create(%{entity_type: :foobar})
       assert :entity_type in Keyword.keys(cs.errors)
     end
   end

@@ -2,6 +2,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   use Ecto.Schema
 
+  alias HELL.Constant
   alias Helix.Hardware.Model.ComponentType
 
   import Ecto.Changeset
@@ -23,18 +24,18 @@ defmodule Helix.Hardware.Model.ComponentSpec do
   @callback validate_spec(map) :: Ecto.Changeset.t
 
   @valid_spec_types (
-    ComponentType.type_implementations()
-    |> Map.keys()
+    ComponentType.possible_types()
+    |> Enum.map(&to_string/1)
     |> Enum.map(&String.upcase/1))
 
   @spec_type_implementation (
     ComponentType.type_implementations()
-    |> Enum.map(fn {k, v} -> {String.upcase(k), v} end)
+    |> Enum.map(fn {k, v} -> {String.upcase(to_string(k)), v} end)
     |> :maps.from_list())
 
   @spec_type_to_component_type (
-    ComponentType.type_implementations()
-    |> Enum.map(fn {k, _} -> {String.upcase(k), k} end)
+    ComponentType.possible_types()
+    |> Enum.map(fn k -> {String.upcase(to_string(k)), k} end)
     |> :maps.from_list())
 
   @primary_key false
@@ -43,7 +44,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
       primary_key: true
 
     # FK to ComponentType
-    field :component_type, :string
+    field :component_type, Constant
     field :spec, :map,
       # HACK: Yes, this is totally unnecessary, but the `spec` field after
       #   applying our changeset validation logic is returned with keys as atoms

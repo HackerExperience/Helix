@@ -53,10 +53,10 @@ defmodule Helix.Hardware.Controller.HardwareService do
     bundle = %{
       motherboard: "MOBO01",
       components:  [
-        {"cpu", "CPU01"},
-        {"ram", "RAM01"},
-        {"hdd", "HDD01"},
-        {"nic", "NIC01"}
+        {:cpu, "CPU01"},
+        {:ram, "RAM01"},
+        {:hdd, "HDD01"},
+        {:nic, "NIC01"}
       ],
       network: [
         {"::", uplink: 100, downlink: 100}

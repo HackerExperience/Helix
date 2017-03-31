@@ -11,10 +11,7 @@ defmodule Helix.Hardware.Controller.MotherboardSlotTest do
   @moduletag :integration
 
   def component_for(slot) do
-    specialization =
-      slot.link_component_type
-      |> String.to_atom()
-      |> Factory.insert()
+    specialization = Factory.insert(slot.link_component_type)
 
     specialization.component
   end

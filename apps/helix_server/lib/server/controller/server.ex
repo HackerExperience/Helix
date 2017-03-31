@@ -1,6 +1,7 @@
 defmodule Helix.Server.Controller.Server do
 
   alias HELF.Broker
+  alias HELL.Constant
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
@@ -8,7 +9,7 @@ defmodule Helix.Server.Controller.Server do
 
   @type find_param ::
     {:id, [HELL.PK.t]}
-    | {:type, String.t}
+    | {:type, Constant.t}
 
   @spec create(Server.creation_params) ::
     {:ok, Server.t}

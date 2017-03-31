@@ -10,8 +10,7 @@ defmodule Helix.Hardware.Model.Component.HDD do
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
-  @type t :: %__MODULE__{
-  }
+  @type t :: %__MODULE__{}
 
   @primary_key false
   schema "hdds" do

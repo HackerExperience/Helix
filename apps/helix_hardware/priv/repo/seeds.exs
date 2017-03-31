@@ -14,7 +14,7 @@ end
 if Mix.env in [:dev, :test] do
   Repo.transaction fn ->
     mobo_params = %{
-      component_type: "mobo",
+      component_type: :mobo,
       spec: %{
         "spec_code" => "MOBO01",
         "spec_type" => "MOBO",
@@ -33,7 +33,7 @@ if Mix.env in [:dev, :test] do
     }
 
     cpu_params = %{
-      component_type: "cpu",
+      component_type: :cpu,
       spec: %{
         "spec_code" => "CPU01",
         "spec_type" => "CPU",
@@ -44,7 +44,7 @@ if Mix.env in [:dev, :test] do
     }
 
     ram_params = %{
-      component_type: "ram",
+      component_type: :ram,
       spec: %{
         "spec_code" => "RAM01",
         "spec_type" => "RAM",
@@ -55,7 +55,7 @@ if Mix.env in [:dev, :test] do
     }
 
     hdd_params = %{
-      component_type: "hdd",
+      component_type: :hdd,
       spec: %{
         "spec_code" => "HDD01",
         "spec_type" => "HDD",
@@ -65,7 +65,7 @@ if Mix.env in [:dev, :test] do
     }
 
     nic_params = %{
-      component_type: "nic",
+      component_type: :nic,
       spec: %{
        "spec_code" => "NIC01",
         "spec_type" => "NIC",
