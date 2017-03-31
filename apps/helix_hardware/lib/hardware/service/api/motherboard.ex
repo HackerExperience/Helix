@@ -3,19 +3,8 @@ defmodule Helix.Hardware.Service.API.Motherboard do
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
-
-  @spec create_from_spec(ComponentSpec.t) ::
-    {:ok, Motherboard.t}
-    | {:error, Ecto.Changeset.t}
-  @doc """
-  Creates motherboard of given specification
-  """
-  def create_from_spec(component_spec) do
-    MotherboardController.create_from_spec(component_spec)
-  end
 
   @spec fetch!(Component.t) :: Motherboard.t
   @doc """
@@ -57,19 +46,12 @@ defmodule Helix.Hardware.Service.API.Motherboard do
     MotherboardSlotController.unlink(motherboard_slot)
   end
 
-  @spec unlink_components_from_motherboard(Motherboard.t | HELL.PK.t) :: :ok
-  @doc """
-  Unlinks every component linked to motherboard
-  """
-  def unlink_components_from_motherboard(motherboard) do
-    MotherboardController.unlink_components_from_motherboard(motherboard)
-  end
-
   @spec delete(Motherboard.t | HELL.PK.t) :: no_return
   @doc """
-  Deletes the motherboard, unlinking every linked components
+  Deletes the motherboard
 
-  This function is idempotent
+  This function is idempotent, note that this effectively unlinks every
+  component linked to motherboard's slots
   """
   def delete(motherboard) do
     MotherboardController.delete(motherboard)
