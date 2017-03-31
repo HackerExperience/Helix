@@ -93,6 +93,15 @@ defmodule Helix.Software.Controller.File do
     |> Repo.update()
   end
 
+  @spec decrypt(File.t) ::
+    {:ok, Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
+  def decrypt(file = %File{}) do
+    file
+    |> File.update_changeset(%{crypto_version: nil})
+    |> Repo.update()
+  end
+
   @spec delete(File.t) :: no_return
   def delete(file = %File{}),
     do: delete(file.file_id)

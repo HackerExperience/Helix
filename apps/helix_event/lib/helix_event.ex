@@ -2,11 +2,16 @@ defmodule Helix.Event do
 
   use HELF.Event
 
-  alias Helix.Software.Model.SoftwareType.Encryptor
-  alias Helix.Software.Service.Event, as: SoftwareEvent
+  alias Helix.Software
 
   # TODO: This type belongs to HELF.Event
   @type t :: struct
 
-  event Encryptor.ProcessConclusionEvent, SoftwareEvent.Encryptor, :complete
+  event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
+    Software.Service.Event.Encryptor,
+    :complete
+
+  event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
+    Software.Service.Event.Decryptor,
+    :complete
 end
