@@ -11,8 +11,8 @@ defmodule Helix.Account.Controller.Session do
   @spec for_token(Account.t) :: {:ok, Session.t}
   def for_token(%Account{account_id: account_id}) when is_binary(account_id),
     do: {:ok, to_string(account_id)}
-    def for_token(_),
-      do: {:error, "invalid input"}
+  def for_token(_),
+    do: {:error, "invalid input"}
 
   # Well. i think that this module should not be inside the model folders
   # if it depends on external data, but let's leave it as is until we fix it
@@ -43,5 +43,4 @@ defmodule Helix.Account.Controller.Session do
         {:error, :unauthorized}
     end
   end
-
 end
