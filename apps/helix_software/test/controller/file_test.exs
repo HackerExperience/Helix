@@ -2,8 +2,9 @@ defmodule Helix.Software.Controller.FileTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
+  alias HELL.TestHelper.Random
   alias Helix.Software.Controller.File, as: FileController
+  alias Helix.Software.Controller.CryptoKey, as: CryptoKeyController
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareModule
   alias Helix.Software.Repo
@@ -16,21 +17,16 @@ defmodule Helix.Software.Controller.FileTest do
     storage = Factory.insert(:storage)
     file = Factory.build(:file)
 
-    %{
-      file_path: file.file_path,
-      file_size: file.file_size,
-      name: file.name,
-      software_type: file.software_type,
-      storage_id: storage.storage_id
-    }
+    file
+    |> Map.take([:path, :file_size, :name, :software_type])
+    |> Map.put(:storage_id, storage.storage_id)
   end
 
   defp generate_software_modules(software_type) do
     software_type
     |> SoftwareModule.Query.by_software_type()
     |> Repo.all()
-    |> Enum.map(&{&1.software_module, Burette.Number.number(1..1024)})
-    |> :maps.from_list()
+    |> Enum.into(%{}, &{&1.software_module, Burette.Number.number(1..1024)})
   end
 
   describe "creating" do
@@ -44,7 +40,7 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "fails on path identity conflict" do
       params = generate_params()
-      collision = Map.take(params, [:name, :file_path, :software_type, :storage_id])
+      collision = Map.take(params, [:name, :path, :software_type, :storage_id])
 
       {:ok, _} = FileController.create(params)
 
@@ -59,13 +55,58 @@ defmodule Helix.Software.Controller.FileTest do
       assert %File{} = FileController.fetch(file.file_id)
     end
 
-    test "returns nil if file with id doesn't exist" do
-      file_id = PK.pk_for(File)
-      refute FileController.fetch(file_id)
+    test "returns nil if file doesn't exist" do
+      refute FileController.fetch(Random.pk())
+    end
+  end
+
+  describe "get_files_on_target_storage/2" do
+    test "returns non-encrypted files" do
+      origin_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, %{files: []})
+
+      Factory.insert_list(5, :file, %{storage: target_storage})
+      Factory.insert_list(5, :file, %{storage: target_storage, crypto_version: 1})
+
+      files = FileController.get_files_on_target_storage(
+        origin_storage,
+        target_storage)
+
+      assert 5 == Enum.count(files)
+      assert Enum.all?(files, &is_nil(&1.crypto_version))
+    end
+
+    test "returns additional files for which the origin storage has a key" do
+      origin_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, %{files: []})
+      server_id = Random.pk()
+
+      Factory.insert_list(5, :file, %{storage: target_storage})
+      encrypted_files = Factory.insert_list(
+        5,
+        :file,
+        %{storage: target_storage, crypto_version: 1})
+
+      create_key = &CryptoKeyController.create(origin_storage, server_id, &1)
+      Enum.each(encrypted_files, create_key)
+
+      files = FileController.get_files_on_target_storage(
+        origin_storage,
+        target_storage)
+
+      unencrypted_returned_files = Enum.filter(
+        files,
+        &is_nil(&1.crypto_version))
+      encrypted_returned_files = Enum.filter(files, &(&1.crypto_version == 1))
+
+      assert 10 == Enum.count(files)
+      assert 5 == Enum.count(unencrypted_returned_files)
+      assert 5 == Enum.count(encrypted_returned_files)
     end
   end
 
   describe "updating" do
+    # TODO: Chop the things that are tested here in three different tests
     test "succeeds with valid params" do
       file = Factory.insert(:file)
 
@@ -76,49 +117,34 @@ defmodule Helix.Software.Controller.FileTest do
       refute file.name == updated.name
       assert params.name == updated.name
 
-      # update file_path
-      params = Map.take(Factory.params_for(:file), [:file_path])
+      # update path
+      params = Map.take(Factory.params_for(:file), [:path])
       {:ok, updated} = FileController.update(file, params)
 
-      refute file.file_path == updated.file_path
-      assert params.file_path == updated.file_path
-
-      # Storage
-      # REVIEW: I think we should disallow this. A file should not be
-      #   moved/updated to another storage but should be copied to it
-      storage = Factory.insert(:storage)
-      params = %{storage_id: storage.storage_id}
-      {:ok, updated} = FileController.update(file, params)
-
-      refute file.storage_id == updated.storage_id
-      assert params.storage_id == updated.storage_id
+      refute file.path == updated.path
+      assert params.path == updated.path
     end
 
-    test "fails on path identity conflict" do
+    test "fails on file path identity conflict" do
       file0 = Factory.insert(:file)
-      similarities =  Map.take(file0, [:software_type, :storage, :storage_id])
-      file1 = Factory.insert(:file, similarities)
+      intersection = Map.take(file0, [:storage, :software_type])
+      file1 = Factory.insert(:file, intersection)
 
-      file1 = FileController.fetch(file1.file_id)
-
-      params = %{file_path: file0.file_path, name: file0.name}
+      params = Map.take(file0, [:path, :name])
       assert {:error, :file_exists} == FileController.update(file1, params)
-
-      found = FileController.fetch(file1.file_id)
-      assert file1 == found
     end
   end
 
   describe "copying" do
     test "to another path in the same storage" do
-      path = Factory.params_for(:file).file_path
+      path = Factory.params_for(:file).path
       origin = Factory.insert(:file)
 
       {:ok, copy} = FileController.copy(origin, path, origin.storage_id)
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
-      assert path == copy.file_path
+      assert path == copy.path
     end
 
     test "to another storage" do
@@ -126,7 +152,7 @@ defmodule Helix.Software.Controller.FileTest do
       origin = Factory.insert(:file)
 
       {:ok, copy} =
-        FileController.copy(origin, origin.file_path, storage.storage_id)
+        FileController.copy(origin, origin.path, storage.storage_id)
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
@@ -135,33 +161,28 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "fails on path identity conflict" do
       origin = Factory.insert(:file)
-      assert {:error, :file_exists} ==
-        FileController.copy(origin, origin.file_path, origin.storage_id)
+
+      result = FileController.copy(origin, origin.path, origin.storage_id)
+      assert {:error, :file_exists} == result
     end
   end
 
   describe "moving" do
     test "to another path" do
       file = Factory.insert(:file)
-      path = Factory.params_for(:file).file_path
+      path = Factory.params_for(:file).path
 
-      {:ok, file} = FileController.move(file, path, file.storage_id)
+      {:ok, file} = FileController.move(file, path)
 
-      assert path == file.file_path
-    end
-
-    @tag :pending
-    test "to another storage" do
-      # REVIEW: I think this should not be allowed. You don't move a file to
-      #   another storage, you copy it and delete the original
+      assert path == file.path
     end
 
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
-      similarities = Map.take(file0, [:name, :storage, :storage_id, :software_type])
+      similarities = Map.take(file0, [:name, :storage, :software_type])
       file1 = Factory.insert(:file, similarities)
 
-      result = FileController.move(file1, file0.file_path, file0.storage_id)
+      result = FileController.move(file1, file0.path)
       assert {:error, :file_exists} == result
     end
   end
@@ -178,8 +199,7 @@ defmodule Helix.Software.Controller.FileTest do
 
     test "fails on path identity conflict" do
       file0 = Factory.insert(:file)
-      similarities =
-        Map.take(file0, [:file_path, :software_type, :storage, :storage_id])
+      similarities = Map.take(file0, [:path, :software_type, :storage])
       file1 = Factory.insert(:file, similarities)
 
       assert {:error, :file_exists} == FileController.rename(file1, file0.name)

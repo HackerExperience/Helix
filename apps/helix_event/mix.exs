@@ -1,10 +1,9 @@
-defmodule Helix.Core.Mixfile do
-
+defmodule Helix.Event.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :helix_core,
+      app: :helix_event,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -21,10 +20,7 @@ defmodule Helix.Core.Mixfile do
   end
 
   def application do
-    [
-      mod: {Helix.Core.Application, []},
-      extra_applications: [:logger, :plug]
-    ]
+    []
   end
 
   defp elixirc_options(:dev) do
@@ -47,12 +43,19 @@ defmodule Helix.Core.Mixfile do
     do: ["lib"]
 
   defp deps do
-    [
-      {:hell, in_umbrella: true},
-      {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true},
-      {:ecto, "~> 2.1", override: true},
-      {:helf, github: "HackerExperience/HELF"},
-      {:burette, git: "https://github.com/HackerExperience/burette", only: :test}
-    ]
+    umbrella_apps = ~w/
+      helix_account
+      helix_core
+      helix_entity
+      helix_hardware
+      helix_log
+      helix_npc
+      helix_process
+      helix_server
+      helix_software
+      hell
+    /a
+
+    Enum.map(umbrella_apps, &({&1, in_umbrella: true}))
   end
 end

@@ -11,8 +11,10 @@ defmodule Helix.Hardware.Model.Motherboard do
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
+  @type id :: PK.t
+
   @type t :: %__MODULE__{
-    motherboard_id: PK.t,
+    motherboard_id: id,
     slots: [MotherboardSlot.t],
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t

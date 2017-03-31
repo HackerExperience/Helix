@@ -8,6 +8,8 @@ defmodule Helix.Account.Model.AccountSetting do
 
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{}
+
   @type changeset_params :: %{
     optional(:account_id) => Account.id,
     :settings => map
@@ -28,7 +30,7 @@ defmodule Helix.Account.Model.AccountSetting do
       define_field: false
   end
 
-  @spec changeset(AccountSetting.t, changeset_params) :: Ecto.Changeset.t
+  @spec changeset(t, changeset_params) :: Ecto.Changeset.t
   def changeset(struct \\ %__MODULE__{}, params) do
     struct
     |> cast(params, [:account_id])

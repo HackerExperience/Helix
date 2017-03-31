@@ -5,8 +5,8 @@ defmodule Helix.Process.TestHelper.ProcessTypeExample do
   defimpl Helix.Process.Model.Process.ProcessType do
     def dynamic_resources(_),
       do: [:cpu, :dlk, :ulk]
-    def event_namespace(_),
-      do: "event:process:test:completed"
+    def event(_, _, _),
+      do: []
   end
 end
 
@@ -17,7 +17,7 @@ defmodule Helix.Process.TestHelper.StaticProcessTypeExample do
   defimpl Helix.Process.Model.Process.ProcessType do
     def dynamic_resources(_),
       do: []
-    def event_namespace(_),
-      do: "event:process:statictest:completed"
+    def event(_, _, _),
+      do: []
   end
 end

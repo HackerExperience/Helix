@@ -1,7 +1,9 @@
 defmodule Helix.Software.Controller.File do
 
+  alias Helix.Software.Controller.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
   import Ecto.Query, only: [where: 3, select: 3]
@@ -20,6 +22,23 @@ defmodule Helix.Software.Controller.File do
   def fetch(file_id),
     do: Repo.get(File, file_id)
 
+  @spec get_files_on_target_storage(Storage.t, Storage.t) :: [File.t]
+  @doc """
+  Gets all files on `target_storage` that are not encrypted or for whom is there
+  a key on `origin_storage`
+  """
+  def get_files_on_target_storage(origin_storage, target_storage) do
+    keyed_files = CryptoKey.get_files_targeted_on_storage(
+      origin_storage,
+      target_storage)
+
+    target_storage
+    |> File.Query.from_storage()
+    |> File.Query.not_encrypted()
+    |> File.Query.from_id_list(keyed_files, :or)
+    |> Repo.all()
+  end
+
   @spec update(File.t, File.update_params) ::
     {:ok, File.t}
     | {:error, :file_exists | Ecto.Changeset.t}
@@ -30,27 +49,26 @@ defmodule Helix.Software.Controller.File do
     |> parse_errors()
   end
 
-  @spec copy(File.t, file_path :: String.t, storage_id :: HELL.PK.t) ::
+  @spec copy(File.t, path :: String.t, storage_id :: HELL.PK.t) ::
     {:ok, File.t}
     | {:error, :file_exists | Ecto.Changeset.t}
-  def copy(file, file_path, storage_id) do
+  def copy(file, path, storage_id) do
     # TODO: allow copying to the same folder
     params = %{
       name: file.name,
-      file_path: file_path,
+      path: path,
       file_size: file.file_size,
       software_type: file.software_type,
       storage_id: storage_id}
     create(params)
   end
 
-  @spec move(File.t, file_path :: String.t, storage_id :: HELL.PK.t) ::
+  @spec move(File.t, path :: String.t) ::
     {:ok, File.t}
     | {:error, :file_exists | Ecto.Changeset.t}
-  def move(file, file_path, storage_id) do
-    params = %{file_path: file_path, storage_id: storage_id}
+  def move(file, path) do
     file
-    |> File.update_changeset(params)
+    |> File.update_changeset(%{path: path})
     |> Repo.update()
     |> parse_errors()
   end
@@ -64,6 +82,24 @@ defmodule Helix.Software.Controller.File do
     |> File.update_changeset(params)
     |> Repo.update()
     |> parse_errors()
+  end
+
+  @spec encrypt(File.t, pos_integer) ::
+    {:ok, Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
+  def encrypt(file = %File{}, version) when version >= 1 do
+    file
+    |> File.update_changeset(%{crypto_version: version})
+    |> Repo.update()
+  end
+
+  @spec decrypt(File.t) ::
+    {:ok, Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
+  def decrypt(file = %File{}) do
+    file
+    |> File.update_changeset(%{crypto_version: nil})
+    |> Repo.update()
   end
 
   @spec delete(File.t) :: no_return
@@ -116,7 +152,7 @@ defmodule Helix.Software.Controller.File do
   defp parse_errors({:ok, changeset}),
     do: {:ok, changeset}
   defp parse_errors({:error, changeset}) do
-    if Keyword.get(changeset.errors, :file_path) do
+    if Keyword.get(changeset.errors, :full_path) do
       {:error, :file_exists}
     else
       {:error, changeset}
