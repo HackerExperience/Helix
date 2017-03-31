@@ -1,10 +1,14 @@
 defprotocol Helix.Process.Model.Process.ProcessType do
+
+  alias Helix.Process.Model.Process
+
   @type resource :: :cpu | :ram | :dlk | :ulk
 
   @spec dynamic_resources(t) :: [resource]
   def dynamic_resources(data)
 
-  def event_namespace(data)
+  @spec event(t, Process.t, :created | :completed) :: [Helix.Event.t]
+  def event(data, process, circumstance)
 end
 
 ###########################################
@@ -34,7 +38,7 @@ for impl <- impls do
     def dynamic_resources(input),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
 
-    def event_namespace(input),
+    def event(input, _, _),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
   end
 end
