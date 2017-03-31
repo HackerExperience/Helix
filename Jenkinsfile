@@ -26,7 +26,7 @@ parallel (
 
         unstash 'source'
 
-        withEnv (['MIX_ENV=test']) {
+        withEnv (['MIX_ENV=test', 'HELIX_SKIP_WARNINGS=true']) {
           sh 'mix compile'
         }
 
@@ -41,7 +41,7 @@ parallel (
 
         unstash 'source'
 
-        withEnv (['MIX_ENV=prod']) {
+        withEnv (['MIX_ENV=prod', 'HELIX_SKIP_WARNINGS=true']) {
           sh 'mix compile'
           sh 'mix release --env=prod --warnings-as-errors'
         }
