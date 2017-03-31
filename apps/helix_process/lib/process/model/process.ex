@@ -459,7 +459,7 @@ defmodule Helix.Process.Model.Process do
     def from_type_list(query \\ Process, type_list),
       do: where(query, [p], p.process_type in ^type_list)
 
-    @spec from_state_list(Ecto.Queryable.t, [State.t]) :: Ecto.Queryable.t
+    @spec from_state_list(Ecto.Queryable.t, [State.state]) :: Ecto.Queryable.t
     def from_state_list(query \\ Process, state_list),
       do: where(query, [p], p.state in ^state_list)
 
@@ -487,7 +487,7 @@ defmodule Helix.Process.Model.Process do
     def by_type(query \\ Process, process_type),
       do: where(query, [p], p.process_type == ^process_type)
 
-    @spec by_state(Ecto.Queryable.t, State.t) :: Ecto.Queryable.t
+    @spec by_state(Ecto.Queryable.t, State.state) :: Ecto.Queryable.t
     def by_state(query \\ Process, state),
       do: where(query, [p], p.state == ^state)
 

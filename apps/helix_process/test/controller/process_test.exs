@@ -27,7 +27,7 @@ defmodule Helix.Process.Controller.ProcessTest do
       assert %ProcessModel{} = ProcessController.fetch(process.process_id)
     end
 
-    test "fails when process with id doesn't exist" do
+    test "fails when process doesn't exists" do
       refute ProcessController.fetch(Random.pk())
     end
   end
