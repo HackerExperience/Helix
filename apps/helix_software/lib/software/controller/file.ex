@@ -84,6 +84,15 @@ defmodule Helix.Software.Controller.File do
     |> parse_errors()
   end
 
+  @spec encrypt(File.t, pos_integer) ::
+    {:ok, Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
+  def encrypt(file = %File{}, version) when version >= 1 do
+    file
+    |> File.update_changeset(%{crypto_version: version})
+    |> Repo.update()
+  end
+
   @spec delete(File.t) :: no_return
   def delete(file = %File{}),
     do: delete(file.file_id)
