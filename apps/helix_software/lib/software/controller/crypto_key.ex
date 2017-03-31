@@ -1,6 +1,6 @@
 defmodule Helix.Software.Controller.CryptoKey do
 
-  alias Helix.Core.EventDispatcher
+  alias Helix.Event
   alias Helix.Software.Model.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
@@ -57,7 +57,7 @@ defmodule Helix.Software.Controller.CryptoKey do
     |> Repo.all()
   end
 
-  @spec invalidate_keys_for_file(File.t) :: [EventDispatcher.t]
+  @spec invalidate_keys_for_file(File.t) :: [Event.t]
   @doc """
   Invalidates all keys that affect `file`
   """

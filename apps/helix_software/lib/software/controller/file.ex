@@ -3,6 +3,7 @@ defmodule Helix.Software.Controller.File do
   alias Helix.Software.Controller.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
   import Ecto.Query, only: [where: 3, select: 3]
