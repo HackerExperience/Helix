@@ -3,12 +3,11 @@
     %{
       name: "improvement",
       files: %{
-        included: ["apps/*/lib", "app/*/test"]
+        included: ["lib", "test"]
       },
       check_for_updates: false,
       strict: true,
       color: true,
-      requires: ["apps/hell/lib/credo/"],
       checks: [
         {Credo.Check.Design.AliasUsage},
         {Credo.Check.Design.TagFIXME},
@@ -21,12 +20,11 @@
     %{
       name: "default",
       files: %{
-        included: ["apps/*/lib", "app/*/test"]
+        included: ["lib", "test"]
       },
       check_for_updates: false,
       strict: true,
       color: true,
-      requires: ["apps/hell/lib/credo/"],
       checks: [
         {Credo.Check.Consistency.ExceptionNames},
         {Credo.Check.Consistency.LineEndings},
