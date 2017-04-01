@@ -79,31 +79,35 @@ defmodule Helix.Process.Model.ProcessTest do
 
   describe "ttl" do
     test "seconds_to_change defaults to nil if nothing is going to change" do
-      now = DateTime.from_unix!(1470000000)
+      now = DateTime.from_unix!(1_470_000_000)
 
-      p =
+      params = %{allocated: %{cpu: 0, dlk: 0}, updated_time: now}
+
+      process =
         %{objective: %{cpu: 50}}
         |> Process.create_changeset()
-        |> Process.update_changeset(%{allocated: %{cpu: 0, dlk: 0}, updated_time: now})
+        |> Process.update_changeset(params)
         |> Changeset.apply_changes()
 
-      refute Process.seconds_to_change(p)
+      refute Process.seconds_to_change(process)
     end
 
     test "seconds_to_change returns amount of seconds to the next change on a process resource consumption" do
-      now = DateTime.from_unix!(1470000000)
+      now = DateTime.from_unix!(1_470_000_000)
 
-      p =
+      params = %{allocated: %{cpu: 10, dlk: 10}, updated_time: now}
+
+      process =
         %{objective: %{cpu: 50, dlk: 100}}
         |> Process.create_changeset()
-        |> Process.update_changeset(%{allocated: %{cpu: 10, dlk: 10}, updated_time: now})
+        |> Process.update_changeset(params)
         |> Changeset.apply_changes()
 
-      assert 5 === Process.seconds_to_change(p)
+      assert 5 === Process.seconds_to_change(process)
     end
 
     test "estimate_conclusion is the value of the longest-to-complete objective (or nil if infinity)" do
-      now = DateTime.from_unix!(1470000000)
+      now = DateTime.from_unix!(1_470_000_000)
 
       p =
         %{objective: %{cpu: 50, dlk: 100}}
@@ -121,7 +125,7 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Changeset.apply_changes()
         |> Process.estimate_conclusion()
 
-      future = DateTime.from_unix!(1470000050)
+      future = DateTime.from_unix!(1_470_000_050)
 
       assert :eq === DateTime.compare(future, p2.estimated_time)
     end
@@ -159,7 +163,8 @@ defmodule Helix.Process.Model.ProcessTest do
       assert 2 === Process.allocation_shares(process)
       p2 = %{process| process_data: %TestHelper.StaticProcessTypeExample{}}
 
-      assert [] === ProcessType.dynamic_resources(%TestHelper.StaticProcessTypeExample{})
+      process_type = %TestHelper.StaticProcessTypeExample{}
+      assert [] === ProcessType.dynamic_resources(process_type)
       assert 0 === Process.allocation_shares(p2)
     end
   end

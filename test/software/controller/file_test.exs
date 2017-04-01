@@ -65,8 +65,8 @@ defmodule Helix.Software.Controller.FileTest do
       origin_storage = Factory.insert(:storage, %{files: []})
       target_storage = Factory.insert(:storage, %{files: []})
 
-      Factory.insert_list(5, :file, %{storage: target_storage})
-      Factory.insert_list(5, :file, %{storage: target_storage, crypto_version: 1})
+      Factory.insert_list(5, :file, storage: target_storage)
+      Factory.insert_list(5, :file, storage: target_storage, crypto_version: 1)
 
       files = FileController.get_files_on_target_storage(
         origin_storage,

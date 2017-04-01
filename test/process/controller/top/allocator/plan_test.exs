@@ -264,7 +264,11 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     # there are several ways to execute the allocation algorithm, we should
     # expect allocator to fail to allocate a part of the resources left
     assert processes[process0.process_id].allocated.cpu in 4_200..4_250
-    assert processes[process0.process_id].allocated.cpu == processes[process1.process_id].allocated.cpu
+
+    cpu_allocated0 = processes[process0.process_id].allocated.cpu
+    cpu_allocated1 = processes[process1.process_id].allocated.cpu
+    assert cpu_allocated0 == cpu_allocated1
+
     assert 500 === processes[process2.process_id].allocated.cpu
   end
 
@@ -301,7 +305,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
     }
 
     # TODO: return precise errors
-    # assert {:error, {:resources, :lack, :ram}} === Plan.allocate([process0, process1], resources)
+    # result = Plan.allocate([process0, process1], resources)
+    # assert {:error, {:resources, :lack, :ram}} == result
     assert {:error, _} = Plan.allocate([process0, process1], resources)
   end
 end

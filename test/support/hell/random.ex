@@ -11,7 +11,7 @@ defmodule HELL.TestHelper.Random do
     {:max, integer},
     {:length, integer}]
 
-  # AKA int(2^27)... The range is good enough and is 32-bit compatible int (non-big)
+  # AKA int(2^27)
   @default_number trunc(:math.pow(2, 27))
 
   # A few TLDs to be used when building a random hostname (no particular order
@@ -157,7 +157,9 @@ defmodule HELL.TestHelper.Random do
       random_char(@email_sep_alphabet) <> string(max: 10)
     end
 
-    email_part = string(min: 3) <> Enum.join(repeat(build_email_part, min: 0, max: 5))
+    email_part0 = string(min: 3)
+    email_part1 = Enum.join(repeat(build_email_part, min: 0, max: 5))
+    email_part = email_part0 <> email_part1
 
     email_part <> "@" <> hostname
   end
@@ -166,7 +168,8 @@ defmodule HELL.TestHelper.Random do
   Generates a random hostname
   """
   def hostname do
-    name = Enum.join(repeat(fn -> string(min: 2, max: 10) end, min: 1, max: 4), ".")
+    parts = repeat(fn -> string(min: 2, max: 10) end, min: 1, max: 4)
+    name = Enum.join(parts, ".")
 
     name <> Enum.random(@tlds)
   end
@@ -174,13 +177,13 @@ defmodule HELL.TestHelper.Random do
   @doc """
   Generates a random username
   """
-  def username(),
+  def username,
     do: String.slice(Burette.Internet.username(), 0..14)
 
   @doc """
   Generates a random setting_id
   """
-  def setting_id() do
+  def setting_id do
     [min: 20, max: 20]
     |> string()
     |> String.downcase()

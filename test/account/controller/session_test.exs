@@ -40,7 +40,7 @@ defmodule Helix.Account.Controller.SessionTest do
 
     test "does not validate expired token" do
       account = %Account{account_id: Random.pk()}
-      claims = %{"exp": 12345}
+      claims = %{"exp": 12_345}
 
       {:ok, token, _} = Guardian.encode_and_sign(account, :access, claims)
       assert {:error, :token_expired} = Guardian.decode_and_verify(token)

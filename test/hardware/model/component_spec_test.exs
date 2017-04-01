@@ -13,7 +13,8 @@ defmodule Helix.Hardware.Model.ComponentSpecTest do
 
       # Note: the schema defines these three fields and their value is derived
       # from the input spec
-      assert [:component_type, :spec_id, :spec] == Keyword.keys(changeset.errors)
+      errors = Keyword.keys(changeset.errors)
+      assert [:component_type, :spec_id, :spec] == errors
     end
 
     test "derives component_type from spec_type" do
@@ -51,7 +52,7 @@ defmodule Helix.Hardware.Model.ComponentSpecTest do
         |> Keyword.keys()
       end
 
-      assert :spec_code in check_spec.(12345)
+      assert :spec_code in check_spec.(123)
       assert :spec_code in check_spec.(:atom)
       assert :spec_code in check_spec.([1, 2, 3, 4, 5])
       assert :spec_code in check_spec.(%{})

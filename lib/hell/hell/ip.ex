@@ -42,7 +42,8 @@ defmodule HELL.IPv6 do
   defp partition_binary(<<>>, acc),
     do: acc
 
-  @spec fill_metadata([non_neg_integer | String.t]) :: [non_neg_integer | String.t]
+  @spec fill_metadata([non_neg_integer | String.t]) ::
+    [non_neg_integer | String.t]
   defp fill_metadata(list),
     do: fill_metadata(list, 0)
   defp fill_metadata([], @meta_groups),
