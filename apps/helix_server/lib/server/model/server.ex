@@ -11,17 +11,16 @@ defmodule Helix.Server.Model.Server do
   @type id :: PK.t
   @type t :: %__MODULE__{
     server_id: id,
-    server_type: Constant.t,
     poi_id: PK.t,
-    motherboard_id: PK.t,
+    motherboard_id: PK.t |  nil,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
     :server_type => Constant.t,
-    optional(:motherboard_id) => PK.t,
-    optional(:poi_id) => PK.t
+    optional(:poi_id) => PK.t | nil,
+    optional(:motherboard_id) => PK.t | nil
   }
   @type update_params :: %{
     optional(:poi_id) => PK.t | nil,
@@ -29,7 +28,7 @@ defmodule Helix.Server.Model.Server do
   }
 
   @creation_fields ~w/server_type poi_id motherboard_id/a
-  @update_fields ~w/poi_id motherboard_id/a
+  @update_fields ~w/poi_id/a
 
   @primary_key false
   @ecto_autogenerate {:server_id, {PK, :pk_for, [__MODULE__]}}
@@ -50,12 +49,28 @@ defmodule Helix.Server.Model.Server do
     |> cast(params, @creation_fields)
     |> validate_required(:server_type)
     |> validate_inclusion(:server_type, ServerType.possible_types())
+    |> unique_constraint(:motherboard_id)
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
+    |> unique_constraint(:motherboard_id)
+    |> attach_motherboard(params)
+  end
+
+  defp attach_motherboard(changeset, params) do
+    previous = get_field(changeset, :motherboard_id)
+    changeset = cast(changeset, params, [:motherboard_id])
+    next = get_change(changeset, :motherboard_id)
+
+    # Already has motherboard and is trying to override it
+    if previous && next do
+      add_error(changeset, :motherboard_id, "is already set")
+    else
+      changeset
+    end
   end
 
   defmodule Query do
