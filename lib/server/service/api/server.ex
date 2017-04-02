@@ -56,8 +56,7 @@ defmodule Helix.Server.Service.API.Server do
   This function is idempotent
   """
   @spec detach(Server.t) ::
-    {:ok, Server.t}
-    | {:error, Ecto.Changeset.t}
+    :ok
   def detach(server) do
     ServerController.detach(server)
   end

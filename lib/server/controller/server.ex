@@ -62,12 +62,15 @@ defmodule Helix.Server.Controller.Server do
   end
 
   @spec detach(Server.t) ::
-    {:ok, Server.t}
-    | {:error, Ecto.Changeset.t}
+    :ok
+  def detach(%Server{server_id: id}),
+    do: detach(id)
   def detach(server) do
     server
-    |> Server.update_changeset(%{motherboard_id: nil})
-    |> Repo.update()
+    |> Server.Query.by_id()
+    |> Repo.update_all(set: [motherboard_id: nil])
+
+    :ok
   end
 
   @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t

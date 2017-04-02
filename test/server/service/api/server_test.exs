@@ -4,6 +4,7 @@ defmodule Helix.Server.Service.API.ServerTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Server.Model.Server
+  alias Helix.Server.Repo
   alias Helix.Server.Service.API.Server, as: API
 
   alias Helix.Hardware.Factory, as: HardwareFactory
@@ -110,19 +111,15 @@ defmodule Helix.Server.Service.API.ServerTest do
   end
 
   describe "detach/1" do
-    test "succeeds with valid input" do
-      mobo = HardwareFactory.insert(:motherboard)
-      server = Factory.insert(:server, motherboard_id: mobo.motherboard_id)
-
-      assert {:ok, %Server{}} = API.detach(server)
-    end
-
     test "is idempotent" do
       mobo = HardwareFactory.insert(:motherboard)
       server = Factory.insert(:server, motherboard_id: mobo.motherboard_id)
 
-      assert {:ok, server} = API.detach(server)
-      assert {:ok, %Server{}} = API.detach(server)
+      API.detach(server)
+      API.detach(server)
+
+      server = Repo.get(Server, server.server_id)
+      refute server.motherboard_id
     end
   end
 end
