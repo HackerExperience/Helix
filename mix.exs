@@ -19,6 +19,14 @@ defmodule Helix.Mixfile do
 
       dialyzer: [plt_add_apps: [:mix]],
 
+      preferred_cli_env: %{
+        "test.quick": :test,
+        "test.full": :test,
+        "test.unit": :test,
+        "test.cluster": :test,
+        "test.external": :test
+      },
+
       name: "Helix",
       source_url: "https://github.com/HackerExperience/Helix",
       homepage_url: "https://hackerexperience.com/",
@@ -62,7 +70,26 @@ defmodule Helix.Mixfile do
     [
       "ecto.setup": ["ecto.create", "ecto.migrate", "helix.seeds"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["compile", "helix.test"]
+      "test": ["test.quick"],
+      "test.full": [
+        "helix.test --exclude sequential --exclude cluster --exclude external",
+        "helix.test --no-prune --only sequential --exclude cluster --exclude external --max-cases 1",
+        "helix.test --no-prune --only cluster --exclude external --max-cases 1",
+        "helix.test --no-prune --only external --max-cases 1"
+      ],
+      "test.unit": [
+        "helix.test --no-prune --only unit"
+      ],
+      "test.cluster": [
+        "helix.test --only cluster --exclude sequential",
+        "helix.test --no-prune --only sequential --only cluster --max-cases 1"
+      ],
+      "test.external": [
+        "helix.test --only external --exclude cluster --max-cases 1"
+      ],
+      "test.quick": [
+        "helix.test --no-prune --exclude sequential --exclude cluster --exclude external",
+      ]
     ]
   end
 

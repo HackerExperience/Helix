@@ -29,12 +29,6 @@ defmodule Mix.Tasks.Helix.Test do
       Mix.Task.run("helix.seeds", [])
     end
 
-    additional_opts = if "umbrella" in List.wrap(Keyword.get(switches, :exclude, [])) do
-      []
-    else
-      ["--include", "umbrella"]
-    end
-
-    Mix.Task.run("test", additional_opts ++ test_argv)
+    Mix.Tasks.Test.run(test_argv)
   end
 end
