@@ -3,7 +3,9 @@ defmodule Helix.Software.Model.FileModule do
   use Ecto.Schema
 
   alias HELL.PK
+  alias HELL.Constant
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.SoftwareModule
 
   import Ecto.Changeset
 
@@ -11,12 +13,12 @@ defmodule Helix.Software.Model.FileModule do
     module_version: pos_integer,
     file: File.t,
     file_id: PK.t,
-    software_module: String.t
+    software_module: Constant.t
   }
 
   @type creation_params :: %{
     file_id: PK.t,
-    software_module: String.t,
+    software_module: Constant.t,
     module_version: pos_integer
   }
   @type update_params :: %{module_version: pos_integer}
@@ -28,17 +30,15 @@ defmodule Helix.Software.Model.FileModule do
   schema "file_modules" do
     field :file_id, HELL.PK,
       primary_key: true
-    field :software_module, :string,
+    field :software_module, Constant,
       primary_key: true
     field :module_version, :integer
 
     belongs_to :file, File,
       foreign_key: :file_id,
       references: :file_id,
-      type: HELL.PK,
       define_field: false,
-      on_replace: :update,
-      primary_key: true
+      on_replace: :update
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -58,7 +58,9 @@ defmodule Helix.Software.Model.FileModule do
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   def generic_validations(changeset) do
-    validate_number(changeset, :module_version, greater_than: 0)
+    changeset
+    |> validate_number(:module_version, greater_than: 0)
+    |> validate_inclusion(:software_module, SoftwareModule.possible_modules())
   end
 
   @spec changeset(t | Ecto.Changeset.t, creation_params) :: Ecto.Changeset.t
@@ -71,6 +73,7 @@ defmodule Helix.Software.Model.FileModule do
 
   defmodule Query do
 
+    alias HELL.Constant
     alias Helix.Software.Model.File
     alias Helix.Software.Model.FileModule
 
@@ -87,8 +90,7 @@ defmodule Helix.Software.Model.FileModule do
     def from_file(query, file_id),
       do: where(query, [fm], fm.file_id == ^file_id)
 
-    @spec by_software_module(String.t) :: Ecto.Queryable.t
-    @spec by_software_module(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    @spec by_software_module(Ecto.Queryable.t, Constant.t) :: Ecto.Queryable.t
     def by_software_module(query \\ FileModule, software_module),
       do: where(query, [fm], fm.software_module == ^software_module)
   end
