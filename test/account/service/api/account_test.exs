@@ -17,7 +17,8 @@ defmodule Helix.Account.Service.API.AccountTest do
         password: "Would you very kindly let me in, please, good sir"
       }
 
-      assert {:ok, %Account{}} = API.create(params)
+      assert {:ok, acc = %Account{}} = API.create(params)
+      Repo.delete!(acc) # FIXME: Ecto.Sandbox || on_exit
     end
 
     test "returns changeset when input is invalid" do
@@ -36,7 +37,8 @@ defmodule Helix.Account.Service.API.AccountTest do
       username = "good_username1"
       password = "Would you very kindly let me in, please, good sir"
 
-      assert {:ok, %Account{}} = API.create(email, username, password)
+      assert {:ok, acc = %Account{}} = API.create(email, username, password)
+      Repo.delete!(acc) # FIXME: Ecto.Sandbox || on_exit
     end
 
     test "returns changeset when input is invalid" do

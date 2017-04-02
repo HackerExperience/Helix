@@ -1,3 +1,3 @@
-ExUnit.configure(exclude: [:pending, :umbrella])
+ExUnit.configure(exclude: [:pending])
 
 ExUnit.start()

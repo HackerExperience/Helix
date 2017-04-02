@@ -102,7 +102,7 @@ parallel (
 
         withEnv (['MIX_ENV=test']) {
           // Unset debug flag, load env vars on ~/.profile & run mix test
-          sh '#!/bin/sh -e\n' + '. ~/.profile && mix test'
+          sh '#!/bin/sh -e\n' + '. ~/.profile && mix test.full'
         }
       }
     }
