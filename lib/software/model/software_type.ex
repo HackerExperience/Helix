@@ -2,14 +2,16 @@ defmodule Helix.Software.Model.SoftwareType do
 
   use Ecto.Schema
 
+  alias HELL.Constant
+
   @type t :: %__MODULE__{
-    software_type: String.t,
+    software_type: Constant.t,
     extension: String.t
   }
 
   @primary_key false
   schema "software_types" do
-    field :software_type, :string,
+    field :software_type, Constant,
       primary_key: true
 
     field :extension, :string
@@ -18,43 +20,53 @@ defmodule Helix.Software.Model.SoftwareType do
   @doc false
   def possible_types do
     %{
-      "cracker" => %{
+      cracker: %{
         extension: "crc",
-        modules: ["password"]
+        modules: [:cracker_password]
       },
-      "exploit" => %{
+      exploit: %{
         extension: "exp",
-        modules: ["ftp", "ssh"]
+        modules: [:exploit_ftp, :exploit_ssh]
       },
-      "firewall" => %{
+      firewall: %{
         extension: "fwl",
-        modules: ["active", "passive"]
+        modules: [:firewall_active, :firewall_passive]
       },
-      "hasher" => %{
+      hasher: %{
         extension: "hash",
-        modules: ["password"]
+        modules: [:hasher_password]
       },
-      "log_forger" => %{
+      log_forger: %{
         extension: "logf",
-        modules: ["create", "edit"]
+        modules: [:log_forger_create, :log_forger_edit]
       },
-      "log_recover" => %{
+      log_recover: %{
         extension: "logr",
-        modules: ["recover"]
+        modules: [:log_recover_recover]
       },
-      "encryptor" => %{
+      encryptor: %{
         extension: "enc",
-        modules: ["file", "log", "connection", "process"]
+        modules: [
+          :encryptor_file,
+          :encryptor_log,
+          :encryptor_connection,
+          :encryptor_process
+        ]
       },
-      "decryptor" => %{
+      decryptor: %{
         extension: "dec",
-        modules: ["file", "log", "connection", "process"]
+        modules: [
+          :decryptor_file,
+          :decryptor_log,
+          :decryptor_connection,
+          :decryptor_process
+        ]
       },
-      "anymap" => %{
+      anymap: %{
         extension: "map",
-        modules: ["geo", "inbound", "outbound"]
+        modules: [:anymap_geo, :anymap_inbound, :anymap_outbound]
       },
-      "crypto_key" => %{
+      crypto_key: %{
         extension: "key",
         modules: []
       }

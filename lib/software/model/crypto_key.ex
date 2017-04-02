@@ -14,7 +14,7 @@ defmodule Helix.Software.Model.CryptoKey do
   }
 
   @default_path "/.keys"
-  @software_type "crypto_key"
+  @software_type :crypto_key
 
   @primary_key false
   schema "crypto_keys" do

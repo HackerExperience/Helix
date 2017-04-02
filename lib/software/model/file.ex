@@ -2,6 +2,7 @@ defmodule Helix.Software.Model.File do
 
   use Ecto.Schema
 
+  alias HELL.Constant
   alias HELL.PK
   alias Helix.Software.Model.SoftwareType
   alias Helix.Software.Model.FileModule
@@ -16,7 +17,7 @@ defmodule Helix.Software.Model.File do
     full_path: String.t,
     file_size: pos_integer,
     type: SoftwareType.t,
-    software_type: String.t,
+    software_type: Constant.t,
     storage: Storage.t,
     storage_id: PK.t,
     inserted_at: NaiveDateTime.t,
@@ -31,7 +32,7 @@ defmodule Helix.Software.Model.File do
     name: String.t,
     path: String.t,
     file_size: pos_integer,
-    software_type: String.t,
+    software_type: Constant.t,
     storage_id: PK.t
   }
 
@@ -47,6 +48,8 @@ defmodule Helix.Software.Model.File do
 
   @required_fields ~w/name path file_size software_type/a
 
+  @software_types Map.keys(SoftwareType.possible_types())
+
   @primary_key false
   @ecto_autogenerate {:file_id, {PK, :pk_for, [__MODULE__]}}
   schema "files" do
@@ -55,7 +58,7 @@ defmodule Helix.Software.Model.File do
 
     field :name, :string
     field :path, :string
-    field :software_type, :string
+    field :software_type, Constant
     field :file_size, :integer
     field :storage_id, HELL.PK
 
@@ -121,6 +124,7 @@ defmodule Helix.Software.Model.File do
     |> cast(params, @castable_fields)
     |> validate_required(@required_fields)
     |> validate_number(:file_size, greater_than: 0)
+    |> validate_inclusion(:software_type, @software_types)
     |> unique_constraint(:full_path, name: :files_storage_id_full_path_index)
     |> update_change(:path, &add_leading_slash/1)
     |> update_change(:path, &remove_leading_slash/1)
@@ -131,7 +135,7 @@ defmodule Helix.Software.Model.File do
     path = get_field(changeset, :path)
     name = get_field(changeset, :name)
     software_type = get_field(changeset, :software_type)
-    extension = SoftwareType.possible_types[software_type].extension
+    extension = SoftwareType.possible_types()[software_type].extension
 
     full_path = path <> "/" <> name <> "." <> extension
 
