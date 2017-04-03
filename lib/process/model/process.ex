@@ -39,7 +39,7 @@ defmodule Helix.Process.Model.Process do
   @opaque id :: PK.t
 
   @primary_key false
-  @ecto_autogenerate {:process_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:process_id, {PK, :pk_for, [:process_process]}}
   schema "processes" do
     field :process_id, PK,
       primary_key: true

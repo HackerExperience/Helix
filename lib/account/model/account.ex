@@ -40,7 +40,7 @@ defmodule Helix.Account.Model.Account do
 
   @derive {Poison.Encoder, only: [:email, :username, :account_id]}
   @primary_key false
-  @ecto_autogenerate {:account_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:account_id, {PK, :pk_for, [:account_account]}}
   schema "accounts" do
     field :account_id, HELL.PK,
       primary_key: true

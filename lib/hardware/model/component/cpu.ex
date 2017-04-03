@@ -31,7 +31,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
 
   @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
-    cpu_id = PK.pk_for(__MODULE__)
+    cpu_id = PK.pk_for(:hardware_component_cpu)
     params = Map.take(spec, ["clock", "cores"])
 
     component = Component.create_from_spec(cs, cpu_id)

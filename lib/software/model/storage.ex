@@ -15,7 +15,7 @@ defmodule Helix.Software.Model.Storage do
   }
 
   @primary_key false
-  @ecto_autogenerate {:storage_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:storage_id, {PK, :pk_for, [:software_storage]}}
   schema "storages" do
     field :storage_id, HELL.PK,
       primary_key: true

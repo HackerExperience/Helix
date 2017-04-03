@@ -37,7 +37,7 @@ defmodule Helix.Hardware.Model.Component.NIC do
 
   @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: _}) do
-    nic_id = PK.pk_for(__MODULE__)
+    nic_id = PK.pk_for(:hardware_component_nic)
     component = Component.create_from_spec(cs, nic_id)
 
     %__MODULE__{}

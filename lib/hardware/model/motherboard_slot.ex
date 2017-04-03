@@ -35,7 +35,7 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   @required_fields ~w/motherboard_id link_component_type slot_internal_id/a
 
   @primary_key false
-  @ecto_autogenerate {:slot_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:slot_id, {PK, :pk_for, [:hardware_motherboard_slot]}}
   schema "motherboard_slots" do
     field :slot_id, PK,
       primary_key: true

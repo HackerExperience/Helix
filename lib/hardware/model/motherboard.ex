@@ -43,7 +43,7 @@ defmodule Helix.Hardware.Model.Motherboard do
   end
 
   def create_from_spec(cs = %ComponentSpec{spec: %{"slots" => slots}}) do
-    motherboard_id = PK.pk_for(__MODULE__)
+    motherboard_id = PK.pk_for(:hardware_motherboard)
 
     slots = Enum.map(slots, fn {id, spec} ->
       component_type =
