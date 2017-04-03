@@ -15,5 +15,3 @@ config :guardian, Guardian,
   allowed_algos: ["HS512"],
   allowed_drift: 2_000,
   serializer: Helix.Account.Controller.Session
-
-import_config "#{Mix.env}.exs"

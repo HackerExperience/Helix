@@ -8,5 +8,3 @@ config :helix, Helix.Log.Repo,
   password: System.get_env("HELIX_DB_PASS") || "postgres",
   hostname: System.get_env("HELIX_DB_HOST") || "localhost",
   types: HELL.PostgrexTypes
-
-import_config "#{Mix.env}.exs"
