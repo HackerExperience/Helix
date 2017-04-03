@@ -25,6 +25,8 @@ defmodule Helix.Network.Model.Link do
       sequence: sequence
     }
 
-    cast(%__MODULE__{}, params, [:source_id, :destination_id, :sequence])
+    %__MODULE__{}
+    |> cast(params, [:source_id, :destination_id, :sequence])
+    |> validate_required([:source_id, :destination_id, :sequence])
   end
 end
