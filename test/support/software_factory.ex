@@ -2,9 +2,7 @@ defmodule Helix.Software.Factory do
 
   use ExMachina.Ecto, repo: Helix.Software.Repo
 
-  alias HELL.PK
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Model.SoftwareType
 
@@ -64,5 +62,5 @@ defmodule Helix.Software.Factory do
   end
 
   defp prepare(:storage_drive),
-    do: %StorageDrive{drive_id: PK.pk_for(Component)}
+    do: %StorageDrive{drive_id: Random.pk()}
 end

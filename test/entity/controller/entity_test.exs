@@ -2,13 +2,10 @@ defmodule Helix.Entity.Controller.EntityTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
   alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.Entity, as: EntityController
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
-  alias Helix.Server.Model.Server
-  alias Helix.Hardware.Model.Component
 
   alias Helix.Entity.Factory
 
@@ -91,13 +88,13 @@ defmodule Helix.Entity.Controller.EntityTest do
   describe "link_component/2" do
     test "succeeds with entity struct" do
       entity = Factory.insert(:entity)
-      component_id = PK.pk_for(Component)
+      component_id = Random.pk()
 
       assert {:ok, _} = EntityController.link_component(entity, component_id)
     end
 
     test "fails when entity doesn't exist" do
-      component_id = PK.pk_for(Component)
+      component_id = Random.pk()
 
       result = EntityController.link_component(%Entity{}, component_id)
       assert {:error, _} = result
@@ -128,13 +125,13 @@ defmodule Helix.Entity.Controller.EntityTest do
   describe "link_server/2" do
     test "succeeds with entity struct" do
       entity = Factory.insert(:entity)
-      server_id = PK.pk_for(Server)
+      server_id = Random.pk()
 
       assert {:ok, _} = EntityController.link_server(entity, server_id)
     end
 
     test "fails when entity doesn't exist" do
-      server_id = PK.pk_for(Server)
+      server_id = Random.pk()
 
       result = EntityController.link_server(%Entity{}, server_id)
       assert {:error, _} = result

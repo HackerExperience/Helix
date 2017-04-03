@@ -2,7 +2,7 @@ defmodule Helix.Software.Controller.StorageTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
+  alias HELL.TestHelper.Random
   alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Model.Storage
 
@@ -22,7 +22,7 @@ defmodule Helix.Software.Controller.StorageTest do
     end
 
     test "returns nil if storage with id doesn't exists" do
-      storage_id = PK.pk_for(Storage)
+      storage_id = Random.pk()
       refute StorageController.fetch(storage_id)
     end
   end

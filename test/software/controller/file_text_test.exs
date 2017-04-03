@@ -2,9 +2,8 @@ defmodule Helix.Software.Controller.FileTextTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
+  alias HELL.TestHelper.Random
   alias Helix.Software.Controller.FileText, as: FileTextController
-  alias Helix.Software.Model.File
   alias Helix.Software.Model.FileText
 
   alias Helix.Software.Factory
@@ -40,7 +39,7 @@ defmodule Helix.Software.Controller.FileTextTest do
     end
 
     test "returns nil if file_text with id doesn't exists" do
-      bogus = Factory.build(:file, %{file_id: PK.pk_for(File)})
+      bogus = Factory.build(:file, %{file_id: Random.pk()})
       refute FileTextController.fetch(bogus)
     end
   end

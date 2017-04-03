@@ -2,9 +2,8 @@ defmodule Helix.Software.Model.FileTextTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
   alias Ecto.Changeset
-  alias Helix.Software.Model.File
+  alias HELL.TestHelper.Random
   alias Helix.Software.Model.FileText
 
   alias Helix.Software.Factory
@@ -14,7 +13,7 @@ defmodule Helix.Software.Model.FileTextTest do
   defp generate_params do
     :file_text
     |> Factory.params_for()
-    |> Map.put(:file_id, PK.pk_for(File))
+    |> Map.put(:file_id, Random.pk())
     |> Map.drop([:inserted_at, :updated_at])
   end
 
