@@ -29,7 +29,7 @@ defmodule Helix.Hardware.Model.Component.HDD do
 
   @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
-    hdd_id = PK.pk_for(__MODULE__)
+    hdd_id = PK.pk_for(:hardware_component_hdd)
     params = Map.take(spec, ["hdd_size"])
     component = Component.create_from_spec(cs, hdd_id)
 

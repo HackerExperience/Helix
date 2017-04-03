@@ -51,7 +51,7 @@ defmodule Helix.Software.Model.File do
   @software_types Map.keys(SoftwareType.possible_types())
 
   @primary_key false
-  @ecto_autogenerate {:file_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:file_id, {PK, :pk_for, [:software_file]}}
   schema "files" do
     field :file_id, HELL.PK,
       primary_key: true

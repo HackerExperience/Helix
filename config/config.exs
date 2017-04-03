@@ -16,5 +16,6 @@ config :helix, :router_port, System.get_env("HELF_ROUTER_PORT") || 8080
 
 config :distillery, no_warn_missing: [:burette]
 
-import_config "*/config.exs"
 import_config "#{Mix.env}.exs"
+import_config "*/config.exs"
+import_config "*/#{Mix.env}.exs"

@@ -31,7 +31,7 @@ defmodule Helix.Server.Model.Server do
   @update_fields ~w/poi_id/a
 
   @primary_key false
-  @ecto_autogenerate {:server_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:server_id, {PK, :pk_for, [:server_server]}}
   schema "servers" do
     field :server_id, HELL.PK,
       primary_key: true

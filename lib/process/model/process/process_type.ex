@@ -7,7 +7,7 @@ defprotocol Helix.Process.Model.Process.ProcessType do
   @spec dynamic_resources(t) :: [resource]
   def dynamic_resources(data)
 
-  @spec event(t, Process.t, :created | :completed) :: [Helix.Event.t]
+  @spec event(t, Process.t, :created | :completed) :: [struct]
   def event(data, process, circumstance)
 end
 

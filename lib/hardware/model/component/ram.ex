@@ -31,7 +31,7 @@ defmodule Helix.Hardware.Model.Component.RAM do
   @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
     params = Map.take(spec, ["ram_size"])
-    ram_id = PK.pk_for(__MODULE__)
+    ram_id = PK.pk_for(:hardware_component_ram)
     component = Component.create_from_spec(cs, ram_id)
 
     %__MODULE__{}

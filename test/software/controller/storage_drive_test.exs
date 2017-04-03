@@ -2,8 +2,7 @@ defmodule Helix.Software.Controller.StorageDriveTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
-  alias Helix.Hardware.Model.Component
+  alias HELL.TestHelper.Random
   alias Helix.Software.Controller.StorageDrive, as: Controller
 
   alias Helix.Software.Factory
@@ -11,7 +10,7 @@ defmodule Helix.Software.Controller.StorageDriveTest do
   @moduletag :integration
 
   test "linking succeeds with a valid storage" do
-    drive_id = PK.pk_for(Component)
+    drive_id = Random.pk()
     storage = Factory.insert(:storage, %{drives: []})
 
     Controller.link_drive(storage, drive_id)

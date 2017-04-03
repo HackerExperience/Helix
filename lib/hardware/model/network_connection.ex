@@ -19,7 +19,10 @@ defmodule Helix.Hardware.Model.NetworkConnection do
   @one_ip_per_network_index :network_connections_network_id_ip_unique_index
 
   @primary_key false
-  @ecto_autogenerate {:network_conection_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {
+    :network_conection_id,
+    {PK, :pk_for, [:hardware_network_connection]}
+  }
   schema "network_connections" do
     field :network_connection_id, PK,
       primary_key: true

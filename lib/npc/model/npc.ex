@@ -15,7 +15,7 @@ defmodule Helix.NPC.Model.NPC do
   @creation_fields ~w//a
 
   @primary_key false
-  @ecto_autogenerate {:npc_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:npc_id, {PK, :pk_for, [:npc_npc]}}
   schema "npcs" do
     field :npc_id, HELL.PK,
       primary_key: true

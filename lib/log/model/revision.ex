@@ -27,7 +27,7 @@ defmodule Helix.Log.Model.Revision do
   @creation_fields ~w/entity_id message forge_version log_id/a
 
   @primary_key false
-  @ecto_autogenerate {:revision_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:revision_id, {PK, :pk_for, [:log_revision]}}
   schema "revisions" do
     field :revision_id, PK,
       primary_key: true

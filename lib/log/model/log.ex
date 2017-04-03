@@ -37,7 +37,7 @@ defmodule Helix.Log.Model.Log do
   @required_fields ~w/server_id entity_id message/a
 
   @primary_key false
-  @ecto_autogenerate {:log_id, {PK, :pk_for, [__MODULE__]}}
+  @ecto_autogenerate {:log_id, {PK, :pk_for, [:log_log]}}
   schema "logs" do
     field :log_id, PK,
       primary_key: true

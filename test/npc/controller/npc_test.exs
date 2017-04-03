@@ -2,9 +2,9 @@ defmodule Helix.NPC.Controller.NPCTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.PK
+  alias HELL.TestHelper.Random
   alias Helix.NPC.Controller.NPC, as: NPCController
-  alias Helix.NPC.Model.NPC, as: NPC
+  alias Helix.NPC.Model.NPC
 
   @moduletag :integration
 
@@ -21,7 +21,7 @@ defmodule Helix.NPC.Controller.NPCTest do
     end
 
     test "fails when npc with id doesn't exist" do
-      bogus = PK.pk_for(NPC)
+      bogus = Random.pk()
       refute NPCController.fetch(bogus)
     end
   end
