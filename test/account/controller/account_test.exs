@@ -14,16 +14,28 @@ defmodule Helix.Account.Controller.AccountTest do
 
   @moduletag :integration
 
+  defp params do
+    %{
+      username: Random.username(),
+      email: Burette.Internet.email(),
+      password: Burette.Internet.password()
+    }
+  end
+
   describe "creation" do
     test "succeeds with valid params" do
-      params = Factory.params_for(:account)
+      params = %{
+      username: Random.username(),
+      email: Burette.Internet.email(),
+      password: Burette.Internet.password()
+    }
 
       assert {:ok, _} = AccountController.create(params)
     end
 
     test "fails when email is already in use" do
       account = Factory.insert(:account)
-      params = %{Factory.params_for(:account) | email: account.email}
+      params = %{params()| email: account.email}
 
       assert {:error, changeset} = AccountController.create(params)
       assert :email in Keyword.keys(changeset.errors)
@@ -31,14 +43,14 @@ defmodule Helix.Account.Controller.AccountTest do
 
     test "fails when username is already in use" do
       account = Factory.insert(:account)
-      params = %{Factory.params_for(:account) | username: account.username}
+      params = %{params()| username: account.username}
 
       assert {:error, changeset} = AccountController.create(params)
       assert :username in Keyword.keys(changeset.errors)
     end
 
     test "fails when password is too short" do
-      params = %{Factory.params_for(:account) | password: "123"}
+      params = %{params()| password: "123"}
 
       assert {:error, changeset} = AccountController.create(params)
       assert :password in Keyword.keys(changeset.errors)
@@ -103,18 +115,17 @@ defmodule Helix.Account.Controller.AccountTest do
   describe "account updating" do
     test "changes its fields" do
       account = Factory.insert(:account)
-      params = Factory.params_for(:account)
-      update_params = %{
-        email: params.email,
-        password: params.password,
+      params = %{
+        email: Burette.Internet.email(),
+        password: Burette.Internet.password(),
         confirmed: true
       }
 
-      {:ok, updated_account} = AccountController.update(account, update_params)
+      {:ok, updated_account} = AccountController.update(account, params)
 
-      assert update_params.email == updated_account.email
-      assert Bcrypt.checkpw(update_params.password, updated_account.password)
-      assert update_params.confirmed == updated_account.confirmed
+      assert params.email == updated_account.email
+      assert Bcrypt.checkpw(params.password, updated_account.password)
+      assert params.confirmed == updated_account.confirmed
     end
 
     test "fails when email is already in use" do
