@@ -18,3 +18,7 @@ erl_crash.dump
 
 # Macintosh
 *.DS_Store
+
+# xref graphs
+xref_graph.dot
+/graphs
