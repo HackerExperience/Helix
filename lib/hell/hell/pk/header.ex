@@ -6,6 +6,10 @@ defmodule HELL.PK.Header do
     # "::" as a constant value for the internet (ie: global all-players network)
     network_network:
       [0x0000, 0x0000, 0x0000],
+    network_tunnel:
+      [0x0000, 0x0001, 0x0000],
+    network_connection:
+      [0x0000, 0x0001, 0x0001],
     account_account:
       [0x0001, 0x0000, 0x0000],
     npc_npc:
