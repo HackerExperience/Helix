@@ -4,6 +4,8 @@ defmodule Helix.Network.Model.Network do
 
   alias HELL.PK
 
+  @type t :: %__MODULE__{}
+
   @primary_key false
   @ecto_autogenerate {:network_id, {PK, :pk_for, [:network_network]}}
   schema "networks" do

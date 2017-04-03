@@ -24,7 +24,8 @@ defmodule Helix.Mixfile do
         "test.full": :test,
         "test.unit": :test,
         "test.cluster": :test,
-        "test.external": :test
+        "test.external": :test,
+        "pr": :test
       },
 
       name: "Helix",
@@ -89,6 +90,12 @@ defmodule Helix.Mixfile do
       ],
       "test.quick": [
         "helix.test --no-prune --exclude sequential --exclude cluster --exclude external",
+      ],
+      "pr": [
+        "helix.test --exclude sequential --exclude cluster --exclude external",
+        "helix.test --no-prune --only sequential --exclude cluster --exclude external --max-cases 1",
+        "dialyzer --halt-exit-status",
+        "credo --strict"
       ]
     ]
   end
