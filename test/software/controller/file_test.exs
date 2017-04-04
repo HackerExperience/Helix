@@ -60,23 +60,30 @@ defmodule Helix.Software.Controller.FileTest do
     end
   end
 
-  describe "get_files_on_target_storage/2" do
+  describe "get_files_on_target_storage/1" do
     test "returns non-encrypted files" do
-      origin_storage = Factory.insert(:storage, %{files: []})
       target_storage = Factory.insert(:storage, %{files: []})
 
       Factory.insert_list(5, :file, storage: target_storage)
-      Factory.insert_list(5, :file, storage: target_storage, crypto_version: 1)
 
-      files = FileController.get_files_on_target_storage(
-        origin_storage,
-        target_storage)
+      files = FileController.get_files_on_target_storage(target_storage)
 
       assert 5 == Enum.count(files)
-      assert Enum.all?(files, &is_nil(&1.crypto_version))
     end
 
-    test "returns additional files for which the origin storage has a key" do
+    test "returns encrypted files" do
+      target_storage = Factory.insert(:storage, %{files: []})
+
+      Factory.insert_list(5, :file, storage: target_storage, crypto_version: 1)
+
+      files = FileController.get_files_on_target_storage(target_storage)
+
+      assert 5 == Enum.count(files)
+    end
+  end
+
+  describe "get_decryptable_files_on_target_storage/2" do
+    test "returns files for which the origin storage has a key" do
       origin_storage = Factory.insert(:storage, %{files: []})
       target_storage = Factory.insert(:storage, %{files: []})
       server_id = Random.pk()
@@ -90,18 +97,32 @@ defmodule Helix.Software.Controller.FileTest do
       create_key = &CryptoKeyController.create(origin_storage, server_id, &1)
       Enum.each(encrypted_files, create_key)
 
-      files = FileController.get_files_on_target_storage(
+      files = FileController.get_decryptable_files_on_target_storage(
+        origin_storage,
+        target_storage)
+
+      encrypted_returned_files = Enum.filter(files, &(&1.crypto_version == 1))
+
+      assert 5 == Enum.count(files)
+      assert 5 == Enum.count(encrypted_returned_files)
+    end
+
+    test "returns no unencrypted files" do
+      origin_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, %{files: []})
+
+      Factory.insert_list(5, :file, %{storage: target_storage})
+
+      files = FileController.get_decryptable_files_on_target_storage(
         origin_storage,
         target_storage)
 
       unencrypted_returned_files = Enum.filter(
         files,
         &is_nil(&1.crypto_version))
-      encrypted_returned_files = Enum.filter(files, &(&1.crypto_version == 1))
 
-      assert 10 == Enum.count(files)
-      assert 5 == Enum.count(unencrypted_returned_files)
-      assert 5 == Enum.count(encrypted_returned_files)
+      assert 0 = Enum.count(files)
+      assert 0 == Enum.count(unencrypted_returned_files)
     end
   end
 

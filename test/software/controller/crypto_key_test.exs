@@ -20,7 +20,7 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
       create_key = &CryptoKeyController.create(storage, server_id, &1)
       Enum.each(random_files, create_key)
 
-      files = FileController.get_files_on_target_storage(storage, storage)
+      files = FileController.get_files_on_target_storage(storage)
 
       assert 5 == Enum.count(files)
       assert Enum.all?(files, &(&1.software_type == :crypto_key))
