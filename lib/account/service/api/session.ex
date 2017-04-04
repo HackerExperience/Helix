@@ -16,4 +16,8 @@ defmodule Helix.Account.Service.API.Session do
   def validate_token(token) do
     SessionController.validate(token)
   end
+
+  # @spec invalidate_token(Session.t) :: no_return
+  def invalidate_token(session),
+    do: SessionController.invalidate(session)
 end

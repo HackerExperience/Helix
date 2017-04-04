@@ -79,4 +79,15 @@ defmodule Helix.Account.Service.API.AccountTest do
       assert {:error, _} = API.login(account.email, password)
     end
   end
+
+  describe "logout/1 is idempotent" do
+    password = "foobar 123 password LetMeIn"
+    account = Factory.insert(:account, %{password: password})
+    {:ok, token} = API.login(account.username, password)
+
+    API.logout(token)
+    API.logout(token)
+
+    assert {:error, _} = SessionAPI.validate_token(token)
+  end
 end
