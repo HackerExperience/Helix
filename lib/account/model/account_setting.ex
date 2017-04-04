@@ -11,8 +11,9 @@ defmodule Helix.Account.Model.AccountSetting do
   @type t :: %__MODULE__{}
 
   @type changeset_params :: %{
+    :settings => map,
     optional(:account_id) => Account.id,
-    :settings => map
+    optional(any) => any
   }
 
   @primary_key false
