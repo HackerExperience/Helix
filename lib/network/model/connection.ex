@@ -63,5 +63,19 @@ defmodule Helix.Network.Model.Connection do
         l.source_id == ^server or l.destination_id == ^server)
       |> distinct(true)
     end
+
+    def inbound_to(query \\ Connection, server) do
+      query
+      |> join(:inner, [c], t in Tunnel, c.tunnel_id == t.tunnel_id)
+      |> join(:inner, [c, ..., t], l in Link, t.tunnel_id == l.tunnel_id)
+      |> where([c, ..., l], l.destination_id == ^server)
+    end
+
+    def outbound_from(query \\ Connection, server) do
+      query
+      |> join(:inner, [c], t in Tunnel, c.tunnel_id == t.tunnel_id)
+      |> join(:inner, [c, ..., t], l in Link, t.tunnel_id == l.tunnel_id)
+      |> where([c, ..., l], l.source_id == ^server)
+    end
   end
 end

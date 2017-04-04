@@ -66,14 +66,6 @@ defmodule Helix.Network.Controller.Tunnel do
     is_integer(count) and count > 0
   end
 
-  # REVIEW: Where do this belongs?
-  @spec connections_through_node(server) :: [Connection.t]
-  def connections_through_node(server) do
-    server
-    |> Connection.Query.through_node()
-    |> Repo.all()
-  end
-
   @spec fetch(HELL.PK.t) :: Tunnel.t
   def fetch(id),
     do: Repo.get(Tunnel, id)
@@ -81,6 +73,29 @@ defmodule Helix.Network.Controller.Tunnel do
   @spec get_connections(Tunnel.t) :: [Connection.t]
   def get_connections(tunnel) do
     Repo.preload(tunnel, :connections).connections
+  end
+
+  @spec connections_through_node(server) :: [Connection.t]
+  def connections_through_node(server) do
+    server
+    |> Connection.Query.through_node()
+    |> Repo.all()
+  end
+
+  @spec inbound_connections(server) :: [Connection.t]
+  # REVIEW: Maybe return only connections whose tunnel's destination is `server`
+  def inbound_connections(server) do
+    server
+    |> Connection.Query.inbound_to()
+    |> Repo.all()
+  end
+
+  @spec outbound_connections(server) :: [Connection.t]
+  # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
+  def outbound_connections(server) do
+    server
+    |> Connection.Query.outbound_from()
+    |> Repo.all()
   end
 
   @spec start_connection(Tunnel.t, term) ::
