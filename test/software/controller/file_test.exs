@@ -42,7 +42,9 @@ defmodule Helix.Software.Controller.FileTest do
       {:ok, _} = FileController.create(params)
 
       params = Map.merge(generate_params(), collision)
-      assert {:error, :file_exists} == FileController.create(params)
+
+      {:error, result} = FileController.create(params)
+      assert :full_path in Keyword.keys(result.errors)
     end
   end
 
@@ -103,9 +105,10 @@ defmodule Helix.Software.Controller.FileTest do
       file0 = Factory.insert(:file)
       intersection = Map.take(file0, [:storage, :software_type])
       file1 = Factory.insert(:file, intersection)
-
       params = Map.take(file0, [:path, :name])
-      assert {:error, :file_exists} == FileController.update(file1, params)
+
+      {:error, result} =  FileController.update(file1, params)
+      assert :full_path in Keyword.keys(result.errors)
     end
   end
 
@@ -114,7 +117,7 @@ defmodule Helix.Software.Controller.FileTest do
       path = Factory.params_for(:file).path
       origin = Factory.insert(:file)
 
-      {:ok, copy} = FileController.copy(origin, path, origin.storage_id)
+      {:ok, copy} = FileController.copy(origin, origin.storage, path)
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
@@ -126,7 +129,7 @@ defmodule Helix.Software.Controller.FileTest do
       origin = Factory.insert(:file)
 
       {:ok, copy} =
-        FileController.copy(origin, origin.path, storage.storage_id)
+        FileController.copy(origin, storage, origin.path)
 
       assert FileController.fetch(origin.file_id)
       assert FileController.fetch(copy.file_id)
@@ -136,8 +139,11 @@ defmodule Helix.Software.Controller.FileTest do
     test "fails on path identity conflict" do
       origin = Factory.insert(:file)
 
-      result = FileController.copy(origin, origin.path, origin.storage_id)
-      assert {:error, :file_exists} == result
+      {:error, result} = FileController.copy(
+        origin,
+        origin.storage,
+        origin.path)
+      assert :full_path in Keyword.keys(result.errors)
     end
   end
 
@@ -156,8 +162,8 @@ defmodule Helix.Software.Controller.FileTest do
       similarities = Map.take(file0, [:name, :storage, :software_type])
       file1 = Factory.insert(:file, similarities)
 
-      result = FileController.move(file1, file0.path)
-      assert {:error, :file_exists} == result
+      {:error, result} = FileController.move(file1, file0.path)
+      assert :full_path in Keyword.keys(result.errors)
     end
   end
 
@@ -179,7 +185,8 @@ defmodule Helix.Software.Controller.FileTest do
       # FIXME: this is thanks to how ExMachina works
       file1 = Repo.update! File.update_changeset(file1, similarities)
 
-      assert {:error, :file_exists} == FileController.rename(file1, file0.name)
+      {:error, result} = FileController.rename(file1, file0.name)
+      assert :full_path in Keyword.keys(result.errors)
     end
   end
 

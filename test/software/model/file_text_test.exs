@@ -1,14 +1,12 @@
 defmodule Helix.Software.Model.FileTextTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Ecto.Changeset
   alias HELL.TestHelper.Random
   alias Helix.Software.Model.FileText
 
   alias Helix.Software.Factory
-
-  @moduletag :unit
 
   defp generate_params do
     :file_text
