@@ -4,7 +4,18 @@ defmodule Helix.Event.Dispatcher do
   use HELF.Event
 
   alias Helix.Software
+  alias Helix.Network
 
+  ##############################################################################
+  # Network events
+  ##############################################################################
+  event Network.Model.ConnectionClosedEvent,
+    Network.Service.Event.Tunnel,
+    :connection_closed
+
+  ##############################################################################
+  # Software events
+  ##############################################################################
   event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
     Software.Service.Event.Encryptor,
     :complete

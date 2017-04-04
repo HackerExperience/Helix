@@ -48,6 +48,21 @@ defmodule Helix.Network.Controller.Tunnel do
     end
   end
 
+  @spec fetch(HELL.PK.t) :: Tunnel.t
+  def fetch(id),
+    do: Repo.get(Tunnel, id)
+
+  @spec delete(Tunnel.t) :: :ok
+  def delete(%Tunnel{tunnel_id: id}),
+    do: delete(id)
+  def delete(id) do
+    id
+    |> Tunnel.Query.by_id()
+    |> Repo.delete_all()
+
+    :ok
+  end
+
   @spec connected?(server, server, Network.t | nil) :: boolean
   def connected?(gateway, destination, network \\ nil) do
     query =
@@ -66,14 +81,14 @@ defmodule Helix.Network.Controller.Tunnel do
     is_integer(count) and count > 0
   end
 
-  @spec fetch(HELL.PK.t) :: Tunnel.t
-  def fetch(id),
-    do: Repo.get(Tunnel, id)
-
   @spec get_connections(Tunnel.t) :: [Connection.t]
   def get_connections(tunnel) do
     Repo.preload(tunnel, :connections).connections
   end
+
+  @spec fetch_connection(HELL.PK.t) :: Connection.t | nil
+  def fetch_connection(connection_id),
+    do: Repo.get(Connection, connection_id)
 
   @spec connections_through_node(server) :: [Connection.t]
   def connections_through_node(server) do
@@ -99,12 +114,20 @@ defmodule Helix.Network.Controller.Tunnel do
   end
 
   @spec start_connection(Tunnel.t, term) ::
-    {:ok, Connection.t}
+    {:ok, Connection.t, [event :: struct]}
     | {:error, Ecto.Changeset.t}
   def start_connection(tunnel, connection_type) do
-    tunnel
-    |> Connection.create(connection_type)
-    |> Repo.insert()
+    cs = Connection.create(tunnel, connection_type)
+
+    with {:ok, connection} <- Repo.insert(cs) do
+      event = %Connection.ConnectionStartedEvent{
+        connection_id: connection.connection_id,
+        tunnel_id: connection.tunnel_id,
+        network_id: tunnel.network_id
+      }
+
+      {:ok, connection, [event]}
+    end
   end
 
   @spec close_connection(Connection.t, Connection.close_reasons) :: :ok
@@ -121,11 +144,17 @@ defmodule Helix.Network.Controller.Tunnel do
   The current reasons are valid: #{inspect Connection.close_reasons()}
   """
   def close_connection(connection, reason \\ :normal) do
-    connection
-    |> Connection.close(reason)
-    |> Repo.delete!()
+    connection = Repo.preload(connection, :tunnel)
 
-    # TODO: return event
-    :ok
+    Repo.delete!(connection)
+
+    event = %Helix.Network.Model.ConnectionClosedEvent{
+      connection_id: connection.connection_id,
+      tunnel_id: connection.tunnel_id,
+      network_id: connection.tunnel.network_id,
+      reason: reason
+    }
+
+    [event]
   end
 end
