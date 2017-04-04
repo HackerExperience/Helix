@@ -1,6 +1,7 @@
 defmodule Helix.Account.WS.Controller.Account do
 
   alias Helix.Account.Service.API.Account, as: AccountAPI
+  alias Helix.Account.Model.Session
 
   @typep json_response ::
     {:ok, map}
@@ -37,6 +38,20 @@ defmodule Helix.Account.WS.Controller.Account do
   end
 
   def login(_, _) do
+    {:error, :bad_request}
+  end
+
+  @spec logout(%{jwt: Session.t}, term) :: json_response
+  def logout(%{jwt: session}, _) do
+    case AccountAPI.logout(session) do
+      :ok ->
+        {:ok, %{}}
+      {:error, changeset} ->
+        {:error, {400, Helix.Account.WS.View.Account.format(changeset)}}
+    end
+  end
+
+  def logout(_, _) do
     {:error, :bad_request}
   end
 end
