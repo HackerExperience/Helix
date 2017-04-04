@@ -9,16 +9,24 @@ defmodule Helix.Network.Controller.Tunnel do
 
   @type server :: HELL.PK.t
 
-  @spec prepare(Network.t, server, server, [server]) ::
+  @spec create(Network.t, server, server, [server]) ::
     {:ok, Tunnel.t}
     | {:error, Ecto.Changeset.t}
   @doc """
-  Provides a tunnel
-
-  Will fetch a tunnel with the exact input configuration or create one if none
-  exists
+  Creates a new tunnel
   """
-  def prepare(network, gateway, destination, bounces \\ []) do
+  def create(network, gateway, destination, bounces \\ []) do
+    cs = Tunnel.create(network, gateway, destination, bounces)
+    Repo.insert(cs)
+  end
+
+  @spec get_tunnel(Network.t, server, server, [server]) ::
+    Tunnel.t
+    | nil
+  @doc """
+  Returns the tunnel with the input configuration shall it exist
+  """
+  def get_tunnel(network, gateway, destination, bounces \\ []) do
     tunnel_hash = Tunnel.hash_bounces(bounces)
 
     fetch_clauses = [
@@ -28,24 +36,7 @@ defmodule Helix.Network.Controller.Tunnel do
       hash: tunnel_hash
     ]
 
-    tunnel = Repo.get_by(Tunnel, fetch_clauses)
-
-    if tunnel do
-      {:ok, tunnel}
-    else
-      cs = Tunnel.create(network, gateway, destination, bounces)
-      Repo.insert(cs)
-    end
-  end
-
-  @spec prepare!(Network.t, server, server, [server]) :: Tunnel.t | no_return
-  def prepare!(network, gateway, destination, bounces \\ []) do
-    case prepare(network, gateway, destination, bounces) do
-      {:ok, tunnel} ->
-        tunnel
-      _ ->
-        raise "failed to prepare network tunnel"
-    end
+    Repo.get_by(Tunnel, fetch_clauses)
   end
 
   @spec fetch(HELL.PK.t) :: Tunnel.t

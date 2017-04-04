@@ -6,48 +6,11 @@ defmodule Helix.Network.Controller.TunnelTest do
   alias Helix.Network.Controller.Tunnel, as: Controller
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
-  alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
 
   @moduletag :integration
 
   @internet Repo.get!(Network, "::")
-
-  describe "prepare/4" do
-    test "creates a tunnel if none exists" do
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = []
-
-      {:ok, tunnel} = Controller.prepare(
-        @internet,
-        gateway,
-        destination,
-        bounces)
-
-      assert %Tunnel{} = tunnel
-      assert Repo.get_by(Tunnel, gateway_id: gateway)
-    end
-
-    test "returns a tunnel if one already exists" do
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = []
-
-      {:ok, tunnel0} = Controller.prepare(
-        @internet,
-        gateway,
-        destination,
-        bounces)
-      {:ok, tunnel1} = Controller.prepare(
-        @internet,
-        gateway,
-        destination,
-        bounces)
-
-      assert tunnel0.tunnel_id == tunnel1.tunnel_id
-    end
-  end
 
   describe "connected?/3" do
     test "returns false if there is no tunnel open linking two nodes" do
@@ -59,7 +22,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       destination = Random.pk()
       bounces = []
 
-      Controller.prepare(@internet, gateway, destination, bounces)
+      Controller.create(@internet, gateway, destination, bounces)
 
       assert Controller.connected?(gateway, destination)
     end
@@ -71,7 +34,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       bounces = []
       network = :todo
 
-      Controller.prepare(network, gateway, destination, bounces)
+      Controller.create(network, gateway, destination, bounces)
 
       refute Controller.connected?(gateway, destination, @internet)
       assert Controller.connected?(gateway, destination, network)
@@ -82,7 +45,7 @@ defmodule Helix.Network.Controller.TunnelTest do
     test "returns all connections that pass through node" do
       server = Random.pk()
 
-      {:ok, tunnel1} = Controller.prepare(
+      {:ok, tunnel1} = Controller.create(
         @internet,
         server,
         Random.pk(),
@@ -90,7 +53,7 @@ defmodule Helix.Network.Controller.TunnelTest do
 
       Controller.start_connection(tunnel1, "ssh")
 
-      {:ok, tunnel2} = Controller.prepare(
+      {:ok, tunnel2} = Controller.create(
         @internet,
         Random.pk(),
         server,
@@ -99,7 +62,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       Controller.start_connection(tunnel2, "ssh")
       Controller.start_connection(tunnel2, "ssh")
 
-      {:ok, tunnel3} = Controller.prepare(
+      {:ok, tunnel3} = Controller.create(
         @internet,
         Random.pk(),
         Random.pk(),
@@ -119,7 +82,7 @@ defmodule Helix.Network.Controller.TunnelTest do
     test "list the conections that are incident on node" do
       server = Random.pk()
 
-      {:ok, tunnel1} = Controller.prepare(
+      {:ok, tunnel1} = Controller.create(
         @internet,
         server,
         Random.pk(),
@@ -128,7 +91,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       # This is not incident since the connection emanates from the server
       Controller.start_connection(tunnel1, "ssh")
 
-      {:ok, tunnel2} = Controller.prepare(
+      {:ok, tunnel2} = Controller.create(
         @internet,
         Random.pk(),
         server,
@@ -139,7 +102,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       Controller.start_connection(tunnel2, "ssh")
       Controller.start_connection(tunnel2, "ssh")
 
-      {:ok, tunnel3} = Controller.prepare(
+      {:ok, tunnel3} = Controller.create(
         @internet,
         Random.pk(),
         Random.pk(),
@@ -161,7 +124,7 @@ defmodule Helix.Network.Controller.TunnelTest do
     test "list the conections that emanate from node" do
       server = Random.pk()
 
-      {:ok, tunnel1} = Controller.prepare(
+      {:ok, tunnel1} = Controller.create(
         @internet,
         server,
         Random.pk(),
@@ -171,7 +134,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       # bounces and finally to the destination
       Controller.start_connection(tunnel1, "ssh")
 
-      {:ok, tunnel2} = Controller.prepare(
+      {:ok, tunnel2} = Controller.create(
         @internet,
         Random.pk(),
         server,
@@ -181,7 +144,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       Controller.start_connection(tunnel2, "ssh")
       Controller.start_connection(tunnel2, "ssh")
 
-      {:ok, tunnel3} = Controller.prepare(
+      {:ok, tunnel3} = Controller.create(
         @internet,
         Random.pk(),
         Random.pk(),
@@ -205,7 +168,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       destination = Random.pk()
       bounces = []
 
-      {:ok, tunnel} = Controller.prepare(
+      {:ok, tunnel} = Controller.create(
         @internet,
         gateway,
         destination,
@@ -229,7 +192,7 @@ defmodule Helix.Network.Controller.TunnelTest do
       destination = Random.pk()
       bounces = []
 
-      {:ok, tunnel} = Controller.prepare(
+      {:ok, tunnel} = Controller.create(
         @internet,
         gateway,
         destination,
