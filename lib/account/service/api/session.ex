@@ -16,4 +16,10 @@ defmodule Helix.Account.Service.API.Session do
   def validate_token(token) do
     SessionController.validate(token)
   end
+
+  @spec invalidate_token(Session.t) ::
+    :ok
+    | {:error, Ecto.Changeset.t}
+  def invalidate_token(session),
+    do: SessionController.invalidate(session)
 end

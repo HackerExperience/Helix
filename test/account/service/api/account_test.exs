@@ -79,4 +79,21 @@ defmodule Helix.Account.Service.API.AccountTest do
       assert {:error, _} = API.login(account.email, password)
     end
   end
+
+  describe "logout/1" do
+    test "succeeds when token is valid" do
+      password = "foobar 123 password LetMeIn"
+      account =
+        Factory.insert(:account)
+        |> Account.update_changeset(%{password: password})
+        |> Repo.update!()
+
+      {:ok, token} = API.login(account.username, password)
+      assert :ok == API.logout(token)
+    end
+
+    test "fails when provided with invalid token" do
+      assert {:error, _} = API.logout("")
+    end
+  end
 end

@@ -4,7 +4,9 @@ defmodule Helix.Account.Controller.Session do
 
   alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
+  alias Helix.Account.Model.BlacklistedToken
   alias Helix.Account.Model.Session
+  alias Helix.Account.Repo
 
   # REVIEW: What is this expecting to receive exactly ? I'll make it temporarily
   #   just store the account's id
@@ -36,11 +38,28 @@ defmodule Helix.Account.Controller.Session do
     {:ok, claims :: map}
     | {:error, :unauthorized}
   def validate(jwt) do
-    case Guardian.decode_and_verify(jwt) do
-      {:ok, claims} ->
-        {:ok, claims}
-      {:error, _} ->
+    with \
+      {:ok, claims} <- Guardian.decode_and_verify(jwt),
+      nil <- Repo.get(BlacklistedToken, jwt)
+    do
+      {:ok, claims}
+    else
+      _ ->
         {:error, :unauthorized}
+    end
+  end
+
+  @spec invalidate(Session.t) ::
+    :ok
+    | {:error, Ecto.Changeset.t}
+  def invalidate(jwt) do
+    changeset = BlacklistedToken.create_changeset(%{token: jwt})
+
+    case Repo.insert(changeset, on_conflict: :nothing) do
+      {:ok, _} ->
+        :ok
+      {:error, error} ->
+        {:error, error}
     end
   end
 end

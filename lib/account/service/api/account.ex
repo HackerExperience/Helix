@@ -79,4 +79,13 @@ defmodule Helix.Account.Service.API.Account do
       {:error, :notfound}
     end
   end
+
+  @spec logout(Session.t) ::
+    :ok
+    | {:error, Ecto.Changeset.t}
+  @doc """
+  Invalidates session `token`
+  """
+  def logout(token),
+   do: Helix.Account.Service.API.Session.invalidate_token(token)
 end
