@@ -36,11 +36,6 @@ defmodule Helix.Network.Model.Connection do
     |> validate_required([:connection_type])
   end
 
-  @spec close(t, close_reasons) :: t | Ecto.Changeset.t
-  def close(conn = %__MODULE__{}, reason) when reason in @close_reasons do
-    conn
-  end
-
   @doc false
   def close_reasons do
     @close_reasons
