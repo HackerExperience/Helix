@@ -34,6 +34,7 @@ defmodule Helix.Application.DomainsSupervisor do
       supervisor(Helix.Entity.Supervisor, []),
       supervisor(Helix.Hardware.Supervisor, []),
       supervisor(Helix.Log.Supervisor, []),
+      supervisor(Helix.Network.Supervisor, []),
       supervisor(Helix.NPC.Supervisor, []),
       supervisor(Helix.Process.Supervisor, []),
       supervisor(Helix.Server.Supervisor, []),
