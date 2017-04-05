@@ -46,4 +46,23 @@ defmodule Helix.Account.Controller.SessionTest do
       assert {:error, :token_expired} = Guardian.decode_and_verify(token)
     end
   end
+
+  describe "token invalidation" do
+    test "is idempotent" do
+      account = %Account{account_id: Random.pk()}
+      claims = %{"exp": 12_345}
+
+      {:ok, token, _} = SessionController.create(account)
+      {:ok, exp_token, _} = Guardian.encode_and_sign(account, :access, claims)
+
+      SessionController.invalidate(token)
+      SessionController.invalidate(token)
+
+      SessionController.invalidate(exp_token)
+      SessionController.invalidate(exp_token)
+
+      assert {:error, :unauthorized} == SessionController.validate(token)
+      assert {:error, :unauthorized} == SessionController.validate(exp_token)
+    end
+  end
 end

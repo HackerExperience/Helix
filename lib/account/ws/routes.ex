@@ -11,6 +11,10 @@ defmodule Helix.Account.WS.Routes do
     "account.login" => %{
       broker: "account.login",
       atoms: ~w/username password/a
+    },
+    "account.logout" => %{
+      broker: "account.logout",
+      atoms: ~w//a
     }
   }
 
@@ -33,5 +37,10 @@ defmodule Helix.Account.WS.Routes do
       {:reply, AccountController.login(nil, message)}
     end
     HELF.Broker.subscribe("account.login", call: account_login_fun)
+
+    account_logout_fun = fn _pid, _topic, message, _request ->
+      {:reply, AccountController.logout(message, message)}
+    end
+    HELF.Broker.subscribe("account.logout", call: account_logout_fun)
   end
 end
