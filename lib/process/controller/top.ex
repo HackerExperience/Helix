@@ -19,7 +19,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   import HELL.MacroHelpers
 
-  defstruct [:server_id, :processes, :resources, :timer, :broker]
+  defstruct [:gateway, :processes, :resources, :timer, :broker]
 
   @type server_id :: String.t
   @type timer :: {DateTime.t, tref :: reference} | nil
@@ -73,6 +73,10 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   @doc false
   def resources(pid, resources),
     do: GenServer.cast(pid, {:resources, resources})
+
+  @doc false
+  def recalculate(pid),
+    do: GenServer.cast(pid, :recalculate)
 
   @spec apply_update(term) :: [ProcessModel.t]
   docp """
@@ -167,7 +171,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       state = %__MODULE__{
         processes: processes,
         resources: resources,
-        server_id: server_id,
+        gateway: server_id,
         timer: update_timer(processes, nil),
         broker: broker
       }
@@ -216,6 +220,25 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   def handle_cast({:resources, resources}, state) do
     handle_info(:allocate, %{state| resources: ServerResources.cast(resources)})
+  end
+
+  def handle_cast(:recalculate, state) do
+    {:ok, resources} = request_server_resources(state.gateway)
+    {:ok, process_list} = request_server_processes(state.gateway)
+
+    processes =
+      process_list
+      |> calculate_work()
+      |> allocate(resources)
+      |> apply_update()
+
+    state = %__MODULE__{state|
+        processes: processes,
+        resources: resources,
+        timer: update_timer(processes, state.timer)
+    }
+
+    {:noreply, state}
   end
 
   @doc false
@@ -291,7 +314,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   def handle_info(msg, state) do
     Logger.warn """
-      TOP process for server_id "#{state.server_id}" received unexpected message.
+      TOP process for server_id "#{state.gateway}" received unexpected message.
       Received message:
       #{inspect msg}
     """

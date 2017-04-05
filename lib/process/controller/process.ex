@@ -3,6 +3,7 @@ defmodule Helix.Process.Controller.Process do
   alias HELL.PK
   alias Helix.Process.Repo
   alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Process.ProcessCreatedEvent
   alias Helix.Process.Model.Process.State
 
   @type find_param ::
@@ -13,10 +14,20 @@ defmodule Helix.Process.Controller.Process do
     | {:type, [String.t] | String.t}
     | {:state, [State.state] | State.state}
 
+  @spec create(map) ::
+    {:ok, Process.t, [event :: struct]}
+    | {:error, Ecto.Changeset.t}
   def create(process) do
-    process
-    |> Process.create_changeset()
-    |> Repo.insert()
+    changeset = Process.create_changeset(process)
+
+    with {:ok, process} <- Repo.insert(changeset) do
+      event = %ProcessCreatedEvent{
+        process_id: process.process_id,
+        gateway_id: process.gateway_id
+      }
+
+      {:ok, process, [event]}
+    end
   end
 
   @spec fetch(PK.t) :: Process.t | nil
