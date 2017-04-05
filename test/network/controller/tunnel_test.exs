@@ -211,8 +211,8 @@ defmodule Helix.Network.Controller.TunnelTest do
         destination,
         bounces)
 
-      {:ok, connection1} = Controller.start_connection(tunnel, "ssh")
-      {:ok, connection2} = Controller.start_connection(tunnel, "ssh")
+      {:ok, connection1, _events} = Controller.start_connection(tunnel, "ssh")
+      {:ok, connection2, _events} = Controller.start_connection(tunnel, "ssh")
 
       connections = Controller.get_connections(tunnel)
 
@@ -235,7 +235,7 @@ defmodule Helix.Network.Controller.TunnelTest do
         destination,
         bounces)
 
-      {:ok, connection} = Controller.start_connection(tunnel, "ssh")
+      {:ok, connection, _events} = Controller.start_connection(tunnel, "ssh")
 
       Controller.close_connection(connection)
 
