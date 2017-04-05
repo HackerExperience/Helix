@@ -5,7 +5,7 @@ defmodule Helix.Server.WS.Routes do
   @routes %{
     "server.create" => %{
       broker: "server.create",
-      atoms: ~w/server_type poi_id motherboard_id/a
+      atoms: ~w/server_type motherboard_id/a
     },
     "server.fetch" => %{
       broker: "server.fetch",

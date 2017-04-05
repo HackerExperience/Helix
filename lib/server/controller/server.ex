@@ -23,10 +23,6 @@ defmodule Helix.Server.Controller.Server do
   def fetch(server_id),
     do: Repo.get(Server, server_id)
 
-  @spec fetch_by_poi(HELL.PK.t) :: Server.t | nil
-  def fetch_by_poi(poi_id),
-    do: Repo.get_by(Server, poi_id: poi_id)
-
   @spec find([find_param], meta :: []) :: [Server.t]
   def find(params, _meta \\ []) do
     params

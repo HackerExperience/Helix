@@ -6,14 +6,12 @@ defmodule Helix.Server.Service.API.Server do
 
   @doc """
   Creates a server of given type
-
-  Optionally accepts a point of interest
   """
-  @spec create(Constant.t, HELL.PK.t | nil) ::
+  @spec create(Constant.t) ::
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}
-  def create(server_type, poi_id \\ nil) do
-    ServerController.create(%{server_type: server_type, poi_id: poi_id})
+  def create(server_type) do
+    ServerController.create(%{server_type: server_type})
   end
 
   @spec fetch(HELL.PK.t) :: Server.t | nil
