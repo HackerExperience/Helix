@@ -3,9 +3,9 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   use ExUnit.Case, async: true
 
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
-  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.Motherboard
+  alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
@@ -16,6 +16,12 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     specialized_component = Factory.insert(type)
 
     specialized_component.component
+  end
+
+  def component_for(slot) do
+    specialization = Factory.insert(slot.link_component_type)
+
+    specialization.component
   end
 
   describe "fetching" do
@@ -45,6 +51,85 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
     end
   end
 
+  describe "linking" do
+    test "links a component to slot" do
+      slot =
+        :motherboard
+        |> Factory.insert()
+        |> Map.fetch!(:slots)
+        |> Enum.random()
+
+      component = component_for(slot)
+
+      {:ok, slot} = MotherboardController.link(slot, component)
+      assert component.component_id == slot.link_component_id
+    end
+
+    test "fails when slot is already in use" do
+      slot =
+        :motherboard
+        |> Factory.insert()
+        |> Map.fetch!(:slots)
+        |> Enum.random()
+
+      component1 = component_for(slot)
+      component2 = component_for(slot)
+
+      {:ok, slot} = MotherboardController.link(slot, component1)
+
+      {:error, cs} = MotherboardController.link(slot, component2)
+      assert :link_component_id in Keyword.keys(cs.errors)
+    end
+
+    test "fails when component is already in use" do
+      slot_for = fn motherboard, component ->
+        motherboard.slots
+        |> Enum.filter(&(&1.link_component_type == component.component_type))
+        |> Enum.random()
+      end
+
+      component =
+        :cpu
+        |> Factory.insert()
+        |> Map.fetch!(:component)
+
+      slot1 =
+        :motherboard
+        |> Factory.insert()
+        |> slot_for.(component)
+
+      slot2 =
+        :motherboard
+        |> Factory.insert()
+        |> slot_for.(component)
+
+      MotherboardController.link(slot1, component)
+
+      {:error, cs} = MotherboardController.link(slot2, component)
+      assert :link_component_id in Keyword.keys(cs.errors)
+    end
+  end
+
+  test "unlink is idempotent" do
+    slot =
+      :motherboard
+      |> Factory.insert()
+      |> Map.fetch!(:slots)
+      |> Enum.random()
+
+    component = component_for(slot)
+
+    {:ok, slot} = MotherboardController.link(slot, component)
+
+    assert slot.link_component_id
+    assert {:ok, _} = MotherboardController.unlink(slot)
+    assert {:ok, _} = MotherboardController.unlink(slot)
+
+    slot = Repo.get(MotherboardSlot, slot.slot_id)
+
+    refute slot.link_component_id
+  end
+
   test "unlinking every component from a motherboard" do
     mobo = Factory.insert(:motherboard)
 
@@ -54,7 +139,7 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
       type = slot.link_component_type
       component = component_of_type(type)
 
-      MotherboardSlotController.link(slot, component)
+      MotherboardController.link(slot, component)
     end)
 
     MotherboardController.unlink_components_from_motherboard(mobo)

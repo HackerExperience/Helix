@@ -72,6 +72,26 @@ defmodule Helix.Hardware.Controller.Motherboard do
     |> Repo.all()
   end
 
+  @spec link(MotherboardSlot.t, Component.t) ::
+    {:ok, MotherboardSlot.t}
+    | {:error, Ecto.Changeset.t}
+  def link(slot, component) do
+    params = %{link_component_id: component.component_id}
+
+    slot
+    |> MotherboardSlot.update_changeset(params)
+    |> Repo.update()
+  end
+
+  @spec unlink(MotherboardSlot.t) ::
+    {:ok, MotherboardSlot.t}
+    | {:error, Ecto.Changeset.t}
+  def unlink(slot) do
+    slot
+    |> MotherboardSlot.update_changeset(%{link_component_id: nil})
+    |> Repo.update()
+  end
+
   @spec unlink_components_from_motherboard(Motherboard.t | HELL.PK.t) :: :ok
   def unlink_components_from_motherboard(motherboard_or_motherboard_id) do
     motherboard_or_motherboard_id
