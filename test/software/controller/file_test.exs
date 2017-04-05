@@ -111,7 +111,7 @@ defmodule Helix.Software.Controller.FileTest do
       file = Factory.insert(:file)
 
       # update name
-      params = Map.take(Factory.params_for(:file), [:name])
+      params = %{name: "some very random name"}
       {:ok, updated} = FileController.update(file, params)
 
       refute file.name == updated.name
