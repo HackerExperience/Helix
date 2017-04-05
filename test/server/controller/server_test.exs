@@ -32,17 +32,8 @@ defmodule Helix.Server.Controller.ServerTest do
       assert %Server{} = ServerController.fetch(server.server_id)
     end
 
-    test "succeeds by poi_id" do
-      server = Factory.insert(:server)
-      assert %Server{} = ServerController.fetch_by_poi(server.poi_id)
-    end
-
     test "fails when server doesn't exists" do
       refute ServerController.fetch(Random.pk())
-    end
-
-    test "fails when server with poi_id doesn't exists" do
-      refute ServerController.fetch_by_poi(Random.pk())
     end
   end
 

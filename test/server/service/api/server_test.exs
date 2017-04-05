@@ -13,11 +13,10 @@ defmodule Helix.Server.Service.API.ServerTest do
   describe "create/2" do
     test "succeeds with valid input" do
       assert {:ok, %Server{}} = API.create(:desktop)
-      assert {:ok, %Server{}} = API.create(:desktop, Random.pk())
     end
 
     test "fails when input is invalid" do
-      assert {:error, cs} = API.create(:desktop, "not-pk")
+      assert {:error, cs} = API.create(:invalid)
       refute cs.valid?
     end
   end

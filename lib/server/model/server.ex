@@ -11,7 +11,6 @@ defmodule Helix.Server.Model.Server do
   @type id :: PK.t
   @type t :: %__MODULE__{
     server_id: id,
-    poi_id: PK.t,
     motherboard_id: PK.t |  nil,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
@@ -19,16 +18,13 @@ defmodule Helix.Server.Model.Server do
 
   @type creation_params :: %{
     :server_type => Constant.t,
-    optional(:poi_id) => PK.t | nil,
     optional(:motherboard_id) => PK.t | nil
   }
   @type update_params :: %{
-    optional(:poi_id) => PK.t | nil,
     optional(:motherboard_id) => PK.t | nil
   }
 
-  @creation_fields ~w/server_type poi_id motherboard_id/a
-  @update_fields ~w/poi_id/a
+  @creation_fields ~w/server_type motherboard_id/a
 
   @primary_key false
   @ecto_autogenerate {:server_id, {PK, :pk_for, [:server_server]}}
@@ -36,7 +32,6 @@ defmodule Helix.Server.Model.Server do
     field :server_id, HELL.PK,
       primary_key: true
 
-    field :poi_id, HELL.PK
     field :motherboard_id, HELL.PK
     field :server_type, Constant
 
@@ -55,7 +50,7 @@ defmodule Helix.Server.Model.Server do
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
   def update_changeset(struct, params) do
     struct
-    |> cast(params, @update_fields)
+    |> cast(params, [])
     |> unique_constraint(:motherboard_id)
     |> attach_motherboard(params)
   end
