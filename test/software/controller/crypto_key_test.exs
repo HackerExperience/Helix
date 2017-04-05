@@ -20,10 +20,46 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
       create_key = &CryptoKeyController.create(storage, server_id, &1)
       Enum.each(random_files, create_key)
 
-      files = FileController.get_files_on_target_storage(storage, storage)
+      files = FileController.get_files_on_target_storage(storage)
 
       assert 5 == Enum.count(files)
       assert Enum.all?(files, &(&1.software_type == :crypto_key))
+    end
+  end
+
+  describe "get_files_targeted_on_storage/2" do
+    test "returns files for which the origin storage has a key" do
+      origin_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, %{files: []})
+      Factory.insert_list(5, :file, %{storage: target_storage})
+
+      encrypted_files = Factory.insert_list(
+        5,
+        :file,
+        %{storage: target_storage, crypto_version: 1})
+
+      server_id = Random.pk()
+      create_key = &CryptoKeyController.create(origin_storage, server_id, &1)
+      Enum.each(encrypted_files, create_key)
+
+      files = CryptoKeyController.get_files_targeted_on_storage(
+        origin_storage,
+        target_storage)
+
+      assert 5 == Enum.count(files)
+      assert Enum.all?(files, &(not is_nil(&1)))
+    end
+
+    test "returns no unencrypted files" do
+      origin_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, %{files: []})
+      Factory.insert_list(5, :file, %{storage: target_storage})
+
+      files = CryptoKeyController.get_files_targeted_on_storage(
+        origin_storage,
+        target_storage)
+
+      assert Enum.empty?(files)
     end
   end
 
