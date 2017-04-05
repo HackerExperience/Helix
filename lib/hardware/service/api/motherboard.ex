@@ -1,7 +1,6 @@
 defmodule Helix.Hardware.Service.API.Motherboard do
 
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
-  alias Helix.Hardware.Controller.MotherboardSlot, as: MotherboardSlotController
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
@@ -31,7 +30,7 @@ defmodule Helix.Hardware.Service.API.Motherboard do
   This function will fail if either the slot or component are attached
   """
   def link(motherboard_slot, component) do
-    MotherboardSlotController.link(motherboard_slot, component)
+    MotherboardController.link(motherboard_slot, component)
   end
 
   @spec unlink(MotherboardSlot.t) ::
@@ -43,7 +42,7 @@ defmodule Helix.Hardware.Service.API.Motherboard do
   This function is idempotent
   """
   def unlink(motherboard_slot) do
-    MotherboardSlotController.unlink(motherboard_slot)
+    MotherboardController.unlink(motherboard_slot)
   end
 
   @spec delete(Motherboard.t | HELL.PK.t) :: no_return
