@@ -6,55 +6,59 @@ defmodule Helix.Account.Factory do
 
   alias Helix.Account.Repo
 
-  @spec build_changeset(atom, map() | Keyword.t) ::
+  @type thing :: :account | :account_setting
+
+  @spec changeset(thing, map | Keyword.t) ::
     Ecto.Changeset.t
-  def build_changeset(thing, params \\ %{}) do
+  def changeset(thing, params \\ %{}) do
     attrs =
       thing
       |> params_for()
       |> Map.merge(to_map(params))
 
-    generate_changeset(thing, attrs)
+    fabricate_changeset(thing, attrs)
   end
 
-  @spec build_changeset_list(pos_integer, atom, map() | Keyword.t) ::
+  @spec changeset_list(pos_integer, thing, map | Keyword.t) ::
     [Ecto.Changeset.t, ...]
-  def build_changeset_list(n, thing, params \\ %{}) when n >= 1 do
+  def changeset_list(n, thing, params \\ %{}) when n >= 1 do
     for _ <- 1..n,
-      do: build_changeset(thing, params)
+      do: changeset(thing, params)
   end
 
-  @spec build(atom, map() | Keyword.t) ::
+  @spec build(thing, map | Keyword.t) ::
     Ecto.Schema.t
   def build(thing, params \\ %{}) do
     thing
-    |> build_changeset(params)
+    |> changeset(params)
     |> ensure_valid_changeset()
     |> Ecto.Changeset.apply_changes()
   end
 
-  @spec build_list(atom, map() | Keyword.t) ::
+  @spec build_list(pos_integer, thing, map | Keyword.t) ::
     [Ecto.Schema.t, ...]
   def build_list(n, thing, params \\ %{}) when n >= 1 do
     for _ <- 1..n,
       do: build(thing, params)
   end
 
-  @spec insert(atom, map() | Keyword.t) ::
+  @spec insert(thing, map | Keyword.t) ::
     Ecto.Schema.t
   def insert(thing, params \\ %{}) do
     thing
-    |> build(params)
+    |> changeset(params)
     |> Repo.insert!()
   end
 
-  @spec insert_list(atom, map() | Keyword.t) ::
+  @spec insert_list(pos_integer, thing, map | Keyword.t) ::
     [Ecto.Schema.t, ...]
   def insert_list(n, thing, params \\ %{}) when n >= 1 do
     for _ <- 1..n,
       do: insert(thing, params)
   end
 
+  @spec params_for(thing) ::
+    map
   defp params_for(:account) do
     %{
       username: Random.username(),
@@ -69,21 +73,26 @@ defmodule Helix.Account.Factory do
     }
 
     %{
-      account: build(:account),
+      account: changeset(:account),
       settings: settings
     }
   end
 
-  defp generate_changeset(:account, params) do
+  @spec fabricate_changeset(thing, map) ::
+    Ecto.Changeset.t
+  defp fabricate_changeset(:account, params) do
     Account.create_changeset(params)
   end
 
-  defp generate_changeset(:account_setting, params = %{account_id: _}),
+  defp fabricate_changeset(:account_setting, params = %{account_id: _}),
     do: AccountSetting.changeset(params)
-  defp generate_changeset(:account_setting, params) do
+  defp fabricate_changeset(:account_setting, params) do
     params
-    |> Map.put(:account_id, params.account.account_id)
+    |> Map.put(:account_id, Random.pk())
     |> AccountSetting.changeset()
+    # HACK: Right now AccountSetting is requiring account_id and we don't want
+    #   to insert the account to generate the setting, right ?
+    |> Ecto.Changeset.delete_change(:account_id)
     |> Ecto.Changeset.put_assoc(:account, params.account)
   end
 
