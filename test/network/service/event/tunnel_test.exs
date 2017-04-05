@@ -19,7 +19,7 @@ defmodule Helix.Network.Service.Event.TunnelTest do
       destination = Random.pk()
       bounces = []
 
-      {:ok, tunnel} = Controller.prepare(
+      {:ok, tunnel} = Controller.create(
         @internet,
         gateway,
         destination,
@@ -42,7 +42,7 @@ defmodule Helix.Network.Service.Event.TunnelTest do
       destination = Random.pk()
       bounces = []
 
-      {:ok, tunnel} = Controller.prepare(
+      {:ok, tunnel} = Controller.create(
         @internet,
         gateway,
         destination,
