@@ -2,41 +2,39 @@ defmodule Helix.Software.Model.FileTextTest do
 
   use ExUnit.Case, async: true
 
-  alias Ecto.Changeset
   alias HELL.TestHelper.Random
   alias Helix.Software.Model.FileText
-
-  alias Helix.Software.Factory
+  alias Helix.Software.Model.Storage
 
   @moduletag :unit
 
-  defp generate_params do
-    :file_text
-    |> Factory.params_for()
-    |> Map.put(:file_id, Random.pk())
-    |> Map.drop([:inserted_at, :updated_at])
+  def generate_path do
+    1..5
+    |> Random.repeat(&Random.username/0)
+    |> Enum.join("/")
+    |> String.replace_prefix("", "/")
   end
 
-  test "creating file_text changeset only requires file_id and contents" do
-    params = generate_params()
-    cs1 = FileText.create_changeset(params)
-    cs2 = FileText.create_changeset(%{})
+  describe "create/2" do
+    test "when provided with a storage, file path and file name, succeeds" do
+      storage = %Storage{}
+      name = Random.username()
+      path = generate_path()
 
-    got = Enum.sort(Keyword.keys(cs2.errors))
-    expected = Enum.sort([:file_id, :contents])
+      changeset = FileText.create(storage, name, path, "content")
 
-    assert expected == got
-    assert cs1.valid?
+      assert changeset.valid?
+    end
   end
 
-  test "updating file_text replaces its contents" do
-    params = Map.take(generate_params(), [:contents])
+  describe "update_contents/2" do
+    test "when provided with a file_text and contents, succeeds" do
+      file_text = %FileText{}
+      contents = Random.string(max: 100)
 
-    cs =
-      generate_params()
-      |> FileText.create_changeset()
-      |> FileText.update_changeset(params)
+      changeset = FileText.update_contents(file_text, contents)
 
-    assert params.contents == Changeset.get_field(cs, :contents)
+      assert changeset.valid?
+    end
   end
 end
