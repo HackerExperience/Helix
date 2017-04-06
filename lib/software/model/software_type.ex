@@ -20,6 +20,10 @@ defmodule Helix.Software.Model.SoftwareType do
   @doc false
   def possible_types do
     %{
+      text: %{
+        extension: "txt",
+        modules: []
+      },
       cracker: %{
         extension: "crc",
         modules: [:cracker_password]
