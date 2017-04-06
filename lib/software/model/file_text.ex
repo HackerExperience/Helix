@@ -4,58 +4,74 @@ defmodule Helix.Software.Model.FileText do
 
   alias HELL.PK
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
 
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
+    file: File.t,
     file_id: PK.t,
     contents: String.t
   }
 
   @type creation_params :: %{
-    file_id: PK.t,
+    name: String.t,
+    path: String.t,
     contents: String.t
   }
 
-  @type update_params :: %{
-    contents: String.t
-  }
-
-  @creation_fields ~w/file_id contents/a
-  @update_fields ~w/contents/a
+  @software_type :text
 
   @primary_key false
   schema "file_texts" do
+    field :file_id, PK,
+      primary_key: true
+
+    field :contents, :string, default: ""
+
     belongs_to :file, File,
       foreign_key: :file_id,
       references: :file_id,
       type: PK,
-      primary_key: true
-
-    field :contents, :string, default: ""
+      define_field: false
   end
 
-  @spec create_changeset(%{file_id: PK.t, contents: String.t}) ::
+  @spec create(Storage.t, creation_params) ::
     Ecto.Changeset.t
-  def create_changeset(params) do
+  def create(storage = %Storage{}, params) do
+    file = generate_file(storage, params)
+    params = Map.take(params, [:contents])
+
     %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> validate_required([:file_id, :contents])
-    |> generic_validations()
+    |> changeset(params)
+    |> put_assoc(:file, file)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{contents: String.t}) ::
+  @spec update_contents(t, String.t) ::
     Ecto.Changeset.t
-  def update_changeset(schema_or_changeset, params) do
-    schema_or_changeset
-    |> cast(params, @update_fields)
-    |> validate_required(:contents)
-    |> generic_validations()
+  def update_contents(struct, contents),
+    do: changeset(struct, %{contents: contents})
+
+  @spec changeset(t | Ecto.Changeset.t, %{any => any}) ::
+    Ecto.Changeset.t
+  def changeset(struct, params) do
+    # REVIEW: if needed, update file size according to contents size
+    struct
+    |> cast(params, [:contents])
+    |> validate_length(:contents, max: 8192)
   end
 
-  @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
-  def generic_validations(changeset),
-    do: validate_length(changeset, :contents, max: 8192)
+  defp generate_file(storage, params) do
+    # REVIEW: Text files should have a size? If so, we need to check if the
+    # storage can store them
+    params =
+      params
+      |> Map.take([:name, :path])
+      |> Map.put(:file_size, 1)
+      |> Map.put(:software_type, @software_type)
+
+    File.create(storage, params)
+  end
 
   defmodule Query do
 
