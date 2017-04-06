@@ -3,6 +3,7 @@ defmodule Helix.Software.Controller.FileTextTest do
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
+  alias Helix.Software.Controller.File, as: FileController
   alias Helix.Software.Controller.FileText, as: FileTextController
   alias Helix.Software.Model.FileText
 
@@ -10,45 +11,45 @@ defmodule Helix.Software.Controller.FileTextTest do
 
   @moduletag :integration
 
-  defp generate_params do
-    %{file_id: file_id} = Factory.insert(:file)
-    %{contents: contents} = Factory.build(:file_text)
-
-    %{file_id: file_id, contents: contents}
+  def generate_path do
+    1..5
+    |> Random.repeat(&Random.username/0)
+    |> Enum.join("/")
+    |> String.replace_prefix("", "/")
   end
 
-  describe "creating"do
-    test "succeeds with valid params" do
-      params = generate_params()
-      assert {:ok, _} = FileTextController.create(params)
-    end
+  describe "create/1" do
+    test "will create a file for the text on storage" do
+      storage = Factory.insert(:storage)
 
-    test "fails if file with id doesn't exist" do
-      file_text = Factory.build(:file_text)
-      params = %{file_id: file_text.file_id, contents: file_text.contents}
+      params = %{
+        name: Random.username(),
+        path: generate_path(),
+        contents: Random.string(max: 100)
+      }
 
-      assert {:error, cs} = FileTextController.create(params)
-      assert :file_id in Keyword.keys(cs.errors)
+      assert {:ok, file_text} = FileTextController.create(storage, params)
+      assert FileController.fetch(file_text.file_id)
     end
   end
 
-  describe "fetching" do
-    test "returns a record based on its identification" do
+  describe "fetch/1" do
+    test "succeeds by id" do
       file_text = Factory.insert(:file_text)
-      assert %FileText{} = FileTextController.fetch(file_text.file)
+      assert %FileText{} = FileTextController.fetch(file_text.file_id)
     end
 
-    test "returns nil if file_text with id doesn't exists" do
-      bogus = Factory.build(:file, %{file_id: Random.pk()})
-      refute FileTextController.fetch(bogus)
+    test "fails when file_text doesn't exist" do
+      refute FileTextController.fetch(Random.pk())
     end
   end
 
-  test "updating contents" do
-    ft = Factory.insert(:file_text)
-    %{contents: contents} = Factory.build(:file_text)
+  describe "update_contents/2" do
+    test "succeeds with valid input" do
+      file_text = Factory.insert(:file_text)
+      result =  FileTextController.update_contents(file_text, "example text")
 
-    assert {:ok, updated} = FileTextController.update_contents(ft, contents)
-    assert contents == updated.contents
+      assert {:ok, %FileText{}} = result
+    end
   end
 end

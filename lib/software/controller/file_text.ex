@@ -2,13 +2,15 @@ defmodule Helix.Software.Controller.FileText do
 
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileText
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
-  @spec create(FileText.creation_params) ::
-    {:ok, FileText.t} | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
-    |> FileText.create_changeset()
+  @spec create(Storage.t, FileText.creation_params) ::
+    {:ok, FileText.t}
+    | {:error, Ecto.Changeset.t}
+  def create(storage, params) do
+    storage
+    |> FileText.create(params)
     |> Repo.insert()
   end
 
@@ -22,10 +24,11 @@ defmodule Helix.Software.Controller.FileText do
   end
 
   @spec update_contents(FileText.t, String.t) ::
-    {:ok, FileText.t} | {:error, Ecto.Changeset.t}
+    {:ok, FileText.t}
+    | {:error, Ecto.Changeset.t}
   def update_contents(file_text, contents) do
     file_text
-    |> FileText.update_changeset(%{contents: contents})
+    |> FileText.update_contents(contents)
     |> Repo.update()
   end
 end
