@@ -67,14 +67,12 @@ defmodule Helix.Network.Factory do
   end
 
   defp params_for(:tunnel) do
-    bounces = for _ <- 0..3, do: Random.pk()
-
     # REVIEW: maybe it's better to use internet as the default network
     %{
       network: changeset(:network),
       gateway_id: Random.pk(),
       destination_id: Random.pk(),
-      bounces: bounces
+      bounces: []
     }
   end
 

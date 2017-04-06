@@ -20,7 +20,7 @@ defmodule Helix.Network.Controller.TunnelTest do
     end
 
     test "returns true if there is any tunnel open linking two nodes" do
-      tunnel = Factory.insert(:tunnel, network: @internet, bounces: [])
+      tunnel = Factory.insert(:tunnel, network: @internet)
       gateway = tunnel.gateway_id
       destination = tunnel.destination_id
 
@@ -29,7 +29,7 @@ defmodule Helix.Network.Controller.TunnelTest do
 
     @tag :pending
     test "can be filtered by network" do
-      tunnel = Factory.insert(:tunnel, network: :todo, bounces: [])
+      tunnel = Factory.insert(:tunnel, network: :todo)
       network = tunnel.network
       gateway = tunnel.gateway_id
       destination = tunnel.destination_id
@@ -45,15 +45,13 @@ defmodule Helix.Network.Controller.TunnelTest do
 
       tunnel1 = Factory.insert(:tunnel,
         network: @internet,
-        gateway_id: server,
-        bounces: [])
+        gateway_id: server)
 
       Controller.start_connection(tunnel1, "ssh")
 
       tunnel2 = Factory.insert(:tunnel,
         network: @internet,
-        destination_id: server,
-        bounces: [])
+        destination_id: server)
 
       Controller.start_connection(tunnel2, "ssh")
       Controller.start_connection(tunnel2, "ssh")
@@ -149,7 +147,7 @@ defmodule Helix.Network.Controller.TunnelTest do
 
   describe "start_connection/2" do
     test "starts a new connection every call" do
-      tunnel = Factory.insert(:tunnel, network: @internet, bounces: [])
+      tunnel = Factory.insert(:tunnel, network: @internet)
 
       {:ok, connection1, _events} = Controller.start_connection(tunnel, "ssh")
       {:ok, connection2, _events} = Controller.start_connection(tunnel, "ssh")
@@ -165,7 +163,7 @@ defmodule Helix.Network.Controller.TunnelTest do
 
   describe "close_connection/2" do
     test "deletes the connection" do
-      tunnel = Factory.insert(:tunnel, network: @internet, bounces: [])
+      tunnel = Factory.insert(:tunnel, network: @internet)
 
       {:ok, connection, _events} = Controller.start_connection(tunnel, "ssh")
 
