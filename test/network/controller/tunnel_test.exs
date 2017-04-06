@@ -8,6 +8,8 @@ defmodule Helix.Network.Controller.TunnelTest do
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo
 
+  alias Helix.Network.Factory
+
   @moduletag :integration
 
   @internet Repo.get!(Network, "::")
@@ -18,23 +20,19 @@ defmodule Helix.Network.Controller.TunnelTest do
     end
 
     test "returns true if there is any tunnel open linking two nodes" do
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = []
-
-      Controller.create(@internet, gateway, destination, bounces)
+      tunnel = Factory.insert(:tunnel, network: @internet, bounces: [])
+      gateway = tunnel.gateway_id
+      destination = tunnel.destination_id
 
       assert Controller.connected?(gateway, destination)
     end
 
     @tag :pending
     test "can be filtered by network" do
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = []
-      network = :todo
-
-      Controller.create(network, gateway, destination, bounces)
+      tunnel = Factory.insert(:tunnel, network: :todo, bounces: [])
+      network = tunnel.network
+      gateway = tunnel.gateway_id
+      destination = tunnel.destination_id
 
       refute Controller.connected?(gateway, destination, @internet)
       assert Controller.connected?(gateway, destination, network)
@@ -45,28 +43,24 @@ defmodule Helix.Network.Controller.TunnelTest do
     test "returns all connections that pass through node" do
       server = Random.pk()
 
-      {:ok, tunnel1} = Controller.create(
-        @internet,
-        server,
-        Random.pk(),
-        [])
+      tunnel1 = Factory.insert(:tunnel,
+        network: @internet,
+        gateway_id: server,
+        bounces: [])
 
       Controller.start_connection(tunnel1, "ssh")
 
-      {:ok, tunnel2} = Controller.create(
-        @internet,
-        Random.pk(),
-        server,
-        [])
+      tunnel2 = Factory.insert(:tunnel,
+        network: @internet,
+        destination_id: server,
+        bounces: [])
 
       Controller.start_connection(tunnel2, "ssh")
       Controller.start_connection(tunnel2, "ssh")
 
-      {:ok, tunnel3} = Controller.create(
-        @internet,
-        Random.pk(),
-        Random.pk(),
-        [Random.pk(), server, Random.pk(), Random.pk()])
+      tunnel3 = Factory.insert(:tunnel,
+        network: @internet,
+        bounces: [Random.pk(), server, Random.pk(), Random.pk()])
 
       Controller.start_connection(tunnel3, "ssh")
       Controller.start_connection(tunnel3, "ssh")
@@ -82,31 +76,26 @@ defmodule Helix.Network.Controller.TunnelTest do
     test "list the conections that are incident on node" do
       server = Random.pk()
 
-      {:ok, tunnel1} = Controller.create(
-        @internet,
-        server,
-        Random.pk(),
-        [Random.pk(), Random.pk()])
+      tunnel1 = Factory.insert(:tunnel,
+        network: @internet,
+        gateway_id: server,
+        bounces: [Random.pk(), Random.pk()])
 
       # This is not incident since the connection emanates from the server
       Controller.start_connection(tunnel1, "ssh")
 
-      {:ok, tunnel2} = Controller.create(
-        @internet,
-        Random.pk(),
-        server,
-        [Random.pk(), Random.pk()])
-
+      tunnel2 = Factory.insert(:tunnel,
+        network: @internet,
+        destination_id: server,
+        bounces: [Random.pk(), Random.pk()])
       # Those are incident because they emanate from a gateway node onto the
       # bounce nodes and finally on the server
       Controller.start_connection(tunnel2, "ssh")
       Controller.start_connection(tunnel2, "ssh")
 
-      {:ok, tunnel3} = Controller.create(
-        @internet,
-        Random.pk(),
-        Random.pk(),
-        [Random.pk(), server, Random.pk()])
+      tunnel3 = Factory.insert(:tunnel,
+        network: @internet,
+        bounces: [Random.pk(), server, Random.pk()])
 
       # Those are also incident as they emanate from the gateway, onto the
       # bounces, onto the specified target and onto the destination
@@ -124,31 +113,27 @@ defmodule Helix.Network.Controller.TunnelTest do
     test "list the conections that emanate from node" do
       server = Random.pk()
 
-      {:ok, tunnel1} = Controller.create(
-        @internet,
-        server,
-        Random.pk(),
-        [Random.pk(), Random.pk()])
+      tunnel1 = Factory.insert(:tunnel,
+        network: @internet,
+        gateway_id: server,
+        bounces: [Random.pk(), Random.pk()])
 
       # This emanates from the server since it goes from the server to the
       # bounces and finally to the destination
       Controller.start_connection(tunnel1, "ssh")
 
-      {:ok, tunnel2} = Controller.create(
-        @internet,
-        Random.pk(),
-        server,
-        [Random.pk(), Random.pk()])
+      tunnel2 = Factory.insert(:tunnel,
+        network: @internet,
+        destination_id: server,
+        bounces: [Random.pk(), Random.pk()])
 
       # Those don't emanate from the server as the connection is incident on it
       Controller.start_connection(tunnel2, "ssh")
       Controller.start_connection(tunnel2, "ssh")
 
-      {:ok, tunnel3} = Controller.create(
-        @internet,
-        Random.pk(),
-        Random.pk(),
-        [Random.pk(), server, Random.pk()])
+      tunnel3 = Factory.insert(:tunnel,
+        network: @internet,
+        bounces: [Random.pk(), server, Random.pk()])
 
       # Those do emanate from server onto another bounce and finally on the
       # destination
@@ -164,15 +149,7 @@ defmodule Helix.Network.Controller.TunnelTest do
 
   describe "start_connection/2" do
     test "starts a new connection every call" do
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = []
-
-      {:ok, tunnel} = Controller.create(
-        @internet,
-        gateway,
-        destination,
-        bounces)
+      tunnel = Factory.insert(:tunnel, network: @internet, bounces: [])
 
       {:ok, connection1, _events} = Controller.start_connection(tunnel, "ssh")
       {:ok, connection2, _events} = Controller.start_connection(tunnel, "ssh")
@@ -188,15 +165,7 @@ defmodule Helix.Network.Controller.TunnelTest do
 
   describe "close_connection/2" do
     test "deletes the connection" do
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = []
-
-      {:ok, tunnel} = Controller.create(
-        @internet,
-        gateway,
-        destination,
-        bounces)
+      tunnel = Factory.insert(:tunnel, network: @internet, bounces: [])
 
       {:ok, connection, _events} = Controller.start_connection(tunnel, "ssh")
 
