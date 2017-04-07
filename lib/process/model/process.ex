@@ -452,7 +452,7 @@ defmodule Helix.Process.Model.Process do
     Filter processes that are running on `server_id`
     """
     def from_server(query \\ Process, server_id) do
-      where(query, [p], p.server_id == ^server_id)
+      where(query, [p], p.gateway_id == ^server_id)
     end
 
     @spec from_type_list(Ecto.Queryable.t, [String.t]) :: Ecto.Queryable.t

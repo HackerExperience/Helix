@@ -3,8 +3,9 @@ defmodule Helix.Event.Dispatcher do
 
   use HELF.Event
 
-  alias Helix.Software
   alias Helix.Network
+  alias Helix.Process
+  alias Helix.Software
 
   ##############################################################################
   # Network events
@@ -12,6 +13,13 @@ defmodule Helix.Event.Dispatcher do
   event Network.Model.ConnectionClosedEvent,
     Network.Service.Event.Tunnel,
     :connection_closed
+
+  ##############################################################################
+  # Process events
+  ##############################################################################
+  event Process.Model.Process.ProcessCreatedEvent,
+    Process.Service.Event.TOP,
+    :process_created
 
   ##############################################################################
   # Software events

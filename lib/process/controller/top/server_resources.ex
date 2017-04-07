@@ -20,7 +20,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
 
   # TODO: FIXME: change symbols and fun names to things that make sense
 
-  @spec cast(%{}) :: t
+  @spec cast(map) :: t
   def cast(params) do
     server_resources = struct(__MODULE__, params)
 

@@ -18,7 +18,7 @@ defmodule Helix.Process.Controller.ProcessTest do
       process_type: Random.string(min: 20, max: 20)
     }
 
-    assert {:ok, _} = ProcessController.create(params)
+    assert {:ok, _, _} = ProcessController.create(params)
   end
 
   describe "fetching" do

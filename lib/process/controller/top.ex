@@ -15,10 +15,11 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Service.Local.Top.Manager
 
   import HELL.MacroHelpers
 
-  defstruct [:server_id, :processes, :resources, :timer, :broker]
+  defstruct [:gateway, :processes, :resources, :timer, :broker]
 
   @type server_id :: String.t
   @type timer :: {DateTime.t, tref :: reference} | nil
@@ -33,14 +34,14 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   def start_link(server_id, params \\ []),
     do: GenServer.start_link(__MODULE__, {server_id, params})
 
-  @spec priority(pid, ProcessModel.id, 0..5) :: no_return
+  @spec priority(pid, ProcessModel.id, 0..5) :: :ok
   @doc """
   Changes the priority of an in-game process
   """
   def priority(pid, process_id, value) when value in 0..5,
     do: GenServer.cast(pid, {:priority, process_id, value})
 
-  @spec pause(pid, ProcessModel.id) :: no_return
+  @spec pause(pid, ProcessModel.id) :: :ok
   @doc """
   Pauses an in-game process
   """
@@ -54,7 +55,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   def resume(pid, process_id),
     do: GenServer.call(pid, {:resume, process_id})
 
-  @spec kill(pid, ProcessModel.id) :: no_return
+  @spec kill(pid, ProcessModel.id) :: :ok
   @doc """
   Kills an in-game process
   """
@@ -68,10 +69,14 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   @spec resources(
     pid,
-    %{cpu: integer, ram: integer, dlk: integer, ulk: integer}) :: no_return
+    %{cpu: integer, ram: integer, dlk: integer, ulk: integer}) :: :ok
   @doc false
   def resources(pid, resources),
     do: GenServer.cast(pid, {:resources, resources})
+
+  @doc false
+  def recalculate(pid),
+    do: GenServer.cast(pid, :recalculate)
 
   @spec apply_update(term) :: [ProcessModel.t]
   docp """
@@ -100,18 +105,30 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     Enum.map(changeset_list, &Ecto.Changeset.apply_changes/1)
   end
 
-  @spec request_server_resources(module, server_id) :: {:ok, ServerResources.t} | {:error, reason :: term}
+  @spec request_server_resources(server_id) ::
+    {:ok, ServerResources.t}
+    | {:error, reason :: term}
   docp """
   Requests the amount of in-game hardware related to the `server_id` server
   """
-  defp request_server_resources(broker, server_id) do
+  defp request_server_resources(server) do
+    # FIXME
+    alias Helix.Hardware.Controller.Component
+    alias Helix.Hardware.Controller.Motherboard
+    alias Helix.Server.Controller.Server
+
     with \
-      params = %{server_id: server_id},
-      {_, return} <- broker.call("server:hardware:resources", params),
-      {:ok, resources} <- return
+      %{motherboard_id: motherboard} <- Server.fetch(server),
+      true <- not is_nil(motherboard) || :server_not_assembled,
+      component = %{} <- Component.fetch(motherboard),
+      motherboard = %{} <- Motherboard.fetch!(component),
+      resources = %{} <- Motherboard.resources(motherboard)
     do
       resources = ServerResources.cast(resources)
       {:ok, resources}
+    else
+      reason ->
+        {:error, reason}
     end
   end
 
@@ -142,7 +159,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
     broker = Keyword.get(params, :broker, HELF.Broker)
 
     with \
-      {:ok, resources} <- request_server_resources(broker, server_id),
+      {:ok, resources} <- request_server_resources(server_id),
       {:ok, process_list} <- request_server_processes(server_id)
     do
       processes =
@@ -154,12 +171,14 @@ defmodule Helix.Process.Controller.TableOfProcesses do
       state = %__MODULE__{
         processes: processes,
         resources: resources,
-        server_id: server_id,
+        gateway: server_id,
         timer: update_timer(processes, nil),
         broker: broker
       }
 
       # TODO: enqueue request to fetch the "minimum" of each process
+
+      Manager.put(server_id, self())
 
       {:ok, state, @hibernate_after}
     else
@@ -201,6 +220,25 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   def handle_cast({:resources, resources}, state) do
     handle_info(:allocate, %{state| resources: ServerResources.cast(resources)})
+  end
+
+  def handle_cast(:recalculate, state) do
+    {:ok, resources} = request_server_resources(state.gateway)
+    {:ok, process_list} = request_server_processes(state.gateway)
+
+    processes =
+      process_list
+      |> calculate_work()
+      |> allocate(resources)
+      |> apply_update()
+
+    state = %__MODULE__{state|
+        processes: processes,
+        resources: resources,
+        timer: update_timer(processes, state.timer)
+    }
+
+    {:noreply, state}
   end
 
   @doc false
@@ -276,7 +314,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
   def handle_info(msg, state) do
     Logger.warn """
-      TOP process for server_id "#{state.server_id}" received unexpected message.
+      TOP process for server_id "#{state.gateway}" received unexpected message.
       Received message:
       #{inspect msg}
     """
