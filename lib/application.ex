@@ -5,17 +5,13 @@ defmodule Helix.Application do
   import Supervisor.Spec
 
   def start(_type, _args) do
-    port = Application.get_env(:helix, :router_port)
-
     children = [
-      worker(HELF.Broker, []),
-      worker(HELF.Router, [port]),
+      # worker(HELF.Broker, []),
+      supervisor(Helix.Endpoint, []),
       supervisor(Helix.Application.DomainsSupervisor, [])
     ]
 
-    # IE: If broker breaks, restart everything; if Router breaks, restart router
-    # and the domain supervisors; if a domain supervisor breaks, only restart it
-    opts = [strategy: :rest_for_one, name: Helix.Supervisor]
+    opts = [strategy: :one_for_one, name: Helix.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end
