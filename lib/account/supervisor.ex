@@ -3,7 +3,6 @@ defmodule Helix.Account.Supervisor do
   use Supervisor
 
   alias Helix.Account.Repo
-  alias Helix.Account.WS.Routes
 
   def start_link do
     Supervisor.start_link(__MODULE__, [])
@@ -15,8 +14,6 @@ defmodule Helix.Account.Supervisor do
     ]
 
     validate_guardian_config()
-    Routes.register_routes()
-    Routes.register_topics()
 
     supervise(children, strategy: :one_for_one)
   end

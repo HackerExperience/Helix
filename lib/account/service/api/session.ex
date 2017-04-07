@@ -20,4 +20,8 @@ defmodule Helix.Account.Service.API.Session do
   @spec invalidate_token(Session.t) :: :ok
   def invalidate_token(token),
     do: SessionController.invalidate(token)
+
+  @spec principal(claims :: map) :: String.t
+  def principal(%{"sub" => principal}),
+    do: principal
 end
