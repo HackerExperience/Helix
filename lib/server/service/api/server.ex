@@ -58,4 +58,9 @@ defmodule Helix.Server.Service.API.Server do
   def detach(server) do
     ServerController.detach(server)
   end
+
+  @spec delete(Server.t | HELL.PK.t) :: :ok
+  def delete(server) do
+    ServerController.delete(server)
+  end
 end
