@@ -2,6 +2,7 @@ defmodule Helix.Software.Service.Event.Account do
 
   alias HELF.Mailer
   alias Helix.Account.Model.Account.AccountCreatedEvent
+  alias Helix.Account.Service.Flow.Account, as: AccountFlow
 
   @spec send_email(%AccountCreatedEvent{}) :: any
   def send_email(event = %AccountCreatedEvent{}) do
@@ -14,4 +15,8 @@ defmodule Helix.Software.Service.Event.Account do
     |> Mailer.text("Lorem ipsum.")
     |> Mailer.send()
   end
+
+  @spec setup_account(%AccountCreatedEvent{}) :: any
+  def setup_account(event = %AccountCreatedEvent{}),
+    do: AccountFlow.setup(event.account_id)
 end
