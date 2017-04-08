@@ -18,7 +18,7 @@ defmodule Helix.Mixfile do
       aliases: aliases(),
       deps: deps(),
 
-      dialyzer: [plt_add_apps: [:mix]],
+      dialyzer: [plt_add_apps: [:mix, :phoenix_pubsub]],
 
       preferred_cli_env: %{
         "test.quick": :test,
@@ -40,7 +40,7 @@ defmodule Helix.Mixfile do
     [
       mod: {Helix.Application, []},
       extra_applications: [:logger],
-      included_applications: [:plug]
+      included_applications: [:plug, :phoenix_pubsub]
     ]
   end
 

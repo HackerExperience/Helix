@@ -1,46 +1,49 @@
 defmodule Helix.Account.WS.Routes do
 
-  alias HELF.Router
   alias Helix.Account.WS.Controller.Account, as: AccountController
 
-  @routes %{
-    "account.create" => %{
-      broker: "account.create",
-      atoms: ~w/email username password/a
-    },
-    "account.login" => %{
-      broker: "account.login",
-      atoms: ~w/username password/a
-    },
-    "account.logout" => %{
-      broker: "account.logout",
-      atoms: ~w//a
-    }
-  }
+  # Note that this is somewhat a hack to allow us to break our request-response
+  # channel into several parts (one on each domain). So this code will be
+  # executed inside the "requests" channel and thus must follow Phoenix
+  # Channel's callback interface:
+  # https://hexdocs.pm/phoenix/Phoenix.Channel.html#c:handle_in/3
 
-  def register_routes do
-    Enum.each(@routes, fn {topic, params} ->
-      Router.register(topic, params.broker, params.atoms)
-    end)
+  def handle_in("account.logout", _params, socket) do
+    AccountController.logout(socket.assigns, %{})
+
+    # Logout will blacklist the token and stop the socket, so, this only makes
+    # sense
+    {:stop, :normal, socket}
   end
 
-  # This is a hack and only makes sense until we update Router to use Plug or
-  # Phoenix.Channels
-  @doc false
-  def register_topics do
-    account_create_fun = fn _pid, _topic, message, _request ->
-      {:reply, AccountController.register(nil, message)}
-    end
-    HELF.Broker.subscribe("account.create", call: account_create_fun)
+  def handle_in(_, _, socket) do
+    {:reply, :error, socket}
+  end
+end
 
-    account_login_fun = fn _pid, _topic, message, _request ->
-      {:reply, AccountController.login(nil, message)}
-    end
-    HELF.Broker.subscribe("account.login", call: account_login_fun)
+defmodule Helix.Account.WS.PublicRoutes do
 
-    account_logout_fun = fn _pid, _topic, message, _request ->
-      {:reply, AccountController.logout(message, message)}
-    end
-    HELF.Broker.subscribe("account.logout", call: account_logout_fun)
+  alias Helix.Account.WS.Controller.Account, as: AccountController
+
+  # Note that this is somewhat a hack to allow us to break our request-response
+  # channel into several parts (one on each domain). So this code will be
+  # executed inside the "requests" channel and thus must follow Phoenix
+  # Channel's callback interface:
+  # https://hexdocs.pm/phoenix/Phoenix.Channel.html#c:handle_in/3
+
+  def handle_in("account.create", params, socket) do
+    response = AccountController.register(socket.assigns, params)
+
+    {:reply, response, socket}
+  end
+
+  def handle_in("account.login", params, socket) do
+    response = AccountController.login(socket.assigns, params)
+
+    {:reply, response, socket}
+  end
+
+  def handle_in(_, _, socket) do
+    {:reply, :error, socket}
   end
 end
