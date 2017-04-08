@@ -1,54 +1,48 @@
 defmodule Helix.Account.WS.Controller.Account do
 
-  alias Helix.Account.Service.API.Account, as: AccountAPI
   alias Helix.Account.Model.Session
+  alias Helix.Account.Service.API.Account, as: AccountAPI
+  alias Helix.Account.WS.View.Account, as: AccountView
 
   @typep json_response ::
     {:ok, map}
-    | {:error, status :: integer, map}
-    | {:error, atom}
+    | {:error, map}
 
-  @spec register(term, %{:email => String.t, :username => String.t, :password => String.t, optional(atom) => any}) ::
+  @spec register(term, %{optional(String.t) => any}) ::
     json_response
-  # Plug-like format
-  def register(_request, params) do
-    case AccountAPI.create(params) do
+  def register(
+    _request,
+    %{"username" => username, "password" => password, "email" => email})
+  do
+    case AccountAPI.create(email, username, password) do
       {:ok, account} ->
         # In the future we'll just pass the return to a protocol
 
-        # Note that we are wrapping it in a 2-tuple because Router expects it
-        # that way
-        {:ok, Helix.Account.WS.View.Account.format(account)}
+        {:ok, AccountView.format(account)}
       {:error, changeset} ->
-        # Note that we are wrapping it in a 2-tuple because Router expects it
-        # that way
-        {:error, {400, Helix.Account.WS.View.Account.format(changeset)}}
+        {:error, AccountView.format(changeset)}
     end
   end
 
-  @spec login(term, %{:username => String.t, :password => String.t, optional(atom) => any}) ::
+  @spec login(term, %{optional(String.t) => any}) ::
     json_response
-  def login(_request, %{username: username, password: password}) do
+  def login(_request, %{"username" => username, "password" => password}) do
     case AccountAPI.login(username, password) do
       {:ok, jwt} ->
-        {:ok, %{:token => jwt}}
+        {:ok, %{token: jwt}}
       {:error, :notfound} ->
-        {:error, :notfound}
+        {:error, %{message: "not found"}}
     end
   end
 
   def login(_, _) do
-    {:error, :bad_request}
+    {:error, %{message: "bad request"}}
   end
 
-  @spec logout(%{jwt: Session.t}, map) :: json_response
-  def logout(%{jwt: token}, _) do
+  @spec logout(%{token: Session.t}, map) :: json_response
+  def logout(%{token: token}, _) do
     AccountAPI.logout(token)
 
     {:ok, %{}}
-  end
-
-  def logout(_, _) do
-    {:error, :bad_request}
   end
 end

@@ -4,14 +4,14 @@ defmodule Helix.Router.Socket.Player do
 
   alias Helix.Account.Service.API.Session
 
-  channel "account:*", Helix.Account.WS.Channel.Public.Account
+  channel "requests", Helix.Router.Channel.PlayerRequests
 
   def connect(%{"token" => token}, socket) do
     case Session.validate_token(token) do
       {:ok, claims} ->
         socket =
           socket
-          |> assign(:jwt, token)
+          |> assign(:token, token)
           |> assign(:claims, claims)
         {:ok, socket}
       _ ->

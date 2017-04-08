@@ -59,7 +59,7 @@ defmodule Helix.Account.Factory do
 
   @spec params_for(thing) ::
     map
-  defp params_for(:account) do
+  def params_for(:account) do
     %{
       username: Random.username(),
       email: Burette.Internet.email(),
@@ -67,7 +67,7 @@ defmodule Helix.Account.Factory do
     }
   end
 
-  defp params_for(:account_setting) do
+  def params_for(:account_setting) do
     settings = %{
       is_beta: true
     }
