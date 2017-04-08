@@ -1,5 +1,6 @@
 defmodule Helix.Account.WS.Routes do
 
+  alias Helix.Router.Socket.Player, as: Socket
   alias Helix.Account.WS.Controller.Account, as: AccountController
 
   # Note that this is somewhat a hack to allow us to break our request-response
@@ -11,9 +12,12 @@ defmodule Helix.Account.WS.Routes do
   def handle_in("account.logout", _params, socket) do
     AccountController.logout(socket.assigns, %{})
 
+    socket_id = Socket.id(socket)
+    Helix.Endpoint.broadcast(socket_id, "disconnect", %{})
+
     # Logout will blacklist the token and stop the socket, so, this only makes
     # sense
-    {:stop, :normal, socket}
+    {:stop, :shutdown, socket}
   end
 
   def handle_in(_, _, socket) do

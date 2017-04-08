@@ -9,7 +9,7 @@ defmodule Helix.Mixfile do
 
       elixirc_options: elixirc_options(Mix.env),
       elixirc_paths: elixirc_paths(Mix.env),
-      compilers: [:phoenix] ++ Mix.compilers,
+      compilers: Mix.compilers,
 
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -39,16 +39,16 @@ defmodule Helix.Mixfile do
   def application do
     [
       mod: {Helix.Application, []},
-      extra_applications: [:logger],
-      included_applications: [:plug, :phoenix_pubsub]
+      extra_applications: [:logger, :crypto]
     ]
   end
 
   defp deps do
     [
-      {:distillery, "~>1.2", runtime: :false},
+      {:distillery, "~>1.2", runtime: false},
 
       {:phoenix, "~> 1.3.0-rc.1", override: true},
+      {:phoenix_pubsub, "~> 1.0"},
       {:cowboy, "~> 1.0"},
 
       {:ecto, "~> 2.1", override: true},
