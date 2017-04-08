@@ -1,3 +1,36 @@
+defmodule Helix.Account.WS.RoutesTest do
+
+  use ExUnit.Case, async: true
+
+  alias Helix.Router.Socket.Player, as: Socket
+  alias Helix.Account.Controller.Session
+
+  alias Helix.Account.Factory
+
+  import Phoenix.ChannelTest
+
+  @endpoint Helix.Endpoint
+
+  setup do
+    account = Factory.insert(:account)
+    {:ok, jwt, _} = Session.create(account)
+    {:ok, socket} = connect(Socket, %{token: jwt})
+    {:ok, _, socket} = join(socket, "requests")
+
+    {:ok, account: account, socket: socket}
+  end
+
+  test "logout closes socket", context do
+    push(context.socket, "account.logout")
+
+    :timer.sleep(100)
+
+    refute Process.alive? context.socket.channel_pid
+    # The token has been invalidated so we should not be able to use it again
+    assert :error == connect(Socket, %{token: context.socket.assigns.token})
+  end
+end
+
 defmodule Helix.Account.WS.PublicRoutesTest do
 
   use ExUnit.Case, async: true
@@ -15,7 +48,7 @@ defmodule Helix.Account.WS.PublicRoutesTest do
 
   def requests_driver do
     {:ok, socket} = connect(Socket, %{})
-    {:ok, _, socket} = join(socket, "requests", %{})
+    {:ok, _, socket} = join(socket, "requests")
 
     socket
   end
