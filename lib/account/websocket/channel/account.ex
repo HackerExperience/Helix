@@ -1,4 +1,4 @@
-defmodule Helix.Account.WS.Channel.Account do
+defmodule Helix.Account.Websocket.Channel.Account do
   @moduledoc """
   Channel to notify an user of an action that affects them.
   """

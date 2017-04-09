@@ -1,4 +1,4 @@
-defmodule Helix.Socket do
+defmodule Helix.Websocket.Socket do
 
   use Phoenix.Socket
 
@@ -6,8 +6,8 @@ defmodule Helix.Socket do
 
   transport :websocket, Phoenix.Transports.WebSocket
 
-  channel "requests", Helix.Socket.RequestsChannel
-  channel "account:*", Helix.Account.WS.Channel.Account
+  channel "requests", Helix.Websocket.RequestsChannel
+  channel "account:*", Helix.Account.Websocket.Channel.Account
 
   def connect(%{"token" => token}, socket) do
     case Session.validate_token(token) do
@@ -29,24 +29,4 @@ defmodule Helix.Socket do
 
   def id(socket),
     do: "session:" <> socket.assigns.session
-end
-
-defmodule Helix.Socket.RequestsChannel do
-
-  use Phoenix.Channel
-
-  alias Helix.Account.WS.Routes, as: Account
-
-  def join(_topic, _message, socket) do
-    # God in the command
-    {:ok, socket}
-  end
-
-  def handle_in(topic = "account." <> _, params, socket) do
-    Account.handle_in(topic, params, socket)
-  end
-
-  def handle_in(_, _, socket) do
-    {:reply, :error, socket}
-  end
 end

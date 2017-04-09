@@ -4,7 +4,6 @@ defmodule Helix.Account.HTTP.Controller.Account do
 
   alias Helix.Account.Service.API.Account, as: AccountAPI
 
-
   import Plug.Conn
 
   def register(conn, params) do
