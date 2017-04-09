@@ -1,6 +1,6 @@
 defmodule Helix.Account.WS.Controller.Account do
 
-  alias Helix.Account.Model.Session
+  alias Helix.Account.Service.API.Session
   alias Helix.Account.Service.API.Account, as: AccountAPI
   alias Helix.Account.WS.View.Account, as: AccountView
 
@@ -28,9 +28,9 @@ defmodule Helix.Account.WS.Controller.Account do
     json_response
   def login(_request, %{"username" => username, "password" => password}) do
     case AccountAPI.login(username, password) do
-      {:ok, jwt} ->
-        {:ok, %{token: jwt}}
-      {:error, :notfound} ->
+      {:ok, account} ->
+        {:ok, %{token: Session.generate_token(account)}}
+      _ ->
         {:error, %{message: "not found"}}
     end
   end
@@ -39,9 +39,10 @@ defmodule Helix.Account.WS.Controller.Account do
     {:error, %{message: "bad request"}}
   end
 
-  @spec logout(%{token: Session.t}, map) :: json_response
-  def logout(%{token: token}, _) do
-    AccountAPI.logout(token)
+  @spec logout(%{session: Session.session}, map) ::
+    json_response
+  def logout(%{session: session}, _) do
+    Session.invalidate_session(session)
 
     {:ok, %{}}
   end

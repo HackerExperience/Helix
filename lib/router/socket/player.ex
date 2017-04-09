@@ -11,11 +11,12 @@ defmodule Helix.Router.Socket.Player do
 
   def connect(%{"token" => token}, socket) do
     case Session.validate_token(token) do
-      {:ok, claims} ->
+      {:ok, account, session} ->
         socket =
           socket
-          |> assign(:token, token)
-          |> assign(:claims, claims)
+          |> assign(:account, account)
+          |> assign(:session, session)
+
         {:ok, socket}
       _ ->
         :error
@@ -26,11 +27,6 @@ defmodule Helix.Router.Socket.Player do
     :error
   end
 
-  # TODO: Use a different value for the ID of the socket, otherwise if the
-  #   player logs out of its account on one device, they will be logged out
-  #   everywhere
-  def id(socket) do
-    principal =  Session.principal(socket.assigns.claims)
-    "player:" <> principal
-  end
+  def id(socket),
+    do: "session:" <> socket.assigns.session
 end

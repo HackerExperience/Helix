@@ -58,7 +58,6 @@ defmodule Helix.Mixfile do
       {:poison, "~> 2.0"},
 
       {:comeonin, "~> 2.5"},
-      {:guardian, "~> 0.14"},
       {:timex, "~> 3.0"},
 
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test},

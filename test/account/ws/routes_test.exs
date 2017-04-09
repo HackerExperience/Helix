@@ -3,7 +3,7 @@ defmodule Helix.Account.WS.RoutesTest do
   use ExUnit.Case, async: true
 
   alias Helix.Router.Socket.Player, as: Socket
-  alias Helix.Account.Controller.Session
+  alias Helix.Account.Service.API.Session
 
   alias Helix.Account.Factory
 
@@ -13,11 +13,11 @@ defmodule Helix.Account.WS.RoutesTest do
 
   setup do
     account = Factory.insert(:account)
-    {:ok, jwt, _} = Session.create(account)
-    {:ok, socket} = connect(Socket, %{token: jwt})
+    token = Session.generate_token(account)
+    {:ok, socket} = connect(Socket, %{token: token})
     {:ok, _, socket} = join(socket, "requests")
 
-    {:ok, account: account, socket: socket}
+    {:ok, account: account, token: token, socket: socket}
   end
 
   test "logout closes socket", context do
@@ -27,7 +27,7 @@ defmodule Helix.Account.WS.RoutesTest do
 
     refute Process.alive? context.socket.channel_pid
     # The token has been invalidated so we should not be able to use it again
-    assert :error == connect(Socket, %{token: context.socket.assigns.token})
+    assert :error == connect(Socket, %{token: context.token})
   end
 end
 
@@ -79,7 +79,7 @@ defmodule Helix.Account.WS.PublicRoutesTest do
       # Login requests should have a longer timeout because bcrypt might make
       # them slow
       assert_reply ref, :ok, %{token: token}, 5_000
-      assert {:ok, _} = Session.validate_token(token)
+      assert {:ok, _, _} = Session.validate_token(token)
     end
   end
 

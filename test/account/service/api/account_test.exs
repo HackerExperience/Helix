@@ -5,7 +5,6 @@ defmodule Helix.Account.Service.API.AccountTest do
   alias Helix.Account.Model.Account
   alias Helix.Account.Repo
   alias Helix.Account.Service.API.Account, as: API
-  alias Helix.Account.Service.API.Session, as: SessionAPI
 
   alias Helix.Account.Factory
 
@@ -53,14 +52,11 @@ defmodule Helix.Account.Service.API.AccountTest do
   describe "login/2" do
     test "succeeds when username and password are correct" do
       password = "foobar 123 password LetMeIn"
-      account =
-        Factory.insert(:account)
-        |> Account.update_changeset(%{password: password})
-        |> Repo.update!()
+      account = Factory.insert(:account, password: password)
 
-      assert {:ok, token} = API.login(account.username, password)
-      assert {:ok, claims} = SessionAPI.validate_token(token)
-      assert account.account_id == claims["sub"]
+      {:ok, acc} = API.login(account.username, password)
+
+      assert account.account_id == acc.account_id
     end
 
     test "fails when provided with incorrect password" do
@@ -71,23 +67,9 @@ defmodule Helix.Account.Service.API.AccountTest do
 
     test "cannot use email as login credential" do
       password = "foobar 123 password LetMeIn"
-      account =
-        Factory.insert(:account)
-        |> Account.update_changeset(%{password: password})
-        |> Repo.update!()
+      account = Factory.insert(:account, password: password)
 
       assert {:error, _} = API.login(account.email, password)
     end
-  end
-
-  test "logout/1 is idempotent" do
-    password = "foobar 123 password LetMeIn"
-    account = Factory.insert(:account, %{password: password})
-    {:ok, token} = API.login(account.username, password)
-
-    API.logout(token)
-    API.logout(token)
-
-    assert {:error, _} = SessionAPI.validate_token(token)
   end
 end

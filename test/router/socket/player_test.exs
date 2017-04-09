@@ -17,21 +17,21 @@ defmodule Helix.Router.Socket.PlayerTest do
 
   test "socket is connectable only with valid JWT token" do
     account = AccountFactory.insert(:account)
-    {:ok, jwt, _} = Session.create(account)
+    token = Session.generate_token(account)
 
-    assert {:ok, _} = connect(Socket, %{"token" => jwt})
+    assert {:ok, _} = connect(Socket, %{"token" => token})
   end
 
   test "identifies users within different connections" do
     account0 = AccountFactory.insert(:account)
     account1 = AccountFactory.insert(:account)
 
-    {:ok, jwt, _} = Session.create(account0)
-    {:ok, socket0} = connect(Socket, %{"token" => jwt})
-    {:ok, socket1} = connect(Socket, %{"token" => jwt})
+    token = Session.generate_token(account0)
+    {:ok, socket0} = connect(Socket, %{"token" => token})
+    {:ok, socket1} = connect(Socket, %{"token" => token})
 
-    {:ok, jwt, _} = Session.create(account1)
-    {:ok, socket2} = connect(Socket, %{"token" => jwt})
+    token = Session.generate_token(account1)
+    {:ok, socket2} = connect(Socket, %{"token" => token})
 
     id0 = Socket.id(socket0)
     id1 = Socket.id(socket1)
