@@ -2,7 +2,7 @@ defmodule Helix.Account.WS.Channel.AccountTest do
 
   use ExUnit.Case, async: true
 
-  alias Helix.Router.Socket.Player, as: Socket
+  alias Helix.Socket
   alias Helix.Account.Service.API.Session
   alias Helix.Account.WS.Channel.Account, as: Channel
 

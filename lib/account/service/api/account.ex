@@ -2,6 +2,7 @@ defmodule Helix.Account.Service.API.Account do
 
   alias Helix.Account.Controller.Account, as: AccountController
   alias Helix.Account.Model.Account
+  alias Helix.Account.Service.API.Session
 
   @spec create(String.t, String.t, String.t) ::
     {:ok, Account.t}
@@ -54,7 +55,7 @@ defmodule Helix.Account.Service.API.Account do
   end
 
   @spec login(Account.username, Account.password) ::
-    {:ok, Account.t}
+    {:ok, Account.t, Session.token}
     | {:error, reason :: atom}
   @doc """
   Checks if `password` logs into `username`'s account
@@ -72,7 +73,8 @@ defmodule Helix.Account.Service.API.Account do
     account = AccountController.fetch_by_username(username)
 
     if Account.check_password(account, password) do
-      {:ok, account}
+      token = Session.generate_token(account)
+      {:ok, account, token}
     else
       {:error, :notfound}
     end
