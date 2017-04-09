@@ -1,4 +1,4 @@
-defmodule Helix.Router.Socket.Player do
+defmodule Helix.Socket do
 
   use Phoenix.Socket
 
@@ -6,7 +6,7 @@ defmodule Helix.Router.Socket.Player do
 
   transport :websocket, Phoenix.Transports.WebSocket
 
-  channel "requests", Helix.Router.Channel.PlayerRequests
+  channel "requests", Helix.Socket.RequestsChannel
   channel "account:*", Helix.Account.WS.Channel.Account
 
   def connect(%{"token" => token}, socket) do
@@ -29,4 +29,24 @@ defmodule Helix.Router.Socket.Player do
 
   def id(socket),
     do: "session:" <> socket.assigns.session
+end
+
+defmodule Helix.Socket.RequestsChannel do
+
+  use Phoenix.Channel
+
+  alias Helix.Account.WS.Routes, as: Account
+
+  def join(_topic, _message, socket) do
+    # God in the command
+    {:ok, socket}
+  end
+
+  def handle_in(topic = "account." <> _, params, socket) do
+    Account.handle_in(topic, params, socket)
+  end
+
+  def handle_in(_, _, socket) do
+    {:reply, :error, socket}
+  end
 end

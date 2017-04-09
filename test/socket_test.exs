@@ -1,9 +1,9 @@
-defmodule Helix.Router.Socket.PlayerTest do
+defmodule Helix.SocketTest do
 
   use ExUnit.Case, async: true
 
   alias Helix.Account.Controller.Session
-  alias Helix.Router.Socket.Player, as: Socket
+  alias Helix.Socket
 
   alias Helix.Account.Factory, as: AccountFactory
 
