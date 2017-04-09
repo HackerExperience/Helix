@@ -54,7 +54,7 @@ defmodule Helix.Account.Service.API.AccountTest do
       password = "foobar 123 password LetMeIn"
       account = Factory.insert(:account, password: password)
 
-      {:ok, acc} = API.login(account.username, password)
+      {:ok, acc, _token} = API.login(account.username, password)
 
       assert account.account_id == acc.account_id
     end

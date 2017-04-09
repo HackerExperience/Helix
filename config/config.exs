@@ -13,8 +13,9 @@ config :helix,
     Helix.Software.Repo
   ]
 
+default_key = "asdfghjklzxcvbnm,./';[]-=1234567890!"
 config :helix, Helix.Endpoint,
-  secret_key_base: System.get_env("HELIX_ENDPOINT_SECRET_KEY") || "removeme",
+  secret_key_base: System.get_env("HELIX_ENDPOINT_SECRET_KEY") || default_key,
   pubsub: [
     adapter: Phoenix.PubSub.PG2,
     pool_size: 1,
