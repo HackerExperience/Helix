@@ -15,7 +15,7 @@ defmodule Helix.Test.ConnCase do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
 
-      import Helix.HTTPRouter.Helpers
+      import Helix.HTTP.Router.Helpers
 
       # The default endpoint for testing
       @endpoint Helix.Endpoint

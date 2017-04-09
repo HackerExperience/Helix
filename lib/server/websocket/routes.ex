@@ -1,4 +1,4 @@
-defmodule Helix.Server.WS.Routes do
+defmodule Helix.Server.Websocket.Routes do
 
   alias HELF.Router
 

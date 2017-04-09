@@ -1,7 +1,7 @@
 defmodule Helix.Endpoint do
   use Phoenix.Endpoint, otp_app: :helix
 
-  socket "/ws", Helix.Socket
+  socket "/", Helix.Websocket.Socket
 
   plug Plug.Static,
     at: "/",
@@ -19,5 +19,5 @@ defmodule Helix.Endpoint do
     pass: ["*/*"],
     json_decoder: Poison
 
-  plug Helix.HTTPRouter
+  plug Helix.HTTP.Router
 end

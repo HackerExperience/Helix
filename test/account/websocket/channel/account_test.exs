@@ -1,10 +1,10 @@
-defmodule Helix.Account.WS.Channel.AccountTest do
+defmodule Helix.Account.Websocket.Channel.AccountTest do
 
   use ExUnit.Case, async: true
 
-  alias Helix.Socket
+  alias Helix.Websocket.Socket
   alias Helix.Account.Service.API.Session
-  alias Helix.Account.WS.Channel.Account, as: Channel
+  alias Helix.Account.Websocket.Channel.Account, as: Channel
 
   alias Helix.Account.Factory
 

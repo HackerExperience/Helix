@@ -1,9 +1,9 @@
-defmodule Helix.SocketTest do
+defmodule Helix.Websocket.SocketTest do
 
   use ExUnit.Case, async: true
 
   alias Helix.Account.Controller.Session
-  alias Helix.Socket
+  alias Helix.Websocket.Socket
 
   alias Helix.Account.Factory, as: AccountFactory
 
