@@ -3,7 +3,7 @@ defmodule Helix.Account.WS.Channel.AccountTest do
   use ExUnit.Case, async: true
 
   alias Helix.Router.Socket.Player, as: Socket
-  alias Helix.Account.Controller.Session
+  alias Helix.Account.Service.API.Session
   alias Helix.Account.WS.Channel.Account, as: Channel
 
   alias Helix.Account.Factory
@@ -14,8 +14,8 @@ defmodule Helix.Account.WS.Channel.AccountTest do
 
   setup do
     account = Factory.insert(:account)
-    {:ok, jwt, _} = Session.create(account)
-    {:ok, socket} = connect(Socket, %{token: jwt})
+    token = Session.generate_token(account)
+    {:ok, socket} = connect(Socket, %{token: token})
     {:ok, _, socket} = join(socket, "account:" <> account.account_id)
 
     {:ok, account: account, socket: socket}

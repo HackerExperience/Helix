@@ -1,62 +1,66 @@
 defmodule Helix.Account.Controller.Session do
 
-  @behaviour Guardian.Serializer
-
-  alias Helix.Account.Controller.Account, as: AccountController
+  alias Phoenix.Token
   alias Helix.Account.Model.Account
-  alias Helix.Account.Model.BlacklistedToken
-  alias Helix.Account.Model.Session
+  alias Helix.Account.Model.AccountSession
   alias Helix.Account.Repo
 
-  # REVIEW: What is this expecting to receive exactly ? I'll make it temporarily
-  #   just store the account's id
-  @spec for_token(Account.t) :: {:ok, Session.t}
-  def for_token(%Account{account_id: account_id}) when is_binary(account_id),
-    do: {:ok, to_string(account_id)}
-  def for_token(_),
-    do: {:error, "invalid input"}
+  import Ecto.Query, only: [where: 3]
 
-  # Well. i think that this module should not be inside the model folders
-  # if it depends on external data, but let's leave it as is until we fix it
-  @spec from_token(Session.t) :: {:ok, Account.t}
-  def from_token(account_id) do
-    case AccountController.fetch(account_id) do
-      nil ->
-        # FIXME: use a better error message
-        {:error, "notfound"}
-      account ->
-        {:ok, account}
-    end
+  @type token :: String.t
+  @type session :: String.t
+
+  # 1 Week
+  @max_age 7 * 24 * 60 * 60
+
+  @spec generate_token(Account.t) ::
+    token
+  def generate_token(account) do
+    changeset = AccountSession.create(account)
+
+    account_session = Repo.insert!(changeset)
+
+    sign(account_session.session_id)
   end
 
-  @spec create(Account.t) :: {:ok, Session.t, claims :: map}
-  def create(account) do
-    Guardian.encode_and_sign(account, :access)
-  end
-
-  @spec validate(Session.t) ::
-    {:ok, claims :: map}
+  @spec validate_token(token) ::
+    {:ok, Account.t, session}
     | {:error, :unauthorized}
-  def validate(jwt) do
+  def validate_token(token) do
     with \
-      {:ok, claims} <- Guardian.decode_and_verify(jwt),
-      nil <- Repo.get(BlacklistedToken, jwt)
+      {:ok, session} <- verify(token),
+      account_session = %{} <- Repo.get(AccountSession, session)
     do
-      {:ok, claims}
+      account = Repo.preload(account_session, :account).account
+
+      {:ok, account, session}
     else
       _ ->
         {:error, :unauthorized}
     end
   end
 
-  @spec invalidate(Session.t) :: :ok
-  def invalidate(jwt) do
-    with {:ok, claims} <- Guardian.decode_and_verify(jwt) do
-      expiration = DateTime.from_unix!(claims["exp"])
-      changeset = BlacklistedToken.create(jwt, expiration)
-      Repo.insert(changeset, on_conflict: :nothing)
+  @spec invalidate_token(token) :: :ok
+  def invalidate_token(token) do
+    with {:ok, session} <- verify(token) do
+      invalidate_session(session)
     end
 
     :ok
   end
+
+  @spec invalidate_session(session) :: :ok
+  def invalidate_session(session) do
+    AccountSession
+    |> where([s], s.session_id == ^session)
+    |> Repo.delete_all()
+
+    :ok
+  end
+
+  defp sign(session),
+    do: Token.sign(Helix.Endpoint, "player", session)
+
+  defp verify(token),
+    do: Token.verify(Helix.Endpoint, "player", token, max_age: @max_age)
 end

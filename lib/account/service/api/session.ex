@@ -1,27 +1,19 @@
 defmodule Helix.Account.Service.API.Session do
 
   alias Helix.Account.Controller.Session, as: SessionController
-  alias Helix.Account.Model.Account
-  alias Helix.Account.Model.Session
 
-  @spec generate_token(Account.t) :: {Session.t, claims :: map}
-  def generate_token(account) do
-    {:ok, jwt, claims} = SessionController.create(account)
-    {jwt, claims}
-  end
+  @type session :: SessionController.session
+  @type token :: SessionController.token
 
-  @spec validate_token(Session.t) ::
-    {:ok, claims :: map}
-    | {:error, :unauthorized}
-  def validate_token(token) do
-    SessionController.validate(token)
-  end
+  defdelegate generate_token(account),
+    to: SessionController
 
-  @spec invalidate_token(Session.t) :: :ok
-  def invalidate_token(token),
-    do: SessionController.invalidate(token)
+  defdelegate validate_token(token),
+    to: SessionController
 
-  @spec principal(claims :: map) :: String.t
-  def principal(%{"sub" => principal}),
-    do: principal
+  defdelegate invalidate_token(token),
+    to: SessionController
+
+  defdelegate invalidate_session(session),
+    to: SessionController
 end
