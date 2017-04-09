@@ -8,10 +8,3 @@ config :helix, Helix.Account.Repo,
   password: System.get_env("HELIX_DB_PASS") || "postgres",
   hostname: System.get_env("HELIX_DB_HOST") || "localhost",
   types: HELL.PostgrexTypes
-
-config :guardian, Guardian,
-  issuer: "helix",
-  ttl: {1, :days},
-  allowed_algos: ["HS512"],
-  allowed_drift: 2_000,
-  serializer: Helix.Account.Controller.Session

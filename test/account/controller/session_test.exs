@@ -2,67 +2,81 @@ defmodule Helix.Account.Controller.SessionTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
-  alias Helix.Account.Controller.Session, as: SessionController
-  alias Helix.Account.Model.Account
+  alias Helix.Account.Controller.Session
+  alias Helix.Account.Model.AccountSession
+  alias Helix.Account.Repo
 
   alias Helix.Account.Factory
 
-  @moduletag :unit
+  @moduletag :integration
 
-  describe "token generation" do
+  describe "generate_token/1" do
     test "succeeds with valid account" do
-      params = Factory.build(:account)
-      account = Map.merge(params, %{account_id: Random.pk()})
+      account = Factory.insert(:account)
 
-      {:ok, token, claims} = SessionController.create(account)
+      token = Session.generate_token(account)
 
       assert is_binary(token)
-      assert account.account_id == claims["sub"]
-    end
-
-    test "fails with invalid data" do
-      assert {:error, _} = SessionController.create(%{})
-      assert {:error, _} = SessionController.create(%Account{})
-    end
-
-  end
-
-  describe "token validation" do
-    test "validates newly generated token" do
-      account = %Account{account_id: Random.pk()}
-
-      {:ok, token, claims} = SessionController.create(account)
-      assert {:ok, verified_claims} = SessionController.validate(token)
-
-      assert verified_claims == claims
-    end
-
-    test "does not validate expired token" do
-      account = %Account{account_id: Random.pk()}
-      claims = %{"exp": 12_345}
-
-      {:ok, token, _} = Guardian.encode_and_sign(account, :access, claims)
-      assert {:error, :token_expired} = Guardian.decode_and_verify(token)
     end
   end
 
-  describe "token invalidation" do
+  describe "validate_token/1" do
+    test "succeeds with valid token" do
+      account = Factory.insert(:account)
+
+      token = Session.generate_token(account)
+      assert {:ok, _, _} = Session.validate_token(token)
+    end
+
+    test "fails when session was invalidated" do
+      account = Factory.insert(:account)
+
+      token = Session.generate_token(account)
+      Session.invalidate_token(token)
+
+      assert {:error, :unauthorized} == Session.validate_token(token)
+    end
+
+    test "fails when token is invalid" do
+      assert {:error, :unauthorized} == Session.validate_token("foobarbaz")
+    end
+
+    test "returns account and session" do
+      account = Factory.insert(:account)
+
+      token = Session.generate_token(account)
+      {:ok, acc, session} = Session.validate_token(token)
+
+      assert account.account_id == acc.account_id
+      assert is_binary(session)
+      assert Repo.get(AccountSession, session)
+    end
+  end
+
+  describe "invalidate_token/1" do
     test "is idempotent" do
-      account = %Account{account_id: Random.pk()}
-      claims = %{"exp": 12_345}
+      account = Factory.insert(:account)
 
-      {:ok, token, _} = SessionController.create(account)
-      {:ok, exp_token, _} = Guardian.encode_and_sign(account, :access, claims)
+      token = Session.generate_token(account)
 
-      SessionController.invalidate(token)
-      SessionController.invalidate(token)
+      Session.invalidate_token(token)
+      Session.invalidate_token(token)
 
-      SessionController.invalidate(exp_token)
-      SessionController.invalidate(exp_token)
+      assert {:error, :unauthorized} == Session.validate_token(token)
+    end
+  end
 
-      assert {:error, :unauthorized} == SessionController.validate(token)
-      assert {:error, :unauthorized} == SessionController.validate(exp_token)
+  describe "invalidate_session/1" do
+    test "is idempotent" do
+      account = Factory.insert(:account)
+
+      token = Session.generate_token(account)
+      {:ok, _, session} = Session.validate_token(token)
+
+      Session.invalidate_session(session)
+      Session.invalidate_session(session)
+
+      assert {:error, :unauthorized} == Session.validate_token(token)
     end
   end
 end

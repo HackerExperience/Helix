@@ -5,18 +5,39 @@ defmodule Helix.Application do
   import Supervisor.Spec
 
   def start(_type, _args) do
-    port = Application.get_env(:helix, :router_port)
-
     children = [
-      worker(HELF.Broker, []),
-      worker(HELF.Router, [port]),
+      # worker(HELF.Broker, []),
+      supervisor(Helix.Endpoint, []),
       supervisor(Helix.Application.DomainsSupervisor, [])
     ]
 
-    # IE: If broker breaks, restart everything; if Router breaks, restart router
-    # and the domain supervisors; if a domain supervisor breaks, only restart it
-    opts = [strategy: :rest_for_one, name: Helix.Supervisor]
+    validate_token_key()
+
+    opts = [strategy: :one_for_one, name: Helix.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  defp validate_token_key do
+    config = Application.get_env(:helix, Helix.Endpoint)
+    secret_key = config[:secret_key_base]
+
+    # If there is no env set, distillery will pass the env name forward
+    # without any change
+    env_set? = secret_key != "${HELIX_ENDPOINT_SECRET_KEY}"
+
+    unless is_binary(secret_key) and byte_size(secret_key) > 20 and env_set? do
+      raise """
+
+      Helix.Endpoint `secret_key_base` config is not set or the key is too short
+
+      To fix this, set the environment variable `HELIX_ENDPOINT_SECRET_KEY`
+      with the desired key. It should be longer than 20 characters to ensure
+      be secure
+
+      Example:
+      HELIX_ENDPOINT_SECRET_KEY="myVerySeCr3tK3y!!++=" mix run
+      """
+    end
   end
 end
 

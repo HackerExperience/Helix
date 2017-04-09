@@ -9,6 +9,7 @@ defmodule Helix.Mixfile do
 
       elixirc_options: elixirc_options(Mix.env),
       elixirc_paths: elixirc_paths(Mix.env),
+      compilers: Mix.compilers,
 
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -17,7 +18,7 @@ defmodule Helix.Mixfile do
       aliases: aliases(),
       deps: deps(),
 
-      dialyzer: [plt_add_apps: [:mix]],
+      dialyzer: [plt_add_apps: [:mix, :phoenix_pubsub]],
 
       preferred_cli_env: %{
         "test.quick": :test,
@@ -38,14 +39,17 @@ defmodule Helix.Mixfile do
   def application do
     [
       mod: {Helix.Application, []},
-      extra_applications: [:logger],
-      included_applications: [:plug]
+      extra_applications: [:logger, :crypto]
     ]
   end
 
   defp deps do
     [
-      {:distillery, "~>1.2", runtime: :false},
+      {:distillery, "~>1.2", runtime: false},
+
+      {:phoenix, "~> 1.3.0-rc.1", override: true},
+      {:phoenix_pubsub, "~> 1.0"},
+      {:cowboy, "~> 1.0"},
 
       {:ecto, "~> 2.1", override: true},
       {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true},
@@ -54,7 +58,6 @@ defmodule Helix.Mixfile do
       {:poison, "~> 2.0"},
 
       {:comeonin, "~> 2.5"},
-      {:guardian, "~> 0.14"},
       {:timex, "~> 3.0"},
 
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test},
