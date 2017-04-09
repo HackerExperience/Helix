@@ -1,7 +1,7 @@
-defmodule Helix.Account.WS.Routes do
+defmodule Helix.Account.Websocket.Routes do
 
-  alias Helix.Socket
-  alias Helix.Account.WS.Controller.Account, as: AccountController
+  alias Helix.Websocket.Socket
+  alias Helix.Account.Websocket.Controller.Account, as: AccountController
 
   # Note that this is somewhat a hack to allow us to break our request-response
   # channel into several parts (one on each domain). So this code will be

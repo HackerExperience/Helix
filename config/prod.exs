@@ -7,5 +7,6 @@ config :logger,
 
 config :helix, Helix.Endpoint,
   server: true,
+  url: [host: "${HELIX_ENDPOINT_URL}", port: 80],
   secret_key_base: "${HELIX_ENDPOINT_SECRET_KEY}",
   debug_errors: false

@@ -1,4 +1,4 @@
-defmodule Helix.Account.WS.Controller.Account do
+defmodule Helix.Account.Websocket.Controller.Account do
 
   alias Helix.Account.Service.API.Session
 

@@ -1,8 +1,8 @@
-defmodule Helix.Account.WS.RoutesTest do
+defmodule Helix.Account.Websocket.RoutesTest do
 
   use ExUnit.Case, async: true
 
-  alias Helix.Socket
+  alias Helix.Websocket.Socket
   alias Helix.Account.Service.API.Session
 
   alias Helix.Account.Factory

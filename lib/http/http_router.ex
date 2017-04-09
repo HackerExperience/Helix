@@ -1,4 +1,4 @@
-defmodule Helix.HTTPRouter do
+defmodule Helix.HTTP.Router do
 
   use Phoenix.Router
 
@@ -10,7 +10,7 @@ defmodule Helix.HTTPRouter do
     plug :accepts, ["json"]
   end
 
-  scope "/api/v1", as: :api_v1 do
+  scope "/v1", as: :api_v1 do
     pipe_through [:api]
 
     scope "/account" do
