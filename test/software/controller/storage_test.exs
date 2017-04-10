@@ -1,14 +1,12 @@
 defmodule Helix.Software.Controller.StorageTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Model.Storage
 
   alias Helix.Software.Factory
-
-  @moduletag :integration
 
   # REVIEW: Is this is a good test name, it's weird?
   test "creating always succeeds" do

@@ -1,6 +1,6 @@
 defmodule Helix.Hardware.Controller.ComponentTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Controller.Component, as: ComponentController
@@ -8,8 +8,6 @@ defmodule Helix.Hardware.Controller.ComponentTest do
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
-
-  @moduletag :integration
 
   describe "fetching" do
     test "succeeds by id" do

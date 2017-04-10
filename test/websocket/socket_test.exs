@@ -1,6 +1,6 @@
 defmodule Helix.Websocket.SocketTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Helix.Account.Controller.Session
   alias Helix.Websocket.Socket

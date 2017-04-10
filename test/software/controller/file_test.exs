@@ -1,6 +1,6 @@
 defmodule Helix.Software.Controller.FileTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.File, as: FileController
@@ -9,8 +9,6 @@ defmodule Helix.Software.Controller.FileTest do
   alias Helix.Software.Repo
 
   alias Helix.Software.Factory
-
-  @moduletag :integration
 
   def generate_params do
     storage = Factory.insert(:storage)
@@ -177,6 +175,9 @@ defmodule Helix.Software.Controller.FileTest do
       file0 = Factory.insert(:file)
       similarities = Map.take(file0, [:path, :software_type, :storage])
       file1 = Factory.insert(:file, similarities)
+
+      # FIXME: this is thanks to how ExMachina works
+      file1 = Repo.update! File.update_changeset(file1, similarities)
 
       assert {:error, :file_exists} == FileController.rename(file1, file0.name)
     end

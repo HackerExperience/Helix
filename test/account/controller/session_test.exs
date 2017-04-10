@@ -1,14 +1,12 @@
 defmodule Helix.Account.Controller.SessionTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Helix.Account.Controller.Session
   alias Helix.Account.Model.AccountSession
   alias Helix.Account.Repo
 
   alias Helix.Account.Factory
-
-  @moduletag :integration
 
   describe "generate_token/1" do
     test "succeeds with valid account" do
