@@ -1,11 +1,9 @@
 defmodule Helix.Account.Service.API.AccountTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Helix.Account.Model.Account
-  alias Helix.Account.Repo
   alias Helix.Account.Service.API.Account, as: API
-  alias Helix.Account.Service.API.Session, as: SessionAPI
 
   alias Helix.Account.Factory
 
@@ -17,8 +15,7 @@ defmodule Helix.Account.Service.API.AccountTest do
         password: "Would you very kindly let me in, please, good sir"
       }
 
-      assert {:ok, acc = %Account{}} = API.create(params)
-      Repo.delete!(acc) # FIXME: Ecto.Sandbox || on_exit
+      assert {:ok, %Account{}} = API.create(params)
     end
 
     test "returns changeset when input is invalid" do
@@ -37,8 +34,7 @@ defmodule Helix.Account.Service.API.AccountTest do
       username = "good_username1"
       password = "Would you very kindly let me in, please, good sir"
 
-      assert {:ok, acc = %Account{}} = API.create(email, username, password)
-      Repo.delete!(acc) # FIXME: Ecto.Sandbox || on_exit
+      assert {:ok, %Account{}} = API.create(email, username, password)
     end
 
     test "returns changeset when input is invalid" do
@@ -53,14 +49,11 @@ defmodule Helix.Account.Service.API.AccountTest do
   describe "login/2" do
     test "succeeds when username and password are correct" do
       password = "foobar 123 password LetMeIn"
-      account =
-        Factory.insert(:account)
-        |> Account.update_changeset(%{password: password})
-        |> Repo.update!()
+      account = Factory.insert(:account, password: password)
 
-      assert {:ok, token} = API.login(account.username, password)
-      assert {:ok, claims} = SessionAPI.validate_token(token)
-      assert account.account_id == claims["sub"]
+      {:ok, acc, _token} = API.login(account.username, password)
+
+      assert account.account_id == acc.account_id
     end
 
     test "fails when provided with incorrect password" do
@@ -71,23 +64,9 @@ defmodule Helix.Account.Service.API.AccountTest do
 
     test "cannot use email as login credential" do
       password = "foobar 123 password LetMeIn"
-      account =
-        Factory.insert(:account)
-        |> Account.update_changeset(%{password: password})
-        |> Repo.update!()
+      account = Factory.insert(:account, password: password)
 
       assert {:error, _} = API.login(account.email, password)
     end
-  end
-
-  test "logout/1 is idempotent" do
-    password = "foobar 123 password LetMeIn"
-    account = Factory.insert(:account, %{password: password})
-    {:ok, token} = API.login(account.username, password)
-
-    API.logout(token)
-    API.logout(token)
-
-    assert {:error, _} = SessionAPI.validate_token(token)
   end
 end

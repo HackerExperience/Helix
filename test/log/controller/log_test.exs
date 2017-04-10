@@ -1,13 +1,11 @@
 defmodule Helix.Log.Controller.LogTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Log.Controller.Log, as: Controller
   alias Helix.Log.Repo
   alias Helix.Log.Model.Log
-
-  @moduletag :integration
 
   # FIXME: this is bad, create a factory and remove this
   defp create_log(params \\ []) do

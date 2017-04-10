@@ -1,6 +1,6 @@
 defmodule Helix.Software.Service.Event.DecryptorTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Event
@@ -11,8 +11,6 @@ defmodule Helix.Software.Service.Event.DecryptorTest do
   alias Helix.Software.Repo
 
   alias Helix.Software.Factory
-
-  @moduletag :integration
 
   describe "when decryption is global" do
     test "on conclusion, removes the crypto version of the target file" do

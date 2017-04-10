@@ -1,6 +1,6 @@
 defmodule Helix.Account.Controller.AccountTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Comeonin.Bcrypt
   alias HELL.TestHelper.Random
@@ -11,8 +11,6 @@ defmodule Helix.Account.Controller.AccountTest do
   alias Helix.Account.Repo
 
   alias Helix.Account.Factory
-
-  @moduletag :integration
 
   defp params do
     %{

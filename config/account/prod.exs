@@ -10,6 +10,3 @@ config :helix, Helix.Account.Repo,
   password: "${HELIX_DB_PASS}",
   hostname: "${HELIX_DB_HOST}",
   database: prefix <> "_prod_account"
-
-config :guardian, Guardian,
-  secret_key: "${HELIX_JWT_KEY}"

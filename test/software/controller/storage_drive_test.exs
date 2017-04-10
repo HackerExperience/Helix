@@ -1,13 +1,11 @@
 defmodule Helix.Software.Controller.StorageDriveTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.StorageDrive, as: Controller
 
   alias Helix.Software.Factory
-
-  @moduletag :integration
 
   test "linking succeeds with a valid storage" do
     drive_id = Random.pk()

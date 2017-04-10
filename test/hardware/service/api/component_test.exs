@@ -1,6 +1,6 @@
 defmodule Helix.Hardware.Service.API.ComponentTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Service.API.Component, as: API
@@ -9,8 +9,6 @@ defmodule Helix.Hardware.Service.API.ComponentTest do
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
-
-  @moduletag :integration
 
   describe "create_from_spec/1" do
     test "succeeds with valid input" do

@@ -1,6 +1,6 @@
 defmodule Helix.Software.Service.Event.EncryptorTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Event
@@ -11,8 +11,6 @@ defmodule Helix.Software.Service.Event.EncryptorTest do
   alias Helix.Software.Repo
 
   alias Helix.Software.Factory
-
-  @moduletag :integration
 
   describe "when process is completed" do
     test "creates a new key file on storage that binds to target_file" do
