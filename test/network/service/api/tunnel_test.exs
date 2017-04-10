@@ -1,6 +1,6 @@
 defmodule Helix.Network.Service.TunnelTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   # TODO: Write tests (depends on factory)
 end

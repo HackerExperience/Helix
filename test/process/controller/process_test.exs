@@ -1,5 +1,6 @@
 defmodule Helix.Process.Controller.ProcessTest do
-  use ExUnit.Case
+
+  use Helix.Test.IntegrationCase
 
   alias Helix.Process.Controller.Process, as: ProcessController
   alias Helix.Process.Model.Process, as: ProcessModel
@@ -7,8 +8,6 @@ defmodule Helix.Process.Controller.ProcessTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Process.Factory
-
-  @moduletag :integration
 
   test "creating succeeds with valid params" do
     params = %{

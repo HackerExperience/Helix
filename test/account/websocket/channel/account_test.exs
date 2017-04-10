@@ -1,6 +1,6 @@
 defmodule Helix.Account.Websocket.Channel.AccountTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Helix.Websocket.Socket
   alias Helix.Account.Service.API.Session

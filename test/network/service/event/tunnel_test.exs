@@ -1,6 +1,6 @@
 defmodule Helix.Network.Service.Event.TunnelTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Event
@@ -8,8 +8,6 @@ defmodule Helix.Network.Service.Event.TunnelTest do
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
-
-  @moduletag :integration
 
   @internet Repo.get!(Network, "::")
 

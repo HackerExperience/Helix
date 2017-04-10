@@ -1,12 +1,10 @@
 defmodule Helix.NPC.Controller.NPCTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.NPC.Controller.NPC, as: NPCController
   alias Helix.NPC.Model.NPC
-
-  @moduletag :integration
 
   # FIXME: add factories as soon as this get more fields
 

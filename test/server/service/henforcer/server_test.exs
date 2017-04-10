@@ -1,6 +1,6 @@
 defmodule Helix.Server.Service.Henforcer.ServerTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Server.Controller.Server, as: ServerController

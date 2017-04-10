@@ -1,9 +1,8 @@
 defmodule Helix.Account.Service.API.AccountTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Helix.Account.Model.Account
-  alias Helix.Account.Repo
   alias Helix.Account.Service.API.Account, as: API
 
   alias Helix.Account.Factory
@@ -16,8 +15,7 @@ defmodule Helix.Account.Service.API.AccountTest do
         password: "Would you very kindly let me in, please, good sir"
       }
 
-      assert {:ok, acc = %Account{}} = API.create(params)
-      Repo.delete!(acc) # FIXME: Ecto.Sandbox || on_exit
+      assert {:ok, %Account{}} = API.create(params)
     end
 
     test "returns changeset when input is invalid" do
@@ -36,8 +34,7 @@ defmodule Helix.Account.Service.API.AccountTest do
       username = "good_username1"
       password = "Would you very kindly let me in, please, good sir"
 
-      assert {:ok, acc = %Account{}} = API.create(email, username, password)
-      Repo.delete!(acc) # FIXME: Ecto.Sandbox || on_exit
+      assert {:ok, %Account{}} = API.create(email, username, password)
     end
 
     test "returns changeset when input is invalid" do
