@@ -1,6 +1,6 @@
 defmodule Helix.Hardware.Service.API.MotherboardTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Service.API.Motherboard, as: API
@@ -9,8 +9,6 @@ defmodule Helix.Hardware.Service.API.MotherboardTest do
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
-
-  @moduletag :integration
 
   describe "fetch!/1" do
     test "succeeds by component" do

@@ -1,6 +1,6 @@
 defmodule Helix.Hardware.Controller.MotherboardTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
   alias Helix.Hardware.Model.ComponentType
@@ -9,8 +9,6 @@ defmodule Helix.Hardware.Controller.MotherboardTest do
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
-
-  @moduletag :integration
 
   defp component_of_type(type) do
     specialized_component = Factory.insert(type)

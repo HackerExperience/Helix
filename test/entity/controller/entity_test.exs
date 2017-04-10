@@ -1,6 +1,6 @@
 defmodule Helix.Entity.Controller.EntityTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Entity.Controller.Entity, as: EntityController
@@ -17,8 +17,6 @@ defmodule Helix.Entity.Controller.EntityTest do
       entity_type: e.entity_type
     }
   end
-
-  @moduletag :integration
 
   describe "entity creation" do
     test "succeeds with valid params" do

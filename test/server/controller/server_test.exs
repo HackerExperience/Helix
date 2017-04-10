@@ -1,6 +1,6 @@
 defmodule Helix.Server.Controller.ServerTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Server.Controller.Server, as: ServerController
@@ -9,8 +9,6 @@ defmodule Helix.Server.Controller.ServerTest do
   alias Helix.Server.Repo
 
   alias Helix.Server.Factory
-
-  @moduletag :integration
 
   # FIXME: add more tests
 

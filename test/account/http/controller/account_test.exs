@@ -1,7 +1,9 @@
 defmodule Helix.Account.HTTP.Controller.AccountTest do
 
   use Helix.Test.ConnCase
+  use Helix.Test.IntegrationCase
 
+  alias HELL.TestHelper.Random
   alias Helix.Account.Service.API.Session
 
   alias Helix.Account.Factory
@@ -10,7 +12,7 @@ defmodule Helix.Account.HTTP.Controller.AccountTest do
     test "creates account when input is valid", context do
       password = Burette.Internet.password()
       params = %{
-        "username" => Burette.Internet.username(),
+        "username" => Random.username(),
         "email" => Burette.Internet.email(),
         "password" => password
       }

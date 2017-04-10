@@ -1,14 +1,12 @@
 defmodule Helix.Software.Controller.FileTextTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.FileText, as: FileTextController
   alias Helix.Software.Model.FileText
 
   alias Helix.Software.Factory
-
-  @moduletag :integration
 
   defp generate_params do
     %{file_id: file_id} = Factory.insert(:file)

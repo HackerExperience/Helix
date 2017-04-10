@@ -1,6 +1,6 @@
 defmodule Helix.Software.Controller.CryptoKeyTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.CryptoKey, as: CryptoKeyController
@@ -8,8 +8,6 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
   alias Helix.Software.Model.CryptoKey.InvalidatedEvent
 
   alias Helix.Software.Factory
-
-  @moduletag :integration
 
   describe "create/3" do
     test "will create a file for the key on storage" do

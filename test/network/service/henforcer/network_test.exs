@@ -1,6 +1,6 @@
 defmodule Helix.Network.Service.Henforcer.NetworkTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.IntegrationCase
 
   # TODO: Write tests (depends on factory)
 
