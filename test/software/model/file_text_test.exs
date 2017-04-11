@@ -1,9 +1,9 @@
-defmodule Helix.Software.Model.FileTextTest do
+defmodule Helix.Software.Model.TextFileTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Software.Model.FileText
+  alias Helix.Software.Model.TextFile
   alias Helix.Software.Model.Storage
 
   @moduletag :unit
@@ -21,18 +21,18 @@ defmodule Helix.Software.Model.FileTextTest do
       name = Random.username()
       path = generate_path()
 
-      changeset = FileText.create(storage, name, path, "content")
+      changeset = TextFile.create(storage, name, path, "content")
 
       assert changeset.valid?
     end
   end
 
   describe "update_contents/2" do
-    test "when provided with a file_text and contents, succeeds" do
-      file_text = %FileText{}
+    test "when provided with a text_file and contents, succeeds" do
+      text_file = %TextFile{}
       contents = Random.string(max: 100)
 
-      changeset = FileText.update_contents(file_text, contents)
+      changeset = TextFile.update_contents(text_file, contents)
 
       assert changeset.valid?
     end

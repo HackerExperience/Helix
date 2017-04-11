@@ -1,11 +1,11 @@
-defmodule Helix.Software.Controller.FileTextTest do
+defmodule Helix.Software.Controller.TextFileTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Controller.File, as: FileController
-  alias Helix.Software.Controller.FileText, as: FileTextController
-  alias Helix.Software.Model.FileText
+  alias Helix.Software.Controller.TextFile, as: TextFileController
+  alias Helix.Software.Model.TextFile
 
   alias Helix.Software.Factory
 
@@ -23,37 +23,37 @@ defmodule Helix.Software.Controller.FileTextTest do
       path = generate_path()
       contents = Random.string(max: 100)
 
-      result = FileTextController.create(storage, name, path, contents)
+      result = TextFileController.create(storage, name, path, contents)
 
-      assert {:ok, file_text} = result
-      assert FileController.fetch(file_text.file_id)
+      assert {:ok, text_file} = result
+      assert FileController.fetch(text_file.file_id)
     end
   end
 
   describe "fetch!/1" do
     test "succeeds by id" do
-      file_text = Factory.insert(:file_text)
-      assert %FileText{} = FileTextController.fetch!(file_text.file_id)
+      text_file = Factory.insert(:text_file)
+      assert %TextFile{} = TextFileController.fetch!(text_file.file_id)
     end
 
     test "succeeds by file struct" do
-      file_text = Factory.insert(:file_text)
-      assert %FileText{} = FileTextController.fetch!(file_text.file)
+      text_file = Factory.insert(:text_file)
+      assert %TextFile{} = TextFileController.fetch!(text_file.file)
     end
 
     test "raises Ecto.NoResultsError when file doesn't exists" do
       assert_raise Ecto.NoResultsError, fn ->
-        refute FileTextController.fetch!(Random.pk())
+        refute TextFileController.fetch!(Random.pk())
       end
     end
   end
 
   describe "update_contents/2" do
     test "succeeds with valid input" do
-      file_text = Factory.insert(:file_text)
-      result =  FileTextController.update_contents(file_text, "example text")
+      text_file = Factory.insert(:text_file)
+      result =  TextFileController.update_contents(text_file, "example text")
 
-      assert {:ok, %FileText{}} = result
+      assert {:ok, %TextFile{}} = result
     end
   end
 end

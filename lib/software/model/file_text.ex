@@ -1,4 +1,4 @@
-defmodule Helix.Software.Model.FileText do
+defmodule Helix.Software.Model.TextFile do
 
   use Ecto.Schema
 
@@ -23,7 +23,7 @@ defmodule Helix.Software.Model.FileText do
   @software_type :text
 
   @primary_key false
-  schema "file_texts" do
+  schema "text_files" do
     field :file_id, PK,
       primary_key: true
 
@@ -80,13 +80,13 @@ defmodule Helix.Software.Model.FileText do
   defmodule Query do
 
     alias Helix.Software.Model.File
-    alias Helix.Software.Model.FileText
+    alias Helix.Software.Model.TextFile
 
     import Ecto.Query, only: [where: 3]
 
     @spec from_file(Ecto.Queryable.t, File.t | File.id) ::
       Ecto.Queryable.t
-    def from_file(query \\ FileText, file_or_file_id)
+    def from_file(query \\ TextFile, file_or_file_id)
     def from_file(query, file = %File{}),
       do: from_file(query, file.file_id)
     def from_file(query, file_id),
