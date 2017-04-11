@@ -149,4 +149,10 @@ defmodule Helix.Network.Controller.Tunnel do
 
     [event]
   end
+
+  def connections_on_tunnels_between(gateway, endpoint) do
+    gateway
+    |> Connection.Query.from_gateway_to_endpoint(endpoint)
+    |> Repo.all()
+  end
 end
