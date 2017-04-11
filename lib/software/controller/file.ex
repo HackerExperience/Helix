@@ -9,15 +9,16 @@ defmodule Helix.Software.Controller.File do
 
   @spec create(File.creation_params) ::
     {:ok, File.t}
-    | {:error, :file_exists | Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> File.create_changeset()
     |> Repo.insert()
-    |> parse_errors()
   end
 
-  @spec fetch(HELL.PK.t) :: File.t | nil
+  @spec fetch(HELL.PK.t) ::
+    File.t
+    | nil
   def fetch(file_id),
     do: Repo.get(File, file_id)
 
@@ -33,47 +34,40 @@ defmodule Helix.Software.Controller.File do
 
   @spec update(File.t, File.update_params) ::
     {:ok, File.t}
-    | {:error, :file_exists | Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
   def update(file, params) do
     file
     |> File.update_changeset(params)
     |> Repo.update()
-    |> parse_errors()
   end
 
-  @spec copy(File.t, path :: String.t, storage_id :: HELL.PK.t) ::
+  @spec copy(File.t, Storage.t, path :: String.t) ::
     {:ok, File.t}
-    | {:error, :file_exists | Ecto.Changeset.t}
-  def copy(file, path, storage_id) do
+    | {:error, Ecto.Changeset.t}
+  def copy(file, storage, path) do
     # TODO: allow copying to the same folder
-    params = %{
-      name: file.name,
-      path: path,
-      file_size: file.file_size,
-      software_type: file.software_type,
-      storage_id: storage_id}
-    create(params)
+    file
+    |> File.copy(storage, %{path: path})
+    |> Repo.insert()
   end
 
   @spec move(File.t, path :: String.t) ::
     {:ok, File.t}
-    | {:error, :file_exists | Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
   def move(file, path) do
     file
     |> File.update_changeset(%{path: path})
     |> Repo.update()
-    |> parse_errors()
   end
 
   @spec rename(File.t, String.t) ::
     {:ok, File.t}
-    | {:error, :file_exists | Ecto.Changeset.t}
+    | {:error, Ecto.Changeset.t}
   def rename(file, file_name) do
     params = %{name: file_name}
     file
     |> File.update_changeset(params)
     |> Repo.update()
-    |> parse_errors()
   end
 
   @spec encrypt(File.t, pos_integer) ::
@@ -94,11 +88,9 @@ defmodule Helix.Software.Controller.File do
     |> Repo.update()
   end
 
-  @spec delete(File.t) :: no_return
+  @spec delete(File.t | File.id) :: :ok
   def delete(file = %File{}),
     do: delete(file.file_id)
-
-  @spec delete(File.id) :: no_return
   def delete(file_id) do
     File
     |> where([f], f.file_id == ^file_id)
@@ -136,18 +128,5 @@ defmodule Helix.Software.Controller.File do
     |> select([fm], {fm.software_module, fm.module_version})
     |> Repo.all()
     |> :maps.from_list()
-  end
-
-  @spec parse_errors({:ok | :error, Ecto.Changeset.t}) ::
-    {:ok, Ecto.Changeset.t}
-    | {:error, :file_exists | Ecto.Changeset.t}
-  defp parse_errors({:ok, changeset}),
-    do: {:ok, changeset}
-  defp parse_errors({:error, changeset}) do
-    if Keyword.get(changeset.errors, :full_path) do
-      {:error, :file_exists}
-    else
-      {:error, changeset}
-    end
   end
 end

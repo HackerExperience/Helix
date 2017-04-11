@@ -90,6 +90,20 @@ defmodule Helix.Software.Model.File do
     |> changeset(params)
   end
 
+  @spec copy(t, Storage.t, map) :: Ecto.Changeset.t
+  def copy(file, storage, params) do
+    # dropping :file_id to avoid Ecto thinking this is an update
+    base =
+      file
+      |> Map.take(__schema__(:fields))
+      |> Map.drop([:file_id, :storage_id, :full_path])
+
+    __MODULE__
+    |> struct(base)
+    |> changeset(params)
+    |> put_assoc(:storage, storage)
+  end
+
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
