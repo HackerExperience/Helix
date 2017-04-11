@@ -12,8 +12,8 @@ defmodule Helix.Software.Factory do
     |> Map.put(:storage, build(:storage))
   end
 
-  def file_text_factory do
-    %Helix.Software.Model.FileText{
+  def text_file_factory do
+    %Helix.Software.Model.TextFile{
       file: build(:file),
       contents: Burette.Color.name()
     }

@@ -1,4 +1,4 @@
-defmodule Helix.Software.Model.FileText do
+defmodule Helix.Software.Model.TextFile do
 
   use Ecto.Schema
 
@@ -23,7 +23,7 @@ defmodule Helix.Software.Model.FileText do
   @software_type :text
 
   @primary_key false
-  schema "file_texts" do
+  schema "text_files" do
     field :file_id, PK,
       primary_key: true
 
@@ -39,7 +39,7 @@ defmodule Helix.Software.Model.FileText do
   @spec create(Storage.t, String.t, String.t, String.t) ::
     Ecto.Changeset.t
   @doc """
-  Creates a `file text`  on `storage`.
+  Creates a `text file`  on `storage`.
   """
   def create(storage = %Storage{}, name, path, contents) do
     file = generate_file(storage, name, path)
@@ -52,7 +52,7 @@ defmodule Helix.Software.Model.FileText do
   @spec update_contents(t | Ecto.Changeset.t, String.t) ::
     Ecto.Changeset.t
   @doc """
-  Updates `file text`  contents.
+  Updates `text file`  contents.
   """
   def update_contents(struct, contents),
     do: changeset(struct, %{contents: contents})
@@ -65,7 +65,7 @@ defmodule Helix.Software.Model.FileText do
   end
 
   defp generate_file(storage, name, path) do
-    # REVIEW: Text files should have a size? If so, we need to check if the
+    # REVIEW: text files should have a size? If so, we need to check if the
     # storage can store them
     params = %{
       name: name,
@@ -80,13 +80,13 @@ defmodule Helix.Software.Model.FileText do
   defmodule Query do
 
     alias Helix.Software.Model.File
-    alias Helix.Software.Model.FileText
+    alias Helix.Software.Model.TextFile
 
     import Ecto.Query, only: [where: 3]
 
     @spec from_file(Ecto.Queryable.t, File.t | File.id) ::
       Ecto.Queryable.t
-    def from_file(query \\ FileText, file_or_file_id)
+    def from_file(query \\ TextFile, file_or_file_id)
     def from_file(query, file = %File{}),
       do: from_file(query, file.file_id)
     def from_file(query, file_id),
