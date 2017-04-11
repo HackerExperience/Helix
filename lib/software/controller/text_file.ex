@@ -9,7 +9,7 @@ defmodule Helix.Software.Controller.TextFile do
     {:ok, TextFile.t}
     | {:error, Ecto.Changeset.t}
   @doc """
-  Creates a `file text` on `storage`
+  Creates a `text file` on `storage`
   """
   def create(storage, name, path, contents) do
     storage
@@ -21,7 +21,7 @@ defmodule Helix.Software.Controller.TextFile do
     TextFile.t
     | nil
   @doc """
-  Fetches a `file text` by their id or their file
+  Fetches a `text file` by their id or their file
   """
   def fetch!(%File{file_id: id}),
     do: fetch!(id)
@@ -32,7 +32,7 @@ defmodule Helix.Software.Controller.TextFile do
     {:ok, TextFile.t}
     | {:error, Ecto.Changeset.t}
   @doc """
-  Updates `file text` contents
+  Updates `text file` contents
   """
   def update_contents(text_file, contents) do
     text_file

@@ -39,7 +39,7 @@ defmodule Helix.Software.Model.TextFile do
   @spec create(Storage.t, String.t, String.t, String.t) ::
     Ecto.Changeset.t
   @doc """
-  Creates a `file text`  on `storage`.
+  Creates a `text file`  on `storage`.
   """
   def create(storage = %Storage{}, name, path, contents) do
     file = generate_file(storage, name, path)
@@ -52,7 +52,7 @@ defmodule Helix.Software.Model.TextFile do
   @spec update_contents(t | Ecto.Changeset.t, String.t) ::
     Ecto.Changeset.t
   @doc """
-  Updates `file text`  contents.
+  Updates `text file`  contents.
   """
   def update_contents(struct, contents),
     do: changeset(struct, %{contents: contents})
@@ -65,7 +65,7 @@ defmodule Helix.Software.Model.TextFile do
   end
 
   defp generate_file(storage, name, path) do
-    # REVIEW: Text files should have a size? If so, we need to check if the
+    # REVIEW: text files should have a size? If so, we need to check if the
     # storage can store them
     params = %{
       name: name,
