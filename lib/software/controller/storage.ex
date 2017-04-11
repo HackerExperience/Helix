@@ -1,9 +1,10 @@
 defmodule Helix.Software.Controller.Storage do
 
   alias Helix.Software.Model.Storage
+  alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Repo
 
-  import Ecto.Query, only: [where: 3]
+  import Ecto.Query, only: [join: 5, where: 3]
 
   @spec create() :: {:ok, Storage.t} | {:error, Ecto.Changeset.t}
   def create do
@@ -22,5 +23,13 @@ defmodule Helix.Software.Controller.Storage do
     |> Repo.delete_all()
 
     :ok
+  end
+
+  @spec get_storage_from_hdd(HELL.PK.t) :: Storage.t | nil
+  def get_storage_from_hdd(hdd_id) do
+    Storage
+    |> join(:inner, [s], sd in StorageDrive, s.storage_id == sd.storage_id)
+    |> where([s, sd], sd.drive_id == ^hdd_id)
+    |> Repo.one()
   end
 end
