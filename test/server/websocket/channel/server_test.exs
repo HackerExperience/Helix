@@ -190,4 +190,10 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     @tag :pending
     test "fetches logs on the destination"
   end
+
+  @tag :pending
+  test "server is notified when a process is created"
+
+  @tag :pending
+  test "server is notified when a process is completed"
 end

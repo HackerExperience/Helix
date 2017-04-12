@@ -147,11 +147,25 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   end
 
   @spec notify(ProcessModel.t, :completed) :: :ok
-  defp notify(process, circumstance) do
+  # FIXME: This looks awful. We should improve the readability (and reduce the
+  #   bloat) of this function and also _return_ the events so they are only
+  #   emitted inside a transaction (along with the record update)
+  defp notify(process, :completed) do
+    event = %ProcessModel.ProcessConclusionEvent{
+      gateway_id: process.gateway_id,
+      target_id: process.target_server_id
+    }
+
+    events = process_events(process, :completed)
+
+    Event.emit([event| events])
+  end
+
+  @spec process_events(ProcessModel.t, :completed) :: [struct]
+  defp process_events(process, circumstance) do
     process.process_data
     |> ProcessType.event(process, circumstance)
     |> List.wrap()
-    |> Enum.each(&Event.emit/1)
   end
 
   @doc false
