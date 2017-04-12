@@ -1,4 +1,4 @@
-defmodule Helix.Service.API.Process do
+defmodule Helix.Process.Service.API.Process do
 
   alias Helix.Event
   alias Helix.Process.Controller.Process, as: Controller
