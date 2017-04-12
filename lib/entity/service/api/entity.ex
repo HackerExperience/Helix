@@ -39,7 +39,7 @@ defmodule Helix.Entity.Service.API.Entity do
 
   @spec get_entity_id(struct) :: term
   @doc """
-  Returns the ID if an entity or entity-equivalent record
+  Returns the ID of an entity or entity-equivalent record
   """
   def get_entity_id(entity) do
     # TODO: Use a protocol ?

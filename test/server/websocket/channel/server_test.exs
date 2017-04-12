@@ -3,7 +3,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Websocket.Socket
-  # alias Helix.Server.Websocket.Channel.Server, as: Channel
 
   alias Helix.Server.Factory, as: ServerFactory
   alias Helix.Network.Factory, as: NetworkFactory
@@ -177,5 +176,18 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert is_map(file_map)
     assert Enum.all?(Map.keys(file_map), &is_binary/1)
     assert expected_file_ids == file_ids
+  end
+
+  describe "get_processes" do
+    @tag :pending
+    test "fetches all processes running on destination"
+
+    @tag :pending
+    test "fetches all processes targeting destination"
+  end
+
+  describe "get_logs" do
+    @tag :pending
+    test "fetches logs on the destination"
   end
 end
