@@ -3,6 +3,7 @@ defmodule Helix.Network.Service.Henforcer.Network do
   alias Helix.Hardware.Controller.Component
   alias Helix.Hardware.Controller.Motherboard
   alias Helix.Server.Controller.Server
+  alias Helix.Network.Controller.Tunnel, as: TunnelController
 
   @spec node_connected?(HELL.PK.t, HELL.PK.t) ::
     boolean
@@ -20,5 +21,16 @@ defmodule Helix.Network.Service.Henforcer.Network do
       _ ->
         false
     end
+  end
+
+  @spec has_ssh_connection?(HELL.PK.t, HELL.PK.t) ::
+    boolean
+  def has_ssh_connection?(gateway, destination) do
+    connections_between = TunnelController.connections_on_tunnels_between(
+      gateway,
+      destination)
+    connection_types = MapSet.new(connections_between, &(&1.connection_type))
+
+    MapSet.member?(connection_types, "ssh")
   end
 end

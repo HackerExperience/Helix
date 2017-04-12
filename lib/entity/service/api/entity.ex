@@ -1,5 +1,6 @@
 defmodule Helix.Entity.Service.API.Entity do
 
+  alias Helix.Account.Model.Account
   alias Helix.Entity.Controller.Entity, as: EntityController
   alias Helix.Entity.Model.Entity
 
@@ -34,5 +35,19 @@ defmodule Helix.Entity.Service.API.Entity do
   @spec unlink_server(HELL.PK.t) :: :ok | {:error, reason :: term}
   def unlink_server(server) do
     EntityController.unlink_server(server)
+  end
+
+  @spec get_entity_id(struct) :: term
+  @doc """
+  Returns the ID of an entity or entity-equivalent record
+  """
+  def get_entity_id(entity) do
+    # TODO: Use a protocol ?
+    case entity do
+      %Entity{entity_id: id} ->
+        id
+      %Account{account_id: id} ->
+        id
+    end
   end
 end

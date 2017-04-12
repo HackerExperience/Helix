@@ -8,6 +8,7 @@ defmodule Helix.Websocket.Socket do
 
   channel "requests", Helix.Websocket.RequestsChannel
   channel "account:*", Helix.Account.Websocket.Channel.Account
+  channel "server:*", Helix.Server.Websocket.Channel.Server
 
   def connect(%{"token" => token}, socket) do
     case Session.validate_token(token) do
