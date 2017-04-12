@@ -6,6 +6,7 @@ defmodule Helix.Event.Dispatcher do
   alias Helix.Network
   alias Helix.Process
   alias Helix.Software
+  alias Helix.Server
 
   ##############################################################################
   # Network events
@@ -20,6 +21,13 @@ defmodule Helix.Event.Dispatcher do
   event Process.Model.Process.ProcessCreatedEvent,
     Process.Service.Event.TOP,
     :process_created
+  event Process.Model.Process.ProcessCreatedEvent,
+    Server.Websocket.Channel.Server,
+    :event_process_created
+
+  event Process.Model.Process.ProcessConclusionEvent,
+    Server.Websocket.Channel.Server,
+    :event_process_conclusion
 
   ##############################################################################
   # Software events

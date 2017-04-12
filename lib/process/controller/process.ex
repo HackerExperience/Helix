@@ -23,7 +23,8 @@ defmodule Helix.Process.Controller.Process do
     with {:ok, process} <- Repo.insert(changeset) do
       event = %ProcessCreatedEvent{
         process_id: process.process_id,
-        gateway_id: process.gateway_id
+        gateway_id: process.gateway_id,
+        target_id: process.target_server_id
       }
 
       {:ok, process, [event]}

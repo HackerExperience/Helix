@@ -18,7 +18,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Server.Service.API.Server, as: ServerAPI
   alias Helix.Server.Service.Henforcer.Server, as: Henforcer
 
-  intercept ["notification"]
+  # Events
+  alias Helix.Process.Model.Process.ProcessCreatedEvent
+  alias Helix.Process.Model.Process.ProcessConclusionEvent
 
   @doc false
   def join(topic, message, socket)
@@ -199,19 +201,44 @@ defmodule Helix.Server.Websocket.Channel.Server do
     {:reply, {:ok, return}, socket}
   end
 
-  @doc false
-  # We'll use this function in the future to filter and transform notification
-  # events
-  def handle_out("notification", notification, socket) do
-    push socket, "notification", notification
+  def notify(server_id, :processes_changed, _params) do
+    # TODO: Use a view to always follow an standardized format
+    notification = %{
+      event: "processes_changed",
+      data: %{
+        server_id: server_id
+      }
+    }
 
-    {:noreply, socket}
+    topic = "server:" <> server_id
+
+    Helix.Endpoint.broadcast(topic, "notification", notification)
   end
 
-  def notify(server_id, notification) do
-    Helix.Endpoint.broadcast(
-      "server:" <> server_id,
-      "notification",
-      notification)
+  @doc false
+  def event_process_created(
+    %ProcessCreatedEvent{gateway_id: gateway, target_id: gateway})
+  do
+    notify(gateway, :processes_changed, %{})
+  end
+
+  def event_process_created(
+    %ProcessCreatedEvent{gateway_id: gateway, target_id: target})
+  do
+    notify(gateway, :processes_changed, %{})
+    notify(target, :processes_changed, %{})
+  end
+
+  @doc false
+  def event_process_conclusion(
+    %ProcessConclusionEvent{gateway_id: gateway, target_id: gateway})
+  do
+    notify(gateway, :processes_changed, %{})
+  end
+  def event_process_conclusion(
+    %ProcessConclusionEvent{gateway_id: gateway, target_id: target})
+  do
+    notify(gateway, :processes_changed, %{})
+    notify(target, :processes_changed, %{})
   end
 end
