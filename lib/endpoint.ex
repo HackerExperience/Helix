@@ -3,6 +3,11 @@ defmodule Helix.Endpoint do
 
   socket "/", Helix.Websocket.Socket
 
+  plug Corsica,
+    origins: Application.get_env(:helix, Helix.Endpoint)[:allowed_cors],
+    allow_headers: ["content-type", "x-request-id"],
+    expose_headers: ~w(X-Request-Id)
+
   plug Plug.Static,
     at: "/",
     from: :helix,
