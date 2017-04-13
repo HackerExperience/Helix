@@ -8,7 +8,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Network.Service.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Entity.Service.API.Entity, as: EntityAPI
-  alias Helix.Log.Controller.Log, as: LogController
+  alias Helix.Log.Service.API.Log, as: LogAPI
   alias Helix.Process.Controller.Process, as: ProcessController
   alias Helix.Process.Service.API.Process, as: ProcessAPI
   alias Helix.Hardware.Service.API.Component, as: ComponentAPI
@@ -143,17 +143,14 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   # TODO: Paginate
   def handle_in("get_logs", _message, socket) do
-    server = socket.assigns.servers.destination
+    server_id = socket.assigns.servers.destination.server_id
 
-    # FIXME: Log API
-    # TODO: Ensure chronological order
-    logs = LogController.find(server_id: server)
+    logs = LogAPI.get_logs_on_server(server_id)
 
     # HACK: FIXME: This belongs to a viewable protocol. We're doing it as it
     #   is now so it works before we do the real work (?)
     formatted_logs = Enum.map(logs, fn log ->
-      # REVIEW: How is crypto going to work on logs ?
-      Map.take(log, [:log_id, :message, :crypto_version, :updated_at])
+      Map.take(log, [:log_id, :message, :inserted_at])
     end)
 
     {:reply, {:ok, formatted_logs}, socket}

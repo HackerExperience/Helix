@@ -1,10 +1,13 @@
 defmodule Helix.Log.Model.Revision do
+  @moduledoc false
+
+  # This record is opaque and should only be used on the Log domain to apply the
+  # stack mechanics of log forging
 
   use Ecto.Schema
 
   alias HELL.PK
   alias Helix.Log.Model.Log
-  alias Helix.Log.Model.LogTouch
 
   import Ecto.Changeset
 
@@ -20,11 +23,10 @@ defmodule Helix.Log.Model.Revision do
   @type creation_params :: %{
     :entity_id => PK.t,
     :message => String.t,
-    :log_id => PK.t,
     optional(:forge_version) => pos_integer | nil
   }
 
-  @creation_fields ~w/entity_id message forge_version log_id/a
+  @creation_fields ~w/entity_id message forge_version/a
 
   @primary_key false
   @ecto_autogenerate {:revision_id, {PK, :pk_for, [:log_revision]}}
@@ -32,6 +34,7 @@ defmodule Helix.Log.Model.Revision do
     field :revision_id, PK,
       primary_key: true
 
+    field :log_id, PK
     field :entity_id, PK
 
     field :message, :string
@@ -40,35 +43,58 @@ defmodule Helix.Log.Model.Revision do
     belongs_to :log, Log,
       foreign_key: :log_id,
       references: :log_id,
-      type: PK
+      define_field: false
   end
 
-  @spec create_changeset(creation_params) ::Ecto.Changeset.t
-  def create_changeset(params) do
-    %__MODULE__{}
+  @spec create(Log.t, PK.t, String.t, pos_integer) ::
+    Ecto.Changeset.t
+  def create(log, entity, message, forge) do
+    params = %{
+      entity_id: entity,
+      message: message,
+      forge_version: forge
+    }
+
+    changeset = changeset(%__MODULE__{}, params)
+    message = get_change(changeset, :message)
+
+    log = Log.update_changeset(log, %{message: message})
+
+    put_assoc(changeset, :log, log)
+  end
+
+  @spec changeset(t | Ecto.Changeset.t, %{entity_id: PK.t, message: String.t, forge_version: pos_integer}) ::
+    Ecto.Changeset.t
+  def changeset(struct, params) do
+    struct
     |> cast(params, @creation_fields)
     |> validate_required([:entity_id, :message])
     |> validate_number(:forge_version, greater_than: 0)
-    |> prepare_changes(fn changeset ->
-      # REVIEW: This callback is executed even if this is the revision that
-      #   created the log entry
+  end
 
-      message = get_field(changeset, :message)
-      log_id = get_field(changeset, :log_id)
-      entity_id = get_field(changeset, :entity_id)
+  defmodule Query do
 
-      # The Log entity should be properly updated to reflect the lastest
-      # revision
-      changeset
-      |> apply_changes()
-      |> Ecto.assoc(:log)
-      |> changeset.repo.update_all(set: [message: message])
+    alias Ecto.Queryable
+    alias HELL.PK
+    alias Helix.Log.Model.Log
+    alias Helix.Log.Model.Revision
 
-      %LogTouch{}
-      |> LogTouch.changeset(%{log_id: log_id, entity_id: entity_id})
-      |> changeset.repo.insert(on_conflict: :nothing)
+    import Ecto.Query
 
-      changeset
-    end)
+    @spec from_log(Queryable.t, Log.t | PK.t) ::
+      Queryable.t
+    def from_log(query \\ Revision, log_or_id)
+    def from_log(query, %Log{log_id: id}),
+      do: from_log(query, id)
+    def from_log(query, id),
+      do: where(query, [r], r.log_id == ^id)
+
+    @spec last(Queryable.t, non_neg_integer) ::
+      Queryable.t
+    def last(query \\ Revision, n) do
+      query
+      |> order_by([r], desc: r.revision_id)
+      |> limit(^n)
+    end
   end
 end
