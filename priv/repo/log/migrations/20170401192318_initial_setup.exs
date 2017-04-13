@@ -23,6 +23,8 @@ defmodule Helix.Log.Repo.Migrations.InitialSetup do
 
       add :message, :string, null: false
       add :forge_version, :integer
+
+      timestamps(type: :utc_datetime, updated_at: false)
     end
 
     create index(:logs, [:server_id, :inserted_at])

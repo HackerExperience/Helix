@@ -3,10 +3,26 @@ defmodule Helix.Event.Dispatcher do
 
   use HELF.Event
 
+  alias Helix.Log
   alias Helix.Network
   alias Helix.Process
   alias Helix.Software
   alias Helix.Server
+
+  ##############################################################################
+  # Log events
+  ##############################################################################
+  event Log.Model.Log.LogCreatedEvent,
+    Server.Websocket.Channel.Server,
+    :event_log_created
+
+  event Log.Model.Log.LogModifiedEvent,
+    Server.Websocket.Channel.Server,
+    :event_log_modified
+
+  event Log.Model.Log.LogDeletedEvent,
+    Server.Websocket.Channel.Server,
+    :event_log_deleted
 
   ##############################################################################
   # Network events

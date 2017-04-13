@@ -52,7 +52,7 @@ defmodule Helix.Mixfile do
       {:cowboy, "~> 1.0"},
       {:corsica, "~> 0.5"},
 
-      {:ecto, "~> 2.1", override: true},
+      {:ecto, github: "elixir-ecto/ecto", ref: "945e154", override: true},
       {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true},
 
       {:helf, github: "HackerExperience/HELF"},
