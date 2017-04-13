@@ -50,6 +50,7 @@ defmodule Helix.Mixfile do
       {:phoenix, "~> 1.3.0-rc.1", override: true},
       {:phoenix_pubsub, "~> 1.0"},
       {:cowboy, "~> 1.0"},
+      {:corsica, "~> 0.5"},
 
       {:ecto, "~> 2.1", override: true},
       {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true},
