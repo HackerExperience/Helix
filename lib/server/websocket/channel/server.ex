@@ -8,6 +8,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Network.Service.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Entity.Service.API.Entity, as: EntityAPI
+  alias Helix.Log.Model.Log.LogCreatedEvent
+  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Log.Model.Log.LogDeletedEvent
   alias Helix.Log.Service.API.Log, as: LogAPI
   alias Helix.Process.Controller.Process, as: ProcessController
   alias Helix.Process.Service.API.Process, as: ProcessAPI
@@ -200,13 +203,21 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   def notify(server_id, :processes_changed, _params) do
     # TODO: Use a view to always follow an standardized format
-    notification = %{
+    notify(server_id, %{
       event: "processes_changed",
-      data: %{
-        server_id: server_id
-      }
-    }
+      data: %{}
+    })
+  end
 
+  def notify(server_id, :logs_changed, _params) do
+    # TODO: Use a view to always follow an standardized format
+    notify(server_id, %{
+      event: "logs_changed",
+      data: %{}
+    })
+  end
+
+  defp notify(server_id, notification) do
     topic = "server:" <> server_id
 
     Helix.Endpoint.broadcast(topic, "notification", notification)
@@ -218,7 +229,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   do
     notify(gateway, :processes_changed, %{})
   end
-
   def event_process_created(
     %ProcessCreatedEvent{gateway_id: gateway, target_id: target})
   do
@@ -238,4 +248,16 @@ defmodule Helix.Server.Websocket.Channel.Server do
     notify(gateway, :processes_changed, %{})
     notify(target, :processes_changed, %{})
   end
+
+  @doc false
+  def event_log_created(%LogCreatedEvent{server_id: server}),
+    do: notify(server, :logs_changed, %{})
+
+  @doc false
+  def event_log_modified(%LogModifiedEvent{server_id: server}),
+    do: notify(server, :logs_changed, %{})
+
+  @doc false
+  def event_log_deleted(%LogDeletedEvent{server_id: server}),
+    do: notify(server, :logs_changed, %{})
 end

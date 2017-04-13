@@ -196,4 +196,13 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   @tag :pending
   test "server is notified when a process is completed"
+
+  @tag :pending
+  test "server is notified when a log is created"
+
+  @tag :pending
+  test "server is notified when a log is modified"
+
+  @tag :pending
+  test "server is notified when a log is deleted"
 end

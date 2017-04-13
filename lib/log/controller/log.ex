@@ -5,6 +5,9 @@ defmodule Helix.Log.Controller.Log do
   alias Ecto.Queryable
   alias Helix.Event
   alias Helix.Log.Model.Log
+  alias Helix.Log.Model.Log.LogCreatedEvent
+  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Log.Model.Log.LogDeletedEvent
   alias Helix.Log.Model.LogTouch
   alias Helix.Log.Model.Revision
   alias Helix.Log.Repo
@@ -31,7 +34,7 @@ defmodule Helix.Log.Controller.Log do
         |> Repo.insert()
       end)
 
-    events = []
+    events = [%LogCreatedEvent{server_id: server}]
 
     {multi, events}
   end
@@ -72,7 +75,7 @@ defmodule Helix.Log.Controller.Log do
         |> Repo.insert(on_conflict: :nothing)
       end)
 
-    events = []
+    events = [%LogModifiedEvent{server_id: log.server_id}]
 
     {multi, events}
   end
@@ -94,7 +97,7 @@ defmodule Helix.Log.Controller.Log do
         [_] ->
           # Forged log, should be deleted
           with {:ok, _} <- Repo.delete(log) do
-            events = []
+            events = [%LogDeletedEvent{server_id: log.server_id}]
             {:ok, {:event, events}}
           end
 
@@ -104,7 +107,7 @@ defmodule Helix.Log.Controller.Log do
             changeset = Log.update_changeset(log, %{message: m}),
             {:ok, _} <- Repo.update(changeset)
           do
-            events = []
+            events = [%LogModifiedEvent{server_id: log.server_id}]
             {:ok, {:event, events}}
           end
       end
