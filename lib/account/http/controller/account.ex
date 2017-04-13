@@ -33,10 +33,16 @@ defmodule Helix.Account.HTTP.Controller.Account do
 
   def login(conn, %{"username" => username, "password" => password}) do
     case AccountAPI.login(username, password) do
-      {:ok, _account, token} ->
+      {:ok, account, token} ->
+
+        result =
+          account
+          |> Map.take([:account_id])
+          |> Map.put(:token, token)
+
         conn
         |> put_status(:ok)
-        |> json(%{token: token})
+        |> json(result)
       _ ->
         conn
         |> put_status(:not_found)
