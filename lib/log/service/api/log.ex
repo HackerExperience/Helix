@@ -22,12 +22,12 @@ defmodule Helix.Log.Service.API.Log do
   alias Helix.Log.Model.Log
   alias Helix.Log.Repo
 
-  @opaque server_id :: LogController.server_id
-  @opaque entity_id :: LogController.entity_id
+  @type server_id :: LogController.server_id
+  @type entity_id :: LogController.entity_id
 
   @spec create(server_id, entity_id, String.t) ::
-    {:ok, %{log: Log.t, events: [Event.t]}}
-    | {:error, :log, Ecto.Changeset.t, map}
+    {:ok, %{log: Log.t, log_touch: any, events: [Event.t]}}
+    | {:error, :log | :log_touch, Ecto.Changeset.t, map}
   @doc """
   Creates a new log linked to `entity` on `server` with `message` as content.
   """
@@ -77,6 +77,14 @@ defmodule Helix.Log.Service.API.Log do
     end)
     |> Repo.transaction()
   end
+
+  @spec fetch(Log.id) ::
+    Log.t | nil
+  @doc """
+  Fetches a log
+  """
+  def fetch(id),
+    do: Repo.one(LogController.fetch(id))
 
   @spec get_logs_on_server(server_id, Keyword.t) ::
     [Log.t]

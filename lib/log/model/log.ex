@@ -7,14 +7,14 @@ defmodule Helix.Log.Model.Log do
 
   import Ecto.Changeset
 
-  @opaque id :: PK.t
+  @type id :: PK.t
 
   @type t :: %__MODULE__{
     log_id: PK.t,
     server_id: PK.t,
     entity_id: PK.t,
     message: String.t,
-    crypto_version: non_neg_integer | nil,
+    crypto_version: pos_integer | nil,
     revisions: [Revision.t],
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
@@ -24,13 +24,13 @@ defmodule Helix.Log.Model.Log do
     :server_id => PK.t,
     :entity_id => PK.t,
     :message => String.t,
-    optional(:crypto_version) => non_neg_integer | nil,
-    optional(:forge_version) => non_neg_integer | nil
+    optional(:crypto_version) => pos_integer | nil,
+    optional(:forge_version) => pos_integer | nil
   }
 
   @type update_params :: %{
-    optional(:crypto_version) => non_neg_integer | nil,
-    optional(:message) => non_neg_integer | nil
+    optional(:crypto_version) => pos_integer | nil,
+    optional(:message) => pos_integer | nil
   }
 
   @creation_fields ~w/server_id entity_id message/a
@@ -59,7 +59,8 @@ defmodule Helix.Log.Model.Log do
     timestamps()
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Ecto.Changeset.t
   def create_changeset(params) do
     revision = Revision.changeset(%Revision{}, params)
 

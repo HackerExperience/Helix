@@ -11,19 +11,13 @@ defmodule Helix.Log.Model.Revision do
 
   import Ecto.Changeset
 
-  @type t :: %__MODULE__{
-    revision_id: PK.t,
-    entity_id: PK.t,
-    log_id: PK.t,
-    message: String.t,
-    forge_version: pos_integer | nil,
-    log: Log.t
-  }
+  @type t :: %__MODULE__{}
 
   @type creation_params :: %{
     :entity_id => PK.t,
     :message => String.t,
-    optional(:forge_version) => pos_integer | nil
+    optional(:forge_version) => pos_integer | nil,
+    optional(any) => any
   }
 
   @creation_fields ~w/entity_id message forge_version/a
@@ -44,11 +38,13 @@ defmodule Helix.Log.Model.Revision do
       foreign_key: :log_id,
       references: :log_id,
       define_field: false
+
+    timestamps(type: :utc_datetime, updated_at: false)
   end
 
-  @spec create(Log.t, PK.t, String.t, pos_integer) ::
+  @spec create(Log.t, PK.t, String.t, pos_integer | nil) ::
     Ecto.Changeset.t
-  def create(log, entity, message, forge) do
+  def create(log, entity, message, forge \\ nil) do
     params = %{
       entity_id: entity,
       message: message,
@@ -63,7 +59,7 @@ defmodule Helix.Log.Model.Revision do
     put_assoc(changeset, :log, log)
   end
 
-  @spec changeset(t | Ecto.Changeset.t, %{entity_id: PK.t, message: String.t, forge_version: pos_integer}) ::
+  @spec changeset(t | Ecto.Changeset.t, creation_params) ::
     Ecto.Changeset.t
   def changeset(struct, params) do
     struct
@@ -93,7 +89,8 @@ defmodule Helix.Log.Model.Revision do
       Queryable.t
     def last(query \\ Revision, n) do
       query
-      |> order_by([r], desc: r.revision_id)
+      # TODO: Use revision id to order (and remove inserted_at)
+      |> order_by([r], desc: r.inserted_at)
       |> limit(^n)
     end
   end

@@ -9,8 +9,8 @@ defmodule Helix.Log.Controller.Log do
   alias Helix.Log.Model.Revision
   alias Helix.Log.Repo
 
-  @opaque server_id :: HELL.PK.t
-  @opaque entity_id :: HELL.PK.t
+  @type server_id :: HELL.PK.t
+  @type entity_id :: HELL.PK.t
 
   @spec create(server_id, entity_id, String.t, pos_integer | nil) ::
     {Multi.t, [Event.t]}
@@ -22,7 +22,15 @@ defmodule Helix.Log.Controller.Log do
       forge_version: forge_version
     }
 
-    multi = Multi.insert(Multi.new(), :log, Log.create_changeset(params))
+    multi =
+      Multi.new()
+      |> Multi.insert(:log, Log.create_changeset(params))
+      |> Multi.run(:log_touch, fn %{log: log} ->
+        log
+        |> LogTouch.create(entity)
+        |> Repo.insert()
+      end)
+
     events = []
 
     {multi, events}
