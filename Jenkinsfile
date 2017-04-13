@@ -18,39 +18,34 @@ node('elixir') {
   }
 }
 
-parallel (
-  'Build [test]': {
-    node('elixir') {
-      stage('Build [test]') {
-        step([$class: 'WsCleanup'])
+node('elixir') {
+  stage('Build [test]') {
+    step([$class: 'WsCleanup'])
 
-        unstash 'source'
+    unstash 'source'
 
-        withEnv (['MIX_ENV=test']) {
-          sh 'mix compile'
-        }
-
-        stash 'build-test'
-      }
+    withEnv (['MIX_ENV=test']) {
+      sh 'mix compile'
     }
-  },
-  'Build [prod]': {
-    node('elixir') {
-      stage('Build [prod]') {
-        step([$class: 'WsCleanup'])
 
-        unstash 'source'
-
-        withEnv (['MIX_ENV=prod']) {
-          sh 'mix compile'
-          sh 'mix release --env=prod --warnings-as-errors'
-        }
-
-        stash 'build-prod'
-      }
-    }
+    stash 'build-test'
   }
-)
+}
+
+node('elixir') {
+  stage('Build [prod]') {
+    step([$class: 'WsCleanup'])
+
+    unstash 'source'
+
+    withEnv (['MIX_ENV=prod']) {
+      sh 'mix compile'
+      sh 'mix release --env=prod --warnings-as-errors'
+    }
+
+    stash 'build-prod'
+  }
+}
 
 parallel (
   'Lint': {
