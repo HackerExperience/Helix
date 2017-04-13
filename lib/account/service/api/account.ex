@@ -54,6 +54,9 @@ defmodule Helix.Account.Service.API.Account do
     AccountController.create(params)
   end
 
+  def fetch(id),
+    do: Helix.Account.Repo.get(Account, id)
+
   @spec login(Account.username, Account.password) ::
     {:ok, Account.t, Session.token}
     | {:error, reason :: atom}

@@ -20,7 +20,7 @@ defmodule Helix.Hardware.Model.NetworkConnection do
 
   @primary_key false
   @ecto_autogenerate {
-    :network_conection_id,
+    :network_connection_id,
     {PK, :pk_for, [:hardware_network_connection]}
   }
   schema "network_connections" do
@@ -40,7 +40,7 @@ defmodule Helix.Hardware.Model.NetworkConnection do
       on_delete: :nilify_all
   end
 
-  @spec create_changeset(%{}) :: Ecto.Changeset.t
+  @spec create_changeset(map) :: Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, [:network_id])
@@ -48,11 +48,11 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     |> changeset(params)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{}) :: Ecto.Changeset.t
+  @spec update_changeset(t | Ecto.Changeset.t, map) :: Ecto.Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{}) :: Ecto.Changeset.t
+  @spec changeset(t | Ecto.Changeset.t, map) :: Ecto.Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:ip, :downlink, :uplink])

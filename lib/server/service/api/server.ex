@@ -58,4 +58,8 @@ defmodule Helix.Server.Service.API.Server do
   def detach(server) do
     ServerController.detach(server)
   end
+
+  def delete(server) do
+    Helix.Server.Repo.delete(server)
+  end
 end

@@ -3,11 +3,19 @@ defmodule Helix.Event.Dispatcher do
 
   use HELF.Event
 
+  alias Helix.Account
   alias Helix.Log
   alias Helix.Network
   alias Helix.Process
   alias Helix.Software
   alias Helix.Server
+
+  ##############################################################################
+  # Account events
+  ##############################################################################
+  event Account.Model.Account.AccountCreatedEvent,
+    Account.Service.Event.Account,
+    :account_create
 
   ##############################################################################
   # Log events

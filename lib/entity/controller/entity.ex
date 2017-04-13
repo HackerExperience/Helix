@@ -63,7 +63,9 @@ defmodule Helix.Entity.Controller.Entity do
     :ok
   end
 
-  @spec link_component(Entity.t, HELL.PK.t) :: :ok | {:error, Ecto.Changeset.t}
+  @spec link_component(Entity.t, HELL.PK.t) ::
+    {:ok, any}
+    | {:error, Ecto.Changeset.t}
   def link_component(%Entity{entity_id: id}, component) do
     params = %{entity_id: id, component_id: component}
     changeset = EntityComponent.create_changeset(params)
@@ -80,7 +82,9 @@ defmodule Helix.Entity.Controller.Entity do
     :ok
   end
 
-  @spec link_server(Entity.t, HELL.PK.t) :: :ok | {:error, Ecto.Changeset.t}
+  @spec link_server(Entity.t, HELL.PK.t) ::
+    {:ok, term}
+    | {:error, Ecto.Changeset.t}
   def link_server(%Entity{entity_id: id}, server) do
     params = %{entity_id: id, server_id: server}
     changeset = EntityServer.create_changeset(params)

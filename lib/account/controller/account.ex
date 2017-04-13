@@ -1,6 +1,8 @@
 defmodule Helix.Account.Controller.Account do
 
+  alias Helix.Event
   alias Helix.Account.Model.Account
+  alias Helix.Account.Model.Account.AccountCreatedEvent
   alias Helix.Account.Model.AccountSetting
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
@@ -10,9 +12,18 @@ defmodule Helix.Account.Controller.Account do
   @spec create(Account.creation_params) ::
     {:ok, Account.t} | {:error, Ecto.Changeset.t}
   def create(params) do
-    params
-    |> Account.create_changeset()
-    |> Repo.insert()
+    changeset = Account.create_changeset(params)
+
+    case Repo.insert(changeset) do
+      {:ok, account} ->
+        # FIXME: The internal API should not emit events
+        event = %AccountCreatedEvent{account_id: account.account_id}
+        Event.emit(event)
+
+        {:ok, account}
+      error ->
+        error
+    end
   end
 
   @spec fetch(Account.id) :: Account.t | nil

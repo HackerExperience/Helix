@@ -23,12 +23,15 @@ defmodule Helix.Account.Controller.AccountTest do
   describe "creation" do
     test "succeeds with valid params" do
       params = %{
-      username: Random.username(),
-      email: Burette.Internet.email(),
-      password: Burette.Internet.password()
-    }
+        username: Random.username(),
+        email: Burette.Internet.email(),
+        password: Burette.Internet.password()
+      }
 
       assert {:ok, _} = AccountController.create(params)
+
+      # HACK: workaround for the flow event
+      :timer.sleep(100)
     end
 
     test "fails when email is already in use" do
