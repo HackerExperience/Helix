@@ -1,13 +1,22 @@
-defmodule Helix.Process.Service.Local.Top.Manager do
+defmodule Helix.Process.Service.Local.TOP.Manager do
+  @moduledoc false
 
-  alias Helix.Process.Service.Local.Top.Supervisor
+  alias Helix.Process.Service.Local.TOP.Supervisor
 
   # TODO: Replace this with a distributed alternative. Maybe using PubSub
 
+  @opaque server_id :: HELL.PK.t
+
+  @doc false
   def start_link do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+    Registry.start_link(:unique, __MODULE__)
   end
 
+  @spec prepare_top(server_id) ::
+    Supervisor.on_start_child
+  @doc """
+  Fetches or starts a TOP process for `gateway`
+  """
   def prepare_top(gateway) do
     pid = get(gateway)
 
@@ -18,42 +27,24 @@ defmodule Helix.Process.Service.Local.Top.Manager do
     end
   end
 
-  @spec put(HELL.PK.t, pid) ::
-    :ok
-  @doc false
-  def put(gateway, top_server),
-    do: GenServer.cast(__MODULE__, {:put, {gateway, top_server}})
-
-  @spec get(HELL.PK.t) ::
-    pid | nil
-  def get(gateway),
-    do: GenServer.call(__MODULE__, {:get, gateway})
-
-  @doc false
-  def init(_) do
-    {:ok, {%{}, %{}}}
+  @spec get(server_id) ::
+    pid
+    | nil
+  @doc """
+  Fetches the pid of the process running the TOP for the specified `gateway`
+  """
+  def get(gateway) do
+    case Registry.lookup(__MODULE__, gateway) do
+      [{pid, _}] ->
+        pid
+      [] ->
+        nil
+    end
   end
 
+  @spec register(server_id) ::
+    any
   @doc false
-  def handle_cast({:put, {gateway, top_server}}, {name_to_pid, pid_to_name}) do
-    Process.monitor(top_server)
-
-    name_to_pid = Map.put(name_to_pid, gateway, top_server)
-    pid_to_name = Map.put(pid_to_name, top_server, gateway)
-
-    {:noreply, {name_to_pid, pid_to_name}}
-  end
-
-  @doc false
-  def handle_call({:get, gateway}, _from, state = {name_to_pid, _}) do
-    {:reply, Map.get(name_to_pid, gateway), state}
-  end
-
-  @doc false
-  def handle_info({:DOWN, _, :process, pid, _}, {name_to_pid, pid_to_name}) do
-    {gateway, pid_to_name} = Map.pop(pid_to_name, pid)
-    name_to_pid = Map.delete(name_to_pid, gateway)
-
-    {:noreply, {name_to_pid, pid_to_name}}
-  end
+  def register(gateway),
+    do: Registry.register(__MODULE__, gateway, [])
 end

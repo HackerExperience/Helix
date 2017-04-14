@@ -15,7 +15,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
   alias Helix.Process.Model.Process, as: ProcessModel
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.ProcessType
-  alias Helix.Process.Service.Local.Top.Manager
+  alias Helix.Process.Service.Local.TOP.Manager
 
   import HELL.MacroHelpers
 
@@ -192,7 +192,7 @@ defmodule Helix.Process.Controller.TableOfProcesses do
 
       # TODO: enqueue request to fetch the "minimum" of each process
 
-      Manager.put(server_id, self())
+      Manager.register(server_id)
 
       {:ok, state, @hibernate_after}
     else

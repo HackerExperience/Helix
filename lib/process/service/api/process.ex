@@ -5,7 +5,7 @@ defmodule Helix.Process.Service.API.Process do
   alias Helix.Process.Controller.TableOfProcesses
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
-  alias Helix.Process.Service.Local.Top.Manager
+  alias Helix.Process.Service.Local.TOP.Manager
 
   # FIXME: this is not a good interface but i am too tired to adequate it right
   #   now
