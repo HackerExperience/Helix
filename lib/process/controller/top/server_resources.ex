@@ -154,4 +154,42 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
         |> :maps.from_list()
     }
   end
+
+  def sum_process(server_resources, process = %Changeset{}) do
+    allocated = Changeset.get_field(process, :allocated)
+    network_id = Changeset.get_field(process, :network_id)
+
+    net = if network_id do
+      net_alloc = Map.take(allocated, [:uplink, :downlink])
+      sum_net_alloc = &Map.merge(&1, net_alloc, fn _, v1, v2 -> v1 + v2 end)
+      Map.update(server_resources.net, network_id, net_alloc, sum_net_alloc)
+    else
+      server_resources.net
+    end
+
+    %{
+      server_resources|
+        cpu: server_resources.cpu + allocated.cpu,
+        ram: server_resources.ram + allocated.ram,
+        net: net
+    }
+  end
+
+  @spec sum(t, t) ::
+    t
+  def sum(_resources_a, _resources_b) do
+    %__MODULE__{}
+  end
+
+  @spec sub(t, t) ::
+    t
+  def sub(_resources_a, _resources_b) do
+    %__MODULE__{}
+  end
+
+  @spec negatives(t) ::
+    list
+  def negatives(_resources) do
+    []
+  end
 end
