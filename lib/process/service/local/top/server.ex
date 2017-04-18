@@ -6,6 +6,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
 
   use GenServer
 
+  alias Helix.Event
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.Model.Process
   alias Helix.Process.Service.Local.TOP.Domain
@@ -15,6 +16,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
 
   @type server_id :: HELL.PK.t
   @type process_id :: HELL.PK.t
+  @type process :: Process.t
 
   @enforce_keys [:gateway, :domain]
   defstruct [:gateway, :domain]
@@ -25,25 +27,25 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     GenServer.start_link(__MODULE__, [gateway])
   end
 
-  @spec priority(pid, process_id, 0..5) ::
+  @spec priority(pid, process, 0..5) ::
     :ok
   def priority(pid, process, priority) when priority in 0..5 do
     GenServer.cast(pid, {:priority, process, priority})
   end
 
-  @spec pause(pid, process_id) ::
+  @spec pause(pid, process) ::
     :ok
   def pause(pid, process) do
     GenServer.cast(pid, {:pause, process})
   end
 
-  @spec resume(pid, process_id) ::
+  @spec resume(pid, process) ::
     :ok
   def resume(pid, process) do
     GenServer.cast(pid, {:resume, process})
   end
 
-  @spec kill(pid, process_id) ::
+  @spec kill(pid, process) ::
     :ok
   def kill(pid, process) do
     GenServer.cast(pid, {:kill, process})
@@ -69,6 +71,70 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     end
   end
 
+  @doc false
+  def handle_cast({:priority, process, priority}, state) do
+    if belongs_to_the_server?(process, state) do
+      Domain.priority(state.domain, process.process_id, priority)
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:pause, process}, state) do
+    if belongs_to_the_server?(process, state) do
+      Domain.pause(state.domain, process.process_id)
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:resume, process}, state) do
+    if belongs_to_the_server?(process, state) do
+      Domain.resume(state.domain, process.process_id)
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:kill, process}, state) do
+    if belongs_to_the_server?(process, state) do
+      Domain.kill(state.domain, process.process_id)
+    end
+
+    {:noreply, state}
+  end
+
+  @doc false
+  def handle_info({:top, :instructions, instructions}, state) do
+    # If the brick hits the fan, it's better to just crash and try again
+    {:ok, _} = Repo.transaction fn ->
+      Enum.each(instructions, &execute_repo_instruction/1)
+    end
+
+    Enum.each(instructions, &execute_post_instruction/1)
+
+    {:noreply, state}
+  end
+
+  defp execute_repo_instruction({:delete, record}),
+    do: Repo.delete!(record)
+  defp execute_repo_instruction({:update, record}),
+    do: Repo.update!(record)
+  defp execute_repo_instruction({:create, record}),
+    do: Repo.insert!(record)
+  defp execute_repo_instruction(_),
+    do: :ok
+
+  defp execute_post_instruction({:event, event}),
+    do: Event.emit(event)
+  defp execute_post_instruction(_),
+    do: :ok
+
+  defp belongs_to_the_server?(%Process{gateway_id: g}, %{gateway: g}),
+    do: true
+  defp belongs_to_the_server?(%Process{}, %{}),
+    do: false
+
   @spec get_resources(server_id) ::
     {:ok, ServerResources.t}
     | {:error, atom}
@@ -90,8 +156,6 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     else
       reason when is_atom(reason) ->
         {:error, reason}
-      _ ->
-        {:error, :internal}
     end
   end
 

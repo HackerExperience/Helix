@@ -13,10 +13,18 @@ defmodule Helix.Process.Factory do
     defstruct []
   end
 
+  # TODO: delete this one too
   defimpl ProcessType, for: DummyProcessType do
     def dynamic_resources(_),
       do: []
+    def conclusion(_, process) do
+      process =
+        process
+        |> Ecto.Changeset.change()
+        |> Map.put(:action, :delete)
 
+      {process, []}
+    end
     def event(_, _, _),
       do: []
   end

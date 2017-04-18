@@ -1,3 +1,5 @@
+# TODO: Delete this ?
+
 defmodule Helix.Process.TestHelper.ProcessTypeExample do
 
   defstruct []
@@ -5,6 +7,14 @@ defmodule Helix.Process.TestHelper.ProcessTypeExample do
   defimpl Helix.Process.Model.Process.ProcessType do
     def dynamic_resources(_),
       do: [:cpu, :dlk, :ulk]
+    def conclusion(_, process) do
+      process =
+        process
+        |> Ecto.Changeset.change()
+        |> Map.put(:action, :delete)
+
+      {process, []}
+    end
     def event(_, _, _),
       do: []
   end
@@ -17,6 +27,14 @@ defmodule Helix.Process.TestHelper.StaticProcessTypeExample do
   defimpl Helix.Process.Model.Process.ProcessType do
     def dynamic_resources(_),
       do: []
+    def conclusion(_, process) do
+      process =
+        process
+        |> Ecto.Changeset.change()
+        |> Map.put(:action, :delete)
+
+      {process, []}
+    end
     def event(_, _, _),
       do: []
   end

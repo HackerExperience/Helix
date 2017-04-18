@@ -2,10 +2,10 @@ defmodule Helix.Process.Service.API.Process do
 
   alias Helix.Event
   alias Helix.Process.Controller.Process, as: Controller
-  alias Helix.Process.Controller.TableOfProcesses
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
   alias Helix.Process.Service.Local.TOP.Manager
+  alias Helix.Process.Service.Local.TOP.Server, as: TOP
 
   # FIXME: this is not a good interface but i am too tired to adequate it right
   #   now
@@ -30,9 +30,9 @@ defmodule Helix.Process.Service.API.Process do
   @spec kill(Process.t, atom) ::
     :ok
   def kill(process, _reason) do
-    pid = top(process)
-
-    TableOfProcesses.kill(pid, process.process_id)
+    process
+    |> top()
+    |> TOP.kill(process)
   end
 
   @spec get_processes_on_server(HELL.PK.t) ::
@@ -46,25 +46,25 @@ defmodule Helix.Process.Service.API.Process do
   @spec priority(Process.t, 0..5) ::
     :ok
   def priority(process, priority) when priority in 0..5 do
-    pid = top(process)
-
-    TableOfProcesses.priority(pid, process.process_id, priority)
+    process
+    |> top()
+    |> TOP.priority(process, priority)
   end
 
   @spec pause(Process.t) ::
     :ok
   def pause(process) do
-    pid = top(process)
-
-    TableOfProcesses.pause(pid, process.process_id)
+    process
+    |> top()
+    |> TOP.pause(process)
   end
 
   @spec resume(Process.t) ::
     :ok
   def resume(process) do
-    pid = top(process)
-
-    TableOfProcesses.resume(pid, process.process_id)
+    process
+    |> top()
+    |> TOP.resume(process)
   end
 
   defp top(process) do

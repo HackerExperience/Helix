@@ -43,9 +43,6 @@ defmodule Helix.Event.Dispatcher do
   # Process events
   ##############################################################################
   event Process.Model.Process.ProcessCreatedEvent,
-    Process.Service.Event.TOP,
-    :process_created
-  event Process.Model.Process.ProcessCreatedEvent,
     Server.Websocket.Channel.Server,
     :event_process_created
 

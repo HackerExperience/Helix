@@ -1,9 +1,11 @@
 defmodule Helix.Process.Service.Local.TOP.Domain do
+  @moduledoc false
 
   alias Ecto.Changeset
   alias Helix.Process.Controller.TableOfProcesses.Allocator.Plan
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Process.ProcessType
 
   @behaviour :gen_statem
 
@@ -45,6 +47,26 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   def priority(pid, process, priority) when priority in 0..5,
     do: :gen_statem.cast(pid, {:priority, process, priority})
 
+  @spec pause(pid, process_id) ::
+    :ok
+  def pause(pid, process),
+    do: :gen_statem.cast(pid, {:pause, process})
+
+  @spec resume(pid, process_id) ::
+    :ok
+  def resume(pid, process),
+    do: :gen_statem.cast(pid, {:resume, process})
+
+  @spec kill(pid, process_id) ::
+    :ok
+  def kill(pid, process),
+    do: :gen_statem.cast(pid, {:kill, process})
+
+  @spec reset(pid, [process], resources) ::
+    :ok
+  def reset(pid, processes, resources),
+    do: :gen_statem.cast(pid, {:reset, processes, resources})
+
   @doc false
   def init({gateway, processes, resources, handler}) do
     data = %__MODULE__{
@@ -76,23 +98,37 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   @doc false
   def handle_event(event_type, event_msg, state, data)
 
-  def handle_event(:internal, :allocate, :startup, data) do
-    processes = allocate(data.processes, data.resources)
-
-    newdata = store_processes(data, processes)
-
-    time =
-      processes
-      |> Enum.map(&Process.seconds_to_change/1)
-      |> Enum.reduce(:infinity, &min/2)
-
-    notify_completed = {:timeout, :completed, time}
-    actions = [notify_completed, @flush]
-
-    {:next_state, :running, newdata, actions}
-  end
-
   def handle_event(:internal, :allocate, :running, data) do
+    now = DateTime.utc_now()
+
+    data =
+      Enum.reduce(data.processes, %{data| processes: []}, fn
+        process, acc ->
+          process = Process.calculate_work(process, now)
+
+          if Process.complete?(process) do
+            # TODO: this is an awkward interface. Wrap into into a facade maybe?
+            process_data = Changeset.get_field(process, :process_data)
+            {processes, events} = ProcessType.conclusion(
+              process_data,
+              process)
+
+            # I think i should probably make this a function of the event module
+            process_conclusion = %Process.ProcessConclusionEvent{
+              gateway_id: Changeset.get_field(process, :gateway_id),
+              target_id: Changeset.get_field(process, :target_server_id)
+            }
+
+            acc
+            |> store_processes(List.wrap(processes))
+            |> store_events([process_conclusion])
+            |> store_events(events)
+          else
+            acc
+            |> store_processes([process])
+          end
+      end)
+
     processes = allocate(data.processes, data.resources)
 
     newdata = store_processes(data, processes)
@@ -193,22 +229,28 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     {:next_state, :startup, new_data, actions}
   end
 
-  # Cleans processes so the server can be shutdown gracefully
-  # It is a call statement to
-  # def handle_event({:call, from}, :shutdown, :running, data) do
+  # Cleans processes so the in-game server can be shutdown gracefully
+  def handle_event({:call, from}, :shutdown, :running, data) do
+    # Deallocates resources completely, so the processes can be "frozen" while
+    # the server is shutdown
+    processes =
+      data.processes
+      |> calculate_worked()
+      |> Enum.map(&Process.update_changeset(&1, %{allocated: %{}}))
 
+    new_data = store_processes(data, processes)
 
-  #   reply = {:reply, from, new_data.instructions}
+    reply = {:reply, from, new_data.instructions}
 
-  #   # This timeout is executed if the handler for some reason fails to execute
-  #   # it's operation in a timely manner, effectively making the whole shutdown
-  #   # sequence to fail
-  #   kill_timer = {:timeout, :timeout, 10_000}
+    # This timeout is executed if the handler for some reason fails to execute
+    # it's operation in a timely manner, effectively making the whole shutdown
+    # sequence to fail
+    kill_timer = {:timeout, :timeout, 10_000}
 
-  #   # Will move the process state to the shutdown state so it can wait for the
-  #   # handler to properly
-  #   {:next_state, :shutdown, nil, [reply, kill_timer]}
-  # end
+    # Will move the process state to the shutdown state so it can wait for the
+    # handler to properly
+    {:next_state, :shutdown, nil, [reply, kill_timer]}
+  end
 
   # This event means that for some reason the graceful shutdown didn't happen in
   # a timely manner, so this will force a shutdown (and cause the supervisor to
@@ -242,10 +284,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   @spec allocate([Process.t | Changeset.t], resources) ::
     [Changeset.t]
   defp allocate(processes, resources) do
-    {processes, reserved_resources} =
-      processes
-      |> calculate_worked()
-      |> allocate_minimum()
+    {processes, reserved_resources} = allocate_minimum(processes)
 
     # Subtracts from the total resource pool the amount that was already
     # reserved by the processes
@@ -284,7 +323,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     remove ++ Plan.allocate(allocate, resources)
   end
 
-  @spec drop_processes_to_free_resources([Changeset.t], [{atom, term}]) ::
+  @spec drop_processes_to_free_resources([Changeset.t], list) ::
     {dropped_process_ids :: MapSet.t, freed_resources :: resources}
   defp drop_processes_to_free_resources(processes, negative_resources) do
     processes = Enum.filter_map(
@@ -299,6 +338,8 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
       negative_resources)
   end
 
+  @spec free_resources([Process.t], removed, freed, list) ::
+    {removed, freed} when removed: MapSet.t, freed: ServerResources.t
   # This looks a bit complex. I'll have to think another way to make it simpler
   # without making it long and bothersome
   # This function will, for each negative_resource, remove processes that
@@ -349,42 +390,44 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
 
     free_resources(processes, removed, freed, t)
   end
+
   defp free_resources(_, removed, freed, []) do
     {removed, freed}
   end
 
+  @spec store_events(t, [struct]) ::
+    t
+  defp store_events(data, events) do
+    Enum.reduce(events, data, fn e, acc = %{instructions: i} ->
+      instruction = {:event, e}
+
+      %{acc| instructions: [instruction| i]}
+    end)
+  end
+
   @spec store_processes(t, [Process.t | Changeset.t]) ::
     t
-  defp store_processes(data, processes),
-    do: do_store_processes(%{data| processes: []}, processes)
+  defp store_processes(data, processes) do
+    Enum.reduce(processes, data, fn
+      e = %Changeset{action: :delete}, acc = %{instructions: i} ->
+        instruction = {:delete, e}
 
-  defp do_store_processes(data = %{instructions: i, processes: p}, [h| t]) do
-    data = case h do
-      %Changeset{action: :delete} ->
-        instruction = {:delete, h}
+        %{acc| instructions: [instruction| i]}
+      e = %Changeset{action: :update}, acc = %{processes: p, instructions: i} ->
+        instruction = {:update, e}
 
-        %{data| instructions: [instruction| i]}
-      %Changeset{action: :update} ->
-        instruction = {:update, h}
+        %{acc| processes: [e| p], instructions: [instruction| i]}
+      e = %Changeset{action: :insert}, acc = %{processes: p, instructions: i} ->
+        instruction = {:create, e}
 
-        %{data| processes: [h| p], instructions: [instruction| i]}
-      %Changeset{action: :insert} ->
-        instruction = {:insert, h}
-
-        %{data| processes: [h| p], instructions: [instruction| i]}
-      %Process{} ->
+        %{acc| processes: [e| p], instructions: [instruction| i]}
+      e = %Process{}, acc = %{processes: p, instructions: i} ->
         # This case might happen if a protocol returns a new process from it's
         # conclusion and we handle it. This is what happens (will happen) with
         # virus installing
-        instruction = {:insert, h}
+        instruction = {:create, e}
 
-        %{data| processes: [h| p], instructions: [instruction| i]}
-    end
-
-    do_store_processes(data, t)
-  end
-
-  defp do_store_processes(data, []) do
-    data
+        %{acc| processes: [e| p], instructions: [instruction| i]}
+    end)
   end
 end

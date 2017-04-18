@@ -172,7 +172,7 @@ defmodule Helix.Process.Model.Process do
     |> validate_inclusion(:priority, 0..5)
   end
 
-  @spec complete?(t) :: boolean
+  @spec complete?(process) :: boolean
   def complete?(process = %Ecto.Changeset{}),
     do: complete?(apply_changes(process))
   def complete?(%__MODULE__{state: state, objective: objective, processed: processed}),
@@ -321,7 +321,7 @@ defmodule Helix.Process.Model.Process do
     end
   end
 
-  @spec seconds_to_change(t | Ecto.Changeset.t) :: non_neg_integer | nil
+  @spec seconds_to_change(t | Ecto.Changeset.t) :: non_neg_integer | :infinity
   @doc """
   How many seconds until the `process` change state or frees some resource from
   completing part of it's objective
@@ -335,7 +335,7 @@ defmodule Helix.Process.Model.Process do
     |> Resources.to_list()
     |> Keyword.values()
     |> Enum.filter(&(is_integer(&1) and &1 > 0))
-    |> Enum.reduce(nil, &min/2) # Note that atom > int
+    |> Enum.reduce(:infinity, &min/2) # Note that atom > int
   end
 
   @spec can_allocate?(process, res | [res]) :: boolean when res: (:cpu | :ram | :dlk | :ulk)

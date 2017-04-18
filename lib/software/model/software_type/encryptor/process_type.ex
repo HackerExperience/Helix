@@ -13,6 +13,17 @@ defmodule Software.Encryptor.ProcessType do
     def dynamic_resources(%{}),
       do: [:cpu]
 
+    def conclusion(data, process) do
+      process =
+        process
+        |> Ecto.Changeset.change()
+        |> Map.put(:action, :delete)
+
+      events = event(data, process, :completed)
+
+      {process, events}
+    end
+
     def event(data, process, :completed) do
       event = %ProcessConclusionEvent{
         target_file_id: data.target_file_id,

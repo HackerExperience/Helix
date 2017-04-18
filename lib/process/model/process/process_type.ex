@@ -7,6 +7,11 @@ defprotocol Helix.Process.Model.Process.ProcessType do
   @spec dynamic_resources(t) :: [resource]
   def dynamic_resources(data)
 
+  @spec conclusion(t, Process.t | Ecto.Changeset.t) ::
+    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  def conclusion(data, process)
+
+  # TODO: check if this still makes sense
   @spec event(t, Process.t, :created | :completed) :: [struct]
   def event(data, process, circumstance)
 end
@@ -39,6 +44,9 @@ for impl <- impls do
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
 
     def event(input, _, _),
+      do: raise "#{inspect input} doesn't implement ProcessType protocol"
+
+    def conclusion(input, _),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
   end
 end

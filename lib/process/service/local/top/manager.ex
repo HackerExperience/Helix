@@ -1,7 +1,7 @@
 defmodule Helix.Process.Service.Local.TOP.Manager do
   @moduledoc false
 
-  alias Helix.Process.Service.Local.TOP.Supervisor
+  alias Helix.Process.Service.Local.TOP.Supervisor, as: TOPSupervisor
 
   # TODO: Replace this with a distributed alternative. Maybe using PubSub
 
@@ -23,7 +23,7 @@ defmodule Helix.Process.Service.Local.TOP.Manager do
     if pid do
       {:ok, pid}
     else
-      Supervisor.start_top(gateway)
+      TOPSupervisor.start_top(gateway)
     end
   end
 
