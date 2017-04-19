@@ -12,7 +12,8 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Process.Model.Process.State
 
   import Ecto.Changeset
-  import HELL.MacroHelpers
+
+  @opaque id :: PK.t
 
   @type t :: %__MODULE__{
     process_id: id,
@@ -35,9 +36,7 @@ defmodule Helix.Process.Model.Process do
     estimated_time: DateTime.t | nil
   }
 
-  @type process :: t | %Ecto.Changeset{data: t}
-
-  @opaque id :: PK.t
+  @type process :: %__MODULE__{} | %Ecto.Changeset{data: %__MODULE__{}}
 
   @primary_key false
   @ecto_autogenerate {:process_id, {PK, :pk_for, [:process_process]}}
@@ -133,13 +132,11 @@ defmodule Helix.Process.Model.Process do
     Changeset.t
   def create_changeset(params) do
     now = DateTime.utc_now()
-    params =
-      params
-      |> Map.put(:creation_time, now)
-      |> Map.put(:updated_time, now)
 
     %__MODULE__{}
-    |> cast(params, [:creation_time| @creation_fields])
+    |> cast(params, @creation_fields)
+    |> put_change(:creation_time, now)
+    |> put_change(:updated_time, now)
     |> validate_change(:process_data, fn :process_data, value ->
       # Only accepts as input structs that implement protocol ProcessType to
       # ensure that they will be properly processed
@@ -151,6 +148,19 @@ defmodule Helix.Process.Model.Process do
     |> changeset(params)
     |> server_to_process_map()
     |> Map.put(:action, :insert)
+  end
+
+  @spec put_defaults(Changeset.t) ::
+    Changeset.t
+  defp put_defaults(changeset) do
+    cs =
+      get_change(changeset, :limitations)
+      && changeset
+      || put_embed(changeset, :limitations, %{})
+
+    cs
+    |> put_embed(:processed, %{})
+    |> put_embed(:allocated, %{})
   end
 
   @type update_params :: %{
@@ -189,35 +199,44 @@ defmodule Helix.Process.Model.Process do
     |> validate_inclusion(:priority, 0..5)
   end
 
+  @spec load_virtual_data(t) ::
+    t
+  @doc """
+  Updates `minimum` and `estimated_time`  into the process
+  """
+  def load_virtual_data(process) do
+    minimum = ProcessType.minimum(process.process_data)
+
+    process
+    |> estimate_conclusion()
+    |> Map.put(:minimum, minimum)
+  end
+
   @spec complete?(process) :: boolean
   def complete?(process = %Ecto.Changeset{}),
     do: complete?(apply_changes(process))
   def complete?(%__MODULE__{state: state, objective: objective, processed: processed}),
     do: state == :complete or objective == processed
 
-  @spec handle_complete(t) :: t | nil
-  def handle_complete(p) do
-    # TODO: rename this to something that sounds like a real model function and
-    #   not some garbage workaround
-    p
-  end
-
-  @spec allocate_minimum(process) :: Changeset.t
+  @spec allocate_minimum(process) ::
+    Changeset.t
   def allocate_minimum(process) do
-    process = %{change(process)| action: :update}
+    process = change(process)
 
     minimum =
       process
       |> get_field(:minimum)
       |> Map.get(get_field(process, :state), %{})
 
-    put_embed(process, :allocated, minimum)
+    update_changeset(process, %{allocated: minimum})
   end
 
-  @spec allocate(process, Resources.resourceable) :: Changeset.t
+  @spec allocate(process, Resources.resourceable) ::
+    Changeset.t
   def allocate(process, amount) do
     cs = change(process)
 
+    # The amount we want to allocate
     allocable =
       cs
       |> get_field(:allocated)
@@ -231,22 +250,24 @@ defmodule Helix.Process.Model.Process do
         {_, nil}, acc ->
           acc
         {field, value}, acc ->
+          # If there is a limit to certain resource, don't allow the allocation
+          # to exceed that limit
           Map.update!(acc, field, &min(&1, value))
       end)
+      |> Map.from_struct()
 
-    put_embed(cs, :allocated, allocated)
+    update_changeset(cs, %{allocated: allocated})
   end
 
-  @spec allocation_shares(process) :: non_neg_integer
+  @spec allocation_shares(process) ::
+    non_neg_integer
   def allocation_shares(process) do
     case process do
       %__MODULE__{state: state, priority: priority}
       when state in [:standby, :running] ->
-        if can_allocate?(process) do
-          priority
-        else
-          0
-        end
+        can_allocate?(process)
+        && priority
+        || 0
       %__MODULE__{} ->
         0
       %Ecto.Changeset{} ->
@@ -256,26 +277,28 @@ defmodule Helix.Process.Model.Process do
     end
   end
 
-  @spec pause(process) :: Changeset.t
-  def pause(process = %__MODULE__{}),
-    do: pause(change(process))
+  @spec pause(process) ::
+    Changeset.t
   def pause(process) do
-    if :paused == get_field(process, :state) do
-      process
+    changeset = change(process)
+
+    if :paused == get_field(changeset, :state) do
+      changeset
     else
-      process
+      changeset
       |> calculate_work(DateTime.utc_now())
       |> update_changeset(%{state: :paused, estimated_time: nil})
       |> allocate_minimum()
     end
   end
 
-  @spec resume(process) :: Changeset.t
+  @spec resume(process) ::
+    Changeset.t
   def resume(process) do
     cs = change(process)
     state = get_field(cs, :state)
 
-    if :paused === state do
+    if :paused == state do
       # FIXME: state can be "standby" on some cases
       cs
       |> update_changeset(%{state: :running, updated_time: DateTime.utc_now()})
@@ -286,64 +309,81 @@ defmodule Helix.Process.Model.Process do
     end
   end
 
-  @spec calculate_work(process, DateTime.t) :: Changeset.t
-  def calculate_work(process, time_now) do
-    cs = %{change(process)| action: :update}
-
-    if :running === get_field(cs, :state) do
-      diff = cs |> get_field(:updated_time) |> diff_in_seconds(time_now)
-
-      process
-      |> update_changeset(%{updated_time: time_now})
-      |> put_embed(:processed, calculate_processed(process, diff))
-    else
-      cs
-    end
+  @spec calculate_work(elem, DateTime.t) ::
+    elem when elem: process
+  def calculate_work(p = %__MODULE__{}, now) do
+    p
+    |> change()
+    |> calculate_work(now)
+    |> apply_changes()
   end
 
-  # REVIEW: FIXME: Maybe return as a changeset because life is a disaster
-  @spec estimate_conclusion(elem) :: elem when elem: process
-  def estimate_conclusion(process) do
-    struct = case process do
-      %__MODULE__{} ->
+  def calculate_work(process, now) do
+    if :running === get_field(process, :state) do
+      diff =
         process
-      %Ecto.Changeset{} ->
-        apply_changes(process)
-    end
+        |> get_field(:updated_time)
+        |> diff_in_seconds(now)
 
-    conclusion = if struct.objective do
-      struct.objective
-      |> Resources.sub(struct.processed)
-      |> Resources.div(struct.allocated)
-      |> Resources.to_list()
-      |> Enum.filter_map(fn {_, x} -> x != 0 end, &elem(&1, 1))
-      |> Enum.reduce(0, &max/2)
-      |> case do
-        x when not x in [0, nil] ->
-          Timex.shift(struct.updated_time, seconds: x)
-        _ ->
-          # Exceptional case when all resources are "0" (ie: nothing to do)
-          # Also includes the case of when a certain resource will never be
-          # completed
-          nil
-      end
-    end
+      processed = calculate_processed(process, diff)
 
-    changeset = cast(process, %{estimated_time: conclusion}, [:estimated_time])
-    case process do
-      %__MODULE__{} ->
-        apply_changes(changeset)
-      %Ecto.Changeset{} ->
-        changeset
+      update_changeset(process, %{updated_time: now, processed: processed})
+    else
+      process
     end
   end
 
-  @spec seconds_to_change(t | Ecto.Changeset.t) :: non_neg_integer | :infinity
+  @spec estimate_conclusion(elem) ::
+    elem when elem: process
+  def estimate_conclusion(process = %__MODULE__{}) do
+    process
+    |> change()
+    |> estimate_conclusion()
+    |> apply_changes()
+  end
+
+  def estimate_conclusion(process) do
+    objective = get_field(process, :objective)
+    processed = get_field(process, :processed)
+    allocated = get_field(process, :allocated)
+
+    conclusion =
+      if objective do
+        ttl =
+          objective
+          |> Resources.sub(processed)
+          |> Resources.div(allocated)
+          |> Resources.to_list()
+          # Returns a list of "seconds to fulfill resource"
+          |> Enum.filter_map(fn {_, x} -> x != 0 end, &elem(&1, 1))
+          |> Enum.reduce(0, &max/2)
+
+        case ttl do
+          x when not x in [0, nil] ->
+            process
+            |> get_field(:updated_time)
+            |> Timex.shift(seconds: x)
+          _ ->
+            # Exceptional case when all resources are "0" (ie: nothing to do)
+            # Also includes the case of when a certain resource will never be
+            # completed
+            nil
+        end
+      else
+        nil
+      end
+
+    update_changeset(process, %{estimated_time: conclusion})
+  end
+
+  @spec seconds_to_change(process) ::
+    non_neg_integer
+    | :infinity
   @doc """
   How many seconds until the `process` change state or frees some resource from
   completing part of it's objective
   """
-  def seconds_to_change(p = %Ecto.Changeset{}),
+  def seconds_to_change(p = %Changeset{}),
     do: seconds_to_change(apply_changes(p))
   def seconds_to_change(process) do
     process.objective
@@ -355,7 +395,8 @@ defmodule Helix.Process.Model.Process do
     |> Enum.reduce(:infinity, &min/2) # Note that atom > int
   end
 
-  @spec can_allocate?(process, res | [res]) :: boolean when res: (:cpu | :ram | :dlk | :ulk)
+  @spec can_allocate?(process, res | [res]) ::
+    boolean when res: (:cpu | :ram | :dlk | :ulk)
   @doc """
   Checks if the `process` can allocate any of the specified `resources`
   """
@@ -365,65 +406,51 @@ defmodule Helix.Process.Model.Process do
   end
 
   # TODO: rename this
-  @spec can_allocate(process) :: [:cpu | :ram | :dlk | :ulk]
+  @spec can_allocate(process) ::
+    [:cpu | :ram | :dlk | :ulk]
   @doc """
   Returns a list with all resources that the `process` can allocate
   """
-  def can_allocate(process = %Ecto.Changeset{}),
+  def can_allocate(process = %Changeset{}),
     do: can_allocate(apply_changes(process))
   def can_allocate(process = %__MODULE__{}) do
-    objective_allows? = case process.objective do
-      nil ->
-        fn _ ->
-          true
-        end
-      objective ->
-        remaining = Resources.sub(objective, process.processed)
-        fn resource ->
-          still_to_be_processed_amount = Map.get(remaining, resource)
+    dynamic_resources = ProcessType.dynamic_resources(process.process_data)
 
-          is_integer(still_to_be_processed_amount)
-          and still_to_be_processed_amount > 0
-        end
-    end
+    allowed =
+      case process.objective do
+        nil ->
+          []
+        objective ->
+          remaining = Resources.sub(objective, process.processed)
 
-    process.process_data
-    |> ProcessType.dynamic_resources()
+          Enum.filter(dynamic_resources, fn resource ->
+            remaining = Map.get(remaining, resource)
+            is_integer(remaining) and remaining > 0
+          end)
+      end
+
+    dynamic_resources
     |> Enum.filter(fn resource ->
       # Note that this is `nil` unless a value is specified.
       # Also note that nil is greater than any integer :)
       limitations = Map.get(process.limitations, resource)
       allocated = Map.get(process.allocated, resource)
 
-      objective_allows?.(resource) and limitations > allocated
+      resource in allowed and limitations > allocated
     end)
   end
 
-  @spec put_defaults(Changeset.t) :: Changeset.t
-  defp put_defaults(changeset) do
-    cs =
-      get_change(changeset, :limitations)
-      && changeset
-      || put_embed(changeset, :limitations, %{})
-
-    cs
-    |> put_embed(:processed, %{})
-    |> put_embed(:allocated, %{})
-  end
-
-  @spec server_to_process_map(Changeset.t) :: Changeset.t
+  @spec server_to_process_map(Changeset.t) ::
+    Changeset.t
   defp server_to_process_map(changeset) do
-    id = get_field(changeset, :process_id)
     process_type = get_field(changeset, :process_type)
 
     params1 = %{
       server_id: get_field(changeset, :gateway_id),
-      process_id: id,
       process_type: process_type
     }
     params2 = %{
       server_id: get_field(changeset, :target_server_id),
-      process_id: id,
       process_type: process_type
     }
 
@@ -433,28 +460,33 @@ defmodule Helix.Process.Model.Process do
     put_assoc(changeset, :server_to_process_map, records)
   end
 
-  @spec diff_in_seconds(DateTime.t, DateTime.t) :: non_neg_integer | nil
-  docp """
-  Returns the difference in seconds from `start` to `finish`
-
-  This assumes that both the inputs are using UTC. This implementation might and
-  should be replaced by a calendar library diff function
-  """
+  @spec diff_in_seconds(DateTime.t, DateTime.t) ::
+    non_neg_integer
+    | nil
+  # Returns the difference in seconds from `start` to `finish`.
+  # This assumes that both the inputs are using UTC.
   defp diff_in_seconds(%DateTime{}, nil),
     do: nil
   defp diff_in_seconds(start = %DateTime{}, finish = %DateTime{}),
     do: Timex.diff(start, finish, :seconds)
 
-  @spec calculate_processed(process, non_neg_integer) :: Resources.t
-  defp calculate_processed(process, delta_t) do
+  @spec calculate_processed(process, non_neg_integer) ::
+    Resources.t
+  # Returns the value of resources processed by `process` after adding the
+  # amount processed in `seconds_passed`
+  defp calculate_processed(process, seconds_passed) do
     cs = change(process)
 
-    diff = cs |> get_field(:allocated) |> Resources.mul(delta_t)
+    diff =
+      cs
+      |> get_field(:allocated)
+      |> Resources.mul(seconds_passed)
 
     cs
     |> get_field(:processed)
     |> Resources.sum(diff)
     |> Resources.min(get_field(cs, :objective))
+    |> Map.from_struct()
   end
 
   defmodule Query do

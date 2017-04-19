@@ -161,7 +161,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
       |> Enum.map(&Process.seconds_to_change/1)
       |> Enum.reduce(:infinity, &min/2)
 
-    notify_completed = {:timeout, time, :completed}
+    notify_completed = {:timeout, time, :allocate}
     actions = [notify_completed]
 
     {:keep_state, newdata, actions}
@@ -174,6 +174,12 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     end
 
     {:keep_state, %{data| instructions: []}}
+  end
+
+  def handle_event(:timeout, :allocate, :running, data) do
+    actions = [@allocate, @flush]
+
+    {:keep_state, data, actions}
   end
 
   # Changes the priority of a single process
@@ -278,7 +284,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   # This event means that for some reason the graceful shutdown didn't happen in
   # a timely manner, so this will force a shutdown (and cause the supervisor to
   # reset both this state machine and the handler)
-  def handle_event(:internal, :timeout, :shutdown, _) do
+  def handle_event(:timeout, :timeout, :shutdown, _) do
     {:stop, :shutdown_failed}
   end
 
@@ -453,6 +459,11 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
         instruction = {:create, e}
 
         %{acc| processes: [e| p], instructions: [instruction| i]}
+      %Changeset{action: nil, changes: c}, acc
+      when map_size(c) == 0 ->
+        # For some reason this process was converted to a changeset but no
+        # change was reduced on it
+        acc
     end)
   end
 end

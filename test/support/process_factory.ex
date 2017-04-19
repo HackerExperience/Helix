@@ -17,6 +17,8 @@ defmodule Helix.Process.Factory do
   defimpl ProcessType, for: DummyProcessType do
     def dynamic_resources(_),
       do: []
+    def minimum(_),
+      do: %{}
     def conclusion(_, process) do
       process =
         process

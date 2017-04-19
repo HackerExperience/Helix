@@ -1,6 +1,7 @@
 defprotocol Helix.Process.Model.Process.ProcessType do
 
   alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Process.State
 
   @type resource :: :cpu | :ram | :dlk | :ulk
 
@@ -10,6 +11,10 @@ defprotocol Helix.Process.Model.Process.ProcessType do
   @spec conclusion(t, Process.t | Ecto.Changeset.t) ::
     {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
   def conclusion(data, process)
+
+  @spec minimum(t) ::
+    %{optional(State.state) => %{resource => non_neg_integer}}
+  def minimum(data)
 
   # TODO: check if this still makes sense
   @spec event(t, Process.t, :created | :completed) :: [struct]
@@ -42,11 +47,11 @@ for impl <- impls do
   defimpl Helix.Process.Model.Process.ProcessType, for: impl do
     def dynamic_resources(input),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
-
-    def event(input, _, _),
+    def minimum(input),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
-
     def conclusion(input, _),
+      do: raise "#{inspect input} doesn't implement ProcessType protocol"
+    def event(input, _, _),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
   end
 end
