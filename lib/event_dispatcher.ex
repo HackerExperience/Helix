@@ -38,6 +38,9 @@ defmodule Helix.Event.Dispatcher do
   event Network.Model.ConnectionClosedEvent,
     Network.Service.Event.Tunnel,
     :connection_closed
+  event Network.Model.ConnectionClosedEvent,
+    Process.Service.Event.TOP,
+    :connection_closed
 
   ##############################################################################
   # Process events

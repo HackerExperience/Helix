@@ -57,7 +57,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
       {:ok, resources} <- get_resources(gateway),
       {:ok, processes} <- get_processes(gateway)
     do
-      domain = Domain.start_link(gateway, processes, resources)
+      {:ok, domain} = Domain.start_link(gateway, processes, resources)
 
       state = %__MODULE__{
         gateway: gateway,

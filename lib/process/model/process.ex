@@ -20,6 +20,7 @@ defmodule Helix.Process.Model.Process do
     target_server_id: PK.t,
     file_id: PK.t | nil,
     network_id: PK.t | nil,
+    connection_id: PK.t | nil,
     process_data: ProcessType.t,
     process_type: String.t,
     state: State.state,
@@ -28,7 +29,7 @@ defmodule Helix.Process.Model.Process do
     processed: Resources.t,
     allocated: Resources.t,
     priority: 0..5,
-    minimum: %{},
+    minimum: map,
     creation_time: DateTime.t,
     updated_time: DateTime.t,
     estimated_time: DateTime.t | nil
@@ -52,6 +53,11 @@ defmodule Helix.Process.Model.Process do
     field :file_id, PK
     # Which network is this process bound to (if any)
     field :network_id, PK
+    # Which connection is the transport method for this process (if any).
+    # Obviously if the connection is closed, the process will be killed. In the
+    # future it might make sense to have processes that might survive after a
+    # connection shutdown but right now, it's a kill
+    field :connection_id, PK
 
     # Data that is used by the specific implementation of the process
     # side-effects
@@ -106,19 +112,25 @@ defmodule Helix.Process.Model.Process do
     gateway_id
     target_server_id
     file_id
-    network_id/a
+    network_id
+    connection_id/a
   @update_fields ~w/state priority updated_time estimated_time minimum/a
 
   @required_fields ~w/gateway_id target_server_id process_data process_type/a
 
-  @spec create_changeset(%{
+  @type create_params :: %{
     :gateway_id => PK.t,
     :target_server_id => PK.t,
     :process_data => ProcessType.t,
     :process_type => String.t,
     optional(:file_id) => PK.t,
     optional(:network_id) => PK.t,
-    optional(:objective) => %{}}) :: Changeset.t
+    optional(:connection_id) => PK.t,
+    optional(:objective) => map
+  }
+
+  @spec create_changeset(create_params) ::
+    Changeset.t
   def create_changeset(params) do
     now = DateTime.utc_now()
     params =
@@ -138,21 +150,24 @@ defmodule Helix.Process.Model.Process do
     |> put_defaults()
     |> changeset(params)
     |> server_to_process_map()
+    |> Map.put(:action, :insert)
   end
 
-  @spec update_changeset(
-    process,
-    %{
-      optional(:state) => State.state,
-      optional(:priority) => 0..5,
-      optional(:creation_time) => DateTime.t,
-      optional(:updated_time) => DateTime.t,
-      optional(:estimated_time) => DateTime.t | nil,
-      optional(:limitations) => %{},
-      optional(:objective) => %{},
-      optional(:processed) => %{},
-      optional(:allocated) => %{},
-      optional(:minimum) => %{}}) :: Changeset.t
+  @type update_params :: %{
+    optional(:state) => State.state,
+    optional(:priority) => 0..5,
+    optional(:creation_time) => DateTime.t,
+    optional(:updated_time) => DateTime.t,
+    optional(:estimated_time) => DateTime.t | nil,
+    optional(:limitations) => map,
+    optional(:objective) => map,
+    optional(:processed) => map,
+    optional(:allocated) => map,
+    optional(:minimum) => map
+  }
+
+  @spec update_changeset(process, update_params) ::
+    Changeset.t
   def update_changeset(process, params) do
     process
     |> cast(params, @update_fields)
@@ -160,9 +175,11 @@ defmodule Helix.Process.Model.Process do
     |> cast_embed(:allocated)
     |> cast_embed(:limitations)
     |> changeset(params)
+    |> Map.put(:action, :update)
   end
 
-  @spec changeset(process, %{any => any}) :: Changeset.t
+  @spec changeset(process, %{optional(any) => any}) ::
+    Changeset.t
   @doc false
   def changeset(struct, params) do
     struct
@@ -187,7 +204,7 @@ defmodule Helix.Process.Model.Process do
 
   @spec allocate_minimum(process) :: Changeset.t
   def allocate_minimum(process) do
-    process = change(process)
+    process = %{change(process)| action: :update}
 
     minimum =
       process
@@ -271,7 +288,7 @@ defmodule Helix.Process.Model.Process do
 
   @spec calculate_work(process, DateTime.t) :: Changeset.t
   def calculate_work(process, time_now) do
-    cs = change(process)
+    cs = %{change(process)| action: :update}
 
     if :running === get_field(cs, :state) do
       diff = cs |> get_field(:updated_time) |> diff_in_seconds(time_now)
@@ -441,6 +458,9 @@ defmodule Helix.Process.Model.Process do
   end
 
   defmodule Query do
+
+    alias Ecto.Queryable
+    alias HELL.PK
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.MapServerToProcess
     alias Helix.Process.Model.Process.State
@@ -482,6 +502,11 @@ defmodule Helix.Process.Model.Process do
     @spec by_network(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     def by_network(query \\ Process, network_id),
       do: where(query, [p], p.network_id == ^network_id)
+
+    @spec by_connection_id(Queryable.t, PK.t) ::
+      Queryable.t
+    def by_connection_id(query \\ Process, connection_id),
+      do: where(query, [p], p.connection_id == ^connection_id)
 
     @spec by_type(Ecto.Queryable.t,String.t) :: Ecto.Queryable.t
     def by_type(query \\ Process, process_type),

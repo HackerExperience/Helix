@@ -35,7 +35,7 @@ defmodule Helix.Process.Service.Local.TOP.ChildrenSupervisor do
 
   use Supervisor
 
-  alias Helix.Process.Controller.TableOfProcesses
+  alias Helix.Process.Service.Local.TOP.Server
 
   @spec start_link() ::
     Supervisor.on_start
@@ -53,7 +53,7 @@ defmodule Helix.Process.Service.Local.TOP.ChildrenSupervisor do
   @doc false
   def init(_) do
     children = [
-      worker(TableOfProcesses, [], restart: :transient)
+      worker(Server, [], restart: :transient)
     ]
 
     supervise(children, strategy: :simple_one_for_one)

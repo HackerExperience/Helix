@@ -175,6 +175,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
           :file_id,
           :target_server_id,
           :network_id,
+          :connection_id,
           :process_type,
           :state,
           :priority])
@@ -188,6 +189,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
             :file_id,
             :target_server_id,
             :network_id,
+            :connection_id,
             :process_type,
             :state,
             :priority])

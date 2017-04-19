@@ -43,6 +43,14 @@ defmodule Helix.Process.Service.API.Process do
     |> Repo.all()
   end
 
+  @spec get_processes_on_connection(HELL.PK.t) ::
+    [Process.t]
+  def get_processes_on_connection(connection_id) do
+    connection_id
+    |> Process.Query.by_connection_id()
+    |> Repo.all()
+  end
+
   @spec pause(Process.t) ::
     :ok
   def pause(process) do

@@ -98,12 +98,23 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   @doc false
   def handle_event(event_type, event_msg, state, data)
 
+  # This callback exists because i intend to potentially include additional
+  # operations on startup
+  def handle_event(:internal, :allocate, :startup, data) do
+    actions = [@allocate]
+
+    {:next_state, :running, data, actions}
+  end
+
   def handle_event(:internal, :allocate, :running, data) do
     now = DateTime.utc_now()
 
-    data =
-      Enum.reduce(data.processes, %{data| processes: []}, fn
-        process, acc ->
+    {data, processes} =
+      Enum.reduce(data.processes, {data, []}, fn
+        p = %Changeset{action: :delete}, {data_acc, process_acc} ->
+          data_acc = store_processes(data_acc, [p])
+          {data_acc, process_acc}
+        process, {data_acc, process_acc} ->
           process = Process.calculate_work(process, now)
 
           if Process.complete?(process) do
@@ -119,26 +130,38 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
               target_id: Changeset.get_field(process, :target_server_id)
             }
 
-            acc
-            |> store_processes(List.wrap(processes))
-            |> store_events([process_conclusion])
-            |> store_events(events)
+            {delete, keep} =
+              processes
+              |> List.wrap()
+              |> Enum.split_with(fn
+                %Changeset{action: :delete} ->
+                  true
+                _ ->
+                  false
+              end)
+
+            data_acc =
+              data_acc
+              |> store_processes(delete)
+              |> store_events([process_conclusion])
+              |> store_events(events)
+
+            {data_acc, keep ++ process_acc}
           else
-            acc
-            |> store_processes([process])
+            {data_acc, [process| process_acc]}
           end
       end)
 
-    processes = allocate(data.processes, data.resources)
+    processes = allocate(processes, data.resources)
 
-    newdata = store_processes(data, processes)
+    newdata = store_processes(%{data| processes: []}, processes)
 
     time =
       processes
       |> Enum.map(&Process.seconds_to_change/1)
       |> Enum.reduce(:infinity, &min/2)
 
-    notify_completed = {:timeout, :completed, time}
+    notify_completed = {:timeout, time, :completed}
     actions = [notify_completed]
 
     {:keep_state, newdata, actions}
@@ -245,7 +268,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     # This timeout is executed if the handler for some reason fails to execute
     # it's operation in a timely manner, effectively making the whole shutdown
     # sequence to fail
-    kill_timer = {:timeout, :timeout, 10_000}
+    kill_timer = {:timeout, 10_000, :timeout}
 
     # Will move the process state to the shutdown state so it can wait for the
     # handler to properly
@@ -415,10 +438,12 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
         %{acc| instructions: [instruction| i]}
       e = %Changeset{action: :update}, acc = %{processes: p, instructions: i} ->
         instruction = {:update, e}
+        e = Changeset.apply_changes(e)
 
         %{acc| processes: [e| p], instructions: [instruction| i]}
       e = %Changeset{action: :insert}, acc = %{processes: p, instructions: i} ->
         instruction = {:create, e}
+        e = Changeset.apply_changes(e)
 
         %{acc| processes: [e| p], instructions: [instruction| i]}
       e = %Process{}, acc = %{processes: p, instructions: i} ->

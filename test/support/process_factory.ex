@@ -66,7 +66,7 @@ defmodule Helix.Process.Factory do
   end
 
   def random_process_state,
-    do: Enum.random([:standby, :paused, :running, :complete])
+    do: Enum.random([:running])
 
   def process_factory do
     %Process{
