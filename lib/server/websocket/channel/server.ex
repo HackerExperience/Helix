@@ -12,7 +12,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
   alias Helix.Log.Service.API.Log, as: LogAPI
-  alias Helix.Process.Controller.Process, as: ProcessController
   alias Helix.Process.Service.API.Process, as: ProcessAPI
   alias Helix.Hardware.Service.API.Component, as: ComponentAPI
   alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
@@ -163,7 +162,8 @@ defmodule Helix.Server.Websocket.Channel.Server do
     server = socket.assigns.servers.destination
     processes_on_server = ProcessAPI.get_processes_on_server(server)
 
-    processes_targeting_server = ProcessController.find(target: server)
+    processes_targeting_server = ProcessAPI.get_processes_targeting_server(
+      server)
 
     # HACK: FIXME: This belongs to a viewable protocol. We're doing it as it
     #   is now so it works before we do the real work (?)

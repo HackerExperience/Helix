@@ -42,8 +42,6 @@ defmodule Helix.Process.Service.Local.TOP.Manager do
     end
   end
 
-  @spec register(server_id) ::
-    any
   @doc false
   def register(gateway),
     do: Registry.register(__MODULE__, gateway, [])

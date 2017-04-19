@@ -27,14 +27,6 @@ defmodule Helix.Process.Service.API.Process do
     Controller.fetch(id)
   end
 
-  @spec kill(Process.t, atom) ::
-    :ok
-  def kill(process, _reason) do
-    process
-    |> top()
-    |> TOP.kill(process)
-  end
-
   @spec get_processes_on_server(HELL.PK.t) ::
     [Process.t]
   def get_processes_on_server(gateway) do
@@ -43,12 +35,12 @@ defmodule Helix.Process.Service.API.Process do
     |> Repo.all()
   end
 
-  @spec priority(Process.t, 0..5) ::
-    :ok
-  def priority(process, priority) when priority in 0..5 do
-    process
-    |> top()
-    |> TOP.priority(process, priority)
+  @spec get_processes_targeting_server(HELL.PK.t) ::
+    [Process.t]
+  def get_processes_targeting_server(gateway) do
+    gateway
+    |> Process.Query.by_target()
+    |> Repo.all()
   end
 
   @spec pause(Process.t) ::
@@ -65,6 +57,22 @@ defmodule Helix.Process.Service.API.Process do
     process
     |> top()
     |> TOP.resume(process)
+  end
+
+  @spec priority(Process.t, 0..5) ::
+    :ok
+  def priority(process, priority) when priority in 0..5 do
+    process
+    |> top()
+    |> TOP.priority(process, priority)
+  end
+
+  @spec kill(Process.t, atom) ::
+    :ok
+  def kill(process, _reason) do
+    process
+    |> top()
+    |> TOP.kill(process)
   end
 
   defp top(process) do
