@@ -56,11 +56,15 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
   # Software events
   ##############################################################################
+  event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
+    Software.Service.Event.Decryptor,
+    :complete
+
   event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
     Software.Service.Event.Encryptor,
     :complete
 
-  event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
-    Software.Service.Event.Decryptor,
+  event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
+    Software.Service.Event.FileDownload,
     :complete
 end

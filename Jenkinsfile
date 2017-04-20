@@ -57,7 +57,7 @@ parallel (
         unstash 'build-test'
 
         withEnv (['MIX_ENV=test']) {
-          sh "mix credo --strict"
+          sh 'mix credo --strict'
         }
       }
     }
@@ -70,19 +70,19 @@ parallel (
         unstash 'build-prod'
 
         // HACK: mix complains if I don't run deps.get again, not sure why
-        sh "mix deps.get"
+        sh 'mix deps.get'
 
         // Reuse existing plt
-        sh "cp ~/.mix/*prod*.plt* _build/prod || :"
+        sh 'cp ~/.mix/*prod*.plt* _build/prod || :'
 
         withEnv (['MIX_ENV=prod']) {
-          sh "mix dialyzer --halt-exit-status"
+          sh 'mix dialyzer --halt-exit-status'
         }
 
         // Store newly generated plt
         // Do it on two commands because we want it failing if .plt is not found
-        sh "cp _build/prod/*.plt ~/.mix/"
-        sh "cp _build/prod/*.plt.hash ~/.mix/"
+        sh 'cp _build/prod/*.plt ~/.mix/'
+        sh 'cp _build/prod/*.plt.hash ~/.mix/'
       }
 
     }
@@ -96,6 +96,9 @@ parallel (
         unstash 'build-test'
 
         withEnv (['MIX_ENV=test']) {
+          // HACK: mix complains if I don't run deps.get again, not sure why
+          sh 'mix deps.get'
+
           // Unset debug flag, load env vars on ~/.profile & run mix test
           sh '#!/bin/sh -e\n' + '. ~/.profile && mix test.full'
         }

@@ -25,6 +25,7 @@ defmodule Helix.Software.Controller.Storage do
     :ok
   end
 
+  # FIXME: This doesn't belongs here, does it ?
   @spec get_storage_from_hdd(HELL.PK.t) :: Storage.t | nil
   def get_storage_from_hdd(hdd_id) do
     Storage

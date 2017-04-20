@@ -12,7 +12,7 @@ defmodule Software.Encryptor.ProcessType do
 
     # The only value that is dynamic (ie: the more allocated, the faster the
     # process goes) is cpu
-    def dynamic_resources(%{}),
+    def dynamic_resources(_),
       do: [:cpu]
 
     def minimum(%{software_version: v}),
