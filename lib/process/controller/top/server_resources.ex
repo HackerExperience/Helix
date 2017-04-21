@@ -243,4 +243,36 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
 
     cpu ++ ram ++ networks
   end
+
+  @spec exceeds?(t, t) ::
+    boolean
+  @doc """
+  Checks if any resource on `a` exceeds a resource on `b`
+
+  In practice, seeing `a` and `b` as sets, this function will check if `a` is
+  **not** a subset of `b`
+
+  ## Examples
+
+      iex> a = %{cpu: 10, ram: 10, net: %{"a::b" => %{ulk: 10, dlk: 10}}}
+      %{}
+      iex> b = %{cpu: 10, ram: 10, net: %{"a::b" => %{ulk: 10, dlk: 10}, "c::d" => %{ulk: 10, dlk: 10}}}
+      %{}
+      iex> exceeds?(a, b)
+      false
+      iex> exceeds?(%{a| cpu: 20}, b)
+      true
+      iex> exceeds?(%{a| net: %{"ffff::ffff" => %{ulk: 1, dlk: 1}}}, b)
+      true
+  """
+  def exceeds?(a, b) do
+    a.cpu > b.cpu
+    or a.ram > b.ram
+    or not MapSet.subset?(MapSet.new(Map.keys(a)), MapSet.new(Map.keys(b)))
+    or Enum.any?(a.net, fn {net_id, a} ->
+      b = b.net[net_id]
+
+      a.ulk > b.ulk or a.dlk > b.dlk
+    end)
+  end
 end

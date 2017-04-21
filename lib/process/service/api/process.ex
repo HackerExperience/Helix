@@ -4,17 +4,29 @@ defmodule Helix.Process.Service.API.Process do
   alias Helix.Process.Controller.Process, as: Controller
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
+  alias Helix.Process.Model.Process.ProcessCreatedEvent
   alias Helix.Process.Service.Local.TOP.Manager
   alias Helix.Process.Service.Local.TOP.Server, as: TOP
 
-  # FIXME: this is not a good interface but i am too tired to adequate it right
-  #   now
-  @spec create(map) ::
+  @spec create(Process.create_params) ::
     {:ok, Process.t}
     | {:error, Ecto.Changeset.t}
   def create(params) do
-    with {:ok, process, events} <- Controller.create(params) do
-      Event.emit(events)
+    # TODO: i don't like this with here as it is. I think getting the TOP pid
+    #   should be more transparent
+    with \
+      %{gateway_id: gateway} <- params,
+      {:ok, pid} = Manager.prepare_top(gateway),
+      {:ok, process} <- TOP.create(pid, params)
+    do
+      # Event definition doesn't belongs here
+      event = %ProcessCreatedEvent{
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_id: process.target_server_id
+      }
+
+      Event.emit(event)
 
       {:ok, process}
     end

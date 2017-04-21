@@ -9,17 +9,6 @@ defmodule Helix.Process.Controller.ProcessTest do
   alias HELL.TestHelper.Random
   alias Helix.Process.Factory
 
-  test "creating succeeds with valid params" do
-    params = %{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
-      process_data: %Factory.DummyProcessType{},
-      process_type: Random.string(min: 20, max: 20)
-    }
-
-    assert {:ok, _, _} = ProcessController.create(params)
-  end
-
   describe "fetching" do
     test "succeeds by id" do
       process = Factory.insert(:process)

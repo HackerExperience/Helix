@@ -28,6 +28,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     gateway: nil,
     processes: nil,
     resources: nil,
+    last_minimum: nil,
     instructions: [],
     handler: nil
   ]
@@ -41,6 +42,17 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     init_options = {gateway, processes, resources, handler}
     :gen_statem.start_link(__MODULE__, init_options, [])
   end
+
+  @spec may_create?(pid, process) ::
+    :ok
+    | {:error, :resources}
+  def may_create?(pid, process),
+    do: :gen_statem.call(pid, {:may_create?, process})
+
+  @spec create(pid, process) ::
+    :ok
+  def create(pid, process),
+    do: :gen_statem.cast(pid, {:create, process})
 
   @spec priority(pid, process_id, 0..5) ::
     :ok
@@ -152,9 +164,10 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
           end
       end)
 
-    processes = allocate(processes, data.resources)
+    {processes, minimum} = allocate(processes, data.resources)
 
-    newdata = store_processes(%{data| processes: []}, processes)
+    data = %{data| processes: [], last_minimum: minimum}
+    newdata = store_processes(data, processes)
 
     time =
       processes
@@ -258,6 +271,34 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     {:next_state, :startup, new_data, actions}
   end
 
+  def handle_event(:cast, {:create, process}, :running, data) do
+    actions = [@allocate, @flush]
+    new_data = %{data| processes: [process| data.processes]}
+    {:keep_state, new_data, actions}
+  end
+
+  # I don't like setting server-like callbacks like this on FSM but this will do
+  # for now
+  def handle_event({:call, from}, {:may_create?, process}, :running, data) do
+    minimum = data.last_minimum
+    maximum = data.resources
+
+    process = Process.allocate_minimum(process)
+    foreseen = ServerResources.sum_process(minimum, process)
+
+    reply = if ServerResources.exceeds?(foreseen, maximum) do
+      # Process would cause the server to overflow it's resources
+      {:error, :resources}
+    else
+      # Everything is okay, so we aggregate process into the TOP processes,
+      # reply the requesting client with an okay, allocate and tells the handler
+      # to update the processes on the database with new allocation values
+      :ok
+    end
+
+    {:keep_state, data, [{:reply, from, reply}]}
+  end
+
   # Cleans processes so the in-game server can be shutdown gracefully
   def handle_event({:call, from}, :shutdown, :running, data) do
     # Deallocates resources completely, so the processes can be "frozen" while
@@ -311,7 +352,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   end
 
   @spec allocate([Process.t | Changeset.t], resources) ::
-    [Changeset.t]
+    {[Changeset.t], resources}
   defp allocate(processes, resources) do
     {processes, reserved_resources} = allocate_minimum(processes)
 
@@ -349,7 +390,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     # deleted processes. This will be removed in the future tho
     {remove, allocate} = Enum.split_with(processes, &(&1.action == :delete))
 
-    remove ++ Plan.allocate(allocate, resources)
+    {remove ++ Plan.allocate(allocate, resources), reserved_resources}
   end
 
   @spec drop_processes_to_free_resources([Changeset.t], list) ::

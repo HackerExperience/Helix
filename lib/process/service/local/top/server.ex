@@ -6,6 +6,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
 
   use GenServer
 
+  alias Ecto.Changeset
   alias Helix.Event
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.Model.Process
@@ -25,6 +26,13 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     GenServer.on_start
   def start_link(gateway) do
     GenServer.start_link(__MODULE__, [gateway])
+  end
+
+  @spec create(pid, Process.create_params) ::
+    {:ok, Process.t}
+    | {:error, reason :: term}
+  def create(pid, params) do
+    GenServer.call(pid, {:create, params})
   end
 
   @spec priority(pid, process, 0..5) ::
@@ -69,6 +77,32 @@ defmodule Helix.Process.Service.Local.TOP.Server do
       reason ->
         {:stop, reason}
     end
+  end
+
+  @doc false
+  def handle_call({:create, params}, state) do
+    reply =
+      with \
+        changeset = %{} <- Process.create_changeset(params),
+        true <- changeset.valid? || changeset,
+        process = Process.load_virtual_data(Changeset.apply_changes(changeset)),
+        :ok <- Domain.may_create?(state.domain, process),
+        {:ok, process} <- Repo.insert(changeset)
+      do
+        process = Process.load_virtual_data(process)
+        Domain.create(state.domain, process)
+
+        {:ok, process}
+      else
+        changeset = %Changeset{} ->
+          {:error, changeset}
+        {:error, reason} ->
+          {:error, reason}
+        _ ->
+          {:error, :internal}
+      end
+
+    {:reply, reply, state}
   end
 
   @doc false
@@ -134,6 +168,8 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     do: true
   defp belongs_to_the_server?(%Process{}, %{}),
     do: false
+  defp belongs_to_the_server?(cs = %Changeset{}, %{gateway: g}),
+    do: Changeset.get_field(cs, :gateway_id) == g
 
   @spec get_resources(server_id) ::
     {:ok, ServerResources.t}
