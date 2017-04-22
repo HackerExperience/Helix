@@ -8,6 +8,8 @@ defmodule Helix.Software.Service.Flow.FileDownload do
   alias Helix.Software.Model.Storage
   alias Software.FileDownload.ProcessType
 
+  import HELF.Flow
+
   @spec start_download_process(File.t, Storage.t, Tunnel.t) ::
     {:ok, struct}
   def start_download_process(origin_file, destination_storage, tunnel) do
@@ -29,6 +31,7 @@ defmodule Helix.Software.Service.Flow.FileDownload do
       target_server_id: destination,
       network_id: network,
       connection_id: nil,
+      objective: objective,
       process_data: process_data,
       process_type: "file_download"
     }
