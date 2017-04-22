@@ -56,6 +56,8 @@ end
 
 defmodule HELL.IPv4 do
 
+  @type t :: String.t
+
   def autogenerate do
     Enum.map_join(1..4, ".", fn _ ->
       (256 * :rand.uniform())
