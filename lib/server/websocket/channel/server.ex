@@ -6,17 +6,18 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   use Phoenix.Channel
 
-  alias Helix.Network.Service.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Entity.Service.API.Entity, as: EntityAPI
+  alias Helix.Hardware.Service.API.Component, as: ComponentAPI
+  alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
   alias Helix.Log.Model.Log.LogCreatedEvent
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
   alias Helix.Log.Service.API.Log, as: LogAPI
+  alias Helix.Network.Controller.Tunnel, as: TunnelController
   alias Helix.Process.Service.API.Process, as: ProcessAPI
-  alias Helix.Hardware.Service.API.Component, as: ComponentAPI
-  alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
   alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Service.API.File, as: FileAPI
+  alias Helix.Software.Service.Flow.FileDownload
   alias Helix.Server.Service.API.Server, as: ServerAPI
   alias Helix.Server.Service.Henforcer.Server, as: Henforcer
 
@@ -29,8 +30,18 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   # Connecting to an external server
   def join("server:" <> server_id, %{"gateway_id" => gateway}, socket) do
-    has_connection? = fn ->
-      NetworkHenforcer.has_ssh_connection?(gateway, server_id)
+    # FIXME: this doesn't belongs here
+    get_tunnel_for_ssh = fn ->
+      connections_between = TunnelController.connections_on_tunnels_between(
+        gateway,
+        server_id)
+
+      case Enum.find(connections_between, &(&1.connection_type == "ssh")) do
+        connection = %{} ->
+          {:ok, TunnelController.fetch(connection.tunnel_id)}
+        _ ->
+          {:error, :not_connected}
+      end
     end
 
     with \
@@ -42,15 +53,15 @@ defmodule Helix.Server.Websocket.Channel.Server do
       account_id = EntityAPI.get_entity_id(socket.assigns.account),
       owner_id = EntityAPI.get_entity_id(owner),
       true <- owner_id == account_id || {:error, :not_owner},
-      true <- has_connection?.() || {:error, :not_connected}
+      {:ok, tunnel} <- get_tunnel_for_ssh.()
     do
       # PHEW! That means that the server exists, the player owns the specified
       # gateway and that it has an SSH connection to the target server
 
-      socket = assign(
-        socket,
-        :servers,
-        %{gateway: gateway, destination: server_id})
+      socket =
+        socket
+        |> assign(:servers, %{gateway: gateway, destination: server_id})
+        |> assign(:tunnel, tunnel)
 
       {:ok, socket}
     else
@@ -94,24 +105,10 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   @doc false
   def handle_in("get_files", _, socket) do
-    server = ServerAPI.fetch(socket.assigns.servers.destination)
-    hdds =
-      server.motherboard_id
-      |> ComponentAPI.fetch()
-      |> MotherboardAPI.fetch!()
-      |> MotherboardAPI.get_slots()
-      # TODO: Delegate this to a function on Motherboard API
-      # Gets hdds linked to the motherboard
-      |> Enum.filter_map(
-        &(&1.link_component_type == :hdd && &1.link_component_id),
-        &(&1.link_component_id))
-
     files =
-      hdds
-      # FIXME: This belongs to an API function that facades this boring shit
-      |> Enum.map(&StorageController.get_storage_from_hdd/1)
-      |> Enum.uniq()
-      |> Enum.reject(&is_nil/1)
+      socket.assigns.servers.destination
+      |> ServerAPI.fetch()
+      |> storages_on_server()
       # Returns a map %{path => [files]}
       |> Enum.map(&FileAPI.storage_contents/1)
       |> Enum.reduce(%{}, fn el, acc ->
@@ -144,7 +141,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   end
 
   # TODO: Paginate
-  def handle_in("get_logs", _message, socket) do
+  def handle_in("log.index", _message, socket) do
     server_id = socket.assigns.servers.destination.server_id
 
     logs = LogAPI.get_logs_on_server(server_id)
@@ -158,7 +155,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
     {:reply, {:ok, formatted_logs}, socket}
   end
 
-  def handle_in("get_processes", _message, socket) do
+  def handle_in("process.index", _message, socket) do
     server = socket.assigns.servers.destination
     processes_on_server = ProcessAPI.get_processes_on_server(server)
 
@@ -201,6 +198,59 @@ defmodule Helix.Server.Websocket.Channel.Server do
     }
 
     {:reply, {:ok, return}, socket}
+  end
+
+  # TODO: This will hard fail if the user tries to download a file from their
+  #   own gateway for obvious reasons
+  def handle_in("file.download", %{file_id: file}, socket) do
+    # This won't be necessary as soon as we have a cache server->storages
+    destination_storage_ids =
+      socket.assigns.servers.destination
+      |> ServerAPI.fetch()
+      |> storages_on_server()
+      |> Enum.map(&(&1.storage_id))
+
+    # FIXME
+    gateway_storage =
+      socket.assigns.servers.gateway
+      |> ServerAPI.fetch()
+      |> storages_on_server()
+      |> Enum.random()
+
+    tunnel = socket.assigns.tunnel
+
+    start_download = fn file ->
+      FileDownload.start_download_process(file, gateway_storage, tunnel)
+    end
+
+    with \
+      file = %{} <- FileAPI.fetch(file),
+      true <- file.storage_id in destination_storage_ids,
+      {:ok, _process} <- start_download.(file)
+    do
+      {:reply, :ok, socket}
+    else
+      _ ->
+        {:reply, :error, socket}
+    end
+  end
+
+  @spec storages_on_server(struct) ::
+    [struct]
+  defp storages_on_server(server) do
+    server.motherboard_id
+    |> ComponentAPI.fetch()
+    |> MotherboardAPI.fetch!()
+    |> MotherboardAPI.get_slots()
+    # TODO: Delegate this to a function on Motherboard API
+    # Gets hdds linked to the motherboard
+    |> Enum.filter_map(
+      &(&1.link_component_type == :hdd && &1.link_component_id),
+      &(&1.link_component_id))
+    # FIXME: This belongs to an API function that facades this boring shit
+    |> Enum.map(&StorageController.get_storage_from_hdd/1)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq()
   end
 
   def notify(server_id, :processes_changed, _params) do

@@ -178,7 +178,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert expected_file_ids == file_ids
   end
 
-  describe "get_processes" do
+  describe "process.index" do
     @tag :pending
     test "fetches all processes running on destination"
 
@@ -186,9 +186,17 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     test "fetches all processes targeting destination"
   end
 
-  describe "get_logs" do
+  describe "log.index" do
     @tag :pending
     test "fetches logs on the destination"
+  end
+
+  describe "file.download" do
+    @tag :pending
+    test "initiates a process to download the specified file"
+
+    @tag :pending
+    test "returns error if the file does not belongs to target server"
   end
 
   @tag :pending
