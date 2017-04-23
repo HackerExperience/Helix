@@ -3,6 +3,8 @@ defmodule Helix.Log.Service.Event.Log do
   alias Helix.Event
   alias Helix.Entity.Service.API.Entity
   alias Helix.Hardware.Service.API.NetworkConnection
+  alias Helix.Network.Model.Connection.ConnectionStartedEvent
+  alias Helix.Network.Controller.Tunnel
   alias Helix.Software.Service.API.File
   alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
     as: DownloadComplete
@@ -31,5 +33,38 @@ defmodule Helix.Log.Service.Event.Log do
     Event.emit(e)
     {:ok, %{events: e}} = Log.create(to, entity.entity_id, message_to)
     Event.emit(e)
+  end
+
+  def connection_started(
+    event = %ConnectionStartedEvent{connection_type: "ssh"})
+  do
+    tunnel = Tunnel.fetch(event.tunnel_id)
+    network = event.network_id
+    gateway_id = tunnel.gateway_id
+    destination_id = tunnel.destination_id
+
+    gateway_ip = NetworkConnection.get_server_ip(gateway_id, network)
+    destination_ip = NetworkConnection.get_server_ip(destination_id, network)
+
+    entity = Entity.fetch_server_owner(gateway_id)
+
+    message_gateway = "Logged into #{destination_ip}"
+    message_destination = "#{gateway_ip} logged in as root"
+
+    # TODO: Wrap into a transaction
+    {:ok, %{events: e}} = Log.create(
+      gateway_id,
+      entity.entity_id,
+      message_gateway)
+    Event.emit(e)
+    {:ok, %{events: e}} = Log.create(
+      destination_id,
+      entity.entity_id,
+      message_destination)
+    Event.emit(e)
+  end
+
+  def connection_started(_) do
+    :ignore
   end
 end

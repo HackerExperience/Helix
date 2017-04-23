@@ -1,7 +1,7 @@
 defmodule Helix.Process.Service.Event.TOP do
   @moduledoc false
 
-  alias Helix.Network.Model.ConnectionClosedEvent
+  alias Helix.Network.Model.Connection.ConnectionClosedEvent
   alias Helix.Process.Service.API.Process, as: API
 
   # TODO: Ensure that the processes are killed (by making `kill` blocking

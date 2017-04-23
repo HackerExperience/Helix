@@ -3,7 +3,7 @@ defmodule Helix.Process.Service.Event.TOPTest do
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Network.Model.ConnectionClosedEvent
+  alias Helix.Network.Model.Connection.ConnectionClosedEvent
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
   alias Helix.Process.Service.Event.TOP, as: TOPEvent
