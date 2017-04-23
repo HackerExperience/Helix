@@ -4,6 +4,7 @@ defmodule Helix.Event.Dispatcher do
   use HELF.Event
 
   alias Helix.Account
+  alias Helix.Entity
   alias Helix.Log
   alias Helix.Network
   alias Helix.Process
@@ -56,6 +57,10 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
   # Software events
   ##############################################################################
+  event Software.Model.SoftwareType.Cracker.ProcessConclusionEvent,
+    Entity.Service.Event.HackDatabase,
+    :cracker_conclusion
+
   event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
     Software.Service.Event.Decryptor,
     :complete

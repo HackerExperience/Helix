@@ -15,10 +15,6 @@ defprotocol Helix.Process.Model.Process.ProcessType do
   @spec minimum(t) ::
     %{optional(State.state) => %{resource => non_neg_integer}}
   def minimum(data)
-
-  # TODO: check if this still makes sense
-  @spec event(t, Process.t, :created | :completed) :: [struct]
-  def event(data, process, circumstance)
 end
 
 ###########################################
@@ -50,8 +46,6 @@ for impl <- impls do
     def minimum(input),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
     def conclusion(input, _),
-      do: raise "#{inspect input} doesn't implement ProcessType protocol"
-    def event(input, _, _),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
   end
 end
