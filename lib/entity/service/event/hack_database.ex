@@ -1,13 +1,18 @@
 defmodule Helix.Entity.Service.Event.HackDatabase do
 
+  alias Helix.Hardware.Service.API.NetworkConnection, as: NetworkConnectionAPI
+  alias Helix.Server.Service.API.Server, as: ServerAPI
   alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
   alias Helix.Entity.Service.API.Entity, as: EntityAPI
   alias Helix.Entity.Service.API.HackDatabase, as: HackDatabaseAPI
 
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityAPI.fetch(event.entity_id)
+    server = ServerAPI.fetch(event.server_id)
+    server_ip = NetworkConnectionAPI.get_server_ip(
+      event.server_id,
+      event.network_id)
 
-    # TODO: check that the target server has the specified ip on the network
     create_entry = fn ->
       HackDatabaseAPI.create(
         entity,
@@ -22,11 +27,12 @@ defmodule Helix.Entity.Service.Event.HackDatabase do
         entity,
         event.network_id,
         event.server_ip,
-        # TODO: password
-        %{password: ""})
+        %{password: server.password})
     end
 
-    {:ok, _} = create_entry.()
-    {:ok, _} = set_password.()
+    if to_string(server_ip) == to_string(event.server_ip) do
+      {:ok, _} = create_entry.()
+      {:ok, _} = set_password.()
+    end
   end
 end

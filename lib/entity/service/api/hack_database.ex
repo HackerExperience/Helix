@@ -7,6 +7,8 @@ defmodule Helix.Entity.Service.API.HackDatabase do
   alias Helix.Entity.Model.HackDatabase
   alias Helix.Entity.Repo
 
+  @spec get_database(Entity.t) ::
+    [map]
   def get_database(entity) do
     entity
     |> HackDatabaseController.get_database()
