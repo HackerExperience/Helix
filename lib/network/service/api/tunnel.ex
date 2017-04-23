@@ -1,4 +1,4 @@
-defmodule Helix.Network.Service.Tunnel do
+defmodule Helix.Network.Service.API.Tunnel do
 
   alias Ecto.Changeset
   alias Helix.Network.Model.Connection

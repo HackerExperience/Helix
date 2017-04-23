@@ -14,6 +14,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Log.Model.Log.LogDeletedEvent
   alias Helix.Log.Service.API.Log, as: LogAPI
   alias Helix.Network.Controller.Tunnel, as: TunnelController
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Repo, as: NetworkRepo
+  alias Helix.Network.Service.API.Tunnel, as: TunnelAPI
   alias Helix.Process.Service.API.Process, as: ProcessAPI
   alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Service.API.File, as: FileAPI
@@ -27,6 +30,64 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   @doc false
   def join(topic, message, socket)
+
+  # FIXME: This IS awful
+  # Connecting to an external server without an established connection
+  def join(
+    "server:" <> server_id,
+    %{
+      "gateway_id" => gateway,
+      "network_id" => network,
+      "password" => password
+    },
+    socket)
+  do
+    # Right now i won't accept bounces. In the future we'll obviously have to
+    # check them but at that time we'll have a better interface, HEnforcer and
+    # proper APIs
+    with \
+      true <- Henforcer.server_exists?(server_id) || {:error, :not_found},
+      true <- Henforcer.server_exists?(gateway) || {:error, :not_found},
+      true <- Henforcer.functioning?(server_id) || {:error, :not_assembled},
+      true <- Henforcer.functioning?(gateway) || {:error, :not_assembled},
+      owner = EntityAPI.fetch_server_owner(gateway),
+      account_id = EntityAPI.get_entity_id(socket.assigns.account),
+      owner_id = EntityAPI.get_entity_id(owner),
+      true <- owner_id == account_id || {:error, :not_owner},
+
+      destination = %{} <- ServerAPI.fetch(server_id),
+      true <- password == destination.password || {:error, :password},
+
+      network = NetworkRepo.get(Network, "::"),
+      {:ok, connection, events} <- TunnelAPI.connect(
+        network,
+        gateway,
+        server_id,
+        [],
+        "ssh"),
+      tunnel = NetworkRepo.preload(connection, :tunnel).tunnel
+    do
+      # Yup, most of the code in this function does not belongs here. It'll be
+      # moved around (and be properly tested) ASAP
+      Helix.Event.emit(events)
+
+      socket =
+        socket
+        |> assign(:servers, %{gateway: gateway, destination: server_id})
+        |> assign(:tunnel, tunnel)
+
+      {:ok, socket}
+    else
+      {:error, :not_found} ->
+        {:error, %{reason: "invalid server"}}
+      {:error, :not_assembled} ->
+        {:error, %{reason: "server is not assembled"}}
+      {:error, :not_owner} ->
+        {:error, %{reason: "player is not the server owner"}}
+      {:error, :password} ->
+        {:error, %{reason: "invalid password"}}
+    end
+  end
 
   # Connecting to an external server
   def join("server:" <> server_id, %{"gateway_id" => gateway}, socket) do

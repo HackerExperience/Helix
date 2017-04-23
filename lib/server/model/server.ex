@@ -12,6 +12,7 @@ defmodule Helix.Server.Model.Server do
   @type t :: %__MODULE__{
     server_id: id,
     motherboard_id: PK.t |  nil,
+    password: String.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
@@ -35,6 +36,8 @@ defmodule Helix.Server.Model.Server do
     field :motherboard_id, HELL.PK
     field :server_type, Constant
 
+    field :password, :string
+
     timestamps()
   end
 
@@ -45,6 +48,7 @@ defmodule Helix.Server.Model.Server do
     |> validate_required(:server_type)
     |> validate_inclusion(:server_type, ServerType.possible_types())
     |> unique_constraint(:motherboard_id)
+    |> generate_password()
   end
 
   @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
@@ -66,6 +70,23 @@ defmodule Helix.Server.Model.Server do
     else
       changeset
     end
+  end
+
+  defp generate_password(changeset) do
+    # HACK: I don't intend to keep this generation method but it'll be good
+    #   enough for now (and is faster than using a proper string generator)
+    unique =
+      :seconds
+      |> System.system_time()
+      |> :erlang.+(:erlang.unique_integer())
+      |> to_string()
+
+    password =
+      :md5
+      |> :crypto.hash(unique)
+      |> Base.encode16()
+
+    put_change(changeset, :password, password)
   end
 
   defmodule Query do
