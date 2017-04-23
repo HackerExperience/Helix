@@ -21,6 +21,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Service.API.File, as: FileAPI
   alias Helix.Software.Service.Flow.FileDownload
+  alias Helix.Software.Service.Flow.LogDeleter
   alias Helix.Server.Service.API.Server, as: ServerAPI
   alias Helix.Server.Service.Henforcer.Server, as: Henforcer
 
@@ -165,7 +166,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   end
 
   @doc false
-  def handle_in("get_files", _, socket) do
+  def handle_in("file.index", _, socket) do
     files =
       socket.assigns.servers.destination
       |> ServerAPI.fetch()
@@ -203,7 +204,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   # TODO: Paginate
   def handle_in("log.index", _message, socket) do
-    server_id = socket.assigns.servers.destination.server_id
+    server_id = socket.assigns.servers.destination
 
     logs = LogAPI.get_logs_on_server(server_id)
 
@@ -214,6 +215,22 @@ defmodule Helix.Server.Websocket.Channel.Server do
     end)
 
     {:reply, {:ok, formatted_logs}, socket}
+  end
+
+  def handle_in("log.delete", %{log_id: log}, socket) do
+    target_id = socket.assigns.servers.destination
+    gateway_id = socket.assigns.servers.gateway
+    network_id = "::"
+
+    with \
+      %{server_id: ^target_id} <- LogAPI.fetch(log),
+      {:ok, _} <- LogDeleter.start_process(gateway_id, network_id, log)
+    do
+      {:reply, :ok, socket}
+    else
+      _ ->
+        {:reply, :error, socket}
+    end
   end
 
   def handle_in("process.index", _message, socket) do

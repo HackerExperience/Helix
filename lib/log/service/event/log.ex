@@ -6,6 +6,8 @@ defmodule Helix.Log.Service.Event.Log do
   alias Helix.Network.Model.Connection.ConnectionStartedEvent
   alias Helix.Network.Controller.Tunnel
   alias Helix.Software.Service.API.File
+  alias Helix.Software.Model.SoftwareType.LogDeleter.ProcessConclusionEvent,
+    as: LogDeleteComplete
   alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
     as: DownloadComplete
   alias Helix.Log.Service.API.Log
@@ -33,6 +35,12 @@ defmodule Helix.Log.Service.Event.Log do
     Event.emit(e)
     {:ok, %{events: e}} = Log.create(to, entity.entity_id, message_to)
     Event.emit(e)
+  end
+
+  def log_deleter_conclusion(%LogDeleteComplete{target_log_id: log}) do
+    log
+    |> Log.fetch()
+    |> Log.hard_delete()
   end
 
   def connection_started(

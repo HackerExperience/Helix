@@ -79,12 +79,22 @@ defmodule Helix.Log.Service.API.Log do
   end
 
   @spec fetch(Log.id) ::
-    Log.t | nil
+    Log.t
+    | nil
   @doc """
   Fetches a log
   """
   def fetch(id),
     do: Repo.one(LogController.fetch(id))
+
+  @spec hard_delete(Log.t) ::
+    {:ok, Log.t}
+    | {:error, reason :: term}
+  @doc """
+  Deletes the log by removing it's entry from database
+  """
+  def hard_delete(log),
+    do: Repo.delete(log)
 
   @spec get_logs_on_server(server_id, Keyword.t) ::
     [Log.t]

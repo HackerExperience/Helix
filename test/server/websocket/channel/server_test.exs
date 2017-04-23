@@ -158,7 +158,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   test "returns files on server", context do
     context = connect_to_realword_server(context.socket)
 
-    ref = push context.socket, "get_files", %{}
+    ref = push context.socket, "file.index", %{}
 
     assert_reply ref, :ok, file_map
 
@@ -189,6 +189,14 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   describe "log.index" do
     @tag :pending
     test "fetches logs on the destination"
+  end
+
+  describe "log.delete" do
+    @tag :pending
+    test "start a process to delete target log"
+
+    @tag :pending
+    test "fails if log does not belong to target server"
   end
 
   describe "file.download" do

@@ -79,4 +79,8 @@ defmodule Helix.Event.Dispatcher do
   event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
     Log.Service.Event.Log,
     :file_download_conclusion
+
+  event Software.Model.SoftwareType.LogDeleter.ProcessConclusionEvent,
+    Log.Service.Event.Log,
+    :log_deleter_conclusion
 end
