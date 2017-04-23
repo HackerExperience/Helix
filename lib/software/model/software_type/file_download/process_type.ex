@@ -27,9 +27,11 @@ defmodule Software.FileDownload.ProcessType do
 
     def event(data, process, :completed) do
       event = %ProcessConclusionEvent{
-        server_id: process.gateway_id,
-        target_file_id: data.target_file_id,
-        destination_storage_id: data.destination_storage_id
+        to_server_id: process.gateway_id,
+        from_server_id: process.target_server_id,
+        from_file_id: data.target_file_id,
+        to_storage_id: data.destination_storage_id,
+        network_id: process.network_id
       }
 
       [event]

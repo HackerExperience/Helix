@@ -72,4 +72,7 @@ defmodule Helix.Event.Dispatcher do
   event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
     Software.Service.Event.FileDownload,
     :complete
+  event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
+    Log.Service.Event.Log,
+    :file_download_conclusion
 end

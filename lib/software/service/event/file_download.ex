@@ -8,9 +8,9 @@ defmodule Helix.Software.Service.Event.FileDownload do
   # TODO: Copy "FileModule" from origin file
   def complete(event = %ProcessConclusionEvent{}) do
     transaction = fn ->
-      origin_file = File.fetch(event.target_file_id)
+      origin_file = File.fetch(event.from_file_id)
 
-      destination_storage = Storage.fetch(event.destination_storage_id)
+      destination_storage = Storage.fetch(event.to_storage_id)
 
       # Who needs space checks, eh ?
       {:ok, _} = File.copy(origin_file, destination_storage, "/Downloads")

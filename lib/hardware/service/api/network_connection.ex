@@ -27,4 +27,11 @@ defmodule Helix.Hardware.Service.API.NetworkConnection do
         nil
     end
   end
+
+  @spec get_server_ip(HELL.PK.t, HELL.PK.t) ::
+    HELL.IPv4.t
+    | nil
+  def get_server_ip(server_id, network_id) do
+    Repo.get_by(NetworkConnection, network_id: network_id, server_id: server_id)
+  end
 end
