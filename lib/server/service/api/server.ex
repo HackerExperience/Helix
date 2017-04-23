@@ -3,6 +3,7 @@ defmodule Helix.Server.Service.API.Server do
   alias HELL.Constant
   alias Helix.Server.Controller.Server, as: ServerController
   alias Helix.Server.Model.Server
+  alias Helix.Server.Repo
 
   @doc """
   Creates a server of given type
@@ -20,6 +21,10 @@ defmodule Helix.Server.Service.API.Server do
   """
   def fetch(server_id) do
     ServerController.fetch(server_id)
+  end
+
+  def fetch_by_motherboard(motherboard_id) do
+    Repo.get_by(Server, motherboard_id: motherboard_id)
   end
 
   @spec find([ServerController.find_param], meta :: []) :: [Server.t]

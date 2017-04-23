@@ -7,10 +7,6 @@ defmodule Helix.Entity.Service.Event.HackDatabase do
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityAPI.fetch(event.entity_id)
 
-    # TODO: as soon as we introduce the NPC service, the server's entity should
-    #   be checked so we can provide relevant info about it's purpose
-    server_type = "vpc"
-
     # TODO: check that the target server has the specified ip on the network
     create_entry = fn ->
       HackDatabaseAPI.create(
@@ -18,7 +14,7 @@ defmodule Helix.Entity.Service.Event.HackDatabase do
         event.network_id,
         event.server_ip,
         event.server_id,
-        server_type)
+        event.server_type)
     end
 
     set_password = fn ->

@@ -6,12 +6,14 @@ defmodule Software.Cracker.ProcessType do
     network_id
     target_server_ip
     target_server_id
+    server_type
     software_version/a
   defstruct ~w/
     entity_id
     network_id
     target_server_ip
     target_server_id
+    server_type
     software_version/a
 
   defimpl Helix.Process.Model.Process.ProcessType do
@@ -41,7 +43,8 @@ defmodule Software.Cracker.ProcessType do
         entity_id: data.entity_id,
         network_id: data.network_id,
         server_id: data.target_server_id,
-        server_ip: data.target_server_ip
+        server_ip: data.target_server_ip,
+        server_type: data.server_type
       }
 
       {process, [event]}
