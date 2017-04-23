@@ -16,6 +16,9 @@ defmodule Helix.Account.Service.API.AccountTest do
       }
 
       assert {:ok, %Account{}} = API.create(params)
+
+      # HACK: workaround for the flow event
+      :timer.sleep(100)
     end
 
     test "returns changeset when input is invalid" do
@@ -35,6 +38,9 @@ defmodule Helix.Account.Service.API.AccountTest do
       password = "Would you very kindly let me in, please, good sir"
 
       assert {:ok, %Account{}} = API.create(email, username, password)
+
+      # HACK: workaround for the flow event
+      :timer.sleep(100)
     end
 
     test "returns changeset when input is invalid" do

@@ -22,6 +22,7 @@ defmodule Helix.Hardware.Service.API.Component do
     ComponentController.fetch(component_id)
   end
 
+  # TODO: Deprecate this
   @spec find([ComponentController.find_param], meta :: []) :: [Component.t]
   @doc """
   Search for components
@@ -35,7 +36,7 @@ defmodule Helix.Hardware.Service.API.Component do
     ComponentController.find(params, meta)
   end
 
-  @spec delete(Component.t | HELL.PK.t) :: no_return
+  @spec delete(Component.t | HELL.PK.t) :: :ok
   @doc """
   Deletes the component
 

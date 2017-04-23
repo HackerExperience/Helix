@@ -4,12 +4,32 @@ defmodule Helix.Entity.Service.API.Entity do
   alias Helix.Entity.Controller.Entity, as: EntityController
   alias Helix.Entity.Model.Entity
 
-  # Note that Entity API has no create function because it should be created
-  # through reactions to events
+  @spec create_from_specialization(struct) ::
+    {:ok, Entity.t}
+    | {:error, Ecto.Changeset.t}
+  def create_from_specialization(%Account{account_id: account_id}) do
+    params = %{
+      entity_id: account_id,
+      entity_type: :account
+    }
+
+    EntityController.create(params)
+  end
 
   @spec fetch(HELL.PK.t) :: Entity.t | nil
   def fetch(id) do
     EntityController.fetch(id)
+  end
+
+  @spec delete(Entity.t) :: :ok
+  @doc """
+  Deletes input `entity`
+
+  Alternatively accepts the entity id as input
+  """
+  def delete(entity) do
+    # TODO: Accept entity-equivalent structs
+    EntityController.delete(entity)
   end
 
   @spec fetch_server_owner(HELL.PK.t) :: Entity.t | nil
