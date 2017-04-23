@@ -75,7 +75,7 @@ defmodule Helix.Entity.Controller.HackDatabase do
   @spec delete_server(PK.t) ::
     Multi.t
   def delete_server(server_id) do
-    query = HackDatabase |> where([h], h.server_id == ^server_id)
+    query = where(HackDatabase, [h], h.server_id == ^server_id)
 
     Multi.new()
     |> Multi.delete_all({:hack_database, :deleted}, query)

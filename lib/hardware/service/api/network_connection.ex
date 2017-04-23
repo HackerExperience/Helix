@@ -11,10 +11,10 @@ defmodule Helix.Hardware.Service.API.NetworkConnection do
     Helix.Server.Model.Server.t
     | nil
   def get_server_by_ip(network_id, ip) do
-    net_conn = Repo.get_by(NetworkConnection, network_id: network_id, ip: ip)
+    query = [network_id: network_id, ip: ip]
 
     with \
-      {:ok, net} <- net_conn,
+      net = %{} <- Repo.get_by(NetworkConnection, query),
       nic = %{} <- net |> Repo.preload(:nic) |> Map.fetch!(:nic),
       # Everything is terrible
       slot = %{} <- Repo.get_by(MotherboardSlot, link_component_id: nic.nic_id),
@@ -22,9 +22,6 @@ defmodule Helix.Hardware.Service.API.NetworkConnection do
       server = %{} <- ServerAPI.fetch_by_motherboard(slot.motherboard_id)
     do
       server
-    else
-      _ ->
-        nil
     end
   end
 
@@ -32,6 +29,10 @@ defmodule Helix.Hardware.Service.API.NetworkConnection do
     HELL.IPv4.t
     | nil
   def get_server_ip(server_id, network_id) do
-    Repo.get_by(NetworkConnection, network_id: network_id, server_id: server_id)
+    query = [network_id: network_id, server_id: server_id]
+
+    with %{ip: ip} <- Repo.get_by(NetworkConnection, query) do
+      ip
+    end
   end
 end
