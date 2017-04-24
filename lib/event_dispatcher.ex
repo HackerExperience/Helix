@@ -4,6 +4,7 @@ defmodule Helix.Event.Dispatcher do
   use HELF.Event
 
   alias Helix.Account
+  alias Helix.Entity
   alias Helix.Log
   alias Helix.Network
   alias Helix.Process
@@ -35,16 +36,20 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
   # Network events
   ##############################################################################
-  event Network.Model.ConnectionClosedEvent,
+  event Network.Model.Connection.ConnectionClosedEvent,
     Network.Service.Event.Tunnel,
     :connection_closed
+  event Network.Model.Connection.ConnectionClosedEvent,
+    Process.Service.Event.TOP,
+    :connection_closed
+
+  event Network.Model.Connection.ConnectionStartedEvent,
+    Log.Service.Event.Log,
+    :connection_started
 
   ##############################################################################
   # Process events
   ##############################################################################
-  event Process.Model.Process.ProcessCreatedEvent,
-    Process.Service.Event.TOP,
-    :process_created
   event Process.Model.Process.ProcessCreatedEvent,
     Server.Websocket.Channel.Server,
     :event_process_created
@@ -56,11 +61,26 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
   # Software events
   ##############################################################################
-  event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
-    Software.Service.Event.Encryptor,
-    :complete
+  event Software.Model.SoftwareType.Cracker.ProcessConclusionEvent,
+    Entity.Service.Event.HackDatabase,
+    :cracker_conclusion
 
   event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
     Software.Service.Event.Decryptor,
     :complete
+
+  event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
+    Software.Service.Event.Encryptor,
+    :complete
+
+  event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
+    Software.Service.Event.FileDownload,
+    :complete
+  event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
+    Log.Service.Event.Log,
+    :file_download_conclusion
+
+  event Software.Model.SoftwareType.LogDeleter.ProcessConclusionEvent,
+    Log.Service.Event.Log,
+    :log_deleter_conclusion
 end

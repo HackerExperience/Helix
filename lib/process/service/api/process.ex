@@ -2,19 +2,31 @@ defmodule Helix.Process.Service.API.Process do
 
   alias Helix.Event
   alias Helix.Process.Controller.Process, as: Controller
-  alias Helix.Process.Controller.TableOfProcesses
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
-  alias Helix.Process.Service.Local.Top.Manager
+  alias Helix.Process.Model.Process.ProcessCreatedEvent
+  alias Helix.Process.Service.Local.TOP.Manager
+  alias Helix.Process.Service.Local.TOP.Server, as: TOP
 
-  # FIXME: this is not a good interface but i am too tired to adequate it right
-  #   now
-  @spec create(map) ::
+  @spec create(Process.create_params) ::
     {:ok, Process.t}
     | {:error, Ecto.Changeset.t}
   def create(params) do
-    with {:ok, process, events} <- Controller.create(params) do
-      Event.emit(events)
+    # TODO: i don't like this with here as it is. I think getting the TOP pid
+    #   should be more transparent
+    with \
+      %{gateway_id: gateway} <- params,
+      {:ok, pid} = Manager.prepare_top(gateway),
+      {:ok, process} <- TOP.create(pid, params)
+    do
+      # Event definition doesn't belongs here
+      event = %ProcessCreatedEvent{
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_id: process.target_server_id
+      }
+
+      Event.emit(event)
 
       {:ok, process}
     end
@@ -27,14 +39,6 @@ defmodule Helix.Process.Service.API.Process do
     Controller.fetch(id)
   end
 
-  @spec kill(Process.t, atom) ::
-    :ok
-  def kill(process, _reason) do
-    pid = top(process)
-
-    TableOfProcesses.kill(pid, process.process_id)
-  end
-
   @spec get_processes_on_server(HELL.PK.t) ::
     [Process.t]
   def get_processes_on_server(gateway) do
@@ -43,28 +47,52 @@ defmodule Helix.Process.Service.API.Process do
     |> Repo.all()
   end
 
-  @spec priority(Process.t, 0..5) ::
-    :ok
-  def priority(process, priority) when priority in 0..5 do
-    pid = top(process)
+  @spec get_processes_targeting_server(HELL.PK.t) ::
+    [Process.t]
+  def get_processes_targeting_server(gateway) do
+    gateway
+    |> Process.Query.by_target()
+    |> Repo.all()
+  end
 
-    TableOfProcesses.priority(pid, process.process_id, priority)
+  @spec get_processes_on_connection(HELL.PK.t) ::
+    [Process.t]
+  def get_processes_on_connection(connection_id) do
+    connection_id
+    |> Process.Query.by_connection_id()
+    |> Repo.all()
   end
 
   @spec pause(Process.t) ::
     :ok
   def pause(process) do
-    pid = top(process)
-
-    TableOfProcesses.pause(pid, process.process_id)
+    process
+    |> top()
+    |> TOP.pause(process)
   end
 
   @spec resume(Process.t) ::
     :ok
   def resume(process) do
-    pid = top(process)
+    process
+    |> top()
+    |> TOP.resume(process)
+  end
 
-    TableOfProcesses.resume(pid, process.process_id)
+  @spec priority(Process.t, 0..5) ::
+    :ok
+  def priority(process, priority) when priority in 0..5 do
+    process
+    |> top()
+    |> TOP.priority(process, priority)
+  end
+
+  @spec kill(Process.t, atom) ::
+    :ok
+  def kill(process, _reason) do
+    process
+    |> top()
+    |> TOP.kill(process)
   end
 
   defp top(process) do

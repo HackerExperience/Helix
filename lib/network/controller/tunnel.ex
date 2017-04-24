@@ -114,7 +114,8 @@ defmodule Helix.Network.Controller.Tunnel do
       event = %Connection.ConnectionStartedEvent{
         connection_id: connection.connection_id,
         tunnel_id: connection.tunnel_id,
-        network_id: tunnel.network_id
+        network_id: tunnel.network_id,
+        connection_type: connection_type
       }
 
       {:ok, connection, [event]}
@@ -140,7 +141,7 @@ defmodule Helix.Network.Controller.Tunnel do
 
     Repo.delete!(connection)
 
-    event = %Helix.Network.Model.ConnectionClosedEvent{
+    event = %Connection.ConnectionClosedEvent{
       connection_id: connection.connection_id,
       tunnel_id: connection.tunnel_id,
       network_id: connection.tunnel.network_id,

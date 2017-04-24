@@ -36,8 +36,6 @@ defmodule Helix.Account.Model.Account do
   @creation_fields ~w/email username password/a
   @update_fields ~w/email password confirmed/a
 
-  @default_pass_for_timing_attacks Bcrypt.hashpwsalt("I am ready!")
-
   @derive {Poison.Encoder, only: [:email, :username, :account_id]}
   @primary_key false
   @ecto_autogenerate {:account_id, {PK, :pk_for, [:account_account]}}
@@ -71,6 +69,8 @@ defmodule Helix.Account.Model.Account do
     |> prepare_changes()
   end
 
+  @default_pass_for_timing_attacks Bcrypt.hashpwsalt("Avoid timing attacks")
+
   @spec check_password(t | nil, password) :: boolean
   @doc """
   Checks if `pass` matches with `account`'s password
@@ -90,10 +90,13 @@ defmodule Helix.Account.Model.Account do
       iex> check_password(account, "incorrect password")
       false
   """
-  def check_password(account = %__MODULE__{}, pass) when is_binary(pass),
+  def check_password(account = %__MODULE__{}, pass),
     do: Bcrypt.checkpw(pass, account.password)
-  def check_password(nil, pass) when is_binary(pass),
-    do: Bcrypt.checkpw("this is to avoid", @default_pass_for_timing_attacks)
+  def check_password(nil, pass) do
+    Bcrypt.checkpw(pass, @default_pass_for_timing_attacks)
+
+    false
+  end
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp generic_validations(changeset) do

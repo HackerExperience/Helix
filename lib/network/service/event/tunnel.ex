@@ -1,6 +1,6 @@
 defmodule Helix.Network.Service.Event.Tunnel do
 
-  alias Helix.Network.Model.ConnectionClosedEvent
+  alias Helix.Network.Model.Connection.ConnectionClosedEvent
   alias Helix.Network.Controller.Tunnel
 
   def connection_closed(e = %ConnectionClosedEvent{}) do

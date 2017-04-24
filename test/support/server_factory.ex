@@ -10,6 +10,7 @@ defmodule Helix.Server.Factory do
 
   def server_factory do
     %Server{
+      password: "letmein",
       server_type: random_server_type()
     }
   end

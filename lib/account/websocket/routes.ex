@@ -9,7 +9,7 @@ defmodule Helix.Account.Websocket.Routes do
   # Channel's callback interface:
   # https://hexdocs.pm/phoenix/Phoenix.Channel.html#c:handle_in/3
 
-  def handle_in("account.logout", _params, socket) do
+  def account_logout(socket) do
     AccountController.logout(socket.assigns, %{})
 
     socket_id = Socket.id(socket)
@@ -18,9 +18,5 @@ defmodule Helix.Account.Websocket.Routes do
     # Logout will blacklist the token and stop the socket, so, this only makes
     # sense
     {:stop, :shutdown, socket}
-  end
-
-  def handle_in(_, _, socket) do
-    {:reply, :error, socket}
   end
 end

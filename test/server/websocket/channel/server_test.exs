@@ -158,7 +158,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   test "returns files on server", context do
     context = connect_to_realword_server(context.socket)
 
-    ref = push context.socket, "get_files", %{}
+    ref = push context.socket, "file.index", %{}
 
     assert_reply ref, :ok, file_map
 
@@ -178,7 +178,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert expected_file_ids == file_ids
   end
 
-  describe "get_processes" do
+  describe "process.index" do
     @tag :pending
     test "fetches all processes running on destination"
 
@@ -186,9 +186,25 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     test "fetches all processes targeting destination"
   end
 
-  describe "get_logs" do
+  describe "log.index" do
     @tag :pending
     test "fetches logs on the destination"
+  end
+
+  describe "log.delete" do
+    @tag :pending
+    test "start a process to delete target log"
+
+    @tag :pending
+    test "fails if log does not belong to target server"
+  end
+
+  describe "file.download" do
+    @tag :pending
+    test "initiates a process to download the specified file"
+
+    @tag :pending
+    test "returns error if the file does not belongs to target server"
   end
 
   @tag :pending

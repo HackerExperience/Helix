@@ -5,6 +5,9 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   use Phoenix.Channel
 
+  alias Helix.Entity.Service.API.HackDatabase
+  alias Helix.Entity.Service.API.Entity
+
   def join("account:" <> account_id, _message, socket) do
     # TODO: Provide a cleaner way to check this
 
@@ -14,6 +17,16 @@ defmodule Helix.Account.Websocket.Channel.Account do
     else
       {:error, %{reason: "can't join another user's notification channel"}}
     end
+  end
+
+  def handle_in("hack_database.index", _message, socket) do
+    hack_database =
+      socket.assigns.account.account_id
+      |> Entity.get_entity_id()
+      |> Entity.fetch()
+      |> HackDatabase.get_database()
+
+    {:reply, {:ok, %{data: %{entries: hack_database}}}, socket}
   end
 
   def notify(account_id, notification) do

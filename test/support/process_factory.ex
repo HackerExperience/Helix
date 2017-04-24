@@ -13,10 +13,20 @@ defmodule Helix.Process.Factory do
     defstruct []
   end
 
+  # TODO: delete this one too
   defimpl ProcessType, for: DummyProcessType do
     def dynamic_resources(_),
       do: []
+    def minimum(_),
+      do: %{}
+    def conclusion(_, process) do
+      process =
+        process
+        |> Ecto.Changeset.change()
+        |> Map.put(:action, :delete)
 
+      {process, []}
+    end
     def event(_, _, _),
       do: []
   end
@@ -58,7 +68,7 @@ defmodule Helix.Process.Factory do
   end
 
   def random_process_state,
-    do: Enum.random([:standby, :paused, :running, :complete])
+    do: Enum.random([:running])
 
   def process_factory do
     %Process{

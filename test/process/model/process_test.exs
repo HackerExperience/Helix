@@ -78,7 +78,7 @@ defmodule Helix.Process.Model.ProcessTest do
   end
 
   describe "ttl" do
-    test "seconds_to_change defaults to nil if nothing is going to change" do
+    test "seconds_to_change defaults to :infinity if nothing is going to change" do
       now = DateTime.from_unix!(1_470_000_000)
 
       params = %{allocated: %{cpu: 0, dlk: 0}, updated_time: now}
@@ -89,7 +89,7 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Process.update_changeset(params)
         |> Changeset.apply_changes()
 
-      refute Process.seconds_to_change(process)
+      assert :infinity == Process.seconds_to_change(process)
     end
 
     test "seconds_to_change returns amount of seconds to the next change on a process resource consumption" do

@@ -1,7 +1,7 @@
 defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
 
   alias Ecto.Changeset
-  alias Helix.Process.Model.Process, as: ProcessModel
+  alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
 
   defstruct [cpu: 0, ram: 0, net: %{}]
@@ -72,7 +72,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
     end
   end
 
-  @spec sub_from_process(t, ProcessModel.t | Ecto.Changeset.t) :: {:ok, t} | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, network_id :: HELL.PK.t}}}
+  @spec sub_from_process(t, Process.t | Ecto.Changeset.t) :: {:ok, t} | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, network_id :: HELL.PK.t}}}
   def sub_from_process(server_resources = %__MODULE__{cpu: cpu, ram: ram, net: networks}, process) do
     process = Changeset.change(process)
     net_id = Changeset.get_field(process, :network_id)
@@ -153,5 +153,126 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
         end)
         |> :maps.from_list()
     }
+  end
+
+  def sum_process(server_resources, process) do
+    {allocated, network_id} = case process do
+      %Process{} ->
+        allocated = process.allocated
+        network_id = process.network_id
+
+        {allocated, network_id}
+      %Changeset{} ->
+        allocated = Changeset.get_field(process, :allocated)
+        network_id = Changeset.get_field(process, :network_id)
+
+        {allocated, network_id}
+    end
+
+    do_sum_process(server_resources, allocated, network_id)
+  end
+
+  defp do_sum_process(server_resources, allocated, network_id) do
+    net = if network_id do
+      net_alloc = Map.take(allocated, [:uplink, :downlink])
+      sum_net_alloc = &Map.merge(&1, net_alloc, fn _, v1, v2 -> v1 + v2 end)
+      Map.update(server_resources.net, network_id, net_alloc, sum_net_alloc)
+    else
+      server_resources.net
+    end
+
+    %{
+      server_resources|
+        cpu: server_resources.cpu + allocated.cpu,
+        ram: server_resources.ram + allocated.ram,
+        net: net
+    }
+  end
+
+  @spec sum(t, t) ::
+    t
+  def sum(resources_a, resources_b) do
+    net = Map.merge(resources_a.net, resources_b.net, fn
+      _k, v1, v2 ->
+        %{
+          dlk: v1.dlk + v2.dlk,
+          ulk: v1.ulk + v2.ulk
+        }
+    end)
+
+    %__MODULE__{
+      cpu: resources_a.cpu + resources_b.cpu,
+      ram: resources_a.cpu + resources_b.cpu,
+      net: net
+    }
+  end
+
+  @spec sub(t, t) ::
+    t
+  def sub(resources_a, resources_b) do
+    net = Map.merge(resources_a.net, resources_b.net, fn
+      _k, v1, v2 ->
+        %{
+          dlk: v1.dlk - v2.dlk,
+          ulk: v1.ulk - v2.ulk
+        }
+    end)
+
+    %__MODULE__{
+      cpu: resources_a.cpu - resources_b.cpu,
+      ram: resources_a.cpu - resources_b.cpu,
+      net: net
+    }
+  end
+
+  @spec negatives(t) ::
+    list
+  def negatives(resources) do
+    cpu = resources.cpu < 0 && [{:cpu, resources.cpu * -1}] || []
+    ram = resources.ram < 0 && [{:ram, resources.ram * -1}] || []
+    networks = Enum.reduce(resources.net, [], fn
+      {net_id, values}, acc ->
+        negative_net_res =
+          Enum.filter_map(
+            values,
+            fn {_, v} -> v < 0 end,
+            fn {k, v} -> {k, net_id, v * -1} end)
+
+        negative_net_res ++ acc
+    end)
+
+    cpu ++ ram ++ networks
+  end
+
+  @spec exceeds?(t, t) ::
+    boolean
+  @doc """
+  Checks if any resource on `a` exceeds a resource on `b`
+
+  In practice, seeing `a` and `b` as sets, this function will check if `a` is
+  **not** a subset of `b`
+
+  ## Examples
+
+      iex> a = %{cpu: 10, ram: 10, net: %{"a::b" => %{ulk: 10, dlk: 10}}}
+      %{}
+      iex> b = %{cpu: 10, ram: 10, net: %{"a::b" => %{ulk: 10, dlk: 10}, "c::d" => %{ulk: 10, dlk: 10}}}
+      %{}
+      iex> exceeds?(a, b)
+      false
+      iex> exceeds?(%{a| cpu: 20}, b)
+      true
+      iex> exceeds?(%{a| net: %{"ffff::ffff" => %{ulk: 1, dlk: 1}}}, b)
+      true
+  """
+  def exceeds?(a, b) do
+    a.cpu > b.cpu
+    or a.ram > b.ram
+    or not MapSet.subset?(MapSet.new(Map.keys(a)), MapSet.new(Map.keys(b)))
+    or Enum.any?(a.net, fn {net_id, a} ->
+      b = b.net[net_id]
+
+      a.ulk > b.ulk or a.dlk > b.dlk
+    end)
   end
 end

@@ -1,15 +1,14 @@
 defmodule Helix.Process.Service.Event.TOP do
+  @moduledoc false
 
-  alias Helix.Process.Controller.Process, as: Controller
-  alias Helix.Process.Controller.TableOfProcesses
-  alias Helix.Process.Model.Process.ProcessCreatedEvent
-  alias Helix.Process.Service.Local.Top.Manager
+  alias Helix.Network.Model.Connection.ConnectionClosedEvent
+  alias Helix.Process.Service.API.Process, as: API
 
-  def process_created(event = %ProcessCreatedEvent{}) do
-    process = Controller.fetch(event.process_id)
-
-    {:ok, pid} = Manager.prepare_top(process.gateway_id)
-
-    TableOfProcesses.recalculate(pid)
+  # TODO: Ensure that the processes are killed (by making `kill` blocking
+  #   probably)
+  def connection_closed(%ConnectionClosedEvent{connection_id: connection}) do
+    connection
+    |> API.get_processes_on_connection()
+    |> Enum.each(&API.kill(&1, :connection_closed))
   end
 end
