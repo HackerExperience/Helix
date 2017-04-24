@@ -25,17 +25,19 @@ use Mix.Releases.Config,
 environment :dev do
   set dev_mode: true
   set include_erts: false
-  set cookie: :dev_cookie
+  set cookie: :placeholder
+  set vm_args: "rel/vm.args"
 end
 
 environment :prod do
   set include_erts: true
   set include_src: false
-  set cookie: :prod_cookie
+  set cookie: :placeholder
   set commands: [
     ecto_create: "rel/commands/ecto_create.sh",
     ecto_migrate: "rel/commands/ecto_migrate.sh"
   ]
+  set vm_args: "rel/vm.args"
 end
 
 # You may define one or more releases in this file.
@@ -44,7 +46,7 @@ end
 # will be used by default
 
 release :helix do
-  set version: "0.0.1"
+  set version: current_version(:helix)
   set applications: [
     helix: :permanent
   ]
