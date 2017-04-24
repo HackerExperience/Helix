@@ -29,10 +29,29 @@ defmodule Helix.Hardware.Service.API.NetworkConnection do
     HELL.IPv4.t
     | nil
   def get_server_ip(server_id, network_id) do
-    query = [network_id: network_id, server_id: server_id]
+    alias Helix.Server.Service.API.Server
+    alias Helix.Hardware.Model.Component.NIC
+    alias Helix.Hardware.Model.NetworkConnection
+    alias Helix.Hardware.Service.API.Component
+    alias Helix.Hardware.Service.API.Motherboard
 
-    with %{ip: ip} <- Repo.get_by(NetworkConnection, query) do
+    with \
+      %{motherboard_id: m} when not is_nil(m) <- Server.fetch(server_id),
+      component = %{} <- Component.fetch(m),
+      motherboard = %{} <- Motherboard.fetch!(component),
+      slots = [_|_] <- Motherboard.get_slots(motherboard),
+      nics = [_|_] <- Enum.filter(slots, &(&1.link_component_type == :nic)),
+      nics = [_|_] <- Enum.reject(nics, &is_nil(&1.link_component_id)),
+      nics = [_|_] <- Enum.map(nics, &Repo.get(NIC, &1.link_component_id)),
+      nets = [_|_] <- Enum.map(
+        nics,
+        &Repo.get(NetworkConnection, &1.network_connection_id)),
+      %{ip: ip} <- Enum.find(nets, &(&1.network_id == network_id))
+    do
       ip
+    else
+      _ ->
+        nil
     end
   end
 end

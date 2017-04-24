@@ -45,6 +45,7 @@ defmodule Helix.Process.Service.API.Process do
     gateway
     |> Process.Query.from_server()
     |> Repo.all()
+    |> Enum.map(&Process.load_virtual_data/1)
   end
 
   @spec get_processes_targeting_server(HELL.PK.t) ::
@@ -53,6 +54,7 @@ defmodule Helix.Process.Service.API.Process do
     gateway
     |> Process.Query.by_target()
     |> Repo.all()
+    |> Enum.map(&Process.load_virtual_data/1)
   end
 
   @spec get_processes_on_connection(HELL.PK.t) ::
@@ -61,6 +63,7 @@ defmodule Helix.Process.Service.API.Process do
     connection_id
     |> Process.Query.by_connection_id()
     |> Repo.all()
+    |> Enum.map(&Process.load_virtual_data/1)
   end
 
   @spec pause(Process.t) ::

@@ -71,7 +71,7 @@ defmodule Helix.Process.Model.Process do
 
     # Which state in the process FSM the process is currently on
     field :state, State,
-      default: :standby
+      default: :running
     # What is the process priority on the Table of Processes (only affects
     # dynamic allocation)
     field :priority, :integer,
@@ -319,7 +319,7 @@ defmodule Helix.Process.Model.Process do
   end
 
   def calculate_work(process, now) do
-    if :running === get_field(process, :state) do
+    if :running == get_field(process, :state) do
       diff =
         process
         |> get_field(:updated_time)
@@ -468,7 +468,7 @@ defmodule Helix.Process.Model.Process do
   defp diff_in_seconds(%DateTime{}, nil),
     do: nil
   defp diff_in_seconds(start = %DateTime{}, finish = %DateTime{}),
-    do: Timex.diff(start, finish, :seconds)
+    do: Timex.diff(finish, start, :seconds)
 
   @spec calculate_processed(process, non_neg_integer) ::
     Resources.t

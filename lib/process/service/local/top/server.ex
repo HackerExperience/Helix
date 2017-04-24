@@ -80,7 +80,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
   end
 
   @doc false
-  def handle_call({:create, params}, state) do
+  def handle_call({:create, params}, _from, state) do
     reply =
       with \
         changeset = %{} <- Process.create_changeset(params),
