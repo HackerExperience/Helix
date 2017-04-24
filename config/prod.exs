@@ -10,6 +10,7 @@ config :helix, Helix.Endpoint,
                  "https://1.hackerexperience.com",
                  "https://heborn.hackerexperience.com"],
   server: true,
+  http: [port: 80],
   url: [host: "${HELIX_ENDPOINT_URL}", port: 80],
   secret_key_base: "${HELIX_ENDPOINT_SECRET_KEY}",
   debug_errors: false
