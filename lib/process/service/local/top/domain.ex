@@ -127,7 +127,10 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
           data_acc = store_processes(data_acc, [p])
           {data_acc, process_acc}
         process, {data_acc, process_acc} ->
-          process = Process.calculate_work(process, now)
+          process =
+            process
+            |> Changeset.change()
+            |> Process.calculate_work(now)
 
           if Process.complete?(process) do
             # TODO: this is an awkward interface. Wrap into into a facade maybe?
@@ -169,15 +172,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
     data = %{data| processes: [], last_minimum: minimum}
     newdata = store_processes(data, processes)
 
-    time =
-      processes
-      |> Enum.map(&Process.seconds_to_change/1)
-      |> Enum.reduce(:infinity, &min/2)
-
-    notify_completed = {:timeout, time, :allocate}
-    actions = [notify_completed]
-
-    {:keep_state, newdata, actions}
+    {:keep_state, newdata}
   end
 
   # Sends a set of instructions to the handler process to persist data
@@ -186,7 +181,23 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
       send(data.handler, {:top, :instructions, instructions})
     end
 
-    {:keep_state, %{data| instructions: []}}
+    {:keep_state, %{data| instructions: []}, [{:next_event, :internal, :wait}]}
+  end
+
+  def handle_event(:internal, :wait, :running, data) do
+    time =
+      data.processes
+      |> Enum.map(&Process.seconds_to_change/1)
+      |> Enum.reduce(:infinity, &min/2)
+
+    time = if is_integer(time),
+      do: time * 1_000,
+      else: time
+
+    notify_completed = {:timeout, time, :allocate}
+    actions = [notify_completed]
+
+    {:keep_state, data, actions}
   end
 
   def handle_event(:timeout, :allocate, :running, data) do

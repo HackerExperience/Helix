@@ -134,7 +134,7 @@ defmodule Helix.Process.Model.Process.Resources do
   end
 
   defp safe_div(dividend, divisor) when is_integer(divisor) and divisor > 0,
-    do: Kernel.div(dividend, divisor)
+    do: trunc(Float.ceil(dividend / divisor))
   defp safe_div(0, 0),
     do: 0
   defp safe_div(_, _),

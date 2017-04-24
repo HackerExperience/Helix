@@ -35,8 +35,11 @@ defmodule Helix.Process.Model.Process.NaiveStruct do
 
   def load(not_a_struct = %{"__module_name__" => m}) do
     module = String.to_existing_atom(m)
+    params = Enum.map(not_a_struct, fn {k, v} ->
+      {String.to_existing_atom(k), v}
+    end)
 
-    {:ok, struct(module, not_a_struct)}
+    {:ok, struct(module, params)}
   end
 
   def load(_),

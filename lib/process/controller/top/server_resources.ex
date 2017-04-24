@@ -174,7 +174,7 @@ defmodule Helix.Process.Controller.TableOfProcesses.ServerResources do
 
   defp do_sum_process(server_resources, allocated, network_id) do
     net = if network_id do
-      net_alloc = Map.take(allocated, [:uplink, :downlink])
+      net_alloc = Map.take(allocated, [:ulk, :dlk])
       sum_net_alloc = &Map.merge(&1, net_alloc, fn _, v1, v2 -> v1 + v2 end)
       Map.update(server_resources.net, network_id, net_alloc, sum_net_alloc)
     else
