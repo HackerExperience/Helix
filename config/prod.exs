@@ -25,3 +25,5 @@ config :helix, Helix.Endpoint,
   secret_key_base: "${HELIX_ENDPOINT_SECRET_KEY}",
   debug_errors: false,
   check_origin: false
+
+config :helix, :migration_token, "${HELIX_MIGRATION_TOKEN}"

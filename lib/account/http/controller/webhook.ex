@@ -9,6 +9,36 @@ defmodule Helix.Account.HTTP.Controller.Webhook do
 
   import Plug.Conn
 
+  plug :authenticate
+
+  defp get_token do
+    case Application.get_env(:helix, :migration_token) do
+      "${HELIX_MIGRATION_TOKEN}" ->
+        raise "Migration token not set"
+      token when is_binary(token) ->
+        token
+      _ ->
+        raise "Migration token not set"
+    end
+  end
+
+  # Ensures that the request has the expected authorization bearer token,
+  # otherwise blocks it
+  defp authenticate(conn, _) do
+    token = get_token()
+    case get_req_header(conn, "authorization") do
+      ["Bearer " <> ^token] ->
+        # Request has expected token and thus is valid
+        conn
+      _ ->
+        # Request does not include expected token and must be halted
+        conn
+        |> put_status(:forbidden)
+        |> json(%{status: :error, message: "invalid token"})
+        |> halt()
+    end
+  end
+
   def import_from_migration(conn, params) do
     %{"username" => username, "password" => password, "email" => email} = params
 
