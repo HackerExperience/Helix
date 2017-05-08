@@ -7,6 +7,7 @@ config :logger,
 
 config :helix, Helix.Endpoint,
   server: true,
+  instrumenters: [Appsignal.Phoenix.Instrumenter],
   allowed_cors: [
     "https://api.hackerexperience.com",
     "https://1.hackerexperience.com",
@@ -27,3 +28,7 @@ config :helix, Helix.Endpoint,
   check_origin: false
 
 config :helix, :migration_token, "${HELIX_MIGRATION_TOKEN}"
+
+config :appsignal, :config,
+  name: "Helix",
+  env: :prod

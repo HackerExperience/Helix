@@ -24,5 +24,9 @@ defmodule Helix.Endpoint do
     pass: ["*/*"],
     json_decoder: Poison
 
+  if Mix.env == :prod do
+    use Appsignal.Phoenix
+  end
+
   plug Helix.HTTP.Router
 end

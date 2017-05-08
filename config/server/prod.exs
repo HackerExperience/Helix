@@ -7,4 +7,5 @@ config :helix, Helix.Server.Repo,
   username: "${HELIX_DB_USER}",
   password: "${HELIX_DB_PASS}",
   hostname: "${HELIX_DB_HOST}",
-  database: prefix <> "_prod_server"
+  database: prefix <> "_prod_server",
+  loggers: [Appsignal.Ecto, Ecto.LogEntry]
