@@ -22,6 +22,8 @@ config :helix, Helix.Endpoint,
     name: Helix.Endpoint.PubSub
   ]
 
+config :helix, :migration_token, "defaultMigrationToken"
+
 config :distillery, no_warn_missing: [:burette]
 
 import_config "#{Mix.env}.exs"

@@ -148,7 +148,7 @@ defmodule Helix.Account.Model.Account do
   """
   defp validate_username(:username, value) do
     is_binary(value)
-    && Regex.match?(~r/^[a-zA-Z0-9][a-zA-Z0-9\!\?\$\%\-\_\.]{1,14}$/, value)
+    && Regex.match?(~r/^[a-zA-Z0-9][a-zA-Z0-9\!\?\$\%\-\_\.]{1,15}$/, value)
     && []
     || [username: "has invalid format"]
   end

@@ -2,7 +2,7 @@ defmodule Helix.HTTP.Router do
 
   use Phoenix.Router
 
-  alias Helix.Account.HTTP.Controller.Account
+  alias Helix.Account.HTTP.Controller, as: Account
 
   import Phoenix.Controller
 
@@ -13,10 +13,16 @@ defmodule Helix.HTTP.Router do
   scope "/v1", as: :api_v1 do
     pipe_through [:api]
 
-    scope "/account" do
-      post "/register", Account, :register
+    scope "/webhook" do
+      scope "/migration" do
+        post "/import", Account.Webhook, :import_from_migration
+      end
+    end
 
-      post "/login", Account, :login
+    scope "/account" do
+      post "/register", Account.Account, :register
+
+      post "/login", Account.Account, :login
     end
   end
 end
