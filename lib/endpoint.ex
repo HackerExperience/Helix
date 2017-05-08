@@ -1,5 +1,8 @@
 defmodule Helix.Endpoint do
+
   use Phoenix.Endpoint, otp_app: :helix
+
+  require Helix.Appsignal
 
   socket "/", Helix.Websocket.Socket
 
@@ -24,9 +27,8 @@ defmodule Helix.Endpoint do
     pass: ["*/*"],
     json_decoder: Poison
 
-  if Mix.env == :prod do
-    use Appsignal.Phoenix
-  end
+  @dialyzer :no_match
+  Helix.Appsignal.phoenix_instrumentation()
 
   plug Helix.HTTP.Router
 end
