@@ -18,7 +18,9 @@ defmodule Helix.Account.HTTP.Controller.WebhookTest do
 
       context.conn
       |> put_req_header("authorization", @token)
-      |> post(api_v1_webhook_path(context.conn, :import_from_migration), input_data)
+      |> post(
+        api_v1_webhook_path(context.conn, :import_from_migration),
+        input_data)
       |> json_response(200)
 
       account = Controller.fetch_by_username(input_data["username"])
@@ -44,7 +46,9 @@ defmodule Helix.Account.HTTP.Controller.WebhookTest do
       response =
         context.conn
         |> put_req_header("authorization", "Bearer invalidToken")
-        |> post(api_v1_webhook_path(context.conn, :import_from_migration), input_data)
+        |> post(
+          api_v1_webhook_path(context.conn, :import_from_migration),
+          input_data)
         |> json_response(403)
 
       assert response["message"] =~ "token"
