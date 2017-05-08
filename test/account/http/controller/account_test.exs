@@ -9,6 +9,7 @@ defmodule Helix.Account.HTTP.Controller.AccountTest do
   alias Helix.Account.Factory
 
   describe "register" do
+    @tag :pending
     test "creates account when input is valid", context do
       password = Burette.Internet.password()
       params = %{
