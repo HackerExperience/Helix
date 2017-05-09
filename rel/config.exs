@@ -16,7 +16,6 @@ use Mix.Releases.Config,
 # For a full list of config options for both releases
 # and environments, visit https://hexdocs.pm/distillery/configuration.html
 
-
 # You may define one or more environments in this file,
 # an environment's settings will override those of a release
 # when building in that environment, this combination of release
@@ -51,4 +50,3 @@ release :helix do
     helix: :permanent
   ]
 end
-

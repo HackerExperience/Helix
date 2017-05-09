@@ -45,7 +45,7 @@ defmodule Helix.Hardware.Model.MotherboardTest do
         |> Keyword.keys()
       end
 
-      assert :slots in check_spec.(%{[1,2] => slot()})
+      assert :slots in check_spec.(%{[1, 2] => slot()})
       assert :slots in check_spec.(%{:atom => slot()})
       assert :slots in check_spec.(%{0 => slot()})
       assert :slots in check_spec.(%{"foo" => slot()})

@@ -79,7 +79,7 @@ defmodule Helix.Hardware.Model.ComponentSpecTest do
 
       assert :name in check_spec.(123)
       assert :name in check_spec.(:atom)
-      assert :name in check_spec.([1,2])
+      assert :name in check_spec.([1, 2])
       assert :name in check_spec.(%{})
       assert :name in check_spec.("x")
       refute :name in check_spec.("xxx")
@@ -101,7 +101,7 @@ defmodule Helix.Hardware.Model.ComponentSpecTest do
 
       assert :spec_type in check_spec.(123)
       assert :spec_type in check_spec.(:foo)
-      assert :spec_type in check_spec.([1,2])
+      assert :spec_type in check_spec.([1, 2])
       assert :spec_type in check_spec.(%{})
       assert :spec_type in check_spec.("foobar")
       assert :spec_type in check_spec.("invalid")

@@ -41,7 +41,11 @@
 
         {Credo.Check.Readability.FunctionNames},
         {Credo.Check.Readability.LargeNumbers},
-        {Credo.Check.Readability.MaxLineLength, max_length: 80, ignore_definitions: true, ignore_specs: true, ignore_strings: true},
+        {Credo.Check.Readability.MaxLineLength,
+          max_length: 80,
+          ignore_definitions: true,
+          ignore_specs: true,
+          ignore_strings: true},
         {Credo.Check.Readability.ModuleAttributeNames},
         {Credo.Check.Readability.ModuleDoc, false},
         {Credo.Check.Readability.ModuleNames},
@@ -58,7 +62,6 @@
         {Credo.Check.Refactor.DoubleBooleanNegation, false},
         {Credo.Check.Refactor.ABCSize, false},
         {Credo.Check.Refactor.CondStatements},
-        # TODO: Check if this is a good metric and tune the max complexity
         {Credo.Check.Refactor.CyclomaticComplexity},
         {Credo.Check.Refactor.FunctionArity, max_arity: 6, ignore_defp: true},
         {Credo.Check.Refactor.MatchInCondition},
