@@ -4,10 +4,19 @@ node('elixir') {
   stage('Pre-build') {
     step([$class: 'WsCleanup'])
 
-    env.BUILD_VERSION = sh(script: 'date +%Y.%m.%d%H%M', returnStdout: true).trim()
-    def ARTIFACT_PATH = "${env.BRANCH_NAME}/${env.BUILD_VERSION}"
-
     checkout scm
+
+    env.BUILD_VERSION = sh(
+      script: 'date +%Y.%m.%d%H%M',
+      returnStdout: true
+    ).trim()
+
+    env.COMMIT_ID = sh(
+      script: 'git rev-parse --short HEAD',
+      returnStdout: true
+    ).trim()
+
+    def ARTIFACT_PATH = "${env.BRANCH_NAME}/${env.BUILD_VERSION}"
 
     sh 'mix local.hex --force'
     sh 'mix local.rebar --force'
@@ -110,7 +119,7 @@ parallel (
           withEnv(['CI_NAME=jenkins', "CI_BUILD_NUMBER=${env.BUILD_NUMBER}", "CI_BUILD_URL=${env.BUILD_URL}", "CI_BRANCH=${env.BRANCH_NAME}", "COVERALLS_REPO_TOKEN=${env.HELIX_COVERALLS_TOKEN}"]) {
 
             // Run code coverage
-            sh '#!/bin/sh -e\n' + '. ~/.profile && mix ecto.reset && mix coveralls.post ' + "--sha ${env.sha1} --branch ${env.BRANCH_NAME}"
+            sh '#!/bin/sh -e\n' + '. ~/.profile && mix ecto.reset && mix coveralls.post ' + "--sha ${env.COMMIT_ID} --branch ${env.BRANCH_NAME}"
 
           }
         }
