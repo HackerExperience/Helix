@@ -23,7 +23,7 @@ defmodule Helix.Entity.Controller.HackDatabase do
     Queryable.t
   def get_database(entity) do
     HackDatabase
-    |> select(^@select_fields)
+    |> select_for_presentation()
     |> where([h], h.entity_id == ^entity.entity_id)
     |> order_by(asc: :network_id, asc: :inserted_at)
   end
@@ -36,6 +36,19 @@ defmodule Helix.Entity.Controller.HackDatabase do
     |> where([h], h.network_id == ^network_id)
     |> where([h], h.server_ip == ^ip)
   end
+
+  @spec get_entry_by_server_id(Entity.t, PK.t) ::
+    Queryable.t
+  def get_entry_by_server_id(entity, server_id) do
+    HackDatabase
+    |> where([h], h.entity_id == ^entity.entity_id)
+    |> where([h], h.server_id == ^server_id)
+  end
+
+  @spec select_for_presentation(Queryable.t) ::
+    Queryable.t
+  def select_for_presentation(query),
+    do: select(query, ^@select_fields)
 
   @spec create(Entity.t, PK.t, IPv4.t, PK.t, String.t) ::
     Multi.t

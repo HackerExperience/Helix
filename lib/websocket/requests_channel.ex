@@ -3,6 +3,7 @@ defmodule Helix.Websocket.RequestsChannel do
   use Phoenix.Channel
 
   alias Helix.Account.Websocket.Routes, as: Account
+  alias Helix.Network.Websocket.Routes, as: Network
   alias Helix.Server.Websocket.Routes, as: Server
 
   def join(_topic, _message, socket) do
@@ -14,7 +15,10 @@ defmodule Helix.Websocket.RequestsChannel do
     do: Account.account_logout(socket)
 
   def handle_in("server.crack", params, socket),
-    do: Server.server_crack(params, socket)
+    do: Server.server_crack(socket, params)
+
+  def handle_in("network.browse", params, socket),
+    do: Network.browse_ip(socket, params)
 
   def handle_in(_, _, socket) do
     {:reply, :error, socket}
