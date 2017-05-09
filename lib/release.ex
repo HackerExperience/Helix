@@ -41,4 +41,24 @@ defmodule Helix.Release do
 
     :init.stop()
   end
+
+  def seeds do
+    Application.load(:helix)
+
+    repos = Application.get_env(:helix, :ecto_repos)
+
+    {:ok, _} = Application.ensure_all_started(:ecto)
+
+    Enum.each(repos, fn repo ->
+      {:ok, _} = repo.__adapter__.ensure_all_started(repo, :temporary)
+      {:ok, _} = repo.start_link(pool_size: 1)
+    end)
+
+    :helix
+    |> Application.app_dir("priv/**/seeds.exs")
+    |> Path.wildcard()
+    |> Enum.each(&Code.require_file/1)
+
+    :init.stop()
+  end
 end

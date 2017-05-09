@@ -34,7 +34,8 @@ environment :prod do
   set cookie: :placeholder
   set commands: [
     ecto_create: "rel/commands/ecto_create.sh",
-    ecto_migrate: "rel/commands/ecto_migrate.sh"
+    ecto_migrate: "rel/commands/ecto_migrate.sh",
+    seeds: "rel/commands/seeds.sh"
   ]
   set vm_args: "rel/vm.args"
 end
@@ -46,7 +47,4 @@ end
 
 release :helix do
   set version: current_version(:helix)
-  set applications: [
-    helix: :permanent
-  ]
 end

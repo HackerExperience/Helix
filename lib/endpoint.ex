@@ -1,5 +1,8 @@
 defmodule Helix.Endpoint do
+
   use Phoenix.Endpoint, otp_app: :helix
+
+  require Helix.Appsignal
 
   socket "/", Helix.Websocket.Socket
 
@@ -23,6 +26,9 @@ defmodule Helix.Endpoint do
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
     json_decoder: Poison
+
+  @dialyzer :no_match
+  Helix.Appsignal.phoenix_instrumentation()
 
   plug Helix.HTTP.Router
 end

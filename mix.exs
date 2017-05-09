@@ -45,7 +45,7 @@ defmodule Helix.Mixfile do
 
   defp deps do
     [
-      {:distillery, "~>1.2", runtime: false},
+      {:distillery, "~>1.3", runtime: false},
 
       {:phoenix, "~> 1.3.0-rc.1", override: true},
       {:phoenix_pubsub, "~> 1.0"},
@@ -60,6 +60,8 @@ defmodule Helix.Mixfile do
 
       {:comeonin, "~> 2.5"},
       {:timex, "~> 3.0"},
+
+      {:appsignal, "~> 1.2", only: :prod},
 
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test},
 
