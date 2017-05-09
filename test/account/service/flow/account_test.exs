@@ -16,7 +16,7 @@ defmodule Helix.Account.Service.Flow.AccountTest do
       # FIXME: This is to ensure that all callbacks in the flow are executed
       #   before the test ends (otherwise the callbacks will not have access to
       #   the repo because Ecto.Sandbox)
-      :timer.sleep(300)
+      :timer.sleep(500)
 
       assert {:ok, %{entity: entity}} = result
       assert %Entity{} = entity

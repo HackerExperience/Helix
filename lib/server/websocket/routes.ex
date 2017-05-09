@@ -13,8 +13,8 @@ defmodule Helix.Server.Websocket.Routes do
   # https://hexdocs.pm/phoenix/Phoenix.Channel.html#c:handle_in/3
 
   def server_crack(
-    %{gateway: gateway, network_id: network, target_ip: target},
-    socket)
+    socket,
+    %{"gateway" => gateway, "network_id" => network, "target_ip" => target})
   do
     account = socket.assigns.account
 

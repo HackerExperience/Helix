@@ -15,6 +15,16 @@ defmodule Helix.Entity.Service.API.HackDatabase do
     |> Repo.all()
   end
 
+  @spec fetch_server_record(Entity.t, PK.t) ::
+    map
+    | nil
+  def fetch_server_record(entity, server) do
+    entity
+    |> HackDatabaseController.get_entry_by_server_id(server)
+    |> HackDatabaseController.select_for_presentation()
+    |> Repo.one()
+  end
+
   @spec create(Entity.t, PK.t, IPv4.t, PK.t, String.t) ::
     {:ok, %{{:hack_database, :new} => HackDatabase.t}}
     | {:error, {:hack_database, :new}, term, map}
