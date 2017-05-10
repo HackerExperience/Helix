@@ -22,6 +22,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Software.Service.API.File, as: FileAPI
   alias Helix.Software.Service.Flow.FileDownload
   alias Helix.Software.Service.Flow.LogDeleter
+  alias Helix.Software.Public.View.File, as: FileView
   alias Helix.Server.Service.API.Server, as: ServerAPI
   alias Helix.Server.Service.Henforcer.Server, as: Henforcer
 
@@ -178,22 +179,8 @@ defmodule Helix.Server.Websocket.Channel.Server do
         # %{"foo" => [1, 2]}
         Map.merge(acc, el, fn _k, v1, v2 -> v1 ++ v2 end)
       end)
-      # HACK: FIXME: This belongs to a viewable protocol. We're doing it as it
-      #   is now so it works before we do the real work (?)
       |> Enum.map(fn {path, files} ->
-        files = for file <- files do
-          Map.take(
-            file,
-            [
-              :file_id,
-              :name,
-              :path,
-              :full_path,
-              :file_size,
-              :software_type,
-              :inserted_at,
-              :updated_at])
-        end
+        files = Enum.map(files, &FileView.render/1)
 
         {path, files}
       end)
