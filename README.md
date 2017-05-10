@@ -1,7 +1,7 @@
 <p align="center"><img src="help/logo.png" /></p>
 
 
-# Helix [![Build Status](https://ci.hackerexperience.com/buildStatus/icon?job=HackerExperience/Helix/master)](https://ci.hackerexperience.com/job/HackerExperience/job/Helix/job/master) [![Ebert](https://ebertapp.io/github/HackerExperience/Helix.svg)](https://ebertapp.io/github/HackerExperience/Helix) ![](https://tokei.rs/b1/github/hackerexperience/helix)
+# Helix [![Build Status](https://ci.hackerexperience.com/buildStatus/icon?job=HackerExperience/Helix/master)](https://ci.hackerexperience.com/job/HackerExperience/job/Helix/job/master) [![Ebert](https://ebertapp.io/github/HackerExperience/Helix.svg)](https://ebertapp.io/github/HackerExperience/Helix) ![](https://tokei.rs/b1/github/hackerexperience/helix) [![Coverage Status](https://coveralls.io/repos/github/HackerExperience/Helix/badge.svg?branch=master)](https://coveralls.io/github/HackerExperience/Helix?branch=master)
 ---
 
 Helix is the backend powering the game **Hacker Experience 2**.
@@ -55,19 +55,19 @@ you can execute elixir code on the terminal. You can alternatively use
 
 | Environment | Required? | Example Value | Description |
 |:-- |:--:|:-- |:-- |
-|`HELIX_CLUSTER_COOKIE`| true | randomcookie | The secret cookie used to authenticate erlang nodes on a cluster* |
-|`HELIX_NODE_NAME`| true | mynode | Each erlang node on a cluster must have a different name; this name is used solely to identify the node on the cluster |
-|`HELIX_ENDPOINT_SECRET_KEY`| true | reallyreallylongstring | The secret key used to encrypt the session token |
-|`HELIX_ENDPOINT_URL`| true | 127.0.0.1 | The hostname where the Helix server will run |
-|`HELIX_DB_USER`| true | postgres | RDBMS username |
-|`HELIX_DB_PASS`| true | postgres | RDBMS password |
-|`HELIX_DB_HOST`| true | localhost | RDBMS hostname |
-|`HELIX_DB_PREFIX`| true | helix | The prefix for the databases used on Helix. Eg: if the prefix is `foobar`, the database for accounts will be `foobar_prod_account` |
-|`HELIX_DB_POOL_SIZE`| true | 3 | The amount of connections constantly open for each database |
-|`HELIX_SSL_KEYFILE`| true | priv/dev/ssl.key | The path for the keyfile used on HTTPS connections |
-|`HELIX_SSL_CERTFILE`| true | priv/dev/sll.crt | The path for the certificate used on HTTPS connections |
-|`HELIX_MIGRATION_TOKEN`| false | foobar | Token used to authenticate HEBornMigration application exports |
-|`APPSIGNAL_PUSH_API_KEY`| false | abcdef | Key for AppSignal. If this env is not provided, AppSignal won't log errors |
+|`HELIX_CLUSTER_COOKIE`| ✓ | randomcookie | The secret cookie used to authenticate erlang nodes on a cluster* |
+|`HELIX_NODE_NAME`| ✓ | mynode | Each erlang node on a cluster must have a different name; this name is used solely to identify the node on the cluster |
+|`HELIX_ENDPOINT_SECRET_KEY`| ✓ | reallyreallylongstring | The secret key used to encrypt the session token |
+|`HELIX_ENDPOINT_URL`| ✓ | 127.0.0.1 | The hostname where the Helix server will run |
+|`HELIX_DB_USER`| ✓ | postgres | RDBMS username |
+|`HELIX_DB_PASS`| ✓ | postgres | RDBMS password |
+|`HELIX_DB_HOST`| ✓ | localhost | RDBMS hostname |
+|`HELIX_DB_PREFIX`| ✓ | helix | The prefix for the databases used on Helix. Eg: if the prefix is `foobar`, the database for accounts will be `foobar_prod_account` |
+|`HELIX_DB_POOL_SIZE`| ✓ | 3 | The amount of connections constantly open for each database |
+|`HELIX_SSL_KEYFILE`| ✓ | priv/dev/ssl.key | The path for the keyfile used on HTTPS connections |
+|`HELIX_SSL_CERTFILE`| ✓ | priv/dev/sll.crt | The path for the certificate used on HTTPS connections |
+|`HELIX_MIGRATION_TOKEN`| ✕ | foobar | Token used to authenticate HEBornMigration application exports |
+|`APPSIGNAL_PUSH_API_KEY`| ✕ | abcdef | Key for AppSignal. If this env is not provided, AppSignal won't log errors |
 
 **Notes**
 
