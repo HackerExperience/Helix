@@ -66,20 +66,17 @@ defmodule Helix.Account.Service.API.Account do
   This function is safe against timing attacks
   """
   def login(username, password) do
-    # TODO: if it makes sense, use `erlang:send_after/3` to make the database
-    #   fetch time be constant even when the user account doesn't exist to avoid
-    #   guessing about it's validity. Albeit i don't think it's really worth as
-    #   anyone that has an account can check if a certain username exists. (it
-    #   would make sense if we used email for login tho)
     # TODO: check account status (when implemented) and return error for
     #   non-confirmed email and for banned account
-    account = AccountController.fetch_by_username(username)
-
-    if Account.check_password(account, password) do
+    with \
+      account = %{} <- AccountController.fetch_by_username(username),
+      true <- Account.check_password(account, password)
+    do
       token = Session.generate_token(account)
       {:ok, account, token}
     else
-      {:error, :notfound}
+      _ ->
+        {:error, :notfound}
     end
   end
 end

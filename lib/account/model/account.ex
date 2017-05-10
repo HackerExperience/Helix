@@ -69,34 +69,23 @@ defmodule Helix.Account.Model.Account do
     |> prepare_changes()
   end
 
-  @default_pass_for_timing_attacks Bcrypt.hashpwsalt("Avoid timing attacks")
-
-  @spec check_password(t | nil, password) :: boolean
+  @spec check_password(t, password) :: boolean
   @doc """
   Checks if `pass` matches with `account`'s password
 
-  This function is safe against timing attacks by having a default clause for
-  when the input account is nil that will still compare hash of a potential
-  password thus taking the same time to be executed
+  This function is safe against timing attacks by always traversing the whole
+  input string
 
   ## Examples
 
       iex> check_password(account, "correct password")
       true
 
-      iex> check_password(nil, "some password")
-      false
-
       iex> check_password(account, "incorrect password")
       false
   """
   def check_password(account = %__MODULE__{}, pass),
     do: Bcrypt.checkpw(pass, account.password)
-  def check_password(nil, pass) do
-    Bcrypt.checkpw(pass, @default_pass_for_timing_attacks)
-
-    false
-  end
 
   @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp generic_validations(changeset) do
