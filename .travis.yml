@@ -6,7 +6,7 @@ elixir:
 otp_release:
   - 19.3
 script:
-- "MIX_ENV=test mix do deps.get, compile, ecto.setup, coveralls.travis"
+- "MIX_ENV=test mix do deps.get, compile, ecto.setup, coveralls.travis, inch.report"
 services:
   - postgresql
 addons:

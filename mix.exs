@@ -73,6 +73,8 @@ defmodule Helix.Mixfile do
       {:earmark, "~> 1.1", only: :dev},
       {:ex_doc, "~> 0.15", only: :dev},
 
+      {:inch_ex, "~> 0.5.6", only: [:dev, :test]},
+
       {:credo, "~> 0.7", only: [:dev, :test]},
       {:excoveralls, "~> 0.6.3", only: [:dev, :test]}
     ]
