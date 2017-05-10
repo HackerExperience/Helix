@@ -30,8 +30,7 @@ defmodule Helix.Mixfile do
         "test.cover": :test,
         "pr": :test,
         "coveralls": :test,
-        "coveralls.post": :test,
-        "coveralls.json": :test
+        "coveralls.travis": :test
       },
 
       name: "Helix",
