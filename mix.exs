@@ -19,6 +19,7 @@ defmodule Helix.Mixfile do
       deps: deps(),
 
       dialyzer: [plt_add_apps: [:mix, :phoenix_pubsub]],
+      test_coverage: [tool: ExCoveralls, test_task: "test.cover"],
 
       preferred_cli_env: %{
         "test.quick": :test,
@@ -26,7 +27,10 @@ defmodule Helix.Mixfile do
         "test.unit": :test,
         "test.cluster": :test,
         "test.external": :test,
-        "pr": :test
+        "test.cover": :test,
+        "pr": :test,
+        "coveralls": :test,
+        "coveralls.travis": :test
       },
 
       name: "Helix",
@@ -69,7 +73,8 @@ defmodule Helix.Mixfile do
       {:earmark, "~> 1.1", only: :dev},
       {:ex_doc, "~> 0.15", only: :dev},
 
-      {:credo, "~> 0.7", only: [:dev, :test]}
+      {:credo, "~> 0.7", only: [:dev, :test]},
+      {:excoveralls, "~> 0.6.3", only: [:dev, :test]}
     ]
   end
 
@@ -77,7 +82,6 @@ defmodule Helix.Mixfile do
     [
       "ecto.setup": ["ecto.create", "ecto.migrate", "helix.seeds"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      "test": ["test.quick"],
       "test.full": [
         "helix.test --exclude sequential --exclude cluster --exclude external",
         "helix.test --no-prune --only sequential --exclude cluster --exclude external --max-cases 1",
@@ -102,6 +106,9 @@ defmodule Helix.Mixfile do
         "helix.test --no-prune --only sequential --exclude cluster --exclude external --max-cases 1",
         "dialyzer --halt-exit-status",
         "credo --strict"
+      ],
+      "test.cover": [
+        "helix.test --no-prune --exclude sequential --exclude cluster --exclude external --max-cases 1"
       ]
     ]
   end

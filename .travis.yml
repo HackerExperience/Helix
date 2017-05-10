@@ -1,0 +1,24 @@
+dist: trusty
+sudo: false
+language: elixir
+elixir:
+  - 1.4.2
+otp_release:
+  - 19.3
+script:
+- "MIX_ENV=test mix do deps.get, compile, ecto.setup, coveralls.travis"
+services:
+  - postgresql
+addons:
+  postgresql: "9.6"
+env:
+  global:
+    - HELIX_DB_USER=postgres
+    - HELIX_DB_PASS=
+    - HELIX_DB_HOST=127.0.0.1
+    - HELIX_DB_POOL_SIZE=3
+    - HELIX_DB_PREFIX=travis
+    - HELIX_ENDPOINT_URL=127.0.0.1
+    - HELIX_ENDPOINT_SECRET=uhauhauhhauuhahuahuaha
+    - HELIX_NODE_NAME=travis
+    - HELIX_CLUSTER_COOKIE=uehauehuaheuaheuaheuhe
