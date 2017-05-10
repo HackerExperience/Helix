@@ -99,7 +99,7 @@ retry(2) {
     'Tests': {
       node('helix') {
         stage('Tests') {
-          timeout(3) {
+          timeout(4) {
             step([$class: 'WsCleanup'])
 
             unstash 'source'
@@ -107,6 +107,7 @@ retry(2) {
 
             withEnv (['MIX_ENV=test']) {
               // HACK: mix complains if I don't run deps.get again, not sure why
+              // TODO: it's compiling everything again, find out why
               sh 'mix deps.get'
 
               // Unset debug flag, load env vars on ~/.profile & run mix test
