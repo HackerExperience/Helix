@@ -1,7 +1,7 @@
 <p align="center"><img src="help/logo.png" /></p>
 
 
-# Helix [![Build Status](https://ci.hackerexperience.com/buildStatus/icon?job=HackerExperience/Helix/master)](https://ci.hackerexperience.com/job/HackerExperience/job/Helix/job/master) [![Ebert](https://ebertapp.io/github/HackerExperience/Helix.svg)](https://ebertapp.io/github/HackerExperience/Helix) ![](https://tokei.rs/b1/github/hackerexperience/helix)
+# Helix [![Build Status](https://ci.hackerexperience.com/buildStatus/icon?job=HackerExperience/Helix/master)](https://ci.hackerexperience.com/job/HackerExperience/job/Helix/job/master) [![Ebert](https://ebertapp.io/github/HackerExperience/Helix.svg)](https://ebertapp.io/github/HackerExperience/Helix) ![](https://tokei.rs/b1/github/hackerexperience/helix) [![Coverage Status](https://coveralls.io/repos/github/HackerExperience/Helix/badge.svg?branch=master)](https://coveralls.io/github/HackerExperience/Helix?branch=master)
 ---
 
 Helix is the backend powering the game **Hacker Experience 2**.
