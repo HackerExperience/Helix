@@ -1,11 +1,3 @@
-# This configuration was used Ebert to review the HackerExperience/Helix repository
-# on 4c6e317551396af8a822b36df2556781e259fbc5.
-# You can make this the default configuration for future reviews by moving this
-# file to your repository as `.ebert.yml` and pushing it to GitHub, and tweak
-# it as you wish - To know more on how to change this file to better review your
-# repository you can go to https://ebertapp.io/docs/config and see the configuration
-# details.
----
 styleguide: plataformatec/linters
 engines:
   credo:
@@ -22,4 +14,3 @@ exclude_paths:
 - config
 - priv/repo
 - test
-
