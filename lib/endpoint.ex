@@ -27,8 +27,5 @@ defmodule Helix.Endpoint do
     pass: ["*/*"],
     json_decoder: Poison
 
-  @dialyzer :no_match
-  Helix.Appsignal.phoenix_instrumentation()
-
   plug Helix.HTTP.Router
 end

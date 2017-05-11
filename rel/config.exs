@@ -47,4 +47,7 @@ end
 
 release :helix do
   set version: current_version(:helix)
+  set applications: [
+    helix: :permanent
+  ]
 end
