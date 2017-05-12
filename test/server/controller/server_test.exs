@@ -5,7 +5,6 @@ defmodule Helix.Server.Controller.ServerTest do
   alias HELL.TestHelper.Random
   alias Helix.Server.Controller.Server, as: ServerController
   alias Helix.Server.Model.Server
-  alias Helix.Server.Model.ServerType
   alias Helix.Server.Repo
 
   alias Helix.Server.Factory
@@ -32,49 +31,6 @@ defmodule Helix.Server.Controller.ServerTest do
 
     test "fails when server doesn't exists" do
       refute ServerController.fetch(Random.pk())
-    end
-  end
-
-  describe "finding" do
-    test "succeeds by id list" do
-      server_list =
-        3
-        |> Factory.insert_list(:server)
-        |> Enum.map(&(&1.server_id))
-        |> Enum.sort()
-
-      found =
-        [id: server_list]
-        |> ServerController.find()
-        |> Enum.map(&(&1.server_id))
-        |> Enum.sort()
-
-      assert server_list == found
-    end
-
-    test "succeeds by type" do
-      server_type = Enum.random(ServerType.possible_types())
-      expected =
-        3
-        |> Factory.insert_list(:server, server_type: server_type)
-        |> Enum.map(&(&1.server_id))
-
-      found =
-        [type: server_type]
-        |> ServerController.find()
-        |> Enum.map(&(&1.server_id))
-
-      assert Enum.all?(expected, &(&1 in found))
-    end
-
-    test "returns an empty list when no server is found by id" do
-      bogus =
-        3
-        |> Factory.build_list(:server)
-        |> Enum.map(&(&1.server_id))
-
-      result = ServerController.find(id: bogus)
-      assert Enum.empty?(result)
     end
   end
 
