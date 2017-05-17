@@ -51,7 +51,7 @@ defmodule Helix.Account.Service.Flow.Account do
         {:ok, server} <- ServerAPI.create(:desktop),
         on_fail(fn -> ServerAPI.delete(server) end),
 
-        {:ok, _} <- ServerAPI.attach(server, motherboard_id),
+        {:ok, server} <- ServerAPI.attach(server, motherboard_id),
         on_fail(fn -> ServerAPI.detach(server) end),
 
         server_id = server.server_id,
