@@ -17,6 +17,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo, as: NetworkRepo
   alias Helix.Network.Service.API.Tunnel, as: TunnelAPI
+  alias Helix.Process.Public.ProcessView
   alias Helix.Process.Service.API.Process, as: ProcessAPI
   alias Helix.Software.Controller.Storage, as: StorageController
   alias Helix.Software.Service.API.File, as: FileAPI
@@ -227,34 +228,13 @@ defmodule Helix.Server.Websocket.Channel.Server do
     processes_targeting_server = ProcessAPI.get_processes_targeting_server(
       server)
 
-    # HACK: FIXME: This belongs to a viewable protocol. We're doing it as it
-    #   is now so it works before we do the real work (?)
+    entity = EntityAPI.get_entity_id(socket.assigns.account)
     processes_on_server = Enum.map(processes_on_server, fn process ->
-      Map.take(
-        process,
-        [
-          :process_id,
-          :file_id,
-          :target_server_id,
-          :network_id,
-          :connection_id,
-          :process_type,
-          :state,
-          :priority])
+      ProcessView.render(process.process_data, process, server, entity)
     end)
-    processes_targeting_server = Enum.map(processes_targeting_server,
-      fn process ->
-        Map.take(
-          process,
-          [
-            :process_id,
-            :file_id,
-            :target_server_id,
-            :network_id,
-            :connection_id,
-            :process_type,
-            :state,
-            :priority])
+    processes_targeting_server = Enum.map(processes_targeting_server, fn
+      process ->
+        ProcessView.render(process.process_data, process, server, entity)
     end)
 
     return = %{
