@@ -41,4 +41,87 @@ defmodule Software.FileDownload.ProcessType do
       []
     end
   end
+
+  defimpl Helix.Process.Public.ProcessView do
+
+    alias Helix.Process.Model.Process
+    alias Helix.Process.Model.Process.Resources
+    alias Helix.Process.Model.Process.State
+
+    @spec render(map, Process.t, HELL.PK.t, HELL.PK.t) ::
+      %{
+        :process_id => HELL.PK.t,
+        :gateway_id => HELL.PK.t,
+        :target_server_id => HELL.PK.t,
+        :network_id => HELL.PK.t,
+        :connection_id => HELL.PK.t,
+        :process_type => term,
+        :target_file_id => HELL.PK.t,
+        optional(:state) => State.state,
+        optional(:objective) => Resources.t,
+        optional(:processed) => Resources.t,
+        optional(:allocated) => Resources.t,
+        optional(:priority) => 0..5,
+        optional(:creation_time) => DateTime.t
+      }
+    def render(data, process = %{gateway_id: server}, server, _) do
+      base = take_data_from_process(process)
+      complement = %{
+        target_file_id: data.target_file_id
+      }
+
+      Map.merge(base, complement)
+    end
+
+    def render(data, process, _, _) do
+      base =
+        process
+        |> take_data_from_process()
+        |> Map.drop([
+          :state,
+          :objective,
+          :processed,
+          :allocated,
+          :priority,
+          :creation_time
+        ])
+
+      complement = %{
+        target_file_id: data.target_file_id
+      }
+
+      Map.merge(base, complement)
+    end
+
+    defp take_data_from_process(process) do
+      %{
+        process_id: id,
+        gateway_id: gateway,
+        target_server_id: target,
+        network_id: net,
+        connection_id: connection,
+        process_type: type,
+        state: state,
+        objective: objective,
+        processed: processed,
+        allocated: allocated,
+        priority: priority,
+        creation_time: creation} = process
+
+      %{
+        process_id: id,
+        gateway_id: gateway,
+        target_server_id: target,
+        network_id: net,
+        connection_id: connection,
+        process_type: type,
+        state: state,
+        objective: objective,
+        processed: processed,
+        allocated: allocated,
+        priority: priority,
+        creation_time: creation
+      }
+    end
+  end
 end
