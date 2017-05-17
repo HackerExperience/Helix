@@ -32,42 +32,15 @@ defmodule Helix.Server.Service.API.ServerTest do
     end
   end
 
-  describe "find/2" do
-    test "succeeds by id list" do
-      server_ids =
-        3
-        |> Factory.insert_list(:server)
-        |> Enum.map(&(&1.server_id))
-        |> Enum.sort()
+  describe "fetch_by_motherboard/1" do
+    test "returns the server that mounts the motherboard" do
+      server = Factory.insert(:server)
+      motherboard = Random.pk()
 
-      found_ids =
-        [id: server_ids]
-        |> API.find()
-        |> Enum.map(&(&1.server_id))
-        |> Enum.sort()
+      API.attach(server, motherboard)
 
-      assert server_ids == found_ids
-    end
-
-    test "succeeds by type" do
-      type = Factory.random_server_type()
-
-      server_ids =
-        3
-        |> Factory.insert_list(:server, server_type: type)
-        |> Enum.map(&(&1.server_id))
-
-      found_ids =
-        [type: type]
-        |> API.find()
-        |> Enum.map(&(&1.server_id))
-
-      assert Enum.all?(server_ids, &(&1 in found_ids))
-    end
-
-    test "returns an empty list when no server is found by id" do
-      bogus = [Random.pk()]
-      assert Enum.empty?(API.find(id: bogus))
+      fetched = API.fetch_by_motherboard(motherboard)
+      assert server.server_id == fetched.server_id
     end
   end
 
@@ -119,6 +92,25 @@ defmodule Helix.Server.Service.API.ServerTest do
 
       server = Repo.get(Server, server.server_id)
       refute server.motherboard_id
+    end
+  end
+
+  describe "delete/1" do
+    test "removes the record from database" do
+      server = Factory.insert(:server)
+
+      assert Repo.get(Server, server.server_id)
+      API.delete(server)
+      refute Repo.get(Server, server.server_id)
+    end
+
+    @tag :pending
+    test "is idempotent" do
+      server = Factory.insert(:server)
+
+      assert API.delete(server)
+      assert API.delete(server)
+      assert API.delete(server)
     end
   end
 end
