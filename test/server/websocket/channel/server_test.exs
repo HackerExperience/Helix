@@ -4,7 +4,8 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   alias Helix.Websocket.Socket
 
-  alias Helix.Server.Factory, as: ServerFactory
+  alias Helix.Entity.Service.API.Entity, as: EntityAPI
+  alias Helix.Log.Service.API.Log, as: LogAPI
   alias Helix.Network.Factory, as: NetworkFactory
 
   import Phoenix.ChannelTest
@@ -23,46 +24,22 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     {:ok, account: account, socket: socket}
   end
 
-  # TODO: Move this to a factory
+  # FIXME: This will certainly break in the worst way in the future, but right
+  #   now it's good enough for me not to suffer
   defp create_server_for_account(account) do
-    alias Helix.Entity.Factory, as: EntityFactory
+    alias Helix.Account.Service.Flow.Account, as: AccountFlow
 
-    # FIXME PLEASE
-    entity = EntityFactory.insert(:entity, entity_id: account.account_id)
+    {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-    create_server_for_entity(entity)
+    server
   end
 
   defp create_destination_server do
-    alias Helix.Entity.Factory, as: EntityFactory
+    alias Helix.Account.Factory, as: AccountFactory
 
-    entity = EntityFactory.insert(:entity)
+    account = AccountFactory.insert(:account)
 
-    create_server_for_entity(entity)
-  end
-
-  defp create_server_for_entity(entity) do
-    alias Helix.Hardware.Factory, as: HardwareFactory
-    alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
-    alias Helix.Entity.Service.API.Entity, as: EntityAPI
-    alias Helix.Server.Service.API.Server, as: ServerAPI
-    alias Helix.Server.Factory, as: ServerFactory
-
-    # FIXME PLEASE
-    server = ServerFactory.insert(:server)
-    EntityAPI.link_server(entity, server.server_id)
-
-    # I BEG YOU, SAVE ME FROM THIS EXCRUCIATING PAIN
-    motherboard = HardwareFactory.insert(:motherboard)
-    Enum.each(motherboard.slots, fn slot ->
-      component = HardwareFactory.insert(slot.link_component_type)
-      component = component.component
-
-      MotherboardAPI.link(slot, component)
-    end)
-    {:ok, server} = ServerAPI.attach(server, motherboard.motherboard_id)
-
-    server
+    create_server_for_account(account)
   end
 
   defp populate_server_with_files(server) do
@@ -87,7 +64,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     end)
   end
 
-  defp connect_to_realword_server(socket) do
+  defp connect_to_realword_server(context = %{socket: socket}) do
     gateway = create_server_for_account(socket.assigns.account)
     gateway_id = gateway.server_id
     destination = create_destination_server()
@@ -108,12 +85,14 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
     {:ok, _, socket} = join(socket, topic, join_msg)
 
-    %{
+    data = %{
       socket: socket,
       gateway: gateway,
       destination: destination_id,
       files: destination_files
     }
+
+    Map.merge(context, data)
   end
 
   test "can connect to owned server", context do
@@ -155,8 +134,26 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert {:ok, _, _} = join(context.socket, topic, join_msg)
   end
 
+  test "can start connection with a server", context do
+    gateway = create_server_for_account(context.account)
+    gateway = gateway.server_id
+    destination = create_destination_server()
+
+    topic = "server:" <> destination.server_id
+    join_msg = %{
+      "gateway_id" => gateway,
+      "network_id" => "::", # The hardcoded way is the right way (tm)
+      "password" => destination.password
+    }
+
+    assert {:ok, _, _} = join(context.socket, topic, join_msg)
+
+    # This will emit an event...
+    :timer.sleep(250)
+  end
+
   test "returns files on server", context do
-    context = connect_to_realword_server(context.socket)
+    context = connect_to_realword_server(context)
 
     ref = push context.socket, "file.index", %{}
 
@@ -187,8 +184,23 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   end
 
   describe "log.index" do
-    @tag :pending
-    test "fetches logs on the destination"
+    test "fetches logs on the destination", context do
+      context = connect_to_realword_server(context)
+
+      server_id = context.destination
+      entity_id = EntityAPI.get_entity_id(context.account)
+
+      LogAPI.create(server_id, entity_id, "foo")
+      LogAPI.create(server_id, entity_id, "bar")
+      LogAPI.create(server_id, entity_id, "baz")
+
+      ref = push context.socket, "log.index", %{}
+
+      assert_reply ref, :ok, response
+
+      assert %{data: %{logs: logs}} = response
+      assert [%{message: "baz"}, %{message: "bar"}, %{message: "foo"}] = logs
+    end
   end
 
   describe "log.delete" do
