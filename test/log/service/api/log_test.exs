@@ -6,6 +6,9 @@ defmodule Helix.Log.Service.API.LogTest do
   alias Helix.Test.Factory.Log, as: LogFactory
   alias Helix.Log.Service.API.Log, as: API
   alias Helix.Log.Model.Log
+  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Log.Model.Log.LogDeletedEvent
+  alias Helix.Log.Repo
 
   describe "create/3" do
     test "succeeds with valid input" do
@@ -58,6 +61,39 @@ defmodule Helix.Log.Service.API.LogTest do
 
       {:ok, _} = API.recover(log)
       assert %{message: ^message0} = API.fetch(log.log_id)
+    end
+
+    test "returns LogModified event when a message is recovered" do
+      log = LogFactory.insert(:log)
+      entity = Random.pk()
+      message = "nullPointerException"
+
+      API.revise(log, entity, message, 1)
+
+      assert {:ok, %{events: [%LogModifiedEvent{}]}} = API.recover(log)
+    end
+
+    test "returns error when log is original" do
+      log = LogFactory.insert(:log)
+
+      # This is an Ecto Multi return; it means that the operation failed on
+      # operation "log", returning "original_revision" and that the success
+      # state is the map (empty because nothing else was done)
+      assert {:error, :log, :original_revision, %{}} == API.recover(log)
+    end
+
+    test "deletes log if it was forged" do
+      log = LogFactory.insert(:log, forge_version: 1)
+
+      assert Repo.get(Log, log.log_id)
+      assert {:ok, _} = API.recover(log)
+      refute Repo.get(Log, log.log_id)
+    end
+
+    test "returns LogDeleted event when forged log is deleted" do
+      log = LogFactory.insert(:log, forge_version: 1)
+
+      assert {:ok, %{events: [%LogDeletedEvent{}]}} = API.recover(log)
     end
   end
 
