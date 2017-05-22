@@ -216,7 +216,7 @@ defmodule Helix.Process.Model.Process do
   def complete?(process = %Ecto.Changeset{}),
     do: complete?(apply_changes(process))
   def complete?(%__MODULE__{state: state, objective: objective, processed: processed}),
-    do: state == :complete or objective == processed
+    do: state == :complete or (objective && objective == processed)
 
   @spec allocate_minimum(process) ::
     Changeset.t
@@ -385,6 +385,8 @@ defmodule Helix.Process.Model.Process do
   """
   def seconds_to_change(p = %Changeset{}),
     do: seconds_to_change(apply_changes(p))
+  def seconds_to_change(%{objective: nil}),
+    do: :infinity
   def seconds_to_change(process) do
     process.objective
     |> Resources.sub(process.processed)

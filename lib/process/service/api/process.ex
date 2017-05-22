@@ -15,7 +15,7 @@ defmodule Helix.Process.Service.API.Process do
     # TODO: i don't like this with here as it is. I think getting the TOP pid
     #   should be more transparent
     with \
-      %{gateway_id: gateway} <- params,
+      %{gateway_id: gateway} <- params, # TODO: Return an error on unmatch
       {:ok, pid} = Manager.prepare_top(gateway),
       {:ok, process} <- TOP.create(pid, params)
     do
