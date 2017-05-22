@@ -13,8 +13,17 @@ defmodule Helix.Software.Service.Flow.Cracker do
     target_id,
     server_type)
   do
+
+    firewall_version =
+      target_id
+      |> Process.get_running_processes_of_type_on_server("firewall_passive")
+      |> Enum.reduce(0, &(max(&1.process_data.version, &2)))
+
+    firewall_difficulty_increase = firewall_version * 50_000
+    base_crack_difficulty = 100_000
+
     # TODO: Check target firewall
-    objective = %{cpu: 100_000}
+    objective = %{cpu: base_crack_difficulty + firewall_difficulty_increase}
 
     process_data = %ProcessType{
       entity_id: entity_id,

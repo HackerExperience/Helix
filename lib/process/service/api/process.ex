@@ -39,6 +39,17 @@ defmodule Helix.Process.Service.API.Process do
     Controller.fetch(id)
   end
 
+  @spec get_running_processes_of_type_on_server(HELL.PK.t, String.t) ::
+    [Process.t]
+  def get_running_processes_of_type_on_server(gateway, type) do
+    gateway
+    |> Process.Query.from_server()
+    |> Process.Query.by_type(type)
+    |> Process.Query.by_state(:running)
+    |> Repo.all()
+    |> Enum.map(&Process.load_virtual_data/1)
+  end
+
   @spec get_processes_on_server(HELL.PK.t) ::
     [Process.t]
   def get_processes_on_server(gateway) do
