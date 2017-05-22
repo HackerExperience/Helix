@@ -11,6 +11,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
   alias Helix.Process.Controller.TableOfProcesses.ServerResources
   alias Helix.Process.Model.Process
   alias Helix.Process.Service.Local.TOP.Domain
+  alias Helix.Process.Service.Local.TOP.Manager
   alias Helix.Process.Repo
 
   require Logger
@@ -66,6 +67,8 @@ defmodule Helix.Process.Service.Local.TOP.Server do
       {:ok, processes} <- get_processes(gateway)
     do
       {:ok, domain} = Domain.start_link(gateway, processes, resources)
+
+      Manager.register(gateway)
 
       state = %__MODULE__{
         gateway: gateway,
@@ -202,6 +205,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
       Process
       |> Process.Query.from_server(gateway)
       |> Repo.all()
+      |> Enum.map(&Process.load_virtual_data/1)
 
     {:ok, processes}
   end
