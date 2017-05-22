@@ -202,7 +202,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
       Map.take(log, [:log_id, :message, :inserted_at])
     end)
 
-    {:reply, {:ok, formatted_logs}, socket}
+    {:reply, {:ok, %{data: %{logs: formatted_logs}}}, socket}
   end
 
   def handle_in("log.delete", %{log_id: log}, socket) do
