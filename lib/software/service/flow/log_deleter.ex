@@ -11,7 +11,8 @@ defmodule Helix.Software.Service.Flow.LogDeleter do
     objective = %{cpu: 20_000}
 
     process_data = %ProcessType{
-      target_log_id: log_id
+      target_log_id: log_id,
+      software_version: 1
     }
 
     # TODO: start a connection for the process
