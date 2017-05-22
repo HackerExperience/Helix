@@ -113,7 +113,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   # This callback exists because i intend to potentially include additional
   # operations on startup
   def handle_event(:internal, :allocate, :startup, data) do
-    actions = [@allocate]
+    actions = [@allocate, @flush]
 
     {:next_state, :running, data, actions}
   end
@@ -277,7 +277,7 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
         resources: resources
     }
 
-    actions = [@allocate]
+    actions = [@allocate, @flush]
 
     {:next_state, :startup, new_data, actions}
   end
