@@ -1,5 +1,9 @@
 defmodule Helix.Software.Model.SoftwareType.FileDownload do
+  @moduledoc false
+
   defmodule ProcessConclusionEvent do
+    @moduledoc false
+
     @enforce_keys ~w/
       to_server_id
       from_server_id

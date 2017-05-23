@@ -74,10 +74,10 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   def kill(pid, process),
     do: :gen_statem.cast(pid, {:kill, process})
 
-  @spec reset(pid, [process], resources) ::
+  @spec reset_processes(pid, [process]) ::
     :ok
-  def reset(pid, processes, resources),
-    do: :gen_statem.cast(pid, {:reset, processes, resources})
+  def reset_processes(pid, processes),
+    do: :gen_statem.cast(pid, {:reset, :processes, processes})
 
   @doc false
   def init({gateway, processes, resources, handler}) do
@@ -269,13 +269,8 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
 
   # Resets the machine (useful as a recovery mechanism for when the persisted
   # state is inconsistent with current state)
-  def handle_event(:cast, {:reset, processes, resources}, :running, data) do
-    new_data = %{
-      data|
-        instructions: [],
-        processes: processes,
-        resources: resources
-    }
+  def handle_event(:cast, {:reset, :processes, processes}, :running, data) do
+    new_data = %{data| instructions: [], processes: processes}
 
     actions = [@allocate, @flush]
 

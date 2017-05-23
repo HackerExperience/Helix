@@ -173,7 +173,8 @@ defmodule Helix.Process.Model.Process do
     optional(:objective) => map,
     optional(:processed) => map,
     optional(:allocated) => map,
-    optional(:minimum) => map
+    optional(:minimum) => map,
+    optional(:process_data) => ProcessType.t
   }
 
   @spec update_changeset(process, update_params) ::
@@ -184,8 +185,21 @@ defmodule Helix.Process.Model.Process do
     |> cast_embed(:processed)
     |> cast_embed(:allocated)
     |> cast_embed(:limitations)
+    |> validate_process_data(params)
     |> changeset(params)
     |> Map.put(:action, :update)
+  end
+
+  defp validate_process_data(changeset, params) do
+    process_data = get_field(changeset, :process_data)
+
+    changeset
+    |> cast(params, [:process_data])
+    |> validate_change(:process_data, fn :process_data, new_data ->
+      if process_data.__struct__ == new_data.__struct__,
+        do: [],
+        else: [process_data: "type changed"]
+    end)
   end
 
   @spec changeset(process, %{optional(any) => any}) ::

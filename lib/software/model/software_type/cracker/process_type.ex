@@ -1,5 +1,6 @@
 # FIXME: OTP20
 defmodule Software.Cracker.ProcessType do
+  @moduledoc false
 
   @enforce_keys ~w/
     entity_id
@@ -7,16 +8,24 @@ defmodule Software.Cracker.ProcessType do
     target_server_ip
     target_server_id
     server_type
-    software_version/a
+    software_version
+    firewall_version/a
   defstruct ~w/
     entity_id
     network_id
     target_server_ip
     target_server_id
     server_type
-    software_version/a
+    software_version
+    firewall_version/a
+
+  def firewall_additional_wu,
+    do: 50_000
+  def firewall_additional_wu(version),
+    do: version * 50_000
 
   defimpl Helix.Process.Model.Process.ProcessType do
+    @moduledoc false
 
     alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
 
@@ -52,6 +61,7 @@ defmodule Software.Cracker.ProcessType do
   end
 
   defimpl Helix.Process.Public.ProcessView do
+    @moduledoc false
 
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.Resources

@@ -60,6 +60,15 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     GenServer.cast(pid, {:kill, process})
   end
 
+  @spec reset_processes(pid, [process]) ::
+    :ok
+  @doc false
+  def reset_processes(pid, processes) do
+    # The processes of a TOP server changed in a potentially unexpected way, so
+    # it's better to gracefully reset the domain machine
+    GenServer.cast(pid, {:reset, :processes, processes})
+  end
+
   @doc false
   def init([gateway]) do
     with \
@@ -137,6 +146,12 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     if belongs_to_the_server?(process, state) do
       Domain.kill(state.domain, process.process_id)
     end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:reset, :processes, processes}, state) do
+    Domain.reset_processes(state.domain, processes)
 
     {:noreply, state}
   end
