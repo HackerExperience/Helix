@@ -5,14 +5,12 @@ defmodule Helix.Process.Service.Local.TOP.Manager do
 
   # TODO: Replace this with a distributed alternative. Maybe using PubSub
 
-  @opaque server_id :: HELL.PK.t
-
   @doc false
   def start_link do
     Registry.start_link(:unique, __MODULE__)
   end
 
-  @spec prepare_top(server_id) ::
+  @spec prepare_top(HELL.PK.t) ::
     Supervisor.on_start_child
   @doc """
   Fetches or starts a TOP process for `gateway`
@@ -27,7 +25,7 @@ defmodule Helix.Process.Service.Local.TOP.Manager do
     end
   end
 
-  @spec get(server_id) ::
+  @spec get(HELL.PK.t) ::
     pid
     | nil
   @doc """

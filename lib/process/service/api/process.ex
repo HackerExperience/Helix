@@ -136,6 +136,28 @@ defmodule Helix.Process.Service.API.Process do
     |> Enum.map(&Process.load_virtual_data/1)
   end
 
+  @spec get_processes_of_type_targeting_server(HELL.PK.t, String.t) ::
+    [Process.t]
+  @doc """
+  Fetches remote processes of type `type` affecting `gateway`
+
+  Note that this will **not** include processes running on `gateway` even if
+  they affect it
+
+  ### Examples
+
+      iex> get_processes_of_type_targeting_server("aa::bb", "cracker")
+      [%Process{}, %Process{}]
+  """
+  def get_processes_of_type_targeting_server(gateway, type) do
+    gateway
+    |> Process.Query.by_target()
+    |> Process.Query.not_targeting_gateway()
+    |> Process.Query.by_type(type)
+    |> Repo.all()
+    |> Enum.map(&Process.load_virtual_data/1)
+  end
+
   @spec get_processes_on_connection(HELL.PK.t) ::
     [Process.t]
   @doc """
@@ -235,6 +257,17 @@ defmodule Helix.Process.Service.API.Process do
     process
     |> top()
     |> TOP.kill(process)
+  end
+
+  @doc false
+  def reset_processes_on_server(gateway_id) do
+    case Manager.get(gateway_id) do
+      nil ->
+        :noop
+      pid ->
+        processes = get_processes_on_server(gateway_id)
+        TOP.reset_processes(pid, processes)
+    end
   end
 
   @spec top(Process.t) ::
