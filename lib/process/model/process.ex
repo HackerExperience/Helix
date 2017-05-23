@@ -550,6 +550,11 @@ defmodule Helix.Process.Model.Process do
     def by_state(query \\ Process, state),
       do: where(query, [p], p.state == ^state)
 
+    @spec not_targeting_gateway(Queryable.t) ::
+      Queryable.t
+    def not_targeting_gateway(query \\ Process),
+      do: where(query, [p], p.gateway_id != p.target_server_id)
+
     @spec related_to_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     @doc """
     Filter processes that are running on `server_id` or affect it
