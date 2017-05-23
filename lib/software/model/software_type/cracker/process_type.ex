@@ -100,28 +100,16 @@ defmodule Software.Cracker.ProcessType do
 
     defp take_data_from_process(process) do
       %{
-        process_id: id,
-        gateway_id: gateway,
-        target_server_id: target,
-        network_id: net,
-        connection_id: connection,
-        process_type: type,
-        state: state,
-        allocated: allocated,
-        priority: priority,
-        creation_time: creation} = process
-
-      %{
-        process_id: id,
-        gateway_id: gateway,
-        target_server_id: target,
-        network_id: net,
-        connection_id: connection,
-        process_type: type,
-        state: state,
-        allocated: allocated,
-        priority: priority,
-        creation_time: creation
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_server_id: process.target_server_id,
+        network_id: process.network_id,
+        connection_id: process.connection_id,
+        process_type: process.process_type,
+        state: process.state,
+        allocated: process.allocated,
+        priority: process.priority,
+        creation_time: process.creation_time
       }
     end
   end
