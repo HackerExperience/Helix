@@ -36,6 +36,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     GenServer.call(pid, {:create, params})
   end
 
+  # REVIEW: Maybe make priority/3, pause/2, resume/2 and kill/2 synchronous
   @spec priority(pid, process, 0..5) ::
     :ok
   def priority(pid, process, priority) when priority in 0..5 do

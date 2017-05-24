@@ -351,7 +351,11 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   defp calculate_worked(processes) do
     now = DateTime.utc_now()
 
-    Enum.map(processes, &Process.calculate_work(&1, now))
+    Enum.map(processes, fn process ->
+      process
+      |> Ecto.Changeset.change()
+      |> Process.calculate_work(now)
+    end)
   end
 
   @spec allocate_minimum([Process.t]) ::

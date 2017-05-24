@@ -329,7 +329,9 @@ defmodule Helix.Process.Model.Process do
       # FIXME: state can be "standby" on some cases
       changeset =
         changeset
-        |> update_changeset(%{state: :running, updated_time: DateTime.utc_now()})
+        |> update_changeset(%{
+          state: :running,
+          updated_time: DateTime.utc_now()})
         |> allocate_minimum()
         |> estimate_conclusion()
 
