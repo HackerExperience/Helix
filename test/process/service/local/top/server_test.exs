@@ -8,9 +8,16 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
   defmodule ProcessThatCausesOverflow do
     defstruct []
     defimpl Helix.Process.Model.Process.ProcessType do
-      def dynamic_resources(_), do: []
-      def minimum(_), do: %{running: %{cpu: 999_999_999}}
-      def conclusion(_, _), do: {[], []}
+      def dynamic_resources(_),
+        do: []
+      def minimum(_),
+        do: %{running: %{cpu: 999_999_999}}
+      def kill(_, process, _),
+        do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+      def state_change(_, process, _, _),
+        do: {process, []}
+      def conclusion(data, process),
+        do: state_change(data, process, :running, :complete)
     end
   end
 

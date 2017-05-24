@@ -14,32 +14,31 @@ defmodule Software.FileDownload.ProcessType do
     def minimum(_),
       do: %{}
 
-    def conclusion(data, process) do
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+
+    def state_change(data, process, _, :complete) do
       process =
         process
         |> Ecto.Changeset.change()
         |> Map.put(:action, :delete)
 
-      events = event(data, process, :completed)
-
-      {process, events}
-    end
-
-    def event(data, process, :completed) do
       event = %ProcessConclusionEvent{
         to_server_id: process.gateway_id,
-        from_server_id: process.target_server_id,
+        from_server_id: Ecto.Changeset.get_field(process, :target_server_id),
         from_file_id: data.target_file_id,
         to_storage_id: data.destination_storage_id,
         network_id: process.network_id
       }
 
-      [event]
+      {process, [event]}
     end
 
-    def event(_, _, _) do
-      []
-    end
+    def state_change(_, process, _, _),
+      do: {process, []}
+
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
   end
 
   defimpl Helix.Process.Public.ProcessView do

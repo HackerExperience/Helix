@@ -25,31 +25,30 @@ defmodule Software.Encryptor.ProcessType do
         }
     }
 
-    def conclusion(data, process) do
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+
+    def state_change(data, process, _, :complete) do
       process =
         process
         |> Ecto.Changeset.change()
         |> Map.put(:action, :delete)
 
-      events = event(data, process, :completed)
-
-      {process, events}
-    end
-
-    def event(data, process, :completed) do
       event = %ProcessConclusionEvent{
         target_file_id: data.target_file_id,
-        target_server_id: process.target_server_id,
+        target_server_id: Ecto.Changeset.get_field(process, :target_server_id),
         storage_id: data.storage_id,
         version: data.software_version
       }
 
-      [event]
+      {process, [event]}
     end
 
-    def event(_, _, _) do
-      []
-    end
+    def state_change(_, process, _, _),
+      do: {process, []}
+
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
   end
 
   defimpl Helix.Process.Public.ProcessView do

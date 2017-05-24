@@ -232,6 +232,13 @@ defmodule Helix.Process.Model.Process do
   def complete?(%__MODULE__{state: state, objective: objective, processed: processed}),
     do: state == :complete or (objective && objective == processed)
 
+  @spec kill(process, atom) ::
+    {[process] | process, [struct]}
+  def kill(process = %__MODULE__{}, reason),
+    do: ProcessType.kill(process.process_data, process, reason)
+  def kill(process = %Ecto.Changeset{}, reason),
+    do: ProcessType.kill(get_change(process, :process_data), process, reason)
+
   @spec allocate_minimum(process) ::
     Changeset.t
   def allocate_minimum(process) do

@@ -24,7 +24,10 @@ defmodule Software.LogDeleter.ProcessType do
         }
     }
 
-    def conclusion(data, process) do
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+
+    def state_change(data, process, _, :complete) do
       process =
         process
         |> Ecto.Changeset.change()
@@ -36,6 +39,9 @@ defmodule Software.LogDeleter.ProcessType do
 
       {process, [event]}
     end
+
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
   end
 
   defimpl Helix.Process.Public.ProcessView do
