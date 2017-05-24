@@ -299,34 +299,45 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec pause(process) ::
-    Changeset.t
+    {[t | Ecto.Changeset.t] | t | Ecto.Changeset.t, [struct]}
   def pause(process) do
     changeset = change(process)
+    state = get_field(changeset, :state)
 
-    if :paused == get_field(changeset, :state) do
-      changeset
+    if :paused == state do
+      {changeset, []}
     else
+      changeset =
+        changeset
+        |> calculate_work(DateTime.utc_now())
+        |> update_changeset(%{state: :paused, estimated_time: nil})
+        |> allocate_minimum()
+
       changeset
-      |> calculate_work(DateTime.utc_now())
-      |> update_changeset(%{state: :paused, estimated_time: nil})
-      |> allocate_minimum()
+      |> get_field(:process_data)
+      |> ProcessType.state_change(changeset, state, :paused)
     end
   end
 
   @spec resume(process) ::
-    Changeset.t
+    {[t | Ecto.Changeset.t] | t | Ecto.Changeset.t, [struct]}
   def resume(process) do
-    cs = change(process)
-    state = get_field(cs, :state)
+    changeset = change(process)
+    state = get_field(changeset, :state)
 
     if :paused == state do
       # FIXME: state can be "standby" on some cases
-      cs
-      |> update_changeset(%{state: :running, updated_time: DateTime.utc_now()})
-      |> allocate_minimum()
-      |> estimate_conclusion()
+      changeset =
+        changeset
+        |> update_changeset(%{state: :running, updated_time: DateTime.utc_now()})
+        |> allocate_minimum()
+        |> estimate_conclusion()
+
+      changeset
+      |> get_field(:process_data)
+      |> ProcessType.state_change(changeset, state, :running)
     else
-      cs
+      changeset
     end
   end
 

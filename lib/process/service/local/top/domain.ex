@@ -223,33 +223,39 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
 
   # Pauses a single process
   def handle_event(:cast, {:pause, id}, :running, data) do
-    processes =
-      data.processes
-      |> calculate_worked()
-      |> Enum.map(fn p ->
-        Changeset.get_field(p, :process_id) == id
-        && Process.pause(p)
-        || p
-      end)
+    case Enum.split_with(data.processes, &(&1.process_id == id)) do
+      {[], _} ->
+        {:keep_state, data}
+      {[process], processes} ->
+        {resulting_processes, events} = Process.pause(process)
 
-    actions = [@allocate, @flush]
-    {:keep_state, %{data| processes: processes}, actions}
+        new_data =
+          %{data| processes: processes}
+          |> store_processes(List.wrap(resulting_processes))
+          |> store_events(events)
+
+        actions = [@allocate, @flush]
+        {:keep_state, new_data, actions}
+    end
   end
 
   # Resumes a single process
   def handle_event(:cast, {:resume, id}, :running, data) do
     # TODO: block this action if it would trigger "resource overflow"
-    processes =
-      data.processes
-      |> calculate_worked()
-      |> Enum.map(fn p ->
-        Changeset.get_field(p, :process_id) == id
-        && Process.resume(p)
-        || p
-      end)
+    case Enum.split_with(data.processes, &(&1.process_id == id)) do
+      {[], _} ->
+        {:keep_state, data}
+      {[process], processes} ->
+        {resulting_processes, events} = Process.resume(process)
 
-    actions = [@allocate, @flush]
-    {:keep_state, %{data| processes: processes}, actions}
+        new_data =
+          %{data| processes: processes}
+          |> store_processes(List.wrap(resulting_processes))
+          |> store_events(events)
+
+        actions = [@allocate, @flush]
+        {:keep_state, new_data, actions}
+    end
   end
 
   # Kills a single process
