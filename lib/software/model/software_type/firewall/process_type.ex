@@ -24,6 +24,12 @@ defmodule Software.Firewall.ProcessType do
           }
         }
 
+      def kill(_, process, _),
+        do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+
+      def state_change(_, process, _, _),
+        do: {process, []}
+
       def conclusion(_, _),
         do: raise "firewall(passive) process should not be 'completed'"
     end

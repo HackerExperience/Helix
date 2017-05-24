@@ -9,7 +9,9 @@ defmodule Helix.Process.TestHelper.ProcessTypeExample do
       do: [:cpu, :dlk, :ulk]
     def minimum(_),
       do: %{}
-    def conclusion(_, process) do
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+    def state_change(_, process, _, :complete) do
       process =
         process
         |> Ecto.Changeset.change()
@@ -17,8 +19,10 @@ defmodule Helix.Process.TestHelper.ProcessTypeExample do
 
       {process, []}
     end
-    def event(_, _, _),
-      do: []
+    def state_change(_, process, _, _),
+      do: {process, []}
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
   end
 end
 
@@ -31,7 +35,9 @@ defmodule Helix.Process.TestHelper.StaticProcessTypeExample do
       do: []
     def minimum(_),
       do: %{}
-    def conclusion(_, process) do
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+    def state_change(_, process, _, :complete) do
       process =
         process
         |> Ecto.Changeset.change()
@@ -39,7 +45,9 @@ defmodule Helix.Process.TestHelper.StaticProcessTypeExample do
 
       {process, []}
     end
-    def event(_, _, _),
-      do: []
+    def state_change(_, process, _, _),
+      do: {process, []}
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
   end
 end

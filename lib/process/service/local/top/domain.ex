@@ -256,15 +256,20 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   def handle_event(:cast, {:kill, id}, :running, data) do
     # Marks the process to be removed. It'll be included in the remove
     # instructions after the allocation procedure
-    processes = Enum.map(data.processes, fn
-      p = %{process_id: ^id} ->
-        %{Changeset.change(p)| action: :delete}
-      p ->
-        p
-    end)
+    case Enum.split_with(data.processes, &(&1.process_id == id)) do
+      {[], _} ->
+        {:keep_state, data}
+      {[process], processes} ->
+        {resulting_processes, events} = Process.kill(process, :shutdown)
 
-    actions = [@allocate, @flush]
-    {:keep_state, %{data| processes: processes}, actions}
+        new_data =
+          %{data| processes: processes}
+          |> store_processes(List.wrap(resulting_processes))
+          |> store_events(events)
+
+        actions = [@allocate, @flush]
+        {:keep_state, new_data, actions}
+    end
   end
 
   # Resets the machine (useful as a recovery mechanism for when the persisted

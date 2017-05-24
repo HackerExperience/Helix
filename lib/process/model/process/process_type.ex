@@ -12,6 +12,14 @@ defprotocol Helix.Process.Model.Process.ProcessType do
     {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
   def conclusion(data, process)
 
+  @spec state_change(t, Process.t | Ecto.Changeset.t, State.state, State.state) ::
+    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  def state_change(data, process, from, to)
+
+  @spec kill(t, Process.t | Ecto.Changeset.t, atom) ::
+    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  def kill(data, process, reason)
+
   @spec minimum(t) ::
     %{optional(State.state) => %{resource => non_neg_integer}}
   def minimum(data)
@@ -42,6 +50,10 @@ impls = [
 for impl <- impls do
   defimpl Helix.Process.Model.Process.ProcessType, for: impl do
     def dynamic_resources(input),
+      do: raise "#{inspect input} doesn't implement ProcessType protocol"
+    def state_change(input, _, _, _),
+      do: raise "#{inspect input} doesn't implement ProcessType protocol"
+    def kill(input, _, _),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
     def minimum(input),
       do: raise "#{inspect input} doesn't implement ProcessType protocol"
