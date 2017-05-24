@@ -24,11 +24,11 @@ defmodule Software.FileDownload.ProcessType do
         |> Map.put(:action, :delete)
 
       event = %ProcessConclusionEvent{
-        to_server_id: process.gateway_id,
+        to_server_id: Ecto.Changeset.get_field(process, :gateway_id),
         from_server_id: Ecto.Changeset.get_field(process, :target_server_id),
         from_file_id: data.target_file_id,
         to_storage_id: data.destination_storage_id,
-        network_id: process.network_id
+        network_id: Ecto.Changeset.get_field(process, :network_id)
       }
 
       {process, [event]}
