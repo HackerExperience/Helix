@@ -1,14 +1,14 @@
 defmodule Helix.Software.Model.SoftwareType.Firewall do
   @moduledoc false
 
-  defmodule FirewallStarted do
+  defmodule FirewallStartedEvent do
     @moduledoc false
 
     @enforce_keys [:version, :gateway_id]
     defstruct [:version, :gateway_id]
   end
 
-  defmodule FirewallStopped do
+  defmodule FirewallStoppedEvent do
     @moduledoc false
 
     @enforce_keys [:version, :gateway_id]

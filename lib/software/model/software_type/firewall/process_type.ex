@@ -7,8 +7,8 @@ defmodule Software.Firewall.ProcessType do
 
     defimpl Helix.Process.Model.Process.ProcessType do
 
-      alias Helix.Software.Model.SoftwareType.Firewall.FirewallStarted
-      alias Helix.Software.Model.SoftwareType.Firewall.FirewallStopped
+      alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
+      alias Helix.Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
 
       @ram_base_factor 300
       @cpu_base_factor 100
@@ -33,7 +33,7 @@ defmodule Software.Firewall.ProcessType do
           |> Ecto.Changeset.change()
           |> Map.put(:action, :delete)
 
-        event = %FirewallStopped{
+        event = %FirewallStoppedEvent{
           version: data.version,
           gateway_id: Ecto.Changeset.get_field(process, :gateway_id)
         }
@@ -42,7 +42,7 @@ defmodule Software.Firewall.ProcessType do
       end
 
       def state_change(data, process, :running, :paused) do
-        event = %FirewallStopped{
+        event = %FirewallStoppedEvent{
           version: data.version,
           gateway_id: Ecto.Changeset.get_field(process, :gateway_id)
         }
@@ -51,7 +51,7 @@ defmodule Software.Firewall.ProcessType do
       end
 
       def state_change(data, process, :paused, :running) do
-        event = %FirewallStarted{
+        event = %FirewallStartedEvent{
           version: data.version,
           gateway_id: Ecto.Changeset.get_field(process, :gateway_id)
         }

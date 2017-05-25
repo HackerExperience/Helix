@@ -4,7 +4,7 @@ defmodule Helix.Software.Service.Flow.File do
   alias Helix.Process.Service.API.Process
   alias Helix.Software.Controller.File, as: FileController
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStarted
+  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
   alias Software.Firewall.ProcessType.Passive, as: FirewallPassive
 
   import HELF.Flow
@@ -39,7 +39,7 @@ defmodule Helix.Software.Service.Flow.File do
 
     flowing do
       with {:ok, process} <- Process.create(params) do
-        event = %FirewallStarted{
+        event = %FirewallStartedEvent{
           gateway_id: server,
           version: version
         }

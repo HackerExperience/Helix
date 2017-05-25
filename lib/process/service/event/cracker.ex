@@ -2,19 +2,32 @@ defmodule Helix.Process.Service.Event.Cracker do
   @moduledoc false
 
   alias Software.Cracker.ProcessType, as: Cracker
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStarted
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStopped
+  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
+  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
   alias Helix.Process.Model.Process
   alias Helix.Process.Service.API.Process, as: ProcessAPI
   alias Helix.Process.Repo
 
-  def firewall_started(event = %FirewallStarted{}) do
+  def firewall_started(event = %FirewallStartedEvent{}) do
     # ME COOKIE MONSTER
     crackers =
       event.gateway_id
       |> ProcessAPI.get_processes_of_type_targeting_server("cracker")
-      |> Enum.map(&increase_wu_on_firewall_diff(&1, event.version))
-      |> Enum.filter(&match?(%Ecto.Changeset{}, &1))
+      |> Enum.filter(&(&1.process_data.firewall_version < event.version))
+      |> Enum.map(fn process ->
+        base_fw_version = process.process_data.firewall_version
+
+        base_cost = Cracker.firewall_additional_wu(base_fw_version)
+        new_cost = Cracker.firewall_additional_wu(event.version)
+        cost_diff = new_cost - base_cost
+
+        process_data = %{process.process_data| firewall_version: event.version}
+        objective = %{process.objective| cpu: process.objective.cpu + cost_diff}
+        objective = Map.from_struct(objective)
+        params = %{process_data: process_data, objective: objective}
+
+        Process.update_changeset(process, params)
+      end)
 
     {:ok, gateways} = Repo.transaction fn ->
       Enum.reduce(crackers, MapSet.new(), fn cracker, acc ->
@@ -29,7 +42,7 @@ defmodule Helix.Process.Service.Event.Cracker do
     end)
   end
 
-  def firewall_stopped(event = %FirewallStopped{}) do
+  def firewall_stopped(event = %FirewallStoppedEvent{}) do
     crackers =
       event.gateway_id
       |> ProcessAPI.get_processes_of_type_targeting_server("cracker")
@@ -57,23 +70,5 @@ defmodule Helix.Process.Service.Event.Cracker do
     Enum.each(gateways, fn gateway ->
       ProcessAPI.reset_processes_on_server(gateway)
     end)
-  end
-
-  defp increase_wu_on_firewall_diff(process, version) do
-    base_fw_version = process.process_data.firewall_version
-    if version > base_fw_version do
-      base_cost = Cracker.firewall_additional_wu(base_fw_version)
-      new_cost = Cracker.firewall_additional_wu(version)
-      cost_diff = new_cost - base_cost
-
-      process_data = %{process.process_data| firewall_version: version}
-      objective = %{process.objective| cpu: process.objective.cpu + cost_diff}
-      objective = Map.from_struct(objective)
-      params = %{process_data: process_data, objective: objective}
-
-      Process.update_changeset(process, params)
-    else
-      process
-    end
   end
 end

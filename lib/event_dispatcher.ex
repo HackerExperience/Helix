@@ -80,11 +80,11 @@ defmodule Helix.Event.Dispatcher do
     Log.Service.Event.Log,
     :file_download_conclusion
 
-  event Software.Model.SoftwareType.Firewall.FirewallStarted,
+  event Software.Model.SoftwareType.Firewall.FirewallStartedEvent,
     Process.Service.Event.Cracker,
     :firewall_started
 
-  event Software.Model.SoftwareType.Firewall.FirewallStopped,
+  event Software.Model.SoftwareType.Firewall.FirewallStoppedEvent,
     Process.Service.Event.Cracker,
     :firewall_stopped
 
