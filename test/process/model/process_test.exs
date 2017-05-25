@@ -133,7 +133,11 @@ defmodule Helix.Process.Model.ProcessTest do
 
   describe "allocation_shares" do
     test "returns 0 when paused", %{process: process} do
-      process = process |> Process.pause() |> Changeset.apply_changes()
+      process =
+        process
+        |> Process.pause()
+        |> elem(0)
+        |> Changeset.apply_changes()
 
       assert 0 === Process.allocation_shares(process)
     end
@@ -176,6 +180,7 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Process.update_changeset(%{state: :running})
         |> Changeset.apply_changes()
         |> Process.pause()
+        |> elem(0)
         |> Changeset.apply_changes()
 
       assert :paused === process.state
@@ -195,6 +200,7 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Changeset.cast_embed(:allocated)
         |> Changeset.apply_changes()
         |> Process.pause()
+        |> elem(0)
         |> Changeset.apply_changes()
 
       assert 0 === process.allocated.cpu
@@ -349,6 +355,7 @@ defmodule Helix.Process.Model.ProcessTest do
       process =
         process
         |> Process.resume()
+        |> elem(0)
         |> Changeset.apply_changes()
 
       assert :running === process.state

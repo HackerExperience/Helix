@@ -74,10 +74,10 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   def kill(pid, process),
     do: :gen_statem.cast(pid, {:kill, process})
 
-  @spec reset(pid, [process], resources) ::
+  @spec reset_processes(pid, [process]) ::
     :ok
-  def reset(pid, processes, resources),
-    do: :gen_statem.cast(pid, {:reset, processes, resources})
+  def reset_processes(pid, processes),
+    do: :gen_statem.cast(pid, {:reset, :processes, processes})
 
   @doc false
   def init({gateway, processes, resources, handler}) do
@@ -223,59 +223,65 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
 
   # Pauses a single process
   def handle_event(:cast, {:pause, id}, :running, data) do
-    processes =
-      data.processes
-      |> calculate_worked()
-      |> Enum.map(fn p ->
-        Changeset.get_field(p, :process_id) == id
-        && Process.pause(p)
-        || p
-      end)
+    case Enum.split_with(data.processes, &(&1.process_id == id)) do
+      {[], _} ->
+        {:keep_state, data}
+      {[process], processes} ->
+        {resulting_processes, events} = Process.pause(process)
 
-    actions = [@allocate, @flush]
-    {:keep_state, %{data| processes: processes}, actions}
+        new_data =
+          %{data| processes: processes}
+          |> store_processes(List.wrap(resulting_processes))
+          |> store_events(events)
+
+        actions = [@allocate, @flush]
+        {:keep_state, new_data, actions}
+    end
   end
 
   # Resumes a single process
   def handle_event(:cast, {:resume, id}, :running, data) do
     # TODO: block this action if it would trigger "resource overflow"
-    processes =
-      data.processes
-      |> calculate_worked()
-      |> Enum.map(fn p ->
-        Changeset.get_field(p, :process_id) == id
-        && Process.resume(p)
-        || p
-      end)
+    case Enum.split_with(data.processes, &(&1.process_id == id)) do
+      {[], _} ->
+        {:keep_state, data}
+      {[process], processes} ->
+        {resulting_processes, events} = Process.resume(process)
 
-    actions = [@allocate, @flush]
-    {:keep_state, %{data| processes: processes}, actions}
+        new_data =
+          %{data| processes: processes}
+          |> store_processes(List.wrap(resulting_processes))
+          |> store_events(events)
+
+        actions = [@allocate, @flush]
+        {:keep_state, new_data, actions}
+    end
   end
 
   # Kills a single process
   def handle_event(:cast, {:kill, id}, :running, data) do
     # Marks the process to be removed. It'll be included in the remove
     # instructions after the allocation procedure
-    processes = Enum.map(data.processes, fn
-      p = %{process_id: ^id} ->
-        %{Changeset.change(p)| action: :delete}
-      p ->
-        p
-    end)
+    case Enum.split_with(data.processes, &(&1.process_id == id)) do
+      {[], _} ->
+        {:keep_state, data}
+      {[process], processes} ->
+        {resulting_processes, events} = Process.kill(process, :shutdown)
 
-    actions = [@allocate, @flush]
-    {:keep_state, %{data| processes: processes}, actions}
+        new_data =
+          %{data| processes: processes}
+          |> store_processes(List.wrap(resulting_processes))
+          |> store_events(events)
+
+        actions = [@allocate, @flush]
+        {:keep_state, new_data, actions}
+    end
   end
 
   # Resets the machine (useful as a recovery mechanism for when the persisted
   # state is inconsistent with current state)
-  def handle_event(:cast, {:reset, processes, resources}, :running, data) do
-    new_data = %{
-      data|
-        instructions: [],
-        processes: processes,
-        resources: resources
-    }
+  def handle_event(:cast, {:reset, :processes, processes}, :running, data) do
+    new_data = %{data| instructions: [], processes: processes}
 
     actions = [@allocate, @flush]
 
@@ -345,7 +351,11 @@ defmodule Helix.Process.Service.Local.TOP.Domain do
   defp calculate_worked(processes) do
     now = DateTime.utc_now()
 
-    Enum.map(processes, &Process.calculate_work(&1, now))
+    Enum.map(processes, fn process ->
+      process
+      |> Ecto.Changeset.change()
+      |> Process.calculate_work(now)
+    end)
   end
 
   @spec allocate_minimum([Process.t]) ::

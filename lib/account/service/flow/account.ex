@@ -9,6 +9,8 @@ defmodule Helix.Account.Service.Flow.Account do
   alias Helix.Hardware.Service.API.ComponentSpec, as: ComponentSpecAPI
   alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
   alias Helix.Server.Service.API.Server, as: ServerAPI
+  alias Helix.Software.Controller.Storage
+  alias Helix.Software.Controller.StorageDrive
   alias Helix.Account.Model.Account
   alias Helix.Account.Service.API.Account, as: API
 
@@ -137,6 +139,12 @@ defmodule Helix.Account.Service.Flow.Account do
         changeset = NetworkConnection.create_changeset(bundle.network),
         {:ok, net} <- HardwareRepo.insert(changeset),
         on_fail(fn -> HardwareRepo.delete(net) end),
+
+        hdd = %{} <- Enum.find(components, &(&1.component_type == :hdd)),
+        {:ok, storage} <- Storage.create(),
+        on_fail(fn -> Storage.delete(storage.storage_id) end),
+        :ok <- StorageDrive.link_drive(storage, hdd.component_id),
+        on_fail(fn -> StorageDrive.unlink_drive(hdd.component_id) end),
 
         nic = %{} <- Enum.find(components, &(&1.component_type == :nic)),
         nic = HardwareRepo.get(NIC, nic.component_id),

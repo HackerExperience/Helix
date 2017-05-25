@@ -14,32 +14,31 @@ defmodule Software.FileDownload.ProcessType do
     def minimum(_),
       do: %{}
 
-    def conclusion(data, process) do
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+
+    def state_change(data, process, _, :complete) do
       process =
         process
         |> Ecto.Changeset.change()
         |> Map.put(:action, :delete)
 
-      events = event(data, process, :completed)
-
-      {process, events}
-    end
-
-    def event(data, process, :completed) do
       event = %ProcessConclusionEvent{
-        to_server_id: process.gateway_id,
-        from_server_id: process.target_server_id,
+        to_server_id: Ecto.Changeset.get_field(process, :gateway_id),
+        from_server_id: Ecto.Changeset.get_field(process, :target_server_id),
         from_file_id: data.target_file_id,
         to_storage_id: data.destination_storage_id,
-        network_id: process.network_id
+        network_id: Ecto.Changeset.get_field(process, :network_id)
       }
 
-      [event]
+      {process, [event]}
     end
 
-    def event(_, _, _) do
-      []
-    end
+    def state_change(_, process, _, _),
+      do: {process, []}
+
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
   end
 
   defimpl Helix.Process.Public.ProcessView do
@@ -95,32 +94,18 @@ defmodule Software.FileDownload.ProcessType do
 
     defp take_data_from_process(process) do
       %{
-        process_id: id,
-        gateway_id: gateway,
-        target_server_id: target,
-        network_id: net,
-        connection_id: connection,
-        process_type: type,
-        state: state,
-        objective: objective,
-        processed: processed,
-        allocated: allocated,
-        priority: priority,
-        creation_time: creation} = process
-
-      %{
-        process_id: id,
-        gateway_id: gateway,
-        target_server_id: target,
-        network_id: net,
-        connection_id: connection,
-        process_type: type,
-        state: state,
-        objective: objective,
-        processed: processed,
-        allocated: allocated,
-        priority: priority,
-        creation_time: creation
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_server_id: process.target_server_id,
+        network_id: process.network_id,
+        connection_id: process.connection_id,
+        process_type: process.process_type,
+        state: process.state,
+        objective: process.objective,
+        processed: process.processed,
+        allocated: process.allocated,
+        priority: process.priority,
+        creation_time: process.creation_time
       }
     end
   end

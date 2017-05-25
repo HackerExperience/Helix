@@ -36,6 +36,7 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     GenServer.call(pid, {:create, params})
   end
 
+  # REVIEW: Maybe make priority/3, pause/2, resume/2 and kill/2 synchronous
   @spec priority(pid, process, 0..5) ::
     :ok
   def priority(pid, process, priority) when priority in 0..5 do
@@ -58,6 +59,15 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     :ok
   def kill(pid, process) do
     GenServer.cast(pid, {:kill, process})
+  end
+
+  @spec reset_processes(pid, [process]) ::
+    :ok
+  @doc false
+  def reset_processes(pid, processes) do
+    # The processes of a TOP server changed in a potentially unexpected way, so
+    # it's better to gracefully reset the domain machine
+    GenServer.cast(pid, {:reset, :processes, processes})
   end
 
   @doc false
@@ -137,6 +147,12 @@ defmodule Helix.Process.Service.Local.TOP.Server do
     if belongs_to_the_server?(process, state) do
       Domain.kill(state.domain, process.process_id)
     end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:reset, :processes, processes}, state) do
+    Domain.reset_processes(state.domain, processes)
 
     {:noreply, state}
   end

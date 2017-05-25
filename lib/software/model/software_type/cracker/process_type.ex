@@ -1,5 +1,6 @@
 # FIXME: OTP20
 defmodule Software.Cracker.ProcessType do
+  @moduledoc false
 
   @enforce_keys ~w/
     entity_id
@@ -7,16 +8,24 @@ defmodule Software.Cracker.ProcessType do
     target_server_ip
     target_server_id
     server_type
-    software_version/a
+    software_version
+    firewall_version/a
   defstruct ~w/
     entity_id
     network_id
     target_server_ip
     target_server_id
     server_type
-    software_version/a
+    software_version
+    firewall_version/a
+
+  def firewall_additional_wu,
+    do: 50_000
+  def firewall_additional_wu(version),
+    do: version * 50_000
 
   defimpl Helix.Process.Model.Process.ProcessType do
+    @moduledoc false
 
     alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
 
@@ -33,7 +42,10 @@ defmodule Software.Cracker.ProcessType do
       }
     end
 
-    def conclusion(data, process) do
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+
+    def state_change(data, process, _, :complete) do
       process =
         process
         |> Ecto.Changeset.change()
@@ -49,9 +61,16 @@ defmodule Software.Cracker.ProcessType do
 
       {process, [event]}
     end
+
+    def state_change(_, process, _, _),
+      do: {process, []}
+
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
   end
 
   defimpl Helix.Process.Public.ProcessView do
+    @moduledoc false
 
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.Resources
@@ -100,28 +119,16 @@ defmodule Software.Cracker.ProcessType do
 
     defp take_data_from_process(process) do
       %{
-        process_id: id,
-        gateway_id: gateway,
-        target_server_id: target,
-        network_id: net,
-        connection_id: connection,
-        process_type: type,
-        state: state,
-        allocated: allocated,
-        priority: priority,
-        creation_time: creation} = process
-
-      %{
-        process_id: id,
-        gateway_id: gateway,
-        target_server_id: target,
-        network_id: net,
-        connection_id: connection,
-        process_type: type,
-        state: state,
-        allocated: allocated,
-        priority: priority,
-        creation_time: creation
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_server_id: process.target_server_id,
+        network_id: process.network_id,
+        connection_id: process.connection_id,
+        process_type: process.process_type,
+        state: process.state,
+        allocated: process.allocated,
+        priority: process.priority,
+        creation_time: process.creation_time
       }
     end
   end

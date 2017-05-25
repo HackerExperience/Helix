@@ -43,6 +43,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   end
 
   defp populate_server_with_files(server) do
+    alias Helix.Software.Controller.Storage
     alias Helix.Software.Factory, as: SoftwareFactory
     alias Helix.Hardware.Service.API.Component, as: ComponentAPI
     alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
@@ -57,10 +58,13 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       |> Enum.map(&(&1.link_component_id))
 
     Enum.flat_map(hdds, fn drive ->
-      storage = SoftwareFactory.insert(:storage, drives: [])
-      SoftwareFactory.insert(:storage_drive, storage: storage, drive_id: drive)
+      storage = Storage.get_storage_from_hdd(drive)
 
-      storage.files
+      SoftwareFactory.insert_list(
+        3,
+        :file,
+        storage: nil,
+        storage_id: storage.storage_id)
     end)
   end
 

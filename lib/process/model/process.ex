@@ -173,7 +173,8 @@ defmodule Helix.Process.Model.Process do
     optional(:objective) => map,
     optional(:processed) => map,
     optional(:allocated) => map,
-    optional(:minimum) => map
+    optional(:minimum) => map,
+    optional(:process_data) => ProcessType.t
   }
 
   @spec update_changeset(process, update_params) ::
@@ -184,8 +185,21 @@ defmodule Helix.Process.Model.Process do
     |> cast_embed(:processed)
     |> cast_embed(:allocated)
     |> cast_embed(:limitations)
+    |> validate_process_data(params)
     |> changeset(params)
     |> Map.put(:action, :update)
+  end
+
+  defp validate_process_data(changeset, params) do
+    process_data = get_field(changeset, :process_data)
+
+    changeset
+    |> cast(params, [:process_data])
+    |> validate_change(:process_data, fn :process_data, new_data ->
+      if process_data.__struct__ == new_data.__struct__,
+        do: [],
+        else: [process_data: "type changed"]
+    end)
   end
 
   @spec changeset(process, %{optional(any) => any}) ::
@@ -216,7 +230,14 @@ defmodule Helix.Process.Model.Process do
   def complete?(process = %Ecto.Changeset{}),
     do: complete?(apply_changes(process))
   def complete?(%__MODULE__{state: state, objective: objective, processed: processed}),
-    do: state == :complete or objective == processed
+    do: state == :complete or (objective && objective == processed)
+
+  @spec kill(process, atom) ::
+    {[process] | process, [struct]}
+  def kill(process = %__MODULE__{}, reason),
+    do: ProcessType.kill(process.process_data, process, reason)
+  def kill(process = %Ecto.Changeset{}, reason),
+    do: ProcessType.kill(get_change(process, :process_data), process, reason)
 
   @spec allocate_minimum(process) ::
     Changeset.t
@@ -278,34 +299,47 @@ defmodule Helix.Process.Model.Process do
   end
 
   @spec pause(process) ::
-    Changeset.t
+    {[t | Ecto.Changeset.t] | t | Ecto.Changeset.t, [struct]}
   def pause(process) do
     changeset = change(process)
+    state = get_field(changeset, :state)
 
-    if :paused == get_field(changeset, :state) do
-      changeset
+    if :paused == state do
+      {changeset, []}
     else
+      changeset =
+        changeset
+        |> calculate_work(DateTime.utc_now())
+        |> update_changeset(%{state: :paused, estimated_time: nil})
+        |> allocate_minimum()
+
       changeset
-      |> calculate_work(DateTime.utc_now())
-      |> update_changeset(%{state: :paused, estimated_time: nil})
-      |> allocate_minimum()
+      |> get_field(:process_data)
+      |> ProcessType.state_change(changeset, state, :paused)
     end
   end
 
   @spec resume(process) ::
-    Changeset.t
+    {[t | Ecto.Changeset.t] | t | Ecto.Changeset.t, [struct]}
   def resume(process) do
-    cs = change(process)
-    state = get_field(cs, :state)
+    changeset = change(process)
+    state = get_field(changeset, :state)
 
     if :paused == state do
       # FIXME: state can be "standby" on some cases
-      cs
-      |> update_changeset(%{state: :running, updated_time: DateTime.utc_now()})
-      |> allocate_minimum()
-      |> estimate_conclusion()
+      changeset =
+        changeset
+        |> update_changeset(%{
+          state: :running,
+          updated_time: DateTime.utc_now()})
+        |> allocate_minimum()
+        |> estimate_conclusion()
+
+      changeset
+      |> get_field(:process_data)
+      |> ProcessType.state_change(changeset, state, :running)
     else
-      cs
+      changeset
     end
   end
 
@@ -385,6 +419,8 @@ defmodule Helix.Process.Model.Process do
   """
   def seconds_to_change(p = %Changeset{}),
     do: seconds_to_change(apply_changes(p))
+  def seconds_to_change(%{objective: nil}),
+    do: :infinity
   def seconds_to_change(process) do
     process.objective
     |> Resources.sub(process.processed)
@@ -547,6 +583,11 @@ defmodule Helix.Process.Model.Process do
     @spec by_state(Ecto.Queryable.t, State.state) :: Ecto.Queryable.t
     def by_state(query \\ Process, state),
       do: where(query, [p], p.state == ^state)
+
+    @spec not_targeting_gateway(Queryable.t) ::
+      Queryable.t
+    def not_targeting_gateway(query \\ Process),
+      do: where(query, [p], p.gateway_id != p.target_server_id)
 
     @spec related_to_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     @doc """

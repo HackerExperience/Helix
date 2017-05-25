@@ -26,7 +26,7 @@ defmodule Helix.Software.Model.File do
 
   @type id :: PK.t
 
-  @type modules :: %{software_module :: String.t => version :: pos_integer}
+  @type modules :: %{software_module :: Constant.t => version :: pos_integer}
 
   @type creation_params :: %{
     name: String.t,
