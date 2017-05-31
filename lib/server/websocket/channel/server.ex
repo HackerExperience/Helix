@@ -119,22 +119,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
     {:reply, {:ok, message}, socket}
   end
 
-  def handle_in("log.delete", %{log_id: log_id}, socket) do
-    target_id = socket.assigns.servers.destination
-    gateway_id = socket.assigns.servers.gateway
-
-    case ServerPublic.log_delete(gateway_id, target_id, @internet_id, log_id) do
-      :ok ->
-        {:reply, :ok, socket}
-      {:error, :nxlog} ->
-        message = %{type: "error", data: %{message: "Log not found"}}
-        {:reply, {:error, message}, socket}
-      {:error, :unknown} ->
-        message = %{type: "error", data: %{message: "Unexpected error"}}
-        {:reply, {:error, message}, socket}
-    end
-  end
-
   def handle_in("process.index", _, socket) do
     server_id = socket.assigns.servers.destination
     entity_id = EntityQuery.get_entity_id(socket.assigns.account)

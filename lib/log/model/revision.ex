@@ -79,6 +79,7 @@ defmodule Helix.Log.Model.Revision do
     import Ecto.Query
 
     alias Ecto.Queryable
+    alias Helix.Entity.Model.Entity
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.Revision
 
@@ -91,6 +92,16 @@ defmodule Helix.Log.Model.Revision do
       Queryable.t
     def by_log(query \\ Revision, id),
       do: where(query, [r], r.log_id == ^id)
+
+    @spec by_entity(Queryable.t, Entity.idtb) ::
+      Queryable.t
+    def by_entity(query \\ Revision, id),
+      do: where(query, [r], r.entity_id == ^id)
+
+    @spec select_count(Queryable.t) ::
+      Queryable.t
+    def select_count(query \\ Revision),
+      do: select(query, [r], count(r.revision_id))
 
     @spec last(Queryable.t, non_neg_integer) ::
       Queryable.t

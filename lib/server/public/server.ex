@@ -2,7 +2,6 @@ defmodule Helix.Server.Public.Server do
 
   alias Helix.Event
   alias Helix.Entity.Model.Entity
-  alias Helix.Log.Model.Log
   alias Helix.Log.Public.Log, as: LogPublic
   alias Helix.Process.Public.Process, as: ProcessPublic
   alias Helix.Server.Model.Server
@@ -48,13 +47,6 @@ defmodule Helix.Server.Public.Server do
   defdelegate log_index(server_id),
     to: LogPublic,
     as: :index
-
-  @spec log_delete(Server.id, Server.id, Network.id, Log.id) ::
-    :ok
-    | {:error, :nxlog | :unknown}
-  defdelegate log_delete(gateway_id, target_id, network_id, log_id),
-    to: LogPublic,
-    as: :delete
 
   @spec file_index(Server.id) ::
     %{path :: String.t => [map]}

@@ -5,8 +5,8 @@ defmodule Helix.Log.Event.Log do
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Software.Model.SoftwareType.LogDeleter.ProcessConclusionEvent,
-    as: LogDeleteComplete
+  alias Helix.Software.Model.SoftwareType.LogForge.ProcessConclusionEvent,
+    as: LogForgeComplete
   alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
     as: DownloadComplete
   alias Helix.Log.Action.Log, as: LogAction
@@ -35,10 +35,16 @@ defmodule Helix.Log.Event.Log do
     LogAction.create(to, entity, message_to)
   end
 
-  def log_deleter_conclusion(%LogDeleteComplete{target_log_id: log}) do
-    log
-    |> LogQuery.fetch()
-    |> LogAction.hard_delete()
+
+  def log_forge_conclusion(event = %LogForgeComplete{}) do
+    log = LogQuery.fetch(event.target_log_id)
+    %{
+      entity_id: entity,
+      message: message,
+      version: version
+    } = event
+
+    LogAction.revise(log, entity, message, version)
   end
 
   def connection_started(

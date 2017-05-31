@@ -1,20 +1,20 @@
 # FIXME: OTP20
-# TODO: Remove me when implementing LogForge and LogRecover
-defmodule Software.LogDeleter.ProcessType do
+defmodule Software.LogForge.ProcessType do
 
-  @enforce_keys [:target_log_id, :software_version]
-  defstruct [:target_log_id, :software_version]
+  @enforce_keys [:target_log_id, :version, :message, :entity_id]
+  defstruct [:target_log_id, :version, :message, :entity_id]
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
-    alias Helix.Software.Model.SoftwareType.LogDeleter.ProcessConclusionEvent
+    alias Ecto.Changeset
+    alias Helix.Software.Model.SoftwareType.LogForge.ProcessConclusionEvent
 
     @ram_base_factor 100
 
     def dynamic_resources(_),
       do: [:cpu]
 
-    def minimum(%{software_version: v}),
+    def minimum(%{version: v}),
       do: %{
         paused: %{
           ram: v * @ram_base_factor
@@ -25,20 +25,23 @@ defmodule Software.LogDeleter.ProcessType do
     }
 
     def kill(_, process, _),
-      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+      do: {%{Changeset.change(process)| action: :delete}, []}
 
     def state_change(data, process, _, :complete) do
-      process =
-        process
-        |> Ecto.Changeset.change()
-        |> Map.put(:action, :delete)
+      process = %{Changeset.change(process)| action: :delete}
 
       event = %ProcessConclusionEvent{
-        target_log_id: data.target_log_id
+        target_log_id: data.target_log_id,
+        version: data.version,
+        message: data.message,
+        entity_id: data.entity_id
       }
 
       {process, [event]}
     end
+
+    def state_change(_, process, _, _),
+      do: {process, []}
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
@@ -70,11 +73,27 @@ defmodule Software.LogDeleter.ProcessType do
         optional(:allocated) => Resources.t,
         optional(:priority) => 0..5,
         optional(:creation_time) => DateTime.t,
-        optional(:software_version) => non_neg_integer,
-        optional(:scope) => String.t
+        optional(:version) => non_neg_integer
       }
-    def render(data, process = %{gateway_id: server}, server, _) do
-      base = take_data_from_process(process)
+    def render(data, process = %{gateway_id: server}, server, _),
+      do: render_local(data, process)
+    def render(data = %{entity_id: entity}, process, _, entity),
+      do: render_local(data, process)
+    def render(data, process, _, _),
+      do: render_remote(data, process)
+
+    defp render_local(data, process) do
+      base = take_data_from_process(process, :local)
+      complement = %{
+        target_log_id: data.target_log_id,
+        version: data.version
+      }
+
+      Map.merge(base, complement)
+    end
+
+    defp render_remote(data, process) do
+      base = take_data_from_process(process, :remote)
       complement = %{
         target_log_id: data.target_log_id
       }
@@ -82,27 +101,18 @@ defmodule Software.LogDeleter.ProcessType do
       Map.merge(base, complement)
     end
 
-    def render(data, process, _, _) do
-      base =
-        process
-        |> take_data_from_process()
-        |> Map.drop([
-          :state,
-          :objective,
-          :processed,
-          :allocated,
-          :priority,
-          :creation_time
-        ])
-
-      complement = %{
-        target_log_id: data.target_log_id
+    defp take_data_from_process(process, :remote) do
+      %{
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_server_id: process.target_server_id,
+        network_id: process.network_id,
+        connection_id: process.connection_id,
+        process_type: process.process_type,
       }
-
-      Map.merge(base, complement)
     end
 
-    defp take_data_from_process(process) do
+    defp take_data_from_process(process, :local) do
       %{
         process_id: process.process_id,
         gateway_id: process.gateway_id,
