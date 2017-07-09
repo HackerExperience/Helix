@@ -12,7 +12,7 @@ defmodule HELL.PK.Header do
       [0x0000, 0x0001, 0x0001],
     account_account:
       [0x0001, 0x0000, 0x0000],
-    npc_npc:
+    universe_npc:
       [0x0002, 0x0000, 0x0000],
     clan_clan:
       [0x0003, 0x0000, 0x0000],
