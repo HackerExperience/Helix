@@ -8,7 +8,7 @@ config :helix,
     Helix.Hardware.Repo,
     Helix.Log.Repo,
     Helix.Network.Repo,
-    Helix.NPC.Repo,
+    Helix.Universe.Repo,
     Helix.Process.Repo,
     Helix.Server.Repo,
     Helix.Software.Repo
