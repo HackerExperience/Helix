@@ -15,7 +15,7 @@ defmodule Helix.Event.Dispatcher do
   # Account events
   ##############################################################################
   event Account.Model.Account.AccountCreatedEvent,
-    Account.Service.Event.Account,
+    Account.Event.Account,
     :account_create
 
   ##############################################################################
@@ -37,14 +37,14 @@ defmodule Helix.Event.Dispatcher do
   # Network events
   ##############################################################################
   event Network.Model.Connection.ConnectionClosedEvent,
-    Network.Service.Event.Tunnel,
+    Network.Event.Tunnel,
     :connection_closed
   event Network.Model.Connection.ConnectionClosedEvent,
-    Process.Service.Event.TOP,
+    Process.Event.TOP,
     :connection_closed
 
   event Network.Model.Connection.ConnectionStartedEvent,
-    Log.Service.Event.Log,
+    Log.Event.Log,
     :connection_started
 
   ##############################################################################
@@ -62,33 +62,33 @@ defmodule Helix.Event.Dispatcher do
   # Software events
   ##############################################################################
   event Software.Model.SoftwareType.Cracker.ProcessConclusionEvent,
-    Entity.Service.Event.HackDatabase,
+    Entity.Event.HackDatabase,
     :cracker_conclusion
 
   event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
-    Software.Service.Event.Decryptor,
+    Software.Event.Decryptor,
     :complete
 
   event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
-    Software.Service.Event.Encryptor,
+    Software.Event.Encryptor,
     :complete
 
   event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
-    Software.Service.Event.FileDownload,
+    Software.Event.FileDownload,
     :complete
   event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
-    Log.Service.Event.Log,
+    Log.Event.Log,
     :file_download_conclusion
 
   event Software.Model.SoftwareType.Firewall.FirewallStartedEvent,
-    Process.Service.Event.Cracker,
+    Process.Event.Cracker,
     :firewall_started
 
   event Software.Model.SoftwareType.Firewall.FirewallStoppedEvent,
-    Process.Service.Event.Cracker,
+    Process.Event.Cracker,
     :firewall_stopped
 
   event Software.Model.SoftwareType.LogDeleter.ProcessConclusionEvent,
-    Log.Service.Event.Log,
+    Log.Event.Log,
     :log_deleter_conclusion
 end

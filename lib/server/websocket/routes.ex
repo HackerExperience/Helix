@@ -1,10 +1,10 @@
 defmodule Helix.Server.Websocket.Routes do
 
   alias Helix.Websocket.Socket, warn: false
-  alias Helix.Entity.Service.API.Entity
-  alias Helix.Entity.Service.API.HackDatabase
-  alias Helix.Hardware.Service.API.NetworkConnection
-  alias Helix.Software.Service.Flow.Cracker
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Entity.Action.HackDatabase, as: HackDatabaseAction
+  alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
+  alias Helix.Software.Action.Flow.Cracker, as: CrackerFlow
 
   # Note that this is somewhat a hack to allow us to break our request-response
   # channel into several parts (one on each domain). So this code will be
@@ -19,11 +19,11 @@ defmodule Helix.Server.Websocket.Routes do
     account = socket.assigns.account
 
     create_hack_db_entry = fn entity, server_id ->
-      HackDatabase.create(entity, network, target, server_id, "vpc")
+      HackDatabaseAction.create(entity, network, target, server_id, "vpc")
     end
 
     start_cracker = fn entity, server_id ->
-      Cracker.start_process(
+      CrackerFlow.start_process(
         entity.entity_id,
         gateway,
         network,
@@ -33,9 +33,9 @@ defmodule Helix.Server.Websocket.Routes do
     end
 
     with \
-      server = %{} <- NetworkConnection.get_server_by_ip(network, target),
+      server = %{} <- NetworkConnectionQuery.get_server_by_ip(network, target),
       # FIXME
-      entity = %{} <- account |> Entity.get_entity_id() |> Entity.fetch(),
+      entity = %{} <- account |> EntityQuery.get_entity_id() |> EntityQuery.fetch(),
       server_id = server.server_id,
       {:ok, _} <- create_hack_db_entry.(entity, server_id),
       {:ok, process} <- start_cracker.(entity, server_id)

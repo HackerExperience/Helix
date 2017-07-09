@@ -1,15 +1,15 @@
 defmodule Helix.Account.Websocket.Controller.Account do
 
-  alias Helix.Account.Service.API.Session
+  alias Helix.Account.Action.Session, as: SessionAction
 
   @typep json_response ::
     {:ok, map}
     | {:error, map}
 
-  @spec logout(%{session: Session.session}, map) ::
+  @spec logout(%{session: SessionAction.session}, map) ::
     json_response
   def logout(%{session: session}, _) do
-    Session.invalidate_session(session)
+    SessionAction.invalidate_session(session)
 
     {:ok, %{}}
   end

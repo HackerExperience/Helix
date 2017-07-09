@@ -1,23 +1,23 @@
 defmodule Helix.Network.Websocket.Routes do
 
   alias Helix.Websocket.Socket, warn: false
-  alias Helix.Entity.Service.API.Entity
-  alias Helix.Entity.Service.API.HackDatabase
-  alias Helix.Hardware.Service.API.NetworkConnection
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Entity.Query.HackDatabase, as: HackDatabaseQuery
+  alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
 
   # TODO: Check if player's gateway is connected to specified network
   def browse_ip(socket, %{"network_id" => network, "ip" => ip}) do
     # FIXME
     account =
       socket.assigns.account
-      |> Entity.get_entity_id()
-      |> Entity.fetch()
+      |> EntityQuery.get_entity_id()
+      |> EntityQuery.fetch()
 
     with \
-      server = %{} <- NetworkConnection.get_server_by_ip(network, ip),
-      entity = %{} <- Entity.fetch_server_owner(server.server_id)
+      server = %{} <- NetworkConnectionQuery.get_server_by_ip(network, ip),
+      entity = %{} <- EntityQuery.fetch_server_owner(server.server_id)
     do
-      hack_database_entry = HackDatabase.fetch_server_record(
+      hack_database_entry = HackDatabaseQuery.fetch_server_record(
         account,
         server.server_id)
 

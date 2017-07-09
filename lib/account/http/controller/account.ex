@@ -2,7 +2,7 @@ defmodule Helix.Account.HTTP.Controller.Account do
 
   use Phoenix.Controller
 
-  alias Helix.Account.Service.API.Account, as: AccountAPI
+  alias Helix.Account.Action.Account, as: AccountAction
 
   import Plug.Conn
 
@@ -15,7 +15,7 @@ defmodule Helix.Account.HTTP.Controller.Account do
   # def register(conn, params) do
   #   %{"username" => username, "password" => password, "email" => email} = params
 
-  #   case AccountAPI.create(email, username, password) do
+  #   case AccountAction.create(email, username, password) do
   #     {:ok, account} ->
   #       # In the future we'll just pass the return to a protocol
   #       account =
@@ -38,7 +38,7 @@ defmodule Helix.Account.HTTP.Controller.Account do
   # end
 
   def login(conn, %{"username" => username, "password" => password}) do
-    case AccountAPI.login(username, password) do
+    case AccountAction.login(username, password) do
       {:ok, account, token} ->
 
         result =
