@@ -2,7 +2,7 @@ defmodule Helix.Server.Websocket.Routes do
 
   alias Helix.Websocket.Socket, warn: false
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Entity.Action.HackDatabase, as: HackDatabaseAction
+  alias Helix.Entity.Action.Database, as: DatabaseAction
   alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
   alias Helix.Software.Action.Flow.Cracker, as: CrackerFlow
 
@@ -19,7 +19,7 @@ defmodule Helix.Server.Websocket.Routes do
     account = socket.assigns.account
 
     create_hack_db_entry = fn entity, server_id ->
-      HackDatabaseAction.create(entity, network, target, server_id, "vpc")
+      DatabaseAction.create(entity, network, target, server_id, "vpc")
     end
 
     start_cracker = fn entity, server_id ->

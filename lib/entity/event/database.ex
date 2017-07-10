@@ -1,10 +1,10 @@
-defmodule Helix.Entity.Event.HackDatabase do
+defmodule Helix.Entity.Event.Database do
 
   alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Entity.Action.HackDatabase, as: HackDatabaseAction
+  alias Helix.Entity.Action.Database, as: DatabaseAction
 
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityQuery.fetch(event.entity_id)
@@ -14,7 +14,7 @@ defmodule Helix.Entity.Event.HackDatabase do
       event.network_id)
 
     create_entry = fn ->
-      HackDatabaseAction.create(
+      DatabaseAction.create(
         entity,
         event.network_id,
         event.server_ip,
@@ -23,7 +23,7 @@ defmodule Helix.Entity.Event.HackDatabase do
     end
 
     set_password = fn ->
-      HackDatabaseAction.update(
+      DatabaseAction.update(
         entity,
         event.network_id,
         event.server_ip,

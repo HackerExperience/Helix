@@ -1,4 +1,4 @@
-defmodule Helix.Entity.Model.HackDatabase do
+defmodule Helix.Entity.Model.Database do
 
   use Ecto.Schema
 
@@ -21,7 +21,7 @@ defmodule Helix.Entity.Model.HackDatabase do
   @notes_max_length 1024
 
   @primary_key false
-  schema "hack_database_entries" do
+  schema "database_entries" do
     field :entity_id, PK,
       primary_key: true
     field :network_id, PK,

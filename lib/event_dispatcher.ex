@@ -62,7 +62,7 @@ defmodule Helix.Event.Dispatcher do
   # Software events
   ##############################################################################
   event Software.Model.SoftwareType.Cracker.ProcessConclusionEvent,
-    Entity.Event.HackDatabase,
+    Entity.Event.Database,
     :cracker_conclusion
 
   event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,

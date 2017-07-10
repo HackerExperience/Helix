@@ -8,7 +8,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Entity.Query.HackDatabase, as: HackDatabaseQuery
+  alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
   def join("account:" <> account_id, _message, socket) do
@@ -22,14 +22,14 @@ defmodule Helix.Account.Websocket.Channel.Account do
     end
   end
 
-  def handle_in("hack_database.index", _message, socket) do
-    hack_database =
+  def handle_in("database.index", _message, socket) do
+    database =
       socket.assigns.account.account_id
       |> EntityQuery.get_entity_id()
       |> EntityQuery.fetch()
-      |> HackDatabaseQuery.get_database()
+      |> DatabaseQuery.get_database()
 
-    {:reply, {:ok, %{data: %{entries: hack_database}}}, socket}
+    {:reply, {:ok, %{data: %{entries: database}}}, socket}
   end
 
   # TODO: Fetch server's IPs

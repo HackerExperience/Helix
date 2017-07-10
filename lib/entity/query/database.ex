@@ -1,7 +1,7 @@
-defmodule Helix.Entity.Query.HackDatabase do
+defmodule Helix.Entity.Query.Database do
 
   alias Helix.Server.Model.Server
-  alias Helix.Entity.Internal.HackDatabase, as: HackDatabaseInternal
+  alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
 
@@ -9,7 +9,7 @@ defmodule Helix.Entity.Query.HackDatabase do
     [map]
   def get_database(entity) do
     entity
-    |> HackDatabaseInternal.get_database()
+    |> DatabaseInternal.get_database()
     |> Repo.all()
   end
 
@@ -18,8 +18,8 @@ defmodule Helix.Entity.Query.HackDatabase do
     | nil
   def fetch_server_record(entity, server) do
     entity
-    |> HackDatabaseInternal.get_entry_by_server_id(server)
-    |> HackDatabaseInternal.select_for_presentation()
+    |> DatabaseInternal.get_entry_by_server_id(server)
+    |> DatabaseInternal.select_for_presentation()
     |> Repo.one()
   end
 end
