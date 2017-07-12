@@ -3,6 +3,7 @@ defmodule Helix.Entity.Action.Entity do
   alias Helix.Account.Model.Account
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
+  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
 
@@ -26,6 +27,15 @@ defmodule Helix.Entity.Action.Entity do
 
     EntityInternal.create(params)
   end
+  def create_from_specialization(%NPC{npc_id: npc_id}) do
+    params = %{
+      entity_id: npc_id,
+      entity_type: :npc
+    }
+
+    EntityInternal.create(params)
+  end
+
 
   # TODO: Accept entity-equivalent structs
   @spec delete(Entity.t) ::
