@@ -43,7 +43,7 @@ defmodule Helix.Network.Action.Tunnel do
   # have to convert the input IPs into server_ids anyway
   defp create_tunnel(network, gateway, destination, bounces) do
     with \
-      exists? = &ServerHenforcer.server_exists?/1,
+      exists? = &ServerHenforcer.exists?/1,
       true <- exists?.(gateway) || {:gateway_id, :notfound},
       true <- exists?.(destination) || {:destination_id, :notfound},
       true <- Enum.all?(bounces, exists?) || {:links, :notfound},
