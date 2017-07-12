@@ -1,4 +1,4 @@
-defprotocol Helix.Process.API.ProcessView do
+defprotocol Helix.Process.API.View.Process do
 
   # Entity and Server data are included to allow the viewable to render
   # differently for the process creator or if seen from an external server
@@ -28,7 +28,7 @@ impls = [
 ]
 
 for impl <- impls do
-  defimpl Helix.Process.API.ProcessView, for: impl do
+  defimpl Helix.Process.API.View.Process, for: impl do
     def render(input, _, _, _),
       do: raise "#{inspect input} doesn't implement ProcessView protocol"
   end

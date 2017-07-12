@@ -5,12 +5,9 @@ defmodule Helix.Server.Henforcer.Server do
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
 
-  # TODO: rename functions. since the context is servers, it's a bit redundant
-  #   for the functions to start with server_*
-
-  @spec server_exists?(HELL.PK.t) ::
+  @spec exists?(HELL.PK.t) ::
     boolean
-  def server_exists?(server) do
+  def exists?(server) do
     # TODO: Use a count(server_id) to waste less resources
     !!ServerQuery.fetch(server)
   end
