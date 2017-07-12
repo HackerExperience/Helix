@@ -13,13 +13,6 @@ alias Helix.Network.Action.DNS, as: DNSAction
 alias Helix.Network.Internal.DNS, as: DNSInternal
 
 
-Repo.transaction fn ->
-  Enum.each(NPCType.possible_types(), fn type ->
-    Repo.insert!(%NPCType{npc_type: type}, on_conflict: :nothing)
-  end)
-end
-
-
 # TODO: Move to a JSON
 npcs = [
   %{
@@ -43,6 +36,11 @@ npcs = [
 ]
 
 Repo.transaction fn ->
+  # NPC Types
+  Enum.each(NPCType.possible_types(), fn type ->
+    Repo.insert!(%NPCType{npc_type: type}, on_conflict: :nothing)
+  end)
+
   Enum.map(npcs, fn (entry) ->
 
     npc = %NPC{npc_id: entry["id"], npc_type: entry["type"]}
