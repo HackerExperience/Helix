@@ -6,4 +6,5 @@ defmodule Helix.Universe.NPC.Query.NPC do
   @spec fetch(HELL.PK.t) :: NPC.t | nil
   def fetch(npc_id),
     do: NPCInternal.fetch(npc_id)
+
 end
