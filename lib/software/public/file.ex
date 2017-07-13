@@ -67,15 +67,7 @@ defmodule Helix.Software.Public.File do
   @spec storages_on_server(Server.t) ::
     [Storage.t]
   defp storages_on_server(server) do
-    server.motherboard_id
-    |> ComponentQuery.fetch()
-    |> MotherboardQuery.fetch!()
-    |> MotherboardQuery.get_slots()
-    # TODO: Delegate this to a function on Motherboard API
-    # Gets hdds linked to the motherboard
-    |> Enum.filter_map(
-      &(&1.link_component_type == :hdd && &1.link_component_id),
-      &(&1.link_component_id))
-    |> Enum.map(&StorageQuery.get_storage_from_hdd/1)
+    {:ok, storages} = CacheQuery.from_server_get_storages(server.server_id)
+    storages
   end
 end

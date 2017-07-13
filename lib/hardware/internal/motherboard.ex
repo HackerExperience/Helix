@@ -15,42 +15,88 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> Repo.insert()
   end
 
-  # REVIEW: refactor this
+  def get_components_ids(motherboard) do
+    motherboard
+    |> MotherboardSlot.Query.from_motherboard()
+    |> MotherboardSlot.Query.only_linked_slots()
+    |> MotherboardSlot.Query.select_component_id()
+    |> Repo.all()
+  end
+
+  def get_cpus(motherboard) do
+    motherboard
+    |> get_components_ids()
+    |> get_cpus_from_ids()
+  end
+
+  def get_rams(motherboard) do
+    motherboard
+    |> get_components_ids()
+    |> get_rams_from_ids()
+  end
+
+  def get_nics(motherboard) do
+    motherboard
+    |> get_components_ids()
+    |> get_nics_from_ids()
+  end
+
+  def get_hdds(motherboard) do
+    motherboard
+    |> get_components_ids()
+    |> get_hdds_from_ids()
+  end
+
+  defp get_cpus_from_ids(components) do
+    components
+    |> Component.CPU.Query.from_component_ids()
+    |> Repo.all()
+  end
+
+  defp get_rams_from_ids(components) do
+    components
+    |> Component.RAM.Query.from_component_ids()
+    |> Repo.all()
+  end
+
+  defp get_nics_from_ids(components) do
+    components
+    |> Component.NIC.Query.from_component_ids()
+    |> Component.NIC.Query.inner_join_network_connection()
+    |> Repo.all()
+  end
+
+  defp get_hdds_from_ids(components) do
+    components
+    |> Component.HDD.Query.from_component_ids()
+    |> Repo.all()
+  end
+
   @spec resources(Motherboard.t) ::
-    %{
-      cpu: non_neg_integer,
-      ram: non_neg_integer,
-      net: %{any => %{uplink: non_neg_integer, downlink: non_neg_integer}}}
+  %{cpu: non_neg_integer,
+    ram: non_neg_integer,
+    hdd: non_neg_integer,
+    net: %{any => %{uplink: non_neg_integer, downlink: non_neg_integer}}}
   def resources(motherboard) do
-    cids =
-      motherboard
-      |> MotherboardSlot.Query.from_motherboard()
-      |> MotherboardSlot.Query.only_linked_slots()
-      |> MotherboardSlot.Query.select_component_id()
-      |> Repo.all()
+    components = get_components_ids(motherboard)
 
     cpu =
-      cids
-      |> Component.CPU.Query.from_component_ids()
-      |> Repo.all()
+      components
+      |> get_cpus_from_ids()
       |> Enum.reduce(0, fn el, acc ->
-        # REVIEW: Move the operation (cores * clock) to the CPU model ?
         acc + (el.cores * el.clock)
       end)
 
     ram =
-      cids
-      |> Component.RAM.Query.from_component_ids()
-      |> Repo.all()
+      components
+      |> get_rams_from_ids()
       |> Enum.reduce(0, fn el, acc ->
         acc + el.ram_size
       end)
 
     nic =
-      cids
-      |> Component.NIC.Query.from_component_ids()
-      |> Component.NIC.Query.inner_join_network_connection()
-      |> Repo.all()
+      components
+      |> get_nics_from_ids()
       |> Enum.reduce(%{}, fn el, acc ->
         network = el.network_connection.network_id
         value = Map.take(el.network_connection, [:uplink, :downlink])
@@ -60,9 +106,17 @@ defmodule Helix.Hardware.Internal.Motherboard do
         Map.update(acc, network, value, sum_map_values)
       end)
 
+    hdd =
+      components
+      |> get_hdds_from_ids()
+      |> Enum.reduce(0, fn el, acc ->
+        acc + el.hdd_size
+      end)
+
     %{
       cpu: cpu,
       ram: ram,
+      hdd: hdd,
       net: nic
     }
   end
