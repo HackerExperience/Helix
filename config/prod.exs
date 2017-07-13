@@ -14,10 +14,10 @@ config :helix, Helix.Endpoint,
   ],
   url: [
     host: "${HELIX_ENDPOINT_URL}",
-    port: 4000
+    port: 3000
   ],
   https: [
-    port: 4000,
+    port: 3000,
     otp_app: :helix,
     keyfile: "${HELIX_SSL_KEYFILE}",
     certfile: "${HELIX_SSL_CERTFILE}"
