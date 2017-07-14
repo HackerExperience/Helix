@@ -11,6 +11,7 @@ defmodule Helix.Software.Public.File do
   alias Helix.Software.Public.View.File, as: FileView
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
+  alias Helix.Cache.Query.Cache, as: CacheQuery
 
   @spec index(Server.id) ::
     %{path :: String.t => [map]}

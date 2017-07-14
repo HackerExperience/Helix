@@ -25,7 +25,7 @@ defmodule Helix.Hardware.Internal.Component do
     Component.t
     | nil
   def fetch(component_id),
-    do: Repo.get(Component, component_id)
+    do: Repo.get(Component, component_id) |> Repo.preload(:slot)
 
   @spec delete(Component.t | Component.id) ::
     :ok
@@ -37,5 +37,23 @@ defmodule Helix.Hardware.Internal.Component do
     |> Repo.delete_all()
 
     :ok
+  end
+
+  def get_motherboard(component = %Component{}) do
+    component
+    |> Repo.preload(:slot)
+    |> Map.get(:slot)
+    |> case do
+         nil ->
+           nil
+         slot ->
+           Map.get(slot, :motherboard_id)
+       end
+  end
+
+  def get_motherboard(component_id) do
+    component_id
+    |> fetch()
+    |> get_motherboard()
   end
 end

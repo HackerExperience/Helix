@@ -1,6 +1,5 @@
 defmodule Helix.Entity.Event.Database do
 
-  alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
   alias Helix.Entity.Action.Database, as: DatabaseAction
@@ -9,9 +8,7 @@ defmodule Helix.Entity.Event.Database do
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityQuery.fetch(event.entity_id)
     server = ServerQuery.fetch(event.server_id)
-    server_ip = NetworkConnectionQuery.get_server_ip(
-      event.server_id,
-      event.network_id)
+    server_ip = ServerQuery.get_ip(event.server_id, event.network_id)
 
     create_entry = fn ->
       DatabaseAction.create(

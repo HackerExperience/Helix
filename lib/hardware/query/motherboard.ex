@@ -68,8 +68,8 @@ defmodule Helix.Hardware.Query.Motherboard do
       nics = [_|_] <- Enum.reject(nics, &is_nil(&1.link_component_id)),
       nics = [_|_] <- Enum.map(nics, &Repo.get(NIC, &1.link_component_id)),
       nets = [_|_] <- Enum.map(
-               nics,
-               &Repo.get(NetworkConnection, &1.network_connection_id))
+        nics,
+        &Repo.get(NetworkConnection, &1.network_connection_id))
     do
       nets
     end
@@ -86,12 +86,30 @@ defmodule Helix.Hardware.Query.Motherboard do
     |> MotherboardInternal.get_hdds()
   end
 
-  def storages_on_motherboard(motherboard) do
+  def get_storages(motherboard) do
     # FIXME: Works only for one hd
-    hdd = motherboard
+    motherboard
     |> get_hdds()
     |> List.first()
     |> Map.get(:hdd_id)
-    |> StorageQuery.get_storage_from_hdd()
+    |> StorageQuery.fetch_by_hdd()
+  end
+
+  def fetch_by_nip(network_id, ip) do
+    # TODO: Query using its own Internal
+    alias Helix.Hardware.Model.NetworkConnection
+    query = [network_id: network_id, ip: ip]
+
+    with \
+      net = %{} <- Repo.get_by(NetworkConnection, query),
+      nic = %{} <- net |> Repo.preload(:nic) |> Map.fetch!(:nic),
+      slot = %{} <- Repo.get_by(MotherboardSlot, link_component_id: nic.nic_id)
+    do
+      slot.motherboard_id
+    else
+      _ ->
+        nil
+    end
+
   end
 end

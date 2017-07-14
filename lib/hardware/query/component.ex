@@ -11,4 +11,8 @@ defmodule Helix.Hardware.Query.Component do
   """
   defdelegate fetch(component_id),
     to: ComponentInternal
+
+  def get_motherboard(component) do
+    ComponentInternal.get_motherboard(component)
+  end
 end

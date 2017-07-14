@@ -35,10 +35,21 @@ defmodule Helix.Software.Internal.Storage do
   @spec get_storage_from_hdd(Component.id) ::
     Storage.t
     | nil
-  def get_storage_from_hdd(hdd_id) do
+  def get_storage_from_hdd(hdd_id),
+    do: fetch_by_hdd(hdd_id)
+
+  @spec fetch_by_hdd(HELL.PK.t) :: Storage.t | nil
+  def fetch_by_hdd(hdd_id) do
     Storage
     |> join(:inner, [s], sd in StorageDrive, s.storage_id == sd.storage_id)
     |> where([s, sd], sd.drive_id == ^hdd_id)
     |> Repo.one()
+  end
+
+  def get_drives(storage_id) do
+    storage_id
+    |> fetch()
+    |> Repo.preload(:drives)
+    |> Map.get(:drives)
   end
 end

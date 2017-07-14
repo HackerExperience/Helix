@@ -3,7 +3,7 @@ defmodule Helix.Network.Websocket.Routes do
   alias Helix.Websocket.Socket, warn: false
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Entity.Query.Database, as: DatabaseQuery
-  alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
+  alias Helix.Cache.Query.Cache, as: CacheQuery
 
   # TODO: Check if player's gateway is connected to specified network
   def browse_ip(socket, %{"network_id" => network, "ip" => ip}) do
@@ -14,7 +14,7 @@ defmodule Helix.Network.Websocket.Routes do
       |> EntityQuery.fetch()
 
     with \
-      server = %{} <- NetworkConnectionQuery.get_server_by_ip(network, ip),
+      {:ok, server} <- CacheQuery.from_nip_get_server(network, ip),
       entity = %{} <- EntityQuery.fetch_server_owner(server.server_id)
     do
       database_entry = DatabaseQuery.fetch_server_record(
