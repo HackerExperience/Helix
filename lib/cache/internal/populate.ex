@@ -33,6 +33,8 @@ defmodule Helix.Cache.Internal.Populate do
   several different services in order to compile a denormalized cache.
   """
   def populate(:server, server_id) do
+    entity = EntityQuery.fetch_server_owner(server_id)
+
     with \
       server = %{} <- ServerQuery.fetch(server_id) || :nxserver,
       true <- not is_nil(server.motherboard_id) || :nxmobo,
@@ -41,17 +43,16 @@ defmodule Helix.Cache.Internal.Populate do
       resources = %{} <- MotherboardQuery.resources(motherboard),
       components = MotherboardQuery.get_components(motherboard),
       storages = MotherboardQuery.get_storages(motherboard),
-      networks = MotherboardQuery.get_networks(motherboard),
-      entity = %{} <- EntityQuery.fetch_server_owner(server_id)
+      networks = MotherboardQuery.get_networks(motherboard)
     do
       data = {server_id, entity, motherboard, networks, storages, resources,
               components}
       cache(:server, data)
     else
+      :nxmobo ->
+        cache(:server, {server_id, entity, nil, nil, nil, nil, nil})
       :nxserver ->
         {:error, :nxserver}
-      :nxmobo ->
-        {:error, :nxmobo}
       _ ->
         {:error, :unknown}
     end
@@ -91,22 +92,26 @@ defmodule Helix.Cache.Internal.Populate do
   docp """
   Formats the compiled data and inserts into the DB.
   """
-  defp cache(:server, data = {server_id, _, motherboard_id, networks, storages, _, components}) do
+  defp cache(:server, data = {server_id, _, mobo, networks, storages, _, components}) do
     params = format(:server, data)
     result = store(:server, params)
 
-    spawn(fn() ->
-      # Network
-      Enum.each(networks, fn(network) ->
-        cache(:network, {network.network_id, network.ip, server_id})
+    unless is_nil(mobo) do
+      spawn(fn() ->
+        # Network
+        Enum.each(networks, fn(network) ->
+          cache(:network, {network.network_id, network.ip, server_id})
+        end)
+
+        # Storage
+        cache(:storage, {storages.storage_id, server_id})
+
+        # Components
+        Enum.each(components, fn(component) ->
+          cache(:component, {component, mobo.motherboard_id})
+        end)
       end)
-      # Storage
-      cache(:storage, {storages.storage_id, server_id})
-      # Components
-      Enum.each(components, fn(component) ->
-        cache(:component, {component.component_id, motherboard_id})
-      end)
-    end)
+    end
 
     result
   end
@@ -123,7 +128,17 @@ defmodule Helix.Cache.Internal.Populate do
     store(:component, params)
   end
 
-
+  defp format(:server, {server, entity, mobo, _, _, _, _}) when is_nil(mobo) do
+    %{
+      server_id: server,
+      entity_id: entity.entity_id,
+      motherboard_id: nil,
+      components: nil,
+      resources: nil,
+      storages: nil,
+      networks: nil
+    }
+  end
   defp format(:server, {server, entity, mobo, networks, storages, resources, components}) do
 
     network_list = Enum.reduce(networks, [], fn(net, acc) ->

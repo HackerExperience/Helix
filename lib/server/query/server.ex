@@ -32,9 +32,6 @@ defmodule Helix.Server.Query.Server do
       server = fetch_by_motherboard(motherboard_id)
     do
       server
-    else
-      _ ->
-        nil
     end
   end
 

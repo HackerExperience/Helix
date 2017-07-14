@@ -28,7 +28,7 @@ defmodule Helix.Cache.Internal.Cache do
   docp """
   Wrapper used to populate cache data in case it isn't stored (miss)
   """
-  def process(info, params) do
+  defp process(info, params) do
     case query(info, params) do
       :miss ->
         apply(PopulateInternal, :populate, [info.module] ++ params)

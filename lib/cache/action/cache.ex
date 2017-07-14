@@ -1,6 +1,6 @@
 defmodule Helix.Cache.Action.Cache do
 
-  alias Helix.Cache.Internal.Cache, as: CacheInternal
+  # alias Helix.Cache.Internal.Cache, as: CacheInternal
 
   def purge_server() do
   end
