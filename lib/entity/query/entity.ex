@@ -1,5 +1,6 @@
 defmodule Helix.Entity.Query.Entity do
 
+  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
@@ -62,6 +63,8 @@ defmodule Helix.Entity.Query.Entity do
       %Account{account_id: %Account.ID{id: id}} ->
         # HACK: entity specializations have their own ID but those ID's are 1:1
         #   to entity ids
+        %Entity.ID{id: id}
+      %NPC{npc_id: %NPC.ID{id: id}} ->
         %Entity.ID{id: id}
     end
   end

@@ -5,7 +5,7 @@ defmodule Helix.Universe.NPC.Model.Seed do
       :download_center ->
         "DC0"
       _ ->
-        # Not implemented
+        # TODO
         raise ArgumentError
     end
 

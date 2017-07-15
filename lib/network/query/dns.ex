@@ -1,11 +1,11 @@
 defmodule Helix.Network.Query.DNS do
 
-  alias Helix.Network.Internal.DNS, as: DNSInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Network.Internal.DNS, as: DNSInternal
 
-  @spec resolve(String.t, HELL.IPv4) ::
+  @spec resolve(String.t, HELL.IPv4.t) ::
   {:ok, HELL.IPv4.t}
   | :nxdomain
   @doc """
@@ -29,12 +29,12 @@ defmodule Helix.Network.Query.DNS do
     end
   end
 
-  @spec nearest_server(HELL.PK, IPv4) :: IPv4
+  @spec nearest_server(HELL.PK.t, IPv4.t) :: IPv4.t
   defp nearest_server(npc_id, origin_server) do
     # TODO: Actual GIS implementation. Move to `GIS` module
     # TODO: Network handling
     EntityQuery.get_servers_from_entity(%Entity{entity_id: npc_id})
     |> List.first()
-    |> NetworkConnectionQuery.get_server_ip("::")
+    |> ServerQuery.get_ip("::")
   end
 end
