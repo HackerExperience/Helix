@@ -13,8 +13,36 @@ defmodule Helix.Cache.Internal.Cache do
   alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Repo
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
+  alias Helix.Cache.Internal.Purge, as: PurgeInternal
 
   import HELL.MacroHelpers
+
+  @doc """
+  Directly query the cache without populating it. Reports whether it's a miss
+  or hit, along with the cached data (entire row) if it's a hit.
+  """
+  def direct_query(model, params) when not is_list(params) do
+    direct_query(model, [params])
+  end
+  def direct_query(model, params) when is_atom(model) do
+    model = case model do
+      :server ->
+        {:server, :by_server}
+      :motherboard ->
+        {:server, :by_motherboard}
+      :storage ->
+        {:storage, :by_storage}
+      :components ->
+        {:component, :by_component}
+      :network ->
+        {:network, :by_nip}
+    end
+    direct_query(model, params)
+  end
+  def direct_query({model, method}, params) do
+    info = query_info({model, method, :full})
+    query(info, params, true)
+  end
 
   @doc """
   Queries the Cache database, populating it if the requested data wasn't found.
@@ -22,7 +50,22 @@ defmodule Helix.Cache.Internal.Cache do
   def lookup(condition, params) do
     info = query_info(lookup_table(condition))
     result = process(info, params)
-    post_lookup_hook(result)
+    case result do
+      {:ok, data} ->
+        {:ok, post_lookup_hook(data)}
+      _ ->
+        result
+    end
+  end
+
+  @doc """
+  Requests an entry to be purged from cache. It happens asynchronously.
+  """
+  def purge(model, params) do
+    spawn(fn() ->
+      apply(PurgeInternal, :purge, [model] ++ params)
+    end)
+    :ok
   end
 
   docp """
@@ -37,7 +80,7 @@ defmodule Helix.Cache.Internal.Cache do
                {:ok, Map.get(schema, info.field)}
              result ->
                result
-           end
+            end
       {:hit, data} ->
         {:ok, data}
     end
@@ -50,15 +93,22 @@ defmodule Helix.Cache.Internal.Cache do
   ServerCache.Query.by_server(server_id)
   |> Repo.one
   |> Map.get(:networks)
+
+  The `full?` option tells whether the caller wants the entire row.
   """
-  defp query(info, params) do
+  defp query(info, params, full? \\ false) do
     apply(get_module(info.module), info.function, params)
     |> Repo.one
     |> case do
          nil ->
            :miss
          schema ->
-           {:hit, Map.get(schema, info.field)}
+           return = if full? do
+             schema
+           else
+             Map.get(schema, info.field)
+           end
+           {:hit, return}
        end
   end
 
@@ -119,16 +169,11 @@ defmodule Helix.Cache.Internal.Cache do
 
   Mostly useful for transforming map keys from strings to atoms.
   """
-  defp post_lookup_hook(result) do
-    case result do
-      {:ok, data} ->
-        if is_list(data) or is_map(data) do
-          {:ok, map_to_atoms(data)}
-        else
-          result
-        end
-      _ ->
-        result
+  defp post_lookup_hook(data) do
+    if is_list(data) or is_map(data) do
+      {:ok, map_to_atoms(data)}
+    else
+      data
     end
   end
 

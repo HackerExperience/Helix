@@ -51,5 +51,4 @@ defmodule Helix.Cache.Query.Cache do
   def from_component_get_motherboard(component_id) do
     CacheInternal.lookup({:component, :motherboard}, [component_id])
   end
-
 end
