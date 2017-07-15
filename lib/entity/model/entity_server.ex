@@ -40,13 +40,7 @@ defmodule Helix.Entity.Model.EntityServer do
     alias Helix.Entity.Model.Entity
     alias Helix.Entity.Model.EntityServer
 
-    import Ecto.Query, only: [where: 3, join: 5]
-
-    def from_entity2(query \\ Entity, entity_id) do
-      query
-      |> join(:inner, [e], es in EntityServer, es.entity_id == e.entity_id)
-      |> where([e, ..., es], es.entity_id == ^entity_id)
-    end
+    import Ecto.Query, only: [where: 3]
 
     @spec from_entity(Ecto.Queryable.t, Entity.t | Entity.id) ::
       Ecto.Queryable.t

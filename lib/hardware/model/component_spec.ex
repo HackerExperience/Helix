@@ -7,8 +7,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   import Ecto.Changeset
 
-  @type t :: %__MODULE__{
-  }
+  @type id :: String.t
+  @type t :: %__MODULE__{}
 
   @type spec :: %{
     :spec_code => String.t,

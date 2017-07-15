@@ -3,8 +3,8 @@ defmodule Helix.Entity.Event.Database do
   alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
-  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Entity.Action.Database, as: DatabaseAction
+  alias Helix.Entity.Query.Entity, as: EntityQuery
 
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityQuery.fetch(event.entity_id)

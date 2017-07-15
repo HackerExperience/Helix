@@ -85,7 +85,6 @@ defmodule Helix.Hardware.Internal.Motherboard do
 
   @spec unlink(MotherboardSlot.t) ::
     {:ok, MotherboardSlot.t}
-    | {:error, Ecto.Changeset.t}
   def unlink(slot) do
     slot
     |> MotherboardSlot.update_changeset(%{link_component_id: nil})

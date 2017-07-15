@@ -3,8 +3,6 @@ defmodule Helix.Hardware.Internal.ComponentSpec do
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
-  @type find_param :: {:type, String.t}
-
   @spec create(ComponentSpec.spec) ::
     {:ok, ComponentSpec.t}
     | {:error, Ecto.Changeset.t}
@@ -14,18 +12,14 @@ defmodule Helix.Hardware.Internal.ComponentSpec do
     |> Repo.insert()
   end
 
-  @spec fetch(String.t) :: ComponentSpec.t | nil
+  @spec fetch(ComponentSpec.id) ::
+    ComponentSpec.t
+    | nil
   def fetch(spec_id),
     do: Repo.get(ComponentSpec, spec_id)
 
-  @spec find([find_param], meta :: []) :: [ComponentSpec.t]
-  def find(params, _meta \\ []) do
-    params
-    |> Enum.reduce(ComponentSpec, &reduce_find_params/2)
-    |> Repo.all()
-  end
-
-  @spec delete(ComponentSpec.t | String.t) :: no_return
+  @spec delete(ComponentSpec.t | ComponentSpec.id) ::
+    :ok
   def delete(%ComponentSpec{spec_id: sid}),
     do: delete(sid)
   def delete(spec_id) do
@@ -35,8 +29,4 @@ defmodule Helix.Hardware.Internal.ComponentSpec do
 
     :ok
   end
-
-  @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
-  def reduce_find_params({:type, spec_type}, query),
-    do: ComponentSpec.Query.by_component_type(query, spec_type)
 end

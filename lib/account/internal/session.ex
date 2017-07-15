@@ -7,14 +7,11 @@ defmodule Helix.Account.Internal.Session do
 
   import Ecto.Query, only: [where: 3]
 
-  @type token :: String.t
-  @type session :: String.t
-
   # 1 Week
   @max_age 7 * 24 * 60 * 60
 
   @spec generate_token(Account.t) ::
-    token
+    AccountSession.token
   def generate_token(account) do
     changeset = AccountSession.create(account)
 
@@ -23,8 +20,8 @@ defmodule Helix.Account.Internal.Session do
     sign(account_session.session_id)
   end
 
-  @spec validate_token(token) ::
-    {:ok, Account.t, session}
+  @spec validate_token(AccountSession.token) ::
+    {:ok, Account.t, AccountSession.session}
     | {:error, :unauthorized}
   def validate_token(token) do
     with \
@@ -40,7 +37,8 @@ defmodule Helix.Account.Internal.Session do
     end
   end
 
-  @spec invalidate_token(token) :: :ok
+  @spec invalidate_token(AccountSession.token) ::
+    :ok
   def invalidate_token(token) do
     with {:ok, session} <- verify(token) do
       invalidate_session(session)
@@ -49,7 +47,8 @@ defmodule Helix.Account.Internal.Session do
     :ok
   end
 
-  @spec invalidate_session(session) :: :ok
+  @spec invalidate_session(AccountSession.session) ::
+    :ok
   def invalidate_session(session) do
     AccountSession
     |> where([s], s.session_id == ^session)

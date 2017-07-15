@@ -2,20 +2,21 @@ defmodule Helix.Account.Action.Flow.Account do
 
   import HELF.Flow
 
+  alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Action.Flow.Server, as: ServerFlow
+  alias Helix.Server.Model.Server
   alias Helix.Account.Model.Account
   alias Helix.Account.Query.Account, as: AccountQuery
-  alias Helix.Server.Action.Flow.Server, as: ServerFlow
-  alias Helix.Entity.Action.Entity, as: EntityAction
 
   @spec setup_account(HELL.PK.t | Account.t) ::
-    {:ok, %{entity: struct, server: struct}}
+    {:ok, %{entity: Entity.t, server: Server.t}}
     | :error
+  # TODO: improve documentation
   @doc """
   Setups the input account
   """
-  def setup_account(account_id) when is_binary(account_id),
-    do: setup_account(AccountQuery.fetch(account_id))
-  def setup_account(account) do
+  def setup_account(account = %Account{}) do
     flowing do
       with \
         {:ok, entity} <- EntityAction.create_from_specialization(account),
@@ -26,9 +27,15 @@ defmodule Helix.Account.Action.Flow.Account do
         {:ok, %{entity: entity, server: server}}
       else
         _ ->
+          # TODO: Improve returned error
           :error
       end
     end
   end
 
+  def setup_account(account_id) when is_binary(account_id) do
+    account_id
+    |> AccountQuery.fetch()
+    |> setup_account()
+  end
 end

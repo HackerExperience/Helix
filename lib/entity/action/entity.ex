@@ -24,6 +24,7 @@ defmodule Helix.Entity.Action.Entity do
     EntityInternal.create(params)
   end
 
+  # TODO: Accept entity-equivalent structs
   @spec delete(Entity.t) ::
     :ok
   @doc """
@@ -31,14 +32,12 @@ defmodule Helix.Entity.Action.Entity do
 
   Alternatively accepts the entity id as input
   """
-  def delete(entity) do
-    # TODO: Accept entity-equivalent structs
-    EntityInternal.delete(entity)
-  end
+  defdelegate delete(entity),
+    to: EntityInternal
 
   @spec link_component(Entity.t, HELL.PK.t) ::
     :ok
-    | {:error, reason :: term}
+    | {:error, Ecto.Changeset.t}
   @doc """
   Links `component` to `entity` effectively making entity the owner of the
   component
@@ -48,13 +47,11 @@ defmodule Helix.Entity.Action.Entity do
       iex> link_component(%Entity{}, "1::2")
       :ok
   """
-  def link_component(entity, component) do
-    EntityInternal.link_component(entity, component)
-  end
+  defdelegate link_component(entity, component),
+    to: EntityInternal
 
   @spec unlink_component(HELL.PK.t) ::
     :ok
-    | {:error, reason :: term}
   @doc """
   Unlink `component`, effectively removing the component ownership
 
@@ -63,13 +60,12 @@ defmodule Helix.Entity.Action.Entity do
       iex> unlink_component("1::2")
       :ok
   """
-  def unlink_component(component) do
-    EntityInternal.unlink_component(component)
-  end
+  defdelegate unlink_component(component),
+    to: EntityInternal
 
   @spec link_server(Entity.t, HELL.PK.t) ::
     :ok
-    | {:error, reason :: term}
+    | {:error, Ecto.Changeset.t}
   @doc """
   Link `server` to `entity` effectively making entity the owner of the server
 
@@ -78,13 +74,11 @@ defmodule Helix.Entity.Action.Entity do
       iex> link_server(%Entity{}, "a::b")
       :ok
   """
-  def link_server(entity, server) do
-    EntityInternal.link_server(entity, server)
-  end
+  defdelegate link_server(entity, server),
+    to: EntityInternal
 
   @spec unlink_server(HELL.PK.t) ::
     :ok
-    | {:error, reason :: term}
   @doc """
   Unlink `server`, effectively removing the server ownership
 
@@ -93,7 +87,6 @@ defmodule Helix.Entity.Action.Entity do
       iex> unlink_server("a::b")
       :ok
   """
-  def unlink_server(server) do
-    EntityInternal.unlink_server(server)
-  end
+  defdelegate unlink_server(server),
+    to: EntityInternal
 end

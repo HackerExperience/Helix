@@ -1,20 +1,24 @@
 defmodule Helix.Entity.Internal.Entity do
 
-  alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.EntityServer
-  alias Helix.Entity.Model.EntityComponent
-  alias Helix.Entity.Repo
-
   import Ecto.Query, only: [where: 3]
 
-  @spec create(Entity.creation_params) :: {:ok, Entity.t} | no_return
+  alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Model.EntityComponent
+  alias Helix.Entity.Model.EntityServer
+  alias Helix.Entity.Repo
+
+  @spec create(Entity.creation_params) ::
+    {:ok, Entity.t}
+    | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> Entity.create_changeset()
     |> Repo.insert()
   end
 
-  @spec fetch(Entity.id) :: Entity.t | nil
+  @spec fetch(Entity.id) ::
+    Entity.t
+    | nil
   @doc """
   Fetches the entity
 
@@ -29,16 +33,22 @@ defmodule Helix.Entity.Internal.Entity do
   def fetch(id),
     do: Repo.get(Entity, id)
 
-  @spec fetch_servers(Entity.t | Entity.id) :: EntityServer.t | nil
+  @spec fetch_servers(Entity.t | Entity.id) ::
+    [EntityServer.t]
+  # TODO: documentation
+  # this doesn't returns servers but records that links a certain entity to
+  # a server
   def fetch_servers(entity = %Entity{}),
     do: fetch_servers(entity.entity_id)
   def fetch_servers(entity) do
     entity
-    |> EntityServer.Query.from_entity2()
-    |> Repo.all
+    |> EntityServer.Query.from_entity()
+    |> Repo.all()
   end
 
-  @spec fetch_server_owner(HELL.PK.t) :: Entity.t | nil
+  @spec fetch_server_owner(HELL.PK.t) ::
+    Entity.t
+    | nil
   @doc """
   Fetches the entity that owns `server`
 
@@ -61,7 +71,8 @@ defmodule Helix.Entity.Internal.Entity do
     end
   end
 
-  @spec delete(Entity.t | Entity.id) :: no_return
+  @spec delete(Entity.t | Entity.id) ::
+    :ok
   def delete(entity = %Entity{}),
     do: delete(entity.entity_id)
   def delete(entity_id) do
@@ -82,7 +93,8 @@ defmodule Helix.Entity.Internal.Entity do
     Repo.insert(changeset)
   end
 
-  @spec unlink_component(HELL.PK.t) :: :ok
+  @spec unlink_component(HELL.PK.t) ::
+    :ok
   def unlink_component(component) do
     component
     |> EntityComponent.Query.by_component_id()
@@ -101,7 +113,8 @@ defmodule Helix.Entity.Internal.Entity do
     Repo.insert(changeset)
   end
 
-  @spec unlink_server(HELL.PK.t) :: :ok
+  @spec unlink_server(HELL.PK.t) ::
+    :ok
   def unlink_server(server) do
     server
     |> EntityServer.Query.by_server_id()

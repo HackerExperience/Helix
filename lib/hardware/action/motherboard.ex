@@ -13,30 +13,27 @@ defmodule Helix.Hardware.Action.Motherboard do
 
   This function will fail if either the slot or component are attached
   """
-  def link(motherboard_slot, component) do
-    MotherboardInternal.link(motherboard_slot, component)
-  end
+  defdelegate link(motherboard_slot, component),
+    to: MotherboardInternal
 
   @spec unlink(MotherboardSlot.t) ::
     {:ok, MotherboardSlot.t}
-    | {:error, Ecto.Changeset.t}
   @doc """
   Unlinks the component linked to motherboard slot
 
   This function is idempotent
   """
-  def unlink(motherboard_slot) do
-    MotherboardInternal.unlink(motherboard_slot)
-  end
+  defdelegate unlink(motherboard_slot),
+    to: MotherboardInternal
 
-  @spec delete(Motherboard.t | HELL.PK.t) :: no_return
+  @spec delete(Motherboard.t | HELL.PK.t) ::
+    :ok
   @doc """
   Deletes the motherboard
 
   This function is idempotent, note that this effectively unlinks every
   component linked to motherboard's slots
   """
-  def delete(motherboard) do
-    MotherboardInternal.delete(motherboard)
-  end
+  defdelegate delete(motherboard),
+    to: MotherboardInternal
 end

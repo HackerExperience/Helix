@@ -1,14 +1,9 @@
 defmodule Helix.Hardware.Internal.Component do
 
-  alias HELL.Constant
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Repo
-
-  @type find_param ::
-    {:id, [HELL.PK.t]}
-    | {:type, [Constant.t] | Constant.t}
 
   @spec create_from_spec(ComponentSpec.t) ::
     {:ok, Component.t}
@@ -26,18 +21,14 @@ defmodule Helix.Hardware.Internal.Component do
     end
   end
 
-  @spec fetch(HELL.PK.t) :: Component.t | nil
+  @spec fetch(HELL.PK.t) ::
+    Component.t
+    | nil
   def fetch(component_id),
     do: Repo.get(Component, component_id)
 
-  @spec find([find_param], meta :: []) :: [Component.t]
-  def find(params, _meta \\ []) do
-    params
-    |> Enum.reduce(Component, &reduce_find_params/2)
-    |> Repo.all()
-  end
-
-  @spec delete(Component.t | HELL.PK.t) :: no_return
+  @spec delete(Component.t | HELL.PK.t) ::
+    :ok
   def delete(component = %Component{}),
     do: delete(component.component_id)
   def delete(component_id) do
@@ -47,12 +38,4 @@ defmodule Helix.Hardware.Internal.Component do
 
     :ok
   end
-
-  @spec reduce_find_params(find_param, Ecto.Queryable.t) :: Ecto.Queryable.t
-  defp reduce_find_params({:id, id_list}, query) when is_list(id_list),
-    do: Component.Query.from_id_list(query, id_list)
-  defp reduce_find_params({:type, type_list}, query) when is_list(type_list),
-    do: Component.Query.from_type_list(query, type_list)
-  defp reduce_find_params({:type, type}, query),
-    do: Component.Query.by_type(query, type)
 end

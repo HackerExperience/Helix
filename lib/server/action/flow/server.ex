@@ -1,10 +1,10 @@
 defmodule Helix.Server.Action.Flow.Server do
 
+  import HELF.Flow
+
   alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Server.Action.Server, as: ServerAction
-
-  import HELF.Flow
 
   def setup_server(entity) do
     flowing do

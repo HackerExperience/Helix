@@ -1,19 +1,19 @@
 defmodule Helix.Hardware.Action.Flow.Hardware do
 
-  alias Helix.Hardware.Repo
-  alias Helix.Entity.Action.Entity, as: EntityAction
-  alias Helix.Hardware.Model.NetworkConnection
-  alias Helix.Hardware.Model.Component.NIC
-  alias Helix.Hardware.Query.ComponentSpec, as: ComponentSpecQuery
-  alias Helix.Hardware.Action.Component, as: ComponentAction
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
-  alias Helix.Software.Action.Storage, as: StorageAction
-  alias Helix.Software.Action.StorageDrive, as: StorageDriveAction
-
   import HELF.Flow
 
-  def player_initial_bundle() do
+  alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Software.Action.Storage, as: StorageAction
+  alias Helix.Software.Action.StorageDrive, as: StorageDriveAction
+  alias Helix.Hardware.Action.Component, as: ComponentAction
+  alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
+  alias Helix.Hardware.Model.Component.NIC
+  alias Helix.Hardware.Model.NetworkConnection
+  alias Helix.Hardware.Query.ComponentSpec, as: ComponentSpecQuery
+  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Hardware.Repo
+
+  def player_initial_bundle do
     %{
       motherboard: ComponentSpecQuery.fetch("MOBO01"),
       components: [

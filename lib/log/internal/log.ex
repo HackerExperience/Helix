@@ -2,7 +2,6 @@ defmodule Helix.Log.Internal.Log do
   @moduledoc false
 
   alias Ecto.Multi
-  alias Ecto.Queryable
   alias Helix.Event
   alias Helix.Log.Model.Log
   alias Helix.Log.Model.Log.LogCreatedEvent
@@ -40,25 +39,28 @@ defmodule Helix.Log.Internal.Log do
   end
 
   @spec fetch(Log.id) ::
-    Queryable.t
+    Log.t
+    | nil
   def fetch(log_id),
-    do: Log.Query.by_id(log_id)
+    do: Repo.get(Log, log_id)
 
   @spec get_logs_on_server(server_id, Keyword.t) ::
-    Queryable.t
+    [Log.t]
   def get_logs_on_server(server, _params \\ []) do
     Log
     |> Log.Query.by_server_id(server)
     # TODO: Use id's timestamp
     |> Log.Query.order_by_newest()
+    |> Repo.all()
   end
 
   @spec get_logs_from_entity_on_server(server_id, entity_id, Keyword.t) ::
-    Queryable.t
+    [Log.t]
   def get_logs_from_entity_on_server(server, entity, _params \\ []) do
     server
     |> get_logs_on_server()
     |> Log.Query.edited_by_entity(entity)
+    |> Repo.all()
   end
 
   @spec revise(Log.t, entity_id, String.t, pos_integer) ::

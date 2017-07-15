@@ -1,8 +1,8 @@
 defmodule Helix.Entity.Action.Database do
 
   alias HELL.IPv4
-  alias Helix.Server.Model.Server
   alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Database
   alias Helix.Entity.Repo

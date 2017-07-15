@@ -7,6 +7,7 @@ defmodule Helix.Entity.Query.Database do
 
   @spec get_database(Entity.t) ::
     [map]
+  # TODO: documentation
   def get_database(entity) do
     entity
     |> DatabaseInternal.get_database()
@@ -16,6 +17,7 @@ defmodule Helix.Entity.Query.Database do
   @spec fetch_server_record(Entity.t, Server.id) ::
     map
     | nil
+  # TODO: documentation
   def fetch_server_record(entity, server) do
     entity
     |> DatabaseInternal.get_entry_by_server_id(server)

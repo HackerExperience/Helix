@@ -9,17 +9,16 @@ defmodule Helix.Hardware.Action.ComponentSpec do
   @doc """
   Creates a component specification from a specification map
   """
-  def create(spec_map) do
-    ComponentSpecInternal.create(spec_map)
-  end
+  defdelegate create(spec_map),
+    to: ComponentSpecInternal
 
-  @spec delete(ComponentSpec.t | String.t) :: no_return
+  @spec delete(ComponentSpec.t | String.t) ::
+    :ok
   @doc """
   Deletes the component specification
 
   This function is idempotent
   """
-  def delete(component_spec) do
-    ComponentSpecInternal.delete(component_spec)
-  end
+  defdelegate delete(component_spec),
+    to: ComponentSpecInternal
 end

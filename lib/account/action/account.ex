@@ -1,10 +1,11 @@
 defmodule Helix.Account.Action.Account do
 
+  alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Account.Internal.Account, as: AccountInternal
   alias Helix.Account.Model.Account
-  alias Helix.Account.Action.Session, as: SessionAction
+  alias Helix.Account.Model.AccountSession
 
-  @spec create(String.t, String.t, String.t) ::
+  @spec create(Account.email, Account.username, Account.password) ::
     {:ok, Account.t}
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -50,13 +51,12 @@ defmodule Helix.Account.Action.Account do
       })
       {:error, %Ecto.Changeset{}}
   """
-  def create(params) do
-    AccountInternal.create(params)
-  end
+  defdelegate create(params),
+    to: AccountInternal
 
   @spec login(Account.username, Account.password) ::
-    {:ok, Account.t, SessionAction.token}
-    | {:error, reason :: atom}
+    {:ok, Account.t, AccountSession.token}
+    | {:error, :notfound}
   @doc """
   Checks if `password` logs into `username`'s account
 

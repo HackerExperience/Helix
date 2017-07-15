@@ -1,20 +1,26 @@
 defmodule Helix.Account.Action.Session do
 
   alias Helix.Account.Internal.Session, as: SessionInternal
+  alias Helix.Account.Model.AccountSession
 
-  # REVIEW: Move below to a Session model? Seems more appropriate
-  @type session :: SessionInternal.session
-  @type token :: SessionInternal.token
-
+  @spec generate_token(Account.t) ::
+    AccountSession.token
   defdelegate generate_token(account),
     to: SessionInternal
 
+  @spec validate_token(AccountSession.token) ::
+    {:ok, Account.t, AccountSession.session}
+    | {:error, :unauthorized}
   defdelegate validate_token(token),
     to: SessionInternal
 
+  @spec invalidate_token(AccountSession.token) ::
+    :ok
   defdelegate invalidate_token(token),
     to: SessionInternal
 
+  @spec invalidate_session(AccountSession.session) ::
+    :ok
   defdelegate invalidate_session(session),
     to: SessionInternal
 end

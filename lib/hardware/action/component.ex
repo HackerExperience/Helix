@@ -10,17 +10,16 @@ defmodule Helix.Hardware.Action.Component do
   @doc """
   Creates component of given specification
   """
-  def create_from_spec(component_spec) do
-    ComponentInternal.create_from_spec(component_spec)
-  end
+  defdelegate create_from_spec(component_spec),
+    to: ComponentInternal
 
-  @spec delete(Component.t | HELL.PK.t) :: :ok
+  @spec delete(Component.t | HELL.PK.t) ::
+    :ok
   @doc """
   Deletes the component
 
   This function is idempotent
   """
-  def delete(component_id) do
-    ComponentInternal.delete(component_id)
-  end
+  defdelegate delete(component_id),
+    to: ComponentInternal
 end

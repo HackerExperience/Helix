@@ -2,11 +2,11 @@ defmodule Helix.Account.Model.Account do
 
   use Ecto.Schema
 
-  alias HELL.PK
-  alias Comeonin.Bcrypt
-
   import Ecto.Changeset
   import HELL.MacroHelpers
+
+  alias HELL.PK
+  alias Comeonin.Bcrypt
 
   @type id :: PK.t
   @type email :: String.t

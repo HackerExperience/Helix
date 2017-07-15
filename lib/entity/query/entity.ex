@@ -1,12 +1,11 @@
 defmodule Helix.Entity.Query.Entity do
 
   alias Helix.Account.Model.Account
+  alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityServer
-  alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Repo
 
-  # Charlot pls
   import Ecto.Query, only: [select: 3, where: 3]
 
   @spec fetch(HELL.PK.t) ::
@@ -19,9 +18,8 @@ defmodule Helix.Entity.Query.Entity do
 
       iex> fetch("aa:bb::cc12:dd34")
   """
-  def fetch(id) do
-    EntityInternal.fetch(id)
-  end
+  defdelegate fetch(id),
+    to: EntityInternal
 
   @spec fetch_server_owner(HELL.PK.t) ::
     Entity.t
@@ -34,9 +32,8 @@ defmodule Helix.Entity.Query.Entity do
       iex> fetch_server_owner("a::b")
       %Entity{}
   """
-  def fetch_server_owner(server) do
-    EntityInternal.fetch_server_owner(server)
-  end
+  defdelegate fetch_server_owner(server),
+    to: EntityInternal
 
   @spec get_servers_from_entity(Entity.t) ::
     [HELL.PK.t]
@@ -51,6 +48,7 @@ defmodule Helix.Entity.Query.Entity do
   def get_servers_from_entity(%Entity{entity_id: id}) do
     EntityServer
     |> select([s], s.server_id)
+    # FIXME: this belongs to EntityServer.Query
     |> where([s], s.entity_id == ^id)
     |> Repo.all()
   end

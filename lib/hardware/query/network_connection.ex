@@ -1,17 +1,18 @@
 defmodule Helix.Hardware.Query.NetworkConnection do
 
-  alias Helix.Hardware.Repo
+  alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Hardware.Model.Component.NIC
-  alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Model.MotherboardSlot
+  alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Hardware.Repo
 
   # FIXME: Think this belongs somewhere else but in the current chaos, it'll be
   #   left here for some time
   @spec get_server_by_ip(HELL.PK.t, HELL.IPv4.t) ::
-    Helix.Server.Model.Server.t
+    Server.t
     | nil
   def get_server_by_ip(network_id, ip) do
     query = [network_id: network_id, ip: ip]
