@@ -91,13 +91,15 @@ defmodule Helix.Cache.Internal.Cache do
 
   It usually translates to something like:
   ServerCache.Query.by_server(server_id)
+  |> ServerCache.Query.filter_expired()
   |> Repo.one
   |> Map.get(:networks)
 
   The `full?` option tells whether the caller wants the entire row.
   """
   defp query(info, params, full? \\ false) do
-    apply(get_module(info.module), info.function, params)
+    fetch = apply(get_module(info.module), info.function, params)
+    apply(get_module(info.module), :filter_expired, [fetch])
     |> Repo.one
     |> case do
          nil ->

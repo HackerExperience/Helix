@@ -33,7 +33,7 @@ defmodule Helix.Cache.Model.ComponentCache do
       primary_key: true
     field :motherboard_id, PK
 
-    field :expiration_date, :utc_datetime
+    field :expiration_date, Ecto.DateTime
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -66,5 +66,9 @@ defmodule Helix.Cache.Model.ComponentCache do
     @spec by_component(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
     def by_component(query \\ ComponentCache, component_id),
       do: where(query, [c], c.component_id == ^component_id)
+
+    @spec filter_expired(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def filter_expired(query),
+      do: where(query, [s], s.expiration_date >= ^Ecto.DateTime.utc())
   end
 end

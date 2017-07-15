@@ -33,7 +33,7 @@ defmodule Helix.Cache.Model.StorageCache do
       primary_key: true
     field :server_id, PK
 
-    field :expiration_date, :utc_datetime
+    field :expiration_date, Ecto.DateTime
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -66,5 +66,9 @@ defmodule Helix.Cache.Model.StorageCache do
     @spec by_storage(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
     def by_storage(query \\ StorageCache, storage_id),
       do: where(query, [s], s.storage_id == ^storage_id)
+
+    @spec filter_expired(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def filter_expired(query),
+      do: where(query, [s], s.expiration_date >= ^Ecto.DateTime.utc())
   end
 end

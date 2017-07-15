@@ -39,7 +39,7 @@ defmodule Helix.Cache.Model.NetworkCache do
       primary_key: true
     field :server_id, PK
 
-    field :expiration_date, :utc_datetime
+    field :expiration_date, Ecto.DateTime
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -72,5 +72,9 @@ defmodule Helix.Cache.Model.NetworkCache do
     @spec by_nip(Ecto.Queryable.t, PK.t, IPV4.t) :: Ecto.Queryable.t
     def by_nip(query \\ NetworkCache, network_id, ip),
       do: where(query, [n], n.network_id == ^network_id and n.ip == ^ip)
+
+    @spec filter_expired(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def filter_expired(query),
+      do: where(query, [s], s.expiration_date >= ^Ecto.DateTime.utc())
   end
 end

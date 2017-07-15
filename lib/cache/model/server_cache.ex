@@ -54,7 +54,7 @@ defmodule Helix.Cache.Model.ServerCache do
     field :resources, :map
     field :components, {:array, PK}
 
-    field :expiration_date, :utc_datetime
+    field :expiration_date, Ecto.DateTime
   end
 
   @spec create_changeset(creation_params) :: Ecto.Changeset.t
@@ -74,7 +74,7 @@ defmodule Helix.Cache.Model.ServerCache do
   @spec add_expiration_date(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp add_expiration_date(changeset) do
     expire_ts = DateTime.to_unix(DateTime.utc_now()) + @cache_duration
-    {:ok, expire_date} = DateTime.from_unix(expire_ts)
+    expire_date = Ecto.DateTime.from_unix!(expire_ts, :second)
     put_change(changeset, :expiration_date, expire_date)
   end
 
@@ -95,5 +95,9 @@ defmodule Helix.Cache.Model.ServerCache do
     @spec by_entity(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
     def by_entity(query \\ ServerCache, entity_id),
       do: where(query, [s], s.entity_id == ^entity_id)
+
+    @spec filter_expired(Ecto.Queryable.t) :: Ecto.Queryable.t
+    def filter_expired(query),
+      do: where(query, [s], s.expiration_date >= ^Ecto.DateTime.utc())
   end
 end
