@@ -1,6 +1,7 @@
 alias Helix.Universe.Repo
 alias Helix.Universe.NPC.Model.NPC
 alias Helix.Universe.NPC.Model.NPCType
+alias Helix.Universe.NPC.Model.Seed
 alias Helix.Entity.Model.Entity
 alias Helix.Entity.Query.Entity, as: EntityQuery
 alias Helix.Entity.Action.Entity, as: EntityAction
@@ -12,28 +13,7 @@ alias Helix.Server.Repo, as: ServerRepo
 alias Helix.Network.Action.DNS, as: DNSAction
 alias Helix.Network.Internal.DNS, as: DNSInternal
 
-
-# TODO: Move to a JSON
-npcs = [
-  %{
-    "id" => "2::920e:c06c:abea:b249:a158",
-    "type" => :download_center,
-    "servers" =>
-      [
-        %{
-          "id" => "10::15c1:d147:47f9:b4b2:cbbd",
-          "spec" => "todo",
-          "static_ip": "1.2.3.4"
-        },
-        %{
-          "id" => "10::15c1:d147:47f9:b4b2:cbbe",
-          "spec" => "todo",
-          "static_ip": false
-        }
-      ],
-    "anycast" => "dc.com"
-  }
-]
+npcs = Seed.seed()
 
 Repo.transaction fn ->
   # NPC Types
@@ -43,7 +23,7 @@ Repo.transaction fn ->
 
   Enum.map(npcs, fn (entry) ->
 
-    npc = %NPC{npc_id: entry["id"], npc_type: entry["type"]}
+    npc = %NPC{npc_id: entry.id, npc_type: entry.type}
     entity = %Entity{entity_id: npc.npc_id, entity_type: :npc}
 
     # Create NPC
@@ -54,13 +34,13 @@ Repo.transaction fn ->
       EntityAction.create_from_specialization(npc)
     end
 
-    Enum.map(entry["servers"], fn(cur) ->
-      unless ServerQuery.fetch(cur["id"]) do
+    Enum.map(entry.servers, fn(cur) ->
+      unless ServerQuery.fetch(cur.id) do
 
         # Create Server
-        server = %{server_id: cur["id"], server_type: :desktop}
+        server = %{server_id: cur.id, server_type: :desktop}
         |> Server.create_changeset()
-        |> Ecto.Changeset.cast(%{server_id: cur["id"]}, [:server_id])
+        |> Ecto.Changeset.cast(%{server_id: cur.id}, [:server_id])
         |> ServerRepo.insert!
 
         # Create & attach mobo
@@ -68,9 +48,9 @@ Repo.transaction fn ->
         {:ok, server} = ServerAction.attach(server, motherboard_id)
 
         # Link to Entity
-        {:ok, _} = EntityAction.link_server(entity, cur["id"])
+        {:ok, _} = EntityAction.link_server(entity, cur.id)
 
-        if cur["static_ip"] do
+        if cur.static_ip do
           # TODO
         end
       end
