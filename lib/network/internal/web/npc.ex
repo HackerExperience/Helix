@@ -47,7 +47,7 @@ defmodule Helix.Network.Internal.Web.NPC do
       :download_center ->
         %{a: "b"}
       _ ->
-        %{}
+        :notfound
     end
   end
 
