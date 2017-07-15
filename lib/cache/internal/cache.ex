@@ -32,7 +32,7 @@ defmodule Helix.Cache.Internal.Cache do
         {:server, :by_motherboard}
       :storage ->
         {:storage, :by_storage}
-      :components ->
+      :component ->
         {:component, :by_component}
       :network ->
         {:network, :by_nip}
@@ -171,7 +171,7 @@ defmodule Helix.Cache.Internal.Cache do
   """
   defp post_lookup_hook(data) do
     if is_list(data) or is_map(data) do
-      {:ok, map_to_atoms(data)}
+      map_to_atoms(data)
     else
       data
     end

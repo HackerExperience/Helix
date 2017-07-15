@@ -37,32 +37,36 @@ defmodule Helix.Cache.Internal.Purge do
     case CacheInternal.direct_query(:server, server_id) do
       {:hit, server} ->
         purge_logic(:server, server)
-      :miss ->
         :ok
+      :miss ->
+        :nocache
     end
   end
   def purge(:component, component_id) do
-    case CacheInteranl.direct_query(:component, component_id) do
+    case CacheInternal.direct_query(:component, component_id) do
       {:hit, component} ->
         purge_logic(:component, component)
-      :miss ->
         :ok
+      :miss ->
+        :nocache
     end
   end
   def purge(:storage, storage_id) do
     case CacheInternal.direct_query(:storage, storage_id) do
       {:hit, storage} ->
         purge_logic(:storage, storage)
-      :miss ->
         :ok
+      :miss ->
+        :nocache
     end
   end
   def purge(:network, network_id, ip) do
     case CacheInternal.direct_query(:network, [network_id, ip]) do
       {:hit, network} ->
         purge_logic(:network, network)
-      :miss ->
         :ok
+      :miss ->
+        :nocache
     end
   end
 
@@ -117,7 +121,7 @@ defmodule Helix.Cache.Internal.Purge do
     end
   end
   defp purge_logic(:network, network) do
-    delete(:network, network.network_id, network.network_ip)
+    delete(:network, network.network_id, network.ip)
 
     case CacheInternal.direct_query(:server, network.server_id) do
       {:hit, server} ->

@@ -39,6 +39,10 @@ defmodule Helix.Hardware.Internal.Component do
     :ok
   end
 
+  def get_motherboard(component = %Component{component_type: :mobo}) do
+    component.component_id
+  end
+
   def get_motherboard(component = %Component{}) do
     component
     |> Repo.preload(:slot)

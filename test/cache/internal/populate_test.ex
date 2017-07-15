@@ -2,13 +2,12 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
-  alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.ServerCache
-  alias Helix.Cache.Model.StorageCache
-  alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Repo
 
   setup do
@@ -35,23 +34,29 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, [server_id])
       {:ok, components} = CacheInternal.lookup({:server, :components}, [server_id])
 
-      cached_nip = NetworkCache.Query.by_nip(nip.network_id, nip.ip)
-      |> Repo.one
+      # Cache population is asynchronous..
+      :timer.sleep(10)
 
-      refute cached_nip == nil
-      assert cached_nip.server_id == server_id
+      {:hit, cnip} = CacheInternal.direct_query(:network, [nip.network_id, nip.ip])
 
-      cached_storage = StorageCache.Query.by_storage(storage_id)
-      |> Repo.one
+      refute cnip == nil
+      assert cnip.server_id == server_id
 
-      refute cached_storage == nil
-      assert cached_storage.storage_id == storage_id
+      {:hit, cstorage} = CacheInternal.direct_query(:storage, storage_id)
 
-      cached_components = ComponentCache.Query.by_component(List.first(components))
-      |> Repo.one
+      refute cstorage == nil
+      assert cstorage.storage_id == storage_id
 
-      refute cached_components == nil
-      assert cached_components.motherboard_id == motherboard_id
+      {:hit, ccomponent} = CacheInternal.direct_query(:component, List.first(components))
+
+      refute ccomponent == nil
+      assert ccomponent.motherboard_id == motherboard_id
+
+      # Regression: motherboard is also added to components
+      {:hit, cmobo} = CacheInternal.direct_query(:component, motherboard_id)
+
+      refute cmobo == nil
+      assert cmobo.component_id == motherboard_id
 
       :timer.sleep(10)
     end
@@ -68,6 +73,47 @@ defmodule Helix.Cache.Internal.PopulateTest do
       # have to block this test for 1 second, making it the longest one.
       refute server1 == server2
       assert server2.motherboard_id == nil
+
+      :timer.sleep(10)
+    end
+
+    test "component population", context do
+      motherboard_id = context.server.motherboard_id
+
+      {:ok, component} = PopulateInternal.populate(:component, motherboard_id)
+
+      {:hit, query} = CacheInternal.direct_query(:component, motherboard_id)
+
+      assert component.component_id == query.component_id
+
+      :timer.sleep(10)
+    end
+
+    test "storage population", context do
+      motherboard_id = context.server.motherboard_id
+
+      storage = MotherboardQuery.get_storages(motherboard_id)
+
+      {:ok, storage1} = PopulateInternal.populate(:storage, storage.storage_id)
+
+      {:hit, storage2} = CacheInternal.direct_query(:storage, storage.storage_id)
+
+      assert storage1.storage_id == storage2.storage_id
+
+      :timer.sleep(10)
+    end
+
+    test "network population", context do
+      server_id = context.server.server_id
+
+      nip = ServerQuery.get_nips(server_id)
+      |> List.first()
+
+      {:ok, nip1} = PopulateInternal.populate(:network, nip.network_id, nip.ip)
+
+      {:hit, nip2} = CacheInternal.direct_query(:network, [nip.network_id, nip.ip])
+
+      assert nip1.network_id == nip2.network_id
 
       :timer.sleep(10)
     end

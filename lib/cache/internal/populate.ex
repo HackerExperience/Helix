@@ -110,6 +110,9 @@ defmodule Helix.Cache.Internal.Populate do
         Enum.each(components, fn(component) ->
           cache(:component, {component, mobo.motherboard_id})
         end)
+
+        # Motherboard
+        cache(:component, {mobo.motherboard_id, mobo.motherboard_id})
       end)
     end
 
