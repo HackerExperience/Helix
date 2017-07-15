@@ -12,7 +12,7 @@ defmodule Helix.Hardware.Query.Motherboard do
     Motherboard.t
     | nil
   @doc """
-  Fetches a motherboard by component
+  Fetches a motherboard by component or id
   """
   defdelegate fetch(component),
     to: MotherboardInternal

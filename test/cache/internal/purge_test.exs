@@ -57,6 +57,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
     test "populates non-existing data", context  do
       server_id = context.server.server_id
+      motherboard_id = context.server.motherboard_id
 
       # Ensure cache is empty
       CacheInternal.purge(:server, server_id)

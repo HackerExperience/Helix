@@ -1,5 +1,6 @@
 defmodule Helix.Entity.Query.Entity do
 
+  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
@@ -59,6 +60,8 @@ defmodule Helix.Entity.Query.Entity do
       %Entity{entity_id: id} ->
         id
       %Account{account_id: id} ->
+        id
+      %NPC{npc_id: id} ->
         id
     end
   end
