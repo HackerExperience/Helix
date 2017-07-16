@@ -14,6 +14,7 @@ defmodule Helix.Cache.Internal.Cache do
   alias Helix.Cache.Repo
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Internal.Purge, as: PurgeInternal
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   import HELL.MacroHelpers
 
@@ -59,9 +60,16 @@ defmodule Helix.Cache.Internal.Cache do
   end
 
   @doc """
-  Requests an entry to be purged from cache. It happens asynchronously.
+  Requests an entry to be purged from cache.
+  Actual deletion of database entries happens asynchronously, but we immediately
+  tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
+  reads from reading not-yet-purged (stale) data.
   """
   def purge(model, params) do
+    # Synchronously mark entry as invalid by adding it to the PurgeQueue
+    StatePurgeQueue.queue(model, params)
+
+    # Asynchronously delete stuff from the DB
     spawn(fn() ->
       apply(PurgeInternal, :purge, [model] ++ params)
     end)
@@ -77,12 +85,29 @@ defmodule Helix.Cache.Internal.Cache do
         apply(PopulateInternal, :populate, [info.module] ++ params)
         |> case do
              {:ok, schema} ->
+               # Remove entry (if any)from PurgeQueue
+               StatePurgeQueue.unqueue(info.module, params)
+
                {:ok, Map.get(schema, info.field)}
              result ->
                result
             end
       {:hit, data} ->
         {:ok, data}
+    end
+  end
+
+  docp """
+  This intermediary step first checks whether the entry is queued up for deletion
+  on the PurgeQueue in-memory table. If this is the case, return a miss right away
+  (which will later be repopulated).
+  If it's not queued for deletion, actually query the database.
+  """
+  defp query(info, params, full? \\ false) do
+    unless StatePurgeQueue.lookup(info.module, params) do
+      sql_query(info, params, full?)
+    else
+      :miss
     end
   end
 
@@ -97,7 +122,7 @@ defmodule Helix.Cache.Internal.Cache do
 
   The `full?` option tells whether the caller wants the entire row.
   """
-  defp query(info, params, full? \\ false) do
+  defp sql_query(info, params, full?) do
     fetch = apply(get_module(info.module), info.function, params)
     apply(get_module(info.module), :filter_expired, [fetch])
     |> Repo.one

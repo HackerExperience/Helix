@@ -28,10 +28,14 @@ defmodule Helix.Server.Query.Server do
 
   def fetch_by_nip(network_id, ip) do
     with \
-      motherboard_id = MotherboardQuery.fetch_by_nip(network_id, ip),
+         motherboard_id = MotherboardQuery.fetch_by_nip(network_id, ip),
+         true <- not is_nil(motherboard_id),
       server = fetch_by_motherboard(motherboard_id)
     do
-      server
+    server
+    else
+      _ ->
+        nil
     end
   end
 
