@@ -8,32 +8,10 @@ defmodule Helix.Cache.Internal.Purge do
   however that complexity isn't desirable right now.
   """
 
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.Storage
-  alias Helix.Hardware.Model.Component
-  alias Helix.Network.Model.Network
-  alias Helix.Cache.Internal.Cache, as: CacheInternal
-  alias Helix.Cache.Model.ComponentCache
-  alias Helix.Cache.Model.ServerCache
-  alias Helix.Cache.Model.StorageCache
-  alias Helix.Cache.Model.NetworkCache
-  alias Helix.Cache.Repo
+  alias Helix.Cache.Internal.Populate, as: PopulateInternal
 
-  import HELL.MacroHelpers
-
-  @spec purge(:server, Server.id) :: no_return
-  @spec purge(:component, Component.id) :: no_return
-  @spec purge(:storage, Storage.id) :: no_return
-  @spec purge(:network, Network.id) :: no_return
-  @doc """
-  `purge/2` and `purge/3` are the public interface of `PurgeInternal`.
-
-  If the requested entry to be purged exists, it removes it according to
-  the purge logic defined at `purge_logic/2` and `purge_logic/3`.
-
-  It performs a no-op if the requested entry isn't cached.
-  """
   def purge(:server, server_id) do
+<<<<<<< HEAD
     case CacheInternal.direct_query(:server, server_id) do
       {:hit, server} ->
         purge_logic(:server, server)
@@ -146,9 +124,11 @@ defmodule Helix.Cache.Internal.Purge do
   defp delete(:storage, storage_id) do
     StorageCache.Query.by_storage(storage_id)
     |> Repo.delete_all()
+=======
+    PopulateInternal.populate(:server, server_id)
+>>>>>>> b40911d... Consolidate and test PurgeQueue
   end
-  defp delete(:network, network_id, ip) do
-    NetworkCache.Query.by_nip(network_id, ip)
-    |> Repo.delete_all()
+  def purge(model, _) do
+    raise "purge not implemented for #{inspect model}"
   end
 end

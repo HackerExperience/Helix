@@ -18,6 +18,8 @@ defmodule Helix.Cache.Internal.Populate do
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.StorageCache
   alias Helix.Cache.Model.ComponentCache
+  alias Helix.Cache.Internal.Cache, as: CacheInternal
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
@@ -94,10 +96,30 @@ defmodule Helix.Cache.Internal.Populate do
   """
   defp cache(:server, data = {server_id, _, mobo, networks, storages, _, components}) do
     params = format(:server, data)
-    result = store(:server, params)
 
     unless is_nil(mobo) do
+      purge_list = [
+        {:server, [server_id]},
+        {:storage, [storages.storage_id]},
+        {:component, [mobo.motherboard_id]}
+      ]
+
+      networks_purge = Enum.reduce(networks, [], fn(network, acc) ->
+        [{:network, [network.network_id, network.ip]}] ++ acc
+      end)
+
+      components_purge = Enum.reduce(components, [], fn(component_id, acc) ->
+        [{:component, [component_id]}] ++ acc
+      end)
+
+      purge_list
+      |> Kernel.++(networks_purge)
+      |> Kernel.++(components_purge)
+      |> CacheInternal.mark_multiple_as_purged()
+
       spawn(fn() ->
+        store(:server, params)
+
         # Network
         Enum.each(networks, fn(network) ->
           cache(:network, {network.network_id, network.ip, server_id})
@@ -114,20 +136,29 @@ defmodule Helix.Cache.Internal.Populate do
         # Motherboard
         cache(:component, {mobo.motherboard_id, mobo.motherboard_id})
       end)
+    else
+      CacheInternal.mark_as_purged(:server, server_id)
+
+      spawn(fn() ->
+        store(:server, params)
+      end)
     end
 
-    result
+    {:ok, params}
   end
   defp cache(:network, data) do
     params = format(:network, data)
+    CacheInternal.mark_as_purged(:network, [params.network_id, params.ip])
     store(:network, params)
   end
   defp cache(:storage, data) do
     params = format(:storage, data)
+    CacheInternal.mark_as_purged(:storage, params.storage_id)
     store(:storage, params)
   end
   defp cache(:component, data) do
     params = format(:component, data)
+    CacheInternal.mark_as_purged(:component, params.component_id)
     store(:component, params)
   end
 
@@ -185,26 +216,60 @@ defmodule Helix.Cache.Internal.Populate do
 
   docp """
   Saves the cache on the database. If it already exists, it updates its contents
-  along with the expiration time.
+  along with the new expiration time.
   """
   defp store(:server, params) do
-    params
+    IO.puts "inserting"
+    IO.inspect(params)
+    result = params
     |> ServerCache.create_changeset()
-    |> Repo.insert(on_conflict: :replace_all, conflict_target: :server_id)
+    |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
+
+    case result do
+      {:ok, _} ->
+        StatePurgeQueue.unqueue(:server, [params.server_id])
+        result
+      _ ->
+        result
+    end
   end
   defp store(:network, params) do
-    params
+    result = params
     |> NetworkCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:network_id, :ip])
+
+    case result do
+      {:ok, _} ->
+        StatePurgeQueue.unqueue(:network, [params.network_id, params.ip])
+        result
+      _ ->
+        result
+    end
   end
   defp store(:storage, params) do
-    params
+    result = params
     |> StorageCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:storage_id])
+
+    case result do
+      {:ok, _} ->
+        StatePurgeQueue.unqueue(:storage, [params.storage_id])
+        result
+      _ ->
+        result
+    end
   end
   defp store(:component, params) do
-    params
+    result = params
     |> ComponentCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:component_id])
+
+    case result do
+      {:ok, _} ->
+        StatePurgeQueue.unqueue(:component, [params.component_id])
+        result
+      _ ->
+        result
+    end
   end
 end

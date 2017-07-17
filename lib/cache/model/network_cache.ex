@@ -58,8 +58,13 @@ defmodule Helix.Cache.Model.NetworkCache do
 
   @spec add_expiration_date(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp add_expiration_date(changeset) do
+<<<<<<< HEAD
     expire_ts = DateTime.to_unix(DateTime.utc_now()) + @cache_duration
     {:ok, expire_date} = DateTime.from_unix(expire_ts)
+=======
+    expire_ts = DateTime.to_unix(DateTime.utc_now(), :microsecond) + @cache_duration
+    expire_date = Ecto.DateTime.from_unix!(expire_ts, :microsecond)
+>>>>>>> b40911d... Consolidate and test PurgeQueue
     put_change(changeset, :expiration_date, expire_date)
   end
 

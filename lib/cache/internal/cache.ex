@@ -41,8 +41,14 @@ defmodule Helix.Cache.Internal.Cache do
     direct_query(model, params)
   end
   def direct_query({model, method}, params) do
-    info = query_info({model, method, :full})
-    query(info, params, true)
+    info = query_info({model, method, :all})
+    result = sql_query(info, params, true)
+    case result do
+      {:hit, data} ->
+        {:hit, post_lookup_hook(data)}
+      _ ->
+        result
+    end
   end
 
   @doc """
@@ -50,7 +56,12 @@ defmodule Helix.Cache.Internal.Cache do
   """
   def lookup(condition, params) do
     info = query_info(lookup_table(condition))
-    result = process(info, params)
+    full? = if info.field == :all do
+      true
+    else
+      false
+    end
+    result = process(info, params, full?)
     case result do
       {:ok, data} ->
         {:ok, post_lookup_hook(data)}
@@ -59,36 +70,62 @@ defmodule Helix.Cache.Internal.Cache do
     end
   end
 
+  def is_marked_as_purged(model, params) when not is_list(params),
+    do: is_marked_as_purged(model, [params])
+  def is_marked_as_purged(model, params) do
+    StatePurgeQueue.lookup(model, params)
+  end
+
+  def mark_multiple_as_purged(entry_list) do
+    StatePurgeQueue.queue_multiple(entry_list)
+  end
+
+  def mark_as_purged(model, params) when not is_list(params),
+    do: mark_as_purged(model, [params])
+  def mark_as_purged(model, params) do
+    StatePurgeQueue.queue(model, params)
+  end
+
+  def remove_from_purge_queue(model, params) when not is_list(params),
+    do: remove_from_purge_queue(model, [params])
+  def remove_from_purge_queue(model, params) do
+    StatePurgeQueue.unqueue(model, params)
+  end
+
   @doc """
   Requests an entry to be purged from cache.
   Actual deletion of database entries happens asynchronously, but we immediately
   tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
   reads from reading not-yet-purged (stale) data.
   """
+  def purge(model, params) when not is_list(params),
+    do: purge(model, [params])
   def purge(model, params) do
     # Synchronously mark entry as invalid by adding it to the PurgeQueue
-    StatePurgeQueue.queue(model, params)
+    mark_as_purged(model, params)
 
     # Asynchronously delete stuff from the DB
     spawn(fn() ->
       apply(PurgeInternal, :purge, [model] ++ params)
     end)
+
     :ok
   end
 
   docp """
   Wrapper used to populate cache data in case it isn't stored (miss)
   """
-  defp process(info, params) do
-    case query(info, params) do
+  defp process(info, params, full?) do
+    case query(info, params, full?) do
       :miss ->
         apply(PopulateInternal, :populate, [info.module] ++ params)
         |> case do
              {:ok, schema} ->
-               # Remove entry (if any)from PurgeQueue
-               StatePurgeQueue.unqueue(info.module, params)
-
-               {:ok, Map.get(schema, info.field)}
+               if full? do
+                 {:ok, schema}
+               else
+                 {:ok, Map.get(schema, info.field)}
+               end
              result ->
                result
             end
@@ -130,12 +167,11 @@ defmodule Helix.Cache.Internal.Cache do
          nil ->
            :miss
          schema ->
-           return = if full? do
-             schema
+           if full? do
+             {:hit, schema}
            else
-             Map.get(schema, info.field)
+             {:hit, Map.get(schema, info.field)}
            end
-           {:hit, return}
        end
   end
 
@@ -164,6 +200,8 @@ defmodule Helix.Cache.Internal.Cache do
   """
   defp lookup_table(condition) do
     case condition do
+      :server ->
+        {:server, :by_server, :all}
       {:server, :nips} ->
         {:server, :by_server, :networks}
       {:server, :storages} ->
@@ -204,6 +242,29 @@ defmodule Helix.Cache.Internal.Cache do
     end
   end
 
+  defp ecto_enum(schema, fields) do
+    Enum.reduce(fields, %{}, fn(field, acc) ->
+      case field do
+        :expiration_date ->
+          Map.put(acc, field, schema.expiration_date)
+        _ ->
+          Map.put(acc, field, map_to_atoms(Map.get(schema, field)))
+      end
+    end)
+  end
+
+  defp map_to_atoms(data = %StorageCache{}) do
+    ecto_enum(data, StorageCache.__schema__(:fields))
+  end
+  defp map_to_atoms(data = %ComponentCache{}) do
+    ecto_enum(data, ComponentCache.__schema__(:fields))
+  end
+  defp map_to_atoms(data = %NetworkCache{}) do
+    ecto_enum(data, NetworkCache.__schema__(:fields))
+  end
+  defp map_to_atoms(data = %ServerCache{}) do
+    ecto_enum(data, ServerCache.__schema__(:fields))
+  end
   defp map_to_atoms(data) when is_list(data) do
     Enum.map(data, fn(elem) ->
       map_to_atoms(elem)

@@ -8,6 +8,10 @@ defmodule Helix.Cache.Query.Cache do
 
   alias Helix.Cache.Internal.Cache, as: CacheInternal
 
+  def from_server_get_all(server_id) do
+    CacheInternal.lookup(:server, [server_id])
+  end
+
   def from_server_get_nips(server_id) do
     CacheInternal.lookup({:server, :nips}, [server_id])
   end

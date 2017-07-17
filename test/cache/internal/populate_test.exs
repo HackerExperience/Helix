@@ -35,7 +35,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:ok, components} = CacheInternal.lookup({:server, :components}, [server_id])
 
       # Cache population is asynchronous..
-      :timer.sleep(10)
+      :timer.sleep(20)
 
       {:hit, cnip} = CacheInternal.direct_query(:network, [nip.network_id, nip.ip])
 
@@ -65,12 +65,12 @@ defmodule Helix.Cache.Internal.PopulateTest do
       server_id = context.server.server_id
 
       {:ok, server1} = PopulateInternal.populate(:server, server_id)
+      :timer.sleep(20)
+
       ServerAction.detach(context.server)
+
       {:ok, server2} = PopulateInternal.populate(:server, server_id)
 
-      # Comparing the expiration_time could be a better idea, and it was my
-      # first attempt, but it is stored with second-level precision. So I'd
-      # have to block this test for 1 second, making it the longest one.
       refute server1 == server2
       assert server2.motherboard_id == nil
 

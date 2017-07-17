@@ -73,8 +73,8 @@ defmodule Helix.Cache.Model.ServerCache do
 
   @spec add_expiration_date(Ecto.Changeset.t) :: Ecto.Changeset.t
   defp add_expiration_date(changeset) do
-    expire_ts = DateTime.to_unix(DateTime.utc_now()) + @cache_duration
-    expire_date = Ecto.DateTime.from_unix!(expire_ts, :second)
+    expire_ts = DateTime.to_unix(DateTime.utc_now(), :microsecond) + @cache_duration
+    expire_date = Ecto.DateTime.from_unix!(expire_ts, :microsecond)
     put_change(changeset, :expiration_date, expire_date)
   end
 

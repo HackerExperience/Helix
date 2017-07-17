@@ -6,9 +6,9 @@ defmodule Helix.Cache.Internal.CacheTest do
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
-  alias Helix.Cache.Internal.Purge, as: PurgeInternal
   alias Helix.Cache.Repo
 
   setup do
@@ -65,13 +65,13 @@ defmodule Helix.Cache.Internal.CacheTest do
       server_id = context.server.server_id
 
       {:ok, server} = PopulateInternal.populate(:server, server_id)
-
-      :ok = PurgeInternal.purge(:server, server_id)
+      :timer.sleep(10)
 
       expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600000, :second)
 
-      %{server | expiration_date: expired_date}
-      |> Repo.insert()
+      {:ok, _} = ServerCache.create_changeset(server)
+      |> Ecto.Changeset.force_change(:expiration_date, expired_date)
+      |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
 
       :miss = CacheInternal.direct_query(:server, server_id)
 
@@ -82,24 +82,40 @@ defmodule Helix.Cache.Internal.CacheTest do
       server_id = context.server.server_id
 
       {:ok, server} = PopulateInternal.populate(:server, server_id)
-
-      :ok = PurgeInternal.purge(:server, server_id)
+      :timer.sleep(10)
 
       expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600000, :second)
 
-      server1 = %{server | expiration_date: expired_date}
-
-      server1
-      |> Repo.insert()
+      {:ok, _} = ServerCache.create_changeset(server)
+      |> Ecto.Changeset.force_change(:expiration_date, expired_date)
+      |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
 
       :miss = CacheInternal.direct_query(:server, server_id)
 
       {:ok, _} = CacheInternal.lookup({:server, :nips}, [server_id])
+      :timer.sleep(10)
 
       {:hit, server2} = CacheInternal.direct_query(:server, server_id)
 
-      assert server2.server_id == server1.server_id
-      assert server2.expiration_date > server1.expiration_date
+      assert server2.server_id == server_id
+      assert server2.expiration_date > expired_date
+
+      :timer.sleep(10)
+    end
+
+    test "full (entire row) lookups", context do
+      server_id = context.server.server_id
+
+      {:ok, _} = PopulateInternal.populate(:server, server_id)
+
+      {:ok, cserver} = CacheInternal.lookup(:server, [server_id])
+
+      assert is_map(cserver)
+      assert cserver.server_id == server_id
+
+      # Below is to ensure nested maps have atom indexes
+      nip = List.first(cserver.networks)
+      assert is_binary(nip.ip)
 
       :timer.sleep(10)
     end

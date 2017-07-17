@@ -21,6 +21,10 @@ defmodule Helix.Cache.State.PurgeQueue do
     GenServer.call(@registry_name, {:add, model, key})
   end
 
+  def queue_multiple(entry_list) do
+    GenServer.call(@registry_name, {:add_multiple, entry_list})
+  end
+
   def unqueue(model, key) do
     GenServer.cast(@registry_name, {:remove, model, key})
   end
@@ -50,6 +54,13 @@ defmodule Helix.Cache.State.PurgeQueue do
 
   def handle_call({:add, model, key}, _from, state) do
     :ets.insert(@ets_table_name, {{model, key}})
+    {:reply, :ok, state}
+  end
+
+  def handle_call({:add_multiple, entry_list}, _from, state) do
+    Enum.each(entry_list, fn({model, key}) ->
+      :ets.insert(@ets_table_name, {{model, key}})
+    end)
     {:reply, :ok, state}
   end
 
