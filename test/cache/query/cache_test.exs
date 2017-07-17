@@ -44,14 +44,14 @@ defmodule Helix.Cache.Query.CacheTest do
     end
   end
 
-  describe "queue synchronization" do
+  describe "queue synchronization on updates" do
     test "sync is transparent", context do
       server_id = context.server.server_id
 
       refute CacheInternal.is_marked_as_purged(:server, server_id)
 
       # Start invalidation action
-      CacheAction.purge_server(server_id)
+      CacheAction.update_server(server_id)
 
       assert CacheInternal.is_marked_as_purged(:server, server_id)
 
@@ -137,6 +137,65 @@ defmodule Helix.Cache.Query.CacheTest do
 
       refute CacheInternal.is_marked_as_purged(:storage, storage_id)
       assert CacheInternal.is_marked_as_purged(:component, motherboard_id)
+
+      :timer.sleep(10)
+    end
+  end
+
+  describe "queue synchronization on purges" do
+    test "sync is transparent1", context do
+      server_id = context.server.server_id
+
+      refute CacheInternal.is_marked_as_purged(:server, server_id)
+      {:ok, server} = PopulateInternal.populate(:server, server_id)
+      :timer.sleep(20)
+
+      motherboard_id = server.motherboard_id
+      component_id = List.first(server.components)
+      nip = List.first(server.networks)
+      storage_id = List.first(server.storages)
+
+      # Purge
+      CacheAction.purge_component(component_id)
+
+      # Component is marked for deletion...
+      assert CacheInternal.is_marked_as_purged(:component, component_id)
+
+      # But his buddies aren't
+      refute CacheInternal.is_marked_as_purged(:server, server_id)
+      refute CacheInternal.is_marked_as_purged(:component, motherboard_id)
+      refute CacheInternal.is_marked_as_purged(:storage, storage_id)
+      refute CacheInternal.is_marked_as_purged(:network, [nip.network_id, nip.ip])
+
+      # Continues below
+
+      :timer.sleep(10)
+    end
+
+    test "sync is transparent2", context do
+      # (Once again, part 2 is required to ensure correct timing for the test)
+      server_id = context.server.server_id
+
+      {:ok, server} = PopulateInternal.populate(:server, server_id)
+      :timer.sleep(20)
+
+      component_id = List.first(server.components)
+
+      # Purge
+      CacheAction.purge_component(component_id)
+
+      # Hasn't synced yet, so we can still query it directly...
+      # (Note: every once in a while it may fail here because things went too fast)
+      {:hit, component} = CacheInternal.direct_query(:component, component_id)
+
+      # But querying it TheRightWay will lead to re-population (and Queue sync)
+      {:ok, _} = CacheQuery.from_component_get_motherboard(component_id)
+      refute CacheInternal.is_marked_as_purged(:component, component_id)
+
+      # And here's the proof
+      {:hit, component1} = CacheInternal.direct_query(:component, component_id)
+      assert component1.expiration_date != component.expiration_date
+      assert component1.motherboard_id == component.motherboard_id
 
       :timer.sleep(10)
     end

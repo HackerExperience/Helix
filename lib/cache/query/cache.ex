@@ -1,6 +1,6 @@
 defmodule Helix.Cache.Query.Cache do
   @moduledoc """
-  Inter-domain Cache API.
+  Inter-domain Cache Query API.
 
   Lookups are transparent to cache misses, meaning that they will automatically
   populate the cache and then reply with the requested data.

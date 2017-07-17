@@ -37,8 +37,8 @@ defmodule Helix.Cache.Action.CacheTest do
     assert data1.expiration_date != data2.expiration_date
   end
 
-  describe "purge logic" do
-    test "purging server updates everything", context do
+  describe "update logic" do
+    test "updating server updates everything", context do
       server_id = context.server.server_id
 
       PopulateInternal.populate(:server, server_id)
@@ -48,8 +48,8 @@ defmodule Helix.Cache.Action.CacheTest do
 
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
-      # Purge
-      CacheAction.purge_server(server_id)
+      # Update
+      CacheAction.update_server(server_id)
 
       # Sync (wait for side-population)
       :timer.sleep(20)
@@ -76,7 +76,7 @@ defmodule Helix.Cache.Action.CacheTest do
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       storage_id = List.first(server1.storages)
-      CacheAction.purge_storage(storage_id)
+      CacheAction.update_storage(storage_id)
 
       # Sync (wait for side-population)
       :timer.sleep(20)
@@ -103,7 +103,7 @@ defmodule Helix.Cache.Action.CacheTest do
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       component_id = List.first(server1.components)
-      CacheAction.purge_component(component_id)
+      CacheAction.update_component(component_id)
 
       # Sync (wait for side-population)
       :timer.sleep(20)
@@ -130,7 +130,7 @@ defmodule Helix.Cache.Action.CacheTest do
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       net = List.first(server1.networks)
-      CacheAction.purge_nip(net.network_id, net.ip)
+      CacheAction.update_nip(net.network_id, net.ip)
 
       # Sync (wait for side-population)
       :timer.sleep(20)

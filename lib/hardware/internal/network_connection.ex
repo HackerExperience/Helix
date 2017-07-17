@@ -1,6 +1,5 @@
 defmodule Helix.Hardware.Internal.NetworkConnection do
 
-  alias HELL.Constant
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Repo
@@ -29,7 +28,7 @@ defmodule Helix.Hardware.Internal.NetworkConnection do
     case result do
       {:ok, _} ->
         CacheAction.purge_nip(nc.network_id, nc.ip)
-        CacheAction.purge_nip(nc.network_id, ip)
+        CacheAction.update_nip(nc.network_id, ip)
         result
       _ ->
         result

@@ -219,8 +219,6 @@ defmodule Helix.Cache.Internal.Populate do
   along with the new expiration time.
   """
   defp store(:server, params) do
-    IO.puts "inserting"
-    IO.inspect(params)
     result = params
     |> ServerCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])

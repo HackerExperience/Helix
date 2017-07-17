@@ -120,4 +120,32 @@ defmodule Helix.Cache.Internal.CacheTest do
       :timer.sleep(10)
     end
   end
+
+  # Purging and updating at CacheInternal is asynchronous (except for PurgeQueue
+  # notification, which is synchronous)
+  describe "purge/2" do
+    test "purge queue", context do
+      server_id = context.server.server_id
+
+      {:ok, server} = PopulateInternal.populate(:server, server_id)
+      :timer.sleep(20)
+
+      storage_id = List.first(server.storages)
+
+      refute CacheInternal.is_marked_as_purged(:storage, storage_id)
+
+      CacheInternal.purge(:storage, storage_id)
+
+      assert CacheInternal.is_marked_as_purged(:storage, storage_id)
+
+      # Sync
+      :timer.sleep(20)
+
+      :miss = CacheInternal.direct_query(:storage, storage_id)
+
+      refute CacheInternal.is_marked_as_purged(:storage, storage_id)
+
+      :timer.sleep(10)
+    end
+  end
 end

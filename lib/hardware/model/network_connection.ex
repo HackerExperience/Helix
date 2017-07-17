@@ -9,6 +9,8 @@ defmodule Helix.Hardware.Model.NetworkConnection do
   alias HELL.PK
   alias Helix.Hardware.Model.Component.NIC
 
+
+  @type id :: PK.t
   @type t :: %__MODULE__{
     network_connection_id: PK.t,
     network_id: PK.t,
@@ -64,5 +66,20 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     |> validate_number(:downlink, greater_than_or_equal_to: 0)
     |> validate_number(:uplink, greater_than_or_equal_to: 0)
     |> unique_constraint(:ip, name: @one_ip_per_network_index)
+  end
+
+  defmodule Query do
+
+    alias Helix.Hardware.Model.NetworkConnection
+
+    import Ecto.Query, only: [where: 3]
+
+    @spec by_id(Ecto.Queryable.t, NetworkConnection.id) :: Ecto.Queryable.t
+    def by_id(query \\ NetworkConnection, nc_id),
+      do: where(query, [nc], nc.network_connection_id == ^nc_id)
+
+    @spec by_nip(Ecto.Queryable.t, PK.t, IPv4.t) :: Ecto.Queryable.t
+    def by_nip(query \\ NetworkConnection, network_id, ip),
+      do: where(query, [nc], nc.network_id == ^network_id and nc.ip == ^ip)
   end
 end

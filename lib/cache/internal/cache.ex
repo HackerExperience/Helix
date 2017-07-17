@@ -112,6 +112,27 @@ defmodule Helix.Cache.Internal.Cache do
     :ok
   end
 
+  @doc """
+  Requests an entry to be repopulated (updated) on the cache.
+  Actual update of database entries happens asynchronously, but we immediately
+  tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
+  reads from reading not-yet-purged (stale) data.
+  """
+  def update(model, params) when not is_list(params),
+    do: update(model, [params])
+  def update(model, params) do
+    # Synchronously mark entry as invalid by adding it to the PurgeQueue
+    mark_as_purged(model, params)
+
+    # Asynchronously update stuff on the DB
+    spawn(fn() ->
+      apply(PurgeInternal, :update, [model] ++ params)
+    end)
+
+    :ok
+  end
+
+
   docp """
   Wrapper used to populate cache data in case it isn't stored (miss)
   """
@@ -140,7 +161,7 @@ defmodule Helix.Cache.Internal.Cache do
   (which will later be repopulated).
   If it's not queued for deletion, actually query the database.
   """
-  defp query(info, params, full? \\ false) do
+  defp query(info, params, full?) do
     unless StatePurgeQueue.lookup(info.module, params) do
       sql_query(info, params, full?)
     else
