@@ -59,6 +59,8 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, storage} = CacheInternal.lookup({:server, :storages}, [server_id])
 
       assert storage == nil
+
+      :timer.sleep(10)
     end
 
     test "filters out expired entries", context do

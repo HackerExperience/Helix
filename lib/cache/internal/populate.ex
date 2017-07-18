@@ -38,14 +38,14 @@ defmodule Helix.Cache.Internal.Populate do
     entity = EntityQuery.fetch_server_owner(server_id)
 
     with \
-      server = %{} <- ServerQuery.fetch(server_id) || :nxserver,
+      server = %{} <- ServerQuery.Origin.fetch(server_id) || :nxserver,
       true <- not is_nil(server.motherboard_id) || :nxmobo,
-      motherboard = %{} <- MotherboardQuery.fetch_by_server(server_id),
-      motherboard = MotherboardQuery.preload_components(motherboard),
-      resources = %{} <- MotherboardQuery.resources(motherboard),
-      components = MotherboardQuery.get_components(motherboard),
-      storages = MotherboardQuery.get_storages(motherboard),
-      networks = MotherboardQuery.get_networks(motherboard)
+      motherboard = %{} <- MotherboardQuery.Origin.fetch_by_server(server_id),
+      motherboard = MotherboardQuery.Origin.preload_components(motherboard),
+      resources = %{} <- MotherboardQuery.Origin.resources(motherboard),
+      components = MotherboardQuery.Origin.get_components(motherboard),
+      storages = MotherboardQuery.Origin.get_storages(motherboard),
+      networks = MotherboardQuery.Origin.get_networks(motherboard)
     do
       data = {server_id, entity, motherboard, networks, storages, resources,
               components}
@@ -62,9 +62,9 @@ defmodule Helix.Cache.Internal.Populate do
   def populate(:storage, storage_id) do
     with \
       drive_id = StorageQuery.get_drives(storage_id),
-      motherboard_id = ComponentQuery.get_motherboard(drive_id),
+      motherboard_id = ComponentQuery.Origin.get_motherboard(drive_id),
       true <- not is_nil(motherboard_id) || :unlinked,
-      server = %{} <- ServerQuery.fetch_by_motherboard(motherboard_id)
+      server = %{} <- ServerQuery.Origin.fetch_by_motherboard(motherboard_id)
     do
       cache(:storage, {storage_id, server.server_id})
     else
@@ -75,7 +75,7 @@ defmodule Helix.Cache.Internal.Populate do
     end
   end
   def populate(:component, component_id) do
-    case ComponentQuery.get_motherboard(component_id) do
+    case ComponentQuery.Origin.get_motherboard(component_id) do
       nil ->
         {:error, :unlinked}
       motherboard_id ->
@@ -83,7 +83,7 @@ defmodule Helix.Cache.Internal.Populate do
     end
   end
   def populate(:network, network_id, ip) do
-    case ServerQuery.fetch_by_nip(network_id, ip) do
+    case ServerQuery.Origin.fetch_by_nip(network_id, ip) do
       nil ->
         {:error, :unknown}
       server ->

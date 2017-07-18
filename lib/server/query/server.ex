@@ -1,10 +1,8 @@
 defmodule Helix.Server.Query.Server do
 
-  alias Helix.Server.Internal.Server, as: ServerInternal
-  alias Helix.Server.Model.Server
-  alias Helix.Server.Repo
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server.Origin, as: ServerQueryOrigin
 
   @spec fetch(HELL.PK.t) ::
     Server.t
@@ -12,9 +10,8 @@ defmodule Helix.Server.Query.Server do
   @doc """
   Fetches a server
   """
-  def fetch(server_id) do
-    ServerInternal.fetch(server_id)
-  end
+  defdelegate fetch(server_id),
+    to: ServerQueryOrigin
 
   @spec fetch_by_motherboard(HELL.PK.t) ::
     Server.t
@@ -22,22 +19,11 @@ defmodule Helix.Server.Query.Server do
   @doc """
   Fetches the server that mounts the `motherboard`
   """
-  def fetch_by_motherboard(motherboard) do
-    Repo.get_by(Server, motherboard_id: motherboard)
-  end
+  defdelegate fetch_by_motherboard(motherboard_id),
+    to: ServerQueryOrigin
 
-  def fetch_by_nip(network_id, ip) do
-    with \
-         motherboard_id = MotherboardQuery.fetch_by_nip(network_id, ip),
-         true <- not is_nil(motherboard_id),
-      server = fetch_by_motherboard(motherboard_id)
-    do
-    server
-    else
-      _ ->
-        nil
-    end
-  end
+  defdelegate fetch_by_nip(network_id, ip),
+    to: ServerQueryOrigin
 
   def get_nips(server_id) do
     {:ok, nips} = CacheQuery.from_server_get_nips(server_id)
@@ -49,6 +35,34 @@ defmodule Helix.Server.Query.Server do
     |> Enum.find(fn(net) ->
       net.network_id == network_id
       end)
+  end
+
+  defmodule Origin do
+
+    alias Helix.Server.Internal.Server, as: ServerInternal
+    alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+
+    def fetch(server_id) do
+      ServerInternal.fetch(server_id)
+    end
+
+    def fetch_by_motherboard(motherboard_id) do
+      ServerInternal.fetch_by_motherboard(motherboard_id)
+    end
+
+    def fetch_by_nip(network_id, ip) do
+      with \
+        motherboard_id = MotherboardQuery.fetch_by_nip(network_id, ip),
+        true <- not is_nil(motherboard_id),
+        server = fetch_by_motherboard(motherboard_id)
+      do
+        server
+      else
+        _ ->
+          nil
+      end
+    end
+
   end
 
 end

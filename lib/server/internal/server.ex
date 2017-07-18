@@ -18,6 +18,11 @@ defmodule Helix.Server.Internal.Server do
   def fetch(server_id),
     do: Repo.get(Server, server_id)
 
+  def fetch_by_motherboard(motherboard_id) do
+    Server.Query.by_motherboard(motherboard_id)
+    |> Repo.one()
+  end
+
   @spec delete(HELL.PK.t) :: no_return
   def delete(server_id) do
     Server

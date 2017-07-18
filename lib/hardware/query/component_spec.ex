@@ -1,7 +1,7 @@
 defmodule Helix.Hardware.Query.ComponentSpec do
 
-  alias Helix.Hardware.Internal.ComponentSpec, as: ComponentSpecInternal
   alias Helix.Hardware.Model.ComponentSpec
+  alias Helix.Hardware.Query.ComponentSpec.Origin, as: ComponentSpecQueryOrigin
 
   @spec fetch(ComponentSpec.id) ::
     ComponentSpec.t
@@ -10,5 +10,14 @@ defmodule Helix.Hardware.Query.ComponentSpec do
   Fetches acomponent specification
   """
   defdelegate fetch(spec_id),
-    to: ComponentSpecInternal
+    to: ComponentSpecQueryOrigin
+
+  defmodule Origin do
+
+    alias Helix.Hardware.Internal.ComponentSpec, as: ComponentSpecInternal
+
+    def fetch(spec_id) do
+      ComponentSpecInternal.fetch(spec_id)
+    end
+  end
 end

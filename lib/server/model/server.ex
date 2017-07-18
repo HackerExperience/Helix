@@ -103,5 +103,9 @@ defmodule Helix.Server.Model.Server do
     @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
     def by_id(query \\ Server, server_id),
       do: where(query, [s], s.server_id == ^server_id)
+
+    @spec by_motherboard(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    def by_motherboard(query \\ Server, motherboard_id),
+      do: where(query, [s], s.motherboard_id == ^motherboard_id)
   end
 end
