@@ -120,16 +120,14 @@ defmodule Helix.Mixfile do
     ]
   end
 
-  defp elixirc_options(:dev) do
-    # On dev, by default, allow to compile even with warnings, unless explicitly
-    # required not to
-    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") == "false"
-
-    [warnings_as_errors: warnings_as_errors?]
+  defp elixirc_options(:prod) do
+    # On prod, don't compile unless no warning is issued
+    [warnings_as_errors: true]
   end
   defp elixirc_options(_) do
-    # On test and prod, don't compile unless no warning is issued
-    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") != "true"
+    # On dev and test, by default, allow to compile even with warnings,
+    # unless explicitly told not to
+    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") == "false"
 
     [warnings_as_errors: warnings_as_errors?]
   end
