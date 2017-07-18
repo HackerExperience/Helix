@@ -1,8 +1,8 @@
-defmodule Helix.Process.Service.Local.TOP.ManagerTest do
+defmodule Helix.Process.State.TOP.ManagerTest do
 
   use Helix.Test.IntegrationCase
 
-  alias Helix.Process.Service.Local.TOP.Manager
+  alias Helix.Process.State.TOP.Manager
 
   test "returns the registered process when it exists" do
     Manager.register("a:b::c:d")

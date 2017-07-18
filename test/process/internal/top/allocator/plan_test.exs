@@ -1,11 +1,11 @@
-defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
+defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
-  alias Helix.Process.Model.Process, as: ProcessModel
-  alias Helix.Process.Controller.TableOfProcesses.Allocator.Plan
-  alias Helix.Process.Controller.TableOfProcesses.ServerResources
+  alias Helix.Process.Model.Process
+  alias Helix.Process.Internal.TOP.Allocator.Plan
+  alias Helix.Process.Internal.TOP.ServerResources
   alias Helix.Process.TestHelper.ProcessTypeExample
   alias Helix.Process.TestHelper.StaticProcessTypeExample
 
@@ -42,8 +42,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
 
     process =
       params
-      |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(params2)
+      |> Process.create_changeset()
+      |> Process.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     resources = %ServerResources{
@@ -90,8 +90,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
 
     process =
       params
-      |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(params2)
+      |> Process.create_changeset()
+      |> Process.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     resources = %ServerResources{
@@ -135,8 +135,8 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
 
     process0 =
       params
-      |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(params2)
+      |> Process.create_changeset()
+      |> Process.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     process1 = %{process0| process_id: Random.pk()}
@@ -181,13 +181,13 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
 
     process0 =
       params
-      |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(params2)
+      |> Process.create_changeset()
+      |> Process.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     process1 =
       %{process0| process_id: Random.pk()}
-      |> ProcessModel.update_changeset(%{priority: 4})
+      |> Process.update_changeset(%{priority: 4})
       |> Ecto.Changeset.apply_changes()
 
     resources = %ServerResources{
@@ -234,15 +234,15 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
 
     process0 =
       params
-      |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(params2)
+      |> Process.create_changeset()
+      |> Process.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
     process1 = %{process0| process_id: Random.pk()}
 
     process2 =
       %{process0| process_id: Random.pk()}
-      |> ProcessModel.update_changeset(%{limitations: %{cpu: 500}})
+      |> Process.update_changeset(%{limitations: %{cpu: 500}})
       |> Ecto.Changeset.apply_changes()
 
     resources = %ServerResources{
@@ -284,16 +284,16 @@ defmodule Helix.Process.Controller.TableOfProcesses.Allocator.PlanTest do
 
     process0 =
       params
-      |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(%{state: :running})
-      |> ProcessModel.update_changeset(%{minimum: %{running: %{ram: 2_000}}})
+      |> Process.create_changeset()
+      |> Process.update_changeset(%{state: :running})
+      |> Process.update_changeset(%{minimum: %{running: %{ram: 2_000}}})
       |> Ecto.Changeset.apply_changes()
 
     process1 =
       %{params| gateway_id: Random.pk()}
-      |> ProcessModel.create_changeset()
-      |> ProcessModel.update_changeset(%{state: :running})
-      |> ProcessModel.update_changeset(%{minimum: %{running: %{ram: 2_000}}})
+      |> Process.create_changeset()
+      |> Process.update_changeset(%{state: :running})
+      |> Process.update_changeset(%{minimum: %{running: %{ram: 2_000}}})
       |> Ecto.Changeset.apply_changes()
 
     resources = %ServerResources{

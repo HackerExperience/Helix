@@ -1,10 +1,13 @@
-defmodule Helix.Process.Service.Local.TOP.ServerTest do
+defmodule Helix.Process.State.TOP.TOPServerTest do
 
   use Helix.Test.IntegrationCase
 
   alias Helix.Process.TestHelper.StaticProcessTypeExample
-  alias Helix.Process.Service.API.Process, as: ProcessAPI
-  alias Helix.Process.Service.Local.TOP.Server
+  alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  alias Helix.Process.State.TOP.Server, as: TOPServer
+  alias Helix.Process.Query.Process, as: ProcessQuery
+
+  alias Helix.Account.Factory, as: AccountFactory
 
   defmodule ProcessThatCausesOverflow do
     defstruct []
@@ -23,9 +26,6 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
   end
 
   defp create_server do
-    alias Helix.Account.Service.Flow.Account, as: AccountFlow
-    alias Helix.Account.Factory, as: AccountFactory
-
     account = AccountFactory.insert(:account)
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
@@ -41,13 +41,13 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
       objective: %{cpu: 9_999_999}
     }
 
-    Server.create(top, params)
+    TOPServer.create(top, params)
   end
 
   setup do
     server = create_server()
 
-    {:ok, top} = Server.start_link(server.server_id)
+    {:ok, top} = TOPServer.start_link(server.server_id)
 
     {:ok, top: top, server: server}
   end
@@ -62,7 +62,7 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
         objective: %{cpu: 9_999_999}
       }
 
-      assert {:ok, _} = Server.create(context.top, params)
+      assert {:ok, _} = TOPServer.create(context.top, params)
     end
 
     test "fails if new process would cause resource overflow", context do
@@ -74,7 +74,7 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
         objective: %{cpu: 9_999_999}
       }
 
-      assert {:error, :resources} == Server.create(context.top, params)
+      assert {:error, :resources} == TOPServer.create(context.top, params)
     end
   end
 
@@ -82,11 +82,11 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
     test "changes the process priority", context do
       {:ok, process} = start_process(context.top, context.server.server_id)
 
-      Server.priority(context.top, process, 5)
+      TOPServer.priority(context.top, process, 5)
 
       :timer.sleep(100)
 
-      assert 5 == ProcessAPI.fetch(process.process_id).priority
+      assert 5 == ProcessQuery.fetch(process.process_id).priority
     end
   end
 
@@ -94,11 +94,11 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
     test "changes state of process", context do
       {:ok, process} = start_process(context.top, context.server.server_id)
 
-      Server.pause(context.top, process)
+      TOPServer.pause(context.top, process)
 
       :timer.sleep(100)
 
-      assert :paused == ProcessAPI.fetch(process.process_id).state
+      assert :paused == ProcessQuery.fetch(process.process_id).state
     end
   end
 
@@ -106,12 +106,12 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
     test "changes state of a paused process to running", context do
       {:ok, process} = start_process(context.top, context.server.server_id)
 
-      Server.pause(context.top, process)
+      TOPServer.pause(context.top, process)
       :timer.sleep(50)
-      Server.resume(context.top, process)
+      TOPServer.resume(context.top, process)
       :timer.sleep(50)
 
-      assert :running == ProcessAPI.fetch(process.process_id).state
+      assert :running == ProcessQuery.fetch(process.process_id).state
     end
   end
 
@@ -119,11 +119,11 @@ defmodule Helix.Process.Service.Local.TOP.ServerTest do
     test "removes a process from a server", context do
       {:ok, process} = start_process(context.top, context.server.server_id)
 
-      Server.kill(context.top, process)
+      TOPServer.kill(context.top, process)
 
       :timer.sleep(100)
 
-      refute ProcessAPI.fetch(process.process_id)
+      refute ProcessQuery.fetch(process.process_id)
     end
   end
 end
