@@ -3,11 +3,17 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Websocket.Socket
+  alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
   alias Helix.Server.Model.ServerType
-  alias Helix.Account.Service.API.Session
+  alias Helix.Server.Action.Server, as: ServerAction
+  alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Account.Websocket.Channel.Account, as: Channel
 
+
   alias Helix.Entity.Factory, as: EntityFactory
+  alias Helix.Hardware.Factory, as: HardwareFactory
+  alias Helix.Server.Factory, as: ServerFactory
   alias Helix.Account.Factory
 
   import Phoenix.ChannelTest
@@ -16,7 +22,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
 
   setup do
     account = Factory.insert(:account)
-    token = Session.generate_token(account)
+    token = SessionAction.generate_token(account)
     {:ok, socket} = connect(Socket, %{token: token})
     {:ok, _, socket} = join(socket, "account:" <> account.account_id)
 
@@ -24,15 +30,10 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
   end
 
   defp create_server_for_entity(entity) do
-    alias Helix.Hardware.Factory, as: HardwareFactory
-    alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
-    alias Helix.Entity.Service.API.Entity, as: EntityAPI
-    alias Helix.Server.Service.API.Server, as: ServerAPI
-    alias Helix.Server.Factory, as: ServerFactory
 
     # FIXME PLEASE
     server = ServerFactory.insert(:server)
-    EntityAPI.link_server(entity, server.server_id)
+    EntityAction.link_server(entity, server.server_id)
 
     # I BEG YOU, SAVE ME FROM THIS EXCRUCIATING PAIN
     motherboard = HardwareFactory.insert(:motherboard)
@@ -40,9 +41,9 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
       component = HardwareFactory.insert(slot.link_component_type)
       component = component.component
 
-      MotherboardAPI.link(slot, component)
+      MotherboardAction.link(slot, component)
     end)
-    {:ok, server} = ServerAPI.attach(server, motherboard.motherboard_id)
+    {:ok, server} = ServerAction.attach(server, motherboard.motherboard_id)
 
     server
   end

@@ -1,10 +1,10 @@
-defmodule Helix.Account.Controller.AccountTest do
+defmodule Helix.Account.Internal.AccountTest do
 
   use Helix.Test.IntegrationCase
 
   alias Comeonin.Bcrypt
   alias HELL.TestHelper.Random
-  alias Helix.Account.Controller.Account, as: AccountController
+  alias Helix.Account.Internal.Account, as: AccountInternal
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSetting
   alias Helix.Account.Model.Setting
@@ -28,17 +28,17 @@ defmodule Helix.Account.Controller.AccountTest do
         password: Burette.Internet.password()
       }
 
-      assert {:ok, _} = AccountController.create(params)
+      assert {:ok, _} = AccountInternal.create(params)
 
-      # HACK: workaround for the flow event
-      :timer.sleep(100)
+      # HACK: workaround for the flow event (it's pretty heavy)
+      :timer.sleep(250)
     end
 
     test "fails when email is already in use" do
       account = Factory.insert(:account)
       params = %{params()| email: account.email}
 
-      assert {:error, changeset} = AccountController.create(params)
+      assert {:error, changeset} = AccountInternal.create(params)
       assert :email in Keyword.keys(changeset.errors)
     end
 
@@ -46,14 +46,14 @@ defmodule Helix.Account.Controller.AccountTest do
       account = Factory.insert(:account)
       params = %{params()| username: account.username}
 
-      assert {:error, changeset} = AccountController.create(params)
+      assert {:error, changeset} = AccountInternal.create(params)
       assert :username in Keyword.keys(changeset.errors)
     end
 
     test "fails when password is too short" do
       params = %{params()| password: "123"}
 
-      assert {:error, changeset} = AccountController.create(params)
+      assert {:error, changeset} = AccountInternal.create(params)
       assert :password in Keyword.keys(changeset.errors)
     end
   end
@@ -61,31 +61,31 @@ defmodule Helix.Account.Controller.AccountTest do
   describe "fetching" do
     test "succeeds by id" do
       account = Factory.insert(:account)
-      assert %Account{} = AccountController.fetch(account.account_id)
+      assert %Account{} = AccountInternal.fetch(account.account_id)
     end
 
     test "succeeds by email" do
       account = Factory.insert(:account)
-      assert %Account{} = AccountController.fetch_by_email(account.email)
+      assert %Account{} = AccountInternal.fetch_by_email(account.email)
     end
 
     test "succeeds by username" do
       account = Factory.insert(:account)
-      assert %Account{} = AccountController.fetch_by_username(account.username)
+      assert %Account{} = AccountInternal.fetch_by_username(account.username)
     end
 
     test "fails when account with id doesn't exist" do
-      refute AccountController.fetch(Random.pk())
+      refute AccountInternal.fetch(Random.pk())
     end
 
     test "fails when account with email doesn't exist" do
       bogus = Factory.build(:account)
-      refute AccountController.fetch_by_email(bogus.email)
+      refute AccountInternal.fetch_by_email(bogus.email)
     end
 
     test "fails when account with username doesn't exist" do
       bogus = Factory.build(:account)
-      refute AccountController.fetch_by_username(bogus.username)
+      refute AccountInternal.fetch_by_username(bogus.username)
     end
   end
 
@@ -94,8 +94,8 @@ defmodule Helix.Account.Controller.AccountTest do
       account1 = Factory.insert(:account)
       account2 = Factory.insert(:account)
 
-      AccountController.delete(account1)
-      AccountController.delete(account2.account_id)
+      AccountInternal.delete(account1)
+      AccountInternal.delete(account2.account_id)
 
       refute Repo.get_by(Account, account_id: account1.account_id)
       refute Repo.get_by(Account, account_id: account2.account_id)
@@ -106,8 +106,8 @@ defmodule Helix.Account.Controller.AccountTest do
 
       assert Repo.get_by(Account, account_id: account.account_id)
 
-      AccountController.delete(account.account_id)
-      AccountController.delete(account.account_id)
+      AccountInternal.delete(account.account_id)
+      AccountInternal.delete(account.account_id)
 
       refute Repo.get_by(Account, account_id: account.account_id)
     end
@@ -122,7 +122,7 @@ defmodule Helix.Account.Controller.AccountTest do
         confirmed: true
       }
 
-      {:ok, updated_account} = AccountController.update(account, params)
+      {:ok, updated_account} = AccountInternal.update(account, params)
 
       assert params.email == updated_account.email
       assert Bcrypt.checkpw(params.password, updated_account.password)
@@ -135,7 +135,7 @@ defmodule Helix.Account.Controller.AccountTest do
 
       params = %{email: account1.email}
 
-      {:error, cs} = AccountController.update(account2, params)
+      {:error, cs} = AccountInternal.update(account2, params)
 
       assert :email in Keyword.keys(cs.errors)
     end
@@ -146,7 +146,7 @@ defmodule Helix.Account.Controller.AccountTest do
       account = Factory.insert(:account)
       settings = %{is_beta: true}
 
-      AccountController.put_settings(account, settings)
+      AccountInternal.put_settings(account, settings)
       %{settings: got} = Repo.get(AccountSetting, account.account_id)
 
       assert settings == Map.from_struct(got)
@@ -155,7 +155,7 @@ defmodule Helix.Account.Controller.AccountTest do
     test "fails with contract violating params" do
       account = Factory.insert(:account)
       bogus = %{is_beta: "uhe"}
-      result = AccountController.put_settings(account, bogus)
+      result = AccountInternal.put_settings(account, bogus)
 
       assert {:error, _} = result
     end
@@ -179,7 +179,7 @@ defmodule Helix.Account.Controller.AccountTest do
 
       result =
         account
-        |> AccountController.get_settings()
+        |> AccountInternal.get_settings()
         |> custom_keys.()
 
       assert custom_keys.(settings) == result
@@ -188,7 +188,7 @@ defmodule Helix.Account.Controller.AccountTest do
     # FIXME: add some custom settings and filter like on previous test
     test "includes every unchanged setting" do
       account = Factory.insert(:account)
-      settings = AccountController.get_settings(account)
+      settings = AccountInternal.get_settings(account)
 
       assert %Setting{} == settings
     end
