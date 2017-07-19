@@ -1,10 +1,10 @@
-defmodule Helix.Network.Service.Event.TunnelTest do
+defmodule Helix.Network.Event.TunnelTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Event
-  alias Helix.Network.Controller.Tunnel, as: Controller
+  alias Helix.Network.Internal.Tunnel, as: TunnelInternal
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
@@ -17,15 +17,15 @@ defmodule Helix.Network.Service.Event.TunnelTest do
       destination = Random.pk()
       bounces = []
 
-      {:ok, tunnel} = Controller.create(
+      {:ok, tunnel} = TunnelInternal.create(
         @internet,
         gateway,
         destination,
         bounces)
 
-      {:ok, connection, _events} = Controller.start_connection(tunnel, "ssh")
+      {:ok, connection, _events} = TunnelInternal.start_connection(tunnel, "ssh")
 
-      events = Controller.close_connection(connection)
+      events = TunnelInternal.close_connection(connection)
 
       Event.emit(events)
 
@@ -40,16 +40,16 @@ defmodule Helix.Network.Service.Event.TunnelTest do
       destination = Random.pk()
       bounces = []
 
-      {:ok, tunnel} = Controller.create(
+      {:ok, tunnel} = TunnelInternal.create(
         @internet,
         gateway,
         destination,
         bounces)
 
-      Controller.start_connection(tunnel, "ssh")
-      {:ok, connection, _events} = Controller.start_connection(tunnel, "ssh")
+      TunnelInternal.start_connection(tunnel, "ssh")
+      {:ok, connection, _events} = TunnelInternal.start_connection(tunnel, "ssh")
 
-      events = Controller.close_connection(connection)
+      events = TunnelInternal.close_connection(connection)
 
       Event.emit(events)
 

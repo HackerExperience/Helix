@@ -2,12 +2,13 @@ defmodule Helix.NPC.Model.NPC do
 
   use Ecto.Schema
 
-  alias HELL.PK
-
   import Ecto.Changeset
 
+  alias HELL.PK
+
+  @type id :: PK.t
   @type t :: %__MODULE__{
-    npc_id: PK.t,
+    npc_id: id,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
