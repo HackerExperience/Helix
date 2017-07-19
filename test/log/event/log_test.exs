@@ -1,4 +1,4 @@
-defmodule Helix.Log.Service.Event.LogTest do
+defmodule Helix.Log.Event.LogTest do
 
   use Helix.Test.IntegrationCase
 

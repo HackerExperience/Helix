@@ -47,8 +47,8 @@ defmodule Helix.Log.Internal.Log do
   @spec get_logs_on_server(server_id, Keyword.t) ::
     [Log.t]
   def get_logs_on_server(server, _params \\ []) do
-    Log
-    |> Log.Query.by_server_id(server)
+    server
+    |> Log.Query.by_server_id()
     # TODO: Use id's timestamp
     |> Log.Query.order_by_newest()
     |> Repo.all()
@@ -58,7 +58,9 @@ defmodule Helix.Log.Internal.Log do
     [Log.t]
   def get_logs_from_entity_on_server(server, entity, _params \\ []) do
     server
-    |> get_logs_on_server()
+    |> Log.Query.by_server_id()
+    # TODO: Use id's timestamp
+    |> Log.Query.order_by_newest()
     |> Log.Query.edited_by_entity(entity)
     |> Repo.all()
   end
