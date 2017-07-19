@@ -1,9 +1,9 @@
-defmodule Helix.Entity.Controller.EntityTest do
+defmodule Helix.Entity.Internal.EntityTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Entity.Controller.Entity, as: EntityController
+  alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
 
@@ -21,11 +21,11 @@ defmodule Helix.Entity.Controller.EntityTest do
   describe "entity creation" do
     test "succeeds with valid params" do
       params = generate_params()
-      assert {:ok, _} = EntityController.create(params)
+      assert {:ok, _} = EntityInternal.create(params)
     end
 
     test "fails when entity_type is invalid" do
-      {:error, cs} = EntityController.create(%{entity_type: :foobar})
+      {:error, cs} = EntityInternal.create(%{entity_type: :foobar})
       assert :entity_type in Keyword.keys(cs.errors)
     end
   end
@@ -34,11 +34,11 @@ defmodule Helix.Entity.Controller.EntityTest do
     test "returns entity on success" do
       entity = Factory.insert(:entity)
 
-      assert %Entity{} = EntityController.fetch(entity.entity_id)
+      assert %Entity{} = EntityInternal.fetch(entity.entity_id)
     end
 
     test "returns nil if entity doesn't exists" do
-      refute EntityController.fetch(Random.pk())
+      refute EntityInternal.fetch(Random.pk())
     end
   end
 
@@ -46,11 +46,11 @@ defmodule Helix.Entity.Controller.EntityTest do
     test "returns entity if server is owned" do
       %{server_id: id} = Factory.insert(:entity_server)
 
-      assert %Entity{} = EntityController.fetch_server_owner(id)
+      assert %Entity{} = EntityInternal.fetch_server_owner(id)
     end
 
     test "returns nil if server is not owned" do
-      refute EntityController.fetch_server_owner(Random.pk())
+      refute EntityInternal.fetch_server_owner(Random.pk())
     end
   end
 
@@ -59,7 +59,7 @@ defmodule Helix.Entity.Controller.EntityTest do
       entity = Factory.insert(:entity)
 
       assert Repo.get(Entity, entity.entity_id)
-      EntityController.delete(entity)
+      EntityInternal.delete(entity)
       refute Repo.get(Entity, entity.entity_id)
     end
 
@@ -67,7 +67,7 @@ defmodule Helix.Entity.Controller.EntityTest do
       entity = Factory.insert(:entity)
 
       assert Repo.get(Entity, entity.entity_id)
-      EntityController.delete(entity.entity_id)
+      EntityInternal.delete(entity.entity_id)
       refute Repo.get(Entity, entity.entity_id)
     end
 
@@ -76,8 +76,8 @@ defmodule Helix.Entity.Controller.EntityTest do
 
       assert Repo.get(Entity, entity.entity_id)
 
-      EntityController.delete(entity.entity_id)
-      EntityController.delete(entity.entity_id)
+      EntityInternal.delete(entity.entity_id)
+      EntityInternal.delete(entity.entity_id)
 
       refute Repo.get(Entity, entity.entity_id)
     end
@@ -88,13 +88,13 @@ defmodule Helix.Entity.Controller.EntityTest do
       entity = Factory.insert(:entity)
       component_id = Random.pk()
 
-      assert {:ok, _} = EntityController.link_component(entity, component_id)
+      assert {:ok, _} = EntityInternal.link_component(entity, component_id)
     end
 
     test "fails when entity doesn't exist" do
       component_id = Random.pk()
 
-      result = EntityController.link_component(%Entity{}, component_id)
+      result = EntityInternal.link_component(%Entity{}, component_id)
       assert {:error, _} = result
     end
   end
@@ -109,8 +109,8 @@ defmodule Helix.Entity.Controller.EntityTest do
         |> Map.fetch!(:components)
       refute Enum.empty?(components)
 
-      EntityController.unlink_component(ec.component_id)
-      EntityController.unlink_component(ec.component_id)
+      EntityInternal.unlink_component(ec.component_id)
+      EntityInternal.unlink_component(ec.component_id)
 
       components =
         ec.entity
@@ -125,13 +125,13 @@ defmodule Helix.Entity.Controller.EntityTest do
       entity = Factory.insert(:entity)
       server_id = Random.pk()
 
-      assert {:ok, _} = EntityController.link_server(entity, server_id)
+      assert {:ok, _} = EntityInternal.link_server(entity, server_id)
     end
 
     test "fails when entity doesn't exist" do
       server_id = Random.pk()
 
-      result = EntityController.link_server(%Entity{}, server_id)
+      result = EntityInternal.link_server(%Entity{}, server_id)
       assert {:error, _} = result
     end
   end
@@ -146,8 +146,8 @@ defmodule Helix.Entity.Controller.EntityTest do
         |> Map.fetch!(:servers)
       refute Enum.empty?(servers)
 
-      EntityController.unlink_server(es.server_id)
-      EntityController.unlink_server(es.server_id)
+      EntityInternal.unlink_server(es.server_id)
+      EntityInternal.unlink_server(es.server_id)
 
       servers =
         es.entity

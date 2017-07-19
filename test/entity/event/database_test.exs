@@ -1,4 +1,4 @@
-defmodule Helix.Entity.Service.Event.HackDatabaseTest do
+defmodule Helix.Entity.Event.DatabaseTest do
 
   use Helix.Test.IntegrationCase
 
