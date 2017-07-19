@@ -1,13 +1,13 @@
-defmodule Helix.Server.Service.Henforcer.ServerTest do
+defmodule Helix.Server.Henforcer.ServerTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Server.Controller.Server, as: ServerController
-  alias Helix.Server.Service.Henforcer.Server, as: Henforcer
+  alias Helix.Server.Internal.Server, as: ServerInternal
+  alias Helix.Server.Henforcer.Server, as: Henforcer
 
-  alias Helix.Server.Factory
   alias Helix.Hardware.Factory, as: HardwareFactory
+  alias Helix.Server.Factory
 
   describe "server_exists?/1" do
     test "returns true when server exists" do
@@ -27,7 +27,7 @@ defmodule Helix.Server.Service.Henforcer.ServerTest do
     test "returns true when server has motherboard attached" do
       server = Factory.insert(:server)
       motherboard = HardwareFactory.insert(:motherboard)
-      ServerController.attach(server, motherboard.motherboard_id)
+      ServerInternal.attach(server, motherboard.motherboard_id)
 
       assert Henforcer.server_assembled?(server.server_id)
     end

@@ -2,23 +2,27 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   use Helix.Test.IntegrationCase
 
-  alias Helix.Websocket.Socket
-
-  alias Helix.Entity.Service.API.Entity, as: EntityAPI
-  alias Helix.Log.Service.API.Log, as: LogAPI
-  alias Helix.Network.Factory, as: NetworkFactory
-
   import Phoenix.ChannelTest
+
+  alias Helix.Websocket.Socket
+  alias Helix.Account.Action.Session, as: SessionAction
+  alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Log.Action.Log, as: LogAction
+  alias Helix.Hardware.Query.Component, as: ComponentQuery
+  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Software.Query.Storage, as: StorageQuery
+
+  alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Network.Factory, as: NetworkFactory
+  alias Helix.Software.Factory, as: SoftwareFactory
 
   @endpoint Helix.Endpoint
 
   # TODO: Move this to a case
   setup do
-    alias Helix.Account.Factory
-    alias Helix.Account.Service.API.Session
-
-    account = Factory.insert(:account)
-    token = Session.generate_token(account)
+    account = AccountFactory.insert(:account)
+    token = SessionAction.generate_token(account)
     {:ok, socket} = connect(Socket, %{token: token})
 
     {:ok, account: account, socket: socket}
@@ -27,38 +31,29 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   # FIXME: This will certainly break in the worst way in the future, but right
   #   now it's good enough for me not to suffer
   defp create_server_for_account(account) do
-    alias Helix.Account.Service.Flow.Account, as: AccountFlow
-
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
     server
   end
 
   defp create_destination_server do
-    alias Helix.Account.Factory, as: AccountFactory
-
     account = AccountFactory.insert(:account)
 
     create_server_for_account(account)
   end
 
   defp populate_server_with_files(server) do
-    alias Helix.Software.Controller.Storage
-    alias Helix.Software.Factory, as: SoftwareFactory
-    alias Helix.Hardware.Service.API.Component, as: ComponentAPI
-    alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
-
     hdds =
       server.motherboard_id
-      |> ComponentAPI.fetch()
-      |> MotherboardAPI.fetch!()
-      |> MotherboardAPI.get_slots()
+      |> ComponentQuery.fetch()
+      |> MotherboardQuery.fetch!()
+      |> MotherboardQuery.get_slots()
       |> Enum.filter(&(&1.link_component_type == :hdd))
       |> Enum.reject(&(is_nil(&1.link_component_id)))
       |> Enum.map(&(&1.link_component_id))
 
     Enum.flat_map(hdds, fn drive ->
-      storage = Storage.get_storage_from_hdd(drive)
+      storage = StorageQuery.get_storage_from_hdd(drive)
 
       SoftwareFactory.insert_list(
         3,
@@ -192,11 +187,11 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       context = connect_to_realword_server(context)
 
       server_id = context.destination
-      entity_id = EntityAPI.get_entity_id(context.account)
+      entity_id = EntityQuery.get_entity_id(context.account)
 
-      LogAPI.create(server_id, entity_id, "foo")
-      LogAPI.create(server_id, entity_id, "bar")
-      LogAPI.create(server_id, entity_id, "baz")
+      LogAction.create(server_id, entity_id, "foo")
+      LogAction.create(server_id, entity_id, "bar")
+      LogAction.create(server_id, entity_id, "baz")
 
       ref = push context.socket, "log.index", %{}
 

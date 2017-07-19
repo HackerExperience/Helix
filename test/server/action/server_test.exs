@@ -1,46 +1,22 @@
-defmodule Helix.Server.Service.API.ServerTest do
+defmodule Helix.Server.Action.ServerTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
-  alias Helix.Server.Service.API.Server, as: API
 
   alias Helix.Hardware.Factory, as: HardwareFactory
   alias Helix.Server.Factory
 
   describe "create/2" do
     test "succeeds with valid input" do
-      assert {:ok, %Server{}} = API.create(:desktop)
+      assert {:ok, %Server{}} = ServerAction.create(:desktop)
     end
 
     test "fails when input is invalid" do
-      assert {:error, cs} = API.create(:invalid)
+      assert {:error, cs} = ServerAction.create(:invalid)
       refute cs.valid?
-    end
-  end
-
-  describe "fetch/1" do
-    test "succeeds by id" do
-      server = Factory.insert(:server)
-      assert %Server{} = API.fetch(server.server_id)
-    end
-
-    test "fails when server doesn't exist" do
-      refute API.fetch(Random.pk())
-    end
-  end
-
-  describe "fetch_by_motherboard/1" do
-    test "returns the server that mounts the motherboard" do
-      server = Factory.insert(:server)
-      motherboard = Random.pk()
-
-      API.attach(server, motherboard)
-
-      fetched = API.fetch_by_motherboard(motherboard)
-      assert server.server_id == fetched.server_id
     end
   end
 
@@ -49,13 +25,13 @@ defmodule Helix.Server.Service.API.ServerTest do
       server = Factory.insert(:server)
       mobo = HardwareFactory.insert(:motherboard)
 
-      assert {:ok, %Server{}} = API.attach(server, mobo.motherboard_id)
+      assert {:ok, %Server{}} = ServerAction.attach(server, mobo.motherboard_id)
     end
 
     test "fails when input is invalid" do
       server = Factory.insert(:server)
 
-      assert {:error, cs} = API.attach(server, "invalid")
+      assert {:error, cs} = ServerAction.attach(server, "invalid")
       refute cs.valid?
     end
 
@@ -65,7 +41,7 @@ defmodule Helix.Server.Service.API.ServerTest do
 
       Factory.insert(:server, motherboard_id: mobo.motherboard_id)
 
-      result = API.attach(server, mobo.motherboard_id)
+      result = ServerAction.attach(server, mobo.motherboard_id)
       assert {:error, cs} = result
       refute cs.valid?
     end
@@ -75,7 +51,7 @@ defmodule Helix.Server.Service.API.ServerTest do
       server = Factory.insert(:server, motherboard_id: mobo1.motherboard_id)
 
       mobo2 = HardwareFactory.insert(:motherboard)
-      result = API.attach(server, mobo2.motherboard_id)
+      result = ServerAction.attach(server, mobo2.motherboard_id)
 
       assert {:error, cs} = result
       refute cs.valid?
@@ -87,8 +63,8 @@ defmodule Helix.Server.Service.API.ServerTest do
       mobo = HardwareFactory.insert(:motherboard)
       server = Factory.insert(:server, motherboard_id: mobo.motherboard_id)
 
-      API.detach(server)
-      API.detach(server)
+      ServerAction.detach(server)
+      ServerAction.detach(server)
 
       server = Repo.get(Server, server.server_id)
       refute server.motherboard_id
@@ -100,7 +76,7 @@ defmodule Helix.Server.Service.API.ServerTest do
       server = Factory.insert(:server)
 
       assert Repo.get(Server, server.server_id)
-      API.delete(server)
+      ServerAction.delete(server)
       refute Repo.get(Server, server.server_id)
     end
 
@@ -108,9 +84,9 @@ defmodule Helix.Server.Service.API.ServerTest do
     test "is idempotent" do
       server = Factory.insert(:server)
 
-      assert API.delete(server)
-      assert API.delete(server)
-      assert API.delete(server)
+      assert ServerAction.delete(server)
+      assert ServerAction.delete(server)
+      assert ServerAction.delete(server)
     end
   end
 end

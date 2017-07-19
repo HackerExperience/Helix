@@ -1,9 +1,9 @@
-defmodule Helix.Server.Controller.ServerTest do
+defmodule Helix.Server.Internal.ServerTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Server.Controller.Server, as: ServerController
+  alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
@@ -14,11 +14,11 @@ defmodule Helix.Server.Controller.ServerTest do
   describe "creating" do
     test "succeeds with valid server_type" do
       params = %{server_type: Factory.random_server_type()}
-      assert {:ok, _} = ServerController.create(params)
+      assert {:ok, _} = ServerInternal.create(params)
     end
 
     test "fails with invalid server_type" do
-      {:error, cs} = ServerController.create(%{server_type: :foobar})
+      {:error, cs} = ServerInternal.create(%{server_type: :foobar})
       assert :server_type in Keyword.keys(cs.errors)
     end
   end
@@ -26,11 +26,11 @@ defmodule Helix.Server.Controller.ServerTest do
   describe "fetching" do
     test "succeeds by id" do
       server = Factory.insert(:server)
-      assert %Server{} = ServerController.fetch(server.server_id)
+      assert %Server{} = ServerInternal.fetch(server.server_id)
     end
 
     test "fails when server doesn't exists" do
-      refute ServerController.fetch(Random.pk())
+      refute ServerInternal.fetch(Random.pk())
     end
   end
 
@@ -38,8 +38,8 @@ defmodule Helix.Server.Controller.ServerTest do
     server = Factory.insert(:server)
     assert Repo.get(Server, server.server_id)
 
-    ServerController.delete(server.server_id)
-    ServerController.delete(server.server_id)
+    ServerInternal.delete(server.server_id)
+    ServerInternal.delete(server.server_id)
 
     refute Repo.get(Server, server.server_id)
   end
