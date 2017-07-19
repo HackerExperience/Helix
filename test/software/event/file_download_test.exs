@@ -1,11 +1,11 @@
-defmodule Helix.Software.Service.Event.FileDownloadTest do
+defmodule Helix.Software.Event.FileDownloadTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Software.Controller.File
+  alias Helix.Software.Internal.File, as: FileInternal
+  alias Helix.Software.Event.FileDownload, as: EventHandler
   alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent
-  alias Helix.Software.Service.Event.FileDownload, as: EventHandler
 
   alias Helix.Software.Factory
 
@@ -24,7 +24,7 @@ defmodule Helix.Software.Service.Event.FileDownloadTest do
 
       EventHandler.complete(event)
 
-      [new_file] = File.get_files_on_target_storage(storage)
+      [new_file] = FileInternal.get_files_on_target_storage(storage)
 
       expected = Map.take(file, [:name, :file_size, :software_type])
       got = Map.take(new_file, [:name, :file_size, :software_type])

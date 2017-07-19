@@ -1,9 +1,9 @@
-defmodule Helix.Software.Controller.FileTest do
+defmodule Helix.Software.Internal.FileTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Software.Controller.File, as: FileController
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareModule
   alias Helix.Software.Repo
@@ -29,7 +29,7 @@ defmodule Helix.Software.Controller.FileTest do
   describe "creating" do
     test "succeeds with valid params" do
       params = generate_params()
-      {:ok, file} = FileController.create(params)
+      {:ok, file} = FileInternal.create(params)
 
       got = Map.take(file, Map.keys(params))
       assert params == got
@@ -39,11 +39,11 @@ defmodule Helix.Software.Controller.FileTest do
       params = generate_params()
       collision = Map.take(params, [:name, :path, :software_type, :storage_id])
 
-      {:ok, _} = FileController.create(params)
+      {:ok, _} = FileInternal.create(params)
 
       params = Map.merge(generate_params(), collision)
 
-      {:error, result} = FileController.create(params)
+      {:error, result} = FileInternal.create(params)
       assert :full_path in Keyword.keys(result.errors)
     end
   end
@@ -51,11 +51,11 @@ defmodule Helix.Software.Controller.FileTest do
   describe "fetching" do
     test "returns a record based on its identification" do
       file = Factory.insert(:file)
-      assert %File{} = FileController.fetch(file.file_id)
+      assert %File{} = FileInternal.fetch(file.file_id)
     end
 
     test "returns nil if file doesn't exist" do
-      refute FileController.fetch(Random.pk())
+      refute FileInternal.fetch(Random.pk())
     end
   end
 
@@ -64,7 +64,7 @@ defmodule Helix.Software.Controller.FileTest do
       target_storage = Factory.insert(:storage, %{files: []})
       Factory.insert_list(5, :file, storage: target_storage)
 
-      files = FileController.get_files_on_target_storage(target_storage)
+      files = FileInternal.get_files_on_target_storage(target_storage)
 
       assert 5 == Enum.count(files)
       assert Enum.all?(files, &(is_nil(&1.crypto_version)))
@@ -74,7 +74,7 @@ defmodule Helix.Software.Controller.FileTest do
       target_storage = Factory.insert(:storage, %{files: []})
       Factory.insert_list(5, :file, storage: target_storage, crypto_version: 1)
 
-      files = FileController.get_files_on_target_storage(target_storage)
+      files = FileInternal.get_files_on_target_storage(target_storage)
 
       assert 5 == Enum.count(files)
       assert Enum.all?(files, &(not is_nil(&1.crypto_version)))
@@ -88,14 +88,14 @@ defmodule Helix.Software.Controller.FileTest do
 
       # update name
       params = %{name: "some very random name"}
-      {:ok, updated} = FileController.update(file, params)
+      {:ok, updated} = FileInternal.update(file, params)
 
       refute file.name == updated.name
       assert params.name == updated.name
 
       # update path
       params = Map.take(Factory.params_for(:file), [:path])
-      {:ok, updated} = FileController.update(file, params)
+      {:ok, updated} = FileInternal.update(file, params)
 
       refute file.path == updated.path
       assert params.path == updated.path
@@ -107,7 +107,7 @@ defmodule Helix.Software.Controller.FileTest do
       file1 = Factory.insert(:file, intersection)
       params = Map.take(file0, [:path, :name])
 
-      {:error, result} =  FileController.update(file1, params)
+      {:error, result} =  FileInternal.update(file1, params)
       assert :full_path in Keyword.keys(result.errors)
     end
   end
@@ -117,10 +117,10 @@ defmodule Helix.Software.Controller.FileTest do
       path = Factory.params_for(:file).path
       origin = Factory.insert(:file)
 
-      {:ok, copy} = FileController.copy(origin, origin.storage, path)
+      {:ok, copy} = FileInternal.copy(origin, origin.storage, path)
 
-      assert FileController.fetch(origin.file_id)
-      assert FileController.fetch(copy.file_id)
+      assert FileInternal.fetch(origin.file_id)
+      assert FileInternal.fetch(copy.file_id)
       assert path == copy.path
     end
 
@@ -129,17 +129,17 @@ defmodule Helix.Software.Controller.FileTest do
       origin = Factory.insert(:file)
 
       {:ok, copy} =
-        FileController.copy(origin, storage, origin.path)
+        FileInternal.copy(origin, storage, origin.path)
 
-      assert FileController.fetch(origin.file_id)
-      assert FileController.fetch(copy.file_id)
+      assert FileInternal.fetch(origin.file_id)
+      assert FileInternal.fetch(copy.file_id)
       assert storage.storage_id == copy.storage_id
     end
 
     test "fails on path identity conflict" do
       origin = Factory.insert(:file)
 
-      {:error, result} = FileController.copy(
+      {:error, result} = FileInternal.copy(
         origin,
         origin.storage,
         origin.path)
@@ -152,7 +152,7 @@ defmodule Helix.Software.Controller.FileTest do
       file = Factory.insert(:file)
       path = Factory.params_for(:file).path
 
-      {:ok, file} = FileController.move(file, path)
+      {:ok, file} = FileInternal.move(file, path)
 
       assert path == file.path
     end
@@ -162,7 +162,7 @@ defmodule Helix.Software.Controller.FileTest do
       similarities = Map.take(file0, [:name, :storage, :software_type])
       file1 = Factory.insert(:file, similarities)
 
-      {:error, result} = FileController.move(file1, file0.path)
+      {:error, result} = FileInternal.move(file1, file0.path)
       assert :full_path in Keyword.keys(result.errors)
     end
   end
@@ -172,7 +172,7 @@ defmodule Helix.Software.Controller.FileTest do
       file = Factory.insert(:file)
       name = Factory.params_for(:file).name
 
-      {:ok, file} = FileController.rename(file, name)
+      {:ok, file} = FileInternal.rename(file, name)
 
       assert name == file.name
     end
@@ -185,7 +185,7 @@ defmodule Helix.Software.Controller.FileTest do
       # FIXME: this is thanks to how ExMachina works
       file1 = Repo.update! File.update_changeset(file1, similarities)
 
-      {:error, result} = FileController.rename(file1, file0.name)
+      {:error, result} = FileInternal.rename(file1, file0.name)
       assert :full_path in Keyword.keys(result.errors)
     end
   end
@@ -194,7 +194,7 @@ defmodule Helix.Software.Controller.FileTest do
     file = Factory.insert(:file)
     modules = generate_software_modules(file.software_type)
 
-    {:ok, file_modules} = FileController.set_modules(file, modules)
+    {:ok, file_modules} = FileInternal.set_modules(file, modules)
 
     # created modules from `modules`
     assert modules == file_modules
@@ -205,15 +205,15 @@ defmodule Helix.Software.Controller.FileTest do
       file = Factory.insert(:file)
       modules = generate_software_modules(file.software_type)
 
-      FileController.set_modules(file, modules)
+      FileInternal.set_modules(file, modules)
 
-      file_modules = FileController.get_modules(file)
+      file_modules = FileInternal.get_modules(file)
       assert modules == file_modules
     end
 
     test "returns empty map when nothing is found" do
       file = Factory.insert(:file)
-      file_modules = FileController.get_modules(file)
+      file_modules = FileInternal.get_modules(file)
 
       assert Enum.empty?(file_modules)
     end
@@ -223,37 +223,37 @@ defmodule Helix.Software.Controller.FileTest do
     test "is idempotent" do
       file = Factory.insert(:file)
 
-      assert FileController.fetch(file.file_id)
-      FileController.delete(file.file_id)
-      FileController.delete(file.file_id)
-      refute FileController.fetch(file.file_id)
+      assert FileInternal.fetch(file.file_id)
+      FileInternal.delete(file.file_id)
+      FileInternal.delete(file.file_id)
+      refute FileInternal.fetch(file.file_id)
     end
 
     test "can be done by its id" do
       file = Factory.insert(:file)
 
-      assert FileController.fetch(file.file_id)
-      FileController.delete(file.file_id)
-      refute FileController.fetch(file.file_id)
+      assert FileInternal.fetch(file.file_id)
+      FileInternal.delete(file.file_id)
+      refute FileInternal.fetch(file.file_id)
     end
 
     test "can be done by its struct" do
       file = Factory.insert(:file)
 
-      assert FileController.fetch(file.file_id)
-      FileController.delete(file.file_id)
-      refute FileController.fetch(file.file_id)
+      assert FileInternal.fetch(file.file_id)
+      FileInternal.delete(file.file_id)
+      refute FileInternal.fetch(file.file_id)
     end
 
     test "deletes every module" do
       file = Factory.insert(:file)
       software_module = generate_software_modules(file.software_type)
 
-      {:ok, _} = FileController.set_modules(file, software_module)
+      {:ok, _} = FileInternal.set_modules(file, software_module)
 
       Repo.delete(file)
 
-      file_modules = FileController.get_modules(file)
+      file_modules = FileInternal.get_modules(file)
       assert Enum.empty?(file_modules)
     end
   end

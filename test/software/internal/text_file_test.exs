@@ -1,10 +1,10 @@
-defmodule Helix.Software.Controller.TextFileTest do
+defmodule Helix.Software.Internal.TextFileTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Software.Controller.File, as: FileController
-  alias Helix.Software.Controller.TextFile, as: TextFileController
+  alias Helix.Software.Internal.File, as: FileInternal
+  alias Helix.Software.Internal.TextFile, as: TextFileInternal
   alias Helix.Software.Model.TextFile
 
   alias Helix.Software.Factory
@@ -23,27 +23,27 @@ defmodule Helix.Software.Controller.TextFileTest do
       path = generate_path()
       contents = Random.string(max: 100)
 
-      result = TextFileController.create(storage, name, path, contents)
+      result = TextFileInternal.create(storage, name, path, contents)
 
       assert {:ok, text_file} = result
-      assert FileController.fetch(text_file.file_id)
+      assert FileInternal.fetch(text_file.file_id)
     end
   end
 
   describe "fetch!/1" do
     test "succeeds by id" do
       text_file = Factory.insert(:text_file)
-      assert %TextFile{} = TextFileController.fetch!(text_file.file_id)
+      assert %TextFile{} = TextFileInternal.fetch!(text_file.file_id)
     end
 
     test "succeeds by file struct" do
       text_file = Factory.insert(:text_file)
-      assert %TextFile{} = TextFileController.fetch!(text_file.file)
+      assert %TextFile{} = TextFileInternal.fetch!(text_file.file)
     end
 
     test "raises Ecto.NoResultsError when file doesn't exists" do
       assert_raise Ecto.NoResultsError, fn ->
-        refute TextFileController.fetch!(Random.pk())
+        refute TextFileInternal.fetch!(Random.pk())
       end
     end
   end
@@ -51,7 +51,7 @@ defmodule Helix.Software.Controller.TextFileTest do
   describe "update_contents/2" do
     test "succeeds with valid input" do
       text_file = Factory.insert(:text_file)
-      result =  TextFileController.update_contents(text_file, "example text")
+      result =  TextFileInternal.update_contents(text_file, "example text")
 
       assert {:ok, %TextFile{}} = result
     end

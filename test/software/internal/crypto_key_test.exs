@@ -1,10 +1,10 @@
-defmodule Helix.Software.Controller.CryptoKeyTest do
+defmodule Helix.Software.Internal.CryptoKeyTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Software.Controller.CryptoKey, as: CryptoKeyController
-  alias Helix.Software.Controller.File, as: FileController
+  alias Helix.Software.Internal.CryptoKey, as: CryptoKeyInternal
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.CryptoKey.InvalidatedEvent
 
   alias Helix.Software.Factory
@@ -15,10 +15,10 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
       random_files = Factory.insert_list(5, :file, %{crypto_version: 1})
       server_id = Random.pk()
 
-      create_key = &CryptoKeyController.create(storage, server_id, &1)
+      create_key = &CryptoKeyInternal.create(storage, server_id, &1)
       Enum.each(random_files, create_key)
 
-      files = FileController.get_files_on_target_storage(storage)
+      files = FileInternal.get_files_on_target_storage(storage)
 
       assert 5 == Enum.count(files)
       assert Enum.all?(files, &(&1.software_type == :crypto_key))
@@ -37,10 +37,10 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
         %{storage: target_storage, crypto_version: 1})
 
       server_id = Random.pk()
-      create_key = &CryptoKeyController.create(origin_storage, server_id, &1)
+      create_key = &CryptoKeyInternal.create(origin_storage, server_id, &1)
       Enum.each(encrypted_files, create_key)
 
-      files = CryptoKeyController.get_files_targeted_on_storage(
+      files = CryptoKeyInternal.get_files_targeted_on_storage(
         origin_storage,
         target_storage)
 
@@ -53,7 +53,7 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
       target_storage = Factory.insert(:storage, %{files: []})
       Factory.insert_list(5, :file, %{storage: target_storage})
 
-      files = CryptoKeyController.get_files_targeted_on_storage(
+      files = CryptoKeyInternal.get_files_targeted_on_storage(
         origin_storage,
         target_storage)
 
@@ -66,18 +66,18 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
       storages = Factory.insert_list(3, :storage, %{files: []})
       file = Factory.insert(:file, %{crypto_version: 1})
 
-      create_key_for_file = &CryptoKeyController.create(&1, Random.pk(), file)
+      create_key_for_file = &CryptoKeyInternal.create(&1, Random.pk(), file)
       Enum.each(storages, create_key_for_file)
 
       keys_before = Enum.flat_map(
         storages,
-        &CryptoKeyController.get_on_storage/1)
+        &CryptoKeyInternal.get_on_storage/1)
 
-      CryptoKeyController.invalidate_keys_for_file(file)
+      CryptoKeyInternal.invalidate_keys_for_file(file)
 
       keys_after = Enum.flat_map(
         storages,
-        &CryptoKeyController.get_on_storage/1)
+        &CryptoKeyInternal.get_on_storage/1)
 
       refute Enum.any?(keys_before, &is_nil(&1.target_file_id))
       assert Enum.all?(keys_after, &is_nil(&1.target_file_id))
@@ -87,10 +87,10 @@ defmodule Helix.Software.Controller.CryptoKeyTest do
       storages = Factory.insert_list(3, :storage, %{files: []})
       file = Factory.insert(:file, %{crypto_version: 1})
 
-      create_key_for_file = &CryptoKeyController.create(&1, Random.pk(), file)
+      create_key_for_file = &CryptoKeyInternal.create(&1, Random.pk(), file)
       Enum.each(storages, create_key_for_file)
 
-      events = CryptoKeyController.invalidate_keys_for_file(file)
+      events = CryptoKeyInternal.invalidate_keys_for_file(file)
 
       assert 3 == Enum.count(events)
       assert Enum.all?(events, &match?(%InvalidatedEvent{}, &1))

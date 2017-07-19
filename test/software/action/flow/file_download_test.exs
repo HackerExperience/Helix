@@ -1,8 +1,8 @@
-defmodule Helix.Software.Service.Flow.FileDownloadTest do
+defmodule Helix.Software.Action.Flow.FileDownloadTest do
 
   use Helix.Test.IntegrationCase
 
-  alias Helix.Software.Service.Flow.FileDownload, warn: false
+  alias Helix.Software.Action.Flow.FileDownload, warn: false
 
   @moduletag :pending
 

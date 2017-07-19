@@ -1,10 +1,10 @@
-defmodule Helix.Software.Service.Event.DecryptorTest do
+defmodule Helix.Software.Event.DecryptorTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
   alias Helix.Event
-  alias Helix.Software.Controller.CryptoKey, as: CryptoKeyController
+  alias Helix.Software.Internal.CryptoKey, as: CryptoKeyInternal
   alias Helix.Software.Model.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent
@@ -42,7 +42,7 @@ defmodule Helix.Software.Service.Event.DecryptorTest do
 
       # Create several keys for the file
       storages_that_had_key = Factory.insert_list(5, :storage, files: [])
-      create_key = &CryptoKeyController.create(&1, Random.pk(), target_file)
+      create_key = &CryptoKeyInternal.create(&1, Random.pk(), target_file)
       old_keys =
         storages_that_had_key
         |> Enum.map(create_key)
@@ -76,7 +76,7 @@ defmodule Helix.Software.Service.Event.DecryptorTest do
       # Let's give it enough time to run
       :timer.sleep(100)
 
-      [key] = CryptoKeyController.get_on_storage(storage)
+      [key] = CryptoKeyInternal.get_on_storage(storage)
 
       assert target_file.file_id == key.target_file_id
       assert server_id == key.target_server_id
