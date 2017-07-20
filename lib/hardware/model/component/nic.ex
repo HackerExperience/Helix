@@ -2,13 +2,14 @@ defmodule Helix.Hardware.Model.Component.NIC do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias HELL.MacAddress
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.NetworkConnection
-
-  import Ecto.Changeset
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
@@ -35,7 +36,8 @@ defmodule Helix.Hardware.Model.Component.NIC do
       on_replace: :nilify
   end
 
-  @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
+  @spec create_from_spec(ComponentSpec.t) ::
+    Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: _}) do
     nic_id = PK.pk_for(:hardware_component_nic)
     component = Component.create_from_spec(cs, nic_id)
@@ -49,12 +51,13 @@ defmodule Helix.Hardware.Model.Component.NIC do
     |> put_assoc(:component, component)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec update_changeset(t | Changeset.t, %{any => any}) ::
+    Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{any => any}) ::
-    Ecto.Changeset.t
+  @spec changeset(t | Changeset.t, %{any => any}) ::
+    Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:network_connection_id])
@@ -63,7 +66,8 @@ defmodule Helix.Hardware.Model.Component.NIC do
     |> unique_constraint(:mac_address)
   end
 
-  @spec validate_spec(%{:link => non_neg_integer, optional(any) => any}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:link => non_neg_integer, optional(any) => any}) ::
+    Changeset.t
   @doc false
   def validate_spec(params) do
     data = %{
@@ -81,18 +85,23 @@ defmodule Helix.Hardware.Model.Component.NIC do
 
   defmodule Query do
 
-    alias Helix.Hardware.Model.Component.NIC
-
     import Ecto.Query, only: [join: 4, preload: 3, where: 3]
 
-    @spec from_component_ids([HELL.PK.t]) :: Ecto.Queryable.t
-    @spec from_component_ids(Ecto.Queryable.t, [HELL.PK.t]) :: Ecto.Queryable.t
-    def from_component_ids(query \\ NIC, component_ids) do
-      where(query, [n], n.nic_id in ^component_ids)
-    end
+    alias Ecto.Queryable
+    alias Helix.Hardware.Model.Component
+    alias Helix.Hardware.Model.Component.NIC
+
+
+    @spec from_component_ids([Component.id]) ::
+      Queryable.t
+    @spec from_component_ids(Queryable.t, [Component.id]) ::
+      Queryable.t
+    def from_component_ids(query \\ NIC, component_ids),
+      do: where(query, [n], n.nic_id in ^component_ids)
 
     # REVIEW: rename this ?
-    @spec inner_join_network_connection(Ecto.Queryable.t) :: Ecto.Queryable.t
+    @spec inner_join_network_connection(Queryable.t) ::
+      Queryable.t
     def inner_join_network_connection(query \\ NIC) do
       query
       |> join(:inner, [n], nc in assoc(n, :network_connection))

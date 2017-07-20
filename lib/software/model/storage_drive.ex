@@ -2,20 +2,23 @@ defmodule Helix.Software.Model.StorageDrive do
 
   use Ecto.Schema
 
-  alias HELL.PK
-  alias Helix.Software.Model.Storage
-
   import Ecto.Changeset
 
+  alias Ecto.Changeset
+  alias HELL.PK
+  alias Helix.Hardware.Model.Component
+  alias Helix.Software.Model.Storage
+
+
   @type t :: %__MODULE__{
-    storage_id: PK.t,
+    storage_id: Storage.id,
     storage: Storage.t,
-    drive_id: PK.t
+    drive_id: Component.id
   }
 
   @type creation_params :: %{
-    storage_id: PK.t,
-    drive_id: PK.t
+    storage_id: Storage.id,
+    drive_id: Component.id
   }
 
   @creation_fields ~w/storage_id drive_id/a
@@ -34,7 +37,8 @@ defmodule Helix.Software.Model.StorageDrive do
       define_field: false
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -44,20 +48,23 @@ defmodule Helix.Software.Model.StorageDrive do
 
   defmodule Query do
 
-    alias HELL.PK
+    import Ecto.Query, only: [where: 3]
+
+    alias Ecto.Queryable
+    alias Helix.Hardware.Model.Component
     alias Helix.Software.Model.Storage
     alias Helix.Software.Model.StorageDrive
 
-    import Ecto.Query, only: [where: 3]
-
-    @spec from_storage(Ecto.Queryable.t, Storage.t | PK.t) :: Ecto.Queryable.t
+    @spec from_storage(Queryable.t, Storage.t | Storage.id) ::
+      Queryable.t
     def from_storage(query \\ StorageDrive, storage_or_storage_id)
     def from_storage(query, storage = %Storage{}),
       do: from_storage(query, storage.storage_id)
     def from_storage(query, storage_id),
       do: where(query, [sd], sd.storage_id == ^storage_id)
 
-    @spec by_drive_id(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
+    @spec by_drive_id(Queryable.t, Component.id) ::
+      Queryable.t
     def by_drive_id(query \\ StorageDrive, drive_id),
       do: where(query, [sd], sd.drive_id == ^drive_id)
   end

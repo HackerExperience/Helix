@@ -2,17 +2,17 @@ defmodule Helix.Hardware.Model.Motherboard do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.MotherboardSlot
 
-  import Ecto.Changeset
-
   @behaviour Helix.Hardware.Model.ComponentSpec
 
   @type id :: PK.t
-
   @type t :: %__MODULE__{
     motherboard_id: id,
     slots: [MotherboardSlot.t],
@@ -70,7 +70,8 @@ defmodule Helix.Hardware.Model.Motherboard do
     |> put_assoc(:component, component)
   end
 
-  @spec validate_spec(%{:slots => %{String.t => map}, optional(any) => any}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:slots => %{String.t => map}, optional(any) => any}) ::
+    Changeset.t
   @doc false
   def validate_spec(params) do
     slot_data = %{
@@ -142,12 +143,11 @@ defmodule Helix.Hardware.Model.Motherboard do
 
   defmodule Query do
 
-    alias Helix.Hardware.Model.Motherboard
-
     import Ecto.Query, only: [where: 3]
 
-    def by_id(query \\ Motherboard, motherboard_id) do
-      where(query, [m], m.motherboard_id == ^motherboard_id)
-    end
+    alias Helix.Hardware.Model.Motherboard
+
+    def by_id(query \\ Motherboard, motherboard_id),
+      do: where(query, [m], m.motherboard_id == ^motherboard_id)
   end
 end

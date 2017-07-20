@@ -2,18 +2,19 @@ defmodule Helix.Account.Model.Account do
 
   use Ecto.Schema
 
-  alias HELL.PK
-  alias Comeonin.Bcrypt
-
   import Ecto.Changeset
   import HELL.MacroHelpers
+
+  alias Comeonin.Bcrypt
+  alias Ecto.Changeset
+  alias HELL.PK
 
   @type id :: PK.t
   @type email :: String.t
   @type username :: String.t
   @type password :: String.t
   @type t :: %__MODULE__{
-    account_id: PK.t,
+    account_id: id,
     email: email,
     username: username,
     display_name: String.t,
@@ -53,7 +54,8 @@ defmodule Helix.Account.Model.Account do
     timestamps()
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -61,7 +63,8 @@ defmodule Helix.Account.Model.Account do
     |> prepare_changes()
   end
 
-  @spec update_changeset(t, update_params) :: Ecto.Changeset.t
+  @spec update_changeset(t | Changeset.t, update_params) ::
+    Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
@@ -69,7 +72,8 @@ defmodule Helix.Account.Model.Account do
     |> prepare_changes()
   end
 
-  @spec check_password(t, password) :: boolean
+  @spec check_password(t, password) ::
+    boolean
   @doc """
   Checks if `pass` matches with `account`'s password
 
@@ -87,7 +91,8 @@ defmodule Helix.Account.Model.Account do
   def check_password(account = %__MODULE__{}, pass),
     do: Bcrypt.checkpw(pass, account.password)
 
-  @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec generic_validations(Changeset.t) ::
+    Changeset.t
   defp generic_validations(changeset) do
     changeset
     |> validate_required([:email, :username, :password])
@@ -98,7 +103,8 @@ defmodule Helix.Account.Model.Account do
     |> unique_constraint(:username)
   end
 
-  @spec prepare_changes(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec prepare_changes(Changeset.t) ::
+    Changeset.t
   defp prepare_changes(changeset) do
     changeset
     |> put_display_name()
@@ -107,7 +113,8 @@ defmodule Helix.Account.Model.Account do
     |> update_change(:password, &Bcrypt.hashpwsalt/1)
   end
 
-  @spec put_display_name(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec put_display_name(Changeset.t) ::
+    Changeset.t
   defp put_display_name(changeset) do
     case fetch_change(changeset, :username) do
       {:ok, username} ->
@@ -117,7 +124,9 @@ defmodule Helix.Account.Model.Account do
     end
   end
 
-  @spec validate_email(:email, String.t) :: [] | [email: String.t]
+  @spec validate_email(:email, email) ::
+    []
+    | [email: String.t]
   docp """
   Validates that the email is a valid email address
 
@@ -130,7 +139,9 @@ defmodule Helix.Account.Model.Account do
     || [email: "has invalid format"]
   end
 
-  @spec validate_username(:username, String.t) :: [] | [username: String.t]
+  @spec validate_username(:username, username) ::
+    []
+    | [username: String.t]
   docp """
   Validates that the username contains just alphanumeric and `!?$%-_.`
   characters.
@@ -144,25 +155,32 @@ defmodule Helix.Account.Model.Account do
 
   defmodule Query do
 
-    alias Helix.Account.Model.Account
-
     import Ecto.Query, only: [where: 3]
 
-    @spec by_id(Account.id) :: Ecto.Queryable.t
-    @spec by_id(Ecto.Queryable.t, Account.id) :: Ecto.Queryable.t
+    alias Ecto.Queryable
+    alias Helix.Account.Model.Account
+
+    @spec by_id(Account.id) ::
+      Queryable.t
+    @spec by_id(Queryable.t, Account.id) ::
+      Queryable.t
     def by_id(query \\ Account, account_id),
       do: where(query, [a], a.account_id == ^account_id)
 
-    @spec by_email(Account.email) :: Ecto.Queryable.t
-    @spec by_email(Ecto.Queryable.t, Account.email) :: Ecto.Queryable.t
+    @spec by_email(Account.email) ::
+      Queryable.t
+    @spec by_email(Queryable.t, Account.email) ::
+      Queryable.t
     def by_email(query \\ Account, email) do
       email = String.downcase(email)
 
       where(query, [a], a.email == ^email)
     end
 
-    @spec by_username(Account.username) :: Ecto.Queryable.t
-    @spec by_username(Ecto.Queryable.t, Account.username) :: Ecto.Queryable.t
+    @spec by_username(Account.username) ::
+      Queryable.t
+    @spec by_username(Queryable.t, Account.username) ::
+      Queryable.t
     def by_username(query \\ Account, username) do
       username = String.downcase(username)
 

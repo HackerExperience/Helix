@@ -46,13 +46,14 @@ defmodule HELL.PK.Header do
       [0x0030, 0x0001, 0x0000]
   }
 
-  @spec pk_for(module) :: HELL.PK.t
+  @spec pk_for(atom) ::
+    HELL.PK.t
   @doc """
-  Generates a PK for given module with a proper header, raises
-  `FunctionClauseError` when no header is available for the module.
+  Generates a PK for given atom with a proper header, raises
+  `FunctionClauseError` when no header is available for the atom.
   """
-  for {module, header} <- @mappings do
-    def pk_for(unquote(module)),
+  for {atom, header} <- @mappings do
+    def pk_for(unquote(atom)),
       do: HELL.IPv6.generate(unquote(header))
   end
 end

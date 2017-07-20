@@ -2,7 +2,7 @@ defmodule Helix.Websocket.SocketTest do
 
   use Helix.Test.IntegrationCase
 
-  alias Helix.Account.Controller.Session
+  alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Websocket.Socket
 
   alias Helix.Account.Factory, as: AccountFactory
@@ -17,7 +17,7 @@ defmodule Helix.Websocket.SocketTest do
 
   test "socket is connectable only with valid token" do
     account = AccountFactory.insert(:account)
-    token = Session.generate_token(account)
+    token = SessionAction.generate_token(account)
 
     assert {:ok, _} = connect(Socket, %{"token" => token})
   end

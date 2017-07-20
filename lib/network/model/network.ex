@@ -4,6 +4,7 @@ defmodule Helix.Network.Model.Network do
 
   alias HELL.PK
 
+  @type id :: PK.t
   @type t :: %__MODULE__{}
 
   @primary_key false

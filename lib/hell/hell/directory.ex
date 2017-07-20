@@ -46,7 +46,8 @@ defmodule HELL.Directory do
   def dump(_),
     do: :error
 
-  @spec convert_to_ltree(path) :: t
+  @spec convert_to_ltree(path) ::
+    t
   defp convert_to_ltree(""),
     do: represent_path("")
   defp convert_to_ltree("/"),
@@ -54,7 +55,8 @@ defmodule HELL.Directory do
   defp convert_to_ltree(path) when is_binary(path),
     do: convert_to_ltree(path, "", "")
 
-  @spec convert_to_ltree(path, path, directory) :: t
+  @spec convert_to_ltree(path, path, directory) ::
+    t
   defp convert_to_ltree("/", acc, cwd),
     do: represent_path(merge_cwd(acc, cwd))
   defp convert_to_ltree("", acc, cwd),
@@ -64,17 +66,20 @@ defmodule HELL.Directory do
   defp convert_to_ltree(<<char::utf8, rest::binary>>, acc, cwd),
     do: convert_to_ltree(rest, acc, cwd <> <<char::utf8>>)
 
-  @spec merge_cwd(path, directory) :: path
+  @spec merge_cwd(path, directory) ::
+    path
   defp merge_cwd("", cwd),
     do: cwd_to_label(cwd)
   defp merge_cwd(acc, cwd),
     do: acc <> "." <> cwd_to_label(cwd)
 
-  @spec cwd_to_label(directory) :: label
+  @spec cwd_to_label(directory) ::
+    label
   defp cwd_to_label(cwd),
     do: Base.encode32(cwd, padding: false)
 
-  @spec represent_path(path) :: t
+  @spec represent_path(path) ::
+    t
   defp represent_path(path),
     do: %__MODULE__{path: path}
 end

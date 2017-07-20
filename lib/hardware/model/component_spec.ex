@@ -2,13 +2,14 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.Constant
   alias Helix.Hardware.Model.ComponentType
 
-  import Ecto.Changeset
-
-  @type t :: %__MODULE__{
-  }
+  @type id :: String.t
+  @type t :: %__MODULE__{}
 
   @type spec :: %{
     :spec_code => String.t,
@@ -61,7 +62,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
   def valid_spec_types,
     do: @valid_spec_types
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> change()
@@ -69,11 +71,13 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     |> validate_required([:component_type, :spec, :spec_id])
   end
 
-  @spec create_from_spec(spec) :: Ecto.Changeset.t
+  @spec create_from_spec(spec) ::
+    Changeset.t
   def create_from_spec(spec),
     do: create_changeset(%{spec: spec})
 
-  @spec cast_and_validate_spec(Ecto.Changeset.t, %{spec: spec}) :: Ecto.Changeset.t
+  @spec cast_and_validate_spec(Changeset.t, %{spec: spec}) ::
+    Changeset.t
   defp cast_and_validate_spec(changeset, params) do
     spec = Map.get(params, :spec, %{})
 
@@ -93,7 +97,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     |> add_errors_if_spec_changeset_invalid(base_cs, impl_cs)
   end
 
-  @spec prevalidate_spec(spec) :: Ecto.Changeset.t
+  @spec prevalidate_spec(spec) ::
+    Changeset.t
   defp prevalidate_spec(params) do
     data = %{
       spec_code: nil,
@@ -114,7 +119,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     |> validate_length(:name, min: 3, max: 64)
   end
 
-  @spec validate_spec_by_type(Ecto.Changeset.t, map) :: Ecto.Changeset.t
+  @spec validate_spec_by_type(Changeset.t, map) ::
+    Changeset.t
   defp validate_spec_by_type(base_changeset, params) do
     spec_type = get_change(base_changeset, :spec_type)
     implementation = Map.get(@spec_type_implementation, spec_type)
@@ -128,7 +134,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     end
   end
 
-  @spec add_errors_if_spec_changeset_invalid(Ecto.Changeset.t, Ecto.Changeset.t, Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec add_errors_if_spec_changeset_invalid(Changeset.t, Changeset.t, Changeset.t) ::
+    Changeset.t
   defp add_errors_if_spec_changeset_invalid(changeset, %{valid?: true}, %{valid?: true}),
     do: changeset
   defp add_errors_if_spec_changeset_invalid(changeset, cs0, cs1),
@@ -136,16 +143,19 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
   defmodule Query do
 
-    alias Helix.Hardware.Model.ComponentSpec
-
     import Ecto.Query, only: [where: 3]
 
-    @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_id(query \\ ComponentSpec, spec_id) do
-      where(query, [s], s.spec_id == ^spec_id)
-    end
+    alias Ecto.Queryable
+    alias HELL.Constant
+    alias Helix.Hardware.Model.ComponentSpec
 
-    @spec by_component_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    @spec by_id(Queryable.t, ComponentSpec.id) ::
+      Queryable.t
+    def by_id(query \\ ComponentSpec, spec_id),
+      do: where(query, [s], s.spec_id == ^spec_id)
+
+    @spec by_component_type(Queryable.t, Constant.t) ::
+      Queryable.t
     def by_component_type(query \\ ComponentSpec, component_type),
       do: where(query, [cs], cs.component_type == ^component_type)
   end

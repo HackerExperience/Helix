@@ -3,7 +3,7 @@ defmodule Helix.Account.Websocket.RoutesTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Websocket.Socket
-  alias Helix.Account.Service.API.Session
+  alias Helix.Account.Action.Session, as: SessionAction
 
   alias Helix.Account.Factory
 
@@ -13,7 +13,7 @@ defmodule Helix.Account.Websocket.RoutesTest do
 
   setup do
     account = Factory.insert(:account)
-    token = Session.generate_token(account)
+    token = SessionAction.generate_token(account)
     {:ok, socket} = connect(Socket, %{token: token})
     {:ok, _, socket} = join(socket, "requests")
 

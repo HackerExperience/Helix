@@ -1,15 +1,16 @@
 defmodule Helix.Software.Public.View.File do
 
+  alias HELL.Constant
   alias Helix.Software.Model.File
 
   @spec render(File.t) ::
     %{
-      file_id: HELL.PK.t,
+      file_id: File.id,
       path: String.t,
       size: non_neg_integer,
-      software_type: String.t,
-      inserted_at: DateTime.t,
-      updated_at: DateTime.t,
+      software_type: Constant.t,
+      inserted_at: DateTime.t | NaiveDateTime.t,
+      updated_at: DateTime.t | NaiveDateTime.t,
       meta: map,
       modules: map
     }

@@ -44,7 +44,7 @@ defmodule Software.LogDeleter.ProcessType do
       do: state_change(data, process, :running, :complete)
   end
 
-  defimpl Helix.Process.Public.ProcessView do
+  defimpl Helix.Process.API.ProcessView do
 
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.Resources

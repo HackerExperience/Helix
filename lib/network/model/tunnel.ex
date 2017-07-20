@@ -2,13 +2,14 @@ defmodule Helix.Network.Model.Tunnel do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias HELL.PK
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Link
   alias Helix.Network.Model.Network
 
-  import Ecto.Changeset
-
+  @type id :: PK.t
   @type t :: %__MODULE__{}
 
   @primary_key false
@@ -50,10 +51,9 @@ defmodule Helix.Network.Model.Tunnel do
     |> hash(bounces)
   end
 
-  def hash_bounces(bounces) do
-    # TODO: Use something like murmur
-    Enum.join(bounces, "_")
-  end
+  # TODO: Use something like murmur
+  def hash_bounces(bounces),
+    do: Enum.join(bounces, "_")
 
   # TODO: Refactor this ?
   defp bounce(changeset, [gateway| bounces]) do
@@ -77,16 +77,15 @@ defmodule Helix.Network.Model.Tunnel do
     end
   end
 
-  defp hash(changeset, bounces) do
-    put_change(changeset, :hash, hash_bounces(bounces))
-  end
+  defp hash(changeset, bounces),
+    do: put_change(changeset, :hash, hash_bounces(bounces))
 
   defmodule Query do
 
+    import Ecto.Query
+
     alias Helix.Network.Model.Network
     alias Helix.Network.Model.Tunnel
-
-    import Ecto.Query
 
     def by_id(query \\ Tunnel, id),
       do: where(query, [t], t.tunnel_id == ^id)

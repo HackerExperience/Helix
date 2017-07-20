@@ -2,9 +2,9 @@ defmodule Helix.HTTP.Router do
 
   use Phoenix.Router
 
-  alias Helix.Account.HTTP.Controller, as: Account
-
   import Phoenix.Controller
+
+  alias Helix.Account.HTTP.Controller, as: Account
 
   pipeline :api do
     plug :accepts, ["json"]

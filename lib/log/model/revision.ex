@@ -6,15 +6,18 @@ defmodule Helix.Log.Model.Revision do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
+  alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
 
-  import Ecto.Changeset
 
   @type t :: %__MODULE__{}
 
   @type creation_params :: %{
-    :entity_id => PK.t,
+    :entity_id => Entity.id,
     :message => String.t,
     optional(:forge_version) => pos_integer | nil,
     optional(any) => any
@@ -42,8 +45,8 @@ defmodule Helix.Log.Model.Revision do
     timestamps(type: :utc_datetime, updated_at: false)
   end
 
-  @spec create(Log.t, PK.t, String.t, pos_integer | nil) ::
-    Ecto.Changeset.t
+  @spec create(Log.t, Entity.id, String.t, pos_integer | nil) ::
+    Changeset.t
   def create(log, entity, message, forge \\ nil) do
     params = %{
       entity_id: entity,
@@ -59,8 +62,8 @@ defmodule Helix.Log.Model.Revision do
     put_assoc(changeset, :log, log)
   end
 
-  @spec changeset(t | Ecto.Changeset.t, creation_params) ::
-    Ecto.Changeset.t
+  @spec changeset(t | Changeset.t, creation_params) ::
+    Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, @creation_fields)
@@ -70,14 +73,13 @@ defmodule Helix.Log.Model.Revision do
 
   defmodule Query do
 
+    import Ecto.Query
+
     alias Ecto.Queryable
-    alias HELL.PK
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.Revision
 
-    import Ecto.Query
-
-    @spec from_log(Queryable.t, Log.t | PK.t) ::
+    @spec from_log(Queryable.t, Log.t | Log.id) ::
       Queryable.t
     def from_log(query \\ Revision, log_or_id)
     def from_log(query, %Log{log_id: id}),

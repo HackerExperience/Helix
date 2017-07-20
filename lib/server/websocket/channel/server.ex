@@ -6,26 +6,26 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   use Phoenix.Channel
 
-  alias Helix.Entity.Service.API.Entity, as: EntityAPI
-  alias Helix.Hardware.Service.API.Component, as: ComponentAPI
-  alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Hardware.Query.Component, as: ComponentQuery
+  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Log.Model.Log.LogCreatedEvent
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
-  alias Helix.Log.Service.API.Log, as: LogAPI
-  alias Helix.Network.Controller.Tunnel, as: TunnelController
+  alias Helix.Log.Query.Log, as: LogQuery
+  alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo, as: NetworkRepo
-  alias Helix.Network.Service.API.Tunnel, as: TunnelAPI
-  alias Helix.Process.Public.ProcessView
-  alias Helix.Process.Service.API.Process, as: ProcessAPI
-  alias Helix.Software.Controller.Storage, as: StorageController
-  alias Helix.Software.Service.API.File, as: FileAPI
-  alias Helix.Software.Service.Flow.FileDownload
-  alias Helix.Software.Service.Flow.LogDeleter
-  alias Helix.Software.Public.View.File, as: FileView
-  alias Helix.Server.Service.API.Server, as: ServerAPI
-  alias Helix.Server.Service.Henforcer.Server, as: Henforcer
+  alias Helix.Process.API.ProcessView
+  alias Helix.Process.Query.Process, as: ProcessQuery
+  alias Helix.Software.Query.Storage, as: StorageQuery
+  alias Helix.Software.Query.File, as: FileQuery
+  alias Helix.Software.Action.Flow.FileDownload, as: FileDownloadFlow
+  alias Helix.Software.Action.Flow.LogDeleter, as: LogDeleterFlow
+  alias Helix.Software.API.View.File, as: FileView
+  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
 
   # Events
   alias Helix.Process.Model.Process.ProcessCreatedEvent
@@ -49,20 +49,21 @@ defmodule Helix.Server.Websocket.Channel.Server do
     # check them but at that time we'll have a better interface, HEnforcer and
     # proper APIs
     with \
-      true <- Henforcer.server_exists?(server_id) || {:error, :not_found},
-      true <- Henforcer.server_exists?(gateway) || {:error, :not_found},
-      true <- Henforcer.functioning?(server_id) || {:error, :not_assembled},
-      true <- Henforcer.functioning?(gateway) || {:error, :not_assembled},
-      owner = EntityAPI.fetch_server_owner(gateway),
-      account_id = EntityAPI.get_entity_id(socket.assigns.account),
-      owner_id = EntityAPI.get_entity_id(owner),
+      true <- ServerHenforcer.server_exists?(server_id) || {:error, :not_found},
+      true <- ServerHenforcer.server_exists?(gateway) || {:error, :not_found},
+      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
+      true <- ServerHenforcer.functioning?(gateway) || {:error, :not_assembled},
+      owner = EntityQuery.fetch_server_owner(gateway),
+      account_id = EntityQuery.get_entity_id(socket.assigns.account),
+      owner_id = EntityQuery.get_entity_id(owner),
       true <- owner_id == account_id || {:error, :not_owner},
 
-      destination = %{} <- ServerAPI.fetch(server_id),
+      destination = %{} <- ServerQuery.fetch(server_id),
       true <- password == destination.password || {:error, :password},
 
+      # FIXME: Using other Repo directly, nono
       network = NetworkRepo.get(Network, "::"),
-      {:ok, connection, events} <- TunnelAPI.connect(
+      {:ok, connection, events} <- TunnelAction.connect(
         network,
         gateway,
         server_id,
@@ -96,26 +97,26 @@ defmodule Helix.Server.Websocket.Channel.Server do
   def join("server:" <> server_id, %{"gateway_id" => gateway}, socket) do
     # FIXME: this doesn't belongs here
     get_tunnel_for_ssh = fn ->
-      connections_between = TunnelController.connections_on_tunnels_between(
+      connections_between = TunnelQuery.connections_on_tunnels_between(
         gateway,
         server_id)
 
       case Enum.find(connections_between, &(&1.connection_type == "ssh")) do
         connection = %{} ->
-          {:ok, TunnelController.fetch(connection.tunnel_id)}
+          {:ok, TunnelQuery.fetch(connection.tunnel_id)}
         _ ->
           {:error, :not_connected}
       end
     end
 
     with \
-      true <- Henforcer.server_exists?(server_id) || {:error, :not_found},
-      true <- Henforcer.server_exists?(gateway) || {:error, :not_found},
-      true <- Henforcer.functioning?(server_id) || {:error, :not_assembled},
-      true <- Henforcer.functioning?(gateway) || {:error, :not_assembled},
-      owner = EntityAPI.fetch_server_owner(gateway),
-      account_id = EntityAPI.get_entity_id(socket.assigns.account),
-      owner_id = EntityAPI.get_entity_id(owner),
+      true <- ServerHenforcer.server_exists?(server_id) || {:error, :not_found},
+      true <- ServerHenforcer.server_exists?(gateway) || {:error, :not_found},
+      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
+      true <- ServerHenforcer.functioning?(gateway) || {:error, :not_assembled},
+      owner = EntityQuery.fetch_server_owner(gateway),
+      account_id = EntityQuery.get_entity_id(socket.assigns.account),
+      owner_id = EntityQuery.get_entity_id(owner),
       true <- owner_id == account_id || {:error, :not_owner},
       {:ok, tunnel} <- get_tunnel_for_ssh.()
     do
@@ -143,12 +144,12 @@ defmodule Helix.Server.Websocket.Channel.Server do
   # Connecting to player's own gateways
   def join("server:" <> server_id, _, socket) do
     with \
-      true <- Henforcer.server_exists?(server_id) || {:error, :not_found},
-      true <- Henforcer.functioning?(server_id) || {:error, :not_assembled},
-      owner = EntityAPI.fetch_server_owner(server_id),
+      true <- ServerHenforcer.server_exists?(server_id) || {:error, :not_found},
+      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
+      owner = EntityQuery.fetch_server_owner(server_id),
       account = socket.assigns.account,
-      owner_id = EntityAPI.get_entity_id(owner),
-      account_id = EntityAPI.get_entity_id(account),
+      owner_id = EntityQuery.get_entity_id(owner),
+      account_id = EntityQuery.get_entity_id(account),
       true <- owner_id == account_id || {:error, :not_owner}
     do
       socket = assign(
@@ -171,10 +172,10 @@ defmodule Helix.Server.Websocket.Channel.Server do
   def handle_in("file.index", _, socket) do
     files =
       socket.assigns.servers.destination
-      |> ServerAPI.fetch()
+      |> ServerQuery.fetch()
       |> storages_on_server()
       # Returns a map %{path => [files]}
-      |> Enum.map(&FileAPI.storage_contents/1)
+      |> Enum.map(&FileQuery.storage_contents/1)
       |> Enum.reduce(%{}, fn el, acc ->
         # Merge the maps, so %{"foo" => [1]} and %{"foo" => [2]} becomes
         # %{"foo" => [1, 2]}
@@ -194,7 +195,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   def handle_in("log.index", _message, socket) do
     server_id = socket.assigns.servers.destination
 
-    logs = LogAPI.get_logs_on_server(server_id)
+    logs = LogQuery.get_logs_on_server(server_id)
 
     # HACK: FIXME: This belongs to a viewable protocol. We're doing it as it
     #   is now so it works before we do the real work (?)
@@ -211,8 +212,8 @@ defmodule Helix.Server.Websocket.Channel.Server do
     network_id = "::"
 
     with \
-      %{server_id: ^target_id} <- LogAPI.fetch(log),
-      {:ok, _} <- LogDeleter.start_process(gateway_id, network_id, log)
+      %{server_id: ^target_id} <- LogQuery.fetch(log),
+      {:ok, _} <- LogDeleterFlow.start_process(gateway_id, network_id, log)
     do
       {:reply, :ok, socket}
     else
@@ -223,12 +224,12 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   def handle_in("process.index", _message, socket) do
     server = socket.assigns.servers.destination
-    processes_on_server = ProcessAPI.get_processes_on_server(server)
+    processes_on_server = ProcessQuery.get_processes_on_server(server)
 
-    processes_targeting_server = ProcessAPI.get_processes_targeting_server(
+    processes_targeting_server = ProcessQuery.get_processes_targeting_server(
       server)
 
-    entity = EntityAPI.get_entity_id(socket.assigns.account)
+    entity = EntityQuery.get_entity_id(socket.assigns.account)
     processes_on_server = Enum.map(processes_on_server, fn process ->
       ProcessView.render(process.process_data, process, server, entity)
     end)
@@ -251,25 +252,25 @@ defmodule Helix.Server.Websocket.Channel.Server do
     # This won't be necessary as soon as we have a cache server->storages
     destination_storage_ids =
       socket.assigns.servers.destination
-      |> ServerAPI.fetch()
+      |> ServerQuery.fetch()
       |> storages_on_server()
       |> Enum.map(&(&1.storage_id))
 
     # FIXME
     gateway_storage =
       socket.assigns.servers.gateway
-      |> ServerAPI.fetch()
+      |> ServerQuery.fetch()
       |> storages_on_server()
       |> Enum.random()
 
     tunnel = socket.assigns.tunnel
 
     start_download = fn file ->
-      FileDownload.start_download_process(file, gateway_storage, tunnel)
+      FileDownloadFlow.start_download_process(file, gateway_storage, tunnel)
     end
 
     with \
-      file = %{} <- FileAPI.fetch(file),
+      file = %{} <- FileQuery.fetch(file),
       true <- file.storage_id in destination_storage_ids,
       {:ok, _process} <- start_download.(file)
     do
@@ -284,16 +285,16 @@ defmodule Helix.Server.Websocket.Channel.Server do
     [struct]
   defp storages_on_server(server) do
     server.motherboard_id
-    |> ComponentAPI.fetch()
-    |> MotherboardAPI.fetch!()
-    |> MotherboardAPI.get_slots()
+    |> ComponentQuery.fetch()
+    |> MotherboardQuery.fetch!()
+    |> MotherboardQuery.get_slots()
     # TODO: Delegate this to a function on Motherboard API
     # Gets hdds linked to the motherboard
     |> Enum.filter_map(
       &(&1.link_component_type == :hdd && &1.link_component_id),
       &(&1.link_component_id))
     # FIXME: This belongs to an API function that facades this boring shit
-    |> Enum.map(&StorageController.get_storage_from_hdd/1)
+    |> Enum.map(&StorageQuery.get_storage_from_hdd/1)
     |> Enum.reject(&is_nil/1)
     |> Enum.uniq()
   end

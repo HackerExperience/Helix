@@ -1,11 +1,12 @@
 defmodule HELL.PK do
 
-  @type t :: String.t
-
   @behaviour Ecto.Type
 
-  @spec pk_for(module) :: t
-  defdelegate pk_for(module),
+  @type t :: String.t
+
+  @spec pk_for(atom) ::
+    t
+  defdelegate pk_for(atom),
     to: HELL.PK.Header
 
   def type,
@@ -38,7 +39,9 @@ defmodule HELL.PK do
   def dump(_),
     do: :error
 
-  @spec parse_address(String.t) :: {:ok, Postgrex.INET.t} | :error
+  @spec parse_address(t) ::
+    {:ok, Postgrex.INET.t}
+    | :error
   defp parse_address(string) when is_binary(string) do
     string
     |> String.to_char_list()

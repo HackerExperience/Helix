@@ -2,7 +2,7 @@ defmodule Helix.Websocket.Socket do
 
   use Phoenix.Socket
 
-  alias Helix.Account.Service.API.Session
+  alias Helix.Account.Action.Session, as: SessionAction
 
   transport :websocket, Phoenix.Transports.WebSocket
 
@@ -11,7 +11,7 @@ defmodule Helix.Websocket.Socket do
   channel "server:*", Helix.Server.Websocket.Channel.Server
 
   def connect(%{"token" => token}, socket) do
-    case Session.validate_token(token) do
+    case SessionAction.validate_token(token) do
       {:ok, account, session} ->
         socket =
           socket

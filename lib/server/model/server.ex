@@ -2,11 +2,11 @@ defmodule Helix.Server.Model.Server do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias HELL.PK
   alias HELL.Constant
   alias Helix.Server.Model.ServerType
-
-  import Ecto.Changeset
 
   @type id :: PK.t
   @type t :: %__MODULE__{

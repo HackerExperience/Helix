@@ -2,13 +2,14 @@ defmodule Helix.Entity.Model.Entity do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias HELL.Constant
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Model.EntityType
-
-  import Ecto.Changeset
 
   @type id :: PK.t
   @type t :: %__MODULE__{
@@ -44,7 +45,8 @@ defmodule Helix.Entity.Model.Entity do
     timestamps()
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

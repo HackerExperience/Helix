@@ -5,12 +5,11 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   use Phoenix.Channel
 
-  alias Helix.Hardware.Controller.Motherboard, as: MotherboardController
-  alias Helix.Hardware.Service.API.Component, as: ComponentAPI
-  alias Helix.Hardware.Service.API.Motherboard, as: MotherboardAPI
-  alias Helix.Server.Service.API.Server, as: ServerAPI
-  alias Helix.Entity.Service.API.HackDatabase
-  alias Helix.Entity.Service.API.Entity
+  alias Helix.Hardware.Query.Component, as: ComponentQuery
+  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Entity.Query.Database, as: DatabaseQuery
+  alias Helix.Entity.Query.Entity, as: EntityQuery
 
   def join("account:" <> account_id, _message, socket) do
     # TODO: Provide a cleaner way to check this
@@ -23,31 +22,31 @@ defmodule Helix.Account.Websocket.Channel.Account do
     end
   end
 
-  def handle_in("hack_database.index", _message, socket) do
-    hack_database =
+  def handle_in("database.index", _message, socket) do
+    database =
       socket.assigns.account.account_id
-      |> Entity.get_entity_id()
-      |> Entity.fetch()
-      |> HackDatabase.get_database()
+      |> EntityQuery.get_entity_id()
+      |> EntityQuery.fetch()
+      |> DatabaseQuery.get_database()
 
-    {:reply, {:ok, %{data: %{entries: hack_database}}}, socket}
+    {:reply, {:ok, %{data: %{entries: database}}}, socket}
   end
 
   # TODO: Fetch server's IPs
   def handle_in("server.index", _message, socket) do
     servers =
       socket.assigns.account
-      |> Entity.get_entity_id()
-      |> Entity.fetch()
-      |> Entity.get_servers_from_entity()
-      |> Enum.map(&ServerAPI.fetch/1)
+      |> EntityQuery.get_entity_id()
+      |> EntityQuery.fetch()
+      |> EntityQuery.get_servers_from_entity()
+      |> Enum.map(&ServerQuery.fetch/1)
       |> Enum.map(fn
         server = %{motherboard_id: motherboard} when not is_nil(motherboard) ->
           motherboard =
             server.motherboard_id
-            |> ComponentAPI.fetch()
-            |> MotherboardAPI.fetch!()
-            |> MotherboardAPI.preload_components()
+            |> ComponentQuery.fetch()
+            |> MotherboardQuery.fetch!()
+            |> MotherboardQuery.preload_components()
 
           {server, motherboard}
         server ->
@@ -75,7 +74,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
       password: server.password,
       hardware: %{
         # FIXME: This is querying the db again for the components
-        resources: MotherboardController.resources(motherboard),
+        resources: MotherboardQuery.resources(motherboard),
         components: render_components(motherboard)
       },
       ips: []

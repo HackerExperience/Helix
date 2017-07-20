@@ -2,22 +2,23 @@ defmodule Helix.Software.Model.FileModule do
 
   use Ecto.Schema
 
-  alias HELL.PK
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.Constant
+  alias HELL.PK
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareModule
-
-  import Ecto.Changeset
 
   @type t :: %__MODULE__{
     module_version: pos_integer,
     file: File.t,
-    file_id: PK.t,
+    file_id: File.id,
     software_module: Constant.t
   }
 
   @type creation_params :: %{
-    file_id: PK.t,
+    file_id: File.id,
     software_module: Constant.t,
     module_version: pos_integer
   }
@@ -28,7 +29,7 @@ defmodule Helix.Software.Model.FileModule do
 
   @primary_key false
   schema "file_modules" do
-    field :file_id, HELL.PK,
+    field :file_id, PK,
       primary_key: true
     field :software_module, Constant,
       primary_key: true
@@ -41,7 +42,8 @@ defmodule Helix.Software.Model.FileModule do
       on_replace: :update
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -49,21 +51,24 @@ defmodule Helix.Software.Model.FileModule do
     |> generic_validations()
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  @spec update_changeset(t | Changeset.t, update_params) ::
+    Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
     |> generic_validations()
   end
 
-  @spec generic_validations(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec generic_validations(Changeset.t) ::
+    Changeset.t
   def generic_validations(changeset) do
     changeset
     |> validate_number(:module_version, greater_than: 0)
     |> validate_inclusion(:software_module, SoftwareModule.possible_modules())
   end
 
-  @spec changeset(t | Ecto.Changeset.t, creation_params) :: Ecto.Changeset.t
+  @spec changeset(t | Changeset.t, creation_params) ::
+    Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, @creation_fields)
@@ -73,24 +78,27 @@ defmodule Helix.Software.Model.FileModule do
 
   defmodule Query do
 
+    import Ecto.Query, only: [where: 3]
+
+    alias Ecto.Queryable
     alias HELL.Constant
     alias Helix.Software.Model.File
     alias Helix.Software.Model.FileModule
 
-    import Ecto.Query, only: [where: 3]
-
-    @spec from_file(File.t | File.id) :: Ecto.Queryable.t
+    @spec from_file(File.t | File.id) ::
+      Queryable.t
     def from_file(file_or_file_id),
       do: from_file(FileModule, file_or_file_id)
 
-    @spec from_file(Ecto.Queryable.t, File.t | File.id) ::
-      Ecto.Queryable.t
+    @spec from_file(Queryable.t, File.t | File.id) ::
+      Queryable.t
     def from_file(query, file = %File{}),
       do: from_file(query, file.file_id)
     def from_file(query, file_id),
       do: where(query, [fm], fm.file_id == ^file_id)
 
-    @spec by_software_module(Ecto.Queryable.t, Constant.t) :: Ecto.Queryable.t
+    @spec by_software_module(Queryable.t, Constant.t) ::
+      Queryable.t
     def by_software_module(query \\ FileModule, software_module),
       do: where(query, [fm], fm.software_module == ^software_module)
   end

@@ -2,15 +2,16 @@ defmodule Helix.Software.Model.TextFile do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
-  import Ecto.Changeset
-
   @type t :: %__MODULE__{
     file: File.t,
-    file_id: PK.t,
+    file_id: File.id,
     contents: String.t
   }
 
@@ -37,7 +38,7 @@ defmodule Helix.Software.Model.TextFile do
   end
 
   @spec create(Storage.t, String.t, String.t, String.t) ::
-    Ecto.Changeset.t
+    Changeset.t
   @doc """
   Creates a `text file`  on `storage`.
   """
@@ -49,8 +50,8 @@ defmodule Helix.Software.Model.TextFile do
     |> put_assoc(:file, file)
   end
 
-  @spec update_contents(t | Ecto.Changeset.t, String.t) ::
-    Ecto.Changeset.t
+  @spec update_contents(t | Changeset.t, String.t) ::
+    Changeset.t
   @doc """
   Updates `text file`  contents.
   """
@@ -79,13 +80,14 @@ defmodule Helix.Software.Model.TextFile do
 
   defmodule Query do
 
+    import Ecto.Query, only: [where: 3]
+
+    alias Ecto.Queryable
     alias Helix.Software.Model.File
     alias Helix.Software.Model.TextFile
 
-    import Ecto.Query, only: [where: 3]
-
-    @spec from_file(Ecto.Queryable.t, File.t | File.id) ::
-      Ecto.Queryable.t
+    @spec from_file(Queryable.t, File.t | File.id) ::
+      Queryable.t
     def from_file(query \\ TextFile, file_or_file_id)
     def from_file(query, file = %File{}),
       do: from_file(query, file.file_id)

@@ -2,12 +2,15 @@ defmodule Helix.Account.Model.AccountSession do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Account.Model.Account
 
-  import Ecto.Changeset
-
   @type t :: %__MODULE__{}
+  @type token :: String.t
+  @type session :: String.t
 
   @primary_key false
   @ecto_autogenerate {:session_id, {Ecto.UUID, :generate, []}}
@@ -25,6 +28,8 @@ defmodule Helix.Account.Model.AccountSession do
     timestamps()
   end
 
+  @spec create(Account.t) ::
+    Changeset.t
   def create(account) do
     %__MODULE__{}
     |> change()

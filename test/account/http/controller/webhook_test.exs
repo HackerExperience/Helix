@@ -4,7 +4,7 @@ defmodule Helix.Account.HTTP.Controller.WebhookTest do
   use Helix.Test.IntegrationCase
 
   alias Comeonin.Bcrypt
-  alias Helix.Account.Controller.Account, as: Controller
+  alias Helix.Account.Query.Account, as: AccountQuery
 
   @token "Bearer " <> Application.get_env(:helix, :migration_token)
 
@@ -23,7 +23,7 @@ defmodule Helix.Account.HTTP.Controller.WebhookTest do
         input_data)
       |> json_response(200)
 
-      account = Controller.fetch_by_username(input_data["username"])
+      account = AccountQuery.fetch_by_username(input_data["username"])
 
       assert account
       assert account.confirmed

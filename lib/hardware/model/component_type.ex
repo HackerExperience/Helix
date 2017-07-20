@@ -30,7 +30,9 @@ defmodule Helix.Hardware.Model.ComponentType do
     }
   end
 
-  @spec type_implementation(Constant.t) :: module | nil
+  @spec type_implementation(Constant.t) ::
+    module
+    | nil
   def type_implementation(type),
     do: type_implementations()[type]
 end

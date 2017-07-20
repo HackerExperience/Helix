@@ -2,15 +2,16 @@ defmodule Helix.Log.Model.Log do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Log.Model.Revision
 
-  import Ecto.Changeset
 
   @type id :: PK.t
-
   @type t :: %__MODULE__{
-    log_id: PK.t,
+    log_id: id,
     server_id: PK.t,
     entity_id: PK.t,
     message: String.t,
@@ -60,7 +61,7 @@ defmodule Helix.Log.Model.Log do
   end
 
   @spec create_changeset(creation_params) ::
-    Ecto.Changeset.t
+    Changeset.t
   def create_changeset(params) do
     revision = Revision.changeset(%Revision{}, params)
 
@@ -70,7 +71,8 @@ defmodule Helix.Log.Model.Log do
     |> put_assoc(:revisions, [revision])
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  @spec update_changeset(t | Changeset.t, update_params) ::
+    Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
@@ -80,14 +82,16 @@ defmodule Helix.Log.Model.Log do
 
   defmodule Query do
 
-    alias HELL.PK
+    import Ecto.Query, only: [join: 5, order_by: 3, where: 3]
+
     alias Ecto.Queryable
+    alias HELL.PK
+    alias Helix.Entity.Model.Entity
+    alias Helix.Server.Model.Server
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.LogTouch
 
-    import Ecto.Query, only: [join: 5, order_by: 3, where: 3]
-
-    @spec edited_by_entity(Queryable.t, PK.t) ::
+    @spec edited_by_entity(Queryable.t, Entity.id) ::
       Queryable.t
     def edited_by_entity(query \\ Log, entity_id) do
       query
@@ -95,20 +99,23 @@ defmodule Helix.Log.Model.Log do
       |> where([l, ..., lt], lt.entity_id == ^entity_id)
     end
 
-    @spec by_id(Queryable.t, PK.t) :: Queryable.t
+    @spec by_id(Queryable.t, Log.id) ::
+      Queryable.t
     def by_id(query \\ Log, id),
       do: where(query, [l], l.log_id == ^id)
 
-    @spec by_server_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_server_id(query \\ Log, server_id) do
-      where(query, [l], l.server_id == ^server_id)
-    end
+    @spec by_server_id(Queryable.t, Server.id) ::
+      Queryable.t
+    def by_server_id(query \\ Log, server_id),
+      do: where(query, [l], l.server_id == ^server_id)
 
-    @spec by_message(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    @spec by_message(Queryable.t, String.t) ::
+      Queryable.t
     def by_message(query \\ Log, message),
       do: where(query, [l], like(l.message, ^message))
 
-    @spec order_by_newest(Ecto.Queryable.t) :: Ecto.Queryable.t
+    @spec order_by_newest(Queryable.t) ::
+      Queryable.t
     def order_by_newest(query \\ Log),
       do: order_by(query, [l], desc: l.inserted_at)
   end

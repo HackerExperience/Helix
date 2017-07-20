@@ -1,8 +1,8 @@
 defmodule HELL.MacAddress do
 
-  @type t :: String.t
-
   @behaviour Ecto.Type
+
+  @type t :: String.t
 
   def generate do
     6
@@ -38,7 +38,9 @@ defmodule HELL.MacAddress do
   def dump(_),
     do: :error
 
-  @spec parse_address(String.t) :: {:ok, Postgrex.MACADDR.t} | :error
+  @spec parse_address(t) ::
+    {:ok, Postgrex.MACADDR.t}
+    | :error
   defp parse_address(string) when is_binary(string) do
     addr =
       string
@@ -77,7 +79,8 @@ defmodule HELL.MacAddress do
   defp valid_addr?(_, _),
     do: false
 
-  @spec generate_octets(pos_integer) :: [0..0xff]
+  @spec generate_octets(pos_integer) ::
+    [0..0xff]
   defp generate_octets(octets) do
     octets
     |> :crypto.strong_rand_bytes()
