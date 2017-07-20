@@ -2,11 +2,13 @@ defmodule Helix.Software.Model.Storage do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Software.Model.File
   alias Helix.Software.Model.StorageDrive
 
-  import Ecto.Changeset
 
   @type id :: PK.t
   @type t :: %__MODULE__{
@@ -18,7 +20,7 @@ defmodule Helix.Software.Model.Storage do
   @primary_key false
   @ecto_autogenerate {:storage_id, {PK, :pk_for, [:software_storage]}}
   schema "storages" do
-    field :storage_id, HELL.PK,
+    field :storage_id, PK,
       primary_key: true
 
     has_many :drives, StorageDrive,
@@ -29,7 +31,8 @@ defmodule Helix.Software.Model.Storage do
       references: :storage_id
   end
 
-  @spec create_changeset() :: Ecto.Changeset.t
+  @spec create_changeset() ::
+    Changeset.t
   def create_changeset,
     do: cast(%__MODULE__{}, %{}, [])
 end

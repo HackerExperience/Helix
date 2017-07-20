@@ -2,15 +2,18 @@ defmodule Helix.Software.Model.CryptoKey do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
+  alias HELL.PK
+  alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
-  import Ecto.Changeset
-
   @type t :: %__MODULE__{
-    file_id: HELL.PK.t,
-    target_file_id: HELL.PK.t | nil,
-    target_server_id: HELL.PK.t
+    file_id: File.id,
+    target_file_id: File.id | nil,
+    target_server_id: Server.id
   }
 
   @default_path "/.keys"
@@ -18,11 +21,11 @@ defmodule Helix.Software.Model.CryptoKey do
 
   @primary_key false
   schema "crypto_keys" do
-    field :file_id, HELL.PK,
+    field :file_id, PK,
       primary_key: true
 
-    field :target_file_id, HELL.PK
-    field :target_server_id, HELL.PK
+    field :target_file_id, PK
+    field :target_server_id, PK
 
     belongs_to :file, File,
       foreign_key: :file_id,
@@ -35,7 +38,8 @@ defmodule Helix.Software.Model.CryptoKey do
       define_field: false
   end
 
-  @spec create(Storage.t, HELL.PK.t, File.t) :: Ecto.Changeset.t
+  @spec create(Storage.t, Server.id, File.t) ::
+    Changeset.t
   @doc """
   Creates a key for `target_file` on `storage`.
 
@@ -68,29 +72,31 @@ defmodule Helix.Software.Model.CryptoKey do
 
   defmodule Query do
 
-    alias Ecto.Queryable
+    import Ecto.Query, only: [join: 5, where: 3]
 
+    alias Ecto.Queryable
     alias Helix.Software.Model.CryptoKey
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    import Ecto.Query, only: [join: 5, where: 3]
-
-    @spec from_storage(Queryable.t, Storage.t) :: Queryable.t
+    @spec from_storage(Queryable.t, Storage.t) ::
+      Queryable.t
     def from_storage(query \\ CryptoKey, %Storage{storage_id: id}) do
       query
       |> join(:inner, [k], f in File, k.file_id == f.file_id)
       |> where([k, ..., f], f.storage_id == ^id)
     end
 
-    @spec target_files_on_storage(Queryable.t, Storage.t) :: Queryable.t
+    @spec target_files_on_storage(Queryable.t, Storage.t) ::
+      Queryable.t
     def target_files_on_storage(query \\ CryptoKey, %Storage{storage_id: id}) do
       query
       |> join(:inner, [k], t in File, k.target_file_id == t.file_id)
       |> where([k, ..., t], t.storage_id == ^id)
     end
 
-    @spec target_file(Queryable.t, File.t) :: Queryable.t
+    @spec target_file(Queryable.t, File.t) ::
+      Queryable.t
     def target_file(query \\ CryptoKey, %File{file_id: id}),
       do: where(query, [k], k.target_file_id == ^id)
   end

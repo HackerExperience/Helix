@@ -2,16 +2,18 @@ defmodule Helix.Software.Model.File do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.Constant
   alias HELL.PK
   alias Helix.Software.Model.SoftwareType
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
 
-  import Ecto.Changeset
-
+  @type id :: PK.t
   @type t :: %__MODULE__{
-    file_id: PK.t,
+    file_id: id,
     name: String.t,
     path: String.t,
     full_path: String.t,
@@ -19,12 +21,10 @@ defmodule Helix.Software.Model.File do
     type: SoftwareType.t,
     software_type: Constant.t,
     storage: Storage.t,
-    storage_id: PK.t,
+    storage_id: Storage.id,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
-
-  @type id :: PK.t
 
   @type modules :: %{software_module :: Constant.t => version :: pos_integer}
 
@@ -33,7 +33,7 @@ defmodule Helix.Software.Model.File do
     path: String.t,
     file_size: pos_integer,
     software_type: Constant.t,
-    storage_id: PK.t
+    storage_id: Storage.id
   }
 
   @type update_params :: %{
@@ -53,14 +53,14 @@ defmodule Helix.Software.Model.File do
   @primary_key false
   @ecto_autogenerate {:file_id, {PK, :pk_for, [:software_file]}}
   schema "files" do
-    field :file_id, HELL.PK,
+    field :file_id, PK,
       primary_key: true
 
     field :name, :string
     field :path, :string
     field :software_type, Constant
     field :file_size, :integer
-    field :storage_id, HELL.PK
+    field :storage_id, PK
 
     field :crypto_version, :integer
 
@@ -82,7 +82,8 @@ defmodule Helix.Software.Model.File do
     timestamps()
   end
 
-  @spec create(Storage.t, map) :: Ecto.Changeset.t
+  @spec create(Storage.t, map) ::
+    Changeset.t
   def create(storage = %Storage{}, params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -90,7 +91,8 @@ defmodule Helix.Software.Model.File do
     |> changeset(params)
   end
 
-  @spec copy(t, Storage.t, map) :: Ecto.Changeset.t
+  @spec copy(t, Storage.t, map) ::
+    Changeset.t
   def copy(file, storage, params) do
     # dropping :file_id to avoid Ecto thinking this is an update
     base =
@@ -104,7 +106,8 @@ defmodule Helix.Software.Model.File do
     |> put_assoc(:storage, storage)
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -113,7 +116,8 @@ defmodule Helix.Software.Model.File do
     |> changeset(params)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, update_params) :: Ecto.Changeset.t
+  @spec update_changeset(t | Changeset.t, update_params) ::
+    Changeset.t
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
@@ -121,7 +125,8 @@ defmodule Helix.Software.Model.File do
     |> validate_number(:crypto_version, greater_than: 0)
   end
 
-  @spec set_modules(t, modules) :: Ecto.Changeset.t
+  @spec set_modules(t, modules) ::
+    Changeset.t
   def set_modules(file, modules) do
     modules =
       Enum.map(modules, fn {module, version} ->
@@ -175,24 +180,27 @@ defmodule Helix.Software.Model.File do
 
   defmodule Query do
 
+    import Ecto.Query, only: [or_where: 3, where: 3]
+
     alias Ecto.Queryable
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    import Ecto.Query, only: [or_where: 3, where: 3]
-
-    @spec from_id_list(Queryable.t, [HELL.PK.t]) :: Queryable.t
+    @spec from_id_list(Queryable.t, [File.id]) ::
+      Queryable.t
     def from_id_list(query \\ File, id_list, comparison_operator \\ :and)
     def from_id_list(query, id_list, :and),
       do: where(query, [f], f.file_id in ^id_list)
     def from_id_list(query, id_list, :or),
       do: or_where(query, [f], f.file_id in ^id_list)
 
-    @spec from_storage(Queryable.t, Storage.t) :: Queryable.t
+    @spec from_storage(Queryable.t, Storage.t) ::
+      Queryable.t
     def from_storage(query \\ File, %Storage{storage_id: id}),
       do: where(query, [f], f.storage_id == ^id)
 
-    @spec not_encrypted(Queryable.t) :: Queryable.t
+    @spec not_encrypted(Queryable.t) ::
+      Queryable.t
     def not_encrypted(query \\ File),
       do: where(query, [f], is_nil(f.crypto_version))
   end

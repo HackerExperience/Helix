@@ -24,18 +24,19 @@ defmodule Helix.Software.Model.SoftwareModule do
   end
 
   @doc false
-  def possible_modules do
-    @software_modules
-  end
+  def possible_modules,
+    do: @software_modules
 
   defmodule Query do
 
+    import Ecto.Query, only: [where: 3]
+
+    alias Ecto.Queryable
     alias HELL.Constant
     alias Helix.Software.Model.SoftwareModule
 
-    import Ecto.Query, only: [where: 3]
-
-    @spec by_software_type(Ecto.Queryable.t, Constant.t) :: Ecto.Queryable.t
+    @spec by_software_type(Queryable.t, Constant.t) ::
+      Queryable.t
     def by_software_type(query \\ SoftwareModule, software_type),
       do: where(query, [m], m.software_type == ^software_type)
   end
