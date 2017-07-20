@@ -1,9 +1,9 @@
-defmodule Helix.Hardware.Service.API.ComponentSpecTest do
+defmodule Helix.Hardware.Action.ComponentSpecTest do
 
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Service.API.ComponentSpec, as: API
+  alias Helix.Hardware.Action.ComponentSpec, as: ComponentSpecAction
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
@@ -21,13 +21,13 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
         "cores" => 7
       }
 
-      assert {:ok, %ComponentSpec{}} = API.create(spec_map)
+      assert {:ok, %ComponentSpec{}} = ComponentSpecAction.create(spec_map)
     end
 
     test "fails when input is invalid" do
       params = %{}
 
-      assert {:error, cs} = API.create(params)
+      assert {:error, cs} = ComponentSpecAction.create(params)
       refute cs.valid?
 
       spec_map = %{
@@ -36,30 +36,9 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
         name: "non invalid, but whatever"
       }
 
-      assert {:error, cs} = API.create(spec_map)
+      assert {:error, cs} = ComponentSpecAction.create(spec_map)
       refute cs.valid?
     end
-  end
-
-  describe "fetch/1" do
-    test "succeeds by id" do
-      cs = Factory.insert(:component_spec)
-      assert %ComponentSpec{} = API.fetch(cs.spec_id)
-    end
-
-    test "fails when it doesn't exist'" do
-      refute API.fetch(Random.pk())
-    end
-  end
-
-  test "find/2 succeeds by type list" do
-    type = Factory.random_component_type()
-    specs = Factory.insert_list(4, :component_spec, component_type: type)
-
-    found = API.find(type: type)
-    found_ids = Enum.map(found, &(&1.spec_id))
-
-    assert Enum.all?(specs, &(&1.spec_id in found_ids))
   end
 
   describe "delete/1" do
@@ -68,7 +47,7 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
 
       assert Repo.get(ComponentSpec, cs.spec_id)
 
-      API.delete(cs)
+      ComponentSpecAction.delete(cs)
 
       refute Repo.get(ComponentSpec, cs.spec_id)
     end
@@ -78,7 +57,7 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
 
       assert Repo.get(ComponentSpec, cs.spec_id)
 
-      API.delete(cs.spec_id)
+      ComponentSpecAction.delete(cs.spec_id)
 
       refute Repo.get(ComponentSpec, cs.spec_id)
     end
@@ -88,8 +67,8 @@ defmodule Helix.Hardware.Service.API.ComponentSpecTest do
 
       assert Repo.get(ComponentSpec, cs.spec_id)
 
-      API.delete(cs.spec_id)
-      API.delete(cs.spec_id)
+      ComponentSpecAction.delete(cs.spec_id)
+      ComponentSpecAction.delete(cs.spec_id)
 
       refute Repo.get(ComponentSpec, cs.spec_id)
     end

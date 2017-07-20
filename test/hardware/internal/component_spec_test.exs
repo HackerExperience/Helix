@@ -5,7 +5,6 @@ defmodule Helix.Hardware.Internal.ComponentSpecTest do
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Internal.ComponentSpec, as: ComponentSpecInternal
   alias Helix.Hardware.Model.ComponentSpec
-  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Repo
 
   alias Helix.Hardware.Factory
