@@ -4,6 +4,7 @@ defmodule Helix.Account.Model.AccountSession do
 
   import Ecto.Changeset
 
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Account.Model.Account
 
@@ -28,7 +29,7 @@ defmodule Helix.Account.Model.AccountSession do
   end
 
   @spec create(Account.t) ::
-    Ecto.Changeset.t
+    Changeset.t
   def create(account) do
     %__MODULE__{}
     |> change()

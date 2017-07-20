@@ -2,11 +2,12 @@ defmodule Helix.Hardware.Model.NetworkConnection do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.IPv4
   alias HELL.PK
   alias Helix.Hardware.Model.Component.NIC
-
-  import Ecto.Changeset
 
   @type t :: %__MODULE__{
     network_connection_id: PK.t,
@@ -40,7 +41,8 @@ defmodule Helix.Hardware.Model.NetworkConnection do
       on_delete: :nilify_all
   end
 
-  @spec create_changeset(map) :: Ecto.Changeset.t
+  @spec create_changeset(map) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, [:network_id])
@@ -48,11 +50,13 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     |> changeset(params)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, map) :: Ecto.Changeset.t
+  @spec update_changeset(t | Changeset.t, map) ::
+    Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, map) :: Ecto.Changeset.t
+  @spec changeset(t | Changeset.t, map) ::
+    Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:ip, :downlink, :uplink])

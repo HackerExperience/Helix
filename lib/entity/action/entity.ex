@@ -1,6 +1,8 @@
 defmodule Helix.Entity.Action.Entity do
 
   alias Helix.Account.Model.Account
+  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
 
@@ -35,7 +37,7 @@ defmodule Helix.Entity.Action.Entity do
   defdelegate delete(entity),
     to: EntityInternal
 
-  @spec link_component(Entity.t, HELL.PK.t) ::
+  @spec link_component(Entity.t, Component.id) ::
     :ok
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -50,7 +52,7 @@ defmodule Helix.Entity.Action.Entity do
   defdelegate link_component(entity, component),
     to: EntityInternal
 
-  @spec unlink_component(HELL.PK.t) ::
+  @spec unlink_component(Component.id) ::
     :ok
   @doc """
   Unlink `component`, effectively removing the component ownership
@@ -63,7 +65,7 @@ defmodule Helix.Entity.Action.Entity do
   defdelegate unlink_component(component),
     to: EntityInternal
 
-  @spec link_server(Entity.t, HELL.PK.t) ::
+  @spec link_server(Entity.t, Server.id) ::
     :ok
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -77,7 +79,7 @@ defmodule Helix.Entity.Action.Entity do
   defdelegate link_server(entity, server),
     to: EntityInternal
 
-  @spec unlink_server(HELL.PK.t) ::
+  @spec unlink_server(Server.id) ::
     :ok
   @doc """
   Unlink `server`, effectively removing the server ownership

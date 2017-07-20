@@ -13,7 +13,6 @@ defmodule HELL.MacroHelpers do
       defp some_fun(),
         do: :something
   """
-  defmacro docp(_) do
-    :ok
-  end
+  defmacro docp(_),
+    do: :ok
 end

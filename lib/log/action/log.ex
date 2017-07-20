@@ -18,14 +18,13 @@ defmodule Helix.Log.Action.Log do
 
   alias Ecto.Multi
   alias Helix.Event
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Internal.Log, as: LogInternal
   alias Helix.Log.Model.Log
   alias Helix.Log.Repo
 
-  @type server_id :: LogInternal.server_id
-  @type entity_id :: LogInternal.entity_id
-
-  @spec create(server_id, entity_id, String.t) ::
+  @spec create(Server.id, Entity.id, String.t) ::
     {:ok, %{log: Log.t, log_touch: any, events: [Event.t]}}
     | {:error, :log | :log_touch, Ecto.Changeset.t, map}
   @doc """
@@ -39,7 +38,7 @@ defmodule Helix.Log.Action.Log do
     |> Repo.transaction()
   end
 
-  @spec revise(Log.t, entity_id, String.t, pos_integer) ::
+  @spec revise(Log.t, Entity.id, String.t, pos_integer) ::
     {:ok, %{revision: any, log_touch: any, events: [Event.t]}}
     | {:error, :revision | :log_touch, Ecto.Changeset.t, map}
   @doc """

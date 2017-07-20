@@ -2,12 +2,13 @@ defmodule Helix.Network.Model.Connection do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias HELL.PK
   alias Helix.Network.Model.Tunnel
 
-  import Ecto.Changeset
-
   @type close_reasons :: :normal | :force
+  @type id :: PK.t
   @type t :: %__MODULE__{}
 
   @close_reasons [:normal, :force]
@@ -37,17 +38,16 @@ defmodule Helix.Network.Model.Connection do
   end
 
   @doc false
-  def close_reasons do
-    @close_reasons
-  end
+  def close_reasons,
+    do: @close_reasons
 
   defmodule Query do
+
+    import Ecto.Query
 
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Link
     alias Helix.Network.Model.Tunnel
-
-    import Ecto.Query
 
     def through_node(query \\ Connection, server) do
       query

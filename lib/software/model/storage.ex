@@ -8,8 +8,9 @@ defmodule Helix.Software.Model.Storage do
 
   import Ecto.Changeset
 
+  @type id :: PK.t
   @type t :: %__MODULE__{
-    storage_id: PK.t,
+    storage_id: id,
     drives: [StorageDrive.t],
     files: [File.t]
   }

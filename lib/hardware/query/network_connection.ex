@@ -1,5 +1,7 @@
 defmodule Helix.Hardware.Query.NetworkConnection do
 
+  alias HELL.IPv4
+  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Hardware.Model.Component.NIC
@@ -11,7 +13,7 @@ defmodule Helix.Hardware.Query.NetworkConnection do
 
   # FIXME: Think this belongs somewhere else but in the current chaos, it'll be
   #   left here for some time
-  @spec get_server_by_ip(HELL.PK.t, HELL.IPv4.t) ::
+  @spec get_server_by_ip(Network.id, IPv4.t) ::
     Server.t
     | nil
   def get_server_by_ip(network_id, ip) do
@@ -29,8 +31,8 @@ defmodule Helix.Hardware.Query.NetworkConnection do
     end
   end
 
-  @spec get_server_ip(HELL.PK.t, HELL.PK.t) ::
-    HELL.IPv4.t
+  @spec get_server_ip(Server.id, Network.id) ::
+    IPv4.t
     | nil
   def get_server_ip(server_id, network_id) do
 

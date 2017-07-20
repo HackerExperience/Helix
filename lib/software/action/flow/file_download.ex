@@ -6,12 +6,14 @@ defmodule Helix.Software.Action.Flow.FileDownload do
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Tunnel
   alias Helix.Process.Action.Process, as: ProcessAction
+  alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Software.FileDownload.ProcessType
 
+  # FIXME: return on error
   @spec start_download_process(File.t, Storage.t, Tunnel.t) ::
-    {:ok, struct}
+    {:ok, Process.t}
   def start_download_process(origin_file, destination_storage, tunnel) do
     objective = %{dlk: origin_file.file_size}
     process_data = %ProcessType{

@@ -1,6 +1,7 @@
 defmodule Helix.Account.Action.Session do
 
   alias Helix.Account.Internal.Session, as: SessionInternal
+  alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSession
 
   @spec generate_token(Account.t) ::

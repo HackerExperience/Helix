@@ -5,6 +5,7 @@ defmodule Helix.Entity.Action.Database do
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Database
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
 
   @spec create(Entity.t, Network.id, IPv4.t, Server.id, String.t) ::

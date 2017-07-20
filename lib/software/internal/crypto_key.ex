@@ -1,14 +1,15 @@
 defmodule Helix.Software.Internal.CryptoKey do
 
+  import Ecto.Query, only: [select: 3]
+
   alias Helix.Event
+  alias Helix.Server.Model.Server
   alias Helix.Software.Model.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
-  import Ecto.Query, only: [select: 3]
-
-  @spec create(Storage.t, HELL.PK.t, File.t) ::
+  @spec create(Storage.t, Server.id, File.t) ::
     {:ok, CryptoKey.t}
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -20,7 +21,9 @@ defmodule Helix.Software.Internal.CryptoKey do
     |> Repo.insert()
   end
 
-  @spec fetch!(File.t | File.id) :: CryptoKey.t | nil
+  @spec fetch!(File.t | File.id) ::
+    CryptoKey.t
+    | nil
   @doc """
   Fetches a key by their id or their file
   """
@@ -29,7 +32,8 @@ defmodule Helix.Software.Internal.CryptoKey do
   def fetch!(id),
     do: Repo.get!(CryptoKey, id)
 
-  @spec get_on_storage(Storage.t) :: [CryptoKey.t]
+  @spec get_on_storage(Storage.t) ::
+    [CryptoKey.t]
   @doc """
   Gets the keys on `storage`
   """
@@ -39,7 +43,8 @@ defmodule Helix.Software.Internal.CryptoKey do
     |> Repo.all()
   end
 
-  @spec get_files_targeted_on_storage(Storage.t, Storage.t) :: [HELL.PK.t]
+  @spec get_files_targeted_on_storage(Storage.t, Storage.t) ::
+    [File.id]
   @doc """
   Returns the id of all files on `target_storage` for whom there is a key on
   `origin_storage`
@@ -57,7 +62,8 @@ defmodule Helix.Software.Internal.CryptoKey do
     |> Repo.all()
   end
 
-  @spec invalidate_keys_for_file(File.t) :: [Event.t]
+  @spec invalidate_keys_for_file(File.t) ::
+    [Event.t]
   @doc """
   Invalidates all keys that affect `file`
   """

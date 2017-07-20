@@ -6,7 +6,9 @@ defmodule Helix.Hardware.Internal.Motherboard do
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
-  @spec create_from_spec(ComponentSpec.t) :: {:ok, Motherboard.t} | {:error, Ecto.Changeset.t}
+  @spec create_from_spec(ComponentSpec.t) ::
+    {:ok, Motherboard.t}
+    | {:error, Ecto.Changeset.t}
   def create_from_spec(component_spec) do
     component_spec
     |> Motherboard.create_from_spec()
@@ -14,7 +16,11 @@ defmodule Helix.Hardware.Internal.Motherboard do
   end
 
   # REVIEW: refactor this
-  @spec resources(Motherboard.t) :: %{cpu: non_neg_integer, ram: non_neg_integer, net: %{any => %{uplink: non_neg_integer, downlink: non_neg_integer}}}
+  @spec resources(Motherboard.t) ::
+    %{
+      cpu: non_neg_integer,
+      ram: non_neg_integer,
+      net: %{any => %{uplink: non_neg_integer, downlink: non_neg_integer}}}
   def resources(motherboard) do
     cids =
       motherboard
@@ -61,11 +67,13 @@ defmodule Helix.Hardware.Internal.Motherboard do
     }
   end
 
-  @spec fetch!(Component.t) :: Motherboard.t
+  @spec fetch!(Component.t) ::
+    Motherboard.t
   def fetch!(component = %Component{component_type: :mobo}),
     do: Repo.get!(Motherboard, component.component_id)
 
-  @spec get_slots(Motherboard.t | HELL.PK.t) :: [MotherboardSlot.t]
+  @spec get_slots(Motherboard.t | Motherboard.id) ::
+    [MotherboardSlot.t]
   def get_slots(motherboard_or_motherboard_id) do
     motherboard_or_motherboard_id
     |> MotherboardSlot.Query.from_motherboard()
@@ -91,7 +99,8 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> Repo.update()
   end
 
-  @spec unlink_components_from_motherboard(Motherboard.t | HELL.PK.t) :: :ok
+  @spec unlink_components_from_motherboard(Motherboard.t | Motherboard.id) ::
+    :ok
   def unlink_components_from_motherboard(motherboard_or_motherboard_id) do
     motherboard_or_motherboard_id
     |> MotherboardSlot.Query.from_motherboard()
@@ -100,7 +109,8 @@ defmodule Helix.Hardware.Internal.Motherboard do
     :ok
   end
 
-  @spec delete(Motherboard.t | HELL.PK.t) :: no_return
+  @spec delete(Motherboard.t | Motherboard.id) ::
+    :ok
   def delete(%Motherboard{motherboard_id: mid}),
     do: delete(mid)
   def delete(motherboard_id) do

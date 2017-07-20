@@ -2,11 +2,12 @@ defmodule Helix.Account.Model.AccountSetting do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.Setting
-
-  import Ecto.Changeset
 
   @type t :: %__MODULE__{}
 
@@ -31,7 +32,8 @@ defmodule Helix.Account.Model.AccountSetting do
       define_field: false
   end
 
-  @spec changeset(t, changeset_params) :: Ecto.Changeset.t
+  @spec changeset(t, changeset_params) ::
+    Changeset.t
   def changeset(struct \\ %__MODULE__{}, params) do
     struct
     |> cast(params, [:account_id])
@@ -41,13 +43,14 @@ defmodule Helix.Account.Model.AccountSetting do
 
   defmodule Query do
 
+    import Ecto.Query, only: [where: 3]
+
+    alias Ecto.Queryable
     alias Helix.Account.Model.Account
     alias Helix.Account.Model.AccountSetting
 
-    import Ecto.Query, only: [where: 3]
-
-    @spec from_account(Ecto.Queryable.t, Account.t | Account.id) ::
-      Ecto.Queryable.t
+    @spec from_account(Queryable.t, Account.t | Account.id) ::
+      Queryable.t
     def from_account(query \\ AccountSetting, account_or_account_id)
     def from_account(query, account = %Account{}),
       do: from_account(query, account.account_id)

@@ -1,6 +1,7 @@
 defmodule Helix.Network.Action.Tunnel do
 
   alias Ecto.Changeset
+  alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
@@ -8,9 +9,7 @@ defmodule Helix.Network.Action.Tunnel do
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
 
-  @type server :: HELL.PK.t
-
-  @spec connect(Network.t, server, server, [server], term) ::
+  @spec connect(Network.t, Server.id, Server.id, [Server.id], term) ::
     {:ok, Connection.t, [event :: struct]}
     | {:error, Changeset.t}
   @doc """
@@ -34,7 +33,7 @@ defmodule Helix.Network.Action.Tunnel do
     end
   end
 
-  @spec create_tunnel(Network.t, server, server, [server]) ::
+  @spec create_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
     | {:error, Changeset.t}
   # Checks if gateway, destination and bounces are valid servers, and if they
@@ -71,20 +70,19 @@ defmodule Helix.Network.Action.Tunnel do
     end
   end
 
-  @spec delete(Tunnel.t | Tunnel.id) :: :ok
-  def delete(tunnel),
-    do: TunnelInternal.delete(tunnel)
+  @spec delete(Tunnel.t | Tunnel.id) ::
+    :ok
+  defdelegate delete(tunnel),
+    to: TunnelInternal
 
   @spec start_connection(Tunnel.t, term) ::
     {:ok, Connection.t, [event :: struct]}
     | {:error, Ecto.Changeset.t}
-  def start_connection(tunnel, connection_type) do
-      TunnelInternal.start_connection(tunnel, connection_type)
-  end
+  defdelegate start_connection(tunnel, connection_type),
+    to: TunnelInternal
 
   @spec close_connection(Connection.t, Connection.close_reasons) ::
     [event :: struct]
-  def close_connection(connection, reason \\ :normal) do
-    TunnelInternal.close_connection(connection, reason)
-  end
+  defdelegate close_connection(connection, reason \\ :normal),
+    to: TunnelInternal
 end

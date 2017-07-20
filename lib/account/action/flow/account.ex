@@ -9,7 +9,7 @@ defmodule Helix.Account.Action.Flow.Account do
   alias Helix.Account.Model.Account
   alias Helix.Account.Query.Account, as: AccountQuery
 
-  @spec setup_account(HELL.PK.t | Account.t) ::
+  @spec setup_account(Account.id | Account.t) ::
     {:ok, %{entity: Entity.t, server: Server.t}}
     | :error
   # TODO: improve documentation

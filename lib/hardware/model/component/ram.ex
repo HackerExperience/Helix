@@ -2,16 +2,16 @@ defmodule Helix.Hardware.Model.Component.RAM do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
 
-  import Ecto.Changeset
-
   @behaviour Helix.Hardware.Model.ComponentSpec
 
-  @type t :: %__MODULE__{
-  }
+  @type t :: %__MODULE__{}
 
   @primary_key false
   schema "rams" do
@@ -28,7 +28,8 @@ defmodule Helix.Hardware.Model.Component.RAM do
       on_replace: :delete
   end
 
-  @spec create_from_spec(ComponentSpec.t) :: Ecto.Changeset.t
+  @spec create_from_spec(ComponentSpec.t) ::
+    Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
     params = Map.take(spec, ["ram_size"])
     ram_id = PK.pk_for(:hardware_component_ram)
@@ -40,12 +41,13 @@ defmodule Helix.Hardware.Model.Component.RAM do
     |> put_assoc(:component, component)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) :: Ecto.Changeset.t
+  @spec update_changeset(t | Changeset.t, %{any => any}) ::
+    Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Ecto.Changeset.t, %{any => any}) ::
-    Ecto.Changeset.t
+  @spec changeset(t | Changeset.t, %{any => any}) ::
+    Changeset.t
   def changeset(struct, params) do
     struct
     |> cast(params, [:ram_size])
@@ -54,7 +56,8 @@ defmodule Helix.Hardware.Model.Component.RAM do
     |> foreign_key_constraint(:ram_id, name: :rams_ram_id_fkey)
   end
 
-  @spec validate_spec(%{:clock => non_neg_integer, :ram_size => non_neg_integer, optional(any) => any}) :: Ecto.Changeset.t
+  @spec validate_spec(%{:clock => non_neg_integer, :ram_size => non_neg_integer, optional(any) => any}) ::
+    Changeset.t
   @doc false
   def validate_spec(params) do
     data = %{
@@ -75,14 +78,18 @@ defmodule Helix.Hardware.Model.Component.RAM do
 
   defmodule Query do
 
-    alias Helix.Hardware.Model.Component.RAM
-
     import Ecto.Query, only: [where: 3]
 
-    @spec from_component_ids([HELL.PK.t]) :: Ecto.Queryable.t
-    @spec from_component_ids(Ecto.Queryable.t, [HELL.PK.t]) :: Ecto.Queryable.t
-    def from_component_ids(query \\ RAM, component_ids) do
-      where(query, [r], r.ram_id in ^component_ids)
-    end
+    alias Ecto.Queryable
+    alias Helix.Hardware.Model.Component
+    alias Helix.Hardware.Model.Component.RAM
+
+
+    @spec from_component_ids([Component.id]) ::
+      Queryable.t
+    @spec from_component_ids(Queryable.t, [Component.id]) ::
+      Queryable.t
+    def from_component_ids(query \\ RAM, component_ids),
+      do: where(query, [r], r.ram_id in ^component_ids)
   end
 end

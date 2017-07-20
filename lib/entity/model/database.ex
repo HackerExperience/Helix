@@ -2,10 +2,14 @@ defmodule Helix.Entity.Model.Database do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias HELL.IPv4
-
-  import Ecto.Changeset
+  alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
 
   @type t :: %__MODULE__{}
 
@@ -43,8 +47,8 @@ defmodule Helix.Entity.Model.Database do
     timestamps()
   end
 
-  @spec create(PK.t, PK.t, IPv4.t, PK.t, String.t) ::
-    Ecto.Changeset.t
+  @spec create(Entity.id, Network.id, IPv4.t, Server.id, String.t) ::
+    Changeset.t
   def create(entity_id, network_id, ip, server_id, server_type) do
     params = %{
       entity_id: entity_id,
@@ -61,7 +65,7 @@ defmodule Helix.Entity.Model.Database do
   end
 
   @spec update(t, map) ::
-    Ecto.Changeset.t
+    Changeset.t
   def update(struct, params) do
     struct
     |> cast(params, @update_fields)

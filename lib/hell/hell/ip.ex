@@ -2,11 +2,14 @@ defmodule HELL.IPv6 do
 
   use Bitwise
 
+  @type t :: String.t
+
   @twooctet 0xffff
   @meta_groups 3
   @rand_groups 8 - @meta_groups
 
-  @spec generate([non_neg_integer]) :: String.t
+  @spec generate([non_neg_integer]) ::
+    t
   def generate(metadata) do
     metadata
     |> fill_metadata()
@@ -16,7 +19,8 @@ defmodule HELL.IPv6 do
     |> List.to_string()
   end
 
-  @spec generate_octet_groups(pos_integer) :: [0..0xffff]
+  @spec generate_octet_groups(pos_integer) ::
+    [0..0xffff]
   defp generate_octet_groups(groups) do
     # Each group is comprised of 2 octets
     bytes = groups * 2
@@ -34,7 +38,8 @@ defmodule HELL.IPv6 do
       end
   end
 
-  @spec partition_binary(String.t) :: [non_neg_integer]
+  @spec partition_binary(String.t) ::
+    [non_neg_integer]
   defp partition_binary(binary),
     do: partition_binary(binary, [])
   defp partition_binary(<<h1, h2, t::binary>>, acc),
@@ -96,7 +101,9 @@ defmodule HELL.IPv4 do
   def dump(_),
     do: :error
 
-  @spec parse_address(String.t) :: {:ok, Postgrex.INET.t} | :error
+  @spec parse_address(t) ::
+    {:ok, Postgrex.INET.t}
+    | :error
   defp parse_address(string) when is_binary(string) do
     string
     |> String.to_char_list()

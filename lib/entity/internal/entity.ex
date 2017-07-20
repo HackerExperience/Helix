@@ -2,6 +2,8 @@ defmodule Helix.Entity.Internal.Entity do
 
   import Ecto.Query, only: [where: 3]
 
+  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
@@ -46,7 +48,7 @@ defmodule Helix.Entity.Internal.Entity do
     |> Repo.all()
   end
 
-  @spec fetch_server_owner(HELL.PK.t) ::
+  @spec fetch_server_owner(Server.id) ::
     Entity.t
     | nil
   @doc """
@@ -83,7 +85,7 @@ defmodule Helix.Entity.Internal.Entity do
     :ok
   end
 
-  @spec link_component(Entity.t, HELL.PK.t) ::
+  @spec link_component(Entity.t, Component.id) ::
     {:ok, any}
     | {:error, Ecto.Changeset.t}
   def link_component(%Entity{entity_id: id}, component) do
@@ -93,7 +95,7 @@ defmodule Helix.Entity.Internal.Entity do
     Repo.insert(changeset)
   end
 
-  @spec unlink_component(HELL.PK.t) ::
+  @spec unlink_component(Component.id) ::
     :ok
   def unlink_component(component) do
     component
@@ -103,7 +105,7 @@ defmodule Helix.Entity.Internal.Entity do
     :ok
   end
 
-  @spec link_server(Entity.t, HELL.PK.t) ::
+  @spec link_server(Entity.t, Server.id) ::
     {:ok, term}
     | {:error, Ecto.Changeset.t}
   def link_server(%Entity{entity_id: id}, server) do
@@ -113,7 +115,7 @@ defmodule Helix.Entity.Internal.Entity do
     Repo.insert(changeset)
   end
 
-  @spec unlink_server(HELL.PK.t) ::
+  @spec unlink_server(Server.id) ::
     :ok
   def unlink_server(server) do
     server

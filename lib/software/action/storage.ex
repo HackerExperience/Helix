@@ -3,15 +3,14 @@ defmodule Helix.Software.Action.Storage do
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Model.Storage
 
-  @spec create() :: {:ok, Storage.t} | {:error, Ecto.Changeset.t}
-  def create do
-    StorageInternal.create()
-  end
+  @spec create() ::
+    {:ok, Storage.t}
+    | {:error, Ecto.Changeset.t}
+  defdelegate create,
+    to: StorageInternal
 
-  @spec delete(HELL.PK.t) :: no_return
-  def delete(storage_id) do
-    StorageInternal.delete(storage_id)
-
+  @spec delete(Storage.id) ::
     :ok
-  end
+  defdelegate delete(storage_id),
+    to: StorageInternal
 end

@@ -12,7 +12,7 @@ defmodule Helix.Hardware.Action.ComponentSpec do
   defdelegate create(spec_map),
     to: ComponentSpecInternal
 
-  @spec delete(ComponentSpec.t | String.t) ::
+  @spec delete(ComponentSpec.t | ComponentSpec.id) ::
     :ok
   @doc """
   Deletes the component specification

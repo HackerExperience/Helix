@@ -2,10 +2,12 @@ defmodule Helix.Network.Henforcer.Network do
 
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Network.Model.Network
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
-  @spec node_connected?(HELL.PK.t, HELL.PK.t) ::
+  @spec node_connected?(Server.id, Network.id) ::
     boolean
   def node_connected?(server, network) do
     # FIXME: This looks awful
@@ -23,7 +25,7 @@ defmodule Helix.Network.Henforcer.Network do
     end
   end
 
-  @spec has_ssh_connection?(HELL.PK.t, HELL.PK.t) ::
+  @spec has_ssh_connection?(Server.id, Server.id) ::
     boolean
   def has_ssh_connection?(gateway, destination) do
     connections_between = TunnelQuery.connections_on_tunnels_between(

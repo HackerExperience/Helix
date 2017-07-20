@@ -1,14 +1,15 @@
 defmodule Helix.Entity.Query.Entity do
 
+  import Ecto.Query, only: [select: 3, where: 3]
+
   alias Helix.Account.Model.Account
+  alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
 
-  import Ecto.Query, only: [select: 3, where: 3]
-
-  @spec fetch(HELL.PK.t) ::
+  @spec fetch(Entity.id) ::
     Entity.t
     | nil
   @doc """
@@ -21,7 +22,7 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate fetch(id),
     to: EntityInternal
 
-  @spec fetch_server_owner(HELL.PK.t) ::
+  @spec fetch_server_owner(Server.id) ::
     Entity.t
     | nil
   @doc """
@@ -36,7 +37,7 @@ defmodule Helix.Entity.Query.Entity do
     to: EntityInternal
 
   @spec get_servers_from_entity(Entity.t) ::
-    [HELL.PK.t]
+    [Server.id]
   @doc """
   Returns the ids of the servers owned by the entity
 

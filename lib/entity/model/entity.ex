@@ -4,6 +4,7 @@ defmodule Helix.Entity.Model.Entity do
 
   import Ecto.Changeset
 
+  alias Ecto.Changeset
   alias HELL.PK
   alias HELL.Constant
   alias Helix.Entity.Model.EntityComponent
@@ -45,7 +46,7 @@ defmodule Helix.Entity.Model.Entity do
   end
 
   @spec create_changeset(creation_params) ::
-    Ecto.Changeset.t
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)

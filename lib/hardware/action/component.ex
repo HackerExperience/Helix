@@ -13,7 +13,7 @@ defmodule Helix.Hardware.Action.Component do
   defdelegate create_from_spec(component_spec),
     to: ComponentInternal
 
-  @spec delete(Component.t | HELL.PK.t) ::
+  @spec delete(Component.t | Component.id) ::
     :ok
   @doc """
   Deletes the component

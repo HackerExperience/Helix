@@ -14,10 +14,12 @@ defmodule Helix.Log.Model.LogTouch do
 
   use Ecto.Schema
 
-  alias HELL.PK
-  alias Helix.Log.Model.Log
-
   import Ecto.Changeset
+
+  alias Ecto.Changeset
+  alias HELL.PK
+  alias Helix.Entity.Model.Entity
+  alias Helix.Log.Model.Log
 
   @primary_key false
   schema "log_touches" do
@@ -32,8 +34,8 @@ defmodule Helix.Log.Model.LogTouch do
       define_field: false
   end
 
-  @spec create(Log.t, PK.t) ::
-    Ecto.Changeset.t
+  @spec create(Log.t, Entity.id) ::
+    Changeset.t
   def create(log, entity) do
     %__MODULE__{}
     |> cast(%{entity_id: entity}, [:entity_id])

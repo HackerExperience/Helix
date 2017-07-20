@@ -3,14 +3,15 @@ defmodule Helix.Entity.Internal.Database do
   # FIXME: As much as possible, the queries described here should be
   # added to Database.Query for reuse and readability.
 
+  import Ecto.Query, only: [select: 2, where: 3, order_by: 2]
+
   alias Ecto.Multi
   alias Ecto.Queryable
-  alias HELL.PK
   alias HELL.IPv4
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.Database
-
-  import Ecto.Query, only: [select: 2, where: 3, order_by: 2]
 
   @select_fields ~w/
     network_id
@@ -31,7 +32,7 @@ defmodule Helix.Entity.Internal.Database do
     |> order_by(asc: :network_id, asc: :inserted_at)
   end
 
-  @spec get_entry(Entity.t, PK.t, IPv4.t) ::
+  @spec get_entry(Entity.t, Network.id, IPv4.t) ::
     Queryable.t
   def get_entry(entity, network_id, ip) do
     Database
@@ -40,7 +41,7 @@ defmodule Helix.Entity.Internal.Database do
     |> where([h], h.server_ip == ^ip)
   end
 
-  @spec get_entry_by_server_id(Entity.t, PK.t) ::
+  @spec get_entry_by_server_id(Entity.t, Server.id) ::
     Queryable.t
   def get_entry_by_server_id(entity, server_id) do
     Database
@@ -53,7 +54,7 @@ defmodule Helix.Entity.Internal.Database do
   def select_for_presentation(query),
     do: select(query, ^@select_fields)
 
-  @spec create(Entity.t, PK.t, IPv4.t, PK.t, String.t) ::
+  @spec create(Entity.t, Network.id, IPv4.t, Server.id, String.t) ::
     Multi.t
   def create(entity, network_id, ip, server_id, server_type) do
     changeset = Database.create(
@@ -76,7 +77,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Multi.update({:database, :updated}, changeset)
   end
 
-  @spec delete_server_from_network(PK.t, PK.t) ::
+  @spec delete_server_from_network(Server.id, Network.id) ::
     Multi.t
   def delete_server_from_network(server_id, network_id) do
     query =
@@ -88,7 +89,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Multi.delete_all({:database, :deleted}, query)
   end
 
-  @spec delete_server(PK.t) ::
+  @spec delete_server(Server.id) ::
     Multi.t
   def delete_server(server_id) do
     query = where(Database, [h], h.server_id == ^server_id)

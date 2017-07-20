@@ -26,7 +26,7 @@ defmodule Helix.Hardware.Action.Motherboard do
   defdelegate unlink(motherboard_slot),
     to: MotherboardInternal
 
-  @spec delete(Motherboard.t | HELL.PK.t) ::
+  @spec delete(Motherboard.t | Motherboard.id) ::
     :ok
   @doc """
   Deletes the motherboard

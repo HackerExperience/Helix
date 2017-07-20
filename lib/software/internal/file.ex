@@ -1,11 +1,11 @@
 defmodule Helix.Software.Internal.File do
 
+  import Ecto.Query, only: [where: 3, select: 3]
+
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
-
-  import Ecto.Query, only: [where: 3, select: 3]
 
   @spec create(File.creation_params) ::
     {:ok, File.t}
@@ -16,13 +16,14 @@ defmodule Helix.Software.Internal.File do
     |> Repo.insert()
   end
 
-  @spec fetch(HELL.PK.t) ::
+  @spec fetch(File.id) ::
     File.t
     | nil
   def fetch(file_id),
     do: Repo.get(File, file_id)
 
-  @spec get_files_on_target_storage(Storage.t) :: [File.t]
+  @spec get_files_on_target_storage(Storage.t) ::
+    [File.t]
   @doc """
   Gets all files on `target_storage`
   """
@@ -88,7 +89,8 @@ defmodule Helix.Software.Internal.File do
     |> Repo.update()
   end
 
-  @spec delete(File.t | File.id) :: :ok
+  @spec delete(File.t | File.id) ::
+    :ok
   def delete(file = %File{}),
     do: delete(file.file_id)
   def delete(file_id) do
@@ -121,7 +123,8 @@ defmodule Helix.Software.Internal.File do
     end
   end
 
-  @spec get_modules(File.t) :: File.modules
+  @spec get_modules(File.t) ::
+    File.modules
   def get_modules(file) do
     file
     |> FileModule.Query.from_file()

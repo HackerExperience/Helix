@@ -21,13 +21,13 @@ defmodule Helix.Hardware.Internal.Component do
     end
   end
 
-  @spec fetch(HELL.PK.t) ::
+  @spec fetch(Component.id) ::
     Component.t
     | nil
   def fetch(component_id),
     do: Repo.get(Component, component_id)
 
-  @spec delete(Component.t | HELL.PK.t) ::
+  @spec delete(Component.t | Component.id) ::
     :ok
   def delete(component = %Component{}),
     do: delete(component.component_id)

@@ -6,7 +6,8 @@ defmodule Helix.Hardware.Query.Motherboard do
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
-  @spec fetch!(Component.t) :: Motherboard.t
+  @spec fetch!(Component.t) ::
+    Motherboard.t
   @doc """
   Fetches a motherboard by component
   """
@@ -23,9 +24,8 @@ defmodule Helix.Hardware.Query.Motherboard do
 
   @spec preload_components(Motherboard.t) ::
     Motherboard.t
-  def preload_components(motherboard) do
-    Repo.preload(motherboard, slots: :component)
-  end
+  def preload_components(motherboard),
+    do: Repo.preload(motherboard, slots: :component)
 
   @spec resources(Motherboard.t) ::
     %{

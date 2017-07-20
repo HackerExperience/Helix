@@ -3,6 +3,8 @@ defmodule Helix.Log.Internal.Log do
 
   alias Ecto.Multi
   alias Helix.Event
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Model.Log
   alias Helix.Log.Model.Log.LogCreatedEvent
   alias Helix.Log.Model.Log.LogModifiedEvent
@@ -11,10 +13,7 @@ defmodule Helix.Log.Internal.Log do
   alias Helix.Log.Model.Revision
   alias Helix.Log.Repo
 
-  @type server_id :: HELL.PK.t
-  @type entity_id :: HELL.PK.t
-
-  @spec create(server_id, entity_id, String.t, pos_integer | nil) ::
+  @spec create(Server.id, Entity.id, String.t, pos_integer | nil) ::
     {Multi.t, [Event.t]}
   def create(server, entity, message, forge_version \\ nil) do
     params = %{
@@ -44,7 +43,7 @@ defmodule Helix.Log.Internal.Log do
   def fetch(log_id),
     do: Repo.get(Log, log_id)
 
-  @spec get_logs_on_server(server_id, Keyword.t) ::
+  @spec get_logs_on_server(Server.id, Keyword.t) ::
     [Log.t]
   def get_logs_on_server(server, _params \\ []) do
     server
@@ -54,7 +53,7 @@ defmodule Helix.Log.Internal.Log do
     |> Repo.all()
   end
 
-  @spec get_logs_from_entity_on_server(server_id, entity_id, Keyword.t) ::
+  @spec get_logs_from_entity_on_server(Server.id, Entity.id, Keyword.t) ::
     [Log.t]
   def get_logs_from_entity_on_server(server, entity, _params \\ []) do
     server
@@ -65,7 +64,7 @@ defmodule Helix.Log.Internal.Log do
     |> Repo.all()
   end
 
-  @spec revise(Log.t, entity_id, String.t, pos_integer) ::
+  @spec revise(Log.t, Entity.id, String.t, pos_integer) ::
     {Multi.t, [Event.t]}
   def revise(log, entity, message, forge_version) do
     revision = Revision.create(log, entity, message, forge_version)

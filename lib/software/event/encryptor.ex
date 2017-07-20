@@ -8,7 +8,6 @@ defmodule Helix.Software.Event.Encryptor do
   alias Helix.Software.Query.Storage, as: StorageQuery
   alias Helix.Software.Repo
 
-  @spec complete(%ProcessConclusionEvent{}) :: any
   def complete(event = %ProcessConclusionEvent{}) do
     storage = StorageQuery.fetch(event.storage_id)
     target_file = FileQuery.fetch(event.target_file_id)
@@ -25,9 +24,7 @@ defmodule Helix.Software.Event.Encryptor do
 
     case Repo.transaction(transaction) do
       {:ok, events} ->
-        events
-        |> List.wrap()
-        |> Enum.each(&Event.emit/1)
+        Event.emit(events)
     end
   end
 end

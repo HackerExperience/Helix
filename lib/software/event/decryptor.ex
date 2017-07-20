@@ -8,7 +8,6 @@ defmodule Helix.Software.Event.Decryptor do
   alias Helix.Software.Query.Storage, as: StorageQuery
   alias Helix.Software.Repo
 
-  @spec complete(%ProcessConclusionEvent{}) :: any
   def complete(event = %ProcessConclusionEvent{scope: :global}) do
     target_file = FileQuery.fetch(event.target_file_id)
 
@@ -21,7 +20,7 @@ defmodule Helix.Software.Event.Decryptor do
     end
 
     {:ok, events} = Repo.transaction(transaction)
-    emit(events)
+    Event.emit(events)
   end
 
   def complete(event = %ProcessConclusionEvent{scope: :local}) do
@@ -35,7 +34,4 @@ defmodule Helix.Software.Event.Decryptor do
 
     {:ok, _} = Repo.transaction(transaction)
   end
-
-  defp emit(events),
-    do: events |> List.wrap() |> Enum.each(&Event.emit/1)
 end

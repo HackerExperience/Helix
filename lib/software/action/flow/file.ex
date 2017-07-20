@@ -4,13 +4,15 @@ defmodule Helix.Software.Action.Flow.File do
 
   alias Helix.Event
   alias Helix.Process.Action.Process, as: ProcessAction
+  alias Helix.Process.Model.Process
+  alias Helix.Server.Model.Server
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
   alias Software.Firewall.ProcessType.Passive, as: FirewallPassive
 
-  @spec execute_file(File.t, HELL.PK.t, Keyword.t) ::
-    {:ok, process :: term}
+  @spec execute_file(File.t, Server.id, Keyword.t) ::
+    {:ok, Process.t}
     | {:error, :notexecutable}
     | {:error, :resources}
     | {:error, Ecto.Changeset.t}
@@ -21,9 +23,8 @@ defmodule Helix.Software.Action.Flow.File do
 
   If the process can not be started on the server, returns the respective error
   """
-  def execute_file(file, server, params \\ []) do
-    start_file_process(file, server, params)
-  end
+  def execute_file(file, server, params \\ []),
+    do: start_file_process(file, server, params)
 
   defp start_file_process(file = %File{software_type: :firewall}, server, _) do
     %{firewall_passive: version} = FileQuery.get_modules(file)

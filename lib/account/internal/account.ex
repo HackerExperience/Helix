@@ -1,5 +1,7 @@
 defmodule Helix.Account.Internal.Account do
 
+  import Ecto.Query, only: [select: 3]
+
   alias Helix.Event
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.Account.AccountCreatedEvent
@@ -7,10 +9,9 @@ defmodule Helix.Account.Internal.Account do
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
-  import Ecto.Query, only: [select: 3]
-
   @spec create(Account.creation_params) ::
-    {:ok, Account.t} | {:error, Ecto.Changeset.t}
+    {:ok, Account.t}
+    | {:error, Ecto.Changeset.t}
   def create(params) do
     changeset = Account.create_changeset(params)
 
@@ -26,27 +27,35 @@ defmodule Helix.Account.Internal.Account do
     end
   end
 
-  @spec fetch(Account.id) :: Account.t | nil
+  @spec fetch(Account.id) ::
+    Account.t
+    | nil
   def fetch(account_id),
     do: Repo.get(Account, account_id)
 
-  @spec fetch_by_email(Account.email) :: Account.t | nil
+  @spec fetch_by_email(Account.email) ::
+    Account.t
+    | nil
   def fetch_by_email(email),
     do: Repo.get_by(Account, email: String.downcase(email))
 
-  @spec fetch_by_username(Account.username) :: Account.t | nil
+  @spec fetch_by_username(Account.username) ::
+    Account.t
+    | nil
   def fetch_by_username(username),
     do: Repo.get_by(Account, username: String.downcase(username))
 
   @spec update(Account.t, Account.update_params) ::
-    {:ok, Account.t} | {:error, Ecto.Changeset.t}
+    {:ok, Account.t}
+    | {:error, Ecto.Changeset.t}
   def update(account, params) do
     account
     |> Account.update_changeset(params)
     |> Repo.update()
   end
 
-  @spec delete(Account.id | Account.t) :: no_return
+  @spec delete(Account.id | Account.t) ::
+    :ok
   def delete(account = %Account{}),
     do: delete(account.account_id)
   def delete(account_id) do
@@ -75,7 +84,8 @@ defmodule Helix.Account.Internal.Account do
     end
   end
 
-  @spec get_settings(Account.t | Account.id) :: Setting.t
+  @spec get_settings(Account.t | Account.id) ::
+    Setting.t
   def get_settings(account) do
     settings =
       account

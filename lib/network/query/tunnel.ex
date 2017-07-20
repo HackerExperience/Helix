@@ -1,55 +1,56 @@
 defmodule Helix.Network.Query.Tunnel do
 
+  alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
 
-  @type server :: HELL.PK.t
-
-  @spec get_tunnel(Network.t, server, server, [server]) ::
+  @spec get_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
     Tunnel.t
     | nil
-  def get_tunnel(network, gateway, destination, bounces \\ []) do
-    TunnelInternal.get_tunnel(network, gateway, destination, bounces)
-  end
+  defdelegate get_tunnel(network, gateway, destination, bounces \\ []),
+    to: TunnelInternal
 
-  @spec fetch(HELL.PK.t) :: Tunnel.t
-  def fetch(id),
-    do: TunnelInternal.fetch(id)
+  @spec fetch(Tunnel.id) ::
+    Tunnel.t
+    | nil
+  defdelegate fetch(id),
+    to: TunnelInternal
 
-  @spec connected?(server, server, Network.t | nil) :: boolean
-  def connected?(gateway, destination, network \\ nil) do
-    TunnelInternal.connected?(gateway, destination, network)
-  end
+  @spec connected?(Server.id, Server.id, Network.t | nil) ::
+    boolean
+  defdelegate connected?(gateway, destination, network \\ nil),
+    to: TunnelInternal
 
-  @spec get_connections(Tunnel.t) :: [Connection.t]
-  def get_connections(tunnel) do
-    TunnelInternal.get_connections(tunnel)
-  end
+  @spec get_connections(Tunnel.t) ::
+    [Connection.t]
+  defdelegate get_connections(tunnel),
+    to: TunnelInternal
 
-  @spec fetch_connection(HELL.PK.t) :: Connection.t | nil
-  def fetch_connection(connection_id),
-    do: TunnelInternal.fetch_connection(connection_id)
+  @spec fetch_connection(Connection.id) ::
+    Connection.t
+    | nil
+  defdelegate fetch_connection(connection_id),
+    to: TunnelInternal
 
-  @spec connections_through_node(server) :: [Connection.t]
-  def connections_through_node(server) do
-    TunnelInternal.connections_through_node(server)
-  end
+  @spec connections_through_node(Server.id) ::
+    [Connection.t]
+  defdelegate connections_through_node(server),
+    to: TunnelInternal
 
-  @spec inbound_connections(server) :: [Connection.t]
+  @spec inbound_connections(Server.id) ::
+    [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's destination is `server`
-  def inbound_connections(server) do
-    TunnelInternal.inbound_connections(server)
-  end
+  defdelegate inbound_connections(server),
+    to: TunnelInternal
 
-  @spec outbound_connections(server) :: [Connection.t]
+  @spec outbound_connections(Server.id) ::
+    [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
-  def outbound_connections(server) do
-    TunnelInternal.outbound_connections(server)
-  end
+  defdelegate outbound_connections(server),
+    to: TunnelInternal
 
-  def connections_on_tunnels_between(gateway, endpoint) do
-    TunnelInternal.connections_on_tunnels_between(gateway, endpoint)
-  end
+  defdelegate connections_on_tunnels_between(gateway, endpoint),
+    to: TunnelInternal
 end

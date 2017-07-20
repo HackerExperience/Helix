@@ -1,11 +1,11 @@
 defmodule Helix.Account.Internal.Session do
 
+  import Ecto.Query, only: [where: 3]
+
   alias Phoenix.Token
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSession
   alias Helix.Account.Repo
-
-  import Ecto.Query, only: [where: 3]
 
   # 1 Week
   @max_age 7 * 24 * 60 * 60
