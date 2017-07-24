@@ -12,6 +12,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Log.API.Log, as: LogAPI
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Public.Server, as: ServerPublic
+  alias Helix.Server.Websocket.View.ServerChannel, as: ChannelView
 
   # Events
   alias Helix.Process.Model.Process.ProcessCreatedEvent
@@ -20,19 +21,11 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
 
-  @doc false
-  def join(topic, message, socket)
-
   # Joining into player's own gateway
-  def join(
-    "server:" <> gateway_id,
-    %{"gateway_id" => gateway_id},
-    socket)
-  do
-    # TODO: bring back "server functioning" check in an elegant way
+  def join("server:" <> gateway_id, %{"gateway_id" => gateway_id}, socket) do
     with \
       account = socket.assigns.account,
-      :ok <- ChannelHenforcer.account_owns_server_check(account, gateway_id)
+      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id)
     do
       servers = %{gateway: gateway_id, destination: gateway_id}
 
@@ -43,13 +36,12 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
       {:ok, socket}
     else
-      {:error, :not_owner} ->
-        reply = %{type: "error", data: %{message: "User is not server owner"}}
-        {:error, reply}
+      error ->
+        {:error, ChannelView.render_join_error(error)}
     end
   end
 
-  # Joining into any other server
+  # Joining a remote server
   def join(
     "server:" <> destination_id,
     %{
@@ -60,13 +52,10 @@ defmodule Helix.Server.Websocket.Channel.Server do
     },
     socket)
   do
-    # TODO: bring back "server functioning" check in an elegant way
     with \
       account = socket.assigns.account,
-      :ok <- ChannelHenforcer.account_owns_server_check(account, gateway_id),
-
-      :ok <- ChannelHenforcer.server_password_check(destination_id, password),
-
+      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
+      :ok <- ChannelHenforcer.validate_server(destination_id, password),
       {:ok, tunnel} <- ServerPublic.connect_to_server(
         gateway_id,
         destination_id,
@@ -82,12 +71,8 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
       {:ok, socket}
     else
-      {:error, :not_owner} ->
-        reply = %{type: "error", data: %{message: "User is not server owner"}}
-        {:error, reply}
-      {:error, :password} ->
-        reply = %{type: "error", data: %{message: "Server password is invalid"}}
-        {:error, reply}
+      error ->
+        {:error, ChannelView.render_join_error(error)}
     end
   end
 

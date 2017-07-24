@@ -6,10 +6,41 @@ defmodule Helix.Server.Henforcer.Channel do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
+  @spec validate_gateway(Account.t, Server.id) ::
+    :ok
+    | {:error, {:gateway, :not_owner | :not_assembled}}
+  def validate_gateway(account, gateway_id) do
+    with \
+      :ok <- account_owns_server_check(account, gateway_id),
+      :ok <- server_functioning_check(gateway_id)
+    do
+      :ok
+    else
+      {:error, reason} ->
+        {:error, {:gateway, reason}}
+    end
+  end
+
+  @spec validate_server(Server.id, password :: String.t) ::
+    :ok
+    | {:error, {:server, :not_found | :not_assembled | :password}}
+  def validate_server(server_id, password) do
+    with \
+      :ok <- server_exists_check(server_id),
+      :ok <- server_functioning_check(server_id),
+      :ok <- server_password_check(server_id, password)
+    do
+      :ok
+    else
+      {:error, reason} ->
+        {:error, {:server, reason}}
+    end
+  end
+
   @spec account_owns_server_check(Account.t, Server.id) ::
     :ok
     | {:error, :not_owner}
-  def account_owns_server_check(account, server_id) do
+  defp account_owns_server_check(account, server_id) do
     owner = EntityQuery.fetch_server_owner(server_id)
     owner_id = EntityQuery.get_entity_id(owner)
 
@@ -23,17 +54,17 @@ defmodule Helix.Server.Henforcer.Channel do
   @spec server_password_check(Server.t | Server.id, String.t) ::
     :ok
     | {:error, :password}
-  def server_password_check(%Server{password: password}, password),
+  defp server_password_check(%Server{password: password}, password),
     do: :ok
-  def server_password_check(server_id, password) when is_binary(server_id),
+  defp server_password_check(server_id, password) when is_binary(server_id),
     do: server_password_check(ServerQuery.fetch(server_id), password)
-  def server_password_check(_, _),
+  defp server_password_check(_, _),
     do: {:error, :password}
 
   @spec server_exists_check(Server.id) ::
     :ok
     | {:error, :not_found}
-  def server_exists_check(server_id) do
+  defp server_exists_check(server_id) do
     ServerHenforcer.exists?(server_id)
     && :ok
     || {:error, :not_found}
@@ -42,7 +73,7 @@ defmodule Helix.Server.Henforcer.Channel do
   @spec server_functioning_check(Server.id) ::
     :ok
     | {:error, :not_assembled}
-  def server_functioning_check(server_id) do
+  defp server_functioning_check(server_id) do
     ServerHenforcer.functioning?(server_id)
     && :ok
     || {:error, :not_assembled}
