@@ -71,7 +71,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     destination_id = destination.server_id
 
     topic = "server:" <> destination_id
-    join_msg = %{"gateway_id" => gateway_id}
+    join_msg = %{"gateway_id" => gateway_id, "password" => destination.password}
 
     # TODO: Make this an integration factory function
     tunnel = NetworkFactory.insert(
@@ -94,17 +94,31 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     Map.merge(context, data)
   end
 
-  test "can connect to owned server", context do
+  test "can connect to owned server with simple join message", context do
     server = create_server_for_account(context.account)
-    assert {:ok, _, _} = join(context.socket, "server:" <> server.server_id)
+    assert {:ok, _, _} = join(
+      context.socket,
+      "server:" <> server.server_id,
+      %{"gateway_id" => server.server_id})
+
+    # This might emit an event...
+    :timer.sleep(250)
   end
 
-  test "can not connect to a non owned server without connection", context do
-    server = create_destination_server()
+  test "can not connect to a remote server without valid password", context do
+    gateway = create_server_for_account(context.account)
+    destination = create_destination_server()
 
-    assert {:error, _} = join(context.socket, "server:" <> server.server_id)
+    assert {:error, _} = join(
+      context.socket,
+      "server:" <> destination.server_id,
+      %{"gateway_id" => gateway.server_id, "password" => "wrongpass"})
   end
 
+  # This test is not that relevant anymore because a connection is started
+  # implictly as long as sufficient data is provided
+  # TODO: remove ?
+  @tag :pending
   test \
     "can connect to a destination if a suitable connection exists",
     context
@@ -135,19 +149,18 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   test "can start connection with a server", context do
     gateway = create_server_for_account(context.account)
-    gateway = gateway.server_id
     destination = create_destination_server()
 
     topic = "server:" <> destination.server_id
     join_msg = %{
-      "gateway_id" => gateway,
+      "gateway_id" => gateway.server_id,
       "network_id" => "::", # The hardcoded way is the right way (tm)
       "password" => destination.password
     }
 
     assert {:ok, _, _} = join(context.socket, topic, join_msg)
 
-    # This will emit an event...
+    # This might emit an event...
     :timer.sleep(250)
   end
 
@@ -172,6 +185,9 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert is_map(file_map)
     assert Enum.all?(Map.keys(file_map), &is_binary/1)
     assert expected_file_ids == file_ids
+
+    # This might emit an event...
+    :timer.sleep(250)
   end
 
   describe "process.index" do
@@ -199,6 +215,9 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
       assert %{data: %{logs: logs}} = response
       assert [%{message: "baz"}, %{message: "bar"}, %{message: "foo"}] = logs
+
+      # This might emit an event...
+      :timer.sleep(250)
     end
   end
 

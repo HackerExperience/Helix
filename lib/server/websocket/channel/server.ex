@@ -7,10 +7,11 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Software.API.File, as: FileAPI
   alias Helix.Process.API.Process, as: ProcessAPI
   alias Helix.Log.API.Log, as: LogAPI
+  alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
+  alias Helix.Server.Public.Server, as: ServerPublic
 
   # Events
   alias Helix.Process.Model.Process.ProcessCreatedEvent
@@ -19,58 +20,74 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
 
-  defp socket_assign(socket, assigns) do
-    # TODO: Manual test
-    IO.inspect socket
-    Enum.reduce(assigns, socket, fn(%{key: key, data: data}, acc) ->
-      assign(acc, key, data)
-    end)
-    IO.inspect socket
-  end
-
   @doc false
   def join(topic, message, socket)
 
-  # Connecting to an external server without an established connection
+  # Joining into player's own gateway
   def join(
-    "server:" <> server_id,
+    "server:" <> gateway_id,
+    %{"gateway_id" => gateway_id},
+    socket)
+  do
+    # TODO: bring back "server functioning" check in an elegant way
+    with \
+      account = socket.assigns.account,
+      :ok <- ChannelHenforcer.account_owns_server_check(account, gateway_id)
+    do
+      servers = %{gateway: gateway_id, destination: gateway_id}
+
+      socket =
+        socket
+        |> assign(:servers, servers)
+        |> assign(:access_type, :local)
+
+      {:ok, socket}
+    else
+      {:error, :not_owner} ->
+        reply = %{type: "error", data: %{message: "User is not server owner"}}
+        {:error, reply}
+    end
+  end
+
+  # Joining into any other server
+  def join(
+    "server:" <> destination_id,
     %{
       "gateway_id" => gateway_id,
-      "network_id" => _network_id,
+      # "network_id" => network_id,
+      # "bounces" => bounce_list,
       "password" => password
     },
     socket)
   do
-  account_id = socket.assigns.account.account_id
-    join = ChannelHenforcer.join_external?(
-      account_id, server_id, gateway_id, password)
-    case join do
-      {:ok, assigns} ->
-        {:ok, socket_assign(socket, assigns)}
-      {:error, reason} ->
-        {:error, %{reason: Atom.to_string(reason)}}
-    end
-  end
+    # TODO: bring back "server functioning" check in an elegant way
+    with \
+      account = socket.assigns.account,
+      :ok <- ChannelHenforcer.account_owns_server_check(account, gateway_id),
 
-  # Connecting to an external server
-  def join("server:" <> server_id, %{"gateway_id" => gateway_id}, socket) do
-    account_id = socket.assigns.account.account_id
-    case ChannelHenforcer.join_connected?(account_id, server_id, gateway_id) do
-      {:ok, assigns} ->
-        {:ok, socket_assign(socket, assigns)}
-      {:error, reason} ->
-        {:error, %{reason: Atom.to_string(reason)}}
-    end
-  end
+      :ok <- ChannelHenforcer.server_password_check(destination_id, password),
 
-  # Connecting to player's own gateways
-  def join("server:" <> server_id, _, socket) do
-    account_id = socket.assigns.account.account_id
-    case ChannelHenforcer.join_own_gateway?(account_id, server_id) do
-      {:ok, assigns} ->
-        {:ok, socket_assign(socket, assigns)}
-      {:error, reason} ->
-        {:error, %{reason: Atom.to_string(reason)}}
+      {:ok, tunnel} <- ServerPublic.connect_to_server(
+        gateway_id,
+        destination_id,
+        [])
+    do
+      servers = %{gateway: gateway_id, destination: destination_id}
+
+      socket =
+        socket
+        |> assign(:tunnel, tunnel)
+        |> assign(:servers, servers)
+        |> assign(:access_type, :remote)
+
+      {:ok, socket}
+    else
+      {:error, :not_owner} ->
+        reply = %{type: "error", data: %{message: "User is not server owner"}}
+        {:error, reply}
+      {:error, :password} ->
+        reply = %{type: "error", data: %{message: "Server password is invalid"}}
+        {:error, reply}
     end
   end
 

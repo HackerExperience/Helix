@@ -1,103 +1,50 @@
 defmodule Helix.Server.Henforcer.Channel do
 
-  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
-  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Account.Model.Account
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Query.Tunnel, as: TunnelQuery
-  alias Helix.Network.Repo, as: NetworkRepo
-  alias Helix.Network.Action.Tunnel, as: TunnelAction
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
+  alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server, as: ServerQuery
 
-  def join_external?(account_id, server_id, gateway_id, password) do
-    with \
-      true <- ServerHenforcer.exists?(server_id) || {:error, :not_found},
-      true <- ServerHenforcer.exists?(gateway_id) || {:error, :not_found},
-      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
-      true <- ServerHenforcer.functioning?(gateway_id) || {:error, :not_assembled},
-      owner = EntityQuery.fetch_server_owner(gateway_id),
-      account_id = EntityQuery.get_entity_id(account_id),
-      owner_id = EntityQuery.get_entity_id(owner),
-      true <- owner_id == account_id || {:error, :not_owner},
+  @spec account_owns_server_check(Account.t, Server.id) ::
+    :ok
+    | {:error, :not_owner}
+  def account_owns_server_check(account, server_id) do
+    owner = EntityQuery.fetch_server_owner(server_id)
+    owner_id = EntityQuery.get_entity_id(owner)
 
-      destination = %{} <- ServerQuery.fetch(server_id),
-      true <- password == destination.password || {:error, :password},
+    account_id = EntityQuery.get_entity_id(account)
 
-      # FIXME: Using other Repo directly, nono
-      network = NetworkRepo.get(Network, "::"),
-      {:ok, connection, events} <- TunnelAction.connect(
-        network,
-        gateway_id,
-        server_id,
-        [],
-        "ssh"),
-      tunnel = NetworkRepo.preload(connection, :tunnel).tunnel
-    do
-      # FIXME charlots
-      Helix.Event.emit(events)
-
-      assigns = [
-        %{key: :servers, data: %{gateway: gateway_id, destination: server_id}},
-        %{key: :tunnel, data: tunnel}
-      ]
-      {:ok, assigns}
-    else
-      error ->
-        error
-    end
+    (owner_id == account_id)
+    && :ok
+    || {:error, :not_owner}
   end
 
-  def join_connected?(account_id, server_id, gateway_id) do
-    # FIXME: this doesn't belongs here
-    get_tunnel_for_ssh = fn ->
-      connections_between = TunnelQuery.connections_on_tunnels_between(
-      gateway_id,
-      server_id)
+  @spec server_password_check(Server.t | Server.id, String.t) ::
+    :ok
+    | {:error, :password}
+  def server_password_check(%Server{password: password}, password),
+    do: :ok
+  def server_password_check(server_id, password) when is_binary(server_id),
+    do: server_password_check(ServerQuery.fetch(server_id), password)
+  def server_password_check(_, _),
+    do: {:error, :password}
 
-      case Enum.find(connections_between, &(&1.connection_type == "ssh")) do
-        connection = %{} ->
-          {:ok, TunnelQuery.fetch(connection.tunnel_id)}
-        _ ->
-          {:error, :not_connected}
-      end
-    end
-
-    with \
-      true <- ServerHenforcer.exists?(server_id) || {:error, :not_found},
-      true <- ServerHenforcer.exists?(gateway_id) || {:error, :not_found},
-      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
-      true <- ServerHenforcer.functioning?(gateway_id) || {:error, :not_assembled},
-      owner = EntityQuery.fetch_server_owner(gateway_id),
-      account_id = EntityQuery.get_entity_id(account_id),
-      owner_id = EntityQuery.get_entity_id(owner),
-      true <- owner_id == account_id || {:error, :not_owner},
-      {:ok, tunnel} <- get_tunnel_for_ssh.()
-    do
-      assigns = [
-        %{key: :servers, data: %{gateway: gateway_id, destination: server_id}},
-        %{key: :tunnel, data: tunnel}
-      ]
-      {:ok, assigns}
-    else
-      error ->
-        error
-    end
+  @spec server_exists_check(Server.id) ::
+    :ok
+    | {:error, :not_found}
+  def server_exists_check(server_id) do
+    ServerHenforcer.exists?(server_id)
+    && :ok
+    || {:error, :not_found}
   end
 
-  def join_own_gateway?(account_id, server_id) do
-    with \
-      true <- ServerHenforcer.exists?(server_id) || {:error, :not_found},
-      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
-      owner = EntityQuery.fetch_server_owner(server_id),
-      owner_id = EntityQuery.get_entity_id(owner),
-      account_id = EntityQuery.get_entity_id(account_id),
-      true <- owner_id == account_id || {:error, :not_owner}
-    do
-      assigns = [
-        %{servers: %{gateway: server_id, destination: server_id}}
-      ]
-      {:ok, assigns}
-    else
-      error ->
-        error
-    end
+  @spec server_functioning_check(Server.id) ::
+    :ok
+    | {:error, :not_assembled}
+  def server_functioning_check(server_id) do
+    ServerHenforcer.functioning?(server_id)
+    && :ok
+    || {:error, :not_assembled}
   end
 end

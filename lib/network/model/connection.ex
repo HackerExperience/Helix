@@ -10,6 +10,7 @@ defmodule Helix.Network.Model.Connection do
   @type close_reasons :: :normal | :force
   @type id :: PK.t
   @type t :: %__MODULE__{}
+  @type type :: String.t
 
   @close_reasons [:normal, :force]
 
