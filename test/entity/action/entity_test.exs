@@ -12,7 +12,8 @@ defmodule Helix.Entity.Action.EntityTest do
     test "derives an entity from an existing account" do
       account = AccountFactory.insert(:account)
 
-      assert {:ok, entity = %Entity{}} = EntityAction.create_from_specialization(account)
+      assert {:ok, entity} = EntityAction.create_from_specialization(account)
+      assert %Entity{} = entity
       assert Repo.get(Entity, entity.entity_id)
     end
   end

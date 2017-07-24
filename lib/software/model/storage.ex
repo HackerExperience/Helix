@@ -9,7 +9,6 @@ defmodule Helix.Software.Model.Storage do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.StorageDrive
 
-
   @type id :: PK.t
   @type t :: %__MODULE__{
     storage_id: id,

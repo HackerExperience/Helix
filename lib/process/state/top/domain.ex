@@ -403,7 +403,9 @@ defmodule Helix.Process.State.TOP.Domain do
             end
           end)
 
-          resources = ServerResourcesTOP.sum(remaining_resources, freed_resources)
+          resources = ServerResourcesTOP.sum(
+            remaining_resources,
+            freed_resources)
           {processes, resources}
       end
 

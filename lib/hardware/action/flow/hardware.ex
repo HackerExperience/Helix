@@ -39,7 +39,9 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
           {:ok, component} <- ComponentAction.create_from_spec(spec),
           on_fail(fn -> ComponentAction.delete(component) end),
 
-          {:ok, _} <- EntityAction.link_component(entity, component.component_id)
+          {:ok, _} <- EntityAction.link_component(
+            entity,
+            component.component_id)
         do
           {:cont, {:ok, [component| acc]}}
         end
@@ -74,11 +76,16 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
 
     flowing do
       with \
-        {:ok, motherboard} <- ComponentAction.create_from_spec(bundle.motherboard),
+        {:ok, motherboard} <- ComponentAction.create_from_spec(
+          bundle.motherboard),
         on_fail(fn -> ComponentAction.delete(motherboard) end),
 
-        {:ok, _} <- EntityAction.link_component(entity, motherboard.component_id),
-        on_fail(fn -> EntityAction.unlink_component(motherboard.component_id) end),
+        {:ok, _} <- EntityAction.link_component(
+          entity,
+          motherboard.component_id),
+        on_fail(fn ->
+          EntityAction.unlink_component(motherboard.component_id)
+        end),
 
         {:ok, components} <- build_components.(),
 

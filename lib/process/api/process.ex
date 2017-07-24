@@ -22,6 +22,4 @@ defmodule Helix.Process.API.Process do
       affecting: processes_targeting_server
     }
   end
-
-
 end

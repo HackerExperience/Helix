@@ -65,7 +65,6 @@ defmodule Helix.Hardware.Model.Component do
     alias HELL.Constant
     alias Helix.Hardware.Model.Component
 
-
     @spec from_id_list(Queryable.t, [Component.id]) ::
       Queryable.t
     def from_id_list(query \\ Component, id_list),
