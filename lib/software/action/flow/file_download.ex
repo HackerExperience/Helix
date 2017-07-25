@@ -14,6 +14,7 @@ defmodule Helix.Software.Action.Flow.FileDownload do
   # FIXME: return on error
   @spec start_download_process(File.t, Storage.t, Tunnel.t) ::
     {:ok, Process.t}
+    | error :: term
   def start_download_process(origin_file, destination_storage, tunnel) do
     objective = %{dlk: origin_file.file_size}
     process_data = %ProcessType{

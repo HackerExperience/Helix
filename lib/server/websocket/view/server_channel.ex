@@ -1,6 +1,11 @@
 defmodule Helix.Server.Websocket.View.ServerChannel do
 
-  @spec render_join_error({:error, {:gateway | :server, :not_owner | :not_assembled | :not_found | :password}}) ::
+  @type join_error_reason :: :not_owner
+    | :not_assembled
+    | :not_found
+    | :password
+
+  @spec render_join_error({:error, {:gateway | :server, join_error_reason}}) ::
     %{type: String.t, data: %{message: String.t}}
   def render_join_error({:error, {:gateway, :not_owner}}),
     do: error("User is not server owner")

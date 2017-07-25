@@ -7,7 +7,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Software.API.File, as: FileAPI
+  alias Helix.Software.Public.File, as: FilePublic
   alias Helix.Process.API.Process, as: ProcessAPI
   alias Helix.Log.API.Log, as: LogAPI
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
@@ -78,19 +78,41 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   @doc false
   def handle_in("file.index", _, socket) do
-    destination = socket.assigns.servers.destination
-    index = FileAPI.index(destination)
+    server_id = socket.assigns.servers.destination
 
-    {:reply, {:ok, index}, socket}
+    message = %{data: %{files: FilePublic.index(server_id)}}
+
+    {:reply, {:ok, message}, socket}
+  end
+
+  def handle_in("file.download", %{file_id: file_id}, socket) do
+    if socket.assigns.access_type == :remote do
+      destination = socket.assigns.servers.destination
+      gateway = socket.assigns.servers.gateway
+      tunnel = socket.assigns.tunnel
+
+      case FilePublic.download(gateway, destination, tunnel, file_id) do
+        :ok ->
+          {:reply, :ok, socket}
+        :error ->
+          {:reply, :error, socket}
+      end
+    else
+      message = %{
+        type: "error",
+        data: %{message: "Can't download from own gateway"}
+      }
+      {:reply, {:error, message}, socket}
+    end
   end
 
   # TODO: Paginate
-  def handle_in("log.index", _message, socket) do
+  def handle_in("log.index", _, socket) do
     server_id = socket.assigns.servers.destination
 
-    data = %{logs: LogAPI.index(server_id)}
+    message = %{data: %{logs: LogAPI.index(server_id)}}
 
-    {:reply, {:ok, %{data: data}}, socket}
+    {:reply, {:ok, message}, socket}
   end
 
   def handle_in("log.delete", %{log_id: log_id}, socket) do
@@ -106,34 +128,21 @@ defmodule Helix.Server.Websocket.Channel.Server do
     end
   end
 
-  def handle_in("process.index", _message, socket) do
+  def handle_in("process.index", _, socket) do
     server = socket.assigns.servers.destination
     entity = EntityQuery.get_entity_id(socket.assigns.account)
 
     index = ProcessAPI.index(server, entity)
 
-    return = %{
-      owned_processes: index[:owned],
-      affecting_processes: index[:affecting]
-    }
+    return = %{data: %{
+      owned_processes: index.owned,
+      affecting_processes: index.affecting
+    }}
 
     {:reply, {:ok, return}, socket}
   end
 
-  def handle_in("file.download", %{file_id: file_id}, socket) do
-    destination = socket.assigns.servers.destination
-    gateway = socket.assigns.servers.gateway
-    tunnel = socket.assigns.tunnel
-
-    case FileAPI.download(gateway, destination, tunnel, file_id) do
-      :ok ->
-        {:reply, :ok, socket}
-      :error ->
-        {:reply, :error, socket}
-    end
-  end
-
-  def notify(server_id, :processes_changed, _params) do
+  defp notify(server_id, :processes_changed, _params) do
     # TODO: Use a view to always follow an standardized format
     notify(server_id, %{
       event: "processes_changed",
@@ -141,7 +150,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
     })
   end
 
-  def notify(server_id, :logs_changed, _params) do
+  defp notify(server_id, :logs_changed, _params) do
     # TODO: Use a view to always follow an standardized format
     notify(server_id, %{
       event: "logs_changed",

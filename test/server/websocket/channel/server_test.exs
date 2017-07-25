@@ -169,7 +169,8 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
     ref = push context.socket, "file.index", %{}
 
-    assert_reply ref, :ok, file_map
+    assert_reply ref, :ok, response
+    file_map = response.data.files
 
     expected_file_ids =
       context.files
