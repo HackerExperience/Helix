@@ -36,15 +36,15 @@ defmodule Helix.Software.Public.File do
   @spec download(Server.id, Server.id, Tunnel.t, File.id) ::
     :ok
     | :error
-  def download(gateway, destination, tunnel, file_id) do
+  def download(gateway_id, destination_id, tunnel, file_id) do
     destination_storage_ids =
-      destination
+      destination_id
       |> ServerQuery.fetch()
       |> storages_on_server()
       |> Enum.map(&(&1.storage_id))
 
     gateway_storage =
-      gateway
+      gateway_id
       |> ServerQuery.fetch()
       |> storages_on_server()
       |> Enum.random()

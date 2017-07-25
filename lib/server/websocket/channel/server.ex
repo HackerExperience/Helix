@@ -7,19 +7,16 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Software.Public.File, as: FilePublic
-  alias Helix.Process.API.Process, as: ProcessAPI
-  alias Helix.Log.API.Log, as: LogAPI
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Public.Server, as: ServerPublic
   alias Helix.Server.Websocket.View.ServerChannel, as: ChannelView
 
   # Events
-  alias Helix.Process.Model.Process.ProcessCreatedEvent
-  alias Helix.Process.Model.Process.ProcessConclusionEvent
   alias Helix.Log.Model.Log.LogCreatedEvent
-  alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
+  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Process.Model.Process.ProcessConclusionEvent
+  alias Helix.Process.Model.Process.ProcessCreatedEvent
 
   # Joining into player's own gateway
   def join("server:" <> gateway_id, %{"gateway_id" => gateway_id}, socket) do
@@ -80,7 +77,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   def handle_in("file.index", _, socket) do
     server_id = socket.assigns.servers.destination
 
-    message = %{data: %{files: FilePublic.index(server_id)}}
+    message = %{data: %{files: ServerPublic.file_index(server_id)}}
 
     {:reply, {:ok, message}, socket}
   end
@@ -91,7 +88,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
       gateway = socket.assigns.servers.gateway
       tunnel = socket.assigns.tunnel
 
-      case FilePublic.download(gateway, destination, tunnel, file_id) do
+      case ServerPublic.file_download(gateway, destination, tunnel, file_id) do
         :ok ->
           {:reply, :ok, socket}
         :error ->
@@ -110,7 +107,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   def handle_in("log.index", _, socket) do
     server_id = socket.assigns.servers.destination
 
-    message = %{data: %{logs: LogAPI.index(server_id)}}
+    message = %{data: %{logs: ServerPublic.log_index(server_id)}}
 
     {:reply, {:ok, message}, socket}
   end
@@ -120,19 +117,23 @@ defmodule Helix.Server.Websocket.Channel.Server do
     gateway_id = socket.assigns.servers.gateway
     network_id = "::"
 
-    case LogAPI.delete(gateway_id, target_id, network_id, log_id) do
+    case ServerPublic.log_delete(gateway_id, target_id, network_id, log_id) do
       :ok ->
         {:reply, :ok, socket}
-      {:error, reason} ->
-        {:reply, {:error, %{reason: Atom.to_string(reason)}}}
+      {:error, :nxlog} ->
+        message = %{type: "error", data: %{message: "Log not found"}}
+        {:reply, {:error, message}, socket}
+      {:error, :unknown} ->
+        message = %{type: "error", data: %{message: "Unexpected error"}}
+        {:reply, {:error, message}, socket}
     end
   end
 
   def handle_in("process.index", _, socket) do
-    server = socket.assigns.servers.destination
-    entity = EntityQuery.get_entity_id(socket.assigns.account)
+    server_id = socket.assigns.servers.destination
+    entity_id = EntityQuery.get_entity_id(socket.assigns.account)
 
-    index = ProcessAPI.index(server, entity)
+    index = ServerPublic.process_index(server_id, entity_id)
 
     return = %{data: %{
       owned_processes: index.owned,

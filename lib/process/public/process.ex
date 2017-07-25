@@ -1,4 +1,4 @@
-defmodule Helix.Process.API.Process do
+defmodule Helix.Process.Public.Process do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server

@@ -215,6 +215,12 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       assert_reply ref, :ok, response
 
       assert %{data: %{logs: logs}} = response
+
+      # Welp, when you connect to a server it emits an event that causes a log
+      # to be created on the target server. We are ignoring those logs for this
+      # test because yes
+      logs = Enum.reject(logs, &(&1.message =~ "logged in as root"))
+
       assert [%{message: "baz"}, %{message: "bar"}, %{message: "foo"}] = logs
 
       # This might emit an event...
