@@ -66,7 +66,7 @@ defmodule Software.Firewall.ProcessType do
         do: raise "firewall(passive) process should not be 'completed'"
     end
 
-    defimpl Helix.Process.API.ProcessView do
+    defimpl Helix.Process.API.View.Process do
 
       def render(data, process, _, _) do
         %{

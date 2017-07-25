@@ -7,299 +7,143 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Hardware.Query.Component, as: ComponentQuery
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Log.Model.Log.LogCreatedEvent
-  alias Helix.Log.Model.Log.LogModifiedEvent
-  alias Helix.Log.Model.Log.LogDeletedEvent
-  alias Helix.Log.Query.Log, as: LogQuery
-  alias Helix.Network.Query.Tunnel, as: TunnelQuery
-  alias Helix.Network.Action.Tunnel, as: TunnelAction
-  alias Helix.Network.Model.Network
-  alias Helix.Network.Repo, as: NetworkRepo
-  alias Helix.Process.API.ProcessView
-  alias Helix.Process.Query.Process, as: ProcessQuery
-  alias Helix.Software.Query.Storage, as: StorageQuery
-  alias Helix.Software.Query.File, as: FileQuery
-  alias Helix.Software.Action.Flow.FileDownload, as: FileDownloadFlow
-  alias Helix.Software.Action.Flow.LogDeleter, as: LogDeleterFlow
-  alias Helix.Software.API.View.File, as: FileView
-  alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
+  alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
+  alias Helix.Server.Public.Server, as: ServerPublic
+  alias Helix.Server.Websocket.View.ServerChannel, as: ChannelView
 
   # Events
-  alias Helix.Process.Model.Process.ProcessCreatedEvent
+  alias Helix.Log.Model.Log.LogCreatedEvent
+  alias Helix.Log.Model.Log.LogDeletedEvent
+  alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Process.Model.Process.ProcessConclusionEvent
+  alias Helix.Process.Model.Process.ProcessCreatedEvent
 
-  @doc false
-  def join(topic, message, socket)
+  # Joining into player's own gateway
+  def join("server:" <> gateway_id, %{"gateway_id" => gateway_id}, socket) do
+    with \
+      account = socket.assigns.account,
+      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id)
+    do
+      servers = %{gateway: gateway_id, destination: gateway_id}
 
-  # FIXME: This IS awful
-  # Connecting to an external server without an established connection
+      socket =
+        socket
+        |> assign(:servers, servers)
+        |> assign(:access_type, :local)
+
+      {:ok, socket}
+    else
+      error ->
+        {:error, ChannelView.render_join_error(error)}
+    end
+  end
+
+  # Joining a remote server
   def join(
-    "server:" <> server_id,
+    "server:" <> destination_id,
     %{
-      "gateway_id" => gateway,
-      "network_id" => network,
+      "gateway_id" => gateway_id,
+      # "network_id" => network_id,
+      # "bounces" => bounce_list,
       "password" => password
     },
     socket)
   do
-    # Right now i won't accept bounces. In the future we'll obviously have to
-    # check them but at that time we'll have a better interface, HEnforcer and
-    # proper APIs
     with \
-      true <- ServerHenforcer.server_exists?(server_id) || {:error, :not_found},
-      true <- ServerHenforcer.server_exists?(gateway) || {:error, :not_found},
-      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
-      true <- ServerHenforcer.functioning?(gateway) || {:error, :not_assembled},
-      owner = EntityQuery.fetch_server_owner(gateway),
-      account_id = EntityQuery.get_entity_id(socket.assigns.account),
-      owner_id = EntityQuery.get_entity_id(owner),
-      true <- owner_id == account_id || {:error, :not_owner},
-
-      destination = %{} <- ServerQuery.fetch(server_id),
-      true <- password == destination.password || {:error, :password},
-
-      # FIXME: Using other Repo directly, nono
-      network = NetworkRepo.get(Network, "::"),
-      {:ok, connection, events} <- TunnelAction.connect(
-        network,
-        gateway,
-        server_id,
-        [],
-        "ssh"),
-      tunnel = NetworkRepo.preload(connection, :tunnel).tunnel
-    do
-      # Yup, most of the code in this function does not belongs here. It'll be
-      # moved around (and be properly tested) ASAP
-      Helix.Event.emit(events)
-
-      socket =
-        socket
-        |> assign(:servers, %{gateway: gateway, destination: server_id})
-        |> assign(:tunnel, tunnel)
-
-      {:ok, socket}
-    else
-      {:error, :not_found} ->
-        {:error, %{reason: "invalid server"}}
-      {:error, :not_assembled} ->
-        {:error, %{reason: "server is not assembled"}}
-      {:error, :not_owner} ->
-        {:error, %{reason: "player is not the server owner"}}
-      {:error, :password} ->
-        {:error, %{reason: "invalid password"}}
-    end
-  end
-
-  # Connecting to an external server
-  def join("server:" <> server_id, %{"gateway_id" => gateway}, socket) do
-    # FIXME: this doesn't belongs here
-    get_tunnel_for_ssh = fn ->
-      connections_between = TunnelQuery.connections_on_tunnels_between(
-        gateway,
-        server_id)
-
-      case Enum.find(connections_between, &(&1.connection_type == "ssh")) do
-        connection = %{} ->
-          {:ok, TunnelQuery.fetch(connection.tunnel_id)}
-        _ ->
-          {:error, :not_connected}
-      end
-    end
-
-    with \
-      true <- ServerHenforcer.server_exists?(server_id) || {:error, :not_found},
-      true <- ServerHenforcer.server_exists?(gateway) || {:error, :not_found},
-      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
-      true <- ServerHenforcer.functioning?(gateway) || {:error, :not_assembled},
-      owner = EntityQuery.fetch_server_owner(gateway),
-      account_id = EntityQuery.get_entity_id(socket.assigns.account),
-      owner_id = EntityQuery.get_entity_id(owner),
-      true <- owner_id == account_id || {:error, :not_owner},
-      {:ok, tunnel} <- get_tunnel_for_ssh.()
-    do
-      # PHEW! That means that the server exists, the player owns the specified
-      # gateway and that it has an SSH connection to the target server
-
-      socket =
-        socket
-        |> assign(:servers, %{gateway: gateway, destination: server_id})
-        |> assign(:tunnel, tunnel)
-
-      {:ok, socket}
-    else
-      {:error, :not_found} ->
-        {:error, %{reason: "invalid server"}}
-      {:error, :not_assembled} ->
-        {:error, %{reason: "server is not assembled"}}
-      {:error, :not_owner} ->
-        {:error, %{reason: "player is not the server owner"}}
-      {:error, :not_connected} ->
-        {:error, %{reason: "gateway is not connected to target server"}}
-    end
-  end
-
-  # Connecting to player's own gateways
-  def join("server:" <> server_id, _, socket) do
-    with \
-      true <- ServerHenforcer.server_exists?(server_id) || {:error, :not_found},
-      true <- ServerHenforcer.functioning?(server_id) || {:error, :not_assembled},
-      owner = EntityQuery.fetch_server_owner(server_id),
       account = socket.assigns.account,
-      owner_id = EntityQuery.get_entity_id(owner),
-      account_id = EntityQuery.get_entity_id(account),
-      true <- owner_id == account_id || {:error, :not_owner}
+      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
+      :ok <- ChannelHenforcer.validate_server(destination_id, password),
+      {:ok, tunnel} <- ServerPublic.connect_to_server(
+        gateway_id,
+        destination_id,
+        [])
     do
-      socket = assign(
-        socket,
-        :servers,
-        %{gateway: server_id, destination: server_id})
+      servers = %{gateway: gateway_id, destination: destination_id}
+
+      socket =
+        socket
+        |> assign(:tunnel, tunnel)
+        |> assign(:servers, servers)
+        |> assign(:access_type, :remote)
 
       {:ok, socket}
     else
-      {:error, :not_found} ->
-        {:error, %{reason: "invalid server"}}
-      {:error, :not_assembled} ->
-        {:error, %{reason: "server is not assembled"}}
-      {:error, :not_owner} ->
-        {:error, %{reason: "player is not the server owner"}}
+      error ->
+        {:error, ChannelView.render_join_error(error)}
     end
   end
 
   @doc false
   def handle_in("file.index", _, socket) do
-    files =
-      socket.assigns.servers.destination
-      |> ServerQuery.fetch()
-      |> storages_on_server()
-      # Returns a map %{path => [files]}
-      |> Enum.map(&FileQuery.storage_contents/1)
-      |> Enum.reduce(%{}, fn el, acc ->
-        # Merge the maps, so %{"foo" => [1]} and %{"foo" => [2]} becomes
-        # %{"foo" => [1, 2]}
-        Map.merge(acc, el, fn _k, v1, v2 -> v1 ++ v2 end)
-      end)
-      |> Enum.map(fn {path, files} ->
-        files = Enum.map(files, &FileView.render/1)
+    server_id = socket.assigns.servers.destination
 
-        {path, files}
-      end)
-      |> :maps.from_list()
+    message = %{data: %{files: ServerPublic.file_index(server_id)}}
 
-    {:reply, {:ok, files}, socket}
+    {:reply, {:ok, message}, socket}
+  end
+
+  def handle_in("file.download", %{file_id: file_id}, socket) do
+    if socket.assigns.access_type == :remote do
+      destination = socket.assigns.servers.destination
+      gateway = socket.assigns.servers.gateway
+      tunnel = socket.assigns.tunnel
+
+      case ServerPublic.file_download(gateway, destination, tunnel, file_id) do
+        :ok ->
+          {:reply, :ok, socket}
+        :error ->
+          {:reply, :error, socket}
+      end
+    else
+      message = %{
+        type: "error",
+        data: %{message: "Can't download from own gateway"}
+      }
+      {:reply, {:error, message}, socket}
+    end
   end
 
   # TODO: Paginate
-  def handle_in("log.index", _message, socket) do
+  def handle_in("log.index", _, socket) do
     server_id = socket.assigns.servers.destination
 
-    logs = LogQuery.get_logs_on_server(server_id)
+    message = %{data: %{logs: ServerPublic.log_index(server_id)}}
 
-    # HACK: FIXME: This belongs to a viewable protocol. We're doing it as it
-    #   is now so it works before we do the real work (?)
-    formatted_logs = Enum.map(logs, fn log ->
-      Map.take(log, [:log_id, :message, :inserted_at])
-    end)
-
-    {:reply, {:ok, %{data: %{logs: formatted_logs}}}, socket}
+    {:reply, {:ok, message}, socket}
   end
 
-  def handle_in("log.delete", %{log_id: log}, socket) do
+  def handle_in("log.delete", %{log_id: log_id}, socket) do
     target_id = socket.assigns.servers.destination
     gateway_id = socket.assigns.servers.gateway
     network_id = "::"
 
-    with \
-      %{server_id: ^target_id} <- LogQuery.fetch(log),
-      {:ok, _} <- LogDeleterFlow.start_process(gateway_id, network_id, log)
-    do
-      {:reply, :ok, socket}
-    else
-      _ ->
-        {:reply, :error, socket}
+    case ServerPublic.log_delete(gateway_id, target_id, network_id, log_id) do
+      :ok ->
+        {:reply, :ok, socket}
+      {:error, :nxlog} ->
+        message = %{type: "error", data: %{message: "Log not found"}}
+        {:reply, {:error, message}, socket}
+      {:error, :unknown} ->
+        message = %{type: "error", data: %{message: "Unexpected error"}}
+        {:reply, {:error, message}, socket}
     end
   end
 
-  def handle_in("process.index", _message, socket) do
-    server = socket.assigns.servers.destination
-    processes_on_server = ProcessQuery.get_processes_on_server(server)
+  def handle_in("process.index", _, socket) do
+    server_id = socket.assigns.servers.destination
+    entity_id = EntityQuery.get_entity_id(socket.assigns.account)
 
-    processes_targeting_server = ProcessQuery.get_processes_targeting_server(
-      server)
+    index = ServerPublic.process_index(server_id, entity_id)
 
-    entity = EntityQuery.get_entity_id(socket.assigns.account)
-    processes_on_server = Enum.map(processes_on_server, fn process ->
-      ProcessView.render(process.process_data, process, server, entity)
-    end)
-    processes_targeting_server = Enum.map(processes_targeting_server, fn
-      process ->
-        ProcessView.render(process.process_data, process, server, entity)
-    end)
-
-    return = %{
-      owned_processes: processes_on_server,
-      affecting_processes: processes_targeting_server
-    }
+    return = %{data: %{
+      owned_processes: index.owned,
+      affecting_processes: index.affecting
+    }}
 
     {:reply, {:ok, return}, socket}
   end
 
-  # TODO: This will hard fail if the user tries to download a file from their
-  #   own gateway for obvious reasons
-  def handle_in("file.download", %{file_id: file}, socket) do
-    # This won't be necessary as soon as we have a cache server->storages
-    destination_storage_ids =
-      socket.assigns.servers.destination
-      |> ServerQuery.fetch()
-      |> storages_on_server()
-      |> Enum.map(&(&1.storage_id))
-
-    # FIXME
-    gateway_storage =
-      socket.assigns.servers.gateway
-      |> ServerQuery.fetch()
-      |> storages_on_server()
-      |> Enum.random()
-
-    tunnel = socket.assigns.tunnel
-
-    start_download = fn file ->
-      FileDownloadFlow.start_download_process(file, gateway_storage, tunnel)
-    end
-
-    with \
-      file = %{} <- FileQuery.fetch(file),
-      true <- file.storage_id in destination_storage_ids,
-      {:ok, _process} <- start_download.(file)
-    do
-      {:reply, :ok, socket}
-    else
-      _ ->
-        {:reply, :error, socket}
-    end
-  end
-
-  @spec storages_on_server(struct) ::
-    [struct]
-  defp storages_on_server(server) do
-    server.motherboard_id
-    |> ComponentQuery.fetch()
-    |> MotherboardQuery.fetch!()
-    |> MotherboardQuery.get_slots()
-    # TODO: Delegate this to a function on Motherboard API
-    # Gets hdds linked to the motherboard
-    |> Enum.filter_map(
-      &(&1.link_component_type == :hdd && &1.link_component_id),
-      &(&1.link_component_id))
-    # FIXME: This belongs to an API function that facades this boring shit
-    |> Enum.map(&StorageQuery.get_storage_from_hdd/1)
-    |> Enum.reject(&is_nil/1)
-    |> Enum.uniq()
-  end
-
-  def notify(server_id, :processes_changed, _params) do
+  defp notify(server_id, :processes_changed, _params) do
     # TODO: Use a view to always follow an standardized format
     notify(server_id, %{
       event: "processes_changed",
@@ -307,7 +151,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
     })
   end
 
-  def notify(server_id, :logs_changed, _params) do
+  defp notify(server_id, :logs_changed, _params) do
     # TODO: Use a view to always follow an standardized format
     notify(server_id, %{
       event: "logs_changed",

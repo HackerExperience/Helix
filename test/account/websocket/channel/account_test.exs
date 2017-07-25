@@ -10,7 +10,6 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
   alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Account.Websocket.Channel.Account, as: Channel
 
-
   alias Helix.Entity.Factory, as: EntityFactory
   alias Helix.Hardware.Factory, as: HardwareFactory
   alias Helix.Server.Factory, as: ServerFactory

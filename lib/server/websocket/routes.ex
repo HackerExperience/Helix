@@ -34,9 +34,9 @@ defmodule Helix.Server.Websocket.Routes do
 
     with \
       server = %{} <- NetworkConnectionQuery.get_server_by_ip(network, target),
-      # FIXME
-      entity = %{} <- account |> EntityQuery.get_entity_id() |> EntityQuery.fetch(),
       server_id = server.server_id,
+      entity_id = EntityQuery.get_entity_id(account),
+      entity = %{} <- EntityQuery.fetch(entity_id),
       {:ok, _} <- create_hack_db_entry.(entity, server_id),
       {:ok, process} <- start_cracker.(entity, server_id)
     do

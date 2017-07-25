@@ -8,7 +8,6 @@ defmodule Helix.Log.Model.Log do
   alias HELL.PK
   alias Helix.Log.Model.Revision
 
-
   @type id :: PK.t
   @type t :: %__MODULE__{
     log_id: id,

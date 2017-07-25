@@ -15,7 +15,9 @@ defmodule Helix.Hardware.Action.MotherboardTest do
       slot = Factory.insert(:motherboard_slot)
       component = Factory.insert(slot.link_component_type)
 
-      assert {:ok, %MotherboardSlot{}} = MotherboardAction.link(slot, component.component)
+      assert {:ok, %MotherboardSlot{}} = MotherboardAction.link(
+        slot,
+        component.component)
     end
 
     test "fails when slot is already in use" do

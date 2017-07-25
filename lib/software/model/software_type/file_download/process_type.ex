@@ -41,7 +41,7 @@ defmodule Software.FileDownload.ProcessType do
       do: state_change(data, process, :running, :complete)
   end
 
-  defimpl Helix.Process.API.ProcessView do
+  defimpl Helix.Process.API.View.Process do
 
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.Resources

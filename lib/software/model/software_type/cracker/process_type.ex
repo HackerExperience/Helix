@@ -69,7 +69,7 @@ defmodule Software.Cracker.ProcessType do
       do: state_change(data, process, :running, :complete)
   end
 
-  defimpl Helix.Process.API.ProcessView do
+  defimpl Helix.Process.API.View.Process do
     @moduledoc false
 
     alias Helix.Process.Model.Process

@@ -110,7 +110,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     alias Helix.Hardware.Model.Motherboard
     alias Helix.Hardware.Model.MotherboardSlot
 
-
     @spec from_motherboard(Queryable.t, Motherboard.t | Motherboard.id) ::
       Queryable.t
     def from_motherboard(query \\ MotherboardSlot, motherboard_or_id)

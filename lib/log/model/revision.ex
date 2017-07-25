@@ -13,7 +13,6 @@ defmodule Helix.Log.Model.Revision do
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
 
-
   @type t :: %__MODULE__{}
 
   @type creation_params :: %{

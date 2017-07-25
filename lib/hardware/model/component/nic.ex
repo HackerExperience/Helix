@@ -91,7 +91,6 @@ defmodule Helix.Hardware.Model.Component.NIC do
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.NIC
 
-
     @spec from_component_ids([Component.id]) ::
       Queryable.t
     @spec from_component_ids(Queryable.t, [Component.id]) ::

@@ -9,7 +9,6 @@ defmodule Helix.Software.Model.StorageDrive do
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.Storage
 
-
   @type t :: %__MODULE__{
     storage_id: Storage.id,
     storage: Storage.t,

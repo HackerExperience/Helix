@@ -84,7 +84,6 @@ defmodule Helix.Hardware.Model.Component.RAM do
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.RAM
 
-
     @spec from_component_ids([Component.id]) ::
       Queryable.t
     @spec from_component_ids(Queryable.t, [Component.id]) ::

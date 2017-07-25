@@ -1,5 +1,7 @@
 defmodule Helix.Network.Internal.Tunnel do
 
+  alias Helix.Event
+  alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
@@ -7,43 +9,44 @@ defmodule Helix.Network.Internal.Tunnel do
 
   import Ecto.Query, only: [select: 3]
 
-  @type server :: HELL.PK.t
-
-  @spec create(Network.t, server, server, [server]) ::
+  @spec create(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
     | {:error, Ecto.Changeset.t}
   @doc """
   Creates a new tunnel
   """
-  def create(network, gateway, destination, bounces \\ []) do
-    cs = Tunnel.create(network, gateway, destination, bounces)
+  def create(network, gateway_id, endpoint_id, bounces \\ []) do
+    cs = Tunnel.create(network, gateway_id, endpoint_id, bounces)
     Repo.insert(cs)
   end
 
-  @spec get_tunnel(Network.t, server, server, [server]) ::
+  @spec get_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
     Tunnel.t
     | nil
   @doc """
   Returns the tunnel with the input configuration shall it exist
   """
-  def get_tunnel(network, gateway, destination, bounces \\ []) do
+  def get_tunnel(network, gateway_id, endpoint_id, bounces \\ []) do
     tunnel_hash = Tunnel.hash_bounces(bounces)
 
     fetch_clauses = [
       network_id: network.network_id,
-      gateway_id: gateway,
-      destination_id: destination,
+      gateway_id: gateway_id,
+      destination_id: endpoint_id,
       hash: tunnel_hash
     ]
 
     Repo.get_by(Tunnel, fetch_clauses)
   end
 
-  @spec fetch(HELL.PK.t) :: Tunnel.t
+  @spec fetch(Tunnel.id) ::
+    Tunnel.t
+    | nil
   def fetch(id),
     do: Repo.get(Tunnel, id)
 
-  @spec delete(Tunnel.t) :: :ok
+  @spec delete(Tunnel.t | Tunnel.id) ::
+    :ok
   def delete(%Tunnel{tunnel_id: id}),
     do: delete(id)
   def delete(id) do
@@ -54,13 +57,14 @@ defmodule Helix.Network.Internal.Tunnel do
     :ok
   end
 
-  @spec connected?(server, server, Network.t | nil) :: boolean
-  def connected?(gateway, destination, network \\ nil) do
+  @spec connected?(Server.id, Server.id, Network.t | nil) ::
+    boolean
+  def connected?(gateway_id, endpoint_id, network \\ nil) do
     query =
       Tunnel
       |> select([t], count(t.tunnel_id))
-      |> Tunnel.Query.by_gateway_id(gateway)
-      |> Tunnel.Query.by_destination_id(destination)
+      |> Tunnel.Query.by_gateway_id(gateway_id)
+      |> Tunnel.Query.by_destination_id(endpoint_id)
 
     query =
       network
@@ -72,40 +76,46 @@ defmodule Helix.Network.Internal.Tunnel do
     is_integer(count) and count > 0
   end
 
-  @spec get_connections(Tunnel.t) :: [Connection.t]
+  @spec get_connections(Tunnel.t) ::
+    [Connection.t]
   def get_connections(tunnel) do
     Repo.preload(tunnel, :connections).connections
   end
 
-  @spec fetch_connection(HELL.PK.t) :: Connection.t | nil
+  @spec fetch_connection(Connection.id) ::
+    Connection.t
+    | nil
   def fetch_connection(connection_id),
     do: Repo.get(Connection, connection_id)
 
-  @spec connections_through_node(server) :: [Connection.t]
-  def connections_through_node(server) do
-    server
+  @spec connections_through_node(Server.id) ::
+    [Connection.t]
+  def connections_through_node(server_id) do
+    server_id
     |> Connection.Query.through_node()
     |> Repo.all()
   end
 
-  @spec inbound_connections(server) :: [Connection.t]
+  @spec inbound_connections(Server.id) ::
+    [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's destination is `server`
-  def inbound_connections(server) do
-    server
+  def inbound_connections(endpoint_id) do
+    endpoint_id
     |> Connection.Query.inbound_to()
     |> Repo.all()
   end
 
-  @spec outbound_connections(server) :: [Connection.t]
+  @spec outbound_connections(Server.id) ::
+    [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
-  def outbound_connections(server) do
-    server
+  def outbound_connections(gateway_id) do
+    gateway_id
     |> Connection.Query.outbound_from()
     |> Repo.all()
   end
 
-  @spec start_connection(Tunnel.t, term) ::
-    {:ok, Connection.t, [event :: struct]}
+  @spec start_connection(Tunnel.t, Connection.type) ::
+    {:ok, Connection.t, [Event.t]}
     | {:error, Ecto.Changeset.t}
   def start_connection(tunnel, connection_type) do
     cs = Connection.create(tunnel, connection_type)
@@ -123,7 +133,8 @@ defmodule Helix.Network.Internal.Tunnel do
   end
 
   @spec close_connection(Connection.t, Connection.close_reasons) ::
-    [event :: struct]
+    [Event.t]
+    | no_return
   @doc """
   Closes `connection`
 
@@ -136,7 +147,7 @@ defmodule Helix.Network.Internal.Tunnel do
 
   The current reasons are valid: #{inspect Connection.close_reasons()}
   """
-  def close_connection(connection, reason \\ :normal) do
+  def close_connection(connection = %Connection{}, reason \\ :normal) do
     connection = Repo.preload(connection, :tunnel)
 
     Repo.delete!(connection)
@@ -151,9 +162,11 @@ defmodule Helix.Network.Internal.Tunnel do
     [event]
   end
 
-  def connections_on_tunnels_between(gateway, endpoint) do
-    gateway
-    |> Connection.Query.from_gateway_to_endpoint(endpoint)
+  @spec connections_on_tunnels_between(Server.id, Server.id) ::
+    [Connection.t]
+  def connections_on_tunnels_between(gateway_id, endpoint_id) do
+    gateway_id
+    |> Connection.Query.from_gateway_to_endpoint(endpoint_id)
     |> Repo.all()
   end
 end

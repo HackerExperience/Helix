@@ -2,7 +2,7 @@ defmodule Helix.Log.Event.Log do
 
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Hardware.Query.NetworkConnection
+  alias Helix.Hardware.Query.NetworkConnection, as: NetworkConnectionQuery
   alias Helix.Network.Model.Connection.ConnectionStartedEvent
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Software.Query.File, as: FileQuery
@@ -16,8 +16,8 @@ defmodule Helix.Log.Event.Log do
   def file_download_conclusion(event = %DownloadComplete{}) do
     to = event.to_server_id
     from = event.from_server_id
-    ip_to = NetworkConnection.get_server_ip(to, event.network_id)
-    ip_from = NetworkConnection.get_server_ip(from, event.network_id)
+    ip_to = NetworkConnectionQuery.get_server_ip(to, event.network_id)
+    ip_from = NetworkConnectionQuery.get_server_ip(from, event.network_id)
 
     entity = EntityQuery.fetch_server_owner(to)
 
@@ -52,8 +52,10 @@ defmodule Helix.Log.Event.Log do
     gateway_id = tunnel.gateway_id
     destination_id = tunnel.destination_id
 
-    gateway_ip = NetworkConnection.get_server_ip(gateway_id, network)
-    destination_ip = NetworkConnection.get_server_ip(destination_id, network)
+    gateway_ip = NetworkConnectionQuery.get_server_ip(gateway_id, network)
+    destination_ip = NetworkConnectionQuery.get_server_ip(
+      destination_id,
+      network)
 
     entity = EntityQuery.fetch_server_owner(gateway_id)
 
