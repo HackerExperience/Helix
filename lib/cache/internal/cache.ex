@@ -7,6 +7,8 @@ defmodule Helix.Cache.Internal.Cache do
   responsible for coordinating all other Internal modules.
   """
 
+  import HELL.MacroHelpers
+
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.StorageCache
@@ -16,7 +18,37 @@ defmodule Helix.Cache.Internal.Cache do
   alias Helix.Cache.Internal.Purge, as: PurgeInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
-  import HELL.MacroHelpers
+  docp """
+  Static representation of all possible queries
+
+  The 3-tuple means something like:
+  (model_being_used, how_to_query, what_to_return)
+  """
+  @query_table %{
+    # Server
+    :server => {:server, :by_server, :all},
+    :motherboard => {:server, :by_motherboard, :all},
+    {:server, :nips} => {:server, :by_server, :networks},
+    {:server, :storages} => {:server, :by_server, :storages},
+    {:server, :resources} => {:server, :by_server, :resources},
+    {:server, :components} => {:server, :by_server, :components},
+    {:motherboard, :entity} => {:server, :by_motherboard, :entity_id},
+    {:motherboard, :resources} => {:server, :by_motherboard, :resources},
+    {:motherboard, :components} => {:server, :by_motherboard, :components},
+    {:entity, :motherboard} => {:server, :by_entity, :motherboard_id},
+
+    # Network
+    :network => {:network, :by_nip, :all},
+    {:nip, :server} => {:network, :by_nip, :server_id},
+
+    # Storage
+    :storage => {:storage, :by_storage, :all},
+    {:storage, :server} => {:storage, :by_storage, :server_id},
+
+    # Component
+    :component => {:component, :by_component, :all},
+    {:component, :motherboard} => {:component, :by_component, :motherboard_id}
+  }
 
   @doc """
   Directly query the cache without populating it. Reports whether it's a miss
@@ -25,24 +57,9 @@ defmodule Helix.Cache.Internal.Cache do
   def direct_query(model, params) when not is_list(params) do
     direct_query(model, [params])
   end
-  def direct_query(model, params) when is_atom(model) do
-    model = case model do
-      :server ->
-        {:server, :by_server}
-      :motherboard ->
-        {:server, :by_motherboard}
-      :storage ->
-        {:storage, :by_storage}
-      :component ->
-        {:component, :by_component}
-      :network ->
-        {:network, :by_nip}
-    end
-    direct_query(model, params)
-  end
-  def direct_query({model, method}, params) do
-    info = query_info({model, method, :all})
-    result = sql_query(info, params, true)
+  def direct_query(condition, params) do
+    query = query_table(condition)
+    result = sql_query(query, params, true)
     case result do
       {:hit, data} ->
         {:hit, post_lookup_hook(data)}
@@ -55,13 +72,13 @@ defmodule Helix.Cache.Internal.Cache do
   Queries the Cache database, populating it if the requested data wasn't found.
   """
   def lookup(condition, params) do
-    info = query_info(lookup_table(condition))
-    full? = if info.field == :all do
+    query = query_table(condition)
+    full? = if query.field == :all do
       true
     else
       false
     end
-    result = process(info, params, full?)
+    result = process(query, params, full?)
     case result do
       {:ok, data} ->
         {:ok, post_lookup_hook(data)}
@@ -136,16 +153,16 @@ defmodule Helix.Cache.Internal.Cache do
   docp """
   Wrapper used to populate cache data in case it isn't stored (miss)
   """
-  defp process(info, params, full?) do
-    case query(info, params, full?) do
+  defp process(query, params, full?) do
+    case query(query, params, full?) do
       :miss ->
-        apply(PopulateInternal, :populate, [info.module] ++ params)
+        apply(PopulateInternal, :populate, [query.module] ++ params)
         |> case do
              {:ok, schema} ->
                if full? do
                  {:ok, schema}
                else
-                 {:ok, Map.get(schema, info.field)}
+                 {:ok, Map.get(schema, query.field)}
                end
              result ->
                result
@@ -161,9 +178,9 @@ defmodule Helix.Cache.Internal.Cache do
   (which will later be repopulated).
   If it's not queued for deletion, actually query the database.
   """
-  defp query(info, params, full?) do
-    unless StatePurgeQueue.lookup(info.module, params) do
-      sql_query(info, params, full?)
+  defp query(query, params, full?) do
+    if not StatePurgeQueue.lookup(query.module, params) do
+      sql_query(query, params, full?)
     else
       :miss
     end
@@ -178,11 +195,12 @@ defmodule Helix.Cache.Internal.Cache do
   |> Repo.one
   |> Map.get(:networks)
 
-  The `full?` option tells whether the caller wants the entire row.
+  The `full?` option tells whether the caller wants the entire row or
+  a single field.
   """
-  defp sql_query(info, params, full?) do
-    fetch = apply(get_module(info.module), info.function, params)
-    apply(get_module(info.module), :filter_expired, [fetch])
+  defp sql_query(query, params, full?) do
+    fetch = apply(get_module(query.module), query.function, params)
+    apply(get_module(query.module), :filter_expired, [fetch])
     |> Repo.one
     |> case do
          nil ->
@@ -191,7 +209,7 @@ defmodule Helix.Cache.Internal.Cache do
            if full? do
              {:hit, schema}
            else
-             {:hit, Map.get(schema, info.field)}
+             {:hit, Map.get(schema, query.field)}
            end
        end
   end
@@ -209,44 +227,15 @@ defmodule Helix.Cache.Internal.Cache do
     end
   end
 
-  defp query_info({module, function, field}) do
-    %{module: module, function: function, field: field}
-  end
-
   docp """
-  Static representation of all possible queries
-
-  The 3-tuple means something like:
-  (model_being_used, how_to_query, what_to_return)
+  Iterates over the query table, ensuring the requested query is valid.
   """
-  defp lookup_table(condition) do
-    case condition do
-      :server ->
-        {:server, :by_server, :all}
-      {:server, :nips} ->
-        {:server, :by_server, :networks}
-      {:server, :storages} ->
-        {:server, :by_server, :storages}
-      {:server, :resources} ->
-        {:server, :by_server, :resources}
-      {:server, :components} ->
-        {:server, :by_server, :components}
-      {:motherboard, :entity} ->
-        {:server, :by_motherboard, :entity_id}
-      {:motherboard, :resources} ->
-        {:server, :by_motherboard, :resources}
-      {:motherboard, :components} ->
-        {:server, :by_motherboard, :components}
-      {:entity, :motherboard} ->
-        {:server, :by_entity, :motherboard_id}
-      {:storage, :server} ->
-        {:storage, :by_storage, :server_id}
-      {:nip, :server} ->
-        {:network, :by_nip, :server_id}
-      {:component, :motherboard} ->
-        {:component, :by_component, :motherboard_id}
+  def query_table(condition) do
+    case @query_table[condition] do
+      {module, function, field} ->
+        %{module: module, function: function, field: field}
       _ ->
-        raise RuntimeError
+        raise RuntimeError, "Query #{inspect condition} is invalid"
     end
   end
 

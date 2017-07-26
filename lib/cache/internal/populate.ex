@@ -97,7 +97,7 @@ defmodule Helix.Cache.Internal.Populate do
   defp cache(:server, data = {server_id, _, mobo, networks, storages, _, components}) do
     params = format(:server, data)
 
-    unless is_nil(mobo) do
+    if not is_nil(mobo) do
       storage_ids = Enum.map(storages, &(&1.storage_id))
 
       purge_list = [
