@@ -23,13 +23,7 @@ defmodule Helix.Cache.Model.StorageCache do
     server_id: Server.id
   }
 
-  @type update_params :: %{
-    optional(:storage_id) => Storage.id,
-    optional(:server_id) => Server.id
-  }
-
   @creation_fields ~w/storage_id server_id/a
-  @update_fields ~w/storage_id server_id/a
 
   @primary_key false
   schema "storage_cache" do
@@ -45,14 +39,6 @@ defmodule Helix.Cache.Model.StorageCache do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> add_expiration_date()
-  end
-
-  @spec update_changeset(t | Changeset.t, update_params) ::
-    Changeset.t
-  def update_changeset(schema, params) do
-    schema
-    |> cast(params, @update_fields)
     |> add_expiration_date()
   end
 

@@ -21,13 +21,7 @@ defmodule Helix.Cache.Model.ComponentCache do
     motherboard_id: Component.id
   }
 
-  @type update_params :: %{
-    optional(:component_id) => Component.id,
-    optional(:motherboard_id) => Component.id
-  }
-
   @creation_fields ~w/component_id motherboard_id/a
-  @update_fields ~w/component_id motherboard_id/a
 
   @primary_key false
   schema "component_cache" do
@@ -43,14 +37,6 @@ defmodule Helix.Cache.Model.ComponentCache do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> add_expiration_date()
-  end
-
-  @spec update_changeset(t | Changeset.t, update_params) ::
-    Changeset.t
-  def update_changeset(schema, params) do
-    schema
-    |> cast(params, @update_fields)
     |> add_expiration_date()
   end
 

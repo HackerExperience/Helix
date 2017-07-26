@@ -34,25 +34,7 @@ defmodule Helix.Cache.Model.ServerCache do
     components: [Component.id]
   }
 
-  @type update_params :: %{
-    optional(:server_id) => Server.id,
-    optional(:entity_id) => Entity.id,
-    optional(:motherboard_id) => Component.id,
-    optional(:networks) => list,
-    optional(:storages) => [Storage.id],
-    optional(:resources) => map(),
-    optional(:components) => [Component.id]
-  }
-
   @creation_fields ~w/
-    server_id
-    entity_id
-    motherboard_id
-    networks
-    storages
-    resources
-    components/a
-  @update_fields ~w/
     server_id
     entity_id
     motherboard_id
@@ -81,14 +63,6 @@ defmodule Helix.Cache.Model.ServerCache do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> add_expiration_date()
-  end
-
-  @spec update_changeset(t | Changeset.t, update_params) ::
-    Changeset.t
-  def update_changeset(schema, params) do
-    schema
-    |> cast(params, @update_fields)
     |> add_expiration_date()
   end
 

@@ -26,14 +26,7 @@ defmodule Helix.Cache.Model.NetworkCache do
     server_id: Server.id
   }
 
-  @type update_params :: %{
-    optional(:network_id) => Network.id,
-    optional(:ip) => NetworkConnection.ip,
-    optional(:server_id) => Server.id
-  }
-
   @creation_fields ~w/network_id ip server_id/a
-  @update_fields ~w/network_id ip server_id/a
 
   @primary_key false
   schema "network_cache" do
@@ -51,14 +44,6 @@ defmodule Helix.Cache.Model.NetworkCache do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> add_expiration_date()
-  end
-
-  @spec update_changeset(t, update_params) ::
-    Changeset.t
-  def update_changeset(schema, params) do
-    schema
-    |> cast(params, @update_fields)
     |> add_expiration_date()
   end
 
