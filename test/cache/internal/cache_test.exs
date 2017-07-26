@@ -35,7 +35,7 @@ defmodule Helix.Cache.Internal.CacheTest do
     test "returns cached data", context do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
-      storages = MotherboardQuery.get_storages(motherboard_id)
+      [storage|_] = MotherboardQuery.get_storages(motherboard_id)
 
       # Insert directly into cache
       {:ok, cached} = PopulateInternal.populate(:server, server_id)
@@ -43,7 +43,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, result} = CacheInternal.lookup({:server, :storages}, [server_id])
 
       assert result == cached.storages
-      assert result == [storages.storage_id]
+      assert result == [storage.storage_id]
 
       :timer.sleep(10)
     end

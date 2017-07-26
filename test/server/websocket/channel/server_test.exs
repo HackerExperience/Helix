@@ -53,7 +53,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       |> Enum.map(&(&1.link_component_id))
 
     Enum.flat_map(hdds, fn drive ->
-      storage = StorageQuery.get_storage_from_hdd(drive)
+      storage = StorageQuery.fetch_by_hdd(drive)
 
       SoftwareFactory.insert_list(
         3,

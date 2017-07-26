@@ -92,7 +92,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
     test "storage population", context do
       motherboard_id = context.server.motherboard_id
 
-      storage = MotherboardQuery.get_storages(motherboard_id)
+      [storage|_] = MotherboardQuery.get_storages(motherboard_id)
 
       {:ok, storage1} = PopulateInternal.populate(:storage, storage.storage_id)
 

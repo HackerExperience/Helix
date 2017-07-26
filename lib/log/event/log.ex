@@ -16,8 +16,8 @@ defmodule Helix.Log.Event.Log do
   def file_download_conclusion(event = %DownloadComplete{}) do
     to = event.to_server_id
     from = event.from_server_id
-    ip_to = ServerQuery.get_ip(to, event.network_id)
-    ip_from = ServerQuery.get_ip(from, event.network_id)
+    %{ip: ip_to} = ServerQuery.get_ip(to, event.network_id)
+    %{ip: ip_from} = ServerQuery.get_ip(from, event.network_id)
 
     entity = EntityQuery.fetch_server_owner(to)
 
@@ -52,8 +52,8 @@ defmodule Helix.Log.Event.Log do
     gateway_id = tunnel.gateway_id
     destination_id = tunnel.destination_id
 
-    gateway_ip = ServerQuery.get_ip(gateway_id, network)
-    destination_ip = ServerQuery.get_ip(destination_id, network)
+    %{ip: gateway_ip} = ServerQuery.get_ip(gateway_id, network)
+    %{ip: destination_ip} = ServerQuery.get_ip(destination_id, network)
 
     entity = EntityQuery.fetch_server_owner(gateway_id)
 

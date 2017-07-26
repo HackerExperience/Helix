@@ -7,10 +7,12 @@ defmodule Helix.Hardware.Model.NetworkConnection do
   alias Ecto.Changeset
   alias HELL.IPv4
   alias HELL.PK
+  alias Helix.Network.Model.Network
   alias Helix.Hardware.Model.Component.NIC
 
 
   @type id :: PK.t
+  @type ip :: IPv4.t
   @type t :: %__MODULE__{
     network_connection_id: PK.t,
     network_id: PK.t,
@@ -70,15 +72,19 @@ defmodule Helix.Hardware.Model.NetworkConnection do
 
   defmodule Query do
 
-    alias Helix.Hardware.Model.NetworkConnection
-
     import Ecto.Query, only: [where: 3]
 
-    @spec by_id(Ecto.Queryable.t, NetworkConnection.id) :: Ecto.Queryable.t
+    alias Ecto.Queryable
+    alias Helix.Network.Model.Network
+    alias Helix.Hardware.Model.NetworkConnection
+
+    @spec by_id(Queryable.t, NetworkConnection.id) ::
+      Queryable.t
     def by_id(query \\ NetworkConnection, nc_id),
       do: where(query, [nc], nc.network_connection_id == ^nc_id)
 
-    @spec by_nip(Ecto.Queryable.t, PK.t, IPv4.t) :: Ecto.Queryable.t
+    @spec by_nip(Queryable.t, Network.id, NetworkConnection.ip) ::
+      Queryable.t
     def by_nip(query \\ NetworkConnection, network_id, ip),
       do: where(query, [nc], nc.network_id == ^network_id and nc.ip == ^ip)
   end

@@ -2,30 +2,34 @@ defmodule Helix.Cache.Model.NetworkCache do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
   alias HELL.PK
   alias HELL.IPv4
-
-  import Ecto.Changeset
+  alias Helix.Hardware.Model.NetworkConnection
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
 
   @cache_duration 60 * 60 * 24
 
   @type t :: %__MODULE__{
-    network_id: PK.t,
-    ip: IPv4.t,
-    server_id: PK.t,
+    network_id: Network.id,
+    ip: NetworkConnection.ip,
+    server_id: Server.id,
     expiration_date: DateTime.t
   }
 
-  @type creation_params :: %__MODULE__{
-    network_id: PK.t,
-    ip: IPv4.t,
-    server_id: PK.t,
+  @type creation_params :: %{
+    network_id: Network.id,
+    ip: NetworkConnection.ip,
+    server_id: Server.id
   }
 
-  @type update_params :: %__MODULE__{
-    network_id: PK.t,
-    ip: IPv4.t,
-    server_id: PK.t,
+  @type update_params :: %{
+    optional(:network_id) => Network.id,
+    optional(:ip) => NetworkConnection.ip,
+    optional(:server_id) => Server.id
   }
 
   @creation_fields ~w/network_id ip server_id/a
@@ -39,42 +43,54 @@ defmodule Helix.Cache.Model.NetworkCache do
       primary_key: true
     field :server_id, PK
 
-    field :expiration_date, Ecto.DateTime
+    field :expiration_date, :utc_datetime
   end
 
-  @spec create_changeset(creation_params) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> add_expiration_date()
   end
 
-  @spec update_changeset(t, update_params) :: Ecto.Changeset.t
+  @spec update_changeset(t, update_params) ::
+    Changeset.t
   def update_changeset(schema, params) do
     schema
     |> cast(params, @update_fields)
     |> add_expiration_date()
   end
 
-  @spec add_expiration_date(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec add_expiration_date(Changeset.t) ::
+    Changeset.t
   defp add_expiration_date(changeset) do
-    expire_ts = DateTime.to_unix(DateTime.utc_now(), :microsecond) + @cache_duration
-    expire_date = Ecto.DateTime.from_unix!(expire_ts, :microsecond)
+    expire_date =
+      DateTime.utc_now()
+      |> DateTime.to_unix(:microsecond)
+      |> Kernel.+(@cache_duration)
+      |> DateTime.from_unix!(:microsecond)
+
     put_change(changeset, :expiration_date, expire_date)
   end
 
   defmodule Query do
 
-    alias Helix.Cache.Model.NetworkCache
-
     import Ecto.Query, only: [where: 3]
 
-    @spec by_nip(Ecto.Queryable.t, PK.t, IPV4.t) :: Ecto.Queryable.t
+    alias Ecto.Queryable
+    alias Helix.Hardware.Model.NetworkConnection
+    alias Helix.Network.Model.Network
+    alias Helix.Cache.Model.NetworkCache
+
+    @spec by_nip(Queryable.t, Network.id, NetworkConnection.ip) ::
+      Queryable.t
     def by_nip(query \\ NetworkCache, network_id, ip),
       do: where(query, [n], n.network_id == ^network_id and n.ip == ^ip)
 
-    @spec filter_expired(Ecto.Queryable.t) :: Ecto.Queryable.t
+    @spec filter_expired(Queryable.t) ::
+      Queryable.t
     def filter_expired(query),
-      do: where(query, [s], s.expiration_date >= ^Ecto.DateTime.utc())
+      do: where(query, [s], s.expiration_date >= fragment("now()"))
   end
 end

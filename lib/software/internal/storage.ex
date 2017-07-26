@@ -31,14 +31,9 @@ defmodule Helix.Software.Internal.Storage do
     :ok
   end
 
-  # FIXME: This doesn't belongs here, does it ?
-  @spec get_storage_from_hdd(Component.id) ::
+  @spec fetch_by_hdd(Component.id) ::
     Storage.t
     | nil
-  def get_storage_from_hdd(hdd_id),
-    do: fetch_by_hdd(hdd_id)
-
-  @spec fetch_by_hdd(HELL.PK.t) :: Storage.t | nil
   def fetch_by_hdd(hdd_id) do
     Storage
     |> join(:inner, [s], sd in StorageDrive, s.storage_id == sd.storage_id)
@@ -46,6 +41,8 @@ defmodule Helix.Software.Internal.Storage do
     |> Repo.one()
   end
 
+  @spec get_drives(Storage.id) ::
+    [StorageDrive.t]
   def get_drives(storage_id) do
     storage_id
     |> fetch()

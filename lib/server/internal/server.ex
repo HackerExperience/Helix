@@ -1,5 +1,6 @@
 defmodule Helix.Server.Internal.Server do
 
+  alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
@@ -14,16 +15,23 @@ defmodule Helix.Server.Internal.Server do
     |> Repo.insert()
   end
 
-  @spec fetch(HELL.PK.t) :: Server.t | nil
+  @spec fetch(Server.id) ::
+    Server.t
+    | nil
   def fetch(server_id),
     do: Repo.get(Server, server_id)
 
+  @spec fetch_by_motherboard(Component.id) ::
+    Server.t
+    | nil
   def fetch_by_motherboard(motherboard_id) do
-    Server.Query.by_motherboard(motherboard_id)
+    motherboard_id
+    |> Server.Query.by_motherboard()
     |> Repo.one()
   end
 
-  @spec delete(HELL.PK.t) :: no_return
+  @spec delete(Server.id) ::
+    :ok
   def delete(server_id) do
     Server
     |> where([s], s.server_id == ^server_id)
@@ -32,7 +40,7 @@ defmodule Helix.Server.Internal.Server do
     :ok
   end
 
-  @spec attach(Server.t, motherboard :: HELL.PK.t) ::
+  @spec attach(Server.t, Component.id) ::
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}
   def attach(server, mobo_id) do

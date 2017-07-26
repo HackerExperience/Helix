@@ -1,16 +1,15 @@
 defmodule Helix.Process.Internal.Process do
 
-  alias HELL.PK
   alias Helix.Process.Repo
   alias Helix.Process.Model.Process
 
-  @spec fetch(PK.t) ::
+  @spec fetch(Process.id) ::
     Process.t
     | nil
   def fetch(process_id),
     do: Repo.get(Process, process_id)
 
-  @spec delete(Process.t | PK.t) ::
+  @spec delete(Process.t | Process.id) ::
     :ok
   def delete(process = %Process{}),
     do: delete(process.process_id)

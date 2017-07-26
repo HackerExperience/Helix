@@ -1,7 +1,6 @@
 defmodule Helix.Cache.Repo.Migrations.InitialMigration do
   use Ecto.Migration
 
-
   def change do
 
     create table(:server_cache, primary_key: false) do
@@ -39,6 +38,5 @@ defmodule Helix.Cache.Repo.Migrations.InitialMigration do
       add :expiration_date, :utc_datetime
     end
     create index(:component_cache, [:expiration_date])
-
   end
 end

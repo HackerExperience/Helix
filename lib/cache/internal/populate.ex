@@ -43,7 +43,7 @@ defmodule Helix.Cache.Internal.Populate do
       motherboard = %{} <- MotherboardQuery.Origin.fetch_by_server(server_id),
       motherboard = MotherboardQuery.Origin.preload_components(motherboard),
       resources = %{} <- MotherboardQuery.Origin.resources(motherboard),
-      components = MotherboardQuery.Origin.get_components(motherboard),
+      components = MotherboardQuery.Origin.get_component_ids(motherboard),
       storages = MotherboardQuery.Origin.get_storages(motherboard),
       networks = MotherboardQuery.Origin.get_networks(motherboard)
     do
@@ -61,8 +61,8 @@ defmodule Helix.Cache.Internal.Populate do
   end
   def populate(:storage, storage_id) do
     with \
-      drive_id = StorageQuery.get_drives(storage_id),
-      motherboard_id = ComponentQuery.Origin.get_motherboard(drive_id),
+      [drive_id|_] = StorageQuery.get_drive_ids(storage_id),
+      motherboard_id = ComponentQuery.Origin.get_motherboard_id(drive_id),
       true <- not is_nil(motherboard_id) || :unlinked,
       server = %{} <- ServerQuery.Origin.fetch_by_motherboard(motherboard_id)
     do
@@ -75,7 +75,7 @@ defmodule Helix.Cache.Internal.Populate do
     end
   end
   def populate(:component, component_id) do
-    case ComponentQuery.Origin.get_motherboard(component_id) do
+    case ComponentQuery.Origin.get_motherboard_id(component_id) do
       nil ->
         {:error, :unlinked}
       motherboard_id ->
@@ -98,9 +98,10 @@ defmodule Helix.Cache.Internal.Populate do
     params = format(:server, data)
 
     unless is_nil(mobo) do
+      storage_ids = Enum.map(storages, &(&1.storage_id))
+
       purge_list = [
         {:server, [server_id]},
-        {:storage, [storages.storage_id]},
         {:component, [mobo.motherboard_id]}
       ]
 
@@ -108,13 +109,14 @@ defmodule Helix.Cache.Internal.Populate do
         [{:network, [network.network_id, network.ip]}] ++ acc
       end)
 
-      components_purge = Enum.reduce(components, [], fn(component_id, acc) ->
-        [{:component, [component_id]}] ++ acc
-      end)
+      components_purge = Enum.map(components, &({:component, [&1]}))
+
+      storages_purge = Enum.map(storage_ids, &({:storage, [&1]}))
 
       purge_list
       |> Kernel.++(networks_purge)
       |> Kernel.++(components_purge)
+      |> Kernel.++(storages_purge)
       |> CacheInternal.mark_multiple_as_purged()
 
       spawn(fn() ->
@@ -126,7 +128,7 @@ defmodule Helix.Cache.Internal.Populate do
         end)
 
         # Storage
-        cache(:storage, {storages.storage_id, server_id})
+        Enum.each(storage_ids, &cache(:storage, {&1, server_id}))
 
         # Components
         Enum.each(components, fn(component) ->
@@ -181,7 +183,7 @@ defmodule Helix.Cache.Internal.Populate do
       acc ++ [entry]
     end)
 
-    storage_list = [storages.storage_id]
+    storage_list = Enum.map(storages, &(&1.storage_id))
 
     %{
       server_id: server,

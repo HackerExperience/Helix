@@ -39,25 +39,24 @@ defmodule Helix.Hardware.Internal.Component do
     :ok
   end
 
-  def get_motherboard(component = %Component{component_type: :mobo}) do
-    component.component_id
+  @spec get_motherboard_id(Component.t | Component.id) ::
+    Component.id
+    | nil
+  def get_motherboard_id(component = %Component{component_type: :mobo}),
+    do: component.component_id
+
+  def get_motherboard_id(component = %Component{}) do
+    case Repo.preload(component, :slot) do
+      %{slot: nil} ->
+        nil
+      %{slot: %{motherboard_id: id}} ->
+        id
+    end
   end
 
-  def get_motherboard(component = %Component{}) do
-    component
-    |> Repo.preload(:slot)
-    |> Map.get(:slot)
-    |> case do
-         nil ->
-           nil
-         slot ->
-           Map.get(slot, :motherboard_id)
-       end
-  end
-
-  def get_motherboard(component_id) do
+  def get_motherboard_id(component_id) do
     component_id
     |> fetch()
-    |> get_motherboard()
+    |> get_motherboard_id()
   end
 end

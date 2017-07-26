@@ -8,7 +8,7 @@ defmodule Helix.Entity.Event.Database do
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityQuery.fetch(event.entity_id)
     server = ServerQuery.fetch(event.server_id)
-    server_ip = ServerQuery.get_ip(event.server_id, event.network_id)
+    %{ip: server_ip} = ServerQuery.get_ip(event.server_id, event.network_id)
 
     create_entry = fn ->
       DatabaseAction.create(

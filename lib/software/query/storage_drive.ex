@@ -12,11 +12,10 @@ defmodule Helix.Software.Query.StorageDrive do
     to: StorageDriveQueryOrigin
 
   defmodule Origin do
+
     alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
-    def get_storage_drives(storage) do
-      StorageDriveInternal.get_storage_drives(storage)
-    end
-
+    defdelegate get_storage_drives(storage),
+      to: StorageDriveInternal
   end
 end

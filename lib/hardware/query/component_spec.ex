@@ -16,8 +16,7 @@ defmodule Helix.Hardware.Query.ComponentSpec do
 
     alias Helix.Hardware.Internal.ComponentSpec, as: ComponentSpecInternal
 
-    def fetch(spec_id) do
-      ComponentSpecInternal.fetch(spec_id)
-    end
+    defdelegate fetch(spec_id),
+      to: ComponentSpecInternal
   end
 end

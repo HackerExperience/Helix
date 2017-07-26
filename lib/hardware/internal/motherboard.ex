@@ -1,5 +1,6 @@
 defmodule Helix.Hardware.Internal.Motherboard do
 
+  alias Helix.Network.Model.Network
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.Motherboard
@@ -15,6 +16,8 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> Repo.insert()
   end
 
+  @spec get_components_ids(Motherboard.t | Motherboard.id) ::
+    [Component.id]
   def get_components_ids(motherboard) do
     motherboard
     |> MotherboardSlot.Query.from_motherboard()
@@ -73,29 +76,38 @@ defmodule Helix.Hardware.Internal.Motherboard do
   end
 
   @spec resources(Motherboard.t) ::
-  %{cpu: non_neg_integer,
-    ram: non_neg_integer,
-    hdd: non_neg_integer,
-    net: %{any => %{uplink: non_neg_integer, downlink: non_neg_integer}}}
+    %{
+      cpu: non_neg_integer,
+      ram: non_neg_integer,
+      hdd: non_neg_integer,
+      net: %{
+        Network.id =>
+          %{
+            uplink: non_neg_integer,
+            downlink: non_neg_integer
+          }
+          | %{}
+      }
+    }
   def resources(motherboard) do
-    components = get_components_ids(motherboard)
+    component_ids = get_components_ids(motherboard)
 
     cpu =
-      components
+      component_ids
       |> get_cpus_from_ids()
       |> Enum.reduce(0, fn el, acc ->
         acc + (el.cores * el.clock)
       end)
 
     ram =
-      components
+      component_ids
       |> get_rams_from_ids()
       |> Enum.reduce(0, fn el, acc ->
         acc + el.ram_size
       end)
 
     nic =
-      components
+      component_ids
       |> get_nics_from_ids()
       |> Enum.reduce(%{}, fn el, acc ->
         network = el.network_connection.network_id
@@ -107,7 +119,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
       end)
 
     hdd =
-      components
+      component_ids
       |> get_hdds_from_ids()
       |> Enum.reduce(0, fn el, acc ->
         acc + el.hdd_size

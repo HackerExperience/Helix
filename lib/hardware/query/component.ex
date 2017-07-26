@@ -12,19 +12,20 @@ defmodule Helix.Hardware.Query.Component do
   defdelegate fetch(component_id),
     to: ComponentQueryOrigin
 
-  defdelegate get_motherboard(component),
+  @spec get_motherboard_id(Component.t | Component.id) ::
+    Component.id
+    | nil
+  defdelegate get_motherboard_id(component),
     to: ComponentQueryOrigin
 
   defmodule Origin do
 
     alias Helix.Hardware.Internal.Component, as: ComponentInternal
 
-    def fetch(component_id) do
-      ComponentInternal.fetch(component_id)
-    end
+    defdelegate fetch(component_id),
+      to: ComponentInternal
 
-    def get_motherboard(component) do
-      ComponentInternal.get_motherboard(component)
-    end
+    defdelegate get_motherboard_id(component),
+      to: ComponentInternal
   end
 end

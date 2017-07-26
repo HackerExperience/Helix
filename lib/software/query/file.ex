@@ -2,7 +2,7 @@ defmodule Helix.Software.Query.File do
 
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
-  alias Helix.Software.Query.File, as: FileQueryOrigin
+  alias Helix.Software.Query.File.Origin, as: FileQueryOrigin
 
   @spec fetch(File.id) ::
     File.t
@@ -29,9 +29,8 @@ defmodule Helix.Software.Query.File do
 
     alias Helix.Software.Internal.File, as: FileInternal
 
-    def fetch(file_id) do
-      FileInternal.fetch(file_id)
-    end
+    defdelegate fetch(file_id),
+      to: FileInternal
 
     def storage_contents(storage) do
       storage
@@ -39,13 +38,11 @@ defmodule Helix.Software.Query.File do
       |> Enum.group_by(&(&1.path))
     end
 
-    def files_on_storage(storage) do
-      FileInternal.get_files_on_target_storage(storage)
-    end
+    defdelegate files_on_storage(storage),
+      to: FileInternal,
+      as: :get_files_on_target_storage
 
-    def get_modules(file) do
-      FileInternal.get_modules(file)
-    end
-
+    defdelegate get_modules(file),
+      to: FileInternal
   end
 end

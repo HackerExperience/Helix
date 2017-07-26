@@ -194,10 +194,13 @@ defmodule Helix.Software.Model.File do
     def from_id_list(query, id_list, :or),
       do: or_where(query, [f], f.file_id in ^id_list)
 
-    @spec from_storage(Queryable.t, Storage.t) ::
+    @spec from_storage(Queryable.t, Storage.t | Storage.id) ::
       Queryable.t
-    def from_storage(query \\ File, %Storage{storage_id: id}),
+    def from_storage(query \\ File, storage_or_id)
+    def from_storage(query, %Storage{storage_id: id}),
       do: where(query, [f], f.storage_id == ^id)
+    def from_storage(query, storage_id),
+      do: where(query, [f], f.storage_id == ^storage_id)
 
     @spec not_encrypted(Queryable.t) ::
       Queryable.t
