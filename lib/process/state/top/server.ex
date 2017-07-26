@@ -205,7 +205,7 @@ defmodule Helix.Process.State.TOP.Server do
       %{motherboard_id: motherboard} <- ServerQuery.fetch(gateway),
       true <- not is_nil(motherboard) || :server_not_assembled,
       component = %{} <- ComponentQuery.fetch(motherboard),
-      motherboard = %{} <- MotherboardQuery.fetch!(component),
+      motherboard = %{} <- MotherboardQuery.fetch(component),
       resources = %{} <- MotherboardQuery.resources(motherboard)
     do
       resources = ServerResourcesTOP.cast(resources)

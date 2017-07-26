@@ -9,12 +9,13 @@ defmodule Helix.Hardware.Query.Motherboard do
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Query.Motherboard.Origin, as: MotherboardQueryOrigin
 
-  @spec fetch!(Component.t) ::
+  @spec fetch(Component.t | Motherboard.id) ::
     Motherboard.t
+    | nil
   @doc """
   Fetches a motherboard by component
   """
-  defdelegate fetch!(component),
+  defdelegate fetch(component),
     to: MotherboardQueryOrigin
 
   @spec fetch_by_server(Server.id) ::
@@ -23,10 +24,8 @@ defmodule Helix.Hardware.Query.Motherboard do
   defdelegate fetch_by_server(server_id),
     to: MotherboardQueryOrigin
 
-  # FIXME: this should either return the motherboard or have it's name changed
-  #   as it's just getting the id, not the record
   @spec fetch_by_nip(Network.id, NetworkConnection.ip) ::
-    Motherboard.id
+    Motherboard.t
     | nil
   defdelegate fetch_by_nip(network_id, ip),
     to: MotherboardQueryOrigin
@@ -84,12 +83,9 @@ defmodule Helix.Hardware.Query.Motherboard do
     alias Helix.Server.Query.Server, as: ServerQuery
     alias Helix.Software.Query.Storage, as: StorageQuery
     alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-    alias Helix.Hardware.Model.Component.NIC
-    alias Helix.Hardware.Model.NetworkConnection
     alias Helix.Hardware.Query.Component, as: ComponentQuery
-    alias Helix.Hardware.Repo
 
-    defdelegate fetch!(component),
+    defdelegate fetch(component),
       to: MotherboardInternal
 
     def fetch_by_server(server_id) do
@@ -98,61 +94,32 @@ defmodule Helix.Hardware.Query.Motherboard do
         true <- not is_nil(server.motherboard_id),
         component = %{} <- ComponentQuery.fetch(server.motherboard_id)
       do
-        fetch!(component)
+        fetch(component)
       else
         _ ->
           nil
       end
     end
 
-    # FIXME: this should either return the motherboard or have it's name changed
-    #   as it's just getting the id, not the record
-    def fetch_by_nip(network_id, ip) do
-      # TODO: Query using its own Internal
-      alias Helix.Hardware.Model.NetworkConnection
-      query = [network_id: network_id, ip: ip]
+    defdelegate fetch_by_nip(network_id, ip),
+      to: MotherboardInternal
 
-      with \
-        net = %{} <- Repo.get_by(NetworkConnection, query),
-        nic = %{} <- net |> Repo.preload(:nic) |> Map.fetch!(:nic),
-        slot = %{} <- Repo.get_by(MotherboardSlot, link_component_id: nic.nic_id)
-      do
-        slot.motherboard_id
-      else
-        _ ->
-          nil
-      end
-    end
+    defdelegate preload_components(motherboard),
+      to: MotherboardInternal
 
     defdelegate get_slots(motherboard),
       to: MotherboardInternal
 
-    # FIXME: Does not belong here
-    def preload_components(motherboard),
-      do: Repo.preload(motherboard, slots: :component)
-
     defdelegate resources(motherboard),
       to: MotherboardInternal
 
-    def get_networks(motherboard) do
-      with \
-        slots = [_|_] <- get_slots(motherboard),
-        nics = [_|_] <- Enum.filter(slots, &(&1.link_component_type == :nic)),
-        nics = [_|_] <- Enum.reject(nics, &is_nil(&1.link_component_id)),
-        nics = [_|_] <- Enum.map(nics, &Repo.get(NIC, &1.link_component_id)),
-        nets = [_|_] <- Enum.map(
-          nics,
-          &Repo.get(NetworkConnection, &1.network_connection_id))
-      do
-        nets
-      end
-    end
+    defdelegate get_networks(motherboard),
+      to: MotherboardInternal
 
-    def get_component_ids(motherboard) do
-      motherboard
-      |> preload_components()
-      |> MotherboardInternal.get_components_ids()
-    end
+    defdelegate get_component_ids(motherboard),
+      to: MotherboardInternal,
+      as: :get_components_ids
+      # Review: waiting opinion on pluralized objects
 
     defdelegate get_hdds(motherboard),
       to: MotherboardInternal

@@ -73,11 +73,7 @@ defmodule Helix.Cache.Internal.Cache do
   """
   def lookup(condition, params) do
     query = query_table(condition)
-    full? = if query.field == :all do
-      true
-    else
-      false
-    end
+    full? = query.field == :all
     result = process(query, params, full?)
     case result do
       {:ok, data} ->

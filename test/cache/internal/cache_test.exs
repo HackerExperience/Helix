@@ -69,7 +69,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, server} = PopulateInternal.populate(:server, server_id)
       :timer.sleep(10)
 
-      expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600000, :second)
+      expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600_000, :second)
 
       {:ok, _} = ServerCache.create_changeset(server)
       |> Ecto.Changeset.force_change(:expiration_date, expired_date)
@@ -86,7 +86,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, server} = PopulateInternal.populate(:server, server_id)
       :timer.sleep(10)
 
-      expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600000, :second)
+      expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600_000, :second)
 
       {:ok, _} = ServerCache.create_changeset(server)
       |> Ecto.Changeset.force_change(:expiration_date, expired_date)

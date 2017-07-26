@@ -45,7 +45,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
           motherboard =
             server.motherboard_id
             |> ComponentQuery.fetch()
-            |> MotherboardQuery.fetch!()
+            |> MotherboardQuery.fetch()
             |> MotherboardQuery.preload_components()
 
           {server, motherboard}

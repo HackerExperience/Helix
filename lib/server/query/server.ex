@@ -39,12 +39,15 @@ defmodule Helix.Server.Query.Server do
   end
 
   @spec get_ip(Server.id, Network.id) ::
-    %{ip: NetworkConnection.ip, network_id: Network.id}
+    NetworkConnection.ip
     | nil
   def get_ip(server_id, network_id) do
-    server_id
-    |> get_nips()
-    |> Enum.find(&(&1.network_id == network_id))
+    nips =
+      server_id
+      |> get_nips()
+      |> Enum.find(&(&1.network_id == network_id))
+
+    nips[:ip]
   end
 
   defmodule Origin do
@@ -62,8 +65,8 @@ defmodule Helix.Server.Query.Server do
       case MotherboardQuery.fetch_by_nip(network_id, ip) do
         nil ->
           nil
-        motherboard_id ->
-          fetch_by_motherboard(motherboard_id)
+        motherboard ->
+          fetch_by_motherboard(motherboard.motherboard_id)
       end
     end
   end

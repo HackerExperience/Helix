@@ -25,27 +25,23 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
   describe "fetching" do
     test "succeeds by id" do
       mobo = Factory.insert(:motherboard)
-      assert %Motherboard{} = MotherboardInternal.fetch!(mobo.component)
+      assert %Motherboard{} = MotherboardInternal.fetch(mobo.component)
     end
 
-    test "raises Ecto.NoResultsError when motherboard doesn't exists" do
+    test "returns nil when motherboard doesn't exists" do
       bogus = Factory.build(:motherboard)
 
-      assert_raise Ecto.NoResultsError, fn ->
-        MotherboardInternal.fetch!(bogus.component)
-      end
+      refute MotherboardInternal.fetch(bogus.component)
     end
 
-    test "raises FunctionClauseError if component is not of a motherboard" do
+    test "returns nil if component is not of a motherboard" do
       bogus =
         ComponentType.possible_types()
         |> Enum.reject(&(&1 == :mobo))
         |> Enum.random()
         |> component_of_type()
 
-      assert_raise FunctionClauseError, fn ->
-        MotherboardInternal.fetch!(bogus)
-      end
+      refute MotherboardInternal.fetch(bogus)
     end
   end
 

@@ -15,7 +15,7 @@ defmodule Helix.Network.Henforcer.Network do
     with \
       %{motherboard_id: motherboard} <- ServerQuery.fetch(server),
       component = %{} <- ComponentQuery.fetch(motherboard),
-      motherboard = %{} <- MotherboardQuery.fetch!(component),
+      motherboard = %{} <- MotherboardQuery.fetch(component),
       %{net: %{^network => _}} <- MotherboardQuery.resources(motherboard)
     do
       true

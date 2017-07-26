@@ -39,7 +39,7 @@ defmodule Helix.Server.Henforcer.Server do
       server = %Server{} <- ServerQuery.fetch(server),
       motherboard when not is_nil(motherboard) <- server.motherboard_id,
       motherboard = %{} <- ComponentQuery.fetch(motherboard),
-      motherboard = MotherboardQuery.fetch!(motherboard),
+      motherboard = %{} <- MotherboardQuery.fetch(motherboard),
       slots = [_|_] <- MotherboardQuery.get_slots(motherboard),
       hdds = [_|_] <- Enum.filter(slots, &(&1.link_component_type == :hdd)),
       true <- Enum.any?(hdds, &(not is_nil(&1.link_component_id))),

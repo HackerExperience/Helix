@@ -46,7 +46,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     hdds =
       server.motherboard_id
       |> ComponentQuery.fetch()
-      |> MotherboardQuery.fetch!()
+      |> MotherboardQuery.fetch()
       |> MotherboardQuery.get_slots()
       |> Enum.filter(&(&1.link_component_type == :hdd))
       |> Enum.reject(&(is_nil(&1.link_component_id)))

@@ -1,5 +1,7 @@
 defmodule Helix.Hardware.Action.Flow.Hardware do
 
+  # FIXME everywhere
+
   import HELF.Flow
 
   alias Helix.Entity.Action.Entity, as: EntityAction
@@ -51,7 +53,8 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
     # This will be improved with a MotherboardAPI that simply receives a
     # collection of components and try to link them all
     link_components = fn motherboard, components ->
-      motherboard = MotherboardQuery.fetch!(motherboard)
+      # TODO: Use with for negative checks
+      motherboard = MotherboardQuery.fetch(motherboard)
       slots = MotherboardQuery.get_slots(motherboard)
       slots = Enum.group_by(slots, &(&1.link_component_type))
 
@@ -107,10 +110,10 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
         nic = Repo.get(NIC, nic.component_id),
         nic_params = %{network_connection_id: net.network_connection_id},
         cs = NIC.update_changeset(nic, nic_params),
-        {:ok, _} <- Repo.update(cs)
+        {:ok, _} <- Repo.update(cs),
+        # Below is because `motherboard` is actually a component
+        %{motherboard_id: id} <- MotherboardQuery.fetch(motherboard)
       do
-        # This is because `motherboard` is actually a component
-        %{motherboard_id: id} = MotherboardQuery.fetch!(motherboard)
         {:ok, id}
       end
     end
