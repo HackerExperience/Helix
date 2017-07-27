@@ -6,6 +6,7 @@ defmodule Helix.Cache.Query.CacheTest do
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
     alias Helix.Account.Factory, as: AccountFactory
@@ -42,18 +43,44 @@ defmodule Helix.Cache.Query.CacheTest do
 
       :timer.sleep(10)
     end
+
+    test "it won't repopulate if valid entry exists", context do
+      server_id = context.server.server_id
+
+      refute StatePurgeQueue.lookup(:server, [server_id])
+
+      # Query for first time
+      {:ok, _} = CacheQuery.from_server_get_nips(server_id)
+
+      # It is listed as purged, being populated
+      assert StatePurgeQueue.lookup(:server, [server_id])
+      :timer.sleep(50)
+
+      # Entry has been populated. No longer on purge queue.
+      {:hit, _} = CacheInternal.direct_query(:server, [server_id])
+      refute StatePurgeQueue.lookup(:server, [server_id])
+
+      # Query for second time
+      # Must not be added to the purge queue. If it was, then it is populating
+      # again, which is unexpected.
+      {:ok, _} = CacheQuery.from_server_get_nips(server_id)
+      refute StatePurgeQueue.lookup(:server, [server_id])
+      {:hit, _} = CacheInternal.direct_query(:server, [server_id])
+
+      :timer.sleep(100)
+    end
   end
 
   describe "queue synchronization on updates" do
     test "sync is transparent", context do
       server_id = context.server.server_id
 
-      refute CacheInternal.is_marked_as_purged(:server, server_id)
+      refute StatePurgeQueue.lookup(:server, server_id)
 
       # Start invalidation action
       CacheAction.update_server(server_id)
 
-      assert CacheInternal.is_marked_as_purged(:server, server_id)
+      assert StatePurgeQueue.lookup(:server, server_id)
 
       # Hasn't synced yet
       :miss = CacheInternal.direct_query(:server, server_id)
@@ -74,7 +101,7 @@ defmodule Helix.Cache.Query.CacheTest do
       :timer.sleep(10)
 
       # Eventually removes from the purge queue
-      refute CacheInternal.is_marked_as_purged(:server, server_id)
+      refute StatePurgeQueue.lookup(:server, server_id)
 
       :timer.sleep(10)
     end
@@ -98,11 +125,11 @@ defmodule Helix.Cache.Query.CacheTest do
       motherboard_id = server.motherboard_id
       nip = List.first(server.networks)
 
-      assert CacheInternal.is_marked_as_purged(:server, server_id)
-      assert CacheInternal.is_marked_as_purged(:storage, storage_id)
-      assert CacheInternal.is_marked_as_purged(:component, component_id)
-      assert CacheInternal.is_marked_as_purged(:component, motherboard_id)
-      assert CacheInternal.is_marked_as_purged(:network, [nip.network_id, nip.ip])
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage_id)
+      assert StatePurgeQueue.lookup(:component, component_id)
+      assert StatePurgeQueue.lookup(:component, motherboard_id)
+      assert StatePurgeQueue.lookup(:network, [nip.network_id, nip.ip])
 
       # Note: By now we've probably already have `server` inserted at the DB
       # Therefore, we'll use as test subject motherboard_id, because it's the
@@ -113,7 +140,7 @@ defmodule Helix.Cache.Query.CacheTest do
 
       {:ok, _} = CacheQuery.from_component_get_motherboard(motherboard_id)
 
-      refute CacheInternal.is_marked_as_purged(:component, motherboard_id)
+      refute StatePurgeQueue.lookup(:component, motherboard_id)
 
       # Continues on test below
 
@@ -135,8 +162,8 @@ defmodule Helix.Cache.Query.CacheTest do
 
       {:ok, _} = CacheQuery.from_storage_get_server(storage_id)
 
-      refute CacheInternal.is_marked_as_purged(:storage, storage_id)
-      assert CacheInternal.is_marked_as_purged(:component, motherboard_id)
+      refute StatePurgeQueue.lookup(:storage, storage_id)
+      assert StatePurgeQueue.lookup(:component, motherboard_id)
 
       :timer.sleep(10)
     end
@@ -146,7 +173,7 @@ defmodule Helix.Cache.Query.CacheTest do
     test "sync is transparent1", context do
       server_id = context.server.server_id
 
-      refute CacheInternal.is_marked_as_purged(:server, server_id)
+      refute StatePurgeQueue.lookup(:server, server_id)
       {:ok, server} = PopulateInternal.populate(:server, server_id)
       :timer.sleep(20)
 
@@ -159,13 +186,13 @@ defmodule Helix.Cache.Query.CacheTest do
       CacheAction.purge_component(component_id)
 
       # Component is marked for deletion...
-      assert CacheInternal.is_marked_as_purged(:component, component_id)
+      assert StatePurgeQueue.lookup(:component, component_id)
 
       # But his buddies aren't
-      refute CacheInternal.is_marked_as_purged(:server, server_id)
-      refute CacheInternal.is_marked_as_purged(:component, motherboard_id)
-      refute CacheInternal.is_marked_as_purged(:storage, storage_id)
-      refute CacheInternal.is_marked_as_purged(:network, [nip.network_id, nip.ip])
+      refute StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:component, motherboard_id)
+      refute StatePurgeQueue.lookup(:storage, storage_id)
+      refute StatePurgeQueue.lookup(:network, [nip.network_id, nip.ip])
 
       # Continues below
 
@@ -185,12 +212,11 @@ defmodule Helix.Cache.Query.CacheTest do
       CacheAction.purge_component(component_id)
 
       # Hasn't synced yet, so we can still query it directly...
-      # (Note: every once in a while it may fail here because things went too fast)
       {:hit, component} = CacheInternal.direct_query(:component, component_id)
 
       # But querying it TheRightWay will lead to re-population (and Queue sync)
       {:ok, _} = CacheQuery.from_component_get_motherboard(component_id)
-      refute CacheInternal.is_marked_as_purged(:component, component_id)
+      refute StatePurgeQueue.lookup(:component, component_id)
 
       # And here's the proof
       {:hit, component1} = CacheInternal.direct_query(:component, component_id)

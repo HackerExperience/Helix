@@ -48,7 +48,7 @@ defmodule Helix.Entity.Internal.Entity do
     |> Repo.all()
   end
 
-  @spec fetch_server_owner(Server.id) ::
+  @spec fetch_by_server(Server.id) ::
     Entity.t
     | nil
   @doc """
@@ -58,15 +58,15 @@ defmodule Helix.Entity.Internal.Entity do
 
   ## Examples
 
-      iex> fetch_server_owner("10::478F:8BF:D47B:D04E:8190")
+      iex> fetch_by_server("10::478F:8BF:D47B:D04E:8190")
       %Entity{}
 
-      iex> fetch_server_owner("aa:bbbb::ccc")
+      iex> fetch_by_server("aa:bbbb::ccc")
       nil
   """
-  def fetch_server_owner(server) do
+  def fetch_by_server(server_id) do
     with \
-      es = %EntityServer{} <- Repo.get_by(EntityServer, server_id: server),
+      es = %EntityServer{} <- Repo.get_by(EntityServer, server_id: server_id),
       %EntityServer{entity: entity = %Entity{}} <- Repo.preload(es, :entity)
     do
       entity

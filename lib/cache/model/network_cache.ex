@@ -10,20 +10,15 @@ defmodule Helix.Cache.Model.NetworkCache do
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
+  alias Helix.Cache.Model.Populate.Network, as: NetworkParams
 
-  @cache_duration 60 * 60 * 24
+  @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
     network_id: Network.id,
     ip: NetworkConnection.ip,
     server_id: Server.id,
     expiration_date: DateTime.t
-  }
-
-  @type creation_params :: %{
-    network_id: Network.id,
-    ip: NetworkConnection.ip,
-    server_id: Server.id
   }
 
   @creation_fields ~w/network_id ip server_id/a
@@ -39,11 +34,11 @@ defmodule Helix.Cache.Model.NetworkCache do
     field :expiration_date, :utc_datetime
   end
 
-  @spec create_changeset(creation_params) ::
+  @spec create_changeset(NetworkParams.t) ::
     Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(params, @creation_fields)
+    |> cast(Map.from_struct(params), @creation_fields)
     |> add_expiration_date()
   end
 
@@ -52,9 +47,9 @@ defmodule Helix.Cache.Model.NetworkCache do
   defp add_expiration_date(changeset) do
     expire_date =
       DateTime.utc_now()
-      |> DateTime.to_unix(:microsecond)
+      |> DateTime.to_unix(:millisecond)
       |> Kernel.+(@cache_duration)
-      |> DateTime.from_unix!(:microsecond)
+      |> DateTime.from_unix!(:millisecond)
 
     put_change(changeset, :expiration_date, expire_date)
   end

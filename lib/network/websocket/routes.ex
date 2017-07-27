@@ -15,7 +15,7 @@ defmodule Helix.Network.Websocket.Routes do
 
     with \
       {:ok, server} <- CacheQuery.from_nip_get_server(network, ip),
-      entity = %{} <- EntityQuery.fetch_server_owner(server.server_id)
+      entity = %{} <- EntityQuery.fetch_by_server(server.server_id)
     do
       database_entry = DatabaseQuery.fetch_server_record(
         account,

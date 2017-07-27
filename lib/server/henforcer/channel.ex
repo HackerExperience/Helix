@@ -41,7 +41,7 @@ defmodule Helix.Server.Henforcer.Channel do
     :ok
     | {:error, :not_owner}
   defp account_owns_server_check(account, server_id) do
-    owner = EntityQuery.fetch_server_owner(server_id)
+    owner = EntityQuery.fetch_by_server(server_id)
     owner_id = EntityQuery.get_entity_id(owner)
 
     account_id = EntityQuery.get_entity_id(account)

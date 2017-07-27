@@ -32,7 +32,7 @@ defmodule Helix.Server.Query.Server do
     to: ServerQueryOrigin
 
   @spec get_nips(Server.id) ::
-    [%{ip: NetworkConnection.ip, network_id: Network.id}]
+    [Network.nip]
   def get_nips(server_id) do
     {:ok, nips} = CacheQuery.from_server_get_nips(server_id)
     nips

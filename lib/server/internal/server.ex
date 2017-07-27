@@ -1,6 +1,6 @@
 defmodule Helix.Server.Internal.Server do
 
-  alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
@@ -21,9 +21,11 @@ defmodule Helix.Server.Internal.Server do
   def fetch(server_id),
     do: Repo.get(Server, server_id)
 
-  @spec fetch_by_motherboard(Component.id) ::
+  @spec fetch_by_motherboard(Motherboard.t | Component.id) ::
     Server.t
     | nil
+  def fetch_by_motherboard(motherboard = %Motherboard{}),
+    do: fetch_by_motherboard(motherboard.motherboard_id)
   def fetch_by_motherboard(motherboard_id) do
     motherboard_id
     |> Server.Query.by_motherboard()

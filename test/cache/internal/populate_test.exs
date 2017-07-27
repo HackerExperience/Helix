@@ -118,4 +118,33 @@ defmodule Helix.Cache.Internal.PopulateTest do
       :timer.sleep(10)
     end
   end
+
+  describe "minimal cache duration" do
+    test "entries have a minimal cache duration", context do
+      server_id = context.server.server_id
+
+      {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, [server_id])
+      {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, [server_id])
+      {:ok, components} = CacheInternal.lookup({:server, :components}, [server_id])
+
+      # Wait for it..
+      :timer.sleep(50)
+
+      {:hit, cserver} = CacheInternal.direct_query(:server, server_id)
+      {:hit, cnip} = CacheInternal.direct_query(:network, [nip.network_id, nip.ip])
+      {:hit, cstorage} = CacheInternal.direct_query(:storage, storage_id)
+      {:hit, ccomponent} = CacheInternal.direct_query(:component, List.first(components))
+
+      # Ensure cache has a minimal sane duration
+      # Assertions may be changed if some entry do need to live for less
+      # than 10 minutes, but that's a call to re-think whether you really
+      # need such low-lived cache.
+      assert DateTime.diff(cserver.expiration_date, DateTime.utc_now()) >= 600
+      assert DateTime.diff(cnip.expiration_date, DateTime.utc_now()) >= 600
+      assert DateTime.diff(cstorage.expiration_date, DateTime.utc_now()) >= 600
+      assert DateTime.diff(ccomponent.expiration_date, DateTime.utc_now()) >= 600
+
+      :timer.sleep(10)
+    end
+  end
 end

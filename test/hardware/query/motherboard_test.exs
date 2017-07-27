@@ -4,7 +4,6 @@ defmodule Helix.Hardware.Query.MotherboardTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
 
   alias Helix.Hardware.Factory
@@ -16,8 +15,6 @@ defmodule Helix.Hardware.Query.MotherboardTest do
     end
 
     test "returns nil when input is invalid" do
-      refute MotherboardQuery.fetch(%Component{})
-
       bogus_motherboard = Factory.build(:motherboard)
 
       refute MotherboardQuery.fetch(bogus_motherboard.component)

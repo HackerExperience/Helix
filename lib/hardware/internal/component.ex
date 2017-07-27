@@ -3,6 +3,7 @@ defmodule Helix.Hardware.Internal.Component do
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Repo
 
   @spec create_from_spec(ComponentSpec.t) ::
@@ -40,11 +41,10 @@ defmodule Helix.Hardware.Internal.Component do
   end
 
   @spec get_motherboard_id(Component.t | Component.id) ::
-    Component.id
+    Motherboard.id
     | nil
   def get_motherboard_id(component = %Component{component_type: :mobo}),
     do: component.component_id
-
   def get_motherboard_id(component = %Component{}) do
     case Repo.preload(component, :slot) do
       %{slot: nil} ->
@@ -53,7 +53,6 @@ defmodule Helix.Hardware.Internal.Component do
         id
     end
   end
-
   def get_motherboard_id(component_id) do
     component_id
     |> fetch()

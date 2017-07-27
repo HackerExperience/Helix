@@ -5,7 +5,7 @@ defmodule Helix.Mixfile do
     [
       app: :helix,
       version: "0.0.1",
-      elixir: "~> 1.4",
+      elixir: "~> 1.5",
 
       elixirc_options: elixirc_options(Mix.env),
       elixirc_paths: elixirc_paths(Mix.env),
@@ -56,13 +56,17 @@ defmodule Helix.Mixfile do
       {:cowboy, "~> 1.0"},
       {:corsica, "~> 0.5"},
 
+      # Review: required for 1.5, why?
+      {:hackney, "~>1.8"},
+      {:poolboy, "~>1.5"},
+
       {:ecto, github: "elixir-ecto/ecto", ref: "945e154", override: true},
       {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true},
 
       {:helf, github: "HackerExperience/HELF"},
       {:poison, "~> 2.0"},
 
-      {:comeonin, "~> 2.5"},
+      {:comeonin, "~> 3.2"},
       {:timex, "~> 3.0"},
 
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test},

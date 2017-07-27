@@ -2,7 +2,7 @@ dist: trusty
 sudo: false
 language: elixir
 elixir:
-  - 1.4.2
+  - 1.5.0
 otp_release:
   - 19.3
 script:

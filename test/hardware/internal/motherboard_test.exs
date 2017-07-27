@@ -3,7 +3,6 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
@@ -32,16 +31,6 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
       bogus = Factory.build(:motherboard)
 
       refute MotherboardInternal.fetch(bogus.component)
-    end
-
-    test "returns nil if component is not of a motherboard" do
-      bogus =
-        ComponentType.possible_types()
-        |> Enum.reject(&(&1 == :mobo))
-        |> Enum.random()
-        |> component_of_type()
-
-      refute MotherboardInternal.fetch(bogus)
     end
   end
 

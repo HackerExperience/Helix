@@ -3,13 +3,14 @@ defmodule Helix.Cache.Internal.CacheTest do
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
+  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
+  alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Repo
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
     alias Helix.Account.Factory, as: AccountFactory
@@ -69,7 +70,11 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, server} = PopulateInternal.populate(:server, server_id)
       :timer.sleep(10)
 
-      expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600_000, :second)
+      expired_date =
+        DateTime.utc_now()
+        |> DateTime.to_unix(:second)
+        |> Kernel.-(1)
+        |> Ecto.DateTime.from_unix!(:second)
 
       {:ok, _} = ServerCache.create_changeset(server)
       |> Ecto.Changeset.force_change(:expiration_date, expired_date)
@@ -77,7 +82,7 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       :miss = CacheInternal.direct_query(:server, server_id)
 
-      :timer.sleep(10)
+      :timer.sleep(100)
     end
 
     test "repopulates expired entries", context do
@@ -86,7 +91,11 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, server} = PopulateInternal.populate(:server, server_id)
       :timer.sleep(10)
 
-      expired_date = Ecto.DateTime.from_unix!(DateTime.to_unix(DateTime.utc_now()) - 600_000, :second)
+      expired_date =
+        DateTime.utc_now()
+        |> DateTime.to_unix(:second)
+        |> Kernel.-(1)
+        |> Ecto.DateTime.from_unix!(:second)
 
       {:ok, _} = ServerCache.create_changeset(server)
       |> Ecto.Changeset.force_change(:expiration_date, expired_date)
@@ -94,6 +103,7 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       :miss = CacheInternal.direct_query(:server, server_id)
 
+      # CacheInternal.lookup/2 will populate non-existing entries
       {:ok, _} = CacheInternal.lookup({:server, :nips}, [server_id])
       :timer.sleep(10)
 
@@ -134,18 +144,18 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       storage_id = List.first(server.storages)
 
-      refute CacheInternal.is_marked_as_purged(:storage, storage_id)
+      refute StatePurgeQueue.lookup(:storage, storage_id)
 
       CacheInternal.purge(:storage, storage_id)
 
-      assert CacheInternal.is_marked_as_purged(:storage, storage_id)
+      assert StatePurgeQueue.lookup(:storage, storage_id)
 
       # Sync
       :timer.sleep(20)
 
       :miss = CacheInternal.direct_query(:storage, storage_id)
 
-      refute CacheInternal.is_marked_as_purged(:storage, storage_id)
+      refute StatePurgeQueue.lookup(:storage, storage_id)
 
       :timer.sleep(10)
     end

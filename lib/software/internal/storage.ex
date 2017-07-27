@@ -41,12 +41,16 @@ defmodule Helix.Software.Internal.Storage do
     |> Repo.one()
   end
 
-  @spec get_drives(Storage.id) ::
+  @spec get_drives(Storage.t | Storage.id) ::
     [StorageDrive.t]
+  def get_drives(storage = %Storage{}) do
+    storage
+    |> Repo.preload(:drives)
+    |> Map.get(:drives)
+  end
   def get_drives(storage_id) do
     storage_id
     |> fetch()
-    |> Repo.preload(:drives)
-    |> Map.get(:drives)
+    |> get_drives()
   end
 end

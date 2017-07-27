@@ -6,6 +6,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Internal.Purge, as: PurgeInternal
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
     alias Helix.Account.Factory, as: AccountFactory
@@ -63,11 +64,11 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       :miss = CacheInternal.direct_query(:server, server_id)
 
-      refute CacheInternal.is_marked_as_purged(:server, server_id)
+      refute StatePurgeQueue.lookup(:server, server_id)
 
       CacheInternal.update(:server, server_id)
 
-      assert CacheInternal.is_marked_as_purged(:server, server_id)
+      assert StatePurgeQueue.lookup(:server, server_id)
 
       :miss = CacheInternal.direct_query(:server, server_id)
       :miss = CacheInternal.direct_query(:server, server_id)
@@ -76,7 +77,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       # TODO: PurgeQueue.sync
       :timer.sleep(30)
 
-      refute CacheInternal.is_marked_as_purged(:server, server_id)
+      refute StatePurgeQueue.lookup(:server, server_id)
 
       {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
@@ -98,7 +99,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       motherboard_id = server.motherboard_id
 
       # Purge nip
-      PurgeInternal.purge(:network, nip.network_id, nip.ip)
+      PurgeInternal.purge(:network, [nip.network_id, nip.ip])
 
       # (PurgeInternal.purge is synchronous)
 
@@ -111,7 +112,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       {:hit, _} = CacheInternal.direct_query(:server, [server_id])
 
       # Purging storage
-      PurgeInternal.purge(:storage, storage_id)
+      PurgeInternal.purge(:storage, [storage_id])
 
       :miss = CacheInternal.direct_query(:storage, [storage_id])
 
@@ -121,7 +122,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       {:hit, _} = CacheInternal.direct_query(:server, [server_id])
 
       # Purging component
-      PurgeInternal.purge(:component, component_id)
+      PurgeInternal.purge(:component, [component_id])
 
       :miss = CacheInternal.direct_query(:component, [component_id])
 
@@ -130,7 +131,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       {:hit, _} = CacheInternal.direct_query(:server, [server_id])
 
       # Purge motherboard
-      PurgeInternal.purge(:component, motherboard_id)
+      PurgeInternal.purge(:component, [motherboard_id])
 
       :miss = CacheInternal.direct_query(:component, [motherboard_id])
 

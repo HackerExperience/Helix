@@ -14,8 +14,6 @@ defmodule Helix.Hardware.Internal.Motherboard do
     | nil
   def fetch(component = %Component{component_type: :mobo}),
     do: fetch(component.component_id)
-  def fetch(component = %Component{component_type: _}),
-    do: nil
   def fetch(motherboard_id) do
     motherboard_id
     |> Motherboard.Query.by_id()

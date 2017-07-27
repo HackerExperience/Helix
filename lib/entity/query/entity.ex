@@ -22,7 +22,7 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate fetch(id),
     to: EntityInternal
 
-  @spec fetch_server_owner(Server.id) ::
+  @spec fetch_by_server(Server.id) ::
     Entity.t
     | nil
   @doc """
@@ -30,10 +30,10 @@ defmodule Helix.Entity.Query.Entity do
 
   ### Example
 
-      iex> fetch_server_owner("a::b")
+      iex> fetch_by_server("a::b")
       %Entity{}
   """
-  defdelegate fetch_server_owner(server),
+  defdelegate fetch_by_server(server),
     to: EntityInternal
 
   @spec get_servers_from_entity(Entity.t) ::

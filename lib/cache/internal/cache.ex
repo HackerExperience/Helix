@@ -9,14 +9,18 @@ defmodule Helix.Cache.Internal.Cache do
 
   import HELL.MacroHelpers
 
-  alias Helix.Cache.Model.ServerCache
-  alias Helix.Cache.Model.NetworkCache
-  alias Helix.Cache.Model.StorageCache
   alias Helix.Cache.Model.ComponentCache
-  alias Helix.Cache.Repo
+  alias Helix.Cache.Model.NetworkCache
+  alias Helix.Cache.Model.ServerCache
+  alias Helix.Cache.Model.StorageCache
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Internal.Purge, as: PurgeInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+  alias Helix.Cache.Repo
+
+  @type condition ::
+    {atom, atom}
+    | atom
 
   docp """
   Static representation of all possible queries
@@ -50,6 +54,9 @@ defmodule Helix.Cache.Internal.Cache do
     {:component, :motherboard} => {:component, :by_component, :motherboard_id}
   }
 
+  @spec direct_query(condition, [binary]) ::
+    {:hit, binary | map}
+    | :miss
   @doc """
   Directly query the cache without populating it. Reports whether it's a miss
   or hit, along with the cached data (entire row) if it's a hit.
@@ -68,6 +75,9 @@ defmodule Helix.Cache.Internal.Cache do
     end
   end
 
+  @spec lookup(condition, [binary]) ::
+    {:ok, binary | map}
+    | {:error, reason :: atom}
   @doc """
   Queries the Cache database, populating it if the requested data wasn't found.
   """
@@ -83,28 +93,6 @@ defmodule Helix.Cache.Internal.Cache do
     end
   end
 
-  def is_marked_as_purged(model, params) when not is_list(params),
-    do: is_marked_as_purged(model, [params])
-  def is_marked_as_purged(model, params) do
-    StatePurgeQueue.lookup(model, params)
-  end
-
-  def mark_multiple_as_purged(entry_list) do
-    StatePurgeQueue.queue_multiple(entry_list)
-  end
-
-  def mark_as_purged(model, params) when not is_list(params),
-    do: mark_as_purged(model, [params])
-  def mark_as_purged(model, params) do
-    StatePurgeQueue.queue(model, params)
-  end
-
-  def remove_from_purge_queue(model, params) when not is_list(params),
-    do: remove_from_purge_queue(model, [params])
-  def remove_from_purge_queue(model, params) do
-    StatePurgeQueue.unqueue(model, params)
-  end
-
   @doc """
   Requests an entry to be purged from cache.
   Actual deletion of database entries happens asynchronously, but we immediately
@@ -115,11 +103,11 @@ defmodule Helix.Cache.Internal.Cache do
     do: purge(model, [params])
   def purge(model, params) do
     # Synchronously mark entry as invalid by adding it to the PurgeQueue
-    mark_as_purged(model, params)
+    StatePurgeQueue.queue(model, params)
 
     # Asynchronously delete stuff from the DB
     spawn(fn() ->
-      apply(PurgeInternal, :purge, [model] ++ params)
+      apply(PurgeInternal, :purge, [model] ++ [params])
     end)
 
     :ok
@@ -135,7 +123,7 @@ defmodule Helix.Cache.Internal.Cache do
     do: update(model, [params])
   def update(model, params) do
     # Synchronously mark entry as invalid by adding it to the PurgeQueue
-    mark_as_purged(model, params)
+    StatePurgeQueue.queue(model, params)
 
     # Asynchronously update stuff on the DB
     spawn(fn() ->
@@ -156,7 +144,7 @@ defmodule Helix.Cache.Internal.Cache do
         |> case do
              {:ok, schema} ->
                if full? do
-                 {:ok, schema}
+                 {:ok, Map.from_struct(schema)}
                else
                  {:ok, Map.get(schema, query.field)}
                end

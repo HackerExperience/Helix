@@ -37,6 +37,7 @@ defmodule Helix.Cache.Action.Cache do
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   def update_server(server_id) do
     CacheInternal.update(:server, [server_id])
@@ -47,7 +48,7 @@ defmodule Helix.Cache.Action.Cache do
     update_storage(storage_id, server_id)
   end
   defp update_storage(storage_id, server_id) do
-    CacheInternal.mark_as_purged(:storage, [storage_id])
+    StatePurgeQueue.queue(:storage, [storage_id])
     CacheInternal.update(:server, [server_id])
   end
 
@@ -61,7 +62,7 @@ defmodule Helix.Cache.Action.Cache do
     update_component(component_id, server.server_id)
   end
   defp update_component(component_id, server_id) do
-    CacheInternal.mark_as_purged(:component, [component_id])
+    StatePurgeQueue.queue(:component, [component_id])
     CacheInternal.update(:server, [server_id])
   end
 
@@ -74,7 +75,7 @@ defmodule Helix.Cache.Action.Cache do
     update_nip(network_id, ip, server_id)
   end
   defp update_nip(network_id, ip, server_id) do
-    CacheInternal.mark_as_purged(:network, [network_id, ip])
+    StatePurgeQueue.queue(:network, [network_id, ip])
     CacheInternal.update(:server, [server_id])
   end
 

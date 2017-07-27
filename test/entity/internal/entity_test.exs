@@ -42,15 +42,15 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
   end
 
-  describe "fetch_server_owner/1" do
+  describe "fetch_by_server/1" do
     test "returns entity if server is owned" do
       %{server_id: id} = Factory.insert(:entity_server)
 
-      assert %Entity{} = EntityInternal.fetch_server_owner(id)
+      assert %Entity{} = EntityInternal.fetch_by_server(id)
     end
 
     test "returns nil if server is not owned" do
-      refute EntityInternal.fetch_server_owner(Random.pk())
+      refute EntityInternal.fetch_by_server(Random.pk())
     end
   end
 

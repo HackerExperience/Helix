@@ -7,18 +7,14 @@ defmodule Helix.Cache.Model.ComponentCache do
   alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Hardware.Model.Component
+  alias Helix.Cache.Model.Populate.Component, as: ComponentParams
 
-  @cache_duration 60 * 60 * 24
+  @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
     component_id: Component.id,
     motherboard_id: Component.id,
     expiration_date: DateTime.t
-  }
-
-  @type creation_params :: %{
-    component_id: Component.id,
-    motherboard_id: Component.id
   }
 
   @creation_fields ~w/component_id motherboard_id/a
@@ -32,11 +28,11 @@ defmodule Helix.Cache.Model.ComponentCache do
     field :expiration_date, :utc_datetime
   end
 
-  @spec create_changeset(creation_params) ::
+  @spec create_changeset(ComponentParams.t) ::
     Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(params, @creation_fields)
+    |> cast(Map.from_struct(params), @creation_fields)
     |> add_expiration_date()
   end
 
@@ -45,9 +41,9 @@ defmodule Helix.Cache.Model.ComponentCache do
   defp add_expiration_date(changeset) do
     expire_date =
       DateTime.utc_now()
-      |> DateTime.to_unix(:microsecond)
+      |> DateTime.to_unix(:millisecond)
       |> Kernel.+(@cache_duration)
-      |> DateTime.from_unix!(:microsecond)
+      |> DateTime.from_unix!(:millisecond)
 
     put_change(changeset, :expiration_date, expire_date)
   end

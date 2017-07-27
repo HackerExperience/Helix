@@ -37,7 +37,7 @@ defmodule HELL.IPv6Test do
 
       val2 =
         val
-        |> String.to_char_list()
+        |> String.to_charlist()
         |> :inet.parse_address()
         |> elem(1)
         |> :inet.ntoa()

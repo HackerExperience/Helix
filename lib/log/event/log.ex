@@ -19,7 +19,7 @@ defmodule Helix.Log.Event.Log do
     ip_to = ServerQuery.get_ip(to, event.network_id)
     ip_from = ServerQuery.get_ip(from, event.network_id)
 
-    entity = EntityQuery.fetch_server_owner(to)
+    entity = EntityQuery.fetch_by_server(to)
 
     file = FileQuery.fetch(event.from_file_id)
     # FIXME: move to a view helper
@@ -55,7 +55,7 @@ defmodule Helix.Log.Event.Log do
     gateway_ip = ServerQuery.get_ip(gateway_id, network)
     destination_ip = ServerQuery.get_ip(destination_id, network)
 
-    entity = EntityQuery.fetch_server_owner(gateway_id)
+    entity = EntityQuery.fetch_by_server(gateway_id)
 
     message_gateway = "Logged into #{destination_ip}"
     message_destination = "#{gateway_ip} logged in as root"

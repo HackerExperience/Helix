@@ -10,8 +10,9 @@ defmodule Helix.Cache.Model.ServerCache do
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
+  alias Helix.Cache.Model.Populate.Server, as: ServerParams
 
-  @cache_duration 60 * 60 * 24
+  @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
     server_id: Server.id,
@@ -22,16 +23,6 @@ defmodule Helix.Cache.Model.ServerCache do
     resources: map,
     components: [Component.id],
     expiration_date: DateTime.t
-  }
-
-  @type creation_params :: %{
-    server_id: Server.id,
-    entity_id: Entity.id,
-    motherboard_id: Component.id,
-    networks: list,
-    storages: [Storage.id],
-    resources: map(),
-    components: [Component.id]
   }
 
   @creation_fields ~w/
@@ -58,11 +49,11 @@ defmodule Helix.Cache.Model.ServerCache do
     field :expiration_date, :utc_datetime
   end
 
-  @spec create_changeset(creation_params) ::
+  @spec create_changeset(ServerParams.t) ::
     Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(params, @creation_fields)
+    |> cast(Map.from_struct(params), @creation_fields)
     |> add_expiration_date()
   end
 
@@ -71,9 +62,9 @@ defmodule Helix.Cache.Model.ServerCache do
   defp add_expiration_date(changeset) do
     expire_date =
       DateTime.utc_now()
-      |> DateTime.to_unix(:microsecond)
+      |> DateTime.to_unix(:millisecond)
       |> Kernel.+(@cache_duration)
-      |> DateTime.from_unix!(:microsecond)
+      |> DateTime.from_unix!(:millisecond)
 
     put_change(changeset, :expiration_date, expire_date)
   end

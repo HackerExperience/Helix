@@ -63,7 +63,7 @@ defmodule Helix.Software.Public.File do
   end
 
   @spec storages_on_server(Server.t) ::
-    [Storage.t]
+    [Storage.id]
   defp storages_on_server(server) do
     {:ok, storages} = CacheQuery.from_server_get_storages(server.server_id)
     storages

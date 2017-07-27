@@ -6,12 +6,18 @@ defmodule Helix.Cache.Query.Cache do
   populate the cache and then reply with the requested data.
   """
 
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
   alias Helix.Cache.Internal.Cache, as: CacheInternal
 
   def from_server_get_all(server_id) do
     CacheInternal.lookup(:server, [server_id])
   end
 
+  @spec from_server_get_nips(Server.id) ::
+    {:ok, [Network.nip]}
+    | {:error, {:server, :notfound}}
+    | {:error, :unknown}
   def from_server_get_nips(server_id) do
     CacheInternal.lookup({:server, :nips}, [server_id])
   end
