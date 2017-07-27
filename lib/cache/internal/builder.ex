@@ -138,5 +138,4 @@ defmodule Helix.Cache.Internal.Builder do
     |> StorageInternal.get_drives()
     |> Enum.map(&(&1.drive_id))
   end
-
 end

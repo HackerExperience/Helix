@@ -38,7 +38,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
       socket.assigns.account
       |> EntityQuery.get_entity_id()
       |> EntityQuery.fetch()
-      |> EntityQuery.get_servers_from_entity()
+      |> EntityQuery.get_servers()
       |> Enum.map(&ServerQuery.fetch/1)
       |> Enum.map(fn
         server = %{motherboard_id: motherboard} when not is_nil(motherboard) ->

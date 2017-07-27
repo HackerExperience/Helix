@@ -95,12 +95,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     end
   end
 
-  # REVIEW: this function usefulness, it's not being used anywhere anymore
-  @spec linked?(t) ::
-    boolean
-  def linked?(%__MODULE__{link_component_id: xs}),
-    do: !is_nil(xs)
-
   defmodule Query do
 
     import Ecto.Query, only: [select: 3, where: 3]
@@ -118,14 +112,20 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     def from_motherboard(query, motherboard_id),
       do: where(query, [ms], ms.motherboard_id == ^motherboard_id)
 
-    @spec by_id(Queryable.t, MotherboardSlot.id) ::
+    @spec by_slot(Queryable.t, MotherboardSlot.t | MotherboardSlot.id) ::
       Queryable.t
-    def by_id(query \\ MotherboardSlot, slot_id),
+    def by_slot(query \\ MotherboardSlot, slot_or_id)
+    def by_slot(query, slot = %MotherboardSlot{}),
+      do: by_slot(query, slot.slot_id)
+    def by_slot(query, slot_id),
       do: where(query, [ms], ms.slot_id == ^slot_id)
 
-    @spec by_component_id(Queryable.t, Component.id) ::
+    @spec by_component(Queryable.t, Component.t | Component.id) ::
       Queryable.t
-    def by_component_id(query \\ MotherboardSlot, component_id),
+    def by_component(query \\ MotherboardSlot, component_or_component_id)
+    def by_component(query, component = %Component{}),
+      do: by_component(query, component.component_id)
+    def by_component(query, component_id),
       do: where(query, [ms], ms.link_component_id == ^component_id)
 
     @spec only_linked_slots(Queryable.t) ::

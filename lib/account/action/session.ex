@@ -5,7 +5,8 @@ defmodule Helix.Account.Action.Session do
   alias Helix.Account.Model.AccountSession
 
   @spec generate_token(Account.t) ::
-    AccountSession.token
+    {:ok, AccountSession.token}
+    | {:error, Ecto.Changeset.t}
   defdelegate generate_token(account),
     to: SessionInternal
 

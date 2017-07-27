@@ -81,7 +81,7 @@ defmodule Helix.Log.Action.Log do
     {:ok, Log.t}
     | {:error, reason :: term}
   @doc """
-  Deletes the log by removing it's entry from database
+  Deletes the log by removing its entry from database
   """
   def hard_delete(log),
     do: Repo.delete(log)

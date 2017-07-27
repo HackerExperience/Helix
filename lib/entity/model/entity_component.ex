@@ -49,14 +49,17 @@ defmodule Helix.Entity.Model.EntityComponent do
     @spec from_entity(Queryable.t, Entity.t | Entity.id) ::
       Queryable.t
     def from_entity(query \\ EntityComponent, entity_or_entity_id)
-    def from_entity(query, entity = %Entity{}),
-      do: from_entity(query, entity.entity_id)
+    def from_entity(query, %Entity{entity_id: entity_id}),
+      do: from_entity(query, entity_id)
     def from_entity(query, entity_id),
       do: where(query, [ec], ec.entity_id == ^entity_id)
 
-    @spec by_component_id(Queryable.t, Component.id) ::
+    @spec by_component(Queryable.t, Component.t | Component.id) ::
       Ecto.Queryable.t
-    def by_component_id(query \\ EntityComponent, component_id),
+    def by_component(query \\ EntityComponent, component_or_component_id)
+    def by_component(query, %Component{component_id: component_id}),
+      do: from_entity(query, component_id)
+    def by_component(query, component_id),
       do: where(query, [ec], ec.component_id == ^component_id)
   end
 end

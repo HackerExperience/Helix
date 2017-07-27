@@ -22,7 +22,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   # TODO: Move this to a case
   setup do
     account = AccountFactory.insert(:account)
-    token = SessionAction.generate_token(account)
+    {:ok, token} = SessionAction.generate_token(account)
     {:ok, socket} = connect(Socket, %{token: token})
 
     {:ok, account: account, socket: socket}

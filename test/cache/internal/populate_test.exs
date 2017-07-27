@@ -2,9 +2,8 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
   use Helix.Test.IntegrationCase
 
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Action.Server, as: ServerAction
+  alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Model.ServerCache
@@ -90,13 +89,13 @@ defmodule Helix.Cache.Internal.PopulateTest do
     end
 
     test "storage population", context do
-      motherboard_id = context.server.motherboard_id
+      {:ok, origin} = BuilderInternal.by_server(context.server.server_id)
 
-      [storage|_] = MotherboardQuery.get_storages(motherboard_id)
+      storage_id = List.first(origin.storages)
 
-      {:ok, storage1} = PopulateInternal.populate(:storage, storage.storage_id)
+      {:ok, storage1} = PopulateInternal.populate(:storage, storage_id)
 
-      {:hit, storage2} = CacheInternal.direct_query(:storage, storage.storage_id)
+      {:hit, storage2} = CacheInternal.direct_query(:storage, storage_id)
 
       assert storage1.storage_id == storage2.storage_id
 
@@ -104,10 +103,9 @@ defmodule Helix.Cache.Internal.PopulateTest do
     end
 
     test "network population", context do
-      server_id = context.server.server_id
+      {:ok, origin} = BuilderInternal.by_server(context.server.server_id)
 
-      nip = ServerQuery.get_nips(server_id)
-      |> List.first()
+      nip = List.first(origin.networks)
 
       {:ok, nip1} = PopulateInternal.populate(:network, nip.network_id, nip.ip)
 

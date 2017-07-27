@@ -5,6 +5,11 @@ defmodule Helix.Entity.Query.Database do
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
 
+  # REVIEW: @charlots Please arrumar esse modulo, nao sei mexer com Multi
+  # Definicoes de query -> Model
+  # Repos -> Internal
+  # Zoeira -> Infinita
+
   @spec get_database(Entity.t) ::
     [map]
   # TODO: documentation

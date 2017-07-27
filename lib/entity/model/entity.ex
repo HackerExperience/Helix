@@ -53,4 +53,20 @@ defmodule Helix.Entity.Model.Entity do
     |> validate_required(@creation_fields)
     |> validate_inclusion(:entity_type, EntityType.possible_types())
   end
+
+  defmodule Query do
+
+    import Ecto.Query, only: [where: 3]
+
+    alias Ecto.Queryable
+    alias Helix.Entity.Model.Entity
+
+    @spec by_entity(Queryable.t, Entity.t | Entity.id) ::
+      Queryable.t
+    def by_entity(query \\ Entity, entity_or_entity_id)
+    def by_entity(query, %Entity{entity_id: entity_id}),
+      do: by_entity(query, entity_id)
+    def by_entity(query, entity_id),
+      do: where(query, [e], e.entity_id == ^entity_id)
+  end
 end

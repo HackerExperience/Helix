@@ -81,11 +81,11 @@ defmodule Helix.Hardware.Model.Component.HDD do
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.HDD
 
-    @spec from_component_ids([Component.id]) ::
+    @spec from_components_ids([Component.id]) ::
       Queryable.t
-    @spec from_component_ids(Queryable.t, [Component.id]) ::
+    @spec from_components_ids(Queryable.t, [Component.id]) ::
       Queryable.t
-    def from_component_ids(query \\ HDD, component_ids),
-      do: where(query, [h], h.hdd_id in ^component_ids)
+    def from_components_ids(query \\ HDD, components_ids),
+      do: where(query, [h], h.hdd_id in ^components_ids)
   end
 end

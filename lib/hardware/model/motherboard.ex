@@ -145,9 +145,15 @@ defmodule Helix.Hardware.Model.Motherboard do
 
     import Ecto.Query, only: [where: 3]
 
+    alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Motherboard
 
-    def by_id(query \\ Motherboard, motherboard_id),
+    @spec by_motherboard(Queryable.t, Motherboard.t | Component.t | Motherboard.id) ::
+      Queryable.t
+    def by_motherboard(query \\ Motherboard, motherboard_or_motherboard_id)
+    def by_motherboard(query, component = %Component{}),
+      do: by_motherboard(query, component.component_id)
+    def by_motherboard(query, motherboard_id),
       do: where(query, [m], m.motherboard_id == ^motherboard_id)
   end
 end

@@ -1,11 +1,11 @@
 defmodule Helix.Server.Query.Server do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
+  alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
-  alias Helix.Server.Query.Server.Origin, as: ServerQueryOrigin
 
   @spec fetch(Server.id) ::
     Server.t
@@ -14,60 +14,27 @@ defmodule Helix.Server.Query.Server do
   Fetches a server
   """
   defdelegate fetch(server_id),
-    to: ServerQueryOrigin
+    to: ServerInternal
 
-  @spec fetch_by_motherboard(Component.id) ::
+  @spec fetch_by_motherboard(Motherboard.t | Motherboard.id) ::
     Server.t
     | nil
   @doc """
   Fetches the server that mounts the `motherboard`
   """
   defdelegate fetch_by_motherboard(motherboard_id),
-    to: ServerQueryOrigin
-
-  @spec fetch_by_nip(Network.id, NetworkConnection.ip) ::
-    Server.t
-    | nil
-  defdelegate fetch_by_nip(network_id, ip),
-    to: ServerQueryOrigin
-
-  @spec get_nips(Server.id) ::
-    [Network.nip]
-  def get_nips(server_id) do
-    {:ok, nips} = CacheQuery.from_server_get_nips(server_id)
-    nips
-  end
+    to: ServerInternal
 
   @spec get_ip(Server.id, Network.id) ::
     NetworkConnection.ip
     | nil
   def get_ip(server_id, network_id) do
-    nips =
-      server_id
-      |> get_nips()
-      |> Enum.find(&(&1.network_id == network_id))
-
-    nips[:ip]
-  end
-
-  defmodule Origin do
-
-    alias Helix.Server.Internal.Server, as: ServerInternal
-    alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-
-    defdelegate fetch(server_id),
-      to: ServerInternal
-
-    defdelegate fetch_by_motherboard(motherboard_id),
-      to: ServerInternal
-
-    def fetch_by_nip(network_id, ip) do
-      case MotherboardQuery.fetch_by_nip(network_id, ip) do
-        nil ->
-          nil
-        motherboard ->
-          fetch_by_motherboard(motherboard.motherboard_id)
-      end
+    case CacheQuery.from_server_get_nips(server_id) do
+      {:ok, nips} ->
+        Enum.find(nips, &(&1.network_id == network_id))
+        |> Map.get(:ip)
+      _ ->
+        nil
     end
   end
 end

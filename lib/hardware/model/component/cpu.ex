@@ -88,9 +88,9 @@ defmodule Helix.Hardware.Model.Component.CPU do
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.CPU
 
-    @spec from_component_ids(Queryable.t, [Component.id]) ::
+    @spec from_components_ids(Queryable.t, [Component.id]) ::
       Queryable.t
-    def from_component_ids(query \\ CPU, component_ids),
-      do: where(query, [c], c.cpu_id in ^component_ids)
+    def from_components_ids(query \\ CPU, components_ids),
+      do: where(query, [c], c.cpu_id in ^components_ids)
   end
 end

@@ -43,7 +43,7 @@ defmodule Helix.Account.Model.AccountSetting do
 
   defmodule Query do
 
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query, only: [select: 3, where: 3]
 
     alias Ecto.Queryable
     alias Helix.Account.Model.Account
@@ -56,5 +56,10 @@ defmodule Helix.Account.Model.AccountSetting do
       do: from_account(query, account.account_id)
     def from_account(query, account_id),
       do: where(query, [as], as.account_id == ^account_id)
+
+    @spec select_settings(Queryable.t) ::
+      Queryable.t
+    def select_settings(query),
+      do: select(query, [as], as.settings)
   end
 end

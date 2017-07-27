@@ -3,7 +3,7 @@ defmodule Helix.Process.Query.Process do
   alias Helix.Network.Model.Connection
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
-  alias Helix.Process.Query.Process.Origin, as: ProcessQueryOrigin
+  alias Helix.Process.Internal.Process, as: ProcessInternal
 
   @spec fetch(Process.id) ::
     Process.t
@@ -20,9 +20,9 @@ defmodule Helix.Process.Query.Process do
       nil
   """
   defdelegate fetch(id),
-    to: ProcessQueryOrigin
+    to: ProcessInternal
 
-  @spec get_running_processes_of_type_on_server(Server.id, String.t) ::
+  @spec get_running_processes_of_type_on_server(Server.t | Server.id, String.t) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway` that are of `type`
@@ -39,9 +39,9 @@ defmodule Helix.Process.Query.Process do
       [%Process{}, %Process{}, %Process{}]
   """
   defdelegate get_running_processes_of_type_on_server(gateway_id, type),
-    to: ProcessQueryOrigin
+    to: ProcessInternal
 
-  @spec get_processes_on_server(Server.id) ::
+  @spec get_processes_on_server(Server.t | Server.id) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway`
@@ -52,9 +52,9 @@ defmodule Helix.Process.Query.Process do
       [%Process{}, %Process{}, %Process{}, %Process{}, %Process{}]
   """
   defdelegate get_processes_on_server(gateway_id),
-    to: ProcessQueryOrigin
+    to: ProcessInternal
 
-  @spec get_processes_targeting_server(Server.id) ::
+  @spec get_processes_targeting_server(Server.t | Server.id) ::
     [Process.t]
   @doc """
   Fetches remote processes affecting `gateway`
@@ -68,9 +68,9 @@ defmodule Helix.Process.Query.Process do
       [%Process{}]
   """
   defdelegate get_processes_targeting_server(gateway_id),
-    to: ProcessQueryOrigin
+    to: ProcessInternal
 
-  @spec get_processes_of_type_targeting_server(Server.id, String.t) ::
+  @spec get_processes_of_type_targeting_server(Server.t | Server.id, String.t) ::
     [Process.t]
   @doc """
   Fetches remote processes of type `type` affecting `gateway`
@@ -84,9 +84,9 @@ defmodule Helix.Process.Query.Process do
       [%Process{}, %Process{}]
   """
   defdelegate get_processes_of_type_targeting_server(gateway_id, type),
-    to: ProcessQueryOrigin
+    to: ProcessInternal
 
-  @spec get_processes_on_connection(Connection.id) ::
+  @spec get_processes_on_connection(Connection.t | Connection.id) ::
     [Process.t]
   @doc """
   Fetches processes using `connection`
@@ -97,54 +97,5 @@ defmodule Helix.Process.Query.Process do
       [%Process{}]
   """
   defdelegate get_processes_on_connection(connection),
-    to: ProcessQueryOrigin
-
-  defmodule Origin do
-
-    alias Helix.Process.Internal.Process, as: ProcessInternal
-    alias Helix.Process.Repo
-
-    defdelegate fetch(id),
-      to: ProcessInternal
-
-    def get_running_processes_of_type_on_server(gateway_id, type) do
-      gateway_id
-      |> Process.Query.from_server()
-      |> Process.Query.by_type(type)
-      |> Process.Query.by_state(:running)
-      |> Repo.all()
-      |> Enum.map(&Process.load_virtual_data/1)
-    end
-
-    def get_processes_on_server(gateway_id) do
-      gateway_id
-      |> Process.Query.from_server()
-      |> Repo.all()
-      |> Enum.map(&Process.load_virtual_data/1)
-    end
-
-    def get_processes_targeting_server(gateway_id) do
-      gateway_id
-      |> Process.Query.by_target()
-      |> Process.Query.not_targeting_gateway()
-      |> Repo.all()
-      |> Enum.map(&Process.load_virtual_data/1)
-    end
-
-    def get_processes_of_type_targeting_server(gateway_id, type) do
-      gateway_id
-      |> Process.Query.by_target()
-      |> Process.Query.not_targeting_gateway()
-      |> Process.Query.by_type(type)
-      |> Repo.all()
-      |> Enum.map(&Process.load_virtual_data/1)
-    end
-
-    def get_processes_on_connection(connection_id) do
-      connection_id
-      |> Process.Query.by_connection_id()
-      |> Repo.all()
-      |> Enum.map(&Process.load_virtual_data/1)
-    end
-  end
+    to: ProcessInternal
 end

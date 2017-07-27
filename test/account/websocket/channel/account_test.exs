@@ -21,7 +21,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
 
   setup do
     account = Factory.insert(:account)
-    token = SessionAction.generate_token(account)
+    {:ok, token} = SessionAction.generate_token(account)
     {:ok, socket} = connect(Socket, %{token: token})
     {:ok, _, socket} = join(socket, "account:" <> account.account_id)
 

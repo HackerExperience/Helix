@@ -92,20 +92,29 @@ defmodule Helix.Log.Model.Log do
 
     @spec edited_by_entity(Queryable.t, Entity.id) ::
       Queryable.t
-    def edited_by_entity(query \\ Log, entity_id) do
+    def edited_by_entity(query \\ Log, entity_or_entity_id)
+    def edited_by_entity(query, entity = %Entity{}),
+      do: edited_by_entity(query, entity.entity_id)
+    def edited_by_entity(query, entity_id) do
       query
       |> join(:inner, [l], lt in LogTouch, lt.log_id == l.log_id)
       |> where([l, ..., lt], lt.entity_id == ^entity_id)
     end
 
-    @spec by_id(Queryable.t, Log.id) ::
+    @spec by_log(Queryable.t, Log.t | Log.id) ::
       Queryable.t
-    def by_id(query \\ Log, id),
-      do: where(query, [l], l.log_id == ^id)
+    def by_log(query \\ Log, log_or_log_id)
+    def by_log(query, log = %Log{}),
+      do: by_log(query, log.log_id)
+    def by_log(query, log_id),
+      do: where(query, [l], l.log_id == ^log_id)
 
-    @spec by_server_id(Queryable.t, Server.id) ::
+    @spec by_server(Queryable.t, Server.t | Server.id) ::
       Queryable.t
-    def by_server_id(query \\ Log, server_id),
+    def by_server(query \\ Log, server_or_server_id)
+    def by_server(query, server = %Server{}),
+      do: by_server(query, server.server_id)
+    def by_server(query, server_id),
       do: where(query, [l], l.server_id == ^server_id)
 
     @spec by_message(Queryable.t, String.t) ::

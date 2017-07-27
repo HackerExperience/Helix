@@ -149,10 +149,13 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     alias HELL.Constant
     alias Helix.Hardware.Model.ComponentSpec
 
-    @spec by_id(Queryable.t, ComponentSpec.id) ::
+    @spec by_spec(ComponentSpec.t | ComponentSpec.id) ::
       Queryable.t
-    def by_id(query \\ ComponentSpec, spec_id),
-      do: where(query, [s], s.spec_id == ^spec_id)
+    def by_spec(query \\ ComponentSpec, spec_or_spec_id)
+    def by_spec(query, %ComponentSpec{spec_id: spec_id}),
+      do: by_spec(query, spec_id)
+    def by_spec(query, spec_id),
+      do: where(query, [cs], cs.spec_id == ^spec_id)
 
     @spec by_component_type(Queryable.t, Constant.t) ::
       Queryable.t

@@ -82,24 +82,48 @@ defmodule Helix.Network.Model.Tunnel do
 
   defmodule Query do
 
-    import Ecto.Query
+    import Ecto.Query, only: [select: 3, where: 3]
 
+    alias Ecto.Queryable
+    alias Helix.Server.Model.Server
     alias Helix.Network.Model.Network
     alias Helix.Network.Model.Tunnel
 
-    def by_id(query \\ Tunnel, id),
-      do: where(query, [t], t.tunnel_id == ^id)
+    @spec by_tunnel(Queryable.t, Tunnel.t | Tunnel.id) ::
+      Queryable.t
+    def by_tunnel(query \\ Tunnel, tunnel_or_tunnel_id)
+    def by_tunnel(query, tunnel = %Tunnel{}),
+      do: by_tunnel(query, tunnel.tunnel_id)
+    def by_tunnel(query, tunnel_id),
+      do: where(query, [t], t.tunnel_id == ^tunnel_id)
 
-    def from_network(query \\ Tunnel, network)
-    def from_network(query, %Network{network_id: id}),
-      do: from_network(query, id)
+    @spec from_network(Queryable.t, Network.t | Network.id) ::
+      Queryable.t
+    def from_network(query \\ Tunnel, network_or_network_id)
+    def from_network(query, network = %Network{}),
+      do: from_network(query, network.network_id)
     def from_network(query, network_id),
       do: where(query, [t], t.network_id == ^network_id)
 
-    def by_gateway_id(query \\ Tunnel, gateway),
-      do: where(query, [t], t.gateway_id == ^gateway)
+    @spec by_gateway(Queryable.t, Server.t | Server.id) ::
+      Queryable.t
+    def by_gateway(query \\ Tunnel, server_or_server_id)
+    def by_gateway(query, gateway = %Server{}),
+      do: by_gateway(query, gateway.server_id)
+    def by_gateway(query, gateway_id),
+      do: where(query, [t], t.gateway_id == ^gateway_id)
 
-    def by_destination_id(query \\ Tunnel, destination),
-      do: where(query, [t], t.destination_id == ^destination)
+    @spec by_destination(Queryable.t, Server.t | Server.id) ::
+      Queryable.t
+    def by_destination(query \\ Tunnel, server_or_server_id)
+    def by_destination(query, destination = %Server{}),
+      do: by_destination(query, destination.server_id)
+    def by_destination(query, destination_id),
+      do: where(query, [t], t.destination_id == ^destination_id)
+
+    @spec select_total_tunnels(Queryable.t) ::
+      Queryable.t
+    def select_total_tunnels(query),
+      do: select(query, [t], count(t.tunnel_id))
   end
 end

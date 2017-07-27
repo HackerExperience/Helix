@@ -1,5 +1,7 @@
 defmodule Helix.Network.Action.Tunnel do
 
+  import HELL.MacroHelpers
+
   alias Ecto.Changeset
   alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
@@ -36,10 +38,12 @@ defmodule Helix.Network.Action.Tunnel do
   @spec create_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
     | {:error, Changeset.t}
-  # Checks if gateway, destination and bounces are valid servers, and if they
-  # are connected to network
-  # Note that those are more or less redundant since the interface (WS or HTTP)
-  # have to convert the input IPs into server_ids anyway
+  docp """
+  Checks if gateway, destination and bounces are valid servers, and if they
+  are connected to network
+  Note that those are more or less redundant since the interface (WS or HTTP)
+  have to convert the input IPs into server_ids anyway
+  """
   defp create_tunnel(network, gateway, destination, bounces) do
     with \
       exists? = &ServerHenforcer.exists?/1,

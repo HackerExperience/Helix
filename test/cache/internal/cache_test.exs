@@ -3,9 +3,8 @@ defmodule Helix.Cache.Internal.CacheTest do
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Action.Server, as: ServerAction
-  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Model.ServerCache
@@ -26,17 +25,20 @@ defmodule Helix.Cache.Internal.CacheTest do
     test "populates data after miss", context do
       server_id = context.server.server_id
 
+      {:ok, origin} = BuilderInternal.by_server(server_id)
+
       {:ok, result} = CacheInternal.lookup({:server, :nips}, [server_id])
 
-      assert result == ServerQuery.get_nips(server_id)
+      assert result == origin.networks
 
       :timer.sleep(10)
     end
 
     test "returns cached data", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
-      [storage|_] = MotherboardQuery.get_storages(motherboard_id)
+
+      {:ok, origin} = BuilderInternal.by_server(server_id)
+      storage_id = List.first(origin.storages)
 
       # Insert directly into cache
       {:ok, cached} = PopulateInternal.populate(:server, server_id)
@@ -44,7 +46,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, result} = CacheInternal.lookup({:server, :storages}, [server_id])
 
       assert result == cached.storages
-      assert result == [storage.storage_id]
+      assert result == [storage_id]
 
       :timer.sleep(10)
     end

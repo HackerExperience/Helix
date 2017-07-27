@@ -21,7 +21,9 @@ defmodule Helix.Entity.Internal.EntityTest do
   describe "entity creation" do
     test "succeeds with valid params" do
       params = generate_params()
-      assert {:ok, _} = EntityInternal.create(params)
+      {:ok, entity} = EntityInternal.create(params)
+
+      assert entity.entity_id == params.entity_id
     end
 
     test "fails when entity_type is invalid" do
@@ -34,7 +36,10 @@ defmodule Helix.Entity.Internal.EntityTest do
     test "returns entity on success" do
       entity = Factory.insert(:entity)
 
-      assert %Entity{} = EntityInternal.fetch(entity.entity_id)
+      result = EntityInternal.fetch(entity.entity_id)
+
+      assert result
+      assert result.entity_id == entity.entity_id
     end
 
     test "returns nil if entity doesn't exists" do
@@ -44,9 +49,12 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "fetch_by_server/1" do
     test "returns entity if server is owned" do
-      %{server_id: id} = Factory.insert(:entity_server)
+      es = Factory.insert(:entity_server)
 
-      assert %Entity{} = EntityInternal.fetch_by_server(id)
+      result = EntityInternal.fetch_by_server(es.server_id)
+
+      assert result
+      assert result.entity_id == es.entity_id
     end
 
     test "returns nil if server is not owned" do
@@ -88,14 +96,14 @@ defmodule Helix.Entity.Internal.EntityTest do
       entity = Factory.insert(:entity)
       component_id = Random.pk()
 
-      assert {:ok, _} = EntityInternal.link_component(entity, component_id)
+      {:ok, link} = EntityInternal.link_component(entity, component_id)
+
+      assert link.component_id == component_id
+      assert link.entity_id == entity.entity_id
     end
 
     test "fails when entity doesn't exist" do
-      component_id = Random.pk()
-
-      result = EntityInternal.link_component(%Entity{}, component_id)
-      assert {:error, _} = result
+      {:error, _} = EntityInternal.link_component(%Entity{}, Random.pk())
     end
   end
 
@@ -125,14 +133,14 @@ defmodule Helix.Entity.Internal.EntityTest do
       entity = Factory.insert(:entity)
       server_id = Random.pk()
 
-      assert {:ok, _} = EntityInternal.link_server(entity, server_id)
+      {:ok, link} = EntityInternal.link_server(entity, server_id)
+
+      assert link.server_id == server_id
+      assert link.entity_id == entity.entity_id
     end
 
     test "fails when entity doesn't exist" do
-      server_id = Random.pk()
-
-      result = EntityInternal.link_server(%Entity{}, server_id)
-      assert {:error, _} = result
+      {:error, _} = EntityInternal.link_server(%Entity{}, Random.pk())
     end
   end
 

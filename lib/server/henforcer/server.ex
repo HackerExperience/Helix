@@ -5,14 +5,14 @@ defmodule Helix.Server.Henforcer.Server do
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
 
-  @spec exists?(HELL.PK.t) ::
+  @spec exists?(Server.id) ::
     boolean
   def exists?(server) do
     # TODO: Use a count(server_id) to waste less resources
     !!ServerQuery.fetch(server)
   end
 
-  @spec server_assembled?(HELL.PK.t) ::
+  @spec server_assembled?(Server.id) ::
     boolean
   def server_assembled?(server) do
     with \
@@ -25,6 +25,8 @@ defmodule Helix.Server.Henforcer.Server do
     end
   end
 
+  @spec functioning?(Server.id) ::
+    boolean
   @doc """
   Checks if a server has what is needed to provide minimum functionality
 
@@ -35,6 +37,7 @@ defmodule Helix.Server.Henforcer.Server do
   - The motherboard has a RAM assembled
   """
   def functioning?(server) do
+    # TODO: Move below to cache
     with \
       server = %Server{} <- ServerQuery.fetch(server),
       motherboard when not is_nil(motherboard) <- server.motherboard_id,

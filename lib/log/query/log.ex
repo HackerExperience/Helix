@@ -17,7 +17,7 @@ defmodule Helix.Log.Query.Log do
   defdelegate fetch(id),
     to: LogInternal
 
-  @spec get_logs_on_server(Server.id, Keyword.t) ::
+  @spec get_logs_on_server(Server.t | Server.id, Keyword.t) ::
     [Log.t]
   @doc """
   Fetches logs on `server`
@@ -25,7 +25,7 @@ defmodule Helix.Log.Query.Log do
   defdelegate get_logs_on_server(server, params \\ []),
     to: LogInternal
 
-  @spec get_logs_from_entity_on_server(Server.id, Entity.id, Keyword.t) ::
+  @spec get_logs_from_entity_on_server(Server.t | Server.id, Entity.t | Entity.id, Keyword.t) ::
     [Log.t]
   @doc """
   Fetches logs on `server` that `entity` has created or revised

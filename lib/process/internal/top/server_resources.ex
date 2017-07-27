@@ -1,6 +1,7 @@
 defmodule Helix.Process.Internal.TOP.ServerResources do
 
   alias Ecto.Changeset
+  alias Helix.Network.Model.Network
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
 
@@ -39,7 +40,8 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     %{server_resources| net: networks}
   end
 
-  @spec replace_network_if_exists(t, network_id :: HELL.PK.t, non_neg_integer, non_neg_integer) :: t
+  @spec replace_network_if_exists(t, Network.id, non_neg_integer, non_neg_integer) ::
+    t
   def replace_network_if_exists(server_resources = %__MODULE__{}, net_id, dlk, ulk) when is_integer(dlk) and is_integer(ulk) do
     case server_resources.net do
       %{^net_id => _} ->
@@ -54,7 +56,7 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     end
   end
 
-  @spec update_network_if_exists(t, network_id :: HELL.PK.t, ((%{}) -> %{})) :: t
+  @spec update_network_if_exists(t, Network.id, ((%{}) -> %{})) :: t
   def update_network_if_exists(server_resources = %__MODULE__{}, net_id, fun) do
     case server_resources.net do
       %{^net_id => value} ->
@@ -72,7 +74,9 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     end
   end
 
-  @spec sub_from_process(t, Process.t | Ecto.Changeset.t) :: {:ok, t} | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, network_id :: HELL.PK.t}}}
+  @spec sub_from_process(t, Process.t | Ecto.Changeset.t) ::
+    {:ok, t}
+    | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, Network.id}}}
   def sub_from_process(server_resources = %__MODULE__{cpu: cpu, ram: ram, net: networks}, process) do
     process = Changeset.change(process)
     net_id = Changeset.get_field(process, :network_id)
@@ -107,7 +111,8 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     end
   end
 
-  @spec sub_from_resources(t, Resources.t, network_id :: HELL.PK.t) :: t
+  @spec sub_from_resources(t, Resources.t, Network.id) ::
+    t
   @doc """
   Subtracts `resources` from `server_resources`.
 
@@ -128,7 +133,8 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     }
   end
 
-  @spec part_from_shares(t, shares) :: t
+  @spec part_from_shares(t, shares) ::
+    t
   @doc """
   Divides `x` by `shares` including dropping networks not requested by `shares`
   """

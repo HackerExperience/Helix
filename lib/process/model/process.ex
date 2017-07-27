@@ -527,56 +527,88 @@ defmodule Helix.Process.Model.Process do
 
   defmodule Query do
 
+    import Ecto.Query, only: [join: 5, where: 3]
+
     alias Ecto.Queryable
     alias HELL.PK
+    alias Helix.Software.Model.File
+    alias Helix.Network.Model.Connection
+    alias Helix.Network.Model.Network
+    alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.MapServerToProcess
     alias Helix.Process.Model.Process.State
 
-    import Ecto.Query, only: [join: 5, where: 3]
-
-    @spec from_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    @spec from_server(Ecto.Queryable.t, Server.t | Server.id) ::
+      Ecto.Queryable.t
     @doc """
     Filter processes that are running on `server_id`
     """
-    def from_server(query \\ Process, server_id) do
-      where(query, [p], p.gateway_id == ^server_id)
-    end
+    def from_server(query \\ Process, server_or_server_id)
+    def from_server(query, server = %Server{}),
+      do: from_server(query, server.server_id)
+    def from_server(query, server_id),
+      do: where(query, [p], p.gateway_id == ^server_id)
 
-    @spec from_type_list(Ecto.Queryable.t, [String.t]) :: Ecto.Queryable.t
+    @spec from_type_list(Ecto.Queryable.t, [String.t]) ::
+      Ecto.Queryable.t
     def from_type_list(query \\ Process, type_list),
       do: where(query, [p], p.process_type in ^type_list)
 
-    @spec from_state_list(Ecto.Queryable.t, [State.state]) :: Ecto.Queryable.t
+    @spec from_state_list(Ecto.Queryable.t, [State.state]) ::
+      Ecto.Queryable.t
     def from_state_list(query \\ Process, state_list),
       do: where(query, [p], p.state in ^state_list)
 
-    @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_id(query \\ Process, process_id),
+    @spec by_process(Ecto.Queryable.t, Process.t | Process.id) ::
+      Ecto.Queryable.t
+    def by_process(query \\ Process, process_or_process_id)
+    def by_process(query, process = %Process{}),
+      do: by_process(query, process.process_id)
+    def by_process(query, process_id),
       do: where(query, [p], p.process_id == ^process_id)
 
-    @spec by_gateway(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_gateway(query \\ Process, gateway_id),
+    @spec by_gateway(Ecto.Queryable.t, Server.t | Server.id) ::
+      Ecto.Queryable.t
+    def by_gateway(query \\ Process, server_or_server_id)
+    def by_gateway(query, gateway = %Server{}),
+      do: by_gateway(query, gateway.server_id)
+    def by_gateway(query, gateway_id),
       do: where(query, [p], p.gateway_id == ^gateway_id)
 
-    @spec by_target(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_target(query \\ Process, target_server_id),
+    @spec by_target(Ecto.Queryable.t, Server.t | Server.id) ::
+      Ecto.Queryable.t
+    def by_target(query \\ Process, server_or_server_id)
+    def by_target(query, target = %Server{}),
+      do: by_target(query, target.server_id)
+    def by_target(query, target_server_id),
       do: where(query, [p], p.target_server_id == ^target_server_id)
 
-    @spec by_file(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_file(query \\ Process, file_id),
+    @spec by_file(Ecto.Queryable.t, File.t | File.id) ::
+      Ecto.Queryable.t
+    def by_file(query \\ Process, file_or_file_id)
+    def by_file(query, file = %File{}),
+      do: by_file(query, file.file_id)
+    def by_file(query, file_id),
       do: where(query, [p], p.file_id == ^file_id)
 
-    @spec by_network(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_network(query \\ Process, network_id),
+    @spec by_network(Ecto.Queryable.t, Network.t | Network.id) ::
+      Ecto.Queryable.t
+    def by_network(query \\ Process, network_or_network_id)
+    def by_network(query, network = %Network{}),
+      do: by_network(query, network.network_id)
+    def by_network(query, network_id),
       do: where(query, [p], p.network_id == ^network_id)
 
-    @spec by_connection_id(Queryable.t, PK.t) ::
+    @spec by_connection(Queryable.t, Connection.t | Connection.id) ::
       Queryable.t
-    def by_connection_id(query \\ Process, connection_id),
+    def by_connection(query \\ Process, connection_or_connection_id)
+    def by_connection(query, connection = %Connection{}),
+      do: by_connection(query, connection.connection_id)
+    def by_connection(query, connection_id),
       do: where(query, [p], p.connection_id == ^connection_id)
 
-    @spec by_type(Ecto.Queryable.t,String.t) :: Ecto.Queryable.t
+    @spec by_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
     def by_type(query \\ Process, process_type),
       do: where(query, [p], p.process_type == ^process_type)
 
@@ -589,11 +621,15 @@ defmodule Helix.Process.Model.Process do
     def not_targeting_gateway(query \\ Process),
       do: where(query, [p], p.gateway_id != p.target_server_id)
 
-    @spec related_to_server(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
+    @spec related_to_server(Ecto.Queryable.t, Server.t | Server.id) ::
+      Ecto.Queryable.t
     @doc """
     Filter processes that are running on `server_id` or affect it
     """
-    def related_to_server(query \\ Process, server_id) do
+    def related_to_server(query \\ Process, server_or_server_id)
+    def related_to_server(query, server = %Server{}),
+      do: related_to_server(query, server.server_id)
+    def related_to_server(query, server_id) do
       query
       |> join(
         :inner,
@@ -603,7 +639,13 @@ defmodule Helix.Process.Model.Process do
       |> where([p, ..., m], m.server_id == ^server_id)
     end
 
-    def related_to_server_and_of_types(query \\ Process, server_id, types) do
+    @spec related_to_server_and_of_types(
+      Ecto.Queryable.t, Server.t | Server.id, String.t) ::
+      Ecto.Queryable.t
+    def related_to_server_and_of_types(query, server_or_server_id, types)
+    def related_to_server_and_of_types(query, server = %Server{}, types),
+      do: related_to_server_and_of_types(query, server.server_id, types)
+    def related_to_server_and_of_types(query, server_id, types) do
       types = List.wrap(types)
 
       query

@@ -4,14 +4,16 @@ defmodule Helix.Hardware.Query.MotherboardTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Hardware.Model.Motherboard
 
   alias Helix.Hardware.Factory
 
   describe "fetch/1" do
     test "succeeds by component" do
       motherboard = Factory.insert(:motherboard)
-      assert %Motherboard{} = MotherboardQuery.fetch(motherboard.component)
+      result = MotherboardQuery.fetch(motherboard.component)
+
+      assert result
+      assert result.motherboard_id == motherboard.motherboard_id
     end
 
     test "returns nil when input is invalid" do

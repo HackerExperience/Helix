@@ -32,7 +32,6 @@ defmodule Helix.Account.Action.Flow.Account do
       end
     end
   end
-
   def setup_account(account_id) when is_binary(account_id) do
     account_id
     |> AccountQuery.fetch()

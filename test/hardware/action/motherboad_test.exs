@@ -103,8 +103,8 @@ defmodule Helix.Hardware.Action.MotherboardTest do
       refute Enum.empty?(slots)
 
       MotherboardAction.delete(mobo)
-      slots = MotherboardQuery.get_slots(mobo)
 
+      slots = MotherboardQuery.get_slots(mobo)
       assert Enum.empty?(slots)
     end
   end

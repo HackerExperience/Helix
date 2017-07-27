@@ -7,33 +7,49 @@ defmodule Helix.Hardware.Internal.Motherboard do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Model.NetworkConnection
+  alias Helix.Hardware.Internal.Component, as: ComponentInternal
+  alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Hardware.Repo
 
   @spec fetch(Component.t | Motherboard.id) ::
     Motherboard.t
     | nil
-  def fetch(component = %Component{component_type: :mobo}),
-    do: fetch(component.component_id)
-  def fetch(motherboard_id) do
-    motherboard_id
-    |> Motherboard.Query.by_id()
+  def fetch(motherboard) do
+    motherboard
+    |> Motherboard.Query.by_motherboard()
     |> Repo.one()
+  end
+
+  @spec fetch_by_slot(MotherboardSlot.t | MotherboardSlot.id) ::
+    Motherboard.t
+    | nil
+  def fetch_by_slot(slot = %MotherboardSlot{}) do
+    slot
+    |> Repo.preload(:motherboard)
+    |> Map.get(:motherboard)
+  end
+  def fetch_by_slot(slot_id) do
+    slot_id
+    |> MotherboardSlot.Query.by_slot(slot_id)
+    |> Repo.one()
+    |> case do
+         {:ok, slot} ->
+           fetch_by_slot(slot)
+         _ ->
+           nil
+       end
   end
 
   @spec fetch_by_nip(Network.id, NetworkConnection.ip) ::
     Motherboard.t
     | nil
   def fetch_by_nip(network_id, ip) do
-    query = [network_id: network_id, ip: ip]
-
     with \
-      net = %{} <- Repo.get_by(NetworkConnection, query),
-      nic = %{} <- net |> Repo.preload(:nic) |> Map.fetch!(:nic),
-      slot = %{} <- Repo.get_by(MotherboardSlot, link_component_id: nic.nic_id)
+      nc = %{} <- NetworkConnectionInternal.fetch_by_nip(network_id, ip),
+      nic = %{} <- NetworkConnectionInternal.get_nic(nc),
+      slot = %{} <- ComponentInternal.get_motherboard_slot(nic)
     do
-      slot
-      |> Repo.preload(:motherboard)
-      |> Map.get(:motherboard)
+      fetch_by_slot(slot)
     else
       _ ->
         nil
@@ -65,7 +81,6 @@ defmodule Helix.Hardware.Internal.Motherboard do
     [Component.id]
   def get_components_ids(motherboard) do
     motherboard
-    # |> preload_components()
     |> MotherboardSlot.Query.from_motherboard()
     |> MotherboardSlot.Query.only_linked_slots()
     |> MotherboardSlot.Query.select_component_id()
@@ -98,26 +113,26 @@ defmodule Helix.Hardware.Internal.Motherboard do
 
   defp get_cpus_from_ids(components) do
     components
-    |> Component.CPU.Query.from_component_ids()
+    |> Component.CPU.Query.from_components_ids()
     |> Repo.all()
   end
 
   defp get_rams_from_ids(components) do
     components
-    |> Component.RAM.Query.from_component_ids()
+    |> Component.RAM.Query.from_components_ids()
     |> Repo.all()
   end
 
   defp get_nics_from_ids(components) do
     components
-    |> Component.NIC.Query.from_component_ids()
+    |> Component.NIC.Query.from_components_ids()
     |> Component.NIC.Query.inner_join_network_connection()
     |> Repo.all()
   end
 
   defp get_hdds_from_ids(components) do
     components
-    |> Component.HDD.Query.from_component_ids()
+    |> Component.HDD.Query.from_components_ids()
     |> Repo.all()
   end
 
@@ -136,24 +151,24 @@ defmodule Helix.Hardware.Internal.Motherboard do
       }
     }
   def resources(motherboard) do
-    component_ids = get_components_ids(motherboard)
+    components_ids = get_components_ids(motherboard)
 
     cpu =
-      component_ids
+      components_ids
       |> get_cpus_from_ids()
       |> Enum.reduce(0, fn el, acc ->
         acc + (el.cores * el.clock)
       end)
 
     ram =
-      component_ids
+      components_ids
       |> get_rams_from_ids()
       |> Enum.reduce(0, fn el, acc ->
         acc + el.ram_size
       end)
 
     nic =
-      component_ids
+      components_ids
       |> get_nics_from_ids()
       |> Enum.reduce(%{}, fn el, acc ->
         network = el.network_connection.network_id
@@ -165,7 +180,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
       end)
 
     hdd =
-      component_ids
+      components_ids
       |> get_hdds_from_ids()
       |> Enum.reduce(0, fn el, acc ->
         acc + el.hdd_size
@@ -181,8 +196,8 @@ defmodule Helix.Hardware.Internal.Motherboard do
 
   @spec get_slots(Motherboard.t | Motherboard.id) ::
     [MotherboardSlot.t]
-  def get_slots(motherboard_or_motherboard_id) do
-    motherboard_or_motherboard_id
+  def get_slots(motherboard) do
+    motherboard
     |> MotherboardSlot.Query.from_motherboard()
     |> Repo.all()
   end
@@ -196,11 +211,13 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> Repo.insert()
   end
 
-  @spec link(MotherboardSlot.t, Component.t) ::
+  @spec link(MotherboardSlot.t, Component.t | Component.id) ::
     {:ok, MotherboardSlot.t}
     | {:error, Ecto.Changeset.t}
-  def link(slot, component) do
-    params = %{link_component_id: component.component_id}
+  def link(slot, %Component{component_id: component_id}),
+    do: link(slot, component_id)
+  def link(slot, component_id) do
+    params = %{link_component_id: component_id}
 
     slot
     |> MotherboardSlot.update_changeset(params)
@@ -227,11 +244,15 @@ defmodule Helix.Hardware.Internal.Motherboard do
 
   @spec delete(Motherboard.t | Motherboard.id) ::
     :ok
-  def delete(%Motherboard{motherboard_id: mid}),
-    do: delete(mid)
+  def delete(motherboard = %Motherboard{}) do
+    motherboard
+    |> Repo.delete()
+
+    :ok
+  end
   def delete(motherboard_id) do
     motherboard_id
-    |> Motherboard.Query.by_id()
+    |> Motherboard.Query.by_motherboard()
     |> Repo.delete_all()
 
     :ok

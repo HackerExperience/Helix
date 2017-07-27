@@ -6,6 +6,24 @@ defmodule Helix.Server.Internal.Server do
 
   import Ecto.Query, only: [where: 3]
 
+  @spec fetch(Server.id) ::
+    Server.t
+    | nil
+  def fetch(server_id) do
+    server_id
+    |> Server.Query.by_server()
+    |> Repo.one
+  end
+
+  @spec fetch_by_motherboard(Motherboard.t | Motherboard.id) ::
+    Server.t
+    | nil
+  def fetch_by_motherboard(motherboard) do
+    motherboard
+    |> Server.Query.by_motherboard()
+    |> Repo.one()
+  end
+
   @spec create(Server.creation_params) ::
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}
@@ -15,34 +33,7 @@ defmodule Helix.Server.Internal.Server do
     |> Repo.insert()
   end
 
-  @spec fetch(Server.id) ::
-    Server.t
-    | nil
-  def fetch(server_id),
-    do: Repo.get(Server, server_id)
-
-  @spec fetch_by_motherboard(Motherboard.t | Component.id) ::
-    Server.t
-    | nil
-  def fetch_by_motherboard(motherboard = %Motherboard{}),
-    do: fetch_by_motherboard(motherboard.motherboard_id)
-  def fetch_by_motherboard(motherboard_id) do
-    motherboard_id
-    |> Server.Query.by_motherboard()
-    |> Repo.one()
-  end
-
-  @spec delete(Server.id) ::
-    :ok
-  def delete(server_id) do
-    Server
-    |> where([s], s.server_id == ^server_id)
-    |> Repo.delete_all()
-
-    :ok
-  end
-
-  @spec attach(Server.t, Component.id) ::
+  @spec attach(Server.t, Motherboard.id) ::
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}
   def attach(server, mobo_id) do
@@ -51,14 +42,22 @@ defmodule Helix.Server.Internal.Server do
     |> Repo.update()
   end
 
-  @spec detach(Server.t) ::
+  @spec detach(Server.t | Server.id) ::
     :ok
-  def detach(%Server{server_id: id}),
-    do: detach(id)
   def detach(server) do
     server
-    |> Server.Query.by_id()
+    |> Server.Query.by_server()
     |> Repo.update_all(set: [motherboard_id: nil])
+
+    :ok
+  end
+
+  @spec delete(Server.t | Server.id) ::
+    :ok
+  def delete(server) do
+    server
+    |> Server.Query.by_server()
+    |> Repo.delete_all()
 
     :ok
   end

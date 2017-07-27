@@ -1,6 +1,7 @@
 defmodule Helix.Server.Action.Server do
 
   alias HELL.Constant
+  alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
@@ -15,7 +16,7 @@ defmodule Helix.Server.Action.Server do
     ServerInternal.create(%{server_type: server_type})
   end
 
-  @spec attach(Server.t, HELL.PK.t) ::
+  @spec attach(Server.t, Motherboard.id) ::
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -39,14 +40,12 @@ defmodule Helix.Server.Action.Server do
     ServerInternal.detach(server)
   end
 
-  @spec delete(Server.t) ::
+  @spec delete(Server.t | Server.id) ::
     {:ok, Server.t}
     | {:error, reason :: term}
   @doc """
   Deletes `server`
   """
-  def delete(server) do
-    # TODO: Use an idempotent query
-    Repo.delete(server)
-  end
+  defdelegate delete(server),
+    to: ServerInternal
 end

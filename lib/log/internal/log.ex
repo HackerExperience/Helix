@@ -13,6 +13,36 @@ defmodule Helix.Log.Internal.Log do
   alias Helix.Log.Model.Revision
   alias Helix.Log.Repo
 
+  @spec fetch(Log.id) ::
+    Log.t
+    | nil
+  def fetch(log_id) do
+    log_id
+    |> Log.Query.by_log()
+    |> Repo.one()
+  end
+
+  @spec get_logs_on_server(Server.t | Server.id, Keyword.t) ::
+    [Log.t]
+  def get_logs_on_server(server, _params \\ []) do
+    server
+    |> Log.Query.by_server()
+    # TODO: Use id's timestamp
+    |> Log.Query.order_by_newest()
+    |> Repo.all()
+  end
+
+  @spec get_logs_from_entity_on_server(Server.t | Server.id, Entity.t | Entity.id, Keyword.t) ::
+    [Log.t]
+  def get_logs_from_entity_on_server(server, entity, _params \\ []) do
+    server
+    |> Log.Query.by_server()
+    # TODO: Use id's timestamp
+    |> Log.Query.order_by_newest()
+    |> Log.Query.edited_by_entity(entity)
+    |> Repo.all()
+  end
+
   @spec create(Server.id, Entity.id, String.t, pos_integer | nil) ::
     {Multi.t, [Event.t]}
   def create(server, entity, message, forge_version \\ nil) do
@@ -27,41 +57,14 @@ defmodule Helix.Log.Internal.Log do
       Multi.new()
       |> Multi.insert(:log, Log.create_changeset(params))
       |> Multi.run(:log_touch, fn %{log: log} ->
-        log
-        |> LogTouch.create(entity)
-        |> Repo.insert()
-      end)
+      log
+      |> LogTouch.create(entity)
+      |> Repo.insert()
+    end)
 
-    events = [%LogCreatedEvent{server_id: server}]
+      events = [%LogCreatedEvent{server_id: server}]
 
-    {multi, events}
-  end
-
-  @spec fetch(Log.id) ::
-    Log.t
-    | nil
-  def fetch(log_id),
-    do: Repo.get(Log, log_id)
-
-  @spec get_logs_on_server(Server.id, Keyword.t) ::
-    [Log.t]
-  def get_logs_on_server(server, _params \\ []) do
-    server
-    |> Log.Query.by_server_id()
-    # TODO: Use id's timestamp
-    |> Log.Query.order_by_newest()
-    |> Repo.all()
-  end
-
-  @spec get_logs_from_entity_on_server(Server.id, Entity.id, Keyword.t) ::
-    [Log.t]
-  def get_logs_from_entity_on_server(server, entity, _params \\ []) do
-    server
-    |> Log.Query.by_server_id()
-    # TODO: Use id's timestamp
-    |> Log.Query.order_by_newest()
-    |> Log.Query.edited_by_entity(entity)
-    |> Repo.all()
+      {multi, events}
   end
 
   @spec revise(Log.t, Entity.id, String.t, pos_integer) ::

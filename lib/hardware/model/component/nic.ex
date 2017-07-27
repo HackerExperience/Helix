@@ -91,12 +91,12 @@ defmodule Helix.Hardware.Model.Component.NIC do
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.NIC
 
-    @spec from_component_ids([Component.id]) ::
+    @spec from_components_ids([Component.id]) ::
       Queryable.t
-    @spec from_component_ids(Queryable.t, [Component.id]) ::
+    @spec from_components_ids(Queryable.t, [Component.id]) ::
       Queryable.t
-    def from_component_ids(query \\ NIC, component_ids),
-      do: where(query, [n], n.nic_id in ^component_ids)
+    def from_components_ids(query \\ NIC, components_ids),
+      do: where(query, [n], n.nic_id in ^components_ids)
 
     # REVIEW: rename this ?
     @spec inner_join_network_connection(Queryable.t) ::

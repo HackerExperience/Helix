@@ -5,7 +5,7 @@ defmodule Helix.Hardware.Action.Motherboard do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
 
-  @spec link(MotherboardSlot.t, Component.t) ::
+  @spec link(MotherboardSlot.t, Component.t | Component.id) ::
     {:ok, MotherboardSlot.t}
     | {:error, Ecto.Changeset.t}
   @doc """

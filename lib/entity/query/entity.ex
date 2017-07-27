@@ -1,13 +1,9 @@
 defmodule Helix.Entity.Query.Entity do
 
-  import Ecto.Query, only: [select: 3, where: 3]
-
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.EntityServer
-  alias Helix.Entity.Repo
 
   @spec fetch(Entity.id) ::
     Entity.t
@@ -22,7 +18,7 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate fetch(id),
     to: EntityInternal
 
-  @spec fetch_by_server(Server.id) ::
+  @spec fetch_by_server(Server.t | Server.id) ::
     Entity.t
     | nil
   @doc """
@@ -33,26 +29,25 @@ defmodule Helix.Entity.Query.Entity do
       iex> fetch_by_server("a::b")
       %Entity{}
   """
-  defdelegate fetch_by_server(server),
+  def fetch_by_server(%Server{server_id: server_id}),
+    do: fetch_by_server(server_id)
+  defdelegate fetch_by_server(server_id),
     to: EntityInternal
 
-  @spec get_servers_from_entity(Entity.t) ::
+  @spec get_servers(Entity.t | Entity.id) ::
     [Server.id]
   @doc """
   Returns the ids of the servers owned by the entity
 
   ### Example
 
-      iex> get_servers_from_entity(%Entity{})
+      iex> get_servers(%Entity{})
       ["a::b", "f9f9:9090:1::494"]
   """
-  def get_servers_from_entity(%Entity{entity_id: id}) do
-    EntityServer
-    |> select([s], s.server_id)
-    # FIXME: this belongs to EntityServer.Query
-    |> where([s], s.entity_id == ^id)
-    |> Repo.all()
-  end
+  def get_servers(%Entity{entity_id: entity_id}),
+    do: get_servers(entity_id)
+  defdelegate get_servers(entity_id),
+    to: EntityInternal
 
   @spec get_entity_id(struct) ::
     HELL.PK.t
@@ -60,7 +55,6 @@ defmodule Helix.Entity.Query.Entity do
   Returns the ID of an entity or entity-equivalent record
   """
   def get_entity_id(entity) do
-    # TODO: Use a protocol ?
     case entity do
       %Entity{entity_id: id} ->
         id

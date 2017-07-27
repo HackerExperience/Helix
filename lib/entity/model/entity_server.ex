@@ -49,14 +49,17 @@ defmodule Helix.Entity.Model.EntityServer do
     @spec from_entity(Queryable.t, Entity.t | Entity.id) ::
       Queryable.t
     def from_entity(query \\ EntityServer, entity_or_entity_id)
-    def from_entity(query, entity = %Entity{}),
-      do: from_entity(query, entity.entity_id)
+    def from_entity(query, %Entity{entity_id: entity_id}),
+      do: from_entity(query, entity_id)
     def from_entity(query, entity_id),
       do: where(query, [es], es.entity_id == ^entity_id)
 
-    @spec by_server_id(Queryable.t, Server.id) ::
+    @spec by_server(Queryable.t, Server.t | Server.id) ::
       Queryable.t
-    def by_server_id(query \\ EntityServer, server_id),
+    def by_server(query \\ EntityServer, server_or_server_id)
+    def by_server(query, %Server{server_id: server_id}),
+      do: by_server(query, server_id)
+    def by_server(query, server_id),
       do: where(query, [es], es.server_id == ^server_id)
   end
 end

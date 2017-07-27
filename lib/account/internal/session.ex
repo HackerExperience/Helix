@@ -1,35 +1,33 @@
 defmodule Helix.Account.Internal.Session do
 
-  import Ecto.Query, only: [where: 3]
-
   alias Phoenix.Token
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSession
-  alias Helix.Account.Repo
+  alias Helix.Account.Internal.AccountSession, as: AccountSessionInternal
 
   # 1 Week
   @max_age 7 * 24 * 60 * 60
 
   @spec generate_token(Account.t) ::
-    AccountSession.token
+    {:ok, AccountSession.token}
+    | {:error, Ecto.Changeset.t}
   def generate_token(account) do
-    changeset = AccountSession.create(account)
-
-    account_session = Repo.insert!(changeset)
-
-    sign(account_session.session_id)
+    case AccountSessionInternal.create(account) do
+      {:ok, session} ->
+        {:ok, sign(session.session_id)}
+      error ->
+        error
+    end
   end
 
   @spec validate_token(AccountSession.token) ::
-    {:ok, Account.t, AccountSession.session}
+    {:ok, Account.t, AccountSession.id}
     | {:error, :unauthorized}
   def validate_token(token) do
     with \
       {:ok, session} <- verify(token),
-      account_session = %{} <- Repo.get(AccountSession, session)
+      account = %{} <- AccountSessionInternal.get_account(session)
     do
-      account = Repo.preload(account_session, :account).account
-
       {:ok, account, session}
     else
       _ ->
@@ -37,6 +35,8 @@ defmodule Helix.Account.Internal.Session do
     end
   end
 
+  # Review: @charlots `invalidate_token` is never called; `invalidate_session`
+  # is called directly. Shouldn't it be the opposite?
   @spec invalidate_token(AccountSession.token) ::
     :ok
   def invalidate_token(token) do
@@ -47,15 +47,11 @@ defmodule Helix.Account.Internal.Session do
     :ok
   end
 
-  @spec invalidate_session(AccountSession.session) ::
+  @spec invalidate_session(AccountSession.t | AccountSession.id) ::
     :ok
-  def invalidate_session(session) do
-    AccountSession
-    |> where([s], s.session_id == ^session)
-    |> Repo.delete_all()
-
-    :ok
-  end
+  defdelegate invalidate_session(session_or_session_id),
+    to: AccountSessionInternal,
+    as: :delete
 
   defp sign(session),
     do: Token.sign(Helix.Endpoint, "player", session)

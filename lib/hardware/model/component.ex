@@ -65,14 +65,12 @@ defmodule Helix.Hardware.Model.Component do
     alias HELL.Constant
     alias Helix.Hardware.Model.Component
 
-    @spec from_id_list(Queryable.t, [Component.id]) ::
+    @spec by_component(Queryable.t, Component.t | Component.id) ::
       Queryable.t
-    def from_id_list(query \\ Component, id_list),
-      do: where(query, [c], c.component_id in ^id_list)
-
-    @spec by_id(Queryable.t, Component.id) ::
-      Queryable.t
-    def by_id(query \\ Component, component_id),
+    def by_component(query \\ Component, component_or_component_id)
+    def by_component(query, %Component{component_id: component_id}),
+      do: by_component(query, component_id)
+    def by_component(query, component_id),
       do: where(query, [c], c.component_id == ^component_id)
 
     @spec from_type_list(Queryable.t, [Constant.t]) ::

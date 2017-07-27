@@ -8,7 +8,7 @@ defmodule Helix.Entity.Query.EntityTest do
 
   alias Helix.Entity.Factory
 
-  describe "get_servers_from_entity/1" do
+  describe "get_servers/1" do
     test "returns list of server ids owned by entity" do
       entity = Factory.insert(:entity)
 
@@ -21,7 +21,7 @@ defmodule Helix.Entity.Query.EntityTest do
       end)
 
       server_ids = MapSet.new(server_ids)
-      entity_servers = MapSet.new(EntityQuery.get_servers_from_entity(entity))
+      entity_servers = MapSet.new(EntityQuery.get_servers(entity))
       assert MapSet.equal?(server_ids, entity_servers)
     end
   end
