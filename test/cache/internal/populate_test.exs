@@ -3,6 +3,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Server.Action.Server, as: ServerAction
+  alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
@@ -24,19 +25,19 @@ defmodule Helix.Cache.Internal.PopulateTest do
     |> Repo.one
   end
 
-  describe "populate/2,3" do
+  describe "populate/2" do
     test "server side-populates other caches", context do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
 
-      {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, [server_id])
-      {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, [server_id])
-      {:ok, components} = CacheInternal.lookup({:server, :components}, [server_id])
+      {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, server_id)
+      {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, server_id)
+      {:ok, components} = CacheInternal.lookup({:server, :components}, server_id)
 
       # Cache population is asynchronous..
       :timer.sleep(20)
 
-      {:hit, cnip} = CacheInternal.direct_query(:network, [nip.network_id, nip.ip])
+      {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
       refute cnip == nil
       assert cnip.server_id == server_id
@@ -60,15 +61,41 @@ defmodule Helix.Cache.Internal.PopulateTest do
       :timer.sleep(10)
     end
 
+    test "populate server with nil values", context do
+      server_id = context.server.server_id
+
+      # I could simply generate the params and call the PopulateInternal
+      # `cache/1` method directly.... but we can't test private functions,
+      # which makes this test (and all others on this module) totally dependent
+      # on external state, side-effects, etc. ¯\_(ツ)_/¯
+      # Since we can't test at the Internal level (i.e. some integration is
+      # required), you will find this same test at the cache integration tests
+
+      ServerInternal.detach(context.server)
+      :timer.sleep(20)
+
+      assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
+
+      assert server.server_id == server_id
+      assert server.entity_id
+      refute server.motherboard_id
+      refute server.components
+      refute server.storages
+      refute server.networks
+      refute server.resources
+
+      :timer.sleep(100)
+    end
+
     test "pre-existing cached entries are updated", context do
       server_id = context.server.server_id
 
-      {:ok, server1} = PopulateInternal.populate(:server, server_id)
+      {:ok, server1} = PopulateInternal.populate(:by_server, server_id)
       :timer.sleep(20)
 
       ServerAction.detach(context.server)
 
-      {:ok, server2} = PopulateInternal.populate(:server, server_id)
+      {:ok, server2} = PopulateInternal.populate(:by_server, server_id)
 
       refute server1 == server2
       assert server2.motherboard_id == nil
@@ -79,7 +106,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
     test "component population", context do
       motherboard_id = context.server.motherboard_id
 
-      {:ok, component} = PopulateInternal.populate(:component, motherboard_id)
+      {:ok, component} = PopulateInternal.populate(:by_component, motherboard_id)
 
       {:hit, query} = CacheInternal.direct_query(:component, motherboard_id)
 
@@ -93,7 +120,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       storage_id = List.first(origin.storages)
 
-      {:ok, storage1} = PopulateInternal.populate(:storage, storage_id)
+      {:ok, storage1} = PopulateInternal.populate(:by_storage, storage_id)
 
       {:hit, storage2} = CacheInternal.direct_query(:storage, storage_id)
 
@@ -107,9 +134,9 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       nip = List.first(origin.networks)
 
-      {:ok, nip1} = PopulateInternal.populate(:network, nip.network_id, nip.ip)
+      {:ok, nip1} = PopulateInternal.populate(:by_nip, {nip.network_id, nip.ip})
 
-      {:hit, nip2} = CacheInternal.direct_query(:network, [nip.network_id, nip.ip])
+      {:hit, nip2} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
       assert nip1.network_id == nip2.network_id
 
@@ -121,15 +148,15 @@ defmodule Helix.Cache.Internal.PopulateTest do
     test "entries have a minimal cache duration", context do
       server_id = context.server.server_id
 
-      {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, [server_id])
-      {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, [server_id])
-      {:ok, components} = CacheInternal.lookup({:server, :components}, [server_id])
+      {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, server_id)
+      {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, server_id)
+      {:ok, components} = CacheInternal.lookup({:server, :components}, server_id)
 
       # Wait for it..
       :timer.sleep(50)
 
       {:hit, cserver} = CacheInternal.direct_query(:server, server_id)
-      {:hit, cnip} = CacheInternal.direct_query(:network, [nip.network_id, nip.ip])
+      {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
       {:hit, cstorage} = CacheInternal.direct_query(:storage, storage_id)
       {:hit, ccomponent} = CacheInternal.direct_query(:component, List.first(components))
 

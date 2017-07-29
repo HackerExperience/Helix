@@ -54,15 +54,15 @@ defmodule Helix.Cache.Internal.Cache do
     {:component, :motherboard} => {:component, :by_component, :motherboard_id}
   }
 
-  @spec direct_query(condition, [binary]) ::
-    {:hit, binary | map}
-    | :miss
+  # @spec direct_query(condition, [binary]) ::
+  #   {:hit, binary | map}
+  #   | :miss
   @doc """
   Directly query the cache without populating it. Reports whether it's a miss
   or hit, along with the cached data (entire row) if it's a hit.
   """
-  def direct_query(model, params) when not is_list(params) do
-    direct_query(model, [params])
+  def direct_query(model, params) when not is_tuple(params) do
+    direct_query(model, {params})
   end
   def direct_query(condition, params) do
     query = query_table(condition)
@@ -75,12 +75,14 @@ defmodule Helix.Cache.Internal.Cache do
     end
   end
 
-  @spec lookup(condition, [binary]) ::
-    {:ok, binary | map}
-    | {:error, reason :: atom}
+  # @spec lookup(condition, [binary]) ::
+  #   {:ok, binary | map}
+  #   | {:error, reason :: atom}
   @doc """
   Queries the Cache database, populating it if the requested data wasn't found.
   """
+  def lookup(condition, params) when not is_tuple(params),
+    do: lookup(condition, {params})
   def lookup(condition, params) do
     query = query_table(condition)
     full? = query.field == :all
@@ -99,15 +101,16 @@ defmodule Helix.Cache.Internal.Cache do
   tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
   reads from reading not-yet-purged (stale) data.
   """
-  def purge(model, params) when not is_list(params),
-    do: purge(model, [params])
+  def purge(model, params) when not is_tuple(params),
+    do: purge(model, {params})
   def purge(model, params) do
     # Synchronously mark entry as invalid by adding it to the PurgeQueue
     StatePurgeQueue.queue(model, params)
 
     # Asynchronously delete stuff from the DB
     spawn(fn() ->
-      apply(PurgeInternal, :purge, [model] ++ [params])
+      apply(PurgeInternal, :purge, [model, params])
+      # apply(PurgeInternal, :purge, [model] ++ [params])
     end)
 
     :ok
@@ -119,15 +122,16 @@ defmodule Helix.Cache.Internal.Cache do
   tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
   reads from reading not-yet-purged (stale) data.
   """
-  def update(model, params) when not is_list(params),
-    do: update(model, [params])
+  def update(model, params) when not is_tuple(params),
+    do: update(model, {params})
   def update(model, params) do
     # Synchronously mark entry as invalid by adding it to the PurgeQueue
     StatePurgeQueue.queue(model, params)
 
     # Asynchronously update stuff on the DB
     spawn(fn() ->
-      apply(PurgeInternal, :update, [model] ++ params)
+      apply(PurgeInternal, :update, [model, params])
+      # apply(PurgeInternal, :update, [model] ++ params)
     end)
 
     :ok
@@ -140,7 +144,8 @@ defmodule Helix.Cache.Internal.Cache do
   defp process(query, params, full?) do
     case query(query, params, full?) do
       :miss ->
-        apply(PopulateInternal, :populate, [query.module] ++ params)
+        apply(PopulateInternal, :populate, [query.function, params])
+        # apply(PopulateInternal, :populate, [query.function] ++ params)
         |> case do
              {:ok, schema} ->
                if full? do
@@ -183,7 +188,9 @@ defmodule Helix.Cache.Internal.Cache do
   a single field.
   """
   defp sql_query(query, params, full?) do
-    fetch = apply(get_module(query.module), query.function, params)
+    args = Tuple.to_list(params)
+    fetch =
+      apply(get_module(query.module), query.function, args)
     apply(get_module(query.module), :filter_expired, [fetch])
     |> Repo.one
     |> case do

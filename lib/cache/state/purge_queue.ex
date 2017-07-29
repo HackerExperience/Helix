@@ -49,23 +49,36 @@ defmodule Helix.Cache.State.PurgeQueue do
     {:ok, pid}
   end
 
-  def lookup(model, key) when not is_list(key),
-    do: lookup(model, [key])
+  def lookup(model, key) when not is_tuple(key),
+    do: lookup(model, {key})
   def lookup(model, key),
     do: GenServer.call(@registry_name, {:lookup, model, key})
 
-  def queue(model, key) when not is_list(key),
-    do: queue(model, [key])
+  def queue(model, key) when not is_tuple(key),
+    do: queue(model, {key})
   def queue(model, key),
     do: GenServer.call(@registry_name, {:add, model, key})
 
   def queue_multiple(entry_list),
     do: GenServer.call(@registry_name, {:add_multiple, entry_list})
 
-  def unqueue(model, key) when not is_list(key),
-    do: unqueue(model, [key])
+  def unqueue(model, key) when not is_tuple(key),
+    do: unqueue(model, {key})
   def unqueue(model, key),
     do: GenServer.cast(@registry_name, {:remove, model, key})
+
+  def map(el, fun) do
+    case el do
+      :'$end_of_table' ->
+        :ok
+      d ->
+        fun.(d)
+        map(:ets.next(@ets_table_name, d), fun)
+    end
+  end
+  def map(fun) do
+    map(:ets.first(@ets_table_name), fun)
+  end
 
   # Callbacks
 

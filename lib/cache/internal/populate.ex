@@ -33,38 +33,51 @@ defmodule Helix.Cache.Internal.Populate do
   These functions are quite expensive in the sense that they may have to query
   several different services in order to compile a denormalized cache.
   """
-  def populate(:server, server_id) do
-    case BuilderInternal.by_server(server_id) do
+
+  def populate(method, identifier) when not is_tuple(identifier),
+    do: populate(method, {identifier})
+  def populate(method, identifier) do
+    result = apply(BuilderInternal, method, Tuple.to_list(identifier))
+    case result do
       {:ok, params} ->
         cache(params)
       error ->
         error
     end
   end
-  def populate(:storage, storage_id) do
-    case BuilderInternal.by_storage(storage_id) do
-      {:ok, params} ->
-        cache(params)
-      error ->
-        error
-    end
-  end
-  def populate(:component, component_id) do
-    case BuilderInternal.by_component(component_id) do
-      {:ok, params} ->
-        cache(params)
-      error ->
-        error
-    end
-  end
-  def populate(:network, network_id, ip) do
-    case BuilderInternal.by_nip(network_id, ip) do
-      {:ok, params} ->
-        cache(params)
-      error ->
-        error
-    end
-  end
+
+  # def populate(:server, server_id) do
+  #   case BuilderInternal.by_server(server_id) do
+  #     {:ok, params} ->
+  #       cache(params)
+  #     error ->
+  #       error
+  #   end
+  # end
+  # def populate(:storage, storage_id) do
+  #   case BuilderInternal.by_storage(storage_id) do
+  #     {:ok, params} ->
+  #       cache(params)
+  #     error ->
+  #       error
+  #   end
+  # end
+  # def populate(:component, component_id) do
+  #   case BuilderInternal.by_component(component_id) do
+  #     {:ok, params} ->
+  #       cache(params)
+  #     error ->
+  #       error
+  #   end
+  # end
+  # def populate(:network, network_id, ip) do
+  #   case BuilderInternal.by_nip(network_id, ip) do
+  #     {:ok, params} ->
+  #       cache(params)
+  #     error ->
+  #       error
+  #   end
+  # end
 
   docp """
   Coordinates the process of purging and adding cached data to the DB.
@@ -78,13 +91,13 @@ defmodule Helix.Cache.Internal.Populate do
 
       # Mark all related objects as purged
       purge_list = [
-        {:server, [params.server_id]},
-        {:component, [params.motherboard_id]}
+        {:server, {params.server_id}},
+        {:component, {params.motherboard_id}}
       ]
       networks_purge = Enum.map(params.networks,
-        &({:network, [&1.network_id, &1.ip]}))
-      components_purge = Enum.map(params.components, &({:component, [&1]}))
-      storages_purge = Enum.map(params.storages, &({:storage, [&1]}))
+        &({:network, {&1.network_id, &1.ip}}))
+      components_purge = Enum.map(params.components, &({:component, {&1}}))
+      storages_purge = Enum.map(params.storages, &({:storage, {&1}}))
 
       purge_list
       |> Kernel.++(networks_purge)
@@ -125,7 +138,7 @@ defmodule Helix.Cache.Internal.Populate do
     {:ok, params}
   end
   defp cache(params = %NetworkParams{}) do
-    StatePurgeQueue.queue(:network, [params.network_id, params.ip])
+    StatePurgeQueue.queue(:network, {params.network_id, params.ip})
     store(params)
   end
   defp cache(params = %StorageParams{}) do
@@ -161,7 +174,7 @@ defmodule Helix.Cache.Internal.Populate do
 
     case result do
       {:ok, _} ->
-        StatePurgeQueue.unqueue(:network, [params.network_id, params.ip])
+        StatePurgeQueue.unqueue(:network, {params.network_id, params.ip})
         result
       _ ->
         result

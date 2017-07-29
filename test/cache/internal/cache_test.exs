@@ -17,6 +17,11 @@ defmodule Helix.Cache.Internal.CacheTest do
 
     account = AccountFactory.insert(:account)
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
+    :timer.sleep(50)
+
+    alias Helix.Cache.Action.Cache, as: CacheAction
+    CacheAction.purge_server(server.server_id)
+    :timer.sleep(50)
 
     {:ok, account: account, server: server}
   end
@@ -27,7 +32,7 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       {:ok, origin} = BuilderInternal.by_server(server_id)
 
-      {:ok, result} = CacheInternal.lookup({:server, :nips}, [server_id])
+      {:ok, result} = CacheInternal.lookup({:server, :nips}, server_id)
 
       assert result == origin.networks
 
@@ -41,9 +46,9 @@ defmodule Helix.Cache.Internal.CacheTest do
       storage_id = List.first(origin.storages)
 
       # Insert directly into cache
-      {:ok, cached} = PopulateInternal.populate(:server, server_id)
+      {:ok, cached} = PopulateInternal.populate(:by_server, server_id)
 
-      {:ok, result} = CacheInternal.lookup({:server, :storages}, [server_id])
+      {:ok, result} = CacheInternal.lookup({:server, :storages}, server_id)
 
       assert result == cached.storages
       assert result == [storage_id]
@@ -52,14 +57,14 @@ defmodule Helix.Cache.Internal.CacheTest do
     end
 
     test "fails on invalid data"  do
-      {:error, _} = CacheInternal.lookup({:server, :resources}, [Random.pk()])
+      {:error, _} = CacheInternal.lookup({:server, :resources}, Random.pk())
     end
 
     test "returns valid but empty data", context do
       server_id = context.server.server_id
 
       ServerAction.detach(context.server)
-      {:ok, storage} = CacheInternal.lookup({:server, :storages}, [server_id])
+      {:ok, storage} = CacheInternal.lookup({:server, :storages}, server_id)
 
       assert storage == nil
 
@@ -69,7 +74,7 @@ defmodule Helix.Cache.Internal.CacheTest do
     test "filters out expired entries", context do
       server_id = context.server.server_id
 
-      {:ok, server} = PopulateInternal.populate(:server, server_id)
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
       :timer.sleep(10)
 
       expired_date =
@@ -90,7 +95,7 @@ defmodule Helix.Cache.Internal.CacheTest do
     test "repopulates expired entries", context do
       server_id = context.server.server_id
 
-      {:ok, server} = PopulateInternal.populate(:server, server_id)
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
       :timer.sleep(10)
 
       expired_date =
@@ -106,7 +111,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       :miss = CacheInternal.direct_query(:server, server_id)
 
       # CacheInternal.lookup/2 will populate non-existing entries
-      {:ok, _} = CacheInternal.lookup({:server, :nips}, [server_id])
+      {:ok, _} = CacheInternal.lookup({:server, :nips}, server_id)
       :timer.sleep(10)
 
       {:hit, server2} = CacheInternal.direct_query(:server, server_id)
@@ -120,9 +125,9 @@ defmodule Helix.Cache.Internal.CacheTest do
     test "full (entire row) lookups", context do
       server_id = context.server.server_id
 
-      {:ok, _} = PopulateInternal.populate(:server, server_id)
+      {:ok, _} = PopulateInternal.populate(:by_server, server_id)
 
-      {:ok, cserver} = CacheInternal.lookup(:server, [server_id])
+      {:ok, cserver} = CacheInternal.lookup(:server, server_id)
 
       assert is_map(cserver)
       assert cserver.server_id == server_id
@@ -141,7 +146,7 @@ defmodule Helix.Cache.Internal.CacheTest do
     test "purge queue", context do
       server_id = context.server.server_id
 
-      {:ok, server} = PopulateInternal.populate(:server, server_id)
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
       :timer.sleep(20)
 
       storage_id = List.first(server.storages)

@@ -5,6 +5,7 @@ defmodule Helix.Cache.Action.CacheTest do
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
     alias Helix.Account.Factory, as: AccountFactory
@@ -28,7 +29,7 @@ defmodule Helix.Cache.Action.CacheTest do
     {:hit, motherboard1} = CacheInternal.direct_query(:component, server1.motherboard_id)
 
     net1 = List.first(server1.networks)
-    {:hit, nip1} = CacheInternal.direct_query(:network, [net1.network_id, net1.ip])
+    {:hit, nip1} = CacheInternal.direct_query(:network, {net1.network_id, net1.ip})
 
     {server1, storage1, component1, motherboard1, nip1}
   end
@@ -38,10 +39,10 @@ defmodule Helix.Cache.Action.CacheTest do
   end
 
   describe "update logic" do
-    test "updating server updates everything", context do
+    test "update_server/1", context do
       server_id = context.server.server_id
 
-      PopulateInternal.populate(:server, server_id)
+      PopulateInternal.populate(:by_server, server_id)
 
       # Sync (wait for side-population)
       :timer.sleep(20)
@@ -65,10 +66,10 @@ defmodule Helix.Cache.Action.CacheTest do
       :timer.sleep(10)
     end
 
-    test "purging storage deletes everything", context do
+    test "update_storage/1", context do
       server_id = context.server.server_id
 
-      PopulateInternal.populate(:server, server_id)
+      PopulateInternal.populate(:by_server, server_id)
 
       # Sync (wait for side-population)
       :timer.sleep(20)
@@ -92,10 +93,10 @@ defmodule Helix.Cache.Action.CacheTest do
       :timer.sleep(10)
     end
 
-    test "purging component deletes everything", context do
+    test "update_component/1", context do
       server_id = context.server.server_id
 
-      PopulateInternal.populate(:server, server_id)
+      PopulateInternal.populate(:by_server, server_id)
 
       # Sync (wait for side-population)
       :timer.sleep(20)
@@ -119,10 +120,10 @@ defmodule Helix.Cache.Action.CacheTest do
       :timer.sleep(10)
     end
 
-    test "purging network deletes everything", context do
+    test "update_nip/1", context do
       server_id = context.server.server_id
 
-      PopulateInternal.populate(:server, server_id)
+      PopulateInternal.populate(:by_server, server_id)
 
       # Sync (wait for side-population)
       :timer.sleep(20)
@@ -145,5 +146,37 @@ defmodule Helix.Cache.Action.CacheTest do
 
       :timer.sleep(10)
     end
+
+    # test "purge_motherboard/1", context do
+    #   server_id = context.server.server_id
+    #   motherboard_id = context.server.motherboard_id
+
+    #   PopulateInternal.populate(:by_server, server_id)
+    #   :timer.sleep(20)
+
+    #   {:ok, server} = CacheInternal.lookup(:motherboard, [motherboard_id])
+
+    #   refute StatePurgeQueue.lookup(:component, motherboard_id)
+
+    #   # Purge it
+    #   CacheAction.purge_motherboard(motherboard_id)
+
+    #   # Ensure mobo component is marked as purged
+    #   assert StatePurgeQueue.lookup(:component, motherboard_id)
+
+    #   # As well as all components that could be linked to that mobo
+    #   Enum.each(server.components, fn(component) ->
+    #     assert StatePurgeQueue.lookup(:component, component)
+    #   end)
+
+    #   # And the server too (which will soon be updated)
+    #   assert StatePurgeQueue.lookup(:server, server.server_id)
+
+    #   # Note that the purged motherboard will soon be re-added to the DB
+    #   # because it is still linked to server, and calling `purge_motherboard`
+    #   # will call `CacheAction.update_server`, which will re-fetch the mobo.
+
+    #   :timer.sleep(100)
+    # end
   end
 end

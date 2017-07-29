@@ -8,7 +8,8 @@ defmodule Helix.Cache.Model.Populate do
     def new(sid, eid) do
       %__MODULE__{
         server_id: sid,
-        entity_id: eid
+        entity_id: eid,
+        motherboard_id: nil
       }
     end
     def new({sid, eid, mid, networks, storages, resources, components}) do

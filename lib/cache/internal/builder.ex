@@ -56,11 +56,32 @@ defmodule Helix.Cache.Internal.Builder do
     end
   end
 
-  @spec by_nip(Network.id, IPv4.t) ::
-    {:ok, NetworkParams.t}
-    | {:error, {:nip, :notfound}}
+  @spec by_motherboard(Motherboard.id) ::
+    {:ok, ServerParams.t}
     | {:error, {:server, :notfound}}
+    | {:error, {:motherboard, :notfound}}
     | {:error, :unknown}
+  def by_motherboard(motherboard_id) do
+    with \
+      server =
+        %{} <- ServerInternal.fetch_by_motherboard(motherboard_id) || :nxmobo
+    do
+      by_server(server.server_id)
+    else
+      :nxmobo ->
+        IO.inspect(motherboard_id)
+      IO.inspect(ServerInternal.fetch_by_motherboard(motherboard_id))
+        {:error, {:motherboard, :notfound}}
+      _ ->
+        {:error, :unknown}
+    end
+  end
+
+  # @spec by_nip(Network.id, IPv4.t) ::
+  #   {:ok, NetworkParams.t}
+  #   | {:error, {:nip, :notfound}}
+  #   | {:error, {:server, :notfound}}
+  #   | {:error, :unknown}
   def by_nip(network_id, ip) do
     with \
       mobo = %{} <- MotherboardInternal.fetch_by_nip(network_id, ip) || :nxnip,

@@ -54,7 +54,22 @@ defmodule Helix.Cache.Model.ServerCache do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(Map.from_struct(params), @creation_fields)
+    |> workaround_to_add_nil_values(params)
     |> add_expiration_date()
+  end
+
+  # Fix for https://github.com/elixir-ecto/ecto/issues/2017
+  # Basically, Ecto won't add `nil` values on upsert (insert + :replace_all),
+  # even when using changeset and `cast/3`. `put_change` won't work either.
+  defp workaround_to_add_nil_values(changeset, params) do
+    Enum.reduce(@creation_fields, changeset, fn(field, cs) ->
+      value = Map.get(params, field)
+      if is_nil(value) do
+        force_change(cs, field, value)
+      else
+        cs
+      end
+    end)
   end
 
   @spec add_expiration_date(Changeset.t) ::
