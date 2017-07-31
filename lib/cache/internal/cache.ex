@@ -70,8 +70,8 @@ defmodule Helix.Cache.Internal.Cache do
     case result do
       {:hit, data} ->
         {:hit, post_lookup_hook(data)}
-      _ ->
-        result
+      {:miss, :notfound} ->
+        :miss
     end
   end
 
@@ -104,14 +104,7 @@ defmodule Helix.Cache.Internal.Cache do
   def purge(model, params) when not is_tuple(params),
     do: purge(model, {params})
   def purge(model, params) do
-    # Synchronously mark entry as invalid by adding it to the PurgeQueue
-    StatePurgeQueue.queue(model, params)
-
-    # Asynchronously delete stuff from the DB
-    spawn(fn() ->
-      apply(PurgeInternal, :purge, [model, params])
-      # apply(PurgeInternal, :purge, [model] ++ [params])
-    end)
+    StatePurgeQueue.queue(model, params, :purge)
 
     :ok
   end
@@ -125,53 +118,73 @@ defmodule Helix.Cache.Internal.Cache do
   def update(model, params) when not is_tuple(params),
     do: update(model, {params})
   def update(model, params) do
-    # Synchronously mark entry as invalid by adding it to the PurgeQueue
-    StatePurgeQueue.queue(model, params)
-
-    # Asynchronously update stuff on the DB
-    spawn(fn() ->
-      apply(PurgeInternal, :update, [model, params])
-      # apply(PurgeInternal, :update, [model] ++ params)
-    end)
+    StatePurgeQueue.queue(model, params, :update)
 
     :ok
   end
 
 
   docp """
-  Wrapper used to populate cache data in case it isn't stored (miss)
+  Wrapper used to query origin data in case it isn't cached (miss)
   """
   defp process(query, params, full?) do
-    case query(query, params, full?) do
-      :miss ->
-        apply(PopulateInternal, :populate, [query.function, params])
-        # apply(PopulateInternal, :populate, [query.function] ++ params)
-        |> case do
-             {:ok, schema} ->
-               if full? do
-                 {:ok, Map.from_struct(schema)}
-               else
-                 {:ok, Map.get(schema, query.field)}
-               end
-             result ->
-               result
-            end
-      {:hit, data} ->
-        {:ok, data}
+    with {:hit, data} <- query(query, params, full?) do
+      {:ok, data}
+    else
+      {:miss, reason} ->
+        get_original_data(reason, query, params, full?)
     end
   end
 
   docp """
-  This intermediary step first checks whether the entry is queued up for deletion
-  on the PurgeQueue in-memory table. If this is the case, return a miss right away
-  (which will later be repopulated).
+  We've tried to fetch the data but it isn't cached. This may be for two reasons:
+  1) Entry is not on the DB
+  2) Entry is on the DB but it's expired
+  3) Entry is on the DB and valid, but marked as purged on the PurgeQueue
+
+  For the first two cases, we want to notify the PurgeQueue about this entry.
+  For the latter case, however, there's no point on notifying PurgeQueue because
+  it already knows the entry is invalid.
+
+  This function fetches the actual data (from the origin), passing the reason
+  of the miss downstream, which will know whether it should notify PurgeQueue.
+  """
+  defp get_original_data(reason, query, params, full?) do
+    # If we can't find the data because it's purged, there's no need to mark it
+    # as purged (because it already is marked as purged).
+    # On the other hand, if the reason is that the entry does not exist on the DB,
+    # we will populate it soon, and as such we want to mark as purged.
+    mark_as_purged? = reason == :notfound
+
+    result = apply(
+      PopulateInternal,
+      :fetch_origin,
+      [query.function, params, mark_as_purged?]
+    )
+
+    case result do
+      {:ok, schema} ->
+        if full? do
+          {:ok, Map.from_struct(schema)}
+        else
+          {:ok, Map.get(schema, query.field)}
+        end
+      error ->
+        error
+    end
+  end
+
+  docp """
+  This intermediary step first checks whether the entry is queued up for
+  deletion on the PurgeQueue in-memory table. If this is the case, return a
+  miss right away (which will later be repopulated).
   If it's not queued for deletion, actually query the database.
   """
   defp query(query, params, full?) do
-    if not StatePurgeQueue.lookup(query.module, params) do
+    if not StatePurgeQueue.lookup(query.model, params) do
       sql_query(query, params, full?)
     else
-      :miss
+      {:miss, :purged}
     end
   end
 
@@ -188,14 +201,12 @@ defmodule Helix.Cache.Internal.Cache do
   a single field.
   """
   defp sql_query(query, params, full?) do
-    args = Tuple.to_list(params)
-    fetch =
-      apply(get_module(query.module), query.function, args)
-    apply(get_module(query.module), :filter_expired, [fetch])
+    fetch = apply(query.module, query.function, Tuple.to_list(params))
+    apply(query.module, :filter_expired, [fetch])
     |> Repo.one
     |> case do
          nil ->
-           :miss
+           {:miss, :notfound}
          schema ->
            if full? do
              {:hit, schema}
@@ -205,8 +216,8 @@ defmodule Helix.Cache.Internal.Cache do
        end
   end
 
-  defp get_module(module) do
-    case module do
+  defp get_module(model) do
+    case model do
       :server ->
         ServerCache.Query
       :network ->
@@ -223,8 +234,11 @@ defmodule Helix.Cache.Internal.Cache do
   """
   def query_table(condition) do
     case @query_table[condition] do
-      {module, function, field} ->
-        %{module: module, function: function, field: field}
+      {model, function, field} ->
+        %{module: get_module(model),
+          function: function,
+          field: field,
+          model: model}
       _ ->
         raise RuntimeError, "Query #{inspect condition} is invalid"
     end

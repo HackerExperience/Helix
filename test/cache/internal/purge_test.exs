@@ -3,25 +3,14 @@ defmodule Helix.Cache.Internal.PurgeTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Internal.Purge, as: PurgeInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
-    alias Helix.Account.Factory, as: AccountFactory
-    alias Helix.Account.Action.Flow.Account, as: AccountFlow
-
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-
-    :timer.sleep(50)
-
-    alias Helix.Cache.Action.Cache, as: CacheAction
-    CacheAction.purge_server(server.server_id)
-    :timer.sleep(50)
-
-    {:ok, account: account, server: server}
+    CacheHelper.cache_context()
   end
 
   # REMEMBER:
@@ -34,9 +23,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
     test "existing data is updated", context do
       server_id = context.server.server_id
 
-      # Add server server
       {:ok, _} = PopulateInternal.populate(:by_server, server_id)
-      :timer.sleep(10)
 
       {:hit, server1} = CacheInternal.direct_query(:server, server_id)
 
@@ -46,10 +33,13 @@ defmodule Helix.Cache.Internal.PurgeTest do
       new_ip = HELL.IPv4.autogenerate()
       {:ok, _} = NetworkConnectionInternal.update_ip(nc, new_ip)
 
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       # Query again
       {:ok, server2} = CacheInternal.lookup(:server, server_id)
+
+      # Ensure it comes from the cache
+      assert server2.expiration_date
 
       server2_ip = server2.networks
         |> List.first()
@@ -62,15 +52,17 @@ defmodule Helix.Cache.Internal.PurgeTest do
       refute nip.ip == server2_ip
       assert server2_ip == new_ip
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "populates non-existing data", context  do
       server_id = context.server.server_id
 
-      :timer.sleep(100)
-      :miss = CacheInternal.direct_query(:server, server_id)
+      # Ensure cache is empty
+      CacheInternal.purge(:server, server_id)
+      StatePurgeQueue.sync()
 
+      :miss = CacheInternal.direct_query(:server, server_id)
       refute StatePurgeQueue.lookup(:server, server_id)
 
       # Request server update
@@ -84,8 +76,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       :miss = CacheInternal.direct_query(:server, server_id)
       :miss = CacheInternal.direct_query(:server, server_id)
 
-      # TODO: PurgeQueue.sync
-      :timer.sleep(30)
+      StatePurgeQueue.sync()
 
       refute StatePurgeQueue.lookup(:server, server_id)
 
@@ -93,7 +84,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       assert server.server_id == server_id
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
   end
 
@@ -102,7 +93,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       server_id = context.server.server_id
 
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
-      :timer.sleep(20)
+
       nip = List.first(server.networks)
       storage_id = List.first(server.storages)
       component_id = List.first(server.components)
@@ -110,8 +101,6 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       # Purge nip
       PurgeInternal.purge(:network, {nip.network_id, nip.ip})
-
-      # (PurgeInternal.purge is synchronous)
 
       :miss = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
@@ -148,7 +137,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       # Server is still there
       {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
   end
 end

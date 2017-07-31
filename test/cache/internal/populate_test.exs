@@ -4,20 +4,16 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Internal.Server, as: ServerInternal
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Repo
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
-    alias Helix.Account.Factory, as: AccountFactory
-    alias Helix.Account.Action.Flow.Account, as: AccountFlow
-
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-
-    {:ok, account: account, server: server}
+    CacheHelper.cache_context()
   end
 
   def direct_cache_query(server_id) do
@@ -34,8 +30,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, server_id)
       {:ok, components} = CacheInternal.lookup({:server, :components}, server_id)
 
-      # Cache population is asynchronous..
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
@@ -58,7 +53,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       refute cmobo == nil
       assert cmobo.component_id == motherboard_id
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "populate server with nil values", context do
@@ -72,7 +67,8 @@ defmodule Helix.Cache.Internal.PopulateTest do
       # required), you will find this same test at the cache integration tests
 
       ServerInternal.detach(context.server)
-      :timer.sleep(20)
+
+      StatePurgeQueue.sync()
 
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
@@ -84,14 +80,13 @@ defmodule Helix.Cache.Internal.PopulateTest do
       refute server.networks
       refute server.resources
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
 
     test "pre-existing cached entries are updated", context do
       server_id = context.server.server_id
 
       {:ok, server1} = PopulateInternal.populate(:by_server, server_id)
-      :timer.sleep(20)
 
       ServerAction.detach(context.server)
 
@@ -100,7 +95,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       refute server1 == server2
       assert server2.motherboard_id == nil
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "component population", context do
@@ -112,7 +107,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       assert component.component_id == query.component_id
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "storage population", context do
@@ -126,7 +121,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       assert storage1.storage_id == storage2.storage_id
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "network population", context do
@@ -140,7 +135,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       assert nip1.network_id == nip2.network_id
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
   end
 
@@ -152,8 +147,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, server_id)
       {:ok, components} = CacheInternal.lookup({:server, :components}, server_id)
 
-      # Wait for it..
-      :timer.sleep(50)
+      StatePurgeQueue.sync()
 
       {:hit, cserver} = CacheInternal.direct_query(:server, server_id)
       {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
@@ -169,7 +163,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       assert DateTime.diff(cstorage.expiration_date, DateTime.utc_now()) >= 600
       assert DateTime.diff(ccomponent.expiration_date, DateTime.utc_now()) >= 600
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
   end
 end

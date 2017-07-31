@@ -38,6 +38,8 @@ defmodule Helix.Cache.State.PurgeQueue do
 
   use GenServer
 
+  alias Helix.Cache.Internal.Purge, as: PurgeInternal
+
   @registry_name :cache_purge_queue
   @ets_table_name :ets_cache_purge_queue
 
@@ -54,20 +56,34 @@ defmodule Helix.Cache.State.PurgeQueue do
   def lookup(model, key),
     do: GenServer.call(@registry_name, {:lookup, model, key})
 
-  def queue(model, key) when not is_tuple(key),
-    do: queue(model, {key})
-  def queue(model, key),
-    do: GenServer.call(@registry_name, {:add, model, key})
+  def queue(model, key, action) when not is_tuple(key),
+    do: queue(model, {key}, action)
+  def queue(model, key, action) do
+    GenServer.call(@registry_name, {:add, model, key, action})
+  end
 
-  def queue_multiple(entry_list),
-    do: GenServer.call(@registry_name, {:add_multiple, entry_list})
+  def queue_multiple(entry_list, action),
+    do: GenServer.call(@registry_name, {:add_multiple, entry_list, action})
 
-  def unqueue(model, key) when not is_tuple(key),
-    do: unqueue(model, {key})
-  def unqueue(model, key),
-    do: GenServer.cast(@registry_name, {:remove, model, key})
+  def unqueue(model, key, action) when not is_tuple(key),
+    do: unqueue(model, {key}, action)
+  def unqueue(model, key, action),
+    do: GenServer.cast(@registry_name, {:remove, model, key, action})
 
-  def map(el, fun) do
+  def sync do
+    map(&exec_sync/1)
+  end
+
+  defp exec_sync({domain, args, :update}) do
+    PurgeInternal.update(domain, args)
+    unqueue(domain, args, :update)
+  end
+  defp exec_sync({domain, args, :purge}) do
+    PurgeInternal.purge(domain, args)
+    unqueue(domain, args, :purge)
+  end
+
+  defp map(el, fun) do
     case el do
       :'$end_of_table' ->
         :ok
@@ -76,9 +92,8 @@ defmodule Helix.Cache.State.PurgeQueue do
         map(:ets.next(@ets_table_name, d), fun)
     end
   end
-  def map(fun) do
-    map(:ets.first(@ets_table_name), fun)
-  end
+  defp map(fun),
+    do: map(:ets.first(@ets_table_name), fun)
 
   # Callbacks
 
@@ -92,31 +107,32 @@ defmodule Helix.Cache.State.PurgeQueue do
   end
 
   def handle_call({:lookup, model, key}, _from, state) do
-    queued? = :ets.lookup(@ets_table_name, {model, key})
+    queued? = :ets.match_object(@ets_table_name, {{model, key, :'_'}})
     |> case do
          [] ->
            false
-         [_] ->
+         _ ->
            true
        end
 
     {:reply, queued?, state}
   end
 
-  def handle_call({:add, model, key}, _from, state) do
-    :ets.insert(@ets_table_name, {{model, key}})
+  def handle_call({:add, model, key, action}, _from, state) do
+    :ets.insert(@ets_table_name, {{model, key, action}})
     {:reply, :ok, state}
   end
 
-  def handle_call({:add_multiple, entry_list}, _from, state) do
+  def handle_call({:add_multiple, entry_list, action}, _from, state) do
     Enum.each(entry_list, fn({model, key}) ->
-      :ets.insert(@ets_table_name, {{model, key}})
+      :ets.insert(@ets_table_name, {{model, key, action}})
     end)
+
     {:reply, :ok, state}
   end
 
-  def handle_cast({:remove, model, key}, state) do
-    :ets.delete(@ets_table_name, {model, key})
+  def handle_cast({:remove, model, key, action}, state) do
+    :ets.delete(@ets_table_name, {model, key, action})
     {:noreply, state}
   end
 

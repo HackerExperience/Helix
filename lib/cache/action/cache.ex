@@ -46,28 +46,12 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.update(:server, server_id)
   end
 
-  def purge_server(server_id) do
-
-    {:ok, server} = CacheQuery.from_server_get_all(server_id)
-
-    # Remove after sync is added
-    :timer.sleep(50)
-
-    Enum.each(server.networks, &purge_nip(&1.network_id, &1.ip))
-    Enum.each(server.components, &purge_component(&1))
-    Enum.each(server.storages, &purge_storage(&1))
-    purge_component(server.motherboard_id)
-
-    StatePurgeQueue.queue(:server, server.server_id)
-    CacheInternal.purge(:server, {server.server_id})
-  end
-
   def update_storage(storage_id) do
     {:ok, server_id} = CacheQuery.from_storage_get_server(storage_id)
     update_storage(storage_id, server_id)
   end
   defp update_storage(storage_id, server_id) do
-    StatePurgeQueue.queue(:storage, storage_id)
+    StatePurgeQueue.queue(:storage, storage_id, :update)
     CacheInternal.update(:server, server_id)
   end
 
@@ -81,28 +65,9 @@ defmodule Helix.Cache.Action.Cache do
     update_component(component_id, server.server_id)
   end
   defp update_component(component_id, server_id) do
-    StatePurgeQueue.queue(:component, component_id)
+    StatePurgeQueue.queue(:component, component_id, :update)
     CacheInternal.update(:server, server_id)
   end
-
-  # def update_motherboard(motherboard_id) do
-  #   {:ok, server} = CacheQuery.from_motherboard_get_all(motherboard_id)
-  #   unless is_nil(server) do
-  #     Enum.each(server.components, &purge_component(&1))
-  #     update_server(server.server_id)
-  #   end
-  # end
-
-  # def purge_motherboard(motherboard_id) do
-  #   with {:ok, server} <- CacheQuery.from_motherboard_get_all(motherboard_id) do
-  #     unless is_nil(server) do
-  #       Enum.each(server.components, &purge_component(&1))
-  #       update_server(server.server_id)
-  #     end
-  #   end
-
-  #   CacheInternal.purge(:component, [motherboard_id])
-  # end
 
   def purge_component(component_id) do
     CacheInternal.purge(:component, component_id)
@@ -113,7 +78,7 @@ defmodule Helix.Cache.Action.Cache do
     update_nip(network_id, ip, server_id)
   end
   defp update_nip(network_id, ip, server_id) do
-    StatePurgeQueue.queue(:network, {network_id, ip})
+    StatePurgeQueue.queue(:network, {network_id, ip}, :update)
     CacheInternal.update(:server, server_id)
   end
 

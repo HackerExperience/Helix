@@ -24,10 +24,15 @@ defmodule Helix.Cache.Internal.Purge do
   alias Helix.Cache.Model.StorageCache
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Repo
-  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
-  def update(:server, server_id),
-    do: PopulateInternal.populate(:by_server, server_id)
+  def update(:server, object),
+    do: PopulateInternal.populate(:by_server, object)
+  def update(:storage, object),
+    do: PopulateInternal.populate(:by_storage, object)
+  def update(:component, object),
+    do: PopulateInternal.populate(:by_component, object)
+  def update(:network, object),
+    do: PopulateInternal.populate(:by_nip, object)
   def update(model, _),
     do: raise "update not implemented for #{inspect model}"
 
@@ -45,25 +50,17 @@ defmodule Helix.Cache.Internal.Purge do
   def delete(:server, {server_id}) do
     ServerCache.Query.by_server(server_id)
     |> Repo.delete_all()
-
-    StatePurgeQueue.unqueue(:server, server_id)
   end
   def delete(:component, {component_id}) do
     ComponentCache.Query.by_component(component_id)
     |> Repo.delete_all()
-
-    StatePurgeQueue.unqueue(:component, component_id)
   end
   def delete(:storage, {storage_id}) do
     StorageCache.Query.by_storage(storage_id)
     |> Repo.delete_all()
-
-    StatePurgeQueue.unqueue(:storage, storage_id)
   end
   def delete(:network, {network_id, ip}) do
     NetworkCache.Query.by_nip(network_id, ip)
     |> Repo.delete_all()
-
-    StatePurgeQueue.unqueue(:network, {network_id, ip})
   end
 end

@@ -3,18 +3,13 @@ defmodule Helix.Cache.Action.CacheTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Cache.Action.Cache, as: CacheAction
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
-    alias Helix.Account.Factory, as: AccountFactory
-    alias Helix.Account.Action.Flow.Account, as: AccountFlow
-
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-
-    {:ok, account: account, server: server}
+    CacheHelper.cache_context()
   end
 
   def hit_everything(server_id) do
@@ -44,16 +39,12 @@ defmodule Helix.Cache.Action.CacheTest do
 
       PopulateInternal.populate(:by_server, server_id)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
-
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       # Update
       CacheAction.update_server(server_id)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
 
@@ -63,7 +54,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert_expiration_updated(mobo1, mobo2)
       assert_expiration_updated(nip1, nip2)
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "update_storage/1", context do
@@ -71,16 +62,12 @@ defmodule Helix.Cache.Action.CacheTest do
 
       PopulateInternal.populate(:by_server, server_id)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
-
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       storage_id = List.first(server1.storages)
       CacheAction.update_storage(storage_id)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
 
@@ -90,7 +77,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert_expiration_updated(mobo1, mobo2)
       assert_expiration_updated(nip1, nip2)
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "update_component/1", context do
@@ -98,16 +85,12 @@ defmodule Helix.Cache.Action.CacheTest do
 
       PopulateInternal.populate(:by_server, server_id)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
-
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       component_id = List.first(server1.components)
       CacheAction.update_component(component_id)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
 
@@ -117,7 +100,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert_expiration_updated(mobo1, mobo2)
       assert_expiration_updated(nip1, nip2)
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "update_nip/1", context do
@@ -125,16 +108,12 @@ defmodule Helix.Cache.Action.CacheTest do
 
       PopulateInternal.populate(:by_server, server_id)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
-
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       net = List.first(server1.networks)
       CacheAction.update_nip(net.network_id, net.ip)
 
-      # Sync (wait for side-population)
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
 
@@ -144,7 +123,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert_expiration_updated(mobo1, mobo2)
       assert_expiration_updated(nip1, nip2)
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     # test "purge_motherboard/1", context do
@@ -152,7 +131,6 @@ defmodule Helix.Cache.Action.CacheTest do
     #   motherboard_id = context.server.motherboard_id
 
     #   PopulateInternal.populate(:by_server, server_id)
-    #   :timer.sleep(20)
 
     #   {:ok, server} = CacheInternal.lookup(:motherboard, [motherboard_id])
 

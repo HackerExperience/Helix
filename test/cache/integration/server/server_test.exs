@@ -3,19 +3,13 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Server.Internal.Server, as: ServerInternal
-  alias Helix.Cache.Action.Cache, as: CacheAction
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
-  alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
-    alias Helix.Account.Factory, as: AccountFactory
-    alias Helix.Account.Action.Flow.Account, as: AccountFlow
-
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-
-    {:ok, account: account, server: server}
+    CacheHelper.cache_context()
   end
 
   describe "server integration" do
@@ -25,10 +19,10 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       {:ok, components} =
         CacheQuery.from_motherboard_get_components(motherboard_id)
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       ServerInternal.detach(context.server)
-      :timer.sleep(20)
+      StatePurgeQueue.sync()
 
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
@@ -49,7 +43,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
         assert {:hit, _} = CacheInternal.direct_query(:component, component_id)
       end)
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
   end
 end
