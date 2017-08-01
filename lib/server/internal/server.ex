@@ -1,10 +1,9 @@
 defmodule Helix.Server.Internal.Server do
 
+  alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
-
-  import Ecto.Query, only: [where: 3]
 
   @spec fetch(Server.id) ::
     Server.t
@@ -37,17 +36,26 @@ defmodule Helix.Server.Internal.Server do
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}
   def attach(server, mobo_id) do
-    server
-    |> Server.update_changeset(%{motherboard_id: mobo_id})
-    |> Repo.update()
+    result = server
+      |> Server.update_changeset(%{motherboard_id: mobo_id})
+      |> Repo.update()
+
+    with {:ok, _} <- result do
+      CacheAction.update_server(server)
+    end
+
+    result
   end
 
-  @spec detach(Server.t | Server.id) ::
+  @spec detach(Server.t) ::
     :ok
   def detach(server) do
     server
     |> Server.Query.by_server()
     |> Repo.update_all(set: [motherboard_id: nil])
+
+    CacheAction.update_server(server)
+    CacheAction.purge_component(server.motherboard_id)
 
     :ok
   end
@@ -58,6 +66,8 @@ defmodule Helix.Server.Internal.Server do
     server
     |> Server.Query.by_server()
     |> Repo.delete_all()
+
+    CacheAction.purge_server(server)
 
     :ok
   end

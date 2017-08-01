@@ -15,6 +15,8 @@ defmodule Helix.Cache.Helper do
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
     :timer.sleep(50)
 
+    # Note: for our purposes, function below is slightly different from
+    # CacheInternal.purge_server, and should not be replaced.
     purge_server(server.server_id)
 
     {:ok, account: account, server: server}

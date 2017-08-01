@@ -1,5 +1,6 @@
 defmodule Helix.Hardware.Internal.Motherboard do
 
+  alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Network.Model.Network
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Component.NIC
@@ -69,6 +70,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
       nics = [_|_] <- Enum.filter(slots, &(&1.link_component_type == :nic)),
       nics = [_|_] <- Enum.reject(nics, &is_nil(&1.link_component_id)),
       nics = [_|_] <- Enum.map(nics, &Repo.get(NIC, &1.link_component_id)),
+      nics = [_|_] <- Enum.reject(nics, &is_nil(&1.network_connection_id)),
       networks = [_|_] <- Enum.map(
         nics,
         &Repo.get(NetworkConnection, &1.network_connection_id))
@@ -219,41 +221,57 @@ defmodule Helix.Hardware.Internal.Motherboard do
   def link(slot, component_id) do
     params = %{link_component_id: component_id}
 
-    slot
+    result = slot
     |> MotherboardSlot.update_changeset(params)
     |> Repo.update()
+
+    with {:ok, _} <- result do
+      CacheAction.update_component(component_id)
+    end
+
+    result
   end
 
   @spec unlink(MotherboardSlot.t) ::
     {:ok, MotherboardSlot.t}
   def unlink(slot) do
-    slot
+    result = slot
     |> MotherboardSlot.update_changeset(%{link_component_id: nil})
     |> Repo.update()
+
+    with {:ok, _} <- result do
+      CacheAction.purge_component(slot.link_component_id)
+      CacheAction.update_component(slot.motherboard_id)
+    end
+
+    result
   end
 
   @spec unlink_components_from_motherboard(Motherboard.t | Motherboard.id) ::
     :ok
-  def unlink_components_from_motherboard(motherboard_or_motherboard_id) do
-    motherboard_or_motherboard_id
-    |> MotherboardSlot.Query.from_motherboard()
-    |> Repo.update_all(set: [link_component_id: nil])
+  def unlink_components_from_motherboard(motherboard) do
+    components = get_components_ids(motherboard)
+
+    motherboard
+      |> MotherboardSlot.Query.from_motherboard()
+      |> Repo.update_all(set: [link_component_id: nil])
+
+    CacheAction.update_component(motherboard)
+    Enum.map(components, &CacheAction.purge_component(&1))
 
     :ok
   end
 
   @spec delete(Motherboard.t | Motherboard.id) ::
     :ok
-  def delete(motherboard = %Motherboard{}) do
-    motherboard
-    |> Repo.delete()
-
-    :ok
-  end
+  def delete(motherboard = %Motherboard{}),
+    do: delete(motherboard.motherboard_id)
   def delete(motherboard_id) do
     motherboard_id
     |> Motherboard.Query.by_motherboard()
     |> Repo.delete_all()
+
+    CacheAction.purge_component(motherboard_id)
 
     :ok
   end

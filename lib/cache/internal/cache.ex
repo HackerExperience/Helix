@@ -118,7 +118,7 @@ defmodule Helix.Cache.Internal.Cache do
   def update(model, params) when not is_tuple(params),
     do: update(model, {params})
   def update(model, params) do
-    StatePurgeQueue.queue(model, params, :update)
+    PurgeInternal.invalidate_entries(model, params)
 
     :ok
   end

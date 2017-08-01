@@ -83,6 +83,11 @@ defmodule Helix.Cache.State.PurgeQueue do
     unqueue(domain, args, :purge)
   end
 
+  defp map(fun) do
+    :ets.safe_fixtable(@ets_table_name, true)
+    map(:ets.first(@ets_table_name), fun)
+    :ets.safe_fixtable(@ets_table_name, false)
+  end
   defp map(el, fun) do
     case el do
       :'$end_of_table' ->
@@ -92,8 +97,6 @@ defmodule Helix.Cache.State.PurgeQueue do
         map(:ets.next(@ets_table_name, d), fun)
     end
   end
-  defp map(fun),
-    do: map(:ets.first(@ets_table_name), fun)
 
   # Callbacks
 

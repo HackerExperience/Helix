@@ -37,15 +37,31 @@ defmodule Helix.Cache.Action.CacheTest do
     test "update_server/1", context do
       server_id = context.server.server_id
 
-      PopulateInternal.populate(:by_server, server_id)
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       # Update
       CacheAction.update_server(server_id)
 
+      # While it's not yet synced, we need to ensure all related entries
+      # are saved on the PurgeQueue
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:component, server.motherboard_id)
+      Enum.each(server.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      Enum.each(server.storages, fn(storage_id) ->
+        assert StatePurgeQueue.lookup(:storage, storage_id)
+      end)
+      Enum.each(server.networks, fn(net) ->
+        assert StatePurgeQueue.lookup(:network, {net.network_id, net.ip})
+      end)
+
+      # Sync
       StatePurgeQueue.sync()
 
+      # After the sync, stuff on DB has been changed
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
 
       assert_expiration_updated(server1, server2)
@@ -66,6 +82,14 @@ defmodule Helix.Cache.Action.CacheTest do
 
       storage_id = List.first(server1.storages)
       CacheAction.update_storage(storage_id)
+
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage_id)
+      assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
+      Enum.map(server1.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
 
       StatePurgeQueue.sync()
 
@@ -90,6 +114,14 @@ defmodule Helix.Cache.Action.CacheTest do
       component_id = List.first(server1.components)
       CacheAction.update_component(component_id)
 
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
+      assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
+      Enum.map(server1.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
+
       StatePurgeQueue.sync()
 
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
@@ -112,6 +144,14 @@ defmodule Helix.Cache.Action.CacheTest do
 
       net = List.first(server1.networks)
       CacheAction.update_nip(net.network_id, net.ip)
+
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
+      assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
+      Enum.map(server1.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
 
       StatePurgeQueue.sync()
 

@@ -44,7 +44,7 @@ defmodule Helix.Cache.Internal.Builder do
     do
       sp = ServerParams.new(
         {server_id, entity.entity_id, server.motherboard_id, networks, storages,
-        resources, components})
+         resources, components})
       {:ok, sp}
     else
       :nxserver ->
@@ -69,8 +69,6 @@ defmodule Helix.Cache.Internal.Builder do
       by_server(server.server_id)
     else
       :nxmobo ->
-        IO.inspect(motherboard_id)
-      IO.inspect(ServerInternal.fetch_by_motherboard(motherboard_id))
         {:error, {:motherboard, :notfound}}
       _ ->
         {:error, :unknown}
@@ -138,10 +136,15 @@ defmodule Helix.Cache.Internal.Builder do
   @spec get_storages_from_motherboard(Motherboard.t) ::
     [Storage.id]
   defp get_storages_from_motherboard(motherboard) do
-    motherboard
-    |> MotherboardInternal.get_hdds()
-    |> Enum.map(&StorageInternal.fetch_by_hdd(&1.hdd_id))
-    |> Enum.map(&(&1.storage_id))
+    storages = motherboard
+      |> MotherboardInternal.get_hdds()
+      |> Enum.map(&StorageInternal.fetch_by_hdd(&1.hdd_id))
+
+    Enum.reduce(storages, [], fn(storage, acc) ->
+      storage
+      && [storage.storage_id] ++ acc
+      || acc
+    end)
   end
 
   @spec get_networks_from_motherboard(Motherboard.t) ::
@@ -149,7 +152,11 @@ defmodule Helix.Cache.Internal.Builder do
   defp get_networks_from_motherboard(motherboard) do
     motherboard
     |> MotherboardInternal.get_networks()
-    |> Enum.map(&(%{network_id: &1.network_id, ip: &1.ip}))
+    |> Enum.reduce([], fn(nip, acc) ->
+      nip
+      && [%{network_id: nip.network_id, ip: nip.ip}] ++ acc
+      || acc
+    end)
   end
 
   @spec get_drives_from_storage(Storage.t) ::

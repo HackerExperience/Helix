@@ -34,11 +34,38 @@ defmodule Helix.Cache.Action.Cache do
   Follow these rules and no one will get hurt.
   """
 
+  alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+
+  def purge_server(server = %Server{}),
+    do: purge_server(server.server_id)
+  def purge_server(server_id) do
+    server =
+      with {:ok, server} <- CacheQuery.from_server_get_all(server_id) do
+        server
+      else
+        _ ->
+          case CacheInternal.direct_query(:server, server_id) do
+            {:hit, server} ->
+              server
+            _ ->
+              nil
+          end
+      end
+
+    if server do
+      Enum.each(server.networks, &purge_nip(&1.network_id, &1.ip))
+      Enum.each(server.components, &purge_component(&1))
+      Enum.each(server.storages, &purge_storage(&1))
+      purge_component(server.motherboard_id)
+    end
+    CacheInternal.purge(:server, server_id)
+  end
 
   def update_server(server = %Server{}),
     do: update_server(server.server_id)
@@ -59,16 +86,27 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.purge(:storage, storage_id)
   end
 
+  def update_component(motherboard = %Motherboard{}),
+    do: update_component(motherboard.motherboard_id)
+  def update_component(component = %Component{}),
+    do: update_component(component.component_id)
   def update_component(component_id) do
-    {:ok, mobo_id} = CacheQuery.from_component_get_motherboard(component_id)
-    server = ServerQuery.fetch_by_motherboard(mobo_id)
-    update_component(component_id, server.server_id)
-  end
-  defp update_component(component_id, server_id) do
-    StatePurgeQueue.queue(:component, component_id, :update)
-    CacheInternal.update(:server, server_id)
+    # Update server too, if it exists
+    with \
+      {:ok, mobo_id} <- CacheQuery.from_component_get_motherboard(component_id),
+      server = %{} <- ServerQuery.fetch_by_motherboard(mobo_id)
+    do
+      update_server(server.server_id)
+    else
+      _ ->
+        CacheInternal.update(:component, component_id)
+    end
   end
 
+  def purge_component(motherboard = %Motherboard{}),
+    do: purge_component(motherboard.motherboard_id)
+  def purge_component(component = %Component{}),
+    do: purge_component(component.component_id)
   def purge_component(component_id) do
     CacheInternal.purge(:component, component_id)
   end

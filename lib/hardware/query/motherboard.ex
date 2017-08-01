@@ -1,6 +1,7 @@
 defmodule Helix.Hardware.Query.Motherboard do
 
   alias Helix.Network.Model.Network
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
@@ -52,4 +53,11 @@ defmodule Helix.Hardware.Query.Motherboard do
     [NetworkConnection.t]
   defdelegate get_networks(motherboard),
     to: MotherboardInternal
+
+  # TODO: Test, type, doc
+  def is_attached?(motherboard) do
+    ServerQuery.fetch_by_motherboard(motherboard)
+    && true
+    || false
+  end
 end

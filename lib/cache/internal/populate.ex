@@ -24,8 +24,8 @@ defmodule Helix.Cache.Internal.Populate do
   alias Helix.Cache.Model.Populate.Network, as: NetworkParams
   alias Helix.Cache.Model.Populate.Component, as: ComponentParams
   alias Helix.Cache.Model.Populate.Storage, as: StorageParams
-  alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+  alias Helix.Cache.Internal.Builder, as: BuilderInternal
 
   @doc """
   Populates the corresponding model, based on its primary key.
