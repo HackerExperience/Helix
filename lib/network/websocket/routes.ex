@@ -17,9 +17,7 @@ defmodule Helix.Network.Websocket.Routes do
       {:ok, server} <- CacheQuery.from_nip_get_server(network, ip),
       entity = %{} <- EntityQuery.fetch_by_server(server.server_id)
     do
-      database_entry = DatabaseQuery.fetch_server_record(
-        account,
-        server.server_id)
+      password = DatabaseQuery.get_server_password(account, server)
 
       # TODO: move this to the presentation layer
       data = %{
@@ -27,7 +25,7 @@ defmodule Helix.Network.Websocket.Routes do
         server_type: server.server_type,
         entity_type: entity.entity_type,
         # Defaults to nil
-        password: database_entry[:password]
+        password: password
       }
 
       return = %{

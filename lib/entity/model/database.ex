@@ -47,8 +47,14 @@ defmodule Helix.Entity.Model.Database do
     timestamps()
   end
 
-  @spec create(Entity.id, Network.id, IPv4.t, Server.id, String.t) ::
+  @spec create(Entity.t | Entity.id, Network.t | Network.id, IPv4.t, Server.t | Server.id, String.t) ::
     Changeset.t
+  def create(%Entity{entity_id: entity}, network, ip, server, type),
+    do: create(entity, network, ip, server, type)
+  def create(entity, %Network{network_id: network}, ip, server, type),
+    do: create(entity, network, ip, server, type)
+  def create(entity, network, ip, %Server{server_id: server}, type),
+    do: create(entity, network, ip, server, type)
   def create(entity_id, network_id, ip, server_id, server_type) do
     params = %{
       entity_id: entity_id,
@@ -71,5 +77,51 @@ defmodule Helix.Entity.Model.Database do
     |> cast(params, @update_fields)
     |> validate_length(:alias, max: @alias_max_length)
     |> validate_length(:notes, max: @notes_max_length)
+  end
+
+  defmodule Query do
+
+    import Ecto.Query
+
+    alias Ecto.Queryable
+    alias HELL.IPv4
+    alias Helix.Network.Model.Network
+    alias Helix.Server.Model.Server
+    alias Helix.Entity.Model.Database
+    alias Helix.Entity.Model.Entity
+
+    @spec by_entity(Queryable.t, Entity.t | Entity.id) ::
+      Queryable.t
+    def by_entity(query \\ Database, entity_or_id)
+    def by_entity(query, %Entity{entity_id: id}),
+      do: by_entity(query, id)
+    def by_entity(query, id),
+      do: where(query, [d], d.entity_id == ^id)
+
+    @spec by_network(Queryable.t, Network.t | Network.id) ::
+      Queryable.t
+    def by_network(query \\ Database, network_or_id)
+    def by_network(query, %Network{network_id: id}),
+      do: by_network(query, id)
+    def by_network(query, id),
+      do: where(query, [d], d.network_id == ^id)
+
+    @spec by_server(Queryable.t, Server.t | Server.id) ::
+      Queryable.t
+    def by_server(query \\ Database, server_or_id)
+    def by_server(query, %Server{server_id: id}),
+      do: by_server(query, id)
+    def by_server(query, id),
+      do: where(query, [d], d.server_id == ^id)
+
+    @spec by_ip(Queryable.t, IPv4.t) ::
+      Queryable.t
+    def by_ip(query \\ Database, ip),
+      do: where(query, [d], d.server_ip == ^ip)
+
+    @spec order_by_newest_on_network(Queryable.t) ::
+      Queryable.t
+    def order_by_newest_on_network(query),
+      do: order_by(query, asc: :network_id, asc: :inserted_at)
   end
 end

@@ -4,7 +4,6 @@ defmodule Helix.Server.Action.Server do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
-  alias Helix.Server.Repo
 
   @spec create(Constant.t) ::
     {:ok, Server.t}

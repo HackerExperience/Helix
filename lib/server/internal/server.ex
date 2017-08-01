@@ -4,8 +4,6 @@ defmodule Helix.Server.Internal.Server do
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
-  import Ecto.Query, only: [where: 3]
-
   @spec fetch(Server.id) ::
     Server.t
     | nil
