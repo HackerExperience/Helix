@@ -8,7 +8,7 @@ defmodule Helix.Log.Query.LogTest do
 
   alias Helix.Test.Factory.Log, as: Factory
 
-  describe "get_logs_on_server/2" do
+  describe "get_logs_on_server/1" do
     # Well, i think that the function name might be a bit obvious, eh ?
     test "returns logs that belongs to a server" do
       # Random logs on other servers
@@ -32,7 +32,7 @@ defmodule Helix.Log.Query.LogTest do
     end
   end
 
-  describe "get_logs_from_entity_on_server/3" do
+  describe "get_logs_from_entity_on_server/2" do
     test "returns logs that were created by the entity" do
       server = Random.pk()
       entity = Random.pk()
@@ -40,7 +40,7 @@ defmodule Helix.Log.Query.LogTest do
       create_log = fn params ->
         # FIXME
         params = Map.merge(Factory.params_for(:log), params)
-        {:ok, %{log: log}} = LogAction.create(
+        {:ok, log} = LogAction.create(
           params.server_id,
           params.entity_id,
           params.message)

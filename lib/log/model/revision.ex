@@ -78,12 +78,12 @@ defmodule Helix.Log.Model.Revision do
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.Revision
 
-    @spec from_log(Queryable.t, Log.t | Log.id) ::
+    @spec by_log(Queryable.t, Log.t | Log.id) ::
       Queryable.t
-    def from_log(query \\ Revision, log_or_id)
-    def from_log(query, %Log{log_id: id}),
-      do: from_log(query, id)
-    def from_log(query, id),
+    def by_log(query \\ Revision, log_or_id)
+    def by_log(query, %Log{log_id: id}),
+      do: by_log(query, id)
+    def by_log(query, id),
       do: where(query, [r], r.log_id == ^id)
 
     @spec last(Queryable.t, non_neg_integer) ::

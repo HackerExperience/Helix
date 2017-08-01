@@ -21,8 +21,6 @@ defmodule Helix.Log.Action.LogTest do
       result = LogAction.create(server_id, entity_id, message)
 
       assert {:ok, _} = result
-      assert {:ok, %{log: %Log{}, events: events}} = result
-      assert Enum.all?(events, &Map.has_key?(&1, :__struct__))
     end
   end
 
@@ -35,8 +33,7 @@ defmodule Helix.Log.Action.LogTest do
 
       result = LogAction.revise(log, entity, message, forge_version)
 
-      assert {:ok, %{events: events}} = result
-      assert Enum.all?(events, &Map.has_key?(&1, :__struct__))
+      assert {:ok, _} = result
       assert %{message: ^message} = LogQuery.fetch(log.log_id)
     end
   end
@@ -58,13 +55,14 @@ defmodule Helix.Log.Action.LogTest do
       log = LogQuery.fetch(log.log_id)
       assert %{message: ^message2} = log
 
-      {:ok, _} = LogAction.recover(log)
+      assert {:ok, :recovered} == LogAction.recover(log)
       assert %{message: ^message1} = LogQuery.fetch(log.log_id)
 
-      {:ok, _} = LogAction.recover(log)
+      assert {:ok, :recovered} == LogAction.recover(log)
       assert %{message: ^message0} = LogQuery.fetch(log.log_id)
     end
 
+    @tag :pending
     test "returns LogModified event when a message is recovered" do
       log = Factory.insert(:log)
       entity = Random.pk()
@@ -81,7 +79,7 @@ defmodule Helix.Log.Action.LogTest do
       # This is an Ecto Multi return; it means that the operation failed on
       # operation "log", returning "original_revision" and that the success
       # state is the map (empty because nothing else was done)
-      assert {:error, :log, :original_revision, %{}} == LogAction.recover(log)
+      assert {:error, :original_revision} == LogAction.recover(log)
     end
 
     test "deletes log if it was forged" do
@@ -92,6 +90,7 @@ defmodule Helix.Log.Action.LogTest do
       refute Repo.get(Log, log.log_id)
     end
 
+    @tag :pending
     test "returns LogDeleted event when forged log is deleted" do
       log = Factory.insert(:log, forge_version: 1)
 

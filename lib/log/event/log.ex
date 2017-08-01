@@ -1,6 +1,5 @@
 defmodule Helix.Log.Event.Log do
 
-  alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Connection.ConnectionStartedEvent
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
@@ -31,11 +30,9 @@ defmodule Helix.Log.Event.Log do
     message_from = "File #{file_name} downloaded by #{ip_to}"
     message_to = "File #{file_name} downloaded from #{ip_from}"
 
-    # TODO: Wrap into a transaction
-    {:ok, %{events: e}} = LogAction.create(from, entity.entity_id, message_from)
-    Event.emit(e)
-    {:ok, %{events: e}} = LogAction.create(to, entity.entity_id, message_to)
-    Event.emit(e)
+    # TODO: Wrap into a transaction and emit events only on success
+    LogAction.create(from, entity, message_from)
+    LogAction.create(to, entity, message_to)
   end
 
   def log_deleter_conclusion(%LogDeleteComplete{target_log_id: log}) do
@@ -60,17 +57,9 @@ defmodule Helix.Log.Event.Log do
     message_gateway = "Logged into #{destination_ip}"
     message_destination = "#{gateway_ip} logged in as root"
 
-    # TODO: Wrap into a transaction
-    {:ok, %{events: e}} = LogAction.create(
-      gateway_id,
-      entity.entity_id,
-      message_gateway)
-    Event.emit(e)
-    {:ok, %{events: e}} = LogAction.create(
-      destination_id,
-      entity.entity_id,
-      message_destination)
-    Event.emit(e)
+    # TODO: Wrap into a transaction and emit events only on success
+    LogAction.create(gateway_id, entity, message_gateway)
+    LogAction.create(destination_id, entity, message_destination)
   end
 
   def connection_started(_) do
