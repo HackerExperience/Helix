@@ -28,7 +28,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       {:hit, server1} = CacheInternal.direct_query(:server, server_id)
 
       # Modify server
-      nip = List.first(server1.networks)
+      nip = Enum.random(server1.networks)
       nc = NetworkConnectionInternal.fetch_by_nip("::", nip.ip)
       new_ip = HELL.IPv4.autogenerate()
       {:ok, _} = NetworkConnectionInternal.update_ip(nc, new_ip)
@@ -42,7 +42,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       assert server2.expiration_date
 
       server2_ip = server2.networks
-        |> List.first()
+        |> Enum.random()
         |> Map.get(:ip)
 
       :miss = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
@@ -94,9 +94,9 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
-      nip = List.first(server.networks)
-      storage_id = List.first(server.storages)
-      component_id = List.first(server.components)
+      nip = Enum.random(server.networks)
+      storage_id = Enum.random(server.storages)
+      component_id = Enum.random(server.components)
       motherboard_id = server.motherboard_id
 
       # Purge nip

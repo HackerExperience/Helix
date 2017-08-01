@@ -22,7 +22,7 @@ defmodule Helix.Server.Action.Server do
   Attaches a motherboard to the server
 
   This function will fail if either the `motherboard_id` or the `server`
-  are attached
+  are already attached
   """
   def attach(server, motherboard_id) do
     ServerInternal.attach(server, motherboard_id)

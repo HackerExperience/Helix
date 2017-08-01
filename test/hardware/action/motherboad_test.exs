@@ -50,7 +50,6 @@ defmodule Helix.Hardware.Action.MotherboardTest do
   end
 
   describe "unlink/1 is idempotent" do
-    # setup
     slot = Factory.insert(:motherboard_slot)
 
     component = Factory.insert(slot.link_component_type)
@@ -58,32 +57,23 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
     assert slot.link_component_id
 
-    # exercise
     MotherboardAction.unlink(slot)
     MotherboardAction.unlink(slot)
 
-    # assert
     result = Repo.get(MotherboardSlot, slot.slot_id)
     refute result.link_component_id
   end
 
   describe "delete/1" do
-    test "succeeds by struct" do
-      motherboard = Factory.insert(:motherboard)
-      assert Repo.get(Motherboard, motherboard.motherboard_id)
-
-      MotherboardAction.delete(motherboard)
-
-      refute Repo.get(Motherboard, motherboard.motherboard_id)
-    end
-
-    test "succeeds by id" do
+    test "succeeds with valid data" do
       motherboard = Factory.insert(:motherboard)
       assert Repo.get(Motherboard, motherboard.motherboard_id)
 
       MotherboardAction.delete(motherboard.motherboard_id)
 
       refute Repo.get(Motherboard, motherboard.motherboard_id)
+
+      :timer.sleep(100)
     end
 
     test "is idempotent" do
@@ -94,6 +84,8 @@ defmodule Helix.Hardware.Action.MotherboardTest do
       MotherboardAction.delete(motherboard.motherboard_id)
 
       refute Repo.get(Motherboard, motherboard.motherboard_id)
+
+      :timer.sleep(100)
     end
 
     test "removes its slots" do
@@ -106,6 +98,8 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
       slots = MotherboardQuery.get_slots(mobo)
       assert Enum.empty?(slots)
+
+      :timer.sleep(100)
     end
   end
 end

@@ -25,6 +25,18 @@ defmodule Helix.Cache.Internal.Purge do
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Repo
 
+  def invalidate_entries(:server, object),
+    do: PopulateInternal.fetch_origin(:by_server, object, true)
+  def invalidate_entries(:storage, object),
+    do: PopulateInternal.fetch_origin(:by_storage, object, true)
+  def invalidate_entries(:component, object),
+    do: PopulateInternal.fetch_origin(:by_component, object, true)
+  def invalidate_entries(:network, object),
+    do: PopulateInternal.fetch_origin(:by_nip, object, true)
+  def invalidate_entries(model, _),
+    do: raise "invalidate_entries not implemented for #{inspect model}"
+
+
   def update(:server, object),
     do: PopulateInternal.populate(:by_server, object)
   def update(:storage, object),

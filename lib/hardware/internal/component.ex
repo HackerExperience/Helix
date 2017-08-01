@@ -1,5 +1,6 @@
 defmodule Helix.Hardware.Internal.Component do
 
+  alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.ComponentType
@@ -29,6 +30,8 @@ defmodule Helix.Hardware.Internal.Component do
   @spec get_motherboard_id(Component.t | Component.id) ::
     Motherboard.id
     | nil
+  def get_motherboard_id(nil),
+    do: nil
   def get_motherboard_id(component = %Component{component_type: :mobo}),
     do: component.component_id
   def get_motherboard_id(component = %Component{}) do
@@ -64,9 +67,17 @@ defmodule Helix.Hardware.Internal.Component do
   @spec delete(Component.t | Component.id) ::
     :ok
   def delete(component) do
+
+    motherboard_id = get_motherboard_id(component)
+
     component
     |> Component.Query.by_component()
     |> Repo.delete_all()
+
+    CacheAction.purge_component(component)
+    unless is_nil(motherboard_id) do
+      CacheAction.update_server_by_motherboard(motherboard_id)
+    end
 
     :ok
   end

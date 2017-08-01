@@ -5,10 +5,10 @@ config :helix, Helix.Endpoint,
   allowed_cors: ~r/http?.*localhost*/,
   url: [
     host: "localhost",
-    port: 3000
+    port: 4000
   ],
   https: [
-    port: 3000,
+    port: 4000,
     otp_app: :helix,
     keyfile: "priv/dev/ssl.key",
     certfile: "priv/dev/ssl.crt"

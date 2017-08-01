@@ -119,8 +119,11 @@ defmodule Helix.Cache.Internal.Cache do
     do: update(model, {params})
   def update(model, params) do
     StatePurgeQueue.queue(model, params, :update)
-
-    :ok
+    # case PurgeInternal.invalidate_entries(model, params) do
+    #   {:error, _} ->
+    #   _ ->
+    #     :ok
+    # end
   end
 
 

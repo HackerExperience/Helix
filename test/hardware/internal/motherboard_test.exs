@@ -143,6 +143,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
       MotherboardInternal.delete(mobo.motherboard_id)
 
       refute Repo.get(Motherboard, mobo.motherboard_id)
+
+      :timer.sleep(100)
     end
 
     test "removes its slots" do
@@ -155,6 +157,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       slots = MotherboardInternal.get_slots(mobo.motherboard_id)
       assert Enum.empty?(slots)
+
+      :timer.sleep(100)
     end
   end
 end

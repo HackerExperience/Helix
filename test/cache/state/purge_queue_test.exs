@@ -43,10 +43,10 @@ defmodule Helix.Cache.State.PurgeQueueTest do
       # Data did not came from cache
       refute Map.has_key?(server, :expiration_date)
 
-      storage_id = List.first(server.storages)
-      component_id = List.first(server.components)
+      storage_id = Enum.random(server.storages)
+      component_id = Enum.random(server.components)
       motherboard_id = server.motherboard_id
-      nip = List.first(server.networks)
+      nip = Enum.random(server.networks)
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage_id)

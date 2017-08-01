@@ -72,10 +72,52 @@ defmodule Helix.Cache.Query.CacheTest do
 
       refute StatePurgeQueue.lookup(:server, server_id)
 
+      # Ensure server *exists* on the Cache. Otherwise, invalidating it wouldn't
+      # trigger a purge/update call
+      {:ok, _server} = PopulateInternal.populate(:by_server, server_id)
+
       # Start invalidation action
       CacheAction.update_server(server_id)
 
+      # Hasn't synced yet
       assert StatePurgeQueue.lookup(:server, server_id)
+
+      # But querying it returns the row correctly
+      {:ok, server1} = CacheQuery.from_server_get_all(server_id)
+
+      # Different times!
+      {:ok, server2} = CacheQuery.from_server_get_all(server_id)
+      {:ok, server3} = CacheQuery.from_server_get_all(server_id)
+
+      # Those are actually different values, not from the cache
+      # (because the entry is still marked as purged)
+      refute Map.has_key?(server1, :expiration_date)
+      refute Map.has_key?(server2, :expiration_date)
+      refute Map.has_key?(server3, :expiration_date)
+
+      # But if we do sync it...
+      StatePurgeQueue.sync()
+
+      # ...the next query comes from the Cache
+      {:ok, server4} = CacheQuery.from_server_get_all(server_id)
+      assert server4.expiration_date
+      {:hit, _} = CacheInternal.direct_query(:server, server_id)
+
+      # And it's no longer on the purge queue
+      refute StatePurgeQueue.lookup(:server, server_id)
+
+      CacheHelper.sync_test()
+    end
+    test "builds from origin when data is marked as purged (cold)", context do
+      server_id = context.server.server_id
+
+      refute StatePurgeQueue.lookup(:server, server_id)
+
+      # Start invalidation action
+      CacheAction.update_server(server_id)
+
+      # Server isn't added to PurgeQueue because it never existed on the cache
+      refute StatePurgeQueue.lookup(:server, server_id)
 
       # Hasn't synced yet
       :miss = CacheInternal.direct_query(:server, server_id)
@@ -116,9 +158,9 @@ defmodule Helix.Cache.Query.CacheTest do
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
       motherboard_id = server.motherboard_id
-      component_id = List.first(server.components)
-      nip = List.first(server.networks)
-      storage_id = List.first(server.storages)
+      component_id = Enum.random(server.components)
+      nip = Enum.random(server.networks)
+      storage_id = Enum.random(server.storages)
 
       # Purge
       CacheAction.purge_component(component_id)

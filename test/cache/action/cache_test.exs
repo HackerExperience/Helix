@@ -2,6 +2,7 @@ defmodule Helix.Cache.Action.CacheTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -15,15 +16,15 @@ defmodule Helix.Cache.Action.CacheTest do
   def hit_everything(server_id) do
     {:hit, server1} = CacheInternal.direct_query(:server, server_id)
 
-    storage1_id = List.first(server1.storages)
+    storage1_id = Enum.random(server1.storages)
     {:hit, storage1} = CacheInternal.direct_query(:storage, storage1_id)
 
-    component1_id = List.first(server1.components)
+    component1_id = Enum.random(server1.components)
     {:hit, component1} = CacheInternal.direct_query(:component, component1_id)
 
     {:hit, motherboard1} = CacheInternal.direct_query(:component, server1.motherboard_id)
 
-    net1 = List.first(server1.networks)
+    net1 = Enum.random(server1.networks)
     {:hit, nip1} = CacheInternal.direct_query(:network, {net1.network_id, net1.ip})
 
     {server1, storage1, component1, motherboard1, nip1}
@@ -33,19 +34,35 @@ defmodule Helix.Cache.Action.CacheTest do
     assert data1.expiration_date != data2.expiration_date
   end
 
-  describe "update logic" do
-    test "update_server/1", context do
+  describe "update_server/1" do
+    test "it works", context do
       server_id = context.server.server_id
 
-      PopulateInternal.populate(:by_server, server_id)
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       # Update
       CacheAction.update_server(server_id)
 
+      # While it's not yet synced, we need to ensure all related entries
+      # are saved on the PurgeQueue
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:component, server.motherboard_id)
+      Enum.each(server.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      Enum.each(server.storages, fn(storage_id) ->
+        assert StatePurgeQueue.lookup(:storage, storage_id)
+      end)
+      Enum.each(server.networks, fn(net) ->
+        assert StatePurgeQueue.lookup(:network, {net.network_id, net.ip})
+      end)
+
+      # Sync
       StatePurgeQueue.sync()
 
+      # After the sync, stuff on DB has been changed
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
 
       assert_expiration_updated(server1, server2)
@@ -57,16 +74,73 @@ defmodule Helix.Cache.Action.CacheTest do
       CacheHelper.sync_test()
     end
 
-    test "update_storage/1", context do
+    test "it works when motherboard is nil", context do
+      server_id = context.server.server_id
+      motherboard_id = context.server.motherboard_id
+
+      PopulateInternal.populate(:by_server, server_id)
+
+      # Detach mobo. This function will call its own update_server
+      ServerInternal.detach(server_id)
+      StatePurgeQueue.sync
+
+      # Cache has been populated after detach
+      {:hit, server} = CacheInternal.direct_query(:server, server_id)
+
+      # Populated entry already has empty motherboard
+      assert server.server_id == server_id
+      assert server.entity_id
+      refute server.motherboard_id
+
+      # Update
+      CacheAction.update_server(server_id)
+
+      # It only invalidates the server
+      assert StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:component, motherboard_id)
+
+      # Sync
+      StatePurgeQueue.sync()
+
+      {:hit, server2} = CacheInternal.direct_query(:server, server_id)
+      assert server2.server_id == server_id
+      assert server2.entity_id
+      refute server2.motherboard_id
+
+      CacheHelper.sync_test()
+    end
+  end
+
+  describe "update_server_by_motherboard/1" do
+    test "it does nothing when cached data doesn't exists", context do
+      server_id = context.server.server_id
+      motherboard_id = context.server.motherboard_id
+
+      CacheAction.update_server_by_motherboard(motherboard_id)
+
+      refute StatePurgeQueue.lookup(:server, server_id)
+    end
+  end
+
+  describe "update_storage/1" do
+    test "it works", context do
       server_id = context.server.server_id
 
       PopulateInternal.populate(:by_server, server_id)
 
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
-      storage_id = List.first(server1.storages)
+      storage_id = Enum.random(server1.storages)
       CacheAction.update_storage(storage_id)
 
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage_id)
+      assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
+      Enum.map(server1.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
+
       StatePurgeQueue.sync()
 
       {server2, storage2, component2, mobo2, nip2} = hit_everything(server_id)
@@ -79,16 +153,26 @@ defmodule Helix.Cache.Action.CacheTest do
 
       CacheHelper.sync_test()
     end
+  end
 
-    test "update_component/1", context do
+  describe "update_component/1" do
+    test "it works", context do
       server_id = context.server.server_id
 
       PopulateInternal.populate(:by_server, server_id)
 
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
-      component_id = List.first(server1.components)
+      component_id = Enum.random(server1.components)
       CacheAction.update_component(component_id)
+
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
+      assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
+      Enum.map(server1.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
 
       StatePurgeQueue.sync()
 
@@ -102,7 +186,9 @@ defmodule Helix.Cache.Action.CacheTest do
 
       CacheHelper.sync_test()
     end
+  end
 
+  describe "update_nip/1" do
     test "update_nip/1", context do
       server_id = context.server.server_id
 
@@ -110,8 +196,16 @@ defmodule Helix.Cache.Action.CacheTest do
 
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
-      net = List.first(server1.networks)
+      net = Enum.random(server1.networks)
       CacheAction.update_nip(net.network_id, net.ip)
+
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
+      assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
+      Enum.map(server1.components, fn(component_id) ->
+        assert StatePurgeQueue.lookup(:component, component_id)
+      end)
+      assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
 
       StatePurgeQueue.sync()
 
@@ -125,36 +219,5 @@ defmodule Helix.Cache.Action.CacheTest do
 
       CacheHelper.sync_test()
     end
-
-    # test "purge_motherboard/1", context do
-    #   server_id = context.server.server_id
-    #   motherboard_id = context.server.motherboard_id
-
-    #   PopulateInternal.populate(:by_server, server_id)
-
-    #   {:ok, server} = CacheInternal.lookup(:motherboard, [motherboard_id])
-
-    #   refute StatePurgeQueue.lookup(:component, motherboard_id)
-
-    #   # Purge it
-    #   CacheAction.purge_motherboard(motherboard_id)
-
-    #   # Ensure mobo component is marked as purged
-    #   assert StatePurgeQueue.lookup(:component, motherboard_id)
-
-    #   # As well as all components that could be linked to that mobo
-    #   Enum.each(server.components, fn(component) ->
-    #     assert StatePurgeQueue.lookup(:component, component)
-    #   end)
-
-    #   # And the server too (which will soon be updated)
-    #   assert StatePurgeQueue.lookup(:server, server.server_id)
-
-    #   # Note that the purged motherboard will soon be re-added to the DB
-    #   # because it is still linked to server, and calling `purge_motherboard`
-    #   # will call `CacheAction.update_server`, which will re-fetch the mobo.
-
-    #   :timer.sleep(100)
-    # end
   end
 end

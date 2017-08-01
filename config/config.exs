@@ -14,7 +14,7 @@ config :helix,
     Helix.Software.Repo
   ]
 
-default_key = "asdfghjklzxcvbnm,./';[]-=1233567890!"
+default_key = "asdfghjklzxcvbnm,./';[]-=1234567890!"
 config :helix, Helix.Endpoint,
   secret_key_base: System.get_env("HELIX_ENDPOINT_SECRET_KEY") || default_key,
   pubsub: [

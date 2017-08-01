@@ -42,7 +42,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       refute cstorage == nil
       assert cstorage.storage_id == storage_id
 
-      {:hit, ccomponent} = CacheInternal.direct_query(:component, List.first(components))
+      {:hit, ccomponent} = CacheInternal.direct_query(:component, Enum.random(components))
 
       refute ccomponent == nil
       assert ccomponent.motherboard_id == motherboard_id
@@ -64,14 +64,27 @@ defmodule Helix.Cache.Internal.PopulateTest do
       # which makes this test (and all others on this module) totally dependent
       # on external state, side-effects, etc. ¯\_(ツ)_/¯
       # Since we can't test at the Internal level (i.e. some integration is
-      # required), you will find this same test at the cache integration tests
+      # required), you will find this same test at the cache integration too
 
+      # Note that, since we have cold cache (server is not on the cache),
+      # our action won't purge/update anything.
       ServerInternal.detach(context.server)
 
+      # See? Did not add to the purge queue
+      refute StatePurgeQueue.lookup(:server, server_id)
+
+      # And there's nothing on the DB. (Sync not needed but added for clarity)
+      StatePurgeQueue.sync()
+      assert :miss = CacheInternal.direct_query(:server, server_id)
+
+      # Now, if we query using the lookup/2 function, we'll populate the server
+      {:ok, _} = CacheInternal.lookup(:server, server_id)
       StatePurgeQueue.sync()
 
+      # Populated...
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
+      # With nil values
       assert server.server_id == server_id
       assert server.entity_id
       refute server.motherboard_id
@@ -79,8 +92,6 @@ defmodule Helix.Cache.Internal.PopulateTest do
       refute server.storages
       refute server.networks
       refute server.resources
-
-      CacheHelper.sync_test()
     end
 
     test "pre-existing cached entries are updated", context do
@@ -113,7 +124,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
     test "storage population", context do
       {:ok, origin} = BuilderInternal.by_server(context.server.server_id)
 
-      storage_id = List.first(origin.storages)
+      storage_id = Enum.random(origin.storages)
 
       {:ok, storage1} = PopulateInternal.populate(:by_storage, storage_id)
 
@@ -127,7 +138,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
     test "network population", context do
       {:ok, origin} = BuilderInternal.by_server(context.server.server_id)
 
-      nip = List.first(origin.networks)
+      nip = Enum.random(origin.networks)
 
       {:ok, nip1} = PopulateInternal.populate(:by_nip, {nip.network_id, nip.ip})
 
@@ -152,7 +163,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:hit, cserver} = CacheInternal.direct_query(:server, server_id)
       {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
       {:hit, cstorage} = CacheInternal.direct_query(:storage, storage_id)
-      {:hit, ccomponent} = CacheInternal.direct_query(:component, List.first(components))
+      {:hit, ccomponent} = CacheInternal.direct_query(:component, Enum.random(components))
 
       # Ensure cache has a minimal sane duration
       # Assertions may be changed if some entry do need to live for less

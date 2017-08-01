@@ -1,5 +1,6 @@
 defmodule Helix.Entity.Internal.Entity do
 
+  alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
@@ -121,15 +122,21 @@ defmodule Helix.Entity.Internal.Entity do
     |> EntityServer.Query.by_server()
     |> Repo.delete_all()
 
+    CacheAction.purge_server(server)
+
     :ok
   end
 
   @spec delete(Entity.t | Entity.id) ::
     :ok
   def delete(entity) do
+    servers = get_servers(entity)
+
     entity
     |> Entity.Query.by_entity()
     |> Repo.delete_all()
+
+    Enum.each(servers, &CacheAction.purge_server(&1))
 
     :ok
   end

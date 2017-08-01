@@ -35,7 +35,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       server_id = context.server.server_id
 
       # Ensure cache is empty
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert :miss = CacheInternal.direct_query(:server, server_id)
 
       # Insert directly into cache
       {:ok, cached} = PopulateInternal.populate(:by_server, server_id)
@@ -126,7 +126,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       assert cserver.server_id == server_id
 
       # Below is to ensure nested maps have atom indexes
-      nip = List.first(cserver.networks)
+      nip = Enum.random(cserver.networks)
       assert is_binary(nip.ip)
 
       CacheHelper.sync_test()
@@ -144,7 +144,7 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
-      storage_id = List.first(server.storages)
+      storage_id = Enum.random(server.storages)
 
       refute StatePurgeQueue.lookup(:storage, storage_id)
 

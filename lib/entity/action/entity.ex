@@ -27,7 +27,7 @@ defmodule Helix.Entity.Action.Entity do
   end
 
   # TODO: Accept entity-equivalent structs
-  @spec delete(Entity.t) ::
+  @spec delete(Entity.t | Entity.id) ::
     :ok
   @doc """
   Deletes input `entity`

@@ -26,8 +26,13 @@ defmodule Helix.Server.Action.ServerTest do
       mobo = HardwareFactory.insert(:motherboard)
 
       assert {:ok, %Server{}} = ServerAction.attach(server, mobo.motherboard_id)
+
+      :timer.sleep(100)
     end
 
+    # Review: Deprecate: This test isn't useful.
+    # If I pass any PK, it will attach the motherboard without verification
+    # The verification (and this test) should be at the Public/Henforced level
     test "fails when input is invalid" do
       server = Factory.insert(:server)
 
@@ -44,6 +49,8 @@ defmodule Helix.Server.Action.ServerTest do
       result = ServerAction.attach(server, mobo.motherboard_id)
       assert {:error, cs} = result
       refute cs.valid?
+
+      :timer.sleep(100)
     end
 
     test "fails when server already has a motherboard" do
@@ -68,6 +75,8 @@ defmodule Helix.Server.Action.ServerTest do
 
       server = Repo.get(Server, server.server_id)
       refute server.motherboard_id
+
+      :timer.sleep(100)
     end
   end
 
