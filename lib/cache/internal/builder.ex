@@ -8,6 +8,10 @@ defmodule Helix.Cache.Internal.Builder do
   each service's Internal modules. Because of this, some care must be taken
   to ensure the Internal method itself won't use, directly or indirectly, the
   cache service. Otherwise, a nasty infinite loop could happen.
+
+  These functions are quite expensive in the sense that they may have to query
+  several different services in order to compile a denormalized cache. And,
+  that's the reason Cache exists.
   """
 
   alias HELL.IPv4

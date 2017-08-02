@@ -15,7 +15,7 @@ defmodule Helix.Cache.Internal.Purge do
 
   Remember:
   - PurgeInternal.update/purge is SYNCHRONOUS (but side-population isn't)
-  - CacheInternal.update/purge is ASYNCHRONOUS (but PurgeQueue.queue/2 isn't)
+  - CacheInternal.update/purge is ASYNCHRONOUS (but adding to queue isn't)
   """
 
   alias Helix.Cache.Model.ServerCache
@@ -25,18 +25,15 @@ defmodule Helix.Cache.Internal.Purge do
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Repo
 
-  def invalidate_entries(:server, object),
-    do: PopulateInternal.fetch_origin(:by_server, object, true)
-  def invalidate_entries(:storage, object),
-    do: PopulateInternal.fetch_origin(:by_storage, object, true)
-  def invalidate_entries(:component, object),
-    do: PopulateInternal.fetch_origin(:by_component, object, true)
-  def invalidate_entries(:network, object),
-    do: PopulateInternal.fetch_origin(:by_nip, object, true)
-  def invalidate_entries(model, _),
-    do: raise "invalidate_entries not implemented for #{inspect model}"
+  @doc """
+  Given a model and an identifier, updates the cache.
 
+  It must always be called by StatePurgeQueue, during the synchronization step.
 
+  Our update logic is as dumb as possible: always modify the database, even if
+  no such entry exists. Essentially, it performs a UPSERT. As such, we delegate
+  the whole `update` implementation to `PopulateInternal.populate`.
+  """
   def update(:server, object),
     do: PopulateInternal.populate(:by_server, object)
   def update(:storage, object),
@@ -48,6 +45,16 @@ defmodule Helix.Cache.Internal.Purge do
   def update(model, _),
     do: raise "update not implemented for #{inspect model}"
 
+  @doc """
+  Given a model and an identifier, purges the cache.
+
+  It must always be called by StatePurgeQueue, during the synchronization step.
+
+  The purge logic is as dumb as it can be: attempt to delete regardless if there
+  actually is something on the DB. It also won't bother purging related data.
+  Purging/updating related data is done at higher levels, mainly at the
+  CacheAction API.
+  """
   def purge(:server, object),
     do: delete(:server, object)
   def purge(:component, object),
@@ -59,19 +66,19 @@ defmodule Helix.Cache.Internal.Purge do
   def purge(model, _),
     do: raise "purge not implemented for #{inspect model}"
 
-  def delete(:server, {server_id}) do
+  defp delete(:server, {server_id}) do
     ServerCache.Query.by_server(server_id)
     |> Repo.delete_all()
   end
-  def delete(:component, {component_id}) do
+  defp delete(:component, {component_id}) do
     ComponentCache.Query.by_component(component_id)
     |> Repo.delete_all()
   end
-  def delete(:storage, {storage_id}) do
+  defp delete(:storage, {storage_id}) do
     StorageCache.Query.by_storage(storage_id)
     |> Repo.delete_all()
   end
-  def delete(:network, {network_id, ip}) do
+  defp delete(:network, {network_id, ip}) do
     NetworkCache.Query.by_nip(network_id, ip)
     |> Repo.delete_all()
   end

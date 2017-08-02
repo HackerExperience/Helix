@@ -154,7 +154,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       ServerInternal.delete(server_id)
 
-      assert StatePurgeQueue.lookup(:server, server_id)
+      # Nothing to delete...
+      refute StatePurgeQueue.lookup(:server, server_id)
       refute StatePurgeQueue.lookup(:component, motherboard_id)
       Enum.map(server.components, fn(component_id) ->
         refute StatePurgeQueue.lookup(:component, component_id)

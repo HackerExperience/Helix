@@ -43,7 +43,8 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
       EntityInternal.unlink_server(server_id)
       EntityInternal.delete(server.entity_id)
 
-      assert StatePurgeQueue.lookup(:server, server_id)
+      # Nothing to delete...
+      refute StatePurgeQueue.lookup(:server, server_id)
       refute StatePurgeQueue.lookup(:component, server.motherboard_id)
       refute StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
 
@@ -83,7 +84,8 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       EntityInternal.unlink_server(server_id)
 
-      assert StatePurgeQueue.lookup(:server, server_id)
+      # Nothing to delete...
+      refute StatePurgeQueue.lookup(:server, server_id)
       refute StatePurgeQueue.lookup(:component, motherboard_id)
 
       StatePurgeQueue.sync()

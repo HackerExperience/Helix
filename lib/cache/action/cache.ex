@@ -41,31 +41,50 @@ defmodule Helix.Cache.Action.Cache do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.Storage
-  alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
 
+  @doc """
+  Purges the server entry from the cache.
+
+  If there is a motherboard attached to it, it will purge all related
+  objects as well (components, storages and networks).
+
+  If it does not exist on the cache, it won't purge anything. No matter the
+  change, the cache is consistent.
+  """
   def purge_server(server = %Server{}),
     do: purge_server(server.server_id)
   def purge_server(server_id) do
-    server = attempt_to_get_data(:server, server_id)
+    server = direct_cache_query(:server, server_id)
 
-    if not is_nil(server) and not is_nil(server.motherboard_id) do
-      Enum.each(server.components, &CacheInternal.purge(:component, &1))
-      Enum.each(server.storages, &CacheInternal.purge(:storage, &1))
-      CacheInternal.purge(:component, server.motherboard_id)
-      Enum.each(
-        server.networks,
-        &CacheInternal.purge(:network, {&1.network_id, &1.ip})
-      )
+    unless is_nil(server) do
+      unless is_nil(server.motherboard_id) do
+        Enum.each(server.components, &CacheInternal.purge(:component, &1))
+        Enum.each(server.storages, &CacheInternal.purge(:storage, &1))
+        CacheInternal.purge(:component, server.motherboard_id)
+        Enum.each(
+          server.networks,
+          &CacheInternal.purge(:network, {&1.network_id, &1.ip})
+        )
+      end
+      CacheInternal.purge(:server, server_id)
     end
-    CacheInternal.purge(:server, server_id)
   end
 
+  @doc """
+  Updates a server entry.
+
+  If the server has a motherboard attached to it, it will update all related
+  components as well (components, storages and networks).
+
+  If it does not exist on the cache, it won't update anything. No matter the
+  change, the cache is consistent.
+  """
   def update_server(server = %Server{}),
     do: update_server(server.server_id)
   def update_server(server_id) do
-    params = attempt_to_get_data(:server, server_id, false)
+    params = direct_cache_query(:server, server_id)
     update_server(server_id, params)
   end
   defp update_server(server_id, params) do
@@ -83,10 +102,16 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
+  @doc """
+  Given a motherboard, update its corresponding server.
+
+  If the motherboard is not found, it won't update anything, since the server
+  entry doesn't exists anyway.
+  """
   def update_server_by_motherboard(motherboard = %Motherboard{}),
     do: update_server_by_motherboard(motherboard.motherboard_id)
   def update_server_by_motherboard(motherboard_id) do
-    server = attempt_to_get_data(:motherboard, motherboard_id, false)
+    server = direct_cache_query(:motherboard, motherboard_id)
 
     # If data is not on the cache, there's no need to update it
     if server do
@@ -94,35 +119,57 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
+  @doc """
+  Given a storage, update its corresponding server.
+
+  If the storage is not found, it won't update anything. Notice that,
+  technically, it's possible a server entry exists but the storage entry
+  doesn't. It's up to the caller to make sure this distinction. If that's
+  the case, `update_storage/1` may be a better fit.
+  """
   def update_server_by_storage(storage = %Storage{}),
     do: update_server_by_storage(storage.storage_id)
   def update_server_by_storage(storage_id) do
-    server_id = attempt_to_get_data(:storage, storage_id, false)
+    server_id = direct_cache_query(:storage, storage_id)
 
     if server_id do
       update_server(server_id)
     end
   end
 
+  @doc """
+  Updates a storage entry from the cache.
+
+  It will also update the underlying server, even if it doesn't exists.
+  """
   def update_storage(storage_id) do
     {:ok, server_id} = CacheQuery.from_storage_get_server(storage_id)
     update_server(server_id)
     CacheInternal.update(:storage, storage_id)
   end
 
+  @doc """
+  Purges a storage entry.
+
+  It does not purge/update the server.
+  """
   def purge_storage(storage = %Storage{}),
     do: purge_storage(storage.storage_id)
   def purge_storage(storage_id) do
     CacheInternal.purge(:storage, storage_id)
   end
 
+  @doc """
+  Updates a component entry on the cache.
+
+  If the corresponding server is found *on the cache*, it is also updated.
+  """
   def update_component(motherboard = %Motherboard{}),
     do: update_component(motherboard.motherboard_id)
   def update_component(component = %Component{}),
     do: update_component(component.component_id)
   def update_component(component_id) do
-    # Update server too, if it exists
-    server = attempt_to_get_data(:component, component_id, false)
+    server = direct_cache_query(:component, component_id)
 
     if server do
       update_server(server.server_id)
@@ -130,6 +177,11 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.update(:component, component_id)
   end
 
+  @doc """
+  Purges a component entry from the cache.
+
+  It does not purge/update the server.
+  """
   def purge_component(motherboard = %Motherboard{}),
     do: purge_component(motherboard.motherboard_id)
   def purge_component(component = %Component{}),
@@ -138,70 +190,59 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.purge(:component, component_id)
   end
 
+  @doc """
+  Updates the nip entry on the cache.
+
+  It will also update the underlying server, even if it doesn't exists.
+  """
   def update_nip(network_id, ip) do
     {:ok, server_id} = CacheQuery.from_nip_get_server(network_id, ip)
     update_server(server_id)
     CacheInternal.update(:network, {network_id, ip})
   end
 
+  @doc """
+  Purges the nip entry from the cache.
+
+  It does not purge/update the server.
+  """
   def purge_nip(network_id, ip) do
     CacheInternal.purge(:network, {network_id, ip})
   end
 
 
   docp """
-  This is a helper function with the goal of aiding the module to fetch cached
-  or original data that is related to whatever is being purged/updated.
-  It is ugly, but so am I.
+  This is a helper function with the goal of aiding this module to fetch cached
+  data that is related to whatever is being purged/updated.
 
-  Notice there's a small but important difference from using this function
-  instead of, say, PopulateInternal.fetch_origin, which will fetch the original
-  data. Mainly, these are:
+  The reasons for this method's painful existence are:
 
-  1) It attempts to retrieve cached data first. This is important because, in
-  some cases, we only want to purge/update data if it's already cached. Another
-  important use is that calling CacheQuery.$function causes side-effects,
-  populating the entry if a miss occurs.
+  1) In some cases, we only want to purge/update data if it's already cached,
+  and calling CacheQuery.$function causes side-effects, populating the entry
+  if a miss occurs.
 
-  2) Sometimes the underlying data change (most common on purges). This means
+  2) Sometimes the underlying data changes (most common on purges). This means
   that fetching the origin will fail because that object is no longer valid.
   However, it may still be saved on the cache, and directly querying it will
   give us related data. We know the object isn't valid, but the related data is.
-
-  3) It allows for more custom/flexible logic at the Action layer.
   """
-  defp attempt_to_get_data(model, id, origin? \\ true)
-  defp attempt_to_get_data(:server, id, origin?) do
-    with {:hit, server} <- CacheInternal.direct_query(:server, id) do
-      server
-    else
+  defp direct_cache_query(:server, id) do
+    case CacheInternal.direct_query(:server, id) do
+      {:hit, server} ->
+        server
       _ ->
-        if origin? do
-          case BuilderInternal.by_server(id) do
-            {:ok, server} ->
-              server
-            _ ->
-              nil
-          end
-        end
+        nil
     end
   end
-  defp attempt_to_get_data(:motherboard, id, origin?) do
-    with {:hit, server} <- CacheInternal.direct_query(:motherboard, id) do
-      server
-    else
+  defp direct_cache_query(:motherboard, id) do
+    case CacheInternal.direct_query(:motherboard, id) do
+      {:hit, server} ->
+        server
       _ ->
-        if origin? do
-          case BuilderInternal.by_motherboard(id) do
-            {:ok, server} ->
-              server
-            _ ->
-              nil
-          end
-        end
+        nil
     end
   end
-  defp attempt_to_get_data(:component, id, origin?) do
+  defp direct_cache_query(:component, id) do
     with \
       {:hit, mobo} <- CacheInternal.direct_query(:component, id),
       server = %{} <- ServerQuery.fetch_by_motherboard(mobo.motherboard_id)
@@ -209,32 +250,15 @@ defmodule Helix.Cache.Action.Cache do
       server
     else
       _ ->
-        if origin? do
-          with \
-            {:ok, p} <- BuilderInternal.by_component(id),
-            server = %{} <- ServerQuery.fetch_by_motherboard(p.motherboard_id)
-          do
-            server
-          else
-            _ ->
-              nil
-          end
-        end
+        nil
     end
   end
-  defp attempt_to_get_data(:storage, id, origin?) do
-    with {:hit, storage} <- CacheInternal.direct_query(:storage, id) do
-      storage.server_id
-    else
+  defp direct_cache_query(:storage, id) do
+    case CacheInternal.direct_query(:storage, id) do
+      {:hit, storage} ->
+        storage.server_id
       _ ->
-        if origin? do
-          case BuilderInternal.by_storage(id) do
-            {:ok, storage} ->
-              storage.server_id
-            _ ->
-              nil
-          end
-        end
+        nil
     end
   end
 end

@@ -72,7 +72,6 @@ defmodule Helix.Server.Internal.Server do
     |> Server.Query.by_server()
     |> Repo.delete_all()
 
-    # TODO: purge -> update
     CacheAction.purge_server(server)
 
     :ok

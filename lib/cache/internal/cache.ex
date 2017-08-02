@@ -14,13 +14,19 @@ defmodule Helix.Cache.Internal.Cache do
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.StorageCache
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
-  alias Helix.Cache.Internal.Purge, as: PurgeInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Cache.Repo
 
   @type condition ::
     {atom, atom}
     | atom
+
+  @module_table %{
+    :server => ServerCache.Query,
+    :component => ComponentCache.Query,
+    :network => NetworkCache.Query,
+    :storage => StorageCache.Query
+  }
 
   docp """
   Static representation of all possible queries
@@ -54,32 +60,12 @@ defmodule Helix.Cache.Internal.Cache do
     {:component, :motherboard} => {:component, :by_component, :motherboard_id}
   }
 
-  # @spec direct_query(condition, [binary]) ::
-  #   {:hit, binary | map}
-  #   | :miss
-  @doc """
-  Directly query the cache without populating it. Reports whether it's a miss
-  or hit, along with the cached data (entire row) if it's a hit.
-  """
-  def direct_query(model, params) when not is_tuple(params) do
-    direct_query(model, {params})
-  end
-  def direct_query(condition, params) do
-    query = query_table(condition)
-    result = sql_query(query, params, true)
-    case result do
-      {:hit, data} ->
-        {:hit, post_lookup_hook(data)}
-      {:miss, :notfound} ->
-        :miss
-    end
-  end
-
   # @spec lookup(condition, [binary]) ::
   #   {:ok, binary | map}
   #   | {:error, reason :: atom}
   @doc """
-  Queries the Cache database, populating it if the requested data wasn't found.
+  Queries the Cache database, building it from origin if the requested data
+  wasn't found.
   """
   def lookup(condition, params) when not is_tuple(params),
     do: lookup(condition, {params})
@@ -95,6 +81,29 @@ defmodule Helix.Cache.Internal.Cache do
     end
   end
 
+  # @spec direct_query(condition, [binary]) ::
+  #   {:hit, binary | map}
+  #   | :miss
+  @doc """
+  Directly query the cache without populating it. Reports whether it's a miss
+  or hit, along with the cached data (entire row) if it's a hit.
+  It is still subject to expired entries, i.e. they will be filtered out. On the
+  other hand, it bypasses verification of entries at the PurgeQueue waiting to
+  be purged. Use with caution.
+  """
+  def direct_query(model, params) when not is_tuple(params),
+    do: direct_query(model, {params})
+  def direct_query(condition, params) do
+    query = query_table(condition)
+    result = sql_query(query, params, true)
+    case result do
+      {:hit, data} ->
+        {:hit, post_lookup_hook(data)}
+      {:miss, :notfound} ->
+        :miss
+    end
+  end
+
   @doc """
   Requests an entry to be purged from cache.
   Actual deletion of database entries happens asynchronously, but we immediately
@@ -103,11 +112,8 @@ defmodule Helix.Cache.Internal.Cache do
   """
   def purge(model, params) when not is_tuple(params),
     do: purge(model, {params})
-  def purge(model, params) do
-    StatePurgeQueue.queue(model, params, :purge)
-
-    :ok
-  end
+  def purge(model, params),
+    do: StatePurgeQueue.queue(model, params, :purge)
 
   @doc """
   Requests an entry to be repopulated (updated) on the cache.
@@ -117,15 +123,8 @@ defmodule Helix.Cache.Internal.Cache do
   """
   def update(model, params) when not is_tuple(params),
     do: update(model, {params})
-  def update(model, params) do
-    StatePurgeQueue.queue(model, params, :update)
-    # case PurgeInternal.invalidate_entries(model, params) do
-    #   {:error, _} ->
-    #   _ ->
-    #     :ok
-    # end
-  end
-
+  def update(model, params),
+    do: StatePurgeQueue.queue(model, params, :update)
 
   docp """
   Wrapper used to query origin data in case it isn't cached (miss)
@@ -136,44 +135,6 @@ defmodule Helix.Cache.Internal.Cache do
     else
       {:miss, reason} ->
         get_original_data(reason, query, params, full?)
-    end
-  end
-
-  docp """
-  We've tried to fetch the data but it isn't cached. This may be for two reasons:
-  1) Entry is not on the DB
-  2) Entry is on the DB but it's expired
-  3) Entry is on the DB and valid, but marked as purged on the PurgeQueue
-
-  For the first two cases, we want to notify the PurgeQueue about this entry.
-  For the latter case, however, there's no point on notifying PurgeQueue because
-  it already knows the entry is invalid.
-
-  This function fetches the actual data (from the origin), passing the reason
-  of the miss downstream, which will know whether it should notify PurgeQueue.
-  """
-  defp get_original_data(reason, query, params, full?) do
-    # If we can't find the data because it's purged, there's no need to mark it
-    # as purged (because it already is marked as purged).
-    # On the other hand, if the reason is that the entry does not exist on the DB,
-    # we will populate it soon, and as such we want to mark as purged.
-    mark_as_purged? = reason == :notfound
-
-    result = apply(
-      PopulateInternal,
-      :fetch_origin,
-      [query.function, params, mark_as_purged?]
-    )
-
-    case result do
-      {:ok, schema} ->
-        if full? do
-          {:ok, Map.from_struct(schema)}
-        else
-          {:ok, Map.get(schema, query.field)}
-        end
-      error ->
-        error
     end
   end
 
@@ -219,16 +180,36 @@ defmodule Helix.Cache.Internal.Cache do
        end
   end
 
-  defp get_module(model) do
-    case model do
-      :server ->
-        ServerCache.Query
-      :network ->
-        NetworkCache.Query
-      :storage ->
-        StorageCache.Query
-      :component ->
-        ComponentCache.Query
+  docp """
+  We've tried to fetch the data but it isn't cached. This may be for two reasons:
+  1) Entry is not on the DB
+  2) Entry is on the DB but it's expired
+  3) Entry is on the DB and valid, but marked as purged on the PurgeQueue
+
+  For the first two cases, we want to notify the PurgeQueue about this entry.
+  For the latter case, however, there's no point on notifying PurgeQueue because
+  it already knows the entry is invalid.
+
+  This function fetches the actual data (from the origin), passing the reason
+  of the miss downstream, which will know whether it should notify PurgeQueue.
+  """
+  defp get_original_data(reason, query, params, full?) do
+    # If we can't find the data because it's purged, there's no need to mark it
+    # as purged (because it already is marked as purged).
+    # On the other hand, if the reason is that the entry does not exist on the
+    # DB, we will populate it soon, and as such we want to mark as purged.
+    mark_as_purged? = reason == :notfound
+    args = [query.function, params, mark_as_purged?]
+
+    case apply(PopulateInternal, :fetch_origin, args) do
+      {:ok, schema} ->
+        if full? do
+          {:ok, Map.from_struct(schema)}
+        else
+          {:ok, Map.get(schema, query.field)}
+        end
+      error ->
+        error
     end
   end
 
@@ -246,6 +227,9 @@ defmodule Helix.Cache.Internal.Cache do
         raise RuntimeError, "Query #{inspect condition} is invalid"
     end
   end
+
+  defp get_module(model),
+    do: @module_table[model] || raise "Invalid model #{inspect model}"
 
   docp """
   Simple hook for post-processing of cache returns.
@@ -271,6 +255,13 @@ defmodule Helix.Cache.Internal.Cache do
     end)
   end
 
+  docp """
+  Utility function to transform string keys to atom keys, so,
+  from:
+    %{"foo" => "bar"}
+  to:
+    %{foo: "bar"}
+  """
   defp map_to_atoms(data = %StorageCache{}) do
     ecto_enum(data, StorageCache.__schema__(:fields))
   end

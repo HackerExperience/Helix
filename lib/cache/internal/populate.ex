@@ -2,12 +2,11 @@ defmodule Helix.Cache.Internal.Populate do
   @moduledoc """
   `Populate` is responsible for, well, populating the cache.
 
-  In order to gather the "actual" data, it uses other services' Query modules.
-  Since these services *own* that data, Cache can trust it is accurate.
+  It delegates the responsibility of gathering the "actual" data to the Cache
+  Builder module (BuilderInternal)
 
-  `Populate` is called dynamically by `Helix.Cache.Internal.Cache` every time
-  a "miss" happens, i.e. the requested data was not cached. It then proceeds
-  to figure out what the current data is (using `populate`), caching it.
+  `Populate` is only called by StatePurgeQueue during the synchronization step,
+  which is coordinated by StateQueueSync.
 
   It is designed in such a way to have independent data models, each with their
   own logic for populating the cache database.
@@ -27,11 +26,24 @@ defmodule Helix.Cache.Internal.Populate do
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
 
-  @doc """
-  Populates the corresponding model, based on its primary key.
 
-  These functions are quite expensive in the sense that they may have to query
-  several different services in order to compile a denormalized cache.
+  @doc """
+  Attempts to build the original model, based on the given primary key. If it
+  succeeds, it *won't* populate the data, but instead it will make sure all
+  data related to the object is marked as purged. Only when StatePurgeQueue
+  synchronizes will the data be cached.
+
+  The rationale for `fetch_origin/3` is simple: it is used by CacheInternal when
+  a miss occurs. We don't want to update the cache right away, hence the sync
+  step of StatePurgeQueue. So, `fetch_origin/3` simply returns the relevant data
+  and flags it as purged.
+
+  If subsequent queries come through while the data is marked as purged,
+  `fetch_origin` will keep getting called, and `BuilderInternal` will keep
+  building origin data.
+
+  For a contextualized explanation of the mark_as_purged? param, please see
+  (private) docs of `CacheInternal.get_original_data/4`
   """
   def fetch_origin(method, identifier, mark_as_purged?) do
     result = build(method, identifier)
@@ -45,6 +57,12 @@ defmodule Helix.Cache.Internal.Populate do
     result
   end
 
+  @doc """
+  Populates the corresponding model, based on its primary key.
+
+  Origin data is calculated and returned by BuilderInternal. Actual caching
+  happens at the `cache/1` method.
+  """
   def populate(method, identifier) do
     result = build(method, identifier)
 
@@ -60,6 +78,12 @@ defmodule Helix.Cache.Internal.Populate do
   defp build(method, identifier),
     do: apply(BuilderInternal, method, Tuple.to_list(identifier))
 
+  docp """
+  This function holds the logic to, given a model and a key, figure out which
+  data must be marked as purged. It then notifies StatePurgeQueue, synchronously
+
+  Its logic is usually quite similar to `cache/1`.
+  """
   defp mark_as_purged(params = %ServerParams{}) do
     if not is_nil(params.motherboard_id) do
       purge_list = [
@@ -91,11 +115,11 @@ defmodule Helix.Cache.Internal.Populate do
   end
 
   docp """
-  Coordinates the process of purging and adding cached data to the DB.
+  Coordinates the process of updating data to the database. It is responsible
+  for, given a model and a primary key, figure out which data must be updated
+  as well. This function is completely synchronous.
 
-  Purging here is required because adding to the DB is asynchronous. This means
-  that, if another query comes along while the data is still being populated,
-  we won't serve invalid data.
+  The coordination logic is similar to the one at `mark_as_purged/1`
   """
   defp cache(params = %ServerParams{}) do
     # Server
