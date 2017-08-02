@@ -6,6 +6,7 @@ defmodule Helix.Server.Henforcer.ServerTest do
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Henforcer.Server, as: Henforcer
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Factory, as: HardwareFactory
   alias Helix.Server.Factory
 
@@ -32,6 +33,8 @@ defmodule Helix.Server.Henforcer.ServerTest do
       ServerInternal.attach(server, motherboard.motherboard_id)
 
       assert Henforcer.functioning?(server.server_id)
+
+      CacheHelper.sync_test()
     end
 
     @tag :pending

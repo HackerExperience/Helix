@@ -13,6 +13,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Factory, as: AccountFactory
   alias Helix.Network.Factory, as: NetworkFactory
   alias Helix.Software.Factory, as: SoftwareFactory
@@ -32,6 +33,9 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   #   now it's good enough for me not to suffer
   defp create_server_for_account(account) do
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
+
+    :timer.sleep(100)
+    CacheHelper.sync_test()
 
     server
   end
@@ -100,9 +104,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       context.socket,
       "server:" <> server.server_id,
       %{"gateway_id" => server.server_id})
-
-    # This might emit an event...
-    :timer.sleep(250)
   end
 
   test "can not connect to a remote server without valid password", context do

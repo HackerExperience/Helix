@@ -3,9 +3,10 @@ defmodule Helix.Entity.Query.EntityTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Entity.Action.Entity, as: EntityAction
-  alias HELL.TestHelper.Random
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
+  alias HELL.TestHelper.Random
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Entity.Factory
 
   describe "get_servers/1" do
@@ -23,6 +24,8 @@ defmodule Helix.Entity.Query.EntityTest do
       server_ids = MapSet.new(server_ids)
       entity_servers = MapSet.new(EntityQuery.get_servers(entity))
       assert MapSet.equal?(server_ids, entity_servers)
+
+      CacheHelper.sync_test()
     end
   end
 end

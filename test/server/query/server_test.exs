@@ -7,6 +7,7 @@ defmodule Helix.Server.Query.ServerTest do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Server.Factory
 
   describe "fetch/1" do
@@ -29,6 +30,8 @@ defmodule Helix.Server.Query.ServerTest do
 
       fetched = ServerQuery.fetch_by_motherboard(motherboard)
       assert server.server_id == fetched.server_id
+
+      CacheHelper.sync_test()
     end
   end
 end

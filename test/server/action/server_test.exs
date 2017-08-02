@@ -2,6 +2,7 @@ defmodule Helix.Server.Action.ServerTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
@@ -27,7 +28,7 @@ defmodule Helix.Server.Action.ServerTest do
 
       assert {:ok, %Server{}} = ServerAction.attach(server, mobo.motherboard_id)
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
 
     # Review: Deprecate: This test isn't useful.
@@ -50,7 +51,7 @@ defmodule Helix.Server.Action.ServerTest do
       assert {:error, cs} = result
       refute cs.valid?
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
 
     test "fails when server already has a motherboard" do
@@ -62,6 +63,8 @@ defmodule Helix.Server.Action.ServerTest do
 
       assert {:error, cs} = result
       refute cs.valid?
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -76,7 +79,7 @@ defmodule Helix.Server.Action.ServerTest do
       server = Repo.get(Server, server.server_id)
       refute server.motherboard_id
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
   end
 
@@ -87,15 +90,18 @@ defmodule Helix.Server.Action.ServerTest do
       assert Repo.get(Server, server.server_id)
       ServerAction.delete(server)
       refute Repo.get(Server, server.server_id)
+
+      CacheHelper.sync_test()
     end
 
-    @tag :pending
     test "is idempotent" do
       server = Factory.insert(:server)
 
       assert ServerAction.delete(server)
       assert ServerAction.delete(server)
       assert ServerAction.delete(server)
+
+      CacheHelper.sync_test()
     end
   end
 end

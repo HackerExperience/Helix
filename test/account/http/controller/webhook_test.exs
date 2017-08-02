@@ -4,6 +4,7 @@ defmodule Helix.Account.HTTP.Controller.WebhookTest do
   use Helix.Test.IntegrationCase
 
   alias Comeonin.Bcrypt
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Query.Account, as: AccountQuery
 
   @token "Bearer " <> Application.get_env(:helix, :migration_token)
@@ -34,6 +35,7 @@ defmodule Helix.Account.HTTP.Controller.WebhookTest do
 
       # The account setup event was emited, so we better wait
       :timer.sleep(500)
+      CacheHelper.sync_test()
     end
 
     test "fails if request token is invalid", context do

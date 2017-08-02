@@ -5,6 +5,7 @@ defmodule Helix.Software.Internal.StorageDriveTest do
   alias HELL.TestHelper.Random
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Software.Factory
 
   test "linking succeeds with a valid storage" do
@@ -14,6 +15,8 @@ defmodule Helix.Software.Internal.StorageDriveTest do
     StorageDriveInternal.link_drive(storage, drive_id)
 
     assert drive_id in StorageDriveInternal.get_storage_drives(storage)
+
+    CacheHelper.sync_test()
   end
 
   describe "getting" do
@@ -43,5 +46,7 @@ defmodule Helix.Software.Internal.StorageDriveTest do
     StorageDriveInternal.unlink_drive(drive_id)
     StorageDriveInternal.unlink_drive(drive_id)
     refute drive_id in StorageDriveInternal.get_storage_drives(storage)
+
+    CacheHelper.sync_test()
   end
 end

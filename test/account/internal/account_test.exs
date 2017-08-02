@@ -4,6 +4,7 @@ defmodule Helix.Account.Internal.AccountTest do
 
   alias Comeonin.Bcrypt
   alias HELL.TestHelper.Random
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Internal.Account, as: AccountInternal
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSetting
@@ -32,6 +33,7 @@ defmodule Helix.Account.Internal.AccountTest do
 
       # HACK: workaround for the flow event (it's pretty heavy)
       :timer.sleep(250)
+      CacheHelper.sync_test()
     end
 
     test "fails when email is already in use" do

@@ -3,6 +3,7 @@ defmodule Helix.Server.Internal.ServerTest do
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Internal.Server, as: ServerInternal
@@ -20,6 +21,7 @@ defmodule Helix.Server.Internal.ServerTest do
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
     :timer.sleep(100)
+    CacheHelper.sync_test()
 
     {:ok, account: account, server: server}
   end
@@ -52,8 +54,6 @@ defmodule Helix.Server.Internal.ServerTest do
       server = context.server
       result = ServerInternal.fetch_by_motherboard(server.motherboard_id)
       assert server.server_id == result.server_id
-
-      :timer.sleep(250)
     end
 
     test "fails with non-existing id" do
@@ -66,8 +66,6 @@ defmodule Helix.Server.Internal.ServerTest do
       result = ServerInternal.fetch_by_motherboard(motherboard)
 
       assert result.server_id == context.server.server_id
-
-      :timer.sleep(250)
     end
 
     test "fails with non-existing component" do
@@ -84,5 +82,7 @@ defmodule Helix.Server.Internal.ServerTest do
     ServerInternal.delete(server.server_id)
 
     refute Repo.get(Server, server.server_id)
+
+    CacheHelper.sync_test()
   end
 end

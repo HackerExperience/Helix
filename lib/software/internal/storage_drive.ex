@@ -49,8 +49,10 @@ defmodule Helix.Software.Internal.StorageDrive do
       |> StorageDrive.Query.by_drive_id()
       |> Repo.delete_all()
 
-    CacheAction.purge_storage(storage)
-    CacheAction.update_server_by_storage(storage)
+    if storage do
+      CacheAction.purge_storage(storage)
+      CacheAction.update_server_by_storage(storage)
+    end
 
     :ok
   end

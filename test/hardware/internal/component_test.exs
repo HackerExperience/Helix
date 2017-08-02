@@ -3,6 +3,7 @@ defmodule Helix.Hardware.Internal.ComponentTest do
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Component, as: ComponentInternal
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Repo
@@ -27,5 +28,7 @@ defmodule Helix.Hardware.Internal.ComponentTest do
     ComponentInternal.delete(component.component_id)
     ComponentInternal.delete(component.component_id)
     refute Repo.get(Component, component.component_id)
+
+    CacheHelper.sync_test()
   end
 end

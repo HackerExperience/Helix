@@ -2,6 +2,7 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
@@ -46,6 +47,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       {:ok, slot} = MotherboardInternal.link(slot, component)
       assert component.component_id == slot.link_component_id
+
+      CacheHelper.sync_test()
     end
 
     test "fails when slot is already in use" do
@@ -62,6 +65,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       {:error, cs} = MotherboardInternal.link(slot, component2)
       assert :link_component_id in Keyword.keys(cs.errors)
+
+      CacheHelper.sync_test()
     end
 
     test "fails when component is already in use" do
@@ -90,6 +95,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       {:error, cs} = MotherboardInternal.link(slot2, component)
       assert :link_component_id in Keyword.keys(cs.errors)
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -117,13 +124,13 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
     mobo = Factory.insert(:motherboard)
 
     mobo.slots
-    |> Enum.take_random(3)
-    |> Enum.each(fn slot ->
-      type = slot.link_component_type
-      component = component_of_type(type)
+      |> Enum.take_random(3)
+      |> Enum.each(fn slot ->
+        type = slot.link_component_type
+        component = component_of_type(type)
 
-      MotherboardInternal.link(slot, component)
-    end)
+        MotherboardInternal.link(slot, component)
+      end)
 
     MotherboardInternal.unlink_components_from_motherboard(mobo)
 
@@ -131,6 +138,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
     slots = MotherboardInternal.get_slots(mobo)
     assert Enum.all?(slots, unused_slot?)
+
+    CacheHelper.sync_test()
   end
 
   describe "motherboard deleting" do
@@ -144,7 +153,7 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       refute Repo.get(Motherboard, mobo.motherboard_id)
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
 
     test "removes its slots" do
@@ -158,7 +167,7 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
       slots = MotherboardInternal.get_slots(mobo.motherboard_id)
       assert Enum.empty?(slots)
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
   end
 end

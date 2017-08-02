@@ -6,11 +6,13 @@ defmodule Helix.Software.Internal.StorageTest do
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Model.Storage
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Software.Factory
 
-  # REVIEW: Is this is a good test name, it's weird?
-  test "creating always succeeds" do
-    assert {:ok, _} = StorageInternal.create()
+  describe "create/1" do
+    test "it works" do
+      assert {:ok, _} = StorageInternal.create()
+    end
   end
 
   describe "fetching" do
@@ -34,5 +36,7 @@ defmodule Helix.Software.Internal.StorageTest do
     assert :ok = StorageInternal.delete(storage.storage_id)
     assert :ok = StorageInternal.delete(storage.storage_id)
     refute StorageInternal.fetch(storage.storage_id)
+
+    CacheHelper.sync_test()
   end
 end

@@ -7,6 +7,7 @@ defmodule Helix.Process.State.TOP.TOPServerTest do
   alias Helix.Process.State.TOP.Server, as: TOPServer
   alias Helix.Process.Query.Process, as: ProcessQuery
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Factory, as: AccountFactory
 
   defmodule ProcessThatCausesOverflow do
@@ -30,6 +31,7 @@ defmodule Helix.Process.State.TOP.TOPServerTest do
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
     :timer.sleep(100)
+    CacheHelper.sync_test()
 
     server
   end

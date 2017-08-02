@@ -9,6 +9,7 @@ defmodule Helix.Process.Query.ProcessTest do
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Query.Process, as: ProcessQuery
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Factory, as: AccountFactory
 
   defp create_server do
@@ -16,6 +17,7 @@ defmodule Helix.Process.Query.ProcessTest do
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
     :timer.sleep(100)
+    CacheHelper.sync_test()
 
     server
   end

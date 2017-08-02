@@ -13,7 +13,7 @@ defmodule Helix.Cache.Helper do
   def cache_context do
     account = AccountFactory.insert(:account)
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
-    :timer.sleep(50)
+    :timer.sleep(100)
 
     # Note: for our purposes, function below is slightly different from
     # CacheInternal.purge_server, and should not be replaced.

@@ -10,6 +10,7 @@ defmodule Helix.Process.Event.TOPTest do
   alias Helix.Process.Repo
   alias Helix.Process.Event.TOP, as: TOPEvent
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Factory, as: HardwareFactory
   alias Helix.Server.Factory, as: ServerFactory
   alias Helix.Process.Factory
@@ -31,6 +32,8 @@ defmodule Helix.Process.Event.TOPTest do
     end)
 
     {:ok, server} = ServerAction.attach(server, motherboard.motherboard_id)
+
+    CacheHelper.sync_test()
 
     server
   end

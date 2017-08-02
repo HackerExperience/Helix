@@ -2,6 +2,7 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
@@ -18,6 +19,8 @@ defmodule Helix.Hardware.Action.MotherboardTest do
       assert {:ok, %MotherboardSlot{}} = MotherboardAction.link(
         slot,
         component.component)
+
+      CacheHelper.sync_test()
     end
 
     test "fails when slot is already in use" do
@@ -29,6 +32,8 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
       assert {:error, cs} = MotherboardAction.link(slot, component2.component)
       refute cs.valid?
+
+      CacheHelper.sync_test()
     end
 
     test "fails when component is already in use" do
@@ -46,6 +51,8 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
       assert {:error, cs} = MotherboardAction.link(slot2, component.component)
       refute cs.valid?
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -62,6 +69,8 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
     result = Repo.get(MotherboardSlot, slot.slot_id)
     refute result.link_component_id
+
+    CacheHelper.sync_test()
   end
 
   describe "delete/1" do
@@ -73,7 +82,7 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
       refute Repo.get(Motherboard, motherboard.motherboard_id)
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
 
     test "is idempotent" do
@@ -85,7 +94,7 @@ defmodule Helix.Hardware.Action.MotherboardTest do
 
       refute Repo.get(Motherboard, motherboard.motherboard_id)
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
 
     test "removes its slots" do
@@ -99,7 +108,7 @@ defmodule Helix.Hardware.Action.MotherboardTest do
       slots = MotherboardQuery.get_slots(mobo)
       assert Enum.empty?(slots)
 
-      :timer.sleep(100)
+      CacheHelper.sync_test()
     end
   end
 end

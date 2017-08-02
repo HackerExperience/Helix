@@ -10,6 +10,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
   alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Account.Websocket.Channel.Account, as: Channel
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Entity.Factory, as: EntityFactory
   alias Helix.Hardware.Factory, as: HardwareFactory
   alias Helix.Server.Factory, as: ServerFactory
@@ -43,6 +44,8 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
       MotherboardAction.link(slot, component)
     end)
     {:ok, server} = ServerAction.attach(server, motherboard.motherboard_id)
+
+    CacheHelper.sync_test()
 
     server
   end

@@ -2,6 +2,7 @@ defmodule Helix.Hardware.Action.ComponentTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Action.Component, as: ComponentAction
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
@@ -40,6 +41,8 @@ defmodule Helix.Hardware.Action.ComponentTest do
       ComponentAction.delete(component)
 
       refute Repo.get(Component, component.component_id)
+
+      CacheHelper.sync_test()
     end
 
     test "succeeds by id" do
@@ -49,6 +52,8 @@ defmodule Helix.Hardware.Action.ComponentTest do
       ComponentAction.delete(component.component_id)
 
       refute Repo.get(Component, component.component_id)
+
+      CacheHelper.sync_test()
     end
 
     test "is idempotent" do
@@ -59,6 +64,8 @@ defmodule Helix.Hardware.Action.ComponentTest do
       ComponentAction.delete(component.component_id)
 
       refute Repo.get(Component, component.component_id)
+
+      CacheHelper.sync_test()
     end
   end
 end

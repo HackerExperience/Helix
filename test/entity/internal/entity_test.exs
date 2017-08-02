@@ -3,6 +3,7 @@ defmodule Helix.Entity.Internal.EntityTest do
   use Helix.Test.IntegrationCase
 
   alias HELL.TestHelper.Random
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
@@ -69,6 +70,8 @@ defmodule Helix.Entity.Internal.EntityTest do
       assert Repo.get(Entity, entity.entity_id)
       EntityInternal.delete(entity)
       refute Repo.get(Entity, entity.entity_id)
+
+      CacheHelper.sync_test()
     end
 
     test "succeeds by id" do
@@ -77,6 +80,8 @@ defmodule Helix.Entity.Internal.EntityTest do
       assert Repo.get(Entity, entity.entity_id)
       EntityInternal.delete(entity.entity_id)
       refute Repo.get(Entity, entity.entity_id)
+
+      CacheHelper.sync_test()
     end
 
     test "is idempotent" do
@@ -88,6 +93,8 @@ defmodule Helix.Entity.Internal.EntityTest do
       EntityInternal.delete(entity.entity_id)
 
       refute Repo.get(Entity, entity.entity_id)
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -100,6 +107,8 @@ defmodule Helix.Entity.Internal.EntityTest do
 
       assert link.component_id == component_id
       assert link.entity_id == entity.entity_id
+
+      CacheHelper.sync_test()
     end
 
     test "fails when entity doesn't exist" do
@@ -125,6 +134,8 @@ defmodule Helix.Entity.Internal.EntityTest do
         |> Repo.preload(:components, force: true)
         |> Map.fetch!(:components)
       assert Enum.empty?(components)
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -137,6 +148,8 @@ defmodule Helix.Entity.Internal.EntityTest do
 
       assert link.server_id == server_id
       assert link.entity_id == entity.entity_id
+
+      CacheHelper.sync_test()
     end
 
     test "fails when entity doesn't exist" do
@@ -162,6 +175,8 @@ defmodule Helix.Entity.Internal.EntityTest do
         |> Repo.preload(:servers, force: true)
         |> Map.fetch!(:servers)
       assert Enum.empty?(servers)
+
+      CacheHelper.sync_test()
     end
   end
 end

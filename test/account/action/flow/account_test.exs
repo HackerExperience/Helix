@@ -2,6 +2,7 @@ defmodule Helix.Account.Action.Flow.AccountTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
@@ -17,6 +18,7 @@ defmodule Helix.Account.Action.Flow.AccountTest do
       #   before the test ends (otherwise the callbacks will not have access to
       #   the repo because Ecto.Sandbox)
       :timer.sleep(250)
+      CacheHelper.sync_test()
 
       assert {:ok, %{entity: entity}} = result
       assert %Entity{} = entity
