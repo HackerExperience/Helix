@@ -49,6 +49,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       refute StatePurgeQueue.lookup(:server, server_id)
       refute StatePurgeQueue.lookup(:component, motherboard_id)
+
+      CacheHelper.sync_test()
     end
 
     test "detach motherboard cleans cache", context do
@@ -88,6 +90,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
       Enum.each(components, fn(component_id) ->
         assert {:hit, _} = CacheInternal.direct_query(:component, component_id)
       end)
+
+      CacheHelper.sync_test()
     end
 
     test "detach motherboard cleans cache (cold)", context do
@@ -134,6 +138,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       assert {:error, reason} = CacheQuery.from_server_get_all(server_id)
       assert reason == {:server, :notfound}
+
+      CacheHelper.sync_test()
     end
 
     test "deleting server cleans cache (cold)", context do
@@ -163,6 +169,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       assert {:error, reason} = CacheQuery.from_server_get_all(server_id)
       assert reason == {:server, :notfound}
+
+      CacheHelper.sync_test()
     end
   end
 end

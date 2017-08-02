@@ -2,34 +2,17 @@ defmodule Helix.Software.Internal.Storage do
 
   import Ecto.Query, only: [join: 5, where: 3]
 
+  alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.Storage
   alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Repo
-
-  @spec create() ::
-    {:ok, Storage.t}
-    | {:error, Ecto.Changeset.t}
-  def create do
-    Storage.create_changeset()
-    |> Repo.insert()
-  end
 
   @spec fetch(Storage.id) ::
     Storage.t
     | nil
   def fetch(storage_id),
     do: Repo.get(Storage, storage_id)
-
-  @spec delete(Storage.id) ::
-    :ok
-  def delete(storage_id) do
-    Storage
-    |> where([s], s.storage_id == ^storage_id)
-    |> Repo.delete_all()
-
-    :ok
-  end
 
   @spec fetch_by_hdd(Component.id) ::
     Storage.t
@@ -52,5 +35,26 @@ defmodule Helix.Software.Internal.Storage do
     storage_id
     |> fetch()
     |> get_drives()
+  end
+
+  @spec create() ::
+    {:ok, Storage.t}
+    | {:error, Ecto.Changeset.t}
+  def create do
+    Storage.create_changeset()
+    |> Repo.insert()
+  end
+
+  @spec delete(Storage.id) ::
+    :ok
+  def delete(storage_id) do
+    Storage
+    |> where([s], s.storage_id == ^storage_id)
+    |> Repo.delete_all()
+
+    CacheAction.purge_storage(storage_id)
+    CacheAction.update_server_by_storage(storage_id)
+
+    :ok
   end
 end

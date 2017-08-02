@@ -5,6 +5,7 @@ defmodule Helix.Cache.Action.CacheTest do
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
@@ -218,6 +219,75 @@ defmodule Helix.Cache.Action.CacheTest do
       assert_expiration_updated(nip1, nip2)
 
       CacheHelper.sync_test()
+    end
+  end
+
+  describe "purge_storage/1" do
+    test "default case", context do
+      server_id = context.server.server_id
+
+      # Populate on the DB
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
+      assert {:hit, _} = CacheInternal.direct_query(:server, server_id)
+
+      storage_id = Enum.random(server.storages)
+
+      CacheAction.purge_storage(storage_id)
+
+      assert StatePurgeQueue.lookup(:storage, storage_id)
+      refute StatePurgeQueue.lookup(:server, server_id)
+
+      StatePurgeQueue.sync()
+
+      assert :miss == CacheInternal.direct_query(:storage, storage_id)
+
+      # Note that purge_storage will only purge storage, not the server
+      # It's up to the caller to also notify the server has changed,
+      # usually through `update_server_by_storage`
+      assert {:hit, _} = CacheInternal.direct_query(:server, server_id)
+    end
+  end
+
+  describe "update_server_by_storage" do
+    test "default case", context do
+      server_id = context.server.server_id
+
+      # Populate on the DB
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
+      assert {:hit, _} = CacheInternal.direct_query(:server, server_id)
+      storage_id = Enum.random(server.storages)
+
+      refute StatePurgeQueue.lookup(:server, server_id)
+
+      CacheAction.update_server_by_storage(storage_id)
+
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, storage_id)
+      assert StatePurgeQueue.lookup(:component, Enum.random(server.components))
+
+      StatePurgeQueue.sync()
+
+      assert {:hit, server2} = CacheInternal.direct_query(:server, server_id)
+      assert server2.server_id == server_id
+    end
+
+    test "default case (cold)", context do
+      server_id = context.server.server_id
+
+      # Populate on the DB
+      {:ok, server} = BuilderInternal.by_server(server_id)
+      storage_id = Enum.random(server.storages)
+
+      CacheAction.update_server_by_storage(storage_id)
+
+      # Essentially performs a noop
+      refute StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:storage, storage_id)
+      refute StatePurgeQueue.lookup(:component, Enum.random(server.components))
+
+      StatePurgeQueue.sync()
+
+      assert :miss == CacheInternal.direct_query(:server, server_id)
     end
   end
 end

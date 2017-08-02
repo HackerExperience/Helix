@@ -40,6 +40,7 @@ defmodule Helix.Cache.Action.Cache do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Software.Model.Storage
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
@@ -93,12 +94,24 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
+  def update_server_by_storage(storage = %Storage{}),
+    do: update_server_by_storage(storage.storage_id)
+  def update_server_by_storage(storage_id) do
+    server_id = attempt_to_get_data(:storage, storage_id, false)
+
+    if server_id do
+      update_server(server_id)
+    end
+  end
+
   def update_storage(storage_id) do
     {:ok, server_id} = CacheQuery.from_storage_get_server(storage_id)
     update_server(server_id)
     CacheInternal.update(:storage, storage_id)
   end
 
+  def purge_storage(storage = %Storage{}),
+    do: purge_storage(storage.storage_id)
   def purge_storage(storage_id) do
     CacheInternal.purge(:storage, storage_id)
   end
@@ -203,6 +216,21 @@ defmodule Helix.Cache.Action.Cache do
           do
             server
           else
+            _ ->
+              nil
+          end
+        end
+    end
+  end
+  defp attempt_to_get_data(:storage, id, origin?) do
+    with {:hit, storage} <- CacheInternal.direct_query(:storage, id) do
+      storage.server_id
+    else
+      _ ->
+        if origin? do
+          case BuilderInternal.by_storage(id) do
+            {:ok, storage} ->
+              storage.server_id
             _ ->
               nil
           end

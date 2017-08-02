@@ -52,6 +52,8 @@ defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
       {:ok, server4} = CacheQuery.from_server_get_all(server_id)
       assert server4.expiration_date
       assert server4.networks == server2.networks
+
+      CacheHelper.sync_test()
     end
 
     test "changing ip (cold)", context do

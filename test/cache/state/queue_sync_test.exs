@@ -37,6 +37,8 @@ defmodule Helix.Cache.State.QueueSyncTest do
 
       # And removed from the PurgeQueue
       refute StatePurgeQueue.lookup(:server, server_id)
+
+      StatePurgeQueue.sync()
     end
   end
 end

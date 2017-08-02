@@ -8,17 +8,10 @@ defmodule Helix.Cache.Internal.PopulateTest do
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
-  alias Helix.Cache.Model.ServerCache
-  alias Helix.Cache.Repo
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do
     CacheHelper.cache_context()
-  end
-
-  def direct_cache_query(server_id) do
-    ServerCache.Query.by_server(server_id)
-    |> Repo.one
   end
 
   describe "populate/2" do
@@ -169,10 +162,11 @@ defmodule Helix.Cache.Internal.PopulateTest do
       # Assertions may be changed if some entry do need to live for less
       # than 10 minutes, but that's a call to re-think whether you really
       # need such low-lived cache.
-      assert DateTime.diff(cserver.expiration_date, DateTime.utc_now()) >= 600
-      assert DateTime.diff(cnip.expiration_date, DateTime.utc_now()) >= 600
-      assert DateTime.diff(cstorage.expiration_date, DateTime.utc_now()) >= 600
-      assert DateTime.diff(ccomponent.expiration_date, DateTime.utc_now()) >= 600
+      now = DateTime.utc_now()
+      assert DateTime.diff(cserver.expiration_date, now) >= 600
+      assert DateTime.diff(cnip.expiration_date, now) >= 600
+      assert DateTime.diff(cstorage.expiration_date, now) >= 600
+      assert DateTime.diff(ccomponent.expiration_date, now) >= 600
 
       CacheHelper.sync_test()
     end

@@ -184,10 +184,10 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       nip = Enum.random(server.networks)
 
       slot = motherboard_id
-      |> MotherboardInternal.get_slots()
-      |> Enum.find(fn(slot) ->
-        slot.link_component_id == nil and slot.link_component_type == :hdd
-      end)
+        |> MotherboardInternal.get_slots()
+        |> Enum.find(fn(slot) ->
+          slot.link_component_id == nil and slot.link_component_type == :hdd
+        end)
 
       refute StatePurgeQueue.lookup(:server, server_id)
 

@@ -40,6 +40,7 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
 
       # If you want to see the behavior of deleting a component other than
       # a motherboard, like cpu or ram, check the tests for motherboard unlink
+      CacheHelper.sync_test()
     end
 
     test "component (mobo) deletion (cold)", context do
@@ -57,6 +58,8 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
 
       # We've deleted this server's mobo, so it will never populate correctly.
       assert :miss == CacheInternal.direct_query(:server, server_id)
+
+      CacheHelper.sync_test()
     end
   end
 end

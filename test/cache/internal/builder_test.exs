@@ -40,6 +40,8 @@ defmodule Helix.Cache.Internal.BuilderTest do
       refute build.storages
       refute build.networks
       refute build.resources
+
+      CacheHelper.sync_test()
     end
   end
 
