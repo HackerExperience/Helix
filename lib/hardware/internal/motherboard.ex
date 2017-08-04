@@ -12,7 +12,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Hardware.Repo
 
-  @spec fetch(Component.id) ::
+  @spec fetch(Component.idt) ::
     Motherboard.t
     | nil
   def fetch(id),
@@ -56,7 +56,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
   def preload_components(motherboard),
     do: Repo.preload(motherboard, slots: :component)
 
-  @spec get_networks(Motherboard.t | Motherboard.id) ::
+  @spec get_networks(Motherboard.t | Component.idt) ::
     [NetworkConnection.t]
   def get_networks(motherboard) do
     with \
@@ -73,7 +73,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
     end
   end
 
-  @spec get_components_ids(Motherboard.t | Motherboard.id) ::
+  @spec get_components_ids(Motherboard.t | Component.idt) ::
     [Component.id]
   def get_components_ids(motherboard) do
     motherboard
@@ -183,7 +183,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
     }
   end
 
-  @spec get_slots(Motherboard.t | Motherboard.id) ::
+  @spec get_slots(Motherboard.t | Component.idt) ::
     [MotherboardSlot.t]
   def get_slots(motherboard) do
     motherboard
@@ -200,42 +200,37 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> Repo.insert()
   end
 
-  @spec link(MotherboardSlot.t, Component.t | Component.id) ::
+  @spec link(MotherboardSlot.t, Component.idt) ::
     {:ok, MotherboardSlot.t}
     | {:error, Ecto.Changeset.t}
-  def link(slot, %Component{component_id: component_id}),
-    do: link(slot, component_id)
-  def link(slot, component_id) do
-    params = %{link_component_id: component_id}
+  def link(slot, component) do
+    params = %{link_component_id: component}
+    changeset = MotherboardSlot.update_changeset(slot, params)
 
-    result = slot
-    |> MotherboardSlot.update_changeset(params)
-    |> Repo.update()
-
-    with {:ok, _} <- result do
-      CacheAction.update_component(component_id)
+    with result = {:ok, _} <- Repo.update(changeset) do
+      CacheAction.update_component(component)
       CacheAction.update_component(slot.motherboard_id)
-    end
 
-    result
+      result
+    end
   end
 
   @spec unlink(MotherboardSlot.t) ::
     {:ok, MotherboardSlot.t}
+    | {:error, Ecto.Changeset.t}
   def unlink(slot) do
-    result = slot
-    |> MotherboardSlot.update_changeset(%{link_component_id: nil})
-    |> Repo.update()
+    params = %{link_component_id: nil}
+    changeset = MotherboardSlot.update_changeset(slot, params)
 
-    with {:ok, _} <- result do
+    with result = {:ok, _} <- Repo.update(changeset) do
       CacheAction.purge_component(slot.link_component_id)
       CacheAction.update_component(slot.motherboard_id)
-    end
 
-    result
+      result
+    end
   end
 
-  @spec unlink_components_from_motherboard(Motherboard.t | Motherboard.id) ::
+  @spec unlink_components_from_motherboard(Motherboard.t | Component.idt) ::
     :ok
   def unlink_components_from_motherboard(motherboard) do
     components = get_components_ids(motherboard)

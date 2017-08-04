@@ -27,7 +27,7 @@ defmodule Helix.Hardware.Query.Motherboard do
   defdelegate preload_components(mobo),
     to: MotherboardInternal
 
-  @spec get_slots(Motherboard.t | Motherboard.id) ::
+  @spec get_slots(Motherboard.idt) ::
     [MotherboardSlot.t]
   @doc """
   Gets every slot from a motherboard

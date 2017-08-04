@@ -56,7 +56,6 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
     # collection of components and try to link them all
     link_components = fn motherboard, components ->
       # TODO: Use with for negative checks
-      motherboard = MotherboardQuery.fetch(motherboard)
       slots = MotherboardQuery.get_slots(motherboard)
       slots = Enum.group_by(slots, &(&1.link_component_type))
 

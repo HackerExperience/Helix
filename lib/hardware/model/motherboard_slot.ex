@@ -100,9 +100,12 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     alias Helix.Hardware.Model.Motherboard
     alias Helix.Hardware.Model.MotherboardSlot
 
-    @spec by_motherboard(Queryable.t, Motherboard.idtb) ::
+    @spec by_motherboard(Queryable.t, Component.idtb | Motherboard.t) ::
       Queryable.t
-    def by_motherboard(query \\ MotherboardSlot, id),
+    def by_motherboard(query \\ MotherboardSlot, id)
+    def by_motherboard(query, %Motherboard{motherboard_id: id}),
+      do: by_motherboard(query, id)
+    def by_motherboard(query, id),
       do: where(query, [ms], ms.motherboard_id == ^id)
 
     @spec by_component(Queryable.t, Component.idtb) ::
