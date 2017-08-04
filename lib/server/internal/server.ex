@@ -8,11 +8,8 @@ defmodule Helix.Server.Internal.Server do
   @spec fetch(Server.id) ::
     Server.t
     | nil
-  def fetch(server_id) do
-    server_id
-    |> Server.Query.by_server()
-    |> Repo.one
-  end
+  def fetch(id),
+    do: Repo.get(Server, id)
 
   @spec fetch_by_motherboard(Motherboard.t | Motherboard.id) ::
     Server.t
@@ -47,30 +44,23 @@ defmodule Helix.Server.Internal.Server do
     result
   end
 
-  @spec detach(Server.t | Server.id) ::
+  @spec detach(Server.t) ::
     :ok
   def detach(server = %Server{}) do
     server
-    |> Server.Query.by_server()
-    |> Repo.update_all(set: [motherboard_id: nil])
+    |> Server.detach_motherboard()
+    |> Repo.update!()
 
     CacheAction.purge_component(server.motherboard_id)
     CacheAction.update_server(server)
 
     :ok
-    end
-  def detach(server_id) do
-    server_id
-    |> fetch()
-    |> detach()
   end
 
-  @spec delete(Server.t | Server.id) ::
+  @spec delete(Server.t) ::
     :ok
   def delete(server) do
-    server
-    |> Server.Query.by_server()
-    |> Repo.delete_all()
+    Repo.delete(server)
 
     CacheAction.purge_server(server)
 

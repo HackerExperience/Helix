@@ -13,17 +13,17 @@ defmodule Helix.Software.Internal.StorageDrive do
     [Component.id]
   def get_storage_drives(storage) do
     storage
-    |> StorageDrive.Query.from_storage()
+    |> StorageDrive.Query.by_storage()
     |> select([sd], sd.drive_id)
     |> Repo.all()
   end
 
-  @spec link_drive(Storage.t, Component.id) ::
+  @spec link_drive(Storage.t, Component.idt) ::
     :ok
     | {:error, reason :: term}
-  def link_drive(storage, drive_id) do
+  def link_drive(storage, drive) do
     result =
-      %{storage_id: storage.storage_id, drive_id: drive_id}
+      %{storage_id: storage.storage_id, drive_id: drive}
       |> StorageDrive.create_changeset()
       |> Repo.insert()
 
@@ -39,15 +39,16 @@ defmodule Helix.Software.Internal.StorageDrive do
     end
   end
 
-  @spec unlink_drive(Component.id) ::
+  @spec unlink_drive(Component.idt) ::
     :ok
-  def unlink_drive(drive_id) do
+  def unlink_drive(drive) do
+    # TODO: Check if storage is over HDD storage limits and prune files (and
+    #   storage) if necessary
+    storage = StorageInternal.fetch_by_hdd(drive)
 
-    storage = StorageInternal.fetch_by_hdd(drive_id)
-
-    drive_id
-      |> StorageDrive.Query.by_drive_id()
-      |> Repo.delete_all()
+    drive
+    |> StorageDrive.Query.by_drive()
+    |> Repo.delete_all()
 
     if storage do
       CacheAction.purge_storage(storage)

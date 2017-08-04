@@ -32,6 +32,8 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
     }
   end
 
+  @spec setup_bundle(Entity.t, map) ::
+    {:ok, Component.id}
   def setup_bundle(entity, bundle \\ player_initial_bundle()) do
     # TODO: Ecto.Multi to wrap this into one (two) transactions instead of
     #   several failable operations
@@ -83,12 +85,8 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
           bundle.motherboard),
         on_fail(fn -> ComponentAction.delete(motherboard) end),
 
-        {:ok, _} <- EntityAction.link_component(
-          entity,
-          motherboard.component_id),
-        on_fail(fn ->
-          EntityAction.unlink_component(motherboard.component_id)
-        end),
+        {:ok, _} <- EntityAction.link_component(entity, motherboard),
+        on_fail(fn -> EntityAction.unlink_component(motherboard) end),
 
         {:ok, components} <- build_components.(),
 
@@ -102,13 +100,13 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
 
         hdd = %{} <- Enum.find(components, &(&1.component_type == :hdd)),
         {:ok, storage} <- StorageAction.create(),
-        on_fail(fn -> StorageAction.delete(storage.storage_id) end),
-        :ok <- StorageDriveAction.link_drive(storage, hdd.component_id),
-        on_fail(fn -> StorageDriveAction.unlink_drive(hdd.component_id) end),
+        on_fail(fn -> StorageAction.delete(storage) end),
+        :ok <- StorageDriveAction.link_drive(storage, hdd),
+        on_fail(fn -> StorageDriveAction.unlink_drive(hdd) end),
 
         nic = %{} <- Enum.find(components, &(&1.component_type == :nic)),
-        nic = Repo.get(NIC, nic.component_id),
-        nic_params = %{network_connection_id: net.network_connection_id},
+        nic = Repo.get(NIC, nic),
+        nic_params = %{network_connection_id: net},
         cs = NIC.update_changeset(nic, nic_params),
         {:ok, _} <- Repo.update(cs),
         # Below is because `motherboard` is actually a component

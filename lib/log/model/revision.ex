@@ -81,6 +81,11 @@ defmodule Helix.Log.Model.Revision do
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.Revision
 
+    @spec by_id(Queryable.t, Revision.idtb) ::
+      Queryable.t
+    def by_id(query \\ Revision, id),
+      do: where(query, [r], r.revision_id == ^id)
+
     @spec by_log(Queryable.t, Log.idtb) ::
       Queryable.t
     def by_log(query \\ Revision, id),

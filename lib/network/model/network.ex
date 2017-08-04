@@ -20,4 +20,16 @@ defmodule Helix.Network.Model.Network do
 
     field :name, :string
   end
+
+  defmodule Query do
+    import Ecto.Query
+
+    alias Ecto.Queryable
+    alias Helix.Network.Model.Network
+
+    @spec by_id(Queryable.t, Network.idtb) ::
+      Queryable.t
+    def by_id(query \\ Network, id),
+      do: where(query, [n], n.network_id == ^id)
+  end
 end

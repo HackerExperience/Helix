@@ -181,7 +181,12 @@ defmodule Helix.Software.Model.File do
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @spec from_id_list(Queryable.t, [File.id]) ::
+    @spec by_id(Queryable.t, File.idtb) ::
+      Queryable.t
+    def by_id(query \\ File, id),
+      do: where(query, [f], f.file_id == ^id)
+
+    @spec from_id_list(Queryable.t, [File.idtb], :and | :or) ::
       Queryable.t
     def from_id_list(query \\ File, id_list, comparison_operator \\ :and)
     def from_id_list(query, id_list, :and),

@@ -19,7 +19,8 @@ defmodule Helix.Entity.Action.Entity do
   """
   def create_from_specialization(%Account{account_id: account_id}) do
     params = %{
-      entity_id: account_id,
+      # FIXME
+      entity_id: to_string(account_id),
       entity_type: :account
     }
 

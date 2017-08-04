@@ -26,14 +26,14 @@ defmodule Helix.Account.Action.Flow.Account do
       do
         {:ok, %{entity: entity, server: server}}
       else
-        _ ->
+        _err ->
           # TODO: Improve returned error
           :error
       end
     end
   end
-  def setup_account(account_id) when is_binary(account_id) do
-    account_id
+  def setup_account(id = %Account.ID{}) do
+    id
     |> AccountQuery.fetch()
     |> setup_account()
   end

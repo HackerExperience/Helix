@@ -8,7 +8,7 @@ defmodule Helix.Entity.Internal.Entity do
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
 
-  @spec fetch(Entity.t | Entity.id) ::
+  @spec fetch(Entity.id) ::
     Entity.t
     | nil
   @doc """
@@ -22,13 +22,10 @@ defmodule Helix.Entity.Internal.Entity do
       iex> fetch("1::fff")
       nil
   """
-  def fetch(entity) do
-    entity
-    |> Entity.Query.by_entity()
-    |> Repo.one
-  end
+  def fetch(id),
+    do: Repo.get(Entity, id)
 
-  @spec fetch_by_server(Server.t | Server.id) ::
+  @spec fetch_by_server(Server.idt) ::
     Entity.t
     | nil
   @doc """
@@ -45,27 +42,19 @@ defmodule Helix.Entity.Internal.Entity do
   nil
   """
   def fetch_by_server(server) do
-    entity_server = server
-      |> EntityServer.Query.by_server()
-      |> Repo.one()
-
-    if entity_server do
-      entity_server
-      |> Repo.preload(:entity)
-      |> Map.get(:entity)
-    else
-      nil
-    end
+    server
+    |> Entity.Query.owns_server()
+    |> Repo.one()
   end
 
-  @spec get_servers(Entity.t | Entity.id) ::
+  @spec get_servers(Entity.t) ::
     [EntityServer.t]
   @doc """
   Returns a list of servers that belong to a given entity.
   """
   def get_servers(entity) do
     entity
-    |> EntityServer.Query.from_entity()
+    |> EntityServer.Query.by_entity()
     |> Repo.all()
     |> Enum.map(&(&1.server_id))
   end
@@ -79,20 +68,16 @@ defmodule Helix.Entity.Internal.Entity do
     |> Repo.insert()
   end
 
-  @spec link_component(Entity.t | Entity.id, Component.t | Component.id) ::
+  @spec link_component(Entity.t, Component.idt) ::
     {:ok, any}
     | {:error, Ecto.Changeset.t}
-  def link_component(%Entity{entity_id: entity_id}, component_id),
-    do: link_component(entity_id, component_id)
-  def link_component(entity_id, %Component{component_id: component_id}),
-    do: link_component(entity_id, component_id)
-  def link_component(entity_id, component_id) do
-    %{entity_id: entity_id, component_id: component_id}
+  def link_component(entity, component_id) do
+    %{entity_id: entity, component_id: component_id}
     |> EntityComponent.create_changeset()
-    |> Repo.insert
+    |> Repo.insert()
   end
 
-  @spec unlink_component(Component.t | Component.id) ::
+  @spec unlink_component(Component.idt) ::
     :ok
   def unlink_component(component) do
     component
@@ -102,20 +87,16 @@ defmodule Helix.Entity.Internal.Entity do
     :ok
   end
 
-  @spec link_server(Entity.t | Entity.id, Server.t | Server.id) ::
-    {:ok, term}
+  @spec link_server(Entity.t, Server.idt) ::
+    {:ok, EntityServer.t}
     | {:error, Ecto.Changeset.t}
-  def link_server(%Entity{entity_id: entity_id}, server_id),
-    do: link_server(entity_id, server_id)
-  def link_server(entity_id, %Server{server_id: server_id}),
-    do: link_server(entity_id, server_id)
-  def link_server(entity_id, server_id) do
-    %{entity_id: entity_id, server_id: server_id}
+  def link_server(entity, server_id) do
+    %{entity_id: entity, server_id: server_id}
     |> EntityServer.create_changeset()
     |> Repo.insert()
   end
 
-  @spec unlink_server(Server.t | Server.id) ::
+  @spec unlink_server(Server.idt) ::
     :ok
   def unlink_server(server) do
     server
@@ -127,14 +108,12 @@ defmodule Helix.Entity.Internal.Entity do
     :ok
   end
 
-  @spec delete(Entity.t | Entity.id) ::
+  @spec delete(Entity.t) ::
     :ok
   def delete(entity) do
     servers = get_servers(entity)
 
-    entity
-    |> Entity.Query.by_entity()
-    |> Repo.delete_all()
+    Repo.delete(entity)
 
     Enum.each(servers, &CacheAction.purge_server(&1))
 

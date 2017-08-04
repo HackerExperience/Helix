@@ -60,6 +60,11 @@ defmodule Helix.Network.Model.Connection do
     alias Helix.Network.Model.Link
     alias Helix.Network.Model.Tunnel
 
+    @spec by_id(Queryable.t, Connection.idtb) ::
+      Queryable.t
+    def by_id(query \\ Connection, id),
+      do: where(query, [c], c.connection_id == ^id)
+
     @spec through_node(Queryable.t, Server.idtb) ::
       Queryable.t
     def through_node(query \\ Connection, id) do

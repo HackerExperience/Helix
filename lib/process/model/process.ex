@@ -537,6 +537,11 @@ defmodule Helix.Process.Model.Process do
     alias Helix.Process.Model.Process.MapServerToProcess
     alias Helix.Process.Model.Process.State
 
+    @spec by_id(Queryable.t, Process.idtb) ::
+      Queryable.t
+    def by_id(query \\ Process, id),
+      do: where(query, [p], p.process_id == ^id)
+
     @spec from_type_list(Queryable.t, [String.t]) ::
       Queryable.t
     def from_type_list(query \\ Process, type_list),

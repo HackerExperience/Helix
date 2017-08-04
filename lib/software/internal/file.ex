@@ -1,6 +1,6 @@
 defmodule Helix.Software.Internal.File do
 
-  import Ecto.Query, only: [where: 3, select: 3]
+  import Ecto.Query, only: [select: 3]
 
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
@@ -29,7 +29,7 @@ defmodule Helix.Software.Internal.File do
   """
   def get_files_on_target_storage(target_storage) do
     target_storage
-    |> File.Query.from_storage()
+    |> File.Query.by_storage()
     |> Repo.all()
   end
 
@@ -89,14 +89,10 @@ defmodule Helix.Software.Internal.File do
     |> Repo.update()
   end
 
-  @spec delete(File.t | File.id) ::
+  @spec delete(File.t) ::
     :ok
-  def delete(file = %File{}),
-    do: delete(file.file_id)
-  def delete(file_id) do
-    File
-    |> where([f], f.file_id == ^file_id)
-    |> Repo.delete_all()
+  def delete(file) do
+    Repo.delete(file)
 
     :ok
   end
@@ -127,7 +123,7 @@ defmodule Helix.Software.Internal.File do
     File.modules
   def get_modules(file) do
     file
-    |> FileModule.Query.from_file()
+    |> FileModule.Query.by_file()
     |> select([fm], {fm.software_module, fm.module_version})
     |> Repo.all()
     |> :maps.from_list()

@@ -156,6 +156,11 @@ defmodule Helix.Account.Model.Account do
     alias Ecto.Queryable
     alias Helix.Account.Model.Account
 
+    @spec by_id(Queryable.t, Account.idtb) ::
+      Queryable.t
+    def by_id(query \\ Account, id),
+      do: where(query, [a], a.account_id == ^id)
+
     @spec by_email(Queryable.t, Account.email) ::
       Queryable.t
     def by_email(query \\ Account, email) do

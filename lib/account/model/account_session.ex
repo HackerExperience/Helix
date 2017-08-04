@@ -48,6 +48,11 @@ defmodule Helix.Account.Model.AccountSession do
     alias Helix.Account.Model.Account
     alias Helix.Account.Model.AccountSession
 
+    @spec by_id(Queryable.t, binary) ::
+      Queryable.t
+    def by_id(query \\ AccountSession, id),
+      do: where(query, [as], as.session_id == ^id)
+
     @spec by_account(Queryable.t, Account.idtb) ::
       Queryable.t
     def by_account(query \\ AccountSession, id),

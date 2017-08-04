@@ -87,6 +87,11 @@ defmodule Helix.Log.Model.Log do
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.LogTouch
 
+    @spec by_id(Queryable.t, Log.idtb) ::
+      Queryable.t
+    def by_id(query \\ Log, id),
+      do: where(query, [l], l.log_id == ^id)
+
     @spec edited_by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
     def edited_by_entity(query \\ Log, id) do

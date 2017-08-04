@@ -71,6 +71,11 @@ defmodule Helix.Hardware.Model.NetworkConnection do
     alias Helix.Network.Model.Network
     alias Helix.Hardware.Model.NetworkConnection
 
+    @spec by_id(Queryable.t, NetworkConnection.idtb) ::
+      Queryable.t
+    def by_id(query \\ NetworkConnection, id),
+      do: where(query, [nc], nc.network_connection_id == ^id)
+
     @spec by_nip(Queryable.t, Network.idtb, NetworkConnection.ip) ::
       Queryable.t
     def by_nip(query \\ NetworkConnection, network, ip),

@@ -1,33 +1,20 @@
 defmodule Helix.Account.Internal.AccountSession do
 
+  alias Helix.Account.Internal.Account, as: AccountInternal
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSession
   alias Helix.Account.Repo
 
-  @spec fetch(AccountSession.t | AccountSession.id) ::
+  @spec fetch(AccountSession.id) ::
     {:ok, AccountSession.t}
     | nil
-  def fetch(session) do
-    session
-    |> AccountSession.Query.by_session()
-    |> Repo.one()
-  end
+  def fetch(id),
+    do: Repo.one(AccountSession, id)
 
-  @spec get_account(AccountSession.t | AccountSession.id) ::
+  @spec get_account(AccountSession.t) ::
     Account.t
-    | nil
-  def get_account(nil),
-    do: nil
-  def get_account(account_session = %AccountSession{}) do
-    account_session
-    |> Repo.preload(:account)
-    |> Map.get(:account)
-  end
-  def get_account(session) do
-    session
-    |> fetch()
-    |> get_account()
-  end
+  def get_account(session = %AccountSession{}),
+    do: AccountInternal.fetch(session.account_id)
 
   @spec create(Account.t) ::
     {:ok, AccountSession.t}
@@ -35,15 +22,13 @@ defmodule Helix.Account.Internal.AccountSession do
   def create(account) do
     account
     |> AccountSession.create_changeset()
-    |> Repo.insert
+    |> Repo.insert()
   end
 
-  @spec delete(AccountSession.t | AccountSession.id) ::
+  @spec delete(AccountSession.t) ::
     :ok
   def delete(session) do
-    session
-    |> AccountSession.Query.by_session()
-    |> Repo.delete_all()
+    Repo.delete(session)
 
     :ok
   end

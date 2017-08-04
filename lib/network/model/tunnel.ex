@@ -98,6 +98,11 @@ defmodule Helix.Network.Model.Tunnel do
     alias Helix.Network.Model.Network
     alias Helix.Network.Model.Tunnel
 
+    @spec by_id(Queryable.t, Tunnel.idtb) ::
+      Queryable.t
+    def by_id(query \\ Tunnel, id),
+      do: where(query, [t], t.tunnel_id == ^id)
+
     @spec by_network(Queryable.t, Network.idtb) ::
       Queryable.t
     def by_network(query \\ Tunnel, id),

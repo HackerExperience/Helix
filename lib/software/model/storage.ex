@@ -31,4 +31,16 @@ defmodule Helix.Software.Model.Storage do
     Changeset.t
   def create_changeset,
     do: cast(%__MODULE__{}, %{}, [])
+
+  defmodule Query do
+    import Ecto.Query
+
+    alias Ecto.Queryable
+    alias Helix.Software.Model.Storage
+
+    @spec by_id(Queryable.t, Storage.idtb) ::
+      Queryable.t
+    def by_id(query \\ Storage, id),
+      do: where(query, [s], s.storage_id == ^id)
+  end
 end

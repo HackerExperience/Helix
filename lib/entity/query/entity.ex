@@ -50,7 +50,7 @@ defmodule Helix.Entity.Query.Entity do
     to: EntityInternal
 
   @spec get_entity_id(struct) ::
-    HELL.PK.t
+    Entity.id
   @doc """
   Returns the ID of an entity or entity-equivalent record
   """
@@ -58,8 +58,10 @@ defmodule Helix.Entity.Query.Entity do
     case entity do
       %Entity{entity_id: id} ->
         id
-      %Account{account_id: id} ->
-        id
+      %Account{account_id: %Account.ID{id: id}} ->
+        # HACK: entity specializations have their own ID but those ID's are 1:1
+        #   to entity ids
+        %Entity.ID{id: id}
     end
   end
 end

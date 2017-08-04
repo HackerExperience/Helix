@@ -8,11 +8,8 @@ defmodule Helix.Account.Internal.Account do
   @spec fetch(Account.id) ::
     Account.t
     | nil
-  def fetch(account_id) do
-    account_id
-    |> Account.Query.by_id()
-    |> Repo.one()
-  end
+  def fetch(id),
+    do: Repo.get(Account, id)
 
   @spec fetch_by_email(Account.email) ::
     Account.t
@@ -32,12 +29,12 @@ defmodule Helix.Account.Internal.Account do
     |> Repo.one()
   end
 
-  @spec get_settings(Account.t | Account.id) ::
+  @spec get_settings(Account.t) ::
     Setting.t
   def get_settings(account) do
     settings =
       account
-      |> AccountSetting.Query.from_account()
+      |> AccountSetting.Query.by_account()
       |> AccountSetting.Query.select_settings()
       |> Repo.one()
 
@@ -62,14 +59,10 @@ defmodule Helix.Account.Internal.Account do
     |> Repo.update()
   end
 
-  @spec delete(Account.id | Account.t) ::
+  @spec delete(Account.t) ::
     :ok
-  def delete(account = %Account{}),
-    do: delete(account.account_id)
-  def delete(account_id) do
-    account_id
-    |> Account.Query.by_id()
-    |> Repo.delete_all()
+  def delete(account) do
+    Repo.delete(account)
 
     :ok
   end

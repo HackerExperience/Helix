@@ -51,4 +51,25 @@ defmodule Helix.Entity.Model.Entity do
     |> validate_required(@creation_fields)
     |> validate_inclusion(:entity_type, EntityType.possible_types())
   end
+
+  defmodule Query do
+    import Ecto.Query
+
+    alias Ecto.Queryable
+    alias Helix.Entity.Model.Entity
+    alias Helix.Entity.Model.EntityServer
+
+    @spec by_id(Queryable.t, Entity.idtb) ::
+      Queryable.t
+    def by_id(query \\ Entity, id),
+      do: where(query, [e], e.entity_id == ^id)
+
+    @spec owns_server(Queryable.t, Server.idtb) ::
+      Queryable.t
+    def owns_server(query \\ Entity, id) do
+      query
+      |> join(:inner, [e], es in EntityServer, es.entity_id == e.entity_id)
+      |> where([e, ..., es], es.server_id == ^id)
+    end
+  end
 end

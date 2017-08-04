@@ -10,20 +10,14 @@ defmodule Helix.Network.Internal.Tunnel do
   @spec fetch(Tunnel.id) ::
     Tunnel.t
     | nil
-  def fetch(tunnel_id) do
-    tunnel_id
-    |> Tunnel.Query.by_tunnel()
-    |> Repo.one()
-  end
+  def fetch(id),
+    do: Repo.get(Tunnel, id)
 
-  @spec fetch_connection(Connection.t | Connection.id) ::
+  @spec fetch_connection(Connection.id) ::
     Connection.t
     | nil
-  def fetch_connection(connection) do
-    connection
-    |> Connection.Query.by_connection()
-    |> Repo.one()
-  end
+  def fetch_connection(id),
+    do: Repo.get(Connection, id)
 
   @spec create(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
@@ -55,12 +49,10 @@ defmodule Helix.Network.Internal.Tunnel do
     Repo.get_by(Tunnel, fetch_clauses)
   end
 
-  @spec delete(Tunnel.t | Tunnel.id) ::
+  @spec delete(Tunnel.t) ::
     :ok
   def delete(tunnel) do
-    tunnel
-    |> Tunnel.Query.by_tunnel()
-    |> Repo.delete_all()
+    Repo.delete(tunnel)
 
     :ok
   end
@@ -76,7 +68,7 @@ defmodule Helix.Network.Internal.Tunnel do
 
     query =
       network
-      && Tunnel.Query.from_network(query, network)
+      && Tunnel.Query.by_network(query, network)
       || query
 
     count = Repo.one(query)

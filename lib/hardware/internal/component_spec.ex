@@ -12,21 +12,16 @@ defmodule Helix.Hardware.Internal.ComponentSpec do
     |> Repo.insert()
   end
 
-  @spec fetch(ComponentSpec.t | ComponentSpec.id) ::
+  @spec fetch(ComponentSpec.id) ::
     ComponentSpec.t
     | nil
-  def fetch(spec) do
-    spec
-    |> ComponentSpec.Query.by_spec()
-    |> Repo.one
-  end
+  def fetch(spec),
+    do: Repo.get(ComponentSpec, spec)
 
-  @spec delete(ComponentSpec.t | ComponentSpec.id) ::
+  @spec delete(ComponentSpec.t) ::
     :ok
   def delete(spec) do
-    spec
-    |> ComponentSpec.Query.by_spec()
-    |> Repo.delete_all()
+    Repo.delete(spec)
 
     :ok
   end

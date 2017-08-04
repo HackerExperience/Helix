@@ -11,11 +11,8 @@ defmodule Helix.Hardware.Internal.Component do
   @spec fetch(Component.id) ::
     Component.t
     | nil
-  def fetch(component_id) do
-    component_id
-    |> Component.Query.by_component()
-    |> Repo.one()
-  end
+  def fetch(id),
+    do: Repo.get(Component, id)
 
   @spec get_motherboard_slot(Component.t | Component.id) ::
     MotherboardSlot.t
@@ -64,15 +61,12 @@ defmodule Helix.Hardware.Internal.Component do
     end
   end
 
-  @spec delete(Component.t | Component.id) ::
+  @spec delete(Component.t) ::
     :ok
   def delete(component) do
-
     motherboard_id = get_motherboard_id(component)
 
-    component
-    |> Component.Query.by_component()
-    |> Repo.delete_all()
+    Repo.delete(component)
 
     CacheAction.purge_component(component)
     unless is_nil(motherboard_id) do

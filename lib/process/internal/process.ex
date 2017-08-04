@@ -9,27 +9,27 @@ defmodule Helix.Process.Internal.Process do
   def fetch(process_id),
     do: Repo.get(Process, process_id)
 
-  @spec get_running_processes_of_type_on_server(Server.t | Server.id, String.t) ::
+  @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
     [Process.t]
   def get_running_processes_of_type_on_server(gateway_id, type) do
     gateway_id
-    |> Process.Query.from_server()
+    |> Process.Query.by_gateway()
     |> Process.Query.by_type(type)
     |> Process.Query.by_state(:running)
     |> Repo.all()
     |> Enum.map(&Process.load_virtual_data/1)
   end
 
-  @spec get_processes_on_server(Server.t | Server.id) ::
+  @spec get_processes_on_server(Server.idt) ::
     [Process.t]
   def get_processes_on_server(gateway_id) do
     gateway_id
-    |> Process.Query.from_server()
+    |> Process.Query.by_gateway()
     |> Repo.all()
     |> Enum.map(&Process.load_virtual_data/1)
   end
 
-  @spec get_processes_targeting_server(Server.t | Server.id) ::
+  @spec get_processes_targeting_server(Server.idt) ::
     [Process.t]
   def get_processes_targeting_server(gateway_id) do
     gateway_id
@@ -39,7 +39,7 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.load_virtual_data/1)
   end
 
-  @spec get_processes_of_type_targeting_server(Server.t | Server.id, String.t) ::
+  @spec get_processes_of_type_targeting_server(Server.idt, String.t) ::
     [Process.t]
   def get_processes_of_type_targeting_server(gateway_id, type) do
     gateway_id
@@ -50,7 +50,7 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.load_virtual_data/1)
   end
 
-  @spec get_processes_on_connection(Connection.t | Connection.id) ::
+  @spec get_processes_on_connection(Connection.idt) ::
     [Process.t]
   def get_processes_on_connection(connection_id) do
     connection_id
@@ -59,12 +59,10 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.load_virtual_data/1)
   end
 
-  @spec delete(Process.t | Process.id) ::
+  @spec delete(Process.t) ::
     :ok
   def delete(process) do
-    process
-    |> Process.Query.by_process()
-    |> Repo.delete_all()
+    Repo.delete(process)
 
     :ok
   end

@@ -45,15 +45,13 @@ defmodule Helix.Software.Internal.Storage do
     |> Repo.insert()
   end
 
-  @spec delete(Storage.id) ::
+  @spec delete(Storage.t) ::
     :ok
-  def delete(storage_id) do
-    Storage
-    |> where([s], s.storage_id == ^storage_id)
-    |> Repo.delete_all()
+  def delete(storage) do
+    Repo.delete(storage)
 
-    CacheAction.purge_storage(storage_id)
-    CacheAction.update_server_by_storage(storage_id)
+    CacheAction.purge_storage(storage)
+    CacheAction.update_server_by_storage(storage)
 
     :ok
   end

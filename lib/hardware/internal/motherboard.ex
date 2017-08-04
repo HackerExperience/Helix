@@ -12,14 +12,11 @@ defmodule Helix.Hardware.Internal.Motherboard do
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Hardware.Repo
 
-  @spec fetch(Component.t | Motherboard.id) ::
+  @spec fetch(Component.id) ::
     Motherboard.t
     | nil
-  def fetch(motherboard) do
-    motherboard
-    |> Motherboard.Query.by_motherboard()
-    |> Repo.one()
-  end
+  def fetch(id),
+    do: Repo.get(Motherboard, id)
 
   @spec fetch_by_slot(MotherboardSlot.t | MotherboardSlot.id) ::
     Motherboard.t
@@ -30,15 +27,12 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> Map.get(:motherboard)
   end
   def fetch_by_slot(slot_id) do
-    slot_id
-    |> MotherboardSlot.Query.by_slot(slot_id)
-    |> Repo.one()
-    |> case do
-         {:ok, slot} ->
-           fetch_by_slot(slot)
-         _ ->
-           nil
-       end
+    case Repo.get(MotherboardSlot, slot_id) do
+      nil ->
+        nil
+      slot ->
+        fetch_by_slot(slot)
+    end
   end
 
   @spec fetch_by_nip(Network.id, NetworkConnection.ip) ::
@@ -83,7 +77,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
     [Component.id]
   def get_components_ids(motherboard) do
     motherboard
-    |> MotherboardSlot.Query.from_motherboard()
+    |> MotherboardSlot.Query.by_motherboard()
     |> MotherboardSlot.Query.only_linked_slots()
     |> MotherboardSlot.Query.select_component_id()
     |> Repo.all()
@@ -143,14 +137,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
       cpu: non_neg_integer,
       ram: non_neg_integer,
       hdd: non_neg_integer,
-      net: %{
-        Network.id =>
-          %{
-            uplink: non_neg_integer,
-            downlink: non_neg_integer
-          }
-          | %{}
-      }
+      net: %{String.t => %{uplink: non_neg_integer, downlink: non_neg_integer}}
     }
   def resources(motherboard) do
     components_ids = get_components_ids(motherboard)
@@ -173,7 +160,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
       components_ids
       |> get_nics_from_ids()
       |> Enum.reduce(%{}, fn el, acc ->
-        network = el.network_connection.network_id
+        network = to_string(el.network_connection.network_id)
         value = Map.take(el.network_connection, [:uplink, :downlink])
 
         sum_map_values = &Map.merge(&1, value, fn _, v1, v2 -> v1 + v2 end)
@@ -200,7 +187,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
     [MotherboardSlot.t]
   def get_slots(motherboard) do
     motherboard
-    |> MotherboardSlot.Query.from_motherboard()
+    |> MotherboardSlot.Query.by_motherboard()
     |> Repo.all()
   end
 
@@ -254,8 +241,8 @@ defmodule Helix.Hardware.Internal.Motherboard do
     components = get_components_ids(motherboard)
 
     motherboard
-      |> MotherboardSlot.Query.from_motherboard()
-      |> Repo.update_all(set: [link_component_id: nil])
+    |> MotherboardSlot.Query.by_motherboard()
+    |> Repo.update_all(set: [link_component_id: nil])
 
     CacheAction.update_component(motherboard)
     Enum.map(components, &CacheAction.purge_component(&1))
@@ -263,17 +250,17 @@ defmodule Helix.Hardware.Internal.Motherboard do
     :ok
   end
 
-  @spec delete(Motherboard.t | Motherboard.id) ::
+  @spec delete(Motherboard.t) ::
     :ok
-  def delete(motherboard = %Motherboard{}),
-    do: delete(motherboard.motherboard_id)
-  def delete(motherboard_id) do
-    motherboard_id
-    |> Motherboard.Query.by_motherboard()
-    |> Repo.delete_all()
+  # FIXME: this function should not exist. To delete a motherboard, just like
+  #   any other component, the Component record should be deleted (and along
+  #   with it, check if it is a motherboard to execute the proper cache update
+  #   method)
+  def delete(motherboard) do
+    Repo.delete(motherboard)
 
-    CacheAction.purge_component(motherboard_id)
-    CacheAction.update_server_by_motherboard(motherboard_id)
+    CacheAction.purge_component(motherboard)
+    CacheAction.update_server_by_motherboard(motherboard)
 
     :ok
   end

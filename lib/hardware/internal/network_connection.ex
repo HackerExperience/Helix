@@ -7,14 +7,11 @@ defmodule Helix.Hardware.Internal.NetworkConnection do
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Repo
 
-  @spec fetch(NetworkConnection.t | NetworkConnection.id) ::
+  @spec fetch(NetworkConnection.id) ::
     NetworkConnection.t
     | nil
-  def fetch(network_connection) do
-    network_connection
-    |> NetworkConnection.Query.by_network()
-    |> Repo.one()
-  end
+  def fetch(id),
+    do: Repo.get(NetworkConnection, id)
 
   @spec fetch_by_nip(Network.id, NetworkConnection.ip) ::
     NetworkConnection.t
