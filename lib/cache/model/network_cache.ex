@@ -5,7 +5,6 @@ defmodule Helix.Cache.Model.NetworkCache do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias HELL.IPv4
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
@@ -25,11 +24,11 @@ defmodule Helix.Cache.Model.NetworkCache do
 
   @primary_key false
   schema "network_cache" do
-    field :network_id, PK,
+    field :network_id, Network.ID,
       primary_key: true
     field :ip, IPv4,
       primary_key: true
-    field :server_id, PK
+    field :server_id, Server.ID
 
     field :expiration_date, :utc_datetime
   end
@@ -55,18 +54,17 @@ defmodule Helix.Cache.Model.NetworkCache do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.NetworkConnection
     alias Helix.Network.Model.Network
     alias Helix.Cache.Model.NetworkCache
 
-    @spec by_nip(Queryable.t, Network.id, NetworkConnection.ip) ::
+    @spec by_nip(Queryable.t, Network.idtb, NetworkConnection.ip) ::
       Queryable.t
-    def by_nip(query \\ NetworkCache, network_id, ip),
-      do: where(query, [n], n.network_id == ^network_id and n.ip == ^ip)
+    def by_nip(query \\ NetworkCache, network, ip),
+      do: where(query, [n], n.network_id == ^network and n.ip == ^ip)
 
     @spec filter_expired(Queryable.t) ::
       Queryable.t

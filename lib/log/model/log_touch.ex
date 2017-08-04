@@ -17,15 +17,14 @@ defmodule Helix.Log.Model.LogTouch do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
 
   @primary_key false
   schema "log_touches" do
-    field :log_id, PK,
+    field :log_id, Log.ID,
       primary_key: true
-    field :entity_id, PK,
+    field :entity_id, Entity.ID,
       primary_key: true
 
     belongs_to :log, Log,

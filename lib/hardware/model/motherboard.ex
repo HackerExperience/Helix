@@ -5,30 +5,30 @@ defmodule Helix.Hardware.Model.Motherboard do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.MotherboardSlot
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
-  @type id :: PK.t
+  @type id :: Component.id
   @type t :: %__MODULE__{
     motherboard_id: id,
-    slots: [MotherboardSlot.t],
+    component_spec: term,
+    component: term,
+    slots: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @primary_key false
   schema "motherboards" do
-    field :motherboard_id, PK,
+    field :motherboard_id, Component.ID,
       primary_key: true
 
     belongs_to :component, Component,
       foreign_key: :motherboard_id,
       references: :component_id,
-      type: PK,
       define_field: false,
       on_replace: :delete
 
@@ -43,8 +43,6 @@ defmodule Helix.Hardware.Model.Motherboard do
   end
 
   def create_from_spec(cs = %ComponentSpec{spec: %{"slots" => slots}}) do
-    motherboard_id = PK.pk_for(:hardware_motherboard)
-
     slots = Enum.map(slots, fn {id, spec} ->
       component_type =
         spec
@@ -53,7 +51,6 @@ defmodule Helix.Hardware.Model.Motherboard do
         |> String.to_existing_atom()
 
       params = %{
-        motherboard_id: motherboard_id,
         slot_internal_id: String.to_integer(id),
         link_component_type: component_type
       }
@@ -61,11 +58,10 @@ defmodule Helix.Hardware.Model.Motherboard do
       MotherboardSlot.create_changeset(params)
     end)
 
-    component = Component.create_from_spec(cs, motherboard_id)
+    component = Component.create_from_spec(cs)
 
     %__MODULE__{}
     |> change()
-    |> put_change(:motherboard_id, motherboard_id)
     |> put_assoc(:slots, slots)
     |> put_assoc(:component, component)
   end
@@ -142,18 +138,14 @@ defmodule Helix.Hardware.Model.Motherboard do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Motherboard
 
-    @spec by_motherboard(Queryable.t, Motherboard.t | Component.t | Motherboard.id) ::
+    @spec by_component(Queryable.t, Component.idtb) ::
       Queryable.t
-    def by_motherboard(query \\ Motherboard, motherboard_or_motherboard_id)
-    def by_motherboard(query, component = %Component{}),
-      do: by_motherboard(query, component.component_id)
-    def by_motherboard(query, motherboard_id),
-      do: where(query, [m], m.motherboard_id == ^motherboard_id)
+    def by_component(query \\ Motherboard, id),
+      do: where(query, [m], m.motherboard_id == ^id)
   end
 end

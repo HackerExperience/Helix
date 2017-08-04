@@ -1,15 +1,14 @@
 defmodule Helix.Account.Model.Account do
 
   use Ecto.Schema
+  use HELL.ID, field: :account_id, meta: [0x0001]
 
   import Ecto.Changeset
   import HELL.MacroHelpers
 
   alias Comeonin.Bcrypt
   alias Ecto.Changeset
-  alias HELL.PK
 
-  @type id :: PK.t
   @type email :: String.t
   @type username :: String.t
   @type password :: String.t
@@ -38,18 +37,17 @@ defmodule Helix.Account.Model.Account do
   @update_fields ~w/email password confirmed/a
 
   @derive {Poison.Encoder, only: [:email, :username, :account_id]}
-  @primary_key false
-  @ecto_autogenerate {:account_id, {PK, :pk_for, [:account_account]}}
   schema "accounts" do
-    field :account_id, HELL.PK,
+    field :account_id, ID,
       primary_key: true
 
     field :email, :string
     field :username, :string
     field :display_name, :string
+    field :password, :string
+
     field :confirmed, :boolean,
       default: false
-    field :password, :string
 
     timestamps()
   end
@@ -129,11 +127,10 @@ defmodule Helix.Account.Model.Account do
     | [email: String.t]
   docp """
   Validates that the email is a valid email address
-
-  TODO: Remove this regex and use something better
   """
   defp validate_email(:email, value) do
     is_binary(value)
+    # TODO: Remove this regex and use something better
     && Regex.match?(~r/^[\w0-9\.\-\_\+]+@[\w0-9\.\-\_]+\.[\w0-9\-]+$/ui, value)
     && []
     || [email: "has invalid format"]
@@ -154,21 +151,11 @@ defmodule Helix.Account.Model.Account do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Account.Model.Account
 
-    @spec by_id(Account.id) ::
-      Queryable.t
-    @spec by_id(Queryable.t, Account.id) ::
-      Queryable.t
-    def by_id(query \\ Account, account_id),
-      do: where(query, [a], a.account_id == ^account_id)
-
-    @spec by_email(Account.email) ::
-      Queryable.t
     @spec by_email(Queryable.t, Account.email) ::
       Queryable.t
     def by_email(query \\ Account, email) do
@@ -177,8 +164,6 @@ defmodule Helix.Account.Model.Account do
       where(query, [a], a.email == ^email)
     end
 
-    @spec by_username(Account.username) ::
-      Queryable.t
     @spec by_username(Queryable.t, Account.username) ::
       Queryable.t
     def by_username(query \\ Account, username) do

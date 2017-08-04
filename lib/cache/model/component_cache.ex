@@ -5,7 +5,6 @@ defmodule Helix.Cache.Model.ComponentCache do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Cache.Model.Populate.Component, as: ComponentParams
 
@@ -13,7 +12,7 @@ defmodule Helix.Cache.Model.ComponentCache do
 
   @type t :: %__MODULE__{
     component_id: Component.id,
-    motherboard_id: Component.id,
+    motherboard_id: Component.id | nil,
     expiration_date: DateTime.t
   }
 
@@ -21,9 +20,9 @@ defmodule Helix.Cache.Model.ComponentCache do
 
   @primary_key false
   schema "component_cache" do
-    field :component_id, PK,
+    field :component_id, Component.ID,
       primary_key: true
-    field :motherboard_id, PK
+    field :motherboard_id, Component.ID
 
     field :expiration_date, :utc_datetime
   end
@@ -49,17 +48,16 @@ defmodule Helix.Cache.Model.ComponentCache do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Cache.Model.ComponentCache
 
-    @spec by_component(Queryable.t, Component.id) ::
+    @spec by_component(Queryable.t, Component.idtb) ::
       Queryable.t
-    def by_component(query \\ ComponentCache, component_id),
-      do: where(query, [c], c.component_id == ^component_id)
+    def by_component(query \\ ComponentCache, id),
+      do: where(query, [c], c.component_id == ^id)
 
     @spec filter_expired(Queryable.t) ::
       Queryable.t

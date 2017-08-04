@@ -5,7 +5,6 @@ defmodule Helix.Hardware.Model.Component.NIC do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias HELL.MacAddress
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
@@ -13,50 +12,55 @@ defmodule Helix.Hardware.Model.Component.NIC do
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
+  @type id :: Component.id
   @type t :: %__MODULE__{
+    nic_id: id,
+    mac_address: MacAddress.t,
+    network_connection_id: NetworkConnection.id,
+    component: term,
+    network_connection: term
   }
 
   @primary_key false
   schema "nics" do
-    field :nic_id, PK,
+    field :nic_id, Component.ID,
       primary_key: true
+
+    field :network_connection_id, NetworkConnection.ID
 
     field :mac_address, MacAddress
 
     belongs_to :component, Component,
       foreign_key: :nic_id,
       references: :component_id,
-      type: PK,
       define_field: false,
       on_replace: :delete
     belongs_to :network_connection, NetworkConnection,
       foreign_key: :network_connection_id,
       references: :network_connection_id,
-      type: PK,
+      define_field: false,
       on_replace: :nilify
   end
 
   @spec create_from_spec(ComponentSpec.t) ::
     Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: _}) do
-    nic_id = PK.pk_for(:hardware_component_nic)
-    component = Component.create_from_spec(cs, nic_id)
+    component = Component.create_from_spec(cs)
 
     %__MODULE__{}
     |> changeset(%{})
     # REVIEW: have a service that provides unique MacAddresses or just
     #   autogenerate them hoping for no conflict ?
     |> put_change(:mac_address, MacAddress.generate())
-    |> put_change(:nic_id, nic_id)
     |> put_assoc(:component, component)
   end
 
-  @spec update_changeset(t | Changeset.t, %{any => any}) ::
+  @spec update_changeset(t | Changeset.t, map) ::
     Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Changeset.t, %{any => any}) ::
+  @spec changeset(t | Changeset.t, map) ::
     Changeset.t
   def changeset(struct, params) do
     struct
@@ -84,16 +88,13 @@ defmodule Helix.Hardware.Model.Component.NIC do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [join: 4, preload: 3, where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.NIC
 
-    @spec from_components_ids([Component.id]) ::
-      Queryable.t
-    @spec from_components_ids(Queryable.t, [Component.id]) ::
+    @spec from_components_ids(Queryable.t, [Component.idtb]) ::
       Queryable.t
     def from_components_ids(query \\ NIC, components_ids),
       do: where(query, [n], n.nic_id in ^components_ids)
@@ -106,5 +107,10 @@ defmodule Helix.Hardware.Model.Component.NIC do
       |> join(:inner, [n], nc in assoc(n, :network_connection))
       |> preload([n, ..., nc], network_connection: nc)
     end
+
+    @spec by_component(Queryable.t, Component.idtb) ::
+      Queryable.t
+    def by_component(query \\ NIC, id),
+      do: where(query, [n], n.nic_id == ^id)
   end
 end

@@ -5,7 +5,6 @@ defmodule Helix.Software.Model.CryptoKey do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
@@ -13,7 +12,9 @@ defmodule Helix.Software.Model.CryptoKey do
   @type t :: %__MODULE__{
     file_id: File.id,
     target_file_id: File.id | nil,
-    target_server_id: Server.id
+    target_server_id: Server.id,
+    file: term,
+    target_file: term
   }
 
   @default_path "/.keys"
@@ -21,11 +22,11 @@ defmodule Helix.Software.Model.CryptoKey do
 
   @primary_key false
   schema "crypto_keys" do
-    field :file_id, PK,
+    field :file_id, File.ID,
       primary_key: true
 
-    field :target_file_id, PK
-    field :target_server_id, PK
+    field :target_file_id, File.ID
+    field :target_server_id, File.ID
 
     belongs_to :file, File,
       foreign_key: :file_id,
@@ -38,7 +39,7 @@ defmodule Helix.Software.Model.CryptoKey do
       define_field: false
   end
 
-  @spec create(Storage.t, Server.id, File.t) ::
+  @spec create(Storage.t, Server.idt, File.t) ::
     Changeset.t
   @doc """
   Creates a key for `target_file` on `storage`.
@@ -46,11 +47,11 @@ defmodule Helix.Software.Model.CryptoKey do
   `server_id` is the server that has `target_file` so we can inform the player
   that the key is for a certain server in their hacked database
   """
-  def create(storage = %Storage{}, server_id, target_file = %File{}) do
+  def create(storage = %Storage{}, server, target_file = %File{}) do
     file = generate_file(storage)
 
     %__MODULE__{}
-    |> cast(%{target_server_id: server_id}, [:target_server_id])
+    |> cast(%{target_server_id: server}, [:target_server_id])
     |> put_assoc(:target_file, target_file, required: true)
     |> put_assoc(:file, file, required: true)
     |> validate_required([:target_server_id])
@@ -71,33 +72,32 @@ defmodule Helix.Software.Model.CryptoKey do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [join: 5, where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Software.Model.CryptoKey
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @spec from_storage(Queryable.t, Storage.t) ::
+    @spec by_storage(Queryable.t, Storage.idtb) ::
       Queryable.t
-    def from_storage(query \\ CryptoKey, %Storage{storage_id: id}) do
+    def by_storage(query \\ CryptoKey, id) do
       query
       |> join(:inner, [k], f in File, k.file_id == f.file_id)
       |> where([k, ..., f], f.storage_id == ^id)
     end
 
-    @spec target_files_on_storage(Queryable.t, Storage.t) ::
+    @spec target_files_on_storage(Queryable.t, Storage.idtb) ::
       Queryable.t
-    def target_files_on_storage(query \\ CryptoKey, %Storage{storage_id: id}) do
+    def target_files_on_storage(query \\ CryptoKey, id) do
       query
       |> join(:inner, [k], t in File, k.target_file_id == t.file_id)
       |> where([k, ..., t], t.storage_id == ^id)
     end
 
-    @spec target_file(Queryable.t, File.t) ::
+    @spec target_file(Queryable.t, File.idtb) ::
       Queryable.t
-    def target_file(query \\ CryptoKey, %File{file_id: id}),
+    def target_file(query \\ CryptoKey, id),
       do: where(query, [k], k.target_file_id == ^id)
   end
 end

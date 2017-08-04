@@ -1,38 +1,32 @@
 defmodule Helix.Hardware.Model.NetworkConnection do
 
   use Ecto.Schema
+  use HELL.ID, field: :network_connection_id, meta: [0x0011, 0x0003]
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
   alias HELL.IPv4
-  alias HELL.PK
   alias Helix.Network.Model.Network
   alias Helix.Hardware.Model.Component.NIC
 
 
-  @type id :: PK.t
   @type ip :: IPv4.t
   @type t :: %__MODULE__{
-    network_connection_id: PK.t,
-    network_id: PK.t,
+    network_connection_id: id,
+    network_id: Network.id,
     downlink: non_neg_integer,
     uplink: non_neg_integer,
-    nic: NIC.t
+    nic: term
   }
 
   @one_ip_per_network_index :network_connections_network_id_ip_unique_index
 
-  @primary_key false
-  @ecto_autogenerate {
-    :network_connection_id,
-    {PK, :pk_for, [:hardware_network_connection]}
-  }
   schema "network_connections" do
-    field :network_connection_id, PK,
+    field :network_connection_id, ID,
       primary_key: true
 
-    field :network_id, PK
+    field :network_id, Network.ID
 
     field :ip, IPv4
 
@@ -71,24 +65,15 @@ defmodule Helix.Hardware.Model.NetworkConnection do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Network.Model.Network
     alias Helix.Hardware.Model.NetworkConnection
 
-    @spec by_network(Queryable.t, NetworkConnection.t | NetworkConnection.id) ::
+    @spec by_nip(Queryable.t, Network.idtb, NetworkConnection.ip) ::
       Queryable.t
-    def by_network(query \\ NetworkConnection, network_or_network_id)
-    def by_network(query, %NetworkConnection{network_connection_id: nc_id}),
-      do: by_network(query, nc_id)
-    def by_network(query, nc_id),
-      do: where(query, [nc], nc.network_connection_id == ^nc_id)
-
-    @spec by_nip(Queryable.t, Network.id, NetworkConnection.ip) ::
-      Queryable.t
-    def by_nip(query \\ NetworkConnection, network_id, ip),
-      do: where(query, [nc], nc.network_id == ^network_id and nc.ip == ^ip)
+    def by_nip(query \\ NetworkConnection, network, ip),
+      do: where(query, [nc], nc.network_id == ^network and nc.ip == ^ip)
   end
 end

@@ -5,7 +5,7 @@ defmodule Helix.Cache.Model.ServerCache do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
+  alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
@@ -18,7 +18,9 @@ defmodule Helix.Cache.Model.ServerCache do
     server_id: Server.id,
     entity_id: Entity.id,
     motherboard_id: Component.id,
-    networks: list,
+    # Note that this is a "cached" version of the NIP and uses the id as a
+    # string
+    networks: [%{network_id: String.t, ip: IPv4.t}],
     storages: [Storage.id],
     resources: map,
     components: [Component.id],
@@ -36,15 +38,15 @@ defmodule Helix.Cache.Model.ServerCache do
 
   @primary_key false
   schema "server_cache" do
-    field :server_id, PK,
+    field :server_id, Server.ID,
       primary_key: true
 
-    field :entity_id, PK
-    field :motherboard_id, PK
+    field :entity_id, Entity.ID
+    field :motherboard_id, Component.ID
     field :networks, {:array, :map}
-    field :storages, {:array, PK}
+    field :storages, {:array, Storage.ID}
     field :resources, :map
-    field :components, {:array, PK}
+    field :components, {:array, Component.ID}
 
     field :expiration_date, :utc_datetime
   end

@@ -72,17 +72,21 @@ defmodule Software.Cracker.ProcessType do
   defimpl Helix.Process.API.View.Process do
     @moduledoc false
 
+    alias Helix.Entity.Model.Entity
+    alias Helix.Network.Model.Connection
+    alias Helix.Network.Model.Network
+    alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.Resources
     alias Helix.Process.Model.Process.State
 
-    @spec render(map, Process.t, HELL.PK.t, HELL.PK.t) ::
+    @spec render(map, Process.t, Server.id, Entity.id) ::
       %{
-        :process_id => HELL.PK.t,
-        :gateway_id => HELL.PK.t,
-        :target_server_id => HELL.PK.t,
-        :network_id => HELL.PK.t,
-        :connection_id => HELL.PK.t,
+        :process_id => Process.id,
+        :gateway_id => Server.id,
+        :target_server_id => Server.id,
+        :network_id => Network.id,
+        :connection_id => Connection.id,
         :process_type => term,
         optional(:state) => State.state,
         optional(:allocated) => Resources.t,

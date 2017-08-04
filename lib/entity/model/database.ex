@@ -5,13 +5,23 @@ defmodule Helix.Entity.Model.Database do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
 
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+    entity_id: Entity.id,
+    network_id: Network.id,
+    server_id: Server.id,
+    server_type: String.t,
+    password: String.t | nil,
+    alias: String.t | nil,
+    notes: String.t | nil,
+    disabled: boolean,
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
+  }
 
   @creation_fields ~w/entity_id network_id server_ip server_id server_type/a
   @update_fields ~w/alias notes disabled/a
@@ -26,14 +36,14 @@ defmodule Helix.Entity.Model.Database do
 
   @primary_key false
   schema "database_entries" do
-    field :entity_id, PK,
+    field :entity_id, Entity.ID,
       primary_key: true
-    field :network_id, PK,
+    field :network_id, Network.ID,
       primary_key: true
     field :server_ip, IPv4,
       primary_key: true
 
-    field :server_id, PK
+    field :server_id, Server.ID
 
     field :server_type, :string
     field :password, :string
@@ -47,20 +57,14 @@ defmodule Helix.Entity.Model.Database do
     timestamps()
   end
 
-  @spec create(Entity.t | Entity.id, Network.t | Network.id, IPv4.t, Server.t | Server.id, String.t) ::
+  @spec create(Entity.idtb, Network.idtb, IPv4.t, Server.idtb, String.t) ::
     Changeset.t
-  def create(%Entity{entity_id: entity}, network, ip, server, type),
-    do: create(entity, network, ip, server, type)
-  def create(entity, %Network{network_id: network}, ip, server, type),
-    do: create(entity, network, ip, server, type)
-  def create(entity, network, ip, %Server{server_id: server}, type),
-    do: create(entity, network, ip, server, type)
-  def create(entity_id, network_id, ip, server_id, server_type) do
+  def create(entity, network, ip, server, server_type) do
     params = %{
-      entity_id: entity_id,
-      network_id: network_id,
+      entity_id: entity,
+      network_id: network,
       server_ip: ip,
-      server_id: server_id,
+      server_id: server,
       server_type: server_type
     }
 
@@ -80,7 +84,6 @@ defmodule Helix.Entity.Model.Database do
   end
 
   defmodule Query do
-
     import Ecto.Query
 
     alias Ecto.Queryable
@@ -90,28 +93,19 @@ defmodule Helix.Entity.Model.Database do
     alias Helix.Entity.Model.Database
     alias Helix.Entity.Model.Entity
 
-    @spec by_entity(Queryable.t, Entity.t | Entity.id) ::
+    @spec by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def by_entity(query \\ Database, entity_or_id)
-    def by_entity(query, %Entity{entity_id: id}),
-      do: by_entity(query, id)
-    def by_entity(query, id),
+    def by_entity(query \\ Database, id),
       do: where(query, [d], d.entity_id == ^id)
 
-    @spec by_network(Queryable.t, Network.t | Network.id) ::
+    @spec by_network(Queryable.t, Network.idtb) ::
       Queryable.t
-    def by_network(query \\ Database, network_or_id)
-    def by_network(query, %Network{network_id: id}),
-      do: by_network(query, id)
-    def by_network(query, id),
+    def by_network(query \\ Database, id),
       do: where(query, [d], d.network_id == ^id)
 
-    @spec by_server(Queryable.t, Server.t | Server.id) ::
+    @spec by_server(Queryable.t, Server.idtb) ::
       Queryable.t
-    def by_server(query \\ Database, server_or_id)
-    def by_server(query, %Server{server_id: id}),
-      do: by_server(query, id)
-    def by_server(query, id),
+    def by_server(query \\ Database, id),
       do: where(query, [d], d.server_id == ^id)
 
     @spec by_ip(Queryable.t, IPv4.t) ::

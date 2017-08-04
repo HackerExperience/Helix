@@ -5,7 +5,7 @@ defmodule Helix.Mixfile do
     [
       app: :helix,
       version: "0.0.1",
-      elixir: "~> 1.5",
+      elixir: "~> 1.4",
 
       elixirc_options: elixirc_options(Mix.env),
       elixirc_paths: elixirc_paths(Mix.env),

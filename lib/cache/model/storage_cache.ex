@@ -5,7 +5,6 @@ defmodule Helix.Cache.Model.StorageCache do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Model.Populate.Storage, as: StorageParams
@@ -22,9 +21,9 @@ defmodule Helix.Cache.Model.StorageCache do
 
   @primary_key false
   schema "storage_cache" do
-    field :storage_id, PK,
+    field :storage_id, Storage.ID,
       primary_key: true
-    field :server_id, PK
+    field :server_id, Server.ID
 
     field :expiration_date, :utc_datetime
   end

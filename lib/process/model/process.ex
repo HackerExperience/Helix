@@ -1,9 +1,13 @@
 defmodule Helix.Process.Model.Process do
 
   use Ecto.Schema
+  use HELL.ID, field: :process_id, meta: [0x0021]
 
   alias Ecto.Changeset
-  alias HELL.PK
+  alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
   alias Helix.Process.Model.Process.Limitations
   alias Helix.Process.Model.Process.MapServerToProcess
   alias Helix.Process.Model.Process.NaiveStruct
@@ -13,15 +17,13 @@ defmodule Helix.Process.Model.Process do
 
   import Ecto.Changeset
 
-  @opaque id :: PK.t
-
   @type t :: %__MODULE__{
     process_id: id,
-    gateway_id: PK.t,
-    target_server_id: PK.t,
-    file_id: PK.t | nil,
-    network_id: PK.t | nil,
-    connection_id: PK.t | nil,
+    gateway_id: Server.id,
+    target_server_id: Server.id,
+    file_id: File.id | nil,
+    network_id: Network.id | nil,
+    connection_id: Connection.id | nil,
     process_data: ProcessType.t,
     process_type: String.t,
     state: State.state,
@@ -38,25 +40,23 @@ defmodule Helix.Process.Model.Process do
 
   @type process :: %__MODULE__{} | %Ecto.Changeset{data: %__MODULE__{}}
 
-  @primary_key false
-  @ecto_autogenerate {:process_id, {PK, :pk_for, [:process_process]}}
   schema "processes" do
-    field :process_id, PK,
+    field :process_id, ID,
       primary_key: true
 
     # The gateway that started the process
-    field :gateway_id, PK
+    field :gateway_id, Server.ID
     # The server where the target object of this process action is
-    field :target_server_id, PK
+    field :target_server_id, Server.ID
     # Which file (if any) contains the "executable" of this process
-    field :file_id, PK
+    field :file_id, File.ID
     # Which network is this process bound to (if any)
-    field :network_id, PK
+    field :network_id, Network.ID
     # Which connection is the transport method for this process (if any).
     # Obviously if the connection is closed, the process will be killed. In the
     # future it might make sense to have processes that might survive after a
     # connection shutdown but right now, it's a kill
-    field :connection_id, PK
+    field :connection_id, Connection.ID
 
     # Data that is used by the specific implementation of the process
     # side-effects
@@ -118,13 +118,13 @@ defmodule Helix.Process.Model.Process do
   @required_fields ~w/gateway_id target_server_id process_data process_type/a
 
   @type create_params :: %{
-    :gateway_id => PK.t,
-    :target_server_id => PK.t,
+    :gateway_id => Server.idtb,
+    :target_server_id => Server.idtb,
     :process_data => ProcessType.t,
     :process_type => String.t,
-    optional(:file_id) => PK.t,
-    optional(:network_id) => PK.t,
-    optional(:connection_id) => PK.t,
+    optional(:file_id) => File.idtb,
+    optional(:network_id) => Network.idtb,
+    optional(:connection_id) => Connection.idtb,
     optional(:objective) => map
   }
 
@@ -202,7 +202,7 @@ defmodule Helix.Process.Model.Process do
     end)
   end
 
-  @spec changeset(process, %{optional(any) => any}) ::
+  @spec changeset(process, map) ::
     Changeset.t
   @doc false
   def changeset(struct, params) do
@@ -526,11 +526,9 @@ defmodule Helix.Process.Model.Process do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [join: 5, where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
-    alias HELL.PK
     alias Helix.Software.Model.File
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Network
@@ -539,80 +537,48 @@ defmodule Helix.Process.Model.Process do
     alias Helix.Process.Model.Process.MapServerToProcess
     alias Helix.Process.Model.Process.State
 
-    @spec from_server(Ecto.Queryable.t, Server.t | Server.id) ::
-      Ecto.Queryable.t
-    @doc """
-    Filter processes that are running on `server_id`
-    """
-    def from_server(query \\ Process, server_or_server_id)
-    def from_server(query, server = %Server{}),
-      do: from_server(query, server.server_id)
-    def from_server(query, server_id),
-      do: where(query, [p], p.gateway_id == ^server_id)
-
-    @spec from_type_list(Ecto.Queryable.t, [String.t]) ::
-      Ecto.Queryable.t
+    @spec from_type_list(Queryable.t, [String.t]) ::
+      Queryable.t
     def from_type_list(query \\ Process, type_list),
       do: where(query, [p], p.process_type in ^type_list)
 
-    @spec from_state_list(Ecto.Queryable.t, [State.state]) ::
-      Ecto.Queryable.t
+    @spec from_state_list(Queryable.t, [State.state]) ::
+      Queryable.t
     def from_state_list(query \\ Process, state_list),
       do: where(query, [p], p.state in ^state_list)
 
-    @spec by_process(Ecto.Queryable.t, Process.t | Process.id) ::
-      Ecto.Queryable.t
-    def by_process(query \\ Process, process_or_process_id)
-    def by_process(query, process = %Process{}),
-      do: by_process(query, process.process_id)
-    def by_process(query, process_id),
-      do: where(query, [p], p.process_id == ^process_id)
-
-    @spec by_gateway(Ecto.Queryable.t, Server.t | Server.id) ::
-      Ecto.Queryable.t
-    def by_gateway(query \\ Process, server_or_server_id)
-    def by_gateway(query, gateway = %Server{}),
-      do: by_gateway(query, gateway.server_id)
-    def by_gateway(query, gateway_id),
-      do: where(query, [p], p.gateway_id == ^gateway_id)
-
-    @spec by_target(Ecto.Queryable.t, Server.t | Server.id) ::
-      Ecto.Queryable.t
-    def by_target(query \\ Process, server_or_server_id)
-    def by_target(query, target = %Server{}),
-      do: by_target(query, target.server_id)
-    def by_target(query, target_server_id),
-      do: where(query, [p], p.target_server_id == ^target_server_id)
-
-    @spec by_file(Ecto.Queryable.t, File.t | File.id) ::
-      Ecto.Queryable.t
-    def by_file(query \\ Process, file_or_file_id)
-    def by_file(query, file = %File{}),
-      do: by_file(query, file.file_id)
-    def by_file(query, file_id),
-      do: where(query, [p], p.file_id == ^file_id)
-
-    @spec by_network(Ecto.Queryable.t, Network.t | Network.id) ::
-      Ecto.Queryable.t
-    def by_network(query \\ Process, network_or_network_id)
-    def by_network(query, network = %Network{}),
-      do: by_network(query, network.network_id)
-    def by_network(query, network_id),
-      do: where(query, [p], p.network_id == ^network_id)
-
-    @spec by_connection(Queryable.t, Connection.t | Connection.id) ::
+    @spec by_gateway(Queryable.t, Server.idtb) ::
       Queryable.t
-    def by_connection(query \\ Process, connection_or_connection_id)
-    def by_connection(query, connection = %Connection{}),
-      do: by_connection(query, connection.connection_id)
-    def by_connection(query, connection_id),
-      do: where(query, [p], p.connection_id == ^connection_id)
+    def by_gateway(query \\ Process, id),
+      do: where(query, [p], p.gateway_id == ^id)
 
-    @spec by_type(Ecto.Queryable.t, String.t) :: Ecto.Queryable.t
+    @spec by_target(Queryable.t, Server.idtb) ::
+      Queryable.t
+    def by_target(query \\ Process, id),
+      do: where(query, [p], p.target_server_id == ^id)
+
+    @spec by_file(Queryable.t, File.idtb) ::
+      Queryable.t
+    def by_file(query \\ Process, id),
+      do: where(query, [p], p.file_id == ^id)
+
+    @spec by_network(Queryable.t, Network.idtb) ::
+      Queryable.t
+    def by_network(query \\ Process, id),
+      do: where(query, [p], p.network_id == ^id)
+
+    @spec by_connection(Queryable.t, Connection.idtb) ::
+      Queryable.t
+    def by_connection(query \\ Process, id),
+      do: where(query, [p], p.connection_id == ^id)
+
+    @spec by_type(Queryable.t, String.t) ::
+      Queryable.t
     def by_type(query \\ Process, process_type),
       do: where(query, [p], p.process_type == ^process_type)
 
-    @spec by_state(Ecto.Queryable.t, State.state) :: Ecto.Queryable.t
+    @spec by_state(Queryable.t, State.state) ::
+      Queryable.t
     def by_state(query \\ Process, state),
       do: where(query, [p], p.state == ^state)
 
@@ -621,36 +587,19 @@ defmodule Helix.Process.Model.Process do
     def not_targeting_gateway(query \\ Process),
       do: where(query, [p], p.gateway_id != p.target_server_id)
 
-    @spec related_to_server(Ecto.Queryable.t, Server.t | Server.id) ::
-      Ecto.Queryable.t
+    @spec related_to_server(Queryable.t, Server.idtb) ::
+      Queryable.t
     @doc """
     Filter processes that are running on `server_id` or affect it
     """
-    def related_to_server(query \\ Process, server_or_server_id)
-    def related_to_server(query, server = %Server{}),
-      do: related_to_server(query, server.server_id)
-    def related_to_server(query, server_id) do
+    def related_to_server(query \\ Process, id) do
       query
       |> join(
         :inner,
         [p],
         m in MapServerToProcess,
         m.process_id == p.process_id)
-      |> where([p, ..., m], m.server_id == ^server_id)
-    end
-
-    @spec related_to_server_and_of_types(
-      Ecto.Queryable.t, Server.t | Server.id, String.t) ::
-      Ecto.Queryable.t
-    def related_to_server_and_of_types(query, server_or_server_id, types)
-    def related_to_server_and_of_types(query, server = %Server{}, types),
-      do: related_to_server_and_of_types(query, server.server_id, types)
-    def related_to_server_and_of_types(query, server_id, types) do
-      types = List.wrap(types)
-
-      query
-      |> related_to_server(server_id)
-      |> where([p, ..., m], m.process_type in ^types)
+      |> where([p, ..., m], m.server_id == ^id)
     end
   end
 end
