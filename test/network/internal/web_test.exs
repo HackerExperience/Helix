@@ -18,7 +18,7 @@ defmodule Helix.Network.Internal.WebTest do
 
       npc = NPCQuery.fetch(seed.id)
       entity = EntityQuery.fetch(npc.npc_id)
-      [server_id] = EntityQuery.get_servers_from_entity(npc.npc_id)
+      [server_id] = EntityQuery.get_servers(npc.npc_id)
 
       ip = ServerQuery.get_ip(server_id, "::")
 

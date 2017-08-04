@@ -5,7 +5,8 @@ defmodule Helix.Universe.NPC.Internal.NPC do
 
   import Ecto.Query, only: [where: 3]
 
-  @spec create(%{}) :: {:ok, NPC.t} | {:error, Ecto.Changeset.t}
+  @spec create(%{}) ::
+    {:ok, NPC.t} | {:error, Ecto.Changeset.t}
   def create(params) do
     params
     |> NPC.create_changeset()

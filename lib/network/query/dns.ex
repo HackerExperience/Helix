@@ -6,8 +6,8 @@ defmodule Helix.Network.Query.DNS do
   alias Helix.Network.Internal.DNS, as: DNSInternal
 
   @spec resolve(String.t, HELL.IPv4.t) ::
-  {:ok, HELL.IPv4.t}
-  | :nxdomain
+    {:ok, HELL.IPv4.t}
+    | :nxdomain
   @doc """
   DNS resolution function.
 

@@ -61,7 +61,7 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
       motherboard_id = context.server.motherboard_id
 
 
-      motherboard = MotherboardQuery.fetch!(motherboard_id)
+      motherboard = MotherboardQuery.fetch(motherboard_id)
 
       [nic] = MotherboardInternal.get_nics(motherboard)
       network_connection_id = nic.network_connection.network_connection_id
