@@ -94,6 +94,7 @@ defmodule Helix.Server.Action.ServerTest do
       CacheHelper.sync_test()
     end
 
+    @tag :pending
     test "is idempotent" do
       server = Factory.insert(:server)
 

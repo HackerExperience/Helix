@@ -66,7 +66,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
       server_ids = Enum.map(1..5, fn _ ->
         server = create_server_for_entity(entity)
 
-        server.server_id
+        to_string(server.server_id)
       end)
 
       ref = push context.socket, "server.index", %{}

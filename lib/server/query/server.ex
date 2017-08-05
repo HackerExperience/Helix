@@ -31,8 +31,9 @@ defmodule Helix.Server.Query.Server do
   def get_ip(server_id, network_id) do
     case CacheQuery.from_server_get_nips(server_id) do
       {:ok, nips} ->
-        Enum.find(nips, &(&1.network_id == network_id))
-        |> Map.get(:ip)
+        # FIXME
+        netconn = Enum.find(nips, &(&1.network_id == to_string(network_id)))
+        netconn[:ip]
       _ ->
         nil
     end

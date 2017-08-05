@@ -96,7 +96,7 @@ defmodule Helix.Network.Factory do
     Ecto.Changeset.t
   defp fabricate_changeset(:tunnel, params) do
     Tunnel.create(
-      params.network,
+      params.network_id,
       params.gateway_id,
       params.destination_id,
       params.bounces)

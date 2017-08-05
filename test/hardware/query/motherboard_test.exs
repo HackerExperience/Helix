@@ -17,9 +17,7 @@ defmodule Helix.Hardware.Query.MotherboardTest do
     end
 
     test "returns nil when input is invalid" do
-      bogus_motherboard = Factory.build(:motherboard)
-
-      refute MotherboardQuery.fetch(bogus_motherboard.component)
+      refute MotherboardQuery.fetch(Component.ID.generate())
     end
   end
 

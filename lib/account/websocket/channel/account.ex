@@ -60,7 +60,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
   # TODO: Move this to a viewer
   def render_server({server, nil}) do
     %{
-      server_id: server.server_id,
+      server_id: to_string(server.server_id),
       server_type: server.server_type,
       password: server.password,
       hardware: nil,
@@ -69,7 +69,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
   end
   def render_server({server, motherboard}) do
     %{
-      server_id: server.server_id,
+      server_id: to_string(server.server_id),
       server_type: server.server_type,
       password: server.password,
       hardware: %{
@@ -87,7 +87,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
       internal_id = slot.slot_internal_id
 
       data = %{
-        component_id: component.component_id,
+        component_id: to_string(component.component_id),
         component_type: component.component_type,
         # TODO: Return data about component specialization
         meta: %{}

@@ -60,7 +60,7 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
 
     test "returns nil if server is not owned" do
-      refute EntityInternal.fetch_by_server(Entity.ID.generate())
+      refute EntityInternal.fetch_by_server(Server.ID.generate())
     end
   end
 

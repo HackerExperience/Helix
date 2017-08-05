@@ -156,13 +156,27 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     gateway = create_server_for_account(context.account)
     gateway = to_string(gateway.server_id)
     destination = create_destination_server()
+    password = destination.password
     destination = to_string(destination.server_id)
+
+    # To join a remote server, the gateway and the remote server must both be
+    # connected to the same network
+    # FIXME: since the create_* functions on this module don't include creating
+    #   the network connection for the new servers, we are "hacking" the join
+    #   system by providing a valid tunnel (so it doesn't try to connect)
+    tunnel = NetworkFactory.insert(
+      :tunnel,
+      gateway_id: gateway,
+      destination_id: destination)
+    NetworkFactory.insert(:connection,
+      tunnel: tunnel,
+      connection_type: "ssh")
 
     topic = "server:" <> destination
     join_msg = %{
       "gateway_id" => gateway,
-      "network_id" => "::", # The hardcoded way is the right way (tm)
-      "password" => destination
+      "network_id" => to_string(tunnel.network_id),
+      "password" => password
     }
 
     assert {:ok, _, _} = join(context.socket, topic, join_msg)

@@ -4,6 +4,7 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
@@ -29,9 +30,7 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
     end
 
     test "returns nil when motherboard doesn't exists" do
-      bogus = Factory.build(:motherboard)
-
-      refute MotherboardInternal.fetch(bogus.component)
+      refute MotherboardInternal.fetch(Component.ID.generate())
     end
   end
 
@@ -166,7 +165,7 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
       slots = MotherboardInternal.get_slots(mobo.motherboard_id)
       refute Enum.empty?(slots)
 
-      MotherboardInternal.delete(mobo.motherboard_id)
+      MotherboardInternal.delete(mobo)
 
       slots = MotherboardInternal.get_slots(mobo.motherboard_id)
       assert Enum.empty?(slots)
