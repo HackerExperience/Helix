@@ -34,7 +34,7 @@ defmodule Helix.Account.Model.AccountSetting do
       define_field: false
   end
 
-  @spec changeset(t, changeset_params) ::
+  @spec changeset(%__MODULE__{}, changeset_params) ::
     Changeset.t
   def changeset(struct \\ %__MODULE__{}, params) do
     struct

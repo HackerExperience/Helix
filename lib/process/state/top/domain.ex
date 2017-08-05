@@ -2,6 +2,7 @@ defmodule Helix.Process.State.TOP.Domain do
   @moduledoc false
 
   alias Ecto.Changeset
+  alias Helix.Server.Model.Server
   alias Helix.Process.Internal.TOP.Allocator.Plan, as: PlanTOP
   alias Helix.Process.Internal.TOP.ServerResources, as: ServerResourcesTOP
   alias Helix.Process.Model.Process
@@ -10,8 +11,8 @@ defmodule Helix.Process.State.TOP.Domain do
   @behaviour :gen_statem
 
   @typep t :: %__MODULE__{}
-  @type server_id :: HELL.PK.t
-  @type process_id :: HELL.PK.t
+  @type server_id :: Server.id
+  @type process_id :: Process.id
   @type process :: Process.t | Changeset.t
   @type resources :: ServerResourcesTOP.t
 

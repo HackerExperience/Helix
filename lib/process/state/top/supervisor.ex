@@ -3,8 +3,9 @@ defmodule Helix.Process.State.TOP.Supervisor do
 
   use Supervisor
 
-  alias Helix.Process.State.TOP.Manager, as: ManagerTOP
-  alias Helix.Process.State.TOP.ChildrenSupervisor, as: ChildrenSupervisorTOP
+  alias Helix.Server.Model.Server
+  alias Helix.Process.State.TOP.Manager, as: TOPManager
+  alias Helix.Process.State.TOP.ChildrenSupervisor, as: TOPChildrenSupervisor
 
   @spec start_link() ::
     Supervisor.on_start
@@ -13,17 +14,17 @@ defmodule Helix.Process.State.TOP.Supervisor do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  @spec start_top(HELL.PK.t) ::
+  @spec start_top(Server.id) ::
     Supervisor.on_start_child
   def start_top(gateway) do
-    ChildrenSupervisorTOP.start_child(gateway)
+    TOPChildrenSupervisor.start_child(gateway)
   end
 
   @doc false
   def init(_) do
     children = [
-      supervisor(ManagerTOP, []),
-      supervisor(ChildrenSupervisorTOP, [])
+      supervisor(TOPManager, []),
+      supervisor(TOPChildrenSupervisor, [])
     ]
 
     supervise(children, strategy: :rest_for_one)
@@ -35,6 +36,7 @@ defmodule Helix.Process.State.TOP.ChildrenSupervisor do
 
   use Supervisor
 
+  alias Helix.Server.Model.Server
   alias Helix.Process.State.TOP.Server, as: ServerTOP
 
   @spec start_link() ::
@@ -44,7 +46,7 @@ defmodule Helix.Process.State.TOP.ChildrenSupervisor do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  @spec start_child(HELL.PK.t) ::
+  @spec start_child(Server.id) ::
     Supervisor.on_start_child
   def start_child(gateway) do
     Supervisor.start_child(__MODULE__, [gateway])

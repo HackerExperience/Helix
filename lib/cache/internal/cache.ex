@@ -104,7 +104,7 @@ defmodule Helix.Cache.Internal.Cache do
   tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
   reads from reading not-yet-purged (stale) data.
   """
-  def purge(model, params = %_{id: id}),
+  def purge(_, params = %_{id: _}),
     do: raise "bad value #{inspect params}, use only strings"
   def purge(model, params) when not is_tuple(params),
     do: purge(model, {params})
@@ -117,7 +117,7 @@ defmodule Helix.Cache.Internal.Cache do
   tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
   reads from reading not-yet-purged (stale) data.
   """
-  def update(model, params = %_{id: id}),
+  def update(_, params = %_{id: _}),
     do: raise "bad value #{inspect params}, use only strings"
   def update(model, params) when not is_tuple(params),
     do: update(model, {params})

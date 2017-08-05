@@ -62,8 +62,11 @@ defmodule Helix.Network.Model.Tunnel do
   end
 
   # TODO: Use something like murmur
-  def hash_bounces(bounces),
-    do: Enum.join(bounces, "_")
+  def hash_bounces(bounces) do
+    bounces
+    |> Enum.map(&to_string/1)
+    |> Enum.join("_")
+  end
 
   # TODO: Refactor this ?
   defp bounce(changeset, [gateway| bounces]) do

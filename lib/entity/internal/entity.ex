@@ -48,7 +48,7 @@ defmodule Helix.Entity.Internal.Entity do
   end
 
   @spec get_servers(Entity.t) ::
-    [EntityServer.t]
+    [Server.id]
   @doc """
   Returns a list of servers that belong to a given entity.
   """

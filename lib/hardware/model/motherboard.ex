@@ -140,6 +140,7 @@ defmodule Helix.Hardware.Model.Motherboard do
   defmodule Query do
     import Ecto.Query
 
+    alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Motherboard
 

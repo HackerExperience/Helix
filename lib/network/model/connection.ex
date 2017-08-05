@@ -5,6 +5,7 @@ defmodule Helix.Network.Model.Connection do
 
   import Ecto.Changeset
 
+  alias Ecto.Changeset
   alias Helix.Network.Model.Tunnel
 
   @type close_reasons :: :normal | :force

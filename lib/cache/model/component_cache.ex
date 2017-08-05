@@ -7,7 +7,6 @@ defmodule Helix.Cache.Model.ComponentCache do
   alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Hardware.Model.Component
-  alias Helix.Cache.Model.Populate.Component, as: ComponentParams
   alias Helix.Cache.Model.Cacheable
 
   @cache_duration 60 * 60 * 24 * 1000
@@ -37,8 +36,6 @@ defmodule Helix.Cache.Model.ComponentCache do
     |> Cacheable.format_input()
   end
 
-  @spec create_changeset(ComponentParams.t) ::
-    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(Map.from_struct(params), @creation_fields)

@@ -1,7 +1,10 @@
 defmodule Helix.Entity.Query.Database do
 
+  alias HELL.IPv4
+  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
+  alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
 
   @spec get_database(Entity.t) ::

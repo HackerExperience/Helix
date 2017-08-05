@@ -66,6 +66,11 @@ defmodule HELL.ID do
           :error
         end
 
+        def cast!(term) do
+          {:ok, id} = cast(term)
+          id
+        end
+
         @doc false
         def load(%Postgrex.INET{address: id}),
           do: {:ok, %__MODULE__{id: id}}

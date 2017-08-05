@@ -1,5 +1,7 @@
 defmodule Helix.Process.Internal.Process do
 
+  alias Helix.Network.Model.Connection
+  alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
 

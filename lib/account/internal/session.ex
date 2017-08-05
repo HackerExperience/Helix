@@ -51,15 +51,20 @@ defmodule Helix.Account.Internal.Session do
     :ok
   end
 
-  @spec invalidate_session(AccountSession.t) ::
+  @spec invalidate_session(AccountSession.t | AccountSession.id) ::
     :ok
   defdelegate invalidate_session(session_or_session_id),
     to: AccountSessionInternal,
     as: :delete
 
+  @spec sign(AccountSession.id) ::
+    AccountSession.token
   defp sign(session),
     do: Token.sign(Helix.Endpoint, "player", session)
 
+  @spec verify(AccountSession.token) ::
+    {:ok, AccountSession.id}
+    | {:error, :invalid | :expired}
   defp verify(token),
     do: Token.verify(Helix.Endpoint, "player", token, max_age: @max_age)
 end

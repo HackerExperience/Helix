@@ -56,6 +56,7 @@ defmodule Helix.Entity.Model.Entity do
     import Ecto.Query
 
     alias Ecto.Queryable
+    alias Helix.Server.Model.Server
     alias Helix.Entity.Model.Entity
     alias Helix.Entity.Model.EntityServer
 

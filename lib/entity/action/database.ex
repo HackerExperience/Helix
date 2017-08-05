@@ -7,7 +7,7 @@ defmodule Helix.Entity.Action.Database do
   alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
 
-  @spec create(Entity.t, Network.t | Network.id, IPv4.t, Server.t | Server.id, String.t) ::
+  @spec create(Entity.t, Network.idt, IPv4.t, Server.idt, String.t) ::
     {:ok, Database.t}
     | {:error, Ecto.Changeset.t}
   defdelegate create(entity, network, ip, server, server_type),
@@ -19,12 +19,12 @@ defmodule Helix.Entity.Action.Database do
   defdelegate update(entry, params),
     to: DatabaseInternal
 
-  @spec delete_server_from_network(Server.t | Server.id, Network.t | Network.id) ::
+  @spec delete_server_from_network(Server.idt, Network.idt) ::
     :ok
   defdelegate delete_server_from_network(server, network),
     to: DatabaseInternal
 
-  @spec delete_server(Server.t | Server.id) ::
+  @spec delete_server(Server.idt) ::
     :ok
   defdelegate delete_server(server),
     to: DatabaseInternal

@@ -26,8 +26,9 @@ defmodule Helix.Network.Internal.Tunnel do
   Creates a new tunnel
   """
   def create(network, gateway_id, endpoint_id, bounces \\ []) do
-    cs = Tunnel.create(network, gateway_id, endpoint_id, bounces)
-    Repo.insert(cs)
+    network
+    |> Tunnel.create(gateway_id, endpoint_id, bounces)
+    |> Repo.insert()
   end
 
   @spec get_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::

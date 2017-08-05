@@ -10,13 +10,13 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
   @type t :: %__MODULE__{
     cpu: non_neg_integer,
     ram: non_neg_integer,
-    net: %{optional(HELL.PK.t) => %{dlk: non_neg_integer, ulk: non_neg_integer}}
+    net: %{Network.id => %{dlk: non_neg_integer, ulk: non_neg_integer}}
   }
 
   @type shares :: %{
     cpu: non_neg_integer,
     ram: non_neg_integer,
-    net: %{optional(HELL.PK.t) => %{dlk: non_neg_integer, ulk: non_neg_integer}}
+    net: %{Network.id => %{dlk: non_neg_integer, ulk: non_neg_integer}}
   }
 
   # TODO: FIXME: change symbols and fun names to things that make sense
@@ -31,9 +31,9 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
       server_resources.net
       |> Enum.map(fn
         {k, v = %{dlk: _, ulk: _}} when map_size(v) == 2 ->
-          {k, v}
+          {Network.ID.cast!(k), v}
         {k, v = %{}} ->
-          {k, Map.merge(%{dlk: 0, ulk: 0}, Map.take(v, [:dlk, :ulk]))}
+          {Network.ID.cast!(k), Map.merge(%{dlk: 0, ulk: 0}, Map.take(v, [:dlk, :ulk]))}
       end)
       |> :maps.from_list()
 
@@ -56,7 +56,8 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     end
   end
 
-  @spec update_network_if_exists(t, Network.id, ((%{}) -> %{})) :: t
+  @spec update_network_if_exists(t, Network.id, ((map) -> map)) ::
+    t
   def update_network_if_exists(server_resources = %__MODULE__{}, net_id, fun) do
     case server_resources.net do
       %{^net_id => value} ->
@@ -74,7 +75,7 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     end
   end
 
-  @spec sub_from_process(t, Process.t | Ecto.Changeset.t) ::
+  @spec sub_from_process(t, Process.t | Changeset.t) ::
     {:ok, t}
     | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, Network.id}}}
   def sub_from_process(server_resources = %__MODULE__{cpu: cpu, ram: ram, net: networks}, process) do

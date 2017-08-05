@@ -51,7 +51,7 @@ defmodule Helix.Hardware.Model.Component.CPU do
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Changeset.t, map) ::
+  @spec changeset(%__MODULE__{} | Changeset.t, map) ::
     Changeset.t
   def changeset(struct, params) do
     struct

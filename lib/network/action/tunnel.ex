@@ -3,16 +3,17 @@ defmodule Helix.Network.Action.Tunnel do
   import HELL.MacroHelpers
 
   alias Ecto.Changeset
+  alias Helix.Event
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server
+  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
+  alias Helix.Network.Internal.Tunnel, as: TunnelInternal
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
-  alias Helix.Network.Internal.Tunnel, as: TunnelInternal
-  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
-  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
 
   @spec connect(Network.t, Server.id, Server.id, [Server.id], term) ::
-    {:ok, Connection.t, [event :: struct]}
+    {:ok, Connection.t, [Event.t]}
     | {:error, Changeset.t}
   @doc """
   Starts a connection between `gateway` and `destination` through `network`.

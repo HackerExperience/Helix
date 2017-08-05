@@ -78,7 +78,7 @@ defmodule Helix.Account.Action.Account do
     with \
       account = %{} <- AccountInternal.fetch_by_username(username) || :nxacc,
       true <- Account.check_password(account, password) || :badpass,
-      {:ok, token} <- SessionAction.generate_token(account) || :badserver
+      {:ok, token} <- SessionAction.generate_token(account)
     do
       {:ok, account, token}
     else
@@ -86,8 +86,6 @@ defmodule Helix.Account.Action.Account do
         {:error, :notfound}
       :badpass ->
         {:error, :notfound}
-      :badserver ->
-        {:error, :internalerror}
       _ ->
         {:error, :internalerror}
     end

@@ -19,7 +19,7 @@ defmodule Helix.Entity.Internal.Database do
     inserted_at
     updated_at/a
 
-  @spec get_database(Entity.t | Entity.id) ::
+  @spec get_database(Entity.t) ::
     [map]
   def get_database(entity) do
     entity
@@ -29,7 +29,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Repo.all()
   end
 
-  @spec get_entry(Entity.t | Entity.id, Network.t | Network.id, IPv4.t) ::
+  @spec get_entry(Entity.t, Network.idt, IPv4.t) ::
     Database.t
     | nil
   def get_entry(entity, network, ip) do
@@ -40,7 +40,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Repo.one()
   end
 
-  @spec get_server_entries(Entity.t | Entity.id, Server.t | Server.id) ::
+  @spec get_server_entries(Entity.t, Server.idt) ::
     [Database.t]
   def get_server_entries(entity, server) do
     entity
@@ -49,7 +49,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Repo.all()
   end
 
-  @spec get_server_password(Entity.t | Entity.id, Server.t | Server.id) ::
+  @spec get_server_password(Entity.t, Server.idt) ::
     String.t
     | nil
   def get_server_password(entity, server) do
@@ -61,7 +61,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Repo.all()
   end
 
-  @spec create(Entity.t | Entity.id, Network.t | Network.id, IPv4.t, Server.t | Server.id, String.t) ::
+  @spec create(Entity.t, Network.idt, IPv4.t, Server.idt, String.t) ::
     {:ok, Database.t}
     | {:error, Ecto.Changeset.t}
   def create(entity, network, ip, server, server_type) do
@@ -79,7 +79,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Repo.update()
   end
 
-  @spec delete_server_from_network(Server.t | Server.id, Network.t | Network.id) ::
+  @spec delete_server_from_network(Server.idt, Network.idt) ::
     :ok
   def delete_server_from_network(server, network) do
     server
@@ -90,7 +90,7 @@ defmodule Helix.Entity.Internal.Database do
     :ok
   end
 
-  @spec delete_server(Server.t | Server.id) ::
+  @spec delete_server(Server.idt) ::
     :ok
   def delete_server(server) do
     server

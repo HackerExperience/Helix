@@ -23,7 +23,6 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
   }
 
   @type creation_params :: %{
-    :motherboard_id => Component.id,
     :link_component_type => Constant.t,
     :slot_internal_id => integer,
     optional(:link_component_id) => Component.id

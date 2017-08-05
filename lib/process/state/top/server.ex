@@ -10,7 +10,11 @@ defmodule Helix.Process.State.TOP.Server do
 
   alias Ecto.Changeset
   alias Helix.Event
+  alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Query.Component, as: ComponentQuery
+  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Process.Internal.TOP.ServerResources, as: ServerResourcesTOP
   alias Helix.Process.Model.Process
   alias Helix.Process.State.TOP.Domain, as: DomainTOP
@@ -220,25 +224,22 @@ defmodule Helix.Process.State.TOP.Server do
 
   @spec get_resources(Server.id) ::
     {:ok, ServerResourcesTOP.t}
-    | {:error, atom}
+    | {:error, :server_not_assembled | :server_not_found}
   defp get_resources(gateway) do
     # FIXME
-    alias Helix.Hardware.Query.Component, as: ComponentQuery
-    alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-    alias Helix.Server.Query.Server, as: ServerQuery
-
-    with \
-      %{motherboard_id: motherboard} <- ServerQuery.fetch(gateway),
-      true <- not is_nil(motherboard) || :server_not_assembled,
-      component = %{} <- ComponentQuery.fetch(motherboard),
-      motherboard = %{} <- MotherboardQuery.fetch(component),
-      resources = %{} <- MotherboardQuery.resources(motherboard)
-    do
-      resources = ServerResourcesTOP.cast(resources)
-      {:ok, resources}
-    else
-      reason when is_atom(reason) ->
-        {:error, reason}
+    case ServerQuery.fetch(gateway) do
+      %{motherboard_id: motherboard = %Component.ID{}} ->
+        resources =
+          motherboard
+          |> ComponentQuery.fetch()
+          |> MotherboardQuery.fetch()
+          |> MotherboardQuery.resources()
+          |> ServerResourcesTOP.cast()
+        {:ok, resources}
+      %{} ->
+        {:error, :server_not_assembled}
+      nil ->
+        {:error, :server_not_found}
     end
   end
 

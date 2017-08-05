@@ -8,7 +8,7 @@ defmodule Helix.Hardware.Query.Motherboard do
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
 
-  @spec fetch(Component.t | Motherboard.id) ::
+  @spec fetch(Component.idt) ::
     Motherboard.t
     | nil
   @doc """
@@ -27,7 +27,7 @@ defmodule Helix.Hardware.Query.Motherboard do
   defdelegate preload_components(mobo),
     to: MotherboardInternal
 
-  @spec get_slots(Motherboard.idt) ::
+  @spec get_slots(Motherboard.t | Component.idt) ::
     [MotherboardSlot.t]
   @doc """
   Gets every slot from a motherboard
@@ -40,11 +40,7 @@ defmodule Helix.Hardware.Query.Motherboard do
       cpu: non_neg_integer,
       hdd: non_neg_integer,
       ram: non_neg_integer,
-      net: %{
-        Network.id =>
-          %{uplink: non_neg_integer, downlink: non_neg_integer}
-          | %{}
-      }
+      net: %{String.t => %{uplink: non_neg_integer, downlink: non_neg_integer}}
     }
   defdelegate resources(motherboard),
     to: MotherboardInternal

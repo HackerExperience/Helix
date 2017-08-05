@@ -1,21 +1,17 @@
 defmodule Helix.Process.Internal.TOP.Allocator.Plan do
 
   alias Ecto.Changeset
+  alias Helix.Network.Model.Network
   alias Helix.Process.Internal.TOP.ServerResources, as: ServerResourcesTOP
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
-
-  @type process_id :: HELL.PK.t
-  @type network_id :: HELL.PK.t
 
   @type process :: Process.t | %Ecto.Changeset{data: Process.t}
 
   @type shares_plan :: %{
     cpu: non_neg_integer,
     ram: non_neg_integer,
-    net: %{
-      optional(network_id) => %{dlk: non_neg_integer, ulk: non_neg_integer}
-    }
+    net: %{Network.id => %{dlk: non_neg_integer, ulk: non_neg_integer}}
   }
 
   @type plan :: %{
@@ -31,7 +27,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.Plan do
   }
 
   @spec allocate([process], ServerResourcesTOP.t) ::
-    [Ecto.Changeset.t]
+    [Changeset.t]
     | {:error, :insufficient_resources}
   def allocate(processes, resources) do
     processes
@@ -58,7 +54,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.Plan do
   # REVIEW: I was pretty tired when i wrote this. It should be refactored later
   @spec preallocate([process], plan, ServerResourcesTOP.t) ::
     {plan, ServerResourcesTOP.t}
-    | {:error, {:resources, :lack, :cpu | :ram | {:net, network_id}}}
+    | {:error, {:resources, :lack, :cpu | :ram | {:net, Network.id}}}
   defp preallocate([h| t], plan, resources) do
     process = Process.allocate_minimum(h)
     net_id = Changeset.get_field(process, :network_id)
@@ -112,8 +108,10 @@ defmodule Helix.Process.Internal.TOP.Allocator.Plan do
     Process.can_allocate(process) -- shouldnt
   end
 
-  @spec execute({plan, ServerResourcesTOP.t}) :: [Ecto.Changeset.t]
-  @spec execute({:error, any}) :: {:error, :insufficient_resources}
+  @spec execute({plan, ServerResourcesTOP.t}) ::
+    [Changeset.t]
+  @spec execute({:error, any}) ::
+    {:error, :insufficient_resources}
   defp execute({:error, _}),
     # FIXME: Return the resource that was insufficient
     do: {:error, :insufficient_resources}
@@ -123,7 +121,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.Plan do
     |> Map.fetch!(:acc)
   end
 
-  @spec execute_step(plan, ServerResourcesTOP.t) :: plan
+  @spec execute_step(plan, ServerResourcesTOP.t) ::
+    plan
   defp execute_step(plan = %{current_plan: %{fragment: fragment, processes: [{process, required_resources}| t]}}, resources) do
     shares = Changeset.get_field(process, :priority)
     net_id = Changeset.get_field(process, :network_id)
@@ -194,7 +193,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.Plan do
     execute_step(plan, resources)
   end
 
-  @spec merge_share(shares_plan, [:cpu | :ram | :dlk | :ulk], non_neg_integer, network_id) :: shares_plan
+  @spec merge_share(shares_plan, [:cpu | :ram | :dlk | :ulk], non_neg_integer, Network.id) :: shares_plan
   defp merge_share(shares, requested_resources, priority, net_id) do
     Enum.reduce(requested_resources, shares, fn
       :cpu, acc = %{cpu: cpu} ->

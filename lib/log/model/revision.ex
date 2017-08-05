@@ -26,7 +26,8 @@ defmodule Helix.Log.Model.Revision do
   @type creation_params :: %{
     :entity_id => Entity.idtb,
     :message => String.t,
-    optional(:forge_version) => pos_integer | nil
+    optional(:forge_version) => pos_integer | nil,
+    optional(atom) => any
   }
 
   @creation_fields ~w/entity_id message forge_version/a

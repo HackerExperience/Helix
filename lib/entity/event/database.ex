@@ -18,7 +18,7 @@ defmodule Helix.Entity.Event.Database do
         entity,
         event.network_id,
         event.server_ip,
-        event.server_id,
+        server,
         event.server_type)
     end
 
@@ -31,7 +31,7 @@ defmodule Helix.Entity.Event.Database do
     if to_string(server_ip) == to_string(event.server_ip) do
       Repo.transaction fn ->
         {:ok, _} = create_entry.()
-        {:ok, _} = set_password.()
+        :ok = set_password.()
       end
     end
   end

@@ -39,9 +39,8 @@ defmodule Helix.Server.Action.Server do
     ServerInternal.detach(server)
   end
 
-  @spec delete(Server.t | Server.id) ::
-    {:ok, Server.t}
-    | {:error, reason :: term}
+  @spec delete(Server.t) ::
+    :ok
   @doc """
   Deletes `server`
   """

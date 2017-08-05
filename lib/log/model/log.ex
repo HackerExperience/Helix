@@ -22,16 +22,17 @@ defmodule Helix.Log.Model.Log do
   }
 
   @type creation_params :: %{
-    :server_id => Server.id,
-    :entity_id => Entity.id,
+    :server_id => Server.idtb,
+    :entity_id => Entity.idtb,
     :message => String.t,
     optional(:crypto_version) => pos_integer | nil,
-    optional(:forge_version) => pos_integer | nil
+    optional(:forge_version) => pos_integer | nil,
+    optional(atom) => any
   }
 
   @type update_params :: %{
     optional(:crypto_version) => pos_integer | nil,
-    optional(:message) => pos_integer | nil
+    optional(:message) => String.t
   }
 
   @creation_fields ~w/server_id entity_id message/a

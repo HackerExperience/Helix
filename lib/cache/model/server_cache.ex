@@ -10,7 +10,6 @@ defmodule Helix.Cache.Model.ServerCache do
   alias Helix.Entity.Model.Entity
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
-  alias Helix.Software.Model.Storage
   alias Helix.Cache.Model.Cacheable
 
   @cache_duration 60 * 60 * 24 * 1000

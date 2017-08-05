@@ -4,6 +4,7 @@ defmodule Helix.Hardware.Internal.NetworkConnection do
 
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Network.Model.Network
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Repo
 

@@ -27,7 +27,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     spec: spec
   }
 
-  @callback validate_spec(map) :: Ecto.Changeset.t
+  @callback validate_spec(map) :: Changeset.t
 
   @valid_spec_types (
     ComponentType.possible_types()

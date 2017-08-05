@@ -5,10 +5,12 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
   import HELF.Flow
 
   alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Entity.Model.Entity
   alias Helix.Software.Action.Storage, as: StorageAction
   alias Helix.Software.Action.StorageDrive, as: StorageDriveAction
   alias Helix.Hardware.Action.Component, as: ComponentAction
   alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Component.NIC
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Query.ComponentSpec, as: ComponentSpecQuery

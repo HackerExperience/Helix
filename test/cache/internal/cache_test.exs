@@ -10,7 +10,6 @@ defmodule Helix.Cache.Internal.CacheTest do
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
-  alias Helix.Cache.Model.Cacheable
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Repo
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue

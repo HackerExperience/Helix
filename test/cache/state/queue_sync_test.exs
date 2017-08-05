@@ -22,7 +22,7 @@ defmodule Helix.Cache.State.QueueSyncTest do
       StateQueueSync.set_interval(1000)
 
       # First query, will fetch from origin and add entry to PurgeQueue
-      {:ok, server} = CacheQuery.from_server_get_all(server_id)
+      {:ok, _} = CacheQuery.from_server_get_all(server_id)
       assert_miss CacheInternal.direct_query(:server, server_id)
       assert StatePurgeQueue.lookup(:server, server_id)
 
@@ -34,7 +34,7 @@ defmodule Helix.Cache.State.QueueSyncTest do
 
       # ...it will be added to the DB
       assert_hit CacheInternal.direct_query(:server, server_id)
-      {:ok, server} = CacheQuery.from_server_get_all(server_id)
+      {:ok, _} = CacheQuery.from_server_get_all(server_id)
 
       # And removed from the PurgeQueue
       refute StatePurgeQueue.lookup(:server, server_id)

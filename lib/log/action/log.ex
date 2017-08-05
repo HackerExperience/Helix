@@ -27,7 +27,7 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
 
-  @spec create(Server.t | Server.id, Entity.t | Entity.id, String.t) ::
+  @spec create(Server.idt, Entity.idt, String.t) ::
     {:ok, Log.t}
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -41,19 +41,19 @@ defmodule Helix.Log.Action.Log do
     end
   end
 
-  @spec revise(log, Entity.t | Entity.id, String.t, pos_integer) ::
-    {:ok, log}
-    | {:error, Ecto.Changeset.t} when log: Log.t
+  @spec revise(Log.t, Entity.idt, String.t, pos_integer) ::
+    {:ok, Log.t}
+    | {:error, Ecto.Changeset.t}
   @doc """
   Adds a revision over `log`.
 
-  `entity` is the ID of the entity that is doing the revision, `message` is the
+  `entity` is the the entity that is doing the revision, `message` is the
   new log's content and `forge_version` is the version of log forger used to
   make this revision.
   """
   def revise(log, entity, message, forge_version) do
     with \
-      {:ok, ^log} <- LogInternal.revise(log, entity, message, forge_version)
+      {:ok, log} <- LogInternal.revise(log, entity, message, forge_version)
     do
       Event.emit(%LogModifiedEvent{server_id: log.server_id})
 

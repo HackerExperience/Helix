@@ -9,8 +9,8 @@ defmodule Helix.Software.Action.Storage do
   defdelegate create,
     to: StorageInternal
 
-  @spec delete(Storage.id) ::
+  @spec delete(Storage.t) ::
     :ok
-  defdelegate delete(storage_id),
+  defdelegate delete(storage),
     to: StorageInternal
 end

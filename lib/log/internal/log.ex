@@ -14,7 +14,7 @@ defmodule Helix.Log.Internal.Log do
   def fetch(log_id),
     do: Repo.get(Log, log_id)
 
-  @spec get_logs_on_server(Server.t | Server.id) ::
+  @spec get_logs_on_server(Server.idt) ::
     [Log.t]
   def get_logs_on_server(server) do
     server
@@ -24,7 +24,7 @@ defmodule Helix.Log.Internal.Log do
     |> Repo.all()
   end
 
-  @spec get_logs_from_entity_on_server(Server.t | Server.id, Entity.t | Entity.id) ::
+  @spec get_logs_from_entity_on_server(Server.idt, Entity.idt) ::
     [Log.t]
   def get_logs_from_entity_on_server(server, entity) do
     server
@@ -35,7 +35,7 @@ defmodule Helix.Log.Internal.Log do
     |> Repo.all()
   end
 
-  @spec create(Server.id, Entity.id, String.t, pos_integer | nil) ::
+  @spec create(Server.idt, Entity.idt, String.t, pos_integer | nil) ::
     {:ok, Log.t}
     | {:error, Ecto.Changeset.t}
   def create(server, entity, message, forge_version \\ nil) do
@@ -61,18 +61,18 @@ defmodule Helix.Log.Internal.Log do
     end
   end
 
-  @spec revise(log, Entity.t | Entity.id, String.t, pos_integer) ::
-    {:ok, log}
-    | {:error, Ecto.Changeset.t} when log: Log.t
+  @spec revise(Log.t, Entity.idt, String.t, pos_integer) ::
+    {:ok, Log.t}
+    | {:error, Ecto.Changeset.t}
   def revise(log, entity, message, forge_version) do
     revision = Revision.create(log, entity, message, forge_version)
 
     Repo.transaction fn ->
       with \
-        {:ok, _} <- Repo.insert(revision),
+        {:ok, revision} <- Repo.insert(revision),
         {:ok, _} <- touch_log(log, entity)
       do
-        log
+        revision.log
       else
         {:error, changeset} ->
           Repo.rollback(changeset)
@@ -112,7 +112,7 @@ defmodule Helix.Log.Internal.Log do
     end
   end
 
-  @spec touch_log(Log.t, Entity.t | Entity.id) ::
+  @spec touch_log(Log.t, Entity.idt) ::
     {:ok, LogTouch.t}
     | {:error, Ecto.Changeset.t}
   defp touch_log(log, entity) do

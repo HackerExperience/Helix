@@ -7,7 +7,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Model.Network
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
+  alias Helix.Server.Model.Server
   alias Helix.Server.Public.Server, as: ServerPublic
   alias Helix.Server.Websocket.View.ServerChannel, as: ChannelView
 
@@ -18,10 +20,13 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Process.Model.Process.ProcessConclusionEvent
   alias Helix.Process.Model.Process.ProcessCreatedEvent
 
+  @internet_id Network.ID.cast!("::")
+
   # Joining into player's own gateway
   def join("server:" <> gateway_id, %{"gateway_id" => gateway_id}, socket) do
     with \
       account = socket.assigns.account,
+      {:ok, gateway_id} <- Server.ID.cast(gateway_id),
       :ok <- ChannelHenforcer.validate_gateway(account, gateway_id)
     do
       servers = %{gateway: gateway_id, destination: gateway_id}
@@ -51,6 +56,8 @@ defmodule Helix.Server.Websocket.Channel.Server do
   do
     with \
       account = socket.assigns.account,
+      {:ok, gateway_id} <- Server.ID.cast(gateway_id),
+      {:ok, destination_id} <- Server.ID.cast(destination_id),
       :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
       :ok <- ChannelHenforcer.validate_server(destination_id, password),
       {:ok, tunnel} <- ServerPublic.connect_to_server(
@@ -115,9 +122,8 @@ defmodule Helix.Server.Websocket.Channel.Server do
   def handle_in("log.delete", %{log_id: log_id}, socket) do
     target_id = socket.assigns.servers.destination
     gateway_id = socket.assigns.servers.gateway
-    network_id = "::"
 
-    case ServerPublic.log_delete(gateway_id, target_id, network_id, log_id) do
+    case ServerPublic.log_delete(gateway_id, target_id, @internet_id, log_id) do
       :ok ->
         {:reply, :ok, socket}
       {:error, :nxlog} ->

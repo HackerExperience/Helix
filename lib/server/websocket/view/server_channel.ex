@@ -1,12 +1,13 @@
 defmodule Helix.Server.Websocket.View.ServerChannel do
 
-  @type join_error_reason :: :not_owner
+  @type join_error_reason ::
+    :not_owner
     | :not_assembled
     | :not_found
     | :password
 
   @spec render_join_error({:error, {:gateway | :server, join_error_reason}}) ::
-    %{type: String.t, data: %{message: String.t}}
+    %{data: %{message: String.t}, status: :error | :internal_error}
   def render_join_error({:error, {:gateway, :not_owner}}),
     do: error("User is not server owner")
   def render_join_error({:error, {:gateway, :not_assembled}}),
@@ -28,5 +29,5 @@ defmodule Helix.Server.Websocket.View.ServerChannel do
   @spec internal_error(String.t) ::
     %{data: %{message: String.t}, status: :internal_error}
   defp internal_error(message),
-    do: %{data: %{message: message, status: :internal_error}}
+    do: %{data: %{message: message}, status: :internal_error}
 end

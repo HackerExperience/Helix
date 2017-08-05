@@ -64,7 +64,7 @@ defmodule Helix.Cache.State.PurgeQueueTest do
 
       StatePurgeQueue.sync()
 
-      assert {:ok, server} = CacheQuery.from_server_get_all(server_id)
+      assert {:ok, _} = CacheQuery.from_server_get_all(server_id)
 
       # Data came from cache
       assert_hit CacheInternal.direct_query(:server, server_id)

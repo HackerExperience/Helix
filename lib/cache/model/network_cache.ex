@@ -9,8 +9,6 @@ defmodule Helix.Cache.Model.NetworkCache do
   alias HELL.PK
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Server
-  alias Helix.Cache.Model.Populate.Network, as: NetworkParams
   alias Helix.Cache.Model.Cacheable
 
   @cache_duration 60 * 60 * 24 * 1000
@@ -44,8 +42,6 @@ defmodule Helix.Cache.Model.NetworkCache do
     |> Cacheable.format_input()
   end
 
-  @spec create_changeset(NetworkParams.t) ::
-    Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(Map.from_struct(params), @creation_fields)

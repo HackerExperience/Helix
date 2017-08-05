@@ -124,11 +124,11 @@ defmodule Helix.Cache.Query.CacheTest do
       assert_miss CacheInternal.direct_query(:server, server_id)
 
       # But querying it returns the row correctly
-      {:ok, server1} = CacheQuery.from_server_get_all(server_id)
+      {:ok, _} = CacheQuery.from_server_get_all(server_id)
 
       # Different times!
-      {:ok, server2} = CacheQuery.from_server_get_all(server_id)
-      {:ok, server3} = CacheQuery.from_server_get_all(server_id)
+      {:ok, _} = CacheQuery.from_server_get_all(server_id)
+      {:ok, _} = CacheQuery.from_server_get_all(server_id)
 
       # Those are actually different values, not from the cache
       # (because the entry is still marked as purged)

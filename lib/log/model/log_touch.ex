@@ -20,6 +20,12 @@ defmodule Helix.Log.Model.LogTouch do
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
 
+  @type t :: %__MODULE__{
+    log_id: Log.id,
+    entity_id: Entity.id,
+    log: term
+  }
+
   @primary_key false
   schema "log_touches" do
     field :log_id, Log.ID,
@@ -33,7 +39,7 @@ defmodule Helix.Log.Model.LogTouch do
       define_field: false
   end
 
-  @spec create(Log.t, Entity.id) ::
+  @spec create(Log.t, Entity.idtb) ::
     Changeset.t
   def create(log, entity) do
     %__MODULE__{}

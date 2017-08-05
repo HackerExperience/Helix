@@ -6,7 +6,7 @@ defmodule Helix.Account.Internal.AccountSession do
   alias Helix.Account.Repo
 
   @spec fetch(AccountSession.id) ::
-    {:ok, AccountSession.t}
+    AccountSession.t
     | nil
   def fetch(id),
     do: Repo.get(AccountSession, id)

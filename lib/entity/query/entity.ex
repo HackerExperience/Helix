@@ -26,7 +26,10 @@ defmodule Helix.Entity.Query.Entity do
 
   ### Example
 
-      iex> fetch_by_server("a::b")
+      iex> fetch_by_server(%Server.ID{})
+      %Entity{}
+
+      iex> fetch_by_server(%Server{})
       %Entity{}
   """
   def fetch_by_server(%Server{server_id: server_id}),
@@ -34,7 +37,7 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate fetch_by_server(server_id),
     to: EntityInternal
 
-  @spec get_servers(Entity.t | Entity.id) ::
+  @spec get_servers(Entity.t) ::
     [Server.id]
   @doc """
   Returns the ids of the servers owned by the entity
@@ -42,11 +45,9 @@ defmodule Helix.Entity.Query.Entity do
   ### Example
 
       iex> get_servers(%Entity{})
-      ["a::b", "f9f9:9090:1::494"]
+      [%Server.ID{}, %Server.ID{}]
   """
-  def get_servers(%Entity{entity_id: entity_id}),
-    do: get_servers(entity_id)
-  defdelegate get_servers(entity_id),
+  defdelegate get_servers(entity),
     to: EntityInternal
 
   @spec get_entity_id(struct) ::
