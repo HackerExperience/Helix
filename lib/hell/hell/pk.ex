@@ -12,6 +12,8 @@ defmodule HELL.PK do
   def type,
     do: :inet
 
+  def cast(id_struct = %_{id: _}),
+    do: {:ok, to_string(id_struct)}
   def cast(ipv6 = %Postgrex.INET{}),
     do: {:ok, to_string(ipv6)}
   def cast(string) when is_binary(string) do

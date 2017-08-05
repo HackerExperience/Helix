@@ -15,16 +15,13 @@ defmodule Helix.Cache.Internal.Populate do
   import HELL.MacroHelpers
 
   alias Helix.Cache.Repo
-  alias Helix.Cache.Model.ServerCache
-  alias Helix.Cache.Model.NetworkCache
-  alias Helix.Cache.Model.StorageCache
+  alias Helix.Cache.Model.Cacheable
   alias Helix.Cache.Model.ComponentCache
-  alias Helix.Cache.Model.Populate.Server, as: ServerParams
-  alias Helix.Cache.Model.Populate.Network, as: NetworkParams
-  alias Helix.Cache.Model.Populate.Component, as: ComponentParams
-  alias Helix.Cache.Model.Populate.Storage, as: StorageParams
-  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+  alias Helix.Cache.Model.NetworkCache
+  alias Helix.Cache.Model.ServerCache
+  alias Helix.Cache.Model.StorageCache
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
 
   @doc """
@@ -54,7 +51,7 @@ defmodule Helix.Cache.Internal.Populate do
       mark_as_purged(params)
     end
 
-    result
+    format_return(result)
   end
 
   @doc """
@@ -70,8 +67,13 @@ defmodule Helix.Cache.Internal.Populate do
       cache(params)
     end
 
-    result
+    format_return(result)
   end
+
+  defp format_return({:ok, params}),
+    do: {:ok, Cacheable.format_output(params)}
+  defp format_return(result),
+    do: result
 
   defp build(method, identifier) when not is_tuple(identifier),
     do: build(method, {identifier})
@@ -84,7 +86,7 @@ defmodule Helix.Cache.Internal.Populate do
 
   Its logic is usually quite similar to `cache/1`.
   """
-  defp mark_as_purged(params = %ServerParams{}) do
+  defp mark_as_purged(params = %ServerCache{}) do
     if not is_nil(params.motherboard_id) do
       purge_list = [
         {:server, {params.server_id}},
@@ -104,13 +106,13 @@ defmodule Helix.Cache.Internal.Populate do
       StatePurgeQueue.queue(:server, params.server_id, :update)
     end
   end
-  defp mark_as_purged(params = %NetworkParams{}) do
+  defp mark_as_purged(params = %NetworkCache{}) do
     StatePurgeQueue.queue(:network, {params.network_id, params.ip}, :update)
   end
-  defp mark_as_purged(params = %StorageParams{}) do
+  defp mark_as_purged(params = %StorageCache{}) do
     StatePurgeQueue.queue(:storage, params.storage_id, :update)
   end
-  defp mark_as_purged(params = %ComponentParams{}) do
+  defp mark_as_purged(params = %ComponentCache{}) do
     StatePurgeQueue.queue(:component, params.component_id, :update)
   end
 
@@ -121,37 +123,37 @@ defmodule Helix.Cache.Internal.Populate do
 
   The coordination logic is similar to the one at `mark_as_purged/1`
   """
-  defp cache(params = %ServerParams{}) do
+  defp cache(params = %ServerCache{}) do
     # Server
     store(params)
 
     if not is_nil(params.motherboard_id) do
       # Network
       Enum.each(params.networks, fn(net) ->
-        cache(NetworkParams.new(net.network_id, net.ip, params.server_id))
+        cache(NetworkCache.new(net.network_id, net.ip, params.server_id))
       end)
 
       # Storage
       Enum.each(params.storages, fn(storage_id) ->
-        cache(StorageParams.new(storage_id, params.server_id))
+        cache(StorageCache.new(storage_id, params.server_id))
       end)
 
       # Components
       Enum.each(params.components, fn(component_id) ->
-        cache(ComponentParams.new(component_id, params.motherboard_id))
+        cache(ComponentCache.new(component_id, params.motherboard_id))
       end)
 
       # Motherboard
-      cache(ComponentParams.new(params.motherboard_id, params.motherboard_id))
+      cache(ComponentCache.new(params.motherboard_id, params.motherboard_id))
     end
   end
-  defp cache(params = %NetworkParams{}) do
+  defp cache(params = %NetworkCache{}) do
     store(params)
   end
-  defp cache(params = %StorageParams{}) do
+  defp cache(params = %StorageCache{}) do
     store(params)
   end
-  defp cache(params = %ComponentParams{}) do
+  defp cache(params = %ComponentCache{}) do
     store(params)
   end
 
@@ -159,22 +161,22 @@ defmodule Helix.Cache.Internal.Populate do
   Saves the cache on the database. If it already exists, it updates its contents
   along with the new expiration time.
   """
-  defp store(params = %ServerParams{}) do
+  defp store(params = %ServerCache{}) do
     params
     |> ServerCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
   end
-  defp store(params = %NetworkParams{}) do
+  defp store(params = %NetworkCache{}) do
     params
     |> NetworkCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:network_id, :ip])
   end
-  defp store(params = %StorageParams{}) do
+  defp store(params = %StorageCache{}) do
     params
     |> StorageCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:storage_id])
   end
-  defp store(params = %ComponentParams{}) do
+  defp store(params = %ComponentCache{}) do
     params
     |> ComponentCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:component_id])

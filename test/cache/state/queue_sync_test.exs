@@ -2,6 +2,8 @@ defmodule Helix.Cache.State.QueueSyncTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
@@ -21,19 +23,18 @@ defmodule Helix.Cache.State.QueueSyncTest do
 
       # First query, will fetch from origin and add entry to PurgeQueue
       {:ok, server} = CacheQuery.from_server_get_all(server_id)
-      refute Map.has_key?(server, :expiration_date)
+      assert_miss CacheInternal.direct_query(:server, server_id)
       assert StatePurgeQueue.lookup(:server, server_id)
 
       # Nothing on the DB..
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       # But once we give it enough time to sync...
       :timer.sleep(1100)
 
       # ...it will be added to the DB
-      {:hit, _} = CacheInternal.direct_query(:server, server_id)
+      assert_hit CacheInternal.direct_query(:server, server_id)
       {:ok, server} = CacheQuery.from_server_get_all(server_id)
-      assert server.expiration_date
 
       # And removed from the PurgeQueue
       refute StatePurgeQueue.lookup(:server, server_id)

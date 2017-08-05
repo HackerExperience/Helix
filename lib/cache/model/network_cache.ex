@@ -6,17 +6,19 @@ defmodule Helix.Cache.Model.NetworkCache do
 
   alias Ecto.Changeset
   alias HELL.IPv4
+  alias HELL.PK
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Cache.Model.Populate.Network, as: NetworkParams
+  alias Helix.Cache.Model.Cacheable
 
   @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
-    network_id: Network.id,
+    network_id: PK.t,
     ip: NetworkConnection.ip,
-    server_id: Server.id,
+    server_id: PK.t,
     expiration_date: DateTime.t
   }
 
@@ -24,13 +26,22 @@ defmodule Helix.Cache.Model.NetworkCache do
 
   @primary_key false
   schema "network_cache" do
-    field :network_id, Network.ID,
+    field :network_id, PK,
       primary_key: true
     field :ip, IPv4,
       primary_key: true
-    field :server_id, Server.ID
+    field :server_id, PK
 
     field :expiration_date, :utc_datetime
+  end
+
+  def new(network_id, ip, server_id) do
+    %__MODULE__{
+      network_id: network_id,
+      ip: ip,
+      server_id: server_id
+    }
+    |> Cacheable.format_input()
   end
 
   @spec create_changeset(NetworkParams.t) ::

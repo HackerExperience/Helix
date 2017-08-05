@@ -26,7 +26,7 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       #   ComponentInternal delete method
       motherboard_id
       |> ComponentInternal.fetch()
-      |> MotherboardInternal.delete()
+      |> ComponentInternal.delete()
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
       assert StatePurgeQueue.lookup(:server, server_id)
@@ -38,12 +38,9 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
 
-      # FIXME: MotherboardInternal SHOULD NOT have a delete method as a
-      #   motherboard is just a component and thus should use the
-      #   ComponentInternal delete method
       motherboard_id
       |> ComponentInternal.fetch()
-      |> MotherboardInternal.delete()
+      |> ComponentInternal.delete()
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
 
@@ -61,9 +58,15 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
 
       nip = Enum.random(server.networks)
 
-      component_id = Enum.random(server.components)
-      slots = MotherboardInternal.get_slots(motherboard_id)
-      slot = Enum.find(slots, &(&1.link_component_id == component_id))
+      component_id =
+        Enum.random(server.components)
+        |> to_string()
+
+      slot =
+        motherboard_id
+        |> ComponentInternal.fetch()
+        |> MotherboardInternal.get_slots()
+        |> Enum.find(&(to_string(&1.link_component_id) == component_id))
 
       refute StatePurgeQueue.lookup(:server, server_id)
 
@@ -74,7 +77,8 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       assert StatePurgeQueue.lookup(:component, motherboard_id)
       assert StatePurgeQueue.lookup(:component, List.last(server.components))
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
 
       CacheHelper.sync_test()
     end
@@ -90,7 +94,7 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
 
       component_id = List.first(server.components)
       slots = MotherboardInternal.get_slots(motherboard_id)
-      slot = Enum.find(slots, &(&1.link_component_id == component_id))
+      slot = Enum.find(slots, &(to_string(&1.link_component_id) == component_id))
 
       refute StatePurgeQueue.lookup(:server, server_id)
 
@@ -126,7 +130,8 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       end)
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
 
       CacheHelper.sync_test()
     end
@@ -181,7 +186,8 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       assert StatePurgeQueue.lookup(:component, motherboard_id)
       assert StatePurgeQueue.lookup(:component, Enum.random(server.components))
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
 
       CacheHelper.sync_test()
     end
@@ -211,7 +217,8 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       refute StatePurgeQueue.lookup(:server, server_id)
       refute StatePurgeQueue.lookup(:component, Enum.random(server.components))
       refute StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      refute StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      refute StatePurgeQueue.lookup(:network, nip_args)
 
       CacheHelper.sync_test()
     end
@@ -240,7 +247,8 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       assert StatePurgeQueue.lookup(:component, motherboard_id)
       assert StatePurgeQueue.lookup(:component, List.last(server.components))
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
 
       CacheHelper.sync_test()
     end

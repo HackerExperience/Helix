@@ -2,6 +2,8 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
@@ -61,8 +63,10 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
       # Properly updated
       assert {:ok, server} = CacheInternal.lookup(:server, server_id)
-      assert server.expiration_date
-      assert Enum.find(server.storages, &(&1 == storage_id))
+      # And it's on the cache
+      assert_hit CacheInternal.direct_query(:server, server_id)
+      # And it returns the new storage
+      assert Enum.find(server.storages, &(to_string(&1) == to_string(storage_id)))
     end
 
     test "it updates the cache (cold)", context do
@@ -103,7 +107,7 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
       # Ensure cache is empty
       refute StatePurgeQueue.lookup(:storage, storage_id)
       refute StatePurgeQueue.lookup(:server, server_id)
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       # Now we'll link the storage
 
@@ -115,7 +119,7 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
     end
   end
 
@@ -141,10 +145,10 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:storage, storage_id)
+      assert_miss CacheInternal.direct_query(:storage, storage_id)
       assert {:hit, server2} = CacheInternal.direct_query(:server, server_id)
 
-      refute Enum.find(server2.storages, &(&1 == storage_id))
+      refute Enum.find(server2.storages, &(to_string(&1) == to_string(storage_id)))
     end
 
     test "it updates the cache (cold)", context do
@@ -166,8 +170,8 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:storage, storage_id)
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:storage, storage_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
     end
   end
 end

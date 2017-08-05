@@ -2,6 +2,8 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -29,7 +31,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       # Modify server
       nip = Enum.random(server1.networks)
-      nc = NetworkConnectionInternal.fetch_by_nip("::", nip.ip)
+      nc = NetworkConnectionInternal.fetch_by_nip("::", nip["ip"])
       new_ip = HELL.IPv4.autogenerate()
       {:ok, _} = NetworkConnectionInternal.update_ip(nc, new_ip)
 
@@ -38,18 +40,21 @@ defmodule Helix.Cache.Internal.PurgeTest do
       # Query again
       {:ok, server2} = CacheInternal.lookup(:server, server_id)
 
-      # Ensure it comes from the cache
-      assert server2.expiration_date
+      # Ensure it is in the cache
+      assert_hit CacheInternal.direct_query(:server, server_id)
 
       server2_ip = server2.networks
         |> Enum.random()
         |> Map.get(:ip)
 
-      :miss = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
+      assert_miss CacheInternal.direct_query(
+        :network,
+        {nip["network_id"], nip["ip"]}
+      )
 
       assert server1 != server2
-      assert server1.server_id == server2.server_id
-      refute nip.ip == server2_ip
+      assert_id server1.server_id, server2.server_id
+      refute nip["ip"] == server2_ip
       assert server2_ip == new_ip
 
       CacheHelper.sync_test()
@@ -59,22 +64,22 @@ defmodule Helix.Cache.Internal.PurgeTest do
       server_id = context.server.server_id
 
       # Ensure cache is empty
-      CacheInternal.purge(:server, server_id)
+      CacheInternal.purge(:server, to_string(server_id))
       StatePurgeQueue.sync()
 
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
       refute StatePurgeQueue.lookup(:server, server_id)
 
       # Request server update
-      CacheInternal.update(:server, server_id)
+      CacheInternal.update(:server, to_string(server_id))
 
       # It's added to the queue
       assert StatePurgeQueue.lookup(:server, server_id)
 
       # But hasn't synced yet
-      :miss = CacheInternal.direct_query(:server, server_id)
-      :miss = CacheInternal.direct_query(:server, server_id)
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       StatePurgeQueue.sync()
 
@@ -82,7 +87,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
-      assert server.server_id == server_id
+      assert_id server.server_id, server_id
 
       CacheHelper.sync_test()
     end
@@ -102,7 +107,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       # Purge nip
       PurgeInternal.purge(:network, {nip.network_id, nip.ip})
 
-      :miss = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
+      assert_miss CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
       # Purging nip shouldn't affect others
       {:hit, _} = CacheInternal.direct_query(:component, component_id)
@@ -113,7 +118,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       # Purging storage
       PurgeInternal.purge(:storage, {storage_id})
 
-      :miss = CacheInternal.direct_query(:storage, storage_id)
+      assert_miss CacheInternal.direct_query(:storage, storage_id)
 
       # Purging storage shouldn't affect others
       {:hit, _} = CacheInternal.direct_query(:component, component_id)
@@ -123,7 +128,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       # Purging component
       PurgeInternal.purge(:component, {component_id})
 
-      :miss = CacheInternal.direct_query(:component, component_id)
+      assert_miss CacheInternal.direct_query(:component, component_id)
 
       # Purging a component shouldn't affect others
       {:hit, _} = CacheInternal.direct_query(:component, motherboard_id)
@@ -132,7 +137,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
       # Purge motherboard
       PurgeInternal.purge(:component, {motherboard_id})
 
-      :miss = CacheInternal.direct_query(:component, motherboard_id)
+      assert_miss CacheInternal.direct_query(:component, motherboard_id)
 
       # Server is still there
       {:hit, _} = CacheInternal.direct_query(:server, server_id)

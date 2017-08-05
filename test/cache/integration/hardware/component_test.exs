@@ -2,6 +2,8 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Hardware.Internal.Component, as: ComponentInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -27,7 +29,7 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
       # Note: for completeness of context, we also need to detach the mobo from
       # the server, otherwise unexpected things happens. As always, you should
       # use the proper API.
-      ServerInternal.detach(server_id)
+      ServerInternal.detach(context.server)
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
       assert StatePurgeQueue.lookup(:server, server_id)
@@ -36,7 +38,7 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
 
       # We've deleted this server's mobo, so it won't have mobo's data on it
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
-      assert server.server_id == server_id
+      assert_id server.server_id, server_id
       assert server.entity_id
       refute server.motherboard_id
 
@@ -61,7 +63,7 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
       StatePurgeQueue.sync()
 
       # We've deleted this server's mobo, so it will never populate correctly.
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       CacheHelper.sync_test()
     end

@@ -2,6 +2,8 @@ defmodule Helix.Cache.Query.CacheTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -33,7 +35,7 @@ defmodule Helix.Cache.Query.CacheTest do
 
       {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
-      assert server.server_id == server_id
+      assert_id server.server_id, server_id
 
       CacheHelper.sync_test()
     end
@@ -99,9 +101,8 @@ defmodule Helix.Cache.Query.CacheTest do
       StatePurgeQueue.sync()
 
       # ...the next query comes from the Cache
-      {:ok, server4} = CacheQuery.from_server_get_all(server_id)
-      assert server4.expiration_date
-      {:hit, _} = CacheInternal.direct_query(:server, server_id)
+      assert_hit CacheInternal.direct_query(:server, server_id)
+      assert {:ok, _} = CacheQuery.from_server_get_all(server_id)
 
       # And it's no longer on the purge queue
       refute StatePurgeQueue.lookup(:server, server_id)
@@ -120,7 +121,7 @@ defmodule Helix.Cache.Query.CacheTest do
       refute StatePurgeQueue.lookup(:server, server_id)
 
       # Hasn't synced yet
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       # But querying it returns the row correctly
       {:ok, server1} = CacheQuery.from_server_get_all(server_id)
@@ -131,17 +132,14 @@ defmodule Helix.Cache.Query.CacheTest do
 
       # Those are actually different values, not from the cache
       # (because the entry is still marked as purged)
-      refute Map.has_key?(server1, :expiration_date)
-      refute Map.has_key?(server2, :expiration_date)
-      refute Map.has_key?(server3, :expiration_date)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       # But if we do sync it...
       StatePurgeQueue.sync()
 
       # ...the next query comes from the Cache
-      {:ok, server4} = CacheQuery.from_server_get_all(server_id)
-      assert server4.expiration_date
-      {:hit, _} = CacheInternal.direct_query(:server, server_id)
+      assert_hit CacheInternal.direct_query(:server, server_id)
+      assert {:ok, _} = CacheQuery.from_server_get_all(server_id)
 
       # And it's no longer on the purge queue
       refute StatePurgeQueue.lookup(:server, server_id)

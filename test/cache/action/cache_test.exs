@@ -2,6 +2,8 @@ defmodule Helix.Cache.Action.CacheTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Helper, as: CacheHelper
@@ -26,7 +28,8 @@ defmodule Helix.Cache.Action.CacheTest do
     {:hit, motherboard1} = CacheInternal.direct_query(:component, server1.motherboard_id)
 
     net1 = Enum.random(server1.networks)
-    {:hit, nip1} = CacheInternal.direct_query(:network, {net1.network_id, net1.ip})
+    args = {net1["network_id"], net1["ip"]}
+    {:hit, nip1} = CacheInternal.direct_query(:network, args)
 
     {server1, storage1, component1, motherboard1, nip1}
   end
@@ -57,7 +60,8 @@ defmodule Helix.Cache.Action.CacheTest do
         assert StatePurgeQueue.lookup(:storage, storage_id)
       end)
       Enum.each(server.networks, fn(net) ->
-        assert StatePurgeQueue.lookup(:network, {net.network_id, net.ip})
+        args = {to_string(net.network_id), net.ip}
+        assert StatePurgeQueue.lookup(:network, args)
       end)
 
       # Sync
@@ -82,14 +86,14 @@ defmodule Helix.Cache.Action.CacheTest do
       PopulateInternal.populate(:by_server, server_id)
 
       # Detach mobo. This function will call its own update_server
-      ServerInternal.detach(server_id)
-      StatePurgeQueue.sync
+      ServerInternal.detach(context.server)
+      StatePurgeQueue.sync()
 
       # Cache has been populated after detach
       {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
       # Populated entry already has empty motherboard
-      assert server.server_id == server_id
+      assert_id server.server_id, server_id
       assert server.entity_id
       refute server.motherboard_id
 
@@ -104,7 +108,7 @@ defmodule Helix.Cache.Action.CacheTest do
       StatePurgeQueue.sync()
 
       {:hit, server2} = CacheInternal.direct_query(:server, server_id)
-      assert server2.server_id == server_id
+      assert_id server2.server_id, server_id
       assert server2.entity_id
       refute server2.motherboard_id
 
@@ -198,7 +202,7 @@ defmodule Helix.Cache.Action.CacheTest do
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       net = Enum.random(server1.networks)
-      CacheAction.update_nip(net.network_id, net.ip)
+      CacheAction.update_nip(net["network_id"], net["ip"])
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
@@ -239,7 +243,7 @@ defmodule Helix.Cache.Action.CacheTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:storage, storage_id)
+      assert_miss CacheInternal.direct_query(:storage, storage_id)
 
       # Note that purge_storage will only purge storage, not the server
       # It's up to the caller to also notify the server has changed,
@@ -268,7 +272,7 @@ defmodule Helix.Cache.Action.CacheTest do
       StatePurgeQueue.sync()
 
       assert {:hit, server2} = CacheInternal.direct_query(:server, server_id)
-      assert server2.server_id == server_id
+      assert_id server2.server_id, server_id
     end
 
     test "default case (cold)", context do
@@ -287,7 +291,7 @@ defmodule Helix.Cache.Action.CacheTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
     end
   end
 end

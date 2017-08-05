@@ -5,14 +5,16 @@ defmodule Helix.Cache.Model.ComponentCache do
   import Ecto.Changeset
 
   alias Ecto.Changeset
+  alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Cache.Model.Populate.Component, as: ComponentParams
+  alias Helix.Cache.Model.Cacheable
 
   @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
-    component_id: Component.id,
-    motherboard_id: Component.id | nil,
+    component_id: PK.t,
+    motherboard_id: PK.t | nil,
     expiration_date: DateTime.t
   }
 
@@ -20,11 +22,19 @@ defmodule Helix.Cache.Model.ComponentCache do
 
   @primary_key false
   schema "component_cache" do
-    field :component_id, Component.ID,
+    field :component_id, PK,
       primary_key: true
-    field :motherboard_id, Component.ID
+    field :motherboard_id, PK
 
     field :expiration_date, :utc_datetime
+  end
+
+  def new(component_id, mobo_id) do
+    %__MODULE__{
+      component_id: to_string(component_id),
+      motherboard_id: to_string(mobo_id)
+    }
+    |> Cacheable.format_input()
   end
 
   @spec create_changeset(ComponentParams.t) ::

@@ -2,6 +2,8 @@ defmodule Helix.Cache.Integration.Software.StorageTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -37,11 +39,11 @@ defmodule Helix.Cache.Integration.Software.StorageTest do
       StatePurgeQueue.sync()
 
       # Storage no longer saved on cache
-      assert :miss == CacheInternal.direct_query(:storage, storage_id)
+      assert_miss CacheInternal.direct_query(:storage, storage_id)
 
       # Server no long lists that storage
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
-      refute Enum.find(server.storages, &(&1 == storage_id))
+      refute Enum.find(server.storages, &(to_string(&1) == to_string(storage_id)))
     end
 
     test "it cleans the cache (cold)", context do
@@ -65,8 +67,8 @@ defmodule Helix.Cache.Integration.Software.StorageTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:storage, storage_id)
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:storage, storage_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
     end
   end
 end

@@ -2,6 +2,8 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Helper, as: CacheHelper
@@ -28,23 +30,23 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
       refute cnip == nil
-      assert cnip.server_id == server_id
+      assert_id cnip.server_id, server_id
 
       {:hit, cstorage} = CacheInternal.direct_query(:storage, storage_id)
 
       refute cstorage == nil
-      assert cstorage.storage_id == storage_id
+      assert_id cstorage.storage_id, storage_id
 
       {:hit, ccomponent} = CacheInternal.direct_query(:component, Enum.random(components))
 
       refute ccomponent == nil
-      assert ccomponent.motherboard_id == motherboard_id
+      assert_id ccomponent.motherboard_id, motherboard_id
 
       # Regression: motherboard is also added to components
       {:hit, cmobo} = CacheInternal.direct_query(:component, motherboard_id)
 
       refute cmobo == nil
-      assert cmobo.component_id == motherboard_id
+      assert_id cmobo.component_id, motherboard_id
 
       CacheHelper.sync_test()
     end
@@ -68,7 +70,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       # And there's nothing on the DB. (Sync not needed but added for clarity)
       StatePurgeQueue.sync()
-      assert :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       # Now, if we query using the lookup/2 function, we'll populate the server
       {:ok, _} = CacheInternal.lookup(:server, server_id)
@@ -78,7 +80,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
       # With nil values
-      assert server.server_id == server_id
+      assert_id server.server_id, server_id
       assert server.entity_id
       refute server.motherboard_id
       refute server.components
@@ -109,7 +111,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       {:hit, query} = CacheInternal.direct_query(:component, motherboard_id)
 
-      assert component.component_id == query.component_id
+      assert_id component.component_id, query.component_id
 
       CacheHelper.sync_test()
     end
@@ -123,7 +125,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       {:hit, storage2} = CacheInternal.direct_query(:storage, storage_id)
 
-      assert storage1.storage_id == storage2.storage_id
+      assert_id storage1.storage_id, storage2.storage_id
 
       CacheHelper.sync_test()
     end
@@ -137,7 +139,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       {:hit, nip2} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
-      assert nip1.network_id == nip2.network_id
+      assert_id nip1.network_id, nip2.network_id
 
       CacheHelper.sync_test()
     end

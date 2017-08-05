@@ -2,6 +2,8 @@ defmodule Helix.Cache.Internal.BuilderTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
@@ -20,7 +22,7 @@ defmodule Helix.Cache.Internal.BuilderTest do
 
       assert {:ok, build} = BuilderInternal.by_server(server_id)
 
-      assert build.server_id == server_id
+      assert_id build.server_id, server_id
       assert build.entity_id
       assert build.motherboard_id
       assert build.storages
@@ -31,11 +33,13 @@ defmodule Helix.Cache.Internal.BuilderTest do
     test "server without mobo", context do
       server_id = context.server.server_id
 
-      ServerInternal.detach(server_id)
+      server_id
+      |> ServerInternal.fetch()
+      |> ServerInternal.detach()
 
       assert {:ok, build} = BuilderInternal.by_server(server_id)
 
-      assert build.server_id == server_id
+      assert_id build.server_id, server_id
       assert build.entity_id
       refute build.motherboard_id
       refute build.storages
@@ -55,8 +59,8 @@ defmodule Helix.Cache.Internal.BuilderTest do
 
       assert {:ok, storage} = BuilderInternal.by_storage(storage_id)
 
-      assert storage.storage_id == storage_id
-      assert storage.server_id == server_id
+      assert_id storage.storage_id, storage_id
+      assert_id storage.server_id, server_id
     end
 
     test "invalid storage" do
@@ -113,9 +117,10 @@ defmodule Helix.Cache.Internal.BuilderTest do
       nip = Enum.random(server.networks)
 
       assert {:ok, network} = BuilderInternal.by_nip(nip.network_id, nip.ip)
+
       assert network.network_id == nip.network_id
       assert network.ip == nip.ip
-      assert network.server_id == server_id
+      assert_id network.server_id, server_id
     end
 
     test "non-existing nip" do
@@ -130,8 +135,8 @@ defmodule Helix.Cache.Internal.BuilderTest do
 
       assert {:ok, build} = BuilderInternal.by_component(motherboard_id)
 
-      assert build.component_id == motherboard_id
-      assert build.motherboard_id == motherboard_id
+      assert_id build.component_id, motherboard_id
+      assert_id build.motherboard_id, motherboard_id
     end
 
     test "component = cpu/hdd/ram/nic", context do
@@ -144,15 +149,17 @@ defmodule Helix.Cache.Internal.BuilderTest do
 
       assert {:ok, build} = BuilderInternal.by_component(component_id)
 
-      assert build.component_id == component_id
-      assert build.motherboard_id == motherboard_id
+      assert_id build.component_id, component_id
+      assert_id build.motherboard_id, motherboard_id
     end
 
     test "non-attached component (mobo)", context do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
 
-      ServerInternal.detach(server_id)
+      server_id
+      |> ServerInternal.fetch()
+      |> ServerInternal.detach()
 
       assert {:error, reason} = BuilderInternal.by_component(motherboard_id)
       assert reason == {:component, :unlinked}

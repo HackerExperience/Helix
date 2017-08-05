@@ -2,6 +2,8 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -31,7 +33,7 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       CacheHelper.sync_test()
     end
@@ -54,7 +56,7 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       CacheHelper.sync_test()
     end
@@ -73,11 +75,12 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
       assert StatePurgeQueue.lookup(:component, motherboard_id)
       assert StatePurgeQueue.lookup(:component, Enum.random(server.components))
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       CacheHelper.sync_test()
     end
@@ -94,7 +97,7 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       StatePurgeQueue.sync()
 
-      assert :miss == CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
     end
   end
 end

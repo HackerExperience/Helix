@@ -5,15 +5,16 @@ defmodule Helix.Cache.Model.StorageCache do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias Helix.Server.Model.Server
+  alias HELL.PK
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Model.Populate.Storage, as: StorageParams
+  alias Helix.Cache.Model.Cacheable
 
   @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
-    storage_id: Storage.id,
-    server_id: Server.id,
+    storage_id: PK.t,
+    server_id: PK.t,
     expiration_date: DateTime.t
   }
 
@@ -21,11 +22,19 @@ defmodule Helix.Cache.Model.StorageCache do
 
   @primary_key false
   schema "storage_cache" do
-    field :storage_id, Storage.ID,
+    field :storage_id, PK,
       primary_key: true
-    field :server_id, Server.ID
+    field :server_id, PK
 
     field :expiration_date, :utc_datetime
+  end
+
+  def new(storage_id, server_id) do
+    %__MODULE__{
+      storage_id: storage_id,
+      server_id: server_id
+    }
+    |> Cacheable.format_input()
   end
 
   @spec create_changeset(StorageParams.t) ::

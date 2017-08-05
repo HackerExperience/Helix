@@ -51,11 +51,15 @@ defmodule Helix.Cache.State.PurgeQueue do
     {:ok, pid}
   end
 
+  def lookup(model, key = %_{id: _}),
+    do: lookup(model, to_string(key))
   def lookup(model, key) when not is_tuple(key),
     do: lookup(model, {key})
   def lookup(model, key),
     do: GenServer.call(@registry_name, {:lookup, model, key})
 
+  def queue(model, key = %_{id: _}, action),
+    do: queue(model, to_string(key), action)
   def queue(model, key, action) when not is_tuple(key),
     do: queue(model, {key}, action)
   def queue(model, key, action) do
@@ -65,6 +69,8 @@ defmodule Helix.Cache.State.PurgeQueue do
   def queue_multiple(entry_list, action),
     do: GenServer.call(@registry_name, {:add_multiple, entry_list, action})
 
+  def unqueue(model, key = %_{id: _}, action),
+    do: unqueue(model, to_string(key), action)
   def unqueue(model, key, action) when not is_tuple(key),
     do: unqueue(model, {key}, action)
   def unqueue(model, key, action),

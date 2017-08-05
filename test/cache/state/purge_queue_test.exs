@@ -2,6 +2,8 @@ defmodule Helix.Cache.State.PurgeQueueTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
@@ -22,7 +24,7 @@ defmodule Helix.Cache.State.PurgeQueueTest do
       assert StatePurgeQueue.lookup(:server, server_id)
 
       # Definitely not on the db
-      assert :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       StatePurgeQueue.sync()
 
@@ -41,7 +43,7 @@ defmodule Helix.Cache.State.PurgeQueueTest do
       {:ok, server} = CacheQuery.from_server_get_all(server_id)
 
       # Data did not came from cache
-      refute Map.has_key?(server, :expiration_date)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       storage_id = Enum.random(server.storages)
       component_id = Enum.random(server.components)
@@ -52,19 +54,20 @@ defmodule Helix.Cache.State.PurgeQueueTest do
       assert StatePurgeQueue.lookup(:storage, storage_id)
       assert StatePurgeQueue.lookup(:component, component_id)
       assert StatePurgeQueue.lookup(:component, motherboard_id)
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
 
-      assert :miss = CacheInternal.direct_query(:server, server_id)
-      assert :miss = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
-      assert :miss = CacheInternal.direct_query(:storage, storage_id)
-      assert :miss = CacheInternal.direct_query(:component, motherboard_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:network, nip_args)
+      assert_miss CacheInternal.direct_query(:storage, storage_id)
+      assert_miss CacheInternal.direct_query(:component, motherboard_id)
 
       StatePurgeQueue.sync()
 
       assert {:ok, server} = CacheQuery.from_server_get_all(server_id)
 
       # Data came from cache
-      assert server.expiration_date
+      assert_hit CacheInternal.direct_query(:server, server_id)
 
       # No longer on PurgeQueue
       refute StatePurgeQueue.lookup(:component, motherboard_id)

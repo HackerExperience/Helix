@@ -38,6 +38,7 @@ defmodule Helix.Cache.Action.Cache do
 
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
+  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.Storage
@@ -53,8 +54,10 @@ defmodule Helix.Cache.Action.Cache do
   If it does not exist on the cache, it won't purge anything. No matter the
   change, the cache is consistent.
   """
-  def purge_server(server = %Server{}),
-    do: purge_server(server.server_id)
+  def purge_server(%Server{server_id: id}),
+    do: purge_server(to_string(id))
+  def purge_server(id = %Server.ID{}),
+    do: purge_server(to_string(id))
   def purge_server(server_id) do
     server = direct_cache_query(:server, server_id)
 
@@ -65,7 +68,7 @@ defmodule Helix.Cache.Action.Cache do
         CacheInternal.purge(:component, server.motherboard_id)
         Enum.each(
           server.networks,
-          &CacheInternal.purge(:network, {&1.network_id, &1.ip})
+          &CacheInternal.purge(:network, {&1["network_id"], &1["ip"]})
         )
       end
       CacheInternal.purge(:server, server_id)
@@ -81,8 +84,10 @@ defmodule Helix.Cache.Action.Cache do
   If it does not exist on the cache, it won't update anything. No matter the
   change, the cache is consistent.
   """
-  def update_server(server = %Server{}),
-    do: update_server(server.server_id)
+  def update_server(%Server{server_id: id}),
+    do: update_server(to_string(id))
+  def update_server(id = %Server.ID{}),
+    do: update_server(to_string(id))
   def update_server(server_id) do
     params = direct_cache_query(:server, server_id)
     update_server(server_id, params)
@@ -95,7 +100,7 @@ defmodule Helix.Cache.Action.Cache do
         CacheInternal.update(:component, params.motherboard_id)
         Enum.each(
           params.networks,
-          &CacheInternal.update(:network, {&1.network_id, &1.ip})
+          &CacheInternal.update(:network, {&1["network_id"], &1["ip"]})
         )
       end
       CacheInternal.update(:server, server_id)
@@ -108,8 +113,10 @@ defmodule Helix.Cache.Action.Cache do
   If the motherboard is not found, it won't update anything, since the server
   entry doesn't exists anyway.
   """
-  def update_server_by_motherboard(motherboard = %Motherboard{}),
-    do: update_server_by_motherboard(motherboard.motherboard_id)
+  def update_server_by_motherboard(%Motherboard{motherboard_id: id}),
+    do: update_server_by_motherboard(to_string(id))
+  def update_server_by_motherboard(id = %Component.ID{}),
+    do: update_server_by_motherboard(to_string(id))
   def update_server_by_motherboard(motherboard_id) do
     server = direct_cache_query(:motherboard, motherboard_id)
 
@@ -127,8 +134,10 @@ defmodule Helix.Cache.Action.Cache do
   doesn't. It's up to the caller to make sure this distinction. If that's
   the case, `update_storage/1` may be a better fit.
   """
-  def update_server_by_storage(storage = %Storage{}),
-    do: update_server_by_storage(storage.storage_id)
+  def update_server_by_storage(%Storage{storage_id: id}),
+    do: update_server_by_storage(to_string(id))
+  def update_server_by_storage(id = %Storage.ID{}),
+    do: update_server_by_storage(to_string(id))
   def update_server_by_storage(storage_id) do
     server_id = direct_cache_query(:storage, storage_id)
 
@@ -142,6 +151,10 @@ defmodule Helix.Cache.Action.Cache do
 
   It will also update the underlying server, even if it doesn't exists.
   """
+  def update_storage(%Storage{storage_id: id}),
+    do: update_storage(to_string(id))
+  def update_storage(id = %Storage.ID{}),
+    do: update_storage(to_string(id))
   def update_storage(storage_id) do
     {:ok, server_id} = CacheQuery.from_storage_get_server(storage_id)
     update_server(server_id)
@@ -153,8 +166,10 @@ defmodule Helix.Cache.Action.Cache do
 
   It does not purge/update the server.
   """
-  def purge_storage(storage = %Storage{}),
-    do: purge_storage(storage.storage_id)
+  def purge_storage(%Storage{storage_id: id}),
+    do: purge_storage(to_string(id))
+  def purge_storage(id = %Storage.ID{}),
+    do: purge_storage(to_string(id))
   def purge_storage(storage_id) do
     CacheInternal.purge(:storage, storage_id)
   end
@@ -164,10 +179,12 @@ defmodule Helix.Cache.Action.Cache do
 
   If the corresponding server is found *on the cache*, it is also updated.
   """
-  def update_component(motherboard = %Motherboard{}),
-    do: update_component(motherboard.motherboard_id)
-  def update_component(component = %Component{}),
-    do: update_component(component.component_id)
+  def update_component(%Motherboard{motherboard_id: id}),
+    do: update_component(to_string(id))
+  def update_component(%Component{component_id: id}),
+    do: update_component(to_string(id))
+  def update_component(id = %Component.ID{}),
+    do: update_component(to_string(id))
   def update_component(component_id) do
     server = direct_cache_query(:component, component_id)
 
@@ -182,10 +199,12 @@ defmodule Helix.Cache.Action.Cache do
 
   It does not purge/update the server.
   """
-  def purge_component(motherboard = %Motherboard{}),
-    do: purge_component(motherboard.motherboard_id)
-  def purge_component(component = %Component{}),
-    do: purge_component(component.component_id)
+  def purge_component(%Motherboard{motherboard_id: id}),
+    do: purge_component(to_string(id))
+  def purge_component(%Component{component_id: id}),
+    do: purge_component(to_string(id))
+  def purge_component(id = %Component.ID{}),
+    do: purge_component(to_string(id))
   def purge_component(component_id) do
     CacheInternal.purge(:component, component_id)
   end
@@ -195,6 +214,8 @@ defmodule Helix.Cache.Action.Cache do
 
   It will also update the underlying server, even if it doesn't exists.
   """
+  def update_nip(id = %Network.ID{}, ip),
+    do: update_nip(to_string(id), ip)
   def update_nip(network_id, ip) do
     {:ok, server_id} = CacheQuery.from_nip_get_server(network_id, ip)
     update_server(server_id)
@@ -206,6 +227,8 @@ defmodule Helix.Cache.Action.Cache do
 
   It does not purge/update the server.
   """
+  def purge_nip(id = %Network.ID{}, ip),
+    do: purge_nip(to_string(id), ip)
   def purge_nip(network_id, ip) do
     CacheInternal.purge(:network, {network_id, ip})
   end

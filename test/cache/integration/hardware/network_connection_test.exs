@@ -2,9 +2,12 @@ defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
+  alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
@@ -29,15 +32,16 @@ defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
       {:ok, _} = NetworkConnectionInternal.update_ip(nc, new_ip)
 
       assert StatePurgeQueue.lookup(:server, server_id)
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, new_ip})
+      nip_args1 = {to_string(nip.network_id), nip.ip}
+      nip_args2 = {to_string(nip.network_id), new_ip}
+      assert StatePurgeQueue.lookup(:network, nip_args1)
+      assert StatePurgeQueue.lookup(:network, nip_args2)
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
       assert StatePurgeQueue.lookup(:component, Enum.random(server.components))
       assert StatePurgeQueue.lookup(:component, server.motherboard_id)
 
+      # Not on the cache yet
       {:ok, server2} = CacheQuery.from_server_get_all(server_id)
-      refute Map.has_key?(server2, :expiration_date)
-
       nip2 = Enum.random(server2.networks)
       assert nip2 == %{network_id: nip.network_id, ip: new_ip}
 
@@ -45,13 +49,16 @@ defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
       assert reason == {:nip, :notfound}
 
       {:ok, server3} = CacheQuery.from_nip_get_server(nip.network_id, new_ip)
-      assert server3 == server_id
+      assert_id server3, server_id
 
       StatePurgeQueue.sync()
 
+      # Ensure it's on cache
+      assert_hit CacheInternal.direct_query(:server, server_id)
+
+      # And returns correct data
       {:ok, server4} = CacheQuery.from_server_get_all(server_id)
-      assert server4.expiration_date
-      assert server4.networks == server2.networks
+      assert_id server4.networks, server2.networks
 
       CacheHelper.sync_test()
     end

@@ -25,13 +25,13 @@ defmodule Helix.Cache.Internal.Builder do
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Model.Storage
-  alias Helix.Cache.Model.Populate.Component, as: ComponentParams
-  alias Helix.Cache.Model.Populate.Network, as: NetworkParams
-  alias Helix.Cache.Model.Populate.Server, as: ServerParams
-  alias Helix.Cache.Model.Populate.Storage, as: StorageParams
+  alias Helix.Cache.Model.ComponentCache
+  alias Helix.Cache.Model.NetworkCache
+  alias Helix.Cache.Model.ServerCache
+  alias Helix.Cache.Model.StorageCache
 
   @spec by_server(Server.id) ::
-    {:ok, ServerParams.t}
+    {:ok, ServerCache.t}
     | {:error, {:server, :notfound}}
     | {:error, :unknown}
   def by_server(server_id) do
@@ -46,7 +46,7 @@ defmodule Helix.Cache.Internal.Builder do
       storages = get_storages_from_motherboard(motherboard),
       networks = get_networks_from_motherboard(motherboard)
     do
-      sp = ServerParams.new(
+      sp = ServerCache.new(
         {server_id, entity.entity_id, server.motherboard_id, networks, storages,
          resources, components})
       {:ok, sp}
@@ -54,14 +54,14 @@ defmodule Helix.Cache.Internal.Builder do
       :nxserver ->
         {:error, {:server, :notfound}}
       {:nxmobo, entity} ->
-        {:ok, ServerParams.new(server_id, entity.entity_id)}
+        {:ok, ServerCache.new(server_id, entity.entity_id)}
       _ ->
         {:error, :unknown}
     end
   end
 
   @spec by_motherboard(Motherboard.id) ::
-    {:ok, ServerParams.t}
+    {:ok, ServerCache.t}
     | {:error, {:server, :notfound}}
     | {:error, {:motherboard, :notfound}}
     | {:error, :unknown}
@@ -80,7 +80,7 @@ defmodule Helix.Cache.Internal.Builder do
   end
 
   # @spec by_nip(Network.id, IPv4.t) ::
-  #   {:ok, NetworkParams.t}
+  #   {:ok, NetworkCache.t}
   #   | {:error, {:nip, :notfound}}
   #   | {:error, {:server, :notfound}}
   #   | {:error, :unknown}
@@ -89,7 +89,7 @@ defmodule Helix.Cache.Internal.Builder do
       mobo = %{} <- MotherboardInternal.fetch_by_nip(network_id, ip) || :nxnip,
       server = %{} <- ServerInternal.fetch_by_motherboard(mobo) || :nxserver
     do
-      {:ok, NetworkParams.new(network_id, ip, server.server_id)}
+      {:ok, NetworkCache.new(network_id, ip, server.server_id)}
     else
       :nxnip ->
         {:error, {:nip, :notfound}}
@@ -102,7 +102,7 @@ defmodule Helix.Cache.Internal.Builder do
   end
 
   @spec by_storage(Storage.id) ::
-    {:ok, StorageParams.t}
+    {:ok, StorageCache.t}
     | {:error, {:storage, :notfound}}
     | {:error, {:drive, :notfound}}
     | {:error, {:drive, :unlinked}}
@@ -117,7 +117,7 @@ defmodule Helix.Cache.Internal.Builder do
       true <- not is_nil(motherboard_id) || :unlinked,
       server = %{} <- ServerInternal.fetch_by_motherboard(motherboard_id)
     do
-      {:ok, StorageParams.new(storage_id, server.server_id)}
+      {:ok, StorageCache.new(storage_id, server.server_id)}
     else
       :nxstorage ->
         {:error, {:storage, :notfound}}
@@ -131,7 +131,7 @@ defmodule Helix.Cache.Internal.Builder do
   end
 
   @spec by_component(Component.id) ::
-    {:ok, ComponentParams.t}
+    {:ok, ComponentCache.t}
     | {:error, {:component, :notfound}}
   def by_component(component_id) do
     with \
@@ -139,7 +139,7 @@ defmodule Helix.Cache.Internal.Builder do
       true <- not is_nil(mobo_id) || :nxmobo,
       %{} <- ServerInternal.fetch_by_motherboard(mobo_id) || :unlinked
     do
-      {:ok, ComponentParams.new(component_id, mobo_id)}
+      {:ok, ComponentCache.new(component_id, mobo_id)}
     else
       :nxmobo ->
         {:error, {:component, :notfound}}

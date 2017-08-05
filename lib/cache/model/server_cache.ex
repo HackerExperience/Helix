@@ -6,24 +6,25 @@ defmodule Helix.Cache.Model.ServerCache do
 
   alias Ecto.Changeset
   alias HELL.IPv4
+  alias HELL.PK
   alias Helix.Entity.Model.Entity
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
-  alias Helix.Cache.Model.Populate.Server, as: ServerParams
+  alias Helix.Cache.Model.Cacheable
 
   @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
-    server_id: Server.id,
-    entity_id: Entity.id,
-    motherboard_id: Component.id,
+    server_id: PK.t,
+    entity_id: PK.t,
+    motherboard_id: PK.t,
     # Note that this is a "cached" version of the NIP and uses the id as a
     # string
     networks: [%{network_id: String.t, ip: IPv4.t}],
-    storages: [Storage.id],
+    storages: [PK.t],
     resources: map,
-    components: [Component.id],
+    components: [PK.t],
     expiration_date: DateTime.t
   }
 
@@ -38,24 +39,47 @@ defmodule Helix.Cache.Model.ServerCache do
 
   @primary_key false
   schema "server_cache" do
-    field :server_id, Server.ID,
+    field :server_id, PK,
       primary_key: true
 
-    field :entity_id, Entity.ID
-    field :motherboard_id, Component.ID
+    field :entity_id, PK
+    field :motherboard_id, PK
     field :networks, {:array, :map}
-    field :storages, {:array, Storage.ID}
+    field :storages, {:array, PK}
     field :resources, :map
-    field :components, {:array, Component.ID}
+    field :components, {:array, PK}
 
     field :expiration_date, :utc_datetime
   end
 
-  @spec create_changeset(ServerParams.t) ::
-    Changeset.t
+  def new(sid, eid) do
+    %__MODULE__{
+      server_id: sid,
+      entity_id: eid,
+      motherboard_id: nil
+    }
+    |> Cacheable.format_input()
+  end
+  def new({sid, eid, mid, networks, storages, resources, components}) do
+    %__MODULE__{
+      server_id: sid,
+      entity_id: eid,
+      motherboard_id: mid,
+      networks: networks,
+      storages: storages,
+      resources: resources,
+      components: components
+    }
+    |> Cacheable.format_input()
+  end
+
+  # @spec create_changeset(t) ::
+  #   Changeset.t
+  def create_changeset(params = %__MODULE__{}),
+    do: create_changeset(Map.from_struct(params))
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(Map.from_struct(params), @creation_fields)
+    |> cast(params, @creation_fields)
     |> workaround_to_add_nil_values(params)
     |> add_expiration_date()
   end

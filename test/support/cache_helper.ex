@@ -27,13 +27,13 @@ defmodule Helix.Cache.Helper do
 
     StatePurgeQueue.sync()
 
-    Enum.each(server.networks, &CacheAction.purge_nip(&1.network_id, &1.ip))
-    Enum.each(server.components, &CacheAction.purge_component(&1))
-    Enum.each(server.storages, &CacheAction.purge_storage(&1))
-    CacheAction.purge_component(server.motherboard_id)
+    Enum.each(server.networks, &CacheAction.purge_nip(to_string(&1.network_id), &1.ip))
+    Enum.each(server.components, &CacheAction.purge_component(to_string(&1)))
+    Enum.each(server.storages, &CacheAction.purge_storage(to_string(&1)))
+    CacheAction.purge_component(to_string(server.motherboard_id))
 
-    StatePurgeQueue.queue(:server, server.server_id, :purge)
-    CacheInternal.purge(:server, {server.server_id})
+    StatePurgeQueue.queue(:server, to_string(server.server_id), :purge)
+    CacheInternal.purge(:server, {to_string(server.server_id)})
 
     StatePurgeQueue.sync()
   end

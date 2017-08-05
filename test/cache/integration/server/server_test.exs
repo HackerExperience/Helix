@@ -2,6 +2,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
@@ -39,7 +41,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
-      assert server.server_id == server_id
+      assert_id server.server_id, server_id
       assert server.entity_id
       assert server.motherboard_id
       assert server.components
@@ -74,7 +76,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
-      assert server.server_id == server_id
+      assert_id server.server_id, server_id
       assert server.entity_id
       refute server.motherboard_id
       refute server.components
@@ -82,7 +84,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
       refute server.networks
       refute server.resources
 
-      :miss = CacheInternal.direct_query(:component, motherboard_id)
+      assert_miss CacheInternal.direct_query(:component, motherboard_id)
 
       # Note that the mobo components still exist, because ideally one should
       # detach a motherboard only after all components have been removed.
@@ -132,7 +134,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
       Enum.map(server.storages, fn(storage_id) ->
         assert StatePurgeQueue.lookup(:storage, storage_id)
       end)
-      assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
 
       StatePurgeQueue.sync()
 

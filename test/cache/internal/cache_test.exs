@@ -2,12 +2,15 @@ defmodule Helix.Cache.Internal.CacheTest do
 
   use Helix.Test.IntegrationCase
 
+  import Helix.Test.CacheCase
+
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Server
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
+  alias Helix.Cache.Model.Cacheable
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Repo
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
@@ -20,13 +23,13 @@ defmodule Helix.Cache.Internal.CacheTest do
     test "populates data after miss", context do
       server_id = context.server.server_id
 
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       {:ok, origin} = BuilderInternal.by_server(server_id)
 
       {:ok, result} = CacheInternal.lookup({:server, :nips}, server_id)
 
-      assert result == origin.networks
+      assert_id result, origin.networks
 
       CacheHelper.sync_test()
     end
@@ -35,16 +38,19 @@ defmodule Helix.Cache.Internal.CacheTest do
       server_id = context.server.server_id
 
       # Ensure cache is empty
-      assert :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       # Insert directly into cache
       {:ok, cached} = PopulateInternal.populate(:by_server, server_id)
 
+      # Ensures it came from the cache
+      assert_hit CacheInternal.direct_query(:server, server_id)
+
+      # External API (lookup) works as expected
       {:ok, result} = CacheInternal.lookup(:server, server_id)
 
-      assert result.expiration_date
-      assert result.storages == cached.storages
-      assert result.server_id == server_id
+      assert_id result.storages, cached.storages
+      assert_id result.server_id, server_id
 
       CacheHelper.sync_test()
     end
@@ -76,11 +82,13 @@ defmodule Helix.Cache.Internal.CacheTest do
         |> Kernel.-(1)
         |> Ecto.DateTime.from_unix!(:second)
 
-      {:ok, _} = ServerCache.create_changeset(server)
-      |> Ecto.Changeset.force_change(:expiration_date, expired_date)
-      |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
+      {:ok, _} =
+        server
+        |> ServerCache.create_changeset()
+        |> Ecto.Changeset.force_change(:expiration_date, expired_date)
+        |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
 
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       CacheHelper.sync_test()
     end
@@ -97,11 +105,13 @@ defmodule Helix.Cache.Internal.CacheTest do
         |> Kernel.-(1)
         |> Ecto.DateTime.from_unix!(:second)
 
-      {:ok, _} = ServerCache.create_changeset(server)
-      |> Ecto.Changeset.force_change(:expiration_date, expired_date)
-      |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
+      {:ok, _} =
+        server
+        |> ServerCache.create_changeset()
+        |> Ecto.Changeset.force_change(:expiration_date, expired_date)
+        |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
 
-      :miss = CacheInternal.direct_query(:server, server_id)
+      assert_miss CacheInternal.direct_query(:server, server_id)
 
       # CacheInternal.lookup/2 will populate non-existing entries
       {:ok, _} = CacheInternal.lookup({:server, :nips}, server_id)
@@ -110,7 +120,7 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       {:hit, server2} = CacheInternal.direct_query(:server, server_id)
 
-      assert server2.server_id == server_id
+      assert_id server2.server_id, server_id
       assert server2.expiration_date > expired_date
 
       CacheHelper.sync_test()
@@ -124,7 +134,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:ok, cserver} = CacheInternal.lookup(:server, server_id)
 
       assert is_map(cserver)
-      assert cserver.server_id == server_id
+      assert_id cserver.server_id, server_id
 
       # Below is to ensure nested maps have atom indexes
       nip = Enum.random(cserver.networks)
@@ -149,13 +159,13 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       refute StatePurgeQueue.lookup(:storage, storage_id)
 
-      CacheInternal.purge(:storage, storage_id)
+      CacheInternal.purge(:storage, to_string(storage_id))
 
       assert StatePurgeQueue.lookup(:storage, storage_id)
 
       StatePurgeQueue.sync()
 
-      :miss = CacheInternal.direct_query(:storage, storage_id)
+      assert {:miss, :notfound} = CacheInternal.direct_query(:storage, storage_id)
 
       refute StatePurgeQueue.lookup(:storage, storage_id)
 

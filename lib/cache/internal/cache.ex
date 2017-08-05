@@ -9,6 +9,7 @@ defmodule Helix.Cache.Internal.Cache do
 
   import HELL.MacroHelpers
 
+  alias Helix.Cache.Model.Cacheable
   alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.ServerCache
@@ -72,13 +73,7 @@ defmodule Helix.Cache.Internal.Cache do
   def lookup(condition, params) do
     query = query_table(condition)
     full? = query.field == :all
-    result = process(query, params, full?)
-    case result do
-      {:ok, data} ->
-        {:ok, post_lookup_hook(data)}
-      _ ->
-        result
-    end
+    process(query, params, full?)
   end
 
   # @spec direct_query(condition, [binary]) ::
@@ -95,12 +90,11 @@ defmodule Helix.Cache.Internal.Cache do
     do: direct_query(model, {params})
   def direct_query(condition, params) do
     query = query_table(condition)
-    result = sql_query(query, params, true)
-    case result do
-      {:hit, data} ->
-        {:hit, post_lookup_hook(data)}
-      {:miss, :notfound} ->
-        :miss
+    case sql_query(query, params, true) do
+      {:hit, _, original_data} ->
+        {:hit, original_data}
+      miss ->
+        miss
     end
   end
 
@@ -110,6 +104,8 @@ defmodule Helix.Cache.Internal.Cache do
   tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
   reads from reading not-yet-purged (stale) data.
   """
+  def purge(model, params = %_{id: id}),
+    do: raise "bad value #{inspect params}, use only strings"
   def purge(model, params) when not is_tuple(params),
     do: purge(model, {params})
   def purge(model, params),
@@ -121,6 +117,8 @@ defmodule Helix.Cache.Internal.Cache do
   tell the in-memory PurgeQueue DB about this entry. Doing so prevents subsequent
   reads from reading not-yet-purged (stale) data.
   """
+  def update(model, params = %_{id: id}),
+    do: raise "bad value #{inspect params}, use only strings"
   def update(model, params) when not is_tuple(params),
     do: update(model, {params})
   def update(model, params),
@@ -130,7 +128,7 @@ defmodule Helix.Cache.Internal.Cache do
   Wrapper used to query origin data in case it isn't cached (miss)
   """
   defp process(query, params, full?) do
-    with {:hit, data} <- query(query, params, full?) do
+    with {:hit, data, _} <- query(query, params, full?) do
       {:ok, data}
     else
       {:miss, reason} ->
@@ -158,24 +156,30 @@ defmodule Helix.Cache.Internal.Cache do
   It usually translates to something like:
   ServerCache.Query.by_server(server_id)
   |> ServerCache.Query.filter_expired()
-  |> Repo.one
+  |> Repo.one()
   |> Map.get(:networks)
 
   The `full?` option tells whether the caller wants the entire row or
   a single field.
+
+  In case of hit, it returns both the original row and the formatted output.
+  It's up to the caller to decide which one to use.
   """
   defp sql_query(query, params, full?) do
     fetch = apply(query.module, query.function, Tuple.to_list(params))
     apply(query.module, :filter_expired, [fetch])
-    |> Repo.one
+    |> Repo.one()
     |> case do
          nil ->
            {:miss, :notfound}
          schema ->
+           # Reformat the result to Helix internal representation
+           clean_schema = Cacheable.format_output(schema)
            if full? do
-             {:hit, schema}
+             {:hit, clean_schema, schema}
            else
-             {:hit, Map.get(schema, query.field)}
+             field = Map.get(clean_schema, query.field)
+             {:hit, field, field}
            end
        end
   end
@@ -204,7 +208,7 @@ defmodule Helix.Cache.Internal.Cache do
     case apply(PopulateInternal, :fetch_origin, args) do
       {:ok, schema} ->
         if full? do
-          {:ok, Map.from_struct(schema)}
+          {:ok, schema}
         else
           {:ok, Map.get(schema, query.field)}
         end
@@ -230,66 +234,4 @@ defmodule Helix.Cache.Internal.Cache do
 
   defp get_module(model),
     do: @module_table[model] || raise "Invalid model #{inspect model}"
-
-  docp """
-  Simple hook for post-processing of cache returns.
-
-  Mostly useful for transforming map keys from strings to atoms.
-  """
-  defp post_lookup_hook(data) do
-    if is_list(data) or is_map(data) do
-      map_to_atoms(data)
-    else
-      data
-    end
-  end
-
-  defp ecto_enum(schema, fields) do
-    Enum.reduce(fields, %{}, fn(field, acc) ->
-      case field do
-        :expiration_date ->
-          Map.put(acc, field, schema.expiration_date)
-        _ ->
-          Map.put(acc, field, map_to_atoms(Map.get(schema, field)))
-      end
-    end)
-  end
-
-  docp """
-  Utility function to transform string keys to atom keys, so,
-  from:
-    %{"foo" => "bar"}
-  to:
-    %{foo: "bar"}
-  """
-  defp map_to_atoms(data = %StorageCache{}) do
-    ecto_enum(data, StorageCache.__schema__(:fields))
-  end
-  defp map_to_atoms(data = %ComponentCache{}) do
-    ecto_enum(data, ComponentCache.__schema__(:fields))
-  end
-  defp map_to_atoms(data = %NetworkCache{}) do
-    ecto_enum(data, NetworkCache.__schema__(:fields))
-  end
-  defp map_to_atoms(data = %ServerCache{}) do
-    ecto_enum(data, ServerCache.__schema__(:fields))
-  end
-  defp map_to_atoms(data) when is_list(data) do
-    Enum.map(data, fn(elem) ->
-      map_to_atoms(elem)
-    end)
-  end
-  defp map_to_atoms(data) when is_map(data) do
-    data
-    |> Enum.reduce(%{}, fn ({key, val}, acc) ->
-      key = if is_atom(key) do
-        key
-      else
-        String.to_existing_atom(key)
-      end
-      Map.put(acc, key, val)
-    end)
-  end
-  defp map_to_atoms(data),
-    do: data
 end
