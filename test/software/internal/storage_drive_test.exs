@@ -2,14 +2,14 @@ defmodule Helix.Software.Internal.StorageDriveTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Hardware.Model.Component
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Software.Factory
 
   test "linking succeeds with a valid storage" do
-    drive_id = Random.pk()
+    drive_id = Component.ID.generate()
     storage = Factory.insert(:storage, %{drives: []})
 
     StorageDriveInternal.link_drive(storage, drive_id)

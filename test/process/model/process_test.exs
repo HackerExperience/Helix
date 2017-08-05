@@ -3,7 +3,7 @@ defmodule Helix.Process.Model.ProcessTest do
   use ExUnit.Case
 
   alias Ecto.Changeset
-  alias HELL.TestHelper.Random
+  alias Helix.Server.Model.Server
   alias Helix.Process.TestHelper
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
@@ -14,8 +14,8 @@ defmodule Helix.Process.Model.ProcessTest do
   setup do
     process =
       %{
-        gateway_id: Random.pk(),
-        target_server_id: Random.pk(),
+        gateway_id: Server.ID.generate(),
+        target_server_id: Server.ID.generate(),
         process_data: %TestHelper.ProcessTypeExample{}
       }
       |> Process.create_changeset()

@@ -2,7 +2,7 @@ defmodule Helix.Hardware.Query.MotherboardTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
 
   alias Helix.Hardware.Factory
@@ -59,7 +59,7 @@ defmodule Helix.Hardware.Query.MotherboardTest do
     end
 
     test "returns empty list when nothing is found" do
-      bogus = Random.pk()
+      bogus = Component.ID.generate()
       assert Enum.empty?(MotherboardQuery.get_slots(bogus))
     end
   end

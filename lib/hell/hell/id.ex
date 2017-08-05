@@ -89,7 +89,7 @@ defmodule HELL.ID do
 
         defimpl Poison.Encoder do
           def encode(struct, _),
-            do: HELL.ID.to_string(struct)
+            do: "\"" <> HELL.ID.to_string(struct) <> "\""
         end
       end
 

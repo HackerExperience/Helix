@@ -124,10 +124,7 @@ defmodule Helix.Hardware.Factory do
       :component_spec,
       prepare(:component_spec, params))
 
-    component_id = Random.pk()
-
     %Component{
-      component_id: component_id,
       component_type: spec.component_type,
       component_spec: spec
     }

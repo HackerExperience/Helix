@@ -160,9 +160,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
   end
 
   defp notify(server_id, notification) do
-    topic = "server:" <> server_id
+    topic = "server:" <> to_string(server_id)
 
-    Helix.Endpoint.broadcast(topic, "notification", notification)
+    Helix.Endpoint.broadcast(topic, "event", notification)
   end
 
   @doc false

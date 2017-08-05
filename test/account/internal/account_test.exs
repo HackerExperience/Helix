@@ -77,7 +77,7 @@ defmodule Helix.Account.Internal.AccountTest do
     end
 
     test "fails when account with id doesn't exist" do
-      refute AccountInternal.fetch(Random.pk())
+      refute AccountInternal.fetch(Account.ID.generate())
     end
 
     test "fails when account with email doesn't exist" do
@@ -91,25 +91,15 @@ defmodule Helix.Account.Internal.AccountTest do
     end
   end
 
+  @tag :pending
   describe "account deleting" do
-    test "succeeds by struct and id" do
-      account1 = Factory.insert(:account)
-      account2 = Factory.insert(:account)
-
-      AccountInternal.delete(account1)
-      AccountInternal.delete(account2.account_id)
-
-      refute Repo.get_by(Account, account_id: account1.account_id)
-      refute Repo.get_by(Account, account_id: account2.account_id)
-    end
-
     test "is idempotent" do
       account = Factory.insert(:account)
 
       assert Repo.get_by(Account, account_id: account.account_id)
 
-      AccountInternal.delete(account.account_id)
-      AccountInternal.delete(account.account_id)
+      AccountInternal.delete(account)
+      AccountInternal.delete(account)
 
       refute Repo.get_by(Account, account_id: account.account_id)
     end

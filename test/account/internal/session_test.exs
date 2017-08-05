@@ -46,7 +46,6 @@ defmodule Helix.Account.Internal.SessionInternalTest do
       {:ok, acc, session} = SessionInternal.validate_token(token)
 
       assert account.account_id == acc.account_id
-      assert is_binary(session)
       assert Repo.get(AccountSession, session)
     end
   end
@@ -64,6 +63,7 @@ defmodule Helix.Account.Internal.SessionInternalTest do
     end
   end
 
+  @tag :pending
   describe "invalidate_session/1" do
     test "is idempotent" do
       account = Factory.insert(:account)

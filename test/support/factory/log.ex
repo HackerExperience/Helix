@@ -1,6 +1,7 @@
 defmodule Helix.Test.Factory.Log do
 
-  alias HELL.TestHelper.Random
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Model.Log
   alias Helix.Log.Repo
 
@@ -59,8 +60,8 @@ defmodule Helix.Test.Factory.Log do
     map
   def params_for(:log) do
     %{
-      server_id: Random.pk(),
-      entity_id: Random.pk(),
+      server_id: Server.ID.generate(),
+      entity_id: Entity.ID.generate,
       message: "TODO: Use a generator for nice messages"
     }
   end

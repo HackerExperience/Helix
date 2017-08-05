@@ -2,7 +2,6 @@ defmodule Helix.Hardware.Query.ComponentSpecTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Query.ComponentSpec, as: ComponentSpecQuery
 
@@ -14,8 +13,8 @@ defmodule Helix.Hardware.Query.ComponentSpecTest do
       assert %ComponentSpec{} = ComponentSpecQuery.fetch(cs.spec_id)
     end
 
-    test "fails when it doesn't exist'" do
-      refute ComponentSpecQuery.fetch(Random.pk())
+    test "fails when it doesn't exist" do
+      refute ComponentSpecQuery.fetch("foobarbaz")
     end
   end
 end

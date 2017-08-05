@@ -122,7 +122,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       refute StatePurgeQueue.lookup(:server, server_id)
 
-      ServerInternal.delete(server_id)
+      ServerInternal.delete(context.server)
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:component, motherboard_id)
@@ -152,7 +152,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       refute StatePurgeQueue.lookup(:server, server_id)
 
-      ServerInternal.delete(server_id)
+      ServerInternal.delete(context.server)
 
       # Nothing to delete...
       refute StatePurgeQueue.lookup(:server, server_id)

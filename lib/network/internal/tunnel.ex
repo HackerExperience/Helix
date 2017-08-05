@@ -57,7 +57,7 @@ defmodule Helix.Network.Internal.Tunnel do
     :ok
   end
 
-  @spec connected?(Server.t | Server.id, Server.t | Server.id, Network.t | nil) ::
+  @spec connected?(Server.idt, Server.idt, Network.idt | nil) ::
     boolean
   def connected?(gateway_id, endpoint_id, network \\ nil) do
     query =

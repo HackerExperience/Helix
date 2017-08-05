@@ -142,6 +142,10 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
     CacheHelper.sync_test()
   end
 
+  # FIXME: MotherboardInternal SHOULD NOT have a delete method as a motherboard
+  #   is just a component and thus should use the ComponentInternal delete
+  #   method
+  @tag :pending
   describe "motherboard deleting" do
     test "is idempotent" do
       mobo = Factory.insert(:motherboard)

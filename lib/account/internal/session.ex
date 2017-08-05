@@ -26,7 +26,8 @@ defmodule Helix.Account.Internal.Session do
   def validate_token(token) do
     with \
       {:ok, session} <- verify(token),
-      account = %{} <- AccountSessionInternal.get_account(session)
+      account_session = %{} <- AccountSessionInternal.fetch(session),
+      account = %{} <- AccountSessionInternal.get_account(account_session)
     do
       {:ok, account, session}
     else
@@ -40,14 +41,17 @@ defmodule Helix.Account.Internal.Session do
   @spec invalidate_token(AccountSession.token) ::
     :ok
   def invalidate_token(token) do
-    with {:ok, session} <- verify(token) do
+    with \
+      {:ok, session} <- verify(token),
+      session = %{} <- AccountSessionInternal.fetch(session)
+    do
       invalidate_session(session)
     end
 
     :ok
   end
 
-  @spec invalidate_session(AccountSession.t | AccountSession.id) ::
+  @spec invalidate_session(AccountSession.t) ::
     :ok
   defdelegate invalidate_session(session_or_session_id),
     to: AccountSessionInternal,

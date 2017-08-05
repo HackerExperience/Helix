@@ -6,6 +6,7 @@ defmodule Helix.Cache.Internal.BuilderTest do
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
+  alias Helix.Software.Model.Storage
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
 
@@ -59,7 +60,8 @@ defmodule Helix.Cache.Internal.BuilderTest do
     end
 
     test "invalid storage" do
-      assert {:error, reason} = BuilderInternal.by_storage(Random.pk())
+      id = Storage.ID.generate()
+      assert {:error, reason} = BuilderInternal.by_storage(id)
       assert reason == {:storage, :notfound}
     end
 

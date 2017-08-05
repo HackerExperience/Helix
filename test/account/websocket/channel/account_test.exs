@@ -4,6 +4,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
 
   alias Helix.Websocket.Socket
   alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
   alias Helix.Server.Model.ServerType
   alias Helix.Server.Action.Server, as: ServerAction
@@ -24,7 +25,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
     account = Factory.insert(:account)
     {:ok, token} = SessionAction.generate_token(account)
     {:ok, socket} = connect(Socket, %{token: token})
-    {:ok, _, socket} = join(socket, "account:" <> account.account_id)
+    {:ok, _, socket} = join(socket, "account:" <> to_string(account.account_id))
 
     {:ok, account: account, socket: socket}
   end
@@ -52,7 +53,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
 
   test "an user can't join another user's notification channel", context do
     another_account = Factory.insert(:account)
-    id = another_account.account_id
+    id = to_string(another_account.account_id)
     assert {:error, _} = join(context.socket, "account:" <> id)
   end
 
@@ -60,7 +61,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
     test "returns all servers owned by the account", context do
       entity = EntityFactory.insert(
         :entity,
-        entity_id: context.account.account_id)
+        entity_id: EntityQuery.get_entity_id(context.account))
 
       server_ids = Enum.map(1..5, fn _ ->
         server = create_server_for_entity(entity)
@@ -118,7 +119,7 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
       notification = %{warning: "all your base are belong to us!"}
       Channel.notify(context.account.account_id, notification)
 
-      assert_push "notification", %{warning: "all your base are belong to us!"}
+      assert_push "event", %{warning: "all your base are belong to us!"}
     end
   end
 end

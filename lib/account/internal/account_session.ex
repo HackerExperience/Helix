@@ -9,7 +9,7 @@ defmodule Helix.Account.Internal.AccountSession do
     {:ok, AccountSession.t}
     | nil
   def fetch(id),
-    do: Repo.one(AccountSession, id)
+    do: Repo.get(AccountSession, id)
 
   @spec get_account(AccountSession.t) ::
     Account.t
@@ -25,10 +25,14 @@ defmodule Helix.Account.Internal.AccountSession do
     |> Repo.insert()
   end
 
-  @spec delete(AccountSession.t) ::
+  @spec delete(AccountSession.t | AccountSession.id) ::
     :ok
-  def delete(session) do
-    Repo.delete(session)
+  def delete(%AccountSession{session_id: id}),
+    do: delete(id)
+  def delete(session_id) do
+    session_id
+    |> AccountSession.Query.by_id()
+    |> Repo.delete_all()
 
     :ok
   end

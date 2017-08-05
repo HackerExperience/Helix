@@ -20,7 +20,9 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
 
       PopulateInternal.populate(:by_server, server_id)
 
-      ComponentInternal.delete(motherboard_id)
+      motherboard_id
+      |> ComponentInternal.fetch()
+      |> ComponentInternal.delete()
 
       # Note: for completeness of context, we also need to detach the mobo from
       # the server, otherwise unexpected things happens. As always, you should
@@ -47,7 +49,9 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
 
-      ComponentInternal.delete(motherboard_id)
+      motherboard_id
+      |> ComponentInternal.fetch()
+      |> ComponentInternal.delete()
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
 

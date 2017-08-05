@@ -2,7 +2,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
+  alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
   alias Helix.Process.Internal.TOP.Allocator.Plan
   alias Helix.Process.Internal.TOP.ServerResources
@@ -18,8 +18,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   test "allocating to a static process doesn't affects it" do
     params = %{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
+      gateway_id: Server.ID.generate(),
+      target_server_id: Server.ID.generate(),
       process_data: %StaticProcessTypeExample{},
       objective: %{
         cpu: 100_000
@@ -66,8 +66,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   test "allocating to a dynamic process" do
     params = %{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
+      gateway_id: Server.ID.generate(),
+      target_server_id: Server.ID.generate(),
       process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
@@ -111,8 +111,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   test "resources are divided between different dynamic processes" do
     params = %{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
+      gateway_id: Server.ID.generate(),
+      target_server_id: Server.ID.generate(),
       process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
@@ -139,7 +139,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
       |> Process.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
-    process1 = %{process0| process_id: Random.pk()}
+    process1 = %{process0| process_id: Process.ID.generate()}
 
     resources = %ServerResources{
       cpu: 9_000,
@@ -158,8 +158,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   test "processes with higher priority receive bigger shares" do
     params = %{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
+      gateway_id: Server.ID.generate(),
+      target_server_id: Server.ID.generate(),
       process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
@@ -186,7 +186,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
       |> Ecto.Changeset.apply_changes()
 
     process1 =
-      %{process0| process_id: Random.pk()}
+      %{process0| process_id: Process.ID.generate()}
       |> Process.update_changeset(%{priority: 4})
       |> Ecto.Changeset.apply_changes()
 
@@ -212,8 +212,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   test "complex allocation using limits" do
     params = %{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
+      gateway_id: Server.ID.generate(),
+      target_server_id: Server.ID.generate(),
       process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
@@ -238,10 +238,10 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
       |> Process.update_changeset(params2)
       |> Ecto.Changeset.apply_changes()
 
-    process1 = %{process0| process_id: Random.pk()}
+    process1 = %{process0| process_id: Process.ID.generate()}
 
     process2 =
-      %{process0| process_id: Random.pk()}
+      %{process0| process_id: Process.ID.generate()}
       |> Process.update_changeset(%{limitations: %{cpu: 500}})
       |> Ecto.Changeset.apply_changes()
 
@@ -274,8 +274,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
 
   test "returns error when resources can't handle processes at minimum" do
     params = %{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
+      gateway_id: Server.ID.generate(),
+      target_server_id: Server.ID.generate(),
       process_data: %ProcessTypeExample{},
       objective: %{
         cpu: 100_000
@@ -290,7 +290,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
       |> Ecto.Changeset.apply_changes()
 
     process1 =
-      %{params| gateway_id: Random.pk()}
+      %{params| gateway_id: Server.ID.generate()}
       |> Process.create_changeset()
       |> Process.update_changeset(%{state: :running})
       |> Process.update_changeset(%{minimum: %{running: %{ram: 2_000}}})

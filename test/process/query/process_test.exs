@@ -2,8 +2,9 @@ defmodule Helix.Process.Query.ProcessTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
   alias Software.Decryptor.ProcessType, as: Decryptor
   alias Software.Firewall.ProcessType.Passive, as: Firewall
   alias Helix.Process.Action.Process, as: ProcessAction
@@ -29,7 +30,7 @@ defmodule Helix.Process.Query.ProcessTest do
       firewall = %{
         gateway_id: server.server_id,
         target_server_id: server.server_id,
-        file_id: Random.pk(),
+        file_id: File.ID.generate(),
         process_data: %Firewall{version: 1},
         process_type: "firewall_passive"
       }
@@ -37,10 +38,10 @@ defmodule Helix.Process.Query.ProcessTest do
       decryptor = %{
         gateway_id: server.server_id,
         target_server_id: server.server_id,
-        file_id: Random.pk(),
+        file_id: File.ID.generate(),
         process_data: %Decryptor{
-          storage_id: Random.pk(),
-          target_file_id: Random.pk(),
+          storage_id: Storage.ID.generate(),
+          target_file_id: File.ID.generate(),
           scope: :global,
           software_version: 1
         },
@@ -73,7 +74,7 @@ defmodule Helix.Process.Query.ProcessTest do
       firewall = %{
         gateway_id: server.server_id,
         target_server_id: server.server_id,
-        file_id: Random.pk(),
+        file_id: File.ID.generate(),
         process_data: %Firewall{version: 1},
         process_type: "firewall_passive"
       }
@@ -81,10 +82,10 @@ defmodule Helix.Process.Query.ProcessTest do
       decryptor = %{
         gateway_id: server.server_id,
         target_server_id: server.server_id,
-        file_id: Random.pk(),
+        file_id: File.ID.generate(),
         process_data: %Decryptor{
-          storage_id: Random.pk(),
-          target_file_id: Random.pk(),
+          storage_id: Storage.ID.generate(),
+          target_file_id: File.ID.generate(),
           scope: :global,
           software_version: 1
         },
@@ -122,7 +123,7 @@ defmodule Helix.Process.Query.ProcessTest do
       firewall = %{
         gateway_id: server1.server_id,
         target_server_id: server1.server_id,
-        file_id: Random.pk(),
+        file_id: File.ID.generate(),
         process_data: %Firewall{version: 1},
         process_type: "firewall_passive"
       }
@@ -130,10 +131,10 @@ defmodule Helix.Process.Query.ProcessTest do
       decryptor = %{
         gateway_id: server2.server_id,
         target_server_id: server1.server_id,
-        file_id: Random.pk(),
+        file_id: File.ID.generate(),
         process_data: %Decryptor{
-          storage_id: Random.pk(),
-          target_file_id: Random.pk(),
+          storage_id: Storage.ID.generate(),
+          target_file_id: File.ID.generate(),
           scope: :global,
           software_version: 1
         },

@@ -2,7 +2,8 @@ defmodule Helix.Log.Query.LogTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Query.Log, as: LogQuery
 
@@ -14,7 +15,7 @@ defmodule Helix.Log.Query.LogTest do
       # Random logs on other servers
       Enum.each(1..5, fn _ -> Factory.insert(:log) end)
 
-      server = Random.pk()
+      server = Server.ID.generate()
       expected =
         Enum.map(1..5, fn _ ->
           Factory.insert(:log, server_id: server)
@@ -34,8 +35,8 @@ defmodule Helix.Log.Query.LogTest do
 
   describe "get_logs_from_entity_on_server/2" do
     test "returns logs that were created by the entity" do
-      server = Random.pk()
-      entity = Random.pk()
+      server = Server.ID.generate()
+      entity = Entity.ID.generate()
 
       create_log = fn params ->
         # FIXME
@@ -70,8 +71,8 @@ defmodule Helix.Log.Query.LogTest do
     end
 
     test "returns logs that were touched by entity" do
-      server = Random.pk()
-      entity = Random.pk()
+      server = Server.ID.generate()
+      entity = Entity.ID.generate()
 
       # Random logs that were not touched by the entity
       Enum.each(1..5, fn _ ->

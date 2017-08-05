@@ -2,9 +2,11 @@ defmodule Helix.Process.Event.TOPTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
+  alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Connection.ConnectionClosedEvent
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Model.Tunnel
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
@@ -39,7 +41,7 @@ defmodule Helix.Process.Event.TOPTest do
   end
 
   test "process is killed when it's connection is closed" do
-    connection = Random.pk()
+    connection = Connection.ID.generate()
 
     server = reason_we_need_integration_factories()
 
@@ -51,8 +53,8 @@ defmodule Helix.Process.Event.TOPTest do
     # TODO: factories for events ?
     event = %ConnectionClosedEvent{
       connection_id: connection,
-      network_id: Random.pk(),
-      tunnel_id: Random.pk(),
+      network_id: Network.ID.generate(),
+      tunnel_id: Tunnel.ID.generate(),
       reason: :shutdown
     }
 

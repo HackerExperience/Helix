@@ -2,9 +2,9 @@ defmodule Helix.Server.Internal.ServerTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
@@ -45,7 +45,7 @@ defmodule Helix.Server.Internal.ServerTest do
     end
 
     test "fails when server doesn't exists" do
-      refute ServerInternal.fetch(Random.pk())
+      refute ServerInternal.fetch(Server.ID.generate())
     end
   end
 
@@ -57,7 +57,7 @@ defmodule Helix.Server.Internal.ServerTest do
     end
 
     test "fails with non-existing id" do
-      refute ServerInternal.fetch_by_motherboard(Random.pk)
+      refute ServerInternal.fetch_by_motherboard(Component.ID.generate())
     end
 
     test "succeeds with mobo component", context do
@@ -69,17 +69,18 @@ defmodule Helix.Server.Internal.ServerTest do
     end
 
     test "fails with non-existing component" do
-      bogus_mobus = %Motherboard{motherboard_id: Random.pk()}
+      bogus_mobus = %Motherboard{motherboard_id: Component.ID.generate()}
       refute ServerInternal.fetch_by_motherboard(bogus_mobus)
     end
   end
 
+  @tag :pending
   test "deleting is idempotent" do
     server = Factory.insert(:server)
     assert Repo.get(Server, server.server_id)
 
-    ServerInternal.delete(server.server_id)
-    ServerInternal.delete(server.server_id)
+    ServerInternal.delete(server)
+    ServerInternal.delete(server)
 
     refute Repo.get(Server, server.server_id)
 

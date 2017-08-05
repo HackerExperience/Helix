@@ -2,8 +2,8 @@ defmodule Helix.Cache.Internal.CacheTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Server.Action.Server, as: ServerAction
+  alias Helix.Server.Model.Server
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -50,7 +50,8 @@ defmodule Helix.Cache.Internal.CacheTest do
     end
 
     test "fails on invalid data"  do
-      {:error, _} = CacheInternal.lookup({:server, :resources}, Random.pk())
+      id = Server.ID.generate()
+      {:error, _} = CacheInternal.lookup({:server, :resources}, id)
     end
 
     test "returns valid but empty data", context do

@@ -2,7 +2,8 @@ defmodule Helix.Log.Action.LogTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Model.Log
   alias Helix.Log.Model.Log.LogModifiedEvent
@@ -14,8 +15,8 @@ defmodule Helix.Log.Action.LogTest do
 
   describe "create/3" do
     test "succeeds with valid input" do
-      server_id = Random.pk()
-      entity_id = Random.pk()
+      server_id = Server.ID.generate()
+      entity_id = Entity.ID.generate()
       message = "They are taking the hobbits to Isengard"
 
       result = LogAction.create(server_id, entity_id, message)
@@ -27,7 +28,7 @@ defmodule Helix.Log.Action.LogTest do
   describe "revise/4" do
     test "overrides log message" do
       log = Factory.insert(:log)
-      entity = Random.pk()
+      entity = Entity.ID.generate()
       message = "É nois que voa, bruxão!"
       forge_version = Enum.random(1..999)
 
@@ -41,7 +42,7 @@ defmodule Helix.Log.Action.LogTest do
   describe "recover/1" do
     test "recovers log to the last message" do
       log = Factory.insert(:log)
-      entity = Random.pk()
+      entity = Entity.ID.generate()
 
       message0 = log.message
       message1 = "A monad is a monoid in the category of the endofunctors"
@@ -65,7 +66,7 @@ defmodule Helix.Log.Action.LogTest do
     @tag :pending
     test "returns LogModified event when a message is recovered" do
       log = Factory.insert(:log)
-      entity = Random.pk()
+      entity = Entity.ID.generate()
       message = "nullPointerException"
 
       LogAction.revise(log, entity, message, 1)

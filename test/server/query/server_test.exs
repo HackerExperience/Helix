@@ -2,7 +2,7 @@ defmodule Helix.Server.Query.ServerTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Hardware.Model.Component
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -17,14 +17,14 @@ defmodule Helix.Server.Query.ServerTest do
     end
 
     test "fails when server doesn't exist" do
-      refute ServerQuery.fetch(Random.pk())
+      refute ServerQuery.fetch(Server.ID.generate())
     end
   end
 
   describe "fetch_by_motherboard/1" do
     test "returns the server that mounts the motherboard" do
       server = Factory.insert(:server)
-      motherboard = Random.pk()
+      motherboard = Component.ID.generate()
 
       ServerAction.attach(server, motherboard)
 

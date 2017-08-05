@@ -26,7 +26,7 @@ defmodule Helix.Software.Model.CryptoKey do
       primary_key: true
 
     field :target_file_id, File.ID
-    field :target_server_id, File.ID
+    field :target_server_id, Server.ID
 
     belongs_to :file, File,
       foreign_key: :file_id,

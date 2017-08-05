@@ -24,7 +24,9 @@ defmodule Helix.Cache.Integration.Software.StorageTest do
       storage_id = Enum.random(server.storages)
 
       # Delete storage
-      StorageInternal.delete(storage_id)
+      storage_id
+      |> StorageInternal.fetch()
+      |> StorageInternal.delete()
 
       # Marks storage for deletion, obviously
       assert StatePurgeQueue.lookup(:storage, storage_id)
@@ -51,7 +53,9 @@ defmodule Helix.Cache.Integration.Software.StorageTest do
       storage_id = Enum.random(server.storages)
 
       # Delete storage
-      StorageInternal.delete(storage_id)
+      storage_id
+      |> StorageInternal.fetch()
+      |> StorageInternal.delete()
 
       # Always purge storage
       assert StatePurgeQueue.lookup(:storage, storage_id)

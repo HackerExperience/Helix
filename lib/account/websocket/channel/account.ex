@@ -13,8 +13,8 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   def join("account:" <> account_id, _message, socket) do
     # TODO: Provide a cleaner way to check this
-
     player_account_id = to_string(socket.assigns.account.account_id)
+
     if account_id == player_account_id do
       {:ok, socket}
     else
@@ -100,8 +100,8 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   def notify(account_id, notification) do
     Helix.Endpoint.broadcast(
-      "account:" <> account_id,
-      "notification",
+      "account:" <> to_string(account_id),
+      "event",
       notification)
   end
 end

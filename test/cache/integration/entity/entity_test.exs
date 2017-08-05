@@ -21,7 +21,9 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       # Must unlink server first
       EntityInternal.unlink_server(server_id)
-      EntityInternal.delete(server.entity_id)
+      server.entity_id
+      |> EntityInternal.fetch()
+      |> EntityInternal.delete()
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:component, server.motherboard_id)
@@ -41,7 +43,9 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       # Must unlink server first
       EntityInternal.unlink_server(server_id)
-      EntityInternal.delete(server.entity_id)
+      server.entity_id
+      |> EntityInternal.fetch()
+      |> EntityInternal.delete()
 
       # Nothing to delete...
       refute StatePurgeQueue.lookup(:server, server_id)

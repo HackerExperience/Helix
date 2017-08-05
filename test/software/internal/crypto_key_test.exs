@@ -2,7 +2,7 @@ defmodule Helix.Software.Internal.CryptoKeyTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Server.Model.Server
   alias Helix.Software.Internal.CryptoKey, as: CryptoKeyInternal
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.CryptoKey.InvalidatedEvent
@@ -13,7 +13,7 @@ defmodule Helix.Software.Internal.CryptoKeyTest do
     test "will create a file for the key on storage" do
       storage = Factory.insert(:storage, %{files: []})
       random_files = Factory.insert_list(5, :file, %{crypto_version: 1})
-      server_id = Random.pk()
+      server_id = Server.ID.generate()
 
       create_key = &CryptoKeyInternal.create(storage, server_id, &1)
       Enum.each(random_files, create_key)
@@ -36,7 +36,7 @@ defmodule Helix.Software.Internal.CryptoKeyTest do
         :file,
         %{storage: target_storage, crypto_version: 1})
 
-      server_id = Random.pk()
+      server_id = Server.ID.generate()
       create_key = &CryptoKeyInternal.create(origin_storage, server_id, &1)
       Enum.each(encrypted_files, create_key)
 
@@ -66,7 +66,8 @@ defmodule Helix.Software.Internal.CryptoKeyTest do
       storages = Factory.insert_list(3, :storage, %{files: []})
       file = Factory.insert(:file, %{crypto_version: 1})
 
-      create_key_for_file = &CryptoKeyInternal.create(&1, Random.pk(), file)
+      server_id = Server.ID.generate()
+      create_key_for_file = &CryptoKeyInternal.create(&1, server_id, file)
       Enum.each(storages, create_key_for_file)
 
       keys_before = Enum.flat_map(
@@ -87,7 +88,8 @@ defmodule Helix.Software.Internal.CryptoKeyTest do
       storages = Factory.insert_list(3, :storage, %{files: []})
       file = Factory.insert(:file, %{crypto_version: 1})
 
-      create_key_for_file = &CryptoKeyInternal.create(&1, Random.pk(), file)
+      server_id = Server.ID.generate()
+      create_key_for_file = &CryptoKeyInternal.create(&1, server_id, file)
       Enum.each(storages, create_key_for_file)
 
       events = CryptoKeyInternal.invalidate_keys_for_file(file)

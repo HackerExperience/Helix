@@ -2,8 +2,7 @@ defmodule Helix.Software.Model.CryptoKeyTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
-
+  alias Helix.Server.Model.Server
   alias Helix.Software.Model.CryptoKey
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
@@ -14,7 +13,7 @@ defmodule Helix.Software.Model.CryptoKeyTest do
     test "when provided with a storage, a server_id and a target file, succeeds" do
       file = %File{}
       storage = %Storage{}
-      server_id = Random.pk()
+      server_id = Server.ID.generate()
 
       changeset = CryptoKey.create(storage, server_id, file)
 

@@ -2,8 +2,8 @@ defmodule Helix.Software.Event.EncryptorTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Event
+  alias Helix.Server.Model.Server
   alias Helix.Software.Internal.CryptoKey, as: CryptoKeyInternal
   alias Helix.Software.Model.CryptoKey
   alias Helix.Software.Model.File
@@ -16,7 +16,7 @@ defmodule Helix.Software.Event.EncryptorTest do
     test "creates a new key file on storage that binds to target_file" do
       storage = Factory.insert(:storage, files: [])
       target_file = Factory.insert(:file)
-      server_id = Random.pk()
+      server_id = Server.ID.generate()
       event = %ProcessConclusionEvent{
         target_file_id: target_file.file_id,
         target_server_id: server_id,
@@ -38,7 +38,7 @@ defmodule Helix.Software.Event.EncryptorTest do
     test "changes the crypto version of the target file" do
       storage = Factory.insert(:storage, files: [])
       target_file = Factory.insert(:file)
-      server_id = Random.pk()
+      server_id = Server.ID.generate()
       event = %ProcessConclusionEvent{
         target_file_id: target_file.file_id,
         target_server_id: server_id,
@@ -58,7 +58,7 @@ defmodule Helix.Software.Event.EncryptorTest do
     test "invalidates all keys that existed for a certain event" do
       storage = Factory.insert(:storage, files: [])
       target_file = Factory.insert(:file)
-      server_id = Random.pk()
+      server_id = Server.ID.generate()
       event = %ProcessConclusionEvent{
         target_file_id: target_file.file_id,
         target_server_id: server_id,
@@ -68,7 +68,8 @@ defmodule Helix.Software.Event.EncryptorTest do
 
       # Create several keys for the file
       storages_that_had_key = Factory.insert_list(5, :storage, files: [])
-      create_key = &CryptoKeyInternal.create(&1, Random.pk(), target_file)
+      server_id = Server.ID.generate()
+      create_key = &CryptoKeyInternal.create(&1, server_id, target_file)
       old_keys =
         storages_that_had_key
         |> Enum.map(create_key)

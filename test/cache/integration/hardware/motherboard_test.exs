@@ -3,6 +3,7 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
   use Helix.Test.IntegrationCase
 
   alias Helix.Hardware.Factory, as: HardwareFactory
+  alias Helix.Hardware.Internal.Component, as: ComponentInternal
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
@@ -20,7 +21,12 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
 
       {:ok, _} = PopulateInternal.populate(:by_server, server_id)
 
-      MotherboardInternal.delete(motherboard_id)
+      # FIXME: MotherboardInternal SHOULD NOT have a delete method as a
+      #   motherboard is just a component and thus should use the
+      #   ComponentInternal delete method
+      motherboard_id
+      |> ComponentInternal.fetch()
+      |> MotherboardInternal.delete()
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
       assert StatePurgeQueue.lookup(:server, server_id)
@@ -32,7 +38,12 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
 
-      MotherboardInternal.delete(motherboard_id)
+      # FIXME: MotherboardInternal SHOULD NOT have a delete method as a
+      #   motherboard is just a component and thus should use the
+      #   ComponentInternal delete method
+      motherboard_id
+      |> ComponentInternal.fetch()
+      |> MotherboardInternal.delete()
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
 

@@ -2,8 +2,8 @@ defmodule Helix.Network.Event.TunnelTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Event
+  alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
@@ -13,8 +13,8 @@ defmodule Helix.Network.Event.TunnelTest do
 
   describe "when connection is closed" do
     test "deletes tunnel if it is empty" do
-      gateway = Random.pk()
-      destination = Random.pk()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
       bounces = []
 
       {:ok, tunnel} = TunnelInternal.create(
@@ -36,8 +36,8 @@ defmodule Helix.Network.Event.TunnelTest do
     end
 
     test "does nothing if tunnel still has connections" do
-      gateway = Random.pk()
-      destination = Random.pk()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
       bounces = []
 
       {:ok, tunnel} = TunnelInternal.create(

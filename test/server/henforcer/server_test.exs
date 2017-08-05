@@ -2,9 +2,9 @@ defmodule Helix.Server.Henforcer.ServerTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Henforcer.Server, as: Henforcer
+  alias Helix.Server.Model.Server
 
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Factory, as: HardwareFactory
@@ -20,7 +20,7 @@ defmodule Helix.Server.Henforcer.ServerTest do
     test "returns false when server doesn't exists" do
       # well, i personally find those test descriptions a litte too redundant
 
-      refute Henforcer.exists?(Random.pk())
+      refute Henforcer.exists?(Server.ID.generate())
     end
   end
 
@@ -47,7 +47,7 @@ defmodule Helix.Server.Henforcer.ServerTest do
     end
 
     test "returns false if server doesn't exists" do
-      refute Henforcer.functioning?(Random.pk())
+      refute Henforcer.functioning?(Server.ID.generate())
     end
   end
 end
