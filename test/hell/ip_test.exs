@@ -10,9 +10,9 @@ defmodule HELL.IPv6Test do
   describe "generate/1" do
     test "includes the header" do
       assert "3456:" <> _ = IPv6.generate([0x3456])
-      assert "EF01:3456:" <> _ = IPv6.generate([0xef01, 0x3456])
-      assert "ABCD:EF01:3456:" <> _ = IPv6.generate([0xabcd, 0xef01, 0x3456])
-      assert "ABCD:EF:3:" <> _ = IPv6.generate([0xabcd, 0xef, 0x3])
+      assert "ef01:3456:" <> _ = IPv6.generate([0xef01, 0x3456])
+      assert "abcd:ef01:3456:" <> _ = IPv6.generate([0xabcd, 0xef01, 0x3456])
+      assert "abcd:ef:3:" <> _ = IPv6.generate([0xabcd, 0xef, 0x3])
       assert IPv6.generate([0xabcd, 0x0, 0xabcd]) =~ ~r/^abcd\:0?\:abcd\:/i
     end
 

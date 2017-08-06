@@ -242,10 +242,9 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     networks = Enum.reduce(resources.net, [], fn
       {net_id, values}, acc ->
         negative_net_res =
-          Enum.filter_map(
-            values,
-            fn {_, v} -> v < 0 end,
-            fn {k, v} -> {k, net_id, v * -1} end)
+          values
+          |> Enum.filter(fn {_, v} -> v < 0 end)
+          |> Enum.map(fn {k, v} -> {k, net_id, v * -1} end)
 
         negative_net_res ++ acc
     end)

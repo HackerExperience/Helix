@@ -420,10 +420,10 @@ defmodule Helix.Process.State.TOP.Domain do
   @spec drop_processes_to_free_resources([Changeset.t], list) ::
     {dropped_process_ids :: MapSet.t, freed_resources :: resources}
   defp drop_processes_to_free_resources(processes, negative_resources) do
-    processes = Enum.filter_map(
-      processes,
-      &(&1.action != :delete),
-      &Changeset.apply_changes/1)
+    processes =
+      processes
+      |> Enum.filter(&(&1.action != :delete))
+      |> Enum.map(&Changeset.apply_changes/1)
 
     free_resources(
       processes,

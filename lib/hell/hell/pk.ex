@@ -46,7 +46,7 @@ defmodule HELL.PK do
     | :error
   defp parse_address(string) when is_binary(string) do
     string
-    |> String.to_char_list()
+    |> String.to_charlist()
     |> :inet.parse_ipv6strict_address()
     |> case do
       {:ok, address_tuple} ->

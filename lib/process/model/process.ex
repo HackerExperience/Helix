@@ -389,7 +389,8 @@ defmodule Helix.Process.Model.Process do
           |> Resources.div(allocated)
           |> Resources.to_list()
           # Returns a list of "seconds to fulfill resource"
-          |> Enum.filter_map(fn {_, x} -> x != 0 end, &elem(&1, 1))
+          |> Enum.filter(fn {_, x} -> x != 0 end)
+          |> Enum.map(&elem(&1, 1))
           |> Enum.reduce(0, &max/2)
 
         case ttl do

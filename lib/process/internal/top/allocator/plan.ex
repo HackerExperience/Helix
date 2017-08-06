@@ -103,7 +103,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.Plan do
       net
       |> Enum.to_list()
       |> Kernel.++([cpu: cpu, ram: ram])
-      |> Enum.filter_map(fn {_, v} -> v == 0 end, &elem(&1, 0))
+      |> Enum.filter(fn {_, v} -> v == 0 end)
+      |> Enum.map(&elem(&1, 0))
 
     Process.can_allocate(process) -- shouldnt
   end
