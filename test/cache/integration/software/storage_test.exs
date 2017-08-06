@@ -43,7 +43,8 @@ defmodule Helix.Cache.Integration.Software.StorageTest do
 
       # Server no long lists that storage
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
-      refute Enum.find(server.storages, &(to_string(&1) == to_string(storage_id)))
+      storage_ids = Enum.map(server.storages, &to_string/1)
+      refute to_string(storage_id) in storage_ids
     end
 
     test "it cleans the cache (cold)", context do

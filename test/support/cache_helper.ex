@@ -27,7 +27,9 @@ defmodule Helix.Cache.Helper do
 
     StatePurgeQueue.sync()
 
-    Enum.each(server.networks, &CacheAction.purge_nip(to_string(&1.network_id), &1.ip))
+    Enum.each(
+      server.networks,
+      &CacheAction.purge_nip(to_string(&1.network_id), &1.ip))
     Enum.each(server.components, &CacheAction.purge_component(to_string(&1)))
     Enum.each(server.storages, &CacheAction.purge_storage(to_string(&1)))
     CacheAction.purge_component(to_string(server.motherboard_id))

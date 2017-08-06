@@ -240,7 +240,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> Repo.update_all(set: [link_component_id: nil])
 
     CacheAction.update_component(motherboard)
-    Enum.map(components, &CacheAction.purge_component(&1))
+    Enum.each(components, &CacheAction.purge_component/1)
 
     :ok
   end

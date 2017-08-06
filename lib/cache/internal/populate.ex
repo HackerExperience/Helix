@@ -23,7 +23,6 @@ defmodule Helix.Cache.Internal.Populate do
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
-
   @doc """
   Attempts to build the original model, based on the given primary key. If it
   succeeds, it *won't* populate the data, but instead it will make sure all
@@ -169,7 +168,9 @@ defmodule Helix.Cache.Internal.Populate do
   defp store(params = %NetworkCache{}) do
     params
     |> NetworkCache.create_changeset()
-    |> Repo.insert(on_conflict: :replace_all, conflict_target: [:network_id, :ip])
+    |> Repo.insert(
+      on_conflict: :replace_all,
+      conflict_target: [:network_id, :ip])
   end
   defp store(params = %StorageCache{}) do
     params

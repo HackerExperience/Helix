@@ -164,7 +164,9 @@ defmodule Helix.Cache.Internal.CacheTest do
 
       StatePurgeQueue.sync()
 
-      assert {:miss, :notfound} = CacheInternal.direct_query(:storage, storage_id)
+      assert {:miss, :notfound} = CacheInternal.direct_query(
+        :storage,
+        storage_id)
 
       refute StatePurgeQueue.lookup(:storage, storage_id)
 

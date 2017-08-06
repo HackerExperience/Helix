@@ -33,7 +33,8 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
         {k, v = %{dlk: _, ulk: _}} when map_size(v) == 2 ->
           {Network.ID.cast!(k), v}
         {k, v = %{}} ->
-          {Network.ID.cast!(k), Map.merge(%{dlk: 0, ulk: 0}, Map.take(v, [:dlk, :ulk]))}
+          value = Map.merge(%{dlk: 0, ulk: 0}, Map.take(v, [:dlk, :ulk]))
+          {Network.ID.cast!(k), value}
       end)
       |> :maps.from_list()
 
@@ -77,7 +78,8 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
 
   @spec sub_from_process(t, Process.t | Changeset.t) ::
     {:ok, t}
-    | {:error, {:resources, :lack, :cpu | :ram | {:net, :dlk | :ulk, Network.id}}}
+    | {:error, {:resources, :lack, :cpu | :ram}}
+    | {:error, {:resources, :lack, {:net, :dlk | :ulk, Network.id}}}
   def sub_from_process(server_resources = %__MODULE__{cpu: cpu, ram: ram, net: networks}, process) do
     process = Changeset.change(process)
     net_id = Changeset.get_field(process, :network_id)

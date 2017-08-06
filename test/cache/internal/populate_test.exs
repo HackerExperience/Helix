@@ -22,8 +22,12 @@ defmodule Helix.Cache.Internal.PopulateTest do
       motherboard_id = context.server.motherboard_id
 
       {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, server_id)
-      {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, server_id)
-      {:ok, components} = CacheInternal.lookup({:server, :components}, server_id)
+      {:ok, [storage_id]} = CacheInternal.lookup(
+        {:server, :storages},
+        server_id)
+      {:ok, components} = CacheInternal.lookup(
+        {:server, :components},
+        server_id)
 
       StatePurgeQueue.sync()
 
@@ -37,7 +41,9 @@ defmodule Helix.Cache.Internal.PopulateTest do
       refute cstorage == nil
       assert_id cstorage.storage_id, storage_id
 
-      {:hit, ccomponent} = CacheInternal.direct_query(:component, Enum.random(components))
+      {:hit, ccomponent} = CacheInternal.direct_query(
+        :component,
+        Enum.random(components))
 
       refute ccomponent == nil
       assert_id ccomponent.motherboard_id, motherboard_id
@@ -107,7 +113,9 @@ defmodule Helix.Cache.Internal.PopulateTest do
     test "component population", context do
       motherboard_id = context.server.motherboard_id
 
-      {:ok, component} = PopulateInternal.populate(:by_component, motherboard_id)
+      {:ok, component} = PopulateInternal.populate(
+        :by_component,
+        motherboard_id)
 
       {:hit, query} = CacheInternal.direct_query(:component, motherboard_id)
 
@@ -137,7 +145,9 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       {:ok, nip1} = PopulateInternal.populate(:by_nip, {nip.network_id, nip.ip})
 
-      {:hit, nip2} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
+      {:hit, nip2} = CacheInternal.direct_query(
+        :network,
+        {nip.network_id, nip.ip})
 
       assert_id nip1.network_id, nip2.network_id
 
@@ -150,15 +160,23 @@ defmodule Helix.Cache.Internal.PopulateTest do
       server_id = context.server.server_id
 
       {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, server_id)
-      {:ok, [storage_id]} = CacheInternal.lookup({:server, :storages}, server_id)
-      {:ok, components} = CacheInternal.lookup({:server, :components}, server_id)
+      {:ok, [storage_id]} = CacheInternal.lookup(
+        {:server, :storages},
+        server_id)
+      {:ok, components} = CacheInternal.lookup(
+        {:server, :components},
+        server_id)
 
       StatePurgeQueue.sync()
 
       {:hit, cserver} = CacheInternal.direct_query(:server, server_id)
-      {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
+      {:hit, cnip} = CacheInternal.direct_query(
+        :network,
+        {nip.network_id, nip.ip})
       {:hit, cstorage} = CacheInternal.direct_query(:storage, storage_id)
-      {:hit, ccomponent} = CacheInternal.direct_query(:component, Enum.random(components))
+      {:hit, ccomponent} = CacheInternal.direct_query(
+        :component,
+        Enum.random(components))
 
       # Ensure cache has a minimal sane duration
       # Assertions may be changed if some entry do need to live for less

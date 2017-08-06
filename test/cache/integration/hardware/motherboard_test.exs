@@ -94,7 +94,9 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
 
       component_id = List.first(server.components)
       slots = MotherboardInternal.get_slots(motherboard_id)
-      slot = Enum.find(slots, &(to_string(&1.link_component_id) == component_id))
+      slot = Enum.find(
+        slots,
+        &(to_string(&1.link_component_id) == component_id))
 
       refute StatePurgeQueue.lookup(:server, server_id)
 

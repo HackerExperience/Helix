@@ -25,7 +25,9 @@ defmodule Helix.Cache.Action.CacheTest do
     component1_id = Enum.random(server1.components)
     {:hit, component1} = CacheInternal.direct_query(:component, component1_id)
 
-    {:hit, motherboard1} = CacheInternal.direct_query(:component, server1.motherboard_id)
+    {:hit, motherboard1} = CacheInternal.direct_query(
+      :component,
+      server1.motherboard_id)
 
     net1 = Enum.random(server1.networks)
     args = {net1["network_id"], net1["ip"]}

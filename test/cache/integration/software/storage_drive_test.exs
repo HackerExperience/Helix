@@ -66,7 +66,8 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
       # And it's on the cache
       assert_hit CacheInternal.direct_query(:server, server_id)
       # And it returns the new storage
-      assert Enum.find(server.storages, &(to_string(&1) == to_string(storage_id)))
+      storage_ids = Enum.map(server.storages, &to_string/1)
+      assert to_string(storage_id) in storage_ids
     end
 
     test "it updates the cache (cold)", context do
@@ -76,7 +77,8 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
       # Note: Cold testing here is a bit trickier because calling functions like
       # `MotherboardInternal.link` will themselves populate the cache.
       # So here we'll take a dirty approach: Get all the data we need without
-      # caring about cache. Then, directly purge the server. And then do the test.
+      # caring about cache. Then, directly purge the server. And then do the
+      # test.
 
       {:ok, server} = BuilderInternal.by_server(server_id)
 
@@ -148,7 +150,8 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
       assert_miss CacheInternal.direct_query(:storage, storage_id)
       assert {:hit, server2} = CacheInternal.direct_query(:server, server_id)
 
-      refute Enum.find(server2.storages, &(to_string(&1) == to_string(storage_id)))
+      storage_ids = Enum.map(server2.storages, &to_string/1)
+      refute to_string(storage_id) in storage_ids
     end
 
     test "it updates the cache (cold)", context do
@@ -175,4 +178,3 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
     end
   end
 end
-

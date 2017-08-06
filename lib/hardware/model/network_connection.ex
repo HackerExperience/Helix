@@ -10,7 +10,6 @@ defmodule Helix.Hardware.Model.NetworkConnection do
   alias Helix.Network.Model.Network
   alias Helix.Hardware.Model.Component.NIC
 
-
   @type ip :: IPv4.t
   @type t :: %__MODULE__{
     network_connection_id: id,

@@ -233,7 +233,6 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.purge(:network, {network_id, ip})
   end
 
-
   docp """
   This is a helper function with the goal of aiding this module to fetch cached
   data that is related to whatever is being purged/updated.
