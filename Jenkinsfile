@@ -72,7 +72,7 @@ retry(2) {
     'Type validation': {
       node('elixir') {
         stage('Type validation') {
-          timeout(3) {
+          timeout(30) {
             step([$class: 'WsCleanup'])
 
             unstash 'build-prod'

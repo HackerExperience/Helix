@@ -73,4 +73,3 @@ defmodule Helix.Cache.Integration.Software.StorageTest do
     end
   end
 end
-

@@ -31,7 +31,9 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       StatePurgeQueue.sync()
 
-      {:hit, cnip} = CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
+      {:hit, cnip} = CacheInternal.direct_query(:network, {
+        nip.network_id,
+        nip.ip})
 
       refute cnip == nil
       assert_id cnip.server_id, server_id

@@ -36,6 +36,7 @@ defmodule Helix.Cache.Action.Cache do
 
   import HELL.MacroHelpers
 
+  alias HELL.IPv4
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Network.Model.Network

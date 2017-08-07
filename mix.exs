@@ -67,7 +67,7 @@ defmodule Helix.Mixfile do
       {:poison, "~> 2.0"},
 
       {:comeonin, "~> 3.2"},
-      {:timex, "~> 3.0"},
+      {:timex, "~> 3.1"},
 
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test},
 
@@ -77,8 +77,8 @@ defmodule Helix.Mixfile do
 
       {:inch_ex, "~> 0.5.6", only: [:dev, :test]},
 
-      {:credo, "~> 0.7", only: [:dev, :test]},
-      {:excoveralls, "~> 0.6.3", only: [:dev, :test]}
+      {:credo, "~> 0.8", only: [:dev, :test]},
+      {:excoveralls, "~> 0.7.2", only: [:dev, :test]}
     ]
   end
 

@@ -68,7 +68,6 @@ defmodule Helix.Hardware.Model.MotherboardTest do
       assert :slots in check_spec.(%{"type" => %{}})
       assert :slots in check_spec.(%{"type" => []})
       assert :slots in check_spec.(%{"type" => {:foo, :bar}})
-      # assert Enum.all?(valid_types, &(:slots not in check_spec.(%{"type" => &1})))
       refute Enum.any?(valid_types, &(:slots in check_spec.(%{"type" => &1})))
     end
 
