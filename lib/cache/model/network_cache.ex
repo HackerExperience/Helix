@@ -76,6 +76,6 @@ defmodule Helix.Cache.Model.NetworkCache do
     @spec filter_expired(Queryable.t) ::
       Queryable.t
     def filter_expired(query),
-      do: where(query, [s], s.expiration_date >= fragment("now()"))
+      do: where(query, [s], s.expiration_date >= fragment("now() AT TIME ZONE 'UTC'"))
   end
 end

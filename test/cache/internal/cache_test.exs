@@ -102,13 +102,12 @@ defmodule Helix.Cache.Internal.CacheTest do
         DateTime.utc_now()
         |> DateTime.to_unix(:second)
         |> Kernel.-(1)
-        |> Ecto.DateTime.from_unix!(:second)
+        |> DateTime.from_unix!(:second)
 
-      {:ok, _} =
-        server
-        |> ServerCache.create_changeset()
-        |> Ecto.Changeset.force_change(:expiration_date, expired_date)
-        |> Repo.insert(on_conflict: :replace_all, conflict_target: [:server_id])
+      server
+      |> ServerCache.create_changeset()
+      |> Ecto.Changeset.force_change(:expiration_date, expired_date)
+      |> Repo.insert!(on_conflict: :replace_all, conflict_target: [:server_id])
 
       assert_miss CacheInternal.direct_query(:server, server_id)
 

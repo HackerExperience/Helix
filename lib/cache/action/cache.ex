@@ -45,6 +45,8 @@ defmodule Helix.Cache.Action.Cache do
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
 
+  @spec purge_server(Server.idtb) ::
+    term
   @doc """
   Purges the server entry from the cache.
 
@@ -54,11 +56,8 @@ defmodule Helix.Cache.Action.Cache do
   If it does not exist on the cache, it won't purge anything. No matter the
   change, the cache is consistent.
   """
-  def purge_server(%Server{server_id: id}),
-    do: purge_server(to_string(id))
-  def purge_server(id = %Server.ID{}),
-    do: purge_server(to_string(id))
   def purge_server(server_id) do
+    server_id = server_to_id(server_id)
     server = direct_cache_query(:server, server_id)
 
     unless is_nil(server) do
@@ -75,6 +74,8 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
+  @spec update_server(Server.idtb) ::
+    term
   @doc """
   Updates a server entry.
 
@@ -84,14 +85,14 @@ defmodule Helix.Cache.Action.Cache do
   If it does not exist on the cache, it won't update anything. No matter the
   change, the cache is consistent.
   """
-  def update_server(%Server{server_id: id}),
-    do: update_server(to_string(id))
-  def update_server(id = %Server.ID{}),
-    do: update_server(to_string(id))
   def update_server(server_id) do
+    server_id = server_to_id(server_id)
     params = direct_cache_query(:server, server_id)
     update_server(server_id, params)
   end
+
+  @spec update_server(Server.idtb, term) ::
+    term
   defp update_server(server_id, params) do
     unless is_nil(params) do
       unless is_nil(params.motherboard_id) do
@@ -107,17 +108,16 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
+  @spec update_server_by_motherboard(Motherboard.t | Component.idtb) ::
+    term
   @doc """
   Given a motherboard, update its corresponding server.
 
   If the motherboard is not found, it won't update anything, since the server
   entry doesn't exists anyway.
   """
-  def update_server_by_motherboard(%Motherboard{motherboard_id: id}),
-    do: update_server_by_motherboard(to_string(id))
-  def update_server_by_motherboard(id = %Component.ID{}),
-    do: update_server_by_motherboard(to_string(id))
   def update_server_by_motherboard(motherboard_id) do
+    motherboard_id = motherboard_to_id(motherboard_id)
     server = direct_cache_query(:motherboard, motherboard_id)
 
     # If data is not on the cache, there's no need to update it
@@ -126,6 +126,8 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
+  @spec update_server_by_storage(Storage.idtb) ::
+    term
   @doc """
   Given a storage, update its corresponding server.
 
@@ -134,11 +136,8 @@ defmodule Helix.Cache.Action.Cache do
   doesn't. It's up to the caller to make sure this distinction. If that's
   the case, `update_storage/1` may be a better fit.
   """
-  def update_server_by_storage(%Storage{storage_id: id}),
-    do: update_server_by_storage(to_string(id))
-  def update_server_by_storage(id = %Storage.ID{}),
-    do: update_server_by_storage(to_string(id))
   def update_server_by_storage(storage_id) do
+    storage_id = storage_to_id(storage_id)
     server_id = direct_cache_query(:storage, storage_id)
 
     if server_id do
@@ -146,46 +145,41 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
+  @spec update_storage(Storage.idtb) ::
+    term
   @doc """
   Updates a storage entry from the cache.
 
   It will also update the underlying server, even if it doesn't exists.
   """
-  def update_storage(%Storage{storage_id: id}),
-    do: update_storage(to_string(id))
-  def update_storage(id = %Storage.ID{}),
-    do: update_storage(to_string(id))
   def update_storage(storage_id) do
+    storage_id = storage_to_id(storage_id)
     {:ok, server_id} = CacheQuery.from_storage_get_server(storage_id)
     update_server(server_id)
     CacheInternal.update(:storage, storage_id)
   end
 
+  @spec purge_storage(Storage.idtb) ::
+    term
   @doc """
   Purges a storage entry.
 
   It does not purge/update the server.
   """
-  def purge_storage(%Storage{storage_id: id}),
-    do: purge_storage(to_string(id))
-  def purge_storage(id = %Storage.ID{}),
-    do: purge_storage(to_string(id))
-  def purge_storage(storage_id) do
-    CacheInternal.purge(:storage, storage_id)
-  end
+  def purge_storage(storage_id),
+    do: CacheInternal.purge(:storage, storage_to_id(storage_id))
 
+  @spec update_component(Motherboard.t | Component.idtb) ::
+    term
   @doc """
   Updates a component entry on the cache.
 
   If the corresponding server is found *on the cache*, it is also updated.
   """
   def update_component(%Motherboard{motherboard_id: id}),
-    do: update_component(to_string(id))
-  def update_component(%Component{component_id: id}),
-    do: update_component(to_string(id))
-  def update_component(id = %Component.ID{}),
-    do: update_component(to_string(id))
+    do: update_component(id)
   def update_component(component_id) do
+    component_id = component_to_id(component_id)
     server = direct_cache_query(:component, component_id)
 
     if server do
@@ -194,29 +188,27 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.update(:component, component_id)
   end
 
+  @spec purge_component(Motherboard.t | Component.idtb) ::
+    term
   @doc """
   Purges a component entry from the cache.
 
   It does not purge/update the server.
   """
   def purge_component(%Motherboard{motherboard_id: id}),
-    do: purge_component(to_string(id))
-  def purge_component(%Component{component_id: id}),
-    do: purge_component(to_string(id))
-  def purge_component(id = %Component.ID{}),
-    do: purge_component(to_string(id))
-  def purge_component(component_id) do
-    CacheInternal.purge(:component, component_id)
-  end
+    do: purge_component(id)
+  def purge_component(component_id),
+    do: CacheInternal.purge(:component, component_to_id(component_id))
 
+  @spec update_nip(Network.idtb, IPv4.t) ::
+    term
   @doc """
   Updates the nip entry on the cache.
 
   It will also update the underlying server, even if it doesn't exists.
   """
-  def update_nip(id = %Network.ID{}, ip),
-    do: update_nip(to_string(id), ip)
   def update_nip(network_id, ip) do
+    network_id = network_to_id(network_id)
     {:ok, server_id} = CacheQuery.from_nip_get_server(network_id, ip)
     update_server(server_id)
     CacheInternal.update(:network, {network_id, ip})
@@ -227,12 +219,12 @@ defmodule Helix.Cache.Action.Cache do
 
   It does not purge/update the server.
   """
-  def purge_nip(id = %Network.ID{}, ip),
-    do: purge_nip(to_string(id), ip)
-  def purge_nip(network_id, ip) do
-    CacheInternal.purge(:network, {network_id, ip})
-  end
+  def purge_nip(network_id, ip),
+    do: CacheInternal.purge(:network, {network_to_id(network_id), ip})
 
+  @spec direct_cache_query(:server | :motherboard | :component | :storage, HELL.PK.t) ::
+    server_id :: HELL.PK.t
+    | nil
   docp """
   This is a helper function with the goal of aiding this module to fetch cached
   data that is related to whatever is being purged/updated.
@@ -283,4 +275,51 @@ defmodule Helix.Cache.Action.Cache do
         nil
     end
   end
+
+  @spec storage_to_id(Storage.idtb) ::
+    HELL.PK.t
+  def storage_to_id(%Storage{storage_id: id}),
+    do: storage_to_id(id)
+  def storage_to_id(id = %Storage.ID{}),
+    do: to_string(id)
+  def storage_to_id(id) when is_binary(id),
+    do: id
+
+  @spec network_to_id(Network.idtb) ::
+    HELL.PK.t
+  def network_to_id(%Network{network_id: id}),
+    do: network_to_id(id)
+  def network_to_id(id = %Network.ID{}),
+    do: to_string(id)
+  def network_to_id(id) when is_binary(id),
+    do: id
+
+  @spec motherboard_to_id(Motherboard.t | Component.idtb) ::
+    HELL.PK.t
+  defp motherboard_to_id(%Motherboard{motherboard_id: id}),
+    do: component_to_id(id)
+  defp motherboard_to_id(%Component{component_id: id, component_type: :mobo}),
+    do: to_string(id)
+  defp motherboard_to_id(id = %Component.ID{}),
+    do: to_string(id)
+  defp motherboard_to_id(id) when is_binary(id),
+    do: id
+
+  @spec component_to_id(Component.idtb) ::
+    HELL.PK.t
+  defp component_to_id(%Component{component_id: id}),
+    do: component_to_id(id)
+  defp component_to_id(id = %Component.ID{}),
+    do: to_string(id)
+  defp component_to_id(id) when is_binary(id),
+    do: id
+
+  @spec server_to_id(Server.idtb) ::
+    HELL.PK.t
+  defp server_to_id(%Server{server_id: id}),
+    do: server_to_id(id)
+  defp server_to_id(id = %Server.ID{}),
+    do: to_string(id)
+  defp server_to_id(id) when is_binary(id),
+    do: id
 end
