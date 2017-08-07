@@ -2,17 +2,17 @@ defmodule Helix.Network.Model.TunnelTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
-  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
   alias Helix.Network.Model.Tunnel
+  alias Helix.Network.Query.Network, as: NetworkQuery
 
   @moduletag :unit
 
   describe "create/4" do
     test "works without a bounce list" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
       bounces = []
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
@@ -21,10 +21,14 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "works with bounce list" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = [Random.pk(), Random.pk(), Random.pk()]
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
+      bounces = [
+        Server.ID.generate(),
+        Server.ID.generate(),
+        Server.ID.generate()
+      ]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
 
@@ -32,11 +36,17 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "fails if node is repeated" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
-      repeated = Random.pk()
-      bounces = [Random.pk(), repeated, Random.pk(), repeated]
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
+      repeated = Server.ID.generate()
+      bounces = [
+        Server.ID.generate(),
+        repeated,
+        Server.ID.generate(),
+        Server.ID.generate(),
+        repeated
+      ]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
 
@@ -44,10 +54,13 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "fails if gateway and destination are the same" do
-      net = %Network{}
-      gateway = Random.pk()
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
       destination = gateway
-      bounces = [Random.pk(), Random.pk()]
+      bounces = [
+        Server.ID.generate(),
+        Server.ID.generate()
+      ]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
 
@@ -55,9 +68,9 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "fails if gateway or destination are on bounce list" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
       bounces = [gateway, destination]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
@@ -66,9 +79,9 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "prepares link list" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
       bounces = []
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
@@ -79,10 +92,14 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "includes bounce nodes on link list" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = [Random.pk(), Random.pk(), Random.pk()]
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
+      bounces = [
+        Server.ID.generate(),
+        Server.ID.generate(),
+        Server.ID.generate()
+      ]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
       links = Ecto.Changeset.get_change(changeset, :links)
@@ -95,10 +112,14 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "generated links are valid" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = [Random.pk(), Random.pk(), Random.pk()]
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
+      bounces = [
+        Server.ID.generate(),
+        Server.ID.generate(),
+        Server.ID.generate()
+      ]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
       links = Ecto.Changeset.get_change(changeset, :links)
@@ -107,10 +128,14 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "all nodes from the tunnel are included as links" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = [Random.pk(), Random.pk(), Random.pk()]
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
+      bounces = [
+        Server.ID.generate(),
+        Server.ID.generate(),
+        Server.ID.generate()
+      ]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
       links = Ecto.Changeset.get_change(changeset, :links)
@@ -126,10 +151,15 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "nodes used on tunnel are ordered" do
-      net = %Network{}
-      gateway = Random.pk()
-      destination = Random.pk()
-      bounces = [Random.pk(), Random.pk(), Random.pk(), Random.pk()]
+      net = NetworkQuery.internet()
+      gateway = Server.ID.generate()
+      destination = Server.ID.generate()
+      bounces = [
+        Server.ID.generate(),
+        Server.ID.generate(),
+        Server.ID.generate(),
+        Server.ID.generate()
+      ]
 
       changeset = Tunnel.create(net, gateway, destination, bounces)
       struct = Ecto.Changeset.apply_changes(changeset)

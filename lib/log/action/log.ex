@@ -16,7 +16,6 @@ defmodule Helix.Log.Action.Log do
   it's stack.
   """
 
-  alias Ecto.Multi
   alias Helix.Event
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
@@ -24,41 +23,47 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Log.Model.Log
   alias Helix.Log.Repo
 
-  @spec create(Server.id, Entity.id, String.t) ::
-    {:ok, %{log: Log.t, log_touch: any, events: [Event.t]}}
-    | {:error, :log | :log_touch, Ecto.Changeset.t, map}
+  alias Helix.Log.Model.Log.LogCreatedEvent
+  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Log.Model.Log.LogDeletedEvent
+
+  @spec create(Server.idt, Entity.idt, String.t) ::
+    {:ok, Log.t}
+    | {:error, Ecto.Changeset.t}
   @doc """
   Creates a new log linked to `entity` on `server` with `message` as content.
   """
   def create(server, entity, message) do
-    {multi, events} = LogInternal.create(server, entity, message)
+    with {:ok, log} <- LogInternal.create(server, entity, message) do
+      Event.emit(%LogCreatedEvent{server_id: log.server_id})
 
-    multi
-    |> Multi.run(:events, fn _ -> {:ok, events} end)
-    |> Repo.transaction()
+      {:ok, log}
+    end
   end
 
-  @spec revise(Log.t, Entity.id, String.t, pos_integer) ::
-    {:ok, %{revision: any, log_touch: any, events: [Event.t]}}
-    | {:error, :revision | :log_touch, Ecto.Changeset.t, map}
+  @spec revise(Log.t, Entity.idt, String.t, pos_integer) ::
+    {:ok, Log.t}
+    | {:error, Ecto.Changeset.t}
   @doc """
   Adds a revision over `log`.
 
-  `entity` is the ID of the entity that is doing the revision, `message` is the
+  `entity` is the the entity that is doing the revision, `message` is the
   new log's content and `forge_version` is the version of log forger used to
   make this revision.
   """
   def revise(log, entity, message, forge_version) do
-    {multi, events} = LogInternal.revise(log, entity, message, forge_version)
+    with \
+      {:ok, log} <- LogInternal.revise(log, entity, message, forge_version)
+    do
+      Event.emit(%LogModifiedEvent{server_id: log.server_id})
 
-    multi
-    |> Multi.run(:events, fn _ -> {:ok, events} end)
-    |> Repo.transaction()
+      {:ok, log}
+    end
   end
 
   @spec recover(Log.t) ::
-    {:ok, %{log: any, events: [Event.t]}}
-    | {:error, :log, :original_revision | Ecto.Changeset.t, map}
+    {:ok, :deleted | :recovered}
+    | {:error, :original_revision}
   @doc """
   Recovers `log` to a previous revision.
 
@@ -68,20 +73,23 @@ defmodule Helix.Log.Action.Log do
   use the last revision's message.
   """
   def recover(log) do
-    multi = LogInternal.recover(log)
-
-    multi
-    |> Multi.run(:events, fn %{log: {:event, events}} ->
-      {:ok, events}
-    end)
-    |> Repo.transaction()
+    case LogInternal.recover(log) do
+      {:ok, :deleted} ->
+        Event.emit(%LogDeletedEvent{server_id: log.server_id})
+        {:ok, :deleted}
+      {:ok, :recovered} ->
+        Event.emit(%LogModifiedEvent{server_id: log.server_id})
+        {:ok, :recovered}
+      {:error, :original_revision} ->
+        {:error, :original_revision}
+    end
   end
 
   @spec hard_delete(Log.t) ::
     {:ok, Log.t}
-    | {:error, reason :: term}
+    | {:error, Ecto.Changeset.t}
   @doc """
-  Deletes the log by removing it's entry from database
+  Deletes the log by removing its entry from database
   """
   def hard_delete(log),
     do: Repo.delete(log)

@@ -17,15 +17,20 @@ defmodule Helix.Log.Model.LogTouch do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
 
+  @type t :: %__MODULE__{
+    log_id: Log.id,
+    entity_id: Entity.id,
+    log: term
+  }
+
   @primary_key false
   schema "log_touches" do
-    field :log_id, PK,
+    field :log_id, Log.ID,
       primary_key: true
-    field :entity_id, PK,
+    field :entity_id, Entity.ID,
       primary_key: true
 
     belongs_to :log, Log,
@@ -34,7 +39,7 @@ defmodule Helix.Log.Model.LogTouch do
       define_field: false
   end
 
-  @spec create(Log.t, Entity.id) ::
+  @spec create(Log.t, Entity.idtb) ::
     Changeset.t
   def create(log, entity) do
     %__MODULE__{}

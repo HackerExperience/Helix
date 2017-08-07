@@ -2,6 +2,7 @@ defmodule Helix.Server.Action.ServerTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
@@ -26,8 +27,13 @@ defmodule Helix.Server.Action.ServerTest do
       mobo = HardwareFactory.insert(:motherboard)
 
       assert {:ok, %Server{}} = ServerAction.attach(server, mobo.motherboard_id)
+
+      CacheHelper.sync_test()
     end
 
+    # Review: Deprecate: This test isn't useful.
+    # If I pass any PK, it will attach the motherboard without verification
+    # The verification (and this test) should be at the Public/Henforced level
     test "fails when input is invalid" do
       server = Factory.insert(:server)
 
@@ -44,6 +50,8 @@ defmodule Helix.Server.Action.ServerTest do
       result = ServerAction.attach(server, mobo.motherboard_id)
       assert {:error, cs} = result
       refute cs.valid?
+
+      CacheHelper.sync_test()
     end
 
     test "fails when server already has a motherboard" do
@@ -55,6 +63,8 @@ defmodule Helix.Server.Action.ServerTest do
 
       assert {:error, cs} = result
       refute cs.valid?
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -68,6 +78,8 @@ defmodule Helix.Server.Action.ServerTest do
 
       server = Repo.get(Server, server.server_id)
       refute server.motherboard_id
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -78,6 +90,8 @@ defmodule Helix.Server.Action.ServerTest do
       assert Repo.get(Server, server.server_id)
       ServerAction.delete(server)
       refute Repo.get(Server, server.server_id)
+
+      CacheHelper.sync_test()
     end
 
     @tag :pending
@@ -87,6 +101,8 @@ defmodule Helix.Server.Action.ServerTest do
       assert ServerAction.delete(server)
       assert ServerAction.delete(server)
       assert ServerAction.delete(server)
+
+      CacheHelper.sync_test()
     end
   end
 end

@@ -12,6 +12,8 @@ defmodule HELL.PK do
   def type,
     do: :inet
 
+  def cast(id_struct = %_{id: _}),
+    do: {:ok, to_string(id_struct)}
   def cast(ipv6 = %Postgrex.INET{}),
     do: {:ok, to_string(ipv6)}
   def cast(string) when is_binary(string) do
@@ -44,7 +46,7 @@ defmodule HELL.PK do
     | :error
   defp parse_address(string) when is_binary(string) do
     string
-    |> String.to_char_list()
+    |> String.to_charlist()
     |> :inet.parse_ipv6strict_address()
     |> case do
       {:ok, address_tuple} ->

@@ -19,7 +19,8 @@ defmodule Helix.Entity.Action.Entity do
   """
   def create_from_specialization(%Account{account_id: account_id}) do
     params = %{
-      entity_id: account_id,
+      # FIXME
+      entity_id: to_string(account_id),
       entity_type: :account
     }
 
@@ -31,13 +32,11 @@ defmodule Helix.Entity.Action.Entity do
     :ok
   @doc """
   Deletes input `entity`
-
-  Alternatively accepts the entity id as input
   """
   defdelegate delete(entity),
     to: EntityInternal
 
-  @spec link_component(Entity.t, Component.id) ::
+  @spec link_component(Entity.t, Component.idt) ::
     :ok
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -52,7 +51,7 @@ defmodule Helix.Entity.Action.Entity do
   defdelegate link_component(entity, component),
     to: EntityInternal
 
-  @spec unlink_component(Component.id) ::
+  @spec unlink_component(Component.idt) ::
     :ok
   @doc """
   Unlink `component`, effectively removing the component ownership
@@ -65,7 +64,7 @@ defmodule Helix.Entity.Action.Entity do
   defdelegate unlink_component(component),
     to: EntityInternal
 
-  @spec link_server(Entity.t, Server.id) ::
+  @spec link_server(Entity.t, Server.idt) ::
     :ok
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -77,9 +76,9 @@ defmodule Helix.Entity.Action.Entity do
       :ok
   """
   defdelegate link_server(entity, server),
-    to: EntityInternal
+  to: EntityInternal
 
-  @spec unlink_server(Server.id) ::
+  @spec unlink_server(Server.idt) ::
     :ok
   @doc """
   Unlink `server`, effectively removing the server ownership

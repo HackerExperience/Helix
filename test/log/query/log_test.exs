@@ -2,19 +2,20 @@ defmodule Helix.Log.Query.LogTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Query.Log, as: LogQuery
 
   alias Helix.Test.Factory.Log, as: Factory
 
-  describe "get_logs_on_server/2" do
+  describe "get_logs_on_server/1" do
     # Well, i think that the function name might be a bit obvious, eh ?
     test "returns logs that belongs to a server" do
       # Random logs on other servers
       Enum.each(1..5, fn _ -> Factory.insert(:log) end)
 
-      server = Random.pk()
+      server = Server.ID.generate()
       expected =
         Enum.map(1..5, fn _ ->
           Factory.insert(:log, server_id: server)
@@ -32,15 +33,15 @@ defmodule Helix.Log.Query.LogTest do
     end
   end
 
-  describe "get_logs_from_entity_on_server/3" do
+  describe "get_logs_from_entity_on_server/2" do
     test "returns logs that were created by the entity" do
-      server = Random.pk()
-      entity = Random.pk()
+      server = Server.ID.generate()
+      entity = Entity.ID.generate()
 
       create_log = fn params ->
         # FIXME
         params = Map.merge(Factory.params_for(:log), params)
-        {:ok, %{log: log}} = LogAction.create(
+        {:ok, log} = LogAction.create(
           params.server_id,
           params.entity_id,
           params.message)
@@ -70,8 +71,8 @@ defmodule Helix.Log.Query.LogTest do
     end
 
     test "returns logs that were touched by entity" do
-      server = Random.pk()
-      entity = Random.pk()
+      server = Server.ID.generate()
+      entity = Entity.ID.generate()
 
       # Random logs that were not touched by the entity
       Enum.each(1..5, fn _ ->

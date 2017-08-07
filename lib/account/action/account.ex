@@ -1,8 +1,10 @@
 defmodule Helix.Account.Action.Account do
 
+  alias Helix.Event
   alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Account.Internal.Account, as: AccountInternal
   alias Helix.Account.Model.Account
+  alias Helix.Account.Model.Account.AccountCreatedEvent
   alias Helix.Account.Model.AccountSession
 
   @spec create(Account.email, Account.username, Account.password) ::
@@ -51,12 +53,20 @@ defmodule Helix.Account.Action.Account do
       })
       {:error, %Ecto.Changeset{}}
   """
-  defdelegate create(params),
-    to: AccountInternal
+  def create(params) do
+    case AccountInternal.create(params) do
+      {:ok, account} ->
+        Event.emit(%AccountCreatedEvent{account_id: account.account_id})
+        {:ok, account}
+      error ->
+        error
+    end
+  end
 
   @spec login(Account.username, Account.password) ::
     {:ok, Account.t, AccountSession.token}
     | {:error, :notfound}
+    | {:error, :internalerror}
   @doc """
   Checks if `password` logs into `username`'s account
 
@@ -66,14 +76,18 @@ defmodule Helix.Account.Action.Account do
     # TODO: check account status (when implemented) and return error for
     #   non-confirmed email and for banned account
     with \
-      account = %{} <- AccountInternal.fetch_by_username(username),
-      true <- Account.check_password(account, password)
+      account = %{} <- AccountInternal.fetch_by_username(username) || :nxacc,
+      true <- Account.check_password(account, password) || :badpass,
+      {:ok, token} <- SessionAction.generate_token(account)
     do
-      token = SessionAction.generate_token(account)
       {:ok, account, token}
     else
-      _ ->
+      :nxacc ->
         {:error, :notfound}
+      :badpass ->
+        {:error, :notfound}
+      _ ->
+        {:error, :internalerror}
     end
   end
 end

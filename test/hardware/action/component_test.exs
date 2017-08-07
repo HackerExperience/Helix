@@ -2,6 +2,7 @@ defmodule Helix.Hardware.Action.ComponentTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Action.Component, as: ComponentAction
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
@@ -33,6 +34,7 @@ defmodule Helix.Hardware.Action.ComponentTest do
   end
 
   describe "delete/1" do
+    @tag :pending
     test "succeeds by struct" do
       component = Factory.insert(:component)
 
@@ -40,25 +42,21 @@ defmodule Helix.Hardware.Action.ComponentTest do
       ComponentAction.delete(component)
 
       refute Repo.get(Component, component.component_id)
+
+      CacheHelper.sync_test()
     end
 
-    test "succeeds by id" do
-      component = Factory.insert(:component)
-
-      assert Repo.get(Component, component.component_id)
-      ComponentAction.delete(component.component_id)
-
-      refute Repo.get(Component, component.component_id)
-    end
-
+    @tag :pending
     test "is idempotent" do
       component = Factory.insert(:component)
 
       assert Repo.get(Component, component.component_id)
-      ComponentAction.delete(component.component_id)
-      ComponentAction.delete(component.component_id)
+      ComponentAction.delete(component)
+      ComponentAction.delete(component)
 
       refute Repo.get(Component, component.component_id)
+
+      CacheHelper.sync_test()
     end
   end
 end

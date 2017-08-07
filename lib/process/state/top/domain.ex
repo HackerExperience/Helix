@@ -2,6 +2,7 @@ defmodule Helix.Process.State.TOP.Domain do
   @moduledoc false
 
   alias Ecto.Changeset
+  alias Helix.Server.Model.Server
   alias Helix.Process.Internal.TOP.Allocator.Plan, as: PlanTOP
   alias Helix.Process.Internal.TOP.ServerResources, as: ServerResourcesTOP
   alias Helix.Process.Model.Process
@@ -10,8 +11,8 @@ defmodule Helix.Process.State.TOP.Domain do
   @behaviour :gen_statem
 
   @typep t :: %__MODULE__{}
-  @type server_id :: HELL.PK.t
-  @type process_id :: HELL.PK.t
+  @type server_id :: Server.id
+  @type process_id :: Process.id
   @type process :: Process.t | Changeset.t
   @type resources :: ServerResourcesTOP.t
 
@@ -419,10 +420,10 @@ defmodule Helix.Process.State.TOP.Domain do
   @spec drop_processes_to_free_resources([Changeset.t], list) ::
     {dropped_process_ids :: MapSet.t, freed_resources :: resources}
   defp drop_processes_to_free_resources(processes, negative_resources) do
-    processes = Enum.filter_map(
-      processes,
-      &(&1.action != :delete),
-      &Changeset.apply_changes/1)
+    processes =
+      processes
+      |> Enum.filter(&(&1.action != :delete))
+      |> Enum.map(&Changeset.apply_changes/1)
 
     free_resources(
       processes,

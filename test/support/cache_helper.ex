@@ -1,0 +1,42 @@
+defmodule Helix.Cache.Helper do
+
+  alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Cache.Action.Cache, as: CacheAction
+  alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+  alias Helix.Cache.Internal.Cache, as: CacheInternal
+
+  def sync_test,
+    do: StatePurgeQueue.sync()
+
+  def cache_context do
+    account = AccountFactory.insert(:account)
+    {:ok, %{server: server}} = AccountFlow.setup_account(account)
+    :timer.sleep(100)
+
+    # Note: for our purposes, function below is slightly different from
+    # CacheInternal.purge_server, and should not be replaced.
+    purge_server(server.server_id)
+
+    {:ok, account: account, server: server}
+  end
+
+  def purge_server(server_id) do
+    {:ok, server} = CacheQuery.from_server_get_all(server_id)
+
+    StatePurgeQueue.sync()
+
+    Enum.each(
+      server.networks,
+      &CacheAction.purge_nip(to_string(&1.network_id), &1.ip))
+    Enum.each(server.components, &CacheAction.purge_component(to_string(&1)))
+    Enum.each(server.storages, &CacheAction.purge_storage(to_string(&1)))
+    CacheAction.purge_component(to_string(server.motherboard_id))
+
+    StatePurgeQueue.queue(:server, to_string(server.server_id), :purge)
+    CacheInternal.purge(:server, {to_string(server.server_id)})
+
+    StatePurgeQueue.sync()
+  end
+end

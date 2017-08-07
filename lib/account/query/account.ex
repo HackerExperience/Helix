@@ -2,13 +2,12 @@ defmodule Helix.Account.Query.Account do
 
   alias Helix.Account.Internal.Account, as: AccountInternal
   alias Helix.Account.Model.Account
-  alias Helix.Account.Repo
 
   @spec fetch(Account.id) ::
     Account.t
     | nil
-  def fetch(id),
-    do: Repo.get(Account, id)
+  defdelegate fetch(id),
+    to: AccountInternal
 
   @spec fetch_by_email(Account.email) ::
     Account.t

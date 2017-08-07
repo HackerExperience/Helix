@@ -5,21 +5,23 @@ defmodule Helix.Account.Model.AccountSetting do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.Setting
 
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+    account_id: Account.id,
+    settings: Setting.t,
+    account: term
+  }
 
   @type changeset_params :: %{
-    :settings => map,
-    optional(:account_id) => Account.id,
-    optional(any) => any
+    optional(:settings) => map,
+    optional(:account_id) => Account.idtb
   }
 
   @primary_key false
   schema "account_settings" do
-    field :account_id, PK,
+    field :account_id, Account.ID,
       primary_key: true
 
     embeds_one :settings, Setting,
@@ -32,29 +34,30 @@ defmodule Helix.Account.Model.AccountSetting do
       define_field: false
   end
 
-  @spec changeset(t, changeset_params) ::
+  @spec changeset(%__MODULE__{}, changeset_params) ::
     Changeset.t
   def changeset(struct \\ %__MODULE__{}, params) do
     struct
     |> cast(params, [:account_id])
-    |> foreign_key_constraint(:account_id)
+    |> validate_required([:account_id])
     |> cast_embed(:settings)
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Account.Model.Account
     alias Helix.Account.Model.AccountSetting
 
-    @spec from_account(Queryable.t, Account.t | Account.id) ::
+    @spec by_account(Queryable.t, Account.idtb) ::
       Queryable.t
-    def from_account(query \\ AccountSetting, account_or_account_id)
-    def from_account(query, account = %Account{}),
-      do: from_account(query, account.account_id)
-    def from_account(query, account_id),
-      do: where(query, [as], as.account_id == ^account_id)
+    def by_account(query \\ AccountSetting, id),
+      do: where(query, [as], as.account_id == ^id)
+
+    @spec select_settings(Queryable.t) ::
+      Queryable.t
+    def select_settings(query),
+      do: select(query, [as], as.settings)
   end
 end

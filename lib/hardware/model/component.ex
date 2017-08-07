@@ -1,30 +1,28 @@
 defmodule Helix.Hardware.Model.Component do
 
   use Ecto.Schema
+  use HELL.ID, field: :component_id, meta: [0x0011]
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias HELL.Constant
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.ComponentType
   alias Helix.Hardware.Model.MotherboardSlot
 
-  @type id :: PK.t
   @type t :: %__MODULE__{
     component_id: id,
     component_type: Constant.t,
-    component_spec: ComponentSpec.t,
     spec_id: ComponentSpec.id,
-    slot: MotherboardSlot.t,
+    component_spec: term,
+    slot: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
-  @primary_key false
   schema "components" do
-    field :component_id, PK,
+    field :component_id, ID,
       primary_key: true
 
     # FK to ComponentType
@@ -42,38 +40,31 @@ defmodule Helix.Hardware.Model.Component do
     timestamps()
   end
 
-  @spec create_from_spec(ComponentSpec.t, id) ::
+  @spec create_from_spec(ComponentSpec.t) ::
     Changeset.t
-  def create_from_spec(cs = %ComponentSpec{}, component_id) do
+  def create_from_spec(cs = %ComponentSpec{}) do
     params = %{
-      component_id: component_id,
       component_type: cs.component_type,
       spec_id: cs.spec_id
     }
 
     %__MODULE__{}
-    |> cast(params, [:component_type, :spec_id, :component_id])
-    |> validate_required([:component_type, :spec_id, :component_id])
+    |> cast(params, [:component_type, :spec_id])
+    |> validate_required([:component_type, :spec_id])
     |> validate_inclusion(:component_type, ComponentType.possible_types())
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias HELL.Constant
     alias Helix.Hardware.Model.Component
 
-    @spec from_id_list(Queryable.t, [Component.id]) ::
+    @spec by_id(Queryable.t, Component.idtb) ::
       Queryable.t
-    def from_id_list(query \\ Component, id_list),
-      do: where(query, [c], c.component_id in ^id_list)
-
-    @spec by_id(Queryable.t, Component.id) ::
-      Queryable.t
-    def by_id(query \\ Component, component_id),
-      do: where(query, [c], c.component_id == ^component_id)
+    def by_id(query \\ Component, id),
+      do: where(query, [c], c.component_id == ^id)
 
     @spec from_type_list(Queryable.t, [Constant.t]) ::
       Queryable.t

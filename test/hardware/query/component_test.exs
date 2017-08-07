@@ -2,7 +2,6 @@ defmodule Helix.Hardware.Query.ComponentTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Query.Component, as: ComponentQuery
 
@@ -14,8 +13,8 @@ defmodule Helix.Hardware.Query.ComponentTest do
       assert %Component{} = ComponentQuery.fetch(component.component_id)
     end
 
-    test "fails when component doesn't exist'" do
-      refute ComponentQuery.fetch(Random.pk())
+    test "fails when component doesn't exist" do
+      refute ComponentQuery.fetch(Component.ID.generate())
     end
   end
 end

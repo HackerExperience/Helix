@@ -88,7 +88,7 @@ defmodule Helix.Account.Factory do
     do: AccountSetting.changeset(params)
   defp fabricate_changeset(:account_setting, params) do
     params
-    |> Map.put(:account_id, Random.pk())
+    |> Map.put(:account_id, Account.ID.generate())
     |> AccountSetting.changeset()
     # HACK: Right now AccountSetting is requiring account_id and we don't want
     #   to insert the account to generate the setting, right ?

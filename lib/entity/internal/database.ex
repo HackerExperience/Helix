@@ -1,17 +1,13 @@
 defmodule Helix.Entity.Internal.Database do
 
-  # FIXME: As much as possible, the queries described here should be
-  # added to Database.Query for reuse and readability.
+  import Ecto.Query, only: [select: 2, select: 3, limit: 2]
 
-  import Ecto.Query, only: [select: 2, where: 3, order_by: 2]
-
-  alias Ecto.Multi
-  alias Ecto.Queryable
   alias HELL.IPv4
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.Database
+  alias Helix.Entity.Repo
 
   @select_fields ~w/
     network_id
@@ -24,77 +20,89 @@ defmodule Helix.Entity.Internal.Database do
     updated_at/a
 
   @spec get_database(Entity.t) ::
-    Queryable.t
+    [map]
   def get_database(entity) do
-    Database
+    entity
+    |> Database.Query.by_entity()
     |> select_for_presentation()
-    |> where([h], h.entity_id == ^entity.entity_id)
-    |> order_by(asc: :network_id, asc: :inserted_at)
+    |> Database.Query.order_by_newest_on_network()
+    |> Repo.all()
   end
 
-  @spec get_entry(Entity.t, Network.id, IPv4.t) ::
-    Queryable.t
-  def get_entry(entity, network_id, ip) do
-    Database
-    |> where([h], h.entity_id == ^entity.entity_id)
-    |> where([h], h.network_id == ^network_id)
-    |> where([h], h.server_ip == ^ip)
+  @spec get_entry(Entity.t, Network.idt, IPv4.t) ::
+    Database.t
+    | nil
+  def get_entry(entity, network, ip) do
+    entity
+    |> Database.Query.by_entity()
+    |> Database.Query.by_network(network)
+    |> Database.Query.by_ip(ip)
+    |> Repo.one()
   end
 
-  @spec get_entry_by_server_id(Entity.t, Server.id) ::
-    Queryable.t
-  def get_entry_by_server_id(entity, server_id) do
-    Database
-    |> where([h], h.entity_id == ^entity.entity_id)
-    |> where([h], h.server_id == ^server_id)
+  @spec get_server_entries(Entity.t, Server.idt) ::
+    [Database.t]
+  def get_server_entries(entity, server) do
+    entity
+    |> Database.Query.by_entity()
+    |> Database.Query.by_server(server)
+    |> Repo.all()
   end
 
-  @spec select_for_presentation(Queryable.t) ::
-    Queryable.t
-  def select_for_presentation(query),
-    do: select(query, ^@select_fields)
+  @spec get_server_password(Entity.t, Server.idt) ::
+    String.t
+    | nil
+  def get_server_password(entity, server) do
+    entity
+    |> Database.Query.by_entity()
+    |> Database.Query.by_server(server)
+    |> select([d], d.password)
+    |> limit(1)
+    |> Repo.all()
+  end
 
-  @spec create(Entity.t, Network.id, IPv4.t, Server.id, String.t) ::
-    Multi.t
-  def create(entity, network_id, ip, server_id, server_type) do
-    changeset = Database.create(
-      entity.entity_id,
-      network_id,
-      ip,
-      server_id,
-      server_type)
+  @spec create(Entity.t, Network.idt, IPv4.t, Server.idt, String.t) ::
+    {:ok, Database.t}
+    | {:error, Ecto.Changeset.t}
+  def create(entity, network, ip, server, server_type) do
+    changeset = Database.create(entity, network, ip, server, server_type)
 
-    Multi.new()
-    |> Multi.insert({:database, :new}, changeset, on_conflict: :nothing)
+    Repo.insert(changeset, on_conflict: :nothing)
   end
 
   @spec update(Database.t, map) ::
-    Multi.t
+    {:ok, Database.t}
+    | {:error, Ecto.Changeset.t}
   def update(entry, params) do
-    changeset = Database.update(entry, params)
-
-    Multi.new()
-    |> Multi.update({:database, :updated}, changeset)
+    entry
+    |> Database.update(params)
+    |> Repo.update()
   end
 
-  @spec delete_server_from_network(Server.id, Network.id) ::
-    Multi.t
-  def delete_server_from_network(server_id, network_id) do
-    query =
-      Database
-      |> where([h], h.server_id == ^server_id)
-      |> where([h], h.network_id == ^network_id)
+  @spec delete_server_from_network(Server.idt, Network.idt) ::
+    :ok
+  def delete_server_from_network(server, network) do
+    server
+    |> Database.Query.by_server(server)
+    |> Database.Query.by_network(network)
+    |> Repo.delete_all()
 
-    Multi.new()
-    |> Multi.delete_all({:database, :deleted}, query)
+    :ok
   end
 
-  @spec delete_server(Server.id) ::
-    Multi.t
-  def delete_server(server_id) do
-    query = where(Database, [h], h.server_id == ^server_id)
+  @spec delete_server(Server.idt) ::
+    :ok
+  def delete_server(server) do
+    server
+    |> Database.Query.by_server(server)
+    |> Repo.delete_all()
 
-    Multi.new()
-    |> Multi.delete_all({:database, :deleted}, query)
+    :ok
   end
+
+  # I think this doesn't belongs here
+  @spec select_for_presentation(Ecto.Queryable.t) ::
+    Ecto.Queryable.t
+  def select_for_presentation(query),
+    do: select(query, ^@select_fields)
 end

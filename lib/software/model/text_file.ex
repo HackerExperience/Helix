@@ -5,27 +5,20 @@ defmodule Helix.Software.Model.TextFile do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
   @type t :: %__MODULE__{
-    file: File.t,
     file_id: File.id,
-    contents: String.t
-  }
-
-  @type creation_params :: %{
-    name: String.t,
-    path: String.t,
-    contents: String.t
+    contents: String.t,
+    file: term
   }
 
   @software_type :text
 
   @primary_key false
   schema "text_files" do
-    field :file_id, PK,
+    field :file_id, File.ID,
       primary_key: true
 
     field :contents, :string
@@ -33,7 +26,6 @@ defmodule Helix.Software.Model.TextFile do
     belongs_to :file, File,
       foreign_key: :file_id,
       references: :file_id,
-      type: PK,
       define_field: false
   end
 
@@ -79,19 +71,15 @@ defmodule Helix.Software.Model.TextFile do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Software.Model.File
     alias Helix.Software.Model.TextFile
 
-    @spec from_file(Queryable.t, File.t | File.id) ::
+    @spec by_file(Queryable.t, File.idtb) ::
       Queryable.t
-    def from_file(query \\ TextFile, file_or_file_id)
-    def from_file(query, file = %File{}),
-      do: from_file(query, file.file_id)
-    def from_file(query, file_id),
-      do: where(query, [ft], ft.file_id == ^file_id)
+    def by_file(query \\ TextFile, id),
+      do: where(query, [ft], ft.file_id == ^id)
   end
 end

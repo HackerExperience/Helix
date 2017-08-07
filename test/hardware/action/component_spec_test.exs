@@ -42,26 +42,7 @@ defmodule Helix.Hardware.Action.ComponentSpecTest do
   end
 
   describe "delete/1" do
-    test "succeeds by struct" do
-      cs = Factory.insert(:component_spec)
-
-      assert Repo.get(ComponentSpec, cs.spec_id)
-
-      ComponentSpecAction.delete(cs)
-
-      refute Repo.get(ComponentSpec, cs.spec_id)
-    end
-
-    test "succeeds by id" do
-      cs = Factory.insert(:component_spec)
-
-      assert Repo.get(ComponentSpec, cs.spec_id)
-
-      ComponentSpecAction.delete(cs.spec_id)
-
-      refute Repo.get(ComponentSpec, cs.spec_id)
-    end
-
+    @tag :pending
     test "is idempotent" do
       cs = Factory.insert(:component_spec)
 

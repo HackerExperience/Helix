@@ -5,7 +5,7 @@ defmodule Helix.Mixfile do
     [
       app: :helix,
       version: "0.0.1",
-      elixir: "~> 1.4",
+      elixir: "~> 1.5",
 
       elixirc_options: elixirc_options(Mix.env),
       elixirc_paths: elixirc_paths(Mix.env),
@@ -51,19 +51,23 @@ defmodule Helix.Mixfile do
     [
       {:distillery, "~>1.2", runtime: false},
 
-      {:phoenix, "~> 1.3.0-rc.1", override: true},
+      {:phoenix, "~> 1.3.0"},
       {:phoenix_pubsub, "~> 1.0"},
       {:cowboy, "~> 1.0"},
       {:corsica, "~> 0.5"},
 
-      {:ecto, github: "elixir-ecto/ecto", ref: "945e154", override: true},
-      {:postgrex, github: "elixir-ecto/postgrex", ref: "87178f1", override: true},
+      # Review: required for 1.5, why?
+      {:hackney, "~>1.8"},
+      {:poolboy, "~>1.5"},
+
+      {:ecto, "~> 2.1"},
+      {:postgrex, "~> 0.13.3"},
 
       {:helf, github: "HackerExperience/HELF"},
       {:poison, "~> 2.0"},
 
-      {:comeonin, "~> 2.5"},
-      {:timex, "~> 3.0"},
+      {:comeonin, "~> 3.2"},
+      {:timex, "~> 3.1"},
 
       {:burette, git: "https://github.com/HackerExperience/burette", only: :test},
 
@@ -73,8 +77,8 @@ defmodule Helix.Mixfile do
 
       {:inch_ex, "~> 0.5.6", only: [:dev, :test]},
 
-      {:credo, "~> 0.7", only: [:dev, :test]},
-      {:excoveralls, "~> 0.6.3", only: [:dev, :test]}
+      {:credo, "~> 0.8", only: [:dev, :test]},
+      {:excoveralls, "~> 0.7.2", only: [:dev, :test]}
     ]
   end
 
@@ -120,16 +124,14 @@ defmodule Helix.Mixfile do
     ]
   end
 
-  defp elixirc_options(:dev) do
-    # On dev, by default, allow to compile even with warnings, unless explicitly
-    # required not to
-    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") == "false"
-
-    [warnings_as_errors: warnings_as_errors?]
+  defp elixirc_options(:prod) do
+    # On prod, don't compile unless no warning is issued
+    [warnings_as_errors: true]
   end
   defp elixirc_options(_) do
-    # On test and prod, don't compile unless no warning is issued
-    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") != "true"
+    # On dev and test, by default, allow to compile even with warnings,
+    # unless explicitly told not to
+    warnings_as_errors? = System.get_env("HELIX_SKIP_WARNINGS") == "false"
 
     [warnings_as_errors: warnings_as_errors?]
   end

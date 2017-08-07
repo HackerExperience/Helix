@@ -1,7 +1,5 @@
 defmodule Helix.Software.Public.File do
 
-  alias Helix.Hardware.Query.Component, as: ComponentQuery
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Network.Model.Tunnel
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -10,7 +8,7 @@ defmodule Helix.Software.Public.File do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Public.View.File, as: FileView
   alias Helix.Software.Query.File, as: FileQuery
-  alias Helix.Software.Query.Storage, as: StorageQuery
+  alias Helix.Cache.Query.Cache, as: CacheQuery
 
   @spec index(Server.id) ::
     %{path :: String.t => [map]}
@@ -65,17 +63,9 @@ defmodule Helix.Software.Public.File do
   end
 
   @spec storages_on_server(Server.t) ::
-    [Storage.t]
+    [Storage.id]
   defp storages_on_server(server) do
-    server.motherboard_id
-    |> ComponentQuery.fetch()
-    |> MotherboardQuery.fetch!()
-    |> MotherboardQuery.get_slots()
-    # TODO: Delegate this to a function on Motherboard API
-    # Gets hdds linked to the motherboard
-    |> Enum.filter_map(
-      &(&1.link_component_type == :hdd && &1.link_component_id),
-      &(&1.link_component_id))
-    |> Enum.map(&StorageQuery.get_storage_from_hdd/1)
+    {:ok, storages} = CacheQuery.from_server_get_storages(server.server_id)
+    storages
   end
 end

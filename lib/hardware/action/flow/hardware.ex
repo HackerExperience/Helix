@@ -1,12 +1,16 @@
 defmodule Helix.Hardware.Action.Flow.Hardware do
 
+  # FIXME everywhere
+
   import HELF.Flow
 
   alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Entity.Model.Entity
   alias Helix.Software.Action.Storage, as: StorageAction
   alias Helix.Software.Action.StorageDrive, as: StorageDriveAction
   alias Helix.Hardware.Action.Component, as: ComponentAction
   alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Component.NIC
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Hardware.Query.ComponentSpec, as: ComponentSpecQuery
@@ -30,6 +34,8 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
     }
   end
 
+  @spec setup_bundle(Entity.t, map) ::
+    {:ok, Component.id}
   def setup_bundle(entity, bundle \\ player_initial_bundle()) do
     # TODO: Ecto.Multi to wrap this into one (two) transactions instead of
     #   several failable operations
@@ -51,7 +57,7 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
     # This will be improved with a MotherboardAPI that simply receives a
     # collection of components and try to link them all
     link_components = fn motherboard, components ->
-      motherboard = MotherboardQuery.fetch!(motherboard)
+      # TODO: Use with for negative checks
       slots = MotherboardQuery.get_slots(motherboard)
       slots = Enum.group_by(slots, &(&1.link_component_type))
 
@@ -80,12 +86,8 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
           bundle.motherboard),
         on_fail(fn -> ComponentAction.delete(motherboard) end),
 
-        {:ok, _} <- EntityAction.link_component(
-          entity,
-          motherboard.component_id),
-        on_fail(fn ->
-          EntityAction.unlink_component(motherboard.component_id)
-        end),
+        {:ok, _} <- EntityAction.link_component(entity, motherboard),
+        on_fail(fn -> EntityAction.unlink_component(motherboard) end),
 
         {:ok, components} <- build_components.(),
 
@@ -99,18 +101,18 @@ defmodule Helix.Hardware.Action.Flow.Hardware do
 
         hdd = %{} <- Enum.find(components, &(&1.component_type == :hdd)),
         {:ok, storage} <- StorageAction.create(),
-        on_fail(fn -> StorageAction.delete(storage.storage_id) end),
-        :ok <- StorageDriveAction.link_drive(storage, hdd.component_id),
-        on_fail(fn -> StorageDriveAction.unlink_drive(hdd.component_id) end),
+        on_fail(fn -> StorageAction.delete(storage) end),
+        :ok <- StorageDriveAction.link_drive(storage, hdd),
+        on_fail(fn -> StorageDriveAction.unlink_drive(hdd) end),
 
         nic = %{} <- Enum.find(components, &(&1.component_type == :nic)),
-        nic = Repo.get(NIC, nic.component_id),
-        nic_params = %{network_connection_id: net.network_connection_id},
+        nic = Repo.get(NIC, nic),
+        nic_params = %{network_connection_id: net},
         cs = NIC.update_changeset(nic, nic_params),
-        {:ok, _} <- Repo.update(cs)
+        {:ok, _} <- Repo.update(cs),
+        # Below is because `motherboard` is actually a component
+        %{motherboard_id: id} <- MotherboardQuery.fetch(motherboard)
       do
-        # This is because `motherboard` is actually a component
-        %{motherboard_id: id} = MotherboardQuery.fetch!(motherboard)
         {:ok, id}
       end
     end

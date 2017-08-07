@@ -1,22 +1,12 @@
 defmodule Helix.Entity.Internal.Entity do
 
-  import Ecto.Query, only: [where: 3]
-
+  alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo
-
-  @spec create(Entity.creation_params) ::
-    {:ok, Entity.t}
-    | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
-    |> Entity.create_changeset()
-    |> Repo.insert()
-  end
 
   @spec fetch(Entity.id) ::
     Entity.t
@@ -35,20 +25,7 @@ defmodule Helix.Entity.Internal.Entity do
   def fetch(id),
     do: Repo.get(Entity, id)
 
-  @spec fetch_servers(Entity.t | Entity.id) ::
-    [EntityServer.t]
-  # TODO: documentation
-  # this doesn't returns servers but records that links a certain entity to
-  # a server
-  def fetch_servers(entity = %Entity{}),
-    do: fetch_servers(entity.entity_id)
-  def fetch_servers(entity) do
-    entity
-    |> EntityServer.Query.from_entity()
-    |> Repo.all()
-  end
-
-  @spec fetch_server_owner(Server.id) ::
+  @spec fetch_by_server(Server.idt) ::
     Entity.t
     | nil
   @doc """
@@ -58,69 +35,87 @@ defmodule Helix.Entity.Internal.Entity do
 
   ## Examples
 
-      iex> fetch_server_owner("10::478F:8BF:D47B:D04E:8190")
-      %Entity{}
+  iex> fetch_by_server("10::478F:8BF:D47B:D04E:8190")
+  %Entity{}
 
-      iex> fetch_server_owner("aa:bbbb::ccc")
-      nil
+  iex> fetch_by_server("aa:bbbb::ccc")
+  nil
   """
-  def fetch_server_owner(server) do
-    with \
-      es = %EntityServer{} <- Repo.get_by(EntityServer, server_id: server),
-      %EntityServer{entity: entity = %Entity{}} <- Repo.preload(es, :entity)
-    do
-      entity
-    end
+  def fetch_by_server(server) do
+    server
+    |> Entity.Query.owns_server()
+    |> Repo.one()
   end
 
-  @spec delete(Entity.t | Entity.id) ::
-    :ok
-  def delete(entity = %Entity{}),
-    do: delete(entity.entity_id)
-  def delete(entity_id) do
-    Entity
-    |> where([s], s.entity_id == ^entity_id)
-    |> Repo.delete_all()
-
-    :ok
+  @spec get_servers(Entity.t) ::
+    [Server.id]
+  @doc """
+  Returns a list of servers that belong to a given entity.
+  """
+  def get_servers(entity) do
+    entity
+    |> EntityServer.Query.by_entity()
+    |> Repo.all()
+    |> Enum.map(&(&1.server_id))
   end
 
-  @spec link_component(Entity.t, Component.id) ::
+  @spec create(Entity.creation_params) ::
+    {:ok, Entity.t}
+    | {:error, Ecto.Changeset.t}
+  def create(params) do
+    params
+    |> Entity.create_changeset()
+    |> Repo.insert()
+  end
+
+  @spec link_component(Entity.t, Component.idt) ::
     {:ok, any}
     | {:error, Ecto.Changeset.t}
-  def link_component(%Entity{entity_id: id}, component) do
-    params = %{entity_id: id, component_id: component}
-    changeset = EntityComponent.create_changeset(params)
-
-    Repo.insert(changeset)
+  def link_component(entity, component_id) do
+    %{entity_id: entity, component_id: component_id}
+    |> EntityComponent.create_changeset()
+    |> Repo.insert()
   end
 
-  @spec unlink_component(Component.id) ::
+  @spec unlink_component(Component.idt) ::
     :ok
   def unlink_component(component) do
     component
-    |> EntityComponent.Query.by_component_id()
+    |> EntityComponent.Query.by_component()
     |> Repo.delete_all()
 
     :ok
   end
 
-  @spec link_server(Entity.t, Server.id) ::
-    {:ok, term}
+  @spec link_server(Entity.t, Server.idt) ::
+    {:ok, EntityServer.t}
     | {:error, Ecto.Changeset.t}
-  def link_server(%Entity{entity_id: id}, server) do
-    params = %{entity_id: id, server_id: server}
-    changeset = EntityServer.create_changeset(params)
-
-    Repo.insert(changeset)
+  def link_server(entity, server_id) do
+    %{entity_id: entity, server_id: server_id}
+    |> EntityServer.create_changeset()
+    |> Repo.insert()
   end
 
-  @spec unlink_server(Server.id) ::
+  @spec unlink_server(Server.idt) ::
     :ok
   def unlink_server(server) do
     server
-    |> EntityServer.Query.by_server_id()
+    |> EntityServer.Query.by_server()
     |> Repo.delete_all()
+
+    CacheAction.purge_server(server)
+
+    :ok
+  end
+
+  @spec delete(Entity.t) ::
+    :ok
+  def delete(entity) do
+    servers = get_servers(entity)
+
+    Repo.delete(entity)
+
+    Enum.each(servers, &CacheAction.purge_server(&1))
 
     :ok
   end

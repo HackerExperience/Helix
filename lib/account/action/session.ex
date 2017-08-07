@@ -5,12 +5,13 @@ defmodule Helix.Account.Action.Session do
   alias Helix.Account.Model.AccountSession
 
   @spec generate_token(Account.t) ::
-    AccountSession.token
+    {:ok, AccountSession.token}
+    | {:error, Ecto.Changeset.t}
   defdelegate generate_token(account),
     to: SessionInternal
 
   @spec validate_token(AccountSession.token) ::
-    {:ok, Account.t, AccountSession.session}
+    {:ok, Account.t, AccountSession.id}
     | {:error, :unauthorized}
   defdelegate validate_token(token),
     to: SessionInternal
@@ -20,7 +21,7 @@ defmodule Helix.Account.Action.Session do
   defdelegate invalidate_token(token),
     to: SessionInternal
 
-  @spec invalidate_session(AccountSession.session) ::
+  @spec invalidate_session(AccountSession.id) ::
     :ok
   defdelegate invalidate_session(session),
     to: SessionInternal

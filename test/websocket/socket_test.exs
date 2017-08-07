@@ -17,7 +17,7 @@ defmodule Helix.Websocket.SocketTest do
 
   test "socket is connectable only with valid token" do
     account = AccountFactory.insert(:account)
-    token = SessionAction.generate_token(account)
+    {:ok, token} = SessionAction.generate_token(account)
 
     assert {:ok, _} = connect(Socket, %{"token" => token})
   end

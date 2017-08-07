@@ -12,11 +12,12 @@ defmodule Helix.Network.Henforcer.Network do
   def node_connected?(server, network) do
     # FIXME: This looks awful
     # FIXME: Test (needs network factory and some patience)
+    network_id = to_string(network)
     with \
       %{motherboard_id: motherboard} <- ServerQuery.fetch(server),
       component = %{} <- ComponentQuery.fetch(motherboard),
-      motherboard = %{} <- MotherboardQuery.fetch!(component),
-      %{net: %{^network => _}} <- MotherboardQuery.resources(motherboard)
+      motherboard = %{} <- MotherboardQuery.fetch(component),
+      %{net: %{^network_id => _}} <- MotherboardQuery.resources(motherboard)
     do
       true
     else

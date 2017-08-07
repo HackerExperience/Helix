@@ -5,33 +5,39 @@ defmodule Helix.Log.Model.Revision do
   # stack mechanics of log forging
 
   use Ecto.Schema
+  use HELL.ID, field: :revision_id, meta: [0x0030, 0x0001]
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
 
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+    revision_id: id,
+    log_id: Log.id,
+    entity_id: Entity.id,
+    message: String.t,
+    forge_version: pos_integer | nil,
+    log: term,
+    inserted_at: DateTime.t
+  }
 
   @type creation_params :: %{
-    :entity_id => Entity.id,
+    :entity_id => Entity.idtb,
     :message => String.t,
     optional(:forge_version) => pos_integer | nil,
-    optional(any) => any
+    optional(atom) => any
   }
 
   @creation_fields ~w/entity_id message forge_version/a
 
-  @primary_key false
-  @ecto_autogenerate {:revision_id, {PK, :pk_for, [:log_revision]}}
   schema "revisions" do
-    field :revision_id, PK,
+    field :revision_id, ID,
       primary_key: true
 
-    field :log_id, PK
-    field :entity_id, PK
+    field :log_id, Log.ID
+    field :entity_id, Entity.ID
 
     field :message, :string
     field :forge_version, :integer
@@ -44,7 +50,7 @@ defmodule Helix.Log.Model.Revision do
     timestamps(type: :utc_datetime, updated_at: false)
   end
 
-  @spec create(Log.t, Entity.id, String.t, pos_integer | nil) ::
+  @spec create(Log.t, Entity.idtb, String.t, pos_integer | nil) ::
     Changeset.t
   def create(log, entity, message, forge \\ nil) do
     params = %{
@@ -53,15 +59,14 @@ defmodule Helix.Log.Model.Revision do
       forge_version: forge
     }
 
-    changeset = changeset(%__MODULE__{}, params)
-    message = get_change(changeset, :message)
-
     log = Log.update_changeset(log, %{message: message})
 
-    put_assoc(changeset, :log, log)
+    %__MODULE__{}
+    |> changeset(params)
+    |> put_assoc(:log, log)
   end
 
-  @spec changeset(t | Changeset.t, creation_params) ::
+  @spec changeset(%__MODULE__{} | Changeset.t, creation_params) ::
     Changeset.t
   def changeset(struct, params) do
     struct
@@ -71,19 +76,20 @@ defmodule Helix.Log.Model.Revision do
   end
 
   defmodule Query do
-
     import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.Revision
 
-    @spec from_log(Queryable.t, Log.t | Log.id) ::
+    @spec by_id(Queryable.t, Revision.idtb) ::
       Queryable.t
-    def from_log(query \\ Revision, log_or_id)
-    def from_log(query, %Log{log_id: id}),
-      do: from_log(query, id)
-    def from_log(query, id),
+    def by_id(query \\ Revision, id),
+      do: where(query, [r], r.revision_id == ^id)
+
+    @spec by_log(Queryable.t, Log.idtb) ::
+      Queryable.t
+    def by_log(query \\ Revision, id),
       do: where(query, [r], r.log_id == ^id)
 
     @spec last(Queryable.t, non_neg_integer) ::

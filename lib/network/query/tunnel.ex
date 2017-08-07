@@ -23,7 +23,7 @@ defmodule Helix.Network.Query.Tunnel do
   def fetch_from_connection(%Connection{tunnel_id: id}),
     do: fetch(id)
 
-  @spec connected?(Server.id, Server.id, Network.t | nil) ::
+  @spec connected?(Server.t | Server.id, Server.t | Server.id, Network.t | nil) ::
     boolean
   defdelegate connected?(gateway_id, endpoint_id, network \\ nil),
     to: TunnelInternal
@@ -33,31 +33,31 @@ defmodule Helix.Network.Query.Tunnel do
   defdelegate get_connections(tunnel),
     to: TunnelInternal
 
-  @spec fetch_connection(Connection.id) ::
+  @spec fetch_connection(Connection.t | Connection.id) ::
     Connection.t
     | nil
-  defdelegate fetch_connection(connection_id),
+  defdelegate fetch_connection(connection),
     to: TunnelInternal
 
-  @spec connections_through_node(Server.id) ::
+  @spec connections_through_node(Server.t | Server.id) ::
     [Connection.t]
-  defdelegate connections_through_node(server_id),
+  defdelegate connections_through_node(server),
     to: TunnelInternal
 
-  @spec inbound_connections(Server.id) ::
+  @spec inbound_connections(Server.t | Server.id) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's destination is `server`
-  defdelegate inbound_connections(endpoint_id),
+  defdelegate inbound_connections(endpoint),
     to: TunnelInternal
 
-  @spec outbound_connections(Server.id) ::
+  @spec outbound_connections(Server.t | Server.id) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
-  defdelegate outbound_connections(gateway_id),
+  defdelegate outbound_connections(gateway),
     to: TunnelInternal
 
-  @spec connections_on_tunnels_between(Server.id, Server.id) ::
+  @spec connections_on_tunnels_between(Server.t | Server.id, Server.t | Server.id) ::
     [Connection.t]
-  defdelegate connections_on_tunnels_between(gateway_id, endpoint_id),
+  defdelegate connections_on_tunnels_between(gateway, endpoint),
     to: TunnelInternal
 end

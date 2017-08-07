@@ -84,6 +84,7 @@ defmodule Helix.Software.Action.FileTest do
     end
   end
 
+  @tag :pending
   describe "delete/1" do
     test "is idempotent" do
       file = Factory.insert(:file)

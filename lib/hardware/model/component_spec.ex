@@ -9,20 +9,25 @@ defmodule Helix.Hardware.Model.ComponentSpec do
   alias Helix.Hardware.Model.ComponentType
 
   @type id :: String.t
-  @type t :: %__MODULE__{}
-
   @type spec :: %{
     :spec_code => String.t,
     :spec_type => String.t,
     :name => String.t,
     optional(atom) => any
   }
+  @type t :: %__MODULE__{
+    spec_id: id,
+    component_type: Constant.t,
+    spec: spec,
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
+  }
 
   @type creation_params :: %{
     spec: spec
   }
 
-  @callback validate_spec(map) :: Ecto.Changeset.t
+  @callback validate_spec(map) :: Changeset.t
 
   @valid_spec_types (
     ComponentType.possible_types()
@@ -142,8 +147,7 @@ defmodule Helix.Hardware.Model.ComponentSpec do
     do: add_error(changeset, :spec, "is invalid", cs0.errors ++ cs1.errors)
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias HELL.Constant
@@ -151,8 +155,8 @@ defmodule Helix.Hardware.Model.ComponentSpec do
 
     @spec by_id(Queryable.t, ComponentSpec.id) ::
       Queryable.t
-    def by_id(query \\ ComponentSpec, spec_id),
-      do: where(query, [s], s.spec_id == ^spec_id)
+    def by_id(query \\ ComponentSpec, id),
+      do: where(query, [cs], cs.spec_id == ^id)
 
     @spec by_component_type(Queryable.t, Constant.t) ::
       Queryable.t

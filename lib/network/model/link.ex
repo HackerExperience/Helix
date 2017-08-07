@@ -2,18 +2,19 @@ defmodule Helix.Network.Model.Link do
 
   use Ecto.Schema
 
-  alias HELL.PK
+  alias Helix.Server.Model.Server
+  alias Helix.Network.Model.Tunnel
 
   import Ecto.Changeset
 
   @primary_key false
   schema "links" do
-    field :tunnel_id, PK,
+    field :tunnel_id, Tunnel.ID,
       primary_key: true
-    field :source_id, PK,
+    field :source_id, Server.ID,
       primary_key: true
 
-    field :destination_id, PK
+    field :destination_id, Server.ID
 
     field :sequence, :integer
   end

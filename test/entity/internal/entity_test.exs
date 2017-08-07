@@ -2,7 +2,9 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
@@ -21,7 +23,9 @@ defmodule Helix.Entity.Internal.EntityTest do
   describe "entity creation" do
     test "succeeds with valid params" do
       params = generate_params()
-      assert {:ok, _} = EntityInternal.create(params)
+      {:ok, entity} = EntityInternal.create(params)
+
+      assert entity.entity_id == params.entity_id
     end
 
     test "fails when entity_type is invalid" do
@@ -34,68 +38,64 @@ defmodule Helix.Entity.Internal.EntityTest do
     test "returns entity on success" do
       entity = Factory.insert(:entity)
 
-      assert %Entity{} = EntityInternal.fetch(entity.entity_id)
+      result = EntityInternal.fetch(entity.entity_id)
+
+      assert result
+      assert result.entity_id == entity.entity_id
     end
 
     test "returns nil if entity doesn't exists" do
-      refute EntityInternal.fetch(Random.pk())
+      refute EntityInternal.fetch(Entity.ID.generate())
     end
   end
 
-  describe "fetch_server_owner/1" do
+  describe "fetch_by_server/1" do
     test "returns entity if server is owned" do
-      %{server_id: id} = Factory.insert(:entity_server)
+      es = Factory.insert(:entity_server)
 
-      assert %Entity{} = EntityInternal.fetch_server_owner(id)
+      result = EntityInternal.fetch_by_server(es.server_id)
+
+      assert result
+      assert result.entity_id == es.entity_id
     end
 
     test "returns nil if server is not owned" do
-      refute EntityInternal.fetch_server_owner(Random.pk())
+      refute EntityInternal.fetch_by_server(Server.ID.generate())
     end
   end
 
   describe "entity deleting" do
-    test "succeeds by struct" do
-      entity = Factory.insert(:entity)
-
-      assert Repo.get(Entity, entity.entity_id)
-      EntityInternal.delete(entity)
-      refute Repo.get(Entity, entity.entity_id)
-    end
-
-    test "succeeds by id" do
-      entity = Factory.insert(:entity)
-
-      assert Repo.get(Entity, entity.entity_id)
-      EntityInternal.delete(entity.entity_id)
-      refute Repo.get(Entity, entity.entity_id)
-    end
-
+    @tag :pending
     test "is idempotent" do
       entity = Factory.insert(:entity)
 
       assert Repo.get(Entity, entity.entity_id)
 
-      EntityInternal.delete(entity.entity_id)
-      EntityInternal.delete(entity.entity_id)
+      EntityInternal.delete(entity)
+      EntityInternal.delete(entity)
 
       refute Repo.get(Entity, entity.entity_id)
+
+      CacheHelper.sync_test()
     end
   end
 
   describe "link_component/2" do
     test "succeeds with entity struct" do
       entity = Factory.insert(:entity)
-      component_id = Random.pk()
+      component_id = Component.ID.generate()
 
-      assert {:ok, _} = EntityInternal.link_component(entity, component_id)
+      {:ok, link} = EntityInternal.link_component(entity, component_id)
+
+      assert link.component_id == component_id
+      assert link.entity_id == entity.entity_id
+
+      CacheHelper.sync_test()
     end
 
     test "fails when entity doesn't exist" do
-      component_id = Random.pk()
-
-      result = EntityInternal.link_component(%Entity{}, component_id)
-      assert {:error, _} = result
+      component_id = Component.ID.generate()
+      {:error, _} = EntityInternal.link_component(%Entity{}, component_id)
     end
   end
 
@@ -117,22 +117,27 @@ defmodule Helix.Entity.Internal.EntityTest do
         |> Repo.preload(:components, force: true)
         |> Map.fetch!(:components)
       assert Enum.empty?(components)
+
+      CacheHelper.sync_test()
     end
   end
 
   describe "link_server/2" do
     test "succeeds with entity struct" do
       entity = Factory.insert(:entity)
-      server_id = Random.pk()
+      server_id = Server.ID.generate()
 
-      assert {:ok, _} = EntityInternal.link_server(entity, server_id)
+      {:ok, link} = EntityInternal.link_server(entity, server_id)
+
+      assert link.server_id == server_id
+      assert link.entity_id == entity.entity_id
+
+      CacheHelper.sync_test()
     end
 
     test "fails when entity doesn't exist" do
-      server_id = Random.pk()
-
-      result = EntityInternal.link_server(%Entity{}, server_id)
-      assert {:error, _} = result
+      server_id = Server.ID.generate()
+      {:error, _} = EntityInternal.link_server(%Entity{}, server_id)
     end
   end
 
@@ -154,6 +159,8 @@ defmodule Helix.Entity.Internal.EntityTest do
         |> Repo.preload(:servers, force: true)
         |> Map.fetch!(:servers)
       assert Enum.empty?(servers)
+
+      CacheHelper.sync_test()
     end
   end
 end

@@ -17,19 +17,19 @@ defmodule Helix.Log.Query.Log do
   defdelegate fetch(id),
     to: LogInternal
 
-  @spec get_logs_on_server(Server.id, Keyword.t) ::
+  @spec get_logs_on_server(Server.t | Server.id) ::
     [Log.t]
   @doc """
   Fetches logs on `server`
   """
-  defdelegate get_logs_on_server(server, params \\ []),
+  defdelegate get_logs_on_server(server),
     to: LogInternal
 
-  @spec get_logs_from_entity_on_server(Server.id, Entity.id, Keyword.t) ::
+  @spec get_logs_from_entity_on_server(Server.t | Server.id, Entity.t | Entity.id) ::
     [Log.t]
   @doc """
   Fetches logs on `server` that `entity` has created or revised
   """
-  defdelegate get_logs_from_entity_on_server(server, entity, params \\ []),
+  defdelegate get_logs_from_entity_on_server(server, entity),
     to: LogInternal
 end

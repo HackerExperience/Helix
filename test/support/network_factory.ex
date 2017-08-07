@@ -1,9 +1,10 @@
 defmodule Helix.Network.Factory do
 
   alias HELL.TestHelper.Random
+  alias Helix.Server.Model.Server
+  alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
-  alias Helix.Network.Model.Connection
 
   alias Helix.Network.Repo
 
@@ -67,11 +68,10 @@ defmodule Helix.Network.Factory do
   end
 
   defp params_for(:tunnel) do
-    # REVIEW: maybe it's better to use internet as the default network
     %{
-      network: changeset(:network),
-      gateway_id: Random.pk(),
-      destination_id: Random.pk(),
+      network_id: "::",
+      gateway_id: Server.ID.generate(),
+      destination_id: Server.ID.generate(),
       bounces: []
     }
   end
@@ -96,7 +96,7 @@ defmodule Helix.Network.Factory do
     Ecto.Changeset.t
   defp fabricate_changeset(:tunnel, params) do
     Tunnel.create(
-      params.network,
+      params.network_id,
       params.gateway_id,
       params.destination_id,
       params.bounces)

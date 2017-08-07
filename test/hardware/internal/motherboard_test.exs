@@ -2,8 +2,9 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Hardware.Model.ComponentType
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
@@ -25,27 +26,11 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
   describe "fetching" do
     test "succeeds by id" do
       mobo = Factory.insert(:motherboard)
-      assert %Motherboard{} = MotherboardInternal.fetch!(mobo.component)
+      assert %Motherboard{} = MotherboardInternal.fetch(mobo.component)
     end
 
-    test "raises Ecto.NoResultsError when motherboard doesn't exists" do
-      bogus = Factory.build(:motherboard)
-
-      assert_raise Ecto.NoResultsError, fn ->
-        MotherboardInternal.fetch!(bogus.component)
-      end
-    end
-
-    test "raises FunctionClauseError if component is not of a motherboard" do
-      bogus =
-        ComponentType.possible_types()
-        |> Enum.reject(&(&1 == :mobo))
-        |> Enum.random()
-        |> component_of_type()
-
-      assert_raise FunctionClauseError, fn ->
-        MotherboardInternal.fetch!(bogus)
-      end
+    test "returns nil when motherboard doesn't exists" do
+      refute MotherboardInternal.fetch(Component.ID.generate())
     end
   end
 
@@ -61,6 +46,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       {:ok, slot} = MotherboardInternal.link(slot, component)
       assert component.component_id == slot.link_component_id
+
+      CacheHelper.sync_test()
     end
 
     test "fails when slot is already in use" do
@@ -77,6 +64,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       {:error, cs} = MotherboardInternal.link(slot, component2)
       assert :link_component_id in Keyword.keys(cs.errors)
+
+      CacheHelper.sync_test()
     end
 
     test "fails when component is already in use" do
@@ -105,6 +94,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
       {:error, cs} = MotherboardInternal.link(slot2, component)
       assert :link_component_id in Keyword.keys(cs.errors)
+
+      CacheHelper.sync_test()
     end
   end
 
@@ -132,13 +123,13 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
     mobo = Factory.insert(:motherboard)
 
     mobo.slots
-    |> Enum.take_random(3)
-    |> Enum.each(fn slot ->
-      type = slot.link_component_type
-      component = component_of_type(type)
+      |> Enum.take_random(3)
+      |> Enum.each(fn slot ->
+        type = slot.link_component_type
+        component = component_of_type(type)
 
-      MotherboardInternal.link(slot, component)
-    end)
+        MotherboardInternal.link(slot, component)
+      end)
 
     MotherboardInternal.unlink_components_from_motherboard(mobo)
 
@@ -146,8 +137,14 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
 
     slots = MotherboardInternal.get_slots(mobo)
     assert Enum.all?(slots, unused_slot?)
+
+    CacheHelper.sync_test()
   end
 
+  # FIXME: MotherboardInternal SHOULD NOT have a delete method as a motherboard
+  #   is just a component and thus should use the ComponentInternal delete
+  #   method
+  @tag :pending
   describe "motherboard deleting" do
     test "is idempotent" do
       mobo = Factory.insert(:motherboard)
@@ -158,6 +155,8 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
       MotherboardInternal.delete(mobo.motherboard_id)
 
       refute Repo.get(Motherboard, mobo.motherboard_id)
+
+      CacheHelper.sync_test()
     end
 
     test "removes its slots" do
@@ -166,10 +165,12 @@ defmodule Helix.Hardware.Internal.MotherboardTest do
       slots = MotherboardInternal.get_slots(mobo.motherboard_id)
       refute Enum.empty?(slots)
 
-      MotherboardInternal.delete(mobo.motherboard_id)
+      MotherboardInternal.delete(mobo)
 
       slots = MotherboardInternal.get_slots(mobo.motherboard_id)
       assert Enum.empty?(slots)
+
+      CacheHelper.sync_test()
     end
   end
 end

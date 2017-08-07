@@ -52,6 +52,7 @@ defmodule Helix.Application.DomainsSupervisor do
   def init(_) do
     children = [
       supervisor(Helix.Account.Supervisor, []),
+      supervisor(Helix.Cache.Supervisor, []),
       supervisor(Helix.Entity.Supervisor, []),
       supervisor(Helix.Hardware.Supervisor, []),
       supervisor(Helix.Log.Supervisor, []),

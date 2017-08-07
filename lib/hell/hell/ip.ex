@@ -19,6 +19,28 @@ defmodule HELL.IPv6 do
     |> List.to_string()
   end
 
+  @spec generate_address_tuple([0..0xffff, ...]) ::
+    {
+      0..0xffff,
+      0..0xffff,
+      0..0xffff,
+      0..0xffff,
+      0..0xffff,
+      0..0xffff,
+      0..0xffff,
+      0..0xffff}
+  def generate_address_tuple([a, b, c]) do
+    [d, e, f, g, h] = generate_octet_groups(5)
+
+    {a, b, c, d, e, f, g, h}
+  end
+
+  def binary_to_address_tuple(string) do
+    string
+    |> String.to_charlist()
+    |> :inet.parse_ipv6strict_address()
+  end
+
   @spec generate_octet_groups(pos_integer) ::
     [0..0xffff]
   defp generate_octet_groups(groups) do
@@ -106,7 +128,7 @@ defmodule HELL.IPv4 do
     | :error
   defp parse_address(string) when is_binary(string) do
     string
-    |> String.to_char_list()
+    |> String.to_charlist()
     |> :inet.parse_ipv4strict_address()
     |> case do
       {:ok, address_tuple} ->

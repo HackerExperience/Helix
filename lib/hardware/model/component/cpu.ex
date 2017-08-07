@@ -5,17 +5,22 @@ defmodule Helix.Hardware.Model.Component.CPU do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
-  @type t :: %__MODULE__{}
+  @type id :: Component.id
+  @type t :: %__MODULE__{
+    cpu_id: id,
+    clock: non_neg_integer,
+    cores: pos_integer,
+    component: term
+  }
 
   @primary_key false
   schema "cpus" do
-    field :cpu_id, PK,
+    field :cpu_id, Component.ID,
       primary_key: true
 
     field :clock, :integer
@@ -25,7 +30,6 @@ defmodule Helix.Hardware.Model.Component.CPU do
     belongs_to :component, Component,
       foreign_key: :cpu_id,
       references: :component_id,
-      type: PK,
       define_field: false,
       on_replace: :delete
   end
@@ -33,23 +37,21 @@ defmodule Helix.Hardware.Model.Component.CPU do
   @spec create_from_spec(ComponentSpec.t) ::
     Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
-    cpu_id = PK.pk_for(:hardware_component_cpu)
     params = Map.take(spec, ["clock", "cores"])
 
-    component = Component.create_from_spec(cs, cpu_id)
+    component = Component.create_from_spec(cs)
 
     %__MODULE__{}
     |> changeset(params)
-    |> put_change(:cpu_id, cpu_id)
     |> put_assoc(:component, component)
   end
 
-  @spec update_changeset(t | Ecto.Changeset.t, %{any => any}) ::
+  @spec update_changeset(t | Ecto.Changeset.t, map) ::
     Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Changeset.t, %{any => any}) ::
+  @spec changeset(%__MODULE__{} | Changeset.t, map) ::
     Changeset.t
   def changeset(struct, params) do
     struct
@@ -81,16 +83,20 @@ defmodule Helix.Hardware.Model.Component.CPU do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.CPU
 
-    @spec from_component_ids(Queryable.t, [Component.id]) ::
+    @spec from_components_ids(Queryable.t, [Component.idtb]) ::
       Queryable.t
-    def from_component_ids(query \\ CPU, component_ids),
-      do: where(query, [c], c.cpu_id in ^component_ids)
+    def from_components_ids(query \\ CPU, components_ids),
+      do: where(query, [c], c.cpu_id in ^components_ids)
+
+    @spec by_component(Queryable.t, Component.idtb) ::
+      Queryable.t
+    def by_component(query \\ CPU, id),
+      do: where(query, [c], c.cpu_id == ^id)
   end
 end

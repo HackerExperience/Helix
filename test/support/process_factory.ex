@@ -2,6 +2,9 @@ defmodule Helix.Process.Factory do
   use ExMachina.Ecto, repo: Helix.Process.Repo
 
   alias HELL.TestHelper.Random
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Limitations
   alias Helix.Process.Model.Process.ProcessType
@@ -76,11 +79,11 @@ defmodule Helix.Process.Factory do
 
   def process_factory do
     %Process{
-      gateway_id: Random.pk(),
-      target_server_id: Random.pk(),
+      gateway_id: Server.ID.generate(),
+      target_server_id: Server.ID.generate(),
       process_data: %DummyProcessType{},
-      file_id: Random.pk(),
-      network_id: Random.pk(),
+      file_id: File.ID.generate(),
+      network_id: Network.ID.generate(),
       process_type: Random.string(min: 20, max: 20),
       state: random_process_state(),
       priority: Random.number(0..5),

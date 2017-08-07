@@ -11,21 +11,27 @@ defmodule Helix.Entity.Model.EntityComponent do
   @type t :: %__MODULE__{
     component_id: Component.id,
     entity_id: Entity.id,
-    entity: Entity.t
+    entity: term
   }
 
-  @type creation_params :: %{component_id: Component.id, entity_id: Entity.id}
+  @type creation_params :: %{
+    component_id: Component.idtb,
+    entity_id: Entity.idtb
+  }
 
   @creation_fields ~w/component_id entity_id/a
 
   @primary_key false
   schema "entity_components" do
-    field :component_id, HELL.PK,
+    field :component_id, Component.ID,
       primary_key: true
+    field :entity_id, Entity.ID,
+      primary_key: true
+
     belongs_to :entity, Entity,
       foreign_key: :entity_id,
       references: :entity_id,
-      type: HELL.PK,
+      define_field: false,
       primary_key: true
   end
 
@@ -38,25 +44,21 @@ defmodule Helix.Entity.Model.EntityComponent do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Entity.Model.Entity
     alias Helix.Entity.Model.EntityComponent
 
-    @spec from_entity(Queryable.t, Entity.t | Entity.id) ::
+    @spec by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def from_entity(query \\ EntityComponent, entity_or_entity_id)
-    def from_entity(query, entity = %Entity{}),
-      do: from_entity(query, entity.entity_id)
-    def from_entity(query, entity_id),
-      do: where(query, [ec], ec.entity_id == ^entity_id)
+    def by_entity(query \\ EntityComponent, id),
+      do: where(query, [ec], ec.entity_id == ^id)
 
-    @spec by_component_id(Queryable.t, Component.id) ::
+    @spec by_component(Queryable.t, Component.idtb) ::
       Ecto.Queryable.t
-    def by_component_id(query \\ EntityComponent, component_id),
-      do: where(query, [ec], ec.component_id == ^component_id)
+    def by_component(query \\ EntityComponent, id),
+      do: where(query, [ec], ec.component_id == ^id)
   end
 end

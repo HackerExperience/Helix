@@ -1,36 +1,38 @@
 defmodule Helix.Log.Model.Log do
 
   use Ecto.Schema
+  use HELL.ID, field: :log_id, meta: [0x0030]
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Model.Revision
 
-  @type id :: PK.t
   @type t :: %__MODULE__{
     log_id: id,
-    server_id: PK.t,
-    entity_id: PK.t,
+    server_id: Server.id,
+    entity_id: Entity.id,
     message: String.t,
     crypto_version: pos_integer | nil,
-    revisions: [Revision.t],
+    revisions: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
-    :server_id => PK.t,
-    :entity_id => PK.t,
+    :server_id => Server.idtb,
+    :entity_id => Entity.idtb,
     :message => String.t,
     optional(:crypto_version) => pos_integer | nil,
-    optional(:forge_version) => pos_integer | nil
+    optional(:forge_version) => pos_integer | nil,
+    optional(atom) => any
   }
 
   @type update_params :: %{
     optional(:crypto_version) => pos_integer | nil,
-    optional(:message) => pos_integer | nil
+    optional(:message) => String.t
   }
 
   @creation_fields ~w/server_id entity_id message/a
@@ -38,14 +40,12 @@ defmodule Helix.Log.Model.Log do
 
   @required_fields ~w/server_id entity_id message/a
 
-  @primary_key false
-  @ecto_autogenerate {:log_id, {PK, :pk_for, [:log_log]}}
   schema "logs" do
-    field :log_id, PK,
+    field :log_id, ID,
       primary_key: true
 
-    field :server_id, PK
-    field :entity_id, PK
+    field :server_id, Server.ID
+    field :entity_id, Entity.ID
 
     field :message, :string
     field :crypto_version, :integer
@@ -80,33 +80,31 @@ defmodule Helix.Log.Model.Log do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [join: 5, order_by: 3, where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
-    alias HELL.PK
     alias Helix.Entity.Model.Entity
     alias Helix.Server.Model.Server
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.LogTouch
 
-    @spec edited_by_entity(Queryable.t, Entity.id) ::
-      Queryable.t
-    def edited_by_entity(query \\ Log, entity_id) do
-      query
-      |> join(:inner, [l], lt in LogTouch, lt.log_id == l.log_id)
-      |> where([l, ..., lt], lt.entity_id == ^entity_id)
-    end
-
-    @spec by_id(Queryable.t, Log.id) ::
+    @spec by_id(Queryable.t, Log.idtb) ::
       Queryable.t
     def by_id(query \\ Log, id),
       do: where(query, [l], l.log_id == ^id)
 
-    @spec by_server_id(Queryable.t, Server.id) ::
+    @spec edited_by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def by_server_id(query \\ Log, server_id),
-      do: where(query, [l], l.server_id == ^server_id)
+    def edited_by_entity(query \\ Log, id) do
+      query
+      |> join(:inner, [l], lt in LogTouch, lt.log_id == l.log_id)
+      |> where([l, ..., lt], lt.entity_id == ^id)
+    end
+
+    @spec by_server(Queryable.t, Server.idtb) ::
+      Queryable.t
+    def by_server(query \\ Log, id),
+      do: where(query, [l], l.server_id == ^id)
 
     @spec by_message(Queryable.t, String.t) ::
       Queryable.t

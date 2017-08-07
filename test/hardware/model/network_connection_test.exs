@@ -2,7 +2,7 @@ defmodule Helix.Hardware.Model.NetworkConnectionTest do
 
   use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
+  alias Helix.Network.Model.Network
   alias Helix.Hardware.Model.NetworkConnection
 
   @moduletag :unit
@@ -15,7 +15,7 @@ defmodule Helix.Hardware.Model.NetworkConnectionTest do
     assert :downlink in Keyword.keys(nc.errors)
 
     params = %{
-      network_id: Random.pk(),
+      network_id: Network.ID.generate(),
       uplink: 0,
       downlink: 0
     }
@@ -27,7 +27,7 @@ defmodule Helix.Hardware.Model.NetworkConnectionTest do
 
   test "uplink and downlink should not be negative" do
     params = %{
-      network_id: Random.pk(),
+      network_id: Network.ID.generate(),
       uplink: -1,
       downlink: -1
     }

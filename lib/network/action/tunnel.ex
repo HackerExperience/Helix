@@ -1,16 +1,19 @@
 defmodule Helix.Network.Action.Tunnel do
 
+  import HELL.MacroHelpers
+
   alias Ecto.Changeset
+  alias Helix.Event
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server
+  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
+  alias Helix.Network.Internal.Tunnel, as: TunnelInternal
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
-  alias Helix.Network.Internal.Tunnel, as: TunnelInternal
-  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
-  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
 
   @spec connect(Network.t, Server.id, Server.id, [Server.id], term) ::
-    {:ok, Connection.t, [event :: struct]}
+    {:ok, Connection.t, [Event.t]}
     | {:error, Changeset.t}
   @doc """
   Starts a connection between `gateway` and `destination` through `network`.
@@ -36,10 +39,12 @@ defmodule Helix.Network.Action.Tunnel do
   @spec create_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
     | {:error, Changeset.t}
-  # Checks if gateway, destination and bounces are valid servers, and if they
-  # are connected to network
-  # Note that those are more or less redundant since the interface (WS or HTTP)
-  # have to convert the input IPs into server_ids anyway
+  docp """
+  Checks if gateway, destination and bounces are valid servers, and if they
+  are connected to network
+  Note that those are more or less redundant since the interface (WS or HTTP)
+  have to convert the input IPs into server_ids anyway
+  """
   defp create_tunnel(network, gateway, destination, bounces) do
     with \
       exists? = &ServerHenforcer.exists?/1,

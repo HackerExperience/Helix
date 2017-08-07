@@ -2,28 +2,22 @@ defmodule Helix.Hardware.Query.MotherboardTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Hardware.Model.Motherboard
 
   alias Helix.Hardware.Factory
 
-  describe "fetch!/1" do
+  describe "fetch/1" do
     test "succeeds by component" do
       motherboard = Factory.insert(:motherboard)
-      assert %Motherboard{} = MotherboardQuery.fetch!(motherboard.component)
+      result = MotherboardQuery.fetch(motherboard.component)
+
+      assert result
+      assert result.motherboard_id == motherboard.motherboard_id
     end
 
-    test "raises when input is invalid" do
-      assert_raise FunctionClauseError, fn ->
-        MotherboardQuery.fetch!(%{})
-      end
-
-      bogus_motherboard = Factory.build(:motherboard)
-
-      assert_raise Ecto.NoResultsError, fn ->
-        MotherboardQuery.fetch!(bogus_motherboard.component)
-      end
+    test "returns nil when input is invalid" do
+      refute MotherboardQuery.fetch(Component.ID.generate())
     end
   end
 
@@ -63,7 +57,7 @@ defmodule Helix.Hardware.Query.MotherboardTest do
     end
 
     test "returns empty list when nothing is found" do
-      bogus = Random.pk()
+      bogus = Component.ID.generate()
       assert Enum.empty?(MotherboardQuery.get_slots(bogus))
     end
   end

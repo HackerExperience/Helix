@@ -1,17 +1,18 @@
 defmodule Helix.Software.Model.File do
 
   use Ecto.Schema
+  use HELL.ID, field: :file_id, meta: [0x0020]
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
   alias HELL.Constant
-  alias HELL.PK
   alias Helix.Software.Model.SoftwareType
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
 
-  @type id :: PK.t
+  @type module_name :: Constant.t
+  @type modules :: %{optional(module_name) => pos_integer}
   @type t :: %__MODULE__{
     file_id: id,
     name: String.t,
@@ -20,20 +21,18 @@ defmodule Helix.Software.Model.File do
     file_size: pos_integer,
     type: SoftwareType.t,
     software_type: Constant.t,
-    storage: Storage.t,
     storage_id: Storage.id,
+    storage: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
-
-  @type modules :: %{software_module :: Constant.t => version :: pos_integer}
 
   @type creation_params :: %{
     name: String.t,
     path: String.t,
     file_size: pos_integer,
     software_type: Constant.t,
-    storage_id: Storage.id
+    storage_id: Storage.idtb
   }
 
   @type update_params :: %{
@@ -50,17 +49,15 @@ defmodule Helix.Software.Model.File do
 
   @software_types Map.keys(SoftwareType.possible_types())
 
-  @primary_key false
-  @ecto_autogenerate {:file_id, {PK, :pk_for, [:software_file]}}
   schema "files" do
-    field :file_id, PK,
+    field :file_id, ID,
       primary_key: true
 
     field :name, :string
     field :path, :string
     field :software_type, Constant
     field :file_size, :integer
-    field :storage_id, PK
+    field :storage_id, Storage.ID
 
     field :crypto_version, :integer
 
@@ -128,10 +125,9 @@ defmodule Helix.Software.Model.File do
   @spec set_modules(t, modules) ::
     Changeset.t
   def set_modules(file, modules) do
-    modules =
-      Enum.map(modules, fn {module, version} ->
-        %{software_module: module, module_version: version}
-      end)
+    modules = Enum.map(modules, fn {module, version} ->
+      %{software_module: module, module_version: version}
+    end)
 
     file
     |> cast(%{file_modules: modules}, [])
@@ -179,14 +175,18 @@ defmodule Helix.Software.Model.File do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [or_where: 3, where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @spec from_id_list(Queryable.t, [File.id]) ::
+    @spec by_id(Queryable.t, File.idtb) ::
+      Queryable.t
+    def by_id(query \\ File, id),
+      do: where(query, [f], f.file_id == ^id)
+
+    @spec from_id_list(Queryable.t, [File.idtb], :and | :or) ::
       Queryable.t
     def from_id_list(query \\ File, id_list, comparison_operator \\ :and)
     def from_id_list(query, id_list, :and),
@@ -194,9 +194,9 @@ defmodule Helix.Software.Model.File do
     def from_id_list(query, id_list, :or),
       do: or_where(query, [f], f.file_id in ^id_list)
 
-    @spec from_storage(Queryable.t, Storage.t) ::
+    @spec by_storage(Queryable.t, Storage.idtb) ::
       Queryable.t
-    def from_storage(query \\ File, %Storage{storage_id: id}),
+    def by_storage(query \\ File, id),
       do: where(query, [f], f.storage_id == ^id)
 
     @spec not_encrypted(Queryable.t) ::

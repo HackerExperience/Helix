@@ -5,6 +5,7 @@ defmodule Helix.Software.Internal.TextFileTest do
   alias HELL.TestHelper.Random
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.TextFile, as: TextFileInternal
+  alias Helix.Software.Model.File
   alias Helix.Software.Model.TextFile
 
   alias Helix.Software.Factory
@@ -43,7 +44,7 @@ defmodule Helix.Software.Internal.TextFileTest do
 
     test "raises Ecto.NoResultsError when file doesn't exists" do
       assert_raise Ecto.NoResultsError, fn ->
-        refute TextFileInternal.fetch!(Random.pk())
+        refute TextFileInternal.fetch!(File.ID.generate())
       end
     end
   end

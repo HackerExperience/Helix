@@ -53,19 +53,24 @@ defmodule Software.Decryptor.ProcessType do
 
   defimpl Helix.Process.API.View.Process do
 
+    alias Helix.Entity.Model.Entity
+    alias Helix.Network.Model.Connection
+    alias Helix.Network.Model.Network
+    alias Helix.Server.Model.Server
+    alias Helix.Software.Model.File
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process.Resources
     alias Helix.Process.Model.Process.State
 
-    @spec render(map, Process.t, HELL.PK.t, HELL.PK.t) ::
+    @spec render(map, Process.t, Server.id, Entity.id) ::
       %{
-        :process_id => HELL.PK.t,
-        :gateway_id => HELL.PK.t,
-        :target_server_id => HELL.PK.t,
-        :network_id => HELL.PK.t | nil,
-        :connection_id => HELL.PK.t | nil,
+        :process_id => Process.id,
+        :gateway_id => Server.id,
+        :target_server_id => Server.id,
+        :network_id => Network.id | nil,
+        :connection_id => Connection.id | nil,
         :process_type => term,
-        :target_file_id => HELL.PK.t,
+        :target_file_id => File.id,
         optional(:state) => State.state,
         optional(:objective) => Resources.t,
         optional(:processed) => Resources.t,

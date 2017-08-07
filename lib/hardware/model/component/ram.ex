@@ -5,17 +5,21 @@ defmodule Helix.Hardware.Model.Component.RAM do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
 
   @behaviour Helix.Hardware.Model.ComponentSpec
 
-  @type t :: %__MODULE__{}
+  @type id :: Component.id
+  @type t :: %__MODULE__{
+    ram_id: id,
+    ram_size: non_neg_integer,
+    component: term
+  }
 
   @primary_key false
   schema "rams" do
-    field :ram_id, PK,
+    field :ram_id, Component.ID,
       primary_key: true
 
     field :ram_size, :integer
@@ -23,7 +27,6 @@ defmodule Helix.Hardware.Model.Component.RAM do
     belongs_to :component, Component,
       foreign_key: :ram_id,
       references: :component_id,
-      type: PK,
       define_field: false,
       on_replace: :delete
   end
@@ -32,21 +35,20 @@ defmodule Helix.Hardware.Model.Component.RAM do
     Changeset.t
   def create_from_spec(cs = %ComponentSpec{spec: spec}) do
     params = Map.take(spec, ["ram_size"])
-    ram_id = PK.pk_for(:hardware_component_ram)
-    component = Component.create_from_spec(cs, ram_id)
+
+    component = Component.create_from_spec(cs)
 
     %__MODULE__{}
     |> changeset(params)
-    |> put_change(:ram_id, ram_id)
     |> put_assoc(:component, component)
   end
 
-  @spec update_changeset(t | Changeset.t, %{any => any}) ::
+  @spec update_changeset(t | Changeset.t, map) ::
     Changeset.t
   def update_changeset(struct, params),
     do: changeset(struct, params)
 
-  @spec changeset(t | Changeset.t, %{any => any}) ::
+  @spec changeset(%__MODULE__{} | Changeset.t, map) ::
     Changeset.t
   def changeset(struct, params) do
     struct
@@ -77,18 +79,18 @@ defmodule Helix.Hardware.Model.Component.RAM do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Component.RAM
 
-    @spec from_component_ids([Component.id]) ::
+    @spec from_components_ids(Queryable.t, [Component.id]) ::
       Queryable.t
-    @spec from_component_ids(Queryable.t, [Component.id]) ::
-      Queryable.t
-    def from_component_ids(query \\ RAM, component_ids),
-      do: where(query, [r], r.ram_id in ^component_ids)
+    def from_components_ids(query \\ RAM, components_ids),
+      do: where(query, [r], r.ram_id in ^components_ids)
+
+    def by_component(query \\ RAM, id),
+      do: where(query, [r], r.ram_id == ^id)
   end
 end

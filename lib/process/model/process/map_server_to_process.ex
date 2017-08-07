@@ -2,15 +2,16 @@ defmodule Helix.Process.Model.Process.MapServerToProcess do
 
   use Ecto.Schema
 
-  alias HELL.PK
+  alias Helix.Server.Model.Server
+  alias Helix.Process.Model.Process
 
   import Ecto.Changeset
 
   @primary_key false
   schema "process_servers" do
-    field :server_id, PK,
+    field :server_id, Server.ID,
       primary_key: true
-    field :process_id, PK,
+    field :process_id, Process.ID,
       primary_key: true
     field :process_type, :string
   end

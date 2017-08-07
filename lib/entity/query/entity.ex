@@ -1,13 +1,9 @@
 defmodule Helix.Entity.Query.Entity do
 
-  import Ecto.Query, only: [select: 3, where: 3]
-
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.EntityServer
-  alias Helix.Entity.Repo
 
   @spec fetch(Entity.id) ::
     Entity.t
@@ -22,7 +18,7 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate fetch(id),
     to: EntityInternal
 
-  @spec fetch_server_owner(Server.id) ::
+  @spec fetch_by_server(Server.t | Server.id) ::
     Entity.t
     | nil
   @doc """
@@ -30,42 +26,43 @@ defmodule Helix.Entity.Query.Entity do
 
   ### Example
 
-      iex> fetch_server_owner("a::b")
+      iex> fetch_by_server(%Server.ID{})
+      %Entity{}
+
+      iex> fetch_by_server(%Server{})
       %Entity{}
   """
-  defdelegate fetch_server_owner(server),
+  def fetch_by_server(%Server{server_id: server_id}),
+    do: fetch_by_server(server_id)
+  defdelegate fetch_by_server(server_id),
     to: EntityInternal
 
-  @spec get_servers_from_entity(Entity.t) ::
+  @spec get_servers(Entity.t) ::
     [Server.id]
   @doc """
   Returns the ids of the servers owned by the entity
 
   ### Example
 
-      iex> get_servers_from_entity(%Entity{})
-      ["a::b", "f9f9:9090:1::494"]
+      iex> get_servers(%Entity{})
+      [%Server.ID{}, %Server.ID{}]
   """
-  def get_servers_from_entity(%Entity{entity_id: id}) do
-    EntityServer
-    |> select([s], s.server_id)
-    # FIXME: this belongs to EntityServer.Query
-    |> where([s], s.entity_id == ^id)
-    |> Repo.all()
-  end
+  defdelegate get_servers(entity),
+    to: EntityInternal
 
   @spec get_entity_id(struct) ::
-    HELL.PK.t
+    Entity.id
   @doc """
   Returns the ID of an entity or entity-equivalent record
   """
   def get_entity_id(entity) do
-    # TODO: Use a protocol ?
     case entity do
       %Entity{entity_id: id} ->
         id
-      %Account{account_id: id} ->
-        id
+      %Account{account_id: %Account.ID{id: id}} ->
+        # HACK: entity specializations have their own ID but those ID's are 1:1
+        #   to entity ids
+        %Entity.ID{id: id}
     end
   end
 end

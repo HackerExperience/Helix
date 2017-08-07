@@ -1,50 +1,46 @@
 defmodule Helix.Hardware.Model.MotherboardSlot do
 
   use Ecto.Schema
+  use HELL.ID, field: :slot_id, meta: [0x0011, 0x0002]
 
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias HELL.Constant
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
 
-  @type id :: PK.t
   @type t :: %__MODULE__{
     slot_id: id,
     slot_internal_id: integer,
-    motherboard: Motherboard.t,
-    motherboard_id: PK.t,
-    component: Component.t,
-    link_component_id: PK.t | nil,
+    motherboard_id: Component.id,
+    link_component_id: Component.id | nil,
     link_component_type: Constant.t,
+    motherboard: term,
+    component: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
-    :motherboard_id => PK.t,
     :link_component_type => Constant.t,
     :slot_internal_id => integer,
-    optional(:link_component_id) => PK.t
+    optional(:link_component_id) => Component.id
   }
   @type update_params :: %{
-    optional(:link_component_id) => PK.t | nil
+    optional(:link_component_id) => Component.id | nil
   }
 
   @creation_fields ~w/motherboard_id link_component_type slot_internal_id/a
-  @required_fields ~w/motherboard_id link_component_type slot_internal_id/a
+  @required_fields ~w/link_component_type slot_internal_id/a
 
-  @primary_key false
-  @ecto_autogenerate {:slot_id, {PK, :pk_for, [:hardware_motherboard_slot]}}
   schema "motherboard_slots" do
-    field :slot_id, PK,
+    field :slot_id, ID,
       primary_key: true
 
     field :slot_internal_id, :integer
-    field :motherboard_id, PK
-    field :link_component_id, PK
+    field :motherboard_id, Component.ID
+    field :link_component_id, Component.ID
     field :link_component_type, Constant
 
     belongs_to :motherboard, Motherboard,
@@ -95,38 +91,26 @@ defmodule Helix.Hardware.Model.MotherboardSlot do
     end
   end
 
-  # REVIEW: this function usefulness, it's not being used anywhere anymore
-  @spec linked?(t) ::
-    boolean
-  def linked?(%__MODULE__{link_component_id: xs}),
-    do: !is_nil(xs)
-
   defmodule Query do
-
-    import Ecto.Query, only: [select: 3, where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Hardware.Model.Motherboard
     alias Helix.Hardware.Model.MotherboardSlot
 
-    @spec from_motherboard(Queryable.t, Motherboard.t | Motherboard.id) ::
+    @spec by_motherboard(Queryable.t, Component.idtb | Motherboard.t) ::
       Queryable.t
-    def from_motherboard(query \\ MotherboardSlot, motherboard_or_id)
-    def from_motherboard(query, motherboard = %Motherboard{}),
-      do: from_motherboard(query, motherboard.motherboard_id)
-    def from_motherboard(query, motherboard_id),
-      do: where(query, [ms], ms.motherboard_id == ^motherboard_id)
+    def by_motherboard(query \\ MotherboardSlot, id)
+    def by_motherboard(query, %Motherboard{motherboard_id: id}),
+      do: by_motherboard(query, id)
+    def by_motherboard(query, id),
+      do: where(query, [ms], ms.motherboard_id == ^id)
 
-    @spec by_id(Queryable.t, MotherboardSlot.id) ::
+    @spec by_component(Queryable.t, Component.idtb) ::
       Queryable.t
-    def by_id(query \\ MotherboardSlot, slot_id),
-      do: where(query, [ms], ms.slot_id == ^slot_id)
-
-    @spec by_component_id(Queryable.t, Component.id) ::
-      Queryable.t
-    def by_component_id(query \\ MotherboardSlot, component_id),
-      do: where(query, [ms], ms.link_component_id == ^component_id)
+    def by_component(query \\ MotherboardSlot, id),
+      do: where(query, [ms], ms.link_component_id == ^id)
 
     @spec only_linked_slots(Queryable.t) ::
       Queryable.t

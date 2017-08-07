@@ -13,8 +13,8 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   def join("account:" <> account_id, _message, socket) do
     # TODO: Provide a cleaner way to check this
-
     player_account_id = to_string(socket.assigns.account.account_id)
+
     if account_id == player_account_id do
       {:ok, socket}
     else
@@ -38,14 +38,14 @@ defmodule Helix.Account.Websocket.Channel.Account do
       socket.assigns.account
       |> EntityQuery.get_entity_id()
       |> EntityQuery.fetch()
-      |> EntityQuery.get_servers_from_entity()
+      |> EntityQuery.get_servers()
       |> Enum.map(&ServerQuery.fetch/1)
       |> Enum.map(fn
         server = %{motherboard_id: motherboard} when not is_nil(motherboard) ->
           motherboard =
             server.motherboard_id
             |> ComponentQuery.fetch()
-            |> MotherboardQuery.fetch!()
+            |> MotherboardQuery.fetch()
             |> MotherboardQuery.preload_components()
 
           {server, motherboard}
@@ -60,7 +60,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
   # TODO: Move this to a viewer
   def render_server({server, nil}) do
     %{
-      server_id: server.server_id,
+      server_id: to_string(server.server_id),
       server_type: server.server_type,
       password: server.password,
       hardware: nil,
@@ -69,7 +69,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
   end
   def render_server({server, motherboard}) do
     %{
-      server_id: server.server_id,
+      server_id: to_string(server.server_id),
       server_type: server.server_type,
       password: server.password,
       hardware: %{
@@ -87,7 +87,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
       internal_id = slot.slot_internal_id
 
       data = %{
-        component_id: component.component_id,
+        component_id: to_string(component.component_id),
         component_type: component.component_type,
         # TODO: Return data about component specialization
         meta: %{}
@@ -100,8 +100,8 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   def notify(account_id, notification) do
     Helix.Endpoint.broadcast(
-      "account:" <> account_id,
-      "notification",
+      "account:" <> to_string(account_id),
+      "event",
       notification)
   end
 end

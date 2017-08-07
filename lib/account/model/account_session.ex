@@ -5,12 +5,17 @@ defmodule Helix.Account.Model.AccountSession do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Account.Model.Account
 
-  @type t :: %__MODULE__{}
+  @type id :: String.t
   @type token :: String.t
-  @type session :: String.t
+  @type t :: %__MODULE__{
+    session_id: id,
+    account_id: Account.id,
+    account: term,
+    inserted_at: NaiveDateTime.t,
+    updated_at: NaiveDateTime.t
+  }
 
   @primary_key false
   @ecto_autogenerate {:session_id, {Ecto.UUID, :generate, []}}
@@ -18,7 +23,7 @@ defmodule Helix.Account.Model.AccountSession do
     field :session_id, Ecto.UUID,
       primary_key: true
 
-    field :account_id, PK
+    field :account_id, Account.ID
 
     belongs_to :account, Account,
       references: :account_id,
@@ -28,11 +33,29 @@ defmodule Helix.Account.Model.AccountSession do
     timestamps()
   end
 
-  @spec create(Account.t) ::
+  @spec create_changeset(Account.idtb) ::
     Changeset.t
-  def create(account) do
+  def create_changeset(account) do
     %__MODULE__{}
-    |> change()
-    |> put_assoc(:account, account)
+    |> cast(%{account_id: account}, [:account_id])
+    |> validate_required([:account_id])
+  end
+
+  defmodule Query do
+    import Ecto.Query
+
+    alias Ecto.Queryable
+    alias Helix.Account.Model.Account
+    alias Helix.Account.Model.AccountSession
+
+    @spec by_id(Queryable.t, binary) ::
+      Queryable.t
+    def by_id(query \\ AccountSession, id),
+      do: where(query, [as], as.session_id == ^id)
+
+    @spec by_account(Queryable.t, Account.idtb) ::
+      Queryable.t
+    def by_account(query \\ AccountSession, id),
+      do: where(query, [as], as.account_id == ^id)
   end
 end

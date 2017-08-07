@@ -2,7 +2,8 @@ defmodule Helix.Log.Action.LogTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Model.Log
   alias Helix.Log.Model.Log.LogModifiedEvent
@@ -14,29 +15,26 @@ defmodule Helix.Log.Action.LogTest do
 
   describe "create/3" do
     test "succeeds with valid input" do
-      server_id = Random.pk()
-      entity_id = Random.pk()
+      server_id = Server.ID.generate()
+      entity_id = Entity.ID.generate()
       message = "They are taking the hobbits to Isengard"
 
       result = LogAction.create(server_id, entity_id, message)
 
       assert {:ok, _} = result
-      assert {:ok, %{log: %Log{}, events: events}} = result
-      assert Enum.all?(events, &Map.has_key?(&1, :__struct__))
     end
   end
 
   describe "revise/4" do
     test "overrides log message" do
       log = Factory.insert(:log)
-      entity = Random.pk()
+      entity = Entity.ID.generate()
       message = "É nois que voa, bruxão!"
       forge_version = Enum.random(1..999)
 
       result = LogAction.revise(log, entity, message, forge_version)
 
-      assert {:ok, %{events: events}} = result
-      assert Enum.all?(events, &Map.has_key?(&1, :__struct__))
+      assert {:ok, _} = result
       assert %{message: ^message} = LogQuery.fetch(log.log_id)
     end
   end
@@ -44,7 +42,7 @@ defmodule Helix.Log.Action.LogTest do
   describe "recover/1" do
     test "recovers log to the last message" do
       log = Factory.insert(:log)
-      entity = Random.pk()
+      entity = Entity.ID.generate()
 
       message0 = log.message
       message1 = "A monad is a monoid in the category of the endofunctors"
@@ -58,16 +56,17 @@ defmodule Helix.Log.Action.LogTest do
       log = LogQuery.fetch(log.log_id)
       assert %{message: ^message2} = log
 
-      {:ok, _} = LogAction.recover(log)
+      assert {:ok, :recovered} == LogAction.recover(log)
       assert %{message: ^message1} = LogQuery.fetch(log.log_id)
 
-      {:ok, _} = LogAction.recover(log)
+      assert {:ok, :recovered} == LogAction.recover(log)
       assert %{message: ^message0} = LogQuery.fetch(log.log_id)
     end
 
+    @tag :pending
     test "returns LogModified event when a message is recovered" do
       log = Factory.insert(:log)
-      entity = Random.pk()
+      entity = Entity.ID.generate()
       message = "nullPointerException"
 
       LogAction.revise(log, entity, message, 1)
@@ -81,7 +80,7 @@ defmodule Helix.Log.Action.LogTest do
       # This is an Ecto Multi return; it means that the operation failed on
       # operation "log", returning "original_revision" and that the success
       # state is the map (empty because nothing else was done)
-      assert {:error, :log, :original_revision, %{}} == LogAction.recover(log)
+      assert {:error, :original_revision} == LogAction.recover(log)
     end
 
     test "deletes log if it was forged" do
@@ -92,6 +91,7 @@ defmodule Helix.Log.Action.LogTest do
       refute Repo.get(Log, log.log_id)
     end
 
+    @tag :pending
     test "returns LogDeleted event when forged log is deleted" do
       log = Factory.insert(:log, forge_version: 1)
 

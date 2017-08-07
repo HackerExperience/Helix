@@ -2,6 +2,7 @@ defmodule Helix.Account.Action.AccountTest do
 
   use Helix.Test.IntegrationCase
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Action.Account, as: AccountAction
   alias Helix.Account.Model.Account
 
@@ -19,6 +20,7 @@ defmodule Helix.Account.Action.AccountTest do
 
       # HACK: workaround for the flow event
       :timer.sleep(250)
+      CacheHelper.sync_test()
     end
 
     test "returns changeset when input is invalid" do
@@ -41,6 +43,7 @@ defmodule Helix.Account.Action.AccountTest do
 
       # HACK: workaround for the flow event
       :timer.sleep(100)
+      CacheHelper.sync_test()
     end
 
     test "returns changeset when input is invalid" do

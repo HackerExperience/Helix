@@ -1,10 +1,11 @@
 defmodule Helix.Process.Query.Process do
 
-  alias Helix.Process.Internal.Process, as: ProcessInternal
+  alias Helix.Network.Model.Connection
+  alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
-  alias Helix.Process.Repo
+  alias Helix.Process.Internal.Process, as: ProcessInternal
 
-  @spec fetch(HELL.PK.t) ::
+  @spec fetch(Process.id) ::
     Process.t
     | nil
   @doc """
@@ -18,11 +19,10 @@ defmodule Helix.Process.Query.Process do
       iex> fetch("::")
       nil
   """
-  def fetch(id) do
-    ProcessInternal.fetch(id)
-  end
+  defdelegate fetch(id),
+    to: ProcessInternal
 
-  @spec get_running_processes_of_type_on_server(HELL.PK.t, String.t) ::
+  @spec get_running_processes_of_type_on_server(Server.t | Server.id, String.t) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway` that are of `type`
@@ -38,16 +38,10 @@ defmodule Helix.Process.Query.Process do
       iex> get_running_processes_of_type_on_server("aa::bb", "file_download")
       [%Process{}, %Process{}, %Process{}]
   """
-  def get_running_processes_of_type_on_server(gateway, type) do
-    gateway
-    |> Process.Query.from_server()
-    |> Process.Query.by_type(type)
-    |> Process.Query.by_state(:running)
-    |> Repo.all()
-    |> Enum.map(&Process.load_virtual_data/1)
-  end
+  defdelegate get_running_processes_of_type_on_server(gateway_id, type),
+    to: ProcessInternal
 
-  @spec get_processes_on_server(HELL.PK.t) ::
+  @spec get_processes_on_server(Server.t | Server.id) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway`
@@ -57,14 +51,10 @@ defmodule Helix.Process.Query.Process do
       iex> get_processes_on_server("aa::bb")
       [%Process{}, %Process{}, %Process{}, %Process{}, %Process{}]
   """
-  def get_processes_on_server(gateway) do
-    gateway
-    |> Process.Query.from_server()
-    |> Repo.all()
-    |> Enum.map(&Process.load_virtual_data/1)
-  end
+  defdelegate get_processes_on_server(gateway_id),
+    to: ProcessInternal
 
-  @spec get_processes_targeting_server(HELL.PK.t) ::
+  @spec get_processes_targeting_server(Server.t | Server.id) ::
     [Process.t]
   @doc """
   Fetches remote processes affecting `gateway`
@@ -77,15 +67,10 @@ defmodule Helix.Process.Query.Process do
       iex> get_processes_targeting_server("aa::bb")
       [%Process{}]
   """
-  def get_processes_targeting_server(gateway) do
-    gateway
-    |> Process.Query.by_target()
-    |> Process.Query.not_targeting_gateway()
-    |> Repo.all()
-    |> Enum.map(&Process.load_virtual_data/1)
-  end
+  defdelegate get_processes_targeting_server(gateway_id),
+    to: ProcessInternal
 
-  @spec get_processes_of_type_targeting_server(HELL.PK.t, String.t) ::
+  @spec get_processes_of_type_targeting_server(Server.t | Server.id, String.t) ::
     [Process.t]
   @doc """
   Fetches remote processes of type `type` affecting `gateway`
@@ -98,16 +83,10 @@ defmodule Helix.Process.Query.Process do
       iex> get_processes_of_type_targeting_server("aa::bb", "cracker")
       [%Process{}, %Process{}]
   """
-  def get_processes_of_type_targeting_server(gateway, type) do
-    gateway
-    |> Process.Query.by_target()
-    |> Process.Query.not_targeting_gateway()
-    |> Process.Query.by_type(type)
-    |> Repo.all()
-    |> Enum.map(&Process.load_virtual_data/1)
-  end
+  defdelegate get_processes_of_type_targeting_server(gateway_id, type),
+    to: ProcessInternal
 
-  @spec get_processes_on_connection(HELL.PK.t) ::
+  @spec get_processes_on_connection(Connection.t | Connection.id) ::
     [Process.t]
   @doc """
   Fetches processes using `connection`
@@ -117,10 +96,6 @@ defmodule Helix.Process.Query.Process do
       iex> get_processes_on_connection("f::f")
       [%Process{}]
   """
-  def get_processes_on_connection(connection) do
-    connection
-    |> Process.Query.by_connection_id()
-    |> Repo.all()
-    |> Enum.map(&Process.load_virtual_data/1)
-  end
+  defdelegate get_processes_on_connection(connection),
+    to: ProcessInternal
 end

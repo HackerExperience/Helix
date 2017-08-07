@@ -20,6 +20,6 @@ defmodule Helix.Hardware.Action.Component do
 
   This function is idempotent
   """
-  defdelegate delete(component_id),
+  defdelegate delete(component),
     to: ComponentInternal
 end

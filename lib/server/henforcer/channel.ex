@@ -41,7 +41,7 @@ defmodule Helix.Server.Henforcer.Channel do
     :ok
     | {:error, :not_owner}
   defp account_owns_server_check(account, server_id) do
-    owner = EntityQuery.fetch_server_owner(server_id)
+    owner = EntityQuery.fetch_by_server(server_id)
     owner_id = EntityQuery.get_entity_id(owner)
 
     account_id = EntityQuery.get_entity_id(account)
@@ -51,13 +51,13 @@ defmodule Helix.Server.Henforcer.Channel do
     || {:error, :not_owner}
   end
 
-  @spec server_password_check(Server.t | Server.id, String.t) ::
+  @spec server_password_check(Server.idtb, String.t) ::
     :ok
     | {:error, :password}
   defp server_password_check(%Server{password: password}, password),
     do: :ok
-  defp server_password_check(server_id, password) when is_binary(server_id),
-    do: server_password_check(ServerQuery.fetch(server_id), password)
+  defp server_password_check(id = %Server.ID{}, password),
+    do: server_password_check(ServerQuery.fetch(id), password)
   defp server_password_check(_, _),
     do: {:error, :password}
 

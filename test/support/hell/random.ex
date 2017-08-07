@@ -25,6 +25,10 @@ defmodule HELL.TestHelper.Random do
     Burette.Network.ipv6()
   end
 
+  def ipv4 do
+    HELL.IPv4.autogenerate()
+  end
+
   def repeat(times, generator) when is_integer(times) and times > 0 do
     for _ <- 1..times,
       do: generator.()

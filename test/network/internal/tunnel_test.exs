@@ -2,19 +2,21 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
   alias Helix.Network.Model.Connection
-  alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Repo
 
   alias Helix.Network.Factory
 
-  @internet Repo.get!(Network, "::")
+  @internet NetworkQuery.internet()
 
   describe "connected?/3" do
     test "returns false if there is no tunnel open linking two nodes" do
-      refute TunnelInternal.connected?(Random.pk(), Random.pk())
+      gateway = Server.ID.generate()
+      endpoint = Server.ID.generate()
+      refute TunnelInternal.connected?(gateway, endpoint)
     end
 
     test "returns true if there is any tunnel open linking two nodes" do
@@ -39,7 +41,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "connections_through_node/1" do
     test "returns all connections that pass through node" do
-      server = Random.pk()
+      server = Server.ID.generate()
 
       tunnel1 = Factory.insert(:tunnel,
         network: @internet,
@@ -56,7 +58,11 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       tunnel3 = Factory.insert(:tunnel,
         network: @internet,
-        bounces: [Random.pk(), server, Random.pk(), Random.pk()])
+        bounces: [
+          Server.ID.generate(),
+          server,
+          Server.ID.generate(),
+          Server.ID.generate()])
 
       TunnelInternal.start_connection(tunnel3, "ssh")
       TunnelInternal.start_connection(tunnel3, "ssh")
@@ -70,12 +76,12 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "inbound_connections/1" do
     test "list the conections that are incident on node" do
-      server = Random.pk()
+      server = Server.ID.generate()
 
       tunnel1 = Factory.insert(:tunnel,
         network: @internet,
         gateway_id: server,
-        bounces: [Random.pk(), Random.pk()])
+        bounces: [Server.ID.generate(), Server.ID.generate()])
 
       # This is not incident since the connection emanates from the server
       TunnelInternal.start_connection(tunnel1, "ssh")
@@ -83,7 +89,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       tunnel2 = Factory.insert(:tunnel,
         network: @internet,
         destination_id: server,
-        bounces: [Random.pk(), Random.pk()])
+        bounces: [Server.ID.generate(), Server.ID.generate()])
       # Those are incident because they emanate from a gateway node onto the
       # bounce nodes and finally on the server
       TunnelInternal.start_connection(tunnel2, "ssh")
@@ -91,7 +97,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       tunnel3 = Factory.insert(:tunnel,
         network: @internet,
-        bounces: [Random.pk(), server, Random.pk()])
+        bounces: [Server.ID.generate(), server, Server.ID.generate()])
 
       # Those are also incident as they emanate from the gateway, onto the
       # bounces, onto the specified target and onto the destination
@@ -107,12 +113,12 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "outbound_connections/1" do
     test "list the conections that emanate from node" do
-      server = Random.pk()
+      server = Server.ID.generate()
 
       tunnel1 = Factory.insert(:tunnel,
         network: @internet,
         gateway_id: server,
-        bounces: [Random.pk(), Random.pk()])
+        bounces: [Server.ID.generate(), Server.ID.generate()])
 
       # This emanates from the server since it goes from the server to the
       # bounces and finally to the destination
@@ -121,7 +127,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       tunnel2 = Factory.insert(:tunnel,
         network: @internet,
         destination_id: server,
-        bounces: [Random.pk(), Random.pk()])
+        bounces: [Server.ID.generate(), Server.ID.generate()])
 
       # Those don't emanate from the server as the connection is incident on it
       TunnelInternal.start_connection(tunnel2, "ssh")
@@ -129,7 +135,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       tunnel3 = Factory.insert(:tunnel,
         network: @internet,
-        bounces: [Random.pk(), server, Random.pk()])
+        bounces: [Server.ID.generate(), server, Server.ID.generate()])
 
       # Those do emanate from server onto another bounce and finally on the
       # destination

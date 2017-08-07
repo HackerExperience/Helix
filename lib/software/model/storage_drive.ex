@@ -5,14 +5,13 @@ defmodule Helix.Software.Model.StorageDrive do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias HELL.PK
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.Storage
 
   @type t :: %__MODULE__{
     storage_id: Storage.id,
-    storage: Storage.t,
-    drive_id: Component.id
+    drive_id: Component.id,
+    storage: term
   }
 
   @type creation_params :: %{
@@ -24,15 +23,14 @@ defmodule Helix.Software.Model.StorageDrive do
 
   @primary_key false
   schema "storage_drives" do
-    field :storage_id, PK,
+    field :storage_id, Storage.ID,
       primary_key: true
-    field :drive_id, PK,
+    field :drive_id, Component.ID,
       primary_key: true
 
     belongs_to :storage, Storage,
       foreign_key: :storage_id,
       references: :storage_id,
-      type: HELL.PK,
       define_field: false
   end
 
@@ -46,25 +44,21 @@ defmodule Helix.Software.Model.StorageDrive do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Hardware.Model.Component
     alias Helix.Software.Model.Storage
     alias Helix.Software.Model.StorageDrive
 
-    @spec from_storage(Queryable.t, Storage.t | Storage.id) ::
+    @spec by_storage(Queryable.t, Storage.idtb) ::
       Queryable.t
-    def from_storage(query \\ StorageDrive, storage_or_storage_id)
-    def from_storage(query, storage = %Storage{}),
-      do: from_storage(query, storage.storage_id)
-    def from_storage(query, storage_id),
-      do: where(query, [sd], sd.storage_id == ^storage_id)
+    def by_storage(query \\ StorageDrive, id),
+      do: where(query, [sd], sd.storage_id == ^id)
 
-    @spec by_drive_id(Queryable.t, Component.id) ::
+    @spec by_drive(Queryable.t, Component.idtb) ::
       Queryable.t
-    def by_drive_id(query \\ StorageDrive, drive_id),
-      do: where(query, [sd], sd.drive_id == ^drive_id)
+    def by_drive(query \\ StorageDrive, id),
+      do: where(query, [sd], sd.drive_id == ^id)
   end
 end

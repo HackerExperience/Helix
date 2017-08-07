@@ -2,10 +2,14 @@ defmodule Helix.Server.Action.Flow.Server do
 
   import HELF.Flow
 
-  alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
   alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Entity.Model.Entity
+  alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
   alias Helix.Server.Action.Server, as: ServerAction
+  alias Helix.Server.Model.Server
 
+  @spec setup_server(Entity.t) ::
+    {:ok, Server.t}
   def setup_server(entity) do
     flowing do
       with \
@@ -17,13 +21,11 @@ defmodule Helix.Server.Action.Flow.Server do
         {:ok, server} <- ServerAction.attach(server, motherboard_id),
         on_fail(fn -> ServerAction.detach(server) end),
 
-        server_id = server.server_id,
-        {:ok, _} <- EntityAction.link_server(entity, server_id),
-        on_fail(fn -> EntityAction.unlink_server(server_id) end)
+        {:ok, _} <- EntityAction.link_server(entity, server),
+        on_fail(fn -> EntityAction.unlink_server(server) end)
       do
         {:ok, server}
       end
     end
   end
-
 end

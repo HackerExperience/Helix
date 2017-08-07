@@ -13,6 +13,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
 
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Factory, as: AccountFactory
   alias Helix.Network.Factory, as: NetworkFactory
   alias Helix.Software.Factory, as: SoftwareFactory
@@ -22,7 +23,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   # TODO: Move this to a case
   setup do
     account = AccountFactory.insert(:account)
-    token = SessionAction.generate_token(account)
+    {:ok, token} = SessionAction.generate_token(account)
     {:ok, socket} = connect(Socket, %{token: token})
 
     {:ok, account: account, socket: socket}
@@ -32,6 +33,9 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   #   now it's good enough for me not to suffer
   defp create_server_for_account(account) do
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
+
+    :timer.sleep(100)
+    CacheHelper.sync_test()
 
     server
   end
@@ -46,14 +50,14 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     hdds =
       server.motherboard_id
       |> ComponentQuery.fetch()
-      |> MotherboardQuery.fetch!()
+      |> MotherboardQuery.fetch()
       |> MotherboardQuery.get_slots()
       |> Enum.filter(&(&1.link_component_type == :hdd))
       |> Enum.reject(&(is_nil(&1.link_component_id)))
       |> Enum.map(&(&1.link_component_id))
 
     Enum.flat_map(hdds, fn drive ->
-      storage = StorageQuery.get_storage_from_hdd(drive)
+      storage = StorageQuery.fetch_by_hdd(drive)
 
       SoftwareFactory.insert_list(
         3,
@@ -65,10 +69,10 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   defp connect_to_realword_server(context = %{socket: socket}) do
     gateway = create_server_for_account(socket.assigns.account)
-    gateway_id = gateway.server_id
+    gateway_id = to_string(gateway.server_id)
     destination = create_destination_server()
     destination_files = populate_server_with_files(destination)
-    destination_id = destination.server_id
+    destination_id = to_string(destination.server_id)
 
     topic = "server:" <> destination_id
     join_msg = %{"gateway_id" => gateway_id, "password" => destination.password}
@@ -96,23 +100,24 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   test "can connect to owned server with simple join message", context do
     server = create_server_for_account(context.account)
+    server = to_string(server.server_id)
+
     assert {:ok, _, _} = join(
       context.socket,
-      "server:" <> server.server_id,
-      %{"gateway_id" => server.server_id})
-
-    # This might emit an event...
-    :timer.sleep(250)
+      "server:" <> server,
+      %{"gateway_id" => server})
   end
 
   test "can not connect to a remote server without valid password", context do
     gateway = create_server_for_account(context.account)
+    gateway = to_string(gateway.server_id)
     destination = create_destination_server()
+    destination = to_string(destination.server_id)
 
     assert {:error, _} = join(
       context.socket,
-      "server:" <> destination.server_id,
-      %{"gateway_id" => gateway.server_id, "password" => "wrongpass"})
+      "server:" <> destination,
+      %{"gateway_id" => gateway, "password" => "wrongpass"})
   end
 
   # This test is not that relevant anymore because a connection is started
@@ -124,9 +129,9 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     context
   do
     gateway = create_server_for_account(context.account)
-    gateway = gateway.server_id
+    gateway = to_string(gateway.server_id)
     destination = create_destination_server()
-    destination = destination.server_id
+    destination = to_string(destination.server_id)
 
     topic = "server:" <> destination
     join_msg = %{"gateway_id" => gateway}
@@ -149,13 +154,29 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   test "can start connection with a server", context do
     gateway = create_server_for_account(context.account)
+    gateway = to_string(gateway.server_id)
     destination = create_destination_server()
+    password = destination.password
+    destination = to_string(destination.server_id)
 
-    topic = "server:" <> destination.server_id
+    # To join a remote server, the gateway and the remote server must both be
+    # connected to the same network
+    # FIXME: since the create_* functions on this module don't include creating
+    #   the network connection for the new servers, we are "hacking" the join
+    #   system by providing a valid tunnel (so it doesn't try to connect)
+    tunnel = NetworkFactory.insert(
+      :tunnel,
+      gateway_id: gateway,
+      destination_id: destination)
+    NetworkFactory.insert(:connection,
+      tunnel: tunnel,
+      connection_type: "ssh")
+
+    topic = "server:" <> destination
     join_msg = %{
-      "gateway_id" => gateway.server_id,
-      "network_id" => "::", # The hardcoded way is the right way (tm)
-      "password" => destination.password
+      "gateway_id" => gateway,
+      "network_id" => to_string(tunnel.network_id),
+      "password" => password
     }
 
     assert {:ok, _, _} = join(context.socket, topic, join_msg)

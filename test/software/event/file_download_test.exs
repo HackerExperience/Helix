@@ -2,7 +2,8 @@ defmodule Helix.Software.Event.FileDownloadTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Event.FileDownload, as: EventHandler
   alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent
@@ -15,11 +16,11 @@ defmodule Helix.Software.Event.FileDownloadTest do
       storage = Factory.insert(:storage, files: [])
 
       event = %ProcessConclusionEvent{
-        to_server_id: Random.pk(),
-        from_server_id: Random.pk(),
+        to_server_id: Server.ID.generate(),
+        from_server_id: Server.ID.generate(),
         from_file_id: file.file_id,
         to_storage_id: storage.storage_id,
-        network_id: Random.pk()
+        network_id: Network.ID.generate()
       }
 
       EventHandler.complete(event)

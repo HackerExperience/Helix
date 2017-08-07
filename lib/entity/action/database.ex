@@ -6,43 +6,26 @@ defmodule Helix.Entity.Action.Database do
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Repo
 
-  @spec create(Entity.t, Network.id, IPv4.t, Server.id, String.t) ::
-    {:ok, %{{:database, :new} => Database.t}}
-    | {:error, {:database, :new}, term, map}
-  def create(entity, network_id, ip, server_id, server_type) do
-    entity
-    |> DatabaseInternal.create(network_id, ip, server_id, server_type)
-    |> Repo.transaction()
-  end
+  @spec create(Entity.t, Network.idt, IPv4.t, Server.idt, String.t) ::
+    {:ok, Database.t}
+    | {:error, Ecto.Changeset.t}
+  defdelegate create(entity, network, ip, server, server_type),
+    to: DatabaseInternal
 
-  @spec update(Entity.t, Network.id, IPv4.t, map) ::
-    {:ok, %{{:database, :updated} => Database.t}}
-    | {:error, {:database, :updated}, term, map}
-  def update(entity, network_id, ip, params) do
-    entity
-    |> DatabaseInternal.get_entry(network_id, ip)
-    |> Repo.one()
-    |> DatabaseInternal.update(params)
-    |> Repo.transaction()
-  end
+  @spec update(Database.t, map) ::
+    {:ok, Database.t}
+    | {:error, Ecto.Changeset.t}
+  defdelegate update(entry, params),
+    to: DatabaseInternal
 
-  @spec delete_server_from_network(Server.id, Network.id) ::
-    {:ok, %{{:database, :deleted} => term}}
-    | {:error, {:database, :deleted}, term, map}
-  def delete_server_from_network(server_id, network_id) do
-    server_id
-    |> DatabaseInternal.delete_server_from_network(network_id)
-    |> Repo.transaction()
-  end
+  @spec delete_server_from_network(Server.idt, Network.idt) ::
+    :ok
+  defdelegate delete_server_from_network(server, network),
+    to: DatabaseInternal
 
-  @spec delete_server(Server.id) ::
-    {:ok, %{{:database, :deleted} => term}}
-    | {:error, {:database, :deleted}, term, map}
-  def delete_server(server_id) do
-    server_id
-    |> DatabaseInternal.delete_server()
-    |> Repo.transaction()
-  end
+  @spec delete_server(Server.idt) ::
+    :ok
+  defdelegate delete_server(server),
+    to: DatabaseInternal
 end

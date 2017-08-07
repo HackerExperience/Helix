@@ -2,7 +2,7 @@ use Mix.Config
 
 config :helix, Helix.Server.Repo,
   priv: "priv/repo/server",
-  size: 4,
+  pool_size: 3,
   adapter: Ecto.Adapters.Postgres,
   username: System.get_env("HELIX_DB_USER") || "postgres",
   password: System.get_env("HELIX_DB_PASS") || "postgres",

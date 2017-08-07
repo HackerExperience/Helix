@@ -6,7 +6,6 @@ defmodule Helix.Software.Model.FileModule do
 
   alias Ecto.Changeset
   alias HELL.Constant
-  alias HELL.PK
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareModule
 
@@ -22,14 +21,16 @@ defmodule Helix.Software.Model.FileModule do
     software_module: Constant.t,
     module_version: pos_integer
   }
-  @type update_params :: %{module_version: pos_integer}
+  @type update_params :: %{
+    module_version: pos_integer
+  }
 
   @creation_fields ~w/file_id software_module module_version/a
   @update_fields ~w/module_version/a
 
   @primary_key false
   schema "file_modules" do
-    field :file_id, PK,
+    field :file_id, File.ID,
       primary_key: true
     field :software_module, Constant,
       primary_key: true
@@ -77,25 +78,17 @@ defmodule Helix.Software.Model.FileModule do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias HELL.Constant
     alias Helix.Software.Model.File
     alias Helix.Software.Model.FileModule
 
-    @spec from_file(File.t | File.id) ::
+    @spec by_file(Queryable.t, File.idtb) ::
       Queryable.t
-    def from_file(file_or_file_id),
-      do: from_file(FileModule, file_or_file_id)
-
-    @spec from_file(Queryable.t, File.t | File.id) ::
-      Queryable.t
-    def from_file(query, file = %File{}),
-      do: from_file(query, file.file_id)
-    def from_file(query, file_id),
-      do: where(query, [fm], fm.file_id == ^file_id)
+    def by_file(query \\ FileModule, id),
+      do: where(query, [fm], fm.file_id == ^id)
 
     @spec by_software_module(Queryable.t, Constant.t) ::
       Queryable.t

@@ -28,8 +28,7 @@ defmodule Helix.Software.Model.SoftwareModule do
     do: @software_modules
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias HELL.Constant

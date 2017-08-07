@@ -14,18 +14,24 @@ defmodule Helix.Entity.Model.EntityServer do
     entity: Entity.t
   }
 
-  @type creation_params :: %{server_id: Server.id, entity_id: Entity.id}
+  @type creation_params :: %{
+    server_id: Server.idtb,
+    entity_id: Entity.idtb
+  }
 
   @creation_fields ~w/server_id entity_id/a
 
   @primary_key false
   schema "entity_servers" do
-    field :server_id, HELL.PK,
+    field :server_id, Server.ID,
       primary_key: true
+    field :entity_id, Entity.ID,
+      primary_key: true
+
     belongs_to :entity, Entity,
       foreign_key: :entity_id,
       references: :entity_id,
-      type: HELL.PK,
+      define_field: false,
       primary_key: true
   end
 
@@ -38,25 +44,21 @@ defmodule Helix.Entity.Model.EntityServer do
   end
 
   defmodule Query do
-
-    import Ecto.Query, only: [where: 3]
+    import Ecto.Query
 
     alias Ecto.Queryable
     alias Helix.Server.Model.Server
     alias Helix.Entity.Model.Entity
     alias Helix.Entity.Model.EntityServer
 
-    @spec from_entity(Queryable.t, Entity.t | Entity.id) ::
+    @spec by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def from_entity(query \\ EntityServer, entity_or_entity_id)
-    def from_entity(query, entity = %Entity{}),
-      do: from_entity(query, entity.entity_id)
-    def from_entity(query, entity_id),
-      do: where(query, [es], es.entity_id == ^entity_id)
+    def by_entity(query \\ EntityServer, id),
+      do: where(query, [es], es.entity_id == ^id)
 
-    @spec by_server_id(Queryable.t, Server.id) ::
+    @spec by_server(Queryable.t, Server.idtb) ::
       Queryable.t
-    def by_server_id(query \\ EntityServer, server_id),
-      do: where(query, [es], es.server_id == ^server_id)
+    def by_server(query \\ EntityServer, id),
+      do: where(query, [es], es.server_id == ^id)
   end
 end

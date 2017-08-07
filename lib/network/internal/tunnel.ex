@@ -7,7 +7,17 @@ defmodule Helix.Network.Internal.Tunnel do
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
 
-  import Ecto.Query, only: [select: 3]
+  @spec fetch(Tunnel.id) ::
+    Tunnel.t
+    | nil
+  def fetch(id),
+    do: Repo.get(Tunnel, id)
+
+  @spec fetch_connection(Connection.id) ::
+    Connection.t
+    | nil
+  def fetch_connection(id),
+    do: Repo.get(Connection, id)
 
   @spec create(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
@@ -16,8 +26,9 @@ defmodule Helix.Network.Internal.Tunnel do
   Creates a new tunnel
   """
   def create(network, gateway_id, endpoint_id, bounces \\ []) do
-    cs = Tunnel.create(network, gateway_id, endpoint_id, bounces)
-    Repo.insert(cs)
+    network
+    |> Tunnel.create(gateway_id, endpoint_id, bounces)
+    |> Repo.insert()
   end
 
   @spec get_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
@@ -39,36 +50,26 @@ defmodule Helix.Network.Internal.Tunnel do
     Repo.get_by(Tunnel, fetch_clauses)
   end
 
-  @spec fetch(Tunnel.id) ::
-    Tunnel.t
-    | nil
-  def fetch(id),
-    do: Repo.get(Tunnel, id)
-
-  @spec delete(Tunnel.t | Tunnel.id) ::
+  @spec delete(Tunnel.t) ::
     :ok
-  def delete(%Tunnel{tunnel_id: id}),
-    do: delete(id)
-  def delete(id) do
-    id
-    |> Tunnel.Query.by_id()
-    |> Repo.delete_all()
+  def delete(tunnel) do
+    Repo.delete(tunnel)
 
     :ok
   end
 
-  @spec connected?(Server.id, Server.id, Network.t | nil) ::
+  @spec connected?(Server.idt, Server.idt, Network.idt | nil) ::
     boolean
   def connected?(gateway_id, endpoint_id, network \\ nil) do
     query =
       Tunnel
-      |> select([t], count(t.tunnel_id))
-      |> Tunnel.Query.by_gateway_id(gateway_id)
-      |> Tunnel.Query.by_destination_id(endpoint_id)
+      |> Tunnel.Query.select_total_tunnels()
+      |> Tunnel.Query.by_gateway(gateway_id)
+      |> Tunnel.Query.by_destination(endpoint_id)
 
     query =
       network
-      && Tunnel.Query.from_network(query, network)
+      && Tunnel.Query.by_network(query, network)
       || query
 
     count = Repo.one(query)
@@ -82,13 +83,7 @@ defmodule Helix.Network.Internal.Tunnel do
     Repo.preload(tunnel, :connections).connections
   end
 
-  @spec fetch_connection(Connection.id) ::
-    Connection.t
-    | nil
-  def fetch_connection(connection_id),
-    do: Repo.get(Connection, connection_id)
-
-  @spec connections_through_node(Server.id) ::
+  @spec connections_through_node(Server.t | Server.id) ::
     [Connection.t]
   def connections_through_node(server_id) do
     server_id
@@ -96,7 +91,7 @@ defmodule Helix.Network.Internal.Tunnel do
     |> Repo.all()
   end
 
-  @spec inbound_connections(Server.id) ::
+  @spec inbound_connections(Server.t | Server.id) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's destination is `server`
   def inbound_connections(endpoint_id) do
@@ -105,7 +100,7 @@ defmodule Helix.Network.Internal.Tunnel do
     |> Repo.all()
   end
 
-  @spec outbound_connections(Server.id) ::
+  @spec outbound_connections(Server.t | Server.id) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
   def outbound_connections(gateway_id) do

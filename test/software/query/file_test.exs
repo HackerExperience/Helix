@@ -24,7 +24,7 @@ defmodule Helix.Software.Query.FileTest do
     end
 
     test "fails when file doesn't exist" do
-      refute FileQuery.fetch(Random.pk())
+      refute FileQuery.fetch(File.ID.generate())
     end
   end
 

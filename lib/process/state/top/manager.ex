@@ -1,7 +1,8 @@
 defmodule Helix.Process.State.TOP.Manager do
   @moduledoc false
 
-  alias Helix.Process.State.TOP.Supervisor, as: SupervisorTOP
+  alias Helix.Server.Model.Server
+  alias Helix.Process.State.TOP.Supervisor, as: TOPSupervisor
 
   # TODO: Replace this with a distributed alternative. Maybe using PubSub
 
@@ -10,7 +11,7 @@ defmodule Helix.Process.State.TOP.Manager do
     Registry.start_link(:unique, __MODULE__)
   end
 
-  @spec prepare_top(HELL.PK.t) ::
+  @spec prepare_top(Server.id) ::
     Supervisor.on_start_child
   @doc """
   Fetches or starts a TOP process for `gateway`
@@ -21,11 +22,11 @@ defmodule Helix.Process.State.TOP.Manager do
     if pid do
       {:ok, pid}
     else
-      SupervisorTOP.start_top(gateway)
+      TOPSupervisor.start_top(gateway)
     end
   end
 
-  @spec get(HELL.PK.t) ::
+  @spec get(Server.id) ::
     pid
     | nil
   @doc """
