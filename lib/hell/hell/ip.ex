@@ -126,7 +126,7 @@ defmodule HELL.IPv4 do
   @spec parse_address(t) ::
     {:ok, Postgrex.INET.t}
     | :error
-  defp parse_address(string) when is_binary(string) do
+  def parse_address(string) when is_binary(string) do
     string
     |> String.to_charlist()
     |> :inet.parse_ipv4strict_address()

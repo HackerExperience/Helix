@@ -1,35 +1,32 @@
 defmodule Helix.Cache.Helper do
 
-  alias Helix.Account.Action.Flow.Account, as: AccountFlow
-  alias Helix.Account.Factory, as: AccountFactory
+  alias HELL.TestHelper.Setup
   alias Helix.Cache.Action.Cache, as: CacheAction
-  alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Cache.Internal.Cache, as: CacheInternal
+  alias Helix.Cache.Model.ServerCache
+  alias Helix.Cache.Model.NetworkCache
+  alias Helix.Cache.Model.StorageCache
+  alias Helix.Cache.Model.ComponentCache
+  alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Cache.Repo
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   def sync_test,
     do: StatePurgeQueue.sync()
 
   def cache_context do
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-    :timer.sleep(100)
-
-    # Note: for our purposes, function below is slightly different from
-    # CacheInternal.purge_server, and should not be replaced.
-    purge_server(server.server_id)
+    {server, account} = Setup.server()
 
     {:ok, account: account, server: server}
   end
 
   def purge_server(server_id) do
     {:ok, server} = CacheQuery.from_server_get_all(server_id)
-
     StatePurgeQueue.sync()
 
     Enum.each(
       server.networks,
-      &CacheAction.purge_nip(to_string(&1.network_id), &1.ip))
+      &CacheAction.purge_network(to_string(&1.network_id), &1.ip))
     Enum.each(server.components, &CacheAction.purge_component(to_string(&1)))
     Enum.each(server.storages, &CacheAction.purge_storage(to_string(&1)))
     CacheAction.purge_component(to_string(server.motherboard_id))
@@ -38,5 +35,12 @@ defmodule Helix.Cache.Helper do
     CacheInternal.purge(:server, {to_string(server.server_id)})
 
     StatePurgeQueue.sync()
+  end
+
+  def empty_cache do
+    Repo.delete_all(ServerCache)
+    Repo.delete_all(ComponentCache)
+    Repo.delete_all(StorageCache)
+    Repo.delete_all(NetworkCache)
   end
 end

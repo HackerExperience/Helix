@@ -2,13 +2,14 @@ defmodule Helix.Cache.Internal.BuilderTest do
 
   use Helix.Test.IntegrationCase
 
-  import Helix.Test.CacheCase
+  import Helix.Test.IDCase
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.Storage
+  alias Helix.Universe.NPC.Model.Seed
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
 
@@ -183,6 +184,30 @@ defmodule Helix.Cache.Internal.BuilderTest do
       assert reason == {:component, :notfound}
 
       CacheHelper.sync_test()
+    end
+  end
+
+  describe "build web_by_nip" do
+    test "it works with valid npc" do
+      dc = Seed.search_by_type(:download_center)
+      server = List.first(dc.servers)
+
+      assert {:ok, build} = BuilderInternal.web_by_nip("::", server.static_ip)
+      assert build.ip == server.static_ip
+      assert build.content
+    end
+
+    test "it blows with non-existing nip" do
+      assert {:error, reason} = BuilderInternal.web_by_nip("::", Random.ipv4())
+      assert reason == {:nip, :notfound}
+    end
+
+    @tag :pending
+    test "it works  with valid account without webserver" do
+    end
+
+    @tag :pending
+    test "it works with valid account with webserver" do
     end
   end
 end

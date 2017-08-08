@@ -17,9 +17,13 @@ defmodule Helix.Cache.Query.Cache do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Internal.Cache, as: CacheInternal
+  alias Helix.Cache.Model.ServerCache
+  alias Helix.Cache.Model.WebCache
 
   @spec from_server_get_all(Server.idtb) ::
-    term
+    {:ok, ServerCache.t}
+    | {:error, {:server, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a server, return the entire row, cached or not.
   """
@@ -27,7 +31,7 @@ defmodule Helix.Cache.Query.Cache do
     do: CacheInternal.lookup(:server, {server_to_id(server)})
 
   @spec from_server_get_nips(Server.id) ::
-    {:ok, [term]}
+    {:ok, [Network.nip]}
     | {:error, {:server, :notfound}}
     | {:error, :unknown}
   @doc """
@@ -37,7 +41,9 @@ defmodule Helix.Cache.Query.Cache do
     do:  CacheInternal.lookup({:server, :nips}, {server_to_id(server)})
 
   @spec from_server_get_storages(Server.idtb) ::
-    term
+    {:ok, [Storage.idtb]}
+    | {:error, {:server, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a server, return the storages linked to it.
   """
@@ -45,7 +51,9 @@ defmodule Helix.Cache.Query.Cache do
     do: CacheInternal.lookup({:server, :storages}, {server_to_id(server)})
 
   @spec from_server_get_resources(Server.idtb) ::
-    term
+    {:ok, term}
+    | {:error, {:server, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a server, return its hardware resources.
   """
@@ -53,7 +61,9 @@ defmodule Helix.Cache.Query.Cache do
     do: CacheInternal.lookup({:server, :resources}, {server_to_id(server)})
 
   @spec from_server_get_components(Server.idtb) ::
-    term
+    {:ok, [Component.idtb]}
+    | {:error, {:server, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a server, return components linked to its motherboard.
   Note: it does not include the motherboard.
@@ -62,15 +72,21 @@ defmodule Helix.Cache.Query.Cache do
     do: CacheInternal.lookup({:server, :components}, {server_to_id(server)})
 
   @spec from_motherboard_get_all(Motherboard.t | Component.idtb) ::
-    term
+    {:ok, ServerCache.t}
+    | {:error, {:server, :notfound}}
+    | {:error, {:motherboard, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a motherboard, return its entire server row.
   """
   def from_motherboard_get_all(motherboard),
     do: CacheInternal.lookup(:motherboard, {motherboard_to_id(motherboard)})
 
-  @spec from_motherboard_get_entity(Motherboard.t | Component.idtb) ::
-    term
+  @spec from_motherboard_get_entity(Motherboard.idtb) ::
+    {:ok, Entity.idtb}
+    | {:error, {:server, :notfound}}
+    | {:error, {:motherboard, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a motherboard, return its owner (entity).
   """
@@ -79,8 +95,11 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:motherboard, :entity}, {id})
   end
 
-  @spec from_motherboard_get_resources(Motherboard.t | Component.idtb) ::
-    term
+  @spec from_motherboard_get_resources(Motherboard.idtb) ::
+    {:ok, term}
+    | {:error, {:server, :notfound}}
+    | {:error, {:motherboard, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a motherboard, return its total resources.
   """
@@ -89,8 +108,11 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:motherboard, :resources}, {id})
   end
 
-  @spec from_motherboard_get_components(Motherboard.t | Component.idtb) ::
-    term
+  @spec from_motherboard_get_components(Motherboard.idtb) ::
+    {:ok, [Component.idtb]}
+    | {:error, {:server, :notfound}}
+    | {:error, {:motherboard, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a motherboard, return the components linked to it.
   """
@@ -100,7 +122,10 @@ defmodule Helix.Cache.Query.Cache do
   end
 
   @spec from_entity_get_motherboard(Entity.idtb) ::
-    term
+    {:ok, Motherboard.idtb}
+    | {:error, {:server, :notfound}}
+    | {:error, {:motherboard, :notfound}}
+    | {:error, {:server, :notfound}}
   @doc """
   Given an entity, return its motherboard.
   """
@@ -108,7 +133,11 @@ defmodule Helix.Cache.Query.Cache do
     do: CacheInternal.lookup({:entity, :motherboard}, {entity_to_id(entity)})
 
   @spec from_storage_get_server(Storage.idtb) ::
-    term
+    {:ok, Server.idtb}
+    | {:error, {:storage, :notfound}}
+    | {:error, {:drive, :notfound}}
+    | {:error, {:drive, :unlinked}}
+    | {:error, :unknown}
   @doc """
   Given a storage, return its server.
   """
@@ -116,17 +145,33 @@ defmodule Helix.Cache.Query.Cache do
     do: CacheInternal.lookup({:storage, :server}, {storage_to_id(storage)})
 
   @spec from_nip_get_server(Network.idtb, IPv4.t) ::
-    term
+    {:ok, Server.idtb}
+    | {:error, {:nip, :notfound}}
+    | {:error, {:server, :notfound}}
+    | {:error, :unknown}
   @doc """
   Given a nip, return its server.
   """
   def from_nip_get_server(network, ip) do
     network_id = network_to_id(network)
-    CacheInternal.lookup({:nip, :server}, {network_id, ip})
+    CacheInternal.lookup({:network, :server}, {network_id, ip})
+  end
+
+  @spec from_nip_get_web(Network.idtb, IPv4.t) ::
+    {:ok, WebCache.t}
+    | {:error, {:nip, :notfound}}
+    | {:error, {:server, :notfound}}
+    | {:error, {:web, :notfound}}
+    | {:error, :unknown}
+  def from_nip_get_web(network, ip) do
+    network_id = network_to_id(network)
+    CacheInternal.lookup({:web, :content}, {network_id, ip})
   end
 
   @spec from_component_get_motherboard(Component.idtb) ::
-    term
+    {:ok, Motherboard.idtb}
+    | {:error, {:component, :notfound}}
+    | {:error, {:component, :unlinked}}
   @doc """
   Given a component, return its motherboard. Returns nil if it isn't attached.
   """
