@@ -3,7 +3,9 @@ defmodule Helix.Cache.Internal.PopulateTest do
   use Helix.Test.IntegrationCase
 
   import Helix.Test.CacheCase
+  import Helix.Test.IDCase
 
+  alias HELL.MapUtils
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Helper, as: CacheHelper
@@ -11,6 +13,7 @@ defmodule Helix.Cache.Internal.PopulateTest do
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+  alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   setup do
     CacheHelper.cache_context()
@@ -154,6 +157,23 @@ defmodule Helix.Cache.Internal.PopulateTest do
       assert_id nip1.network_id, nip2.network_id
 
       CacheHelper.sync_test()
+    end
+
+    test "web population" do
+      {_, ip} = NPCHelper.download_center()
+
+      {:ok, origin} = BuilderInternal.web_by_nip("::", ip)
+
+      # Add to DB
+      {:ok, web1} = PopulateInternal.populate(:web_by_nip, {"::", ip})
+
+      # Query from db
+      {:hit, web2} = CacheInternal.direct_query(
+        {:web, :content},
+        {"::", ip})
+
+      assert origin.content == web1.content
+      assert web1.content == MapUtils.atomize_keys(web2.content)
     end
   end
 

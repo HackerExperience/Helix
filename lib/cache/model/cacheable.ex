@@ -2,6 +2,7 @@ alias Helix.Cache.Model.ComponentCache
 alias Helix.Cache.Model.NetworkCache
 alias Helix.Cache.Model.ServerCache
 alias Helix.Cache.Model.StorageCache
+alias Helix.Cache.Model.WebCache
 
 defprotocol Helix.Cache.Model.Cacheable do
 
@@ -147,6 +148,28 @@ defimpl Helix.Cache.Model.Cacheable, for: ComponentCache do
     %{
       component_id: Utils.cast(Component.ID, row.component_id),
       motherboard_id: Utils.cast(Component.ID, row.motherboard_id)
+    }
+  end
+end
+
+defimpl Helix.Cache.Model.Cacheable, for: WebCache do
+
+  alias HELL.MapUtils
+  alias Helix.Network.Model.Network
+  alias Helix.Cache.Model.WebCache
+  alias Helix.Cache.Model.Cacheable.Utils
+
+  def format_input(row) do
+    row
+    |> WebCache.create_changeset()
+    |> Ecto.Changeset.apply_changes()
+  end
+
+  def format_output(row) do
+    %{
+      network_id: Utils.cast(Network.ID, row.network_id),
+      ip: row.ip,
+      content: MapUtils.atomize_keys(row.content)
     }
   end
 end

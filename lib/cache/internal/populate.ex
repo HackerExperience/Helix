@@ -20,6 +20,7 @@ defmodule Helix.Cache.Internal.Populate do
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.StorageCache
+  alias Helix.Cache.Model.WebCache
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
@@ -105,14 +106,17 @@ defmodule Helix.Cache.Internal.Populate do
       StatePurgeQueue.queue(:server, params.server_id, :update)
     end
   end
-  defp mark_as_purged(params = %NetworkCache{}) do
-    StatePurgeQueue.queue(:network, {params.network_id, params.ip}, :update)
-  end
   defp mark_as_purged(params = %StorageCache{}) do
     StatePurgeQueue.queue(:storage, params.storage_id, :update)
   end
   defp mark_as_purged(params = %ComponentCache{}) do
     StatePurgeQueue.queue(:component, params.component_id, :update)
+  end
+  defp mark_as_purged(params = %NetworkCache{}) do
+    StatePurgeQueue.queue(:network, {params.network_id, params.ip}, :update)
+  end
+  defp mark_as_purged(params = %WebCache{}) do
+    StatePurgeQueue.queue(:web, {params.network_id, params.ip}, :update)
   end
 
   docp """
@@ -155,6 +159,9 @@ defmodule Helix.Cache.Internal.Populate do
   defp cache(params = %ComponentCache{}) do
     store(params)
   end
+  defp cache(params = %WebCache{}) do
+    store(params)
+  end
 
   docp """
   Saves the cache on the database. If it already exists, it updates its contents
@@ -181,5 +188,12 @@ defmodule Helix.Cache.Internal.Populate do
     params
     |> ComponentCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:component_id])
+  end
+  defp store(params = %WebCache{}) do
+    params
+    |> WebCache.create_changeset()
+    |> Repo.insert(
+      on_conflict: :replace_all,
+      conflict_target: [:network_id, :ip])
   end
 end

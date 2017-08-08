@@ -3,6 +3,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
   use Helix.Test.IntegrationCase
 
   import Helix.Test.CacheCase
+  import Helix.Test.IDCase
 
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Helper, as: CacheHelper

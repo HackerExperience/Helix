@@ -3,6 +3,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
   use Helix.Test.IntegrationCase
 
   import Helix.Test.CacheCase
+  import Helix.Test.IDCase
 
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Cache.Helper, as: CacheHelper
@@ -62,7 +63,6 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
     test "populates non-existing data", context  do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       # Ensure cache is empty
       CacheInternal.purge(:server, to_string(server_id))

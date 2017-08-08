@@ -16,6 +16,7 @@ defmodule Helix.Cache.Internal.Builder do
 
   alias HELL.IPv4
   alias Helix.Entity.Internal.Entity, as: EntityInternal
+  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Hardware.Internal.Component, as: ComponentInternal
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
@@ -25,10 +26,14 @@ defmodule Helix.Cache.Internal.Builder do
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Model.Storage
+  alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
+  alias Helix.Universe.NPC.Internal.Web, as: NPCWebInternal
+  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.StorageCache
+  alias Helix.Cache.Model.WebCache
 
   @spec by_server(Server.id) ::
     {:ok, ServerCache.t}
@@ -79,11 +84,11 @@ defmodule Helix.Cache.Internal.Builder do
     end
   end
 
-  # @spec by_nip(Network.id, IPv4.t) ::
-  #   {:ok, NetworkCache.t}
-  #   | {:error, {:nip, :notfound}}
-  #   | {:error, {:server, :notfound}}
-  #   | {:error, :unknown}
+  @spec by_nip(Network.id, IPv4.t) ::
+    {:ok, NetworkCache.t}
+    | {:error, {:nip, :notfound}}
+    | {:error, {:server, :notfound}}
+    | {:error, :unknown}
   def by_nip(network_id, ip) do
     with \
       mobo = %{} <- MotherboardInternal.fetch_by_nip(network_id, ip) || :nxnip,
@@ -145,6 +150,46 @@ defmodule Helix.Cache.Internal.Builder do
         {:error, {:component, :notfound}}
       :unlinked ->
         {:error, {:component, :unlinked}}
+    end
+  end
+
+  @spec web_by_nip(Network.id, IPv4.t) ::
+    {:ok, WebCache.t}
+    | {:error, {:nip, :notfound}}
+    | {:error, {:server, :notfound}}
+    | {:error, {:web, :notfound}}
+    | {:error, :unknown}
+  def web_by_nip(network_id, ip) do
+    with \
+      mobo = %{} <- MotherboardInternal.fetch_by_nip(network_id, ip) || :nxnip,
+      server = %{} <- ServerInternal.fetch_by_motherboard(mobo) || :nxserver,
+      entity = %{} <- EntityInternal.fetch_by_server(server),
+      content = %{} <- get_web_content(entity, network_id, ip) || :nxweb
+    do
+      {:ok, WebCache.new(network_id, ip, content)}
+    else
+      :nxnip ->
+        {:error, {:nip, :notfound}}
+      :nxserver ->
+        {:error, {:server, :notfound}}
+      :nxweb ->
+        {:error, {:web, :notfound}}
+      _ ->
+        {:error, :unknown}
+      end
+  end
+
+  @spec get_web_content(Entity.t, Network.id, IPv4.t) ::
+    NPCWebInternal.npc_content
+    | nil
+  defp get_web_content(entity, network_id, ip) do
+    case entity.entity_type do
+      :npc ->
+        NPC.ID.cast!(to_string(entity.entity_id))
+        |> NPCInternal.fetch()
+        |> NPCWebInternal.generate_content(network_id, ip)
+      _ ->
+        %{to: "do"}
     end
   end
 

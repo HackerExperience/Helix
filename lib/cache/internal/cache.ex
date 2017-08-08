@@ -14,6 +14,7 @@ defmodule Helix.Cache.Internal.Cache do
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.StorageCache
+  alias Helix.Cache.Model.WebCache
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Cache.Repo
@@ -26,7 +27,8 @@ defmodule Helix.Cache.Internal.Cache do
     :server => ServerCache.Query,
     :component => ComponentCache.Query,
     :network => NetworkCache.Query,
-    :storage => StorageCache.Query
+    :storage => StorageCache.Query,
+    :web => WebCache.Query
   }
 
   docp """
@@ -50,7 +52,7 @@ defmodule Helix.Cache.Internal.Cache do
 
     # Network
     :network => {:network, :by_nip, :all},
-    {:nip, :server} => {:network, :by_nip, :server_id},
+    {:network, :server} => {:network, :by_nip, :server_id},
 
     # Storage
     :storage => {:storage, :by_storage, :all},
@@ -58,7 +60,10 @@ defmodule Helix.Cache.Internal.Cache do
 
     # Component
     :component => {:component, :by_component, :all},
-    {:component, :motherboard} => {:component, :by_component, :motherboard_id}
+    {:component, :motherboard} => {:component, :by_component, :motherboard_id},
+
+    # Web
+    {:web, :content} => {:web, :web_by_nip, :content}
   }
 
   # @spec lookup(condition, [binary]) ::
@@ -185,7 +190,9 @@ defmodule Helix.Cache.Internal.Cache do
   end
 
   docp """
-  We've tried to fetch the data but it isn't cached. This may be for two reasons:
+  We've tried to fetch the data but it isn't cached. This may be for three
+  reasons:
+
   1) Entry is not on the DB
   2) Entry is on the DB but it's expired
   3) Entry is on the DB and valid, but marked as purged on the PurgeQueue
