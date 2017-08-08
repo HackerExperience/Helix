@@ -35,7 +35,6 @@ defmodule Helix.Log.Event.Log do
     LogAction.create(to, entity, message_to)
   end
 
-
   def log_forge_conclusion(event = %LogForgeComplete{}) do
     log = LogQuery.fetch(event.target_log_id)
     %{

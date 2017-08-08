@@ -1,8 +1,83 @@
-# FIXME: OTP20
-defmodule Software.LogForge.ProcessType do
+defmodule Helix.Software.Model.SoftwareType.LogForge do
 
-  @enforce_keys [:target_log_id, :version, :message, :entity_id]
-  defstruct [:target_log_id, :version, :message, :entity_id]
+  use Ecto.Schema
+
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
+  alias Helix.Entity.Model.Entity
+  alias Helix.Log.Model.Log
+  alias Helix.Software.Model.File
+
+  @type t :: %__MODULE__{
+    target_log_id: Log.id,
+    entity_id: Entity.id,
+    message: String.t,
+    version: pos_integer
+  }
+
+  @type create_params ::
+    %{String.t => term}
+    | %{
+      :target_log_id => Log.idtb,
+      :entity_id => Entity.idtb,
+      :message => String.t,
+      optional(atom) => any
+    }
+
+  @primary_key false
+  embedded_schema do
+    field :target_log_id, Log.ID
+    field :entity_id, Entity.ID
+
+    field :message, :string
+    field :version, :integer
+  end
+
+  @spec create(create_params, File.modules) ::
+    {:ok, t}
+    | {:error, Changeset.t}
+  def create(params, modules) do
+    %__MODULE__{}
+    |> cast(params, [:target_log_id, :message, :entity_id])
+    |> validate_required([:target_log_id, :message, :entity_id])
+    |> cast_modules(modules)
+    |> format_return()
+  end
+
+  @spec objective(t, Log.t, non_neg_integer) ::
+    %{cpu: pos_integer}
+  def objective(process_data, target_log, revision_count) do
+    cost_factor =
+      (process_data.entity_id == target_log.entity_id)
+      && revision_count
+      || (revision_count + 1)
+
+    %{
+      cpu: factorial(cost_factor) * 12_500
+    }
+  end
+
+  @spec cast_modules(Changeset.t, File.modules) ::
+    Changeset.t
+  defp cast_modules(changeset, %{log_forger_edit: version}) do
+    changeset
+    |> cast(%{version: version}, [:version])
+    |> validate_number(:version, greater_than: 0)
+  end
+
+  @spec format_return(Changeset.t) ::
+    {:ok, t}
+    | {:error, Changeset.t}
+  defp format_return(changeset = %{valid?: true}),
+    do: {:ok, apply_changes(changeset)}
+  defp format_return(changeset),
+    do: {:error, changeset}
+
+  @spec factorial(non_neg_integer) ::
+    non_neg_integer
+  defp factorial(n),
+    do: Enum.reduce(1..n, &(&1 * &2))
 
   defimpl Helix.Process.Model.Process.ProcessType do
 

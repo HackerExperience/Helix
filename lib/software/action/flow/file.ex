@@ -11,7 +11,7 @@ defmodule Helix.Software.Action.Flow.File do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
   alias Software.Firewall.ProcessType.Passive, as: FirewallPassive
-  alias Software.LogForge.ProcessType, as: LogForge
+  alias Helix.Software.Model.SoftwareType.LogForge, as: LogForge
 
   @spec execute_file(File.t, Server.id, map) ::
     {:ok, Process.t}
@@ -55,55 +55,41 @@ defmodule Helix.Software.Action.Flow.File do
     end
   end
 
-  @spec start_file_process(%File{software_type: :log_forge}, Server.idt, %{target_log_id: Log.id, message: String.t, entity_id: Entity.id}) ::
-    Helix.Process.Action.Process.on_create
+  @spec start_file_process(%File{software_type: :log_forge}, Server.idt, LogForge.create_params) ::
+    ProcessAction.on_create
+    | {:error, {:log, :notfound}}
+    | {:error, Ecto.Changeset.t}
   defp start_file_process(
     file = %File{software_type: :log_forge},
     server,
-    params = %{target_log_id: _, message: _, entity_id: _})
+    params)
   do
-    %{log_forger_edit: version} = FileQuery.get_modules(file)
-    process_data = %LogForge{
-      target_log_id: params.target_log_id,
-      message: params.message,
-      entity_id: params.entity_id,
-      version: version
-    }
+    with \
+      modules = FileQuery.get_modules(file),
+      {:ok, process_data} <- LogForge.create(params, modules),
+      log_id = process_data.target_log_id,
+      target_log = %{} <- LogQuery.fetch(log_id) || {:error, {:log, :notfound}}
+    do
+      revision_count = LogQuery.count_revisions_of_entity(
+        target_log,
+        process_data.entity_id)
+      objective = LogForge.objective(process_data, target_log, revision_count)
 
-    target_log = LogQuery.fetch(params.target_log_id)
-    revision_count = LogQuery.count_revisions_of_entity(
-      target_log,
-      params.entity_id)
+      process_params = %{
+        gateway_id: server,
+        target_server_id: target_log.server_id,
+        file_id: file.file_id,
+        objective: objective,
+        process_data: process_data,
+        process_type: "log_forge"
+      }
 
-    cost_factor = if params.entity_id == target_log.entity_id do
-      # The first revision should not increase the total WUs to edit the log
-      revision_count
-    else
-      revision_count + 1
+      # TODO: emit process started event
+      ProcessAction.create(process_params)
     end
-
-    # TODO: move this to the log forge module
-    objective = %{
-      cpu: factorial(cost_factor) * 12_500
-    }
-
-    process_params = %{
-      gateway_id: server,
-      target_server_id: target_log.server_id,
-      file_id: file.file_id,
-      objective: objective,
-      process_data: process_data,
-      process_type: "log_forge"
-    }
-
-    # TODO: emit process started event
-    ProcessAction.create(process_params)
   end
 
   defp start_file_process(%File{}, _, _) do
     {:error, :notexecutable}
   end
-
-  defp factorial(n),
-    do: Enum.reduce(1..n, &(&1 * &2))
 end
