@@ -21,7 +21,6 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Server.Model.Server
   alias Helix.Log.Internal.Log, as: LogInternal
   alias Helix.Log.Model.Log
-  alias Helix.Log.Repo
 
   alias Helix.Log.Model.Log.LogCreatedEvent
   alias Helix.Log.Model.Log.LogModifiedEvent
@@ -84,13 +83,4 @@ defmodule Helix.Log.Action.Log do
         {:error, :original_revision}
     end
   end
-
-  @spec hard_delete(Log.t) ::
-    {:ok, Log.t}
-    | {:error, Ecto.Changeset.t}
-  @doc """
-  Deletes the log by removing its entry from database
-  """
-  def hard_delete(log),
-    do: Repo.delete(log)
 end

@@ -28,6 +28,8 @@ defmodule Helix.Software.Action.Flow.File do
   def execute_file(file, server, params \\ %{}),
     do: start_file_process(file, server, params)
 
+  @spec start_file_process(%File{software_type: :firewall}, Server.idt, map) ::
+    Helix.Process.Action.Process.on_create
   defp start_file_process(file = %File{software_type: :firewall}, server, _) do
     %{firewall_passive: version} = FileQuery.get_modules(file)
     process_data = %FirewallPassive{version: version}
@@ -53,6 +55,8 @@ defmodule Helix.Software.Action.Flow.File do
     end
   end
 
+  @spec start_file_process(%File{software_type: :log_forge}, Server.idt, %{target_log_id: Log.id, message: String.t, entity_id: Entity.id}) ::
+    Helix.Process.Action.Process.on_create
   defp start_file_process(
     file = %File{software_type: :log_forge},
     server,
@@ -92,10 +96,11 @@ defmodule Helix.Software.Action.Flow.File do
       process_type: "log_forge"
     }
 
+    # TODO: emit process started event
     ProcessAction.create(process_params)
   end
 
-  defp start_file_process(_, _, _) do
+  defp start_file_process(%File{}, _, _) do
     {:error, :notexecutable}
   end
 

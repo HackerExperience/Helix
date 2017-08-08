@@ -7,7 +7,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Network
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Model.Server
   alias Helix.Server.Public.Server, as: ServerPublic
@@ -19,8 +18,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Process.Model.Process.ProcessConclusionEvent
   alias Helix.Process.Model.Process.ProcessCreatedEvent
-
-  @internet_id Network.ID.cast!("::")
 
   # Joining into player's own gateway
   def join("server:" <> gateway_id, %{"gateway_id" => gateway_id}, socket) do
