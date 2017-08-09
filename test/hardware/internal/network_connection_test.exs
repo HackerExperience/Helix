@@ -8,13 +8,12 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
 
+  alias HELL.TestHelper.Setup
+  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Network.Helper, as: NetworkHelper
+
   setup do
-    alias Helix.Account.Factory, as: AccountFactory
-    alias Helix.Account.Action.Flow.Account, as: AccountFlow
-
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-
+    {server, account} = Setup.server()
     {:ok, account: account, server: server}
   end
 
@@ -23,36 +22,37 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
       server_id = context.server.server_id
       new_ip = HELL.IPv4.autogenerate()
 
-      cur_ip = ServerQuery.get_ip(server_id, "::")
-      nc = NetworkConnectionInternal.fetch_by_nip("::", cur_ip)
+      cur_ip = ServerQuery.get_ip(server_id, NetworkHelper.internet_id)
+      nc = NetworkConnectionInternal.fetch_by_nip(
+        NetworkHelper.internet_id,
+        cur_ip)
       NetworkConnectionInternal.update_ip(nc, new_ip)
 
-      # TODO: Remove timer below when Cache's PurgeQueue is merged
-      :timer.sleep(10)
-      updated_ip = ServerQuery.get_ip(server_id, "::")
+      # StatePurgeQueue.sync()
+      updated_ip = ServerQuery.get_ip(server_id, NetworkHelper.internet_id)
 
       refute cur_ip == updated_ip
       assert updated_ip == new_ip
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
 
     test "won't update to an existing ip", context do
       server_id = context.server.server_id
       existing_ip = "1.2.3.4"
 
-      cur_ip = ServerQuery.get_ip(server_id, "::")
-      nc = NetworkConnectionInternal.fetch_by_nip("::", cur_ip)
+      cur_ip = ServerQuery.get_ip(server_id, NetworkHelper.internet_id)
+      nc = NetworkConnectionInternal.fetch_by_nip(
+        NetworkHelper.internet_id,
+        cur_ip)
 
       {:error, _} = NetworkConnectionInternal.update_ip(nc, existing_ip)
 
-      # TODO: Remove timer below when Cache's PurgeQueue is merged
-      :timer.sleep(10)
-      updated_ip = ServerQuery.get_ip(server_id, "::")
+      updated_ip = ServerQuery.get_ip(server_id, NetworkHelper.internet_id)
 
       assert updated_ip == cur_ip
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
   end
 
@@ -60,8 +60,7 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
     test "it fetches, just like phoebe", context do
       motherboard_id = context.server.motherboard_id
 
-
-      motherboard = MotherboardQuery.fetch!(motherboard_id)
+      motherboard = MotherboardQuery.fetch(motherboard_id)
 
       [nic] = MotherboardInternal.get_nics(motherboard)
       network_connection_id = nic.network_connection.network_connection_id
@@ -83,7 +82,7 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
       assert nc.network_id == nip.network_id
       assert nc.ip == nip.ip
 
-      :timer.sleep(10)
+      CacheHelper.sync_test()
     end
   end
 end

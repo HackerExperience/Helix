@@ -36,7 +36,6 @@ defmodule Helix.Entity.Action.Entity do
     EntityInternal.create(params)
   end
 
-
   # TODO: Accept entity-equivalent structs
   @spec delete(Entity.t) ::
     :ok

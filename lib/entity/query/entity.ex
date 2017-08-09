@@ -5,6 +5,7 @@ defmodule Helix.Entity.Query.Entity do
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
+  alias Helix.Universe.NPC.Model.NPC
 
   @spec fetch(Entity.id) ::
     Entity.t
@@ -66,6 +67,8 @@ defmodule Helix.Entity.Query.Entity do
         %Entity.ID{id: id}
       %NPC{npc_id: %NPC.ID{id: id}} ->
         %Entity.ID{id: id}
+      _ ->
+        entity
     end
   end
 end

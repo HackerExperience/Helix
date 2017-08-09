@@ -1,16 +1,15 @@
 defmodule Helix.Universe.NPC.Model.NPC do
 
   use Ecto.Schema
+  use HELL.ID, field: :npc_id, meta: [0x0002]
 
-  alias HELL.PK
   alias HELL.Constant
   alias Helix.Universe.NPC.Model.NPCType
 
   import Ecto.Changeset
 
-  @type id :: PK.t
   @type t :: %__MODULE__{
-    npc_id: PK.t,
+    npc_id: id,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
@@ -22,9 +21,8 @@ defmodule Helix.Universe.NPC.Model.NPC do
   @creation_fields ~w/npc_type/a
 
   @primary_key false
-  @ecto_autogenerate {:npc_id, {PK, :pk_for, [:universe_npc]}}
   schema "npcs" do
-    field :npc_id, HELL.PK,
+    field :npc_id, ID,
       primary_key: true
 
     field :npc_type, Constant
@@ -32,7 +30,8 @@ defmodule Helix.Universe.NPC.Model.NPC do
     timestamps()
   end
 
-  @spec create_changeset(%{}) :: Ecto.Changeset.t
+  @spec create_changeset(creation_params) ::
+    Ecto.Changeset.t
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -41,13 +40,14 @@ defmodule Helix.Universe.NPC.Model.NPC do
   end
 
   defmodule Query do
-    alias Helix.Universe.NPC.Model.NPC
 
     import Ecto.Query, only: [where: 3]
 
-    @spec by_id(Ecto.Queryable.t, HELL.PK.t) :: Ecto.Queryable.t
-    def by_id(query \\ NPC, npc_id),
-      do: where(query, [n], n.npc_id == ^npc_id)
-  end
+    alias Helix.Universe.NPC.Model.NPC
 
+    @spec by_id(Ecto.Queryable.t, NPC.idtb) ::
+      Ecto.Queryable.t
+    def by_id(query \\ NPC, npc),
+      do: where(query, [n], n.npc_id == ^npc)
+  end
 end

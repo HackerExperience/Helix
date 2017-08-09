@@ -52,8 +52,8 @@ defmodule Helix.Hardware.Internal.NetworkConnection do
       |> Repo.update()
 
     with {:ok, _} <- result do
-      CacheAction.purge_nip(nc.network_id, nc.ip)
-      CacheAction.update_nip(nc.network_id, new_ip)
+      CacheAction.purge_network(nc.network_id, nc.ip)
+      CacheAction.update_network(nc.network_id, new_ip)
     end
 
     result
