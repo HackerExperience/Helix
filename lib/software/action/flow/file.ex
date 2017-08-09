@@ -10,7 +10,7 @@ defmodule Helix.Software.Action.Flow.File do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
   alias Software.Firewall.ProcessType.Passive, as: FirewallPassive
-  alias Helix.Software.Model.SoftwareType.LogForge, as: LogForge
+  alias Helix.Software.Model.SoftwareType.LogForge
 
   @doc """
   Starts the process defined by `file` on `server`
@@ -75,7 +75,7 @@ defmodule Helix.Software.Action.Flow.File do
         file_id: file.file_id,
         objective: objective,
         process_data: process_data,
-        process_type: :log_forger
+        process_type: "log_forger"
       }
 
       # TODO: emit process started event
