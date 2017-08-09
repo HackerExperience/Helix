@@ -34,8 +34,18 @@ defmodule Helix.Log.Action.LogTest do
 
       result = LogAction.revise(log, entity, message, forge_version)
 
-      assert {:ok, _} = result
+      assert {:ok, _log, _events} = result
       assert %{message: ^message} = LogQuery.fetch(log.log_id)
+    end
+
+    test "returns LogModified event" do
+      log = Factory.insert(:log)
+      entity = Entity.ID.generate()
+      message = "Don't dead, open inside"
+
+      result = LogAction.revise(log, entity, message, 1)
+
+      assert {:ok, _, [%LogModifiedEvent{}]} = result
     end
   end
 
@@ -56,14 +66,13 @@ defmodule Helix.Log.Action.LogTest do
       log = LogQuery.fetch(log.log_id)
       assert %{message: ^message2} = log
 
-      assert {:ok, :recovered} == LogAction.recover(log)
+      assert {:ok, :recovered, _} = LogAction.recover(log)
       assert %{message: ^message1} = LogQuery.fetch(log.log_id)
 
-      assert {:ok, :recovered} == LogAction.recover(log)
+      assert {:ok, :recovered, _} = LogAction.recover(log)
       assert %{message: ^message0} = LogQuery.fetch(log.log_id)
     end
 
-    @tag :pending
     test "returns LogModified event when a message is recovered" do
       log = Factory.insert(:log)
       entity = Entity.ID.generate()
@@ -71,7 +80,7 @@ defmodule Helix.Log.Action.LogTest do
 
       LogAction.revise(log, entity, message, 1)
 
-      assert {:ok, %{events: [%LogModifiedEvent{}]}} = LogAction.recover(log)
+      assert {:ok, :recovered, [%LogModifiedEvent{}]} = LogAction.recover(log)
     end
 
     test "returns error when log is original" do
@@ -87,15 +96,14 @@ defmodule Helix.Log.Action.LogTest do
       log = Factory.insert(:log, forge_version: 1)
 
       assert Repo.get(Log, log.log_id)
-      assert {:ok, _} = LogAction.recover(log)
+      assert {:ok, :deleted, _} = LogAction.recover(log)
       refute Repo.get(Log, log.log_id)
     end
 
-    @tag :pending
     test "returns LogDeleted event when forged log is deleted" do
       log = Factory.insert(:log, forge_version: 1)
 
-      assert {:ok, %{events: [%LogDeletedEvent{}]}} = LogAction.recover(log)
+      assert {:ok, :deleted, [%LogDeletedEvent{}]} = LogAction.recover(log)
     end
   end
 end

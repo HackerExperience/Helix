@@ -17,7 +17,7 @@ defmodule Helix.Log.Query.Log do
   defdelegate fetch(id),
     to: LogInternal
 
-  @spec get_logs_on_server(Server.t | Server.id) ::
+  @spec get_logs_on_server(Server.idt) ::
     [Log.t]
   @doc """
   Fetches logs on `server`
@@ -25,7 +25,7 @@ defmodule Helix.Log.Query.Log do
   defdelegate get_logs_on_server(server),
     to: LogInternal
 
-  @spec get_logs_from_entity_on_server(Server.t | Server.id, Entity.t | Entity.id) ::
+  @spec get_logs_from_entity_on_server(Server.idt, Entity.idt) ::
     [Log.t]
   @doc """
   Fetches logs on `server` that `entity` has created or revised
@@ -33,8 +33,22 @@ defmodule Helix.Log.Query.Log do
   defdelegate get_logs_from_entity_on_server(server, entity),
     to: LogInternal
 
-  @spec count_revisions_of_entity(Log.t, Entity.id) ::
+  @spec count_revisions_of_entity(Log.t, Entity.idt) ::
     non_neg_integer
-  defdelegate count_revisions_of_entity(log, entity_id),
+  @doc """
+  Returns the number of revisions on `log` that were created by `entity`
+
+  ### Examples
+
+      iex> count_revisions_of_entity(%Log{}, %Entity{})
+      0
+
+      iex> count_revisions_of_entity(%Log{}, %Entity.ID{})
+      2
+
+  Note that this number does include the "original revision" that is created
+  alongside with the new log
+  """
+  defdelegate count_revisions_of_entity(log, entity),
     to: LogInternal
 end

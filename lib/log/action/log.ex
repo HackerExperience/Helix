@@ -41,27 +41,33 @@ defmodule Helix.Log.Action.Log do
   end
 
   @spec revise(Log.t, Entity.idt, String.t, pos_integer) ::
-    {:ok, Log.t}
+    {:ok, Log.t, [Event.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
   Adds a revision over `log`.
 
-  `entity` is the the entity that is doing the revision, `message` is the
-  new log's content and `forge_version` is the version of log forger used to
-  make this revision.
+  ### Params
+  - `entity` is the the entity that is doing the revision
+  - `message` is the new log's content
+  - `forge_version` is the version of log forger used to make this revision
+
+  ### Examples
+
+      iex> revise(%Log{}, %Entity{}, "empty log", 100)
+      {:ok, %Log{message: "empty log"}, [%{}]}
   """
   def revise(log, entity, message, forge_version) do
     with \
       {:ok, log} <- LogInternal.revise(log, entity, message, forge_version)
     do
-      Event.emit(%LogModifiedEvent{server_id: log.server_id})
+      event = %LogModifiedEvent{server_id: log.server_id}
 
-      {:ok, log}
+      {:ok, log, [event]}
     end
   end
 
   @spec recover(Log.t) ::
-    {:ok, :deleted | :recovered}
+    {:ok, :deleted | :recovered, [Event.t]}
     | {:error, :original_revision}
   @doc """
   Recovers `log` to a previous revision.
@@ -74,11 +80,11 @@ defmodule Helix.Log.Action.Log do
   def recover(log) do
     case LogInternal.recover(log) do
       {:ok, :deleted} ->
-        Event.emit(%LogDeletedEvent{server_id: log.server_id})
-        {:ok, :deleted}
+        event = %LogDeletedEvent{server_id: log.server_id}
+        {:ok, :deleted, [event]}
       {:ok, :recovered} ->
-        Event.emit(%LogModifiedEvent{server_id: log.server_id})
-        {:ok, :recovered}
+        event = %LogModifiedEvent{server_id: log.server_id}
+        {:ok, :recovered, [event]}
       {:error, :original_revision} ->
         {:error, :original_revision}
     end
