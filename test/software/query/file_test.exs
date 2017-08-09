@@ -31,6 +31,7 @@ defmodule Helix.Software.Query.FileTest do
   describe "storage_contents/1" do
     test "succeeds with valid input" do
       storage = Factory.insert(:storage)
+      factory_files = Factory.insert_list(5, :file, storage: storage)
 
       contents = FileQuery.storage_contents(storage)
 
@@ -41,14 +42,22 @@ defmodule Helix.Software.Query.FileTest do
 
       # asserts that it gets the expected number of files and that these
       # files are consistently grouped by their path
-      assert Enum.count(storage.files) == Enum.count(files)
-      assert Enum.all?(storage.files, &(&1 in contents[&1.path]))
+      assert Enum.count(factory_files) == Enum.count(files)
+
+      expected = Enum.map(factory_files, &([path: &1.path, id: &1.file_id]))
+      contents =
+        contents
+        |> Enum.map(fn {k, v} -> {k, Enum.map(v, &(&1.file_id))} end)
+        |> :maps.from_list()
+
+      assert Enum.all?(expected, &(&1[:id] in contents[&1[:path]]))
     end
   end
 
   describe "files_on_storage/1" do
     test "succeeds with valid input" do
       storage = Factory.insert(:storage)
+      Factory.insert_list(5, :file, storage: storage)
       refute Enum.empty?(FileQuery.files_on_storage(storage))
     end
   end

@@ -70,7 +70,7 @@ defmodule Helix.Software.Internal.FileTest do
     end
 
     test "returns encrypted files" do
-      target_storage = Factory.insert(:storage, %{files: []})
+      target_storage = Factory.insert(:storage, files: [])
       Factory.insert_list(5, :file, storage: target_storage, crypto_version: 1)
 
       files = FileInternal.get_files_on_target_storage(target_storage)
@@ -93,7 +93,7 @@ defmodule Helix.Software.Internal.FileTest do
       assert params.name == updated.name
 
       # update path
-      params = Map.take(Factory.params_for(:file), [:path])
+      params = %{path: "/foo/bar"}
       {:ok, updated} = FileInternal.update(file, params)
 
       refute file.path == updated.path
@@ -113,7 +113,7 @@ defmodule Helix.Software.Internal.FileTest do
 
   describe "copying" do
     test "to another path in the same storage" do
-      path = Factory.params_for(:file).path
+      path = "/baz"
       origin = Factory.insert(:file)
 
       {:ok, copy} = FileInternal.copy(origin, origin.storage, path)
@@ -149,7 +149,7 @@ defmodule Helix.Software.Internal.FileTest do
   describe "moving" do
     test "to another path" do
       file = Factory.insert(:file)
-      path = Factory.params_for(:file).path
+      path = Factory.build(:file).path
 
       {:ok, file} = FileInternal.move(file, path)
 
@@ -189,6 +189,7 @@ defmodule Helix.Software.Internal.FileTest do
     end
   end
 
+  @tag :pending
   test "setting modules" do
     file = Factory.insert(:file)
     modules = generate_software_modules(file.software_type)
@@ -210,6 +211,7 @@ defmodule Helix.Software.Internal.FileTest do
       assert modules == file_modules
     end
 
+    @tag :pending
     test "returns empty map when nothing is found" do
       file = Factory.insert(:file)
       file_modules = FileInternal.get_modules(file)

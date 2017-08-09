@@ -76,6 +76,11 @@ defmodule Helix.Process.State.TOP.Server do
     GenServer.cast(pid, {:reset, :processes, processes})
   end
 
+  @doc false
+  def force_stop(pid) do
+    GenServer.stop(pid)
+  end
+
   @spec init(Server.id) ::
     {:ok, state}
     | {:stop, reason :: term}

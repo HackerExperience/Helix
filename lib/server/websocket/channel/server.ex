@@ -7,7 +7,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Network
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Model.Server
   alias Helix.Server.Public.Server, as: ServerPublic
@@ -19,8 +18,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Process.Model.Process.ProcessConclusionEvent
   alias Helix.Process.Model.Process.ProcessCreatedEvent
-
-  @internet_id Network.ID.cast!("::")
 
   # Joining into player's own gateway
   def join("server:" <> gateway_id, %{"gateway_id" => gateway_id}, socket) do
@@ -117,22 +114,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
     message = %{data: %{logs: ServerPublic.log_index(server_id)}}
 
     {:reply, {:ok, message}, socket}
-  end
-
-  def handle_in("log.delete", %{log_id: log_id}, socket) do
-    target_id = socket.assigns.servers.destination
-    gateway_id = socket.assigns.servers.gateway
-
-    case ServerPublic.log_delete(gateway_id, target_id, @internet_id, log_id) do
-      :ok ->
-        {:reply, :ok, socket}
-      {:error, :nxlog} ->
-        message = %{type: "error", data: %{message: "Log not found"}}
-        {:reply, {:error, message}, socket}
-      {:error, :unknown} ->
-        message = %{type: "error", data: %{message: "Unexpected error"}}
-        {:reply, {:error, message}, socket}
-    end
   end
 
   def handle_in("process.index", _, socket) do

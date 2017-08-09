@@ -32,4 +32,9 @@ defmodule Helix.Log.Query.Log do
   """
   defdelegate get_logs_from_entity_on_server(server, entity),
     to: LogInternal
+
+  @spec count_revisions_of_entity(Log.t, Entity.id) ::
+    non_neg_integer
+  defdelegate count_revisions_of_entity(log, entity_id),
+    to: LogInternal
 end

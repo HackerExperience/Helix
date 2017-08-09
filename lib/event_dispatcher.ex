@@ -88,7 +88,7 @@ defmodule Helix.Event.Dispatcher do
     Process.Event.Cracker,
     :firewall_stopped
 
-  event Software.Model.SoftwareType.LogDeleter.ProcessConclusionEvent,
+  event Software.Model.SoftwareType.LogForge.ProcessConclusionEvent,
     Log.Event.Log,
-    :log_deleter_conclusion
+    :log_forge_conclusion
 end

@@ -76,7 +76,7 @@ defmodule Helix.Log.Model.Log do
     struct
     |> cast(params, @update_fields)
     |> validate_required(@required_fields)
-    |> validate_number(:crypto_version, greater_than: 0)
+    |> validate_number(:crypto_version, greater_than_or_equal_to: 0)
   end
 
   defmodule Query do

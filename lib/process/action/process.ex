@@ -7,12 +7,15 @@ defmodule Helix.Process.Action.Process do
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
   alias Helix.Process.State.TOP.Server, as: ServerTOP
 
-  # REVIEW: Maybe receive gateway_id as a separate argument and inject it on the
-  #   params map
-  @spec create(Process.create_params) ::
+  @type on_create ::
     {:ok, Process.t}
     | {:error, Ecto.Changeset.t}
     | {:error, :resources}
+
+  # REVIEW: Maybe receive gateway_id as a separate argument and inject it on the
+  #   params map
+  @spec create(Process.create_params) ::
+    on_create
   @doc """
   Creates a new process
 
