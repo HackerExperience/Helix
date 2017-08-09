@@ -40,7 +40,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   def create(params, modules) do
     %__MODULE__{}
     |> cast(params, [:target_log_id, :message, :entity_id])
-    |> validate_required([:target_log_id, :message, :entity_id])
+    |> validate_required([:target_log_id, :entity_id])
     |> cast_modules(modules)
     |> format_return()
   end
@@ -84,7 +84,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     alias Ecto.Changeset
     alias Helix.Software.Model.SoftwareType.LogForge.ProcessConclusionEvent
 
-    @ram_base_factor 100
+    @ram_base_factor 10
 
     def dynamic_resources(_),
       do: [:cpu]

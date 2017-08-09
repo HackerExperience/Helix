@@ -157,6 +157,6 @@ defmodule Helix.Software.Factory do
     do: raise "invalid changeset generated on factory: #{inspect cs}"
 
   defp preload_everything(struct) do
-    Repo.preload(struct, struct.__struct__.__schema__(:associations), force: true)
+    Repo.preload(struct, struct.__struct__.__schema__(:associations))
   end
 end
