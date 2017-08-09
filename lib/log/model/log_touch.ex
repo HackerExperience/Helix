@@ -1,16 +1,15 @@
 defmodule Helix.Log.Model.LogTouch do
-  @moduledoc false
+  @moduledoc """
+  Links entities to logs.
 
-  # Links entities to logs
+  This model caches the relationship of entities that edited (or created) a log.
 
-  # This model caches the relationship of entities that edited (or created) a
-  # log.
+  Does so to allow the client to display all logs that a certain user edited at
+  some point of history (even if their revision was removed).
 
-  # Does so to allow the client to display all logs that a certain user edited
-  # at some point of history (even if their revision was removed)
-
-  # This record is opaque and should only be used on the Log domain to mark logs
-  # as touched by a certain entity
+  This record is opaque and should only be used on the `Helix.Log` domain to
+  mark logs as touched by a certain entity.
+  """
 
   use Ecto.Schema
 

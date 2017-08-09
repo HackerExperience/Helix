@@ -1,4 +1,5 @@
 defmodule Helix.Log.Event.Log do
+  @moduledoc false
 
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
@@ -15,11 +16,14 @@ defmodule Helix.Log.Event.Log do
   alias Helix.Software.Model.SoftwareType.LogForge.ProcessConclusionEvent,
     as: LogForgeComplete
 
+  @doc """
+  Logs that a file was downloaded from a certain server
+  """
   def file_download_conclusion(event = %DownloadComplete{}) do
-    to = event.to_server_id
     from = event.from_server_id
-    ip_to = ServerQuery.get_ip(to, event.network_id)
+    to = event.to_server_id
     ip_from = ServerQuery.get_ip(from, event.network_id)
+    ip_to = ServerQuery.get_ip(to, event.network_id)
 
     entity = EntityQuery.fetch_by_server(to)
 
@@ -33,13 +37,18 @@ defmodule Helix.Log.Event.Log do
     message_from = "File #{file_name} downloaded by #{ip_to}"
     message_to = "File #{file_name} downloaded from #{ip_from}"
 
-    # TODO: Wrap into a transaction and emit events only on success
-    Repo.transaction fn ->
-      LogAction.create(from, entity, message_from)
-      LogAction.create(to, entity, message_to)
+    {:ok, events} = Repo.transaction fn ->
+      {:ok, _, e1} = LogAction.create(from, entity, message_from)
+      {:ok, _, e2} = LogAction.create(to, entity, message_to)
+      e1 ++ e2
     end
+
+    Event.emit(events)
   end
 
+  @doc """
+  Forges a revision onto a log
+  """
   def log_forge_conclusion(event = %LogForgeComplete{}) do
     {:ok, _, events} =
       event.target_log_id
@@ -49,27 +58,32 @@ defmodule Helix.Log.Event.Log do
     Event.emit(events)
   end
 
+  @doc """
+  Logs that a server logged into another via SSH
+  """
   def connection_started(
     event = %ConnectionStartedEvent{connection_type: "ssh"})
   do
     tunnel = TunnelQuery.fetch(event.tunnel_id)
     network = event.network_id
-    gateway_id = tunnel.gateway_id
-    destination_id = tunnel.destination_id
+    gateway = tunnel.gateway_id
+    destination = tunnel.destination_id
 
-    gateway_ip = ServerQuery.get_ip(gateway_id, network)
-    destination_ip = ServerQuery.get_ip(destination_id, network)
+    gateway_ip = ServerQuery.get_ip(gateway, network)
+    destination_ip = ServerQuery.get_ip(destination, network)
 
-    entity = EntityQuery.fetch_by_server(gateway_id)
+    entity = EntityQuery.fetch_by_server(gateway)
 
-    message_gateway = "Logged into #{destination_ip}"
-    message_destination = "#{gateway_ip} logged in as root"
+    message_orig = "Logged into #{destination_ip}"
+    message_dest = "#{gateway_ip} logged in as root"
 
-    # TODO: Wrap into a transaction and emit events only on success
-    Repo.transaction fn ->
-      LogAction.create(gateway_id, entity, message_gateway)
-      LogAction.create(destination_id, entity, message_destination)
+    {:ok, events} = Repo.transaction fn ->
+      {:ok, _, e1} = LogAction.create(gateway, entity, message_orig)
+      {:ok, _, e2} = LogAction.create(destination, entity, message_dest)
+      e1 ++ e2
     end
+
+    Event.emit(events)
   end
 
   def connection_started(_) do

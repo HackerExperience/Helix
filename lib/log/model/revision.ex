@@ -1,8 +1,10 @@
 defmodule Helix.Log.Model.Revision do
-  @moduledoc false
+  @moduledoc """
+  Represents a change in the history of an in-game log.
 
-  # This record is opaque and should only be used on the Log domain to apply the
-  # stack mechanics of log forging
+  This record is opaque and should only be used on the `Helix.Log` domain to
+  apply the stack mechanics of log forging
+  """
 
   use Ecto.Schema
   use HELL.ID, field: :revision_id, meta: [0x0030, 0x0001]

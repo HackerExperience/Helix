@@ -46,8 +46,8 @@ defmodule Helix.Log.Query.Log do
       iex> count_revisions_of_entity(%Log{}, %Entity.ID{})
       2
 
-  Note that this number does include the "original revision" that is created
-  alongside with the new log
+  Note that creating the log (either by forging it or by doing an action whose
+  side-effect is to create a log) will create a revision for the log
   """
   defdelegate count_revisions_of_entity(log, entity),
     to: LogInternal

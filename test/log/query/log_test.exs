@@ -39,25 +39,24 @@ defmodule Helix.Log.Query.LogTest do
       entity = Entity.ID.generate()
 
       create_log = fn params ->
-        # FIXME
-        params = Map.merge(Factory.params_for(:log), params)
-        {:ok, log} = LogAction.create(
-          params.server_id,
-          params.entity_id,
-          params.message)
+        defaults = %{
+          server_id: Server.ID.generate(),
+          entity_id: Entity.ID.generate(),
+          message: "Default message"
+        }
+        p = Map.merge(defaults, params)
 
+        {:ok, log, _} = LogAction.create(p.server_id, p.entity_id, p.message)
         log
       end
 
       # Random logs that were not created by the entity
-      Enum.each(1..5, fn _ ->
-        create_log.(%{server_id: server})
-      end)
+      Enum.each(1..5, fn _ -> create_log.(%{server_id: server}) end)
 
+      entity_params = %{server_id: server, entity_id: entity}
       expected =
-        Enum.map(1..5, fn _ ->
-          create_log.(%{server_id: server, entity_id: entity})
-        end)
+        1..5
+        |> Enum.map(fn _ -> create_log.(entity_params) end)
         |> Enum.map(&(&1.log_id))
         |> MapSet.new()
 

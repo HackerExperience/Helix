@@ -71,7 +71,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       entity_id = EntityQuery.get_entity_id(account)
 
-      {:ok, log} = LogAction.create(server, entity_id, "Root logged in")
+      {:ok, log, _} = LogAction.create(server, entity_id, "Root logged in")
       file = Factory.insert(:file, software_type: :log_forger, storage: storage)
       modules = %{log_forger_create: 100, log_forger_edit: 100}
       # FIXME: this function should exist on the FileAction

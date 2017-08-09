@@ -1,6 +1,6 @@
 defmodule Helix.Log.Action.Log do
   @moduledoc """
-  Functions to work with in-game logs
+  Functions to work with in-game logs.
 
   An in-game log is a record registering an action done by an entity on a
   server.
@@ -16,45 +16,44 @@ defmodule Helix.Log.Action.Log do
   it's stack.
   """
 
-  alias Helix.Event
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
   alias Helix.Log.Internal.Log, as: LogInternal
   alias Helix.Log.Model.Log
 
   alias Helix.Log.Model.Log.LogCreatedEvent
-  alias Helix.Log.Model.Log.LogModifiedEvent
   alias Helix.Log.Model.Log.LogDeletedEvent
+  alias Helix.Log.Model.Log.LogModifiedEvent
 
   @spec create(Server.idt, Entity.idt, String.t) ::
-    {:ok, Log.t}
+    {:ok, Log.t, [LogCreatedEvent.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
   Creates a new log linked to `entity` on `server` with `message` as content.
   """
   def create(server, entity, message) do
     with {:ok, log} <- LogInternal.create(server, entity, message) do
-      Event.emit(%LogCreatedEvent{server_id: log.server_id})
+      event = %LogCreatedEvent{server_id: log.server_id}
 
-      {:ok, log}
+      {:ok, log, [event]}
     end
   end
 
   @spec revise(Log.t, Entity.idt, String.t, pos_integer) ::
-    {:ok, Log.t, [Event.t]}
+    {:ok, Log.t, [LogModifiedEvent.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
   Adds a revision over `log`.
 
   ### Params
-  - `entity` is the the entity that is doing the revision
-  - `message` is the new log's content
-  - `forge_version` is the version of log forger used to make this revision
+  - `entity` is the the entity that is doing the revision.
+  - `message` is the new log's content.
+  - `forge_version` is the version of log forger used to make this revision.
 
   ### Examples
 
       iex> revise(%Log{}, %Entity{}, "empty log", 100)
-      {:ok, %Log{message: "empty log"}, [%{}]}
+      {:ok, %Log{message: "empty log"}, [%LogModifiedEvent{}]}
   """
   def revise(log, entity, message, forge_version) do
     with \
@@ -67,15 +66,19 @@ defmodule Helix.Log.Action.Log do
   end
 
   @spec recover(Log.t) ::
-    {:ok, :deleted | :recovered, [Event.t]}
+    {:ok, :recovered, [LogCreatedEvent.t]}
+    | {:ok, :deleted, [LogDeletedEvent.t]}
     | {:error, :original_revision}
   @doc """
   Recovers `log` to a previous revision.
 
-  If the log is in it's original state and it is not a forged log, the operation
-  will fail; if the log is in it's original state and it's forged, it will be
-  deleted; otherwise the revision will be deleted and the log will be updated to
-  use the last revision's message.
+  ### Notes
+  - If the log is in it's original state and it is not a forged log, the
+  operation will fail with `{:error, :original_revision}`.
+  - If the log is in it's original state and it's forged, it will be deleted,
+  returning `{:ok, :deleted, [Helix.Event.t]}`.
+  - Otherwise the revision will be deleted and the log will be updated to use
+  the last revision's message, returning `{:ok, :recovered, [Helix.Event.t]}`.
   """
   def recover(log) do
     case LogInternal.recover(log) do
