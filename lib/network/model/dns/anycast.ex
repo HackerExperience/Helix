@@ -4,16 +4,17 @@ defmodule Helix.Network.Model.DNS.Anycast do
 
   import Ecto.Changeset
 
-  alias HELL.PK
+  alias HELL.Constant
+  alias Helix.Universe.NPC.Model.NPC
 
   @type t :: %__MODULE__{}
 
   @type creation_params :: %{
     :name => Constant.t,
-    :npc_id => PK
+    :npc_id => NPC.id
   }
 
-  @one_npc_per_name :dns_anycast_id_npc_unique_index
+  @one_npc_per_name :dns_anycast_npc_unique_index
 
   @creation_fields ~w/name npc_id/a
 
@@ -23,7 +24,7 @@ defmodule Helix.Network.Model.DNS.Anycast do
     field :name, :string,
       primary_key: true
 
-    field :npc_id, PK
+    field :npc_id, NPC.ID
   end
 
   def create_changeset(params) do
@@ -35,16 +36,19 @@ defmodule Helix.Network.Model.DNS.Anycast do
 
   defmodule Query do
 
-    alias Helix.Network.Model.DNS.Anycast
-
     import Ecto.Query, only: [where: 3]
 
-    @spec by_name(Ecto.Queryable.t, Constant.t) :: Ecto.Queryable.t
+    alias Helix.Universe.NPC.Model.NPC
+    alias Helix.Network.Model.DNS.Anycast
+
+    @spec by_name(Ecto.Queryable.t, String.t) ::
+      Ecto.Queryable.t
     def by_name(query \\ Anycast, name),
       do: where(query, [a], a.name == ^name)
 
-    @spec by_npc(Ecto.Queryable.t, PK.t) :: Ecto.Queryable.t
-    def by_npc(query \\ Anycast, npc_id),
-      do: where(query, [a], a.npc_id == ^npc_id)
+    @spec by_npc(Ecto.Queryable.t, NPC.idtb) ::
+      Ecto.Queryable.t
+    def by_npc(query \\ Anycast, npc),
+      do: where(query, [a], a.npc_id == ^npc)
   end
 end

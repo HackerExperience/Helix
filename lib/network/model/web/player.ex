@@ -4,7 +4,6 @@ defmodule Helix.Network.Model.Web.Player do
 
   import Ecto.Changeset
 
-  alias HELL.PK
   alias HELL.IPv4
 
   @type t :: %__MODULE__{}
@@ -34,11 +33,13 @@ defmodule Helix.Network.Model.Web.Player do
 
   defmodule Query do
 
-    alias Helix.Network.Model.Web.Player
-
     import Ecto.Query, only: [where: 3]
 
-    @spec by_ip(Ecto.Queryable.t, IPv4) :: Ecto.Queryable.t
+    alias HELL.IPv4
+    alias Helix.Network.Model.Web.Player
+
+    @spec by_ip(Ecto.Queryable.t, IPv4.t) ::
+      Ecto.Queryable.t
     def by_ip(query \\ Player, ip),
       do: where(query, [w], w.ip == ^ip)
   end

@@ -18,25 +18,36 @@ defmodule Helix.Universe.NPC.Model.Seed do
   end
 
   @source [
-    %{key: "DC0", type: :download_center}
+    %{key: "DC0", type: :download_center},
+    %{key: "Bank1", type: :bank}
   ]
 
   @dns %{
-    "DC0" => "dc.com"
+    "DC0" => "dc.com",
+    "Bank1" => "bank.com"
   }
 
   @servers %{
-    "DC0" => [%{spec: "todo", ip: "1.2.3.4"}]
+    "DC0" => [%{spec: "todo", ip: "1.2.3.4"}],
+    "Bank1" => [%{spec: "todo"}]
   }
 
   @ids %{
     "DC0" => %{
       npc: "2::920e:c06c:abea:b249:a158",
       servers: ["10::15c1:d147:47f9:b4b2:cbbd"]
+    },
+    "Bank1" => %{
+      npc: "2::920e:c06c:abea:b249:a159",
+      servers: ["10::15c1:d147:47f9:b4b2:cbbe"]
     }
   }
 
-  defp generate_seed() do
+  @custom %{
+    "Bank1" => %{name: "Bank One"}
+  }
+
+  defp generate_seed do
     Enum.map(@source, fn(npc) ->
       generate_entry(npc.key, npc.type)
     end)
@@ -57,14 +68,15 @@ defmodule Helix.Universe.NPC.Model.Seed do
       id: ids.npc,
       type: type,
       servers: server_entries,
-      anycast: Map.get(@dns, key, false)
+      anycast: Map.get(@dns, key, false),
+      custom: Map.get(@custom, key, false)
     }
   end
 
   defp server_entry({server, id}) do
-    %{id: id, spec: server.spec, static_ip: server.ip}
+    %{id: id, spec: server.spec, static_ip: Map.get(server, :ip, false)}
   end
 
-  defp stop(),
-    do: raise RuntimeError
+  defp stop,
+    do: raise "Your seed config is invalid"
 end

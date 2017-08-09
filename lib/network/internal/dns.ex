@@ -1,8 +1,27 @@
 defmodule Helix.Network.Internal.DNS do
 
-  alias Helix.Network.Model.DNS.Unicast
   alias Helix.Network.Model.DNS.Anycast
+  alias Helix.Network.Model.DNS.Unicast
+  alias Helix.Network.Model.Network
   alias Helix.Network.Repo
+
+  @spec lookup_unicast(Network.id, String.t) ::
+    Unicast.t
+    | nil
+  def lookup_unicast(network, name) do
+    name
+    |> Unicast.Query.by_name(network)
+    |> Repo.one
+  end
+
+  @spec lookup_anycast(String.t) ::
+    Anycast.t
+    | nil
+  def lookup_anycast(name) do
+    name
+    |> Anycast.Query.by_name()
+    |> Repo.one
+  end
 
   @spec register_unicast(Unicast.creation_params) ::
     {:ok, Unicast.t}
@@ -13,10 +32,11 @@ defmodule Helix.Network.Internal.DNS do
     |> Repo.insert
   end
 
-  @spec deregister_unicast(String.t) :: no_return
-  def deregister_unicast(name) do
+  @spec deregister_unicast(Network.id, String.t) ::
+    :ok
+  def deregister_unicast(network, name) do
     name
-    |> Unicast.Query.by_name()
+    |> Unicast.Query.by_name(network)
     |> Repo.delete_all()
 
     :ok
@@ -28,29 +48,16 @@ defmodule Helix.Network.Internal.DNS do
   def register_anycast(params) do
     params
     |> Anycast.create_changeset()
-    |> Repo.insert
+    |> Repo.insert()
   end
 
-  @spec deregister_anycast(String.t) :: no_return
+  @spec deregister_anycast(String.t) ::
+    :ok
   def deregister_anycast(name) do
     name
     |> Anycast.Query.by_name()
     |> Repo.delete_all()
 
     :ok
-  end
-
-  @spec lookup_unicast(String.t) :: Unicast.t | nil
-  def lookup_unicast(name) do
-    name
-    |> Unicast.Query.by_name()
-    |> Repo.one
-  end
-
-  @spec lookup_anycast(String.t) :: Anycast.t | nil
-  def lookup_anycast(name) do
-    name
-    |> Anycast.Query.by_name()
-    |> Repo.one
   end
 end

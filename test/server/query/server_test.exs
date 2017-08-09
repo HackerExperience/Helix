@@ -7,7 +7,9 @@ defmodule Helix.Server.Query.ServerTest do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
+  alias HELL.TestHelper.Setup
   alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Network.Helper, as: NetworkHelper
   alias Helix.Server.Factory
 
   describe "fetch/1" do
@@ -32,6 +34,16 @@ defmodule Helix.Server.Query.ServerTest do
       assert server.server_id == fetched.server_id
 
       CacheHelper.sync_test()
+    end
+  end
+
+  describe "get_ip" do
+    test "gets ip" do
+      {server, _} = Setup.server()
+
+      ip = ServerQuery.get_ip(server.server_id, NetworkHelper.internet_id)
+
+      assert ip
     end
   end
 end
