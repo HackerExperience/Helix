@@ -5,7 +5,6 @@ defmodule Helix.Software.Action.Flow.File do
   alias Helix.Event
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Process.Action.Process, as: ProcessAction
-  alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Model.File
@@ -13,11 +12,6 @@ defmodule Helix.Software.Action.Flow.File do
   alias Software.Firewall.ProcessType.Passive, as: FirewallPassive
   alias Helix.Software.Model.SoftwareType.LogForge, as: LogForge
 
-  @spec execute_file(File.t, Server.id, map) ::
-    {:ok, Process.t}
-    | {:error, :notexecutable}
-    | {:error, :resources}
-    | {:error, Ecto.Changeset.t}
   @doc """
   Starts the process defined by `file` on `server`
 
@@ -25,7 +19,7 @@ defmodule Helix.Software.Action.Flow.File do
 
   If the process can not be started on the server, returns the respective error
   """
-  def execute_file(file, server, params \\ %{}),
+  def execute_file(file = %File{}, server, params \\ %{}),
     do: start_file_process(file, server, params)
 
   @spec start_file_process(%File{software_type: :firewall}, Server.idt, map) ::
@@ -55,12 +49,12 @@ defmodule Helix.Software.Action.Flow.File do
     end
   end
 
-  @spec start_file_process(%File{software_type: :log_forge}, Server.idt, LogForge.create_params) ::
+  @spec start_file_process(%File{software_type: :log_forger}, Server.idt, LogForge.create_params) ::
     ProcessAction.on_create
     | {:error, {:log, :notfound}}
     | {:error, Ecto.Changeset.t}
   defp start_file_process(
-    file = %File{software_type: :log_forge},
+    file = %File{software_type: :log_forger},
     server,
     params)
   do
@@ -81,7 +75,7 @@ defmodule Helix.Software.Action.Flow.File do
         file_id: file.file_id,
         objective: objective,
         process_data: process_data,
-        process_type: "log_forge"
+        process_type: :log_forger
       }
 
       # TODO: emit process started event
@@ -89,7 +83,7 @@ defmodule Helix.Software.Action.Flow.File do
     end
   end
 
-  defp start_file_process(%File{}, _, _) do
+  defp start_file_process(_, _, _) do
     {:error, :notexecutable}
   end
 end

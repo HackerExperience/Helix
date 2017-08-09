@@ -74,7 +74,8 @@ defmodule Helix.Software.Model.File do
 
     has_many :file_modules, FileModule,
       foreign_key: :file_id,
-      references: :file_id
+      references: :file_id,
+      on_replace: :delete
 
     timestamps()
   end
