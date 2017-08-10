@@ -47,11 +47,12 @@ defmodule Helix.Software.Action.Flow.FileDownload do
       with \
         {:ok, connection, events} <- start_connection.(),
         on_fail(fn -> TunnelAction.close_connection(connection) end),
-        on_done(fn -> Event.emit(events) end),
+        on_success(fn -> Event.emit(events) end),
 
         params = %{params| connection_id: connection.connection_id},
 
-        {:ok, process} = ProcessAction.create(params)
+        {:ok, process, events} = ProcessAction.create(params),
+        on_success(fn -> Event.emit(events) end)
       do
         # Yay!
         # TODO: what is the proper return ?

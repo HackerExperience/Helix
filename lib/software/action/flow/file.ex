@@ -4,27 +4,39 @@ defmodule Helix.Software.Action.Flow.File do
 
   alias Helix.Event
   alias Helix.Log.Query.Log, as: LogQuery
+  alias Helix.Process.Model.Process
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Server.Model.Server
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
-  alias Software.Firewall.ProcessType.Passive, as: FirewallPassive
+  alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: FirewallPassive
   alias Helix.Software.Model.SoftwareType.LogForge
 
+  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
+
   @doc """
-  Starts the process defined by `file` on `server`
+  Starts the process defined by `file` on `server`.
 
   If `file` is not an executable software, returns `{:error, :notexecutable}`.
 
-  If the process can not be started on the server, returns the respective error
+  If the process can not be started on the server, returns the respective error.
   """
-  def execute_file(file = %File{}, server, params \\ %{}),
-    do: start_file_process(file, server, params)
+  def execute_file(file = %File{}, server, params \\ %{}) do
+    server = Server.ID.cast!(server)
 
-  @spec start_file_process(%File{software_type: :firewall}, Server.idt, map) ::
-    Helix.Process.Action.Process.on_create
-  defp start_file_process(file = %File{software_type: :firewall}, server, _) do
+    case file do
+      %File{software_type: :firewall} ->
+        firewall(file, server, params)
+      %File{software_type: :log_forger} ->
+        log_forger(file, server, params)
+      %File{} ->
+        {:error, :notexecutable}
+    end
+  end
+
+  @spec firewall(File.t_of_type(:firewall), Server.id, map) ::
+    term
+  defp firewall(file, server, _) do
     %{firewall_passive: version} = FileQuery.get_modules(file)
     process_data = %FirewallPassive{version: version}
 
@@ -37,27 +49,25 @@ defmodule Helix.Software.Action.Flow.File do
     }
 
     flowing do
-      with {:ok, process} <- ProcessAction.create(params) do
+      with {:ok, process, p_events} <- ProcessAction.create(params) do
         event = %FirewallStartedEvent{
           gateway_id: server,
           version: version
         }
 
+        Event.emit(p_events)
         Event.emit(event)
         {:ok, process}
       end
     end
   end
 
-  @spec start_file_process(%File{software_type: :log_forger}, Server.idt, LogForge.create_params) ::
-    ProcessAction.on_create
+  @spec log_forger(File.t_of_type(:log_forger), Server.id, LogForge.create_params) ::
+    {:ok, Process.t}
+    | ProcessAction.on_create_error
     | {:error, {:log, :notfound}}
     | {:error, Ecto.Changeset.t}
-  defp start_file_process(
-    file = %File{software_type: :log_forger},
-    server,
-    params)
-  do
+  defp log_forger(file, server, params) do
     with \
       modules = FileQuery.get_modules(file),
       {:ok, process_data} <- LogForge.create(params, modules),
@@ -78,12 +88,10 @@ defmodule Helix.Software.Action.Flow.File do
         process_type: "log_forger"
       }
 
-      # TODO: emit process started event
-      ProcessAction.create(process_params)
-    end
-  end
+      {:ok, process, events} = ProcessAction.create(process_params)
 
-  defp start_file_process(_, _, _) do
-    {:error, :notexecutable}
+      Event.emit(events)
+      {:ok, process}
+    end
   end
 end

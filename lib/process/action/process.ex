@@ -1,6 +1,5 @@
 defmodule Helix.Process.Action.Process do
 
-  alias Helix.Event
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.ProcessCreatedEvent
@@ -8,8 +7,11 @@ defmodule Helix.Process.Action.Process do
   alias Helix.Process.State.TOP.Server, as: ServerTOP
 
   @type on_create ::
-    {:ok, Process.t}
-    | {:error, Ecto.Changeset.t}
+    {:ok, Process.t, [ProcessCreatedEvent.t]}
+    | on_create_error
+
+  @type on_create_error ::
+    {:error, Ecto.Changeset.t}
     | {:error, :resources}
 
   # REVIEW: Maybe receive gateway_id as a separate argument and inject it on the
@@ -34,7 +36,7 @@ defmodule Helix.Process.Action.Process do
         process_data: %Firewall.ProcessType.Passive{version: 1},
         process_type: "firewall_passive"
       })
-      {:ok, %Process{}}
+      {:ok, %Process{}, [%{}]}
   """
   def create(params) do
     # TODO: i don't like this with here as it is. I think getting the TOP pid
@@ -44,16 +46,13 @@ defmodule Helix.Process.Action.Process do
       {:ok, pid} = ManagerTOP.prepare_top(gateway),
       {:ok, process} <- ServerTOP.create(pid, params)
     do
-      # Event definition doesn't belongs here
       event = %ProcessCreatedEvent{
         process_id: process.process_id,
         gateway_id: process.gateway_id,
         target_id: process.target_server_id
       }
 
-      Event.emit(event)
-
-      {:ok, process}
+      {:ok, process, [event]}
     end
   end
 

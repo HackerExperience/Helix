@@ -15,6 +15,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
   alias Helix.Account.Factory, as: AccountFactory
   alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Process.TOPHelper
   alias Helix.Software.Factory
 
   @moduletag :integration
@@ -88,10 +89,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       assert %LogForge{} = process.process_data
       assert "log_forger" == process.process_type
 
-      # FIXME
-      server
-      |> Helix.Process.State.TOP.Manager.get()
-      |> Helix.Process.State.TOP.Server.force_stop()
+      TOPHelper.top_stop(server)
 
       CacheHelper.sync_test()
     end
