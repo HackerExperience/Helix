@@ -5,8 +5,11 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Ecto.Changeset
   alias Helix.Log.Model.Log
   alias Helix.Entity.Model.Entity
+  alias Helix.Process.API.View.Process, as: ProcessView
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.LogForge
+
+  alias Helix.Process.Factory, as: ProcessFactory
 
   describe "create/2" do
     test "returns changeset if invalid" do
@@ -187,5 +190,170 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       assert rev3 > rev2
       assert rev4 > rev3
     end
+  end
+
+  describe "ProcessView.render/4 for edit operation" do
+    test "returns target_log_id on remote" do
+      process = process_to_render(:edit)
+      data = process.process_data
+      server = Server.ID.generate()
+      entity = Entity.ID.generate()
+
+      rendered = ProcessView.render(data, process, server, entity)
+
+      assert %{target_log_id: %Log.ID{}} = rendered
+    end
+
+    test "returns target_log_id and version on local" do
+      process = process_to_render(:edit)
+      data = process.process_data
+      server = process.gateway_id
+      entity = Entity.ID.generate()
+      version = data.version
+
+      rendered = ProcessView.render(data, process, server, entity)
+
+      assert %{target_log_id: %Log.ID{}, version: ^version} = rendered
+    end
+
+    test "returns a map on remote" do
+      process = process_to_render(:edit)
+      data = process.process_data
+      server = Server.ID.generate()
+      entity = Entity.ID.generate()
+
+      rendered = ProcessView.render(data, process, server, entity)
+
+      keys = Map.keys(rendered)
+      expected = ~w/
+        process_id
+        gateway_id
+        target_server_id
+        network_id
+        connection_id
+        process_type
+        target_log_id/a
+
+      assert Enum.sort(expected) == Enum.sort(keys)
+    end
+
+    test "returns a map on local" do
+      process = process_to_render(:edit)
+      data = process.process_data
+      server = Server.ID.generate()
+      entity = data.entity_id
+
+      rendered = ProcessView.render(data, process, server, entity)
+
+      keys = Map.keys(rendered)
+      expected = ~w/
+        process_id
+        gateway_id
+        target_server_id
+        network_id
+        connection_id
+        process_type
+        state
+        objective
+        processed
+        allocated
+        priority
+        creation_time
+        target_log_id
+        version/a
+
+      assert Enum.sort(expected) == Enum.sort(keys)
+    end
+  end
+
+  describe "ProcessView.render/4 for create operation" do
+    test "returns version on local" do
+      process = process_to_render(:create)
+      data = process.process_data
+      server = process.gateway_id
+      entity = Entity.ID.generate()
+      version = data.version
+
+      rendered = ProcessView.render(data, process, server, entity)
+
+      assert %{version: ^version} = rendered
+    end
+
+    test "returns a map on remote" do
+      process = process_to_render(:create)
+      data = process.process_data
+      server = Server.ID.generate()
+      entity = Entity.ID.generate()
+
+      rendered = ProcessView.render(data, process, server, entity)
+
+      keys = Map.keys(rendered)
+      expected = ~w/
+        process_id
+        gateway_id
+        target_server_id
+        network_id
+        connection_id
+        process_type/a
+
+      assert Enum.sort(expected) == Enum.sort(keys)
+    end
+
+    test "returns a map on local" do
+      process = process_to_render(:create)
+      data = process.process_data
+      server = Server.ID.generate()
+      entity = data.entity_id
+
+      rendered = ProcessView.render(data, process, server, entity)
+
+      keys = Map.keys(rendered)
+      expected = ~w/
+        process_id
+        gateway_id
+        target_server_id
+        network_id
+        connection_id
+        process_type
+        state
+        objective
+        processed
+        allocated
+        priority
+        creation_time
+        version/a
+
+      assert Enum.sort(expected) == Enum.sort(keys)
+    end
+  end
+
+  defp process_to_render(:edit) do
+    %{
+      base_process_to_render()|
+        process_data: %LogForge{
+          target_log_id: Log.ID.generate(),
+          entity_id: Entity.ID.generate(),
+          operation: "edit",
+          message: "",
+          version: 100
+        }
+    }
+  end
+
+  defp process_to_render(:create) do
+    %{
+      base_process_to_render()|
+        process_data: %LogForge{
+          target_server_id: Server.ID.generate(),
+          entity_id: Entity.ID.generate(),
+          operation: "create",
+          message: "",
+          version: 100
+        }
+    }
+  end
+
+  defp base_process_to_render do
+    ProcessFactory.build(:process)
   end
 end

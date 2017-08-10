@@ -193,7 +193,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
         :network_id => Network.id | nil,
         :connection_id => Connection.id | nil,
         :process_type => term,
-        :target_log_id => Log.id,
+        optional(:target_log_id) => Log.id,
         optional(:state) => State.state,
         optional(:objective) => Resources.t,
         optional(:processed) => Resources.t,
@@ -203,30 +203,27 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
         optional(:version) => non_neg_integer
       }
     def render(data, process = %{gateway_id: server}, server, _),
-      do: render_local(data, process)
+      do: do_render(data, process, :local)
     def render(data = %{entity_id: entity}, process, _, entity),
-      do: render_local(data, process)
+      do: do_render(data, process, :local)
     def render(data, process, _, _),
-      do: render_remote(data, process)
+      do: do_render(data, process, :remote)
 
-    defp render_local(data, process) do
-      base = take_data_from_process(process, :local)
-      complement = %{
-        target_log_id: data.target_log_id,
-        version: data.version
-      }
+    defp do_render(data, process, scope) do
+      base = take_data_from_process(process, scope)
+      complement = take_complement_from_data(data, scope)
 
       Map.merge(base, complement)
     end
 
-    defp render_remote(data, process) do
-      base = take_data_from_process(process, :remote)
-      complement = %{
-        target_log_id: data.target_log_id
-      }
-
-      Map.merge(base, complement)
-    end
+    defp take_complement_from_data(data = %{operation: "edit"}, :local),
+      do: %{target_log_id: data.target_log_id, version: data.version}
+    defp take_complement_from_data(data = %{operation: "edit"}, :remote),
+      do: %{target_log_id: data.target_log_id}
+    defp take_complement_from_data(data = %{operation: "create"}, :local),
+      do: %{version: data.version}
+    defp take_complement_from_data(%{operation: "create"}, :remote),
+      do: %{}
 
     defp take_data_from_process(process, :remote) do
       %{
