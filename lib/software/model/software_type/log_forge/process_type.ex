@@ -12,7 +12,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
 
   @type t :: %__MODULE__{
     target_log_id: Log.id | nil,
-    server_id: Server.id | nil,
+    target_server_id: Server.id | nil,
     entity_id: Entity.id,
     operation: String.t,
     message: String.t,
@@ -25,6 +25,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
       :entity_id => Entity.idtb,
       :operation => String.t,
       :message => String.t,
+      optional(:target_server_id) => Server.idtb,
       optional(:target_log_id) => Log.idtb,
       optional(atom) => any
     }
@@ -37,7 +38,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   embedded_schema do
     field :target_log_id, Log.ID
     field :entity_id, Entity.ID
-    field :server_id, Server.ID
+    field :target_server_id, Server.ID
 
     # TODO: use atom
     field :operation, :string
@@ -46,15 +47,15 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     field :version, :integer
   end
 
-  @spec create(create_params, Server.idt, File.modules) ::
+  @spec create(create_params, File.modules) ::
     {:ok, t}
     | {:error, Changeset.t}
-  def create(params, server, modules) do
+  def create(params, modules) do
     %__MODULE__{}
     |> cast(params, [:entity_id, :operation, :message])
     |> validate_required([:entity_id, :operation])
     |> validate_inclusion(:operation, ["edit", "create"])
-    |> cast_modules(params, server, modules)
+    |> cast_modules(params, modules)
     |> format_return()
   end
 
@@ -78,22 +79,22 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     %{cpu: data.version * @create_version_cost}
   end
 
-  @spec cast_modules(Changeset.t, create_params, Server.idt, File.modules) ::
+  @spec cast_modules(Changeset.t, create_params, File.modules) ::
     Changeset.t
-  defp cast_modules(changeset, params, server, modules) do
+  defp cast_modules(changeset, params, modules) do
     case get_change(changeset, :operation) do
       "create" ->
-        params = %{version: modules.log_forger_create, server_id: server}
         changeset
-        |> cast(params, [:server_id, :version])
-        |> validate_required([:server_id, :version])
+        |> cast(%{version: modules.log_forger_create}, [:version])
+        |> cast(params, [:target_server_id])
+        |> validate_required([:target_server_id, :version])
         |> validate_number(:version, greater_than: 0)
       "edit" ->
         changeset
         |> cast(%{version: modules.log_forger_edit}, [:version])
-        |> validate_number(:version, greater_than: 0)
         |> cast(params, [:target_log_id])
         |> validate_required([:target_log_id, :version])
+        |> validate_number(:version, greater_than: 0)
       _ ->
         # Changeset should already be invalid
         changeset
@@ -166,7 +167,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     defp conclusion_event(data = %{operation: "create"}) do
       %CreateConclusion{
         entity_id: data.entity_id,
-        server_id: data.server_id,
+        target_server_id: data.target_server_id,
         message: data.message,
         version: data.version
       }

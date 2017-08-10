@@ -10,50 +10,82 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
   describe "create/2" do
     test "returns changeset if invalid" do
-      server_id = Server.ID.generate()
-      params = %{}
       modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params = %{}
 
-      assert {:error, changeset} = LogForge.create(params, server_id, modules)
+      assert {:error, changeset} = LogForge.create(params, modules)
       assert %Changeset{valid?: false} = changeset
     end
 
     test "requires operation and entity_id" do
-      server_id = Server.ID.generate()
-      params = %{}
       modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params = %{}
 
       expected_errors = [:operation, :entity_id]
 
-      assert {:error, changeset} = LogForge.create(params, server_id, modules)
+      assert {:error, changeset} = LogForge.create(params, modules)
+      errors = Keyword.keys(changeset.errors)
+      assert Enum.all?(expected_errors, &(&1 in errors))
+    end
+
+    test "requires target_log_id when operation is edit" do
+      modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params = %{message: "", operation: "edit"}
+
+      expected_errors = [:target_log_id]
+
+      assert {:error, changeset} = LogForge.create(params, modules)
+      errors = Keyword.keys(changeset.errors)
+      assert Enum.all?(expected_errors, &(&1 in errors))
+    end
+
+    test "requires target_server_id when operation is create" do
+      modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params = %{message: "", operation: "create"}
+
+      expected_errors = [:target_server_id]
+
+      assert {:error, changeset} = LogForge.create(params, modules)
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
 
     test "accepts binary input" do
-      server_id = Server.ID.generate()
-      params = %{
+      modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params_edit = %{
         "target_log_id" => to_string(Log.ID.generate()),
         "message" => "WAKE ME UP INSIDE (can't wake up)",
         "operation" => "edit",
         "entity_id" => to_string(Entity.ID.generate())
       }
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params_create = %{
+        "target_server_id" => to_string(Server.ID.generate()),
+        "message" => "A weapon to surpass Metal Gear",
+        "operation" => "create",
+        "entity_id" => to_string(Entity.ID.generate())
+      }
 
-      assert {:ok, %LogForge{}} = LogForge.create(params, server_id, modules)
+      assert {:ok, %LogForge{}} = LogForge.create(params_edit, modules)
+      assert {:ok, %LogForge{}} = LogForge.create(params_create, modules)
     end
 
     test "accepts native erlang term entries" do
-      server_id = Server.ID.generate()
-      params = %{
+      modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params_edit = %{
         target_log_id: Log.ID.generate(),
         message: "Oh yeah",
         operation: "edit",
         entity_id: Entity.ID.generate()
       }
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
+      params_create = %{
+        target_server_id: Server.ID.generate(),
+        message: "Oh noes",
+        operation: "create",
+        entity_id: Entity.ID.generate()
+      }
 
-      assert {:ok, %LogForge{}} = LogForge.create(params, server_id, modules)
+      assert {:ok, %LogForge{}} = LogForge.create(params_edit, modules)
+      assert {:ok, %LogForge{}} = LogForge.create(params_create, modules)
     end
   end
 
@@ -77,6 +109,31 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       rev2 = LogForge.edit_objective(process_data, log, 2)
       rev3 = LogForge.edit_objective(process_data, log, 3)
       rev4 = LogForge.edit_objective(process_data, log, 20)
+
+      assert rev2 > rev1
+      assert rev3 > rev2
+      assert rev4 > rev3
+    end
+
+    test "returns a higher objective the higher the forger version is" do
+      data = %LogForge{
+        target_log_id: Log.ID.generate(),
+        entity_id: Entity.ID.generate(),
+        operation: "edit",
+        message: "Okay robot",
+        version: 100
+      }
+      log = %Log{
+        log_id: data.target_log_id,
+        server_id: Server.ID.generate(),
+        entity_id: Entity.ID.generate(),
+        message: ""
+      }
+
+      rev1 = LogForge.edit_objective(data, log, 1)
+      rev2 = LogForge.edit_objective(%{data| version: 200}, log, 1)
+      rev3 = LogForge.edit_objective(%{data| version: 300}, log, 1)
+      rev4 = LogForge.edit_objective(%{data| version: 999}, log, 1)
 
       assert rev2 > rev1
       assert rev3 > rev2
@@ -108,6 +165,27 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       # revision (ie: instead of using `3` as the revision count, we consider
       # `3 - 1`)
       assert y > x
+    end
+  end
+
+  describe "create_objective/1" do
+    test "returns a higher objective the higher the forger version is" do
+      data = %LogForge{
+        target_server_id: Server.ID.generate(),
+        entity_id: Entity.ID.generate(),
+        operation: "create",
+        message: "Digital style",
+        version: 100
+      }
+
+      rev1 = LogForge.create_objective(data)
+      rev2 = LogForge.create_objective(%{data| version: 200})
+      rev3 = LogForge.create_objective(%{data| version: 300})
+      rev4 = LogForge.create_objective(%{data| version: 999})
+
+      assert rev2 > rev1
+      assert rev3 > rev2
+      assert rev4 > rev3
     end
   end
 end

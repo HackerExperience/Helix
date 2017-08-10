@@ -69,7 +69,7 @@ defmodule Helix.Software.Action.Flow.File do
     | {:error, Ecto.Changeset.t}
   defp log_forger(file, server, params) do
     with \
-      {:ok, data} <- log_forger_prepare(file, server, params),
+      {:ok, data} <- log_forger_prepare(file, params),
       {:ok, process_params} <- log_forger_process_params(file, server, data),
       {:ok, process, events} <- ProcessAction.create(process_params)
     do
@@ -78,9 +78,9 @@ defmodule Helix.Software.Action.Flow.File do
     end
   end
 
-  defp log_forger_prepare(file, server, params) do
+  defp log_forger_prepare(file, params) do
     modules = FileQuery.get_modules(file)
-    LogForge.create(params, server, modules)
+    LogForge.create(params, modules)
   end
 
   defp log_forger_process_params(file, server, data = %{operation: "edit"}) do
@@ -109,6 +109,7 @@ defmodule Helix.Software.Action.Flow.File do
 
     process_params = %{
       gateway_id: server,
+      target_server_id: data.target_server_id,
       file_id: file.file_id,
       objective: objective,
       process_data: data,

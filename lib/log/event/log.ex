@@ -62,7 +62,7 @@ defmodule Helix.Log.Event.Log do
 
   def log_forge_conclusion(event = %LogForgeCreateComplete{}) do
     {:ok, _, events} = LogAction.create(
-      event.server_id,
+      event.target_server_id,
       event.entity_id,
       event.message,
       event.version)

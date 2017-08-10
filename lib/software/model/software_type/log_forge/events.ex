@@ -20,12 +20,12 @@ defmodule Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent do
   alias Helix.Server.Model.Server
 
   @type t :: %__MODULE__{
+    target_server_id: Server.id,
     entity_id: Entity.id,
-    server_id: Server.id,
     message: String.t,
     version: pos_integer
   }
 
-  @enforce_keys [:entity_id, :server_id, :message, :version]
-  defstruct [:entity_id, :server_id, :message, :version]
+  @enforce_keys [:target_server_id, :entity_id, :message, :version]
+  defstruct [:target_server_id, :entity_id, :message, :version]
 end

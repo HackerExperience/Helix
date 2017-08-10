@@ -18,7 +18,9 @@ defmodule Helix.Software.Action.Flow.FileTest do
   alias Helix.Test.Process.TOPHelper
   alias Helix.Software.Factory
 
-  describe "log_forger" do
+  # defp prepare_server_for_log_forge()
+
+  describe "log_forger 'edit' operation" do
     test "fails if target log doesn't exist" do
       account = AccountFactory.insert(:account)
 
@@ -81,6 +83,51 @@ defmodule Helix.Software.Action.Flow.FileTest do
         target_log_id: log.log_id,
         message: "",
         operation: "edit",
+        entity_id: entity_id
+      }
+
+      result = FileFlow.execute_file(file, server, params)
+      assert {:ok, process} = result
+      assert %LogForge{} = process.process_data
+      assert "log_forger" == process.process_type
+
+      TOPHelper.top_stop(server)
+
+      CacheHelper.sync_test()
+    end
+  end
+
+  describe "log_forger 'create' operation" do
+    test "starts log_forger process on success" do
+      account = AccountFactory.insert(:account)
+
+      {:ok, %{server: server}} = AccountFlow.setup_account(account)
+
+      :timer.sleep(250)
+      CacheHelper.sync_test()
+
+      storage =
+        server.motherboard_id
+        |> ComponentQuery.fetch()
+        |> MotherboardQuery.fetch()
+        |> MotherboardQuery.get_slots()
+        |> Enum.filter(&(&1.link_component_type == :hdd))
+        |> Enum.reject(&(is_nil(&1.link_component_id)))
+        |> Enum.map(&(&1.link_component_id))
+        |> List.first()
+        |> StorageQuery.fetch_by_hdd()
+
+      entity_id = EntityQuery.get_entity_id(account)
+
+      file = Factory.insert(:file, software_type: :log_forger, storage: storage)
+      modules = %{log_forger_create: 100, log_forger_edit: 100}
+      # FIXME: this function should exist on the FileAction
+      FileInternal.set_modules(file, modules)
+
+      params = %{
+        target_server_id: server,
+        message: "",
+        operation: "create",
         entity_id: entity_id
       }
 
