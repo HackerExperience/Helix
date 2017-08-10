@@ -13,8 +13,10 @@ defmodule Helix.Log.Event.Log do
 
   alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
     as: DownloadComplete
-  alias Helix.Software.Model.SoftwareType.LogForge.ProcessConclusionEvent,
-    as: LogForgeComplete
+  alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
+    as: LogForgeEditComplete
+  alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
+    as: LogForgeCreateComplete
 
   @doc """
   Logs that a file was downloaded from a certain server
@@ -47,13 +49,23 @@ defmodule Helix.Log.Event.Log do
   end
 
   @doc """
-  Forges a revision onto a log
+  Forges a revision onto a log or creates a fake new log
   """
-  def log_forge_conclusion(event = %LogForgeComplete{}) do
+  def log_forge_conclusion(event = %LogForgeEditComplete{}) do
     {:ok, _, events} =
       event.target_log_id
       |> LogQuery.fetch()
       |> LogAction.revise(event.entity_id, event.message, event.version)
+
+    Event.emit(events)
+  end
+
+  def log_forge_conclusion(event = %LogForgeCreateComplete{}) do
+    {:ok, _, events} = LogAction.create(
+      event.server_id,
+      event.entity_id,
+      event.message,
+      event.version)
 
     Event.emit(events)
   end

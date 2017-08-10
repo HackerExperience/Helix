@@ -69,29 +69,52 @@ defmodule Helix.Software.Action.Flow.File do
     | {:error, Ecto.Changeset.t}
   defp log_forger(file, server, params) do
     with \
-      modules = FileQuery.get_modules(file),
-      {:ok, process_data} <- LogForge.create(params, modules),
-      log_id = process_data.target_log_id,
-      target_log = %{} <- LogQuery.fetch(log_id) || {:error, {:log, :notfound}}
+      {:ok, data} <- log_forger_prepare(file, server, params),
+      {:ok, process_params} <- log_forger_process_params(file, server, data),
+      {:ok, process, events} <- ProcessAction.create(process_params)
     do
-      revision_count = LogQuery.count_revisions_of_entity(
-        target_log,
-        process_data.entity_id)
-      objective = LogForge.objective(process_data, target_log, revision_count)
-
-      process_params = %{
-        gateway_id: server,
-        target_server_id: target_log.server_id,
-        file_id: file.file_id,
-        objective: objective,
-        process_data: process_data,
-        process_type: "log_forger"
-      }
-
-      {:ok, process, events} = ProcessAction.create(process_params)
-
       Event.emit(events)
       {:ok, process}
     end
+  end
+
+  defp log_forger_prepare(file, server, params) do
+    modules = FileQuery.get_modules(file)
+    LogForge.create(params, server, modules)
+  end
+
+  defp log_forger_process_params(file, server, data = %{operation: "edit"}) do
+    with \
+      log_id = data.target_log_id,
+      log = %{} <- LogQuery.fetch(log_id) || {:error, {:log, :notfound}}
+    do
+      revision_count = LogQuery.count_revisions_of_entity(log, data.entity_id)
+      objective = LogForge.edit_objective(data, log, revision_count)
+
+      process_params = %{
+        gateway_id: server,
+        target_server_id: log.server_id,
+        file_id: file.file_id,
+        objective: objective,
+        process_data: data,
+        process_type: "log_forger"
+      }
+
+      {:ok, process_params}
+    end
+  end
+
+  defp log_forger_process_params(file, server, data = %{operation: "create"}) do
+    objective = LogForge.create_objective(data)
+
+    process_params = %{
+      gateway_id: server,
+      file_id: file.file_id,
+      objective: objective,
+      process_data: data,
+      process_type: "log_forger"
+    }
+
+    {:ok, process_params}
   end
 end

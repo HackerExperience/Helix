@@ -2,8 +2,8 @@ defmodule Helix.Log.Event.LogTest do
 
   use Helix.Test.IntegrationCase
 
-  alias Helix.Software.Model.SoftwareType.LogForge.ProcessConclusionEvent,
-    as: LogForgeComplete
+  alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
+    as: LogForgeEditComplete
   alias Helix.Log.Event.Log, as: EventHandler
   alias Helix.Log.Query.Log, as: LogQuery
 
@@ -24,7 +24,7 @@ defmodule Helix.Log.Event.LogTest do
       entity = EntityFactory.insert(:entity)
       message = "I just got hidden"
 
-      event = %LogForgeComplete{
+      event = %LogForgeEditComplete{
         target_log_id: target_log.log_id,
         entity_id: entity.entity_id,
         message: message,

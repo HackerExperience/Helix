@@ -25,14 +25,14 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Log.Model.Log.LogDeletedEvent
   alias Helix.Log.Model.Log.LogModifiedEvent
 
-  @spec create(Server.idt, Entity.idt, String.t) ::
+  @spec create(Server.idt, Entity.idt, String.t, pos_integer | nil) ::
     {:ok, Log.t, [LogCreatedEvent.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
   Creates a new log linked to `entity` on `server` with `message` as content.
   """
-  def create(server, entity, message) do
-    with {:ok, log} <- LogInternal.create(server, entity, message) do
+  def create(server, entity, message, forge \\ nil) do
+    with {:ok, log} <- LogInternal.create(server, entity, message, forge) do
       event = %LogCreatedEvent{server_id: log.server_id}
 
       {:ok, log, [event]}

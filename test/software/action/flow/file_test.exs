@@ -18,8 +18,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
   alias Helix.Test.Process.TOPHelper
   alias Helix.Software.Factory
 
-  @moduletag :integration
-
   describe "log_forger" do
     test "fails if target log doesn't exist" do
       account = AccountFactory.insert(:account)
@@ -44,6 +42,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       params = %{
         target_log_id: Log.ID.generate(),
         message: "I say hey hey",
+        operation: "edit",
         entity_id: EntityQuery.get_entity_id(account)
       }
 
@@ -81,6 +80,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       params = %{
         target_log_id: log.log_id,
         message: "",
+        operation: "edit",
         entity_id: entity_id
       }
 
