@@ -12,8 +12,8 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
     alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
     alias Helix.Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
 
-    @ram_base_factor 300
-    @cpu_base_factor 100
+    @ram_base_factor 5
+    @cpu_base_factor 2
 
     def dynamic_resources(_),
       do: []

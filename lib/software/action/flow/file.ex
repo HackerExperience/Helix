@@ -21,7 +21,7 @@ defmodule Helix.Software.Action.Flow.File do
 
   If the process can not be started on the server, returns the respective error.
   """
-  def execute_file(file = %File{}, server, params \\ %{}) do
+  def execute_file(file = %File{}, server, params) do
     server = Server.ID.cast!(server)
 
     case file do
@@ -48,15 +48,17 @@ defmodule Helix.Software.Action.Flow.File do
       process_type: "firewall_passive"
     }
 
-    flowing do
-      with {:ok, process, p_events} <- ProcessAction.create(params) do
-        event = %FirewallStartedEvent{
-          gateway_id: server,
-          version: version
-        }
+    event = %FirewallStartedEvent{
+      gateway_id: server,
+      version: version
+    }
 
-        Event.emit(p_events)
-        Event.emit(event)
+    flowing do
+      with \
+        {:ok, process, p_events} <- ProcessAction.create(params),
+        on_success(fn -> Event.emit(p_events) end),
+        on_success(fn -> Event.emit(event) end)
+      do
         {:ok, process}
       end
     end
@@ -68,13 +70,15 @@ defmodule Helix.Software.Action.Flow.File do
     | {:error, {:log, :notfound}}
     | {:error, Ecto.Changeset.t}
   defp log_forger(file, server, params) do
-    with \
-      {:ok, data} <- log_forger_prepare(file, params),
-      {:ok, process_params} <- log_forger_process_params(file, server, data),
-      {:ok, process, events} <- ProcessAction.create(process_params)
-    do
-      Event.emit(events)
-      {:ok, process}
+    flowing do
+      with \
+        {:ok, data} <- log_forger_prepare(file, params),
+        {:ok, process_params} <- log_forger_process_params(file, server, data),
+        {:ok, process, events} <- ProcessAction.create(process_params),
+        on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, process}
+      end
     end
   end
 

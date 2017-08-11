@@ -63,7 +63,6 @@ defmodule Helix.Process.Query.ProcessTest do
       assert MapSet.equal?(expected, result)
 
       TOPHelper.top_stop(server)
-      CacheHelper.sync_test()
     end
   end
 
@@ -105,7 +104,6 @@ defmodule Helix.Process.Query.ProcessTest do
       assert 4 == processes_on_server
 
       TOPHelper.top_stop(server)
-      CacheHelper.sync_test()
     end
   end
 
@@ -149,7 +147,6 @@ defmodule Helix.Process.Query.ProcessTest do
 
       TOPHelper.top_stop(server1)
       TOPHelper.top_stop(server2)
-      CacheHelper.sync_test()
     end
   end
 end
