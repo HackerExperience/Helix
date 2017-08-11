@@ -2,15 +2,14 @@ defmodule Helix.Universe.Bank.Model.ATM do
 
   use Ecto.Schema
 
-  alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.Bank.Model.Bank
 
   import Ecto.Changeset
 
+  @type idtb :: id | t | String.t
   @type id :: Server.id
-
   @type t :: %__MODULE__{
     atm_id: id,
     bank_id: NPC.id,

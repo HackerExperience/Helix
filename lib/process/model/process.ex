@@ -3,6 +3,8 @@ defmodule Helix.Process.Model.Process do
   use Ecto.Schema
   use HELL.ID, field: :process_id, meta: [0x0021]
 
+  import Ecto.Changeset
+
   alias Ecto.Changeset
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
@@ -14,8 +16,6 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.Model.Process.State
-
-  import Ecto.Changeset
 
   @type t :: %__MODULE__{
     process_id: id,
@@ -39,6 +39,43 @@ defmodule Helix.Process.Model.Process do
   }
 
   @type process :: %__MODULE__{} | %Ecto.Changeset{data: %__MODULE__{}}
+
+  @type create_params :: %{
+    :gateway_id => Server.idtb,
+    :target_server_id => Server.idtb,
+    :process_data => ProcessType.t,
+    :process_type => String.t,
+    optional(:file_id) => File.idtb,
+    optional(:network_id) => Network.idtb,
+    optional(:connection_id) => Connection.idtb,
+    optional(:objective) => map
+  }
+
+  @type update_params :: %{
+    optional(:state) => State.state,
+    optional(:priority) => 0..5,
+    optional(:creation_time) => DateTime.t,
+    optional(:updated_time) => DateTime.t,
+    optional(:estimated_time) => DateTime.t | nil,
+    optional(:limitations) => map,
+    optional(:objective) => map,
+    optional(:processed) => map,
+    optional(:allocated) => map,
+    optional(:minimum) => map,
+    optional(:process_data) => ProcessType.t
+  }
+
+  @creation_fields ~w/
+    process_data
+    process_type
+    gateway_id
+    target_server_id
+    file_id
+    network_id
+    connection_id/a
+  @update_fields ~w/state priority updated_time estimated_time minimum/a
+
+  @required_fields ~w/gateway_id target_server_id process_data process_type/a
 
   schema "processes" do
     field :process_id, ID,
@@ -105,29 +142,6 @@ defmodule Helix.Process.Model.Process do
       references: :process_id
   end
 
-  @creation_fields ~w/
-    process_data
-    process_type
-    gateway_id
-    target_server_id
-    file_id
-    network_id
-    connection_id/a
-  @update_fields ~w/state priority updated_time estimated_time minimum/a
-
-  @required_fields ~w/gateway_id target_server_id process_data process_type/a
-
-  @type create_params :: %{
-    :gateway_id => Server.idtb,
-    :target_server_id => Server.idtb,
-    :process_data => ProcessType.t,
-    :process_type => String.t,
-    optional(:file_id) => File.idtb,
-    optional(:network_id) => Network.idtb,
-    optional(:connection_id) => Connection.idtb,
-    optional(:objective) => map
-  }
-
   @spec create_changeset(create_params) ::
     Changeset.t
   def create_changeset(params) do
@@ -162,20 +176,6 @@ defmodule Helix.Process.Model.Process do
     |> put_embed(:processed, %{})
     |> put_embed(:allocated, %{})
   end
-
-  @type update_params :: %{
-    optional(:state) => State.state,
-    optional(:priority) => 0..5,
-    optional(:creation_time) => DateTime.t,
-    optional(:updated_time) => DateTime.t,
-    optional(:estimated_time) => DateTime.t | nil,
-    optional(:limitations) => map,
-    optional(:objective) => map,
-    optional(:processed) => map,
-    optional(:allocated) => map,
-    optional(:minimum) => map,
-    optional(:process_data) => ProcessType.t
-  }
 
   @spec update_changeset(process, update_params) ::
     Changeset.t

@@ -12,7 +12,6 @@ defmodule Helix.Universe.NPC.Helper do
   alias Helix.Server.Repo, as: ServerRepo
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.Bank
-  alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Model.Seed
   alias Helix.Universe.Repo, as: UniverseRepo
@@ -62,7 +61,7 @@ defmodule Helix.Universe.NPC.Helper do
   end
 
   def bank do
-    bank = Seed.search_by_type(:bank)
+    Seed.search_by_type(:bank)
   end
 
 end

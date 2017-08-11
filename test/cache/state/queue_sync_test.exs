@@ -15,6 +15,7 @@ defmodule Helix.Cache.State.QueueSyncTest do
   end
 
   describe "queue sync" do
+    @tag :slow
     test "it syncs periodically", context do
       server_id = context.server.server_id
 

@@ -53,16 +53,17 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
     end
 
     test "with non-existing account" do
-      assert BankAccountInternal.get_balance(1234) == 0
+      assert BankAccountInternal.get_balance(Random.number()) == 0
     end
   end
 
   describe "get_total_funds/1" do
+    @tag :slow
     test "it works" do
       {_, player} = Setup.server()
       player_id = player.account_id
 
-      refute BankAccountInternal.get_total_funds(player_id)
+      assert 0 == BankAccountInternal.get_total_funds(player_id)
 
       acc1 = Setup.bank_account([owner_id: player_id])
       acc2 = Setup.bank_account([owner_id: player_id])
@@ -154,13 +155,27 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
     end
   end
 
-  describe "delete/1" do
-    test "it deletes the account" do
+  describe "close/1" do
+    test "it closes the account" do
       acc = Setup.bank_account()
 
       assert BankAccountInternal.fetch(acc.account_number)
-      BankAccountInternal.delete(acc)
+      assert :ok == BankAccountInternal.close(acc)
       refute BankAccountInternal.fetch(acc.account_number)
+    end
+
+    test "it refuses to close non-empty accounts" do
+      acc = Setup.bank_account([balance: 1])
+
+      assert BankAccountInternal.fetch(acc.account_number)
+      assert {:error, reason} = BankAccountInternal.close(acc)
+      assert reason == {:account, :notempty}
+      assert BankAccountInternal.fetch(acc.account_number)
+    end
+
+    test "with invalid data" do
+      assert {:error, reason} = BankAccountInternal.close(Random.number())
+      assert reason == {:account, :notfound}
     end
   end
 end
