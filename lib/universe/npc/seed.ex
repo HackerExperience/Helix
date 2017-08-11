@@ -11,10 +11,12 @@ defmodule Helix.Universe.NPC.Seed do
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo, as: ServerRepo
-  alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
+  alias Helix.Universe.Bank.Internal.ATM, as: ATMInternal
+  alias Helix.Universe.Bank.Internal.Bank, as: BankInternal
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Model.NPCType
   alias Helix.Universe.NPC.Model.Seed
+  alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
   alias Helix.Universe.Repo
 
   def migrate do
@@ -49,7 +51,7 @@ defmodule Helix.Universe.NPC.Seed do
 
         create_dns(entry, npc)
 
-        create_specialization(entry, npc)
+        create_specialization(entry, npc, npcs)
       end)
     end
 
@@ -117,15 +119,29 @@ defmodule Helix.Universe.NPC.Seed do
     end)
   end
 
-  def create_specialization(_entry = %{type: :bank}, _npc) do
-    # Bank
-  end
-  def create_specialization(_entry = %{type: :atm}, _npc) do
-    # Atm
-  end
-  def create_specialization(%{custom: false}, _npc),
-    do: :ok
-  def create_specialization(_, _),
-    do: raise "Invalid seed config"
+  def create_specialization(entry = %{type: :bank}, npc, _npcs) do
+    # Add Bank entry
+    unless BankInternal.fetch(npc.npc_id) do
+      %{bank_id: npc.npc_id, name: entry.custom.name}
+      |> BankInternal.create()
+    end
 
+    bank = BankInternal.fetch(npc.npc_id)
+
+    # Add ATM entries
+    Enum.map(entry.servers, fn(atm) ->
+      unless ATMInternal.fetch(atm.id) do
+        %{
+          atm_id: atm.id,
+          bank_id: bank.bank_id,
+          region: atm.custom.region
+        }
+        |> ATMInternal.create()
+      end
+    end)
+  end
+  def create_specialization(%{custom: false}, _npc, _npcs),
+    do: :ok
+  def create_specialization(entry, _, _),
+    do: raise "Invalid seed config for #{inspect entry}"
 end

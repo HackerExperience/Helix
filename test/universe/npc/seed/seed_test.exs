@@ -9,6 +9,8 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Network.Internal.DNS, as: DNSInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
+  alias Helix.Universe.Bank.Internal.ATM, as: ATMInternal
+  alias Helix.Universe.Bank.Internal.Bank, as: BankInternal
   alias Helix.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
   alias Helix.Universe.NPC.Model.Seed
@@ -24,13 +26,15 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
     test "NPCHelper prunes all data" do
       NPCHelper.empty_database()
 
-      npc = Seed.search_by_type(:download_center)
+      npc = NPCHelper.random()
       server = List.first(npc.servers)
+      bank = NPCHelper.bank()
 
       # Removes stuff
       refute NPCInternal.fetch(npc.id)
       refute ServerInternal.fetch(server.id)
       refute NetworkConnectionInternal.fetch_by_nip("::", server.static_ip)
+      refute BankInternal.fetch(bank.id)
     end
   end
 
@@ -72,7 +76,22 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
           assert anycast.name == entry.anycast
           assert_id anycast.npc_id, entry.id
         end
+
+        test_specialization(entry, npc)
       end)
     end
+
+    defp test_specialization(entry = %{type: :bank}, npc) do
+      # Bank exists
+      assert BankInternal.fetch(npc.npc_id)
+
+      Enum.map(entry.servers, fn(atm) ->
+        assert ATMInternal.fetch(atm.id)
+      end)
+    end
+    defp test_specialization(%{custom: false}, _npc),
+      do: :ok
+    defp test_specialization(_, _),
+      do: assert false
   end
 end

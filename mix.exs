@@ -69,7 +69,7 @@ defmodule Helix.Mixfile do
       {:comeonin, "~> 3.2"},
       {:timex, "~> 3.1"},
 
-      {:burette, git: "https://github.com/HackerExperience/burette", only: :test},
+      {:burette, git: "https://github.com/HackerExperience/burette"},
 
       {:ex_machina, "~> 1.0", only: :test},
       {:earmark, "~> 1.1", only: :dev},
