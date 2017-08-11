@@ -43,7 +43,9 @@ defmodule HELL.PK.Header do
     log_log:
       [0x0030, 0x0000, 0x0000],
     log_revision:
-      [0x0030, 0x0001, 0x0000]
+      [0x0030, 0x0001, 0x0000],
+    bank_transfer:
+      [0x0040, 0x0000, 0x0000]
   }
 
   @spec pk_for(atom) ::

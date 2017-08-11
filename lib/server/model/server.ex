@@ -7,6 +7,7 @@ defmodule Helix.Server.Model.Server do
 
   alias Ecto.Changeset
   alias HELL.Constant
+  alias HELL.Password
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.ServerType
 
@@ -82,22 +83,8 @@ defmodule Helix.Server.Model.Server do
 
   @spec generate_password(Changeset.t) ::
     Changeset.t
-  defp generate_password(changeset) do
-    # HACK: I don't intend to keep this generation method but it'll be good
-    #   enough for now (and is faster than using a proper string generator)
-    unique =
-      :seconds
-      |> System.system_time()
-      |> :erlang.+(:erlang.unique_integer())
-      |> to_string()
-
-    password =
-      :md5
-      |> :crypto.hash(unique)
-      |> Base.encode16()
-
-    put_change(changeset, :password, password)
-  end
+  defp generate_password(changeset),
+    do: put_change(changeset, :password, Password.generate(:server))
 
   defmodule Query do
     import Ecto.Query
