@@ -1,13 +1,24 @@
 defmodule Helix.Universe.Bank.Internal.BankTransfer do
 
+  alias Helix.Account.Model.Account
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Repo
 
+  @spec fetch(BankTransfer.idtb) ::
+    BankTransfer.t
+    | nil
   def fetch(transfer_id),
     do: Repo.get(BankTransfer, transfer_id)
 
+  @spec fetch_for_update(BankTransfer.idtb) ::
+    BankTransfer.t
+    | nil
+  @doc """
+  Fetches a bank transfer, locking it for external updates. Must be used within
+  a transaction.
+  """
   def fetch_for_update(transfer_id) do
     transfer_id
     |> BankTransfer.Query.by_id()
@@ -15,12 +26,17 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     |> Repo.one()
   end
 
+  @spec start(BankAccount.t, BankAccount.t, pos_integer, Account.idt) ::
+    {:ok, BankTransfer.t}
+    | {:error, {:funds, :insufficient}}
+    | {:error, {:account, :notfound}}
+    | {:error, Ecto.Changeset.t}
   def start(from_acc, to_acc, amount, started_by) do
     trans =
       Repo.transaction(fn ->
         Repo.serializable_transaction()
 
-        with {:ok, acc} <- BankAccountInternal.withdraw(from_acc, amount) do
+        with {:ok, _} <- BankAccountInternal.withdraw(from_acc, amount) do
           %{
             account_from: from_acc.account_number,
             account_to: to_acc.account_number,
@@ -39,6 +55,12 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     end
   end
 
+  @spec complete(BankTransfer.idt) ::
+    :ok
+    | {:error, {:transfer, :notfound}}
+    | {:error, :internal}
+  def complete(transfer = %BankTransfer{}),
+    do: complete(transfer.transfer_id)
   def complete(transfer_id) do
     deposit_money = fn(account_to, amount) ->
       BankAccountInternal.deposit(account_to, amount)
@@ -58,8 +80,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
         else
           :nxtransfer ->
             {:error, {:transfer, :notfound}}
-          error ->
-            error
+          _ ->
+            {:error, :internal}
         end
       end)
 
@@ -69,13 +91,13 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     end
   end
 
-  defp create(params) do
-    params
-    |> BankTransfer.create_changeset()
-    |> Repo.insert()
-  end
-
-  def cancel(transfer_id) do
+  @spec abort(BankTransfer.idt) ::
+    :ok
+    | {:error, {:transfer, :notfound}}
+    | {:error, :internal}
+  def abort(transfer = %BankTransfer{}),
+    do: abort(transfer.transfer_id)
+  def abort(transfer_id) do
     refund_money = fn(account_from, amount) ->
       BankAccountInternal.deposit(account_from, amount)
     end
@@ -94,11 +116,9 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
         else
           :nxtransfer ->
             {:error, {:transfer, :notfound}}
-          error ->
-            error
+          _ ->
+            {:error, :internal}
         end
-
-        # TODO: Remove process too (or vice versa)
       end)
 
     case trans do
@@ -107,10 +127,20 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     end
   end
 
+  @spec create(BankTransfer.creation_params) ::
+    {:ok, BankTransfer.t}
+    | {:error, Ecto.Changeset.t}
+  defp create(params) do
+    params
+    |> BankTransfer.create_changeset()
+    |> Repo.insert()
+  end
+
+  @spec delete(BankTransfer.t) ::
+    :ok
   defp delete(transfer) do
     Repo.delete(transfer)
 
     :ok
   end
 end
-

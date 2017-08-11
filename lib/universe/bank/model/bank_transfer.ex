@@ -16,7 +16,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     account_to: BankAccount.account,
     atm_from: ATM.id,
     atm_to: ATM.id,
-    amount: Integer.t,
+    amount: integer,
     started_by: Account.id,
     started_time: DateTime.t,
     finish_time: DateTime.t
@@ -27,7 +27,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     account_to: BankAccount.account,
     atm_from: ATM.id,
     atm_to: ATM.id,
-    amount: Integer.t,
+    amount: integer,
     started_by: Account.id,
   }
 

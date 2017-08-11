@@ -6,7 +6,6 @@ defmodule HELL.TestHelper.Setup do
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
-  alias Helix.Universe.NPC.Model.NPC
 
   alias HELL.TestHelper.Random
   alias Helix.Universe.NPC.Helper, as: NPCHelper
@@ -49,10 +48,13 @@ defmodule HELL.TestHelper.Setup do
     end
   end
 
-  def bank_transfer do
-    acc1 = bank_account([balance: 500])
-    acc2 = bank_account()
-    amount = 100
+  def bank_transfer(opts \\ []) do
+    amount = Access.get(opts, :amount, 100)
+    balance1 = Access.get(opts, :balance1, amount)
+    balance2 = Access.get(opts, :balance2, 0)
+
+    acc1 = bank_account([balance: balance1])
+    acc2 = bank_account([balance: balance2])
     started_by = Random.pk()
 
     {:ok, transfer} = BankTransferInternal.start(acc1, acc2, amount, started_by)
