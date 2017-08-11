@@ -4,6 +4,8 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   import Helix.Test.IDCase
 
+  alias HELL.TestHelper.Random
+  alias HELL.TestHelper.Setup
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
@@ -60,9 +62,8 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
 
     test "with invalid data" do
-      fake_transfer = Setup.fake_bank_transfer()
-      assert {:error, reason} = BankAction.complete_transfer(fake_transfer)
-      assert {:transfer, :notfound} == reason
+      assert {:error, reason} = BankAction.complete_transfer(Random.pk())
+      assert reason == {:transfer, :notfound}
     end
   end
 

@@ -7,6 +7,7 @@ defmodule HELL.TestHelper.Setup do
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
+  alias Helix.Universe.NPC.Model.NPC
 
   alias HELL.TestHelper.Random
   alias Helix.Account.Factory, as: AccountFactory
