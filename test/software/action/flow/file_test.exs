@@ -10,6 +10,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
   alias Helix.Log.Model.Log
   alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Internal.File, as: FileInternal
+  alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: FirewallPassive
   alias Helix.Software.Model.SoftwareType.LogForge
   alias Helix.Software.Query.Storage, as: StorageQuery
 
@@ -18,7 +19,40 @@ defmodule Helix.Software.Action.Flow.FileTest do
   alias Helix.Test.Process.TOPHelper
   alias Helix.Software.Factory
 
-  # defp prepare_server_for_log_forge()
+  describe "firewall" do
+    test "starts firewall process on success" do
+      account = AccountFactory.insert(:account)
+
+      {:ok, %{server: server}} = AccountFlow.setup_account(account)
+
+      :timer.sleep(250)
+      CacheHelper.sync_test()
+
+      storage =
+        server.motherboard_id
+        |> ComponentQuery.fetch()
+        |> MotherboardQuery.fetch()
+        |> MotherboardQuery.get_slots()
+        |> Enum.filter(&(&1.link_component_type == :hdd))
+        |> Enum.reject(&(is_nil(&1.link_component_id)))
+        |> Enum.map(&(&1.link_component_id))
+        |> List.first()
+        |> StorageQuery.fetch_by_hdd()
+
+      file = Factory.insert(:file, software_type: :firewall, storage: storage)
+      modules = %{firewall_passive: 100}
+      # FIXME: this function should exist on the FileAction
+      FileInternal.set_modules(file, modules)
+
+      result = FileFlow.execute_file(file, server, %{})
+      assert {:ok, process} = result
+      assert %FirewallPassive{} = process.process_data
+      assert "firewall_passive" == process.process_type
+
+      TOPHelper.top_stop(server)
+      CacheHelper.sync_test()
+    end
+  end
 
   describe "log_forger 'edit' operation" do
     test "fails if target log doesn't exist" do
@@ -92,7 +126,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
       assert "log_forger" == process.process_type
 
       TOPHelper.top_stop(server)
-
       CacheHelper.sync_test()
     end
   end
