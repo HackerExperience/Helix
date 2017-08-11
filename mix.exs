@@ -30,6 +30,7 @@ defmodule Helix.Mixfile do
         "test.cover": :test,
         "pr": :test,
         "coveralls": :test,
+        "coveralls.html": :test,
         "coveralls.travis": :test
       },
 
@@ -103,7 +104,7 @@ defmodule Helix.Mixfile do
         "helix.test --only external --exclude cluster --max-cases 1"
       ],
       "test.quick": [
-        "helix.test --no-prune --exclude sequential --exclude cluster --exclude external",
+        "helix.test --no-prune --exclude sequential --exclude cluster --exclude external --exclude slow",
       ],
       "pr": [
         "helix.test --exclude sequential --exclude cluster --exclude external",

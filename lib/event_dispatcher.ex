@@ -10,6 +10,7 @@ defmodule Helix.Event.Dispatcher do
   alias Helix.Process
   alias Helix.Software
   alias Helix.Server
+  alias Helix.Universe
 
   ##############################################################################
   # Account events
@@ -95,4 +96,16 @@ defmodule Helix.Event.Dispatcher do
   event Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
     Log.Event.Log,
     :log_forge_conclusion
+
+  ##############################################################################
+  # Universe events
+  ##############################################################################
+
+  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
+    Universe.Bank.Event.BankTransfer,
+    :transfer_completed
+
+  event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
+    Universe.Bank.Event.BankTransfer,
+    :transfer_aborted
 end

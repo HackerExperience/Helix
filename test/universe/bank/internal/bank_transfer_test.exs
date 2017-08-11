@@ -60,26 +60,24 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
     end
   end
 
-  describe "cancel/1" do
+  describe "abort/1" do
     test "with valid data" do
       transfer = Setup.bank_transfer()
 
-      before_cancel = BankAccountInternal.get_balance(transfer.account_from)
+      before_abort = BankAccountInternal.get_balance(transfer.account_from)
 
-      assert :ok == BankTransferInternal.cancel(transfer.transfer_id)
+      assert :ok == BankTransferInternal.abort(transfer.transfer_id)
 
       # Ensure it reimburses original account money
-      after_cancel = BankAccountInternal.get_balance(transfer.account_from)
-      assert after_cancel == before_cancel + transfer.amount
+      after_abort = BankAccountInternal.get_balance(transfer.account_from)
+      assert after_abort == before_abort + transfer.amount
 
       # Ensure it removed the transfer from DB
       refute BankTransferInternal.fetch(transfer.transfer_id)
-
-      # TODO: Ensure it deleted the process
     end
 
     test "with invalid data" do
-      assert {:error, reason} = BankTransferInternal.cancel(Random.pk())
+      assert {:error, reason} = BankTransferInternal.abort(Random.pk())
       assert reason == {:transfer, :notfound}
     end
   end
@@ -116,7 +114,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
       acc2_before_start = BankAccountInternal.get_balance(acc2.account_number)
 
       # Start
-      {:ok, transfer} = BankTransferInternal.start(acc1, acc2, amount, started_by)
+      {:ok, transfer} =
+        BankTransferInternal.start(acc1, acc2, amount, started_by)
 
       acc1_after_start = BankAccountInternal.get_balance(acc1.account_number)
       acc2_after_start = BankAccountInternal.get_balance(acc2.account_number)
@@ -135,7 +134,7 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
       assert acc2_after_complete == acc2_before_start + amount
     end
 
-    test "transfer cancellation case" do
+    test "transfer abort case" do
       amount = 250
       acc1 = Setup.bank_account([balance: amount])
       acc2 = Setup.bank_account()
@@ -145,7 +144,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
       acc2_before_start = BankAccountInternal.get_balance(acc2.account_number)
 
       # Start
-      {:ok, transfer} = BankTransferInternal.start(acc1, acc2, amount, started_by)
+      {:ok, transfer} =
+        BankTransferInternal.start(acc1, acc2, amount, started_by)
 
       acc1_after_start = BankAccountInternal.get_balance(acc1.account_number)
       acc2_after_start = BankAccountInternal.get_balance(acc2.account_number)
@@ -153,8 +153,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
       assert acc1_after_start == acc1_before_start - amount
       assert acc2_after_start == acc2_before_start
 
-      # Cancel
-      BankTransferInternal.cancel(transfer.transfer_id)
+      # Abort
+      BankTransferInternal.abort(transfer.transfer_id)
 
       acc1_after_complete = BankAccountInternal.get_balance(acc1.account_number)
       acc2_after_complete = BankAccountInternal.get_balance(acc2.account_number)

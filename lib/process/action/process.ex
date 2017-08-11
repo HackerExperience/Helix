@@ -1,8 +1,8 @@
 defmodule Helix.Process.Action.Process do
 
-  alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.ProcessCreatedEvent
+  alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
   alias Helix.Process.State.TOP.Server, as: ServerTOP
 
@@ -21,11 +21,11 @@ defmodule Helix.Process.Action.Process do
   @doc """
   Creates a new process
 
-  Each process defines it's required arguments. When the process is successfully
+  Each process defines its required arguments. When the process is successfully
   created, it'll cause the server to reallocate resources to properly hold it.
 
   Might return `{:error, :resources}` if the server does not have enough
-  resources to hold it's current processes along with the input process
+  resources to hold its current processes along with the input process
 
   ### Examples
 

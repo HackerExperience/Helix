@@ -153,6 +153,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     :timer.sleep(250)
   end
 
+  @tag :slow
   test "returns files on server", context do
     context = connect_to_realword_server(context)
 
@@ -189,6 +190,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   end
 
   describe "log.index" do
+    @tag :slow
     test "fetches logs on the destination", context do
       context = connect_to_realword_server(context)
 
