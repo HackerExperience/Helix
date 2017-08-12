@@ -3,13 +3,14 @@ defmodule Helix.Universe.NPC.Model.NPC do
   use Ecto.Schema
   use HELL.ID, field: :npc_id, meta: [0x0002]
 
+  import Ecto.Changeset
+
   alias HELL.Constant
   alias Helix.Universe.NPC.Model.NPCType
 
-  import Ecto.Changeset
-
   @type t :: %__MODULE__{
     npc_id: id,
+    npc_type: Constant.t,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
@@ -43,10 +44,11 @@ defmodule Helix.Universe.NPC.Model.NPC do
 
     import Ecto.Query, only: [where: 3]
 
+    alias Ecto.Queryable
     alias Helix.Universe.NPC.Model.NPC
 
-    @spec by_id(Ecto.Queryable.t, NPC.idtb) ::
-      Ecto.Queryable.t
+    @spec by_id(Queryable.t, NPC.idtb) ::
+      Queryable.t
     def by_id(query \\ NPC, npc),
       do: where(query, [n], n.npc_id == ^npc)
   end

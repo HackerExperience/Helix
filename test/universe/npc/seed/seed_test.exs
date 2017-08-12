@@ -44,7 +44,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
 
       # Iterate & verify
       npcs = Seed.seed()
-      Enum.map(npcs, fn(entry) ->
+      Enum.each(npcs, fn(entry) ->
 
         npc = NPCInternal.fetch(entry.id)
         assert npc
@@ -54,7 +54,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
         assert npc
         assert_id entity.entity_id, entry.id
 
-        Enum.map(entry.servers, fn(cur) ->
+        Enum.each(entry.servers, fn(cur) ->
           server = ServerInternal.fetch(cur.id)
           assert server
           assert_id server.server_id, cur.id

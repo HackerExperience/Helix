@@ -9,7 +9,7 @@ defmodule Helix.Universe.NPC.Internal.Web do
     optional(:custom) => map
   }
 
-  @spec generate_content(NPC.t, Network.id, IPv4.t) ::
+  @spec generate_content(NPC.t, Network.idt, IPv4.t) ::
     npc_content
     | nil
   def generate_content(_npc = %NPC{npc_type: :download_center}, _net, _ip) do

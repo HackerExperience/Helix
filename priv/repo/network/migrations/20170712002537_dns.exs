@@ -6,9 +6,9 @@ defmodule Helix.Network.Repo.Migrations.Dns do
 
   def change do
     create table(:dns_unicast, primary_key: false) do
-      add :name, :string, primary_key: true
       add :network_id, :inet, primary_key: true
-      add :ip, :inet
+      add :name, :string, primary_key: true
+      add :ip, :inet, null: false
     end
 
     create unique_index(

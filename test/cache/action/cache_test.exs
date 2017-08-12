@@ -132,7 +132,7 @@ defmodule Helix.Cache.Action.CacheTest do
   end
 
   describe "update_storage/1" do
-    test "it works", context do
+    test "storage is updated", context do
       server_id = context.server.server_id
 
       PopulateInternal.populate(:by_server, server_id)
@@ -145,7 +145,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage_id)
       assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
-      Enum.map(server1.components, fn(component_id) ->
+      Enum.each(server1.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
@@ -178,7 +178,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
       assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
-      Enum.map(server1.components, fn(component_id) ->
+      Enum.each(server1.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
@@ -198,7 +198,7 @@ defmodule Helix.Cache.Action.CacheTest do
   end
 
   describe "update_network/1" do
-    test "update_network/1", context do
+    test "network is updated", context do
       server_id = context.server.server_id
 
       PopulateInternal.populate(:by_server, server_id)
@@ -211,7 +211,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
       assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
-      Enum.map(server1.components, fn(component_id) ->
+      Enum.each(server1.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})

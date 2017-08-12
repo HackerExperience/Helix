@@ -13,5 +13,4 @@ defmodule HELL.TestHelper.Setup do
 
     {server, account}
   end
-
 end

@@ -4,29 +4,28 @@ defmodule Helix.Network.Query.Web do
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Internal.Web, as: WebInternal
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.DNS, as: DNSQuery
 
-  @spec browse(Network.idtb, (String.t | IPv4.t), IPv4.t) ::
+  @spec browse(Network.idt, String.t | IPv4.t, IPv4.t) ::
     {:ok, {:npc | :vpc, term}}
-    | {:error, :notfound}
-    | {:error, :nxdomain}
+    | {:error, {:ip, :notfound}}
+    | {:error, {:domain, :notfound}}
   def browse(network, address, origin) do
-    case IPv4.parse_address(address) do
+    case IPv4.valid?(address) do
       {:ok, _} ->
         browse_ip(network, address)
-      :error ->
+      {:error, _} ->
         case DNSQuery.resolve(network, address, origin) do
           {:ok, ip} ->
             browse_ip(network, ip)
-          :nxdomain ->
-            {:error, :nxdomain}
+          error ->
+            error
         end
     end
   end
 
-  @spec browse_ip(Network.idtb, IPv4.t) ::
+  @spec browse_ip(Network.id, IPv4.t) ::
     {:ok, {:npc | :vpc, term}}
     | {:error, :notfound}
   defp browse_ip(network, ip) do
@@ -34,12 +33,24 @@ defmodule Helix.Network.Query.Web do
       {:ok, server_id} <- CacheQuery.from_nip_get_server(network, ip),
       server = %{} <- ServerQuery.fetch(server_id),
       entity = %{} <- EntityQuery.fetch_by_server(server.server_id),
-      {:ok, content} <- WebInternal.serve(network, ip)
+      {:ok, content} <- serve(network, ip)
     do
       {:ok, {entity.entity_type, content}}
     else
       _ ->
-        {:error, :notfound}
+        {:error, {:ip, :notfound}}
+    end
+  end
+
+  @spec serve(Network.id, IPv4.t) ::
+    {:ok, term}
+    | :notfound
+  def serve(network, ip) do
+    case CacheQuery.from_nip_get_web(network, ip) do
+      {:ok, content} ->
+        {:ok, content}
+      _ ->
+        :notfound
     end
   end
 end

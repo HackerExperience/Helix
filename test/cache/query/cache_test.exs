@@ -189,8 +189,8 @@ defmodule Helix.Cache.Query.CacheTest do
     end
   end
 
-  describe "from_nip_get_web" do
-    test "it works" do
+  describe "from_nip_get_web/2" do
+    test "returns content belonging to nip" do
       {_, ip} = NPCHelper.download_center()
       nip = {"::", ip}
 
