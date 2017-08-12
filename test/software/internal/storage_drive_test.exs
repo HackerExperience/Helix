@@ -39,12 +39,10 @@ defmodule Helix.Software.Internal.StorageDriveTest do
     end
   end
 
-  @tag :pending
-  test "unlinking is idempotent" do
+  test "unlinking removes storage_drive" do
     %{storage: storage, drive_id: drive_id} = Factory.insert(:storage_drive)
 
     assert drive_id in StorageDriveInternal.get_storage_drives(storage)
-    StorageDriveInternal.unlink_drive(drive_id)
     StorageDriveInternal.unlink_drive(drive_id)
     refute drive_id in StorageDriveInternal.get_storage_drives(storage)
 

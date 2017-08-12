@@ -91,14 +91,12 @@ defmodule Helix.Account.Internal.AccountTest do
     end
   end
 
-  @tag :pending
-  describe "account deleting" do
-    test "is idempotent" do
+  describe "delete/1" do
+    test "removes entry" do
       account = Factory.insert(:account)
 
       assert Repo.get_by(Account, account_id: account.account_id)
 
-      AccountInternal.delete(account)
       AccountInternal.delete(account)
 
       refute Repo.get_by(Account, account_id: account.account_id)

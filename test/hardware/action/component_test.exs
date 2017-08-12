@@ -34,24 +34,11 @@ defmodule Helix.Hardware.Action.ComponentTest do
   end
 
   describe "delete/1" do
-    @tag :pending
-    test "succeeds by struct" do
+    test "removes entry" do
       component = Factory.insert(:component)
 
       assert Repo.get(Component, component.component_id)
-      ComponentAction.delete(component)
 
-      refute Repo.get(Component, component.component_id)
-
-      CacheHelper.sync_test()
-    end
-
-    @tag :pending
-    test "is idempotent" do
-      component = Factory.insert(:component)
-
-      assert Repo.get(Component, component.component_id)
-      ComponentAction.delete(component)
       ComponentAction.delete(component)
 
       refute Repo.get(Component, component.component_id)
