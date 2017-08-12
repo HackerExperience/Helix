@@ -6,12 +6,13 @@ defmodule Helix.Process.Query.ProcessTest do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Software.Decryptor.ProcessType, as: Decryptor
-  alias Software.Firewall.ProcessType.Passive, as: Firewall
+  alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: Firewall
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Query.Process, as: ProcessQuery
 
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Test.Process.TOPHelper
 
   defp create_server do
     account = AccountFactory.insert(:account)
@@ -48,22 +49,20 @@ defmodule Helix.Process.Query.ProcessTest do
         process_type: "decryptor"
       }
 
-      {:ok, firewall1} = ProcessAction.create(firewall)
-      {:ok, firewall2} = ProcessAction.create(firewall)
-      {:ok, _} = ProcessAction.create(decryptor)
+      {:ok, firewall1, _} = ProcessAction.create(firewall)
+      {:ok, firewall2, _} = ProcessAction.create(firewall)
+      {:ok, _, _} = ProcessAction.create(decryptor)
 
       expected = MapSet.new([firewall1, firewall2], &(&1.process_id))
 
       result =
-        server.server_id
+        server
         |> ProcessQuery.get_running_processes_of_type_on_server("firewall_passive")
         |> MapSet.new(&(&1.process_id))
 
       assert MapSet.equal?(expected, result)
 
-      # ProcessAction.create/1 starts the TOP machine, so we have to wait a bit
-      # to gracefully stop the test
-      :timer.sleep(50)
+      TOPHelper.top_stop(server)
     end
   end
 
@@ -92,21 +91,19 @@ defmodule Helix.Process.Query.ProcessTest do
         process_type: "decryptor"
       }
 
-      {:ok, _} = ProcessAction.create(firewall)
-      {:ok, _} = ProcessAction.create(firewall)
-      {:ok, _} = ProcessAction.create(decryptor)
-      {:ok, _} = ProcessAction.create(decryptor)
+      {:ok, _, _} = ProcessAction.create(firewall)
+      {:ok, _, _} = ProcessAction.create(firewall)
+      {:ok, _, _} = ProcessAction.create(decryptor)
+      {:ok, _, _} = ProcessAction.create(decryptor)
 
       processes_on_server =
-        server.server_id
+        server
         |> ProcessQuery.get_processes_on_server()
         |> Enum.count()
 
       assert 4 == processes_on_server
 
-      # ProcessAction.create/1 starts the TOP machine, so we have to wait a bit
-      # to gracefully stop the test
-      :timer.sleep(50)
+      TOPHelper.top_stop(server)
     end
   end
 
@@ -141,16 +138,15 @@ defmodule Helix.Process.Query.ProcessTest do
         process_type: "decryptor"
       }
 
-      {:ok, _} = ProcessAction.create(firewall)
-      {:ok, decryptor} = ProcessAction.create(decryptor)
+      {:ok, _, _} = ProcessAction.create(firewall)
+      {:ok, decryptor, _} = ProcessAction.create(decryptor)
 
       [process] = ProcessQuery.get_processes_targeting_server(server1.server_id)
 
       assert decryptor.process_id == process.process_id
 
-      # ProcessAction.create/1 starts the TOP machine, so we have to wait a bit
-      # to gracefully stop the test
-      :timer.sleep(50)
+      TOPHelper.top_stop(server1)
+      TOPHelper.top_stop(server2)
     end
   end
 end

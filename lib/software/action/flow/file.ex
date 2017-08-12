@@ -4,27 +4,39 @@ defmodule Helix.Software.Action.Flow.File do
 
   alias Helix.Event
   alias Helix.Log.Query.Log, as: LogQuery
+  alias Helix.Process.Model.Process
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Server.Model.Server
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
-  alias Software.Firewall.ProcessType.Passive, as: FirewallPassive
+  alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: FirewallPassive
   alias Helix.Software.Model.SoftwareType.LogForge
 
+  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
+
   @doc """
-  Starts the process defined by `file` on `server`
+  Starts the process defined by `file` on `server`.
 
   If `file` is not an executable software, returns `{:error, :notexecutable}`.
 
-  If the process can not be started on the server, returns the respective error
+  If the process can not be started on the server, returns the respective error.
   """
-  def execute_file(file = %File{}, server, params \\ %{}),
-    do: start_file_process(file, server, params)
+  def execute_file(file = %File{}, server, params) do
+    server = Server.ID.cast!(server)
 
-  @spec start_file_process(%File{software_type: :firewall}, Server.idt, map) ::
-    Helix.Process.Action.Process.on_create
-  defp start_file_process(file = %File{software_type: :firewall}, server, _) do
+    case file do
+      %File{software_type: :firewall} ->
+        firewall(file, server, params)
+      %File{software_type: :log_forger} ->
+        log_forger(file, server, params)
+      %File{} ->
+        {:error, :notexecutable}
+    end
+  end
+
+  @spec firewall(File.t_of_type(:firewall), Server.id, map) ::
+    term
+  defp firewall(file, server, _) do
     %{firewall_passive: version} = FileQuery.get_modules(file)
     process_data = %FirewallPassive{version: version}
 
@@ -36,54 +48,78 @@ defmodule Helix.Software.Action.Flow.File do
       process_type: "firewall_passive"
     }
 
-    flowing do
-      with {:ok, process} <- ProcessAction.create(params) do
-        event = %FirewallStartedEvent{
-          gateway_id: server,
-          version: version
-        }
+    event = %FirewallStartedEvent{
+      gateway_id: server,
+      version: version
+    }
 
-        Event.emit(event)
+    flowing do
+      with \
+        {:ok, process, p_events} <- ProcessAction.create(params),
+        on_success(fn -> Event.emit(p_events) end),
+        on_success(fn -> Event.emit(event) end)
+      do
         {:ok, process}
       end
     end
   end
 
-  @spec start_file_process(%File{software_type: :log_forger}, Server.idt, LogForge.create_params) ::
-    ProcessAction.on_create
+  @spec log_forger(File.t_of_type(:log_forger), Server.id, LogForge.create_params) ::
+    {:ok, Process.t}
+    | ProcessAction.on_create_error
     | {:error, {:log, :notfound}}
     | {:error, Ecto.Changeset.t}
-  defp start_file_process(
-    file = %File{software_type: :log_forger},
-    server,
-    params)
-  do
-    with \
-      modules = FileQuery.get_modules(file),
-      {:ok, process_data} <- LogForge.create(params, modules),
-      log_id = process_data.target_log_id,
-      target_log = %{} <- LogQuery.fetch(log_id) || {:error, {:log, :notfound}}
-    do
-      revision_count = LogQuery.count_revisions_of_entity(
-        target_log,
-        process_data.entity_id)
-      objective = LogForge.objective(process_data, target_log, revision_count)
-
-      process_params = %{
-        gateway_id: server,
-        target_server_id: target_log.server_id,
-        file_id: file.file_id,
-        objective: objective,
-        process_data: process_data,
-        process_type: "log_forger"
-      }
-
-      # TODO: emit process started event
-      ProcessAction.create(process_params)
+  defp log_forger(file, server, params) do
+    flowing do
+      with \
+        {:ok, data} <- log_forger_prepare(file, params),
+        {:ok, process_params} <- log_forger_process_params(file, server, data),
+        {:ok, process, events} <- ProcessAction.create(process_params),
+        on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, process}
+      end
     end
   end
 
-  defp start_file_process(_, _, _) do
-    {:error, :notexecutable}
+  defp log_forger_prepare(file, params) do
+    modules = FileQuery.get_modules(file)
+    LogForge.create(params, modules)
+  end
+
+  defp log_forger_process_params(file, server, data = %{operation: "edit"}) do
+    with \
+      log_id = data.target_log_id,
+      log = %{} <- LogQuery.fetch(log_id) || {:error, {:log, :notfound}}
+    do
+      revision_count = LogQuery.count_revisions_of_entity(log, data.entity_id)
+      objective = LogForge.edit_objective(data, log, revision_count)
+
+      process_params = %{
+        gateway_id: server,
+        target_server_id: log.server_id,
+        file_id: file.file_id,
+        objective: objective,
+        process_data: data,
+        process_type: "log_forger"
+      }
+
+      {:ok, process_params}
+    end
+  end
+
+  defp log_forger_process_params(file, server, data = %{operation: "create"}) do
+    objective = LogForge.create_objective(data)
+
+    process_params = %{
+      gateway_id: server,
+      target_server_id: data.target_server_id,
+      file_id: file.file_id,
+      objective: objective,
+      process_data: data,
+      process_type: "log_forger"
+    }
+
+    {:ok, process_params}
   end
 end

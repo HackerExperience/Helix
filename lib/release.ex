@@ -1,12 +1,9 @@
 defmodule Helix.Release do
 
   def ecto_create do
-    Application.load(:helix)
-    {:ok, _} = Application.ensure_all_started(:ecto)
+    start_applications()
 
-    repos = Application.get_env(:helix, :ecto_repos)
-
-    Enum.each(repos, fn repo ->
+    execute_on_all_repos(fn repo ->
       case repo.__adapter__.storage_up(repo.config) do
         :ok ->
           IO.puts "created"
@@ -21,18 +18,10 @@ defmodule Helix.Release do
   end
 
   def ecto_migrate do
-    Application.load(:helix)
+    start_applications()
+    start_repos()
 
-    repos = Application.get_env(:helix, :ecto_repos)
-
-    {:ok, _} = Application.ensure_all_started(:ecto)
-
-    Enum.each(repos, fn repo ->
-      {:ok, _} = repo.__adapter__.ensure_all_started(repo, :temporary)
-      {:ok, _} = repo.start_link(pool_size: 1)
-    end)
-
-    Enum.each(repos, fn repo ->
+    execute_on_all_repos(fn repo ->
       priv = Application.get_env(:helix, repo)[:priv]
       path = Application.app_dir(:helix, priv <> "/migrations")
 
@@ -43,16 +32,8 @@ defmodule Helix.Release do
   end
 
   def seeds do
-    Application.load(:helix)
-
-    repos = Application.get_env(:helix, :ecto_repos)
-
-    {:ok, _} = Application.ensure_all_started(:ecto)
-
-    Enum.each(repos, fn repo ->
-      {:ok, _} = repo.__adapter__.ensure_all_started(repo, :temporary)
-      {:ok, _} = repo.start_link(pool_size: 1)
-    end)
+    start_applications()
+    start_repos()
 
     :helix
     |> Application.app_dir("priv/**/seeds.exs")
@@ -60,5 +41,24 @@ defmodule Helix.Release do
     |> Enum.each(&Code.require_file/1)
 
     :init.stop()
+  end
+
+  defp start_applications do
+    Application.load(:helix)
+
+    {:ok, _} = Application.ensure_all_started(:ecto)
+  end
+
+  defp start_repos do
+    execute_on_all_repos(fn repo ->
+      {:ok, _} = repo.__adapter__.ensure_all_started(repo, :temporary)
+      {:ok, _} = repo.start_link(pool_size: 1)
+    end)
+  end
+
+  defp execute_on_all_repos(fun) when is_function(fun, 1) do
+    :helix
+    |> Application.get_env(:ecto_repos)
+    |> Enum.each(fun)
   end
 end

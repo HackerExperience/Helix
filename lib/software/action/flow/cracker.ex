@@ -2,6 +2,7 @@ defmodule Helix.Software.Action.Flow.Cracker do
 
   import HELF.Flow
 
+  alias Helix.Event
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Software.Cracker.ProcessType, as: Cracker
@@ -47,11 +48,8 @@ defmodule Helix.Software.Action.Flow.Cracker do
     }
 
     flowing do
-      with \
-        {:ok, process} <- ProcessAction.create(params)
-      do
-        # Yay!
-        # TODO: what is the proper return ?
+      with {:ok, process, events} <- ProcessAction.create(params) do
+        Event.emit(events)
         {:ok, process}
       end
     end

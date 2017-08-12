@@ -114,13 +114,6 @@ defmodule Helix.Log.Internal.Log do
 
   @spec count_revisions_of_entity(Log.t, Entity.idt) ::
     non_neg_integer
-  @doc """
-  Returns the number of revisions `entity_id` has created on `log`
-
-  Note that creating the log (either by forging it or by doing an action whose
-  side-effect is to create a log) will create a revision for the log (ie: the
-  moment a log is)
-  """
   def count_revisions_of_entity(log, entity) do
     log
     |> Revision.Query.by_log()

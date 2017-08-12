@@ -7,11 +7,14 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
+  alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
 
   @type t :: %__MODULE__{
-    target_log_id: Log.id,
+    target_log_id: Log.id | nil,
+    target_server_id: Server.id | nil,
     entity_id: Entity.id,
+    operation: String.t,
     message: String.t,
     version: pos_integer
   }
@@ -19,16 +22,26 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   @type create_params ::
     %{String.t => term}
     | %{
-      :target_log_id => Log.idtb,
       :entity_id => Entity.idtb,
+      :operation => String.t,
       :message => String.t,
+      optional(:target_server_id) => Server.idtb,
+      optional(:target_log_id) => Log.idtb,
       optional(atom) => any
     }
+
+  @edit_revision_cost 10_000
+  @edit_version_cost 150
+  @create_version_cost 400
 
   @primary_key false
   embedded_schema do
     field :target_log_id, Log.ID
     field :entity_id, Entity.ID
+    field :target_server_id, Server.ID
+
+    # TODO: use atom
+    field :operation, :string
 
     field :message, :string
     field :version, :integer
@@ -39,31 +52,53 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     | {:error, Changeset.t}
   def create(params, modules) do
     %__MODULE__{}
-    |> cast(params, [:target_log_id, :message, :entity_id])
-    |> validate_required([:target_log_id, :entity_id])
-    |> cast_modules(modules)
+    |> cast(params, [:entity_id, :operation, :message])
+    |> validate_required([:entity_id, :operation])
+    |> validate_inclusion(:operation, ["edit", "create"])
+    |> cast_modules(params, modules)
     |> format_return()
   end
 
-  @spec objective(t, Log.t, non_neg_integer) ::
+  @spec edit_objective(t, Log.t, non_neg_integer) ::
     %{cpu: pos_integer}
-  def objective(process_data, target_log, revision_count) do
-    cost_factor =
-      (process_data.entity_id == target_log.entity_id)
-      && revision_count
-      || (revision_count + 1)
+  def edit_objective(data = %{operation: "edit"}, target_log, revision_count) do
+    revision_cost = if data.entity_id == target_log.entity_id do
+      factorial(revision_count) * @edit_revision_cost
+    else
+      factorial(revision_count + 1) * @edit_revision_cost
+    end
 
-    %{
-      cpu: factorial(cost_factor) * 12_500
-    }
+    version_cost = data.version * @edit_version_cost
+
+    %{cpu: revision_cost + version_cost}
   end
 
-  @spec cast_modules(Changeset.t, File.modules) ::
+  @spec create_objective(t) ::
+    %{cpu: pos_integer}
+  def create_objective(data = %{operation: "create"}) do
+    %{cpu: data.version * @create_version_cost}
+  end
+
+  @spec cast_modules(Changeset.t, create_params, File.modules) ::
     Changeset.t
-  defp cast_modules(changeset, %{log_forger_edit: version}) do
-    changeset
-    |> cast(%{version: version}, [:version])
-    |> validate_number(:version, greater_than: 0)
+  defp cast_modules(changeset, params, modules) do
+    case get_change(changeset, :operation) do
+      "create" ->
+        changeset
+        |> cast(%{version: modules.log_forger_create}, [:version])
+        |> cast(params, [:target_server_id])
+        |> validate_required([:target_server_id, :version])
+        |> validate_number(:version, greater_than: 0)
+      "edit" ->
+        changeset
+        |> cast(%{version: modules.log_forger_edit}, [:version])
+        |> cast(params, [:target_log_id])
+        |> validate_required([:target_log_id, :version])
+        |> validate_number(:version, greater_than: 0)
+      _ ->
+        # Changeset should already be invalid
+        changeset
+    end
   end
 
   @spec format_return(Changeset.t) ::
@@ -82,9 +117,13 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   defimpl Helix.Process.Model.Process.ProcessType do
 
     alias Ecto.Changeset
-    alias Helix.Software.Model.SoftwareType.LogForge.ProcessConclusionEvent
+    alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
+      as: EditConclusion
+    alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
+      as: CreateConclusion
 
-    @ram_base_factor 10
+    @ram_base_factor 5
+    @ram_sqrt_factor 50
 
     def dynamic_resources(_),
       do: [:cpu]
@@ -92,10 +131,10 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     def minimum(%{version: v}),
       do: %{
         paused: %{
-          ram: v * @ram_base_factor
+          ram: v * @ram_base_factor + trunc(:math.sqrt(v) * @ram_sqrt_factor)
         },
         running: %{
-          ram: v * @ram_base_factor
+          ram: v * @ram_base_factor + trunc(:math.sqrt(v) * @ram_sqrt_factor)
         }
     }
 
@@ -105,12 +144,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     def state_change(data, process, _, :complete) do
       process = %{Changeset.change(process)| action: :delete}
 
-      event = %ProcessConclusionEvent{
-        target_log_id: data.target_log_id,
-        version: data.version,
-        message: data.message,
-        entity_id: data.entity_id
-      }
+      event = conclusion_event(data)
 
       {process, [event]}
     end
@@ -120,6 +154,24 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    defp conclusion_event(data = %{operation: "edit"}) do
+      %EditConclusion{
+        target_log_id: data.target_log_id,
+        entity_id: data.entity_id,
+        message: data.message,
+        version: data.version
+      }
+    end
+
+    defp conclusion_event(data = %{operation: "create"}) do
+      %CreateConclusion{
+        entity_id: data.entity_id,
+        target_server_id: data.target_server_id,
+        message: data.message,
+        version: data.version
+      }
+    end
   end
 
   defimpl Helix.Process.API.View.Process do
@@ -141,7 +193,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
         :network_id => Network.id | nil,
         :connection_id => Connection.id | nil,
         :process_type => term,
-        :target_log_id => Log.id,
+        optional(:target_log_id) => Log.id,
         optional(:state) => State.state,
         optional(:objective) => Resources.t,
         optional(:processed) => Resources.t,
@@ -151,30 +203,27 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
         optional(:version) => non_neg_integer
       }
     def render(data, process = %{gateway_id: server}, server, _),
-      do: render_local(data, process)
+      do: do_render(data, process, :local)
     def render(data = %{entity_id: entity}, process, _, entity),
-      do: render_local(data, process)
+      do: do_render(data, process, :local)
     def render(data, process, _, _),
-      do: render_remote(data, process)
+      do: do_render(data, process, :remote)
 
-    defp render_local(data, process) do
-      base = take_data_from_process(process, :local)
-      complement = %{
-        target_log_id: data.target_log_id,
-        version: data.version
-      }
+    defp do_render(data, process, scope) do
+      base = take_data_from_process(process, scope)
+      complement = take_complement_from_data(data, scope)
 
       Map.merge(base, complement)
     end
 
-    defp render_remote(data, process) do
-      base = take_data_from_process(process, :remote)
-      complement = %{
-        target_log_id: data.target_log_id
-      }
-
-      Map.merge(base, complement)
-    end
+    defp take_complement_from_data(data = %{operation: "edit"}, :local),
+      do: %{target_log_id: data.target_log_id, version: data.version}
+    defp take_complement_from_data(data = %{operation: "edit"}, :remote),
+      do: %{target_log_id: data.target_log_id}
+    defp take_complement_from_data(data = %{operation: "create"}, :local),
+      do: %{version: data.version}
+    defp take_complement_from_data(%{operation: "create"}, :remote),
+      do: %{}
 
     defp take_data_from_process(process, :remote) do
       %{

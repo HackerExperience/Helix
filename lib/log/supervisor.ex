@@ -1,4 +1,5 @@
 defmodule Helix.Log.Supervisor do
+  @moduledoc false
 
   use Supervisor
 

@@ -13,14 +13,16 @@ defmodule Helix.Software.Model.File do
 
   @type module_name :: Constant.t
   @type modules :: %{optional(module_name) => pos_integer}
-  @type t :: %__MODULE__{
+  @type t :: t_of_type(Constant.t)
+
+  @type t_of_type(type) :: %__MODULE__{
     file_id: id,
     name: String.t,
     path: String.t,
     full_path: String.t,
     file_size: pos_integer,
     type: SoftwareType.t,
-    software_type: Constant.t,
+    software_type: type,
     storage_id: Storage.id,
     storage: term,
     inserted_at: NaiveDateTime.t,
