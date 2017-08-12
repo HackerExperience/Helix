@@ -64,18 +64,15 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
   end
 
-  describe "entity deleting" do
-    @tag :pending
-    test "is idempotent" do
+  describe "delete/1" do
+    test "removes entry" do
       entity = Factory.insert(:entity)
 
       assert Repo.get(Entity, entity.entity_id)
 
       EntityInternal.delete(entity)
-      EntityInternal.delete(entity)
 
       refute Repo.get(Entity, entity.entity_id)
-
       CacheHelper.sync_test()
     end
   end

@@ -20,12 +20,10 @@ defmodule Helix.Hardware.Internal.ComponentTest do
     end
   end
 
-  @tag :pending
-  test "deleting is idempotent" do
+  test "delete/1 removes entry" do
     component = Factory.insert(:component)
 
     assert Repo.get(Component, component.component_id)
-    ComponentInternal.delete(component)
     ComponentInternal.delete(component)
     refute Repo.get(Component, component.component_id)
 

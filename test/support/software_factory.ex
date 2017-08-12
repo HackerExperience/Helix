@@ -127,7 +127,7 @@ defmodule Helix.Software.Factory do
   end
 
   defp fabricate_changeset(:storage_drive, params) do
-    new_storage = fn -> changeset(:storage, drives: nil) end
+    new_storage = fn -> changeset(:storage, drives: []) end
     storage = Map.get_lazy(params, :storage, new_storage)
 
     %StorageDrive{}

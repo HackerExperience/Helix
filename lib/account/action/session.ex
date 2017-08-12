@@ -16,11 +16,6 @@ defmodule Helix.Account.Action.Session do
   defdelegate validate_token(token),
     to: SessionInternal
 
-  @spec invalidate_token(AccountSession.token) ::
-    :ok
-  defdelegate invalidate_token(token),
-    to: SessionInternal
-
   @spec invalidate_session(AccountSession.id) ::
     :ok
   defdelegate invalidate_session(session),

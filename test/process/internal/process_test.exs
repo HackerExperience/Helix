@@ -20,12 +20,10 @@ defmodule Helix.Process.Internal.ProcessTest do
   end
 
   describe "delete/1" do
-    @tag :pending
-    test "is idempotent" do
+    test "removes entry" do
       process = Factory.insert(:process)
 
       assert Repo.get(Process, process.process_id)
-      ProcessInternal.delete(process)
       ProcessInternal.delete(process)
       refute Repo.get(Process, process.process_id)
     end

@@ -74,7 +74,7 @@ defmodule Helix.Hardware.Action.MotherboardTest do
   end
 
   describe "delete/1" do
-    test "succeeds with valid data" do
+    test "removes entry" do
       motherboard = Factory.insert(:motherboard)
       assert Repo.get(Motherboard, motherboard.motherboard_id)
 
@@ -85,20 +85,7 @@ defmodule Helix.Hardware.Action.MotherboardTest do
       CacheHelper.sync_test()
     end
 
-    @tag :pending
-    test "is idempotent" do
-      motherboard = Factory.insert(:motherboard)
-      assert Repo.get(Motherboard, motherboard.motherboard_id)
-
-      MotherboardAction.delete(motherboard.motherboard_id)
-      MotherboardAction.delete(motherboard.motherboard_id)
-
-      refute Repo.get(Motherboard, motherboard.motherboard_id)
-
-      CacheHelper.sync_test()
-    end
-
-    test "removes its slots" do
+    test "removes motherboard slots" do
       mobo = Factory.insert(:motherboard)
       slots = MotherboardQuery.get_slots(mobo)
 

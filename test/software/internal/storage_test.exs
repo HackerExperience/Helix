@@ -26,14 +26,10 @@ defmodule Helix.Software.Internal.StorageTest do
     end
   end
 
-  @tag :pending
-  test "deleting is idempotency" do
-    # Create a Storage without any files being contained by it since (right now)
-    # you can't directly delete an storage without deleting it's files
-    storage = Factory.insert(:storage, %{files: []})
+  test "delete/1 removes entry" do
+    storage = Factory.insert(:storage)
 
     assert StorageInternal.fetch(storage.storage_id)
-    StorageInternal.delete(storage)
     StorageInternal.delete(storage)
     refute StorageInternal.fetch(storage.storage_id)
 
