@@ -36,21 +36,6 @@ defmodule Helix.Account.Internal.Session do
     end
   end
 
-  # Review: @charlots `invalidate_token` is never called; `invalidate_session`
-  # is called directly. Shouldn't it be the opposite?
-  @spec invalidate_token(AccountSession.token) ::
-    :ok
-  def invalidate_token(token) do
-    with \
-      {:ok, session} <- verify(token),
-      session = %{} <- AccountSessionInternal.fetch(session)
-    do
-      invalidate_session(session)
-    end
-
-    :ok
-  end
-
   @spec invalidate_session(AccountSession.t | AccountSession.id) ::
     :ok
   defdelegate invalidate_session(session_or_session_id),

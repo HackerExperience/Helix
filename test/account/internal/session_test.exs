@@ -30,7 +30,8 @@ defmodule Helix.Account.Internal.SessionInternalTest do
       account = Factory.insert(:account)
 
       {:ok, token} = SessionInternal.generate_token(account)
-      SessionInternal.invalidate_token(token)
+      {:ok, _, session} = SessionInternal.validate_token(token)
+      SessionInternal.invalidate_session(session)
 
       assert {:error, :unauthorized} == SessionInternal.validate_token(token)
     end
@@ -47,19 +48,6 @@ defmodule Helix.Account.Internal.SessionInternalTest do
 
       assert account.account_id == acc.account_id
       assert Repo.get(AccountSession, session)
-    end
-  end
-
-  describe "invalidate_token/1" do
-    test "is idempotent" do
-      account = Factory.insert(:account)
-
-      {:ok, token} = SessionInternal.generate_token(account)
-
-      SessionInternal.invalidate_token(token)
-      SessionInternal.invalidate_token(token)
-
-      assert {:error, :unauthorized} == SessionInternal.validate_token(token)
     end
   end
 
