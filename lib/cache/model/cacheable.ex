@@ -98,7 +98,8 @@ defimpl Helix.Cache.Model.Cacheable, for: StorageCache do
   alias Helix.Cache.Model.StorageCache
 
   def format_input(row) do
-    StorageCache.create_changeset(row)
+    row
+    |> StorageCache.create_changeset()
     |> Ecto.Changeset.apply_changes()
   end
 

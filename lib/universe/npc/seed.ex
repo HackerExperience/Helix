@@ -1,20 +1,21 @@
 defmodule Helix.Universe.NPC.Seed do
 
-  alias Helix.Universe.Repo
-  alias Helix.Universe.NPC.Model.NPC
-  alias Helix.Universe.NPC.Model.NPCType
-  alias Helix.Universe.NPC.Model.Seed
-  alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
+  alias Helix.Cache.Action.Cache, as: CacheAction
+  alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Entity.Internal.Entity, as: EntityInternal
+  alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
-  alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
+  alias Helix.Network.Action.DNS, as: DNSAction
+  alias Helix.Network.Internal.DNS, as: DNSInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo, as: ServerRepo
-  alias Helix.Network.Action.DNS, as: DNSAction
-  alias Helix.Network.Internal.DNS, as: DNSInternal
-  alias Helix.Cache.Action.Cache, as: CacheAction
+  alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
+  alias Helix.Universe.NPC.Model.NPC
+  alias Helix.Universe.NPC.Model.NPCType
+  alias Helix.Universe.NPC.Model.Seed
+  alias Helix.Universe.Repo
 
   def migrate do
     npcs = Seed.seed()
@@ -24,15 +25,13 @@ defmodule Helix.Universe.NPC.Seed do
       # Ensure the DB has the basic NPC types
       add_npc_types()
 
-      Enum.map(npcs, fn (entry) ->
+      Enum.each(npcs, fn (entry) ->
 
         # Create NPC
-        unless NPCInternal.fetch(entry.id) do
-          %{npc_type: entry.type}
-          |> NPC.create_changeset()
-          |> Ecto.Changeset.cast(%{npc_id: entry.id}, [:npc_id])
-          |> Repo.insert()
-        end
+        %{npc_type: entry.type}
+        |> NPC.create_changeset()
+        |> Ecto.Changeset.cast(%{npc_id: entry.id}, [:npc_id])
+        |> Repo.insert(on_conflict: :nothing)
 
         npc = NPCInternal.fetch(entry.id)
 
@@ -44,7 +43,7 @@ defmodule Helix.Universe.NPC.Seed do
 
         entity = EntityInternal.fetch(entry.id)
 
-        Enum.map(entry.servers, fn(cur) ->
+        Enum.each(entry.servers, fn(cur) ->
           create_server(cur, entity)
         end)
 
@@ -54,9 +53,7 @@ defmodule Helix.Universe.NPC.Seed do
       end)
     end
 
-    # Give time to commit previous transactions
-    :timer.sleep(500)
-
+    # Ensure nothing is left on cache
     clean_cache(npcs)
   end
 
@@ -70,10 +67,11 @@ defmodule Helix.Universe.NPC.Seed do
     unless ServerInternal.fetch(entry_server.id) do
 
       # Create Server
-      server = %{server_type: :desktop}
+      server =
+        %{server_type: :desktop}
         |> Server.create_changeset()
         |> Ecto.Changeset.cast(%{server_id: entry_server.id}, [:server_id])
-        |> ServerRepo.insert!
+        |> ServerRepo.insert!()
 
       # Create & attach mobo
       {:ok, motherboard_id} = HardwareFlow.setup_bundle(entity)
@@ -84,7 +82,8 @@ defmodule Helix.Universe.NPC.Seed do
 
       # Change IP if a static one was specified
       if entry_server.static_ip do
-        nc = motherboard_id
+        nc =
+          motherboard_id
           |> MotherboardInternal.fetch()
           |> MotherboardInternal.get_networks()
           |> Enum.find(&(to_string(&1.network_id) == "::"))
@@ -105,12 +104,14 @@ defmodule Helix.Universe.NPC.Seed do
   end
 
   def clean_cache(npcs) do
-    # Ensure nothing is left on cache
+    # Sync cache
+    StatePurgeQueue.sync()
+
     # FIXME: This deletes all cache entries from all (seeded) NPCs. Might cause
     # load spikes on production. Filter out to purge only servers who were added
     # during the migration.
-    Enum.map(npcs, fn(npc) ->
-      Enum.map(npc.servers, fn(server) ->
+    Enum.each(npcs, fn(npc) ->
+      Enum.each(npc.servers, fn(server) ->
         CacheAction.purge_server(server.id)
       end)
     end)

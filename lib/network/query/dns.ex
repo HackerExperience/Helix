@@ -8,16 +8,16 @@ defmodule Helix.Network.Query.DNS do
   alias Helix.Network.Internal.DNS, as: DNSInternal
   alias Helix.Network.Model.Network
 
-  @spec resolve(Network.idtb, String.t, IPv4.t) ::
+  @spec resolve(Network.idt, String.t, IPv4.t) ::
     {:ok, IPv4.t}
-    | :nxdomain
+    | {:error, {:domain, :notfound}}
   @doc """
   DNS resolution function.
 
   It first looks for any Unicast entry. If none are found, it looks for Anycast.
   If an Anycast entry is found, it then proceeds to calculate the nearest NPC
   entry to the source connection.
-  If neither Unicast or Anycast entries are found, it returns :nxdomain
+  If neither Unicast or Anycast entries are found, it returns an error.
   """
   def resolve(network, name, origin) do
     cond do
@@ -25,20 +25,20 @@ defmodule Helix.Network.Query.DNS do
         {:ok, unicast.ip}
 
       anycast = DNSInternal.lookup_anycast(name) ->
-        {:ok, nearest_server(network, anycast.npc_id, origin)}
+        npc = NPCQuery.fetch(anycast.npc_id)
+        {:ok, nearest_server(network, npc, origin)}
 
       true ->
-        :nxdomain
+        {:error, {:domain, :notfound}}
     end
   end
 
-  @spec nearest_server(Network.idtb, NPC.id, IPv4.t) ::
+  @spec nearest_server(Network.idt, NPC.t, IPv4.t) ::
     IPv4.t
     | nil
-  defp nearest_server(network, npc_id, _origin_server) do
+  defp nearest_server(network, npc, _origin_server) do
     # TODO: Actual GIS implementation. Move to `GIS` module
-    npc_id
-    |> NPCQuery.fetch()
+    npc
     |> EntityQuery.get_entity_id()
     |> EntityQuery.fetch()
     |> EntityQuery.get_servers()

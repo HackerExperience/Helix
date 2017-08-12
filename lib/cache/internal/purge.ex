@@ -72,23 +72,28 @@ defmodule Helix.Cache.Internal.Purge do
     do: raise "purge not implemented for #{inspect model}"
 
   defp delete(:server, {server_id}) do
-    ServerCache.Query.by_server(server_id)
+    server_id
+    |> ServerCache.Query.by_server()
     |> Repo.delete_all()
   end
   defp delete(:component, {component_id}) do
-    ComponentCache.Query.by_component(component_id)
+    component_id
+    |> ComponentCache.Query.by_component()
     |> Repo.delete_all()
   end
   defp delete(:storage, {storage_id}) do
-    StorageCache.Query.by_storage(storage_id)
+    storage_id
+    |> StorageCache.Query.by_storage()
     |> Repo.delete_all()
   end
   defp delete(:network, {network_id, ip}) do
-    NetworkCache.Query.by_nip(network_id, ip)
+    network_id
+    |> NetworkCache.Query.by_nip(ip)
     |> Repo.delete_all()
   end
   defp delete(:web, {network_id, ip}) do
-    WebCache.Query.web_by_nip(network_id, ip)
+    network_id
+    |> WebCache.Query.web_by_nip(ip)
     |> Repo.delete_all()
   end
 end

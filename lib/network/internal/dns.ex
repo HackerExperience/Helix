@@ -5,13 +5,13 @@ defmodule Helix.Network.Internal.DNS do
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo
 
-  @spec lookup_unicast(Network.id, String.t) ::
+  @spec lookup_unicast(Network.idt, String.t) ::
     Unicast.t
     | nil
   def lookup_unicast(network, name) do
-    name
-    |> Unicast.Query.by_name(network)
-    |> Repo.one
+    network
+    |> Unicast.Query.by_net_and_name(name)
+    |> Repo.one()
   end
 
   @spec lookup_anycast(String.t) ::
@@ -20,7 +20,7 @@ defmodule Helix.Network.Internal.DNS do
   def lookup_anycast(name) do
     name
     |> Anycast.Query.by_name()
-    |> Repo.one
+    |> Repo.one()
   end
 
   @spec register_unicast(Unicast.creation_params) ::
@@ -29,14 +29,14 @@ defmodule Helix.Network.Internal.DNS do
   def register_unicast(params) do
     params
     |> Unicast.create_changeset()
-    |> Repo.insert
+    |> Repo.insert()
   end
 
-  @spec deregister_unicast(Network.id, String.t) ::
+  @spec deregister_unicast(Network.idt, String.t) ::
     :ok
   def deregister_unicast(network, name) do
-    name
-    |> Unicast.Query.by_name(network)
+    network
+    |> Unicast.Query.by_net_and_name(name)
     |> Repo.delete_all()
 
     :ok

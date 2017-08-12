@@ -19,13 +19,14 @@ defmodule Helix.Network.Query.DNSTest do
       {dc, dc_ip} = NPCHelper.download_center()
 
       assert {:ok, ip} =
-        DNSQuery.resolve(NetworkHelper.internet_id, dc.anycast, Random.ipv4())
+        DNSQuery.resolve(NetworkHelper.internet_id(), dc.anycast, Random.ipv4())
 
       assert ip == dc_ip
     end
 
     test "Unicast resolution" do
-      {site, ip} = {"saocarlosagora.com.br", Random.ipv4()}
+      site = "saocarlosagora.com.br"
+      ip = Random.ipv4()
 
       {:ok, _} = DNSAction.register_unicast(NetworkHelper.internet_id, site, ip)
       assert {:ok, ip2} = DNSQuery.resolve(NetworkHelper.internet_id, site, ip)
@@ -33,11 +34,12 @@ defmodule Helix.Network.Query.DNSTest do
     end
 
     test "won't resolve non-existing sites" do
-      :nxdomain =
+      assert {:error, reason} =
         DNSQuery.resolve(
           NetworkHelper.internet_id,
           "wwwwwwwww.jodi.org",
           Random.ipv4())
+      assert reason == {:domain, :notfound}
     end
   end
 end

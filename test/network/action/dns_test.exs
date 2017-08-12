@@ -34,6 +34,8 @@ defmodule Helix.Network.Action.DNSTest do
       {network1, site1, ip1} = unicast_params1()
       {_, _, ip2} = unicast_params2()
       assert {:ok, _} = DNSAction.register_unicast(network1, site1, ip1)
+
+      # One name cannot have more than one IP resolving to it
       assert_raise Ecto.ConstraintError, fn ->
         DNSAction.register_unicast(network1, site1, ip2)
       end
@@ -43,7 +45,7 @@ defmodule Helix.Network.Action.DNSTest do
   end
 
   describe "deregister_unicast/2" do
-    test "it removes unicast entry" do
+    test "removes unicast entry" do
       {network, site, ip} = unicast_params1()
 
       # Add it to the DB

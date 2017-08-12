@@ -127,7 +127,7 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       MotherboardInternal.unlink_components_from_motherboard(motherboard_id)
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.map(server.components, fn(component_id) ->
+      Enum.each(server.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       assert StatePurgeQueue.lookup(:server, server_id)
@@ -151,7 +151,7 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       MotherboardInternal.unlink_components_from_motherboard(motherboard_id)
 
       assert StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.map(server.components, fn(component_id) ->
+      Enum.each(server.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       refute StatePurgeQueue.lookup(:server, server_id)

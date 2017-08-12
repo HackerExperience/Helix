@@ -34,7 +34,7 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.map(components, fn(component_id) ->
+      Enum.each(components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
 
@@ -129,10 +129,10 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.map(server.components, fn(component_id) ->
+      Enum.each(server.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
-      Enum.map(server.storages, fn(storage_id) ->
+      Enum.each(server.storages, fn(storage_id) ->
         assert StatePurgeQueue.lookup(:storage, storage_id)
       end)
       nip_args = {to_string(nip.network_id), nip.ip}
@@ -161,11 +161,11 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
       # Nothing to delete...
       refute StatePurgeQueue.lookup(:server, server_id)
       refute StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.map(server.components, fn(component_id) ->
+      Enum.each(server.components, fn(component_id) ->
         refute StatePurgeQueue.lookup(:component, component_id)
       end)
       refute StatePurgeQueue.lookup(:component, Enum.random(server.components))
-      Enum.map(server.storages, fn(storage_id) ->
+      Enum.each(server.storages, fn(storage_id) ->
         refute StatePurgeQueue.lookup(:storage, storage_id)
       end)
       refute StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})

@@ -29,7 +29,7 @@ defmodule Helix.Entity.Action.Entity do
   end
   def create_from_specialization(%NPC{npc_id: npc_id}) do
     params = %{
-      entity_id: npc_id,
+      entity_id: to_string(npc_id),
       entity_type: :npc
     }
 
