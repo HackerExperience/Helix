@@ -19,13 +19,11 @@ defmodule Helix.Hardware.Internal.ComponentSpecTest do
     end
   end
 
-  describe "deleting" do
-    @tag :pending
-    test "is idempotent" do
+  describe "delete/1" do
+    test "removes entry" do
       cs = Factory.insert(:component_spec)
 
       assert Repo.get(ComponentSpec, cs.spec_id)
-      ComponentSpecInternal.delete(cs)
       ComponentSpecInternal.delete(cs)
       refute Repo.get(ComponentSpec, cs.spec_id)
     end

@@ -74,12 +74,10 @@ defmodule Helix.Server.Internal.ServerTest do
     end
   end
 
-  @tag :pending
-  test "deleting is idempotent" do
+  test "delete/1 removes entry" do
     server = Factory.insert(:server)
     assert Repo.get(Server, server.server_id)
 
-    ServerInternal.delete(server)
     ServerInternal.delete(server)
 
     refute Repo.get(Server, server.server_id)

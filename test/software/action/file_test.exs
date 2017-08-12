@@ -84,12 +84,10 @@ defmodule Helix.Software.Action.FileTest do
     end
   end
 
-  @tag :pending
   describe "delete/1" do
-    test "is idempotent" do
+    test "removes entry" do
       file = Factory.insert(:file)
 
-      FileAction.delete(file)
       FileAction.delete(file)
 
       refute FileQuery.fetch(file.file_id)

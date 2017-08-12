@@ -189,7 +189,6 @@ defmodule Helix.Software.Internal.FileTest do
     end
   end
 
-  @tag :pending
   test "setting modules" do
     file = Factory.insert(:file)
     modules = generate_software_modules(file.software_type)
@@ -210,37 +209,17 @@ defmodule Helix.Software.Internal.FileTest do
       file_modules = FileInternal.get_modules(file)
       assert modules == file_modules
     end
-
-    @tag :pending
-    test "returns empty map when nothing is found" do
-      file = Factory.insert(:file)
-      file_modules = FileInternal.get_modules(file)
-
-      assert Enum.empty?(file_modules)
-    end
   end
 
-  describe "deleting" do
-    @tag :pending
-    test "is idempotent" do
+  describe "delete/1" do
+    test "removes entry" do
       file = Factory.insert(:file)
 
-      assert FileInternal.fetch(file.file_id)
+      assert Repo.get(File, file.file_id)
+
       FileInternal.delete(file)
-      FileInternal.delete(file)
-      refute FileInternal.fetch(file.file_id)
-    end
 
-    test "deletes every module" do
-      file = Factory.insert(:file)
-      software_module = generate_software_modules(file.software_type)
-
-      {:ok, _} = FileInternal.set_modules(file, software_module)
-
-      Repo.delete(file)
-
-      file_modules = FileInternal.get_modules(file)
-      assert Enum.empty?(file_modules)
+      refute Repo.get(File, file.file_id)
     end
   end
 end

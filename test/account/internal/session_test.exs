@@ -51,18 +51,17 @@ defmodule Helix.Account.Internal.SessionInternalTest do
     end
   end
 
-  @tag :pending
   describe "invalidate_session/1" do
-    test "is idempotent" do
+    test "removes session entry" do
       account = Factory.insert(:account)
 
       {:ok, token} = SessionInternal.generate_token(account)
       {:ok, _, session} = SessionInternal.validate_token(token)
 
       SessionInternal.invalidate_session(session)
-      SessionInternal.invalidate_session(session)
 
       assert {:error, :unauthorized} == SessionInternal.validate_token(token)
+      refute Repo.get(AccountSession, session)
     end
   end
 end

@@ -120,38 +120,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       %{"gateway_id" => gateway, "password" => "wrongpass"})
   end
 
-  # This test is not that relevant anymore because a connection is started
-  # implictly as long as sufficient data is provided
-  # TODO: remove ?
-  @tag :pending
-  test \
-    "can connect to a destination if a suitable connection exists",
-    context
-  do
-    gateway = create_server_for_account(context.account)
-    gateway = to_string(gateway.server_id)
-    destination = create_destination_server()
-    destination = to_string(destination.server_id)
-
-    topic = "server:" <> destination
-    join_msg = %{"gateway_id" => gateway}
-
-    # Fails because there is no connection between the two servers
-    assert {:error, _} = join(context.socket, topic, join_msg)
-
-    # TODO: Make this an integration factory function
-    tunnel = NetworkFactory.insert(
-      :tunnel,
-      gateway_id: gateway,
-      destination_id: destination)
-    NetworkFactory.insert(:connection,
-      tunnel: tunnel,
-      connection_type: "ssh")
-
-    # With a valid SSH connection, a join is possible
-    assert {:ok, _, _} = join(context.socket, topic, join_msg)
-  end
-
   test "can start connection with a server", context do
     gateway = create_server_for_account(context.account)
     gateway = to_string(gateway.server_id)
