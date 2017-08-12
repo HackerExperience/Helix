@@ -33,9 +33,8 @@ defmodule Helix.Server.Websocket.Routes do
     end
 
     with \
-      {:ok, server} <- CacheQuery.from_nip_get_server(network, target),
+      {:ok, server_id} <- CacheQuery.from_nip_get_server(network, target),
       # FIXME
-      server_id = server.server_id,
       entity_id = EntityQuery.get_entity_id(account),
       entity = %{} <- EntityQuery.fetch(entity_id),
       {:ok, _} <- create_hack_db_entry.(entity, server_id),

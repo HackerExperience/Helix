@@ -11,6 +11,7 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
   alias HELL.TestHelper.Setup
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Network.Helper, as: NetworkHelper
+  alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   setup do
     {server, account} = Setup.server()
@@ -39,7 +40,7 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
 
     test "won't update to an existing ip", context do
       server_id = context.server.server_id
-      existing_ip = "1.2.3.4"
+      {_, existing_ip} = NPCHelper.download_center()
 
       cur_ip = ServerQuery.get_ip(server_id, NetworkHelper.internet_id)
       nc = NetworkConnectionInternal.fetch_by_nip(
@@ -70,15 +71,15 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
     end
   end
 
-  describe "fetch_by_nip" do
-    test "it works", context do
+  describe "fetch_by_nip/2" do
+    test "returns the network connection bound to specified nip", context do
       server_id = context.server.server_id
 
       {:ok, [nip]} = CacheQuery.from_server_get_nips(server_id)
 
       nc = NetworkConnectionInternal.fetch_by_nip(nip.network_id, nip.ip)
 
-      refute nc == nil
+      assert nc
       assert nc.network_id == nip.network_id
       assert nc.ip == nip.ip
 

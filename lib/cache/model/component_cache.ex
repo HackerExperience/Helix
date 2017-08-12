@@ -7,15 +7,14 @@ defmodule Helix.Cache.Model.ComponentCache do
   alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Hardware.Model.Component
-  alias Helix.Cache.Model.Cacheable
-
-  @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
     component_id: PK.t,
     motherboard_id: PK.t | nil,
     expiration_date: DateTime.t
   }
+
+  @cache_duration 60 * 60 * 24 * 1000
 
   @creation_fields ~w/component_id motherboard_id/a
 
@@ -29,16 +28,19 @@ defmodule Helix.Cache.Model.ComponentCache do
   end
 
   def new(component_id, mobo_id) do
-    %__MODULE__{
+    %{
       component_id: to_string(component_id),
       motherboard_id: to_string(mobo_id)
     }
-    |> Cacheable.format_input()
+    |> create_changeset()
+    |> Changeset.apply_changes()
   end
 
+  def create_changeset(params = %__MODULE__{}),
+    do: create_changeset(Map.from_struct(params))
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(Map.from_struct(params), @creation_fields)
+    |> cast(params, @creation_fields)
     |> add_expiration_date()
   end
 

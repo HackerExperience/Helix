@@ -8,7 +8,7 @@ defmodule Helix.Network.Query.WebTest do
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   describe "browse/3" do
-    test "it browses with ip" do
+    test "accepts ip" do
       {_, ip} = NPCHelper.download_center()
 
       assert {:ok, resolution} =
@@ -17,7 +17,7 @@ defmodule Helix.Network.Query.WebTest do
       assert content.title
     end
 
-    test "it browses with name" do
+    test "accepts name" do
       {dc, _} = NPCHelper.download_center()
 
       assert {:ok, resolution} =
@@ -26,15 +26,24 @@ defmodule Helix.Network.Query.WebTest do
       assert content.title
     end
 
-    test "it wont find non-existing ip" do
-      assert {:error, :notfound} ==
+    test "fails when ip doesnt exists" do
+      assert {:error, {:ip, :notfound}} ==
         WebQuery.browse(NetworkHelper.internet_id, "1.3.3.7", Random.ipv4())
     end
 
-    test "it wont find non-existing domain" do
-      assert {:error, :nxdomain} ==
+    test "fails when domain doesnt exists" do
+      assert {:error, {:domain, :notfound}} ==
         WebQuery.browse(NetworkHelper.internet_id, "lol.com", Random.ipv4())
     end
   end
 
+  describe "serve/2" do
+    test "serves NPC pages correctly" do
+      {_, ip} = NPCHelper.download_center()
+
+      assert {:ok, page} = WebQuery.serve(NetworkHelper.internet_id(), ip)
+
+      assert page.title
+    end
+  end
 end

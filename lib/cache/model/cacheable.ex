@@ -6,8 +6,6 @@ alias Helix.Cache.Model.WebCache
 
 defprotocol Helix.Cache.Model.Cacheable do
 
-  def format_input(data)
-
   def format_output(data)
 
 end
@@ -20,21 +18,6 @@ defimpl Helix.Cache.Model.Cacheable, for: ServerCache do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Model.Cacheable.Utils
-  alias Helix.Cache.Model.ServerCache
-
-  def format_input(row) do
-    networks = if row.networks do
-      Enum.map(row.networks, fn(net) ->
-        %{network_id: to_string(net.network_id), ip: net.ip}
-      end)
-    else
-      nil
-    end
-
-    %{row | networks: networks}
-    |> ServerCache.create_changeset()
-    |> Ecto.Changeset.apply_changes()
-  end
 
   def format_output(row) do
     storages = if row.storages do
@@ -95,12 +78,6 @@ defimpl Helix.Cache.Model.Cacheable, for: StorageCache do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Model.Cacheable.Utils
-  alias Helix.Cache.Model.StorageCache
-
-  def format_input(row) do
-    StorageCache.create_changeset(row)
-    |> Ecto.Changeset.apply_changes()
-  end
 
   def format_output(row) do
     %{
@@ -115,13 +92,6 @@ defimpl Helix.Cache.Model.Cacheable, for: NetworkCache do
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Cache.Model.Cacheable.Utils
-  alias Helix.Cache.Model.NetworkCache
-
-  def format_input(row) do
-    row
-    |> NetworkCache.create_changeset()
-    |> Ecto.Changeset.apply_changes()
-  end
 
   def format_output(row) do
     %{
@@ -135,14 +105,7 @@ end
 defimpl Helix.Cache.Model.Cacheable, for: ComponentCache do
 
   alias Helix.Hardware.Model.Component
-  alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.Cacheable.Utils
-
-  def format_input(row) do
-    row
-    |> ComponentCache.create_changeset()
-    |> Ecto.Changeset.apply_changes()
-  end
 
   def format_output(row) do
     %{
@@ -156,14 +119,7 @@ defimpl Helix.Cache.Model.Cacheable, for: WebCache do
 
   alias HELL.MapUtils
   alias Helix.Network.Model.Network
-  alias Helix.Cache.Model.WebCache
   alias Helix.Cache.Model.Cacheable.Utils
-
-  def format_input(row) do
-    row
-    |> WebCache.create_changeset()
-    |> Ecto.Changeset.apply_changes()
-  end
 
   def format_output(row) do
     %{

@@ -7,9 +7,6 @@ defmodule Helix.Cache.Model.WebCache do
   alias Ecto.Changeset
   alias HELL.IPv4
   alias HELL.PK
-  alias Helix.Cache.Model.Cacheable
-
-  @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
     network_id: PK.t,
@@ -18,7 +15,8 @@ defmodule Helix.Cache.Model.WebCache do
     expiration_date: DateTime.t
   }
 
-  # @creation_fields ~w/ip npc_id content/a
+  @cache_duration 60 * 60 * 24 * 1000
+
   @creation_fields ~w/network_id ip content/a
 
   @primary_key false
@@ -34,17 +32,20 @@ defmodule Helix.Cache.Model.WebCache do
   end
 
   def new(network_id, ip, content) do
-    %__MODULE__{
+    %{
       network_id: network_id,
       ip: ip,
       content: content
     }
-    |> Cacheable.format_input()
+    |> create_changeset()
+    |> Changeset.apply_changes()
   end
 
+  def create_changeset(params = %__MODULE__{}),
+    do: create_changeset(Map.from_struct(params))
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(Map.from_struct(params), @creation_fields)
+    |> cast(params, @creation_fields)
     |> add_expiration_date()
   end
 

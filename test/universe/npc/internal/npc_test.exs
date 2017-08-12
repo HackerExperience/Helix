@@ -2,7 +2,6 @@ defmodule Helix.Universe.NPC.Internal.NPCTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Random
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Helper, as: NPCHelper
@@ -22,15 +21,15 @@ defmodule Helix.Universe.NPC.Internal.NPCTest do
       assert %NPC{} = NPCInternal.fetch(npc.id)
     end
 
-    test "fails when npc with id doesn't exist" do
-      bogus = Random.pk()
-      refute NPCInternal.fetch(bogus)
+    test "fails when npc doesn't exist" do
+      refute NPCInternal.fetch(NPC.ID.generate())
     end
   end
 
   test "delete/1" do
     npc_id = NPCHelper.random().id
     npc = NPCInternal.fetch(npc_id)
+
     assert npc
     NPCInternal.delete(npc)
     refute NPCInternal.fetch(npc_id)

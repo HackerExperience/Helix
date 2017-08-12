@@ -1,9 +1,10 @@
 defmodule Helix.Network.Websocket.Routes do
 
   alias Helix.Websocket.Socket, warn: false
-  alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Entity.Query.Database, as: DatabaseQuery
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
 
   # TODO: Check if player's gateway is connected to specified network
   def browse_ip(socket, %{"network_id" => network, "ip" => ip}) do
@@ -14,14 +15,15 @@ defmodule Helix.Network.Websocket.Routes do
       |> EntityQuery.fetch()
 
     with \
-      {:ok, server} <- CacheQuery.from_nip_get_server(network, ip),
-      entity = %{} <- EntityQuery.fetch_by_server(server.server_id)
+      {:ok, server_id} <- CacheQuery.from_nip_get_server(network, ip),
+      server = %{} <- ServerQuery.fetch(server_id),
+      entity = %{} <- EntityQuery.fetch_by_server(server_id)
     do
       password = DatabaseQuery.get_server_password(account, server)
 
       # TODO: move this to the presentation layer
       data = %{
-        server_id: server.server_id,
+        server_id: server_id,
         server_type: server.server_type,
         entity_type: entity.entity_type,
         # Defaults to nil
