@@ -2,11 +2,13 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Setup
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Universe.Bank.Action.Flow.BankTransfer, as: BankTransferFlow
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+
+  alias HELL.TestHelper.Setup
+  alias Helix.Test.Process.TOPHelper
 
   describe "start/1" do
     @tag :slow
@@ -17,14 +19,14 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       {_, player} = Setup.server()
 
       # They see me flowin', they hatin'
-      {:ok, flow} = BankTransferFlow.start(acc1, acc2, amount, player)
-      transfer_id = flow.process_data.transfer_id
+      {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
+      transfer_id = process.process_data.transfer_id
 
       # Ensure it was added to the DB
       assert BankTransferInternal.fetch(transfer_id)
 
       # Ensure process was created
-      assert ProcessQuery.fetch(flow.process_id)
+      assert ProcessQuery.fetch(process.process_id)
 
       # Ensure it removed money from source, but did not transfer yet
       assert BankAccountInternal.get_balance(acc1.account_number) == 0
@@ -35,9 +37,11 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
 
       # Ensure transfer was completed
       refute BankTransferInternal.fetch(transfer_id)
-      refute ProcessQuery.fetch(flow.process_id)
+      refute ProcessQuery.fetch(process.process_id)
       assert BankAccountInternal.get_balance(acc1.account_number) == 0
       assert BankAccountInternal.get_balance(acc2.account_number) == amount
+
+      TOPHelper.top_stop(process.gateway_id)
     end
   end
 end

@@ -19,7 +19,6 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     amount: integer,
     started_by: Account.id,
     started_time: DateTime.t,
-    finish_time: DateTime.t
   }
 
   @type creation_params :: %{
@@ -49,7 +48,6 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     field :amount, :integer
     field :started_by, Account.ID
     field :started_time, :utc_datetime
-    field :finish_time, :utc_datetime
   end
 
   @spec create_changeset(creation_params) ::
@@ -80,25 +78,8 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
   end
 
   defp add_time_information(changeset) do
-    now = DateTime.utc_now()
-    amount = get_change(changeset, :amount)
-
     changeset
-    |> put_change(:started_time, now)
-    |> put_change(:finish_time, get_finish_time(amount, now))
-  end
-
-  defp get_finish_time(amount, now) do
-    duration = calculate_duration(amount)
-
-    now
-    |> DateTime.to_unix(:second)
-    |> Kernel.+(duration)
-    |> DateTime.from_unix!(:second)
-  end
-
-  def calculate_duration(_amount) do
-    600
+    |> put_change(:started_time, DateTime.utc_now())
   end
 
   defmodule Query do
@@ -115,11 +96,5 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
 
     def lock_for_update(query),
       do: lock(query, "FOR UPDATE")
-
-    # @spec by_owner(Ecto.Queryable.t, Account.id) ::
-    #   Ecto.Queryable.t
-    # def by_owner(query \\ BankAccount, owner),
-    #   do: where(query, [b], b.owner_id == ^owner)
-
   end
 end

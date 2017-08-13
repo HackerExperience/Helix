@@ -10,7 +10,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   describe "fetch/1" do
-    test "it works" do
+    test "with valid account" do
       acc = Setup.bank_account()
 
       acc2 = BankAccountInternal.fetch(acc.account_number)
@@ -23,7 +23,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   end
 
   describe "get_accounts/1" do
-    test "it works" do
+    test "with zero, one or many accounts" do
       {_, player} = Setup.server()
       player_id = player.account_id
 
@@ -45,7 +45,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   end
 
   describe "get_balance/1" do
-    test "with valid data" do
+    test "with valid account" do
       acc = Setup.bank_account()
 
       balance = BankAccountInternal.get_balance(acc.account_number)
@@ -59,7 +59,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
   describe "get_total_funds/1" do
     @tag :slow
-    test "it works" do
+    test "with zero, one or many accounts" do
       {_, player} = Setup.server()
       player_id = player.account_id
 
@@ -77,7 +77,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   end
 
   describe "create/1" do
-    test "it works" do
+    test "with valid params" do
       bank = NPCHelper.bank()
       atm_id = Enum.random(bank.servers).id
       owner_id = Random.pk()
@@ -99,7 +99,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   end
 
   describe "deposit/2" do
-    test "it works" do
+    test "deposited money is added to the account" do
       acc = Setup.bank_account()
       number = acc.account_number
 
@@ -119,7 +119,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   end
 
   describe "withdraw/2" do
-    test "it works" do
+    test "multiple withdraws with valid account balance" do
       acc = Setup.bank_account()
       number = acc.account_number
 
@@ -146,7 +146,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   end
 
   describe "change_password/1" do
-    test "it changes the password" do
+    test "changes the password" do
       acc = Setup.bank_account()
 
       assert {:ok, acc2} = BankAccountInternal.change_password(acc)
@@ -156,7 +156,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   end
 
   describe "close/1" do
-    test "it closes the account" do
+    test "closes the account" do
       acc = Setup.bank_account()
 
       assert BankAccountInternal.fetch(acc.account_number)
@@ -164,7 +164,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       refute BankAccountInternal.fetch(acc.account_number)
     end
 
-    test "it refuses to close non-empty accounts" do
+    test "refuses to close non-empty accounts" do
       acc = Setup.bank_account([balance: 1])
 
       assert BankAccountInternal.fetch(acc.account_number)
