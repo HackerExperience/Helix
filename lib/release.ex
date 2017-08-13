@@ -34,6 +34,7 @@ defmodule Helix.Release do
   def seeds do
     start_applications()
     start_repos()
+    start_cache()
 
     :helix
     |> Application.app_dir("priv/**/seeds.exs")
@@ -55,6 +56,12 @@ defmodule Helix.Release do
       {:ok, _} = repo.start_link(pool_size: 1)
     end)
   end
+
+  # HACK: Some seed functions use cache implicitly, and as such require it
+  # to be started. That's what we do here. A better fix would be to disable
+  # cache altogether, by adding something like a `SKIP_CACHE` flag.
+  defp start_cache,
+    do: Helix.Cache.State.Supervisor.start_link()
 
   defp execute_on_all_repos(fun) when is_function(fun, 1) do
     :helix
