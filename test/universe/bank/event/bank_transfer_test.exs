@@ -2,12 +2,14 @@ defmodule Helix.Universe.Bank.Event.BankTransferTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Setup
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Universe.Bank.Action.Flow.BankTransfer, as: BankTransferFlow
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+
+  alias HELL.TestHelper.Setup
+  alias Helix.Test.Process.TOPHelper
 
   describe "transfer_aborted/1" do
     test "life cycle" do
@@ -36,6 +38,8 @@ defmodule Helix.Universe.Bank.Event.BankTransferTest do
 
       # And process no longer exists..
       refute ProcessQuery.fetch(process)
+
+      TOPHelper.top_stop(process.gateway_id)
     end
   end
 end

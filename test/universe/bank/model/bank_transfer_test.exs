@@ -23,7 +23,6 @@ defmodule Helix.Universe.Bank.Model.BankTransferTest do
 
       assert changeset.valid?
       assert transfer.started_time
-      assert transfer.finish_time
     end
 
     test "with invalid transfer amount" do
@@ -39,17 +38,13 @@ defmodule Helix.Universe.Bank.Model.BankTransferTest do
       refute changeset.valid?
     end
 
-    test "it adds start and finish time correctly" do
+    test "adds start time correctly" do
       params = valid_params()
       changeset = BankTransfer.create_changeset(params)
       transfer = Ecto.Changeset.apply_changes(changeset)
 
       assert changeset.valid?
-
-      expected_duration = BankTransfer.calculate_duration(params.amount)
-      duration = DateTime.diff(transfer.finish_time, transfer.started_time)
-
-      assert duration == expected_duration
+      assert transfer.started_time
     end
   end
 end
