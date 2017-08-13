@@ -54,12 +54,10 @@ defmodule Helix.Universe.Repo.Migrations.AddBanks do
         null: false
       add :amount, :integer, null: false
       add :started_time, :utc_datetime, null: false
-      add :finish_time, :utc_datetime, null: false
       add :started_by, :inet, null: false
     end
     create index(:bank_transfers, [:account_from])
     create index(:bank_transfers, [:account_to])
-    create index(:bank_transfers, [:finish_time])
     create index(:bank_transfers, [:started_by])
     create constraint(:bank_transfers, :non_neg_amount, check: "amount >= 0")
   end

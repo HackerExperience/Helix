@@ -10,7 +10,7 @@ defmodule Helix.Universe.Bank.Internal.ATMTest do
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   describe "create/1" do
-    test "it works with valid data" do
+    test "with valid data" do
       {server, _} = Setup.server()
       bank_id = NPCHelper.bank().id
 
@@ -25,7 +25,7 @@ defmodule Helix.Universe.Bank.Internal.ATMTest do
       assert_id atm.bank_id, bank_id
     end
 
-    test "it wont create with invalid data" do
+    test "with invalid data" do
       params = %{atm_id: Random.pk(), bank_id: Random.pk(), region: "asdf"}
       assert_raise Ecto.ConstraintError, fn ->
         ATMInternal.create(params)
@@ -34,11 +34,12 @@ defmodule Helix.Universe.Bank.Internal.ATMTest do
   end
 
   describe "fetch/1" do
-    test "it works" do
+    test "with valid data" do
       bank = NPCHelper.bank()
       atm = Enum.random(bank.servers)
 
       atm2 = ATMInternal.fetch(atm.id)
+
       assert atm2
       assert_id atm2.atm_id, atm.id
       assert atm2.region == atm.custom.region

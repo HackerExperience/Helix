@@ -6,7 +6,7 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
   alias Helix.Universe.Bank.Model.BankAccount
 
   describe "change_password/1" do
-    test "it changes password" do
+    test "changes password" do
       acc =
         %BankAccount{
           bank_id: Random.pk(),
@@ -24,21 +24,21 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
   end
 
   describe "balance_operation/3" do
-    test "it adds" do
+    test "adds correctly" do
       current = 100
       amount = 37
       sum = BankAccount.balance_operation(:add, current, amount)
       assert sum == 137
     end
 
-    test "it subs" do
+    test "subtracts correctly" do
       current = 100
       amount = 37
       sub = BankAccount.balance_operation(:sub, current, amount)
       assert sub == 63
     end
 
-    test "it blows when subtracting more than it should" do
+    test "blows when subtracting more than it should" do
       assert_raise RuntimeError, fn ->
         BankAccount.balance_operation(:sub, 10, 11)
       end
@@ -46,7 +46,7 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
   end
 
   describe "deposit/1" do
-    test "it deposits!" do
+    test "increases the account balance" do
       acc =
         %BankAccount{
           bank_id: Random.pk(),
@@ -72,7 +72,7 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
   end
 
   describe "withdraw/1" do
-    test "it withdraws!" do
+    test "decreases the account balance" do
       acc =
         %BankAccount{
           bank_id: Random.pk(),

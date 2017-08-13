@@ -2,6 +2,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
 
   import HELF.Flow
 
+  alias Helix.Event
   alias Helix.Account.Model.Account
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Query.Network, as: NetworkQuery
@@ -64,7 +65,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
         on_fail(fn -> BankAction.abort_transfer(transfer) end),
 
         params = create_params.(transfer),
-        {:ok, process} <- ProcessAction.create(params)
+        {:ok, process, events} <- ProcessAction.create(params),
+        on_success(fn -> Event.emit(events) end)
       do
         {:ok, process}
       end
