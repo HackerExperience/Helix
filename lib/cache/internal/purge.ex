@@ -22,6 +22,7 @@ defmodule Helix.Cache.Internal.Purge do
   alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.StorageCache
+  alias Helix.Cache.Model.WebCache
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Repo
 
@@ -42,6 +43,8 @@ defmodule Helix.Cache.Internal.Purge do
     do: PopulateInternal.populate(:by_component, object)
   def update(:network, object),
     do: PopulateInternal.populate(:by_nip, object)
+  def update(:web, object),
+    do: PopulateInternal.populate(:web_by_nip, object)
   def update(model, _),
     do: raise "update not implemented for #{inspect model}"
 
@@ -63,23 +66,34 @@ defmodule Helix.Cache.Internal.Purge do
     do: delete(:storage, object)
   def purge(:network, object),
     do: delete(:network, object)
+  def purge(:web, object),
+    do: delete(:web, object)
   def purge(model, _),
     do: raise "purge not implemented for #{inspect model}"
 
   defp delete(:server, {server_id}) do
-    ServerCache.Query.by_server(server_id)
+    server_id
+    |> ServerCache.Query.by_server()
     |> Repo.delete_all()
   end
   defp delete(:component, {component_id}) do
-    ComponentCache.Query.by_component(component_id)
+    component_id
+    |> ComponentCache.Query.by_component()
     |> Repo.delete_all()
   end
   defp delete(:storage, {storage_id}) do
-    StorageCache.Query.by_storage(storage_id)
+    storage_id
+    |> StorageCache.Query.by_storage()
     |> Repo.delete_all()
   end
   defp delete(:network, {network_id, ip}) do
-    NetworkCache.Query.by_nip(network_id, ip)
+    network_id
+    |> NetworkCache.Query.by_nip(ip)
+    |> Repo.delete_all()
+  end
+  defp delete(:web, {network_id, ip}) do
+    network_id
+    |> WebCache.Query.web_by_nip(ip)
     |> Repo.delete_all()
   end
 end

@@ -1,9 +1,11 @@
 defmodule Helix.Entity.Query.Entity do
 
+  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
+  alias Helix.Universe.NPC.Model.NPC
 
   @spec fetch(Entity.id) ::
     Entity.t
@@ -57,12 +59,16 @@ defmodule Helix.Entity.Query.Entity do
   """
   def get_entity_id(entity) do
     case entity do
-      %Entity{entity_id: id} ->
-        id
       %Account{account_id: %Account.ID{id: id}} ->
-        # HACK: entity specializations have their own ID but those ID's are 1:1
-        #   to entity ids
         %Entity.ID{id: id}
+      %Account.ID{id: id} ->
+        %Entity.ID{id: id}
+      %NPC{npc_id: %NPC.ID{id: id}} ->
+        %Entity.ID{id: id}
+      %NPC.ID{id: id} ->
+        %Entity.ID{id: id}
+      value ->
+        Entity.ID.cast!(value)
     end
   end
 end

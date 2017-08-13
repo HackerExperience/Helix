@@ -3,7 +3,9 @@ defmodule Helix.Cache.Query.CacheTest do
   use Helix.Test.IntegrationCase
 
   import Helix.Test.CacheCase
+  import Helix.Test.IDCase
 
+  alias Helix.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -184,6 +186,44 @@ defmodule Helix.Cache.Query.CacheTest do
       assert StatePurgeQueue.lookup(:component, component_id)
 
       CacheHelper.sync_test()
+    end
+  end
+
+  describe "from_nip_get_web/2" do
+    test "returns content belonging to nip" do
+      {_, ip} = NPCHelper.download_center()
+      nip = {"::", ip}
+
+      # Ensure it is already cached
+      {:ok, _} = PopulateInternal.populate(:web_by_nip, nip)
+      assert_hit CacheInternal.direct_query({:web, :content}, nip)
+
+      assert {:ok, content} = CacheQuery.from_nip_get_web("::", ip)
+      assert content.title
+
+      refute StatePurgeQueue.lookup(:web, nip)
+
+      CacheHelper.sync_test()
+    end
+
+    test "it works (cold)" do
+      {_, ip} = NPCHelper.download_center()
+      nip = {"::", ip}
+
+      # Not cached
+      assert_miss CacheInternal.direct_query({:web, :content}, nip)
+
+      # Queries (from origin)
+      assert {:ok, content} = CacheQuery.from_nip_get_web("::", ip)
+      assert content.title
+
+      # Marked as purged
+      assert StatePurgeQueue.lookup(:web, nip)
+
+      # Cached on sync
+      StatePurgeQueue.sync()
+      refute StatePurgeQueue.lookup(:web, nip)
+      assert_hit CacheInternal.direct_query({:web, :content}, nip)
     end
   end
 end

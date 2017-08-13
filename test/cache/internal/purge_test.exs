@@ -3,6 +3,7 @@ defmodule Helix.Cache.Internal.PurgeTest do
   use Helix.Test.IntegrationCase
 
   import Helix.Test.CacheCase
+  import Helix.Test.IDCase
 
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Cache.Helper, as: CacheHelper

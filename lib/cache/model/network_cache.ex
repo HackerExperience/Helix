@@ -9,9 +9,6 @@ defmodule Helix.Cache.Model.NetworkCache do
   alias HELL.PK
   alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
-  alias Helix.Cache.Model.Cacheable
-
-  @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
     network_id: PK.t,
@@ -19,6 +16,8 @@ defmodule Helix.Cache.Model.NetworkCache do
     server_id: PK.t,
     expiration_date: DateTime.t
   }
+
+  @cache_duration 60 * 60 * 24 * 1000
 
   @creation_fields ~w/network_id ip server_id/a
 
@@ -34,17 +33,20 @@ defmodule Helix.Cache.Model.NetworkCache do
   end
 
   def new(network_id, ip, server_id) do
-    %__MODULE__{
+    %{
       network_id: network_id,
       ip: ip,
       server_id: server_id
     }
-    |> Cacheable.format_input()
+    |> create_changeset()
+    |> Changeset.apply_changes()
   end
 
+  def create_changeset(params = %__MODULE__{}),
+    do: create_changeset(Map.from_struct(params))
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(Map.from_struct(params), @creation_fields)
+    |> cast(params, @creation_fields)
     |> add_expiration_date()
   end
 

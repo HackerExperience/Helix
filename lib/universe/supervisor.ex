@@ -1,8 +1,8 @@
-defmodule Helix.NPC.Supervisor do
+defmodule Helix.Universe.Supervisor do
 
   use Supervisor
 
-  alias Helix.NPC.Repo
+  alias Helix.Universe.Repo
 
   def start_link do
     Supervisor.start_link(__MODULE__, [])

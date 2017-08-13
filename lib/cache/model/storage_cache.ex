@@ -7,15 +7,14 @@ defmodule Helix.Cache.Model.StorageCache do
   alias Ecto.Changeset
   alias HELL.PK
   alias Helix.Software.Model.Storage
-  alias Helix.Cache.Model.Cacheable
-
-  @cache_duration 60 * 60 * 24 * 1000
 
   @type t :: %__MODULE__{
     storage_id: PK.t,
     server_id: PK.t,
     expiration_date: DateTime.t
   }
+
+  @cache_duration 60 * 60 * 24 * 1000
 
   @creation_fields ~w/storage_id server_id/a
 
@@ -29,16 +28,19 @@ defmodule Helix.Cache.Model.StorageCache do
   end
 
   def new(storage_id, server_id) do
-    %__MODULE__{
+    %{
       storage_id: storage_id,
       server_id: server_id
     }
-    |> Cacheable.format_input()
+    |> create_changeset()
+    |> Changeset.apply_changes()
   end
 
+  def create_changeset(params = %__MODULE__{}),
+    do: create_changeset(Map.from_struct(params))
   def create_changeset(params) do
     %__MODULE__{}
-    |> cast(Map.from_struct(params), @creation_fields)
+    |> cast(params, @creation_fields)
     |> add_expiration_date()
   end
 

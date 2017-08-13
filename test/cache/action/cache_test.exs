@@ -3,8 +3,10 @@ defmodule Helix.Cache.Action.CacheTest do
   use Helix.Test.IntegrationCase
 
   import Helix.Test.CacheCase
+  import Helix.Test.IDCase
 
   alias Helix.Server.Internal.Server, as: ServerInternal
+  alias Helix.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
@@ -130,7 +132,7 @@ defmodule Helix.Cache.Action.CacheTest do
   end
 
   describe "update_storage/1" do
-    test "it works", context do
+    test "storage is updated", context do
       server_id = context.server.server_id
 
       PopulateInternal.populate(:by_server, server_id)
@@ -143,7 +145,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage_id)
       assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
-      Enum.map(server1.components, fn(component_id) ->
+      Enum.each(server1.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
@@ -176,7 +178,7 @@ defmodule Helix.Cache.Action.CacheTest do
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
       assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
-      Enum.map(server1.components, fn(component_id) ->
+      Enum.each(server1.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
@@ -195,8 +197,8 @@ defmodule Helix.Cache.Action.CacheTest do
     end
   end
 
-  describe "update_nip/1" do
-    test "update_nip/1", context do
+  describe "update_network/1" do
+    test "network is updated", context do
       server_id = context.server.server_id
 
       PopulateInternal.populate(:by_server, server_id)
@@ -204,12 +206,12 @@ defmodule Helix.Cache.Action.CacheTest do
       {server1, storage1, component1, mobo1, nip1} = hit_everything(server_id)
 
       net = Enum.random(server1.networks)
-      CacheAction.update_nip(net["network_id"], net["ip"])
+      CacheAction.update_network(net["network_id"], net["ip"])
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage1.storage_id)
       assert StatePurgeQueue.lookup(:component, mobo1.motherboard_id)
-      Enum.map(server1.components, fn(component_id) ->
+      Enum.each(server1.components, fn(component_id) ->
         assert StatePurgeQueue.lookup(:component, component_id)
       end)
       assert StatePurgeQueue.lookup(:network, {nip1.network_id, nip1.ip})
@@ -294,6 +296,54 @@ defmodule Helix.Cache.Action.CacheTest do
       StatePurgeQueue.sync()
 
       assert_miss CacheInternal.direct_query(:server, server_id)
+    end
+  end
+
+  describe "update_web/2" do
+    test "default case" do
+      {_, ip} = NPCHelper.download_center()
+      nip = {"::", ip}
+
+      # Ensure cache is hot
+      {:ok, _} = PopulateInternal.populate(:web_by_nip, nip)
+      web1 = assert_hit CacheInternal.direct_query({:web, :content}, nip)
+      refute StatePurgeQueue.lookup(:web, nip)
+
+      # Update
+      CacheAction.update_web("::", ip)
+
+      # It syncs
+      assert StatePurgeQueue.lookup(:web, nip)
+      StatePurgeQueue.sync()
+      refute StatePurgeQueue.lookup(:web, nip)
+
+      # Fresh entry from db
+      web2 = assert_hit CacheInternal.direct_query({:web, :content}, nip)
+      assert web2.expiration_date > web1.expiration_date
+      assert web2.content == web1.content
+    end
+  end
+
+  describe "purge_web/2" do
+    test "default case" do
+      {_, ip} = NPCHelper.download_center()
+      nip = {"::", ip}
+
+      # Ensure it exists on DB
+      {:ok, _} = PopulateInternal.populate(:web_by_nip, nip)
+      assert_hit CacheInternal.direct_query({:web, :content}, nip)
+      refute StatePurgeQueue.lookup(:web, nip)
+
+      # Purge
+      CacheAction.purge_web("::", ip)
+
+      # Sync
+      assert StatePurgeQueue.lookup(:web, nip)
+      StatePurgeQueue.sync()
+      refute StatePurgeQueue.lookup(:web, nip)
+
+      # No longer on DB
+      assert_miss CacheInternal.direct_query({:web, :content}, nip)
     end
   end
 end

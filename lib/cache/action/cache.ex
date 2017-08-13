@@ -47,7 +47,7 @@ defmodule Helix.Cache.Action.Cache do
   alias Helix.Cache.Query.Cache, as: CacheQuery
 
   @spec purge_server(Server.idtb) ::
-    term
+    :ok
   @doc """
   Purges the server entry from the cache.
 
@@ -76,7 +76,7 @@ defmodule Helix.Cache.Action.Cache do
   end
 
   @spec update_server(Server.idtb) ::
-    term
+    :ok
   @doc """
   Updates a server entry.
 
@@ -93,7 +93,7 @@ defmodule Helix.Cache.Action.Cache do
   end
 
   @spec update_server(Server.idtb, term) ::
-    term
+    :ok
   defp update_server(server_id, params) do
     unless is_nil(params) do
       unless is_nil(params.motherboard_id) do
@@ -109,8 +109,8 @@ defmodule Helix.Cache.Action.Cache do
     end
   end
 
-  @spec update_server_by_motherboard(Motherboard.t | Component.idtb) ::
-    term
+  @spec update_server_by_motherboard(Motherboard.idtb) ::
+    :ok
   @doc """
   Given a motherboard, update its corresponding server.
 
@@ -128,7 +128,7 @@ defmodule Helix.Cache.Action.Cache do
   end
 
   @spec update_server_by_storage(Storage.idtb) ::
-    term
+    :ok
   @doc """
   Given a storage, update its corresponding server.
 
@@ -147,7 +147,7 @@ defmodule Helix.Cache.Action.Cache do
   end
 
   @spec update_storage(Storage.idtb) ::
-    term
+    :ok
   @doc """
   Updates a storage entry from the cache.
 
@@ -161,7 +161,7 @@ defmodule Helix.Cache.Action.Cache do
   end
 
   @spec purge_storage(Storage.idtb) ::
-    term
+    :ok
   @doc """
   Purges a storage entry.
 
@@ -170,8 +170,8 @@ defmodule Helix.Cache.Action.Cache do
   def purge_storage(storage_id),
     do: CacheInternal.purge(:storage, storage_to_id(storage_id))
 
-  @spec update_component(Motherboard.t | Component.idtb) ::
-    term
+  @spec update_component(Motherboard.idtb) ::
+    :ok
   @doc """
   Updates a component entry on the cache.
 
@@ -189,8 +189,8 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.update(:component, component_id)
   end
 
-  @spec purge_component(Motherboard.t | Component.idtb) ::
-    term
+  @spec purge_component(Motherboard.idtb) ::
+    :ok
   @doc """
   Purges a component entry from the cache.
 
@@ -201,27 +201,39 @@ defmodule Helix.Cache.Action.Cache do
   def purge_component(component_id),
     do: CacheInternal.purge(:component, component_to_id(component_id))
 
-  @spec update_nip(Network.idtb, IPv4.t) ::
-    term
+  @spec update_network(Network.idtb, IPv4.t) ::
+    :ok
   @doc """
   Updates the nip entry on the cache.
 
   It will also update the underlying server, even if it doesn't exists.
   """
-  def update_nip(network_id, ip) do
+  def update_network(network_id, ip) do
     network_id = network_to_id(network_id)
     {:ok, server_id} = CacheQuery.from_nip_get_server(network_id, ip)
     update_server(server_id)
     CacheInternal.update(:network, {network_id, ip})
   end
 
+  @spec purge_network(Network.idtb, IPv4.t) ::
+    :ok
   @doc """
   Purges the nip entry from the cache.
 
   It does not purge/update the server.
   """
-  def purge_nip(network_id, ip),
+  def purge_network(network_id, ip),
     do: CacheInternal.purge(:network, {network_to_id(network_id), ip})
+
+  @spec update_web(Network.idtb, IPv4.t) ::
+    :ok
+  def update_web(network, ip),
+    do: CacheInternal.update(:web, {network_to_id(network), ip})
+
+  @spec purge_web(Network.idtb, IPv4.t) ::
+    :ok
+  def purge_web(network, ip),
+    do: CacheInternal.purge(:web, {network_to_id(network), ip})
 
   @spec direct_cache_query(:server | :motherboard | :component | :storage, HELL.PK.t) ::
     server_id :: HELL.PK.t
@@ -295,7 +307,7 @@ defmodule Helix.Cache.Action.Cache do
   def network_to_id(id) when is_binary(id),
     do: id
 
-  @spec motherboard_to_id(Motherboard.t | Component.idtb) ::
+  @spec motherboard_to_id(Motherboard.idtb) ::
     HELL.PK.t
   defp motherboard_to_id(%Motherboard{motherboard_id: id}),
     do: component_to_id(id)

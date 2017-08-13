@@ -10,22 +10,24 @@ defmodule Helix.Cache.Model.ServerCache do
   alias Helix.Entity.Model.Entity
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
-  alias Helix.Cache.Model.Cacheable
 
-  @cache_duration 60 * 60 * 24 * 1000
+  @type cache_nip :: %{
+    network_id: PK.t,
+    ip: IPv4.t
+  }
 
   @type t :: %__MODULE__{
     server_id: PK.t,
     entity_id: PK.t,
     motherboard_id: PK.t,
-    # Note that this is a "cached" version of the NIP and uses the id as a
-    # string
-    networks: [%{network_id: String.t, ip: IPv4.t}],
+    networks: [cache_nip],
     storages: [PK.t],
     resources: map,
     components: [PK.t],
     expiration_date: DateTime.t
   }
+
+  @cache_duration 60 * 60 * 24 * 1000
 
   @creation_fields ~w/
     server_id
@@ -52,28 +54,38 @@ defmodule Helix.Cache.Model.ServerCache do
   end
 
   def new(sid, eid) do
-    %__MODULE__{
+    %{
       server_id: sid,
       entity_id: eid,
       motherboard_id: nil
     }
-    |> Cacheable.format_input()
+    |> create_changeset()
+    |> Changeset.apply_changes()
   end
   def new({sid, eid, mid, networks, storages, resources, components}) do
-    %__MODULE__{
+    %{
       server_id: sid,
       entity_id: eid,
       motherboard_id: mid,
-      networks: networks,
+      networks: format_network(networks),
       storages: storages,
       resources: resources,
       components: components
     }
-    |> Cacheable.format_input()
+    |> create_changeset()
+    |> Changeset.apply_changes()
   end
 
-  # @spec create_changeset(t) ::
-  #   Changeset.t
+  defp format_network(networks) do
+    if networks do
+      Enum.map(networks, fn(net) ->
+        %{network_id: to_string(net.network_id), ip: net.ip}
+      end)
+    else
+      nil
+    end
+  end
+
   def create_changeset(params = %__MODULE__{}),
     do: create_changeset(Map.from_struct(params))
   def create_changeset(params) do
