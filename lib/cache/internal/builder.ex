@@ -38,7 +38,7 @@ defmodule Helix.Cache.Internal.Builder do
   @spec by_server(Server.id) ::
     {:ok, ServerCache.t}
     | {:error, {:server, :notfound}}
-    | {:error, :unknown}
+    | {:error, :internal}
   def by_server(server_id) do
     with \
       entity = %{} <- EntityInternal.fetch_by_server(server_id) || :nxserver,
@@ -61,15 +61,15 @@ defmodule Helix.Cache.Internal.Builder do
       {:nxmobo, entity} ->
         {:ok, ServerCache.new(server_id, entity.entity_id)}
       _ ->
-        {:error, :unknown}
+        {:error, :internal}
     end
   end
 
   @spec by_motherboard(Motherboard.id) ::
     {:ok, ServerCache.t}
-    | {:error, {:server, :notfound}}
     | {:error, {:motherboard, :notfound}}
-    | {:error, :unknown}
+    | {:error, {:server, :notfound}}
+    | {:error, :internal}
   def by_motherboard(motherboard_id) do
     with \
       server =
@@ -79,8 +79,6 @@ defmodule Helix.Cache.Internal.Builder do
     else
       :nxmobo ->
         {:error, {:motherboard, :notfound}}
-      _ ->
-        {:error, :unknown}
     end
   end
 
@@ -88,7 +86,6 @@ defmodule Helix.Cache.Internal.Builder do
     {:ok, NetworkCache.t}
     | {:error, {:nip, :notfound}}
     | {:error, {:server, :notfound}}
-    | {:error, :unknown}
   def by_nip(network_id, ip) do
     with \
       mobo = %{} <- MotherboardInternal.fetch_by_nip(network_id, ip) || :nxnip,
@@ -100,8 +97,6 @@ defmodule Helix.Cache.Internal.Builder do
         {:error, {:nip, :notfound}}
       :nxserver ->
         {:error, {:server, :notfound}}
-      _ ->
-        {:error, :unknown}
     end
 
   end
@@ -111,7 +106,7 @@ defmodule Helix.Cache.Internal.Builder do
     | {:error, {:storage, :notfound}}
     | {:error, {:drive, :notfound}}
     | {:error, {:drive, :unlinked}}
-    | {:error, :unknown}
+    | {:error, :internal}
   def by_storage(storage_id) do
     with \
       storage = %{} <- StorageInternal.fetch(storage_id) || :nxstorage,
@@ -131,7 +126,7 @@ defmodule Helix.Cache.Internal.Builder do
       :unlinked ->
         {:error, {:drive, :unlinked}}
       _ ->
-        {:error, :unknown}
+        {:error, :internal}
     end
   end
 
@@ -158,7 +153,7 @@ defmodule Helix.Cache.Internal.Builder do
     | {:error, {:nip, :notfound}}
     | {:error, {:server, :notfound}}
     | {:error, {:web, :notfound}}
-    | {:error, :unknown}
+    | {:error, :internal}
   def web_by_nip(network_id, ip) do
     with \
       mobo = %{} <- MotherboardInternal.fetch_by_nip(network_id, ip) || :nxnip,
@@ -175,7 +170,7 @@ defmodule Helix.Cache.Internal.Builder do
       :nxweb ->
         {:error, {:web, :notfound}}
       _ ->
-        {:error, :unknown}
+        {:error, :internal}
       end
   end
 
