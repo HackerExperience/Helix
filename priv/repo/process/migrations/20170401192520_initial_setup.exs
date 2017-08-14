@@ -29,10 +29,18 @@ defmodule Helix.Process.Repo.Migrations.InitialSetup do
 
     create table(:process_servers, primary_key: false) do
       add :server_id, :inet, primary_key: true
-      add :process_id, references(:processes, column: :process_id, type: :inet, on_delete: :delete_all, on_update: :nothing), primary_key: true
+      add :process_id,
+        references(
+          :processes, column: :process_id, type: :inet,
+          on_delete: :delete_all, on_update: :nothing),
+        primary_key: true
       add :process_type, :string, null: false
     end
 
-    create index(:process_servers, [:server_id, :process_type, :process_id], name: :process_servers_process_type_on_server_index)
+    create index(
+      :process_servers,
+      [:server_id, :process_type, :process_id],
+      name: :process_servers_process_type_on_server_index
+    )
   end
 end
