@@ -33,7 +33,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
       assert {:error, changeset} = LogForge.create(@forger_file, %{})
       errors = Keyword.keys(changeset.errors)
-      assert Enum.all?(expected_errors, &(&1 in errors))
+      assert Enum.sort(expected_errors) == Enum.sort(errors)
     end
 
     test "requires target_log_id when operation is edit" do
