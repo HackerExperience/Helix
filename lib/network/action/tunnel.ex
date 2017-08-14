@@ -60,6 +60,7 @@ defmodule Helix.Network.Action.Tunnel do
     else
       {field, :notfound} ->
         # TODO: produce error somewhere else ?
+        # Review: why not return, say, {:error, {:destination, :notfound}}?
         changeset =
           %Tunnel{}
           |> Changeset.change()

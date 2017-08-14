@@ -8,5 +8,7 @@ defmodule Helix.Process.Repo.Migrations.AddConnectionToProcess do
       #   process when the connection is shut
       add :connection_id, :inet
     end
+
+    create index(:processes, [:connection_id])
   end
 end
