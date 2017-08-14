@@ -4,7 +4,6 @@ defmodule Helix.Websocket.RequestsChannel do
 
   alias Helix.Account.Websocket.Routes, as: Account
   alias Helix.Network.Websocket.Routes, as: Network
-  alias Helix.Server.Websocket.Routes, as: Server
 
   def join(_topic, _message, socket) do
     # God in the command
@@ -13,9 +12,6 @@ defmodule Helix.Websocket.RequestsChannel do
 
   def handle_in("account.logout", _params, socket),
     do: Account.account_logout(socket)
-
-  def handle_in("server.crack", params, socket),
-    do: Server.server_crack(socket, params)
 
   def handle_in("network.browse", params, socket),
     do: Network.browse_ip(socket, params)

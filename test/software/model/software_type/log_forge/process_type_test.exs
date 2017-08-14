@@ -10,51 +10,53 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Helix.Software.Model.SoftwareType.LogForge
 
   alias Helix.Process.Factory, as: ProcessFactory
+  alias Helix.Software.Factory, as: SoftwareFactory
+
+  # FIXME: this will be removed when file modules become just an attribute
+  @forger_file (
+    :file
+    |> SoftwareFactory.build(software_type: :log_forger)
+    |> Map.update!(:file_modules, fn xs ->
+      xs
+      |> Enum.map(&({&1.software_module, &1.module_version}))
+      |> :maps.from_list()
+    end))
 
   describe "create/2" do
     test "returns changeset if invalid" do
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
-      params = %{}
-
-      assert {:error, changeset} = LogForge.create(params, modules)
+      assert {:error, changeset} = LogForge.create(@forger_file, %{})
       assert %Changeset{valid?: false} = changeset
     end
 
     test "requires operation and entity_id" do
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
-      params = %{}
-
       expected_errors = [:operation, :entity_id]
 
-      assert {:error, changeset} = LogForge.create(params, modules)
+      assert {:error, changeset} = LogForge.create(@forger_file, %{})
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
 
     test "requires target_log_id when operation is edit" do
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
       params = %{message: "", operation: "edit"}
 
       expected_errors = [:target_log_id]
 
-      assert {:error, changeset} = LogForge.create(params, modules)
+      assert {:error, changeset} = LogForge.create(@forger_file, params)
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
 
     test "requires target_server_id when operation is create" do
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
       params = %{message: "", operation: "create"}
 
       expected_errors = [:target_server_id]
 
-      assert {:error, changeset} = LogForge.create(params, modules)
+      assert {:error, changeset} = LogForge.create(@forger_file, params)
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
 
     test "accepts binary input" do
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
       params_edit = %{
         "target_log_id" => to_string(Log.ID.generate()),
         "message" => "WAKE ME UP INSIDE (can't wake up)",
@@ -68,12 +70,11 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         "entity_id" => to_string(Entity.ID.generate())
       }
 
-      assert {:ok, %LogForge{}} = LogForge.create(params_edit, modules)
-      assert {:ok, %LogForge{}} = LogForge.create(params_create, modules)
+      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_edit)
+      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_create)
     end
 
     test "accepts native erlang term entries" do
-      modules = %{log_forger_edit: 1, log_forger_create: 1}
       params_edit = %{
         target_log_id: Log.ID.generate(),
         message: "Oh yeah",
@@ -87,8 +88,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         entity_id: Entity.ID.generate()
       }
 
-      assert {:ok, %LogForge{}} = LogForge.create(params_edit, modules)
-      assert {:ok, %LogForge{}} = LogForge.create(params_create, modules)
+      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_edit)
+      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_create)
     end
   end
 
@@ -329,31 +330,29 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
   defp process_to_render(:edit) do
     %{
-      base_process_to_render()|
+      ProcessFactory.build(:process)|
         process_data: %LogForge{
           target_log_id: Log.ID.generate(),
           entity_id: Entity.ID.generate(),
           operation: "edit",
           message: "",
           version: 100
-        }
+        },
+        process_type: "log_forger"
     }
   end
 
   defp process_to_render(:create) do
     %{
-      base_process_to_render()|
+      ProcessFactory.build(:process)|
         process_data: %LogForge{
           target_server_id: Server.ID.generate(),
           entity_id: Entity.ID.generate(),
           operation: "create",
           message: "",
           version: 100
-        }
+        },
+        process_type: "log_forger"
     }
-  end
-
-  defp base_process_to_render do
-    ProcessFactory.build(:process)
   end
 end
