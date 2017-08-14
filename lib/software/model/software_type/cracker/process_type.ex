@@ -39,7 +39,6 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     target_server_id
     target_server_ip
     server_type
-    firewall_version
   /a
   @required_params ~w/
     entity_id
@@ -84,6 +83,9 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
   def objective(%__MODULE__{software_version: s, firewall_version: f}),
     do: %{cpu: cpu_cost(s, f)}
 
+  @spec firewall_version(t, non_neg_integer) ::
+    {:ok, t}
+    | {:error, Changeset.t}
   def firewall_version(cracker, version) do
     cracker
     |> cast(%{firewall_version: version}, [:firewall_version])
@@ -162,7 +164,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     alias Helix.Process.Model.Process.Resources
     alias Helix.Process.Model.Process.State
 
-    @spec render(map, Process.t, Server.id, Entity.id) ::
+    @spec render(term, Process.t, Server.id, Entity.id) ::
       %{
         :process_id => Process.id,
         :gateway_id => Server.id,
@@ -177,33 +179,38 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
         optional(:software_version) => non_neg_integer,
         optional(:target_server_ip) => HELL.IPv4.t
       }
-    def render(data, process = %{gateway_id: server}, server, _) do
-      base = take_data_from_process(process)
-      complement = %{
-        software_version: data.software_version,
-        target_server_ip: data.target_server_ip
-      }
+    def render(data, process = %{gateway_id: server}, server, _),
+      do: do_render(data, process, :local)
+    def render(data = %{entity_id: entity}, process, _, entity),
+      do: do_render(data, process, :local)
+    def render(data, process, _, _),
+      do: do_render(data, process, :remote)
+
+    defp do_render(data, process, scope) do
+      base = take_data_from_process(process, scope)
+      complement = take_complement_from_data(data, scope)
 
       Map.merge(base, complement)
     end
 
-    def render(data = %{entity_id: entity}, process, _, entity) do
-      base = take_data_from_process(process)
-      complement = %{
+    defp take_complement_from_data(data, _),
+      do: %{
         software_version: data.software_version,
         target_server_ip: data.target_server_ip
+    }
+
+    defp take_data_from_process(process, :remote) do
+      %{
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_server_id: process.target_server_id,
+        network_id: process.network_id,
+        connection_id: process.connection_id,
+        process_type: process.process_type,
       }
-
-      Map.merge(base, complement)
     end
 
-    def render(_, process, _, _) do
-      process
-      |> take_data_from_process()
-      |> Map.drop([:state, :allocated, :priority, :creation_time])
-    end
-
-    defp take_data_from_process(process) do
+    defp take_data_from_process(process, :local) do
       %{
         process_id: process.process_id,
         gateway_id: process.gateway_id,
