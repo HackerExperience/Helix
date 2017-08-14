@@ -47,15 +47,15 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     field :version, :integer
   end
 
-  @spec create(create_params, File.modules) ::
+  @spec create(File.t, create_params) ::
     {:ok, t}
     | {:error, Changeset.t}
-  def create(params, modules) do
+  def create(file, params) do
     %__MODULE__{}
     |> cast(params, [:entity_id, :operation, :message])
     |> validate_required([:entity_id, :operation])
     |> validate_inclusion(:operation, ["edit", "create"])
-    |> cast_modules(params, modules)
+    |> cast_modules(file, params)
     |> format_return()
   end
 
@@ -79,19 +79,19 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     %{cpu: data.version * @create_version_cost}
   end
 
-  @spec cast_modules(Changeset.t, create_params, File.modules) ::
+  @spec cast_modules(Changeset.t, File.t, create_params) ::
     Changeset.t
-  defp cast_modules(changeset, params, modules) do
+  defp cast_modules(changeset, file, params) do
     case get_change(changeset, :operation) do
       "create" ->
         changeset
-        |> cast(%{version: modules.log_forger_create}, [:version])
+        |> cast(%{version: file.file_modules.log_forger_create}, [:version])
         |> cast(params, [:target_server_id])
         |> validate_required([:target_server_id, :version])
         |> validate_number(:version, greater_than: 0)
       "edit" ->
         changeset
-        |> cast(%{version: modules.log_forger_edit}, [:version])
+        |> cast(%{version: file.file_modules.log_forger_edit}, [:version])
         |> cast(params, [:target_log_id])
         |> validate_required([:target_log_id, :version])
         |> validate_number(:version, greater_than: 0)

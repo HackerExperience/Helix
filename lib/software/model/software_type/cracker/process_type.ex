@@ -1,40 +1,122 @@
-# FIXME: OTP20
-defmodule Software.Cracker.ProcessType do
+defmodule Helix.Software.Model.SoftwareType.Cracker do
   @moduledoc false
 
-  @enforce_keys ~w/
-    entity_id
-    network_id
-    target_server_ip
-    target_server_id
-    server_type
-    software_version
-    firewall_version/a
-  defstruct ~w/
-    entity_id
-    network_id
-    target_server_ip
-    target_server_id
-    server_type
-    software_version
-    firewall_version/a
+  use Ecto.Schema
 
-  def firewall_additional_wu,
-    do: 50_000
-  def firewall_additional_wu(version),
-    do: version * 50_000
+  import Ecto.Changeset
+
+  alias Ecto.Changeset
+  alias HELL.IPv4
+  alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
+
+  @type t :: %__MODULE__{
+    entity_id: Entity.id,
+    network_id: Network.id,
+    target_server_id: Server.id,
+    target_server_ip: IPv4.t,
+    server_type: String.t,
+    software_version: pos_integer,
+    firewall_version: non_neg_integer
+  }
+
+  @type create_params ::
+    %{String.t => term}
+    | %{
+      :entity_id => Entity.idtb,
+      :network_id => Network.idtb,
+      :target_server_id => Server.idtb,
+      :target_server_ip => IPv4.t,
+      :server_type => String.t,
+      optional(:firewall_version) => non_neg_integer
+    }
+
+  @create_params ~w/
+    entity_id
+    network_id
+    target_server_id
+    target_server_ip
+    server_type
+    firewall_version
+  /a
+  @required_params ~w/
+    entity_id
+    network_id
+    target_server_id
+    target_server_ip
+    server_type
+    software_version
+  /a
+
+  @primary_key false
+  embedded_schema do
+    field :entity_id, Entity.ID
+
+    field :network_id, Network.ID
+    field :target_server_id, Server.ID
+    field :target_server_ip, IPv4
+    field :server_type, :string
+
+    field :software_version, :integer
+    field :firewall_version, :integer,
+      default: 0
+  end
+
+  @spec create(File.t_of_type(:cracker), create_params) ::
+    {:ok, t}
+    | {:error, Changeset.t}
+  def create(file, params) do
+    version = %{software_version: file.file_modules.cracker_password}
+
+    %__MODULE__{}
+    |> cast(params, @create_params)
+    |> cast(version, [:software_version])
+    |> validate_required(@required_params)
+    |> validate_number(:software_version, greater_than: 0)
+    |> validate_number(:firewall_version, greater_than_or_equal_to: 0)
+    |> format_return()
+  end
+
+  @spec objective(t) ::
+    %{cpu: pos_integer}
+  def objective(%__MODULE__{software_version: s, firewall_version: f}),
+    do: %{cpu: cpu_cost(s, f)}
+
+  def firewall_version(cracker, version) do
+    cracker
+    |> cast(%{firewall_version: version}, [:firewall_version])
+    |> validate_required([:firewall_version])
+    |> validate_number(:firewall_version, greater_than_or_equal_to: 0)
+    |> format_return()
+  end
+
+  @spec cpu_cost(non_neg_integer, non_neg_integer) ::
+    pos_integer
+  defp cpu_cost(software_version, firewall_version) do
+    factor = max(firewall_version - software_version, 0)
+    50_000 + factor * 125
+  end
+
+  @spec format_return(Changeset.t) ::
+    {:ok, t}
+    | {:error, Changeset.t}
+  defp format_return(changeset = %{valid?: true}),
+    do: {:ok, apply_changes(changeset)}
+  defp format_return(changeset),
+    do: {:error, changeset}
 
   defimpl Helix.Process.Model.Process.ProcessType do
     @moduledoc false
 
     alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
 
-    @ram_base 300
+    @ram_base 3
 
     def dynamic_resources(_),
       do: [:cpu]
 
-    # TODO: I think that linear growth might not be best bet
     def minimum(%{software_version: v}) do
       %{
         paused: %{ram: v * @ram_base},
