@@ -153,8 +153,8 @@ defmodule Helix.Network.Internal.TunnelTest do
     test "starts a new connection every call" do
       tunnel = Factory.insert(:tunnel, network: @internet)
 
-      {:ok, connection1, _events} = TunnelInternal.start_connection(tunnel, "ssh")
-      {:ok, connection2, _events} = TunnelInternal.start_connection(tunnel, "ssh")
+      {:ok, connection1, _} = TunnelInternal.start_connection(tunnel, "ssh")
+      {:ok, connection2, _} = TunnelInternal.start_connection(tunnel, "ssh")
 
       connections = TunnelInternal.get_connections(tunnel)
 
@@ -174,6 +174,68 @@ defmodule Helix.Network.Internal.TunnelTest do
       TunnelInternal.close_connection(connection)
 
       refute Repo.get(Connection, connection.connection_id)
+    end
+  end
+
+  describe "get_links/1" do
+    test "with a direct connection" do
+      gateway_id = Server.ID.generate()
+      destination_id = Server.ID.generate()
+
+      tunnel = Factory.insert(:tunnel,
+        network: @internet,
+        gateway_id: gateway_id,
+        destination_id: destination_id,
+        bounces: [])
+
+      assert [l1|l2] = TunnelInternal.get_links(tunnel)
+
+      assert l1.source_id == gateway_id
+      assert l1.destination_id == destination_id
+      assert Enum.empty?(l2)
+    end
+
+    test "with n=1 bounce" do
+      gateway_id = Server.ID.generate()
+      destination_id = Server.ID.generate()
+      bounce1 = Server.ID.generate()
+
+      tunnel = Factory.insert(:tunnel,
+        network: @internet,
+        gateway_id: gateway_id,
+        destination_id: destination_id,
+        bounces: [bounce1])
+
+      assert [l1|[l2|l3]] = TunnelInternal.get_links(tunnel)
+
+      assert l1.source_id == gateway_id
+      assert l1.destination_id == bounce1
+      assert l2.source_id == bounce1
+      assert l2.destination_id == destination_id
+      assert Enum.empty?(l3)
+    end
+
+    test "with n>1 bounce" do
+      gateway_id = Server.ID.generate()
+      destination_id = Server.ID.generate()
+      bounce1 = Server.ID.generate()
+      bounce2 = Server.ID.generate()
+
+      tunnel = Factory.insert(:tunnel,
+        network: @internet,
+        gateway_id: gateway_id,
+        destination_id: destination_id,
+        bounces: [bounce1, bounce2])
+
+      assert [l1|[l2|[l3|l4]]] = TunnelInternal.get_links(tunnel)
+
+      assert l1.source_id == gateway_id
+      assert l1.destination_id == bounce1
+      assert l2.source_id == bounce1
+      assert l2.destination_id == bounce2
+      assert l3.source_id == bounce2
+      assert l3.destination_id == destination_id
+      assert Enum.empty?(l4)
     end
   end
 end
