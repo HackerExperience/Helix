@@ -29,8 +29,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       assert ProcessQuery.fetch(process.process_id)
 
       # Ensure it removed money from source, but did not transfer yet
-      assert BankAccountInternal.get_balance(acc1.account_number) == 0
-      assert BankAccountInternal.get_balance(acc2.account_number) == 0
+      assert BankAccountInternal.get_balance(acc1) == 0
+      assert BankAccountInternal.get_balance(acc2) == 0
 
       # Wait for it.... Transferring $0.01 is quite quick (nope)
       :timer.sleep(1100)
@@ -38,8 +38,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       # Ensure transfer was completed
       refute BankTransferInternal.fetch(transfer_id)
       refute ProcessQuery.fetch(process.process_id)
-      assert BankAccountInternal.get_balance(acc1.account_number) == 0
-      assert BankAccountInternal.get_balance(acc2.account_number) == amount
+      assert BankAccountInternal.get_balance(acc1) == 0
+      assert BankAccountInternal.get_balance(acc2) == amount
 
       TOPHelper.top_stop(process.gateway_id)
     end

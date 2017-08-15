@@ -4,16 +4,17 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
   import Helix.Test.IDCase
 
+  alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
+
   alias HELL.TestHelper.Random
   alias HELL.TestHelper.Setup
-  alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   describe "fetch/1" do
     test "with valid account" do
       acc = Setup.bank_account()
 
-      acc2 = BankAccountInternal.fetch(acc.account_number)
+      acc2 = BankAccountInternal.fetch(acc.atm_id, acc.account_number)
 
       assert acc.account_number == acc2.account_number
       assert_id acc.bank_id, acc2.bank_id
@@ -48,12 +49,13 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
     test "with valid account" do
       acc = Setup.bank_account()
 
-      balance = BankAccountInternal.get_balance(acc.account_number)
+      balance = BankAccountInternal.get_balance(acc)
       assert balance == acc.balance
     end
 
     test "with non-existing account" do
-      assert BankAccountInternal.get_balance(Random.number()) == 0
+      fake_acc = Setup.fake_bank_account()
+      assert BankAccountInternal.get_balance(fake_acc) == 0
     end
   end
 
@@ -101,27 +103,25 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
   describe "deposit/2" do
     test "deposited money is added to the account" do
       acc = Setup.bank_account()
-      number = acc.account_number
 
       # Nothing initially
-      assert BankAccountInternal.get_balance(number) == 0
+      assert BankAccountInternal.get_balance(acc) == 0
 
       # Deposit 1.01
       assert {:ok, acc2} = BankAccountInternal.deposit(acc, 101)
       assert acc2.balance == 101
-      assert BankAccountInternal.get_balance(number) == 101
+      assert BankAccountInternal.get_balance(acc) == 101
 
       # Deposit 0.01
       assert {:ok, acc3} = BankAccountInternal.deposit(acc2, 1)
       assert acc3.balance == 102
-      assert BankAccountInternal.get_balance(number) == 102
+      assert BankAccountInternal.get_balance(acc) == 102
     end
   end
 
   describe "withdraw/2" do
     test "multiple withdraws with valid account balance" do
       acc = Setup.bank_account()
-      number = acc.account_number
 
       # Deposit something
       BankAccountInternal.deposit(acc, 1000)
@@ -129,12 +129,12 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       # Withdraw 1.00
       assert {:ok, acc2} = BankAccountInternal.withdraw(acc, 100)
       assert acc2.balance == 900
-      assert BankAccountInternal.get_balance(number) == 900
+      assert BankAccountInternal.get_balance(acc) == 900
 
       # Withdraw 1.50
       assert {:ok, acc3} = BankAccountInternal.withdraw(acc2, 150)
       assert acc3.balance == 750
-      assert BankAccountInternal.get_balance(number) == 750
+      assert BankAccountInternal.get_balance(acc) == 750
     end
 
     test "with insufficient funds" do
@@ -159,22 +159,24 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
     test "closes the account" do
       acc = Setup.bank_account()
 
-      assert BankAccountInternal.fetch(acc.account_number)
+      assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert :ok == BankAccountInternal.close(acc)
-      refute BankAccountInternal.fetch(acc.account_number)
+      refute BankAccountInternal.fetch(acc.atm_id, acc.account_number)
     end
 
     test "refuses to close non-empty accounts" do
       acc = Setup.bank_account([balance: 1])
 
-      assert BankAccountInternal.fetch(acc.account_number)
+      assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert {:error, reason} = BankAccountInternal.close(acc)
       assert reason == {:account, :notempty}
-      assert BankAccountInternal.fetch(acc.account_number)
+      assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
     end
 
-    test "with invalid data" do
-      assert {:error, reason} = BankAccountInternal.close(Random.number())
+    test "with non-existent account" do
+      fake_acc = Setup.fake_bank_account()
+
+      assert {:error, reason} = BankAccountInternal.close(fake_acc)
       assert reason == {:account, :notfound}
     end
   end

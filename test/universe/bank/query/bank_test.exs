@@ -10,7 +10,7 @@ defmodule Helix.Universe.Bank.Query.BankTest do
     test "with valid account" do
       acc = Setup.bank_account()
 
-      acc2 = BankQuery.fetch_account(acc.account_number)
+      acc2 = BankQuery.fetch_account(acc.atm_id, acc.account_number)
       assert acc2 == acc
     end
   end
