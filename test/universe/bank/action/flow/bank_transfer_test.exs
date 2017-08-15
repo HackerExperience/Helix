@@ -33,6 +33,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       assert process.connection_id
       connection = TunnelQuery.fetch_connection(process.connection_id)
       assert connection.connection_id == process.connection_id
+      assert connection.connection_type == :wire_transfer
 
       # Wire transfer bounce is correct
       tunnel = TunnelQuery.fetch(connection.tunnel_id)

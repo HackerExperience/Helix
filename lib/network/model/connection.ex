@@ -6,10 +6,14 @@ defmodule Helix.Network.Model.Connection do
   import Ecto.Changeset
 
   alias Ecto.Changeset
+  alias HELL.Constant
   alias Helix.Network.Model.Tunnel
 
   @type close_reasons :: :normal | :force
-  @type type :: String.t
+  @type type ::
+    :wire_transfer
+    | :ssh
+    | :ftp
   @type t :: %__MODULE__{
     connection_id: id,
     tunnel_id: Tunnel.id,
@@ -19,15 +23,13 @@ defmodule Helix.Network.Model.Connection do
 
   @close_reasons [:normal, :force]
 
-  # TODO: ConnectionType as a constant
-
   schema "connections" do
     field :connection_id, ID,
       primary_key: true
 
     field :tunnel_id, Tunnel.ID
 
-    field :connection_type, :string
+    field :connection_type, Constant
 
     belongs_to :tunnel, Tunnel,
       foreign_key: :tunnel_id,

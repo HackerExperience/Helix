@@ -72,7 +72,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
         gateway_server.server_id,
         server_atm_to.server_id,
         bounces,
-        "wire_transfer"
+        :wire_transfer
       )
     end
 

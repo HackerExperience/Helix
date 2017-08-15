@@ -34,6 +34,6 @@ defmodule Helix.Network.Henforcer.Network do
       destination)
     connection_types = MapSet.new(connections_between, &(&1.connection_type))
 
-    MapSet.member?(connection_types, "ssh")
+    MapSet.member?(connection_types, :ssh)
   end
 end

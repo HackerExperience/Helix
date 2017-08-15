@@ -40,7 +40,7 @@ defmodule Helix.Software.Action.Flow.FileDownload do
     }
 
     start_connection = fn ->
-      TunnelAction.start_connection(tunnel, "ftp")
+      TunnelAction.start_connection(tunnel, :ftp)
     end
 
     flowing do
