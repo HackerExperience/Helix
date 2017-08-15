@@ -104,6 +104,9 @@ defmodule Helix.Event.Dispatcher do
   event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
     Universe.Bank.Event.BankTransfer,
     :transfer_completed
+  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
+    Network.Event.Connection,
+    :bank_transfer_completed
 
   event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
     Universe.Bank.Event.BankTransfer,

@@ -2,19 +2,25 @@ defmodule Helix.Universe.NPC.Model.Seed do
 
   @source [
     %{key: "DC0", type: :download_center},
-    %{key: "Bank1", type: :bank}
+    %{key: "Bank1", type: :bank},
+    %{key: "Bank2", type: :bank}
   ]
 
   @dns %{
     "DC0" => "dc.com",
-    "Bank1" => "bank.com"
+    "Bank1" => "bank.com",
+    "Bank2" => "bank2.com"
   }
 
   @servers %{
     "DC0" => [%{spec: "todo", ip: "1.2.3.4"}],
     "Bank1" => [
-      %{spec: "todo", custom: %{region: "1"}},
-      %{spec: "todo", custom: %{region: "2"}}
+      %{spec: "todo", custom: %{region: "1a"}},
+      %{spec: "todo", custom: %{region: "1b"}}
+    ],
+    "Bank2" => [
+      %{spec: "todo", custom: %{region: "2a"}},
+      %{spec: "todo", custom: %{region: "2b"}}
     ]
   }
 
@@ -29,11 +35,19 @@ defmodule Helix.Universe.NPC.Model.Seed do
         "10::15c1:d147:47f9:b4b2:cbbe",
         "10::15c1:d147:47f9:b4b2:cbbf",
       ]
+    },
+    "Bank2" => %{
+      npc: "2::920e:c06c:abea:b249:a160",
+      servers: [
+        "10::15c1:d147:47f9:b4b2:cbc0",
+        "10::15c1:d147:47f9:b4b2:cbc1",
+      ]
     }
   }
 
   @custom %{
-    "Bank1" => %{name: "Bank One"}
+    "Bank1" => %{name: "Bank One"},
+    "Bank2" => %{name: "Bank Two"}
   }
 
   def search_by_type(type) do
