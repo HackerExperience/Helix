@@ -84,7 +84,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       destination_id: destination_id)
     NetworkFactory.insert(:connection,
       tunnel: tunnel,
-      connection_type: "ssh")
+      connection_type: :ssh)
 
     {:ok, _, socket} = join(socket, topic, join_msg)
 
@@ -138,7 +138,7 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       destination_id: destination)
     NetworkFactory.insert(:connection,
       tunnel: tunnel,
-      connection_type: "ssh")
+      connection_type: :ssh)
 
     topic = "server:" <> destination
     join_msg = %{

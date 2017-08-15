@@ -74,7 +74,7 @@ defmodule Helix.Log.Event.Log do
   Logs that a server logged into another via SSH
   """
   def connection_started(
-    event = %ConnectionStartedEvent{connection_type: "ssh"})
+    event = %ConnectionStartedEvent{connection_type: :ssh})
   do
     tunnel = TunnelQuery.fetch(event.tunnel_id)
     network = event.network_id

@@ -33,7 +33,7 @@ defmodule Helix.Server.Public.Server do
         gateway_id,
         destination_id,
         bounce_list,
-        "ssh"),
+        :ssh),
       tunnel = %{} <- TunnelQuery.fetch_from_connection(connection)
     do
       Event.emit(events)

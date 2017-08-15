@@ -80,7 +80,7 @@ defmodule Helix.Network.Factory do
     # FIXME: update after turning `connection_type` into a constant
     %{
       tunnel: build(:tunnel),
-      connection_type: "ssh"
+      connection_type: :ssh
     }
   end
 
