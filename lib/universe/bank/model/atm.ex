@@ -2,13 +2,14 @@ defmodule Helix.Universe.Bank.Model.ATM do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias Helix.Server.Model.Server
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.Bank.Model.Bank
 
-  import Ecto.Changeset
-
-  @type idtb :: id | t | String.t
+  @type idtb :: Server.idtb | t
+  @type idt :: Server.idt | t
   @type id :: Server.id
   @type t :: %__MODULE__{
     atm_id: id,
@@ -17,8 +18,8 @@ defmodule Helix.Universe.Bank.Model.ATM do
   }
 
   @type creation_params :: %{
-    atm_id: id,
-    bank_id: NPC.id,
+    atm_id: idtb,
+    bank_id: NPC.idtb,
     region: String.t
   }
 

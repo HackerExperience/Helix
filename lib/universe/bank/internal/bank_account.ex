@@ -1,37 +1,44 @@
 defmodule Helix.Universe.Bank.Internal.BankAccount do
 
   alias Helix.Account.Model.Account
+  alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Repo
 
-  @spec fetch(BankAccount.account) ::
+  @spec fetch(ATM.idt, BankAccount.account) ::
     BankAccount.t
     | nil
-  def fetch(account_number),
-    do: Repo.get(BankAccount, account_number)
+  def fetch(atm, account_number) do
+    atm
+    |> BankAccount.Query.by_atm_account(account_number)
+    |> Repo.one()
+  end
 
-  @spec fetch_for_update(BankAccount.account) ::
+  @spec fetch_for_update(ATM.idt, BankAccount.account) ::
     BankAccount.t
     | nil
+    | no_return
   @doc """
   Fetches a bank account, locking it for external updates. Must be used within
   a transaction.
   """
-  def fetch_for_update(account_number) do
-    account_number
-    |> BankAccount.Query.by_id()
+  def fetch_for_update(atm, account_number) do
+    unless Repo.in_transaction?() do
+      raise "Transaction required in order to acquiring lock"
+    end
+
+    atm
+    |> BankAccount.Query.by_atm_account(account_number)
     |> BankAccount.Query.lock_for_update()
     |> Repo.one()
   end
 
-  @spec get_balance(BankAccount.t | BankAccount.account) ::
+  @spec get_balance(BankAccount.t) ::
     non_neg_integer
-  def get_balance(account = %BankAccount{}),
-    do: get_balance(account.account_number)
-  def get_balance(account_number) do
+  def get_balance(account) do
     balance =
-      account_number
-      |> BankAccount.Query.by_id()
+      account.atm_id
+      |> BankAccount.Query.by_atm_account(account.account_number)
       |> BankAccount.Query.select_balance()
       |> Repo.one()
 
@@ -85,99 +92,87 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
     |> Repo.update()
   end
 
-  @spec deposit(BankAccount.t | BankAccount.account, pos_integer) ::
+  @spec deposit(BankAccount.t, pos_integer) ::
     {:ok, BankAccount.t}
     | {:error, {:account, :notfound}}
     | {:error, Ecto.Changeset.t}
-  def deposit(account = %BankAccount{}, amount),
-    do: deposit(account.account_number, amount)
-  def deposit(account_number, amount) do
-    trans =
-      Repo.transaction(fn ->
-        Repo.serializable_transaction()
+  def deposit(account, amount) do
+    Repo.transaction(fn ->
+      Repo.serializable_transaction()
 
-        account = fetch_for_update(account_number)
+      account = fetch_for_update(account.atm_id, account.account_number)
 
-        if not is_nil(account) do
-          account
-          |> BankAccount.deposit(amount)
-          |> Repo.update()
-        else
-          {:error, {:account, :notfound}}
-        end
-      end)
-
-    case trans do
-      {:ok, result} ->
-        result
-    end
+      if not is_nil(account) do
+        account
+        |> BankAccount.deposit(amount)
+        |> Repo.update!()
+      else
+        Repo.rollback({:account, :notfound})
+      end
+    end)
   end
 
-  @spec withdraw(BankAccount.t | BankAccount.account, pos_integer) ::
+  @spec withdraw(BankAccount.t, pos_integer) ::
     {:ok, BankAccount.t}
     | {:error, {:account, :notfound}}
     | {:error, {:funds, :insufficient}}
     | {:error, Ecto.Changeset.t}
-  def withdraw(account = %BankAccount{}, amount),
-    do: withdraw(account.account_number, amount)
-  def withdraw(account_number, amount) do
-    trans =
-      Repo.transaction(fn ->
-        Repo.serializable_transaction()
+  def withdraw(account, amount) do
+    Repo.transaction(fn ->
+      Repo.serializable_transaction()
 
-        with \
-          account = fetch_for_update(account_number),
-          true <- not is_nil(account) || :nxaccount,
-          true <- account.balance >= amount || :nxfunds
-        do
-          account
-          |> BankAccount.withdraw(amount)
-          |> Repo.update()
-        else
-          :nxaccount ->
-            {:error, {:account, :notfound}}
-          :nxfunds ->
-            {:error, {:funds, :insufficient}}
-        end
-      end)
+      account = fetch_for_update(account.atm_id, account.account_number)
 
-    case trans do
-      {:ok, result} ->
-        result
-    end
+      with \
+        true <- not is_nil(account) || :nxaccount,
+        true <- account.balance >= amount || :nxfunds
+      do
+        account
+        |> BankAccount.withdraw(amount)
+        |> Repo.update!()
+      else
+        :nxaccount ->
+          Repo.rollback({:account, :notfound})
+        :nxfunds ->
+          Repo.rollback({:funds, :insufficient})
+      end
+    end)
   end
 
-  @spec close(BankAccount.t | BankAccount.account) ::
+  @spec close(BankAccount.t) ::
     :ok
     | {:error, {:account, :notfound}}
     | {:error, {:account, :notempty}}
-  def close(account = %BankAccount{}),
-    do: close(account.account_number)
-  def close(account_number) do
+  def close(account) do
     trans =
       Repo.transaction(fn ->
         Repo.serializable_transaction()
 
+        account = fetch_for_update(account.atm_id, account.account_number)
+
         with \
-          account = fetch_for_update(account_number),
           true <- not is_nil(account) || :nxaccount,
           true <- account.balance == 0 || :notempty
         do
           delete(account)
         else
           :nxaccount ->
-            {:error, {:account, :notfound}}
+            Repo.rollback({:account, :notfound})
           :notempty ->
-            {:error, {:account, :notempty}}
+            Repo.rollback({:account, :notempty})
         end
       end)
 
     case trans do
       {:ok, result} ->
         result
+      error ->
+        error
     end
   end
 
+  @spec delete(BankAccount.t) ::
+    :ok
   defp delete(account) do
     Repo.delete(account)
 

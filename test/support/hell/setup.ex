@@ -5,6 +5,8 @@ defmodule HELL.TestHelper.Setup do
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
+  alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
 
   alias HELL.TestHelper.Random
@@ -61,4 +63,35 @@ defmodule HELL.TestHelper.Setup do
     transfer
   end
 
+  def fake_bank_account do
+    bank = NPCHelper.bank()
+    atm_id = Enum.random(bank.servers).id
+
+    %BankAccount{
+      account_number: Random.number(min: 100_000, max: 999_999),
+      balance: Random.number(min: 0),
+      bank_id: bank.id,
+      atm_id: atm_id,
+      password: "secret",
+      owner_id: Random.pk()
+    }
+  end
+
+  def fake_bank_transfer do
+    amount = Random.number(min: 1, max: 5000)
+    acc1 = bank_account([balance: amount])
+    acc2 = fake_bank_account()
+    started_by = Random.pk()
+
+    %BankTransfer{
+      transfer_id: BankTransfer.ID.generate(),
+      account_from: acc1.account_number,
+      account_to: acc2.account_number,
+      atm_from: acc1.atm_id,
+      atm_to: acc2.atm_id,
+      amount: amount,
+      started_by: started_by,
+      started_time: DateTime.utc_now()
+    }
+  end
 end

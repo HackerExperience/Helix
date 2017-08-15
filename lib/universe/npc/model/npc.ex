@@ -24,7 +24,6 @@ defmodule Helix.Universe.NPC.Model.NPC do
   @creation_fields ~w/npc_type/a
 
   @primary_key false
-
   schema "npcs" do
     field :npc_id, ID,
       primary_key: true

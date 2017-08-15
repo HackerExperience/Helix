@@ -2,12 +2,13 @@ defmodule Helix.Universe.Bank.Model.Bank do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.NPC.Model.NPC
 
-  import Ecto.Changeset
-
-  @type idtb :: id | t | String.t
+  @type idtb :: NPC.idtb | t
+  @type idt :: NPC.idt | t
   @type id :: NPC.id
   @type t :: %__MODULE__{
     bank_id: NPC.id,
@@ -15,7 +16,7 @@ defmodule Helix.Universe.Bank.Model.Bank do
   }
 
   @type creation_params :: %{
-    :bank_id => NPC.id,
+    :bank_id => NPC.idtb,
     :name => String.t
   }
 
@@ -30,7 +31,6 @@ defmodule Helix.Universe.Bank.Model.Bank do
     belongs_to :npc, NPC,
       references: :npc_id,
       foreign_key: :bank_id,
-      primary_key: false,
       define_field: false
 
     has_many :atm, ATM,

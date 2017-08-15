@@ -23,28 +23,6 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
     end
   end
 
-  describe "balance_operation/3" do
-    test "adds correctly" do
-      current = 100
-      amount = 37
-      sum = BankAccount.balance_operation(:add, current, amount)
-      assert sum == 137
-    end
-
-    test "subtracts correctly" do
-      current = 100
-      amount = 37
-      sub = BankAccount.balance_operation(:sub, current, amount)
-      assert sub == 63
-    end
-
-    test "blows when subtracting more than it should" do
-      assert_raise RuntimeError, fn ->
-        BankAccount.balance_operation(:sub, 10, 11)
-      end
-    end
-  end
-
   describe "deposit/1" do
     test "increases the account balance" do
       acc =

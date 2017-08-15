@@ -3,7 +3,7 @@ defmodule Helix.Universe.Bank.Internal.ATM do
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Repo
 
-  @spec fetch(ATM.idtb) ::
+  @spec fetch(ATM.id) ::
     ATM.t
     | nil
   def fetch(atm_id),

@@ -46,5 +46,4 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
   end
-
 end
