@@ -5,12 +5,13 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
 
   import Ecto.Changeset
 
-  alias Ecto.Changeset
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
+
+  @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
 
   @type t :: %__MODULE__{
     entity_id: Entity.id,
@@ -18,8 +19,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     target_server_id: Server.id,
     target_server_ip: IPv4.t,
     server_type: String.t,
-    software_version: pos_integer,
-    firewall_version: non_neg_integer
+    software_version: pos_integer
   }
 
   @type create_params ::
@@ -29,8 +29,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
       :network_id => Network.idtb,
       :target_server_id => Server.idtb,
       :target_server_ip => IPv4.t,
-      :server_type => String.t,
-      optional(:firewall_version) => non_neg_integer
+      :server_type => String.t
     }
 
   @create_params ~w/
@@ -59,13 +58,11 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     field :server_type, :string
 
     field :software_version, :integer
-    field :firewall_version, :integer,
-      default: 0
   end
 
   @spec create(File.t_of_type(:cracker), create_params) ::
     {:ok, t}
-    | {:error, Changeset.t}
+    | {:error, changeset}
   def create(file, params) do
     version = %{software_version: file.file_modules.cracker_password}
 
@@ -74,25 +71,13 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     |> cast(version, [:software_version])
     |> validate_required(@required_params)
     |> validate_number(:software_version, greater_than: 0)
-    |> validate_number(:firewall_version, greater_than_or_equal_to: 0)
     |> format_return()
   end
 
-  @spec objective(t) ::
+  @spec objective(t, non_neg_integer) ::
     %{cpu: pos_integer}
-  def objective(%__MODULE__{software_version: s, firewall_version: f}),
-    do: %{cpu: cpu_cost(s, f)}
-
-  @spec firewall_version(t, non_neg_integer) ::
-    {:ok, t}
-    | {:error, Changeset.t}
-  def firewall_version(cracker, version) do
-    cracker
-    |> cast(%{firewall_version: version}, [:firewall_version])
-    |> validate_required([:firewall_version])
-    |> validate_number(:firewall_version, greater_than_or_equal_to: 0)
-    |> format_return()
-  end
+  def objective(%__MODULE__{software_version: version}, firewall_version),
+    do: %{cpu: cpu_cost(version, firewall_version)}
 
   @spec cpu_cost(non_neg_integer, non_neg_integer) ::
     pos_integer
@@ -101,10 +86,10 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     50_000 + factor * 125
   end
 
-  @spec format_return(Changeset.t) ::
+  @spec format_return(changeset) ::
     {:ok, t}
-    | {:error, Changeset.t}
-  defp format_return(changeset = %{valid?: true}),
+    | {:error, changeset}
+  defp format_return(changeset = %Ecto.Changeset{valid?: true}),
     do: {:ok, apply_changes(changeset)}
   defp format_return(changeset),
     do: {:error, changeset}

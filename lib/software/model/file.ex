@@ -29,6 +29,8 @@ defmodule Helix.Software.Model.File do
     updated_at: NaiveDateTime.t
   }
 
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
   @type creation_params :: %{
     name: String.t,
     path: String.t,

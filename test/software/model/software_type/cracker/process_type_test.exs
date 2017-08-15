@@ -51,14 +51,13 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
         target_server_id: Server.ID.generate(),
         target_server_ip: IPv4.autogenerate(),
         software_version: 100,
-        firewall_version: 100,
         server_type: "vpc"
       }
 
-      obj1 = Cracker.objective(cracker)
-      obj2 = Cracker.objective(%{cracker| firewall_version: 200})
-      obj3 = Cracker.objective(%{cracker| firewall_version: 300})
-      obj4 = Cracker.objective(%{cracker| firewall_version: 900})
+      obj1 = Cracker.objective(cracker, 100)
+      obj2 = Cracker.objective(cracker, 200)
+      obj3 = Cracker.objective(cracker, 300)
+      obj4 = Cracker.objective(cracker, 900)
 
       assert obj2 > obj1
       assert obj3 > obj2
@@ -72,14 +71,13 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
         target_server_id: Server.ID.generate(),
         target_server_ip: IPv4.autogenerate(),
         software_version: 100,
-        firewall_version: 900,
         server_type: "vpc"
       }
 
-      obj1 = Cracker.objective(cracker)
-      obj2 = Cracker.objective(%{cracker| software_version: 200})
-      obj3 = Cracker.objective(%{cracker| software_version: 300})
-      obj4 = Cracker.objective(%{cracker| software_version: 900})
+      obj1 = Cracker.objective(cracker, 900)
+      obj2 = Cracker.objective(%{cracker| software_version: 200}, 900)
+      obj3 = Cracker.objective(%{cracker| software_version: 300}, 900)
+      obj4 = Cracker.objective(%{cracker| software_version: 900}, 900)
 
       assert obj2 < obj1
       assert obj3 < obj2
@@ -161,7 +159,6 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
           target_server_id: Server.ID.generate(),
           target_server_ip: IPv4.autogenerate(),
           software_version: Enum.random(100..999),
-          firewall_version: Enum.random(100..999),
           server_type: Enum.random(["vpc", "npc"])
         },
         process_type: "cracker"
