@@ -37,7 +37,6 @@ defmodule Helix.Universe.Bank.Internal.ATMTest do
     test "with valid data" do
       bank = NPCHelper.bank()
       atm = Enum.random(bank.servers)
-
       atm2 = ATMInternal.fetch(atm.id)
 
       assert atm2

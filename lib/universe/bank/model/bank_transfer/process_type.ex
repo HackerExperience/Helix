@@ -5,6 +5,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
+    alias Ecto.Changeset
     alias Helix.Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
     alias Helix.Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent
 
@@ -20,11 +21,12 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
     def kill(data, process, _) do
       process =
         process
-        |> Ecto.Changeset.change()
+        |> Changeset.change()
         |> Map.put(:action, :delete)
 
       event = %BankTransferAbortedEvent{
-        transfer_id: data.transfer_id
+        transfer_id: data.transfer_id,
+        connection_id: process.data.connection_id
       }
 
       {process, [event]}
@@ -33,11 +35,12 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
     def state_change(data, process, _, :complete) do
       process =
         process
-        |> Ecto.Changeset.change()
+        |> Changeset.change()
         |> Map.put(:action, :delete)
 
       event = %BankTransferCompletedEvent{
-        transfer_id: data.transfer_id
+        transfer_id: data.transfer_id,
+        connection_id: process.data.connection_id
       }
 
       {process, [event]}

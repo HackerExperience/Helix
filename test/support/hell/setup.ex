@@ -30,7 +30,16 @@ defmodule HELL.TestHelper.Setup do
 
   def bank_account(opts \\ []) do
     bank = NPCHelper.bank()
-    atm_id = Enum.random(bank.servers).id
+
+    atm_id =
+      cond do
+        opts[:atm_seq] ->
+          Enum.fetch!(bank.servers, opts[:atm_seq] - 1).id
+        opts[:atm_id] ->
+          opts[:atm_id]
+        true ->
+          Enum.random(bank.servers).id
+      end
 
     owner_id = Keyword.get(opts, :owner_id, Account.ID.generate)
     balance = Keyword.get(opts, :balance, 0)
