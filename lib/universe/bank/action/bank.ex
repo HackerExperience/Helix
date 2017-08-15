@@ -31,7 +31,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
     to: BankTransferInternal,
     as: :start
 
-  @spec complete_transfer(BankTransfer.idt) ::
+  @spec complete_transfer(BankTransfer.t) ::
     :ok
     | {:error, {:transfer, :notfound}}
     | {:error, :internal}
@@ -51,7 +51,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
     to: BankTransferInternal,
     as: :complete
 
-  @spec abort_transfer(BankTransfer.idt) ::
+  @spec abort_transfer(BankTransfer.t) ::
     :ok
     | {:error, {:transfer, :notfound}}
     | {:error, :internal}
@@ -88,7 +88,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
     |> BankAccountInternal.create()
   end
 
-  @spec close_account(BankAccount.t | BankAccount.account) ::
+  @spec close_account(BankAccount.t) ::
     :ok
     | {:error, {:account, :notfound}}
     | {:error, {:account, :notempty}}

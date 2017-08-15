@@ -2,19 +2,31 @@ defmodule Helix.Universe.Bank.Query.Bank do
 
   alias Helix.Account.Model.Account
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
+  alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+  alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankTransfer
 
-  @spec fetch_account(BankAccount.account) ::
+  @spec fetch_account(ATM.id, BankAccount.account) ::
     BankAccount.t
     | nil
   @doc """
   Fetches a bank account.
   """
-  defdelegate fetch_account(account_number),
+  defdelegate fetch_account(atm, account_number),
     to: BankAccountInternal,
     as: :fetch
 
-  @spec get_account_balance(BankAccount.t | BankAccount.account) ::
+  @spec fetch_transfer(BankTransfer.id) ::
+    BankTransfer.t
+  @doc """
+  Fetches a bank transfer
+  """
+  defdelegate fetch_transfer(transfer_id),
+    to: BankTransferInternal,
+    as: :fetch
+
+  @spec get_account_balance(BankAccount.t) ::
     non_neg_integer
   @doc """
   Returns the balance of a given bank account.

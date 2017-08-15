@@ -11,5 +11,4 @@ defmodule Helix.Universe.Repo do
       Ecto.Adapters.SQL.query(__MODULE__, @serializable)
     end)
   end
-
 end

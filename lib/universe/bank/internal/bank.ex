@@ -3,7 +3,7 @@ defmodule Helix.Universe.Bank.Internal.Bank do
   alias Helix.Universe.Bank.Model.Bank
   alias Helix.Universe.Repo
 
-  @spec fetch(Bank.idtb) ::
+  @spec fetch(Bank.id) ::
     Bank.t
     | nil
   def fetch(bank_id),
@@ -17,5 +17,4 @@ defmodule Helix.Universe.Bank.Internal.Bank do
     |> Bank.create_changeset()
     |> Repo.insert()
   end
-
 end

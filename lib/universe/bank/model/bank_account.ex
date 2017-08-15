@@ -12,33 +12,35 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
 
   import Ecto.Changeset
 
+  @account_range 100_000..999_999
+  @type account_range :: 100_000..999_999
+
   @type account :: integer
 
   @type t :: %__MODULE__{
-    account_number: integer,
+    account_number: account_range,
     bank_id: NPC.id,
     atm_id: ATM.id,
     password: String.t,
-    balance: integer,
+    balance: non_neg_integer,
     owner_id: Account.id
   }
 
   @type creation_params :: %{
     bank_id: NPC.idtb,
-    atm_id: ATM.id,
+    atm_id: ATM.idtb,
     owner_id: Account.idtb
   }
 
   @creation_fields ~w/bank_id atm_id owner_id/a
 
-  @initial_balance 0
-
   @primary_key false
   schema "bank_accounts" do
+    field :atm_id, Server.ID,
+      primary_key: true
     field :account_number, :integer,
       primary_key: true
     field :bank_id, NPC.ID
-    field :atm_id, Server.ID
     field :password, :string
     field :balance, :integer
     field :owner_id, Account.ID
@@ -62,42 +64,42 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> generic_validations()
-    |> add_initial_balance()
-    |> add_account_id()
-    |> add_account_password()
+    |> put_defaults()
     |> add_current_time()
   end
 
   @spec deposit(t, pos_integer) ::
     Changeset.t
   def deposit(account, amount) when amount > 0 do
-    change(account)
-    |> put_change(:balance, balance_operation(:add, account.balance, amount))
+    changeset = change(account)
+
+    if amount <= 0 do
+      add_error(changeset, :balance, "invalid operation")
+    else
+      put_change(changeset, :balance, account.balance + amount)
+    end
   end
 
   @spec withdraw(t, pos_integer) ::
     Changeset.t
   def withdraw(account, amount) when amount > 0 do
-    change(account)
-    |> put_change(:balance, balance_operation(:sub, account.balance, amount))
+    changeset = change(account)
+
+    cond do
+      amount <= 0 ->
+        add_error(changeset, :balance, "invalid operation")
+      amount > account.balance ->
+        add_error(changeset, :balance, "insufficient funds")
+      :else ->
+        put_change(changeset, :balance, account.balance - amount)
+    end
   end
 
   @spec change_password(t) ::
     Changeset.t
   def change_password(account) do
     change(account)
-    |> add_account_password()
-  end
-
-  @spec balance_operation(:add | :sub, non_neg_integer, pos_integer) ::
-    non_neg_integer
-  def balance_operation(:add, current, amount),
-    do: current + amount
-  def balance_operation(:sub, current, amount) do
-    if amount > current do
-      raise "Invalid balance operation"
-    end
-    current - amount
+    |> put_change(:password, generate_account_password())
   end
 
   @spec generic_validations(Changeset.t) ::
@@ -107,38 +109,28 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     |> validate_required(@creation_fields)
   end
 
-  @spec add_initial_balance(Changeset.t) ::
+  @spec put_defaults(Changeset.t) ::
     Changeset.t
-  defp add_initial_balance(changeset) do
-    changeset
-    |> put_change(:balance, @initial_balance)
-  end
+  def put_defaults(changeset) do
+    defaults = %{
+      balance: 0,
+      account_number: generate_account_id(),
+      password: generate_account_password()
+    }
 
-  @spec add_account_id(Changeset.t) ::
-    Changeset.t
-  defp add_account_id(changeset) do
-    changeset
-    |> put_change(:account_number, generate_account_id())
-  end
-
-  @spec add_account_password(Changeset.t) ::
-    Changeset.t
-  defp add_account_password(changeset) do
-    changeset
-    |> put_change(:password, generate_account_password())
+    change(changeset, defaults)
   end
 
   @spec add_current_time(Changeset.t) ::
     Changeset.t
   defp add_current_time(changeset) do
-    changeset
-      |> put_change(:creation_date, DateTime.utc_now())
+    put_change(changeset, :creation_date, DateTime.utc_now())
   end
 
   @spec generate_account_id ::
-    100_000..999_999
+    account_range
   defp generate_account_id,
-    do: Enum.random(100_000..999_999)
+    do: Enum.random(@account_range)
 
   @spec generate_account_password ::
     String.t
@@ -149,28 +141,37 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
 
     import Ecto.Query
 
+    alias Ecto.Queryable
     alias Helix.Account.Model.Account
     alias Helix.Universe.Bank.Model.BankAccount
 
-    @spec by_id(Ecto.Queryable.t, BankAccount.account) ::
-      Ecto.Queryable.t
-    def by_id(query \\ BankAccount, account),
-      do: where(query, [b], b.account_number == ^account)
+    @spec by_atm_account(Queryable.t, ATM.idtb, BankAccount.account) ::
+      Queryable.t
+    def by_atm_account(query \\ BankAccount, atm, account),
+      do: where(query, [b], b.atm_id == ^atm and b.account_number == ^account)
 
-    @spec by_owner(Ecto.Queryable.t, Account.id) ::
-      Ecto.Queryable.t
+    @spec by_owner(Queryable.t, Account.id) ::
+      Queryable.t
     def by_owner(query \\ BankAccount, owner),
       do: where(query, [b], b.owner_id == ^owner)
 
+    @spec order_by_creation_date(Queryable.t) ::
+      Queryable.t
     def order_by_creation_date(query),
       do: order_by(query, [b], b.creation_date)
 
+    @spec select_balance(Queryable.t) ::
+      Queryable.t
     def select_balance(query),
       do: select(query, [b], b.balance)
 
+    @spec select_sum_balance(Queryable.t) ::
+      Queryable.t
     def select_sum_balance(query),
       do: select(query, [b], sum(b.balance))
 
+    @spec lock_for_update(Queryable.t) ::
+      Queryable.t
     def lock_for_update(query),
       do: lock(query, "FOR UPDATE")
   end

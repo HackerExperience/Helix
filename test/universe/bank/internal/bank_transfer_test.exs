@@ -43,12 +43,12 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
       assert transfer.started_time
 
       # Make sure that relevant amount was removed from the first account
-      assert BankAccountInternal.get_balance(acc1.account_number) == 0
+      assert BankAccountInternal.get_balance(acc1) == 0
 
       # Nothing was added to the acc2 (must wait for conclusion)
-      assert BankAccountInternal.get_balance(acc2.account_number) == 0
+      assert BankAccountInternal.get_balance(acc2) == 0
 
-      # Ensure bank_transfer entry was created
+      # Bank transfer entry was created
       assert BankTransferInternal.fetch(transfer.transfer_id)
     end
 
@@ -65,20 +65,31 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
     test "aborts the transfer" do
       transfer = Setup.bank_transfer()
 
-      before_abort = BankAccountInternal.get_balance(transfer.account_from)
+      account_from =
+        BankAccountInternal.fetch(transfer.atm_from, transfer.account_from)
+      account_to =
+        BankAccountInternal.fetch(transfer.atm_to, transfer.account_to)
 
-      assert :ok == BankTransferInternal.abort(transfer.transfer_id)
+      before_abort_from = BankAccountInternal.get_balance(account_from)
+      before_abort_to = BankAccountInternal.get_balance(account_to)
+
+      assert :ok == BankTransferInternal.abort(transfer)
 
       # Ensure it reimburses original account money
-      after_abort = BankAccountInternal.get_balance(transfer.account_from)
-      assert after_abort == before_abort + transfer.amount
+      after_abort_from = BankAccountInternal.get_balance(account_from)
+      assert after_abort_from == before_abort_from + transfer.amount
+
+      # And nothing was added to destination
+      after_abort_to = BankAccountInternal.get_balance(account_to)
+      assert before_abort_to == after_abort_to
 
       # Ensure it removed the transfer from DB
       refute BankTransferInternal.fetch(transfer.transfer_id)
     end
 
     test "with invalid data" do
-      assert {:error, reason} = BankTransferInternal.abort(Random.pk())
+      fake_transfer = Setup.fake_bank_transfer()
+      assert {:error, reason} = BankTransferInternal.abort(fake_transfer)
       assert reason == {:transfer, :notfound}
     end
   end
@@ -87,14 +98,19 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
     test "completes the transfer" do
       transfer = Setup.bank_transfer()
 
-      acc_from_before = BankAccountInternal.get_balance(transfer.account_from)
-      acc_to_before = BankAccountInternal.get_balance(transfer.account_to)
+      account_from =
+        BankAccountInternal.fetch(transfer.atm_from, transfer.account_from)
+      account_to =
+        BankAccountInternal.fetch(transfer.atm_to, transfer.account_to)
 
-      assert :ok == BankTransferInternal.complete(transfer.transfer_id)
+      acc_from_before = BankAccountInternal.get_balance(account_from)
+      acc_to_before = BankAccountInternal.get_balance(account_to)
+
+      assert :ok == BankTransferInternal.complete(transfer)
 
       # Ensure money was transferred around correctly
-      acc_from_after = BankAccountInternal.get_balance(transfer.account_from)
-      acc_to_after = BankAccountInternal.get_balance(transfer.account_to)
+      acc_from_after = BankAccountInternal.get_balance(account_from)
+      acc_to_after = BankAccountInternal.get_balance(account_to)
 
       assert acc_from_before == acc_from_after
       assert acc_to_after == acc_to_before + transfer.amount
@@ -111,24 +127,24 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
       acc2 = Setup.bank_account()
       started_by = Random.pk()
 
-      acc1_before_start = BankAccountInternal.get_balance(acc1.account_number)
-      acc2_before_start = BankAccountInternal.get_balance(acc2.account_number)
+      acc1_before_start = BankAccountInternal.get_balance(acc1)
+      acc2_before_start = BankAccountInternal.get_balance(acc2)
 
       # Start
       {:ok, transfer} =
         BankTransferInternal.start(acc1, acc2, amount, started_by)
 
-      acc1_after_start = BankAccountInternal.get_balance(acc1.account_number)
-      acc2_after_start = BankAccountInternal.get_balance(acc2.account_number)
+      acc1_after_start = BankAccountInternal.get_balance(acc1)
+      acc2_after_start = BankAccountInternal.get_balance(acc2)
 
       assert acc1_after_start == acc1_before_start - amount
       assert acc2_after_start == acc2_before_start
 
       # Complete
-      BankTransferInternal.complete(transfer.transfer_id)
+      BankTransferInternal.complete(transfer)
 
-      acc1_after_complete = BankAccountInternal.get_balance(acc1.account_number)
-      acc2_after_complete = BankAccountInternal.get_balance(acc2.account_number)
+      acc1_after_complete = BankAccountInternal.get_balance(acc1)
+      acc2_after_complete = BankAccountInternal.get_balance(acc2)
 
       # troca troca was successful
       assert acc1_after_complete == acc1_before_start - amount
@@ -141,24 +157,24 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
       acc2 = Setup.bank_account()
       started_by = Random.pk()
 
-      acc1_before_start = BankAccountInternal.get_balance(acc1.account_number)
-      acc2_before_start = BankAccountInternal.get_balance(acc2.account_number)
+      acc1_before_start = BankAccountInternal.get_balance(acc1)
+      acc2_before_start = BankAccountInternal.get_balance(acc2)
 
       # Start
       {:ok, transfer} =
         BankTransferInternal.start(acc1, acc2, amount, started_by)
 
-      acc1_after_start = BankAccountInternal.get_balance(acc1.account_number)
-      acc2_after_start = BankAccountInternal.get_balance(acc2.account_number)
+      acc1_after_start = BankAccountInternal.get_balance(acc1)
+      acc2_after_start = BankAccountInternal.get_balance(acc2)
 
       assert acc1_after_start == acc1_before_start - amount
       assert acc2_after_start == acc2_before_start
 
       # Abort
-      BankTransferInternal.abort(transfer.transfer_id)
+      BankTransferInternal.abort(transfer)
 
-      acc1_after_complete = BankAccountInternal.get_balance(acc1.account_number)
-      acc2_after_complete = BankAccountInternal.get_balance(acc2.account_number)
+      acc1_after_complete = BankAccountInternal.get_balance(acc1)
+      acc2_after_complete = BankAccountInternal.get_balance(acc2)
 
       # Bad bad transfer no troca troca for you
       assert acc1_after_complete == acc1_before_start

@@ -6,20 +6,25 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Repo
 
-  @spec fetch(BankTransfer.idtb) ::
+  @spec fetch(BankTransfer.id) ::
     BankTransfer.t
     | nil
   def fetch(transfer_id),
     do: Repo.get(BankTransfer, transfer_id)
 
-  @spec fetch_for_update(BankTransfer.idtb) ::
+  @spec fetch_for_update(BankTransfer.id) ::
     BankTransfer.t
     | nil
+    | no_return
   @doc """
   Fetches a bank transfer, locking it for external updates. Must be used within
   a transaction.
   """
   def fetch_for_update(transfer_id) do
+    unless Repo.in_transaction?() do
+      raise "Transaction required in order to acquire lock"
+    end
+
     transfer_id
     |> BankTransfer.Query.by_id()
     |> BankTransfer.Query.lock_for_update()
@@ -32,12 +37,12 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     | {:error, {:account, :notfound}}
     | {:error, Ecto.Changeset.t}
   def start(from_acc, to_acc, amount, started_by) do
-    trans =
-      Repo.transaction(fn ->
-        Repo.serializable_transaction()
+    Repo.transaction(fn ->
+      Repo.serializable_transaction()
 
-        with {:ok, _} <- BankAccountInternal.withdraw(from_acc, amount) do
-          %{
+      case BankAccountInternal.withdraw(from_acc, amount) do
+        {:ok, _} ->
+          params = %{
             account_from: from_acc.account_number,
             account_to: to_acc.account_number,
             atm_from: from_acc.atm_id,
@@ -45,85 +50,94 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
             amount: amount,
             started_by: started_by
           }
-          |> create()
-        end
-      end)
-
-    case trans do
-      {:ok, result} ->
-        result
-    end
+          create!(params)
+        {:error, e} ->
+          Repo.rollback(e)
+      end
+    end)
   end
 
-  @spec complete(BankTransfer.idt) ::
+  @spec complete(BankTransfer.t) ::
     :ok
     | {:error, {:transfer, :notfound}}
     | {:error, :internal}
-  def complete(transfer = %BankTransfer{}),
-    do: complete(transfer.transfer_id)
-  def complete(transfer_id) do
-    deposit_money = fn(account_to, amount) ->
-      BankAccountInternal.deposit(account_to, amount)
+  def complete(transfer) do
+    deposit_money = fn(transfer) ->
+      account_to = BankAccountInternal.fetch_for_update(
+        transfer.atm_to,
+        transfer.account_to)
+
+      BankAccountInternal.deposit(account_to, transfer.amount)
     end
 
     trans =
       Repo.transaction(fn ->
         Repo.serializable_transaction()
 
+        transfer = fetch_for_update(transfer.transfer_id)
+
         with \
-          transfer = %{} <- fetch_for_update(transfer_id) || :nxtransfer,
+          true <- not is_nil(transfer) || :nxtransfer,
           # Transfer money to recipient
-          {:ok, _} <- deposit_money.(transfer.account_to, transfer.amount)
+          {:ok, _} <- deposit_money.(transfer)
         do
           # Remove transfer entry
           delete(transfer)
         else
           :nxtransfer ->
-            {:error, {:transfer, :notfound}}
+            Repo.rollback({:transfer, :notfound})
           _ ->
-            {:error, :internal}
+            Repo.rollback(:internal)
         end
       end)
 
     case trans do
       {:ok, result} ->
         result
+      error ->
+        error
     end
   end
 
-  @spec abort(BankTransfer.idt) ::
+  @spec abort(BankTransfer.t) ::
     :ok
     | {:error, {:transfer, :notfound}}
     | {:error, :internal}
-  def abort(transfer = %BankTransfer{}),
-    do: abort(transfer.transfer_id)
-  def abort(transfer_id) do
-    refund_money = fn(account_from, amount) ->
-      BankAccountInternal.deposit(account_from, amount)
+  def abort(transfer) do
+      refund_money = fn(transfer) ->
+        account_from = BankAccountInternal.fetch_for_update(
+          transfer.atm_from,
+          transfer.account_from)
+
+        BankAccountInternal.deposit(account_from, transfer.amount)
     end
 
     trans =
       Repo.transaction(fn ->
         Repo.serializable_transaction()
 
+        transfer = fetch_for_update(transfer.transfer_id)
+
         with \
-          transfer = %{} <- fetch_for_update(transfer_id) || :nxtransfer,
+          true <- not is_nil(transfer) || :nxtransfer,
           # Refund transfer money
-          {:ok, _} <- refund_money.(transfer.account_from, transfer.amount)
+          {:ok, _} <- refund_money.(transfer)
         do
           # Remove transfer entry
           delete(transfer)
         else
           :nxtransfer ->
-            {:error, {:transfer, :notfound}}
+            Repo.rollback({:transfer, :notfound})
           _ ->
-            {:error, :internal}
+            Repo.rollback(:internal)
         end
       end)
 
     case trans do
       {:ok, result} ->
         result
+      error ->
+        error
     end
   end
 
@@ -134,6 +148,14 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     params
     |> BankTransfer.create_changeset()
     |> Repo.insert()
+  end
+
+  @spec create!(BankTransfer.creation_params) ::
+    BankTransfer.t
+    | no_return
+  defp create!(params) do
+    {:ok, acc} = create(params)
+    acc
   end
 
   @spec delete(BankTransfer.t) ::

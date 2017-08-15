@@ -4,13 +4,13 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   import Helix.Test.IDCase
 
-  alias HELL.TestHelper.Random
-  alias HELL.TestHelper.Setup
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
+  alias HELL.TestHelper.Setup
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   describe "start_transfer/4" do
@@ -49,13 +49,19 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
       assert :ok == BankAction.complete_transfer(transfer)
 
+      account_from =
+        BankQuery.fetch_account(transfer.atm_from, transfer.account_from)
+      account_to =
+        BankQuery.fetch_account(transfer.atm_to, transfer.account_to)
+
       refute BankTransferInternal.fetch(transfer)
-      assert BankAccountInternal.get_balance(transfer.account_from) == 0
-      assert BankAccountInternal.get_balance(transfer.account_to) == amount
+      assert BankAccountInternal.get_balance(account_from) == 0
+      assert BankAccountInternal.get_balance(account_to) == amount
     end
 
     test "with invalid data" do
-      assert {:error, reason} = BankAction.complete_transfer(Random.pk())
+      fake_transfer = Setup.fake_bank_transfer()
+      assert {:error, reason} = BankAction.complete_transfer(fake_transfer)
       assert reason == {:transfer, :notfound}
     end
   end
@@ -67,13 +73,19 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
       assert :ok == BankAction.abort_transfer(transfer)
 
+      account_from =
+        BankQuery.fetch_account(transfer.atm_from, transfer.account_from)
+      account_to =
+        BankQuery.fetch_account(transfer.atm_to, transfer.account_to)
+
       refute BankTransferInternal.fetch(transfer)
-      assert BankAccountInternal.get_balance(transfer.account_from) == amount
-      assert BankAccountInternal.get_balance(transfer.account_to) == 0
+      assert BankAccountInternal.get_balance(account_from) == amount
+      assert BankAccountInternal.get_balance(account_to) == 0
     end
 
     test "with invalid data" do
-      assert {:error, reason} = BankAction.abort_transfer(Random.pk())
+      fake_transfer = Setup.fake_bank_transfer()
+      assert {:error, reason} = BankAction.abort_transfer(fake_transfer)
       assert reason == {:transfer, :notfound}
     end
   end
@@ -103,22 +115,23 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     test "it closes the account" do
       acc = Setup.bank_account()
 
-      assert BankAccountInternal.fetch(acc.account_number)
+      assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert :ok == BankAction.close_account(acc)
-      refute BankAccountInternal.fetch(acc.account_number)
+      refute BankAccountInternal.fetch(acc.atm_id, acc.account_number)
     end
 
     test "it refuses to close non-empty accounts" do
       acc = Setup.bank_account([balance: 1])
 
-      assert BankAccountInternal.fetch(acc.account_number)
+      assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert {:error, reason} = BankAction.close_account(acc)
       assert reason == {:account, :notempty}
-      assert BankAccountInternal.fetch(acc.account_number)
+      assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
     end
 
     test "with invalid data" do
-      assert {:error, reason} = BankAction.close_account(Random.number())
+      fake_acc = Setup.fake_bank_account()
+      assert {:error, reason} = BankAction.close_account(fake_acc)
       assert reason == {:account, :notfound}
     end
   end

@@ -3,12 +3,12 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
   use Ecto.Schema
   use HELL.ID, field: :transfer_id, meta: [0x0040]
 
+  import Ecto.Changeset
+
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.ATM
-
-  import Ecto.Changeset
 
   @type t :: %__MODULE__{
     transfer_id: id,
@@ -16,7 +16,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     account_to: BankAccount.account,
     atm_from: ATM.id,
     atm_to: ATM.id,
-    amount: integer,
+    amount: pos_integer,
     started_by: Account.id,
     started_time: DateTime.t,
   }
@@ -24,10 +24,10 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
   @type creation_params :: %{
     account_from: BankAccount.account,
     account_to: BankAccount.account,
-    atm_from: ATM.id,
-    atm_to: ATM.id,
-    amount: integer,
-    started_by: Account.id,
+    atm_from: ATM.idtb,
+    atm_to: ATM.idtb,
+    amount: pos_integer,
+    started_by: Account.idtb,
   }
 
   @creation_fields ~w/
@@ -40,7 +40,8 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
 
   @primary_key false
   schema "bank_transfers" do
-    field :transfer_id, ID, primary_key: true
+    field :transfer_id, ID,
+      primary_key: true
     field :account_from, :integer
     field :account_to, :integer
     field :atm_from, Server.ID
@@ -78,8 +79,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
   end
 
   defp add_time_information(changeset) do
-    changeset
-    |> put_change(:started_time, DateTime.utc_now())
+    put_change(changeset, :started_time, DateTime.utc_now())
   end
 
   defmodule Query do
