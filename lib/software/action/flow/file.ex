@@ -41,12 +41,12 @@ defmodule Helix.Software.Action.Flow.File do
   @spec cracker(File.t_of_type(:cracker), Server.id, Cracker.create_params) ::
     {:ok, Process.t}
     | ProcessAction.on_create_error
-    | {:error, Ecto.Changeset.t}
+    | {:error, Cracker.changeset}
   defp cracker(file, server, params) do
     flowing do
       with \
-        {:ok, data} <- cracker_prepare(file, params),
-        {:ok, process_params} <- cracker_process_params(data, server),
+        {:ok, data, firewall} <- cracker_prepare(file, params),
+        {:ok, process_params} <- cracker_process_params(data, server, firewall),
         {:ok, process, events} <- ProcessAction.create(process_params),
         on_success(fn -> Event.emit(events) end)
       do
@@ -56,8 +56,8 @@ defmodule Helix.Software.Action.Flow.File do
   end
 
   @spec cracker_prepare(File.t_of_type(:cracker), Cracker.create_params) ::
-    {:ok, Cracker.t}
-    | {:error, Ecto.Changeset.t}
+    {:ok, Cracker.t, non_neg_integer}
+    | {:error, Cracker.changeset}
   defp cracker_prepare(file, params) do
     target_firewall = fn server_id ->
       ProcessQuery.get_running_processes_of_type_on_server(
@@ -68,21 +68,21 @@ defmodule Helix.Software.Action.Flow.File do
     with {:ok, cracker} <- file |> load_modules() |> Cracker.create(params) do
       case target_firewall.(cracker.target_server_id) do
         [] ->
-          {:ok, cracker}
+          {:ok, cracker, 0}
         [%{process_data: %{version: v}}] ->
-          Cracker.firewall_version(cracker, v)
+          {:ok, cracker, v}
       end
     end
   end
 
-  @spec cracker_process_params(Cracker.t, Server.id) ::
+  @spec cracker_process_params(Cracker.t, Server.id, non_neg_integer) ::
     {:ok, Process.create_params}
-  defp cracker_process_params(cracker, server_id) do
+  defp cracker_process_params(cracker, server_id, firewall) do
     params = %{
       gateway_id: server_id,
       target_server_id: cracker.target_server_id,
       network_id: cracker.network_id,
-      objective: Cracker.objective(cracker),
+      objective: Cracker.objective(cracker, firewall),
       process_data: cracker,
       process_type: "cracker"
     }
