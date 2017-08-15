@@ -2,7 +2,6 @@ defmodule Helix.Network.Action.Tunnel do
 
   import HELL.MacroHelpers
 
-  alias Ecto.Changeset
   alias Helix.Event
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server
@@ -12,9 +11,17 @@ defmodule Helix.Network.Action.Tunnel do
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
 
+  @type create_tunnel_errors ::
+    {:error, {:gateway_id, :notfound}}
+    | {:error, {:destination_id, :notfound}}
+    | {:error, {:links, :notfound}}
+    | {:error, {:gateway_id, :disconnected}}
+    | {:error, {:destination_id, :disconnected}}
+    | {:error, {:links_id, :disconnected}}
+
   @spec connect(Network.t, Server.id, Server.id, [Server.id], term) ::
     {:ok, Connection.t, [Event.t]}
-    | {:error, Changeset.t}
+    | create_tunnel_errors
   @doc """
   Starts a connection between `gateway` and `destination` through `network`.
 
@@ -38,7 +45,7 @@ defmodule Helix.Network.Action.Tunnel do
 
   @spec create_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
-    | {:error, Changeset.t}
+    | create_tunnel_errors
   docp """
   Checks if gateway, destination and bounces are valid servers, and if they
   are connected to network
@@ -58,25 +65,12 @@ defmodule Helix.Network.Action.Tunnel do
     do
       TunnelInternal.create(network, gateway, destination, bounces)
     else
-      {field, :notfound} ->
-        # TODO: produce error somewhere else ?
-        # Review: why not return, say, {:error, {:destination, :notfound}}?
-        changeset =
-          %Tunnel{}
-          |> Changeset.change()
-          |> Changeset.add_error(field, "doesnt exist")
-        {:error, changeset}
-      {field, :disconnected} ->
-        # TODO: produce error somewhere else ?
-        changeset =
-          %Tunnel{}
-          |> Changeset.change()
-          |> Changeset.add_error(field, "not connected to the network")
-        {:error, changeset}
+      error ->
+        {:error, error}
     end
   end
 
-  @spec delete(Tunnel.t | Tunnel.id) ::
+  @spec delete(Tunnel.idt) ::
     :ok
   defdelegate delete(tunnel),
     to: TunnelInternal

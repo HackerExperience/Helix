@@ -3,6 +3,7 @@ defmodule Helix.Network.Internal.Tunnel do
   alias Helix.Event
   alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Link
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
@@ -83,7 +84,7 @@ defmodule Helix.Network.Internal.Tunnel do
     Repo.preload(tunnel, :connections).connections
   end
 
-  @spec connections_through_node(Server.t | Server.id) ::
+  @spec connections_through_node(Server.idt) ::
     [Connection.t]
   def connections_through_node(server_id) do
     server_id
@@ -91,7 +92,7 @@ defmodule Helix.Network.Internal.Tunnel do
     |> Repo.all()
   end
 
-  @spec inbound_connections(Server.t | Server.id) ::
+  @spec inbound_connections(Server.idt) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's destination is `server`
   def inbound_connections(endpoint_id) do
@@ -100,7 +101,7 @@ defmodule Helix.Network.Internal.Tunnel do
     |> Repo.all()
   end
 
-  @spec outbound_connections(Server.t | Server.id) ::
+  @spec outbound_connections(Server.idt) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
   def outbound_connections(gateway_id) do
@@ -162,6 +163,15 @@ defmodule Helix.Network.Internal.Tunnel do
   def connections_on_tunnels_between(gateway_id, endpoint_id) do
     gateway_id
     |> Connection.Query.from_gateway_to_endpoint(endpoint_id)
+    |> Repo.all()
+    end
+
+  @spec get_links(Tunnel.idt) ::
+    [Link.t]
+  def get_links(tunnel) do
+    tunnel
+    |> Link.Query.by_tunnel()
+    |> Link.Query.order_by_sequence()
     |> Repo.all()
   end
 end
