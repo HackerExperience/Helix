@@ -1,13 +1,19 @@
 defmodule HELL.TestHelper.Setup do
 
+  # TODO: Split -> BankFactory + NPCFactory + IntegrationFactory
+
+  alias Ecto.Changeset
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
   alias Helix.Account.Factory, as: AccountFactory
   alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+  alias Helix.Network.Model.Connection
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
+  alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
+  alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
+  alias Helix.Universe.Repo
 
   alias HELL.TestHelper.Random
   alias Helix.Universe.NPC.Helper, as: NPCHelper
@@ -102,5 +108,31 @@ defmodule HELL.TestHelper.Setup do
       started_by: started_by,
       started_time: DateTime.utc_now()
     }
+  end
+
+  def bank_token(opts \\ []) do
+    acc = bank_account()
+    connection_id = Access.get(opts, :connection_id, Connection.ID.generate())
+
+    {:ok, token} = BankTokenInternal.generate(acc, connection_id)
+
+    # TODO utisl
+    expired_date =
+      DateTime.utc_now()
+      |> DateTime.to_unix(:second)
+      |> Kernel.+(-1)
+      |> DateTime.from_unix!(:second)
+
+    token =
+      if opts[:expired] do
+        token
+        |> Changeset.change()
+        |> Changeset.put_change(:expiration_date, expired_date)
+        |> Repo.update!()
+      else
+        token
+      end
+
+    token
   end
 end
