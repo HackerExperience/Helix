@@ -1,23 +1,28 @@
 defmodule HELL.TestHelper.Setup do
 
+  # TODO: Split -> BankFactory + NPCFactory + IntegrationFactory
+
+  alias Ecto.Changeset
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
-  alias Helix.Account.Model.Account
-  alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+  alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Network.Model.Connection
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
+  alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
+  alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
-  alias Helix.Universe.NPC.Model.NPC
+  alias Helix.Universe.Repo
 
   alias HELL.TestHelper.Random
-  alias Helix.Account.Factory, as: AccountFactory
-  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   def server do
     account = AccountFactory.insert(:account)
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
+    :timer.sleep(100)
     CacheHelper.purge_server(server.server_id)
 
     {server, account}
@@ -41,8 +46,8 @@ defmodule HELL.TestHelper.Setup do
           Enum.random(bank.servers).id
       end
 
-    owner_id = Keyword.get(opts, :owner_id, Account.ID.generate)
-    balance = Keyword.get(opts, :balance, 0)
+    owner_id = Access.get(opts, :owner_id, Random.pk())
+    balance = Access.get(opts, :balance, 0)
 
     params = %{
       bank_id: bank.id,
@@ -61,13 +66,13 @@ defmodule HELL.TestHelper.Setup do
   end
 
   def bank_transfer(opts \\ []) do
-    amount = Keyword.get(opts, :amount, 100)
-    balance1 = Keyword.get(opts, :balance1, amount)
-    balance2 = Keyword.get(opts, :balance2, 0)
+    amount = Access.get(opts, :amount, 100)
+    balance1 = Access.get(opts, :balance1, amount)
+    balance2 = Access.get(opts, :balance2, 0)
 
     acc1 = bank_account([balance: balance1])
     acc2 = bank_account([balance: balance2])
-    started_by = Account.ID.generate()
+    started_by = Random.pk()
 
     {:ok, transfer} = BankTransferInternal.start(acc1, acc2, amount, started_by)
     transfer
@@ -83,7 +88,7 @@ defmodule HELL.TestHelper.Setup do
       bank_id: bank.id,
       atm_id: atm_id,
       password: "secret",
-      owner_id: Account.ID.generate()
+      owner_id: Random.pk()
     }
   end
 
@@ -91,7 +96,7 @@ defmodule HELL.TestHelper.Setup do
     amount = Random.number(min: 1, max: 5000)
     acc1 = bank_account([balance: amount])
     acc2 = fake_bank_account()
-    started_by = Account.ID.generate()
+    started_by = Random.pk()
 
     %BankTransfer{
       transfer_id: BankTransfer.ID.generate(),
@@ -103,5 +108,31 @@ defmodule HELL.TestHelper.Setup do
       started_by: started_by,
       started_time: DateTime.utc_now()
     }
+  end
+
+  def bank_token(opts \\ []) do
+    acc = bank_account()
+    connection_id = Access.get(opts, :connection_id, Connection.ID.generate())
+
+    {:ok, token} = BankTokenInternal.generate(acc, connection_id)
+
+    # TODO utisl
+    expired_date =
+      DateTime.utc_now()
+      |> DateTime.to_unix(:second)
+      |> Kernel.+(-1)
+      |> DateTime.from_unix!(:second)
+
+    token =
+      if opts[:expired] do
+        token
+        |> Changeset.change()
+        |> Changeset.put_change(:expiration_date, expired_date)
+        |> Repo.update!()
+      else
+        token
+      end
+
+    token
   end
 end

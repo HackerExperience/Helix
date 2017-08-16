@@ -2,10 +2,13 @@ defmodule Helix.Universe.Bank.Action.Bank do
 
   alias Helix.Account.Model.Account
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+  alias Helix.Network.Model.Connection
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
+  alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
+  alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
 
@@ -101,4 +104,18 @@ defmodule Helix.Universe.Bank.Action.Bank do
   defdelegate close_account(account),
     to: BankAccountInternal,
     as: :close
+
+  @spec generate_token(BankAccount.t, Connection.idt) ::
+    {:ok, BankToken.t}
+    | {:error, Ecto.Changeset.t}
+  @doc """
+  Generates a new token for the given (BankAccount, Connection) tuple.
+
+  This function should not be called directly by Public or Event. Instead, it
+  must be triggered by `BankQuery.get_account_token`, since token generation is
+  skipped if the given tuple already exists on the DB.
+  """
+  defdelegate generate_token(account, connection),
+    to: BankTokenInternal,
+    as: :generate
 end

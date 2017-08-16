@@ -2,9 +2,11 @@ defmodule Helix.Universe.Bank.Query.BankTest do
 
   use Helix.Test.IntegrationCase
 
-  alias HELL.TestHelper.Setup
+  alias Helix.Network.Model.Connection
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
+
+  alias HELL.TestHelper.Setup
 
   describe "fetch_account/1" do
     test "with valid account" do
@@ -74,6 +76,43 @@ defmodule Helix.Universe.Bank.Query.BankTest do
       # Totally unrelated account
       Setup.bank_account([balance: 1000])
       assert 151 == BankQuery.get_total_funds(owner)
+    end
+  end
+
+  describe "get_account_token/2" do
+    test "creates a new token if none is found" do
+      acc = Setup.bank_account()
+      connection = Connection.ID.generate()
+
+      assert {:ok, token_id} = BankQuery.get_account_token(acc, connection)
+      assert String.length(token_id) == 36
+
+      assert BankQuery.fetch_token(token_id)
+    end
+
+    test "returns the token if it already exists" do
+      connection = Connection.ID.generate()
+      token = Setup.bank_token([connection_id: connection])
+      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+
+      assert {:ok, token_id} = BankQuery.get_account_token(acc, connection)
+
+      assert token_id == token.token_id
+    end
+
+    test "it ignores existing tokens on different connections" do
+      connection1 = Connection.ID.generate()
+      connection2 = Connection.ID.generate()
+      token = Setup.bank_token([connection_id: connection1])
+      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+
+      assert {:ok, token_id} = BankQuery.get_account_token(acc, connection2)
+
+      refute token_id == token.token_id
+
+      # Two connections, two tokens
+      assert BankQuery.fetch_token(token.token_id)
+      assert BankQuery.fetch_token(token_id)
     end
   end
 end
