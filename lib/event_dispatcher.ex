@@ -66,6 +66,10 @@ defmodule Helix.Event.Dispatcher do
     Entity.Event.Database,
     :cracker_conclusion
 
+  event Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+    Software.Event.Cracker,
+    :overflow_conclusion
+
   event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
     Software.Event.Decryptor,
     :complete
@@ -111,4 +115,7 @@ defmodule Helix.Event.Dispatcher do
   event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
     Universe.Bank.Event.BankTransfer,
     :transfer_aborted
+  event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
+    Software.Event.Cracker,
+    :bank_transfer_aborted
 end

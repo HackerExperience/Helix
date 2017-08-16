@@ -87,7 +87,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
           transfer_id: transfer.transfer_id,
           amount: amount
         },
-        process_type: "bank_transfer"
+        process_type: "wire_transfer"
       }
     end
 
