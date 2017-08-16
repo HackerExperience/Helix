@@ -22,7 +22,7 @@ defmodule Helix.Process.Query.Process do
   defdelegate fetch(id),
     to: ProcessInternal
 
-  @spec get_running_processes_of_type_on_server(Server.t | Server.id, String.t) ::
+  @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway` that are of `type`
@@ -41,7 +41,7 @@ defmodule Helix.Process.Query.Process do
   defdelegate get_running_processes_of_type_on_server(gateway_id, type),
     to: ProcessInternal
 
-  @spec get_processes_on_server(Server.t | Server.id) ::
+  @spec get_processes_on_server(Server.idt) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway`
@@ -54,7 +54,7 @@ defmodule Helix.Process.Query.Process do
   defdelegate get_processes_on_server(gateway_id),
     to: ProcessInternal
 
-  @spec get_processes_targeting_server(Server.t | Server.id) ::
+  @spec get_processes_targeting_server(Server.idt) ::
     [Process.t]
   @doc """
   Fetches remote processes affecting `gateway`
@@ -70,7 +70,7 @@ defmodule Helix.Process.Query.Process do
   defdelegate get_processes_targeting_server(gateway_id),
     to: ProcessInternal
 
-  @spec get_processes_of_type_targeting_server(Server.t | Server.id, String.t) ::
+  @spec get_processes_of_type_targeting_server(Server.idt, String.t) ::
     [Process.t]
   @doc """
   Fetches remote processes of type `type` affecting `gateway`
@@ -86,7 +86,7 @@ defmodule Helix.Process.Query.Process do
   defdelegate get_processes_of_type_targeting_server(gateway_id, type),
     to: ProcessInternal
 
-  @spec get_processes_on_connection(Connection.t | Connection.id) ::
+  @spec get_processes_on_connection(Connection.idt) ::
     [Process.t]
   @doc """
   Fetches processes using `connection`

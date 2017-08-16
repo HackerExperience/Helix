@@ -3,14 +3,15 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Account.Model.Account
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Connection
+  alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
+  alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankTransfer
-  alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
 
   @spec start_transfer(BankAccount.t, BankAccount.t, pos_integer, Account.idt) ::
     {:ok, BankTransfer.t}
@@ -106,16 +107,47 @@ defmodule Helix.Universe.Bank.Action.Bank do
     as: :close
 
   @spec generate_token(BankAccount.t, Connection.idt) ::
-    {:ok, BankToken.t}
+    {:ok, BankToken.t, [BankTokenAcquiredEvent.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
-  Generates a new token for the given (BankAccount, Connection) tuple.
+  Returns the token for the given (BankAccount, Connection) tuple.
 
-  This function should not be called directly by Public or Event. Instead, it
-  must be triggered by `BankQuery.get_account_token`, since token generation is
-  skipped if the given tuple already exists on the DB.
+  It generates a new one if it doesn't exists. It fetches the current one
+  otherwise.
+
+  Note that one bank account may have multiple tokens assigned to it at the
+  same time. This happens when multiple connections are open (and hacked).
+
+  One connection will always have a single token. So if two different attackers
+  hack the same connection, they will acquire the same token.
   """
-  defdelegate generate_token(account, connection),
-    to: BankTokenInternal,
-    as: :generate
+  def generate_token(account, connection) do
+    token = BankTokenInternal.fetch_by_connection(connection)
+
+    token_result =
+      if token do
+        {:ok, token.token_id}
+      else
+        with {:ok, token} <- BankTokenInternal.generate(account, connection) do
+          {:ok, token.token_id}
+        end
+      end
+
+    case token_result do
+      {:ok, token} ->
+        {:ok, token, [token_acquired_event(token, account)]}
+      error ->
+        error
+    end
+  end
+
+  @spec token_acquired_event(BankToken.id, BankAccount.t) ::
+    BankTokenAcquiredEvent.t
+  defp token_acquired_event(token_id, account) do
+    %BankTokenAcquiredEvent{
+      token_id: token_id,
+      atm_id: account.atm_id,
+      account_number: account.account_number
+    }
+  end
 end

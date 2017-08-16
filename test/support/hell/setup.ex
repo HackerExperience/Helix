@@ -7,6 +7,7 @@ defmodule HELL.TestHelper.Setup do
   alias Helix.Account.Factory, as: AccountFactory
   alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Network.Model.Connection
+  alias Helix.Universe.Bank.Action.Flow.BankTransfer, as: BankTransferFlow
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
@@ -134,5 +135,15 @@ defmodule HELL.TestHelper.Setup do
       end
 
     token
+  end
+
+  def wire_transfer_flow do
+    amount = 1
+    acc1 = bank_account([balance: amount, atm_seq: 1])
+    acc2 = bank_account([atm_seq: 2])
+    {_, player} = server()
+
+    {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
+    process
   end
 end
