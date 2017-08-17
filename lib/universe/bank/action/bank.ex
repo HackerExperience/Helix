@@ -9,9 +9,12 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
+    as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankTransfer
+  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   @spec start_transfer(BankAccount.t, BankAccount.t, pos_integer, Account.idt) ::
     {:ok, BankTransfer.t}
@@ -135,19 +138,43 @@ defmodule Helix.Universe.Bank.Action.Bank do
 
     case token_result do
       {:ok, token} ->
-        {:ok, token, [token_acquired_event(token, account)]}
+        {:ok, token, [token_acquired_event(account, token)]}
       error ->
         error
     end
   end
 
-  @spec token_acquired_event(BankToken.id, BankAccount.t) ::
+  @spec token_acquired_event(BankAccount.t, BankToken.id) ::
     BankTokenAcquiredEvent.t
-  defp token_acquired_event(token_id, account) do
+  defp token_acquired_event(account, token_id) do
     %BankTokenAcquiredEvent{
       token_id: token_id,
       atm_id: account.atm_id,
       account_number: account.account_number
     }
+  end
+
+  @spec reveal_password(BankAccount.t, BankToken.id) ::
+    {:ok, String.t, [BankAccountPasswordRevealedEvent.t]}
+    | {:error, {:token, :notfound}}
+  def reveal_password(account, token_id) do
+    password_revealed_event = fn account ->
+      %BankAccountPasswordRevealedEvent{
+        atm_id: account.atm_id,
+        account_number: account.account_number,
+        password: account.password
+      }
+    end
+
+    with \
+      token = %{} <- BankQuery.fetch_token(token_id),
+      true <- account.account_number == token.account_number,
+      true <- account.atm_id == token.atm_id
+    do
+      {:ok, account.password, [password_revealed_event.(account)]}
+    else
+      _ ->
+        {:error, {:token, :notfound}}
+    end
   end
 end

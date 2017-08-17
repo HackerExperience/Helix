@@ -20,6 +20,10 @@ defmodule Helix.Software.Event.Cracker do
 
   According to the process type, it will route to internal methods who are
   specialized on applying the overflow attack into that process/connection.
+
+  Note that this function only handles the process *conclusion*. The actual
+  notification of the overflow result to the user is done on more specific
+  events, e.g. the `BankAccountPasswordRevealedEvent`.
   """
   def overflow_conclusion(event = %OverflowConclusionEvent{}) do
     process = ProcessQuery.fetch(event.target_process_id)
@@ -38,6 +42,9 @@ defmodule Helix.Software.Event.Cracker do
   Overflow attack on wire transfer generates an access token for the transfer's
   source account. Once the token is obtained, an event is emitted to notify the
   client.
+  This function handles the conclusion of the event. Actual notification of the
+  result (i.e. which token was obtained through the attack) is managed by other
+  event handlers.
   """
   defp overflow_of_wire_transfer(process) do
     transfer_id = process.process_data.transfer_id
