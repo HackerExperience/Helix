@@ -9,6 +9,8 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
+    as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
@@ -182,6 +184,50 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       token_id: token_id,
       atm_id: acc.atm_id,
       account_number: acc.account_number
+    }
+  end
+
+  describe "reveal_account_password/2" do
+    test "password is revealed if correct input is entered" do
+      token = Setup.bank_token()
+      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+
+      assert {:ok, password, [e]} =
+        BankAction.reveal_password(acc, token.token_id)
+      assert password == acc.password
+      assert e == expected_revealed_event(acc)
+    end
+
+    test "password is not revealed for non-existent token" do
+      fake_token_id = Ecto.UUID.generate()
+      acc = Setup.bank_account()
+
+      assert {:error, reason} = BankAction.reveal_password(acc, fake_token_id)
+      assert reason == {:token, :notfound}
+    end
+
+    test "password is not revealed for expired token" do
+      token = Setup.bank_token([expired: true])
+      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+
+      assert {:error, reason} = BankAction.reveal_password(acc, token.token_id)
+      assert reason == {:token, :notfound}
+    end
+
+    test "password is not revealed if token belongs to another account" do
+      token = Setup.bank_token()
+      acc = Setup.bank_account()
+
+      assert {:error, reason} = BankAction.reveal_password(acc, token.token_id)
+      assert reason == {:token, :notfound}
+    end
+  end
+
+  defp expected_revealed_event(acc) do
+    %BankAccountPasswordRevealedEvent{
+      account_number: acc.account_number,
+      atm_id: acc.atm_id,
+      password: acc.password
     }
   end
 end

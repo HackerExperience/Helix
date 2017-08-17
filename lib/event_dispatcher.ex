@@ -118,4 +118,11 @@ defmodule Helix.Event.Dispatcher do
   event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
     Software.Event.Cracker,
     :bank_transfer_aborted
+
+  event Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent,
+    Universe.Bank.Event.BankAccount,
+    :password_reveal_conclusion
+
+  # event Universe.Bank.Model.BankAccount.PasswordRevealedEvent
+  # TODO: Update database
 end
