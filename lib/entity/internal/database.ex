@@ -108,6 +108,9 @@ defmodule Helix.Entity.Internal.Database do
   def update_bank_password(entry, password),
     do: update_bank_account(entry, %{password: password})
 
+  def update_bank_token(entry, token),
+    do: update_bank_account(entry, %{token: token})
+
   @spec update_bank_account(
     DatabaseBankAccount.t, DatabaseBankAccount.update_params)
   ::

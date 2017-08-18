@@ -203,6 +203,9 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {token, %{acc: acc}}
   end
 
+  @doc """
+  Related data: acc1 :: BankAccount.t, acc2 :: BankAccount.t, Account.t
+  """
   def wire_transfer_flow do
     amount = 1
     {acc1, _} = account([balance: amount, atm_seq: 1])
@@ -210,6 +213,6 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {player, _} = AccountSetup.account([with_server: true])
 
     {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
-    process
+    {process, %{acc1: acc1, acc2: acc2, player: player}}
   end
 end

@@ -137,34 +137,40 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   describe "generate_token/2" do
     test "creates a new token if none is found" do
-      {acc, _} = BankSetup.account()
       connection = Connection.ID.generate()
+      entity = Entity.ID.generate()
+      {acc, _} = BankSetup.account()
 
-      assert {:ok, token_id, [e]} = BankAction.generate_token(acc, connection)
+      assert {:ok, token_id, [e]} =
+        BankAction.generate_token(acc, connection, entity)
 
       assert BankQuery.fetch_token(token_id)
-      assert e == expected_token_event(token_id, acc)
+      assert e == expected_token_event(token_id, acc, entity)
     end
 
     test "returns the token if it already exists" do
       connection = Connection.ID.generate()
+      entity = Entity.ID.generate()
       {token, %{acc: acc}} = BankSetup.token([connection_id: connection])
 
-      assert {:ok, token_id, [e]} = BankAction.generate_token(acc, connection)
+      assert {:ok, token_id, [e]} =
+        BankAction.generate_token(acc, connection, entity)
 
       assert token_id == token.token_id
-      assert e == expected_token_event(token_id, acc)
+      assert e == expected_token_event(token_id, acc, entity)
     end
 
     test "ignores existing tokens on different connections" do
       connection1 = Connection.ID.generate()
       connection2 = Connection.ID.generate()
+      entity = Entity.ID.generate()
       {token, %{acc: acc}} = BankSetup.token([connection_id: connection1])
 
-      assert {:ok, token_id, [e]} = BankAction.generate_token(acc, connection2)
+      assert {:ok, token_id, [e]} =
+        BankAction.generate_token(acc, connection2, entity)
 
       refute token_id == token.token_id
-      assert e == expected_token_event(token_id, acc)
+      assert e == expected_token_event(token_id, acc, entity)
 
       # Two connections, two tokens
       assert BankQuery.fetch_token(token.token_id)
@@ -172,8 +178,9 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
   end
 
-  defp expected_token_event(token_id, acc) do
+  defp expected_token_event(token_id, acc, entity_id) do
     %BankTokenAcquiredEvent{
+      entity_id: entity_id,
       token_id: token_id,
       atm_id: acc.atm_id,
       account_number: acc.account_number

@@ -168,6 +168,20 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     end
   end
 
+  describe "update_bank_token/2" do
+    test "the password is updated" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+      token = Ecto.UUID.generate()
+
+      assert {:ok, new_entry} =
+        DatabaseInternal.update_bank_token(entry, token)
+      assert new_entry.token == token
+
+      entry_on_db = DatabaseInternal.fetch_bank_account(entry.entity_id, acc)
+      assert entry_on_db.token == token
+    end
+  end
+
   describe "delete_server/3" do
     test "entry is removed" do
       {entry, _} = DatabaseSetup.entry_server()

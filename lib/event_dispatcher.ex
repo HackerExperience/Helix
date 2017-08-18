@@ -119,6 +119,10 @@ defmodule Helix.Event.Dispatcher do
     Software.Event.Cracker,
     :bank_transfer_aborted
 
+  event Universe.Bank.Model.BankTokenAcquiredEvent,
+    Entity.Event.Database,
+    :bank_token_acquired
+
   event Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent,
     Universe.Bank.Event.BankAccount,
     :password_reveal_conclusion

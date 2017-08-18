@@ -18,6 +18,17 @@ defmodule Helix.Entity.Model.DatabaseBankAccountTest do
       assert changeset.valid?
       assert Changeset.get_change(changeset, :password) == password
     end
+
+    test "token change" do
+      {entry, _} = DatabaseSetup.fake_entry_bank_account()
+      token = Ecto.UUID.generate()
+      params = %{token: token}
+
+      changeset = DatabaseBankAccount.update_changeset(entry, params)
+
+      assert changeset.valid?
+      assert Changeset.get_change(changeset, :token) == token
+    end
   end
 
 end
