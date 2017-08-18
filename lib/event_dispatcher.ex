@@ -123,6 +123,7 @@ defmodule Helix.Event.Dispatcher do
     Universe.Bank.Event.BankAccount,
     :password_reveal_conclusion
 
-  # event Universe.Bank.Model.BankAccount.PasswordRevealedEvent
-  # TODO: Update database
+  event Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
+    Entity.Event.Database,
+    :bank_password_revealed
 end

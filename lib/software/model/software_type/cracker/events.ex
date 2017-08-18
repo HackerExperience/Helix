@@ -1,6 +1,7 @@
 defmodule Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent do
 
   alias HELL.IPv4
+  alias Helix.Entity.Model.DatabaseServer
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
@@ -10,7 +11,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent do
     network_id: Network.id,
     server_id: Server.id,
     server_ip: IPv4.t,
-    server_type: term
+    server_type: DatabaseServer.server_type
   }
 
   @enforce_keys [:entity_id, :network_id, :server_ip, :server_id, :server_type]

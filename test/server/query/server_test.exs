@@ -38,7 +38,7 @@ defmodule Helix.Server.Query.ServerTest do
   end
 
   describe "get_ip/2" do
-    test "gets ip" do
+    test "returns server IP" do
       {server, _} = Setup.server()
 
       assert ServerQuery.get_ip(server.server_id, NetworkHelper.internet_id())

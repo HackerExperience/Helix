@@ -12,6 +12,8 @@ defmodule Helix.Universe.NPC.Helper do
   alias Helix.Server.Repo, as: ServerRepo
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.Bank
+  alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Model.Seed
   alias Helix.Universe.Repo, as: UniverseRepo
@@ -26,6 +28,8 @@ defmodule Helix.Universe.NPC.Helper do
   def empty_database do
 
     # Bank stuff
+    UniverseRepo.delete_all(BankTransfer)
+    UniverseRepo.delete_all(BankAccount)
     UniverseRepo.delete_all(ATM)
     UniverseRepo.delete_all(Bank)
 

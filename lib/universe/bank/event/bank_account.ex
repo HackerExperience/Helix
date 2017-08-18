@@ -3,6 +3,7 @@ defmodule Helix.Universe.Bank.Event.BankAccount do
   import HELF.Flow
 
   alias Helix.Event
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
   alias Helix.Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent,
@@ -20,8 +21,9 @@ defmodule Helix.Universe.Bank.Event.BankAccount do
       with \
         account = %{} <-
           BankQuery.fetch_account(event.atm_id, event.account_number),
-        {:ok, password, events} <-
-          BankAction.reveal_password(account, event.token_id),
+        revealed_by = %{} <- EntityQuery.fetch_by_server(event.gateway_id),
+        {:ok, _password, events} <-
+          BankAction.reveal_password(account, event.token_id, revealed_by),
         on_success(fn -> Event.emit(events) end)
       do
         :ok

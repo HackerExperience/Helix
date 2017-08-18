@@ -1,12 +1,15 @@
 defmodule Helix.Entity.Event.Database do
 
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
   alias Helix.Entity.Action.Database, as: DatabaseAction
   alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Entity.Repo
 
   alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
+  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
+    as: BankAccountPasswordRevealedEvent
 
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityQuery.fetch(event.entity_id)
@@ -14,7 +17,7 @@ defmodule Helix.Entity.Event.Database do
     server_ip = ServerQuery.get_ip(event.server_id, event.network_id)
 
     create_entry = fn ->
-      DatabaseAction.create(
+      DatabaseAction.add_server(
         entity,
         event.network_id,
         event.server_ip,
@@ -22,6 +25,7 @@ defmodule Helix.Entity.Event.Database do
         event.server_type)
     end
 
+    # Review: Why is it updating everyone's password?
     set_password = fn ->
       entity
       |> DatabaseQuery.get_server_entries(server)
@@ -34,5 +38,14 @@ defmodule Helix.Entity.Event.Database do
         :ok = set_password.()
       end
     end
+  end
+
+  def bank_password_revealed(event = %BankAccountPasswordRevealedEvent{}) do
+    account = BankQuery.fetch_account(event.atm_id, event.account_number)
+
+    DatabaseAction.update_bank_password(
+      event.entity_id,
+      account,
+      event.password)
   end
 end

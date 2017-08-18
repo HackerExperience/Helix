@@ -1,14 +1,11 @@
 defmodule Helix.Universe.Bank.Query.Bank do
 
   alias Helix.Account.Model.Account
-  alias Helix.Network.Model.Connection
-  alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
-  alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Model.BankTransfer
 
   @spec fetch_account(ATM.id, BankAccount.account) ::
