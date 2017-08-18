@@ -1,5 +1,5 @@
-defmodule Helix.Hardware.Fixture do
-  alias Helix.Hardware.Factory
+defmodule Helix.Test.Hardware.Fixture do
+  alias Helix.Test.Hardware.Factory
 
   def insert(:cpu) do
     Factory.insert(:cpu, clock: 120, cores: 1).component

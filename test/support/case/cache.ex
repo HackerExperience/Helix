@@ -1,4 +1,4 @@
-defmodule Helix.Test.CacheCase do
+defmodule Helix.Test.Case.Cache do
 
   import ExUnit.Assertions
 

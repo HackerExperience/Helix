@@ -1,14 +1,14 @@
 defmodule Helix.Process.State.TOP.TOPServerTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Process.TestHelper.StaticProcessTypeExample
+  alias Helix.Test.Process.StaticProcessTypeExample
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
   alias Helix.Process.State.TOP.Server, as: TOPServer
   alias Helix.Process.Query.Process, as: ProcessQuery
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Account.Factory, as: AccountFactory
 
   defmodule ProcessThatCausesOverflow do
     defstruct []

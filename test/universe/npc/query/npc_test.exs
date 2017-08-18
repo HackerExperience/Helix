@@ -1,11 +1,11 @@
 defmodule Helix.Universe.NPC.Query.NPCTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   describe "fetch/1" do
     test "with npc id" do

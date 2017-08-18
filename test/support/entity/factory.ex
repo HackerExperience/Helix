@@ -1,4 +1,4 @@
-defmodule Helix.Entity.Factory do
+defmodule Helix.Test.Entity.Factory do
 
   use ExMachina.Ecto, repo: Helix.Entity.Repo
 

@@ -1,13 +1,12 @@
 defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Universe.Bank.Action.Flow.BankAccount, as: BankAccountFlow
-  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
-  alias HELL.TestHelper.Setup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -16,8 +15,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
     @tag :slow
     test "default life cycle" do
       time_before_event = DateTime.utc_now()
-      token = Setup.bank_token()
-      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+      {token, %{acc: acc}} = BankSetup.token()
       {gateway, %{entity: entity}} = ServerSetup.server()
 
       # There's an entry of this account on the Database

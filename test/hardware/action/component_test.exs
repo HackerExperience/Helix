@@ -1,14 +1,14 @@
 defmodule Helix.Hardware.Action.ComponentTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Action.Component, as: ComponentAction
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
-  alias Helix.Hardware.Factory
+  alias Helix.Test.Hardware.Factory
 
   describe "create_from_spec/1" do
     test "succeeds with valid input" do

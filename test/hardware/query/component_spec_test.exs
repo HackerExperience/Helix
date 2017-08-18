@@ -1,11 +1,11 @@
 defmodule Helix.Hardware.Query.ComponentSpecTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Query.ComponentSpec, as: ComponentSpecQuery
 
-  alias Helix.Hardware.Factory
+  alias Helix.Test.Hardware.Factory
 
   describe "fetch/1" do
     test "succeeds by id" do

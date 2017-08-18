@@ -1,6 +1,6 @@
 defmodule Helix.Network.Event.TunnelTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Event
   alias Helix.Server.Model.Server

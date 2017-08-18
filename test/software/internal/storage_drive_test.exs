@@ -1,12 +1,12 @@
 defmodule Helix.Software.Internal.StorageDriveTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Software.Factory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Software.Factory
 
   test "linking succeeds with a valid storage" do
     drive_id = Component.ID.generate()

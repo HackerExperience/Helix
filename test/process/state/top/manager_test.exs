@@ -1,6 +1,6 @@
 defmodule Helix.Process.State.TOP.ManagerTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Process.State.TOP.Manager
 

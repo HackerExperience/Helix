@@ -1,12 +1,12 @@
 defmodule Helix.Network.Query.TunnelTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Server.Model.Server
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
-  alias Helix.Network.Factory
+  alias Helix.Test.Network.Factory
 
   @internet NetworkQuery.internet()
 

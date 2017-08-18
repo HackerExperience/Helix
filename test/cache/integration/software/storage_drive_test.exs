@@ -1,8 +1,8 @@
 defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.CacheCase
+  import Helix.Test.Case.Cache
 
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Software.Internal.Storage, as: StorageInternal
@@ -13,8 +13,8 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Hardware.Factory, as: HardwareFactory
 
   setup do
     CacheHelper.cache_context()

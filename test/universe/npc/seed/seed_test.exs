@@ -1,8 +1,8 @@
 defmodule Helix.Universe.NPC.Seed.SeedTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.IDCase
+  import Helix.Test.Case.ID
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Internal.Entity, as: EntityInternal
@@ -12,7 +12,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Universe.Bank.Internal.ATM, as: ATMInternal
   alias Helix.Universe.Bank.Internal.Bank, as: BankInternal
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
   alias Helix.Universe.NPC.Model.Seed
   alias Helix.Universe.NPC.Seed, as: NPCSeed

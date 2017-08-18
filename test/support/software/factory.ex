@@ -1,4 +1,4 @@
-defmodule Helix.Software.Factory do
+defmodule Helix.Test.Software.Factory do
 
   import Ecto.Changeset
 

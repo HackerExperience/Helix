@@ -1,15 +1,15 @@
 defmodule Helix.Entity.Internal.EntityTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
 
-  alias Helix.Entity.Factory
+  alias Helix.Test.Entity.Factory
 
   defp generate_params do
     e = Factory.build(:entity)

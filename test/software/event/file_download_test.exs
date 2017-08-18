@@ -1,6 +1,6 @@
 defmodule Helix.Software.Event.FileDownloadTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
@@ -8,7 +8,7 @@ defmodule Helix.Software.Event.FileDownloadTest do
   alias Helix.Software.Event.FileDownload, as: EventHandler
   alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent
 
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   describe "when process is complete" do
     test "copy target file to destination storage" do

@@ -1,10 +1,10 @@
 defmodule Helix.Account.HTTP.Controller.WebhookTest do
 
-  use Helix.Test.ConnCase
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Conn
+  use Helix.Test.Case.Integration
 
   alias Comeonin.Bcrypt
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Account.Query.Account, as: AccountQuery
 
   @token "Bearer " <> Application.get_env(:helix, :migration_token)

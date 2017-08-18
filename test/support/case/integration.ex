@@ -1,4 +1,4 @@
-defmodule Helix.Test.IntegrationCase do
+defmodule Helix.Test.Case.Integration do
 
   use ExUnit.CaseTemplate
 

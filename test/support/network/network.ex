@@ -1,4 +1,4 @@
-defmodule Helix.Network.Helper do
+defmodule Helix.Test.Network.Helper do
 
   alias Helix.Network.Query.Network, as: NetworkQuery
 

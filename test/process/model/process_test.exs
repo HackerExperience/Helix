@@ -4,10 +4,12 @@ defmodule Helix.Process.Model.ProcessTest do
 
   alias Ecto.Changeset
   alias Helix.Server.Model.Server
-  alias Helix.Process.TestHelper
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Process.ProcessType
+
+  alias Helix.Test.Process.ProcessTypeExample
+  alias Helix.Test.Process.StaticProcessTypeExample
 
   @moduletag :unit
 
@@ -16,7 +18,7 @@ defmodule Helix.Process.Model.ProcessTest do
       %{
         gateway_id: Server.ID.generate(),
         target_server_id: Server.ID.generate(),
-        process_data: %TestHelper.ProcessTypeExample{}
+        process_data: %ProcessTypeExample{}
       }
       |> Process.create_changeset()
       |> Changeset.apply_changes()
@@ -44,7 +46,7 @@ defmodule Helix.Process.Model.ProcessTest do
     end
 
     test "as long as the struct implements ProcessType, everything will be alright" do
-      params = %{process_data: %TestHelper.ProcessTypeExample{}}
+      params = %{process_data: %ProcessTypeExample{}}
       p = Process.create_changeset(params)
 
       refute :process_data in error_fields(p)
@@ -165,9 +167,9 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Changeset.apply_changes()
 
       assert 2 === Process.allocation_shares(process)
-      p2 = %{process| process_data: %TestHelper.StaticProcessTypeExample{}}
+      p2 = %{process| process_data: %StaticProcessTypeExample{}}
 
-      process_type = %TestHelper.StaticProcessTypeExample{}
+      process_type = %StaticProcessTypeExample{}
       assert [] === ProcessType.dynamic_resources(process_type)
       assert 0 === Process.allocation_shares(p2)
     end

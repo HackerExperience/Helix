@@ -1,6 +1,6 @@
 defmodule Helix.Process.Query.ProcessTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
   alias Helix.Software.Model.File
@@ -10,8 +10,8 @@ defmodule Helix.Process.Query.ProcessTest do
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Query.Process, as: ProcessQuery
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Account.Factory, as: AccountFactory
   alias Helix.Test.Process.TOPHelper
 
   defp create_server do

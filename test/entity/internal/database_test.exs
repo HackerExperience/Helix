@@ -1,6 +1,6 @@
 defmodule Helix.Entity.Internal.DatabaseTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -8,7 +8,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
   alias Helix.Entity.Model.Entity
 
   alias HELL.TestHelper.Random
-  alias Helix.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
@@ -16,7 +16,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
 
   describe "fetch_server/3" do
     test "returns the entry when input exists" do
-      entry = DatabaseSetup.entry_server()
+      {entry, _} = DatabaseSetup.entry_server()
 
       assert DatabaseInternal.fetch_server(
         entry.entity_id,
@@ -43,7 +43,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
 
     test "returns empty when input isn't found" do
       entity_id = Entity.ID.generate()
-      acc = BankSetup.bank_account()
+      {acc, _} = BankSetup.account()
 
       refute DatabaseInternal.fetch_bank_account(entity_id, acc)
     end
@@ -51,7 +51,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
 
   describe "get_database/1" do
     test "empty database" do
-      entity = EntitySetup.entity()
+      {entity, _} = EntitySetup.entity()
 
       database = DatabaseInternal.get_database(entity)
 
@@ -65,10 +65,11 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     end
 
     test "one entry on each section" do
-      entity = EntitySetup.entity()
+      {entity, _} = EntitySetup.entity()
       entity_id = entity.entity_id
 
-      entry_server = DatabaseSetup.entry_server([entity_id: entity_id])
+      {entry_server, _} =
+        DatabaseSetup.entry_server([entity_id: entity_id])
       {entry_account, _} =
         DatabaseSetup.entry_bank_account([entity_id: entity_id])
 
@@ -84,12 +85,12 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     end
 
     test "multiple entries on each section (ordered)" do
-      entity = EntitySetup.entity()
+      {entity, _} = EntitySetup.entity()
       entity_id = entity.entity_id
 
-      server1 = DatabaseSetup.entry_server([entity_id: entity_id])
-      server2 = DatabaseSetup.entry_server([entity_id: entity_id])
-      server3 = DatabaseSetup.entry_server([entity_id: entity_id])
+      {server1, _} = DatabaseSetup.entry_server([entity_id: entity_id])
+      {server2, _} = DatabaseSetup.entry_server([entity_id: entity_id])
+      {server3, _} = DatabaseSetup.entry_server([entity_id: entity_id])
       {account1, _} = DatabaseSetup.entry_bank_account([entity_id: entity_id])
       {account2, _} = DatabaseSetup.entry_bank_account([entity_id: entity_id])
       {account3, _} = DatabaseSetup.entry_bank_account([entity_id: entity_id])
@@ -134,9 +135,9 @@ defmodule Helix.Entity.Internal.DatabaseTest do
 
   describe "add_bank_account/3" do
     test "given a valid input, entry is created" do
-      entity = EntitySetup.entity()
+      {entity, _} = EntitySetup.entity()
 
-      acc = BankSetup.bank_account()
+      {acc, _} = BankSetup.account()
 
       atm_ip = ServerQuery.get_ip(acc.atm_id, NetworkHelper.internet_id())
 
@@ -169,7 +170,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
 
   describe "delete_server/3" do
     test "entry is removed" do
-      entry = DatabaseSetup.entry_server()
+      {entry, _} = DatabaseSetup.entry_server()
 
       # Make sure it is on the DB
       assert DatabaseInternal.fetch_server(

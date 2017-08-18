@@ -1,6 +1,6 @@
 defmodule Helix.Server.Websocket.RoutesTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   @moduletag :pending
 

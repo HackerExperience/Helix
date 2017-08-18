@@ -1,6 +1,6 @@
 defmodule Helix.Entity.Action.DatabaseTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Entity.Action.Database, as: DatabaseAction
   alias Helix.Entity.Query.Database, as: DatabaseQuery
@@ -11,8 +11,8 @@ defmodule Helix.Entity.Action.DatabaseTest do
 
   describe "add_bank_account/2" do
     test "passes the correct data to the Internal interface" do
-      entity = EntitySetup.entity()
-      acc = BankSetup.bank_account([owner_id: entity.entity_id])
+      {entity, _} = EntitySetup.entity()
+      {acc, _} = BankSetup.account([owner_id: entity.entity_id])
 
       assert {:ok, _} = DatabaseAction.add_bank_account(entity, acc)
     end
@@ -34,7 +34,7 @@ defmodule Helix.Entity.Action.DatabaseTest do
 
   describe "delete_server/3" do
     test "entry is removed" do
-      entry = DatabaseSetup.entry_server()
+      {entry, _} = DatabaseSetup.entry_server()
 
       # Make sure it is on the DB
       assert DatabaseQuery.fetch_server(
@@ -57,7 +57,7 @@ defmodule Helix.Entity.Action.DatabaseTest do
     end
 
     test "non-existent entry isn't removed" do
-      fake_entry = DatabaseSetup.fake_entry_server()
+      {fake_entry, _} = DatabaseSetup.fake_entry_server()
       assert {:error, {:entry, :notfound}} ==
         DatabaseAction.delete_server(
           fake_entry.entity_id,

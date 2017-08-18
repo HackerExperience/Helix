@@ -1,6 +1,6 @@
 defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -8,16 +8,17 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
 
-  alias HELL.TestHelper.Setup
+  alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Process.TOPHelper
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
   describe "start/1" do
     @tag :slow
     test "default life cycle (different atms)" do
       amount = 1
-      acc1 = Setup.bank_account([balance: amount, atm_seq: 1])
-      acc2 = Setup.bank_account([atm_seq: 2])
-      {gateway, player} = Setup.server()
+      {acc1, _} = BankSetup.account([balance: amount, atm_seq: 1])
+      {acc2, _} = BankSetup.account([atm_seq: 2])
+      {player, %{server: gateway}} = AccountSetup.account([with_server: true])
 
       # They see me flowin', they hatin'
       {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
@@ -65,9 +66,9 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
 
   test "wire transfer on same atm" do
     amount = 1
-    acc1 = Setup.bank_account([balance: amount, atm_seq: 1])
-    acc2 = Setup.bank_account([atm_seq: 1])
-    {gateway, player} = Setup.server()
+    {acc1, _} = BankSetup.account([balance: amount, atm_seq: 1])
+    {acc2, _} = BankSetup.account([atm_seq: 1])
+    {player, %{server: gateway}} = AccountSetup.account([with_server: true])
 
     {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
 

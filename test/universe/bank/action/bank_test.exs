@@ -1,8 +1,8 @@
 defmodule Helix.Universe.Bank.Action.BankTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.IDCase
+  import Helix.Test.Case.ID
 
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
@@ -15,15 +15,16 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
-  alias HELL.TestHelper.Setup
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Account.Setup, as: AccountSetup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   describe "start_transfer/4" do
     test "with valid data" do
       amount = 500
-      acc1 = Setup.bank_account([balance: amount])
-      acc2 = Setup.bank_account()
-      {_, player} = Setup.server()
+      {acc1, _} = BankSetup.account([balance: amount])
+      {acc2, _} = BankSetup.account()
+      {player, _} = AccountSetup.account([with_server: true])
 
       assert {:ok, transfer} =
         BankAction.start_transfer(acc1, acc2, amount, player)
@@ -35,9 +36,9 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
     test "with insufficient funds" do
       amount = 500
-      acc1 = Setup.bank_account([balance: 100])
-      acc2 = Setup.bank_account()
-      {_, player} = Setup.server()
+      {acc1, _} = BankSetup.account([balance: 100])
+      {acc2, _} = BankSetup.account()
+      {player, _} = AccountSetup.account([with_server: true])
 
       assert {:error, {:funds, :insufficient}} =
         BankAction.start_transfer(acc1, acc2, amount, player)
@@ -50,14 +51,10 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   describe "complete_transfer/1" do
     test "with valid data" do
       amount = 100
-      transfer = Setup.bank_transfer([amount: amount])
+      {transfer, %{acc1: account_from, acc2: account_to}} =
+        BankSetup.transfer([amount: amount])
 
       assert :ok == BankAction.complete_transfer(transfer)
-
-      account_from =
-        BankQuery.fetch_account(transfer.atm_from, transfer.account_from)
-      account_to =
-        BankQuery.fetch_account(transfer.atm_to, transfer.account_to)
 
       refute BankTransferInternal.fetch(transfer)
       assert BankAccountInternal.get_balance(account_from) == 0
@@ -65,7 +62,8 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
 
     test "with invalid data" do
-      fake_transfer = Setup.fake_bank_transfer()
+      {fake_transfer, _} = BankSetup.fake_transfer()
+
       assert {:error, reason} = BankAction.complete_transfer(fake_transfer)
       assert reason == {:transfer, :notfound}
     end
@@ -74,14 +72,10 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   describe "abort_transfer/1" do
     test "with valid data" do
       amount = 100
-      transfer = Setup.bank_transfer([amount: amount])
+      {transfer, %{acc1: account_from, acc2: account_to}} =
+        BankSetup.transfer([amount: amount])
 
       assert :ok == BankAction.abort_transfer(transfer)
-
-      account_from =
-        BankQuery.fetch_account(transfer.atm_from, transfer.account_from)
-      account_to =
-        BankQuery.fetch_account(transfer.atm_to, transfer.account_to)
 
       refute BankTransferInternal.fetch(transfer)
       assert BankAccountInternal.get_balance(account_from) == amount
@@ -89,7 +83,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
 
     test "with invalid data" do
-      fake_transfer = Setup.fake_bank_transfer()
+      {fake_transfer, _} = BankSetup.fake_transfer()
       assert {:error, reason} = BankAction.abort_transfer(fake_transfer)
       assert reason == {:transfer, :notfound}
     end
@@ -97,7 +91,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   describe "open_account/2" do
     test "default case" do
-      {_, player} = Setup.server()
+      {player, _} = AccountSetup.account()
       bank = NPCHelper.bank()
       atm =
         NPCHelper.bank()
@@ -118,7 +112,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   describe "close_account/1" do
     test "closes the account" do
-      acc = Setup.bank_account()
+      {acc, _} = BankSetup.account()
 
       assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert :ok == BankAction.close_account(acc)
@@ -126,7 +120,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
 
     test "refuses to close non-empty accounts" do
-      acc = Setup.bank_account([balance: 1])
+      {acc, _} = BankSetup.account([balance: 1])
 
       assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert {:error, reason} = BankAction.close_account(acc)
@@ -135,7 +129,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
 
     test "with invalid data" do
-      fake_acc = Setup.fake_bank_account()
+      {fake_acc, _} = BankSetup.fake_account()
       assert {:error, reason} = BankAction.close_account(fake_acc)
       assert reason == {:account, :notfound}
     end
@@ -143,7 +137,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   describe "generate_token/2" do
     test "creates a new token if none is found" do
-      acc = Setup.bank_account()
+      {acc, _} = BankSetup.account()
       connection = Connection.ID.generate()
 
       assert {:ok, token_id, [e]} = BankAction.generate_token(acc, connection)
@@ -154,8 +148,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
     test "returns the token if it already exists" do
       connection = Connection.ID.generate()
-      token = Setup.bank_token([connection_id: connection])
-      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+      {token, %{acc: acc}} = BankSetup.token([connection_id: connection])
 
       assert {:ok, token_id, [e]} = BankAction.generate_token(acc, connection)
 
@@ -166,8 +159,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     test "ignores existing tokens on different connections" do
       connection1 = Connection.ID.generate()
       connection2 = Connection.ID.generate()
-      token = Setup.bank_token([connection_id: connection1])
-      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+      {token, %{acc: acc}} = BankSetup.token([connection_id: connection1])
 
       assert {:ok, token_id, [e]} = BankAction.generate_token(acc, connection2)
 
@@ -190,8 +182,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   describe "reveal_account_password/2" do
     test "password is revealed if correct input is entered" do
-      token = Setup.bank_token()
-      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+      {token, %{acc: acc}} = BankSetup.token()
       entity = Entity.ID.generate()
 
       assert {:ok, password, [e]} =
@@ -201,18 +192,16 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
 
     test "password is not revealed for non-existent token" do
-      fake_token_id = Ecto.UUID.generate()
+      {fake_token, %{acc: acc}} = BankSetup.fake_token()
       fake_entity = Entity.ID.generate()
-      acc = Setup.bank_account()
 
       assert {:error, reason} =
-        BankAction.reveal_password(acc, fake_token_id, fake_entity)
+        BankAction.reveal_password(acc, fake_token.token_id, fake_entity)
       assert reason == {:token, :notfound}
     end
 
     test "password is not revealed for expired token" do
-      token = Setup.bank_token([expired: true])
-      acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+      {token, %{acc: acc}} = BankSetup.token([expired: true])
       entity = Entity.ID.generate()
 
       assert {:error, reason} =
@@ -221,8 +210,8 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
 
     test "password is not revealed if token belongs to another account" do
-      token = Setup.bank_token()
-      acc = Setup.bank_account()
+      {token, _} = BankSetup.token()
+      {acc, _} = BankSetup.account()
       entity = Entity.ID.generate()
 
       assert {:error, reason} =

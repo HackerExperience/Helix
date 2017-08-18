@@ -1,11 +1,11 @@
 defmodule Helix.Account.Websocket.RoutesTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Websocket.Socket
   alias Helix.Account.Action.Session, as: SessionAction
 
-  alias Helix.Account.Factory
+  alias Helix.Test.Account.Factory
 
   import Phoenix.ChannelTest
 

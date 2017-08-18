@@ -1,19 +1,19 @@
 defmodule Helix.Cache.Internal.PopulateTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.CacheCase
-  import Helix.Test.IDCase
+  import Helix.Test.Case.Cache
+  import Helix.Test.Case.ID
 
   alias HELL.MapUtils
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Internal.Server, as: ServerInternal
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   setup do
     CacheHelper.cache_context()

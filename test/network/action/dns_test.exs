@@ -1,9 +1,9 @@
 defmodule Helix.Network.Action.DNSTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Network.Action.DNS, as: DNSAction
-  alias Helix.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Network.Internal.DNS, as: DNSInternal
   alias Helix.Network.Model.Network
 

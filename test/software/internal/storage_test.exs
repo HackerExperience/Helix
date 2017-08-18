@@ -1,12 +1,12 @@
 defmodule Helix.Software.Internal.StorageTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Model.Storage
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Software.Factory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Software.Factory
 
   describe "create/1" do
     test "it works" do

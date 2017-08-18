@@ -1,12 +1,14 @@
-defmodule Helix.Account.Factory do
+defmodule Helix.Test.Network.Factory do
 
   alias HELL.TestHelper.Random
-  alias Helix.Account.Model.Account
-  alias Helix.Account.Model.AccountSetting
+  alias Helix.Server.Model.Server
+  alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Model.Tunnel
 
-  alias Helix.Account.Repo
+  alias Helix.Network.Repo
 
-  @type thing :: :account | :account_setting
+  @type thing :: :network | :tunnel | :connection
 
   @spec changeset(thing, map | Keyword.t) ::
     Ecto.Changeset.t
@@ -59,41 +61,51 @@ defmodule Helix.Account.Factory do
 
   @spec params_for(thing) ::
     map
-  def params_for(:account) do
+  defp params_for(:network) do
     %{
-      username: Random.username(),
-      email: Burette.Internet.email(),
-      password: Burette.Internet.password()
+      name: Random.username()
     }
   end
 
-  def params_for(:account_setting) do
-    settings = %{
-      is_beta: true
-    }
-
+  defp params_for(:tunnel) do
     %{
-      account: changeset(:account),
-      settings: settings
+      network_id: "::",
+      gateway_id: Server.ID.generate(),
+      destination_id: Server.ID.generate(),
+      bounces: []
     }
   end
 
-  @spec fabricate_changeset(thing, map) ::
+  defp params_for(:connection) do
+    # FIXME: update after turning `connection_type` into a constant
+    %{
+      tunnel: build(:tunnel),
+      connection_type: :ssh
+    }
+  end
+
+  @spec fabricate_changeset(:network, %{name: String.t}) ::
     Ecto.Changeset.t
-  defp fabricate_changeset(:account, params) do
-    Account.create_changeset(params)
+  defp fabricate_changeset(:network, params) do
+    Network
+    |> struct(params)
+    |> Ecto.Changeset.cast(%{}, [])
   end
 
-  defp fabricate_changeset(:account_setting, params = %{account_id: _}),
-    do: AccountSetting.changeset(params)
-  defp fabricate_changeset(:account_setting, params) do
-    params
-    |> Map.put(:account_id, Account.ID.generate())
-    |> AccountSetting.changeset()
-    # HACK: Right now AccountSetting is requiring account_id and we don't want
-    #   to insert the account to generate the setting, right ?
-    |> Ecto.Changeset.delete_change(:account_id)
-    |> Ecto.Changeset.put_assoc(:account, params.account)
+  @spec fabricate_changeset(:tunnel, map) ::
+    Ecto.Changeset.t
+  defp fabricate_changeset(:tunnel, params) do
+    Tunnel.create(
+      params.network_id,
+      params.gateway_id,
+      params.destination_id,
+      params.bounces)
+  end
+
+  @spec fabricate_changeset(:connection, map) ::
+    Ecto.Changeset.t
+  defp fabricate_changeset(:connection, params) do
+    Connection.create(params.tunnel, params.connection_type)
   end
 
   defp to_map(x = %{}),

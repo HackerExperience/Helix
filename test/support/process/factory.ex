@@ -1,7 +1,7 @@
-defmodule Helix.Process.Factory do
+defmodule Helix.Test.Process.Factory do
+
   use ExMachina.Ecto, repo: Helix.Process.Repo
 
-  alias HELL.TestHelper.Random
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
