@@ -78,9 +78,8 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     end
   end
 
-  defp add_time_information(changeset) do
-    put_change(changeset, :started_time, DateTime.utc_now())
-  end
+  defp add_time_information(changeset),
+    do: put_change(changeset, :started_time, DateTime.utc_now())
 
   defmodule Query do
 

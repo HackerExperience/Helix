@@ -6,6 +6,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Internal.Entity, as: EntityInternal
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Network.Internal.DNS, as: DNSInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
@@ -54,9 +55,10 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
         assert npc
         assert_id npc.npc_id, entry.id
 
-        entity = EntityInternal.fetch(entry.id)
+        entity_id = EntityQuery.get_entity_id(entry.id)
+        entity = EntityInternal.fetch(entity_id)
         assert npc
-        assert_id entity.entity_id, entry.id
+        assert_id entity.entity_id, entity_id
 
         Enum.each(entry.servers, fn(cur) ->
           server = ServerInternal.fetch(cur.id)

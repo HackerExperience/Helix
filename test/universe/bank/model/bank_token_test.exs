@@ -1,6 +1,6 @@
 defmodule Helix.Universe.Bank.Model.BankTokenTest do
 
-  use Helix.Test.IntegrationCase
+  use ExUnit.Case, async: true
 
   alias Ecto.Changeset
   alias Helix.Universe.Bank.Model.BankToken

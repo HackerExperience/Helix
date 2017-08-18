@@ -158,7 +158,7 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     @spec order_by_creation_date(Queryable.t) ::
       Queryable.t
     def order_by_creation_date(query),
-      do: order_by(query, [b], b.creation_date)
+      do: order_by(query, [b], asc: b.creation_date)
 
     @spec select_balance(Queryable.t) ::
       Queryable.t

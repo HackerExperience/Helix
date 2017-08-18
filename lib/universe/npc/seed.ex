@@ -3,6 +3,7 @@ defmodule Helix.Universe.NPC.Seed do
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Entity.Internal.Entity, as: EntityInternal
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
@@ -36,14 +37,15 @@ defmodule Helix.Universe.NPC.Seed do
         |> Repo.insert(on_conflict: :nothing)
 
         npc = NPCInternal.fetch(entry.id)
+        entity_id = EntityQuery.get_entity_id(entry.id)
 
         # Create Entity
-        unless EntityInternal.fetch(entry.id) do
-          %{entity_id: entry.id, entity_type: :npc}
+        unless EntityInternal.fetch(entity_id) do
+          %{entity_id: entity_id, entity_type: :npc}
           |> EntityInternal.create()
         end
 
-        entity = EntityInternal.fetch(entry.id)
+        entity = EntityInternal.fetch(entity_id)
 
         Enum.each(entry.servers, fn(cur) ->
           create_server(cur, entity)

@@ -2,7 +2,7 @@ defmodule Helix.Universe.NPC.Query.NPCTest do
 
   use Helix.Test.IntegrationCase
 
-  alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
   alias Helix.Universe.NPC.Helper, as: NPCHelper
@@ -15,7 +15,7 @@ defmodule Helix.Universe.NPC.Query.NPCTest do
 
     test "with entity id" do
       npc = NPCHelper.random()
-      entity_id = Entity.ID.cast!(npc.id)
+      entity_id = EntityQuery.get_entity_id(npc.id)
       assert NPCQuery.fetch(entity_id)
     end
 

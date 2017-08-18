@@ -1,6 +1,7 @@
 defmodule Helix.Universe.Bank.Action.Bank do
 
   alias Helix.Account.Model.Account
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Connection
   alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
@@ -154,12 +155,13 @@ defmodule Helix.Universe.Bank.Action.Bank do
     }
   end
 
-  @spec reveal_password(BankAccount.t, BankToken.id) ::
+  @spec reveal_password(BankAccount.t, BankToken.id, Entity.t) ::
     {:ok, String.t, [BankAccountPasswordRevealedEvent.t]}
     | {:error, {:token, :notfound}}
-  def reveal_password(account, token_id) do
+  def reveal_password(account, token_id, revealed_by) do
     password_revealed_event = fn account ->
       %BankAccountPasswordRevealedEvent{
+        entity_id: revealed_by,
         atm_id: account.atm_id,
         account_number: account.account_number,
         password: account.password

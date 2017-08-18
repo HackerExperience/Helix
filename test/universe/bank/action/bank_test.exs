@@ -4,6 +4,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   import Helix.Test.IDCase
 
+  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
@@ -191,40 +192,48 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     test "password is revealed if correct input is entered" do
       token = Setup.bank_token()
       acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+      entity = Entity.ID.generate()
 
       assert {:ok, password, [e]} =
-        BankAction.reveal_password(acc, token.token_id)
+        BankAction.reveal_password(acc, token.token_id, entity)
       assert password == acc.password
-      assert e == expected_revealed_event(acc)
+      assert e == expected_revealed_event(acc, entity)
     end
 
     test "password is not revealed for non-existent token" do
       fake_token_id = Ecto.UUID.generate()
+      fake_entity = Entity.ID.generate()
       acc = Setup.bank_account()
 
-      assert {:error, reason} = BankAction.reveal_password(acc, fake_token_id)
+      assert {:error, reason} =
+        BankAction.reveal_password(acc, fake_token_id, fake_entity)
       assert reason == {:token, :notfound}
     end
 
     test "password is not revealed for expired token" do
       token = Setup.bank_token([expired: true])
       acc = BankQuery.fetch_account(token.atm_id, token.account_number)
+      entity = Entity.ID.generate()
 
-      assert {:error, reason} = BankAction.reveal_password(acc, token.token_id)
+      assert {:error, reason} =
+        BankAction.reveal_password(acc, token.token_id, entity)
       assert reason == {:token, :notfound}
     end
 
     test "password is not revealed if token belongs to another account" do
       token = Setup.bank_token()
       acc = Setup.bank_account()
+      entity = Entity.ID.generate()
 
-      assert {:error, reason} = BankAction.reveal_password(acc, token.token_id)
+      assert {:error, reason} =
+        BankAction.reveal_password(acc, token.token_id, entity)
       assert reason == {:token, :notfound}
     end
   end
 
-  defp expected_revealed_event(acc) do
+  defp expected_revealed_event(acc, entity_id) do
     %BankAccountPasswordRevealedEvent{
+      entity_id: entity_id,
       account_number: acc.account_number,
       atm_id: acc.atm_id,
       password: acc.password

@@ -8,18 +8,12 @@ defmodule Helix.Network.Websocket.Routes do
 
   # TODO: Check if player's gateway is connected to specified network
   def browse_ip(socket, %{"network_id" => network, "ip" => ip}) do
-    # FIXME
-    account =
-      socket.assigns.account
-      |> EntityQuery.get_entity_id()
-      |> EntityQuery.fetch()
-
     with \
       {:ok, server_id} <- CacheQuery.from_nip_get_server(network, ip),
       server = %{} <- ServerQuery.fetch(server_id),
       entity = %{} <- EntityQuery.fetch_by_server(server_id)
     do
-      password = DatabaseQuery.get_server_password(account, server)
+      password = DatabaseQuery.get_server_password(entity, network, ip)
 
       # TODO: move this to the presentation layer
       data = %{

@@ -1,6 +1,6 @@
 defmodule Helix.Universe.Bank.Model.BankTransferTest do
 
-  use Helix.Test.IntegrationCase
+  use ExUnit.Case, async: true
 
   alias HELL.TestHelper.Random
   alias Helix.Universe.Bank.Model.BankTransfer
