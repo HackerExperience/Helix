@@ -10,6 +10,7 @@ defmodule Helix.Entity.Event.Database do
   alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
 
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
     entity = EntityQuery.fetch(event.entity_id)
@@ -40,6 +41,15 @@ defmodule Helix.Entity.Event.Database do
     end
   end
 
+  @doc """
+  Handler called when a BankPassword is revealed. This usually happens when an
+  attacker, in possession of the corresponding BankToken, converts the token
+  into a password. The conversion is a process of type `bank_reveal_password`.
+
+  Note that this handler is only called after the `bank_reveal_password`
+  process has finished and successfully revealed the password. Hence, this
+  handler's goal is to store the newly discovered password into the Database.
+  """
   def bank_password_revealed(event = %BankAccountPasswordRevealedEvent{}) do
     account = BankQuery.fetch_account(event.atm_id, event.account_number)
 
@@ -47,5 +57,15 @@ defmodule Helix.Entity.Event.Database do
       event.entity_id,
       account,
       event.password)
+  end
+
+  @doc """
+  Handler called when a BankToken is successfully acquired, after an Overflow
+  attack. Its goal is simple: store the new token on the Hacked Database.
+  """
+  def bank_token_acquired(event = %BankTokenAcquiredEvent{}) do
+    account = BankQuery.fetch_account(event.atm_id, event.account_number)
+
+    DatabaseAction.update_bank_token(event.entity_id, account, event.token_id)
   end
 end

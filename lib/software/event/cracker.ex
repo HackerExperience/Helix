@@ -4,6 +4,7 @@ defmodule Helix.Software.Event.Cracker do
   import HELL.MacroHelpers
 
   alias Helix.Event
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
@@ -30,12 +31,11 @@ defmodule Helix.Software.Event.Cracker do
 
     case process.process_type do
       "wire_transfer" ->
-        overflow_of_wire_transfer(process)
+        overflow_of_wire_transfer(process, event)
     end
   end
 
-  # TODO: Store Token on (Hacked)Database
-  @spec overflow_of_wire_transfer(Process.t) ::
+  @spec overflow_of_wire_transfer(Process.t, OverflowConclusionEvent.t) ::
     {:ok, BankToken.id}
     | term
   docp """
@@ -46,7 +46,7 @@ defmodule Helix.Software.Event.Cracker do
   result (i.e. which token was obtained through the attack) is managed by other
   event handlers.
   """
-  defp overflow_of_wire_transfer(process) do
+  defp overflow_of_wire_transfer(process, event) do
     transfer_id = process.process_data.transfer_id
     connection_id = process.connection_id
 
@@ -55,8 +55,9 @@ defmodule Helix.Software.Event.Cracker do
         transfer = %{} <- BankQuery.fetch_transfer(transfer_id),
         account = %{} <-
           BankQuery.fetch_account(transfer.atm_from, transfer.account_from),
+        attacker_id = %{} <- EntityQuery.fetch_by_server(event.gateway_id),
         {:ok, token, events} <-
-           BankAction.generate_token(account, connection_id),
+           BankAction.generate_token(account, connection_id, attacker_id),
         on_success(fn -> Event.emit(events) end)
       do
         {:ok, token}

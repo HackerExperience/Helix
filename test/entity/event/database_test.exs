@@ -4,6 +4,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Entity.Event.Database, as: DatabaseHandler
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
@@ -35,6 +36,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
       assert on_db.password == password
       assert on_db.last_update > entry.last_update
+      refute on_db.token
       refute on_db.last_login_date
     end
 
@@ -57,6 +59,52 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
       assert on_db.password == password
       assert on_db.last_update > fake_entry.last_update
+      refute on_db.last_login_date
+    end
+  end
+
+  describe "bank_token_acquired/1" do
+    test "the entry token is updated" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+      token = Ecto.UUID.generate()
+
+      event = %BankTokenAcquiredEvent{
+        entity_id: entry.entity_id,
+        atm_id: entry.atm_id,
+        account_number: entry.account_number,
+        token_id: token
+      }
+
+      DatabaseHandler.bank_token_acquired(event)
+
+      on_db = DatabaseQuery.fetch_bank_account(entry.entity_id, acc)
+
+      assert on_db.token == token
+      assert on_db.last_update > entry.last_update
+      refute on_db.password
+      refute on_db.last_login_date
+    end
+
+    test "a new entry is created in case it did not exist before" do
+      {fake_entry, %{acc: acc}} = DatabaseSetup.fake_entry_bank_account()
+      token = Ecto.UUID.generate()
+
+      refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+
+      event = %BankTokenAcquiredEvent{
+        entity_id: fake_entry.entity_id,
+        atm_id: fake_entry.atm_id,
+        account_number: fake_entry.account_number,
+        token_id: token
+      }
+
+      DatabaseHandler.bank_token_acquired(event)
+
+      on_db = DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+
+      assert on_db.token == token
+      assert on_db.last_update > fake_entry.last_update
+      refute on_db.password
       refute on_db.last_login_date
     end
   end

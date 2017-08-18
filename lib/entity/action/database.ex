@@ -9,6 +9,7 @@ defmodule Helix.Entity.Action.Database do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.DatabaseBankAccount
   alias Helix.Entity.Model.DatabaseServer
@@ -64,6 +65,27 @@ defmodule Helix.Entity.Action.Database do
       end
 
     DatabaseInternal.update_bank_password(entry, password)
+  end
+
+  @spec update_bank_token(Entity.idt, BankAccount.t, BankToken.id) ::
+    {:ok, DatabaseBankAccount.t}
+    | {:error, DatabaseBankAccount.changeset}
+  @doc """
+  Updates the token of the bank account entry.
+
+  If the requested entry does not exist, it is created.
+  """
+  def update_bank_token(entity, account, token) do
+    entry =
+      case DatabaseQuery.fetch_bank_account(entity, account) do
+        entry = %{} ->
+          entry
+        nil ->
+          {:ok, entry} = add_bank_account(entity, account)
+          entry
+      end
+
+    DatabaseInternal.update_bank_token(entry, token)
   end
 
   @spec delete_server(Entity.idt, Network.idt, IPv4.t) ::

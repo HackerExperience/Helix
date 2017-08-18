@@ -221,6 +221,8 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
 
   alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+    as: OverflowConclusionEvent
 
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
 
@@ -268,9 +270,6 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
   defimpl Helix.Process.Model.Process.ProcessType do
     @moduledoc false
 
-    alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
-      as: OverflowConclusionEvent
-
     @ram_base 3
 
     def dynamic_resources(_),
@@ -293,6 +292,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
         |> Map.put(:action, :delete)
 
       event = %OverflowConclusionEvent{
+        gateway_id: process.gateway_id,
         target_process_id: data.target_process_id,
       }
 

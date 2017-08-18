@@ -110,7 +110,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
     to: BankAccountInternal,
     as: :close
 
-  @spec generate_token(BankAccount.t, Connection.idt) ::
+  @spec generate_token(BankAccount.t, Connection.idt, Entity.idt) ::
     {:ok, BankToken.t, [BankTokenAcquiredEvent.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
@@ -125,7 +125,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
   One connection will always have a single token. So if two different attackers
   hack the same connection, they will acquire the same token.
   """
-  def generate_token(account, connection) do
+  def generate_token(account, connection, attacker_id) do
     token = BankTokenInternal.fetch_by_connection(connection)
 
     token_result =
@@ -139,16 +139,17 @@ defmodule Helix.Universe.Bank.Action.Bank do
 
     case token_result do
       {:ok, token} ->
-        {:ok, token, [token_acquired_event(account, token)]}
+        {:ok, token, [token_acquired_event(account, token, attacker_id)]}
       error ->
         error
     end
   end
 
-  @spec token_acquired_event(BankAccount.t, BankToken.id) ::
+  @spec token_acquired_event(BankAccount.t, BankToken.id, Entity.idt) ::
     BankTokenAcquiredEvent.t
-  defp token_acquired_event(account, token_id) do
+  defp token_acquired_event(account, token_id, entity_id) do
     %BankTokenAcquiredEvent{
+      entity_id: entity_id,
       token_id: token_id,
       atm_id: account.atm_id,
       account_number: account.account_number

@@ -21,11 +21,13 @@ end
 defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent do
 
   alias Helix.Process.Model.Process
+  alias Helix.Server.Model.Server
 
   @type t :: %__MODULE__{
+    gateway_id: Server.id,
     target_process_id: Process.id
   }
 
-  @enforce_keys [:target_process_id]
-  defstruct [:target_process_id]
+  @enforce_keys [:gateway_id, :target_process_id]
+  defstruct [:gateway_id, :target_process_id]
 end

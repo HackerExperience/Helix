@@ -30,6 +30,44 @@ defmodule Helix.Entity.Action.DatabaseTest do
       assert result.password == password
       assert result.last_update > entry.last_update
     end
+
+    test "new entry is created if there was none" do
+      {fake_entry, %{acc: acc}} = DatabaseSetup.fake_entry_bank_account()
+      password = "j3r3m14s"
+
+      refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+
+      assert {:ok, _} =
+        DatabaseAction.update_bank_password(fake_entry.entity_id, acc, password)
+
+      assert DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+    end
+  end
+
+  describe "update_bank_token/3" do
+    test "token is updated" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+      token = Ecto.UUID.generate()
+
+      assert {:ok, result} =
+        DatabaseAction.update_bank_token(entry.entity_id, acc, token)
+
+      # Make sure token has been changed, as well as `last_update`
+      assert result.token == token
+      assert result.last_update > entry.last_update
+    end
+
+    test "new entry is created if there was none" do
+      {fake_entry, %{acc: acc}} = DatabaseSetup.fake_entry_bank_account()
+      token = Ecto.UUID.generate()
+
+      refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+
+      assert {:ok, _} =
+        DatabaseAction.update_bank_token(fake_entry.entity_id, acc, token)
+
+      assert DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+    end
   end
 
   describe "delete_server/3" do
