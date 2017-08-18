@@ -1,14 +1,14 @@
 defmodule Helix.Server.Henforcer.ServerTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Henforcer.Server, as: Henforcer
   alias Helix.Server.Model.Server
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Hardware.Factory, as: HardwareFactory
-  alias Helix.Server.Factory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Server.Factory
 
   describe "exists?/1" do
     test "returns true when server exists" do

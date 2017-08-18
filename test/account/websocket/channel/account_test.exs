@@ -1,6 +1,6 @@
 defmodule Helix.Account.Websocket.Channel.AccountTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Websocket.Socket
   alias Helix.Entity.Action.Entity, as: EntityAction
@@ -11,11 +11,11 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
   alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Account.Websocket.Channel.Account, as: Channel
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Entity.Factory, as: EntityFactory
-  alias Helix.Hardware.Factory, as: HardwareFactory
-  alias Helix.Server.Factory, as: ServerFactory
-  alias Helix.Account.Factory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Entity.Factory, as: EntityFactory
+  alias Helix.Test.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Server.Factory, as: ServerFactory
+  alias Helix.Test.Account.Factory
 
   import Phoenix.ChannelTest
 

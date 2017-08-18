@@ -1,14 +1,14 @@
 defmodule Helix.Server.Action.ServerTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
-  alias Helix.Hardware.Factory, as: HardwareFactory
-  alias Helix.Server.Factory
+  alias Helix.Test.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Server.Factory
 
   describe "create/2" do
     test "succeeds with valid input" do

@@ -1,6 +1,6 @@
 defmodule Helix.Server.Websocket.Channel.ServerTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
 
@@ -13,10 +13,10 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Account.Factory, as: AccountFactory
-  alias Helix.Network.Factory, as: NetworkFactory
-  alias Helix.Software.Factory, as: SoftwareFactory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Account.Factory, as: AccountFactory
+  alias Helix.Test.Network.Factory, as: NetworkFactory
+  alias Helix.Test.Software.Factory, as: SoftwareFactory
 
   @endpoint Helix.Endpoint
 

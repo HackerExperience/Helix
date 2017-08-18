@@ -1,6 +1,6 @@
 defmodule Helix.Log.Action.LogTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
@@ -12,7 +12,7 @@ defmodule Helix.Log.Action.LogTest do
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
 
-  alias Helix.Test.Factory.Log, as: LogFactory
+  alias Helix.Test.Log.Factory, as: LogFactory
 
   describe "create/3" do
     test "succeeds with valid input" do

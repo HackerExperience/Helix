@@ -1,6 +1,6 @@
 defmodule Helix.Software.Event.CrackerTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
@@ -8,12 +8,12 @@ defmodule Helix.Software.Event.CrackerTest do
     as: OverflowConclusionEvent
   alias Helix.Software.Event.Cracker, as: CrackerHandler
 
-  alias HELL.TestHelper.Setup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Process.TOPHelper
 
   describe "overflow_conclusion/1 on wire transfer connection" do
     test "life cycle for overflow attack against wire transfer connection" do
-      process = Setup.wire_transfer_flow()
+      process = BankSetup.wire_transfer_flow()
       transfer_id = process.process_data.transfer_id
 
       # Simulate completion of overflow process
@@ -41,7 +41,7 @@ defmodule Helix.Software.Event.CrackerTest do
   @tag :pending
   describe "bank_transfer_aborted/1" do
     test "it stops all overflow attacks running on aborted transfer" do
-      process = Setup.wire_transfer_flow()
+      process = BankSetup.wire_transfer_flow()
       # transfer_id = process.process_data.transfer_id
 
       # Abort transfer

@@ -1,10 +1,10 @@
 defmodule Helix.Universe.NPC.Internal.NPCTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
   alias Helix.Universe.NPC.Model.NPC
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   test "creation" do
     # Note: this is pretty much useless, since we rarely ever want *only* to

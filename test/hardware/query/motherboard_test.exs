@@ -1,11 +1,11 @@
 defmodule Helix.Hardware.Query.MotherboardTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
 
-  alias Helix.Hardware.Factory
+  alias Helix.Test.Hardware.Factory
 
   describe "fetch/1" do
     test "succeeds by component" do

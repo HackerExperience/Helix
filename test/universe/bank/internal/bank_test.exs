@@ -1,17 +1,18 @@
 defmodule Helix.Universe.Bank.Internal.BankTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.IDCase
+  import Helix.Test.Case.ID
+
+  alias Helix.Universe.Bank.Internal.Bank, as: BankInternal
 
   alias HELL.TestHelper.Random
-  alias HELL.TestHelper.Setup
-  alias Helix.Universe.Bank.Internal.Bank, as: BankInternal
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Setup, as: NPCSetup
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   describe "create/1" do
     test "creates when params are valid" do
-      npc = Setup.npc()
+      npc = NPCSetup.npc()
 
       params = %{
         bank_id: npc.npc_id,

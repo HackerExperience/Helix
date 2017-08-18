@@ -1,13 +1,13 @@
 defmodule Helix.Entity.Query.EntityTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Server.Model.Server
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Entity.Factory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Entity.Factory
 
   describe "get_servers/1" do
     test "returns list of server ids owned by entity" do

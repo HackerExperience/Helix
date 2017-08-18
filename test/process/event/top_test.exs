@@ -1,6 +1,6 @@
 defmodule Helix.Process.Event.TOPTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
   alias Helix.Network.Model.Connection
@@ -12,10 +12,10 @@ defmodule Helix.Process.Event.TOPTest do
   alias Helix.Process.Repo
   alias Helix.Process.Event.TOP, as: TOPEvent
 
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Hardware.Factory, as: HardwareFactory
-  alias Helix.Server.Factory, as: ServerFactory
-  alias Helix.Process.Factory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Server.Factory, as: ServerFactory
+  alias Helix.Test.Process.Factory
 
   # FIXME
   defp reason_we_need_integration_factories do
@@ -28,7 +28,7 @@ defmodule Helix.Process.Event.TOPTest do
     |> Enum.map(fn {_, [v| _]} -> v end)
     |> Enum.each(fn slot ->
       # FIXME: Move the "Fixture" module into the factory module
-      component = Helix.Hardware.Fixture.insert(slot.link_component_type)
+      component = Helix.Test.Hardware.Fixture.insert(slot.link_component_type)
 
       MotherboardAction.link(slot, component)
     end)

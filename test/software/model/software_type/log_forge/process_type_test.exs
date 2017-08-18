@@ -9,8 +9,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.LogForge
 
-  alias Helix.Process.Factory, as: ProcessFactory
-  alias Helix.Software.Factory, as: SoftwareFactory
+  alias Helix.Test.Process.Factory, as: ProcessFactory
+  alias Helix.Test.Software.Factory, as: SoftwareFactory
 
   # FIXME: this will be removed when file modules become just an attribute
   @forger_file (

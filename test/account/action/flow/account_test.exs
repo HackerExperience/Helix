@@ -1,13 +1,13 @@
 defmodule Helix.Account.Action.Flow.AccountTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
 
-  alias Helix.Account.Factory
+  alias Helix.Test.Account.Factory
 
   describe "setup_account/1" do
     test "creates an entity" do

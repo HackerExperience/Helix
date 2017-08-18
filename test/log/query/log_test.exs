@@ -1,13 +1,13 @@
 defmodule Helix.Log.Query.LogTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Query.Log, as: LogQuery
 
-  alias Helix.Test.Factory.Log, as: Factory
+  alias Helix.Test.Log.Factory, as: Factory
 
   describe "get_logs_on_server/1" do
     # Well, i think that the function name might be a bit obvious, eh ?

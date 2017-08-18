@@ -1,6 +1,6 @@
 defmodule Helix.Entity.Query.DatabaseTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
@@ -9,7 +9,7 @@ defmodule Helix.Entity.Query.DatabaseTest do
   describe "get_server_password/3" do
     test "returns the stored password when entry exists" do
       expected = "phoebegata"
-      entry = DatabaseSetup.entry_server([password: expected])
+      {entry, _} = DatabaseSetup.entry_server([password: expected])
 
       database_password =
         DatabaseQuery.get_server_password(
@@ -21,7 +21,7 @@ defmodule Helix.Entity.Query.DatabaseTest do
     end
 
     test "returns empty when entry exists but password is unknown" do
-      entry = DatabaseSetup.entry_server()
+      {entry, _} = DatabaseSetup.entry_server()
 
       password =
         DatabaseQuery.get_server_password(
@@ -33,7 +33,7 @@ defmodule Helix.Entity.Query.DatabaseTest do
     end
 
     test "returns empty when entry does not exist" do
-      fake_entry = DatabaseSetup.fake_entry_server()
+      {fake_entry, _} = DatabaseSetup.fake_entry_server()
 
       password =
         DatabaseQuery.get_server_password(

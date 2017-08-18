@@ -1,6 +1,6 @@
-defmodule Helix.Universe.NPC.Helper do
+defmodule Helix.Test.Universe.NPC.Helper do
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo, as: EntityRepo

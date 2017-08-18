@@ -1,6 +1,6 @@
 defmodule Helix.Universe.Bank.Event.BankTransferTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -8,15 +8,16 @@ defmodule Helix.Universe.Bank.Event.BankTransferTest do
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
 
-  alias HELL.TestHelper.Setup
+  alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Process.TOPHelper
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
   describe "transfer_aborted/1" do
     test "life cycle" do
       amount = 100_000_000
-      acc1 = Setup.bank_account([balance: amount])
-      acc2 = Setup.bank_account()
-      {_, player} = Setup.server()
+      {acc1, _} = BankSetup.account([balance: amount])
+      {acc2, _} = BankSetup.account()
+      {player, _} = AccountSetup.account([with_server: true])
 
       {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
       transfer_id = process.process_data.transfer_id

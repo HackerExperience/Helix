@@ -1,4 +1,4 @@
-defmodule Helix.Test.IDCase do
+defmodule Helix.Test.Case.ID do
 
   import ExUnit.Assertions
 

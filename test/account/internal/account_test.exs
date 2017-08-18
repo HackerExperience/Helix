@@ -1,17 +1,17 @@
 defmodule Helix.Account.Internal.AccountTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Comeonin.Bcrypt
   alias HELL.TestHelper.Random
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Account.Internal.Account, as: AccountInternal
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.AccountSetting
   alias Helix.Account.Model.Setting
   alias Helix.Account.Repo
 
-  alias Helix.Account.Factory
+  alias Helix.Test.Account.Factory
 
   defp params do
     %{

@@ -1,6 +1,6 @@
 defmodule Helix.Hardware.Internal.NetworkConnectionTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -8,14 +8,14 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
 
-  alias HELL.TestHelper.Setup
-  alias Helix.Cache.Helper, as: CacheHelper
-  alias Helix.Network.Helper, as: NetworkHelper
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   setup do
-    {server, account} = Setup.server()
-    {:ok, account: account, server: server}
+    {server, _entity} = ServerSetup.server()
+    {:ok, server: server}
   end
 
   describe "update_ip/2" do
@@ -37,7 +37,6 @@ defmodule Helix.Hardware.Internal.NetworkConnectionTest do
 
       CacheHelper.sync_test()
     end
-
     test "won't update to an existing ip", context do
       server_id = context.server.server_id
       {_, existing_ip} = NPCHelper.download_center()

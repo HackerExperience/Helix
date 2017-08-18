@@ -1,8 +1,8 @@
 defmodule Helix.Server.Internal.ServerTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
@@ -10,11 +10,11 @@ defmodule Helix.Server.Internal.ServerTest do
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
-  alias Helix.Server.Factory
+  alias Helix.Test.Server.Factory
 
   # FIXME: add more tests
   setup do
-    alias Helix.Account.Factory, as: AccountFactory
+    alias Helix.Test.Account.Factory, as: AccountFactory
     alias Helix.Account.Action.Flow.Account, as: AccountFlow
 
     account = AccountFactory.insert(:account)

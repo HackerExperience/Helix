@@ -1,9 +1,8 @@
-defmodule Helix.Hardware.Factory do
+defmodule Helix.Test.Hardware.Factory do
 
   use ExMachina.Ecto, repo: Helix.Hardware.Repo
 
   alias HELL.MacAddress
-  alias HELL.TestHelper.Random
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Component.CPU
   alias Helix.Hardware.Model.Component.HDD

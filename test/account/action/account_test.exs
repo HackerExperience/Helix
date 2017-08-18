@@ -1,12 +1,12 @@
 defmodule Helix.Account.Action.AccountTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Account.Action.Account, as: AccountAction
   alias Helix.Account.Model.Account
 
-  alias Helix.Account.Factory
+  alias Helix.Test.Account.Factory
 
   describe "create/1" do
     test "succeeds with valid input" do

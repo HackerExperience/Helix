@@ -1,13 +1,13 @@
 defmodule Helix.Software.Internal.FileTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareModule
   alias Helix.Software.Repo
 
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   def generate_params do
     storage = Factory.insert(:storage)

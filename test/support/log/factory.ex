@@ -1,4 +1,4 @@
-defmodule Helix.Test.Factory.Log do
+defmodule Helix.Test.Log.Factory do
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity

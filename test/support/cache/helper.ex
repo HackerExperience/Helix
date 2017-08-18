@@ -1,6 +1,5 @@
-defmodule Helix.Cache.Helper do
+defmodule Helix.Test.Cache.Helper do
 
-  alias HELL.TestHelper.Setup
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Model.ServerCache
@@ -11,13 +10,15 @@ defmodule Helix.Cache.Helper do
   alias Helix.Cache.Repo
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
+  alias Helix.Test.Server.Setup, as: ServerSetup
+
   def sync_test,
     do: StatePurgeQueue.sync()
 
   def cache_context do
-    {server, account} = Setup.server()
+    {server, _entity} = ServerSetup.server()
 
-    {:ok, account: account, server: server}
+    {:ok, server: server}
   end
 
   def purge_server(server_id) do

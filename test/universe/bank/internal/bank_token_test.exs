@@ -1,30 +1,30 @@
 defmodule Helix.Universe.Bank.Internal.BankTokenTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Ecto.UUID
   alias Helix.Network.Model.Connection
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
 
-  alias HELL.TestHelper.Setup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Network.Model.Connection
 
   @token_ttl 60 * 5
 
   describe "fetch/1" do
     test "fetches non-expired token" do
-      token_id = Setup.bank_token().token_id
+      {token, _} = BankSetup.token()
 
-      token2 = BankTokenInternal.fetch(token_id)
+      token2 = BankTokenInternal.fetch(token.token_id)
 
       assert token2
-      assert token2.token_id == token_id
+      assert token2.token_id == token.token_id
     end
 
     test "wont fetch expired token" do
-      expired_id = Setup.bank_token([expired: true]).token_id
+      {expired, _} = BankSetup.token([expired: true])
 
-      token2 = BankTokenInternal.fetch(expired_id)
+      token2 = BankTokenInternal.fetch(expired.token_id)
 
       refute token2
     end
@@ -36,7 +36,7 @@ defmodule Helix.Universe.Bank.Internal.BankTokenTest do
 
   describe "fetch_by_connection" do
     test "fetches non-expired token" do
-      token = Setup.bank_token()
+      {token, _} = BankSetup.token()
 
       token2 = BankTokenInternal.fetch_by_connection(token.connection_id)
 
@@ -45,7 +45,7 @@ defmodule Helix.Universe.Bank.Internal.BankTokenTest do
     end
 
     test "wont fetch expired token" do
-      token = Setup.bank_token([expired: true])
+      {token, _} = BankSetup.token([expired: true])
 
       token2 = BankTokenInternal.fetch_by_connection(token.connection_id)
 
@@ -59,7 +59,7 @@ defmodule Helix.Universe.Bank.Internal.BankTokenTest do
 
   describe "generate/2" do
     test "generates a token" do
-      acc = Setup.bank_account()
+      {acc, _} = BankSetup.account()
       connection_id = Connection.ID.generate()
 
       assert {:ok, token} = BankTokenInternal.generate(acc, connection_id)
@@ -72,7 +72,7 @@ defmodule Helix.Universe.Bank.Internal.BankTokenTest do
 
   describe "set_expiration/1" do
     test "updates the token expiration" do
-      token = Setup.bank_token()
+      {token, _} = BankSetup.token()
 
       # No expiration_date set
       refute token.expiration_date

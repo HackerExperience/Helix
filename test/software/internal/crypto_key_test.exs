@@ -1,13 +1,13 @@
 defmodule Helix.Software.Internal.CryptoKeyTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.CryptoKey, as: CryptoKeyInternal
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.CryptoKey.InvalidatedEvent
 
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   describe "create/3" do
     test "will create a file for the key on storage" do

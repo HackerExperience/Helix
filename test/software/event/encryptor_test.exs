@@ -1,6 +1,6 @@
 defmodule Helix.Software.Event.EncryptorTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Event
   alias Helix.Server.Model.Server
@@ -10,7 +10,7 @@ defmodule Helix.Software.Event.EncryptorTest do
   alias Helix.Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent
   alias Helix.Software.Repo
 
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   describe "when process is completed" do
     test "creates a new key file on storage that binds to target_file" do

@@ -1,6 +1,6 @@
 defmodule Helix.Software.Internal.TextFileTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Internal.File, as: FileInternal
@@ -8,7 +8,7 @@ defmodule Helix.Software.Internal.TextFileTest do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.TextFile
 
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   def generate_path do
     1..5

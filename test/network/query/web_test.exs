@@ -1,11 +1,11 @@
 defmodule Helix.Network.Query.WebTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias HELL.TestHelper.Random
   alias Helix.Network.Query.Web, as: WebQuery
-  alias Helix.Network.Helper, as: NetworkHelper
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   describe "browse/3" do
     test "accepts ip" do

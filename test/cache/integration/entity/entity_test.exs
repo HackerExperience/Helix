@@ -1,14 +1,14 @@
 defmodule Helix.Cache.Integration.Entity.EntityTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.CacheCase
+  import Helix.Test.Case.Cache
 
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   setup do

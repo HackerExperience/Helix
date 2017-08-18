@@ -1,6 +1,6 @@
 # TODO: Delete this ?
 
-defmodule Helix.Process.TestHelper.ProcessTypeExample do
+defmodule Helix.Test.Process.ProcessTypeExample do
 
   defstruct []
 
@@ -26,7 +26,7 @@ defmodule Helix.Process.TestHelper.ProcessTypeExample do
   end
 end
 
-defmodule Helix.Process.TestHelper.StaticProcessTypeExample do
+defmodule Helix.Test.Process.StaticProcessTypeExample do
 
   defstruct []
 

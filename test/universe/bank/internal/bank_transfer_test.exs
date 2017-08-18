@@ -1,18 +1,18 @@
 defmodule Helix.Universe.Bank.Internal.BankTransferTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.IDCase
+  import Helix.Test.Case.ID
 
   alias HELL.TestHelper.Random
-  alias HELL.TestHelper.Setup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.BankTransfer
 
   describe "fetch/1" do
     test "fetches a transfer" do
-      transfer = Setup.bank_transfer()
+      {transfer, _} = BankSetup.transfer()
       assert BankTransferInternal.fetch(transfer.transfer_id)
     end
 
@@ -23,8 +23,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
 
   describe "start/4" do
     test "starts a new transfer" do
-      acc1 = Setup.bank_account()
-      acc2 = Setup.bank_account()
+      {acc1, _} = BankSetup.account()
+      {acc2, _} = BankSetup.account()
       started_by = Random.pk()
       amount = 500
 
@@ -53,8 +53,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
     end
 
     test "with insufficient funds" do
-      acc1 = Setup.bank_account()
-      acc2 = Setup.bank_account()
+      {acc1, _} = BankSetup.account()
+      {acc2, _} = BankSetup.account()
 
       error = {:error, {:funds, :insufficient}}
       assert error == BankTransferInternal.start(acc1, acc2, 1, Random.pk())
@@ -63,12 +63,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
 
   describe "abort/1" do
     test "aborts the transfer" do
-      transfer = Setup.bank_transfer()
-
-      account_from =
-        BankAccountInternal.fetch(transfer.atm_from, transfer.account_from)
-      account_to =
-        BankAccountInternal.fetch(transfer.atm_to, transfer.account_to)
+      {transfer, %{acc1: account_from, acc2: account_to}} =
+        BankSetup.transfer()
 
       before_abort_from = BankAccountInternal.get_balance(account_from)
       before_abort_to = BankAccountInternal.get_balance(account_to)
@@ -88,7 +84,7 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
     end
 
     test "with invalid data" do
-      fake_transfer = Setup.fake_bank_transfer()
+      {fake_transfer, _} = BankSetup.fake_transfer()
       assert {:error, reason} = BankTransferInternal.abort(fake_transfer)
       assert reason == {:transfer, :notfound}
     end
@@ -96,12 +92,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
 
   describe "complete/1" do
     test "completes the transfer" do
-      transfer = Setup.bank_transfer()
-
-      account_from =
-        BankAccountInternal.fetch(transfer.atm_from, transfer.account_from)
-      account_to =
-        BankAccountInternal.fetch(transfer.atm_to, transfer.account_to)
+      {transfer, %{acc1: account_from, acc2: account_to}} =
+        BankSetup.transfer()
 
       acc_from_before = BankAccountInternal.get_balance(account_from)
       acc_to_before = BankAccountInternal.get_balance(account_to)
@@ -123,8 +115,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
   describe "transfer life cycle" do
     test "default scenario" do
       amount = 250
-      acc1 = Setup.bank_account([balance: amount])
-      acc2 = Setup.bank_account()
+      {acc1, _} = BankSetup.account([balance: amount])
+      {acc2, _} = BankSetup.account()
       started_by = Random.pk()
 
       acc1_before_start = BankAccountInternal.get_balance(acc1)
@@ -153,8 +145,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
 
     test "transfer abort scenario" do
       amount = 250
-      acc1 = Setup.bank_account([balance: amount])
-      acc2 = Setup.bank_account()
+      {acc1, _} = BankSetup.account([balance: amount])
+      {acc2, _} = BankSetup.account()
       started_by = Random.pk()
 
       acc1_before_start = BankAccountInternal.get_balance(acc1)
