@@ -19,7 +19,8 @@ defmodule Helix.Universe.NPC.Model.Seed do
     "DC0" => [%{spec: "todo", ip: "1.2.3.4"}],
     "Bank1" => [
       %{spec: "todo", custom: %{region: "1a"}},
-      %{spec: "todo", custom: %{region: "1b"}}
+      %{spec: "todo", custom: %{region: "1b"}},
+      %{spec: "todo", custom: %{region: "1c"}}
     ],
     "Bank2" => [
       %{spec: "todo", custom: %{region: "2a"}},
@@ -37,6 +38,7 @@ defmodule Helix.Universe.NPC.Model.Seed do
       servers: [
         "10::15c1:d147:47f9:b4b2:cbbe",
         "10::15c1:d147:47f9:b4b2:cbbf",
+        "10::15c1:d147:47f9:b4b2:cbc0"
       ]
     },
     "Bank2" => %{

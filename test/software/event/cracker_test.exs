@@ -70,4 +70,7 @@ defmodule Helix.Software.Event.CrackerTest do
       TOPHelper.top_stop(process.gateway_id)
     end
   end
+
+  @tag :pending
+  test "it stops overflow attacks when bank_login connection was closed"
 end
