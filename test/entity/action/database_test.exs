@@ -42,6 +42,17 @@ defmodule Helix.Entity.Action.DatabaseTest do
 
       assert DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
     end
+
+    test "nothing is done if the player owns that account" do
+      {entity, _} = EntitySetup.entity()
+      {acc, _} = BankSetup.account([owner_id: entity.entity_id])
+
+      assert {:error, reason} =
+        DatabaseAction.update_bank_password(entity.entity_id, acc, acc.password)
+      assert reason == {:bank_account, :belongs_to_entity}
+
+      refute DatabaseQuery.fetch_bank_account(entity.entity_id, acc)
+    end
   end
 
   describe "update_bank_token/3" do
@@ -67,6 +78,54 @@ defmodule Helix.Entity.Action.DatabaseTest do
         DatabaseAction.update_bank_token(fake_entry.entity_id, acc, token)
 
       assert DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+    end
+
+    test "nothing is done if the player owns that account" do
+      {entity, _} = EntitySetup.entity()
+      {acc, _} = BankSetup.account([owner_id: entity.entity_id])
+      token = Ecto.UUID.generate()
+
+      assert {:error, reason} =
+        DatabaseAction.update_bank_token(entity.entity_id, acc, token)
+      assert reason == {:bank_account, :belongs_to_entity}
+
+      refute DatabaseQuery.fetch_bank_account(entity.entity_id, acc)
+    end
+  end
+
+  describe "update_bank_login/2" do
+    test "entry is updated" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+
+      assert {:ok, result} =
+        DatabaseAction.update_bank_login(entry.entity_id, acc)
+
+      assert result.password == acc.password
+      assert result.known_balance == acc.balance
+      assert result.last_update > entry.last_update
+      assert result.last_login_date
+    end
+
+    test "new entry is created if there was none" do
+      {fake_entry, %{acc: acc}} = DatabaseSetup.fake_entry_bank_account()
+
+      refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+
+      assert {:ok, _} =
+        DatabaseAction.update_bank_login(fake_entry.entity_id, acc)
+
+      assert DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+    end
+
+    test "nothing is done if the player owns that account" do
+      {entity, _} = EntitySetup.entity()
+      {acc, _} = BankSetup.account([owner_id: entity.entity_id])
+
+      assert {:error, reason} =
+        DatabaseAction.update_bank_login(entity.entity_id, acc)
+      assert reason == {:bank_account, :belongs_to_entity}
+
+      refute DatabaseQuery.fetch_bank_account(entity.entity_id, acc)
     end
   end
 

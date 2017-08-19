@@ -35,6 +35,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
   """
   def start(from_account, to_account, amount, started_by, bounces \\ []) do
 
+    # TODO: *do* need the gateway_id because of List.first()
     gateway_server =
       started_by
       |> EntityQuery.get_entity_id()

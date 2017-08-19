@@ -10,12 +10,15 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
-  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
-    as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
+
+  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
+    as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
+    as: BankAccountLoginEvent
 
   @spec start_transfer(BankAccount.t, BankAccount.t, pos_integer, Account.idt) ::
     {:ok, BankTransfer.t}
@@ -179,5 +182,18 @@ defmodule Helix.Universe.Bank.Action.Bank do
       _ ->
         {:error, {:token, :notfound}}
     end
+  end
+
+  def login_password(account, password, login_by) do
+    with true <- account.password == password do
+      {:ok, account, [account_login_event(account, login_by)]}
+    end
+  end
+
+  defp account_login_event(account, login_by) do
+    %BankAccountLoginEvent{
+      entity_id: login_by,
+      account: account
+    }
   end
 end

@@ -4,6 +4,7 @@ defmodule Helix.Entity.Internal.Database do
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.DatabaseBankAccount
   alias Helix.Entity.Model.DatabaseServer
@@ -108,8 +109,22 @@ defmodule Helix.Entity.Internal.Database do
   def update_bank_password(entry, password),
     do: update_bank_account(entry, %{password: password})
 
+  @spec update_bank_token(DatabaseBankAccount.t, BankToken.id) ::
+    entry_bank_account_repo_return
   def update_bank_token(entry, token),
     do: update_bank_account(entry, %{token: token})
+
+  @spec update_bank_login(DatabaseBankAccount.t, BankAccount.t) ::
+    entry_bank_account_repo_return
+  def update_bank_login(entry, account) do
+    params = %{
+      password: account.password,
+      known_balance: account.balance,
+      last_login_date: DateTime.utc_now()
+    }
+
+    update_bank_account(entry, params)
+  end
 
   @spec update_bank_account(
     DatabaseBankAccount.t, DatabaseBankAccount.update_params)
