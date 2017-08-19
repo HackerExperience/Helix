@@ -105,7 +105,7 @@ defmodule Helix.Test.Network.Factory do
   @spec fabricate_changeset(:connection, map) ::
     Ecto.Changeset.t
   defp fabricate_changeset(:connection, params) do
-    Connection.create(params.tunnel, params.connection_type)
+    Connection.create(params.tunnel, params.connection_type, nil)
   end
 
   defp to_map(x = %{}),
