@@ -6,6 +6,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
+  alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
@@ -18,6 +19,8 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Test.Account.Setup, as: AccountSetup
+  alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
@@ -259,6 +262,125 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     %BankAccountLoginEvent{
       entity_id: entity_id,
       account: account,
+    }
+  end
+
+  describe "logout/2" do
+    test "`bank_login` connection is successfully closed" do
+      {gateway, _} = ServerSetup.server()
+      {acc, _} = BankSetup.account()
+
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          [gateway_id: gateway.server_id, destination_id: acc.atm_id])
+
+      tunnel_id = tunnel.tunnel_id
+
+      conn_meta = generate_bank_login_meta(acc)
+
+      {bank_connection, _} =
+        NetworkSetup.connection(
+          [tunnel_id: tunnel_id, type: :bank_login, meta: conn_meta])
+
+      # Ensure bank connection really exists
+      assert TunnelQuery.fetch_connection(bank_connection.connection_id)
+
+      assert :ok == BankAction.logout(acc, gateway.server_id)
+
+      # Look ma, no longer there.
+      refute TunnelQuery.fetch_connection(bank_connection.connection_id)
+    end
+
+    test "unrelated connections are not removed" do
+      {player1, _} = ServerSetup.server()
+      {player2, _} = ServerSetup.server()
+
+      # Note: enforce different ATMs for each account otherwise we'd have to
+      # verify if the tunnel already exists before creating it.
+      {acc1, _} = BankSetup.account([atm_seq: 1])
+      {acc2, _} = BankSetup.account([atm_seq: 2])
+      {acc3, _} = BankSetup.account([atm_seq: 3])
+
+      # Description of the context:
+      # There are 2 players and three bank accounts.
+      # - Player 1 is connected on accounts 1 and 2
+      # - Player 2 is connected on accounts 1 and 3
+      # Player 1 will logout from account 1
+      # - Login of player 1 on account 2 should remain unchanged
+      # - Login of player 2 on accounts 1 and 3 should remain unchanged
+      # Just take my word for it and skip to the "CONTINUE HERE" below.
+      {tunnel_p1a1, _} =
+        NetworkSetup.tunnel(
+          [gateway_id: player1.server_id, destination_id: acc1.atm_id])
+      {tunnel_p1a2, _} =
+        NetworkSetup.tunnel(
+          [gateway_id: player1.server_id, destination_id: acc2.atm_id])
+      {tunnel_p2a1, _} =
+        NetworkSetup.tunnel(
+          [gateway_id: player2.server_id, destination_id: acc1.atm_id])
+      {tunnel_p2a3, _} =
+        NetworkSetup.tunnel(
+          [gateway_id: player2.server_id, destination_id: acc3.atm_id])
+
+      tid_p1a1 = tunnel_p1a1.tunnel_id
+      tid_p1a2 = tunnel_p1a2.tunnel_id
+      tid_p2a1 = tunnel_p2a1.tunnel_id
+      tid_p2a3 = tunnel_p2a3.tunnel_id
+
+      meta_a1 = generate_bank_login_meta(acc1)
+      meta_a2 = generate_bank_login_meta(acc2)
+      meta_a3 = generate_bank_login_meta(acc3)
+
+      {conn_p1a1, _} =
+        NetworkSetup.connection(
+          [tunnel_id: tid_p1a1, type: :bank_login, meta: meta_a1])
+      {conn_p1a2, _} =
+        NetworkSetup.connection(
+          [tunnel_id: tid_p1a2, type: :bank_login, meta: meta_a2])
+      {conn_p2a1, _} =
+        NetworkSetup.connection(
+          [tunnel_id: tid_p2a1, type: :bank_login, meta: meta_a1])
+      {conn_p2a3, _} =
+        NetworkSetup.connection(
+          [tunnel_id: tid_p2a3, type: :bank_login, meta: meta_a3])
+
+      # CONTINUE HERE!!
+
+      # Assert player 1 has the two outbound connections created above
+      assert [conn_p1a1, conn_p1a2] ==
+        TunnelQuery.outbound_connections(player1.server_id)
+
+      # And player 2 has two other outbound connections
+      assert [conn_p2a1, conn_p2a3] ==
+        TunnelQuery.outbound_connections(player2.server_id)
+
+      # Before logging out of account 1, let's do a wild thing. We'll try to log
+      # player 1 out of account *three*, which he isn't even logged in!!!!
+      assert [] == BankAction.logout(acc3, player1.server_id)
+
+      # As expected, nothing changed.
+      assert [conn_p1a1, conn_p1a2] ==
+        TunnelQuery.outbound_connections(player1.server_id)
+      assert [conn_p2a1, conn_p2a3] ==
+        TunnelQuery.outbound_connections(player2.server_id)
+
+      # Now player 1 will do the actual log out of account 1
+      assert [event] = BankAction.logout(acc1, player1.server_id)
+
+      # Aaaand player 1 no longer have the connection with a1, but a2 is there
+      assert [conn_p1a2] ==
+        TunnelQuery.outbound_connections(player1.server_id)
+
+      # And player 2 connections remain unchanged
+      assert [conn_p2a1, conn_p2a3] ==
+        TunnelQuery.outbound_connections(player2.server_id)
+    end
+  end
+
+  defp generate_bank_login_meta(account) do
+    %{
+      "atm_id" => to_string(account.atm_id),
+      "account_number" => account.account_number
     }
   end
 end

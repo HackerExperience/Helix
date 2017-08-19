@@ -4,6 +4,8 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Connection
+  alias Helix.Network.Action.Tunnel, as: TunnelAction
+  alias Helix.Server.Model.Server
   alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
@@ -15,6 +17,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
+  alias Helix.Network.Model.Connection.ConnectionClosedEvent
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
@@ -184,16 +187,41 @@ defmodule Helix.Universe.Bank.Action.Bank do
     end
   end
 
+  @spec login_password(BankAccount.t, String.t, Entity.idt) ::
+    {:ok, BankAccount.t, [BankAccountLoginEvent.t]}
+    | term
   def login_password(account, password, login_by) do
     with true <- account.password == password do
       {:ok, account, [account_login_event(account, login_by)]}
     end
   end
 
+  @spec account_login_event(BankAccount.t, Entity.idt) ::
+    BankAccountLoginEvent.t
   defp account_login_event(account, login_by) do
     %BankAccountLoginEvent{
       entity_id: login_by,
       account: account
     }
+  end
+
+  @spec logout(BankAccount.t, Server.idt) ::
+    [ConnectionClosedEvent.t]
+  @doc """
+  Gateway_id will log out from the given account. The corresponding connection
+  (if any) will be closed, and the ConnectionClosed event is passed upstream.
+  """
+  def logout(account, gateway_id) do
+    filter = fn meta ->
+      meta
+      && meta["atm_id"] == to_string(account.atm_id)
+      && meta["account_number"] == account.account_number
+    end
+
+    TunnelAction.close_connections_where(
+      gateway_id,
+      account.atm_id,
+      :bank_login,
+      filter)
   end
 end

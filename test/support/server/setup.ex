@@ -1,6 +1,9 @@
 defmodule Helix.Test.Server.Setup do
 
+  alias HELL.Password
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
   alias Helix.Test.Account.Setup, as: AccountSetup
@@ -30,11 +33,37 @@ defmodule Helix.Test.Server.Setup do
     {server, %{entity: entity}}
   end
 
+  def server!(opts \\ []) do
+    {server, _} = server(opts)
+    server
+  end
+
+  @doc """
+  Note that this function does NOT create related elements, like the motherboard
+  - server_id: set the server_id.
+  - motherboard_id: set the motherboard_id.
+  - password: set the password.
+  """
+  def fake_server(opts \\ []) do
+    server_id = Access.get(opts, :server_id, Server.ID.generate())
+    motherboard_id = Access.get(opts, :mobo_id, Component.ID.generate())
+    password = Access.get(opts, :password, Password.generate(:server))
+
+    server =
+      %Server{
+        server_id: server_id,
+        motherboard_id: motherboard_id,
+        password: password
+      }
+
+    {server, %{}}
+  end
+
   @doc """
   Helper to create_or_fetch servers in a single command.
   """
   def create_or_fetch(nil),
-    do: server()
+    do: server!()
   def create_or_fetch(server_id) do
     ServerQuery.fetch(server_id)
   end
