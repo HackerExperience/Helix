@@ -2,14 +2,10 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
-    as: BankAccountPasswordRevealedEvent
-  alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
-    as: BankAccountLoginEvent
-  alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Entity.Event.Database, as: DatabaseHandler
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
+  alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
 
   describe "on cracker conclusion" do
@@ -25,12 +21,11 @@ defmodule Helix.Entity.Event.DatabaseTest do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
       password = "lulz"
 
-      event = %BankAccountPasswordRevealedEvent{
-        entity_id: entry.entity_id,
-        atm_id: entry.atm_id,
-        account_number: entry.account_number,
-        password: password
-      }
+      event =
+        EventSetup.bank_account_password_revealed(
+          acc,
+          entry.entity_id,
+          [password: password])
 
       DatabaseHandler.bank_password_revealed(event)
 
@@ -48,12 +43,11 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
       refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
-      event = %BankAccountPasswordRevealedEvent{
-        entity_id: fake_entry.entity_id,
-        atm_id: fake_entry.atm_id,
-        account_number: fake_entry.account_number,
-        password: password
-      }
+      event =
+        EventSetup.bank_account_password_revealed(
+          acc,
+          fake_entry.entity_id,
+          [password: password])
 
       DatabaseHandler.bank_password_revealed(event)
 
@@ -70,12 +64,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
       token = Ecto.UUID.generate()
 
-      event = %BankTokenAcquiredEvent{
-        entity_id: entry.entity_id,
-        atm_id: entry.atm_id,
-        account_number: entry.account_number,
-        token_id: token
-      }
+      event = EventSetup.bank_token_acquired(token, acc, entry.entity_id)
 
       DatabaseHandler.bank_token_acquired(event)
 
@@ -93,12 +82,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
       refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
-      event = %BankTokenAcquiredEvent{
-        entity_id: fake_entry.entity_id,
-        atm_id: fake_entry.atm_id,
-        account_number: fake_entry.account_number,
-        token_id: token
-      }
+      event = EventSetup.bank_token_acquired(token, acc, fake_entry.entity_id)
 
       DatabaseHandler.bank_token_acquired(event)
 
@@ -115,10 +99,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
     test "the entry is updated" do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
 
-      event = %BankAccountLoginEvent{
-        entity_id: entry.entity_id,
-        account: acc
-      }
+      event = EventSetup.bank_account_login(acc, entry.entity_id)
 
       DatabaseHandler.bank_account_login(event)
 
@@ -136,10 +117,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
       refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
-      event = %BankAccountLoginEvent{
-        entity_id: fake_entry.entity_id,
-        account: acc
-      }
+      event = EventSetup.bank_account_login(acc, fake_entry.entity_id)
 
       DatabaseHandler.bank_account_login(event)
 
