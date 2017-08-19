@@ -130,4 +130,8 @@ defmodule Helix.Event.Dispatcher do
   event Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     Entity.Event.Database,
     :bank_password_revealed
+
+  event Universe.Bank.Model.BankAccount.LoginEvent,
+    Entity.Event.Database,
+    :bank_account_login
 end

@@ -182,6 +182,22 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     end
   end
 
+  describe "update_bank_login/2" do
+    test "all related information is updated" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+
+      assert {:ok, new_entry} =
+        DatabaseInternal.update_bank_login(entry, acc)
+
+      assert new_entry.password == acc.password
+      assert new_entry.known_balance == acc.balance
+      assert new_entry.last_login_date
+
+      entry_on_db = DatabaseInternal.fetch_bank_account(entry.entity_id, acc)
+      assert entry_on_db == new_entry
+    end
+  end
+
   describe "delete_server/3" do
     test "entry is removed" do
       {entry, _} = DatabaseSetup.entry_server()

@@ -35,3 +35,18 @@ defmodule Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent do
   @enforce_keys ~w/entity_id atm_id account_number password/a
   defstruct ~w/entity_id atm_id account_number password/a
 end
+
+defmodule Helix.Universe.Bank.Model.BankAccount.LoginEvent do
+  @moduledoc false
+
+  alias Helix.Entity.Model.Entity
+  alias Helix.Universe.Bank.Model.BankAccount
+
+  @type t :: %__MODULE__{
+    entity_id: Entity.id,
+    account: BankAccount.t
+  }
+
+  @enforce_keys ~w/entity_id account/a
+  defstruct ~w/entity_id account/a
+end

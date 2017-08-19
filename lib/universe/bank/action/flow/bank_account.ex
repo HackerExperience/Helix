@@ -3,15 +3,19 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   import HELF.Flow
 
   alias Helix.Event
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
+  alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType,
     as: RevealPasswordProcessType
   alias Helix.Universe.Bank.Model.BankToken
+  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   @doc """
   Starts the `bank_reveal_password` process.
@@ -47,6 +51,34 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         on_success(fn -> Event.emit(events) end)
       do
         {:ok, process}
+      end
+    end
+  end
+
+  def login_password(atm_id, account_number, gateway_id, bounces, password) do
+    acc = BankQuery.fetch_account(atm_id, account_number)
+    entity = EntityQuery.fetch_by_server(gateway_id)
+
+    start_connection = fn ->
+      TunnelAction.connect(
+        NetworkQuery.internet(),
+        gateway_id,
+        atm_id,
+        bounces,
+        :bank_login
+      )
+    end
+
+    flowing do
+      with \
+        true <- not is_nil(acc),
+        {:ok, _, events} <- BankAction.login_password(acc, password, entity),
+        on_success(fn -> Event.emit(events) end),
+
+        {:ok, connection, events} <- start_connection.(),
+        on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, connection}
       end
     end
   end

@@ -292,7 +292,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
         |> Map.put(:action, :delete)
 
       event = %OverflowConclusionEvent{
-        gateway_id: process.gateway_id,
+        gateway_id: process.data.gateway_id,
         target_process_id: data.target_process_id,
       }
 

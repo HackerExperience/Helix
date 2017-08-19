@@ -10,6 +10,8 @@ defmodule Helix.Entity.Event.Database do
   alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
+    as: BankAccountLoginEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
 
   def cracker_conclusion(event = %ProcessConclusionEvent{}) do
@@ -67,5 +69,13 @@ defmodule Helix.Entity.Event.Database do
     account = BankQuery.fetch_account(event.atm_id, event.account_number)
 
     DatabaseAction.update_bank_token(event.entity_id, account, event.token_id)
+  end
+
+  @doc """
+  Handler called after a bank account login happens. Its main goal is to make
+  sure the Hacked Database is updated to reflect that account information.
+  """
+  def bank_account_login(event = %BankAccountLoginEvent{}) do
+    DatabaseAction.update_bank_login(event.entity_id, event.account)
   end
 end

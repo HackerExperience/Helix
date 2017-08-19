@@ -34,7 +34,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
   - atm_seq: alternative to `atm_id`, when you don't care about the ID but you
     care that the resulting atm is constant. For instance, atm on atm_seq=1 is
     different from atm on atm_seq=2
-  - owner_id: Player who owns that account
+  - owner_id: Player who owns that account. It's OK to pass an Entity.ID
   - balance: Starting balance of that account. Defaults to 0
   - number: Bank account number.
   """

@@ -4,6 +4,8 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
+    as: BankAccountLoginEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Entity.Event.Database, as: DatabaseHandler
   alias Helix.Entity.Query.Database, as: DatabaseQuery
@@ -106,6 +108,48 @@ defmodule Helix.Entity.Event.DatabaseTest do
       assert on_db.last_update > fake_entry.last_update
       refute on_db.password
       refute on_db.last_login_date
+    end
+  end
+
+  describe "bank_account_login" do
+    test "the entry is updated" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+
+      event = %BankAccountLoginEvent{
+        entity_id: entry.entity_id,
+        account: acc
+      }
+
+      DatabaseHandler.bank_account_login(event)
+
+      on_db = DatabaseQuery.fetch_bank_account(entry.entity_id, acc)
+
+      refute on_db.token
+      assert on_db.last_update > entry.last_update
+      assert on_db.password == acc.password
+      assert on_db.last_login_date
+      assert on_db.known_balance == acc.balance
+    end
+
+    test "a new entry is created in case it did not exist before" do
+      {fake_entry, %{acc: acc}} = DatabaseSetup.fake_entry_bank_account()
+
+      refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+
+      event = %BankAccountLoginEvent{
+        entity_id: fake_entry.entity_id,
+        account: acc
+      }
+
+      DatabaseHandler.bank_account_login(event)
+
+      on_db = DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
+
+      refute on_db.token
+      assert on_db.last_update > fake_entry.last_update
+      assert on_db.password == acc.password
+      assert on_db.last_login_date
+      assert on_db.known_balance == acc.balance
     end
   end
 end
