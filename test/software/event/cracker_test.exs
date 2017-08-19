@@ -6,12 +6,11 @@ defmodule Helix.Software.Event.CrackerTest do
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
-  alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
-    as: OverflowConclusionEvent
   alias Helix.Software.Event.Cracker, as: CrackerHandler
 
-  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
+  alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Process.TOPHelper
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
   describe "overflow_conclusion/1 on wire transfer connection" do
     test "life cycle for overflow attack against wire transfer connection" do
@@ -20,10 +19,7 @@ defmodule Helix.Software.Event.CrackerTest do
       transfer_id = process.process_data.transfer_id
 
       # Simulate completion of overflow process
-      event = %OverflowConclusionEvent{
-        gateway_id: process.gateway_id,
-        target_process_id: process.process_id
-      }
+      event = EventSetup.overflow_conclusion(process)
 
       # Returns a token
       assert {:ok, token_id} = CrackerHandler.overflow_conclusion(event)

@@ -3,7 +3,6 @@ defmodule Helix.Test.Network.Setup do
   alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Tunnel
-  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Network.Repo, as: NetworkRepo
 
@@ -39,20 +38,20 @@ defmodule Helix.Test.Network.Setup do
     (When `fake_servers` is true, it will only return the related server ids.)
   """
   def fake_tunnel(opts \\ []) do
-    if opts[:fake_servers] do
-      gateway_id = Server.ID.generate()
-      destination_id = Server.ID.generate()
+    {gateway_id, destination_id, related} =
+      if opts[:fake_servers] do
+        gateway_id = Server.ID.generate()
+        destination_id = Server.ID.generate()
+        related = %{gateway: gateway_id, destination: destination_id}
 
-      related = %{gateway: gateway_id, destination: destination_id}
-    else
-      gateway = ServerSetup.create_or_fetch(opts[:gateway_id])
-      destination = ServerSetup.create_or_fetch(opts[:destination_id])
+        {gateway_id, destination_id, related}
+      else
+        gateway = ServerSetup.create_or_fetch(opts[:gateway_id])
+        destination = ServerSetup.create_or_fetch(opts[:destination_id])
+        related = %{gateway: gateway, destination: destination}
 
-      gateway_id = gateway.server_id
-      destination_id = destination.server_id
-
-      related = %{gateway: gateway, destination: destination}
-    end
+        {gateway.server_id, destination.server_id, related}
+      end
 
     bounces = Access.get(opts, :bounces, [])
     network_id = Access.get(opts, :network_id, @internet)
@@ -63,7 +62,7 @@ defmodule Helix.Test.Network.Setup do
     # Insert the tunnel_id, if specified
     tunnel =
       if opts[:tunnel_id] do
-        %{tunnel| tunnel_id: opts[:tunnel_id]}
+        %{tunnel| tunnel_id: tunnel_id}
       else
         tunnel
       end

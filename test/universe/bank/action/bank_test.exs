@@ -11,14 +11,11 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
-  alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
-    as: BankAccountLoginEvent
-  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
-    as: BankAccountPasswordRevealedEvent
-  alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
+
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Test.Account.Setup, as: AccountSetup
+  alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
@@ -150,7 +147,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
         BankAction.generate_token(acc, connection, entity_id)
 
       assert BankQuery.fetch_token(token_id)
-      assert e == expected_token_event(token_id, acc, entity_id)
+      assert e == EventSetup.bank_token_acquired(token_id, acc, entity_id)
     end
 
     test "returns the token if it already exists" do
@@ -162,7 +159,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
         BankAction.generate_token(acc, connection, entity_id)
 
       assert token_id == token.token_id
-      assert e == expected_token_event(token_id, acc, entity_id)
+      assert e == EventSetup.bank_token_acquired(token_id, acc, entity_id)
     end
 
     test "ignores existing tokens on different connections" do
@@ -175,21 +172,12 @@ defmodule Helix.Universe.Bank.Action.BankTest do
         BankAction.generate_token(acc, connection2, entity_id)
 
       refute token_id == token.token_id
-      assert e == expected_token_event(token_id, acc, entity_id)
+      assert e == EventSetup.bank_token_acquired(token_id, acc, entity_id)
 
       # Two connections, two tokens
       assert BankQuery.fetch_token(token.token_id)
       assert BankQuery.fetch_token(token_id)
     end
-  end
-
-  defp expected_token_event(token_id, acc, entity_id) do
-    %BankTokenAcquiredEvent{
-      entity_id: entity_id,
-      token_id: token_id,
-      atm_id: acc.atm_id,
-      account_number: acc.account_number
-    }
   end
 
   describe "reveal_account_password/2" do
@@ -200,7 +188,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       assert {:ok, password, [e]} =
         BankAction.reveal_password(acc, token.token_id, entity_id)
       assert password == acc.password
-      assert e == expected_revealed_event(acc, entity_id)
+      assert e == EventSetup.bank_account_password_revealed(acc, entity_id)
     end
 
     test "password is not revealed for non-existent token" do
@@ -232,22 +220,13 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
   end
 
-  defp expected_revealed_event(acc, entity_id) do
-    %BankAccountPasswordRevealedEvent{
-      entity_id: entity_id,
-      account_number: acc.account_number,
-      atm_id: acc.atm_id,
-      password: acc.password
-    }
-  end
-
   describe "login_password/3" do
     test "login is successful when password is correct" do
       {acc, _} = BankSetup.account()
       entity_id = Entity.ID.generate()
 
       {:ok, _, [e]} = BankAction.login_password(acc, acc.password, entity_id)
-      assert e == expected_login_event(acc, entity_id)
+      assert e == EventSetup.bank_account_login(acc, entity_id)
     end
 
     test "login fails with invalid password" do
@@ -256,13 +235,6 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
       refute BankAction.login_password(acc, "incorrect_password", entity_id)
     end
-  end
-
-  defp expected_login_event(account, entity_id) do
-    %BankAccountLoginEvent{
-      entity_id: entity_id,
-      account: account,
-    }
   end
 
   describe "logout/2" do
@@ -285,10 +257,13 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       # Ensure bank connection really exists
       assert TunnelQuery.fetch_connection(bank_connection.connection_id)
 
-      assert :ok == BankAction.logout(acc, gateway.server_id)
+      assert [event] = BankAction.logout(acc, gateway.server_id)
 
       # Look ma, no longer there.
       refute TunnelQuery.fetch_connection(bank_connection.connection_id)
+
+      # Ensure spilled event is the one expected
+      assert event == EventSetup.connection_closed(bank_connection)
     end
 
     test "unrelated connections are not removed" do
@@ -374,6 +349,9 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       # And player 2 connections remain unchanged
       assert [conn_p2a1, conn_p2a3] ==
         TunnelQuery.outbound_connections(player2.server_id)
+
+      # Ensure logout event is the one expected
+      assert event == EventSetup.connection_closed(conn_p1a1)
     end
   end
 
