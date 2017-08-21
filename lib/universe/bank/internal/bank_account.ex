@@ -124,17 +124,15 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
       account = fetch_for_update(account.atm_id, account.account_number)
 
       with \
-        true <- not is_nil(account) || :nxaccount,
-        true <- account.balance >= amount || :nxfunds
+        true <- not is_nil(account) || {:account, :notfound},
+        true <- account.balance >= amount || {:funds, :insufficient}
       do
         account
         |> BankAccount.withdraw(amount)
         |> Repo.update!()
       else
-        :nxaccount ->
-          Repo.rollback({:account, :notfound})
-        :nxfunds ->
-          Repo.rollback({:funds, :insufficient})
+        error = {_, _} ->
+          Repo.rollback(error)
       end
     end)
   end
@@ -151,15 +149,13 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
         account = fetch_for_update(account.atm_id, account.account_number)
 
         with \
-          true <- not is_nil(account) || :nxaccount,
-          true <- account.balance == 0 || :notempty
+          true <- not is_nil(account) || {:account, :notfound},
+          true <- account.balance == 0 || {:account, :notempty}
         do
           delete(account)
         else
-          :nxaccount ->
-            Repo.rollback({:account, :notfound})
-          :notempty ->
-            Repo.rollback({:account, :notempty})
+          error = {_, _} ->
+            Repo.rollback(error)
         end
       end)
 
