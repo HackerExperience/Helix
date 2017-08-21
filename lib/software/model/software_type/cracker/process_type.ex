@@ -219,6 +219,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
 
   import Ecto.Changeset
 
+  alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
@@ -227,21 +228,24 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
 
   @type t :: %__MODULE__{
-    target_process_id: Process.id,
+    target_process_id: Process.id | nil,
+    target_connection_id: Connection.id | nil,
     software_version: pos_integer
   }
 
   @type create_params ::
     %{
-      target_process_id: Process.idtb
+      target_process_id: Process.idtb | nil,
+      target_connection_id: Connection.idtb | nil
     }
 
-  @create_params ~w/target_process_id/a
-  @required_params ~w/target_process_id/a
+  @create_params ~w/target_process_id target_connection_id/a
+  @required_params ~w/target_process_id target_connection_id/a
 
   @primary_key false
   embedded_schema do
     field :target_process_id, Process.ID
+    field :target_connection_id, Connection.ID
     field :software_version, :integer
   end
 
@@ -294,6 +298,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
       event = %OverflowConclusionEvent{
         gateway_id: process.data.gateway_id,
         target_process_id: data.target_process_id,
+        target_connection_id: data.target_connection_id
       }
 
       {process, [event]}

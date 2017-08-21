@@ -37,12 +37,20 @@ defmodule Helix.Test.Event.Setup do
   end
 
   @doc """
-  Accepts: Process.t
+  Accepts: Process.t, (Connection.t, Server.id)
   """
   def overflow_conclusion(process = %Process{}) do
     %OverflowConclusionEvent{
       gateway_id: process.gateway_id,
-      target_process_id: process.process_id
+      target_process_id: process.process_id,
+      target_connection_id: nil
+    }
+  end
+  def overflow_conclusion(connection = %Connection{}, gateway_id) do
+    %OverflowConclusionEvent{
+      gateway_id: gateway_id,
+      target_process_id: nil,
+      target_connection_id: connection.connection_id
     }
   end
 

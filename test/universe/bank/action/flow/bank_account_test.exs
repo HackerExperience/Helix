@@ -76,8 +76,11 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
           acc.password
         )
 
-      # Ensure connection was created
+      # Ensure connection was created correctly
       assert TunnelQuery.fetch_connection(connection.connection_id)
+      assert connection.meta
+      assert connection.meta["atm_id"] == acc.atm_id
+      assert connection.meta["account_number"] == acc.account_number
 
       # Ensure correct elements and order on connection
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
@@ -111,8 +114,11 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
           acc.password
         )
 
-      # Ensure connection was created
+      # Ensure connection was created correctly
       assert TunnelQuery.fetch_connection(connection.connection_id)
+      assert connection.meta
+      assert connection.meta["atm_id"] == acc.atm_id
+      assert connection.meta["account_number"] == acc.account_number
 
       # Ensure correct elements and order on connection
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
@@ -165,8 +171,11 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
           token.token_id
         )
 
-      # Ensure connection was created
+      # Ensure connection was created correctly
       assert TunnelQuery.fetch_connection(connection.connection_id)
+      assert connection.meta
+      assert connection.meta["atm_id"] == acc.atm_id
+      assert connection.meta["account_number"] == acc.account_number
 
       # Ensure correct elements and order on connection
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
@@ -202,8 +211,11 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
           token.token_id
         )
 
-      # Ensure connection was created
+      # Ensure connection was created correctly
       assert TunnelQuery.fetch_connection(connection.connection_id)
+      assert connection.meta
+      assert connection.meta["atm_id"] == acc.atm_id
+      assert connection.meta["account_number"] == acc.account_number
 
       # Ensure correct elements and order on connection
       tunnel = TunnelQuery.fetch(connection.tunnel_id)

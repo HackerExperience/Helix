@@ -72,7 +72,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         gateway_id,
         atm_id,
         bounces,
-        :bank_login
+        :bank_login,
+        login_connection_meta(acc)
       )
     end
 
@@ -107,7 +108,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         gateway_id,
         atm_id,
         bounces,
-        :bank_login
+        :bank_login,
+        login_connection_meta(acc)
       )
     end
 
@@ -123,5 +125,12 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         {:ok, connection}
       end
     end
+  end
+
+  defp login_connection_meta(account) do
+    %{
+      "atm_id" => account.atm_id,
+      "account_number" => account.account_number
+    }
   end
 end
