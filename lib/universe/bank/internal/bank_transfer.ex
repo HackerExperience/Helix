@@ -77,15 +77,15 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
         transfer = fetch_for_update(transfer.transfer_id)
 
         with \
-          true <- not is_nil(transfer) || :nxtransfer,
+          true <- not is_nil(transfer) || {:transfer, :notfound},
           # Transfer money to recipient
           {:ok, _} <- deposit_money.(transfer)
         do
           # Remove transfer entry
           delete(transfer)
         else
-          :nxtransfer ->
-            Repo.rollback({:transfer, :notfound})
+          error = {_, _} ->
+            Repo.rollback(error)
           _ ->
             Repo.rollback(:internal)
         end
@@ -119,15 +119,15 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
         transfer = fetch_for_update(transfer.transfer_id)
 
         with \
-          true <- not is_nil(transfer) || :nxtransfer,
+          true <- not is_nil(transfer) || {:transfer, :notfound},
           # Refund transfer money
           {:ok, _} <- refund_money.(transfer)
         do
           # Remove transfer entry
           delete(transfer)
         else
-          :nxtransfer ->
-            Repo.rollback({:transfer, :notfound})
+          error = {_, _} ->
+            Repo.rollback(error)
           _ ->
             Repo.rollback(:internal)
         end
