@@ -41,12 +41,14 @@ defmodule Helix.Universe.Bank.Model.BankAccount.LoginEvent do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankToken
 
   @type t :: %__MODULE__{
     entity_id: Entity.id,
-    account: BankAccount.t
+    account: BankAccount.t,
+    token_id: BankToken.id | nil
   }
 
-  @enforce_keys ~w/entity_id account/a
-  defstruct ~w/entity_id account/a
+  @enforce_keys ~w/entity_id account token_id/a
+  defstruct ~w/entity_id account token_id/a
 end

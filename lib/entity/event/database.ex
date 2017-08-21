@@ -74,8 +74,12 @@ defmodule Helix.Entity.Event.Database do
   @doc """
   Handler called after a bank account login happens. Its main goal is to make
   sure the Hacked Database is updated to reflect that account information.
+  Note that currently there are two methods for login: using password or token.
   """
   def bank_account_login(event = %BankAccountLoginEvent{}) do
-    DatabaseAction.update_bank_login(event.entity_id, event.account)
+    DatabaseAction.update_bank_login(
+      event.entity_id,
+      event.account,
+      event.token_id)
   end
 end

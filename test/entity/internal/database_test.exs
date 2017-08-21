@@ -183,13 +183,29 @@ defmodule Helix.Entity.Internal.DatabaseTest do
   end
 
   describe "update_bank_login/2" do
-    test "all related information is updated" do
+    test "all related information is updated (login=password)" do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
 
       assert {:ok, new_entry} =
-        DatabaseInternal.update_bank_login(entry, acc)
+        DatabaseInternal.update_bank_login(entry, acc, nil)
 
       assert new_entry.password == acc.password
+      assert new_entry.known_balance == acc.balance
+      assert new_entry.last_login_date
+
+      entry_on_db = DatabaseInternal.fetch_bank_account(entry.entity_id, acc)
+      assert entry_on_db == new_entry
+    end
+
+    test "all related information is updated (login=token)" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+      token_id = Ecto.UUID.generate()
+
+      assert {:ok, new_entry} =
+        DatabaseInternal.update_bank_login(entry, acc, token_id)
+
+      assert new_entry.token == token_id
+      refute new_entry.password
       assert new_entry.known_balance == acc.balance
       assert new_entry.last_login_date
 

@@ -165,6 +165,11 @@ defmodule Helix.Universe.Bank.Action.Bank do
   @spec reveal_password(BankAccount.t, BankToken.id, Entity.t) ::
     {:ok, String.t, [BankAccountPasswordRevealedEvent.t]}
     | {:error, {:token, :notfound}}
+  @doc """
+  Reveals a bank account password. In order for the password to be revealed, a
+  valid token must be passed. A token may be acquired through BufferOverflow
+  attacks on WireTransfer or BankLogin connections.
+  """
   def reveal_password(account, token_id, revealed_by) do
     password_revealed_event = fn account ->
       %BankAccountPasswordRevealedEvent{
@@ -190,18 +195,43 @@ defmodule Helix.Universe.Bank.Action.Bank do
   @spec login_password(BankAccount.t, String.t, Entity.idt) ::
     {:ok, BankAccount.t, [BankAccountLoginEvent.t]}
     | term
+  @doc """
+  Logs into a bank account using a password. The given password must match the
+  account one.
+
+  Returns the relevant BankAccountLoginEvent. Used by `BankAccountFlow`.
+  """
   def login_password(account, password, login_by) do
     with true <- account.password == password do
       {:ok, account, [account_login_event(account, login_by)]}
     end
   end
 
-  @spec account_login_event(BankAccount.t, Entity.idt) ::
+  @doc """
+  Logs into a bank account using a token. The token must be valid and belong to
+  the given account.
+
+  Returns the relevant BankAccountLoginEvent. Used by `BankAccountFlow`.
+  """
+  @spec login_token(BankAccount.t, BankToken.id, Entity.idt) ::
+    {:ok, BankAccount.t, [BankAccountLoginEvent.t]}
+    | term
+  def login_token(account, token_id, login_by) do
+    with \
+      token = %{} <- BankQuery.fetch_token(token_id),
+      true <- token.account_number == account.account_number
+    do
+      {:ok, account, [account_login_event(account, login_by, token_id)]}
+    end
+  end
+
+  @spec account_login_event(BankAccount.t, Entity.idt, BankToken.id | nil) ::
     BankAccountLoginEvent.t
-  defp account_login_event(account, login_by) do
+  defp account_login_event(account, login_by, token \\ nil) do
     %BankAccountLoginEvent{
       entity_id: login_by,
-      account: account
+      account: account,
+      token_id: token
     }
   end
 

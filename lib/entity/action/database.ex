@@ -87,22 +87,23 @@ defmodule Helix.Entity.Action.Database do
     end
   end
 
-  @spec update_bank_login(Entity.idt, BankAccount.t) ::
+  @spec update_bank_login(Entity.idt, BankAccount.t, BankToken.id | nil) ::
     {:ok, DatabaseBankAccount.t}
     | {:error, DatabaseBankAccount.changeset}
     | {:error, {:bank_account, :belongs_to_entity}}
   @doc """
   Updates the bank account entry after a login. This step is the one that adds
   the most information on the entry, namely, the known account balance. It also
-  updates the `last_login_date` and `password`.
+  updates the `last_login_date` and `password` or `token`, depending on the
+  login method.
 
   If the requested entry does not exist, it is created.
   """
-  def update_bank_login(entity, account) do
+  def update_bank_login(entity, account, token_id) do
     if not object_belongs_to_entity?(entity, account) do
       entry = fetch_or_create_bank_entry(entity, account)
 
-      DatabaseInternal.update_bank_login(entry, account)
+      DatabaseInternal.update_bank_login(entry, account, token_id)
     else
       {:error, {:bank_account, :belongs_to_entity}}
     end

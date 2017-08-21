@@ -94,13 +94,27 @@ defmodule Helix.Entity.Action.DatabaseTest do
   end
 
   describe "update_bank_login/2" do
-    test "entry is updated" do
+    test "entry is updated (when login uses password)" do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
 
       assert {:ok, result} =
-        DatabaseAction.update_bank_login(entry.entity_id, acc)
+        DatabaseAction.update_bank_login(entry.entity_id, acc, nil)
 
       assert result.password == acc.password
+      assert result.known_balance == acc.balance
+      assert result.last_update > entry.last_update
+      assert result.last_login_date
+    end
+
+    test "entry is updated (when login uses token)" do
+      {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
+      token_id = Ecto.UUID.generate()
+
+      assert {:ok, result} =
+        DatabaseAction.update_bank_login(entry.entity_id, acc, token_id)
+
+      refute result.password
+      assert result.token == token_id
       assert result.known_balance == acc.balance
       assert result.last_update > entry.last_update
       assert result.last_login_date
@@ -112,7 +126,7 @@ defmodule Helix.Entity.Action.DatabaseTest do
       refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
       assert {:ok, _} =
-        DatabaseAction.update_bank_login(fake_entry.entity_id, acc)
+        DatabaseAction.update_bank_login(fake_entry.entity_id, acc, nil)
 
       assert DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
     end
@@ -122,7 +136,7 @@ defmodule Helix.Entity.Action.DatabaseTest do
       {acc, _} = BankSetup.account([owner_id: entity.entity_id])
 
       assert {:error, reason} =
-        DatabaseAction.update_bank_login(entity.entity_id, acc)
+        DatabaseAction.update_bank_login(entity.entity_id, acc, nil)
       assert reason == {:bank_account, :belongs_to_entity}
 
       refute DatabaseQuery.fetch_bank_account(entity.entity_id, acc)

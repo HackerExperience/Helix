@@ -237,6 +237,31 @@ defmodule Helix.Universe.Bank.Action.BankTest do
     end
   end
 
+  describe "login_token/3" do
+    test "login is successful when token is valid and matches the account" do
+      {token, %{acc: acc}} = BankSetup.token()
+      entity_id = Entity.ID.generate()
+
+      {:ok, _, [e]} = BankAction.login_token(acc, token.token_id, entity_id)
+      assert e == EventSetup.bank_account_login(acc, entity_id, token.token_id)
+    end
+
+    test "login fails when given token belongs to a different account" do
+      {acc, _} = BankSetup.account()
+      {token, _} = BankSetup.token()
+      entity_id = Entity.ID.generate()
+
+      refute BankAction.login_token(acc, token.token_id, entity_id)
+    end
+
+    test "login fails when given token is expired" do
+      {token, %{acc: acc}} = BankSetup.token([expired: true])
+      entity_id = Entity.ID.generate()
+
+      refute BankAction.login_token(acc, token.token_id, entity_id)
+    end
+  end
+
   describe "logout/2" do
     test "`bank_login` connection is successfully closed" do
       {gateway, _} = ServerSetup.server()
