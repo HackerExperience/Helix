@@ -1,6 +1,7 @@
 defmodule Helix.Universe.Bank.Query.Bank do
 
   alias Helix.Account.Model.Account
+  alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
@@ -14,7 +15,7 @@ defmodule Helix.Universe.Bank.Query.Bank do
   @doc """
   Fetches a bank account.
   """
-  defdelegate fetch_account(atm, account_number),
+  defdelegate fetch_account(atm_id, account_number),
     to: BankAccountInternal,
     as: :fetch
 
@@ -30,6 +31,13 @@ defmodule Helix.Universe.Bank.Query.Bank do
   defdelegate fetch_token(token_id),
     to: BankTokenInternal,
     as: :fetch
+
+  def fetch_account_from_connection(connection) do
+    atm_id = Server.ID.cast!(connection.meta["atm_id"])
+    account_number = connection.meta["account_number"]
+
+    fetch_account(atm_id, account_number)
+  end
 
   @spec get_account_balance(BankAccount.t) ::
     non_neg_integer

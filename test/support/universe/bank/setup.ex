@@ -3,6 +3,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
+  alias Helix.Universe.Bank.Action.Flow.BankAccount, as: BankAccountFlow
   alias Helix.Universe.Bank.Action.Flow.BankTransfer, as: BankTransferFlow
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Model.BankAccount
@@ -12,12 +13,8 @@ defmodule Helix.Test.Universe.Bank.Setup do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Account.Setup, as: AccountSetup
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
-
-  def account!(opts \\ []) do
-    {account, _} = account(opts)
-    account
-  end
 
   @doc """
   See doc on `fake_account/1`
@@ -27,6 +24,11 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {:ok, inserted} = UniverseRepo.insert(account)
 
     {inserted, related}
+  end
+
+  def account!(opts \\ []) do
+    {account, _} = account(opts)
+    account
   end
 
   @doc """
@@ -214,5 +216,25 @@ defmodule Helix.Test.Universe.Bank.Setup do
 
     {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
     {process, %{acc1: acc1, acc2: acc2, player: player}}
+  end
+
+  @doc """
+  Related data: BankAccount.t, Server.t, Entity.t
+  """
+  def login_flow do
+    {acc, _} = account()
+    {server, %{entity: entity}} = ServerSetup.server()
+
+    # Login with the right password
+    {:ok, connection} =
+      BankAccountFlow.login_password(
+        acc.atm_id,
+        acc.account_number,
+        server.server_id,
+        [],
+        acc.password
+      )
+
+    {connection, %{acc: acc, server: server, entity: entity}}
   end
 end

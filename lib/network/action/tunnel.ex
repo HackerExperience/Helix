@@ -22,7 +22,14 @@ defmodule Helix.Network.Action.Tunnel do
     | {:error, {:destination_id, :disconnected}}
     | {:error, {:links_id, :disconnected}}
 
-  @spec connect(Network.t, Server.id, Server.id, [Server.id], term) ::
+  @spec connect(
+    Network.t,
+    Server.id,
+    Server.id,
+    [Server.id],
+    Connection.type,
+    Connection.meta)
+  ::
     {:ok, Connection.t, [ConnectionStartedEvent.t]}
     | create_tunnel_errors
   @doc """
@@ -33,7 +40,9 @@ defmodule Helix.Network.Action.Tunnel do
   If there is already a tunnel with this configuration, it'll be reused,
   otherwise a new Tunnel will be created
   """
-  def connect(network, gateway, destination, bounces, connection_type) do
+  def connect(
+    network, gateway, destination, bounces, connection_type, meta \\ nil)
+  do
     tunnel = TunnelInternal.get_tunnel(network, gateway, destination, bounces)
     context = if tunnel do
       {:ok, tunnel}
@@ -42,7 +51,7 @@ defmodule Helix.Network.Action.Tunnel do
     end
 
     with {:ok, tunnel} <- context do
-      TunnelInternal.start_connection(tunnel, connection_type)
+      TunnelInternal.start_connection(tunnel, connection_type, meta)
     end
   end
 
@@ -78,10 +87,10 @@ defmodule Helix.Network.Action.Tunnel do
   defdelegate delete(tunnel),
     to: TunnelInternal
 
-  @spec start_connection(Tunnel.t, term) ::
+  @spec start_connection(Tunnel.t, Connection.type, Connection.meta) ::
     {:ok, Connection.t, [ConnectionStartedEvent.t]}
     | {:error, Ecto.Changeset.t}
-  defdelegate start_connection(tunnel, connection_type),
+  defdelegate start_connection(tunnel, connection_type, meta \\ nil),
     to: TunnelInternal
 
   @spec close_connection(Connection.t, Connection.close_reasons) ::

@@ -5,33 +5,50 @@ defmodule Helix.Software.Event.Cracker do
 
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Model.BankToken
-  alias Helix.Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
+
+  alias Helix.Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
   alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
 
   @spec overflow_conclusion(OverflowConclusionEvent.t) ::
     term
   @doc """
-  Top-level handler of buffer overflow process conclusion.
+  Top-level handler of buffer overflow process conclusion. An overflow attack
+  may target a process or a connection.
 
-  According to the process type, it will route to internal methods who are
-  specialized on applying the overflow attack into that process/connection.
+  According to the process or connection type, it will route to internal methods
+  who are specialized on applying the overflow attack into that specific
+  process/connection.
 
   Note that this function only handles the process *conclusion*. The actual
   notification of the overflow result to the user is done on more specific
-  events, e.g. the `BankAccountPasswordRevealedEvent`.
+  events, e.g. the `BankTokenAcquiredEvent`.
   """
-  def overflow_conclusion(event = %OverflowConclusionEvent{}) do
+  def overflow_conclusion(
+    event = %OverflowConclusionEvent{target_connection_id: nil})
+  do
     process = ProcessQuery.fetch(event.target_process_id)
 
     case process.process_type do
       "wire_transfer" ->
         overflow_of_wire_transfer(process, event)
+    end
+  end
+
+  def overflow_conclusion(
+    event = %OverflowConclusionEvent{target_process_id: nil})
+  do
+    connection = TunnelQuery.fetch_connection(event.target_connection_id)
+
+    case connection.connection_type do
+      :bank_login ->
+        overflow_of_bank_login(connection, event)
     end
   end
 
@@ -45,6 +62,8 @@ defmodule Helix.Software.Event.Cracker do
   This function handles the conclusion of the event. Actual notification of the
   result (i.e. which token was obtained through the attack) is managed by other
   event handlers.
+
+  Emits: BankTokenAcquiredEvent.t
   """
   defp overflow_of_wire_transfer(process, event) do
     transfer_id = process.process_data.transfer_id
@@ -58,6 +77,32 @@ defmodule Helix.Software.Event.Cracker do
         attacker_id = %{} <- EntityQuery.fetch_by_server(event.gateway_id),
         {:ok, token, events} <-
            BankAction.generate_token(account, connection_id, attacker_id),
+        on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, token}
+      end
+    end
+  end
+
+  docp """
+  Overflow attack on bank login connection generates an access token for the
+  account. Once the token is obtained, an event is emitted to notify the client.
+  This function handles the conclusion of the event. Actual notification of the
+  result (i.e. which token was obtained through the attack) is managed by other
+  event handlers.
+
+  Emits: BankTokenAcquiredEvent.t
+  """
+  defp overflow_of_bank_login(connection, event) do
+    connection_id = connection.connection_id
+
+    flowing do
+      with \
+        account = %{} <-
+          BankQuery.fetch_account_from_connection(connection),
+        attacker_id = %{} <- EntityQuery.fetch_by_server(event.gateway_id),
+        {:ok, token, events} <-
+          BankAction.generate_token(account, connection_id, attacker_id),
         on_success(fn -> Event.emit(events) end)
       do
         {:ok, token}
