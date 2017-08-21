@@ -114,14 +114,24 @@ defmodule Helix.Entity.Internal.Database do
   def update_bank_token(entry, token),
     do: update_bank_account(entry, %{token: token})
 
-  @spec update_bank_login(DatabaseBankAccount.t, BankAccount.t) ::
+  @spec update_bank_login(
+    DatabaseBankAccount.t, BankAccount.t, BankToken.id | nil)
+  ::
     entry_bank_account_repo_return
-  def update_bank_login(entry, account) do
-    params = %{
-      password: account.password,
+  def update_bank_login(entry, account, token_id) do
+    account_info = %{
       known_balance: account.balance,
       last_login_date: DateTime.utc_now()
     }
+
+    login_info =
+      if token_id do
+        %{token: token_id}
+      else
+        %{password: account.password}
+      end
+
+    params = Map.merge(account_info, login_info)
 
     update_bank_account(entry, params)
   end

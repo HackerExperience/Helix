@@ -55,6 +55,13 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
     end
   end
 
+  @doc """
+  Logs into a bank account using a password. If the given password matches the
+  current account password, the login is successful, in which case a BankLogin
+  connection is created.
+
+  Emits: BankAccountLoginEvent, ConnectionStartedEvent
+  """
   def login_password(atm_id, account_number, gateway_id, bounces, password) do
     acc = BankQuery.fetch_account(atm_id, account_number)
     entity = EntityQuery.fetch_by_server(gateway_id)
@@ -77,6 +84,41 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
         {:ok, connection, events} <- start_connection.(),
         on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, connection}
+      end
+    end
+  end
+
+  @doc """
+  Logs into a bank account using a token. If the given token is valid (not
+  expired) and belongs to the given account, the login is successful, in which
+  case a BankLogin connection is created.
+
+  Emits: BankAccountLoginEvent, ConnectionStartedEvent
+  """
+  def login_token(atm_id, account_number, gateway_id, bounces, token) do
+    acc = BankQuery.fetch_account(atm_id, account_number)
+    entity = EntityQuery.fetch_by_server(gateway_id)
+
+    start_connection = fn ->
+      TunnelAction.connect(
+        NetworkQuery.internet(),
+        gateway_id,
+        atm_id,
+        bounces,
+        :bank_login
+      )
+    end
+
+    flowing do
+      with \
+        true <- not is_nil(acc),
+        {:ok, _, events} <- BankAction.login_token(acc, token, entity),
+          on_success(fn -> Event.emit(events) end),
+
+        {:ok, connection, events} <- start_connection.(),
+          on_success(fn -> Event.emit(events) end)
       do
         {:ok, connection}
       end

@@ -75,10 +75,11 @@ defmodule Helix.Test.Event.Setup do
   @doc """
   Accepts: (BankAccount.t, Entity.id)
   """
-  def bank_account_login(account, entity_id) do
+  def bank_account_login(account, entity_id, token_id \\ nil) do
     %BankAccountLoginEvent{
       entity_id: entity_id,
       account: account,
+      token_id: token_id
     }
   end
 end
