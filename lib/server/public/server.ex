@@ -3,15 +3,16 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Event
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Public.Log, as: LogPublic
-  alias Helix.Process.Public.Process, as: ProcessPublic
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.File
-  alias Helix.Software.Public.File, as: FilePublic
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
+  alias Helix.Network.Public.Network, as: NetworkPublic
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Process.Public.Process, as: ProcessPublic
+  alias Helix.Software.Model.File
+  alias Helix.Software.Public.File, as: FilePublic
+  alias Helix.Server.Model.Server
 
   @spec connect_to_server(Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
@@ -66,4 +67,8 @@ defmodule Helix.Server.Public.Server do
   defdelegate process_index(server_id, entity_id),
     to: ProcessPublic,
     as: :index
+
+  defdelegate network_browse(network_id, address, origin_id),
+    to: NetworkPublic,
+    as: :browse
 end

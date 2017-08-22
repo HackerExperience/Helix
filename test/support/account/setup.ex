@@ -8,6 +8,7 @@ defmodule Helix.Test.Account.Setup do
 
   @doc """
   - with_server: whether the created account should have a server linked to it.
+    Defaults to false.
 
   Related data: Server.t (when `with_server` is true)
   """
@@ -31,5 +32,16 @@ defmodule Helix.Test.Account.Setup do
 
       {account, %{}}
     end
+  end
+
+  alias Helix.Account.Action.Session, as: SessionAction
+  @doc """
+  - account: Which account to generate a token to
+  """
+  def token(opts \\ []) do
+    account = Access.get(opts, :account, account!())
+    {:ok, token} = SessionAction.generate_token(account)
+
+    {token, %{account: account}}
   end
 end

@@ -23,7 +23,7 @@ defmodule Helix.Server.Websocket.View.ServerChannel do
 
   @spec error(String.t) ::
     %{data: %{message: String.t}, status: :error}
-  defp error(message),
+  def error(message),
     do: %{data: %{message: message}, status: :error}
 
   @spec internal_error(String.t) ::

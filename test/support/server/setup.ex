@@ -11,7 +11,7 @@ defmodule Helix.Test.Server.Setup do
 
   @doc """
   - entity_id: Specify the entity that owns such server (TODO). Defaults to
-  generating a random entity.
+    generating a random entity.
 
   Related data: Entity.t
   """
