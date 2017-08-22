@@ -11,9 +11,10 @@ defmodule Helix.Entity.Model.Entity do
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Model.EntityType
 
+  @type type :: :account | :npc | :clan
   @type t :: %__MODULE__{
     entity_id: id,
-    entity_type: Constant.t,
+    entity_type: type,
     components: [EntityComponent.t] | term,
     servers: [EntityServer.t] | term,
     inserted_at: NaiveDateTime.t,
@@ -22,7 +23,7 @@ defmodule Helix.Entity.Model.Entity do
 
   @type creation_params :: %{
     entity_id: term,
-    entity_type: Constant.t
+    entity_type: type
   }
 
   @creation_fields ~w/entity_type entity_id/a

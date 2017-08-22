@@ -8,7 +8,7 @@ defmodule Helix.Network.Query.Web do
   alias Helix.Network.Query.DNS, as: DNSQuery
 
   @spec browse(Network.idt, String.t | IPv4.t, IPv4.t) ::
-    {:ok, {:npc | :vpc, term}}
+    {:ok, {:npc | :vpc, term}, IPv4.t}
     | {:error, {:ip, :notfound}}
     | {:error, {:domain, :notfound}}
   def browse(network, address, origin) do
@@ -25,7 +25,7 @@ defmodule Helix.Network.Query.Web do
   end
 
   @spec browse_ip(Network.idt, IPv4.t) ::
-    {:ok, {:npc | :vpc, term}}
+    {:ok, {:npc | :account | :clan, term}, IPv4.t}
     | {:error, {:ip, :notfound}}
   defp browse_ip(network, ip) do
     with \
@@ -34,7 +34,7 @@ defmodule Helix.Network.Query.Web do
       entity = %{} <- EntityQuery.fetch_by_server(server.server_id),
       {:ok, content} <- serve(network, ip)
     do
-      {:ok, {entity.entity_type, content}}
+      {:ok, {entity.entity_type, content}, ip}
     else
       _ ->
         {:error, {:ip, :notfound}}

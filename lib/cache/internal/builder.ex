@@ -183,8 +183,8 @@ defmodule Helix.Cache.Internal.Builder do
         NPC.ID.cast!(to_string(entity.entity_id))
         |> NPCInternal.fetch()
         |> NPCWebInternal.generate_content(network_id, ip)
-      _ ->
-        %{to: "do"}
+      :account ->
+        %{}
     end
   end
 

@@ -93,11 +93,17 @@ defmodule Helix.Test.Network.Setup do
   - tunnel_id: set the tunnel_id that connection belongs to.
   - type: set the connection type. Defaults to :ssh
   - meta: set the connection meta map. Defaults to nil.
+  - tunnel_opts: Instructions for tunnel creation. Must be a list.
 
   Related: Tunnel.t
   """
   def fake_connection(opts \\ []) do
-    tunnel = create_or_fetch_tunnel(opts[:tunnel_id])
+    tunnel =
+      if opts[:tunnel_opts] do
+        tunnel(opts[:tunnel_opts])
+      else
+        create_or_fetch_tunnel(opts[:tunnel_id])
+      end
 
     connection_id = Access.get(opts, :connection_id, Connection.ID.generate())
     type = Access.get(opts, :type, :ssh)
