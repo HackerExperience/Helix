@@ -77,7 +77,8 @@ defmodule Helix.Test.Universe.Bank.Setup do
         bank_id: bank.id,
         atm_id: atm_id,
         password: "secret",
-        owner_id: owner_id
+        owner_id: owner_id,
+        creation_date: DateTime.utc_now()
       }
 
     {acc, %{}}
