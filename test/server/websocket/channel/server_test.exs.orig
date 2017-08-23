@@ -17,6 +17,13 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
   @moduletag :driver
 
+  setup_all do
+    on_exit fn ->
+      # Sleep for events
+      :timer.sleep(100)
+    end
+  end
+
   test "can connect to owned server with simple join message" do
     {socket, %{server: gateway, account: account}} =
       ChannelSetup.create_socket()
@@ -79,8 +86,13 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert_id new_socket.assigns.servers.gateway_id, gateway.server_id
     assert new_socket.joined
     assert new_socket.topic == topic
+<<<<<<< HEAD
+=======
 
+    # This might emit an event...
+    :timer.sleep(250)
     CacheHelper.sync_test()
+>>>>>>> Public API for browse.network
   end
 
   @tag :slow
@@ -108,8 +120,13 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert is_map(file_map)
     assert Enum.all?(Map.keys(file_map), &is_binary/1)
     assert expected_file_ids == returned_file_ids
+<<<<<<< HEAD
+=======
 
+    # This might emit an event...
+    :timer.sleep(250)
     CacheHelper.sync_test()
+>>>>>>> Public API for browse.network
   end
 
   describe "process.index" do
@@ -148,8 +165,13 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
       # Ensure all logs have been returned
       assert logs == LogHelper.public_view([log3, log2, log1])
+<<<<<<< HEAD
+=======
 
+      # This might emit an event...
+      :timer.sleep(250)
       CacheHelper.sync_test()
+>>>>>>> Public API for browse.network
     end
   end
 

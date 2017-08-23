@@ -13,7 +13,7 @@ defmodule Helix.Test.Log.Setup do
   See doc on `fake_log/1`
   """
   def log(opts \\ []) do
-    {log, related = %{params: params}} = fake_log(opts)
+    {_, related = %{params: params}} = fake_log(opts)
     {:ok, inserted} =
       LogInternal.create(
         params.server_id,

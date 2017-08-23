@@ -5,7 +5,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Websocket.Socket
 
   alias Helix.Test.Account.Setup, as: AccountSetup
-  alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
@@ -39,17 +39,18 @@ defmodule Helix.Test.Channel.Setup do
   - own_server: Whether joining player's own server. No destination is created.
   - network_id: Specify network id. Not used if `own_server`
   - bounces: List of bounces between each server. Not used if `own_server`.
-    Expected type: [Server.id]
+    Expected type: [Server.id] TODO
   - gateway_files: Whether to generate random files on gateway. Defaults to
-    false. TODO
+    false.
   - destination_files: Whether to generate random files on destination. Defaults
-    to false. TODO
+    to false.
 
   Related:
     Account.t, gateway :: Server.t, destination :: Server.t | nil, \
     destination_files :: [SoftwareSetup.file] | nil,
     gateway_files :: [SoftwareSetup.file] | nil,
   """
+  def join_server(opts \\ [])
   def join_server(opts = [own_server: true]) do
     {socket, %{account: account, server: gateway}} = create_socket()
 
@@ -70,10 +71,12 @@ defmodule Helix.Test.Channel.Setup do
       gateway_files: gateway_files
     }
 
+    CacheHelper.sync_test()
+
     {socket, related}
   end
 
-  def join_server(opts \\ []) do
+  def join_server(opts) do
     {socket, %{account: account, server: gateway}} = create_socket()
 
     {destination, _} = ServerSetup.server()
@@ -82,8 +85,7 @@ defmodule Helix.Test.Channel.Setup do
     destination_id = to_string(destination.server_id)
     network_id = Access.get(opts, :network_id, "::")
 
-    bounces = Access.get(opts, :bounces, [])
-    bounces_string = Enum.map(bounces, fn server_id -> to_string(server_id) end)
+    # bounces = Access.get(opts, :bounces, [])
 
     topic = "server:" <> destination_id
     join_params = %{
@@ -106,6 +108,8 @@ defmodule Helix.Test.Channel.Setup do
       destination_files: destination_files,
       gateway_files: gateway_files
     }
+
+    CacheHelper.sync_test()
 
     {socket, related}
   end

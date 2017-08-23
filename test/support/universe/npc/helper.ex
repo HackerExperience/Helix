@@ -55,12 +55,16 @@ defmodule Helix.Test.Universe.NPC.Helper do
 
   def random do
     # Guaranteed to be random
-    Seed.search_by_type(:download_center)
+    npc = Seed.search_by_type(:download_center)
+    server = List.first(npc.servers)
+
+    {npc, server.static_ip}
   end
 
   def download_center do
     dc = Seed.search_by_type(:download_center)
     server = List.first(dc.servers)
+
     {dc, server.static_ip}
   end
 

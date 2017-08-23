@@ -5,6 +5,7 @@ defmodule Helix.Test.Software.Setup do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
 
@@ -31,8 +32,13 @@ defmodule Helix.Test.Software.Setup do
   See doc on `fake_file/1`
   """
   def file(opts \\ []) do
-    {file, related = %{params: params}} = fake_file(opts)
+    {_, related = %{params: params}} = fake_file(opts)
     {:ok, inserted} = FileInternal.create(params)
+
+    # Sync here because internally we used a CacheQuery. If we don't, any tests
+    # calling `SoftwareSetup.[random_]file` would have to sync, and in some
+    # cases it wouldn't be obvious why they are required to sync
+    CacheHelper.sync_test()
 
     {inserted, related}
   end

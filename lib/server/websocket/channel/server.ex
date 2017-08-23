@@ -7,6 +7,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Model.Server
   alias Helix.Server.Public.Server, as: ServerPublic
@@ -26,7 +29,10 @@ defmodule Helix.Server.Websocket.Channel.Server do
       {:ok, gateway_id} <- Server.ID.cast(gateway_id),
       :ok <- ChannelHenforcer.validate_gateway(account, gateway_id)
     do
-      servers = %{gateway_id: gateway_id, destination_id: gateway_id}
+      servers = %{
+        gateway_id: gateway_id,
+        destination_id: gateway_id
+      }
 
       socket =
         socket
@@ -55,6 +61,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
       account = socket.assigns.account,
       {:ok, gateway_id} <- Server.ID.cast(gateway_id),
       {:ok, destination_id} <- Server.ID.cast(destination_id),
+      {:ok, network_id} <- Network.ID.cast(network_id),
       :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
       :ok <- ChannelHenforcer.validate_server(destination_id, password),
       {:ok, tunnel} <- ServerPublic.connect_to_server(
@@ -62,7 +69,10 @@ defmodule Helix.Server.Websocket.Channel.Server do
         destination_id,
         [])
     do
-      servers = %{gateway_id: gateway_id, destination_id: destination_id}
+      servers = %{
+        gateway_id: gateway_id,
+        destination_id: destination_id
+      }
 
       socket =
         socket
@@ -131,18 +141,55 @@ defmodule Helix.Server.Websocket.Channel.Server do
     {:reply, {:ok, return}, socket}
   end
 
-  def handle_in("network.browse", %{address: address}, socket) do
-    network_id = socket.assigns.network_id
-    gateway_id = socket.assigns.servers.gateway_id
+  @doc """
+  Browses to the specified address, which may be an IPv4 or domain name.
 
-    case ServerPublic.network_browse(network_id, address, gateway_id) do
-      {:ok, return} ->
-        data = %{data: return}
-        {:reply, {:ok, data}, socket}
+  Params:
+  - *address: IP or website the user is trying to browse to.
+  - origin: Force the request to originate from the given ID. By default, the
+    destination_id is always used. This is useful in the scenario where user is
+    remotely logged into someone and wants to browse to a website using his own
+    gateway server as origin. Origin must be one of (gateway_id, destination_id)
+
+  In case the address could not be found, returns `web_not_found` error.
+  """
+  def handle_in("network.browse", params = %{"address" => address}, socket) do
+    servers = socket.assigns.servers
+
+    network_id =
+      if socket.assigns.access_type == :local do
+        NetworkQuery.internet().network_id
+      else
+        socket.assigns.network_id
+      end
+
+    origin_id =
+      if Map.has_key?(params, "origin") do
+        Server.ID.cast!(params["origin"])
+      else
+        socket.assigns.servers.destination_id
+      end
+
+    with \
+      true <- NetworkHenforcer.valid_origin?(origin_id, servers) || :badorigin,
+      {:ok, web} <- ServerPublic.network_browse(network_id, address, origin_id)
+    do
+      reply_ok(web, socket)
+    else
+      :badorigin ->
+        reply_error("bad_origin", socket)
       {:error, %{message: msg}} ->
-        {:reply, {:error, ChannelView.error(msg)}, socket}
+        reply_error(msg, socket)
     end
   end
+
+  defp reply_error(msg, socket),
+    do: {:reply, {:error, ChannelView.error(msg)}, socket}
+
+  defp reply_ok(data = %{data: _}, socket),
+    do: {:reply, {:ok, data}, socket}
+  defp reply_ok(data, socket),
+    do: reply_ok(%{data: data}, socket)
 
   defp notify(server_id, :processes_changed, _params) do
     # TODO: Use a view to always follow an standardized format

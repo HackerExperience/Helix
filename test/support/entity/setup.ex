@@ -39,7 +39,6 @@ defmodule Helix.Test.Entity.Setup do
     |> EntityQuery.fetch()
   end
 
-  def id do
-    Entity.ID.generate!()
-  end
+  def id,
+    do: Entity.ID.generate()
 end
