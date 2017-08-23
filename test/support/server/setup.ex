@@ -45,7 +45,7 @@ defmodule Helix.Test.Server.Setup do
   - password: set the password.
   """
   def fake_server(opts \\ []) do
-    server_id = Access.get(opts, :server_id, Server.ID.generate())
+    server_id = Access.get(opts, :server_id, id())
     motherboard_id = Access.get(opts, :mobo_id, Component.ID.generate())
     password = Access.get(opts, :password, Password.generate(:server))
 
@@ -67,4 +67,11 @@ defmodule Helix.Test.Server.Setup do
   def create_or_fetch(server_id) do
     ServerQuery.fetch(server_id)
   end
+
+  @doc """
+  Generates a random Server ID. It's the same as Server.ID.generate(), but may
+  be helpful/more readable/more portable for some tests/contexts.
+  """
+  def id,
+    do: Server.ID.generate()
 end

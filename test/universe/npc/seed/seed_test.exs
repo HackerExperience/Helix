@@ -27,7 +27,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
     test "NPCHelper prunes all data" do
       NPCHelper.empty_database()
 
-      npc = NPCHelper.random()
+      {npc, _} = NPCHelper.random()
       server = List.first(npc.servers)
       bank = NPCHelper.bank()
 

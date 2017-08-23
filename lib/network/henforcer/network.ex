@@ -36,4 +36,14 @@ defmodule Helix.Network.Henforcer.Network do
 
     MapSet.member?(connection_types, :ssh)
   end
+
+  @type servers :: %{destination_id: Server.id, gateway_id: Server.id}
+  @spec valid_origin?(Server.idtb, servers) ::
+    boolean
+  @doc """
+  If the user requests to use a custom `origin` header for DNS resolution, make
+  sure it is either the `gateway_id` or the `destination_id`
+  """
+  def valid_origin?(origin, servers),
+    do: origin == servers.gateway_id or origin == servers.destination_id
 end

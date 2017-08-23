@@ -1,5 +1,7 @@
 defmodule Helix.Network.Public.Network do
 
+  import HELL.MacroHelpers
+
   alias HELL.IPv4
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Database, as: DatabaseQuery
@@ -8,9 +10,15 @@ defmodule Helix.Network.Public.Network do
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Web, as: WebQuery
 
-  @spec browse(Network.id, String.t | IPv4.t, Server.idt) ::
+  @spec browse(Network.idt, String.t | IPv4.t, Server.idt) ::
     {:ok, term}
     | {:error, %{message: String.t}}
+  @doc """
+  Browses to an address (website or IP).  Regardless of the address type, the
+  network ID must be specified. The ID of the server making the request must
+  also be specified, since it may be relevant if a DNS Anycast resolution takes
+  place.
+  """
   def browse(network_id, address, origin_id) do
     origin_ip = get_origin_ip(network_id, origin_id)
 
@@ -36,6 +44,12 @@ defmodule Helix.Network.Public.Network do
 
   @spec get_origin_ip(Network.id, Server.idt) ::
     IPv4.t
+  docp """
+  Internal helper to quickly figure out what is the IP address of the given
+  server.
+  """
+  defp get_origin_ip(network = %Network{}, origin_id),
+    do: get_origin_ip(network.network_id, origin_id)
   defp get_origin_ip(network_id, origin_id) do
     {:ok, origin_nips} = CacheQuery.from_server_get_nips(origin_id)
 

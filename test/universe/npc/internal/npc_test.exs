@@ -17,7 +17,7 @@ defmodule Helix.Universe.NPC.Internal.NPCTest do
 
   describe "fetching" do
     test "success by id" do
-      npc = NPCHelper.random()
+      {npc, _} = NPCHelper.random()
       assert %NPC{} = NPCInternal.fetch(npc.id)
     end
 
@@ -27,11 +27,11 @@ defmodule Helix.Universe.NPC.Internal.NPCTest do
   end
 
   test "delete/1" do
-    npc_id = NPCHelper.random().id
-    npc = NPCInternal.fetch(npc_id)
+    {npc, _} = NPCHelper.random()
+    npc_from_db = NPCInternal.fetch(npc.id)
 
     assert npc
-    NPCInternal.delete(npc)
-    refute NPCInternal.fetch(npc_id)
+    NPCInternal.delete(npc_from_db)
+    refute NPCInternal.fetch(npc.id)
   end
 end
