@@ -4,6 +4,31 @@ defmodule Helix.Test.Software.Helper do
 
   alias HELL.TestHelper.Random
 
+  @doc """
+  Generates the expected module for the given type.
+
+  Example of expected input:
+    (:cracker, [:bruteforce, :buffer_overflow])
+  """
+  def generate_module(type, opts) do
+    modules = SoftwareType.possible_types()[type].modules
+
+    Enum.reduce(modules, %{}, fn (module, acc) ->
+      Map.put(acc, module, Map.get(opts, module))
+    end)
+  end
+
+  @doc """
+  Returns modules with random versions for the given file.
+  """
+  def get_modules(type) do
+    modules = SoftwareType.possible_types()[type].modules
+
+    Enum.reduce(modules, %{}, fn (module, acc) ->
+      Map.put(acc, module, random_version())
+    end)
+  end
+
   def random_file_name do
     Burette.Color.name()
   end
@@ -18,4 +43,7 @@ defmodule Helix.Test.Software.Helper do
     {software_type, _} = Enum.random(SoftwareType.possible_types())
     software_type
   end
+
+  def random_version,
+    do: 10
 end
