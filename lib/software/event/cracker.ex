@@ -13,7 +13,7 @@ defmodule Helix.Software.Event.Cracker do
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
-  alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
 
   @spec overflow_conclusion(OverflowConclusionEvent.t) ::

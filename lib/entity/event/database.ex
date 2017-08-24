@@ -3,14 +3,15 @@ defmodule Helix.Entity.Event.Database do
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
   alias Helix.Entity.Action.Database, as: DatabaseAction
 
-  alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
+  alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
+    as: CrackerBruteforceConclusionEvent
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
     as: BankAccountLoginEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
 
-  def cracker_conclusion(_event = %ProcessConclusionEvent{}) do
+  def cracker_conclusion(_event = %CrackerBruteforceConclusionEvent{}) do
     # entity = EntityQuery.fetch(event.entity_id)
     # server = ServerQuery.fetch(event.server_id)
     # server_ip = ServerQuery.get_ip(event.server_id, event.network_id)

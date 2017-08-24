@@ -62,11 +62,11 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
   # Software events
   ##############################################################################
-  event Software.Model.SoftwareType.Cracker.ProcessConclusionEvent,
+  event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
     Entity.Event.Database,
     :cracker_conclusion
 
-  event Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+  event Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     Software.Event.Cracker,
     :overflow_conclusion
 
