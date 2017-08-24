@@ -1,7 +1,5 @@
 defmodule Helix.Software.Internal.Storage do
 
-  import Ecto.Query, only: [join: 5, where: 3]
-
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.Storage
@@ -14,17 +12,18 @@ defmodule Helix.Software.Internal.Storage do
   def fetch(storage_id),
     do: Repo.get(Storage, storage_id)
 
+  # NOTE: This would fail if component has more than one storage. It's OK for
+  # now but you gotta forever live with this comment and the guilty conscience
   @spec fetch_by_hdd(Component.id) ::
     Storage.t
     | nil
   def fetch_by_hdd(hdd_id) do
-    Storage
-    |> join(:inner, [s], sd in StorageDrive, s.storage_id == sd.storage_id)
-    |> where([s, sd], sd.drive_id == ^hdd_id)
+    hdd_id
+    |> Storage.Query.by_hdd()
     |> Repo.one()
   end
 
-  @spec get_drives(Storage.t | Storage.id) ::
+  @spec get_drives(Storage.idt) ::
     [StorageDrive.t]
   def get_drives(storage = %Storage{}) do
     storage

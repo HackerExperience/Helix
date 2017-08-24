@@ -1,7 +1,5 @@
 defmodule Helix.Software.Internal.StorageDrive do
 
-  import Ecto.Query, only: [select: 3]
-
   alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Internal.Storage, as: StorageInternal
@@ -14,13 +12,13 @@ defmodule Helix.Software.Internal.StorageDrive do
   def get_storage_drives(storage) do
     storage
     |> StorageDrive.Query.by_storage()
-    |> select([sd], sd.drive_id)
+    |> StorageDrive.Query.select_drive_id()
     |> Repo.all()
   end
 
   @spec link_drive(Storage.t, Component.idt) ::
     :ok
-    | {:error, reason :: term}
+    | {:error, :internal}
   def link_drive(storage, drive) do
     result =
       %{storage_id: storage.storage_id, drive_id: drive}
