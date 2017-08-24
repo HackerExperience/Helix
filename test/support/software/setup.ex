@@ -34,6 +34,7 @@ defmodule Helix.Test.Software.Setup do
   def file(opts \\ []) do
     {_, related = %{params: params}} = fake_file(opts)
     {:ok, inserted} = FileInternal.create(params)
+    {:ok, inserted} = FileInternal.set_modules(inserted, params.modules)
 
     # Sync here because internally we used a CacheQuery. If we don't, any tests
     # calling `SoftwareSetup.[random_]file` would have to sync, and in some
@@ -53,6 +54,7 @@ defmodule Helix.Test.Software.Setup do
   - size: Set file size
   - type: Set file type. SoftwareType.t
   - path: Set file path
+  - module: Set file module. If set, `type` must also be set.
   - server_id: Server that file belongs to. Will use the first storage it finds.
   - fake_storage: Whether to use a fake storage. Defaults to true. In case a
     real storage is generated, the underlying server will be generated too.
@@ -60,10 +62,15 @@ defmodule Helix.Test.Software.Setup do
   Related: File.creation_params, Storage.id, Server.id
   """
   def fake_file(opts \\ []) do
+    if not is_nil(opts[:modules]) and is_nil(opts[:type]) do
+      raise "You can't specify a module and ask for a random file type."
+    end
+
     size = Access.get(opts, :size, Enum.random(1..1_048_576))
     name = Access.get(opts, :name, SoftwareHelper.random_file_name())
     path = Access.get(opts, :path, SoftwareHelper.random_file_path())
     type = Access.get(opts, :type, SoftwareHelper.random_file_type())
+    modules = Access.get(opts, :modules, SoftwareHelper.get_modules(type))
 
     {storage_id, server_id} =
       cond do
@@ -90,7 +97,8 @@ defmodule Helix.Test.Software.Setup do
       name: name,
       software_type: type,
       path: path,
-      storage_id: storage_id
+      storage_id: storage_id,
+      modules: modules
     }
 
     file = File.create_changeset(params)
