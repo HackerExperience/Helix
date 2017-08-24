@@ -41,7 +41,7 @@ defmodule Helix.Entity.Model.DatabaseServer do
   }
 
   @type server_type ::
-    Constant.t
+    Constant.t  # :npc | :vpc
 
   @creation_fields ~w/entity_id network_id server_ip server_id server_type/a
   @update_fields ~w/alias notes/a

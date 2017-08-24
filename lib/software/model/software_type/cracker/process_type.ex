@@ -1,4 +1,4 @@
-defmodule Helix.Software.Model.SoftwareType.Cracker do
+defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   @moduledoc false
 
   use Ecto.Schema
@@ -14,48 +14,43 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
 
   @type t :: %__MODULE__{
-    entity_id: Entity.id,
+    source_entity_id: Entity.id,
     network_id: Network.id,
     target_server_id: Server.id,
     target_server_ip: IPv4.t,
-    server_type: String.t,
     software_version: pos_integer
   }
 
   @type create_params ::
     %{String.t => term}
     | %{
-      :entity_id => Entity.idtb,
+      :source_entity_id => Entity.idtb,
       :network_id => Network.idtb,
       :target_server_id => Server.idtb,
-      :target_server_ip => IPv4.t,
-      :server_type => String.t
+      :target_server_ip => IPv4.t
     }
 
   @create_params ~w/
-    entity_id
+    source_entity_id
     network_id
     target_server_id
     target_server_ip
-    server_type
   /a
   @required_params ~w/
-    entity_id
+    source_entity_id
     network_id
     target_server_id
     target_server_ip
-    server_type
     software_version
   /a
 
   @primary_key false
   embedded_schema do
-    field :entity_id, Entity.ID
+    field :source_entity_id, Entity.ID
 
     field :network_id, Network.ID
     field :target_server_id, Server.ID
     field :target_server_ip, IPv4
-    field :server_type, :string
 
     field :software_version, :integer
   end
@@ -64,7 +59,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     {:ok, t}
     | {:error, changeset}
   def create(file, params) do
-    version = %{software_version: file.file_modules.cracker_password}
+    version = %{software_version: file.file_modules.buffer_overflow}
 
     %__MODULE__{}
     |> cast(params, @create_params)
@@ -97,7 +92,8 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
   defimpl Helix.Process.Model.Process.ProcessType do
     @moduledoc false
 
-    alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
+    alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
+      as: CrackerBruteforceConclusionEvent
 
     @ram_base 3
 
@@ -120,12 +116,11 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
         |> Ecto.Changeset.change()
         |> Map.put(:action, :delete)
 
-      event = %ProcessConclusionEvent{
-        entity_id: data.entity_id,
+      event = %CrackerBruteforceConclusionEvent{
+        source_entity_id: data.source_entity_id,
         network_id: data.network_id,
-        server_id: data.target_server_id,
-        server_ip: data.target_server_ip,
-        server_type: data.server_type
+        target_server_id: data.target_server_id,
+        target_server_ip: data.target_server_ip
       }
 
       {process, [event]}
@@ -166,7 +161,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
       }
     def render(data, process = %{gateway_id: server}, server, _),
       do: do_render(data, process, :local)
-    def render(data = %{entity_id: entity}, process, _, entity),
+    def render(data = %{source_entity_id: entity}, process, _, entity),
       do: do_render(data, process, :local)
     def render(data, process, _, _),
       do: do_render(data, process, :remote)
@@ -213,7 +208,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
 end
 
 # TODO: Merge
-defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
+defmodule Helix.Software.Model.Software.Cracker.Overflow do
 
   use Ecto.Schema
 
@@ -222,7 +217,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
   alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
 
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
@@ -253,7 +248,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
     {:ok, t}
     | {:error, changeset}
   def create(file, params) do
-    version = %{software_version: file.file_modules.cracker_password}
+    version = %{software_version: file.file_modules.bruteforce}
 
     %__MODULE__{}
     |> cast(params, @create_params)

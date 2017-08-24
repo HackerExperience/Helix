@@ -3,7 +3,7 @@ defmodule Helix.Process.Event.Cracker do
 
   alias Ecto.Changeset
   alias Helix.Server.Model.Server
-  alias Helix.Software.Model.SoftwareType.Cracker
+  alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Action.Process, as: ProcessAction
@@ -32,7 +32,7 @@ defmodule Helix.Process.Event.Cracker do
     [Changeset.t]
   defp processes_changeset(processes, version) do
     Enum.map(processes, fn process ->
-      objective = Cracker.objective(process.process_data, version)
+      objective = CrackerBruteforce.objective(process.process_data, version)
 
       Process.update_changeset(process, %{objective: objective})
     end)

@@ -193,10 +193,10 @@ defmodule Helix.Software.Internal.FileTest do
     file = Factory.insert(:file)
     modules = generate_software_modules(file.software_type)
 
-    {:ok, file_modules} = FileInternal.set_modules(file, modules)
+    {:ok, file2} = FileInternal.set_modules(file, modules)
 
     # created modules from `modules`
-    assert modules == file_modules
+    assert FileInternal.get_modules(file2) == modules
   end
 
   describe "getting modules" do

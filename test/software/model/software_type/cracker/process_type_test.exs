@@ -1,4 +1,4 @@
-defmodule Helix.Software.Model.SoftwareType.CrackerTest do
+defmodule Helix.Software.Model.Software.CrackerTest do
 
   use ExUnit.Case, async: true
 
@@ -8,7 +8,7 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
   alias Helix.Network.Model.Network
   alias Helix.Process.API.View.Process, as: ProcessView
   alias Helix.Server.Model.Server
-  alias Helix.Software.Model.SoftwareType.Cracker
+  alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
 
   alias Helix.Test.Process.Factory, as: ProcessFactory
   alias Helix.Test.Software.Factory, as: SoftwareFactory
@@ -25,19 +25,18 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
 
   describe "create/2" do
     test "returns changeset if invalid" do
-      assert {:error, changeset} = Cracker.create(@cracker_file, %{})
+      assert {:error, changeset} = CrackerBruteforce.create(@cracker_file, %{})
       assert %Changeset{valid?: false} = changeset
     end
 
     @required_fields ~w/
-      entity_id
+      source_entity_id
       network_id
       target_server_id
-      target_server_ip
-      server_type/a
+      target_server_ip/a
     @field_names @required_fields |> Enum.map(&to_string/1) |> Enum.join(", ")
     test "requires #{@field_names}" do
-      assert {:error, changeset} = Cracker.create(@cracker_file, %{})
+      assert {:error, changeset} = CrackerBruteforce.create(@cracker_file, %{})
       errors = Keyword.keys(changeset.errors)
       assert Enum.sort(@required_fields) == Enum.sort(errors)
     end
@@ -45,19 +44,18 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
 
   describe "objective/1" do
     test "returns a higher objective the higher the firewall version is" do
-      cracker = %Cracker{
-        entity_id: Entity.ID.generate(),
+      cracker = %CrackerBruteforce{
+        source_entity_id: Entity.ID.generate(),
         network_id: Network.ID.generate(),
         target_server_id: Server.ID.generate(),
         target_server_ip: IPv4.autogenerate(),
-        software_version: 100,
-        server_type: "vpc"
+        software_version: 100
       }
 
-      obj1 = Cracker.objective(cracker, 100)
-      obj2 = Cracker.objective(cracker, 200)
-      obj3 = Cracker.objective(cracker, 300)
-      obj4 = Cracker.objective(cracker, 900)
+      obj1 = CrackerBruteforce.objective(cracker, 100)
+      obj2 = CrackerBruteforce.objective(cracker, 200)
+      obj3 = CrackerBruteforce.objective(cracker, 300)
+      obj4 = CrackerBruteforce.objective(cracker, 900)
 
       assert obj2 > obj1
       assert obj3 > obj2
@@ -65,19 +63,18 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
     end
 
     test "returns a lower objective the higher the cracker version is" do
-      cracker = %Cracker{
-        entity_id: Entity.ID.generate(),
+      cracker = %CrackerBruteforce{
+        source_entity_id: Entity.ID.generate(),
         network_id: Network.ID.generate(),
         target_server_id: Server.ID.generate(),
         target_server_ip: IPv4.autogenerate(),
-        software_version: 100,
-        server_type: "vpc"
+        software_version: 100
       }
 
-      obj1 = Cracker.objective(cracker, 900)
-      obj2 = Cracker.objective(%{cracker| software_version: 200}, 900)
-      obj3 = Cracker.objective(%{cracker| software_version: 300}, 900)
-      obj4 = Cracker.objective(%{cracker| software_version: 900}, 900)
+      obj1 = CrackerBruteforce.objective(cracker, 900)
+      obj2 = CrackerBruteforce.objective(%{cracker| software_version: 200}, 900)
+      obj3 = CrackerBruteforce.objective(%{cracker| software_version: 300}, 900)
+      obj4 = CrackerBruteforce.objective(%{cracker| software_version: 900}, 900)
 
       assert obj2 < obj1
       assert obj3 < obj2
@@ -153,15 +150,14 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
   defp process_to_render do
     %{
       ProcessFactory.build(:process)|
-        process_data: %Cracker{
-          entity_id: Entity.ID.generate(),
+        process_data: %CrackerBruteforce{
+          source_entity_id: Entity.ID.generate(),
           network_id: Network.ID.generate(),
           target_server_id: Server.ID.generate(),
           target_server_ip: IPv4.autogenerate(),
-          software_version: Enum.random(100..999),
-          server_type: Enum.random(["vpc", "npc"])
+          software_version: Enum.random(100..999)
         },
-        process_type: "cracker"
+        process_type: "cracker_bruteforce"
     }
   end
 end

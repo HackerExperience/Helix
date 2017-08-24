@@ -11,11 +11,13 @@ defmodule Helix.Server.Model.Server do
   alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.ServerType
 
+  @type password :: String.t
+
   @type t :: %__MODULE__{
     server_id: id,
     server_type: Constant.t,
     motherboard_id: Component.id |  nil,
-    password: String.t,
+    password: password,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }

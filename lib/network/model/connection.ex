@@ -12,10 +12,11 @@ defmodule Helix.Network.Model.Connection do
   @type meta :: map | nil
   @type close_reasons :: :normal | :force
   @type type ::
-    :wire_transfer
-    | :bank_login
-    | :ssh
+    :ssh
     | :ftp
+    | :cracker_bruteforce
+    | :bank_login
+    | :wire_transfer
   @type t :: %__MODULE__{
     connection_id: id,
     tunnel_id: Tunnel.id,
