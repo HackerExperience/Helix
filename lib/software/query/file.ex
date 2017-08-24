@@ -2,47 +2,30 @@ defmodule Helix.Software.Query.File do
 
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
-  alias Helix.Software.Query.File.Origin, as: FileQueryOrigin
+  alias Helix.Software.Internal.File, as: FileInternal
 
   @spec fetch(File.id) ::
     File.t
     | nil
   defdelegate fetch(file_id),
-    to: FileQueryOrigin
+    to: FileInternal
 
   @spec storage_contents(Storage.t) ::
-    %{folder :: String.t => [File.t]}
-  defdelegate storage_contents(storage),
-    to: FileQueryOrigin
+    %{folder :: File.path => [File.t]}
+  def storage_contents(storage) do
+    storage
+    |> FileInternal.get_files_on_target_storage()
+    |> Enum.group_by(&(&1.path))
+  end
 
   @spec files_on_storage(Storage.t) ::
     [File.t]
   defdelegate files_on_storage(storage),
-    to: FileQueryOrigin
+    to: FileInternal,
+    as: :get_files_on_target_storage
 
   @spec get_modules(File.t) ::
     File.modules
   defdelegate get_modules(file),
-    to: FileQueryOrigin
-
-  defmodule Origin do
-
-    alias Helix.Software.Internal.File, as: FileInternal
-
-    defdelegate fetch(file_id),
-      to: FileInternal
-
-    def storage_contents(storage) do
-      storage
-      |> FileInternal.get_files_on_target_storage()
-      |> Enum.group_by(&(&1.path))
-    end
-
-    defdelegate files_on_storage(storage),
-      to: FileInternal,
-      as: :get_files_on_target_storage
-
-    defdelegate get_modules(file),
-      to: FileInternal
-  end
+    to: FileInternal
 end

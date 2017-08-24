@@ -5,9 +5,23 @@ defmodule Helix.Software.Model.SoftwareType do
   alias HELL.Constant
 
   @type t :: %__MODULE__{
-    software_type: Constant.t,
+    software_type: type,
     extension: String.t
   }
+
+  @type type ::
+  :cracker
+  | :exploit
+  | :firewall
+  | :hasher
+  | :log_forger
+  | :log_recover
+  | :encryptor
+  | :decryptor
+  | :anymap
+  | :crypto_key
+
+  # TODO: Add module types once file_module refactor is done
 
   @primary_key false
   schema "software_types" do
@@ -26,7 +40,7 @@ defmodule Helix.Software.Model.SoftwareType do
       },
       cracker: %{
         extension: "crc",
-        modules: [:cracker_password]
+        modules: [:bruteforce, :buffer_overflow]
       },
       exploit: %{
         extension: "exp",

@@ -60,5 +60,10 @@ defmodule Helix.Software.Model.StorageDrive do
       Queryable.t
     def by_drive(query \\ StorageDrive, id),
       do: where(query, [sd], sd.drive_id == ^id)
+
+    @spec select_drive_id(Queryable.t) ::
+      Queryable.t
+    def select_drive_id(query),
+      do: select(query, [sd], sd.drive_id)
   end
 end

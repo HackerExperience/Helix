@@ -11,16 +11,14 @@ defmodule Helix.Software.Model.File do
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
 
-  @type module_name :: Constant.t
-  @type modules :: %{optional(module_name) => pos_integer}
-  @type t :: t_of_type(Constant.t)
+  @type t :: t_of_type(SoftwareType.type)
 
   @type t_of_type(type) :: %__MODULE__{
     file_id: id,
-    name: String.t,
-    path: String.t,
-    full_path: String.t,
-    file_size: pos_integer,
+    name: name,
+    path: path,
+    full_path: full_path,
+    file_size: size,
     type: SoftwareType.t,
     software_type: type,
     storage_id: Storage.id,
@@ -29,19 +27,28 @@ defmodule Helix.Software.Model.File do
     updated_at: NaiveDateTime.t
   }
 
+  @type modules :: %{optional(module_name) => module_version}
+  @type module_name :: Constant.t
+  @type module_version :: pos_integer
+  @type path :: String.t
+  @type full_path :: path
+  @type name :: String.t
+  @type size :: pos_integer
+  @type software_type :: SoftwareType.type
+
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{
-    name: String.t,
-    path: String.t,
-    file_size: pos_integer,
-    software_type: Constant.t,
+    name: name,
+    path: path,
+    file_size: size,
+    software_type: SoftwareType.type,
     storage_id: Storage.idtb
   }
 
   @type update_params :: %{
-    optional(:name) => String.t,
-    optional(:path) => String.t,
+    optional(:name) => name,
+    optional(:path) => path,
     optional(:crypto_version) => non_neg_integer | nil
   }
 
@@ -151,6 +158,7 @@ defmodule Helix.Software.Model.File do
     |> prepare_changes(&update_full_path/1)
   end
 
+  # DOCME: What is full_path vs path?
   defp update_full_path(changeset) do
     path = get_field(changeset, :path)
     name = get_field(changeset, :name)

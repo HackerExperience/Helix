@@ -35,16 +35,16 @@ defmodule Helix.Software.Internal.File do
 
   @spec update(File.t, File.update_params) ::
     {:ok, File.t}
-    | {:error, Ecto.Changeset.t}
+    | {:error, File.changeset}
   def update(file, params) do
     file
     |> File.update_changeset(params)
     |> Repo.update()
   end
 
-  @spec copy(File.t, Storage.t, path :: String.t) ::
+  @spec copy(File.t, Storage.t, File.path) ::
     {:ok, File.t}
-    | {:error, Ecto.Changeset.t}
+    | {:error, File.changeset}
   def copy(file, storage, path) do
     # TODO: allow copying to the same folder
     file
@@ -52,18 +52,18 @@ defmodule Helix.Software.Internal.File do
     |> Repo.insert()
   end
 
-  @spec move(File.t, path :: String.t) ::
+  @spec move(File.t, File.path) ::
     {:ok, File.t}
-    | {:error, Ecto.Changeset.t}
+    | {:error, File.changeset}
   def move(file, path) do
     file
     |> File.update_changeset(%{path: path})
     |> Repo.update()
   end
 
-  @spec rename(File.t, String.t) ::
+  @spec rename(File.t, File.name) ::
     {:ok, File.t}
-    | {:error, Ecto.Changeset.t}
+    | {:error, File.changeset}
   def rename(file, file_name) do
     params = %{name: file_name}
     file
@@ -71,9 +71,9 @@ defmodule Helix.Software.Internal.File do
     |> Repo.update()
   end
 
-  @spec encrypt(File.t, pos_integer) ::
-    {:ok, Ecto.Changeset.t}
-    | {:error, Ecto.Changeset.t}
+  @spec encrypt(File.t, File.module_version) ::
+    {:ok, File.changeset}
+    | {:error, File.changeset}
   def encrypt(file = %File{}, version) when version >= 1 do
     file
     |> File.update_changeset(%{crypto_version: version})
@@ -81,8 +81,8 @@ defmodule Helix.Software.Internal.File do
   end
 
   @spec decrypt(File.t) ::
-    {:ok, Ecto.Changeset.t}
-    | {:error, Ecto.Changeset.t}
+    {:ok, File.changeset}
+    | {:error, File.changeset}
   def decrypt(file = %File{}) do
     file
     |> File.update_changeset(%{crypto_version: nil})
@@ -97,26 +97,17 @@ defmodule Helix.Software.Internal.File do
     :ok
   end
 
+  # TODO: Merge create + set_modules. Should be always called together.
   @spec set_modules(File.t, File.modules) ::
-    {:ok, File.modules}
-    | {:error, reason :: term}
+    {:ok, File.t}
+    | {:error, File.changeset}
   def set_modules(file, modules) do
     changeset =
       file
       |> Repo.preload(:file_modules)
       |> File.set_modules(modules)
 
-    case Repo.update(changeset) do
-      {:ok, file} ->
-        modules =
-          file.file_modules
-          |> Enum.map(&{&1.software_module, &1.module_version})
-          |> :maps.from_list()
-
-        {:ok, modules}
-      error ->
-        error
-    end
+    Repo.update(changeset)
   end
 
   @spec get_modules(File.t) ::
@@ -128,4 +119,7 @@ defmodule Helix.Software.Internal.File do
     |> Repo.all()
     |> :maps.from_list()
   end
+
+  def load_modules(file),
+    do: %{file| file_modules: get_modules(file)}
 end
