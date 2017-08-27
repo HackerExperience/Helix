@@ -1,5 +1,7 @@
 defmodule Helix.Process.Action.Process do
 
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.ProcessCreatedEvent
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -43,18 +45,53 @@ defmodule Helix.Process.Action.Process do
     #   should be more transparent
     with \
       %{gateway_id: gateway} <- params, # TODO: Return an error on unmatch
+      {source_entity_id, target_entity_id} <- get_process_entities(params),
+      {gateway_ip, target_ip} <- get_process_ips(params),
       {:ok, pid} = ManagerTOP.prepare_top(gateway),
       {:ok, process} <- ServerTOP.create(pid, params)
     do
       event = %ProcessCreatedEvent{
-        process_id: process.process_id,
+        process: process,
         gateway_id: process.gateway_id,
-        target_id: process.target_server_id
+        target_id: process.target_server_id,
+        gateway_entity_id: source_entity_id,
+        target_entity_id: target_entity_id,
+        gateway_ip: gateway_ip,
+        target_ip: target_ip
       }
 
       {:ok, process, [event]}
     end
   end
+
+  defp get_process_entities(params) do
+    source_entity = EntityQuery.fetch_by_server(params.gateway_id)
+
+    target_entity =
+    if params.gateway_id == params.target_server_id do
+      source_entity
+    else
+      EntityQuery.fetch_by_server(params.target_server_id)
+    end
+
+    {source_entity.entity_id, target_entity.entity_id}
+  end
+
+  defp get_process_ips(params = %{network_id: _}) do
+    gateway_ip = ServerQuery.get_ip(params.gateway_id, params.network_id)
+
+    target_ip =
+    if params.gateway_id == params.target_server_id do
+      gateway_ip
+    else
+      ServerQuery.get_ip(params.target_server_id, params.network_id)
+    end
+
+    {gateway_ip, target_ip}
+  end
+
+  defp get_process_ips(_),
+    do: {nil, nil}
 
   @spec pause(Process.t) ::
     :ok

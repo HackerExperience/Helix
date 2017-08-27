@@ -12,24 +12,24 @@ defmodule Helix.Event.Dispatcher.Notification do
 
   event Process.Model.Process.ProcessCreatedEvent,
     Server.Websocket.Channel.Server.Events,
-    :event_process_created
+    :notification_handler
 
   event Process.Model.Process.ProcessConclusionEvent,
     Server.Websocket.Channel.Server.Events,
-    :event_process_conclusion
+    :notification_handler
 
   ##############################################################################
   # Log notifications
   ##############################################################################
   event Log.Model.Log.LogCreatedEvent,
     Server.Websocket.Channel.Server.Events,
-    :event_log_created
+    :notification_handler
 
   event Log.Model.Log.LogModifiedEvent,
     Server.Websocket.Channel.Server.Events,
-    :event_log_modified
+    :notification_handler
 
   event Log.Model.Log.LogDeletedEvent,
     Server.Websocket.Channel.Server.Events,
-    :event_log_deleted
+    :notification_handler
 end

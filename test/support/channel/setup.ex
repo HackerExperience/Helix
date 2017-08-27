@@ -3,9 +3,11 @@ defmodule Helix.Test.Channel.Setup do
   import Phoenix.ChannelTest
 
   alias Helix.Websocket.Socket
+  alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
@@ -47,7 +49,7 @@ defmodule Helix.Test.Channel.Setup do
 
   Related:
     Account.t, gateway :: Server.t, destination :: Server.t | nil, \
-    destination_files :: [SoftwareSetup.file] | nil,
+    destination_files :: [SoftwareSetup.file] | nil, \
     gateway_files :: [SoftwareSetup.file] | nil,
   """
   def join_server(opts \\ [])
@@ -63,7 +65,8 @@ defmodule Helix.Test.Channel.Setup do
 
     gateway_files = generate_files(opts[:gateway_files], gateway.server_id)
 
-    {:ok, _, socket} = join(socket, topic, join_params)
+    {:ok, _, socket} =
+      subscribe_and_join(socket, ServerChannel, topic, join_params)
 
     related = %{
       account: account,
@@ -99,7 +102,8 @@ defmodule Helix.Test.Channel.Setup do
     destination_files =
       generate_files(opts[:destination_files], destination.server_id)
 
-    {:ok, _, socket} = join(socket, topic, join_params)
+    {:ok, _, socket} =
+      subscribe_and_join(socket, ServerChannel, topic, join_params)
 
     related = %{
       account: account,
@@ -121,5 +125,55 @@ defmodule Helix.Test.Channel.Setup do
     else
       nil
     end
+  end
+
+  @doc """
+  Opts:
+  - gateway_id
+  - gateway_entity_id
+  - destination_id
+  - destination_entity_id
+  - access_type: Inferred if not set
+  - own_server: Force socket to represent own server channel
+  """
+  def mock_server_socket(opts \\ []) do
+    gateway_id = Access.get(opts, :gateway_id, ServerSetup.id())
+    gateway_entity_id = Access.get(opts, :gateway_entity_id, EntitySetup.id())
+
+    {destination_id, destination_entity_id} =
+      if opts[:own_server] do
+        {gateway_id, gateway_entity_id}
+      else
+        server_id = Access.get(opts, :destination_id, ServerSetup.id())
+        entity_id = Access.get(opts, :destination_entity_id, EntitySetup.id())
+
+        {server_id, entity_id}
+      end
+
+    access_type =
+      cond do
+        opts[:access_type] ->
+          opts[:access_type]
+
+        gateway_id == destination_id ->
+          :local
+
+        true ->
+          :remote
+      end
+
+    assigns = %{
+      gateway: %{
+        server_id: gateway_id,
+        entity_id: gateway_entity_id
+      },
+      destination: %{
+        server_id: destination_id,
+        entity_id: destination_entity_id
+      },
+      access_type: access_type
+    }
+
+    %{assigns: assigns}
   end
 end

@@ -29,8 +29,8 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
 
     assert new_socket.assigns.access_type == :local
     assert new_socket.assigns.account == account
-    assert new_socket.assigns.servers.destination_id == gateway.server_id
-    assert new_socket.assigns.servers.gateway_id == gateway.server_id
+    assert new_socket.assigns.gateway.server_id == gateway.server_id
+    assert new_socket.assigns.destination.server_id == gateway.server_id
     assert new_socket.joined
     assert new_socket.topic == topic
 
@@ -75,8 +75,8 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert new_socket.assigns.access_type == :remote
     assert new_socket.assigns.account == account
     assert_id new_socket.assigns.network_id, network_id
-    assert_id new_socket.assigns.servers.destination_id, destination.server_id
-    assert_id new_socket.assigns.servers.gateway_id, gateway.server_id
+    assert new_socket.assigns.gateway.server_id == gateway.server_id
+    assert new_socket.assigns.destination.server_id == destination.server_id
     assert new_socket.joined
     assert new_socket.topic == topic
 

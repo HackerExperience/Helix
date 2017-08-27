@@ -1,11 +1,13 @@
 defmodule Helix.Server.Websocket.Channel.Server do
   @moduledoc """
-  Channel to notify all players connected to a certain server about events
-  regarding said server
+  `ServerChannel` handles incoming and outgoing messages between players and
+  servers.
   """
 
   use Phoenix.Channel
 
+  alias Phoenix.Socket
+  alias HELL.IPv4
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Network.Model.Network
@@ -27,17 +29,19 @@ defmodule Helix.Server.Websocket.Channel.Server do
     with \
       account = socket.assigns.account,
       {:ok, gateway_id} <- Server.ID.cast(gateway_id),
-      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id)
+      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
+      gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id)
     do
-      servers = %{
-        gateway_id: gateway_id,
-        destination_id: gateway_id
+      gateway_data = %{
+        server_id: gateway_id,
+        entity_id: gateway_entity.entity_id
       }
 
       socket =
         socket
-        |> assign(:servers, servers)
         |> assign(:access_type, :local)
+        |> assign(:gateway, gateway_data)
+        |> assign(:destination, gateway_data)
 
       {:ok, socket}
     else
@@ -64,22 +68,30 @@ defmodule Helix.Server.Websocket.Channel.Server do
       {:ok, network_id} <- Network.ID.cast(network_id),
       :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
       :ok <- ChannelHenforcer.validate_server(destination_id, password),
+      gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id),
+      destination_entity = %{} <- EntityQuery.fetch_by_server(destination_id),
       {:ok, tunnel} <- ServerPublic.connect_to_server(
         gateway_id,
         destination_id,
         [])
     do
-      servers = %{
-        gateway_id: gateway_id,
-        destination_id: destination_id
+      gateway_data = %{
+        server_id: gateway_id,
+        entity_id: gateway_entity.entity_id
+      }
+
+      destination_data = %{
+        server_id: destination_id,
+        entity_id: destination_entity.entity_id
       }
 
       socket =
         socket
         |> assign(:network_id, network_id)
         |> assign(:tunnel, tunnel)
-        |> assign(:servers, servers)
         |> assign(:access_type, :remote)
+        |> assign(:gateway, gateway_data)
+        |> assign(:destination, destination_data)
 
       {:ok, socket}
     else
@@ -120,18 +132,18 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   # TODO: Paginate
   def handle_in("log.index", _, socket) do
-    server_id = socket.assigns.servers.destination_id
+    destination_id = socket.assigns.destination.server_id
 
-    message = %{data: %{logs: ServerPublic.log_index(server_id)}}
+    message = %{data: %{logs: ServerPublic.log_index(destination_id)}}
 
     {:reply, {:ok, message}, socket}
   end
 
   def handle_in("process.index", _, socket) do
-    server_id = socket.assigns.servers.destination_id
-    entity_id = EntityQuery.get_entity_id(socket.assigns.account)
+    destination_id = socket.assigns.destination.server_id
+    entity_id = socket.assigns.destination.entity_id
 
-    index = ServerPublic.process_index(server_id, entity_id)
+    index = ServerPublic.process_index(destination_id, entity_id)
 
     return = %{data: %{
       owned_processes: index.owned,
@@ -152,9 +164,13 @@ defmodule Helix.Server.Websocket.Channel.Server do
     gateway server as origin. Origin must be one of (gateway_id, destination_id)
 
   In case the address could not be found, returns `web_not_found` error.
+
+  Returns `bad_origin` when the given origin is neither `gateway_id` nor
+    `destination_id`
   """
   def handle_in("network.browse", params = %{"address" => address}, socket) do
-    servers = socket.assigns.servers
+    gateway_id = socket.assigns.gateway.server_id
+    destination_id = socket.assigns.destination.server_id
 
     network_id =
       if socket.assigns.access_type == :local do
@@ -167,7 +183,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
       if Map.has_key?(params, "origin") do
         Server.ID.cast!(params["origin"])
       else
-        socket.assigns.servers.destination_id
+        socket.assigns.destination.server_id
       end
 
     with \
@@ -183,6 +199,86 @@ defmodule Helix.Server.Websocket.Channel.Server do
     end
   end
 
+  alias HELL.IPv4
+  alias Helix.Software.Henforcer.File, as: FileHenforcer
+
+  @doc """
+  Starts a bruteforce attack.
+
+  Params:
+
+  *network_id: Network ID in which the target server resides.
+  *ip: Target server IP address
+  *bounces: List of hops between the origin and the target.
+
+  Note that all bruteforce attacks must originate from a server owned by the
+  entity starting the attack.
+  """
+  def handle_in("bruteforce", params, socket) do
+    source_id = socket.assigns.gateway.server_id
+
+    with \
+      {:ok, network_id} <- Network.ID.cast(params["network_id"]),
+      true <- IPv4.valid?(params["ip"]),
+      {:ok, bounces} = cast_bounces(params["bounces"]),
+      true <- socket.assigns.access_type == :local || :bad_attack_src
+    do
+      bruteforce(source_id, network_id, params["ip"], bounces, socket)
+    else
+      :bad_attack_src ->
+        reply_error("bad_attack_src", socket)
+      _ ->
+        reply_error("bad_param", socket)
+    end
+  end
+
+  intercept ["event"]
+
+  alias Helix.Event.Notificable
+  def handle_out("event", event, socket) do
+    case Notificable.generate_payload(event, socket) do
+      {:ok, data} ->
+        push socket, "event", data
+        {:noreply, socket}
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  @spec network_browse(Network.id, String.t | IPv4.t, Server.id, socket) ::
+    {:reply, {:ok, term}, socket}
+    | term
+  defp network_browse(network_id, address, origin_id, socket) do
+    case ServerPublic.network_browse(network_id, address, origin_id) do
+      {:ok, web} ->
+        reply_ok(web, socket)
+      {:error, %{message: msg}} ->
+        reply_error(msg, socket)
+    end
+  end
+
+  @spec bruteforce(Server.id, Network.id, IPv4.t, [Server.id], socket) ::
+    {:reply, {:ok, :ok}, socket}
+    | term  # TODO
+  defp bruteforce(source_id, network_id, target_ip, bounces, socket) do
+    with \
+      :ok <- FileHenforcer.Cracker.can_bruteforce(),
+      {:ok, _process} <-
+        ServerPublic.bruteforce(source_id, network_id, target_ip, bounces)
+    do
+      # TODO: What to return?
+      {:reply, {:ok, :ok}, socket}
+    else
+      _ ->
+        reply_error("internal", socket)
+    end
+  end
+
+  defp cast_bounces(bounces) when is_list(bounces),
+    do: {:ok, Enum.map(bounces, &(Server.ID.cast!(&1)))}
+  defp cast_bounces(_),
+    do: :error
+
   defp reply_error(msg, socket),
     do: {:reply, {:error, ChannelView.error(msg)}, socket}
 
@@ -191,63 +287,4 @@ defmodule Helix.Server.Websocket.Channel.Server do
   defp reply_ok(data, socket),
     do: reply_ok(%{data: data}, socket)
 
-  defp notify(server_id, :processes_changed, _params) do
-    # TODO: Use a view to always follow an standardized format
-    notify(server_id, %{
-      event: "processes_changed",
-      data: %{}
-    })
-  end
-
-  defp notify(server_id, :logs_changed, _params) do
-    # TODO: Use a view to always follow an standardized format
-    notify(server_id, %{
-      event: "logs_changed",
-      data: %{}
-    })
-  end
-
-  defp notify(server_id, notification) do
-    topic = "server:" <> to_string(server_id)
-
-    Helix.Endpoint.broadcast(topic, "event", notification)
-  end
-
-  @doc false
-  def event_process_created(
-    %ProcessCreatedEvent{gateway_id: gateway, target_id: gateway})
-  do
-    notify(gateway, :processes_changed, %{})
-  end
-  def event_process_created(
-    %ProcessCreatedEvent{gateway_id: gateway, target_id: target})
-  do
-    notify(gateway, :processes_changed, %{})
-    notify(target, :processes_changed, %{})
-  end
-
-  @doc false
-  def event_process_conclusion(
-    %ProcessConclusionEvent{gateway_id: gateway, target_id: gateway})
-  do
-    notify(gateway, :processes_changed, %{})
-  end
-  def event_process_conclusion(
-    %ProcessConclusionEvent{gateway_id: gateway, target_id: target})
-  do
-    notify(gateway, :processes_changed, %{})
-    notify(target, :processes_changed, %{})
-  end
-
-  @doc false
-  def event_log_created(%LogCreatedEvent{server_id: server}),
-    do: notify(server, :logs_changed, %{})
-
-  @doc false
-  def event_log_modified(%LogModifiedEvent{server_id: server}),
-    do: notify(server, :logs_changed, %{})
-
-  @doc false
-  def event_log_deleted(%LogDeletedEvent{server_id: server}),
-    do: notify(server, :logs_changed, %{})
 end
