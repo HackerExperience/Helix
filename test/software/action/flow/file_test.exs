@@ -7,7 +7,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Model.Log
-  alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: FirewallPassive
@@ -138,7 +137,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
   end
 
   describe "execute_file for cracker bruteforce attack" do
-    test "starts the bruteforce process when everything is OK" do
+    test "starts the bruteforce process" do
       {source_server, %{entity: source_entity}} = ServerSetup.server()
       {target_server, _} = ServerSetup.server()
 
@@ -160,32 +159,14 @@ defmodule Helix.Software.Action.Flow.FileTest do
       }
 
       # Executes Cracker.bruteforce against the target server
-      assert {:ok, process} =
+      assert {:ok, _proc} =
         FileFlow.execute_file(file, source_server, params, meta)
 
-      # Process data is correct
-      assert process.connection_id
-      assert process.file_id == file.file_id
-      assert process.process_type == "cracker_bruteforce"
-      assert process.gateway_id == source_server.server_id
-      assert process.process_data.source_entity_id == source_entity.entity_id
-      assert process.process_data.target_server_id == target_server.server_id
-      assert process.process_data.network_id == target_nip.network_id
-      assert process.process_data.target_server_ip == target_nip.ip
+      # For full test see CrackerFlowTest
 
-      # CrackerBruteforce connection is correct
-      connection = TunnelQuery.fetch_connection(process.connection_id)
-
-      assert connection.connection_type == :cracker_bruteforce
-
-      # Underlying tunnel is correct
-      tunnel = TunnelQuery.fetch(connection.tunnel_id)
-
-      assert tunnel.gateway_id == source_server.server_id
-      assert tunnel.destination_id == target_server.server_id
-      assert tunnel.network_id == target_nip.network_id
-
+      :timer.sleep(50)
       TOPHelper.top_stop(source_server)
+      CacheHelper.sync_test()
     end
   end
 end
