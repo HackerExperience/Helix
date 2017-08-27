@@ -8,13 +8,13 @@ defmodule Helix.Test.Software.Helper do
   Generates the expected module for the given type.
 
   Example of expected input:
-    (:cracker, [:bruteforce, :buffer_overflow])
+    (:cracker, %{bruteforce: 20, overflow: 10})
   """
-  def generate_module(type, opts) do
+  def generate_module(type, version_map) do
     modules = SoftwareType.possible_types()[type].modules
 
     Enum.reduce(modules, %{}, fn (module, acc) ->
-      Map.put(acc, module, Map.get(opts, module))
+      Map.put(acc, module, Map.fetch!(version_map, module))
     end)
   end
 

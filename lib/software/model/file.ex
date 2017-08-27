@@ -7,8 +7,8 @@ defmodule Helix.Software.Model.File do
 
   alias Ecto.Changeset
   alias HELL.Constant
-  alias Helix.Software.Model.SoftwareType
   alias Helix.Software.Model.FileModule
+  alias Helix.Software.Model.SoftwareType
   alias Helix.Software.Model.Storage
 
   @type t :: t_of_type(SoftwareType.type)
@@ -34,7 +34,7 @@ defmodule Helix.Software.Model.File do
   @type full_path :: path
   @type name :: String.t
   @type size :: pos_integer
-  @type software_type :: SoftwareType.type
+  @type type :: SoftwareType.type
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 

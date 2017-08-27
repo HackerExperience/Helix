@@ -22,7 +22,7 @@ defmodule Helix.Software.Internal.File do
   def fetch(file_id),
     do: Repo.get(File, file_id)
 
-  @spec get_files_on_target_storage(Storage.t) ::
+  @spec get_files_on_target_storage(Storage.idt) ::
     [File.t]
   @doc """
   Gets all files on `target_storage`

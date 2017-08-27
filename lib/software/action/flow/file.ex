@@ -21,10 +21,13 @@ defmodule Helix.Software.Action.Flow.File do
     CrackerFlow.meta
     | %{}
 
+  @type error ::
+    {:error, :notexecutable}
+    | execution_errors
+
   @spec execute_file(File.t, Server.id, params, meta) ::
     {:ok, Process.t}
-    | {:error, :notexecutable}
-    | execution_errors
+    | error
   @doc """
   Starts the process defined by `file` on `server`.
 
@@ -33,8 +36,6 @@ defmodule Helix.Software.Action.Flow.File do
   If the process can not be started on the server, returns the respective error.
   """
   def execute_file(file = %File{}, server, params, meta \\ %{}) do
-    server = Server.ID.cast!(server)
-
     case file do
       %File{software_type: :cracker} ->
         CrackerFlow.execute_cracker(file, server, params, meta)

@@ -2,8 +2,12 @@ defmodule Helix.Test.Software.Setup do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Software.Internal.File, as: FileInternal
+  alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
+  alias Helix.Hardware.Model.Component
+  alias Helix.Software.Model.StorageDrive
+  alias Helix.Software.Repo, as: SoftwareRepo
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -17,6 +21,7 @@ defmodule Helix.Test.Software.Setup do
   """
   def random_files(opts \\ []) do
     upper = Access.get(opts, :total, 5)
+
     1..upper
     |> Enum.map(fn _ -> file(opts[:file_opts])  end)
   end
@@ -56,8 +61,10 @@ defmodule Helix.Test.Software.Setup do
   - path: Set file path
   - module: Set file module. If set, `type` must also be set.
   - server_id: Server that file belongs to. Will use the first storage it finds.
-  - fake_storage: Whether to use a fake storage. Defaults to true. In case a
-    real storage is generated, the underlying server will be generated too.
+  - storage_id: Specify storage ID to use. If set, ignores server params, and no
+    server is generated. Enhance as you see fit.
+  - fake_server: Whether to use a fake server. Gives the option to create a
+    storage without a server. Defaults to false.
 
   Related: File.creation_params, Storage.id, Server.id
   """
@@ -72,25 +79,7 @@ defmodule Helix.Test.Software.Setup do
     type = Access.get(opts, :type, SoftwareHelper.random_file_type())
     modules = Access.get(opts, :modules, SoftwareHelper.get_modules(type))
 
-    {storage_id, server_id} =
-      cond do
-        opts[:server_id] ->
-        {:ok, storages} =
-          CacheQuery.from_server_get_storages(opts[:server_id])
-
-          {List.first(storages), opts[:server_id]}
-        opts[:fake_storage] == false ->
-          server = ServerSetup.server!()
-        {:ok, storages} =
-          CacheQuery.from_server_get_storages(server.server_id)
-
-          {List.first(storages), server}
-        true ->
-          # TODO: This needs some polishing in order to work. But that's good
-          # enough for my use case now. If you, dear reader, happens to need the
-          # fake file with real storage, please implement it.
-          {Storage.ID.generate(), nil}
-      end
+    {storage_id, server_id} = file_get_storage_and_server(opts)
 
     params = %{
       file_size: size,
@@ -104,5 +93,94 @@ defmodule Helix.Test.Software.Setup do
     file = File.create_changeset(params)
 
     {file, %{params: params, storage_id: storage_id, server_id: server_id}}
+  end
+
+  # This is actually a workaround for credo.
+  defp file_get_storage_and_server(opts) do
+    cond do
+      opts[:server_id] ->
+        {:ok, storages} =
+          CacheQuery.from_server_get_storages(opts[:server_id])
+
+        {List.first(storages), opts[:server_id]}
+
+      opts[:storage_id] ->
+        {opts[:storage_id], nil}
+
+      # Only create storage, not the server
+      opts[:fake_server] ->
+        {storage, _} = storage()
+
+        {storage.storage_id, nil}
+
+      # Default: Generate a real server
+      true ->
+        server = ServerSetup.server!()
+        {:ok, storages} =
+          CacheQuery.from_server_get_storages(server.server_id)
+
+        {List.first(storages), server}
+    end
+  end
+
+  @doc """
+  See docs on `fake_storage/1`
+  """
+  def storage(opts \\ []) do
+    {storage, related} = fake_storage(opts)
+    {:ok, inserted} = SoftwareRepo.insert(storage)
+
+    :ok = StorageDriveInternal.link_drive(inserted, related.drive_id)
+
+    storage_preloaded =
+      storage
+      |> SoftwareRepo.preload(:drives)
+
+    {storage_preloaded, related}
+  end
+
+  @doc """
+  No opts for you
+  Related: StorageDrive.t, drive :: Component.id
+  """
+  def fake_storage(_opts \\ []) do
+    drive_id = Component.ID.generate()
+
+    storage =
+      %Storage{
+        storage_id: Storage.ID.generate()
+      }
+
+    storage_drive =
+      %StorageDrive{
+        storage_id: storage.storage_id,
+        drive_id: drive_id
+      }
+
+    related = %{
+      storage_drive: storage_drive,
+      drive_id: drive_id
+    }
+
+    {storage, related}
+  end
+
+  @doc """
+  - bruteforce: set bruteforce module version. Defaults to random.
+  - overflow: set overflow module version. Defaults to random.
+  Remaining opts are passed to `file/1`
+  """
+  def cracker(opts \\ []) do
+    bruteforce = Access.get(opts, :bruteforce, SoftwareHelper.random_version())
+    overflow = Access.get(opts, :overflow, SoftwareHelper.random_version())
+
+    version_map = %{
+      bruteforce: bruteforce,
+      overflow: overflow
+    }
+
+    modules = SoftwareHelper.generate_module(:cracker, version_map)
+
+    file(opts ++ [type: :cracker, modules: modules])
   end
 end

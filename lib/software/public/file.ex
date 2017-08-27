@@ -1,14 +1,18 @@
 defmodule Helix.Software.Public.File do
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
+  alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Action.Flow.FileDownload, as: FileDownloadFlow
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Public.View.File, as: FileView
   alias Helix.Software.Query.File, as: FileQuery
-  alias Helix.Cache.Query.Cache, as: CacheQuery
 
   @spec index(Server.id) ::
     %{path :: String.t => [map]}
@@ -59,6 +63,44 @@ defmodule Helix.Software.Public.File do
     else
       _ ->
         :error
+    end
+  end
+
+  @spec bruteforce(Server.id, Network.id, Server.id, [Server.id]) ::
+    {:ok, Process.t}
+    | FileFlow.error
+  @doc """
+  Starts a bruteforce attack against `(netwrok_id, target_ip)`, originating from
+  `gateway_id` and having `bounces` as intermediaries.
+  """
+  def bruteforce(gateway_id, network_id, target_ip, bounces) do
+    create_params = fn ->
+      with \
+        gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id),
+        {:ok, target_server_id} <-
+          CacheQuery.from_nip_get_server(network_id, target_ip)
+      do
+        %{
+          source_entity_id: gateway_entity.entity_id,
+          target_server_id: target_server_id,
+          network_id: network_id,
+          target_server_ip: target_ip
+        }
+      end
+    end
+
+    create_meta = fn ->
+      %{bounces: bounces}
+    end
+
+    with \
+      params = %{} <- create_params.(),
+      meta = create_meta.(),
+      cracker = %{} <- FileQuery.fetch_best(gateway_id, :cracker, :bruteforce),
+      {:ok, process} <-
+        FileFlow.execute_file(cracker, gateway_id, params, meta)
+    do
+      {:ok, process}
     end
   end
 
