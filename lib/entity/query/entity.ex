@@ -20,7 +20,7 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate fetch(id),
     to: EntityInternal
 
-  @spec fetch_by_server(Server.t | Server.id) ::
+  @spec fetch_by_server(Server.idt) ::
     Entity.t
     | nil
   @doc """

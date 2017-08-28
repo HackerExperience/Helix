@@ -1,5 +1,6 @@
 defmodule Helix.Server.Public.Server do
 
+  alias HELL.IPv4
   alias Helix.Event
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Public.Log, as: LogPublic
@@ -9,7 +10,9 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Network.Public.Network, as: NetworkPublic
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Process.Model.Process
   alias Helix.Process.Public.Process, as: ProcessPublic
+  alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Model.File
   alias Helix.Software.Public.File, as: FilePublic
   alias Helix.Server.Model.Server
@@ -68,7 +71,16 @@ defmodule Helix.Server.Public.Server do
     to: ProcessPublic,
     as: :index
 
+  @spec network_browse(Network.idt, String.t | IPv4.t, Server.idt) ::
+    {:ok, term}
+    | {:error, %{message: String.t}}
   defdelegate network_browse(network_id, address, origin_id),
     to: NetworkPublic,
     as: :browse
+
+  @spec bruteforce(Server.id, Network.id, Server.id, [Server.id]) ::
+    {:ok, Process.t}
+    | FileFlow.error
+  defdelegate bruteforce(gateway_id, network_id, target_ip, bounces),
+    to: FilePublic
 end

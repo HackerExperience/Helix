@@ -146,4 +146,6 @@ defmodule HELL.IPv4 do
 
     match?({:ok, _}, parse_result)
   end
+  def valid?(nil),
+    do: false
 end
