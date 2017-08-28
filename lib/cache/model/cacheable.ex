@@ -140,35 +140,3 @@ defmodule Helix.Cache.Model.Cacheable.Utils do
     end
   end
 end
-
-###########################################
-# IGNORE THE FOLLOWING LINES.
-# Dialyzer is not particularly a fan of protocols, so it will emit a lot of
-# "unknown functions" for non-implemented types on a protocol. This hack will
-# implement any possible type to avoid those warnings (albeit it might increase
-# the compilation time in a second)
-###########################################
-
-impls = [
-  Atom,
-  BitString,
-  Float,
-  Function,
-  Integer,
-  List,
-  Map,
-  PID,
-  Port,
-  Reference,
-  Tuple
-]
-
-for impl <- impls do
-  defimpl Helix.Cache.Model.Cacheable, for: impl do
-    def format_input(input),
-      do: raise "#{inspect input} is not a valid value for Cacheable"
-
-    def format_output(input),
-      do: raise "#{inspect input} is not a valid value for Cacheable"
-  end
-end
