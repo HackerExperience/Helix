@@ -6,12 +6,16 @@ defmodule Helix.Software.Henforcer.File do
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
 
-    @spec can_bruteforce(Server.id, Network.id, IPv4.t) ::
+    @spec can_bruteforce(Server.id, IPv4.t, Network.id, IPv4.t) ::
       :ok
-    def can_bruteforce(_source_id, _network_id, _target_ip) do
-        # Check stuff like whether the victim is still under noob protection
-        # - is IP(source_id) == target_ip? If so, no!
-      :ok
+      | {:error, {:target, :self}}
+    def can_bruteforce(_source_id, source_ip, _network_id, target_ip) do
+      # TODO: Check for noob protection
+      if source_ip == target_ip do
+        {:error, {:target, :self}}
+      else
+        :ok
+      end
     end
 
   end

@@ -68,6 +68,7 @@ defmodule Helix.Software.Public.File do
 
   @spec bruteforce(Server.id, Network.id, Server.id, [Server.id]) ::
     {:ok, Process.t}
+    | {:error, %{message: String.t}}
     | FileFlow.error
   @doc """
   Starts a bruteforce attack against `(netwrok_id, target_ip)`, originating from
@@ -93,14 +94,23 @@ defmodule Helix.Software.Public.File do
       %{bounces: bounces}
     end
 
+    get_cracker = fn ->
+      FileQuery.fetch_best(gateway_id, :cracker, :bruteforce)
+    end
+
     with \
       params = %{} <- create_params.(),
       meta = create_meta.(),
-      cracker = %{} <- FileQuery.fetch_best(gateway_id, :cracker, :bruteforce),
+      cracker = %{} <- get_cracker.() || :no_cracker,
       {:ok, process} <-
         FileFlow.execute_file(cracker, gateway_id, params, meta)
     do
       {:ok, process}
+    else
+      :no_cracker ->
+        {:error, %{message: "cracker_not_found"}}
+      error ->
+        error
     end
   end
 

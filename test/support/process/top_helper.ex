@@ -8,6 +8,9 @@ defmodule Helix.Test.Process.TOPHelper do
     |> Server.ID.cast!()
     |> TOPManager.get()
     |> its_time_to_stop()
+
+    # Sync TOP events
+    :timer.sleep(50)
   end
 
   defp its_time_to_stop(nil),

@@ -163,7 +163,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
       assert {:ok, %{data: data}} =
         Helix.Event.Notificable.generate_payload(event, socket)
 
-      # Third can see the full process, since it started at `attack_source`
+      # Third can see the full process, since it originated at `attack_source`
       assert_payload_full(data)
     end
 

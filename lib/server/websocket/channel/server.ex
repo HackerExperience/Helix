@@ -15,6 +15,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Websocket.Socket, as: Websocket
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Event.Notificable
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
@@ -38,11 +39,13 @@ defmodule Helix.Server.Websocket.Channel.Server do
       account = socket.assigns.account,
       {:ok, gateway_id} <- Server.ID.cast(gateway_id),
       :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
-      gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id)
+      gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id),
+      {:ok, nips} <- CacheQuery.from_server_get_nips(gateway_id)
     do
       gateway_data = %{
         server_id: gateway_id,
-        entity_id: gateway_entity.entity_id
+        entity_id: gateway_entity.entity_id,
+        ips: format_nips(nips)
       }
 
       socket =
@@ -78,6 +81,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
       :ok <- ChannelHenforcer.validate_server(destination_id, password),
       gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id),
       destination_entity = %{} <- EntityQuery.fetch_by_server(destination_id),
+      {:ok, gateway_nips} <- CacheQuery.from_server_get_nips(gateway_id),
+      {:ok, destination_nips} <-
+         CacheQuery.from_server_get_nips(destination_id),
       {:ok, tunnel} <- ServerPublic.connect_to_server(
         gateway_id,
         destination_id,
@@ -85,12 +91,14 @@ defmodule Helix.Server.Websocket.Channel.Server do
     do
       gateway_data = %{
         server_id: gateway_id,
-        entity_id: gateway_entity.entity_id
+        entity_id: gateway_entity.entity_id,
+        ips: format_nips(gateway_nips)
       }
 
       destination_data = %{
         server_id: destination_id,
-        entity_id: destination_entity.entity_id
+        entity_id: destination_entity.entity_id,
+        ips: format_nips(destination_nips)
       }
 
       socket =
@@ -106,6 +114,13 @@ defmodule Helix.Server.Websocket.Channel.Server do
       error ->
         {:error, ChannelView.render_join_error(error)}
     end
+  end
+
+  defp format_nips(nips) do
+    nips
+    |> Enum.reduce(%{}, fn nip, acc ->
+      Map.put(acc, nip.network_id, nip.ip)
+    end)
   end
 
   @doc false
