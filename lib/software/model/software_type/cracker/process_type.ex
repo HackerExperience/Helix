@@ -8,6 +8,7 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
+  alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
 
@@ -117,9 +118,9 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
         |> Map.put(:action, :delete)
 
       event = %CrackerBruteforceConclusionEvent{
-        source_entity_id: data.source_entity_id,
-        network_id: data.network_id,
-        target_server_id: data.target_server_id,
+        source_entity_id: Entity.ID.cast!(data.source_entity_id),
+        network_id: Network.ID.cast!(data.network_id),
+        target_server_id: Server.ID.cast!(data.target_server_id),
         target_server_ip: data.target_server_ip
       }
 
@@ -267,6 +268,11 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
     do: {:error, changeset}
 
   defimpl Helix.Process.Model.Process.ProcessType do
+
+    alias Helix.Network.Model.Connection
+    alias Helix.Process.Model.Process
+    alias Helix.Server.Model.Server
+
     @moduledoc false
 
     @ram_base 3
@@ -291,9 +297,9 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
         |> Map.put(:action, :delete)
 
       event = %OverflowConclusionEvent{
-        gateway_id: process.data.gateway_id,
-        target_process_id: data.target_process_id,
-        target_connection_id: data.target_connection_id
+        gateway_id: Server.ID.cast!(process.data.gateway_id),
+        target_process_id: Process.ID.cast!(data.target_process_id),
+        target_connection_id: Connection.ID.cast!(data.target_connection_id)
       }
 
       {process, [event]}

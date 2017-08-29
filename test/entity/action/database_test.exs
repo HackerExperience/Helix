@@ -2,9 +2,11 @@ defmodule Helix.Entity.Action.DatabaseTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Action.Database, as: DatabaseAction
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
@@ -15,6 +17,63 @@ defmodule Helix.Entity.Action.DatabaseTest do
       {acc, _} = BankSetup.account([owner_id: entity.entity_id])
 
       assert {:ok, _} = DatabaseAction.add_bank_account(entity, acc)
+    end
+  end
+
+  describe "update_server_password/5" do
+    test "password is updated" do
+      {entry, _} = DatabaseSetup.entry_server()
+      password = "011100000110100001101111011001010110001001100101"
+
+      assert {:ok, result} =
+        DatabaseAction.update_server_password(
+          entry.entity_id,
+          entry.network_id,
+          entry.server_ip,
+          entry.server_id, password)
+
+      # Password was updated, as well as `last_update`
+      assert result.password == password
+      assert result.last_update > entry.last_update
+    end
+
+    test "new entry is created if there was none" do
+      {fake_entry, _} = DatabaseSetup.fake_entry_server()
+      password = "you_just_lost_the_game"
+
+      assert {:ok, _} =
+        DatabaseAction.update_server_password(
+          fake_entry.entity_id,
+          fake_entry.network_id,
+          fake_entry.server_ip,
+          fake_entry.server_id, password)
+
+      # Entry was created
+      assert DatabaseQuery.fetch_server(
+        fake_entry.entity_id,
+        fake_entry.network_id,
+        fake_entry.server_ip)
+    end
+
+    test "nothing is done if that entry belongs to the player" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      {:ok, [nip]} = CacheQuery.from_server_get_nips(server.server_id)
+
+      assert {:error, reason} =
+        DatabaseAction.update_server_password(
+          entity.entity_id,
+          nip.network_id,
+          nip.ip,
+          server.server_id,
+          server.password)
+
+      assert reason == {:server, :belongs_to_entity}
+
+      refute DatabaseQuery.fetch_server(
+        entity.entity_id,
+        nip.network_id,
+        nip.ip)
     end
   end
 

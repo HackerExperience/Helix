@@ -78,7 +78,7 @@ defmodule Helix.Server.Public.Server do
     to: NetworkPublic,
     as: :browse
 
-  @spec bruteforce(Server.id, Network.id, Server.id, [Server.id]) ::
+  @spec bruteforce(Server.id, Network.id, IPv4.t, [Server.id]) ::
     {:ok, Process.t}
     | FileFlow.error
   defdelegate bruteforce(gateway_id, network_id, target_ip, bounces),

@@ -7,6 +7,8 @@ defmodule Helix.Test.Event.Setup do
 
   alias Helix.Network.Model.Connection.ConnectionClosedEvent
   alias Helix.Process.Model.Process.ProcessCreatedEvent
+  alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
+    as: BruteforceConclusionEvent
   alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
@@ -16,8 +18,10 @@ defmodule Helix.Test.Event.Setup do
     as: BankAccountPasswordRevealedEvent
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Server.Setup, as: ServerSetup
 
   @internet NetworkHelper.internet_id()
 
@@ -64,7 +68,6 @@ defmodule Helix.Test.Event.Setup do
 
     process_created(gateway_id, gateway_id, gateway_entity, gateway_entity)
   end
-
   def process_created(:multi_server, opts) do
     gateway_id = Access.get(opts, :gateway_id, Server.ID.generate())
     gateway_entity = Access.get(opts, :gateway_entity_id, Entity.ID.generate())
@@ -90,6 +93,24 @@ defmodule Helix.Test.Event.Setup do
       gateway_id: gateway_id,
       target_process_id: nil,
       target_connection_id: connection.connection_id
+    }
+  end
+
+  def bruteforce_conclusion(process = %Process{}) do
+    %BruteforceConclusionEvent{
+      source_entity_id: process.process_data.source_entity_id,
+      network_id: process.network_id,
+      target_server_id: process.target_server_id,
+      target_server_ip: process.process_data.target_server_ip,
+    }
+  end
+
+  def bruteforce_conclusion do
+    %BruteforceConclusionEvent{
+      source_entity_id: EntitySetup.id(),
+      network_id: @internet,
+      target_server_id: ServerSetup.id(),
+      target_server_ip: Random.ipv4()
     }
   end
 

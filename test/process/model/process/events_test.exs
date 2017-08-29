@@ -4,6 +4,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
 
   alias Helix.Event.Notificable
 
+  alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Event.Setup, as: EventSetup
 
@@ -13,7 +14,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
 
       assert [notification_server] = Notificable.whom_to_notify(event)
 
-      assert notification_server == event.gateway_id
+      assert notification_server == ChannelHelper.to_topic(event.gateway_id)
     end
 
     test "for multi-server processes" do
@@ -21,7 +22,9 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
 
       notification_list = Notificable.whom_to_notify(event)
 
-      assert notification_list == [event.gateway_id, event.target_id]
+      assert notification_list ==
+        [ChannelHelper.to_topic(event.gateway_id),
+         ChannelHelper.to_topic(event.target_id)]
     end
   end
 

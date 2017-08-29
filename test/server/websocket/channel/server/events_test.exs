@@ -68,6 +68,8 @@ defmodule Helix.Server.Websocket.Channel.Server.EventsTest do
       # Process happens on two different servers
       refute event.gateway_id == event.target_id
 
+      sync_channel_events()
+
       EventHelper.emit(event)
 
       # Broadcast is before inspecting the event with `handle_out`, so this
@@ -88,5 +90,12 @@ defmodule Helix.Server.Websocket.Channel.Server.EventsTest do
       assert notification.data.target_ip
       assert notification.data.source_ip
     end
+  end
+
+  # Temporary gambi for filtering out unwanted events. Should be fixed by
+  # synchronous event emission during tests.
+  defp sync_channel_events do
+    assert_broadcast "event", _
+    assert_push "event", _
   end
 end

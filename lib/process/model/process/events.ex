@@ -121,6 +121,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEvent do
     def whom_to_notify(event) do
       [event.gateway_id, event.target_id]
       |> Enum.uniq()
+      |> Enum.map(&("server:" <> to_string(&1)))
     end
   end
 end
@@ -159,6 +160,7 @@ defmodule Helix.Process.Model.Process.ProcessConclusionEvent do
     def whom_to_notify(event) do
       [event.gateway_id, event.target_id]
       |> Enum.uniq()
+      |> Enum.map(&("server:" <> to_string(&1)))
     end
   end
 end

@@ -79,4 +79,43 @@ defmodule Helix.Test.Process.Setup do
 
     {"cracker_bruteforce", data}
   end
+
+  def bruteforce_flow do
+
+    alias Helix.Cache.Query.Cache, as: CacheQuery
+    alias Helix.Software.Action.Flow.File.Cracker, as: CrackerFlow
+    alias Helix.Test.Software.Setup, as: SoftwareSetup
+    {source_server, %{entity: source_entity}} = ServerSetup.server()
+    {target_server, _} = ServerSetup.server()
+
+    {:ok, [target_nip]} =
+      CacheQuery.from_server_get_nips(target_server.server_id)
+
+    {file, _} =
+      SoftwareSetup.file([type: :cracker, server_id: source_server.server_id])
+
+    params = %{
+      source_entity_id: source_entity.entity_id,
+      target_server_id: target_server.server_id,
+      network_id: target_nip.network_id,
+      target_server_ip: target_nip.ip
+    }
+
+    meta = %{
+      bounces: []
+    }
+
+    {:ok, process} =
+      CrackerFlow.execute_cracker(file, source_server, params, meta)
+
+    related = %{
+      source_server: source_server,
+      source_entity: source_entity,
+      target_server: target_server,
+      target_ip: target_nip.ip,
+      network_id: target_nip.network_id
+    }
+
+    {process, related}
+  end
 end

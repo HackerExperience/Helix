@@ -1,5 +1,6 @@
 defmodule Helix.Software.Public.File do
 
+  alias HELL.IPv4
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Network
@@ -66,12 +67,12 @@ defmodule Helix.Software.Public.File do
     end
   end
 
-  @spec bruteforce(Server.id, Network.id, Server.id, [Server.id]) ::
+  @spec bruteforce(Server.id, Network.id, IPv4.t, [Server.id]) ::
     {:ok, Process.t}
     | {:error, %{message: String.t}}
     | FileFlow.error
   @doc """
-  Starts a bruteforce attack against `(netwrok_id, target_ip)`, originating from
+  Starts a bruteforce attack against `(network_id, target_ip)`, originating from
   `gateway_id` and having `bounces` as intermediaries.
   """
   def bruteforce(gateway_id, network_id, target_ip, bounces) do

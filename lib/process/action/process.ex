@@ -1,5 +1,7 @@
 defmodule Helix.Process.Action.Process do
 
+  alias HELL.IPv4
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Process.Model.Process
@@ -63,35 +65,6 @@ defmodule Helix.Process.Action.Process do
       {:ok, process, [event]}
     end
   end
-
-  defp get_process_entities(params) do
-    source_entity = EntityQuery.fetch_by_server(params.gateway_id)
-
-    target_entity =
-    if params.gateway_id == params.target_server_id do
-      source_entity
-    else
-      EntityQuery.fetch_by_server(params.target_server_id)
-    end
-
-    {source_entity.entity_id, target_entity.entity_id}
-  end
-
-  defp get_process_ips(params = %{network_id: _}) do
-    gateway_ip = ServerQuery.get_ip(params.gateway_id, params.network_id)
-
-    target_ip =
-    if params.gateway_id == params.target_server_id do
-      gateway_ip
-    else
-      ServerQuery.get_ip(params.target_server_id, params.network_id)
-    end
-
-    {gateway_ip, target_ip}
-  end
-
-  defp get_process_ips(_),
-    do: {nil, nil}
 
   @spec pause(Process.t) ::
     :ok
@@ -196,4 +169,40 @@ defmodule Helix.Process.Action.Process do
     {:ok, pid} = ManagerTOP.prepare_top(gateway)
     pid
   end
+
+  @spec get_process_entities(Process.create_params) ::
+    {source_entity :: Entity.id, target_entity :: Entity.id}
+  defp get_process_entities(params) do
+    source_entity = EntityQuery.fetch_by_server(params.gateway_id)
+
+    target_entity =
+    if params.gateway_id == params.target_server_id do
+      source_entity
+    else
+      EntityQuery.fetch_by_server(params.target_server_id)
+    end
+
+    {source_entity.entity_id, target_entity.entity_id}
+  end
+
+  # Review: Help with typespec
+  @spec get_process_ips(Process.create_params) ::
+    {gateway_ip :: IPv4.t, target_ip :: IPv4.t}
+  defp get_process_ips(params = %{network_id: _}) do
+    gateway_ip = ServerQuery.get_ip(params.gateway_id, params.network_id)
+
+    target_ip =
+    if params.gateway_id == params.target_server_id do
+      gateway_ip
+    else
+      ServerQuery.get_ip(params.target_server_id, params.network_id)
+    end
+
+    {gateway_ip, target_ip}
+  end
+
+  @spec get_process_ips(Process.create_params) ::
+    {nil, nil}
+  defp get_process_ips(_),
+    do: {nil, nil}
 end

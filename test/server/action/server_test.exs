@@ -2,13 +2,18 @@ defmodule Helix.Server.Action.ServerTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
+  alias HELL.TestHelper.Random
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Factory
+  alias Helix.Test.Server.Setup, as: ServerSetup
 
   describe "create/2" do
     test "succeeds with valid input" do
@@ -92,6 +97,51 @@ defmodule Helix.Server.Action.ServerTest do
       refute Repo.get(Server, server.server_id)
 
       CacheHelper.sync_test()
+    end
+  end
+
+  describe "crack/4" do
+    test "retrieves the password of the target server" do
+      attacker = EntitySetup.id()
+      {target, _} = ServerSetup.server()
+
+      {:ok, [nip]} = CacheQuery.from_server_get_nips(target.server_id)
+
+      # Password was retrieved!
+      assert {:ok, password, [event]} =
+        ServerAction.crack(attacker, target.server_id, nip.network_id, nip.ip)
+
+      # Password is correct
+      assert password == target.password
+
+      # Event data is correct
+      assert event.password == target.password
+      assert event.entity_id == attacker
+      assert event.server_id == target.server_id
+      assert event.network_id == nip.network_id
+      assert event.server_ip == nip.ip
+    end
+
+    test "fails in case target nip is not found" do
+      attacker = EntitySetup.id()
+
+      target_id = ServerSetup.id()
+      network_id = NetworkHelper.internet_id()
+      ip = Random.ipv4()
+
+      # It failed to crack
+      assert {:error, reason, [event]} =
+        ServerAction.crack(attacker, target_id, network_id, ip)
+
+      # Because NIP was not found (may have changed, etc)
+      assert reason == {:nip, :notfound}
+
+      # And the event data is correct
+      assert event.entity_id == attacker
+      assert event.network_id == network_id
+      assert event.server_id == target_id
+      assert event.server_ip == ip
+      assert event.reason == :nip_notfound
     end
   end
 end

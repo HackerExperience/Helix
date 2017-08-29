@@ -26,34 +26,36 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent do
   /a
 end
 
-defmodule Helix.Server.Model.Server.PasswordAcquiredEvent do
+defmodule Helix.Software.Model.Software.Cracker.Bruteforce.FailedEvent do
 
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
 
+  @type reason :: :nip_notfound | :internal
+
   @type t :: %__MODULE__{
-    source_entity_id: Entity.id,
+    entity_id: Entity.id,
     network_id: Network.id,
-    target_server_id: Server.id,
-    target_server_ip: IPv4.t,
-    password: Server.password
+    server_id: Server.id,
+    server_ip: IPv4.t,
+    reason: reason
   }
 
   @enforce_keys ~w/
-    source_entity_id
+    entity_id
     network_id
-    target_server_ip
-    target_server_id
-    password
+    server_id
+    server_ip
+    reason
   /a
   defstruct ~w/
-    source_entity_id
+    entity_id
     network_id
-    target_server_ip
-    target_server_id
-    password
+    server_id
+    server_ip
+    reason
   /a
 end
 

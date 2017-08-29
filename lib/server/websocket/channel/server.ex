@@ -13,8 +13,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   alias Phoenix.Socket
   alias Helix.Websocket.Socket, as: Websocket
-  alias Helix.Websocket.Utils, as: WebsocketUtils
-  alias Helix.Event.Notificable
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Network
@@ -242,14 +240,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   intercept ["event"]
 
-  def handle_out("event", event, socket) do
-    case Notificable.generate_payload(event, socket) do
-      {:ok, data} ->
-        push socket, "event", data
-
-        WebsocketUtils.no_reply(socket)
-      _ ->
-        WebsocketUtils.no_reply(socket)
-    end
-  end
+  def handle_out("event", event, socket),
+    do: Websocket.handle_event(event, socket, &push/3)
 end

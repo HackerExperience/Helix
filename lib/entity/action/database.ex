@@ -19,9 +19,7 @@ defmodule Helix.Entity.Action.Database do
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
-  @spec add_server(
-    Entity.idt, Network.idt, IPv4.t, Server.idt, DatabaseServer.server_type)
-  ::
+  @spec add_server(Entity.idt, Network.idt, IPv4.t, Server.idt) ::
     {:ok, DatabaseServer.t}
     | {:error, DatabaseServer.changeset}
   @doc """
@@ -31,8 +29,9 @@ defmodule Helix.Entity.Action.Database do
   with extra information like password or notes. Modifying these extra data
   should be done by with `update_*` functions.
   """
-  defdelegate add_server(entity, network, ip, server, server_type),
-    to: DatabaseInternal
+  def add_server(entity, network, ip, server) do
+    DatabaseInternal.add_server(entity, network, ip, server, :npc)
+  end
 
   @spec add_bank_account(Entity.idt, BankAccount.t) ::
     {:ok, DatabaseBankAccount.t}
@@ -47,6 +46,33 @@ defmodule Helix.Entity.Action.Database do
   def add_bank_account(entity, bank_account) do
     atm_ip = ServerQuery.get_ip(bank_account.atm_id, NetworkQuery.internet())
     DatabaseInternal.add_bank_account(entity, bank_account, atm_ip)
+  end
+
+  @spec update_server_password(
+    Entity.idt,
+    Network.idt,
+    IPv4.t,
+    Server.id,
+    Server.password)
+  ::
+    {:ok, DatabaseServer.t}
+    | {:error, DatabaseServer.changeset}
+    | {:error, {:server, :belongs_to_entity}}
+  @doc """
+  Updates the password of the server entry. It is usually called when:
+
+  - Bruteforce process has finished, and a new password was acquired
+    (PasswordAcquiredEvent)
+  - Player changed his server password (not implemented yet)
+  """
+  def update_server_password(entity, network_id, ip, server_id, password) do
+    if not object_belongs_to_entity?(entity, server_id) do
+      entry = fetch_or_create_server(entity, network_id, ip, server_id)
+
+      DatabaseInternal.update_server_password(entry, password)
+    else
+      {:error, {:server, :belongs_to_entity}}
+    end
   end
 
   @spec update_bank_password(Entity.idt, BankAccount.t, String.t) ::
@@ -109,7 +135,7 @@ defmodule Helix.Entity.Action.Database do
     end
   end
 
-  @spec object_belongs_to_entity?(Entity.idt, BankAccount.t) ::
+  @spec object_belongs_to_entity?(Entity.idt, BankAccount.t | Server.id) ::
     boolean
   docp """
   Helper function to determine whether the object belongs to the given entity.
@@ -121,12 +147,12 @@ defmodule Helix.Entity.Action.Database do
   """
   defp object_belongs_to_entity?(entity = %Entity{}, obj),
     do: object_belongs_to_entity?(entity.entity_id, obj)
-  defp object_belongs_to_entity?(entity_id, acc = %BankAccount{}) do
-    if (EntityQuery.get_entity_id(acc.owner_id) == entity_id) do
-      true
-    else
-      false
-    end
+  defp object_belongs_to_entity?(entity_id, acc = %BankAccount{}),
+    do: EntityQuery.get_entity_id(acc.owner_id) == entity_id
+  defp object_belongs_to_entity?(entity_id, server_id = %Server.ID{}) do
+    owner = EntityQuery.fetch_by_server(server_id)
+
+    owner.entity_id == entity_id
   end
 
   @spec delete_server(Entity.idt, Network.idt, IPv4.t) ::
@@ -167,6 +193,18 @@ defmodule Helix.Entity.Action.Database do
         entry
       nil ->
         {:ok, entry} = add_bank_account(entity, account)
+        entry
+    end
+  end
+
+  @spec fetch_or_create_server(Entity.t, Network.idt, IPv4.t, Server.id) ::
+    DatabaseServer.t
+  defp fetch_or_create_server(entity, network_id, ip, server_id) do
+    case DatabaseQuery.fetch_server(entity, network_id, ip) do
+      entry = %{} ->
+        entry
+      nil ->
+        {:ok, entry} = add_server(entity, network_id, ip, server_id)
         entry
     end
   end

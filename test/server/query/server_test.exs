@@ -39,4 +39,27 @@ defmodule Helix.Server.Query.ServerTest do
       assert ServerQuery.get_ip(server.server_id, NetworkHelper.internet_id())
     end
   end
+
+  describe "get_password/1" do
+    test "correct password is returned (passing struct)" do
+      {server, _} = ServerSetup.fake_server()
+
+      assert {:ok, password} = ServerQuery.get_password(server)
+      assert password == server.password
+    end
+
+    test "correct password is returned (passing ID)" do
+      {server, _} = ServerSetup.server()
+
+      assert {:ok, password} = ServerQuery.get_password(server.server_id)
+      assert password == server.password
+    end
+
+    test "with non-existing server" do
+      fake_server_id = ServerSetup.id()
+
+      assert {:error, reason} = ServerQuery.get_password(fake_server_id)
+      assert reason == {:server, :notfound}
+    end
+  end
 end
