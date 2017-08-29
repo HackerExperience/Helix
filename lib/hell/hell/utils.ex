@@ -1,4 +1,5 @@
 defmodule HELL.Utils do
+
   def date_after(seconds, precision \\ :second) do
     DateTime.utc_now()
     |> DateTime.to_unix(precision)

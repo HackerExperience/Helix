@@ -33,11 +33,18 @@ defmodule Helix.Event.Dispatcher.Helix do
     :connection_started
 
   ##############################################################################
+  # Server events
+  ##############################################################################
+  event Helix.Server.Model.Server.PasswordAcquiredEvent,
+    Entity.Event.Database,
+    :server_password_acquired
+
+  ##############################################################################
   # Software events
   ##############################################################################
   event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
-    Entity.Event.Database,
-    :cracker_conclusion
+    Software.Event.Cracker,
+    :bruteforce_conclusion
 
   event Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     Software.Event.Cracker,

@@ -24,7 +24,7 @@ defmodule Helix.Test.Entity.Database.Setup do
   @doc """
   - entity_id: generated entry belongs to that entity
   - server_id: server that will be added to the entry
-  - password: password stored on database entry
+  - password: password stored on database entry. Defaults to nil.
 
   Related data: Server.t, Entity.t
   """

@@ -9,7 +9,6 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
   alias Helix.Server.Model.ServerType
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Account.Action.Session, as: SessionAction
-  alias Helix.Account.Websocket.Channel.Account, as: Channel
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Factory, as: EntityFactory
@@ -111,15 +110,6 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
             },
             hardware)
       end)
-    end
-  end
-
-  describe "notification/2" do
-    test "pushes message to all clients", context do
-      notification = %{warning: "all your base are belong to us!"}
-      Channel.notify(context.account.account_id, notification)
-
-      assert_push "event", %{warning: "all your base are belong to us!"}
     end
   end
 end

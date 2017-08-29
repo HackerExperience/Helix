@@ -5,6 +5,7 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   use Phoenix.Channel
 
+  alias Helix.Websocket.Socket, as: Websocket
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -98,10 +99,8 @@ defmodule Helix.Account.Websocket.Channel.Account do
     |> :maps.from_list()
   end
 
-  def notify(account_id, notification) do
-    Helix.Endpoint.broadcast(
-      "account:" <> to_string(account_id),
-      "event",
-      notification)
-  end
+  intercept ["event"]
+
+  def handle_out("event", event, socket),
+    do: Websocket.handle_event(event, socket, &push/3)
 end

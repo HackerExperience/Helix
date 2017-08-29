@@ -2,42 +2,32 @@ defmodule Helix.Entity.Event.Database do
 
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
   alias Helix.Entity.Action.Database, as: DatabaseAction
+  alias Helix.Entity.Query.Entity, as: EntityQuery
 
-  alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
-    as: CrackerBruteforceConclusionEvent
+  alias Helix.Server.Model.Server.PasswordAcquiredEvent,
+    as: ServerPasswordAcquiredEvent
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
     as: BankAccountLoginEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
 
-  def cracker_conclusion(_event = %CrackerBruteforceConclusionEvent{}) do
-    # entity = EntityQuery.fetch(event.entity_id)
-    # server = ServerQuery.fetch(event.server_id)
-    # server_ip = ServerQuery.get_ip(event.server_id, event.network_id)
+  @doc """
+  Handler called when a BruteforceProcess has finished and the target server
+  password has been acquired.
 
-    # create_entry = fn ->
-    #   DatabaseAction.add_server(
-    #     entity,
-    #     event.network_id,
-    #     event.server_ip,
-    #     server,
-    #     event.server_type)
-    # end
+  This handler goal is to update the attacker's database with the recently
+  obtained password.
+  """
+  def server_password_acquired(event = %ServerPasswordAcquiredEvent{}) do
+    entity = EntityQuery.fetch(event.entity_id)
 
-    # # Review: Why is it updating everyone's password?
-    # set_password = fn ->
-    #   entity
-    #   |> DatabaseQuery.get_server_entries(server)
-    #   |> Enum.each(&DatabaseAction.update(&1, %{password: server.password}))
-    # end
-
-    # if to_string(server_ip) == to_string(event.server_ip) do
-    #   Repo.transaction fn ->
-    #     {:ok, _} = create_entry.()
-    #     :ok = set_password.()
-    #   end
-    # end
+    DatabaseAction.update_server_password(
+      entity,
+      event.network_id,
+      event.server_ip,
+      event.server_id,
+      event.password)
   end
 
   @doc """

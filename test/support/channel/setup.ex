@@ -3,6 +3,7 @@ defmodule Helix.Test.Channel.Setup do
   import Phoenix.ChannelTest
 
   alias Helix.Websocket.Socket
+  alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
   alias Helix.Test.Account.Setup, as: AccountSetup
@@ -34,6 +35,41 @@ defmodule Helix.Test.Channel.Setup do
     {:ok, socket} = connect(Socket, %{token: token})
 
     {socket, Map.merge(%{account: account}, related)}
+  end
+
+  @doc """
+  - account_id: Specify channel to join. Creates a new account if none is set.
+  - socket: Specify which socket to use. Generates a new one if not set.
+
+  If `socket` is given, an `account_id` must be set as well. Same for the
+  reverse case (if `account_id` is defined, a `socket` must be given.
+  """
+  def join_account(opts \\ []) do
+    acc_without_socket = not is_nil(opts[:account_id]) and is_nil(opts[:socket])
+    socket_without_acc = is_nil(opts[:account_id]) and not is_nil(opts[:socket])
+
+    if acc_without_socket or socket_without_acc do
+      raise "You must specify both :account_id and :socket"
+    end
+
+    {socket, account_id} =
+      if opts[:socket] do
+        {opts[:socket], opts[:account_id]}
+      else
+        {socket, %{account: account}} = create_socket()
+
+        {socket, account.account_id}
+      end
+
+    topic = "account:" <> to_string(account_id)
+
+    {:ok, _, socket} = subscribe_and_join(socket, AccountChannel, topic, %{})
+
+    related = %{
+      account_id: account_id,
+    }
+
+    {socket, related}
   end
 
   @doc """

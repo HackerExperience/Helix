@@ -2,6 +2,7 @@ defmodule Helix.Event.Dispatcher.Notification do
 
   use HELF.Event
 
+  alias Helix.Event.NotificationHandler
   alias Helix.Log
   alias Helix.Process
   alias Helix.Server
@@ -9,27 +10,33 @@ defmodule Helix.Event.Dispatcher.Notification do
   ##############################################################################
   # Process notifications
   ##############################################################################
-
   event Process.Model.Process.ProcessCreatedEvent,
-    Server.Websocket.Channel.Server.Events,
+    NotificationHandler,
     :notification_handler
 
   event Process.Model.Process.ProcessConclusionEvent,
-    Server.Websocket.Channel.Server.Events,
+    NotificationHandler,
     :notification_handler
 
   ##############################################################################
   # Log notifications
   ##############################################################################
   event Log.Model.Log.LogCreatedEvent,
-    Server.Websocket.Channel.Server.Events,
+    NotificationHandler,
     :notification_handler
 
   event Log.Model.Log.LogModifiedEvent,
-    Server.Websocket.Channel.Server.Events,
+    NotificationHandler,
     :notification_handler
 
   event Log.Model.Log.LogDeletedEvent,
-    Server.Websocket.Channel.Server.Events,
+    NotificationHandler,
+    :notification_handler
+
+  ##############################################################################
+  # Server notifications
+  ##############################################################################
+  event Server.Model.Server.PasswordAcquiredEvent,
+    NotificationHandler,
     :notification_handler
 end

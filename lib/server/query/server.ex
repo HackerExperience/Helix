@@ -16,7 +16,7 @@ defmodule Helix.Server.Query.Server do
   defdelegate fetch(server_id),
     to: ServerInternal
 
-  @spec fetch_by_motherboard(Motherboard.t | Motherboard.id) ::
+  @spec fetch_by_motherboard(Motherboard.idt) ::
     Server.t
     | nil
   @doc """
@@ -40,4 +40,20 @@ defmodule Helix.Server.Query.Server do
         nil
     end
   end
+
+  @spec get_password(Server.idt) ::
+    {:ok, Server.password}
+    | {:error, {:server, :notfound}}
+  @doc """
+  Returns the server password.
+  """
+  def get_password(server_id = %Server.ID{}) do
+    server_id
+    |> fetch()
+    |> get_password()
+  end
+  def get_password(server = %Server{}),
+    do: {:ok, server.password}
+  def get_password(nil),
+    do: {:error, {:server, :notfound}}
 end
