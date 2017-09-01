@@ -14,8 +14,9 @@ defmodule HELL.Hack.Experience do
       Helix.Cache.Model.Cacheable,
       Helix.Event.Notificable,
       Helix.Websocket.Requestable,
+      Helix.Websocket.Joinable,
       Helix.Process.Model.Process.ProcessType,
-      Helix.Process.API.View.Process
+      Helix.Process.API.View.Process,
     ]
 
     methods = %{
@@ -29,6 +30,11 @@ defmodule HELL.Hack.Experience do
         {:check_permissions, 2},
         {:handle_request, 2},
         {:reply, 2}
+      ],
+      "Elixir.Helix.Websocket.Joinable" => [
+        {:check_params, 2},
+        {:check_permissions, 2},
+        {:join, 3}
       ],
       "Elixir.Helix.Process.Model.Process.ProcessType" => [
         {:dynamic_resources, 1},

@@ -40,7 +40,7 @@ defprotocol Helix.Websocket.Requestable do
 
   @doc """
   Method meant to validate the given params in a request. The original params
-  are stored on the `unsafe_param` entry of the Request.t struct.
+  are stored on the `unsafe` entry of the Request.t struct.
 
   May fill the entry `meta` on Request.t in order to relay useful information
   for the next flow steps.
@@ -56,7 +56,7 @@ defprotocol Helix.Websocket.Requestable do
   Method focused on validating and verifying the user has the permissions to
   perform that action.
 
-  Should never rely on `unsafe_params`.
+  Should never rely on `unsafe`.
 
   May fill the entry `meta` on Request.t in order to relay useful information
   for the next flow steps.
@@ -71,7 +71,7 @@ defprotocol Helix.Websocket.Requestable do
   Method responsible for actual processing of the event, routing it to the
   corresponding Public.
 
-  Should never rely on `unsafe_params`.
+  Should never rely on `unsafe`.
 
   May fill the entry `meta` on Request.t in order to relay useful information to
   `reply/2`.

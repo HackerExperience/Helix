@@ -12,15 +12,11 @@ defmodule Helix.Account.Websocket.Channel.Account do
   alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
-  def join("account:" <> account_id, _message, socket) do
-    # TODO: Provide a cleaner way to check this
-    player_account_id = to_string(socket.assigns.account.account_id)
+  alias Helix.Account.Websocket.Channel.Account.Join, as: AccountJoin
 
-    if account_id == player_account_id do
-      {:ok, socket}
-    else
-      {:error, %{reason: "can't join another user's notification channel"}}
-    end
+  def join(topic, _params, socket) do
+    request = AccountJoin.new(topic)
+    Websocket.handle_join(request, socket, &assign/3)
   end
 
   def handle_in("database.index", _message, socket) do

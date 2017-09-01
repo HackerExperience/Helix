@@ -13,8 +13,7 @@ defmodule Helix.Websocket.Request do
 
   @type t(struct) :: %{
     __struct__: struct,
-    socket: term,
-    unsafe_params: map,
+    unsafe: map,
     params: map,
     meta: map
   }
@@ -27,17 +26,16 @@ defmodule Helix.Websocket.Request do
 
     struct =
       quote do
-        @enforce_keys [:socket, :unsafe_params]
-        defstruct [:socket, :unsafe_params, params: %{}, meta: %{}]
+        @enforce_keys [:unsafe]
+        defstruct [:unsafe, params: %{}, meta: %{}]
       end
 
     new =
       quote do
-        @spec new(term, term) :: t
-        def new(socket, params) do
+        @spec new(term) :: t
+        def new(params) do
           %__MODULE__{
-            socket: socket,
-            unsafe_params: params
+            unsafe: params
           }
         end
       end
