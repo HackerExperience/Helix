@@ -50,12 +50,6 @@ defmodule Helix.Account.Websocket.Channel.AccountTest do
     server
   end
 
-  test "an user can't join another user's notification channel", context do
-    another_account = Factory.insert(:account)
-    id = to_string(another_account.account_id)
-    assert {:error, _} = join(context.socket, "account:" <> id)
-  end
-
   describe "server.index" do
     test "returns all servers owned by the account", context do
       entity = EntityFactory.insert(

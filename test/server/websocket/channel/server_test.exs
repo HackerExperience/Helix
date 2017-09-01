@@ -3,7 +3,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
-  import Helix.Test.Case.ID
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
@@ -11,7 +10,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Log.Helper, as: LogHelper
   alias Helix.Test.Log.Setup, as: LogSetup
-  alias Helix.Test.Server.Setup, as: ServerSetup
 
   @moduletag :driver
 

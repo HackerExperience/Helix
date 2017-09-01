@@ -3,9 +3,11 @@ defmodule Helix.Websocket.Socket do
   use Phoenix.Socket
 
   alias Helix.Event.Notificable
+  alias Helix.Websocket.Joinable
   alias Helix.Websocket.Requestable
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Account.Action.Session, as: SessionAction
+  alias Helix.Entity.Query.Entity, as: EntityQuery
 
   transport :websocket, Phoenix.Transports.WebSocket
 
@@ -16,10 +18,13 @@ defmodule Helix.Websocket.Socket do
   def connect(%{"token" => token}, socket) do
     case SessionAction.validate_token(token) do
       {:ok, account, session} ->
+        entity_id = EntityQuery.get_entity_id(account.account_id)
+
         socket =
           socket
           |> assign(:account, account)
           |> assign(:session, session)
+          |> assign(:entity_id, entity_id)
 
         {:ok, socket}
       _ ->
@@ -33,6 +38,25 @@ defmodule Helix.Websocket.Socket do
 
   def id(socket),
     do: "session:" <> socket.assigns.session
+
+  @doc """
+  Generic join handler. it guides the request through the Joinable flow,
+  subscribing the client to the channel in case of success.
+  """
+  def handle_join(request, socket, assign) do
+    with \
+      {:ok, request} <- Joinable.check_params(request, socket),
+      {:ok, request} <- Joinable.check_permissions(request, socket),
+      {:ok, joined_socket} <- Joinable.join(request, socket, assign)
+    do
+      {:ok, joined_socket}
+    else
+      {:error, %{message: msg}} ->
+        {:error, %{data: msg}}
+      _ ->
+        {:error, %{data: "internal"}}
+    end
+  end
 
   @doc """
   Generic request handler. It guides the request through the Requestable flow,

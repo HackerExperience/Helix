@@ -4,6 +4,7 @@ defmodule Helix.Test.Channel.Setup do
 
   alias Helix.Websocket.Socket
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
   alias Helix.Test.Account.Setup, as: AccountSetup
@@ -124,6 +125,8 @@ defmodule Helix.Test.Channel.Setup do
     destination_id = to_string(destination.server_id)
     network_id = Access.get(opts, :network_id, "::")
 
+    {:ok, [target_nip]} = CacheQuery.from_server_get_nips(destination.server_id)
+
     # bounces = Access.get(opts, :bounces, [])
 
     topic = "server:" <> destination_id
@@ -131,6 +134,7 @@ defmodule Helix.Test.Channel.Setup do
       "gateway_id" => gateway_id,
       "network_id" => network_id,
       "password" => destination.password,
+      "ip" => target_nip.ip
       # bounces: bounces_string
     }
 

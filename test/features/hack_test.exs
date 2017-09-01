@@ -98,7 +98,8 @@ defmodule Helix.Test.Features.Hack do
       params = %{
         "gateway_id" => gateway.server_id,
         "network_id" => target_nip.network_id,
-        "password" => password_acquired_event.data.password
+        "password" => password_acquired_event.data.password,
+        "ip" => target_nip.ip
       }
 
       {:ok, _, new_socket} =
@@ -113,5 +114,47 @@ defmodule Helix.Test.Features.Hack do
 
       TOPHelper.top_stop(gateway.server_id)
     end
+  end
+
+  describe "remote login" do
+    test "player can login another server when correct password is given" do
+      {socket, %{gateway: gateway}} =
+        ChannelSetup.join_server([own_server: true])
+
+      {target, _} = ServerSetup.server()
+
+      {:ok, [target_nip]} =
+        CacheQuery.from_server_get_nips(target.server_id)
+
+      # To the client, login consists of two steps:
+      #  1 - Joining the remote server channel
+      #  2 - Retrieving data about the remote server
+      # To the backend, `login` is simply the act of joining another server's
+      # channel (step 1 above).
+
+      topic = "server:" <> to_string(target.server_id)
+      params = %{
+        "gateway_id" => gateway.server_id,
+        "network_id" => target_nip.network_id,
+        "password" => target.password,
+        "ip" => target_nip.ip
+      }
+
+      # So, let's login!
+      {:ok, _, new_socket} =
+        subscribe_and_join(socket, ServerChannel, topic, params)
+
+      # Successfully joined the remote server channel
+      assert new_socket.topic == topic
+      assert new_socket.assigns.gateway.server_id == gateway.server_id
+      assert new_socket.assigns.destination.server_id == target.server_id
+
+      # Now let's retrieve information about that server
+
+      :timer.sleep(50)
+    end
+
+    @tag :pending
+    test "server password is stored on the DB in case it wasn't already"
   end
 end

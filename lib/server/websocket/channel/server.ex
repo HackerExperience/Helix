@@ -11,114 +11,26 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   use Phoenix.Channel
 
-  alias Phoenix.Socket
   alias Helix.Websocket.Socket, as: Websocket
-  alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Server
   alias Helix.Server.Public.Server, as: ServerPublic
-  alias Helix.Server.Websocket.View.ServerChannel, as: ChannelView
-
-  # HEnforcers
-  alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
 
   # Requests
+  alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
   alias Helix.Server.Websocket.Channel.Server.Requests.Browse,
     as: BrowseRequest
   alias Helix.Server.Websocket.Channel.Server.Requests.Bruteforce,
     as: BruteforceRequest
 
-  @type socket :: Socket.t
+  def join(topic = "server:" <> server_id, params, socket) do
+    access_type =
+      if server_id == params["gateway_id"] do
+        :local
+      else
+        :remote
+      end
 
-  # Joining into player's own gateway
-  def join("server:" <> gateway_id, %{"gateway_id" => gateway_id}, socket) do
-    with \
-      account = socket.assigns.account,
-      {:ok, gateway_id} <- Server.ID.cast(gateway_id),
-      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
-      gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id),
-      {:ok, nips} <- CacheQuery.from_server_get_nips(gateway_id)
-    do
-      gateway_data = %{
-        server_id: gateway_id,
-        entity_id: gateway_entity.entity_id,
-        ips: format_nips(nips)
-      }
-
-      socket =
-        socket
-        |> assign(:access_type, :local)
-        |> assign(:gateway, gateway_data)
-        |> assign(:destination, gateway_data)
-
-      {:ok, socket}
-    else
-      error ->
-        {:error, ChannelView.render_join_error(error)}
-    end
-  end
-
-  # Joining a remote server
-  def join(
-    "server:" <> destination_id,
-    %{
-      "gateway_id" => gateway_id,
-      "network_id" => network_id,
-      # "bounces" => bounce_list,
-      "password" => password
-    },
-    socket)
-  do
-    with \
-      account = socket.assigns.account,
-      {:ok, gateway_id} <- Server.ID.cast(gateway_id),
-      {:ok, destination_id} <- Server.ID.cast(destination_id),
-      {:ok, network_id} <- Network.ID.cast(network_id),
-      :ok <- ChannelHenforcer.validate_gateway(account, gateway_id),
-      :ok <- ChannelHenforcer.validate_server(destination_id, password),
-      gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id),
-      destination_entity = %{} <- EntityQuery.fetch_by_server(destination_id),
-      {:ok, gateway_nips} <- CacheQuery.from_server_get_nips(gateway_id),
-      {:ok, destination_nips} <-
-         CacheQuery.from_server_get_nips(destination_id),
-      {:ok, tunnel} <- ServerPublic.connect_to_server(
-        gateway_id,
-        destination_id,
-        [])
-    do
-      gateway_data = %{
-        server_id: gateway_id,
-        entity_id: gateway_entity.entity_id,
-        ips: format_nips(gateway_nips)
-      }
-
-      destination_data = %{
-        server_id: destination_id,
-        entity_id: destination_entity.entity_id,
-        ips: format_nips(destination_nips)
-      }
-
-      socket =
-        socket
-        |> assign(:network_id, network_id)
-        |> assign(:tunnel, tunnel)
-        |> assign(:access_type, :remote)
-        |> assign(:gateway, gateway_data)
-        |> assign(:destination, destination_data)
-
-      {:ok, socket}
-    else
-      error ->
-        {:error, ChannelView.render_join_error(error)}
-    end
-  end
-
-  defp format_nips(nips) do
-    nips
-    |> Enum.reduce(%{}, fn nip, acc ->
-      Map.put(acc, nip.network_id, nip.ip)
-    end)
+    request = ServerJoin.new(topic, params, access_type)
+    Websocket.handle_join(request, socket, &assign/3)
   end
 
   @doc false
@@ -199,7 +111,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - "bad_origin" - The given origin is neither `gateway_id` nor `destination_id`
   """
   def handle_in("network.browse", params, socket) do
-    request = BrowseRequest.new(socket, params)
+    request = BrowseRequest.new(params)
     Websocket.handle_request(request, socket)
   end
 
@@ -234,7 +146,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - "bad_attack_src" - Request originated from a remote server channel
   """
   def handle_in("bruteforce", params, socket) do
-    request = BruteforceRequest.new(socket, params)
+    request = BruteforceRequest.new(params)
     Websocket.handle_request(request, socket)
   end
 
