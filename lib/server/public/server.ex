@@ -13,6 +13,7 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Software.Model.File
   alias Helix.Software.Public.File, as: FilePublic
   alias Helix.Server.Model.Server
+  alias Helix.Server.Public.Index, as: ServerIndex
 
   @spec connect_to_server(Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
@@ -62,4 +63,12 @@ defmodule Helix.Server.Public.Server do
     | FileFlow.error
   defdelegate bruteforce(gateway_id, network_id, target_ip, bounces),
     to: FilePublic
+
+  defdelegate bootstrap(server_id, entity_id),
+    to: ServerIndex,
+    as: :remote_server_index
+
+  defdelegate render_bootstrap(bootstrap),
+    to: ServerIndex,
+    as: :render_remote_server_index
 end

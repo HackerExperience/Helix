@@ -94,6 +94,11 @@ defprotocol Helix.Event.Notificable do
   Example test case: `test/process/model/process/event_test.exs`
   """
 
+  alias Phoenix.Socket
+
+  @spec generate_payload(event :: struct, Socket.t) ::
+    {:ok, %{data: payload :: term, event: String.t}}
+    | :noreply
   @doc """
   Generates the actual payload of the event for the given player, according to
   the context provided by `socket`.
@@ -116,6 +121,8 @@ defprotocol Helix.Event.Notificable do
   """
   def generate_payload(event, socket)
 
+  @spec whom_to_notify(event :: struct) ::
+    [String.t]
   @doc """
   Specifies which topics should receive the event.
 

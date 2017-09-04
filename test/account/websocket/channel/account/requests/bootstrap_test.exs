@@ -17,7 +17,4 @@ defmodule Helix.Account.Websocket.Channel.Account.Requests.BrowseTest do
       assert response.data.servers
     end
   end
-
-  @tag :pending
-  test "removes duplicates"
 end
