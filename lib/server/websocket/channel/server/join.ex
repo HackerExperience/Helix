@@ -201,6 +201,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
   end
 
   defmodule Utils do
+
     @doc """
     Helper to format NIPs to the expected socket assign format, which uses
     `network_id` as index.

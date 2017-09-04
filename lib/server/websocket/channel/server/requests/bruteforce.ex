@@ -16,15 +16,15 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
     def check_params(request, socket) do
       with \
         {:ok, network_id} <-
-          Network.ID.cast(request.unsafe_params["network_id"]),
-        true <- IPv4.valid?(request.unsafe_params["ip"]),
-        {:ok, bounces} = cast_bounces(request.unsafe_params["bounces"]),
+          Network.ID.cast(request.unsafe["network_id"]),
+        true <- IPv4.valid?(request.unsafe["ip"]),
+        {:ok, bounces} = cast_bounces(request.unsafe["bounces"]),
         true <- socket.assigns.access_type == :local || :bad_attack_src
       do
         params = %{
           bounces: bounces,
           network_id: network_id,
-          ip: request.unsafe_params["ip"]
+          ip: request.unsafe["ip"]
         }
 
         {:ok, %{request| params: params}}

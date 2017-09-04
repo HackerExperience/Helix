@@ -21,6 +21,10 @@ defmodule Helix.Network.Model.Tunnel do
     connections: term
   }
 
+  @type remote_endpoints ::
+    %{gateway :: Server.id =>
+      [%{bounces: [Server.id], destination_id: Server.id}]}
+
   schema "tunnels" do
     field :tunnel_id, ID,
       primary_key: true
@@ -125,5 +129,44 @@ defmodule Helix.Network.Model.Tunnel do
       Queryable.t
     def select_total_tunnels(query),
       do: select(query, [t], count(t.tunnel_id))
+
+    @spec get_remote_endpoints([Server.idtb]) ::
+      raw_query :: String.t
+    @doc """
+    Fetches all remote servers that the given server(s) are connected to. It
+    includes only tunnels with connections of tpye `ssh`.
+
+    It also returns the bounces/hops between gateway and endpoint.
+
+    Used exclusively for account bootstrap.
+    """
+    def get_remote_endpoints(servers) do
+      # FIXME: Translate me to Ecto pls
+      # TODO: Add indexes
+      raw = """
+        SELECT DISTINCT t.gateway_id, t.destination_id, (
+          SELECT ARRAY_REMOVE(ARRAY_AGG(source_id), t.gateway_id)
+          FROM links
+          WHERE tunnel_id = t.tunnel_id) as bounces
+        FROM tunnels t
+        INNER JOIN connections c
+        ON t.tunnel_id = c.tunnel_id
+        WHERE t.gateway_id IN ($servers$) and c.connection_type = 'ssh';
+      """
+
+      # Not vulnerable to SQL injection (including second-order injection),
+      # since the given list of server ids come internally from Helix. Still,
+      # it's preferable to translate the above raw query into Ecto language.
+      # Just for precaution, a Server.ID cast is applied to all entries,
+      # ensuring the given ID has a valid format.
+      Enum.each(servers, &(Server.ID.cast!(&1)))
+
+      servers_str =
+        servers
+        |> Enum.map(&("'" <> to_string(&1) <> "'"))
+        |> Enum.join(", ")
+
+      String.replace(raw, "$servers$", servers_str)
+    end
   end
 end

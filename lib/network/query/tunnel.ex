@@ -46,14 +46,39 @@ defmodule Helix.Network.Query.Tunnel do
 
   @spec inbound_connections(Server.idt) ::
     [Connection.t]
-  # REVIEW: Maybe return only connections whose tunnel's destination is `server`
+  @doc """
+  Lists all inbound connections on the given server. It may include connections
+  that have that server as final destination, as well as connections which are
+  bouncing through (using that server as bounce).
+  """
   defdelegate inbound_connections(endpoint),
     to: TunnelInternal
 
   @spec outbound_connections(Server.idt) ::
     [Connection.t]
-  # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
+  @doc """
+  Lists all outbound connections on the given server. It may include connections
+  that originated on that server, as well as connections which are bouncing
+  through (using that server as bounce).
+  """
   defdelegate outbound_connections(gateway),
+    to: TunnelInternal
+
+  @spec connections_originating_from(Server.idt) ::
+    [Connection.t]
+  @doc """
+  Lists all connections that *originated* on the given server, i.e. the server
+  is the gateway/starting point of the connection.
+  """
+  defdelegate connections_originating_from(gateway),
+    to: TunnelInternal
+
+  @spec connections_destined_to(Server.idt) ::
+    [Connection.t]
+  @doc """
+  Lists all connections that have the given server as the final destination.
+  """
+  defdelegate connections_destined_to(endpoint),
     to: TunnelInternal
 
   @spec connections_on_tunnels_between(Server.idt, Server.idt) ::
@@ -66,6 +91,10 @@ defmodule Helix.Network.Query.Tunnel do
 
   @spec get_hops(Tunnel.t) ::
     [Server.id]
+  @doc """
+  Returns all hops in a tunnel, including source (gateway) and endpoint
+  (destination).
+  """
   def get_hops(tunnel) do
     tunnel
     |> TunnelInternal.get_links()
@@ -74,4 +103,17 @@ defmodule Helix.Network.Query.Tunnel do
     end)
     |> Enum.uniq()
   end
+
+  @spec get_remote_endpoints([Server.id]) ::
+    Tunnel.remote_endpoints
+  @doc """
+  Returns information about remote connections (endpoints). For each given
+  server, returns remote connections (if any) including destination_id and
+  bounces/hops between the gateway and the endpoint.
+
+  A server `B` is considered a `remote endpoint` of `S` if there's an SSH
+  connection between `S` and `B`.
+  """
+  defdelegate get_remote_endpoints(servers),
+    to: TunnelInternal
 end
