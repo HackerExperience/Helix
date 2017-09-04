@@ -100,13 +100,13 @@ defmodule Helix.Test.Log.Setup do
         opts[:entity_id] ->
           opts[:entity_id]
 
-        # User asked for real entity
-        not opts[:fake_entity] ->
-          EntitySetup.entity!().entity_id
-
         # Generating log for own server
         opts[:own_log] ->
           server_owner.entity_id
+
+        # User asked for real entity
+        not opts[:fake_entity] ->
+          EntitySetup.entity!().entity_id
 
         # All else: generate a fake entity id.
         true ->

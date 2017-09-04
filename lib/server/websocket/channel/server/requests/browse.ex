@@ -17,15 +17,15 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Browse do
       destination_id = socket.assigns.destination.server_id
 
       origin_id =
-        if Map.has_key?(request.unsafe_params, "origin") do
-          request.unsafe_params["origin"]
+        if Map.has_key?(request.unsafe, "origin") do
+          request.unsafe["origin"]
         else
           socket.assigns.destination.server_id
         end
 
       with \
         {:ok, network_id} <-
-          Network.ID.cast(request.unsafe_params["network_id"]),
+          Network.ID.cast(request.unsafe["network_id"]),
         {:ok, origin_id} <- Server.ID.cast(origin_id),
         true <-
           NetworkHenforcer.valid_origin?(origin_id, gateway_id, destination_id)
@@ -33,7 +33,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Browse do
       do
         validated_params = %{
           network_id: network_id,
-          address: request.unsafe_params["address"],
+          address: request.unsafe["address"],
           origin: origin_id
         }
 

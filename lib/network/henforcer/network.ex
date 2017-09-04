@@ -50,6 +50,7 @@ defmodule Helix.Network.Henforcer.Network do
   def valid_origin?(origin, gateway_id, destination_id),
     do: origin == gateway_id or origin == destination_id
 
-  def can_bounce?(origin_id, network_id, bounces) do
+  def can_bounce?(_origin_id, _network_id, _bounces) do
+    #TODO
   end
 end

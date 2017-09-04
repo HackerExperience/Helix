@@ -33,15 +33,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
     Websocket.handle_join(request, socket, &assign/3)
   end
 
-  @doc false
-  def handle_in("file.index", _, socket) do
-    destination_id = socket.assigns.destination.server_id
-
-    message = %{data: %{files: ServerPublic.file_index(destination_id)}}
-
-    {:reply, {:ok, message}, socket}
-  end
-
   def handle_in("file.download", %{file_id: file_id}, socket) do
     if socket.assigns.access_type == :remote do
       gateway_id = socket.assigns.gateway.server_id
@@ -64,29 +55,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
       }
       {:reply, {:error, message}, socket}
     end
-  end
-
-  # TODO: Paginate
-  def handle_in("log.index", _, socket) do
-    destination_id = socket.assigns.destination.server_id
-
-    message = %{data: %{logs: ServerPublic.log_index(destination_id)}}
-
-    {:reply, {:ok, message}, socket}
-  end
-
-  def handle_in("process.index", _, socket) do
-    destination_id = socket.assigns.destination.server_id
-    entity_id = socket.assigns.destination.entity_id
-
-    index = ServerPublic.process_index(destination_id, entity_id)
-
-    return = %{data: %{
-      owned_processes: index.owned,
-      affecting_processes: index.affecting
-    }}
-
-    {:reply, {:ok, return}, socket}
   end
 
   @doc """

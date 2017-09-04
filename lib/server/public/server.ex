@@ -2,8 +2,6 @@ defmodule Helix.Server.Public.Server do
 
   alias HELL.IPv4
   alias Helix.Event
-  alias Helix.Entity.Model.Entity
-  alias Helix.Log.Public.Log, as: LogPublic
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
@@ -11,7 +9,6 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Model.Process
-  alias Helix.Process.Public.Process, as: ProcessPublic
   alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Model.File
   alias Helix.Software.Public.File, as: FilePublic
@@ -46,30 +43,12 @@ defmodule Helix.Server.Public.Server do
     end
   end
 
-  @spec log_index(Server.id) ::
-    [map]
-  defdelegate log_index(server_id),
-    to: LogPublic,
-    as: :index
-
-  @spec file_index(Server.id) ::
-    %{path :: String.t => [map]}
-  defdelegate file_index(server_id),
-    to: FilePublic,
-    as: :index
-
   @spec file_download(Server.id, Server.id, Tunnel.t, File.id) ::
     :ok
     | :error
   defdelegate file_download(gateway_id, destination_id, tunnel, file_id),
     to: FilePublic,
     as: :download
-
-  @spec process_index(Server.id, Entity.id) ::
-    %{owned: [map], affecting: [map]}
-  defdelegate process_index(server_id, entity_id),
-    to: ProcessPublic,
-    as: :index
 
   @spec network_browse(Network.idt, String.t | IPv4.t, Server.idt) ::
     {:ok, term}

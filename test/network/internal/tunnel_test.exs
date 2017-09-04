@@ -9,6 +9,7 @@ defmodule Helix.Network.Internal.TunnelTest do
   alias Helix.Network.Repo
 
   alias Helix.Test.Network.Factory
+  alias Helix.Test.Network.Setup, as: NetworkSetup
 
   @internet NetworkQuery.internet()
 
@@ -236,6 +237,130 @@ defmodule Helix.Network.Internal.TunnelTest do
       assert l3.source_id == bounce2
       assert l3.destination_id == destination_id
       assert Enum.empty?(l4)
+    end
+  end
+
+  describe "connections_originating_from/1" do
+    test "lists connections correctly" do
+      gateway_id = Server.ID.generate()
+
+      # Tunnel1 has connections originating *from* `gateway`
+      tunnel1_opts = [fake_servers: true, gateway_id: gateway_id]
+      {tunnel1, _} = NetworkSetup.tunnel(tunnel1_opts)
+
+      c1t1 = NetworkSetup.connection!([tunnel_id: tunnel1.tunnel_id])
+      c2t1 = NetworkSetup.connection!([tunnel_id: tunnel1.tunnel_id])
+
+      # Tunnel2 has connections going *to* `gateway`
+      tunnel2_opts = [fake_servers: true, destination_id: gateway_id]
+      {tunnel2, _} = NetworkSetup.tunnel(tunnel2_opts)
+
+      _c1t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
+      _c2t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
+
+      # Tunnel2 has connections going *through* `gateway` (part of bounce)
+      tunnel3_opts = [fake_servers: true, bounces: [gateway_id]]
+      {tunnel3, _} = NetworkSetup.tunnel(tunnel3_opts)
+
+      _c1t3 = NetworkSetup.connection!([tunnel_id: tunnel3.tunnel_id])
+      _c2t3 = NetworkSetup.connection!([tunnel_id: tunnel3.tunnel_id])
+
+      # Get connections originating from `gateway`
+      connections = TunnelInternal.connections_originating_from(gateway_id)
+
+      assert length(connections) == 2
+      assert connections == [c2t1, c1t1]
+    end
+  end
+
+  describe "connections_destined_to/1" do
+    test "lists connections correctly" do
+      server_id = Server.ID.generate()
+
+      # Tunnel1 has connections originating *from* `server`
+      tunnel1_opts = [fake_servers: true, gateway_id: server_id]
+      {tunnel1, _} = NetworkSetup.tunnel(tunnel1_opts)
+
+      _c1t1 = NetworkSetup.connection!([tunnel_id: tunnel1.tunnel_id])
+      _c2t1 = NetworkSetup.connection!([tunnel_id: tunnel1.tunnel_id])
+
+      # Tunnel2 has connections going *to* `server`
+      tunnel2_opts = [fake_servers: true, destination_id: server_id]
+      {tunnel2, _} = NetworkSetup.tunnel(tunnel2_opts)
+
+      c1t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
+      c2t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
+
+      # Tunnel2 has connections going *through* `gateway` (part of bounce)
+      tunnel3_opts = [fake_servers: true, bounces: [server_id]]
+      {tunnel3, _} = NetworkSetup.tunnel(tunnel3_opts)
+
+      _c1t3 = NetworkSetup.connection!([tunnel_id: tunnel3.tunnel_id])
+      _c2t3 = NetworkSetup.connection!([tunnel_id: tunnel3.tunnel_id])
+
+      # Get connections originating from `gateway`
+      connections = TunnelInternal.connections_destined_to(server_id)
+
+      assert length(connections) == 2
+      assert connections == [c2t2, c1t2]
+    end
+  end
+
+  describe "get_remote_endpoints/1" do
+    test "returns expected data" do
+      gateway1 = Server.ID.generate()
+      gateway2 = Server.ID.generate()
+
+      target1 = Server.ID.generate()
+      target2 = Server.ID.generate()
+      target3 = Server.ID.generate()
+
+      bounce1 = Server.ID.generate()
+      bounce2 = Server.ID.generate()
+
+      g2_bounces = [bounce1, bounce2]
+
+      gateway1_opts = [fake_servers: true, gateway_id: gateway1]
+      gateway2_opts =
+        [fake_servers: true, gateway_id: gateway2, bounces: g2_bounces]
+
+      {tun_g1t1, _} =
+        NetworkSetup.tunnel(gateway1_opts ++ [destination_id: target1])
+      {tun_g1t2, _} =
+        NetworkSetup.tunnel(gateway1_opts ++ [destination_id: target2])
+      {tun_g2t1, _} =
+        NetworkSetup.tunnel(gateway2_opts ++ [destination_id: target1])
+      {tun_g2t3, _} =
+        NetworkSetup.tunnel(gateway2_opts ++ [destination_id: target3])
+
+      # g1<>t1 has SSH connection
+      NetworkSetup.connection([tunnel_id: tun_g1t1.tunnel_id, type: :ssh])
+
+      # g1<>t2 has SSH connection
+      NetworkSetup.connection([tunnel_id: tun_g1t2.tunnel_id, type: :ssh])
+      NetworkSetup.connection([tunnel_id: tun_g1t2.tunnel_id, type: :ftp])
+
+      # g2<>t1 does not have SSH connection
+      NetworkSetup.connection([tunnel_id: tun_g2t1.tunnel_id, type: :ftp])
+
+      # g2<>t3 has SSH connection
+      NetworkSetup.connection([tunnel_id: tun_g2t3.tunnel_id, type: :ssh])
+
+      result = TunnelInternal.get_remote_endpoints([gateway1, gateway2])
+
+      gateway1_result = Enum.sort(result[gateway1])
+      gateway1_expected = Enum.sort([
+        %{destination_id: target2, bounces: []},
+        %{destination_id: target1, bounces: []}
+      ])
+
+      gateway2_result = Enum.sort(result[gateway2])
+      gateway2_expected = Enum.sort([
+        %{destination_id: target3, bounces: Enum.reverse(g2_bounces)}
+      ])
+
+      assert gateway1_result == gateway1_expected
+      assert gateway2_result == gateway2_expected
     end
   end
 end

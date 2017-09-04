@@ -40,8 +40,33 @@ defprotocol Helix.Websocket.Joinable do
   """
   def check_params(request, socket)
 
+  @doc """
+  Decides whether to accept or deny access to the Channel.
+
+  # Return
+
+  In case of success, return {:ok, JoinRequest.t}, which will be keep the flow
+  alive, calling `join/3` later on. Any error return will stop the flow and
+  reject the join request.
+  """
   def check_permissions(request, socket)
 
-  def join(request, socket, assign)
+  @doc """
+  Joins the channel, assigning whatever needs to be assigned to the socket, and
+  causing any side-effects that should be caused (either by direct action or
+  events).
 
+  The assign param must be passed as a pointer/reference to the original
+  function because it is an implementation of the Channel behavior. As such,
+  should be called as `assign.(socket, :foo, :bar)`
+
+  # Return
+
+  `join/3` must return what Phoenix's join/3 is expected to return, i.e.:
+
+  - {:ok, Socket.t}
+  - {:ok, reply :: map, Socket.t}
+  - {:error, reply :: map}
+  """
+  def join(request, socket, assign)
 end

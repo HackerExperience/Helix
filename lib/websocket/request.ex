@@ -33,7 +33,7 @@ defmodule Helix.Websocket.Request do
     new =
       quote do
         @spec new(term) :: t
-        def new(params) do
+        def new(params \\ %{}) do
           %__MODULE__{
             unsafe: params
           }
