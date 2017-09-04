@@ -2,6 +2,7 @@ defmodule Helix.Server.Public.IndexTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Public.Index, as: ServerIndex
 
   alias Helix.Test.Network.Setup, as: NetworkSetup
@@ -48,19 +49,22 @@ defmodule Helix.Server.Public.IndexTest do
 
       result_gateway = Enum.find(index.player, &(&1.id == player.server_id))
 
-      endpoints = Enum.sort([target1.server_id, target2.server_id])
-      assert Enum.sort(result_gateway.endpoints) == endpoints
+      endpoint_target1 =
+        find_endpoint(result_gateway.endpoints, target1.server_id)
+      endpoint_target2 =
+        find_endpoint(result_gateway.endpoints, target2.server_id)
+
+      assert endpoint_target1.bounces == []
+      assert endpoint_target2.bounces == Enum.reverse(tunnel2_bounce)
 
       result_target1 = Enum.find(index.remote, &(&1.id == target1.server_id))
       result_target2 = Enum.find(index.remote, &(&1.id == target2.server_id))
-
-      assert result_target1.bounces == []
-      assert result_target2.bounces == Enum.reverse(tunnel2_bounce)
 
       # Does not have gateway-specific data, like password or name
       censored = [:password, :name, :endpoints]
       Enum.each(censored, fn key ->
         refute Map.has_key?(result_target1, key)
+        refute Map.has_key?(result_target2, key)
       end)
     end
 
@@ -99,8 +103,12 @@ defmodule Helix.Server.Public.IndexTest do
       result_gateway1 = Enum.find(index.player, &(&1.id == gateway1.server_id))
       result_gateway2 = Enum.find(index.player, &(&1.id == gateway2.server_id))
 
-      gateway1_endpoints = Enum.sort([target1.server_id, target2.server_id])
-      gateway2_endpoints = Enum.sort([target1.server_id, target2.server_id])
+      gateway1_endpoints =
+        Enum.sort(
+          [%{server_id: target1.server_id, bounces: []},
+           %{server_id: target2.server_id, bounces: []}])
+      # In this context, gateway2 endpoints are the same as gateway1
+      gateway2_endpoints = gateway1_endpoints
 
       # Endpoints are listed correctly
       assert Enum.sort(result_gateway1.endpoints) == gateway1_endpoints
@@ -134,9 +142,11 @@ defmodule Helix.Server.Public.IndexTest do
       assert is_binary(rendered_gateway.id)
       assert is_binary(rendered_endpoint.id)
 
-      # Endpoint / Bounce list is made of strings
-      assert Enum.all?(rendered_gateway.endpoints, &(is_binary(&1)))
-      assert Enum.all?(rendered_endpoint.bounces, &(is_binary(&1)))
+      # (Endpoint, Bounce) list is a tuple made of strings
+      assert Enum.each(rendered_gateway.endpoints, fn [gateway, bounces] ->
+        assert is_binary(gateway)
+        assert Enum.all?(bounces, &(is_binary(&1)))
+      end)
 
       # Nips are rendered as tuples
       Enum.each(rendered_gateway.nips, fn nip ->
@@ -149,5 +159,30 @@ defmodule Helix.Server.Public.IndexTest do
         assert length(nip) == 2
       end)
     end
+  end
+
+  describe "remote_server_index/2" do
+    test "indexes the remote server" do
+      entity_id = Entity.ID.generate()
+      {remote, _} = ServerSetup.server()
+
+      index = ServerIndex.remote_server_index(remote.server_id, entity_id)
+
+      assert index.id == remote.server_id
+    end
+  end
+
+  describe "render_remote_server_index/1" do
+    entity_id = Entity.ID.generate()
+    {remote, _} = ServerSetup.server()
+
+    index = ServerIndex.remote_server_index(remote.server_id, entity_id)
+    rendered_index = ServerIndex.render_remote_server_index(index)
+
+    assert rendered_index.id == to_string(remote.server_id)
+  end
+
+  defp find_endpoint(endpoints, server_id) do
+    Enum.find(endpoints, &(&1.server_id == server_id))
   end
 end

@@ -14,8 +14,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Websocket.Socket, as: Websocket
   alias Helix.Server.Public.Server, as: ServerPublic
 
-  # Requests
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
+  alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
+    as: BootstrapRequest
   alias Helix.Server.Websocket.Channel.Server.Requests.Browse,
     as: BrowseRequest
   alias Helix.Server.Websocket.Channel.Server.Requests.Bruteforce,
@@ -115,6 +116,11 @@ defmodule Helix.Server.Websocket.Channel.Server do
   """
   def handle_in("bruteforce", params, socket) do
     request = BruteforceRequest.new(params)
+    Websocket.handle_request(request, socket)
+  end
+
+  def handle_in("bootstrap", params, socket) do
+    request = BootstrapRequest.new(params)
     Websocket.handle_request(request, socket)
   end
 

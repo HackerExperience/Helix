@@ -38,6 +38,12 @@ defprotocol Helix.Websocket.Requestable do
   an actual Channel socket.
   """
 
+  alias Phoenix.Socket
+  alias Helix.Websocket.Request
+
+  @spec check_params(Request.t(term), Socket.t) ::
+    {:ok, Request.t(term)}
+    | {:error, term}
   @doc """
   Method meant to validate the given params in a request. The original params
   are stored on the `unsafe` entry of the Request.t struct.
@@ -52,6 +58,9 @@ defprotocol Helix.Websocket.Requestable do
   """
   def check_params(request, socket)
 
+  @spec check_permissions(Request.t(term), Socket.t) ::
+    {:ok, Request.t(term)}
+    | {:error, term}
   @doc """
   Method focused on validating and verifying the user has the permissions to
   perform that action.
@@ -67,6 +76,9 @@ defprotocol Helix.Websocket.Requestable do
   """
   def check_permissions(request, socket)
 
+  @spec handle_request(Request.t(term), Socket.t) ::
+    {:ok, Request.t(term)}
+    | {:error, term}
   @doc """
   Method responsible for actual processing of the event, routing it to the
   corresponding Public.
@@ -82,6 +94,12 @@ defprotocol Helix.Websocket.Requestable do
   """
   def handle_request(request, socket)
 
+  @spec reply(Request.t(term), Socket.t) ::
+    {:reply, {:ok, reply :: map}, Socket.t}
+    | {:reply, :ok, Socket.t}
+    | {:stop, reason :: term, Socket.t}
+    | {:stop, reason :: term, reply :: term, Socket.t}
+    | {:noreply, Socket.t}
   @doc """
   Final step of the flow, which is only reached when all previous steps were
   successful.
