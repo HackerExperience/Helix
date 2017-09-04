@@ -134,32 +134,26 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
       do: state_change(data, process, :running, :complete)
   end
 
-  defimpl Helix.Process.API.View.Process do
+  defimpl Helix.Process.Public.View.ProcessViewable do
     @moduledoc false
 
+    alias HELL.IPv4
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
-    alias Helix.Process.Model.Process.Resources
-    alias Helix.Process.Model.Process.State
+    alias Helix.Process.Public.View.Process, as: ProcessView
+    alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
+
+    @type data ::
+      %{
+        :software_version => non_neg_integer,
+        :target_server_ip => IPv4.t
+      }
 
     @spec render(term, Process.t, Server.id, Entity.id) ::
-      %{
-        :process_id => Process.id,
-        :gateway_id => Server.id,
-        :target_server_id => Server.id,
-        :network_id => Network.id,
-        :connection_id => Connection.id,
-        :process_type => term,
-        optional(:state) => State.state,
-        optional(:allocated) => Resources.t,
-        optional(:priority) => 0..5,
-        optional(:creation_time) => DateTime.t,
-        optional(:software_version) => non_neg_integer,
-        optional(:target_server_ip) => HELL.IPv4.t
-      }
+      {ProcessView.local_process | ProcessView.remote_process, data}
     def render(data, process = %{gateway_id: server}, server, _),
       do: do_render(data, process, :local)
     def render(data = %{source_entity_id: entity}, process, _, entity),
@@ -168,43 +162,21 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
       do: do_render(data, process, :remote)
 
     defp do_render(data, process, scope) do
-      base = take_data_from_process(process, scope)
-      complement = take_complement_from_data(data, scope)
+      rendered_process = take_data_from_process(process, scope)
+      rendered_data = take_complement_from_data(data, scope)
 
-      Map.merge(base, complement)
+      {rendered_process, rendered_data}
     end
 
-    defp take_complement_from_data(data, _),
-      do: %{
+    defp take_complement_from_data(data, _) do
+      %{
         software_version: data.software_version,
         target_server_ip: data.target_server_ip
-    }
-
-    defp take_data_from_process(process, :remote) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        target_server_id: process.target_server_id,
-        network_id: process.network_id,
-        connection_id: process.connection_id,
-        process_type: process.process_type,
       }
     end
 
-    defp take_data_from_process(process, :local) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        target_server_id: process.target_server_id,
-        network_id: process.network_id,
-        connection_id: process.connection_id,
-        process_type: process.process_type,
-        state: process.state,
-        allocated: process.allocated,
-        priority: process.priority,
-        creation_time: process.creation_time
-      }
-    end
+    defp take_data_from_process(process, scope),
+      do: ProcessViewHelper.default_process_render(process, scope)
   end
 end
 

@@ -16,7 +16,7 @@ defmodule HELL.Hack.Experience do
       Helix.Websocket.Requestable,
       Helix.Websocket.Joinable,
       Helix.Process.Model.Process.ProcessType,
-      Helix.Process.API.View.Process,
+      Helix.Process.Public.View.ProcessViewable,
     ]
 
     methods = %{
@@ -43,7 +43,7 @@ defmodule HELL.Hack.Experience do
         {:minimum, 1},
         {:conclusion, 2}
       ],
-      "Elixir.Helix.Process.API.View.Process" => [
+      "Elixir.Helix.Process.Public.View.ProcessViewable" => [
         {:render, 4}
       ]
     }

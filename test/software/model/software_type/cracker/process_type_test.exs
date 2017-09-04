@@ -6,7 +6,7 @@ defmodule Helix.Software.Model.Software.CrackerTest do
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
-  alias Helix.Process.API.View.Process, as: ProcessView
+  alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
 
@@ -29,6 +29,7 @@ defmodule Helix.Software.Model.Software.CrackerTest do
       assert %Changeset{valid?: false} = changeset
     end
 
+    # REVIEW: Why cracker isn't using file_id?
     @required_fields ~w/
       source_entity_id
       network_id
@@ -111,6 +112,7 @@ defmodule Helix.Software.Model.Software.CrackerTest do
         process_id
         gateway_id
         target_server_id
+        file_id
         network_id
         connection_id
         process_type
@@ -133,6 +135,7 @@ defmodule Helix.Software.Model.Software.CrackerTest do
         process_id
         gateway_id
         target_server_id
+        file_id
         network_id
         connection_id
         process_type
@@ -146,6 +149,9 @@ defmodule Helix.Software.Model.Software.CrackerTest do
       assert Enum.sort(expected) == Enum.sort(keys)
     end
   end
+
+  # TODO: Use a helper or something like that to test rendered processes. It
+  # will be unmaintainable to use the current test method for upcoming processes
 
   defp process_to_render do
     %{
