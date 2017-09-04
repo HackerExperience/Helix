@@ -174,34 +174,23 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     end
   end
 
-  defimpl Helix.Process.API.View.Process do
+  defimpl Helix.Process.Public.View.ProcessViewable do
 
     alias Helix.Entity.Model.Entity
     alias Helix.Log.Model.Log
-    alias Helix.Network.Model.Connection
-    alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
-    alias Helix.Process.Model.Process.Resources
-    alias Helix.Process.Model.Process.State
+    alias Helix.Process.Public.View.Process, as: ProcessView
+    alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
 
-    @spec render(map, Process.t, Server.id, Entity.id) ::
+    @type data ::
       %{
-        :process_id => Process.id,
-        :gateway_id => Server.id,
-        :target_server_id => Server.id,
-        :network_id => Network.id | nil,
-        :connection_id => Connection.id | nil,
-        :process_type => term,
-        optional(:target_log_id) => Log.id,
-        optional(:state) => State.state,
-        optional(:objective) => Resources.t,
-        optional(:processed) => Resources.t,
-        optional(:allocated) => Resources.t,
-        optional(:priority) => 0..5,
-        optional(:creation_time) => DateTime.t,
+        :target_log_id => Log.id,
         optional(:version) => non_neg_integer
       }
+
+    @spec render(map, Process.t, Server.id, Entity.id) ::
+      {ProcessView.local_process | ProcessView.remote_process, data}
     def render(data, process = %{gateway_id: server}, server, _),
       do: do_render(data, process, :local)
     def render(data = %{entity_id: entity}, process, _, entity),
@@ -213,7 +202,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
       base = take_data_from_process(process, scope)
       complement = take_complement_from_data(data, scope)
 
-      Map.merge(base, complement)
+      {base, complement}
     end
 
     defp take_complement_from_data(data = %{operation: "edit"}, :local),
@@ -225,32 +214,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     defp take_complement_from_data(%{operation: "create"}, :remote),
       do: %{}
 
-    defp take_data_from_process(process, :remote) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        target_server_id: process.target_server_id,
-        network_id: process.network_id,
-        connection_id: process.connection_id,
-        process_type: process.process_type,
-      }
-    end
-
-    defp take_data_from_process(process, :local) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        target_server_id: process.target_server_id,
-        network_id: process.network_id,
-        connection_id: process.connection_id,
-        process_type: process.process_type,
-        state: process.state,
-        objective: process.objective,
-        processed: process.processed,
-        allocated: process.allocated,
-        priority: process.priority,
-        creation_time: process.creation_time
-      }
-    end
+    defp take_data_from_process(process, scope),
+      do: ProcessViewHelper.default_process_render(process, scope)
   end
 end

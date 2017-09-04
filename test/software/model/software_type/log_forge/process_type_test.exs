@@ -5,7 +5,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Ecto.Changeset
   alias Helix.Log.Model.Log
   alias Helix.Entity.Model.Entity
-  alias Helix.Process.API.View.Process, as: ProcessView
+  alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.LogForge
 
@@ -230,6 +230,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         process_id
         gateway_id
         target_server_id
+        file_id
         network_id
         connection_id
         process_type
@@ -251,6 +252,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         process_id
         gateway_id
         target_server_id
+        file_id
         network_id
         connection_id
         process_type
@@ -293,6 +295,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         process_id
         gateway_id
         target_server_id
+        file_id
         network_id
         connection_id
         process_type/a
@@ -313,6 +316,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         process_id
         gateway_id
         target_server_id
+        file_id
         network_id
         connection_id
         process_type

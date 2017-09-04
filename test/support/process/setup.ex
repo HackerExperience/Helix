@@ -3,12 +3,19 @@ defmodule Helix.Test.Process.Setup do
   alias Helix.Software.Model.Software.Cracker.Bruteforce,
     as: CrackerBruteforce
   alias Helix.Process.Model.Process
+  alias Helix.Process.Repo, as: ProcessRepo
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   @internet NetworkHelper.internet_id()
+
+  def process(opts \\ []) do
+    {process, related} = fake_process(opts)
+    {:ok, inserted} = ProcessRepo.insert(process)
+    {inserted, related}
+  end
 
   @doc """
   Note: for a fully integrated process, it's a better idea to use the higher
