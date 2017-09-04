@@ -110,7 +110,7 @@ defmodule Helix.Server.Public.Index do
         acc
         |> Map.replace(:local, acc.local ++ [gateway])
         |> Map.replace(:remote, acc.remote ++ remotes)
-    end)
+      end)
 
     # Remove duplicate remotes, if any. This may happen if two different gateway
     # servers are connected to the same remote
