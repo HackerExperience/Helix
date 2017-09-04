@@ -142,7 +142,6 @@ defmodule Helix.Network.Model.Tunnel do
     """
     def get_remote_endpoints(servers) do
       # FIXME: Translate me to Ecto pls
-      # TODO: Add indexes
       raw = """
         SELECT DISTINCT t.gateway_id, t.destination_id, (
           SELECT ARRAY_REMOVE(ARRAY_AGG(source_id), t.gateway_id)
@@ -151,7 +150,7 @@ defmodule Helix.Network.Model.Tunnel do
         FROM tunnels t
         INNER JOIN connections c
         ON t.tunnel_id = c.tunnel_id
-        WHERE t.gateway_id IN ($servers$) and c.connection_type = 'ssh';
+        WHERE t.gateway_id IN ($servers$) AND c.connection_type = 'ssh';
       """
 
       # Not vulnerable to SQL injection (including second-order injection),
