@@ -27,21 +27,23 @@ defmodule Helix.Process.Public.IndexTest do
         gateway_id: server.server_id,
         file_id: File.ID.generate(),
         connection_id: Connection.ID.generate(),
-        destination_id: process2_destination]
+        target_server_id: process2_destination
+      ]
       {process2, _} = ProcessSetup.process(process2_opts)
 
       # Process 3 affects player's own server, started by third-party.
       process3_gateway = Server.ID.generate()
-      process3_opts =
-        [gateway_id: process3_gateway,
-         destination_id: server.server_id]
+      process3_opts = [
+        gateway_id: process3_gateway,
+        target_server_id: server.server_id
+      ]
       {process3, _} = ProcessSetup.process(process3_opts)
 
       index = ProcessIndex.index(server.server_id, entity.entity_id)
 
       result_process1 = Enum.find(index.owned, &(find_by_id(&1, process1)))
       result_process2 = Enum.find(index.owned, &(find_by_id(&1, process2)))
-      _result_process3 = Enum.find(index.owned, &(find_by_id(&1, process3)))
+      result_process3 = Enum.find(index.targeting, &(find_by_id(&1, process3)))
 
       # Result comes in binary format
       assert is_binary(result_process1.gateway_id)
@@ -59,7 +61,7 @@ defmodule Helix.Process.Public.IndexTest do
 
       # FIXME: process3 isn't being returned
       # Process3 exists!
-      # assert result_process3
+      assert result_process3
 
       TOPHelper.top_stop(server.server_id)
     end
