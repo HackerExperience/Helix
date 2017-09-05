@@ -2,13 +2,18 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
   use Helix.Test.IntegrationCase
 
+  alias HELL.IPv4
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Model.Log
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
   alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Internal.File, as: FileInternal
+  alias Helix.Software.Model.SoftwareType.Cracker
   alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: FirewallPassive
   alias Helix.Software.Model.SoftwareType.LogForge
   alias Helix.Software.Query.Storage, as: StorageQuery
@@ -133,6 +138,40 @@ defmodule Helix.Software.Action.Flow.FileTest do
       assert {:ok, process} = result
       assert %LogForge{} = process.process_data
       assert "log_forger" == process.process_type
+
+      TOPHelper.top_stop(server)
+    end
+  end
+
+  describe "cracker" do
+    test "starts firewall process on success" do
+      account = AccountFactory.insert(:account)
+
+      {:ok, %{server: server}} = AccountFlow.setup_account(account)
+
+      :timer.sleep(250)
+      CacheHelper.sync_test()
+
+      params = %{
+        entity_id: Entity.ID.generate(),
+        network_id: Network.ID.generate(),
+        target_server_id: Server.ID.generate(),
+        target_server_ip: IPv4.autogenerate(),
+        server_type: "vpc"
+      }
+
+      {:ok, storages} = CacheQuery.from_server_get_storages(server)
+      storage = storages |> Enum.random() |> StorageQuery.fetch()
+
+      file = Factory.insert(:file, software_type: :cracker, storage: storage)
+      modules = %{cracker_password: 100}
+      # FIXME: this function should exist on the FileAction
+      FileInternal.set_modules(file, modules)
+
+      result = FileFlow.execute_file(file, server, params)
+      assert {:ok, process} = result
+      assert %Cracker{} = process.process_data
+      assert "cracker" == process.process_type
 
       TOPHelper.top_stop(server)
     end

@@ -184,8 +184,12 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
   defp do_sum_process(server_resources, allocated, network_id) do
     net = if network_id do
       net_alloc = Map.take(allocated, [:ulk, :dlk])
-      sum_net_alloc = &Map.merge(&1, net_alloc, fn _, v1, v2 -> v1 + v2 end)
-      Map.update(server_resources.net, network_id, net_alloc, sum_net_alloc)
+      if %{ulk: 0, dlk: 0} == net_alloc do
+        server_resources.net
+      else
+        sum_net_alloc = &Map.merge(&1, net_alloc, fn _, v1, v2 -> v1 + v2 end)
+        Map.update(server_resources.net, network_id, net_alloc, sum_net_alloc)
+      end
     else
       server_resources.net
     end
@@ -278,9 +282,12 @@ defmodule Helix.Process.Internal.TOP.ServerResources do
     or a.ram > b.ram
     or not MapSet.subset?(MapSet.new(Map.keys(a)), MapSet.new(Map.keys(b)))
     or Enum.any?(a.net, fn {net_id, a} ->
-      b = b.net[net_id]
-
-      a.ulk > b.ulk or a.dlk > b.dlk
+      case b.net[net_id] do
+        nil ->
+          true
+        b ->
+          a.ulk > b.ulk or a.dlk > b.dlk
+      end
     end)
   end
 end

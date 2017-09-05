@@ -1,40 +1,109 @@
-# FIXME: OTP20
-defmodule Software.Cracker.ProcessType do
+defmodule Helix.Software.Model.SoftwareType.Cracker do
   @moduledoc false
 
-  @enforce_keys ~w/
-    entity_id
-    network_id
-    target_server_ip
-    target_server_id
-    server_type
-    software_version
-    firewall_version/a
-  defstruct ~w/
-    entity_id
-    network_id
-    target_server_ip
-    target_server_id
-    server_type
-    software_version
-    firewall_version/a
+  use Ecto.Schema
 
-  def firewall_additional_wu,
-    do: 50_000
-  def firewall_additional_wu(version),
-    do: version * 50_000
+  import Ecto.Changeset
+
+  alias HELL.IPv4
+  alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
+
+  @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
+
+  @type t :: %__MODULE__{
+    entity_id: Entity.id,
+    network_id: Network.id,
+    target_server_id: Server.id,
+    target_server_ip: IPv4.t,
+    server_type: String.t,
+    software_version: pos_integer
+  }
+
+  @type create_params ::
+    %{String.t => term}
+    | %{
+      :entity_id => Entity.idtb,
+      :network_id => Network.idtb,
+      :target_server_id => Server.idtb,
+      :target_server_ip => IPv4.t,
+      :server_type => String.t
+    }
+
+  @create_params ~w/
+    entity_id
+    network_id
+    target_server_id
+    target_server_ip
+    server_type
+  /a
+  @required_params ~w/
+    entity_id
+    network_id
+    target_server_id
+    target_server_ip
+    server_type
+    software_version
+  /a
+
+  @primary_key false
+  embedded_schema do
+    field :entity_id, Entity.ID
+
+    field :network_id, Network.ID
+    field :target_server_id, Server.ID
+    field :target_server_ip, IPv4
+    field :server_type, :string
+
+    field :software_version, :integer
+  end
+
+  @spec create(File.t_of_type(:cracker), create_params) ::
+    {:ok, t}
+    | {:error, changeset}
+  def create(file, params) do
+    version = %{software_version: file.file_modules.cracker_password}
+
+    %__MODULE__{}
+    |> cast(params, @create_params)
+    |> cast(version, [:software_version])
+    |> validate_required(@required_params)
+    |> validate_number(:software_version, greater_than: 0)
+    |> format_return()
+  end
+
+  @spec objective(t, non_neg_integer) ::
+    %{cpu: pos_integer}
+  def objective(%__MODULE__{software_version: version}, firewall_version),
+    do: %{cpu: cpu_cost(version, firewall_version)}
+
+  @spec cpu_cost(non_neg_integer, non_neg_integer) ::
+    pos_integer
+  defp cpu_cost(software_version, firewall_version) do
+    factor = max(firewall_version - software_version, 0)
+    50_000 + factor * 125
+  end
+
+  @spec format_return(changeset) ::
+    {:ok, t}
+    | {:error, changeset}
+  defp format_return(changeset = %Ecto.Changeset{valid?: true}),
+    do: {:ok, apply_changes(changeset)}
+  defp format_return(changeset),
+    do: {:error, changeset}
 
   defimpl Helix.Process.Model.Process.ProcessType do
     @moduledoc false
 
     alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
 
-    @ram_base 300
+    @ram_base 3
 
     def dynamic_resources(_),
       do: [:cpu]
 
-    # TODO: I think that linear growth might not be best bet
     def minimum(%{software_version: v}) do
       %{
         paused: %{ram: v * @ram_base},
@@ -80,7 +149,7 @@ defmodule Software.Cracker.ProcessType do
     alias Helix.Process.Model.Process.Resources
     alias Helix.Process.Model.Process.State
 
-    @spec render(map, Process.t, Server.id, Entity.id) ::
+    @spec render(term, Process.t, Server.id, Entity.id) ::
       %{
         :process_id => Process.id,
         :gateway_id => Server.id,
@@ -95,33 +164,38 @@ defmodule Software.Cracker.ProcessType do
         optional(:software_version) => non_neg_integer,
         optional(:target_server_ip) => HELL.IPv4.t
       }
-    def render(data, process = %{gateway_id: server}, server, _) do
-      base = take_data_from_process(process)
-      complement = %{
-        software_version: data.software_version,
-        target_server_ip: data.target_server_ip
-      }
+    def render(data, process = %{gateway_id: server}, server, _),
+      do: do_render(data, process, :local)
+    def render(data = %{entity_id: entity}, process, _, entity),
+      do: do_render(data, process, :local)
+    def render(data, process, _, _),
+      do: do_render(data, process, :remote)
+
+    defp do_render(data, process, scope) do
+      base = take_data_from_process(process, scope)
+      complement = take_complement_from_data(data, scope)
 
       Map.merge(base, complement)
     end
 
-    def render(data = %{entity_id: entity}, process, _, entity) do
-      base = take_data_from_process(process)
-      complement = %{
+    defp take_complement_from_data(data, _),
+      do: %{
         software_version: data.software_version,
         target_server_ip: data.target_server_ip
+    }
+
+    defp take_data_from_process(process, :remote) do
+      %{
+        process_id: process.process_id,
+        gateway_id: process.gateway_id,
+        target_server_id: process.target_server_id,
+        network_id: process.network_id,
+        connection_id: process.connection_id,
+        process_type: process.process_type,
       }
-
-      Map.merge(base, complement)
     end
 
-    def render(_, process, _, _) do
-      process
-      |> take_data_from_process()
-      |> Map.drop([:state, :allocated, :priority, :creation_time])
-    end
-
-    defp take_data_from_process(process) do
+    defp take_data_from_process(process, :local) do
       %{
         process_id: process.process_id,
         gateway_id: process.gateway_id,
