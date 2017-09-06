@@ -29,7 +29,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-      :timer.sleep(250)
       CacheHelper.sync_test()
 
       {:ok, storages} = CacheQuery.from_server_get_storages(server)
@@ -55,7 +54,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-      :timer.sleep(100)
       CacheHelper.sync_test()
 
       {:ok, storages} = CacheQuery.from_server_get_storages(server)
@@ -78,7 +76,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-      :timer.sleep(250)
       CacheHelper.sync_test()
 
       {:ok, storages} = CacheQuery.from_server_get_storages(server)
@@ -114,7 +111,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-      :timer.sleep(250)
       CacheHelper.sync_test()
 
       {:ok, storages} = CacheQuery.from_server_get_storages(server)
@@ -149,7 +145,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-      :timer.sleep(250)
       CacheHelper.sync_test()
 
       params = %{

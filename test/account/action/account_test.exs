@@ -18,8 +18,6 @@ defmodule Helix.Account.Action.AccountTest do
 
       assert {:ok, %Account{}} = AccountAction.create(params)
 
-      # HACK: workaround for the flow event
-      :timer.sleep(250)
       CacheHelper.sync_test()
     end
 
@@ -41,8 +39,6 @@ defmodule Helix.Account.Action.AccountTest do
 
       assert {:ok, %Account{}} = AccountAction.create(email, username, password)
 
-      # HACK: workaround for the flow event
-      :timer.sleep(100)
       CacheHelper.sync_test()
     end
 

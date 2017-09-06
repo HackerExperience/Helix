@@ -34,7 +34,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
   defp create_server_for_account(account) do
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-    :timer.sleep(100)
     CacheHelper.sync_test()
 
     server
@@ -148,9 +147,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     }
 
     assert {:ok, _, _} = join(context.socket, topic, join_msg)
-
-    # This might emit an event...
-    :timer.sleep(250)
   end
 
   test "returns files on server", context do
@@ -175,9 +171,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
     assert is_map(file_map)
     assert Enum.all?(Map.keys(file_map), &is_binary/1)
     assert expected_file_ids == file_ids
-
-    # This might emit an event...
-    :timer.sleep(250)
   end
 
   describe "process.index" do
@@ -211,9 +204,6 @@ defmodule Helix.Server.Websocket.Channel.ServerTest do
       logs = Enum.reject(logs, &(&1.message =~ "logged in as root"))
 
       assert [%{message: "baz"}, %{message: "bar"}, %{message: "foo"}] = logs
-
-      # This might emit an event...
-      :timer.sleep(250)
     end
   end
 

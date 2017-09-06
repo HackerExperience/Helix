@@ -33,8 +33,6 @@ defmodule Helix.Account.HTTP.Controller.WebhookTest do
       assert String.downcase(input_data["username"]) == account.username
       assert String.downcase(input_data["email"]) == account.email
 
-      # The account setup event was emited, so we better wait
-      :timer.sleep(500)
       CacheHelper.sync_test()
     end
 

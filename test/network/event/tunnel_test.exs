@@ -29,9 +29,6 @@ defmodule Helix.Network.Event.TunnelTest do
 
       Event.emit(events)
 
-      # Let's give it enough time to run
-      :timer.sleep(100)
-
       refute Repo.get(Tunnel, tunnel.tunnel_id)
     end
 
@@ -52,9 +49,6 @@ defmodule Helix.Network.Event.TunnelTest do
       events = TunnelInternal.close_connection(connection)
 
       Event.emit(events)
-
-      # Let's give it enough time to run
-      :timer.sleep(100)
 
       assert Repo.get(Tunnel, tunnel.tunnel_id)
     end

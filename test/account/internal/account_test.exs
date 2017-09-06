@@ -31,8 +31,6 @@ defmodule Helix.Account.Internal.AccountTest do
 
       assert {:ok, _} = AccountInternal.create(params)
 
-      # HACK: workaround for the flow event (it's pretty heavy)
-      :timer.sleep(250)
       CacheHelper.sync_test()
     end
 
