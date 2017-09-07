@@ -25,9 +25,6 @@ defmodule Helix.Software.Event.DecryptorTest do
 
       Event.emit(event)
 
-      # Let's give it enough time to run
-      :timer.sleep(100)
-
       target_file = Repo.get(File, target_file.file_id)
       refute target_file.crypto_version
     end
@@ -52,9 +49,6 @@ defmodule Helix.Software.Event.DecryptorTest do
 
       Event.emit(event)
 
-      # Let's give it enough time to run
-      :timer.sleep(100)
-
       new_keys = Enum.map(old_keys, &Repo.get(CryptoKey, &1.file_id))
 
       assert Enum.all?(new_keys, &is_nil(&1.target_file_id))
@@ -74,9 +68,6 @@ defmodule Helix.Software.Event.DecryptorTest do
       }
 
       Event.emit(event)
-
-      # Let's give it enough time to run
-      :timer.sleep(100)
 
       [key] = CryptoKeyInternal.get_on_storage(storage)
 

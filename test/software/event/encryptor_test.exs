@@ -26,9 +26,6 @@ defmodule Helix.Software.Event.EncryptorTest do
 
       Event.emit(event)
 
-      # Let's give it enough time to run
-      :timer.sleep(100)
-
       [key] = CryptoKeyInternal.get_on_storage(storage)
 
       assert target_file.file_id == key.target_file_id
@@ -47,9 +44,6 @@ defmodule Helix.Software.Event.EncryptorTest do
       }
 
       Event.emit(event)
-
-      # Let's give it enough time to run
-      :timer.sleep(100)
 
       target_file = Repo.get(File, target_file.file_id)
       assert event.version == target_file.crypto_version
@@ -76,9 +70,6 @@ defmodule Helix.Software.Event.EncryptorTest do
         |> Enum.map(fn {:ok, key} -> key end)
 
       Event.emit(event)
-
-      # Let's give it enough time to run
-      :timer.sleep(100)
 
       new_keys = Enum.map(old_keys, &Repo.get(CryptoKey, &1.file_id))
 

@@ -8,7 +8,6 @@ defmodule HELL.TestHelper.Setup do
     account = AccountFactory.insert(:account)
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-    :timer.sleep(100)
     CacheHelper.purge_server(server.server_id)
 
     {server, account}

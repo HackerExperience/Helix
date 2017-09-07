@@ -20,7 +20,6 @@ defmodule Helix.Server.Internal.ServerTest do
     account = AccountFactory.insert(:account)
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-    :timer.sleep(100)
     CacheHelper.sync_test()
 
     {:ok, account: account, server: server}

@@ -14,10 +14,6 @@ defmodule Helix.Account.Action.Flow.AccountTest do
       account = Factory.insert(:account)
 
       result = AccountFlow.setup_account(account)
-      # FIXME: This is to ensure that all callbacks in the flow are executed
-      #   before the test ends (otherwise the callbacks will not have access to
-      #   the repo because Ecto.Sandbox)
-      :timer.sleep(250)
       CacheHelper.sync_test()
 
       assert {:ok, %{entity: entity}} = result

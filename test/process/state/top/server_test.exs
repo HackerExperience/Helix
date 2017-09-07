@@ -30,7 +30,6 @@ defmodule Helix.Process.State.TOP.TOPServerTest do
     account = AccountFactory.insert(:account)
     {:ok, %{server: server}} = AccountFlow.setup_account(account)
 
-    :timer.sleep(100)
     CacheHelper.sync_test()
 
     server
