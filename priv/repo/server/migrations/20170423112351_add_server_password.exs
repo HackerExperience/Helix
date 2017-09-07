@@ -3,7 +3,9 @@ defmodule Helix.Server.Repo.Migrations.AddServerPassword do
 
   def change do
     alter table(:servers) do
-      add :password, :string, null: false
+      add :password,
+        :string,
+        null: false
     end
   end
 end

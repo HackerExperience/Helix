@@ -7,42 +7,89 @@ defmodule Helix.Universe.Repo.Migrations.AddBanks do
     # have at most ~10 rows, so the index is pretty much useless.... BUT we
     # need the unique constraint in order to reference it elsewhere as a FK
     create table(:banks, primary_key: false) do
-      add :bank_id, references(:npcs, column: :npc_id, type: :inet),
+      add :bank_id,
+        references(
+          :npcs,
+          column: :npc_id,
+          type: :inet),
         primary_key: true
-      add :name, :string, null: false
+      add :name,
+        :string,
+        null: false
     end
 
     create table(:atms, primary_key: false) do
-      add :atm_id, :inet, primary_key: true
+      add :atm_id,
+        :inet,
+        primary_key: true
       add :bank_id,
-        references(:banks, column: :bank_id, type: :inet),
+        references(
+          :banks,
+          column: :bank_id,
+          type: :inet),
         null: false
-      add :region, :string, null: false
+      add :region,
+        :string,
+        null: false
     end
     create index(:atms, [:bank_id])
 
     create table(:bank_accounts, primary_key: false) do
-      add :atm_id, references(:atms, column: :atm_id, type: :inet),
+      add :atm_id,
+        references(
+          :atms,
+          column: :atm_id,
+          type: :inet),
         primary_key: true
-      add :account_number, :integer, primary_key: true
-      add :bank_id, references(:banks, column: :bank_id, type: :inet), null: false
-      add :owner_id, :inet, null: false
-      add :password, :string, null: false
-      add :balance, :integer, null: false
-      add :creation_date, :utc_datetime
+      add :account_number,
+        :integer,
+        primary_key: true
+      add :bank_id,
+        references(
+          :banks,
+          column: :bank_id,
+          type: :inet),
+        null: false
+      add :owner_id,
+        :inet,
+        null: false
+      add :password,
+        :string,
+        null: false
+      add :balance,
+        :integer,
+        null: false
+      add :creation_date,
+        :utc_datetime
     end
     create index(:bank_accounts, [:owner_id])
     create constraint(:bank_accounts, :non_neg_balance, check: "balance >= 0")
 
     create table(:bank_transfers, primary_key: false) do
-      add :transfer_id, :inet, primary_key: true
-      add :atm_from, :inet, null: false
-      add :account_from, :integer, null: false
-      add :atm_to, :inet, null: false
-      add :account_to, :integer, null: false
-      add :amount, :integer, null: false
-      add :started_time, :utc_datetime, null: false
-      add :started_by, :inet, null: false
+      add :transfer_id,
+        :inet,
+        primary_key: true
+      add :atm_from,
+        :inet,
+        null: false
+      add :account_from,
+        :integer,
+        null: false
+      add :atm_to,
+        :inet,
+        null: false
+      add :account_to,
+        :integer,
+        null: false
+      add :amount,
+        :integer,
+        null: false
+      add :started_time,
+        :utc_datetime,
+        null: false
+      add :started_by,
+        :inet,
+        null: false
     end
     create index(:bank_transfers, [:atm_from, :account_from])
     create index(:bank_transfers, [:atm_to, :account_to])
