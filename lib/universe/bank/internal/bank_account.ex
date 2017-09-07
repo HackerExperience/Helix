@@ -35,6 +35,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
 
   @spec get_balance(BankAccount.t) ::
     non_neg_integer
+    | nil
   def get_balance(account) do
     account.atm_id
     |> BankAccount.Query.by_atm_account(account.account_number)
