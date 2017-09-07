@@ -25,7 +25,7 @@ defmodule Helix.Universe.Repo.Migrations.AddBanks do
       add :atm_id, references(:atms, column: :atm_id, type: :inet),
         primary_key: true
       add :account_number, :integer, primary_key: true
-      add :bank_id, references(:banks, column: :bank_id, type: :inet)
+      add :bank_id, references(:banks, column: :bank_id, type: :inet), null: false
       add :owner_id, :inet, null: false
       add :password, :string, null: false
       add :balance, :integer, null: false

@@ -23,8 +23,8 @@ defmodule Helix.Universe.Bank.Event.BankTransferTest do
 
       assert ProcessQuery.fetch(process)
       assert BankTransferInternal.fetch(transfer_id)
-      assert BankAccountInternal.get_balance(acc1) == 0
-      assert BankAccountInternal.get_balance(acc2) == 0
+      assert 0 == BankAccountInternal.get_balance(acc1)
+      assert 0 == BankAccountInternal.get_balance(acc2)
 
       # Kill (abort)
       ProcessAction.kill(process, :porquesim)
@@ -33,8 +33,8 @@ defmodule Helix.Universe.Bank.Event.BankTransferTest do
 
       # Ensure bank data is consistent
       refute BankTransferInternal.fetch(transfer_id)
-      assert BankAccountInternal.get_balance(acc1) == amount
-      assert BankAccountInternal.get_balance(acc2) == 0
+      assert amount == BankAccountInternal.get_balance(acc1)
+      assert 0 == BankAccountInternal.get_balance(acc2)
 
       # And process no longer exists..
       refute ProcessQuery.fetch(process)

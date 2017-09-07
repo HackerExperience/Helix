@@ -1,18 +1,20 @@
 defmodule Helix.Universe.Bank.Model.BankAccountTest do
 
-  use Helix.Test.IntegrationCase
+  use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
+  alias Helix.Account.Model.Account
+  alias Helix.Server.Model.Server
+  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.Bank.Model.BankAccount
 
   describe "change_password/1" do
     test "changes password" do
       acc =
         %BankAccount{
-          bank_id: Random.pk(),
-          atm_id: Random.pk(),
+          bank_id: NPC.ID.generate(),
+          atm_id: Server.ID.generate(),
           password: "1234",
-          owner_id: Random.pk(),
+          owner_id: Account.ID.generate(),
           balance: 1234
         }
 
@@ -27,16 +29,16 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
     test "increases the account balance" do
       acc =
         %BankAccount{
-          bank_id: Random.pk(),
-          atm_id: Random.pk(),
+          bank_id: NPC.ID.generate(),
+          atm_id: Server.ID.generate(),
           password: "1234",
-          owner_id: Random.pk(),
+          owner_id: Account.ID.generate(),
           balance: 1000
         }
 
       acc2 = BankAccount.deposit(acc, 3001)
       assert acc2.valid?
-      assert Ecto.Changeset.get_change(acc2, :balance) == 4001
+      assert 4001 == Ecto.Changeset.get_change(acc2, :balance)
     end
 
     test "with invalid data" do
@@ -53,16 +55,16 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
     test "decreases the account balance" do
       acc =
         %BankAccount{
-          bank_id: Random.pk(),
-          atm_id: Random.pk(),
+          bank_id: NPC.ID.generate(),
+          atm_id: Server.ID.generate(),
           password: "1234",
-          owner_id: Random.pk(),
+          owner_id: Account.ID.generate(),
           balance: 1000
         }
 
       acc2 = BankAccount.withdraw(acc, 1)
       assert acc2.valid?
-      assert Ecto.Changeset.get_change(acc2, :balance) == 999
+      assert 999 == Ecto.Changeset.get_change(acc2, :balance)
     end
 
     test "with invalid data" do

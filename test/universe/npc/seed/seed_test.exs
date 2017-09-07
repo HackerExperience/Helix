@@ -92,6 +92,6 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
     defp test_specialization(%{custom: false}, _npc),
       do: :ok
     defp test_specialization(_, _),
-      do: assert false
+      do: flunk "invalid specialization"
   end
 end

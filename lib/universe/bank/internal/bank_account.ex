@@ -36,17 +36,10 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
   @spec get_balance(BankAccount.t) ::
     non_neg_integer
   def get_balance(account) do
-    balance =
-      account.atm_id
-      |> BankAccount.Query.by_atm_account(account.account_number)
-      |> BankAccount.Query.select_balance()
-      |> Repo.one()
-
-    if balance do
-      balance
-    else
-      0
-    end
+    account.atm_id
+    |> BankAccount.Query.by_atm_account(account.account_number)
+    |> BankAccount.Query.select_balance()
+    |> Repo.one()
   end
 
   @spec get_accounts(Account.id) ::
@@ -67,11 +60,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
       |> BankAccount.Query.select_sum_balance()
       |> Repo.one()
 
-    if total do
-      total
-    else
-      0
-    end
+    total || 0
   end
 
   @spec create(BankAccount.creation_params) ::

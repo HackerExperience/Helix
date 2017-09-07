@@ -19,19 +19,19 @@ defmodule Helix.Universe.Bank.Query.BankTest do
     test "with empty account" do
       acc = Setup.bank_account()
 
-      assert BankQuery.get_account_balance(acc) == 0
+      assert 0 == BankQuery.get_account_balance(acc)
     end
 
     test "with subsequent deposits" do
       acc = Setup.bank_account([balance: 100])
 
-      assert BankQuery.get_account_balance(acc) == 100
+      assert 100 == BankQuery.get_account_balance(acc)
 
       BankAccountInternal.deposit(acc, 50)
-      assert BankQuery.get_account_balance(acc) == 150
+      assert 150 == BankQuery.get_account_balance(acc)
 
       BankAccountInternal.withdraw(acc, 50)
-      assert BankQuery.get_account_balance(acc) == 100
+      assert 100 == BankQuery.get_account_balance(acc)
     end
   end
 

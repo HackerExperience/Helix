@@ -4,9 +4,10 @@ defmodule Helix.Universe.Bank.Internal.BankTest do
 
   import Helix.Test.IDCase
 
-  alias HELL.TestHelper.Random
-  alias HELL.TestHelper.Setup
   alias Helix.Universe.Bank.Internal.Bank, as: BankInternal
+  alias Helix.Universe.NPC.Model.NPC
+
+  alias HELL.TestHelper.Setup
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   describe "create/1" do
@@ -22,7 +23,7 @@ defmodule Helix.Universe.Bank.Internal.BankTest do
     end
 
     test "refuses to create when data is invalid" do
-      params = %{bank_id: Random.pk(), name: "asdf"}
+      params = %{bank_id: NPC.ID.generate, name: "asdf"}
       assert_raise Ecto.ConstraintError, fn ->
         BankInternal.create(params)
       end

@@ -1,8 +1,7 @@
 defmodule HELL.TestHelper.Setup do
 
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
-  alias Helix.Account.Factory, as: AccountFactory
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Account.Model.Account
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Model.BankAccount
@@ -10,6 +9,8 @@ defmodule HELL.TestHelper.Setup do
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
 
   alias HELL.TestHelper.Random
+  alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Cache.Helper, as: CacheHelper
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
   def server do
@@ -30,8 +31,8 @@ defmodule HELL.TestHelper.Setup do
     bank = NPCHelper.bank()
     atm_id = Enum.random(bank.servers).id
 
-    owner_id = Access.get(opts, :owner_id, Random.pk())
-    balance = Access.get(opts, :balance, 0)
+    owner_id = Keyword.get(opts, :owner_id, Account.ID.generate)
+    balance = Keyword.get(opts, :balance, 0)
 
     params = %{
       bank_id: bank.id,
@@ -50,13 +51,13 @@ defmodule HELL.TestHelper.Setup do
   end
 
   def bank_transfer(opts \\ []) do
-    amount = Access.get(opts, :amount, 100)
-    balance1 = Access.get(opts, :balance1, amount)
-    balance2 = Access.get(opts, :balance2, 0)
+    amount = Keyword.get(opts, :amount, 100)
+    balance1 = Keyword.get(opts, :balance1, amount)
+    balance2 = Keyword.get(opts, :balance2, 0)
 
     acc1 = bank_account([balance: balance1])
     acc2 = bank_account([balance: balance2])
-    started_by = Random.pk()
+    started_by = Account.ID.generate()
 
     {:ok, transfer} = BankTransferInternal.start(acc1, acc2, amount, started_by)
     transfer
@@ -72,7 +73,7 @@ defmodule HELL.TestHelper.Setup do
       bank_id: bank.id,
       atm_id: atm_id,
       password: "secret",
-      owner_id: Random.pk()
+      owner_id: Account.ID.generate()
     }
   end
 
@@ -80,7 +81,7 @@ defmodule HELL.TestHelper.Setup do
     amount = Random.number(min: 1, max: 5000)
     acc1 = bank_account([balance: amount])
     acc2 = fake_bank_account()
-    started_by = Random.pk()
+    started_by = Account.ID.generate()
 
     %BankTransfer{
       transfer_id: BankTransfer.ID.generate(),

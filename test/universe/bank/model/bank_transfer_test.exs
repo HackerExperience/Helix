@@ -1,18 +1,19 @@
 defmodule Helix.Universe.Bank.Model.BankTransferTest do
 
-  use Helix.Test.IntegrationCase
+  use ExUnit.Case, async: true
 
-  alias HELL.TestHelper.Random
+  alias Helix.Account.Model.Account
+  alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Model.BankTransfer
 
   defp valid_params do
     %{
       account_from: 1234,
       account_to: 4321,
-      atm_from: Random.pk(),
-      atm_to: Random.pk(),
+      atm_from: Server.ID.generate(),
+      atm_to: Server.ID.generate(),
       amount: 500,
-      started_by: Random.pk()
+      started_by: Account.ID.generate()
     }
   end
 

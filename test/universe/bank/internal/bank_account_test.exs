@@ -4,9 +4,9 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
   import Helix.Test.IDCase
 
+  alias Helix.Account.Model.Account
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
 
-  alias HELL.TestHelper.Random
   alias HELL.TestHelper.Setup
   alias Helix.Universe.NPC.Helper, as: NPCHelper
 
@@ -50,12 +50,12 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       acc = Setup.bank_account()
 
       balance = BankAccountInternal.get_balance(acc)
-      assert balance == acc.balance
+      assert acc.balance == balance
     end
 
     test "with non-existing account" do
       fake_acc = Setup.fake_bank_account()
-      assert BankAccountInternal.get_balance(fake_acc) == 0
+      refute BankAccountInternal.get_balance(fake_acc)
     end
   end
 
@@ -74,7 +74,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       BankAccountInternal.deposit(acc2, 200)
 
       balance = BankAccountInternal.get_total_funds(player_id)
-      assert balance == 1434
+      assert 1434 == balance
     end
   end
 
@@ -82,7 +82,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
     test "with valid params" do
       bank = NPCHelper.bank()
       atm_id = Enum.random(bank.servers).id
-      owner_id = Random.pk()
+      owner_id = Account.ID.generate()
 
       params = %{
         bank_id: bank.id,
@@ -94,7 +94,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       assert_id acc.atm_id, atm_id
       assert_id acc.bank_id, bank.id
       assert_id acc.owner_id, owner_id
-      assert acc.balance == 0
+      assert 0 == acc.balance
       assert is_number(acc.account_number)
       assert acc.creation_date
     end
@@ -105,17 +105,17 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       acc = Setup.bank_account()
 
       # Nothing initially
-      assert BankAccountInternal.get_balance(acc) == 0
+      assert 0 == BankAccountInternal.get_balance(acc)
 
       # Deposit 1.01
       assert {:ok, acc2} = BankAccountInternal.deposit(acc, 101)
-      assert acc2.balance == 101
-      assert BankAccountInternal.get_balance(acc) == 101
+      assert 101 == acc2.balance
+      assert 101 == BankAccountInternal.get_balance(acc)
 
       # Deposit 0.01
       assert {:ok, acc3} = BankAccountInternal.deposit(acc2, 1)
-      assert acc3.balance == 102
-      assert BankAccountInternal.get_balance(acc) == 102
+      assert 102 == acc3.balance
+      assert 102 == BankAccountInternal.get_balance(acc)
     end
   end
 
@@ -128,20 +128,20 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
       # Withdraw 1.00
       assert {:ok, acc2} = BankAccountInternal.withdraw(acc, 100)
-      assert acc2.balance == 900
-      assert BankAccountInternal.get_balance(acc) == 900
+      assert 900 == acc2.balance
+      assert 900 == BankAccountInternal.get_balance(acc)
 
       # Withdraw 1.50
       assert {:ok, acc3} = BankAccountInternal.withdraw(acc2, 150)
-      assert acc3.balance == 750
-      assert BankAccountInternal.get_balance(acc) == 750
+      assert 750 == acc3.balance
+      assert 750 == BankAccountInternal.get_balance(acc)
     end
 
     test "with insufficient funds" do
       acc = Setup.bank_account()
 
       assert {:error, reason} = BankAccountInternal.withdraw(acc, 5000)
-      assert reason == {:funds, :insufficient}
+      assert {:funds, :insufficient} == reason
     end
   end
 
@@ -169,7 +169,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
       assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert {:error, reason} = BankAccountInternal.close(acc)
-      assert reason == {:account, :notempty}
+      assert {:account, :notempty} == reason
       assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
     end
 
@@ -177,7 +177,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       fake_acc = Setup.fake_bank_account()
 
       assert {:error, reason} = BankAccountInternal.close(fake_acc)
-      assert reason == {:account, :notfound}
+      assert {:account, :notfound} == reason
     end
   end
 end
