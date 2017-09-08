@@ -10,6 +10,8 @@ defmodule Helix.Universe.NPC.Helper do
   alias Helix.Network.Repo, as: NetworkRepo
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo, as: ServerRepo
+  alias Helix.Universe.Bank.Model.ATM
+  alias Helix.Universe.Bank.Model.Bank
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Model.Seed
   alias Helix.Universe.Repo, as: UniverseRepo
@@ -22,6 +24,11 @@ defmodule Helix.Universe.NPC.Helper do
   are dynamically generated.
   """
   def empty_database do
+
+    # Bank stuff
+    UniverseRepo.delete_all(ATM)
+    UniverseRepo.delete_all(Bank)
+
     # Remove NPC
     UniverseRepo.delete_all(NPC)
 
@@ -51,6 +58,10 @@ defmodule Helix.Universe.NPC.Helper do
     dc = Seed.search_by_type(:download_center)
     server = List.first(dc.servers)
     {dc, server.static_ip}
+  end
+
+  def bank do
+    Seed.search_by_type(:bank)
   end
 
 end

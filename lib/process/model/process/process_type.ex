@@ -5,7 +5,8 @@ defprotocol Helix.Process.Model.Process.ProcessType do
 
   @type resource :: :cpu | :ram | :dlk | :ulk
 
-  @spec dynamic_resources(t) :: [resource]
+  @spec dynamic_resources(t) ::
+    [resource]
   def dynamic_resources(data)
 
   @spec conclusion(t, Process.t | Ecto.Changeset.t) ::

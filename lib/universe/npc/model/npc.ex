@@ -6,6 +6,8 @@ defmodule Helix.Universe.NPC.Model.NPC do
   import Ecto.Changeset
 
   alias HELL.Constant
+  alias Helix.Universe.Bank.Model.Bank
+  alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.NPC.Model.NPCType
 
   @type t :: %__MODULE__{
@@ -27,6 +29,14 @@ defmodule Helix.Universe.NPC.Model.NPC do
       primary_key: true
 
     field :npc_type, Constant
+
+    has_one :bank, Bank,
+      foreign_key: :bank_id,
+      references: :npc_id
+
+    has_one :atm, ATM,
+      foreign_key: :atm_id,
+      references: :npc_id
 
     timestamps()
   end

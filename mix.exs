@@ -30,6 +30,7 @@ defmodule Helix.Mixfile do
         "test.cover": :test,
         "pr": :test,
         "coveralls": :test,
+        "coveralls.html": :test,
         "coveralls.travis": :test
       },
 
@@ -69,7 +70,7 @@ defmodule Helix.Mixfile do
       {:comeonin, "~> 3.2"},
       {:timex, "~> 3.1"},
 
-      {:burette, git: "https://github.com/HackerExperience/burette", only: :test},
+      {:burette, git: "https://github.com/HackerExperience/burette"},
 
       {:ex_machina, "~> 1.0", only: :test},
       {:earmark, "~> 1.1", only: :dev},
@@ -103,7 +104,7 @@ defmodule Helix.Mixfile do
         "helix.test --only external --exclude cluster --max-cases 1"
       ],
       "test.quick": [
-        "helix.test --no-prune --exclude sequential --exclude cluster --exclude external",
+        "helix.test --no-prune --exclude sequential --exclude cluster --exclude external --exclude slow",
       ],
       "pr": [
         "helix.test --exclude sequential --exclude cluster --exclude external",
