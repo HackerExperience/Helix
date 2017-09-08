@@ -8,8 +8,11 @@ defmodule Helix.Process.Internal.Process do
   @spec fetch(Process.id) ::
     Process.t
     | nil
-  def fetch(process_id),
-    do: Repo.get(Process, process_id)
+  def fetch(process_id) do
+    with p = %Process{} <- Repo.get(Process, process_id) do
+      Process.load_virtual_data(p)
+    end
+  end
 
   @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
     [Process.t]
