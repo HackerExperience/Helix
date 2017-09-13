@@ -56,7 +56,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
     test "with non-existing account" do
       {fake_acc, _} = BankSetup.fake_account()
-      assert BankAccountInternal.get_balance(fake_acc) == 0
+      refute BankAccountInternal.get_balance(fake_acc)
     end
   end
 
