@@ -1,12 +1,12 @@
 defmodule Helix.Entity.Action.EntityTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
 
-  alias Helix.Account.Factory, as: AccountFactory
+  alias Helix.Test.Account.Factory, as: AccountFactory
 
   describe "create_from_specialization/1" do
     test "derives an entity from an existing account" do

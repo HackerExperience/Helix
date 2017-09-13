@@ -1,12 +1,12 @@
 defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.CacheCase
-  import Helix.Test.IDCase
+  import Helix.Test.Case.Cache
+  import Helix.Test.Case.ID
 
   alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal

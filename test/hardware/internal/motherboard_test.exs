@@ -1,15 +1,15 @@
 defmodule Helix.Hardware.Internal.MotherboardTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Repo
 
-  alias Helix.Hardware.Factory
+  alias Helix.Test.Hardware.Factory
 
   defp component_of_type(type) do
     specialized_component = Factory.insert(type)

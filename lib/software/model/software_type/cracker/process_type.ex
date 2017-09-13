@@ -211,3 +211,103 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     end
   end
 end
+
+# TODO: Merge
+defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
+
+  use Ecto.Schema
+
+  import Ecto.Changeset
+
+  alias Helix.Network.Model.Connection
+  alias Helix.Process.Model.Process
+  alias Helix.Software.Model.File
+  alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+    as: OverflowConclusionEvent
+
+  @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
+
+  @type t :: %__MODULE__{
+    target_process_id: Process.id | nil,
+    target_connection_id: Connection.id | nil,
+    software_version: pos_integer
+  }
+
+  @type create_params ::
+    %{
+      target_process_id: Process.idtb | nil,
+      target_connection_id: Connection.idtb | nil
+    }
+
+  @create_params ~w/target_process_id target_connection_id/a
+  @required_params ~w/target_process_id target_connection_id/a
+
+  @primary_key false
+  embedded_schema do
+    field :target_process_id, Process.ID
+    field :target_connection_id, Connection.ID
+    field :software_version, :integer
+  end
+
+  @spec create(File.t_of_type(:cracker), create_params) ::
+    {:ok, t}
+    | {:error, changeset}
+  def create(file, params) do
+    version = %{software_version: file.file_modules.cracker_password}
+
+    %__MODULE__{}
+    |> cast(params, @create_params)
+    |> cast(version, [:software_version])
+    |> validate_required(@required_params)
+    |> validate_number(:software_version, greater_than: 0)
+    |> format_return()
+  end
+
+  @spec format_return(changeset) ::
+    {:ok, t}
+    | {:error, changeset}
+  defp format_return(changeset = %Ecto.Changeset{valid?: true}),
+    do: {:ok, apply_changes(changeset)}
+  defp format_return(changeset),
+    do: {:error, changeset}
+
+  defimpl Helix.Process.Model.Process.ProcessType do
+    @moduledoc false
+
+    @ram_base 3
+
+    def dynamic_resources(_),
+      do: [:cpu]
+
+    def minimum(%{software_version: v}) do
+      %{
+        paused: %{ram: v * @ram_base},
+        running: %{ram: v * @ram_base}
+      }
+    end
+
+    def kill(_, process, _),
+      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+
+    def state_change(data, process, _, :complete) do
+      process =
+        process
+        |> Ecto.Changeset.change()
+        |> Map.put(:action, :delete)
+
+      event = %OverflowConclusionEvent{
+        gateway_id: process.data.gateway_id,
+        target_process_id: data.target_process_id,
+        target_connection_id: data.target_connection_id
+      }
+
+      {process, [event]}
+    end
+
+    def state_change(_, process, _, _),
+      do: {process, []}
+
+    def conclusion(data, process),
+      do: state_change(data, process, :running, :complete)
+  end
+end

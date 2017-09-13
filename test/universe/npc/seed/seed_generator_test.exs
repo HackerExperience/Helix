@@ -1,6 +1,6 @@
 defmodule Helix.Universe.NPC.Seed.SeedGeneratorTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Universe.NPC.Model.Seed
 

@@ -1,12 +1,12 @@
 defmodule Helix.Hardware.Internal.ComponentSpecTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Hardware.Internal.ComponentSpec, as: ComponentSpecInternal
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
-  alias Helix.Hardware.Factory
+  alias Helix.Test.Hardware.Factory
 
   describe "fetching" do
     test "succeeds by id" do

@@ -1,11 +1,14 @@
 defmodule Helix.Network.Internal.Tunnel do
 
-  alias Helix.Event
   alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Link
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
+
+  alias Helix.Network.Model.Connection.ConnectionClosedEvent
+  alias Helix.Network.Model.Connection.ConnectionStartedEvent
 
   @spec fetch(Tunnel.id) ::
     Tunnel.t
@@ -83,7 +86,7 @@ defmodule Helix.Network.Internal.Tunnel do
     Repo.preload(tunnel, :connections).connections
   end
 
-  @spec connections_through_node(Server.t | Server.id) ::
+  @spec connections_through_node(Server.idt) ::
     [Connection.t]
   def connections_through_node(server_id) do
     server_id
@@ -91,7 +94,7 @@ defmodule Helix.Network.Internal.Tunnel do
     |> Repo.all()
   end
 
-  @spec inbound_connections(Server.t | Server.id) ::
+  @spec inbound_connections(Server.idt) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's destination is `server`
   def inbound_connections(endpoint_id) do
@@ -100,7 +103,7 @@ defmodule Helix.Network.Internal.Tunnel do
     |> Repo.all()
   end
 
-  @spec outbound_connections(Server.t | Server.id) ::
+  @spec outbound_connections(Server.idt) ::
     [Connection.t]
   # REVIEW: Maybe return only connections whose tunnel's gateway is `server`
   def outbound_connections(gateway_id) do
@@ -109,11 +112,11 @@ defmodule Helix.Network.Internal.Tunnel do
     |> Repo.all()
   end
 
-  @spec start_connection(Tunnel.t, Connection.type) ::
-    {:ok, Connection.t, [Event.t]}
+  @spec start_connection(Tunnel.t, Connection.type, Connection.meta) ::
+    {:ok, Connection.t, [ConnectionStartedEvent.t]}
     | {:error, Ecto.Changeset.t}
-  def start_connection(tunnel, connection_type) do
-    cs = Connection.create(tunnel, connection_type)
+  def start_connection(tunnel, connection_type, meta \\ nil) do
+    cs = Connection.create(tunnel, connection_type, meta)
 
     with {:ok, connection} <- Repo.insert(cs) do
       event = %Connection.ConnectionStartedEvent{
@@ -128,13 +131,13 @@ defmodule Helix.Network.Internal.Tunnel do
   end
 
   @spec close_connection(Connection.t, Connection.close_reasons) ::
-    [Event.t]
+    [ConnectionClosedEvent.t]
     | no_return
   @doc """
   Closes `connection`
 
   This can simply mean deleting the connection and, as an event reaction,
-  cancelling any action that depends on this process.
+  canceling any action that depends on this process.
 
   `reason` is an atom to "justify" the reason the connection is being closed.
   This is used by the event handlers to provide meaningful side-effects based on
@@ -151,6 +154,8 @@ defmodule Helix.Network.Internal.Tunnel do
       connection_id: connection.connection_id,
       tunnel_id: connection.tunnel_id,
       network_id: connection.tunnel.network_id,
+      meta: connection.meta,
+      connection_type: connection.connection_type,
       reason: reason
     }
 
@@ -162,6 +167,15 @@ defmodule Helix.Network.Internal.Tunnel do
   def connections_on_tunnels_between(gateway_id, endpoint_id) do
     gateway_id
     |> Connection.Query.from_gateway_to_endpoint(endpoint_id)
+    |> Repo.all()
+    end
+
+  @spec get_links(Tunnel.idt) ::
+    [Link.t]
+  def get_links(tunnel) do
+    tunnel
+    |> Link.Query.by_tunnel()
+    |> Link.Query.order_by_sequence()
     |> Repo.all()
   end
 end

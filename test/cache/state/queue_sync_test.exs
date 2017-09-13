@@ -1,10 +1,10 @@
 defmodule Helix.Cache.State.QueueSyncTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.CacheCase
+  import Helix.Test.Case.Cache
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue

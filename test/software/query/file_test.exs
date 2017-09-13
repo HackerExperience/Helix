@@ -1,12 +1,12 @@
 defmodule Helix.Software.Query.FileTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias HELL.TestHelper.Random
   alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
 
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   @moduletag :integration
 

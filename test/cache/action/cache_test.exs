@@ -1,14 +1,14 @@
 defmodule Helix.Cache.Action.CacheTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.CacheCase
-  import Helix.Test.IDCase
+  import Helix.Test.Case.Cache
+  import Helix.Test.Case.ID
 
   alias Helix.Server.Internal.Server, as: ServerInternal
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Cache.Action.Cache, as: CacheAction
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal

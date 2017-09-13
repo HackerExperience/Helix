@@ -10,8 +10,8 @@ defmodule Helix.Software.Model.SoftwareType.CrackerTest do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.Cracker
 
-  alias Helix.Process.Factory, as: ProcessFactory
-  alias Helix.Software.Factory, as: SoftwareFactory
+  alias Helix.Test.Process.Factory, as: ProcessFactory
+  alias Helix.Test.Software.Factory, as: SoftwareFactory
 
   # FIXME: this will be removed when file modules become just an attribute
   @cracker_file (

@@ -1,6 +1,6 @@
 defmodule Helix.Software.Action.Flow.FileDownloadTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Software.Action.Flow.FileDownload, warn: false
 

@@ -6,20 +6,25 @@ defmodule Helix.Network.Model.Connection do
   import Ecto.Changeset
 
   alias Ecto.Changeset
+  alias HELL.Constant
   alias Helix.Network.Model.Tunnel
 
+  @type meta :: map | nil
   @type close_reasons :: :normal | :force
-  @type type :: String.t
+  @type type ::
+    :wire_transfer
+    | :bank_login
+    | :ssh
+    | :ftp
   @type t :: %__MODULE__{
     connection_id: id,
     tunnel_id: Tunnel.id,
     connection_type: type,
-    tunnel: term
+    tunnel: term,
+    meta: meta
   }
 
   @close_reasons [:normal, :force]
-
-  # TODO: ConnectionType as a constant
 
   schema "connections" do
     field :connection_id, ID,
@@ -27,7 +32,9 @@ defmodule Helix.Network.Model.Connection do
 
     field :tunnel_id, Tunnel.ID
 
-    field :connection_type, :string
+    field :connection_type, Constant
+
+    field :meta, :map
 
     belongs_to :tunnel, Tunnel,
       foreign_key: :tunnel_id,
@@ -35,16 +42,17 @@ defmodule Helix.Network.Model.Connection do
       define_field: :false
   end
 
-  @spec create(Tunnel.idtb, type) ::
+  @spec create(Tunnel.idtb, type, meta) ::
     Changeset.t
-  def create(tunnel, connection_type) do
+  def create(tunnel, connection_type, meta) do
     params = %{
       tunnel_id: tunnel,
-      connection_type: connection_type
+      connection_type: connection_type,
+      meta: meta
     }
 
     %__MODULE__{}
-    |> cast(params, [:tunnel_id, :connection_type])
+    |> cast(params, [:tunnel_id, :connection_type, :meta])
     |> validate_required([:connection_type])
   end
 
@@ -53,6 +61,7 @@ defmodule Helix.Network.Model.Connection do
     do: @close_reasons
 
   defmodule Query do
+
     import Ecto.Query
 
     alias Ecto.Queryable

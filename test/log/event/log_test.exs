@@ -1,6 +1,6 @@
 defmodule Helix.Log.Event.LogTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
     as: LogForgeEditComplete
@@ -10,9 +10,9 @@ defmodule Helix.Log.Event.LogTest do
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
 
-  alias Helix.Entity.Factory, as: EntityFactory
-  alias Helix.Server.Factory, as: ServerFactory
-  alias Helix.Test.Factory.Log, as: LogFactory
+  alias Helix.Test.Entity.Factory, as: EntityFactory
+  alias Helix.Test.Server.Factory, as: ServerFactory
+  alias Helix.Test.Log.Factory, as: LogFactory
 
   # TODO: Depends on integration factory as it depends on a server being linked
   #   to an entity and having a network_connection (and this depends on a nic

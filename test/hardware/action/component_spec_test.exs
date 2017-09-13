@@ -1,13 +1,13 @@
 defmodule Helix.Hardware.Action.ComponentSpecTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Action.ComponentSpec, as: ComponentSpecAction
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Repo
 
-  alias Helix.Hardware.Factory
+  alias Helix.Test.Hardware.Factory
 
   describe "create/1" do
     test "succeeds with valid input" do

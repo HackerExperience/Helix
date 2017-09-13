@@ -1,12 +1,12 @@
 defmodule Helix.Account.Internal.SessionInternalTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Account.Internal.Session, as: SessionInternal
   alias Helix.Account.Model.AccountSession
   alias Helix.Account.Repo
 
-  alias Helix.Account.Factory
+  alias Helix.Test.Account.Factory
 
   describe "generate_token/1" do
     test "succeeds with valid account" do

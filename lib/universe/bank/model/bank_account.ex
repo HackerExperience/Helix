@@ -2,6 +2,8 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias Ecto.Changeset
   alias HELL.Password
   alias Helix.Account.Model.Account
@@ -10,12 +12,10 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.NPC.Model.NPC
 
-  import Ecto.Changeset
-
   @account_range 100_000..999_999
+  # TODO: Repeated for compatibility. Remove on next PR.
   @type account_range :: 100_000..999_999
-
-  @type account :: integer
+  @type account :: 100_000..999_999
 
   @type t :: %__MODULE__{
     account_number: account_range,
@@ -158,7 +158,7 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     @spec order_by_creation_date(Queryable.t) ::
       Queryable.t
     def order_by_creation_date(query),
-      do: order_by(query, [b], b.creation_date)
+      do: order_by(query, [b], asc: b.creation_date)
 
     @spec select_balance(Queryable.t) ::
       Queryable.t

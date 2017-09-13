@@ -1,12 +1,12 @@
 defmodule Helix.Account.HTTP.Controller.AccountTest do
 
-  use Helix.Test.ConnCase
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Conn
+  use Helix.Test.Case.Integration
 
   alias HELL.TestHelper.Random
   alias Helix.Account.Action.Session, as: SessionAction
 
-  alias Helix.Account.Factory
+  alias Helix.Test.Account.Factory
 
   describe "register" do
     @tag :pending

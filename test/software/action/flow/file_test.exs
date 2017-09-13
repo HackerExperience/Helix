@@ -1,6 +1,6 @@
 defmodule Helix.Software.Action.Flow.FileTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias HELL.IPv4
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
@@ -18,10 +18,10 @@ defmodule Helix.Software.Action.Flow.FileTest do
   alias Helix.Software.Model.SoftwareType.LogForge
   alias Helix.Software.Query.Storage, as: StorageQuery
 
-  alias Helix.Account.Factory, as: AccountFactory
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Account.Factory, as: AccountFactory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Process.TOPHelper
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   describe "firewall" do
     test "starts firewall process on success" do

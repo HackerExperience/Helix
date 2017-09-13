@@ -1,8 +1,8 @@
 defmodule Helix.Cache.Internal.BuilderTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.IDCase
+  import Helix.Test.Case.ID
 
   alias HELL.TestHelper.Random
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
@@ -10,7 +10,7 @@ defmodule Helix.Cache.Internal.BuilderTest do
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.Storage
   alias Helix.Universe.NPC.Model.Seed
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
 
   setup do

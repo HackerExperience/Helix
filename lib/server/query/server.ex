@@ -25,9 +25,11 @@ defmodule Helix.Server.Query.Server do
   defdelegate fetch_by_motherboard(motherboard_id),
     to: ServerInternal
 
-  @spec get_ip(Server.id, Network.id) ::
+  @spec get_ip(Server.id, Network.idt) ::
     NetworkConnection.ip
     | nil
+  def get_ip(server_id, network = %Network{}),
+    do: get_ip(server_id, network.network_id)
   def get_ip(server_id, network_id) do
     case CacheQuery.from_server_get_nips(server_id) do
       {:ok, nips} ->

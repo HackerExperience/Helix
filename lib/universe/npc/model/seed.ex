@@ -1,20 +1,30 @@
 defmodule Helix.Universe.NPC.Model.Seed do
 
+  alias Helix.Server.Model.Server
+  alias Helix.Universe.NPC.Model.NPC
+
   @source [
     %{key: "DC0", type: :download_center},
-    %{key: "Bank1", type: :bank}
+    %{key: "Bank1", type: :bank},
+    %{key: "Bank2", type: :bank}
   ]
 
   @dns %{
     "DC0" => "dc.com",
-    "Bank1" => "bank.com"
+    "Bank1" => "bank.com",
+    "Bank2" => "bank2.com"
   }
 
   @servers %{
     "DC0" => [%{spec: "todo", ip: "1.2.3.4"}],
     "Bank1" => [
-      %{spec: "todo", custom: %{region: "1"}},
-      %{spec: "todo", custom: %{region: "2"}}
+      %{spec: "todo", custom: %{region: "1a"}},
+      %{spec: "todo", custom: %{region: "1b"}},
+      %{spec: "todo", custom: %{region: "1c"}}
+    ],
+    "Bank2" => [
+      %{spec: "todo", custom: %{region: "2a"}},
+      %{spec: "todo", custom: %{region: "2b"}}
     ]
   }
 
@@ -28,12 +38,21 @@ defmodule Helix.Universe.NPC.Model.Seed do
       servers: [
         "10::15c1:d147:47f9:b4b2:cbbe",
         "10::15c1:d147:47f9:b4b2:cbbf",
+        "10::15c1:d147:47f9:b4b2:cbc0"
+      ]
+    },
+    "Bank2" => %{
+      npc: "2::920e:c06c:abea:b249:a160",
+      servers: [
+        "10::15c1:d147:47f9:b4b2:cbc0",
+        "10::15c1:d147:47f9:b4b2:cbc1",
       ]
     }
   }
 
   @custom %{
-    "Bank1" => %{name: "Bank One"}
+    "Bank1" => %{name: "Bank One"},
+    "Bank2" => %{name: "Bank Two"}
   }
 
   def search_by_type(type) do
@@ -49,8 +68,14 @@ defmodule Helix.Universe.NPC.Model.Seed do
   end
 
   def get_npc_id(key) do
-    Map.get(@ids, key)
-    |> Access.get(:npc)
+    npc_id =
+      @ids
+      |> Map.get(key)
+      |> Access.get(:npc)
+
+    if npc_id do
+      NPC.ID.cast!(npc_id)
+    end
   end
 
   def seed do
@@ -66,6 +91,7 @@ defmodule Helix.Universe.NPC.Model.Seed do
 
   defp generate_entry(key, type) do
     ids = Map.get(@ids, key)
+
     servers = Map.get(@servers, key)
 
     Kernel.length(servers) == Kernel.length(ids.servers) || stop()
@@ -76,7 +102,7 @@ defmodule Helix.Universe.NPC.Model.Seed do
     end)
 
     %{
-      id: ids.npc,
+      id: NPC.ID.cast!(ids.npc),
       type: type,
       servers: server_entries,
       anycast: Map.get(@dns, key, false),
@@ -85,7 +111,7 @@ defmodule Helix.Universe.NPC.Model.Seed do
   end
 
   defp server_entry({server, id}) do
-    %{id: id,
+    %{id: Server.ID.cast!(id),
       spec: server.spec,
       static_ip: Map.get(server, :ip, false),
       custom: Map.get(server, :custom, false)

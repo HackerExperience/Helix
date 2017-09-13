@@ -13,6 +13,7 @@ defmodule Helix.Server.Model.Server do
 
   @type t :: %__MODULE__{
     server_id: id,
+    server_type: Constant.t,
     motherboard_id: Component.id |  nil,
     password: String.t,
     inserted_at: NaiveDateTime.t,

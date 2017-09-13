@@ -6,8 +6,8 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
   alias Helix.Process.Model.Process
   alias Helix.Process.Internal.TOP.Allocator.Plan
   alias Helix.Process.Internal.TOP.ServerResources
-  alias Helix.Process.TestHelper.ProcessTypeExample
-  alias Helix.Process.TestHelper.StaticProcessTypeExample
+  alias Helix.Test.Process.ProcessTypeExample
+  alias Helix.Test.Process.StaticProcessTypeExample
 
   @moduletag :unit
 

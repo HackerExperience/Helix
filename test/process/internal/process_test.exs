@@ -1,12 +1,12 @@
 defmodule Helix.Process.Internal.ProcessTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
 
-  alias Helix.Process.Factory
+  alias Helix.Test.Process.Factory
 
   describe "fetching" do
     test "succeeds by id" do

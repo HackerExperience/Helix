@@ -1,6 +1,6 @@
 defmodule Helix.Software.Event.DecryptorTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias Helix.Event
   alias Helix.Server.Model.Server
@@ -11,7 +11,7 @@ defmodule Helix.Software.Event.DecryptorTest do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
-  alias Helix.Software.Factory
+  alias Helix.Test.Software.Factory
 
   describe "when decryption is global" do
     test "on conclusion, removes the crypto version of the target file" do

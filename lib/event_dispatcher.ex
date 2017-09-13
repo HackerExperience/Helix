@@ -66,6 +66,10 @@ defmodule Helix.Event.Dispatcher do
     Entity.Event.Database,
     :cracker_conclusion
 
+  event Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+    Software.Event.Cracker,
+    :overflow_conclusion
+
   event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
     Software.Event.Decryptor,
     :complete
@@ -104,8 +108,30 @@ defmodule Helix.Event.Dispatcher do
   event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
     Universe.Bank.Event.BankTransfer,
     :transfer_completed
+  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
+    Network.Event.Connection,
+    :bank_transfer_completed
 
   event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
     Universe.Bank.Event.BankTransfer,
     :transfer_aborted
+  event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
+    Software.Event.Cracker,
+    :bank_transfer_aborted
+
+  event Universe.Bank.Model.BankTokenAcquiredEvent,
+    Entity.Event.Database,
+    :bank_token_acquired
+
+  event Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent,
+    Universe.Bank.Event.BankAccount,
+    :password_reveal_conclusion
+
+  event Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
+    Entity.Event.Database,
+    :bank_password_revealed
+
+  event Universe.Bank.Model.BankAccount.LoginEvent,
+    Entity.Event.Database,
+    :bank_account_login
 end

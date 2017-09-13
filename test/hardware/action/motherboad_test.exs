@@ -1,15 +1,15 @@
 defmodule Helix.Hardware.Action.MotherboardTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Hardware.Action.Motherboard, as: MotherboardAction
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Hardware.Model.MotherboardSlot
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Hardware.Repo
 
-  alias Helix.Hardware.Factory
+  alias Helix.Test.Hardware.Factory
 
   describe "link/2" do
     test "suceeds with valid input" do

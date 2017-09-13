@@ -1,18 +1,12 @@
 defmodule Helix.Network.Query.DNSTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
   alias HELL.TestHelper.Random
-  alias HELL.TestHelper.Setup
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Network.Action.DNS, as: DNSAction
-  alias Helix.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Network.Query.DNS, as: DNSQuery
-
-  setup do
-    {server, account} = Setup.server()
-    {:ok, account: account, server: server}
-  end
 
   describe "resolve/2" do
     test "NPC resolution (anycast)" do

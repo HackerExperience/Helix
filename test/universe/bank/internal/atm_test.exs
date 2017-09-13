@@ -1,17 +1,17 @@
 defmodule Helix.Universe.Bank.Internal.ATMTest do
 
-  use Helix.Test.IntegrationCase
+  use Helix.Test.Case.Integration
 
-  import Helix.Test.IDCase
+  import Helix.Test.Case.ID
 
   alias HELL.TestHelper.Random
-  alias HELL.TestHelper.Setup
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Universe.Bank.Internal.ATM, as: ATMInternal
-  alias Helix.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   describe "create/1" do
     test "with valid data" do
-      {server, _} = Setup.server()
+      {server, _} = ServerSetup.server()
       bank_id = NPCHelper.bank().id
 
       params = %{
@@ -37,7 +37,6 @@ defmodule Helix.Universe.Bank.Internal.ATMTest do
     test "with valid data" do
       bank = NPCHelper.bank()
       atm = Enum.random(bank.servers)
-
       atm2 = ATMInternal.fetch(atm.id)
 
       assert atm2
