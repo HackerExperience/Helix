@@ -21,18 +21,30 @@ defprotocol Helix.Process.Public.View.ProcessViewable do
   alias Helix.Process.Public.View.Process, as: ProcessView
 
   @typep allowed_processes ::
-    ProcessView.remote_process
-    | ProcessView.local_process
+    ProcessView.partial_process
+    | ProcessView.full_process
     | %{}
 
+  @spec get_scope(term, Process.t, Server.id, Entity.id) ::
+    ProcessView.scopes
   @doc """
-  The implementation of `render/4` is responsible for figuring out the process'
-  context and the result that should be sent to the client.
+  `get_scope/4` is responsible solely for figuring out which context the player
+  has with regards to the given process/data. It's usually either `full` or
+  `partial`
+  """
+  def get_scope(data, process, server_id, entity_id)
+
+  @spec render(term, Process.t, ProcessView.scopes) ::
+    {allowed_processes, data :: map}
+  @doc """
+  The implementation of `render/3` is responsible for rendering the result that
+  should be sent to the client, already knowing which context the player has
+  access, as returned by `get_scope/4`.
 
   Note that this result is sent directly to the client, so it should be JSON
   friendly, e.g. converting Helix.IDs to Strings.
 
-  `render/4` expects a two-tuple to be returned, with the first element being
+  `render/3` expects a two-tuple to be returned, with the first element being
   the "base process" map, and the second one the "data" map.
 
   The "base process" map holds generic information about the process, like
@@ -47,7 +59,5 @@ defprotocol Helix.Process.Public.View.ProcessViewable do
   If the process is not meant to be rendered/displayed to the client, it must
   return an empty map for both the "base" process and the "data" map.
   """
-  @spec render(term, Process.t, Server.id, Entity.id) ::
-    {allowed_processes, data :: map}
-  def render(data, process, server_id, entity_id)
+  def render(data, process, scope)
 end

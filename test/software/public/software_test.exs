@@ -34,7 +34,7 @@ defmodule Helix.Software.Public.FileTest do
       assert process.target_server_id == target_server.server_id
       assert process.network_id == target_nip.network_id
       assert process.file_id == cracker.file_id
-      assert process.process_data.source_entity_id == source_entity.entity_id
+      assert process.source_entity_id == source_entity.entity_id
       assert process.process_data.target_server_ip == target_nip.ip
 
       :timer.sleep(100)

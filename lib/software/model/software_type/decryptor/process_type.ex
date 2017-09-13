@@ -52,34 +52,30 @@ defmodule Helix.Software.Model.Software.Decryptor.ProcessType do
 
   defimpl Helix.Process.Public.View.ProcessViewable do
 
-    alias Helix.Entity.Model.Entity
-    alias Helix.Server.Model.Server
     alias Helix.Software.Model.File
     alias Helix.Process.Model.Process
     alias Helix.Process.Public.View.Process, as: ProcessView
     alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
 
-    @type local_data ::
+    @type full_data ::
       %{
         target_file_id: File.id,
         software_version: File.module_version,
         scope: term
       }
 
-    @type remote_data ::
+    @type partial_data ::
       %{
         target_file_id: File.id
       }
 
-    @spec render(map, Process.t, Server.id, Entity.id) ::
-      {ProcessView.local_process, local_data}
-      | {ProcessView.remote_process, remote_data}
-    def render(data, process = %{gateway_id: server}, server, _),
-      do: do_render(data, process, :local)
-    def render(data, process, _, _),
-      do: do_render(data, process, :remote)
+    def get_scope(data, process, server, entity),
+      do: ProcessViewHelper.get_default_scope(data, process, server, entity)
 
-    defp do_render(data, process, scope) do
+    @spec render(map, Process.t, ProcessView.scopes) ::
+      {ProcessView.full_process, full_data}
+      | {ProcessView.partial_process, partial_data}
+    def render(data, process, scope) do
       base = take_data_from_process(process, scope)
       complement = %{
         target_file_id: data.target_file_id

@@ -10,16 +10,16 @@ defmodule Helix.Software.Model.SoftwareType do
   }
 
   @type type ::
-  :cracker
-  | :exploit
-  | :firewall
-  | :hasher
-  | :log_forger
-  | :log_recover
-  | :encryptor
-  | :decryptor
-  | :anymap
-  | :crypto_key
+    :cracker
+    | :exploit
+    | :firewall
+    | :hasher
+    | :log_forger
+    | :log_recover
+    | :encryptor
+    | :decryptor
+    | :anymap
+    | :crypto_key
 
   # TODO: Add module types once file_module refactor is done
 

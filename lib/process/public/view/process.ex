@@ -11,7 +11,7 @@ defmodule Helix.Process.Public.View.Process do
   alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Public.View.ProcessViewable
 
-  @type remote_process ::
+  @type partial_process ::
     %{
       :process_id => String.t,
       :gateway_id => String.t,
@@ -22,7 +22,7 @@ defmodule Helix.Process.Public.View.Process do
       :process_type => String.t
     }
 
-  @type local_process ::
+  @type full_process ::
     %{
       :process_id => String.t,
       :gateway_id => String.t,
@@ -37,6 +37,10 @@ defmodule Helix.Process.Public.View.Process do
       :creation_time => String.t
     }
 
+  @type scopes ::
+    :full
+    | :partial
+
   @spec render(data :: term, Process.t, Server.id, Entity.id) ::
     rendered_process :: term
   @doc """
@@ -46,7 +50,8 @@ defmodule Helix.Process.Public.View.Process do
   to its documentation.
   """
   def render(data, process, server_id, entity_id) do
-    {base, data} = ProcessViewable.render(data, process, server_id, entity_id)
+    scope = ProcessViewable.get_scope(data, process, server_id, entity_id)
+    {base, data} = ProcessViewable.render(data, process, scope)
 
     Map.merge(base, data)
   end

@@ -113,7 +113,7 @@ defmodule Helix.Test.Log.Setup do
           EntitySetup.id()
       end
 
-    message = Access.get(opts, :message, LogHelper.random_log_message())
+    message = Access.get(opts, :message, LogHelper.random_message())
     forge_version = Access.get(opts, :forge_version, nil)
 
     {server, entity_id, message, forge_version}

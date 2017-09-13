@@ -60,7 +60,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       params = %{
         target_log_id: Log.ID.generate(),
         message: "I say hey hey",
-        operation: "edit",
+        operation: :edit,
         entity_id: EntityQuery.get_entity_id(account)
       }
 
@@ -89,7 +89,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       params = %{
         target_log_id: log.log_id,
         message: "",
-        operation: "edit",
+        operation: :edit,
         entity_id: entity_id
       }
 
@@ -123,7 +123,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       params = %{
         target_server_id: server,
         message: "",
-        operation: "create",
+        operation: :create,
         entity_id: entity_id
       }
 

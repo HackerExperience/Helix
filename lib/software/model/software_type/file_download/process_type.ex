@@ -42,8 +42,6 @@ defmodule Helix.Software.Model.Software.FileDownload.ProcessType do
 
   defimpl Helix.Process.Public.View.ProcessViewable do
 
-    alias Helix.Entity.Model.Entity
-    alias Helix.Server.Model.Server
     alias Helix.Software.Model.File
     alias Helix.Process.Model.Process
     alias Helix.Process.Public.View.Process, as: ProcessView
@@ -55,14 +53,12 @@ defmodule Helix.Software.Model.Software.FileDownload.ProcessType do
         target_file_id: File.id
       }
 
-    @spec render(map, Process.t, Server.id, Entity.id) ::
-      {ProcessView.local_process | ProcessView.remote_process, data}
-    def render(data, process = %{gateway_id: server}, server, _),
-      do: do_render(data, process, :local)
-    def render(data, process, _, _),
-      do: do_render(data, process, :remote)
+    def get_scope(data, process, server, entity),
+      do: ProcessViewHelper.get_default_scope(data, process, server, entity)
 
-    defp do_render(data, process, scope) do
+    @spec render(map, Process.t, ProcessView.scopes) ::
+      {ProcessView.full_process | ProcessView.partial_process, data}
+    def render(data, process, scope) do
       base = take_data_from_process(process, scope)
       complement = take_complement_from_data(data)
 
