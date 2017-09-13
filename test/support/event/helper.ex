@@ -4,6 +4,5 @@ defmodule Helix.Test.Event.Helper do
 
   def emit(event) do
     Event.emit(event)
-    :timer.sleep(50)
   end
 end

@@ -1,15 +1,18 @@
 defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.Case.Integration
 
   alias Ecto.Changeset
   alias Helix.Log.Model.Log
   alias Helix.Entity.Model.Entity
+  alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.LogForge
 
+  alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
   alias Helix.Test.Software.Factory, as: SoftwareFactory
 
@@ -219,6 +222,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       assert victim_view.target_log_id
       assert is_binary(victim_view.target_log_id)
       assert attacker_view.target_log_id == to_string(data.target_log_id)
+
+      TOPHelper.top_stop(process.gateway_id)
     end
 
     defp pview_edit_full do
@@ -256,6 +261,40 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
       assert ProcessViewHelper.pview_partial() == third_keys
       assert ProcessViewHelper.pview_full() == attacker_keys
+
+      TOPHelper.top_stop(process.gateway_id)
+    end
+  end
+
+  describe "after_read_hook/1" do
+    test "serializes to the internal representation" do
+      {process_create, _} = log_forger_process(:create)
+      {process_edit, _} = log_forger_process(:edit)
+
+      db_create = ProcessHelper.raw_get(process_create.process_id)
+      db_edit = ProcessHelper.raw_get(process_edit.process_id)
+
+      serialized_create = ProcessType.after_read_hook(db_create.process_data)
+      serialized_edit = ProcessType.after_read_hook(db_edit.process_data)
+
+      # Create process has `target_log_id` equals nil
+      refute serialized_create.target_log_id
+      assert %Entity.ID{} = serialized_create.entity_id
+      assert %Server.ID{} = serialized_create.target_server_id
+      assert serialized_create.operation == :create
+      assert serialized_create.message
+      assert serialized_create.version
+
+      # Edit has valid `target_log_id`
+      assert %Entity.ID{} = serialized_edit.entity_id
+      assert %Log.ID{} = serialized_edit.target_log_id
+      assert %Server.ID{} = serialized_edit.target_server_id
+      assert serialized_edit.operation == :edit
+      assert serialized_edit.message
+      assert serialized_edit.version
+
+      TOPHelper.top_stop(process_create.gateway_id)
+      TOPHelper.top_stop(process_edit.gateway_id)
     end
   end
 

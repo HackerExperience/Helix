@@ -14,6 +14,7 @@ defmodule Helix.Test.Process.Data.Setup do
   def random(meta) do
     custom_implementations()
     |> Enum.take_random(1)
+    |> List.first()
     |> custom([], meta)
   end
 
@@ -87,7 +88,7 @@ defmodule Helix.Test.Process.Data.Setup do
   defp custom_implementations do
     ~w/
     bruteforce
-    log_forge
+    forge
     /a
   end
 end

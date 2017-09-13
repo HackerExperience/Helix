@@ -24,4 +24,14 @@ defprotocol Helix.Process.Model.Process.ProcessType do
   @spec minimum(t) ::
     %{optional(State.state) => %{resource => non_neg_integer}}
   def minimum(data)
+
+  @spec after_read_hook(term) ::
+    t
+  @doc """
+  Process metadata (ProcessType) is stored as JSONB on Postgres. After
+  retrieval, we may lose some internal data representation, like Helix IDs or
+  atoms, which are both converted to string. This method purpose is somewhat
+  similar to serialization.
+  """
+  def after_read_hook(data)
 end

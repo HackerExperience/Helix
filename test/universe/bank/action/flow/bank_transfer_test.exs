@@ -47,8 +47,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       assert BankAccountInternal.get_balance(acc1) == 0
       assert BankAccountInternal.get_balance(acc2) == 0
 
-      # Wait for it.... Transferring $0.01 is quite quick (nope)
-      :timer.sleep(1100)
+      # Magically finish the process
+      TOPHelper.force_completion(process)
 
       # Transfer was completed
       refute BankTransferInternal.fetch(transfer_id)

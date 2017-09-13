@@ -117,6 +117,10 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   defimpl Helix.Process.Model.Process.ProcessType do
 
     alias Ecto.Changeset
+    alias Helix.Entity.Model.Entity
+    alias Helix.Log.Model.Log
+    alias Helix.Server.Model.Server
+    alias Helix.Software.Model.SoftwareType.LogForge
     alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
       as: EditConclusion
     alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
@@ -172,6 +176,19 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
         version: data.version
       }
     end
+
+    def after_read_hook(data) do
+      target_log_id = data.target_log_id && Log.ID.cast!(data.target_log_id)
+
+      %LogForge{
+        entity_id: Entity.ID.cast!(data.entity_id),
+        target_log_id: target_log_id,
+        target_server_id: Server.ID.cast!(data.target_server_id),
+        operation: String.to_existing_atom(data.operation),
+        message: data.message,
+        version: data.version
+      }
+    end
   end
 
   defimpl Helix.Process.Public.View.ProcessViewable do
@@ -198,9 +215,9 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
       {base, complement}
     end
 
-    defp take_complement_from_data(data = %{operation: :edit}, _),
+    defp take_complement_from_data(data = %_{operation: :edit}, _),
       do: %{target_log_id: to_string(data.target_log_id)}
-    defp take_complement_from_data(%{operation: :create}, _),
+    defp take_complement_from_data(%_{operation: :create}, _),
       do: %{}
 
     defp take_data_from_process(process, scope),

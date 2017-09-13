@@ -88,6 +88,9 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
     @moduledoc false
 
     alias Ecto.Changeset
+    alias Helix.Network.Model.Network
+    alias Helix.Server.Model.Server
+    alias Helix.Software.Model.Software.Cracker.Bruteforce
     alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
       as: CrackerBruteforceConclusionEvent
 
@@ -129,6 +132,15 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    def after_read_hook(data) do
+      %Bruteforce{
+        software_version: data.software_version,
+        network_id: Network.ID.cast!(data.network_id),
+        target_server_ip: data.target_server_ip,
+        target_server_id: Server.ID.cast!(data.target_server_id)
+      }
+    end
   end
 
   defimpl Helix.Process.Public.View.ProcessViewable do
@@ -273,5 +285,8 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    def after_read_hook(data),
+      do: data
   end
 end

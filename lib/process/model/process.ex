@@ -236,6 +236,24 @@ defmodule Helix.Process.Model.Process do
     |> Map.put(:minimum, minimum)
   end
 
+  @spec format(Process.t) ::
+    Process.t
+  @doc """
+  Converts the retrieved process from the Database into TOP's internal format.
+
+  Notably, it:
+  - Adds virtual data (derived data not stored on DB).
+  - Converts the ProcessType (defined at `process_data`) into Helix internal
+    format, by using the `after_read_hook/1` implemented by each ProcessType
+  """
+  def format(process) do
+    data = ProcessType.after_read_hook(process.process_data)
+
+    process
+    |> load_virtual_data()
+    |> Map.replace(:process_data, data)
+  end
+
   @spec complete?(process) :: boolean
   def complete?(process = %Ecto.Changeset{}),
     do: complete?(apply_changes(process))

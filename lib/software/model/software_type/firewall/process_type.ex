@@ -66,5 +66,8 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
 
     def conclusion(_, _),
       do: raise "firewall(passive) process should not be 'completed'"
+
+    def after_read_hook(data),
+      do: data
   end
 end

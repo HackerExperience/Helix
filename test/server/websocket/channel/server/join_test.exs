@@ -15,13 +15,6 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
   @moduletag :driver
 
-  setup_all do
-    on_exit fn ->
-      # Sleep for events
-      :timer.sleep(100)
-    end
-  end
-
   test "can connect to owned server with simple join message" do
     {socket, %{server: gateway, account: account}} =
       ChannelSetup.create_socket()
@@ -147,8 +140,6 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
     assert new_socket.joined
     assert new_socket.topic == topic
 
-    # This might emit an event...
-    :timer.sleep(250)
     CacheHelper.sync_test()
   end
 end

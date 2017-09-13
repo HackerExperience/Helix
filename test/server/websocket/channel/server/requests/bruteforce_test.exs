@@ -51,7 +51,6 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BruteforceTest do
       assert ProcessQuery.fetch(response.data.process_id)
       assert TunnelQuery.fetch_connection(response.data.connection_id)
 
-      :timer.sleep(50)
       TOPHelper.top_stop(gateway.server_id)
     end
 

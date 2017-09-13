@@ -23,6 +23,7 @@ defmodule Helix.Account.Websocket.RoutesTest do
   test "logout closes socket", context do
     push(context.socket, "account.logout")
 
+    # Wait process teardown.
     :timer.sleep(100)
 
     refute Process.alive? context.socket.channel_pid

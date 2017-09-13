@@ -1,15 +1,17 @@
 defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.Case.Integration
 
   alias Ecto.Changeset
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
+  alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
 
+  alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
   alias Helix.Test.Software.Factory, as: SoftwareFactory
@@ -165,5 +167,18 @@ defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
       |> Kernel.++(~w/software_version target_server_ip/a)
       |> Enum.sort()
     end
+  end
+
+  describe "after_read_hook/1" do
+    {process, _} = ProcessSetup.process(fake_server: true, type: :bruteforce)
+
+    db_process = ProcessHelper.raw_get(process.process_id)
+
+    serialized = ProcessType.after_read_hook(db_process.process_data)
+
+    assert %Network.ID{} = serialized.network_id
+    assert %Server.ID{} = serialized.target_server_id
+    assert serialized.software_version
+    assert serialized.target_server_ip
   end
 end

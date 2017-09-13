@@ -55,6 +55,9 @@ defmodule Helix.Server.Websocket.Channel.Server.EventsTest do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
 
+      # Filter out the usual `LogCreatedEvent` after remote server join
+      assert_broadcast "event", _
+
       gateway_entity_id = socket.assigns.gateway.entity_id
       destination_entity_id = socket.assigns.destination.entity_id
 
@@ -67,8 +70,6 @@ defmodule Helix.Server.Websocket.Channel.Server.EventsTest do
 
       # Process happens on two different servers
       refute event.gateway_id == event.target_id
-
-      sync_channel_events()
 
       EventHelper.emit(event)
 
@@ -90,12 +91,5 @@ defmodule Helix.Server.Websocket.Channel.Server.EventsTest do
       assert notification.data.target_ip
       assert notification.data.source_ip
     end
-  end
-
-  # Temporary gambi for filtering out unwanted events. Should be fixed by
-  # synchronous event emission during tests.
-  defp sync_channel_events do
-    assert_broadcast "event", _
-    assert_push "event", _
   end
 end
