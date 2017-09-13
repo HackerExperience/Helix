@@ -64,7 +64,7 @@ defmodule Helix.Test.Features.Hack do
       assert connection
 
       # Let's cheat and finish the process right now
-      TOPHelper.force_completion(gateway.server_id, process)
+      TOPHelper.force_completion(process)
 
       # We'll receive the generic ProcessConclusionEvent
       assert_push "event", process_conclusion_event

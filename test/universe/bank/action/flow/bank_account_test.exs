@@ -16,7 +16,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
   describe "reveal_password/4" do
     @tag :slow
     test "default life cycle" do
-      time_before_event = DateTime.utc_now()
       {token, %{acc: acc}} = BankSetup.token()
       {gateway, %{entity: entity}} = ServerSetup.server()
 
@@ -41,10 +40,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       assert process.process_data.atm_id == acc.atm_id
       assert process.process_data.account_number == acc.account_number
 
-      # TODO: TOPHelper.force_complete_process(process)
-      # Sleeping 1 second only works while CPU objective is 1.
-      # Adjust properly once TOPHelper helps
-      :timer.sleep(1100)
+      TOPHelper.force_completion(process)
 
       # Process no longer exists
       refute ProcessQuery.fetch(process.process_id)
@@ -53,7 +49,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       db_entry = DatabaseQuery.fetch_bank_account(entity, acc)
       refute db_entry == old_entry
       assert db_entry.password == acc.password
-      assert DateTime.diff(db_entry.last_update, time_before_event) > 0
+      refute db_entry.last_update == old_entry.last_update
       refute db_entry.known_balance
 
       TOPHelper.top_stop(process.gateway_id)

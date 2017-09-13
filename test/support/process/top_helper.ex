@@ -11,7 +11,7 @@ defmodule Helix.Test.Process.TOPHelper do
     |> TOPManager.get()
     |> its_time_to_stop()
 
-    # Sync TOP events
+    # Sync TOP events. Required after apply.
     :timer.sleep(50)
   end
 
@@ -20,13 +20,14 @@ defmodule Helix.Test.Process.TOPHelper do
   defp its_time_to_stop(pid),
     do: GenServer.stop(pid)
 
-  def force_completion(server_id, process) do
+  def force_completion(process) do
     finished_process = mark_as_finished(process)
 
-    server_id
+    process.gateway_id
     |> TOPManager.get()
     |> TOPServer.reset_processes([finished_process])
 
+    # Sync TOP events. Required after apply.
     :timer.sleep(50)
   end
 

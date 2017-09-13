@@ -48,6 +48,9 @@ defmodule Helix.Software.Model.Software.Decryptor.ProcessType do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    def after_read_hook(data),
+        do: data
   end
 
   defimpl Helix.Process.Public.View.ProcessViewable do

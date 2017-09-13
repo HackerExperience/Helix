@@ -5,7 +5,6 @@ defmodule Helix.Test.Process.Setup do
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo, as: ProcessRepo
 
-  alias HELL.TestHelper.Random
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -34,7 +33,6 @@ defmodule Helix.Test.Process.Setup do
   - single_server:
   - type: Set process type. If not specified, a random one is generated.
   - data: Data for that specific process type. Must be used when `type` is used
-  - fake_server: Whether to generate the related servers. Defaults to false.
 
   Related: source_entity_id :: Entity.id, target_entity_id :: Entity.id
   """

@@ -24,7 +24,6 @@ defmodule Helix.Process.Public.View.Process.Helper do
   def default_process_render(process, :full) do
     connection_id = process.connection_id && to_string(process.connection_id)
 
-    IO.inspect(process)
     %{
       gateway_id: to_string(process.gateway_id),
       connection_id: connection_id,

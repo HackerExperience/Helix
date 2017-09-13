@@ -77,7 +77,6 @@ defmodule Helix.Test.Server.Setup do
     {:ok, %{entity: entity, server: server}} =
       AccountFlow.setup_account(account)
 
-    :timer.sleep(100)
     CacheHelper.purge_server(server.server_id)
 
     {server, entity}

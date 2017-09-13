@@ -40,7 +40,8 @@ defmodule HELL.Hack.Experience do
         {:state_change, 4},
         {:kill, 3},
         {:minimum, 1},
-        {:conclusion, 2}
+        {:conclusion, 2},
+        {:after_read_hook, 1}
       ],
       "Elixir.Helix.Process.Public.View.ProcessViewable" => [
         {:get_scope, 4},

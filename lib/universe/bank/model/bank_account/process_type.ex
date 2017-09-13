@@ -42,5 +42,8 @@ defmodule Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    def after_read_hook(data),
+      do: data
   end
 end
