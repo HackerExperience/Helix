@@ -13,7 +13,7 @@ defmodule Helix.Test.Log.Helper do
     }
   end
 
-  def random_log_message do
+  def random_message do
     "This is a random log message"
   end
 end

@@ -4,6 +4,7 @@ defmodule Helix.Software.Model.File do
   use HELL.ID, field: :file_id, meta: [0x0020]
 
   import Ecto.Changeset
+  import HELL.MacroHelpers
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -158,7 +159,10 @@ defmodule Helix.Software.Model.File do
     |> prepare_changes(&update_full_path/1)
   end
 
-  # DOCME: What is full_path vs path?
+  docp """
+  Path: Path from root dir (`/`) to file directory
+  Full path: `path` + `File.name` + `File.extension`
+  """
   defp update_full_path(changeset) do
     path = get_field(changeset, :path)
     name = get_field(changeset, :name)

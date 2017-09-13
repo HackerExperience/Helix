@@ -59,9 +59,13 @@ defmodule Helix.Process.Public.IndexTest do
       assert result_process2.file_id
       assert result_process2.connection_id
 
-      # FIXME: process3 isn't being returned
-      # Process3 exists!
+      # Process3 is listed as well
       assert result_process3
+
+      # Process3 is partial, i.e. I have limited information about it.
+      # For instance, I don't know who started it, nor which connection it uses
+      refute Map.has_key?(result_process3, :gateway_id)
+      refute Map.has_key?(result_process3, :connection_id)
 
       TOPHelper.top_stop(server.server_id)
     end

@@ -91,7 +91,7 @@ defmodule Helix.Software.Action.Flow.File.Cracker do
     Server.id,
     firewall :: non_neg_integer)
   ::
-    {:ok, Process.create_params}
+    {:ok, ProcessAction.base_params}
   defp process_params(file, connection, cracker, server_id, firewall) do
     params = %{
       gateway_id: server_id,

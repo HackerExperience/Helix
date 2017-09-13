@@ -1,5 +1,6 @@
 defmodule Helix.Test.Account.Setup do
 
+  alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Account.Model.Account
   alias Helix.Account.Query.Account, as: AccountQuery
 
@@ -34,7 +35,6 @@ defmodule Helix.Test.Account.Setup do
     end
   end
 
-  alias Helix.Account.Action.Session, as: SessionAction
   @doc """
   - account: Which account to generate a token to
   """

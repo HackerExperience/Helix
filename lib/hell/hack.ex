@@ -5,7 +5,6 @@
 # implement any possible type to avoid those warnings (albeit it might increase
 # the compilation time in a second)
 ###########################################
-
 defmodule HELL.Hack.Experience do
 
   defmacro protocolols do
@@ -44,7 +43,8 @@ defmodule HELL.Hack.Experience do
         {:conclusion, 2}
       ],
       "Elixir.Helix.Process.Public.View.ProcessViewable" => [
-        {:render, 4}
+        {:get_scope, 4},
+        {:render, 3}
       ]
     }
 
@@ -68,7 +68,6 @@ defmodule HELL.Hack.Experience do
       for impl <- impls do
         quote do
           defimpl unquote(protocol), for: unquote(impl) do
-
             unquote (
               Enum.map(functions, fn {name, arity} ->
                 args = List.duplicate(quote do _ end, arity)

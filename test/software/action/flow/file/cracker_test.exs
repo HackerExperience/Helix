@@ -23,7 +23,6 @@ defmodule Helix.Software.Action.Flow.File.CrackerTest do
         SoftwareSetup.file([type: :cracker, server_id: source_server.server_id])
 
       params = %{
-        source_entity_id: source_entity.entity_id,
         target_server_id: target_server.server_id,
         network_id: target_nip.network_id,
         target_server_ip: target_nip.ip
@@ -42,7 +41,7 @@ defmodule Helix.Software.Action.Flow.File.CrackerTest do
       assert process.file_id == file.file_id
       assert process.process_type == "cracker_bruteforce"
       assert process.gateway_id == source_server.server_id
-      assert process.process_data.source_entity_id == source_entity.entity_id
+      assert process.source_entity_id == source_entity.entity_id
       assert process.process_data.target_server_id == target_server.server_id
       assert process.process_data.network_id == target_nip.network_id
       assert process.process_data.target_server_ip == target_nip.ip

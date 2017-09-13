@@ -45,13 +45,13 @@ defmodule Helix.Test.Universe.Bank.Setup do
 
     atm_id =
       cond do
-      opts[:atm_seq] ->
-        Enum.fetch!(bank.servers, opts[:atm_seq] - 1).id
-      opts[:atm_id] ->
-        opts[:atm_id]
-      true ->
-        Enum.random(bank.servers).id
-    end
+        opts[:atm_seq] ->
+          Enum.fetch!(bank.servers, opts[:atm_seq] - 1).id
+        opts[:atm_id] ->
+          opts[:atm_id]
+        true ->
+          Enum.random(bank.servers).id
+      end
 
     # Handle the case when user passes an entity id
     owner_id =

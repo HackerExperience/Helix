@@ -2,7 +2,6 @@ defmodule Helix.Software.Public.File do
 
   alias HELL.IPv4
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
@@ -51,12 +50,10 @@ defmodule Helix.Software.Public.File do
   def bruteforce(gateway_id, network_id, target_ip, bounces) do
     create_params = fn ->
       with \
-        gateway_entity = %{} <- EntityQuery.fetch_by_server(gateway_id),
         {:ok, target_server_id} <-
           CacheQuery.from_nip_get_server(network_id, target_ip)
       do
         %{
-          source_entity_id: gateway_entity.entity_id,
           target_server_id: target_server_id,
           network_id: network_id,
           target_server_ip: target_ip

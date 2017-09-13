@@ -18,9 +18,12 @@ defmodule Helix.Process.Action.Process do
     {:error, Ecto.Changeset.t}
     | {:error, :resources}
 
+  @type base_params ::
+    map  # TODO
+
   # REVIEW: Maybe receive gateway_id as a separate argument and inject it on the
   #   params map
-  @spec create(Process.create_params) ::
+  @spec create(base_params) ::
     on_create
   @doc """
   Creates a new process
@@ -49,8 +52,9 @@ defmodule Helix.Process.Action.Process do
       %{gateway_id: gateway} <- params, # TODO: Return an error on unmatch
       {source_entity_id, target_entity_id} <- get_process_entities(params),
       {gateway_ip, target_ip} <- get_process_ips(params),
+      process_params = prepare_create_params(params, source_entity_id),
       {:ok, pid} = ManagerTOP.prepare_top(gateway),
-      {:ok, process} <- ServerTOP.create(pid, params)
+      {:ok, process} <- ServerTOP.create(pid, process_params)
     do
       event = %ProcessCreatedEvent{
         process: process,
@@ -65,6 +69,11 @@ defmodule Helix.Process.Action.Process do
       {:ok, process, [event]}
     end
   end
+
+  @spec prepare_create_params(base_params, Entity.id) ::
+    Process.create_params
+  defp prepare_create_params(params, source_entity_id),
+    do: Map.put(params, :source_entity_id, source_entity_id)
 
   @spec pause(Process.t) ::
     :ok
@@ -176,11 +185,11 @@ defmodule Helix.Process.Action.Process do
     source_entity = EntityQuery.fetch_by_server(params.gateway_id)
 
     target_entity =
-    if params.gateway_id == params.target_server_id do
-      source_entity
-    else
-      EntityQuery.fetch_by_server(params.target_server_id)
-    end
+      if params.gateway_id == params.target_server_id do
+        source_entity
+      else
+        EntityQuery.fetch_by_server(params.target_server_id)
+      end
 
     {source_entity.entity_id, target_entity.entity_id}
   end
@@ -192,11 +201,11 @@ defmodule Helix.Process.Action.Process do
     gateway_ip = ServerQuery.get_ip(params.gateway_id, params.network_id)
 
     target_ip =
-    if params.gateway_id == params.target_server_id do
-      gateway_ip
-    else
-      ServerQuery.get_ip(params.target_server_id, params.network_id)
-    end
+      if params.gateway_id == params.target_server_id do
+        gateway_ip
+      else
+        ServerQuery.get_ip(params.target_server_id, params.network_id)
+      end
 
     {gateway_ip, target_ip}
   end

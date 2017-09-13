@@ -15,7 +15,6 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
 
   @type t :: %__MODULE__{
-    source_entity_id: Entity.id,
     network_id: Network.id,
     target_server_id: Server.id,
     target_server_ip: IPv4.t,
@@ -23,22 +22,19 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   }
 
   @type create_params ::
-    %{String.t => term}
-    | %{
-      :source_entity_id => Entity.idtb,
+    # %{String.t => term}
+    %{
       :network_id => Network.idtb,
       :target_server_id => Server.idtb,
       :target_server_ip => IPv4.t
     }
 
   @create_params ~w/
-    source_entity_id
     network_id
     target_server_id
     target_server_ip
   /a
   @required_params ~w/
-    source_entity_id
     network_id
     target_server_id
     target_server_ip
@@ -47,8 +43,6 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
 
   @primary_key false
   embedded_schema do
-    field :source_entity_id, Entity.ID
-
     field :network_id, Network.ID
     field :target_server_id, Server.ID
     field :target_server_ip, IPv4
@@ -93,6 +87,7 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   defimpl Helix.Process.Model.Process.ProcessType do
     @moduledoc false
 
+    alias Ecto.Changeset
     alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
       as: CrackerBruteforceConclusionEvent
 
@@ -109,7 +104,7 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
     end
 
     def kill(_, process, _),
-      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+      do: {%{Changeset.change(process)| action: :delete}, []}
 
     def state_change(data, process, _, :complete) do
       process =
@@ -117,8 +112,10 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
         |> Ecto.Changeset.change()
         |> Map.put(:action, :delete)
 
+      source_entity_id = Changeset.get_field(process, :source_entity_id)
+
       event = %CrackerBruteforceConclusionEvent{
-        source_entity_id: Entity.ID.cast!(data.source_entity_id),
+        source_entity_id: Entity.ID.cast!(source_entity_id),
         network_id: Network.ID.cast!(data.network_id),
         target_server_id: Server.ID.cast!(data.target_server_id),
         target_server_ip: data.target_server_ip
@@ -138,10 +135,8 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
     @moduledoc false
 
     alias HELL.IPv4
-    alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Network
-    alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
     alias Helix.Process.Public.View.Process, as: ProcessView
     alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
@@ -152,16 +147,12 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
         :target_server_ip => IPv4.t
       }
 
-    @spec render(term, Process.t, Server.id, Entity.id) ::
-      {ProcessView.local_process | ProcessView.remote_process, data}
-    def render(data, process = %{gateway_id: server}, server, _),
-      do: do_render(data, process, :local)
-    def render(data = %{source_entity_id: entity}, process, _, entity),
-      do: do_render(data, process, :local)
-    def render(data, process, _, _),
-      do: do_render(data, process, :remote)
+    def get_scope(data, process, server, entity),
+      do: ProcessViewHelper.get_default_scope(data, process, server, entity)
 
-    defp do_render(data, process, scope) do
+    @spec render(term, Process.t, ProcessView.scopes) ::
+      {ProcessView.full_process | ProcessView.partial_process, data}
+    def render(data, process, scope) do
       rendered_process = take_data_from_process(process, scope)
       rendered_data = take_complement_from_data(data, scope)
 

@@ -1,13 +1,16 @@
 defmodule Helix.Test.Process.Setup do
 
-  alias Helix.Software.Model.Software.Cracker.Bruteforce,
-    as: CrackerBruteforce
+  alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Software.Action.Flow.File.Cracker, as: CrackerFlow
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo, as: ProcessRepo
 
+  alias HELL.TestHelper.Random
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
+  alias Helix.Test.Process.Data.Setup, as: ProcessDataSetup
 
   @internet NetworkHelper.internet_id()
 
@@ -29,15 +32,19 @@ defmodule Helix.Test.Process.Setup do
   - network_id:
   - connection_id:
   - single_server:
+  - type: Set process type. If not specified, a random one is generated.
+  - data: Data for that specific process type. Must be used when `type` is used
   - fake_server: Whether to generate the related servers. Defaults to false.
+
+  Related: source_entity_id :: Entity.id, target_entity_id :: Entity.id
   """
   def fake_process(opts \\ []) do
     gateway_id = Access.get(opts, :gateway_id, ServerSetup.id())
-    gateway_entity_id = Access.get(opts, :entity_id, EntitySetup.id())
+    source_entity_id = Access.get(opts, :entity_id, EntitySetup.id())
     {target_server_id, target_entity_id} =
       cond do
         opts[:single_server] ->
-          {gateway_id, gateway_entity_id}
+          {gateway_id, source_entity_id}
         opts[:target_server_id] ->
           {opts[:target_server_id], nil}
         true ->
@@ -48,12 +55,28 @@ defmodule Helix.Test.Process.Setup do
     connection_id = Access.get(opts, :connection_id, nil)
     network_id = Access.get(opts, :network_id, @internet)
 
-    {process_type, process_data} = random_process_data()
+    meta = %{
+      source_entity_id: source_entity_id,
+      gateway_id: gateway_id,
+      target_entity_id: target_entity_id,
+      target_server_id: target_server_id,
+      file_id: file_id,
+      connection_id: connection_id,
+      network_id: network_id
+    }
+
+    {process_type, process_data} =
+      if opts[:type] do
+        ProcessDataSetup.custom(opts[:type], opts[:data] || [], meta)
+      else
+        ProcessDataSetup.random(meta)
+      end
 
     params = %{
       process_data: process_data,
       process_type: process_type,
       gateway_id: gateway_id,
+      source_entity_id: source_entity_id,
       target_server_id: target_server_id,
       file_id: file_id,
       network_id: network_id,
@@ -67,31 +90,14 @@ defmodule Helix.Test.Process.Setup do
       |> Map.replace(:process_id, Process.ID.generate())
 
     related = %{
-      gateway_entity_id: gateway_entity_id,
+      source_entity_id: source_entity_id,
       target_entity_id: target_entity_id
     }
 
     {process, related}
   end
 
-  # Proper random implementation is TODO
-  defp random_process_data do
-    data = %CrackerBruteforce{
-      source_entity_id: EntitySetup.id(),
-      network_id: @internet,
-      target_server_id: ServerSetup.id(),
-      target_server_ip: "9.9.9.9",
-      software_version: 10
-    }
-
-    {"cracker_bruteforce", data}
-  end
-
   def bruteforce_flow do
-
-    alias Helix.Cache.Query.Cache, as: CacheQuery
-    alias Helix.Software.Action.Flow.File.Cracker, as: CrackerFlow
-    alias Helix.Test.Software.Setup, as: SoftwareSetup
     {source_server, %{entity: source_entity}} = ServerSetup.server()
     {target_server, _} = ServerSetup.server()
 
@@ -102,7 +108,6 @@ defmodule Helix.Test.Process.Setup do
       SoftwareSetup.file([type: :cracker, server_id: source_server.server_id])
 
     params = %{
-      source_entity_id: source_entity.entity_id,
       target_server_id: target_server.server_id,
       network_id: target_nip.network_id,
       target_server_ip: target_nip.ip

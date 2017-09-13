@@ -9,7 +9,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.LogForge
 
-  alias Helix.Test.Process.Factory, as: ProcessFactory
+  alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
   alias Helix.Test.Software.Factory, as: SoftwareFactory
 
   # FIXME: this will be removed when file modules become just an attribute
@@ -37,7 +38,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
     end
 
     test "requires target_log_id when operation is edit" do
-      params = %{message: "", operation: "edit"}
+      params = %{message: "", operation: :edit}
 
       expected_errors = [:target_log_id]
 
@@ -47,7 +48,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
     end
 
     test "requires target_server_id when operation is create" do
-      params = %{message: "", operation: "create"}
+      params = %{message: "", operation: :create}
 
       expected_errors = [:target_server_id]
 
@@ -60,13 +61,13 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       params_edit = %{
         "target_log_id" => to_string(Log.ID.generate()),
         "message" => "WAKE ME UP INSIDE (can't wake up)",
-        "operation" => "edit",
+        "operation" => :edit,
         "entity_id" => to_string(Entity.ID.generate())
       }
       params_create = %{
         "target_server_id" => to_string(Server.ID.generate()),
         "message" => "A weapon to surpass Metal Gear",
-        "operation" => "create",
+        "operation" => :create,
         "entity_id" => to_string(Entity.ID.generate())
       }
 
@@ -78,13 +79,13 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       params_edit = %{
         target_log_id: Log.ID.generate(),
         message: "Oh yeah",
-        operation: "edit",
+        operation: :edit,
         entity_id: Entity.ID.generate()
       }
       params_create = %{
         target_server_id: Server.ID.generate(),
         message: "Oh noes",
-        operation: "create",
+        operation: :create,
         entity_id: Entity.ID.generate()
       }
 
@@ -98,7 +99,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       process_data = %LogForge{
         target_log_id: Log.ID.generate(),
         entity_id: Entity.ID.generate(),
-        operation: "edit",
+        operation: :edit,
         message: "ring ring ring banana phone",
         version: 100
       }
@@ -123,7 +124,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       data = %LogForge{
         target_log_id: Log.ID.generate(),
         entity_id: Entity.ID.generate(),
-        operation: "edit",
+        operation: :edit,
         message: "Okay robot",
         version: 100
       }
@@ -148,7 +149,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       process_data = %LogForge{
         target_log_id: Log.ID.generate(),
         entity_id: Entity.ID.generate(),
-        operation: "edit",
+        operation: :edit,
         message: "ring ring ring banana phone",
         version: 100
       }
@@ -177,7 +178,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       data = %LogForge{
         target_server_id: Server.ID.generate(),
         entity_id: Entity.ID.generate(),
-        operation: "create",
+        operation: :create,
         message: "Digital style",
         version: 100
       }
@@ -194,169 +195,75 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   end
 
   describe "ProcessView.render/4 for edit operation" do
-    test "returns target_log_id on remote" do
-      process = process_to_render(:edit)
+    test "both partial and full processes returns target_log_id" do
+      {process, %{target_entity_id: victim_entity}} = log_forger_process(:edit)
       data = process.process_data
-      server = Server.ID.generate()
-      entity = Entity.ID.generate()
 
-      rendered = ProcessView.render(data, process, server, entity)
+      victim_server = process.target_server_id
+      attacker_entity = process.source_entity_id
 
-      assert %{target_log_id: %Log.ID{}} = rendered
+      # Victim rendering Log process on her own server. Partial access.
+      victim_view =
+        ProcessView.render(data, process, victim_server, victim_entity)
+
+      # Attacker rendering Log process on Victim server. Full access.
+      attacker_view =
+        ProcessView.render(data, process, victim_server, attacker_entity)
+
+      victim_keys = Map.keys(victim_view) |> Enum.sort()
+      attacker_keys = Map.keys(attacker_view) |> Enum.sort()
+
+      assert pview_edit_partial() == victim_keys
+      assert pview_edit_full() == attacker_keys
+
+      assert victim_view.target_log_id
+      assert is_binary(victim_view.target_log_id)
+      assert attacker_view.target_log_id == to_string(data.target_log_id)
     end
 
-    test "returns target_log_id and version on local" do
-      process = process_to_render(:edit)
-      data = process.process_data
-      server = process.gateway_id
-      entity = Entity.ID.generate()
-      version = data.version
-
-      rendered = ProcessView.render(data, process, server, entity)
-
-      assert %{target_log_id: %Log.ID{}, version: ^version} = rendered
+    defp pview_edit_full do
+      ProcessViewHelper.pview_full()
+      |> Kernel.++(~w/target_log_id/a)
+      |> Enum.sort()
     end
-
-    test "returns a map on remote" do
-      process = process_to_render(:edit)
-      data = process.process_data
-      server = Server.ID.generate()
-      entity = Entity.ID.generate()
-
-      rendered = ProcessView.render(data, process, server, entity)
-
-      keys = Map.keys(rendered)
-      expected = ~w/
-        process_id
-        gateway_id
-        target_server_id
-        file_id
-        network_id
-        connection_id
-        process_type
-        target_log_id/a
-
-      assert Enum.sort(expected) == Enum.sort(keys)
-    end
-
-    test "returns a map on local" do
-      process = process_to_render(:edit)
-      data = process.process_data
-      server = Server.ID.generate()
-      entity = data.entity_id
-
-      rendered = ProcessView.render(data, process, server, entity)
-
-      keys = Map.keys(rendered)
-      expected = ~w/
-        process_id
-        gateway_id
-        target_server_id
-        file_id
-        network_id
-        connection_id
-        process_type
-        state
-        objective
-        processed
-        allocated
-        priority
-        creation_time
-        target_log_id
-        version/a
-
-      assert Enum.sort(expected) == Enum.sort(keys)
+    defp pview_edit_partial do
+      ProcessViewHelper.pview_partial()
+      |> Kernel.++(~w/target_log_id/a)
+      |> Enum.sort()
     end
   end
 
   describe "ProcessView.render/4 for create operation" do
-    test "returns version on local" do
-      process = process_to_render(:create)
+    test "both partial and full process adds no complement" do
+      {process, _} = log_forger_process(:create)
       data = process.process_data
-      server = process.gateway_id
-      entity = Entity.ID.generate()
-      version = data.version
 
-      rendered = ProcessView.render(data, process, server, entity)
+      attacker_server = process.gateway_id
+      victim_server = process.target_server_id
+      attacker_entity = process.source_entity_id
+      third_entity = Entity.ID.generate()
 
-      assert %{version: ^version} = rendered
-    end
+      # Third-party rendering Log process on victim. Partial access.
+      third_view =
+        ProcessView.render(data, process, victim_server, third_entity)
 
-    test "returns a map on remote" do
-      process = process_to_render(:create)
-      data = process.process_data
-      server = Server.ID.generate()
-      entity = Entity.ID.generate()
+      # Attacker who started the Log process, on his own server. Full access.
+      attacker_view =
+        ProcessView.render(data, process, attacker_server, attacker_entity)
 
-      rendered = ProcessView.render(data, process, server, entity)
+      third_keys = Map.keys(third_view) |> Enum.sort()
+      attacker_keys = Map.keys(attacker_view) |> Enum.sort()
 
-      keys = Map.keys(rendered)
-      expected = ~w/
-        process_id
-        gateway_id
-        target_server_id
-        file_id
-        network_id
-        connection_id
-        process_type/a
-
-      assert Enum.sort(expected) == Enum.sort(keys)
-    end
-
-    test "returns a map on local" do
-      process = process_to_render(:create)
-      data = process.process_data
-      server = Server.ID.generate()
-      entity = data.entity_id
-
-      rendered = ProcessView.render(data, process, server, entity)
-
-      keys = Map.keys(rendered)
-      expected = ~w/
-        process_id
-        gateway_id
-        target_server_id
-        file_id
-        network_id
-        connection_id
-        process_type
-        state
-        objective
-        processed
-        allocated
-        priority
-        creation_time
-        version/a
-
-      assert Enum.sort(expected) == Enum.sort(keys)
+      assert ProcessViewHelper.pview_partial() == third_keys
+      assert ProcessViewHelper.pview_full() == attacker_keys
     end
   end
 
-  defp process_to_render(:edit) do
-    %{
-      ProcessFactory.build(:process)|
-        process_data: %LogForge{
-          target_log_id: Log.ID.generate(),
-          entity_id: Entity.ID.generate(),
-          operation: "edit",
-          message: "",
-          version: 100
-        },
-        process_type: "log_forger"
-    }
-  end
-
-  defp process_to_render(:create) do
-    %{
-      ProcessFactory.build(:process)|
-        process_data: %LogForge{
-          target_server_id: Server.ID.generate(),
-          entity_id: Entity.ID.generate(),
-          operation: "create",
-          message: "",
-          version: 100
-        },
-        process_type: "log_forger"
-    }
+  defp log_forger_process(operation) do
+    ProcessSetup.process(
+      fake_server: true,
+      type: :forge,
+      data: [operation: operation]
+    )
   end
 end
