@@ -1,4 +1,4 @@
-defmodule Helix.Entity.Repo.Migrations.AddEntityBankAccounts do
+defmodule Helix.Entity.Repo.Migrations.AddEntityDatabase do
   use Ecto.Migration
 
   def change do
@@ -25,8 +25,6 @@ defmodule Helix.Entity.Repo.Migrations.AddEntityBankAccounts do
     end
     create index(:database_bank_accounts, [:atm_id, :account_number])
     create index(:database_bank_accounts, [:entity_id, :last_update])
-
-    drop table(:database_entries)
 
     create table(:database_servers, primary_key: false) do
       add :entity_id,

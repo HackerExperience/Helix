@@ -3,24 +3,12 @@ defmodule Helix.Account.Repo.Migrations.InitialSetup do
 
   def change do
     create table(:accounts, primary_key: false) do
-      add :account_id,
-        :inet,
-        primary_key: true
-      add :username,
-        :string,
-        null: false
-      add :password,
-        :string,
-        null: false
-      add :display_name,
-        :string,
-        null: false
-      add :email,
-        :string,
-        null: false
-      add :confirmed,
-        :boolean,
-        default: false
+      add :account_id, :inet, primary_key: true
+      add :username, :string, null: false
+      add :password, :string, null: false
+      add :display_name, :string, null: false
+      add :email, :string, null: false
+      add :confirmed, :boolean, default: false
 
       timestamps()
     end
@@ -36,9 +24,19 @@ defmodule Helix.Account.Repo.Migrations.InitialSetup do
           type: :inet,
           on_delete: :delete_all),
         primary_key: true
-      add :settings,
-        :map,
-        null: false
+      add :settings, :map, null: false
+    end
+
+    create table(:account_sessions, primary_key: false) do
+      add :session_id, :uuid, primary_key: true
+      add :account_id,
+        references(
+          :accounts,
+          column: :account_id,
+          type: :inet,
+          on_delete: :delete_all)
+
+      timestamps()
     end
   end
 end
