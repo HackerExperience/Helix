@@ -20,10 +20,14 @@ defmodule Helix.Network.Repo.Migrations.InitialSetup do
       add :destination_id, :inet, null: false
       add :hash, :string, null: false
     end
-
     create unique_index(
       :tunnels,
       [:network_id, :gateway_id, :destination_id, :hash])
+
+    # Below indexes are specially useful when figuring out which tunnels or
+    # connections are incoming/outgoing to the specific server.
+    create index(:tunnels, [:gateway_id])
+    create index(:tunnels, [:destination_id])
 
     create table(:links, primary_key: false) do
       add :tunnel_id,
@@ -48,6 +52,7 @@ defmodule Helix.Network.Repo.Migrations.InitialSetup do
         null: false
 
       add :connection_type, :string, null: false
+      add :meta, :map
     end
 
     create index(:connections, [:tunnel_id])
