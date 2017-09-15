@@ -40,7 +40,7 @@ defmodule Helix.Software.Model.SoftwareType do
       },
       cracker: %{
         extension: "crc",
-        modules: [:bruteforce, :overflow]
+        modules: [:cracker_bruteforce, :cracker_overflow]
       },
       exploit: %{
         extension: "exp",

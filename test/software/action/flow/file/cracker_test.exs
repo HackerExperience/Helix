@@ -34,7 +34,7 @@ defmodule Helix.Software.Action.Flow.File.CrackerTest do
 
       # Executes Cracker.bruteforce against the target server
       assert {:ok, process} =
-        CrackerFlow.execute_cracker(file, source_server, params, meta)
+        CrackerFlow.execute_cracker(file, source_server.server_id, params, meta)
 
       # Process data is correct
       assert process.connection_id

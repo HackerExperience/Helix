@@ -45,7 +45,7 @@ defmodule Helix.Software.Action.Flow.File.LogForger do
   @spec process_params(File.t_of_type(:log_forger), Server.id, LogForge.t) ::
     {:ok, Process.create_params}
     | {:error, {:log, :notfound}}
-  defp process_params(file, server, data = %{operation: :edit}) do
+  defp process_params(file, server_id, data = %{operation: :edit}) do
     with \
       log_id = data.target_log_id,
       log = %{} <- LogQuery.fetch(log_id) || {:error, {:log, :notfound}}
@@ -54,7 +54,7 @@ defmodule Helix.Software.Action.Flow.File.LogForger do
       objective = LogForge.edit_objective(data, log, revision_count)
 
       process_params = %{
-        gateway_id: server,
+        gateway_id: server_id,
         target_server_id: log.server_id,
         file_id: file.file_id,
         objective: objective,

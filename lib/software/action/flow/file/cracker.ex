@@ -38,7 +38,7 @@ defmodule Helix.Software.Action.Flow.File.Cracker do
            start_connection(params, server_id, meta.bounces),
         on_success(fn -> Event.emit(events) end),
         on_fail(fn -> TunnelAction.close_connection(connection) end),
-        {:ok, process_params} <-
+        {:ok, process_params} =
            process_params(file, connection, data, server_id, firewall),
         {:ok, process, events} <- ProcessAction.create(process_params),
         on_success(fn -> Event.emit(events) end)

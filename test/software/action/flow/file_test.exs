@@ -36,7 +36,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       # FIXME: this function should exist on the FileAction
       FileInternal.set_modules(file, modules)
 
-      result = FileFlow.execute_file(file, server, %{})
+      result = FileFlow.execute_file(file, server.server_id, %{})
       assert {:ok, process} = result
       assert %FirewallPassive{} = process.process_data
       assert "firewall_passive" == process.process_type
@@ -64,7 +64,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
         entity_id: EntityQuery.get_entity_id(account)
       }
 
-      result = FileFlow.execute_file(file, server, params)
+      result = FileFlow.execute_file(file, server.server_id, params)
       assert {:error, {:log, :notfound}} == result
     end
 
@@ -93,7 +93,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
         entity_id: entity_id
       }
 
-      result = FileFlow.execute_file(file, server, params)
+      result = FileFlow.execute_file(file, server.server_id, params)
       assert {:ok, process} = result
       assert %LogForge{} = process.process_data
       assert "log_forger" == process.process_type
@@ -127,7 +127,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
         entity_id: entity_id
       }
 
-      result = FileFlow.execute_file(file, server, params)
+      result = FileFlow.execute_file(file, server.server_id, params)
       assert {:ok, process} = result
       assert %LogForge{} = process.process_data
       assert "log_forger" == process.process_type
@@ -160,7 +160,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       # Executes Cracker.bruteforce against the target server
       assert {:ok, _proc} =
-        FileFlow.execute_file(file, source_server, params, meta)
+        FileFlow.execute_file(file, source_server.server_id, params, meta)
 
       # For full test see CrackerFlowTest
 
