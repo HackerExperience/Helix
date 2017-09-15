@@ -2,7 +2,12 @@ defmodule Helix.Websocket.Socket do
 
   use Phoenix.Socket
 
+  alias Helix.Event.Notificable
+  alias Helix.Websocket.Joinable
+  alias Helix.Websocket.Requestable
+  alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Account.Action.Session, as: SessionAction
+  alias Helix.Entity.Query.Entity, as: EntityQuery
 
   transport :websocket, Phoenix.Transports.WebSocket
 
@@ -13,10 +18,13 @@ defmodule Helix.Websocket.Socket do
   def connect(%{"token" => token}, socket) do
     case SessionAction.validate_token(token) do
       {:ok, account, session} ->
+        entity_id = EntityQuery.get_entity_id(account.account_id)
+
         socket =
           socket
           |> assign(:account, account)
           |> assign(:session, session)
+          |> assign(:entity_id, entity_id)
 
         {:ok, socket}
       _ ->
@@ -30,4 +38,61 @@ defmodule Helix.Websocket.Socket do
 
   def id(socket),
     do: "session:" <> socket.assigns.session
+
+  @doc """
+  Generic join handler. it guides the request through the Joinable flow,
+  subscribing the client to the channel in case of success.
+  """
+  def handle_join(request, socket, assign) do
+    with \
+      {:ok, request} <- Joinable.check_params(request, socket),
+      {:ok, request} <- Joinable.check_permissions(request, socket),
+      {:ok, joined_socket} <- Joinable.join(request, socket, assign)
+    do
+      {:ok, joined_socket}
+    else
+      {:error, %{message: msg}} ->
+        {:error, %{data: msg}}
+      _ ->
+        {:error, %{data: "internal"}}
+    end
+  end
+
+  @doc """
+  Generic request handler. It guides the request through the Requestable flow,
+  replying the result back to the client.
+  """
+  def handle_request(request, socket) do
+    with \
+      {:ok, request} <- Requestable.check_params(request, socket),
+      {:ok, request} <- Requestable.check_permissions(request, socket),
+      {:ok, request} <- Requestable.handle_request(request, socket)
+    do
+      Requestable.reply(request, socket)
+    else
+      {:error, %{message: msg}} ->
+        WebsocketUtils.reply_error(msg, socket)
+      _ ->
+        WebsocketUtils.internal_error(socket)
+    end
+  end
+
+  @doc """
+  Generic notification ("event going out") handler. It guides the notification
+  through the Notificable flow, making sure the payload sent to the client is
+  filtered/censored according to each player's context.
+
+  Once everything is ready, it pushes the payload to the client by using the
+  function pointing to the Channel's `push` method, passed as argument.
+  """
+  def handle_event(event, socket, channel_push) do
+    case Notificable.generate_payload(event, socket) do
+      {:ok, data} ->
+        channel_push.(socket, "event", data)
+
+        WebsocketUtils.no_reply(socket)
+      _ ->
+        WebsocketUtils.no_reply(socket)
+    end
+  end
 end

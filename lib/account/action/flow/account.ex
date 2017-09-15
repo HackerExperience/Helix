@@ -12,7 +12,6 @@ defmodule Helix.Account.Action.Flow.Account do
   @spec setup_account(Account.id | Account.t) ::
     {:ok, %{entity: Entity.t, server: Server.t}}
     | :error
-  # TODO: improve documentation
   @doc """
   Setups the input account
   """

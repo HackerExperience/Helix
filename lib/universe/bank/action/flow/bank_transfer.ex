@@ -81,7 +81,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
       %{
         gateway_id: gateway_server.server_id,
         target_server_id: gateway_server.server_id,
-        network_id: NetworkQuery.internet(),
+        network_id: NetworkQuery.internet().network_id,
         objective: %{cpu: amount},
         connection_id: connection.connection_id,
         process_data: %ProcessType{

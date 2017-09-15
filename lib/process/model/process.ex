@@ -6,6 +6,7 @@ defmodule Helix.Process.Model.Process do
   import Ecto.Changeset
 
   alias Ecto.Changeset
+  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
@@ -20,6 +21,7 @@ defmodule Helix.Process.Model.Process do
   @type t :: %__MODULE__{
     process_id: id,
     gateway_id: Server.id,
+    source_entity_id: Entity.id,
     target_server_id: Server.id,
     file_id: File.id | nil,
     network_id: Network.id | nil,
@@ -42,6 +44,7 @@ defmodule Helix.Process.Model.Process do
 
   @type create_params :: %{
     :gateway_id => Server.idtb,
+    :source_entity_id => Entity.idtb,
     :target_server_id => Server.idtb,
     :process_data => ProcessType.t,
     :process_type => String.t,
@@ -69,13 +72,18 @@ defmodule Helix.Process.Model.Process do
     process_data
     process_type
     gateway_id
+    source_entity_id
     target_server_id
     file_id
     network_id
     connection_id/a
   @update_fields ~w/state priority updated_time estimated_time minimum/a
 
-  @required_fields ~w/gateway_id target_server_id process_data process_type/a
+  @required_fields ~w/
+    gateway_id
+    target_server_id
+    process_data
+    process_type/a
 
   schema "processes" do
     field :process_id, ID,
@@ -83,6 +91,8 @@ defmodule Helix.Process.Model.Process do
 
     # The gateway that started the process
     field :gateway_id, Server.ID
+    # The entity that started the process
+    field :source_entity_id, Entity.ID
     # The server where the target object of this process action is
     field :target_server_id, Server.ID
     # Which file (if any) contains the "executable" of this process
@@ -226,11 +236,29 @@ defmodule Helix.Process.Model.Process do
     |> Map.put(:minimum, minimum)
   end
 
+  @spec format(t) ::
+    t
+  @doc """
+  Converts the retrieved process from the Database into TOP's internal format.
+
+  Notably, it:
+  - Adds virtual data (derived data not stored on DB).
+  - Converts the ProcessType (defined at `process_data`) into Helix internal
+    format, by using the `after_read_hook/1` implemented by each ProcessType
+  """
+  def format(process) do
+    data = ProcessType.after_read_hook(process.process_data)
+
+    process
+    |> load_virtual_data()
+    |> Map.replace(:process_data, data)
+  end
+
   @spec complete?(process) :: boolean
   def complete?(process = %Ecto.Changeset{}),
     do: complete?(apply_changes(process))
-  def complete?(%__MODULE__{state: state, objective: objective, processed: processed}),
-    do: state == :complete or (objective && objective == processed)
+  def complete?(p = %__MODULE__{}),
+    do: p.state == :complete or (p.objective && p.objective == p.processed)
 
   @spec kill(process, atom) ::
     {[process] | process, [struct]}

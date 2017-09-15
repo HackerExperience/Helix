@@ -1,4 +1,4 @@
-# TODO: Delete this ?
+# TODO: Delete this ? Yes please.
 
 defmodule Helix.Test.Process.ProcessTypeExample do
 
@@ -23,6 +23,8 @@ defmodule Helix.Test.Process.ProcessTypeExample do
       do: {process, []}
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+    def after_read_hook(data),
+      do: data
   end
 end
 
@@ -49,5 +51,6 @@ defmodule Helix.Test.Process.StaticProcessTypeExample do
       do: {process, []}
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
-  end
+    def after_read_hook(data),
+      do: data  end
 end

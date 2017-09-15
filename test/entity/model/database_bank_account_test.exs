@@ -9,7 +9,7 @@ defmodule Helix.Entity.Model.DatabaseBankAccountTest do
 
   describe "update_changeset/2" do
     test "password change" do
-      {entry, _} = DatabaseSetup.fake_entry_bank_account()
+      {entry, _} = DatabaseSetup.fake_entry_bank_account([real_entity: false])
       password = "woooooow"
       params = %{password: password}
 
@@ -20,7 +20,7 @@ defmodule Helix.Entity.Model.DatabaseBankAccountTest do
     end
 
     test "token change" do
-      {entry, _} = DatabaseSetup.fake_entry_bank_account()
+      {entry, _} = DatabaseSetup.fake_entry_bank_account([real_entity: false])
       token = Ecto.UUID.generate()
       params = %{token: token}
 
@@ -30,5 +30,4 @@ defmodule Helix.Entity.Model.DatabaseBankAccountTest do
       assert Changeset.get_change(changeset, :token) == token
     end
   end
-
 end

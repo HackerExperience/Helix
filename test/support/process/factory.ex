@@ -36,6 +36,8 @@ defmodule Helix.Test.Process.Factory do
       do: {process, []}
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+    def after_read_hook(data),
+      do: data
   end
 
   defp generate_processed do

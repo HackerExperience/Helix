@@ -35,13 +35,13 @@ defmodule Helix.Test.Network.Setup do
       when they are not actually needed. Creating servers takes some time.
 
   Related: gateway :: Server.(id|t), destination :: Server.(id|t)
-    (When `fake_servers` is true, it will only return the related server ids.)
+    (When `fake_servers` is true, it will only return the server ids.)
   """
   def fake_tunnel(opts \\ []) do
     {gateway_id, destination_id, related} =
       if opts[:fake_servers] do
-        gateway_id = Server.ID.generate()
-        destination_id = Server.ID.generate()
+        gateway_id = Access.get(opts, :gateway_id, Server.ID.generate())
+        destination_id = Access.get(opts, :destination_id, Server.ID.generate())
         related = %{gateway: gateway_id, destination: destination_id}
 
         {gateway_id, destination_id, related}
@@ -88,16 +88,28 @@ defmodule Helix.Test.Network.Setup do
     {inserted, related}
   end
 
+  def connection!(opts \\ []) do
+    {connection, _} = fake_connection(opts)
+    {:ok, inserted} = NetworkRepo.insert(connection)
+    inserted
+  end
+
   @doc """
   - connection_id: set a specific connection_id
   - tunnel_id: set the tunnel_id that connection belongs to.
   - type: set the connection type. Defaults to :ssh
   - meta: set the connection meta map. Defaults to nil.
+  - tunnel_opts: Instructions for tunnel creation. Must be a list.
 
   Related: Tunnel.t
   """
   def fake_connection(opts \\ []) do
-    tunnel = create_or_fetch_tunnel(opts[:tunnel_id])
+    tunnel =
+      if opts[:tunnel_opts] do
+        tunnel!(opts[:tunnel_opts])
+      else
+        create_or_fetch_tunnel(opts[:tunnel_id])
+      end
 
     connection_id = Access.get(opts, :connection_id, Connection.ID.generate())
     type = Access.get(opts, :type, :ssh)

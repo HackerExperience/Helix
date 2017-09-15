@@ -11,7 +11,7 @@ defmodule Helix.Server.Internal.Server do
   def fetch(id),
     do: Repo.get(Server, id)
 
-  @spec fetch_by_motherboard(Motherboard.t | Motherboard.id) ::
+  @spec fetch_by_motherboard(Motherboard.idt) ::
     Server.t
     | nil
   def fetch_by_motherboard(motherboard) do

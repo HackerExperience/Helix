@@ -1,4 +1,4 @@
-defmodule Helix.Event.Dispatcher do
+defmodule Helix.Event.Dispatcher.Helix do
   @moduledoc false
 
   use HELF.Event
@@ -9,7 +9,6 @@ defmodule Helix.Event.Dispatcher do
   alias Helix.Network
   alias Helix.Process
   alias Helix.Software
-  alias Helix.Server
   alias Helix.Universe
 
   ##############################################################################
@@ -18,21 +17,6 @@ defmodule Helix.Event.Dispatcher do
   event Account.Model.Account.AccountCreatedEvent,
     Account.Event.Account,
     :account_create
-
-  ##############################################################################
-  # Log events
-  ##############################################################################
-  event Log.Model.Log.LogCreatedEvent,
-    Server.Websocket.Channel.Server,
-    :event_log_created
-
-  event Log.Model.Log.LogModifiedEvent,
-    Server.Websocket.Channel.Server,
-    :event_log_modified
-
-  event Log.Model.Log.LogDeletedEvent,
-    Server.Websocket.Channel.Server,
-    :event_log_deleted
 
   ##############################################################################
   # Network events
@@ -49,24 +33,20 @@ defmodule Helix.Event.Dispatcher do
     :connection_started
 
   ##############################################################################
-  # Process events
+  # Server events
   ##############################################################################
-  event Process.Model.Process.ProcessCreatedEvent,
-    Server.Websocket.Channel.Server,
-    :event_process_created
-
-  event Process.Model.Process.ProcessConclusionEvent,
-    Server.Websocket.Channel.Server,
-    :event_process_conclusion
+  event Helix.Server.Model.Server.PasswordAcquiredEvent,
+    Entity.Event.Database,
+    :server_password_acquired
 
   ##############################################################################
   # Software events
   ##############################################################################
-  event Software.Model.SoftwareType.Cracker.ProcessConclusionEvent,
-    Entity.Event.Database,
-    :cracker_conclusion
+  event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
+    Software.Event.Cracker,
+    :bruteforce_conclusion
 
-  event Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+  event Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     Software.Event.Cracker,
     :overflow_conclusion
 

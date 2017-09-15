@@ -9,12 +9,12 @@ defmodule Helix.Universe.NPC.Query.NPCTest do
 
   describe "fetch/1" do
     test "with npc id" do
-      npc = NPCHelper.random()
+      {npc, _} = NPCHelper.random()
       assert NPCQuery.fetch(npc.id)
     end
 
     test "with entity id" do
-      npc = NPCHelper.random()
+      {npc, _} = NPCHelper.random()
       entity_id = EntityQuery.get_entity_id(npc.id)
       assert NPCQuery.fetch(entity_id)
     end

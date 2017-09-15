@@ -8,13 +8,48 @@ defmodule Helix.Software.Event.Cracker do
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
+  alias Helix.Server.Action.Server, as: ServerAction
+  alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
-  alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+  alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
+    as: BruteforceConclusionEvent
+  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
+
+  @spec bruteforce_conclusion(BruteforceConclusionEvent.t) ::
+    {:ok, Server.password}
+    | {:error, {:nip, :notfound}}
+    | {:error, :internal}
+  @doc """
+  Callback executed when a bruteforce process is completed. It will attempt to
+  retrieve the target server password, an in case of success will emit a new
+  event that will 1) notify the client and 2) update the Database.
+
+  Emits: ServerPasswordAcquiredEvent | CrackerBruteforceFailedEvent
+  """
+  def bruteforce_conclusion(event = %BruteforceConclusionEvent{}) do
+    flowing do
+      with \
+        {:ok, password, events} <-
+          ServerAction.crack(
+            event.source_entity_id,
+            event.target_server_id,
+            event.network_id,
+            event.target_server_ip),
+        on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, password}
+      else
+        {:error, reason, events} ->
+          Event.emit(events)
+          {:error, reason}
+      end
+    end
+  end
 
   @spec overflow_conclusion(OverflowConclusionEvent.t) ::
     term

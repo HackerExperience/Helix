@@ -1,17 +1,19 @@
 defmodule Helix.Server.Public.Server do
 
+  alias HELL.IPv4
   alias Helix.Event
-  alias Helix.Entity.Model.Entity
-  alias Helix.Log.Public.Log, as: LogPublic
-  alias Helix.Process.Public.Process, as: ProcessPublic
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.File
-  alias Helix.Software.Public.File, as: FilePublic
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
+  alias Helix.Network.Public.Network, as: NetworkPublic
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Process.Model.Process
+  alias Helix.Software.Action.Flow.File, as: FileFlow
+  alias Helix.Software.Model.File
+  alias Helix.Software.Public.File, as: FilePublic
+  alias Helix.Server.Model.Server
+  alias Helix.Server.Public.Index, as: ServerIndex
 
   @spec connect_to_server(Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
@@ -42,18 +44,6 @@ defmodule Helix.Server.Public.Server do
     end
   end
 
-  @spec log_index(Server.id) ::
-    [map]
-  defdelegate log_index(server_id),
-    to: LogPublic,
-    as: :index
-
-  @spec file_index(Server.id) ::
-    %{path :: String.t => [map]}
-  defdelegate file_index(server_id),
-    to: FilePublic,
-    as: :index
-
   @spec file_download(Server.id, Server.id, Tunnel.t, File.id) ::
     :ok
     | :error
@@ -61,9 +51,24 @@ defmodule Helix.Server.Public.Server do
     to: FilePublic,
     as: :download
 
-  @spec process_index(Server.id, Entity.id) ::
-    %{owned: [map], affecting: [map]}
-  defdelegate process_index(server_id, entity_id),
-    to: ProcessPublic,
-    as: :index
+  @spec network_browse(Network.idt, String.t | IPv4.t, Server.idt) ::
+    {:ok, term}
+    | {:error, %{message: String.t}}
+  defdelegate network_browse(network_id, address, origin_id),
+    to: NetworkPublic,
+    as: :browse
+
+  @spec bruteforce(Server.id, Network.id, IPv4.t, [Server.id]) ::
+    {:ok, Process.t}
+    | FileFlow.error
+  defdelegate bruteforce(gateway_id, network_id, target_ip, bounces),
+    to: FilePublic
+
+  defdelegate bootstrap(server_id, entity_id),
+    to: ServerIndex,
+    as: :remote_server_index
+
+  defdelegate render_bootstrap(bootstrap),
+    to: ServerIndex,
+    as: :render_remote_server_index
 end

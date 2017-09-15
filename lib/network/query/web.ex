@@ -8,9 +8,15 @@ defmodule Helix.Network.Query.Web do
   alias Helix.Network.Query.DNS, as: DNSQuery
 
   @spec browse(Network.idt, String.t | IPv4.t, IPv4.t) ::
-    {:ok, {:npc | :vpc, term}}
+    {:ok, {:npc | :vpc, term}, IPv4.t}
     | {:error, {:ip, :notfound}}
     | {:error, {:domain, :notfound}}
+  @doc """
+  Browses to the specified address, which resides within the given network.
+
+  The server making the request is relevant because, in case of a DNS Anycast
+  query, it will be used to determine the nearest server.
+  """
   def browse(network, address, origin) do
     if IPv4.valid?(address) do
       browse_ip(network, address)
@@ -25,7 +31,7 @@ defmodule Helix.Network.Query.Web do
   end
 
   @spec browse_ip(Network.idt, IPv4.t) ::
-    {:ok, {:npc | :vpc, term}}
+    {:ok, {:npc | :account | :clan, term}, IPv4.t}
     | {:error, {:ip, :notfound}}
   defp browse_ip(network, ip) do
     with \
@@ -34,7 +40,7 @@ defmodule Helix.Network.Query.Web do
       entity = %{} <- EntityQuery.fetch_by_server(server.server_id),
       {:ok, content} <- serve(network, ip)
     do
-      {:ok, {entity.entity_type, content}}
+      {:ok, {entity.entity_type, content}, ip}
     else
       _ ->
         {:error, {:ip, :notfound}}
@@ -44,6 +50,9 @@ defmodule Helix.Network.Query.Web do
   @spec serve(Network.idt, IPv4.t) ::
     {:ok, term}
     | {:error, :notfound}
+  @doc """
+  Returns the webserver content of the given NIP.
+  """
   def serve(network, ip) do
     case CacheQuery.from_nip_get_web(network, ip) do
       {:ok, content} ->

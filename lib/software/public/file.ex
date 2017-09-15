@@ -1,32 +1,15 @@
 defmodule Helix.Software.Public.File do
 
+  alias HELL.IPv4
+  alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
+  alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
-  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Action.Flow.FileDownload, as: FileDownloadFlow
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.Storage
-  alias Helix.Software.Public.View.File, as: FileView
   alias Helix.Software.Query.File, as: FileQuery
-  alias Helix.Cache.Query.Cache, as: CacheQuery
-
-  @spec index(Server.id) ::
-    %{path :: String.t => [map]}
-  def index(server_id) do
-    server_id
-    |> ServerQuery.fetch()
-    |> storages_on_server()
-    |> Enum.map(&FileQuery.storage_contents/1)
-    |> Enum.reduce(%{}, fn el, acc ->
-      # Merge the maps, so %{"foo" => [1]} and %{"foo" => [2]} becomes
-      # %{"foo" => [1, 2]}
-      Map.merge(acc, el, fn _k, v1, v2 -> v1 ++ v2 end)
-    end)
-    |> Enum.map(fn {path, files} ->
-      {path, Enum.map(files, &FileView.render/1)}
-    end)
-    |> :maps.from_list()
-  end
 
   # TODO: This will hard fail if the user tries to download a file from their
   #   own gateway for obvious reasons
@@ -35,17 +18,11 @@ defmodule Helix.Software.Public.File do
     :ok
     | :error
   def download(gateway_id, destination_id, tunnel, file_id) do
-    destination_storage_ids =
-      destination_id
-      |> ServerQuery.fetch()
-      |> storages_on_server()
-      |> Enum.map(&(&1.storage_id))
+    {:ok, gateway_storage_ids} = CacheQuery.from_server_get_storages(gateway_id)
+    {:ok, destination_storage_ids} =
+      CacheQuery.from_server_get_storages(destination_id)
 
-    gateway_storage =
-      gateway_id
-      |> ServerQuery.fetch()
-      |> storages_on_server()
-      |> Enum.random()
+    gateway_storage = Enum.random(gateway_storage_ids)
 
     with \
       file = %{} <- FileQuery.fetch(file_id),
@@ -62,10 +39,49 @@ defmodule Helix.Software.Public.File do
     end
   end
 
-  @spec storages_on_server(Server.t) ::
-    [Storage.id]
-  defp storages_on_server(server) do
-    {:ok, storages} = CacheQuery.from_server_get_storages(server.server_id)
-    storages
+  @spec bruteforce(Server.id, Network.id, IPv4.t, [Server.id]) ::
+    {:ok, Process.t}
+    | {:error, %{message: String.t}}
+    | FileFlow.error
+  @doc """
+  Starts a bruteforce attack against `(network_id, target_ip)`, originating from
+  `gateway_id` and having `bounces` as intermediaries.
+  """
+  def bruteforce(gateway_id, network_id, target_ip, bounces) do
+    create_params = fn ->
+      with \
+        {:ok, target_server_id} <-
+          CacheQuery.from_nip_get_server(network_id, target_ip)
+      do
+        %{
+          target_server_id: target_server_id,
+          network_id: network_id,
+          target_server_ip: target_ip
+        }
+      end
+    end
+
+    create_meta = fn ->
+      %{bounces: bounces}
+    end
+
+    get_cracker = fn ->
+      FileQuery.fetch_best(gateway_id, :cracker, :cracker_bruteforce)
+    end
+
+    with \
+      params = %{} <- create_params.(),
+      meta = create_meta.(),
+      cracker = %{} <- get_cracker.() || :no_cracker,
+      {:ok, process} <-
+        FileFlow.execute_file(cracker, gateway_id, params, meta)
+    do
+      {:ok, process}
+    else
+      :no_cracker ->
+        {:error, %{message: "cracker_not_found"}}
+      error ->
+        error
+    end
   end
 end

@@ -1,7 +1,18 @@
 defmodule Helix.Process.Action.Process do
 
+  import HELL.MacroHelpers
+
+  alias HELL.IPv4
+  alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Software.Model.File
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.ProcessCreatedEvent
+  alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
   alias Helix.Process.State.TOP.Server, as: ServerTOP
@@ -14,9 +25,19 @@ defmodule Helix.Process.Action.Process do
     {:error, Ecto.Changeset.t}
     | {:error, :resources}
 
-  # REVIEW: Maybe receive gateway_id as a separate argument and inject it on the
-  #   params map
-  @spec create(Process.create_params) ::
+  @type base_params ::
+    %{
+      :gateway_id => Server.idtb,
+      :target_server_id => Server.idtb,
+      :process_data => ProcessType.t,
+      :process_type => String.t,
+      optional(:file_id) => File.idtb,
+      optional(:network_id) => Network.idtb,
+      optional(:connection_id) => Connection.idtb,
+      optional(:objective) => map
+    }
+
+  @spec create(base_params) ::
     on_create
   @doc """
   Creates a new process
@@ -39,22 +60,31 @@ defmodule Helix.Process.Action.Process do
       {:ok, %Process{}, [%{}]}
   """
   def create(params) do
-    # TODO: i don't like this with here as it is. I think getting the TOP pid
-    #   should be more transparent
     with \
-      %{gateway_id: gateway} <- params, # TODO: Return an error on unmatch
-      {:ok, pid} = ManagerTOP.prepare_top(gateway),
-      {:ok, process} <- ServerTOP.create(pid, params)
+      {source_entity_id, target_entity_id} <- get_process_entities(params),
+      {gateway_ip, target_ip} <- get_process_ips(params),
+      process_params = prepare_create_params(params, source_entity_id),
+      pid = get_top(process_params),
+      {:ok, process} <- ServerTOP.create(pid, process_params)
     do
       event = %ProcessCreatedEvent{
-        process_id: process.process_id,
+        process: process,
         gateway_id: process.gateway_id,
-        target_id: process.target_server_id
+        target_id: process.target_server_id,
+        gateway_entity_id: source_entity_id,
+        target_entity_id: target_entity_id,
+        gateway_ip: gateway_ip,
+        target_ip: target_ip
       }
 
       {:ok, process, [event]}
     end
   end
+
+  @spec prepare_create_params(base_params, Entity.id) ::
+    Process.create_params
+  defp prepare_create_params(params, source_entity_id),
+    do: Map.put(params, :source_entity_id, source_entity_id)
 
   @spec pause(Process.t) ::
     :ok
@@ -76,7 +106,7 @@ defmodule Helix.Process.Action.Process do
   """
   def pause(process) do
     process
-    |> top()
+    |> get_top()
     |> ServerTOP.pause(process)
   end
 
@@ -97,7 +127,7 @@ defmodule Helix.Process.Action.Process do
   """
   def resume(process) do
     process
-    |> top()
+    |> get_top()
     |> ServerTOP.resume(process)
   end
 
@@ -120,7 +150,7 @@ defmodule Helix.Process.Action.Process do
   """
   def priority(process, priority) when priority in 0..5 do
     process
-    |> top()
+    |> get_top()
     |> ServerTOP.priority(process, priority)
   end
 
@@ -136,7 +166,7 @@ defmodule Helix.Process.Action.Process do
   """
   def kill(process, _reason) do
     process
-    |> top()
+    |> get_top()
     |> ServerTOP.kill(process)
   end
 
@@ -151,12 +181,51 @@ defmodule Helix.Process.Action.Process do
     end
   end
 
-  @spec top(Process.t) ::
+  @spec get_top(Process.t | base_params | Server.id) ::
     pid
-  defp top(process) do
-    gateway = process.gateway_id
-
-    {:ok, pid} = ManagerTOP.prepare_top(gateway)
+  docp """
+  Given a server/process, return the TOP pid.
+  """
+  defp get_top(%Process{gateway_id: gateway_id}),
+    do: get_top(gateway_id)
+  defp get_top(%{gateway_id: gateway_id}),
+    do: get_top(gateway_id)
+  defp get_top(server_id = %Server.ID{}) do
+    {:ok, pid} = ManagerTOP.prepare_top(server_id)
     pid
   end
+
+  @spec get_process_entities(base_params) ::
+    {source_entity :: Entity.id, target_entity :: Entity.id}
+  defp get_process_entities(params) do
+    source_entity = EntityQuery.fetch_by_server(params.gateway_id)
+
+    target_entity =
+      if params.gateway_id == params.target_server_id do
+        source_entity
+      else
+        EntityQuery.fetch_by_server(params.target_server_id)
+      end
+
+    {source_entity.entity_id, target_entity.entity_id}
+  end
+
+  @spec get_process_ips(base_params) ::
+    {gateway_ip :: IPv4.t, target_ip :: IPv4.t}
+    | {nil, nil}
+  defp get_process_ips(params = %{network_id: _}) do
+    gateway_ip = ServerQuery.get_ip(params.gateway_id, params.network_id)
+
+    target_ip =
+      if params.gateway_id == params.target_server_id do
+        gateway_ip
+      else
+        ServerQuery.get_ip(params.target_server_id, params.network_id)
+      end
+
+    {gateway_ip, target_ip}
+  end
+
+  defp get_process_ips(_),
+    do: {nil, nil}
 end

@@ -1,35 +1,58 @@
-defprotocol Helix.Process.API.View.Process do
+defmodule Helix.Process.Public.View.Process do
+  @moduledoc """
+  `ProcessView` is a wrapper to the `ProcessViewable` protocol. Public methods
+  interested on rendering a process (and as such using `ProcessViewable`) should
+  use `ProcessView.render/4` instead.
+  """
 
-  # Entity and Server data are included to allow the viewable to render
-  # differently for the process creator or if seen from an external server
-  def render(data, process, server_id, entity_id)
-end
+  alias Helix.Entity.Model.Entity
+  alias Helix.Server.Model.Server
+  alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Process.Resources
+  alias Helix.Process.Public.View.ProcessViewable
 
-###########################################
-# IGNORE THE FOLLOWING LINES.
-# Dialyzer is not particularly a fan of protocols, so it will emit a lot of
-# "unknown functions" for non-implemented types on a protocol. This hack will
-# implement any possible type to avoid those warnings (albeit it might increase
-# the compilation time in a second)
-###########################################
+  @type partial_process ::
+    %{
+      :process_id => String.t,
+      :gateway_id => String.t,
+      :target_server_id => String.t,
+      :file_id => String.t | nil,
+      :network_id => String.t | nil,
+      :connection_id => String.t | nil,
+      :process_type => String.t
+    }
 
-impls = [
-  Atom,
-  BitString,
-  Float,
-  Function,
-  Integer,
-  List,
-  Map,
-  PID,
-  Port,
-  Reference,
-  Tuple
-]
+  @type full_process ::
+    %{
+      :process_id => String.t,
+      :gateway_id => String.t,
+      :target_server_id => String.t,
+      :file_id => String.t | nil,
+      :network_id => String.t | nil,
+      :connection_id => String.t | nil,
+      :process_type => String.t,
+      :state => String.t,
+      :allocated => Resources.t,
+      :priority => 0..5,
+      :creation_time => String.t
+    }
 
-for impl <- impls do
-  defimpl Helix.Process.API.View.Process, for: impl do
-    def render(input, _, _, _),
-      do: raise "#{inspect input} doesn't implement ProcessView protocol"
+  @type scopes ::
+    :full
+    | :partial
+
+  @spec render(data :: term, Process.t, Server.id, Entity.id) ::
+    rendered_process :: term
+  @doc """
+  Renders the given process, according to the specified context (server, entity)
+
+  It uses the `ProcessViewable` protocol internally, so for more details refer
+  to its documentation.
+  """
+  def render(data, process, server_id, entity_id) do
+    scope = ProcessViewable.get_scope(data, process, server_id, entity_id)
+    {base, data} = ProcessViewable.render(data, process, scope)
+
+    Map.merge(base, data)
   end
 end

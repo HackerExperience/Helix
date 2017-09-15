@@ -26,7 +26,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   It is a process managed by TOP, in the sense that the password reveal does
   not happen instantly. Completion is handled by `BankAccountEvent`.
   """
-  @spec reveal_password(ATM.id, BankAccount.account, BankToken.id, Server.idt) ::
+  @spec reveal_password(ATM.id, BankAccount.account, BankToken.id, Server.id) ::
     {:ok, Process.t}
     | ProcessAction.on_create_error
   def reveal_password(atm_id, account_number, token_id, gateway_id) do

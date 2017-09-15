@@ -104,6 +104,19 @@ defmodule Helix.Entity.Internal.Database do
     |> Repo.insert()
   end
 
+  @spec update_server_password(DatabaseServer.t, Server.password) ::
+    entry_server_repo_return
+  def update_server_password(entry, password),
+    do: update_server(entry, %{password: password})
+
+  @spec update_server(DatabaseServer.t, DatabaseServer.update_params) ::
+    entry_server_repo_return
+  defp update_server(entry, params) do
+    entry
+    |> DatabaseServer.update_changeset(params)
+    |> Repo.update()
+  end
+
   @spec update_bank_password(DatabaseBankAccount.t, String.t) ::
     entry_bank_account_repo_return
   def update_bank_password(entry, password),

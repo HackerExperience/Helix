@@ -12,6 +12,7 @@ defmodule Helix.Hardware.Model.Motherboard do
   @behaviour Helix.Hardware.Model.ComponentSpec
 
   @type idtb :: Component.idtb | t
+  @type idt :: id | t
   @type id :: Component.id
   @type t :: %__MODULE__{
     motherboard_id: id,

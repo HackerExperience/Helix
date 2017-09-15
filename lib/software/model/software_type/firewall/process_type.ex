@@ -66,21 +66,8 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
 
     def conclusion(_, _),
       do: raise "firewall(passive) process should not be 'completed'"
-  end
 
-  defimpl Helix.Process.API.View.Process do
-
-    def render(data, process, _, _) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        process_type: process.type,
-        state: process.state,
-        allocated: process.allocated,
-        priority: process.priority,
-        creation_time: process.creation_time,
-        version: data.version
-      }
-    end
+    def after_read_hook(data),
+      do: data
   end
 end

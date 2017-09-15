@@ -1,12 +1,13 @@
 defmodule Helix.Test.Entity.Database.Setup do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Entity.Model.DatabaseBankAccount
   alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo, as: EntityRepo
 
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
@@ -24,12 +25,11 @@ defmodule Helix.Test.Entity.Database.Setup do
   @doc """
   - entity_id: generated entry belongs to that entity
   - server_id: server that will be added to the entry
-  - password: password stored on database entry
+  - password: password stored on database entry. Defaults to nil.
 
   Related data: Server.t, Entity.t
   """
   def fake_entry_server(opts \\ []) do
-
     entity =
       EntitySetup.create_or_fetch(opts[:entity_id])
 
@@ -77,11 +77,19 @@ defmodule Helix.Test.Entity.Database.Setup do
   @doc """
   - entity_id: generated entry will belong to that entity
   - acc: bank account to store on the database (`BankAccount.t`)
+  - real_entity: Whether it should create an entity. Defaults to true.
 
-  Related data: BankAccount.t, Entity.t
+  Related data: BankAccount.t, Entity.t (nil if not `real_entity`)
   """
   def fake_entry_bank_account(opts \\ []) do
-    entity = EntitySetup.create_or_fetch(opts[:entity_id])
+    {entity, entity_id} =
+      if opts[:real_entity] == false do
+        {nil, Entity.ID.generate()}
+      else
+        entity = EntitySetup.create_or_fetch(opts[:entity_id])
+
+        {entity, entity.entity_id}
+      end
 
     acc = Access.get(opts, :acc, BankSetup.account!())
 
@@ -89,7 +97,7 @@ defmodule Helix.Test.Entity.Database.Setup do
 
     entry =
       %DatabaseBankAccount{
-        entity_id: entity.entity_id,
+        entity_id: entity_id,
         atm_id: acc.atm_id,
         account_number: acc.account_number,
         atm_ip: atm_ip,

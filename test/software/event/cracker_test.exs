@@ -8,7 +8,9 @@ defmodule Helix.Software.Event.CrackerTest do
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
   alias Helix.Software.Event.Cracker, as: CrackerHandler
 
+  alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Event.Setup, as: EventSetup
+  alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
@@ -51,7 +53,6 @@ defmodule Helix.Software.Event.CrackerTest do
       TOPHelper.top_stop(process.gateway_id)
     end
 
-    alias Helix.Test.Account.Setup, as: AccountSetup
     test "life cycle for overflow attack against bank login connection" do
       {connection, %{acc: acc}} =
         BankSetup.login_flow()
@@ -111,4 +112,30 @@ defmodule Helix.Software.Event.CrackerTest do
 
   @tag :pending
   test "it stops overflow attacks when bank_login connection was closed"
+
+  describe "bruteforce_conclusion/1" do
+    test "retrieves the password on success" do
+      {process, _} = ProcessSetup.bruteforce_flow()
+
+      event = EventSetup.bruteforce_conclusion(process)
+
+      assert {:ok, _password} =
+        CrackerHandler.bruteforce_conclusion(event)
+
+      TOPHelper.top_stop(process.gateway_id)
+    end
+
+    test "fails when target server is not found" do
+      event = EventSetup.bruteforce_conclusion()
+
+      assert {:error, reason} =
+        CrackerHandler.bruteforce_conclusion(event)
+
+      # Server not found! This may happen if target changed her IP mid-process
+      assert reason == {:nip, :notfound}
+    end
+  end
+
+  @tag :pending
+  test "bruteforce process is stopped when cracker (file_id) is deleted"
 end

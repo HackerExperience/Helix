@@ -8,26 +8,23 @@ defmodule Helix.Test.Server.Setup do
 
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Entity.Helper, as: EntityHelper
 
   @doc """
-  - entity_id: Specify the entity that owns such server (TODO). Defaults to
-  generating a random entity.
+  - entity_id: Specify the entity that owns such server. Defaults to generating
+  a random entity.
 
-  Related data: Entity.t
+  Related data: Entity.t (when `opts[:entity_id]` is undefined)
   """
   def server(opts \\ []) do
     {server, entity} =
       if opts[:entity_id] do
-        raise "todo"
+        {server, _} = server_create_flow()
+        EntityHelper.change_server_owner(server.server_id, opts[:entity_id])
+
+        {server, nil}
       else
-        {account, _} = AccountSetup.account()
-        {:ok, %{entity: entity, server: server}} =
-          AccountFlow.setup_account(account)
-
-        :timer.sleep(100)
-        CacheHelper.purge_server(server.server_id)
-
-        {server, entity}
+        server_create_flow()
       end
 
     {server, %{entity: entity}}
@@ -45,7 +42,7 @@ defmodule Helix.Test.Server.Setup do
   - password: set the password.
   """
   def fake_server(opts \\ []) do
-    server_id = Access.get(opts, :server_id, Server.ID.generate())
+    server_id = Access.get(opts, :server_id, id())
     motherboard_id = Access.get(opts, :mobo_id, Component.ID.generate())
     password = Access.get(opts, :password, Password.generate(:server))
 
@@ -66,5 +63,22 @@ defmodule Helix.Test.Server.Setup do
     do: server!()
   def create_or_fetch(server_id) do
     ServerQuery.fetch(server_id)
+  end
+
+  @doc """
+  Generates a random Server ID. It's the same as Server.ID.generate(), but may
+  be helpful/more readable/more portable for some tests/contexts.
+  """
+  def id,
+    do: Server.ID.generate()
+
+  defp server_create_flow do
+    {account, _} = AccountSetup.account()
+    {:ok, %{entity: entity, server: server}} =
+      AccountFlow.setup_account(account)
+
+    CacheHelper.purge_server(server.server_id)
+
+    {server, entity}
   end
 end

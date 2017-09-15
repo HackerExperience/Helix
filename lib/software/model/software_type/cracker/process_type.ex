@@ -1,4 +1,4 @@
-defmodule Helix.Software.Model.SoftwareType.Cracker do
+defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   @moduledoc false
 
   use Ecto.Schema
@@ -8,54 +8,44 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
+  alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
 
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
 
   @type t :: %__MODULE__{
-    entity_id: Entity.id,
     network_id: Network.id,
     target_server_id: Server.id,
     target_server_ip: IPv4.t,
-    server_type: String.t,
     software_version: pos_integer
   }
 
   @type create_params ::
-    %{String.t => term}
-    | %{
-      :entity_id => Entity.idtb,
+    # %{String.t => term}
+    %{
       :network_id => Network.idtb,
       :target_server_id => Server.idtb,
-      :target_server_ip => IPv4.t,
-      :server_type => String.t
+      :target_server_ip => IPv4.t
     }
 
   @create_params ~w/
-    entity_id
     network_id
     target_server_id
     target_server_ip
-    server_type
   /a
   @required_params ~w/
-    entity_id
     network_id
     target_server_id
     target_server_ip
-    server_type
     software_version
   /a
 
   @primary_key false
   embedded_schema do
-    field :entity_id, Entity.ID
-
     field :network_id, Network.ID
     field :target_server_id, Server.ID
     field :target_server_ip, IPv4
-    field :server_type, :string
 
     field :software_version, :integer
   end
@@ -64,7 +54,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     {:ok, t}
     | {:error, changeset}
   def create(file, params) do
-    version = %{software_version: file.file_modules.cracker_password}
+    version = %{software_version: file.file_modules.cracker_overflow}
 
     %__MODULE__{}
     |> cast(params, @create_params)
@@ -97,7 +87,12 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
   defimpl Helix.Process.Model.Process.ProcessType do
     @moduledoc false
 
-    alias Helix.Software.Model.SoftwareType.Cracker.ProcessConclusionEvent
+    alias Ecto.Changeset
+    alias Helix.Network.Model.Network
+    alias Helix.Server.Model.Server
+    alias Helix.Software.Model.Software.Cracker.Bruteforce
+    alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
+      as: CrackerBruteforceConclusionEvent
 
     @ram_base 3
 
@@ -112,7 +107,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
     end
 
     def kill(_, process, _),
-      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+      do: {%{Changeset.change(process)| action: :delete}, []}
 
     def state_change(data, process, _, :complete) do
       process =
@@ -120,12 +115,13 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
         |> Ecto.Changeset.change()
         |> Map.put(:action, :delete)
 
-      event = %ProcessConclusionEvent{
-        entity_id: data.entity_id,
-        network_id: data.network_id,
-        server_id: data.target_server_id,
-        server_ip: data.target_server_ip,
-        server_type: data.server_type
+      source_entity_id = Changeset.get_field(process, :source_entity_id)
+
+      event = %CrackerBruteforceConclusionEvent{
+        source_entity_id: Entity.ID.cast!(source_entity_id),
+        network_id: Network.ID.cast!(data.network_id),
+        target_server_id: Server.ID.cast!(data.target_server_id),
+        target_server_ip: data.target_server_ip
       }
 
       {process, [event]}
@@ -136,84 +132,59 @@ defmodule Helix.Software.Model.SoftwareType.Cracker do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    def after_read_hook(data) do
+      %Bruteforce{
+        software_version: data.software_version,
+        network_id: Network.ID.cast!(data.network_id),
+        target_server_ip: data.target_server_ip,
+        target_server_id: Server.ID.cast!(data.target_server_id)
+      }
+    end
   end
 
-  defimpl Helix.Process.API.View.Process do
+  defimpl Helix.Process.Public.View.ProcessViewable do
     @moduledoc false
 
-    alias Helix.Entity.Model.Entity
+    alias HELL.IPv4
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Network
-    alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
-    alias Helix.Process.Model.Process.Resources
-    alias Helix.Process.Model.Process.State
+    alias Helix.Process.Public.View.Process, as: ProcessView
+    alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
 
-    @spec render(term, Process.t, Server.id, Entity.id) ::
+    @type data ::
       %{
-        :process_id => Process.id,
-        :gateway_id => Server.id,
-        :target_server_id => Server.id,
-        :network_id => Network.id,
-        :connection_id => Connection.id,
-        :process_type => term,
-        optional(:state) => State.state,
-        optional(:allocated) => Resources.t,
-        optional(:priority) => 0..5,
-        optional(:creation_time) => DateTime.t,
-        optional(:software_version) => non_neg_integer,
-        optional(:target_server_ip) => HELL.IPv4.t
+        :software_version => non_neg_integer,
+        :target_server_ip => IPv4.t
       }
-    def render(data, process = %{gateway_id: server}, server, _),
-      do: do_render(data, process, :local)
-    def render(data = %{entity_id: entity}, process, _, entity),
-      do: do_render(data, process, :local)
-    def render(data, process, _, _),
-      do: do_render(data, process, :remote)
 
-    defp do_render(data, process, scope) do
-      base = take_data_from_process(process, scope)
-      complement = take_complement_from_data(data, scope)
+    def get_scope(data, process, server, entity),
+      do: ProcessViewHelper.get_default_scope(data, process, server, entity)
 
-      Map.merge(base, complement)
+    @spec render(term, Process.t, ProcessView.scopes) ::
+      {ProcessView.full_process | ProcessView.partial_process, data}
+    def render(data, process, scope) do
+      rendered_process = take_data_from_process(process, scope)
+      rendered_data = take_complement_from_data(data, scope)
+
+      {rendered_process, rendered_data}
     end
 
-    defp take_complement_from_data(data, _),
-      do: %{
+    defp take_complement_from_data(data, _) do
+      %{
         software_version: data.software_version,
         target_server_ip: data.target_server_ip
-    }
-
-    defp take_data_from_process(process, :remote) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        target_server_id: process.target_server_id,
-        network_id: process.network_id,
-        connection_id: process.connection_id,
-        process_type: process.process_type,
       }
     end
 
-    defp take_data_from_process(process, :local) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        target_server_id: process.target_server_id,
-        network_id: process.network_id,
-        connection_id: process.connection_id,
-        process_type: process.process_type,
-        state: process.state,
-        allocated: process.allocated,
-        priority: process.priority,
-        creation_time: process.creation_time
-      }
-    end
+    defp take_data_from_process(process, scope),
+      do: ProcessViewHelper.default_process_render(process, scope)
   end
 end
 
 # TODO: Merge
-defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
+defmodule Helix.Software.Model.Software.Cracker.Overflow do
 
   use Ecto.Schema
 
@@ -222,7 +193,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
   alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareType.Cracker.Overflow.ConclusionEvent,
+  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
 
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
@@ -253,7 +224,7 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
     {:ok, t}
     | {:error, changeset}
   def create(file, params) do
-    version = %{software_version: file.file_modules.cracker_password}
+    version = %{software_version: file.file_modules.cracker_bruteforce}
 
     %__MODULE__{}
     |> cast(params, @create_params)
@@ -272,6 +243,11 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
     do: {:error, changeset}
 
   defimpl Helix.Process.Model.Process.ProcessType do
+
+    alias Helix.Network.Model.Connection
+    alias Helix.Process.Model.Process
+    alias Helix.Server.Model.Server
+
     @moduledoc false
 
     @ram_base 3
@@ -296,9 +272,9 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
         |> Map.put(:action, :delete)
 
       event = %OverflowConclusionEvent{
-        gateway_id: process.data.gateway_id,
-        target_process_id: data.target_process_id,
-        target_connection_id: data.target_connection_id
+        gateway_id: Server.ID.cast!(process.data.gateway_id),
+        target_process_id: Process.ID.cast!(data.target_process_id),
+        target_connection_id: Connection.ID.cast!(data.target_connection_id)
       }
 
       {process, [event]}
@@ -309,5 +285,8 @@ defmodule Helix.Software.Model.SoftwareType.Cracker.Overflow do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    def after_read_hook(data),
+      do: data
   end
 end

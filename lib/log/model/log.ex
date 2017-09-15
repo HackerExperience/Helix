@@ -10,11 +10,13 @@ defmodule Helix.Log.Model.Log do
   alias Helix.Server.Model.Server
   alias Helix.Log.Model.Revision
 
+  @type message :: String.t
+
   @type t :: %__MODULE__{
     log_id: id,
     server_id: Server.id,
     entity_id: Entity.id,
-    message: String.t,
+    message: message,
     crypto_version: pos_integer | nil,
     revisions: term,
     inserted_at: NaiveDateTime.t,

@@ -154,6 +154,23 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     end
   end
 
+  describe "update_server_password/2" do
+    test "the password is updated" do
+      {entry, _} = DatabaseSetup.entry_server()
+      password = "rivotril"
+
+      assert {:ok, new_entry} =
+        DatabaseInternal.update_server_password(entry, password)
+      assert new_entry.password == password
+
+      entry_on_db =
+        DatabaseInternal.fetch_server(entry.entity_id,
+          entry.network_id,
+          entry.server_ip)
+      assert entry_on_db.password == password
+    end
+  end
+
   describe "update_bank_password/2" do
     test "the password is updated" do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()

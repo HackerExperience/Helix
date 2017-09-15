@@ -1,5 +1,4 @@
-# FIXME: OTP20
-defmodule Software.Encryptor.ProcessType do
+defmodule Helix.Software.Model.Software.Encryptor.ProcessType do
 
   @enforce_keys [:storage_id, :target_file_id, :software_version]
   defstruct [:storage_id, :target_file_id, :software_version]
@@ -49,83 +48,57 @@ defmodule Software.Encryptor.ProcessType do
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
+
+    def after_read_hook(data),
+      do: data
   end
 
-  defimpl Helix.Process.API.View.Process do
+  defimpl Helix.Process.Public.View.ProcessViewable do
 
-    alias Helix.Entity.Model.Entity
-    alias Helix.Network.Model.Connection
-    alias Helix.Network.Model.Network
-    alias Helix.Server.Model.Server
     alias Helix.Software.Model.File
     alias Helix.Process.Model.Process
-    alias Helix.Process.Model.Process.Resources
-    alias Helix.Process.Model.Process.State
+    alias Helix.Process.Public.View.Process, as: ProcessView
+    alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
 
-    @spec render(map, Process.t, Server.id, Entity.id) ::
+    @type full_data ::
       %{
-        :process_id => Process.id,
-        :gateway_id => Server.id,
-        :target_server_id => Server.id,
-        :network_id => Network.id | nil,
-        :connection_id => Connection.id | nil,
-        :process_type => term,
-        :target_file_id => File.id,
-        optional(:state) => State.state,
-        optional(:objective) => Resources.t,
-        optional(:processed) => Resources.t,
-        optional(:allocated) => Resources.t,
-        optional(:priority) => 0..5,
-        optional(:creation_time) => DateTime.t,
-        optional(:software_version) => non_neg_integer,
-        optional(:scope) => String.t
+        target_file_id: File.id,
+        software_version: File.module_version,
+        scope: term  # Review: what's this?
       }
-    def render(data, process = %{gateway_id: server}, server, _) do
-      base = take_data_from_process(process)
-      complement = %{
+
+    @type partial_data ::
+      %{
+        target_file_id: File.id
+      }
+
+    def get_scope(data, process, server, entity),
+      do: ProcessViewHelper.get_default_scope(data, process, server, entity)
+
+    @spec render(map, Process.t, ProcessView.scopes) ::
+      {ProcessView.full_process, full_data}
+      | {ProcessView.partial_process, partial_data}
+    def render(data, process, scope) do
+      base = take_data_from_process(process, scope)
+      complement = take_complement_from_data(data, scope)
+
+      {base, complement}
+    end
+
+    defp take_complement_from_data(data, :full) do
+      %{
         target_file_id: data.target_file_id,
         software_version: data.software_version,
         scope: data.scope
       }
-
-      Map.merge(base, complement)
     end
-
-    def render(data, process, _, _) do
-      base =
-        process
-        |> take_data_from_process()
-        |> Map.drop([
-          :state,
-          :objective,
-          :processed,
-          :allocated,
-          :priority,
-          :creation_time
-        ])
-
-      complement = %{
+    defp take_complement_from_data(data, :partial) do
+      %{
         target_file_id: data.target_file_id
       }
-
-      Map.merge(base, complement)
     end
 
-    defp take_data_from_process(process) do
-      %{
-        process_id: process.process_id,
-        gateway_id: process.gateway_id,
-        target_server_id: process.target_server_id,
-        network_id: process.network_id,
-        connection_id: process.connection_id,
-        process_type: process.process_type,
-        state: process.state,
-        objective: process.objective,
-        processed: process.processed,
-        allocated: process.allocated,
-        priority: process.priority,
-        creation_time: process.creation_time
-      }
-    end
+    defp take_data_from_process(process, scope),
+      do: ProcessViewHelper.default_process_render(process, scope)
   end
 end

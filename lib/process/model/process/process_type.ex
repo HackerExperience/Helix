@@ -24,41 +24,14 @@ defprotocol Helix.Process.Model.Process.ProcessType do
   @spec minimum(t) ::
     %{optional(State.state) => %{resource => non_neg_integer}}
   def minimum(data)
-end
 
-###########################################
-# IGNORE THE FOLLOWING LINES.
-# Dialyzer is not particularly a fan of protocols, so it will emit a lot of
-# "unknown functions" for non-implemented types on a protocol. This hack will
-# implement any possible type to avoid those warnings (albeit it might increase
-# the compilation time in a second)
-###########################################
-
-impls = [
-  Atom,
-  BitString,
-  Float,
-  Function,
-  Integer,
-  List,
-  Map,
-  PID,
-  Port,
-  Reference,
-  Tuple
-]
-
-for impl <- impls do
-  defimpl Helix.Process.Model.Process.ProcessType, for: impl do
-    def dynamic_resources(input),
-      do: raise "#{inspect input} doesn't implement ProcessType protocol"
-    def state_change(input, _, _, _),
-      do: raise "#{inspect input} doesn't implement ProcessType protocol"
-    def kill(input, _, _),
-      do: raise "#{inspect input} doesn't implement ProcessType protocol"
-    def minimum(input),
-      do: raise "#{inspect input} doesn't implement ProcessType protocol"
-    def conclusion(input, _),
-      do: raise "#{inspect input} doesn't implement ProcessType protocol"
-  end
+  @spec after_read_hook(term) ::
+    t
+  @doc """
+  Process metadata (ProcessType) is stored as JSONB on Postgres. After
+  retrieval, we may lose some internal data representation, like Helix IDs or
+  atoms, which are both converted to string. This method purpose is somewhat
+  similar to serialization.
+  """
+  def after_read_hook(data)
 end

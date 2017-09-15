@@ -18,8 +18,8 @@ defmodule Helix.Entity.Model.DatabaseServer do
     network_id: Network.id,
     server_id: Server.id,
     server_ip: IPv4.t,
-    server_type: Constant.t,
-    password: String.t | nil,
+    server_type: server_type,
+    password: Server.password | nil,
     alias: String.t | nil,
     notes: String.t | nil,
     last_update: DateTime.t
@@ -30,21 +30,21 @@ defmodule Helix.Entity.Model.DatabaseServer do
     network_id: Network.id,
     server_id: Server.id,
     server_ip: IPv4.t,
-    server_type: Constant.t
+    server_type: server_type
   }
 
   @type update_params :: %{
     optional(:alias) => String.t,
     optional(:notes) => String.t,
-    optional(:password) => String.t,
+    optional(:password) => Server.password,
     optional(:last_update) => DateTime.t
   }
 
   @type server_type ::
-    Constant.t
+    Constant.t  # :npc | :vpc
 
   @creation_fields ~w/entity_id network_id server_ip server_id server_type/a
-  @update_fields ~w/alias notes/a
+  @update_fields ~w/password alias notes last_update/a
 
   @required_creation ~w/entity_id network_id server_ip server_id server_type/a
 
