@@ -3,9 +3,7 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
 
   def change do
     create table(:component_types, primary_key: false) do
-      add :component_type,
-        :string,
-        primary_key: true
+      add :component_type, :string, primary_key: true
     end
 
     create table(:component_specs, primary_key: false) do
@@ -14,11 +12,8 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
           :component_types,
           column: :component_type,
           type: :string)
-      add :spec,
-        :jsonb
-      add :spec_id,
-        :string,
-        primary_key: true
+      add :spec, :jsonb
+      add :spec_id, :string, primary_key: true
 
       timestamps()
     end
@@ -29,9 +24,7 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
           :component_types,
           column: :component_type,
           type: :string)
-      add :component_id,
-        :inet,
-        primary_key: true
+      add :component_id, :inet, primary_key: true
       add :spec_id,
         references(
           :component_specs,
@@ -60,11 +53,8 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
           :component_types,
           column: :component_type,
           type: :string)
-      add :slot_internal_id,
-        :integer
-      add :slot_id,
-        :inet,
-        primary_key: true
+      add :slot_internal_id, :integer
+      add :slot_id, :inet, primary_key: true
       add :motherboard_id,
         references(
           :motherboards,
@@ -81,23 +71,13 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
     end
 
     create table(:network_connections, primary_key: false) do
-      add :network_connection_id,
-        :inet,
-        primary_key: true
-      add :network_id,
-        :inet,
-        null: false
+      add :network_connection_id, :inet, primary_key: true
+      add :network_id, :inet, null: false
 
-      add :ip,
-        :inet,
-        null: false
+      add :ip, :inet, null: false
 
-      add :downlink,
-        :integer,
-        null: false
-      add :uplink,
-        :integer,
-        null: false
+      add :downlink, :integer, null: false
+      add :uplink, :integer, null: false
     end
 
     create unique_index(
@@ -125,9 +105,7 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
           name: :hdds_hdd_id_fkey),
         primary_key: true
 
-      add :hdd_size,
-        :integer,
-        null: false
+      add :hdd_size, :integer, null: false
     end
 
     create constraint(:hdds, :non_neg_size, check: "hdd_size >= 0")
@@ -144,13 +122,8 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
           name: :cpus_cpu_id_fkey),
         primary_key: true
 
-      add :clock,
-        :integer,
-        null: false
-      add :cores,
-        :integer,
-        default: 1,
-        null: false
+      add :clock, :integer, null: false
+      add :cores, :integer, default: 1, null: false
     end
 
     create constraint(:cpus, :non_neg_clock, check: "clock >= 0")
@@ -168,9 +141,7 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
           name: :rams_ram_id_fkey),
         primary_key: true
 
-      add :ram_size,
-        :integer,
-        null: false
+      add :ram_size, :integer, null: false
     end
 
     create constraint(:rams, :non_neg_size, check: "ram_size >= 0")
@@ -194,9 +165,7 @@ defmodule Helix.Hardware.Repo.Migrations.InitialSetup do
           on_delete: :nilify_all,
           name: :nics_network_connection_id_fkey)
 
-      add :mac_address,
-        :macaddr,
-        null: false
+      add :mac_address, :macaddr, null: false
     end
 
     create unique_index(:nics, :mac_address, name: :nics_mac_address_index)
