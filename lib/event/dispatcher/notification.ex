@@ -40,3 +40,15 @@ defmodule Helix.Event.Dispatcher.Notification do
     NotificationHandler,
     :notification_handler
 end
+
+defmodule Helix.Event.Dispatcher.Story do
+
+  use HELF.Event
+
+  alias Helix.Story
+  alias Helix.Universe
+
+  event Universe.Bank.Model.BankTransfer.BankTransferCompleted,
+    Story,
+    :step_handler
+end
