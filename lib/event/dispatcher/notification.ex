@@ -48,7 +48,7 @@ defmodule Helix.Event.Dispatcher.Story do
   alias Helix.Story
   alias Helix.Universe
 
-  event Universe.Bank.Model.BankTransfer.BankTransferCompleted,
+  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
     Story,
     :step_handler
 end

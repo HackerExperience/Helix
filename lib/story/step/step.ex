@@ -5,16 +5,37 @@ defmodule Helix.Story.Step do
 
   alias HELL.Constant
   alias Helix.Event
+  alias Helix.Entity.Model.Entity
+
+  @type email_id :: String.t
+  @type reply_id :: String.t
+
+  @type email ::
+    %{
+      id: email_id,
+      replies: [reply_id],
+      locked: [reply_id]
+    }
+
+  @type emails ::
+    %{
+      email_id => email
+    }
+
+  @type meta :: map
+
+  @type step_name :: Constant.t
 
   @type t(struct) :: %{
     __struct__: struct,
     event: Event.t,
-    step: Constant.t,
-    meta: map
+    step: step_name,
+    meta: meta,
+    entity_id: Entity.id
   }
 
   @spec new(String.t, Event.t) ::
-    t(term)
+    t(struct)
   @doc """
   Given the raw step name fetched from the Database (string, on the format
   `mission_name@step_name`), figures out the corresponding Elixir module and
@@ -33,7 +54,7 @@ defmodule Helix.Story.Step do
   end
 
   @spec get_step_name(elixir_module :: Constant.t) ::
-    step_name :: Constant.t
+    step_name
   @doc """
   The module name format is `:Elixir.Helix.Some.Thing.MissionName.StepName`.
 
@@ -49,8 +70,15 @@ defmodule Helix.Story.Step do
     |> String.to_atom()
   end
 
-  defmacro register do
+  @spec get_entity(Event.t) ::
+    Entity.id
+  @doc """
+  Given an event, figure out which entity is responsible for it.
+  """
+  def get_entity(%_{source_entity_id: entity_id}),
+    do: entity_id
 
+  defmacro register do
     step_name =
       quote do
         @step_name Helix.Story.Step.get_step_name(__MODULE__)
@@ -63,8 +91,8 @@ defmodule Helix.Story.Step do
 
     struct =
       quote do
-        @enforce_keys [:event]
-        defstruct [:step, :event, meta: %{}]
+        @enforce_keys [:step, :event, :entity_id]
+        defstruct [:step, :event, :entity_id, meta: %{}]
       end
 
     new =
@@ -73,7 +101,8 @@ defmodule Helix.Story.Step do
         def new(event) do
           %__MODULE__{
             step: @step_name,
-            event: event
+            event: event,
+            entity_id: Helix.Story.Step.get_entity(event)
           }
         end
       end

@@ -16,6 +16,7 @@ defmodule HELL.Hack.Experience do
       Helix.Websocket.Joinable,
       Helix.Process.Model.Process.ProcessType,
       Helix.Process.Public.View.ProcessViewable,
+      Helix.Story.Steppable
     ]
 
     methods = %{
@@ -46,6 +47,13 @@ defmodule HELL.Hack.Experience do
       "Elixir.Helix.Process.Public.View.ProcessViewable" => [
         {:get_scope, 4},
         {:render, 3}
+      ],
+      "Elixir.Helix.Story.Steppable" => [
+        {:setup, 2},
+        {:handle_event, 3},
+        {:complete, 1},
+        {:fail, 1},
+        {:next_step, 1}
       ]
     }
 
