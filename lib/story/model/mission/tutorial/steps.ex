@@ -1,6 +1,8 @@
-defmodule Helix.Story.Mission.Tutorial do
+defmodule Helix.Story.Model.Mission.Tutorial do
 
-  import Helix.Story.Step.Macros
+  import Helix.Story.Model.Step.Macros
+
+  contact :friend
 
   step SetupPC do
 
@@ -10,17 +12,17 @@ defmodule Helix.Story.Mission.Tutorial do
     on_reply "back_thanks",
       :complete
 
-    setup entity_id do
-      # Add char for player
-      send_email "welcome_pc_setup", entity_id
+    def setup(step, _) do
+      e1 = send_email step, "welcome_pc_setup"
+
+      {:ok, step, e1}
     end
 
     def complete(step) do
-      {:ok, step}
+      {:ok, step, []}
     end
 
-    next_step Helix.Story.Mission.Tutorial.DownloadCrackerPublicFTP
-
+    next_step Helix.Story.Model.Mission.Tutorial.DownloadCrackerPublicFTP
   end
 
   step DownloadCrackerPublicFTP do
@@ -36,20 +38,19 @@ defmodule Helix.Story.Mission.Tutorial do
     on_reply "more_info",
       send: "give_more_info"
 
-    setup entity_id do
+    def setup(step, _) do
       # Gero Servidor do Char
       # Gero FTP Public
       # Gero cracker
-      send_email "download_cracker_public_ftp", entity_id, %{foo: :bar}
+      e1 = send_email step, "download_cracker_public_ftp", %{foo: :bar}
 
-      {:ok, %{meta: :vai_aqui}}
+      {:ok, step, e1}
     end
 
     def complete(step) do
-      {:ok, step}
+      {:ok, step, []}
     end
 
     next_step __MODULE__
-
   end
 end

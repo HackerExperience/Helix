@@ -45,10 +45,10 @@ defmodule Helix.Event.Dispatcher.Story do
 
   use HELF.Event
 
-  alias Helix.Story
+  alias Helix.Story.Event.Handler.Story, as: StoryHandler
   alias Helix.Universe
 
   event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
-    Story,
+    StoryHandler,
     :step_handler
 end
