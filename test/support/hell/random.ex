@@ -25,6 +25,12 @@ defmodule HELL.TestHelper.Random do
     Burette.Network.ipv6()
   end
 
+  def atom do
+    string(min: 4, max: 8)
+    |> String.downcase()
+    |> String.to_atom()
+  end
+
   def ipv4 do
     HELL.IPv4.autogenerate()
   end

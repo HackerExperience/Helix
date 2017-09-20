@@ -77,15 +77,15 @@ defmodule Helix.Story.Model.Step do
 
   @spec get_contact(Step.t(struct)) ::
     Step.contact
-  def get_contact(step) do
-    Steppable.get_contact(step)
-  end
+  def get_contact(step),
+    do: Steppable.get_contact(step)
 
   @spec get_module(Step.step_name) ::
     step_module :: Constant.t
   def get_module(step_name) do
     module_str =
       step_name
+      |> Atom.to_string()
       |> String.split("@")
       |> Enum.map(&Macro.camelize/1)
       |> Enum.join(".")

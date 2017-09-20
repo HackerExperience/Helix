@@ -1,7 +1,6 @@
 defprotocol Helix.Story.Model.Steppable do
 
   alias Helix.Event
-  alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
 
   @type generic_step :: Step.t(struct)
@@ -29,4 +28,8 @@ defprotocol Helix.Story.Model.Steppable do
   @spec get_contact(generic_step) ::
     Step.contact
   def get_contact(step)
+
+  @spec format_meta(generic_step) ::
+    Step.meta
+  def format_meta(step)
 end

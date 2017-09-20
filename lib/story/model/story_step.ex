@@ -37,8 +37,10 @@ defmodule Helix.Story.Model.StoryStep do
     field :step_name, Constant,
       primary_key: true
     field :meta, :map
-    field :emails_sent, {:array, :string}
-    field :allowed_replies, {:array, :string}
+    field :emails_sent, {:array, :string},
+      default: []
+    field :allowed_replies, {:array, :string},
+      default: []
   end
 
   @spec create_changeset(creation_params) ::
@@ -76,16 +78,21 @@ defmodule Helix.Story.Model.StoryStep do
   @spec do_unlock(changeset, Step.reply_id) ::
     changeset
   defp do_unlock(changeset, reply_id) do
-    previously_unlocked = get_field(changeset, :replies)
+    previously_unlocked = get_field(changeset, :allowed_replies, [])
+
+    new_replies =
+      previously_unlocked
+      |> Kernel.++([reply_id])
+      |> Enum.uniq()
 
     changeset
-    |> put_change(:replies, previously_unlocked ++ [reply_id])
+    |> put_change(:allowed_replies, new_replies)
   end
 
   @spec do_append(changeset, Step.email_id) ::
     changeset
   defp do_append(changeset, email_id) do
-    previously_sent = get_field(changeset, :emails_sent)
+    previously_sent = get_field(changeset, :emails_sent, [])
 
     changeset
     |> put_change(:emails_sent, previously_sent ++ [email_id])

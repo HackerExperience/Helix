@@ -45,7 +45,8 @@ defmodule Helix.Story.Model.StoryEmail do
       primary_key: true
     field :contact_id, Constant,
       primary_key: true
-    field :emails, {:array, :map}
+    field :emails, {:array, :map},
+      default: []
   end
 
   @spec create_changeset(creation_params) ::
@@ -60,13 +61,37 @@ defmodule Helix.Story.Model.StoryEmail do
     email
   def create_email(id, meta, sender) do
     if sender != :player and sender != :contact,
-      do: raise "invalid sender"
+      do: raise "invalid sender #{inspect sender}"
 
     %{
       id: id,
       meta: meta,
       sender: sender,
       timestamp: DateTime.utc_now()
+    }
+  end
+
+  @spec format(t) ::
+    t
+  def format(entry) do
+    formatted_emails =
+      entry.emails
+      |> Enum.map(&format_email/1)
+      |> Enum.sort(&(&1.timestamp >= &2.timestamp))
+
+    %{entry| emails: formatted_emails}
+  end
+
+  @spec format_email(%{String.t => String.t | map}) ::
+    email
+  defp format_email(email) do
+    {:ok, timestamp, _} = DateTime.from_iso8601(email["timestamp"])
+
+    %{
+      id: email["id"],
+      meta: email["meta"],
+      sender: String.to_existing_atom(email["sender"]),
+      timestamp: timestamp
     }
   end
 

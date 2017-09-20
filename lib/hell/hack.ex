@@ -6,6 +6,7 @@
 # the compilation time in a second)
 ###########################################
 defmodule HELL.Hack.Experience do
+  @moduledoc false
 
   defmacro protocolols do
 
@@ -54,7 +55,8 @@ defmodule HELL.Hack.Experience do
         {:complete, 1},
         {:fail, 1},
         {:next_step, 1},
-        {:get_contact, 1}
+        {:get_contact, 1},
+        {:format_meta, 1}
       ]
     }
 
@@ -77,12 +79,14 @@ defmodule HELL.Hack.Experience do
 
       for impl <- impls do
         quote do
+          @doc false
           defimpl unquote(protocol), for: unquote(impl) do
             unquote (
               Enum.map(functions, fn {name, arity} ->
                 args = List.duplicate(quote do _ end, arity)
 
                 quote do
+                  @doc false
                   def unquote(name)(unquote_splicing(args)) do
                     raise \
                       "#{inspect unquote(protocol)} not implemented " <>
@@ -99,6 +103,8 @@ defmodule HELL.Hack.Experience do
 end
 
 defmodule HELL.Hack.Experience2 do
+  @moduledoc false
+
   require HELL.Hack.Experience
 
   HELL.Hack.Experience.protocolols()

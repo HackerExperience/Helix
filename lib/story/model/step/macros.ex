@@ -30,6 +30,9 @@ defmodule Helix.Story.Model.Step.Macros do
           def handle_event(step, _event, _meta),
             do: {:noop, step, []}
 
+          def format_meta(%{meta: meta}),
+            do: meta
+
           def get_contact(_),
             do: @contact
 
@@ -177,7 +180,7 @@ defmodule Helix.Story.Model.Step.Macros do
   """
   def get_contact(contact, _) when is_binary(contact),
     do: String.to_atom(contact)
-  def get_contact(contact, _) when is_atom(contact),
+  def get_contact(contact, _) when not is_nil(contact),
     do: contact
   def get_contact(_, step_module) do
     mission_contact =

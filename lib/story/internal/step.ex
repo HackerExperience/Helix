@@ -2,6 +2,7 @@ defmodule Helix.Story.Internal.Step do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
+  alias Helix.Story.Model.Steppable
   alias Helix.Story.Model.StoryStep
   alias Helix.Story.Repo
 
@@ -23,16 +24,29 @@ defmodule Helix.Story.Internal.Step do
     StoryStep.t
     | nil
   def get_current_step(entity_id) do
-    entity_id
-    |> StoryStep.Query.by_entity()
-    |> Repo.one()
+    story_step =
+      entity_id
+      |> StoryStep.Query.by_entity()
+      |> Repo.one()
+
+    if story_step do
+      formatted_meta =
+        Step.fetch(story_step.step_name, story_step.entity_id, story_step.meta)
+        |> Steppable.format_meta()
+
+      %{story_step|meta: formatted_meta}
+    end
   end
 
+  @spec proceed(first_step :: Step.t(struct)) ::
+    entry_step_repo_return
   @spec proceed(prev_step :: Step.t(struct), next_step :: Step.t(struct)) ::
     {:ok, StoryStep.t}
     | {:error, term}
+  def proceed(next_step),
+    do: create(next_step)
   def proceed(prev_step, next_step) do
-    Repo.transaction(
+    Repo.transaction(fn ->
       with \
         :ok <- remove(prev_step),
         {:ok, entry} <- create(next_step)
@@ -42,31 +56,8 @@ defmodule Helix.Story.Internal.Step do
         error ->
           Repo.rollback(error)
       end
-    )
+    end)
   end
-
-  @spec remove(Step.t(struct)) ::
-    :ok
-  defp remove(step) do
-    step
-    |> fetch!()
-    |> Repo.delete()
-
-    :ok
-  end
-
-  @spec create(Step.t(struct)) ::
-    entry_step_repo_return
-  defp create(step) do
-    %{
-      entity_id: step.entity_id,
-      step_name: step.name,
-      meta: step.meta
-    }
-    |> StoryStep.create_changeset()
-    |> Repo.insert()
-  end
-
   @spec update_meta(Step.t(struct)) ::
     entry_step_repo_return
     | no_return
@@ -97,8 +88,30 @@ defmodule Helix.Story.Internal.Step do
     |> update()
   end
 
+  @spec create(Step.t(struct)) ::
+    entry_step_repo_return
+  defp create(step) do
+    %{
+      entity_id: step.entity_id,
+      step_name: step.name,
+      meta: step.meta
+    }
+    |> StoryStep.create_changeset()
+    |> Repo.insert()
+  end
+
   @spec update(StoryStep.changeset) ::
     entry_step_repo_return
   defp update(changeset),
     do: Repo.update(changeset)
+
+  @spec remove(Step.t(struct)) ::
+    :ok
+  defp remove(step) do
+    step
+    |> fetch!()
+    |> Repo.delete()
+
+    :ok
+  end
 end

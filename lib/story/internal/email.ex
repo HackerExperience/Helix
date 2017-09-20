@@ -12,10 +12,15 @@ defmodule Helix.Story.Internal.Email do
     StoryEmail.t
     | nil
   def fetch(entity_id, contact_id) do
-    entity_id
-    |> StoryEmail.Query.by_entity()
-    |> StoryEmail.Query.by_contact(contact_id)
-    |> Repo.one()
+    entry =
+      entity_id
+      |> StoryEmail.Query.by_entity()
+      |> StoryEmail.Query.by_contact(contact_id)
+      |> Repo.one()
+
+    if entry do
+      format(entry)
+    end
   end
 
   @spec get_emails(Entity.id) ::
@@ -24,37 +29,35 @@ defmodule Helix.Story.Internal.Email do
     entity_id
     |> StoryEmail.Query.by_entity()
     |> Repo.all()
-  end
-
-  @spec add_contact(Entity.id, Step.contact) ::
-    entry_email_repo_return
-  def add_contact(entity_id, contact_id) do
-    %{
-      entity_id: entity_id,
-      contact_id: contact_id
-    }
-    |> StoryEmail.create_changeset()
-    |> Repo.insert()
+    |> Enum.map(&format/1)
   end
 
   @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
-    entry_email_repo_return
+    {:ok, StoryEmail.t}
+    | :error
   def send_email(step, email_id, meta),
     do: generic_send(step, email_id, :contact, meta)
 
   @spec send_reply(Step.t(struct), Step.reply_id) ::
-    entry_email_repo_return
+    {:ok, StoryEmail.t}
+    | :error
   def send_reply(step, reply_id),
     do: generic_send(step, reply_id, :player)
 
   @spec generic_send(term, id :: String.t, StoryEmail.sender, meta :: map) ::
-    entry_email_repo_return
+    {:ok, StoryEmail.t}
+    | :error
   defp generic_send(step, id, sender, meta \\ %{}) do
     email = create_email(id, sender, meta)
     contact_id = Step.get_contact(step)
 
     ensure_exists(step.entity_id, contact_id)
-    append_email(step.entity_id, contact_id, email)
+    case append_email(step.entity_id, contact_id, email) do
+      {1, [story_email]} ->
+        {:ok, format(story_email)}
+      _ ->
+        :error
+    end
   end
 
   @spec ensure_exists(Entity.id, Step.contact) ::
@@ -68,10 +71,16 @@ defmodule Helix.Story.Internal.Email do
     end
   end
 
-  @spec create_email(Step.email_id, StoryEmail.sender, Step.meta) ::
+  @spec add_contact(Entity.id, Step.contact) ::
     entry_email_repo_return
-  def create_email(id, sender, meta),
-    do: StoryEmail.create_email(id, meta, sender)
+  defp add_contact(entity_id, contact_id) do
+    %{
+      entity_id: entity_id,
+      contact_id: contact_id
+    }
+    |> StoryEmail.create_changeset()
+    |> Repo.insert()
+  end
 
   @spec append_email(Entity.id, Step.contact, StoryEmail.email) ::
     {integer, nil | [term]}
@@ -81,6 +90,16 @@ defmodule Helix.Story.Internal.Email do
     |> StoryEmail.Query.by_entity()
     |> StoryEmail.Query.by_contact(contact_id)
     |> StoryEmail.Query.append_email(email)
-    |> Repo.update_all([])
+    |> Repo.update_all([], returning: true)
   end
+
+  @spec format(StoryEmail.t) ::
+    StoryEmail.t
+  def format(entry),
+    do: StoryEmail.format(entry)
+
+  @spec create_email(Step.email_id, StoryEmail.sender, Step.meta) ::
+    StoryEmail.email
+  defp create_email(id, sender, meta),
+    do: StoryEmail.create_email(id, meta, sender)
 end
