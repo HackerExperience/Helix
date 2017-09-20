@@ -1,6 +1,3 @@
-# Story shares the same database with Entity, but we use a separate Repo module
-# for separation/abstraction purposes.
-
 use Mix.Config
 
 config :helix, Helix.Story.Repo,
