@@ -50,4 +50,27 @@ defmodule Helix.Network.Query.WebTest do
       assert page.title
     end
   end
+
+  describe "specific npc resolutions" do
+    test "download center" do
+      {_, ip} = NPCHelper.download_center()
+
+      assert {:ok, {page_owner, page_content}, resolved_ip} =
+        WebQuery.browse(NetworkHelper.internet_id, ip, Random.ipv4())
+
+      assert {:npc, :download_center} == page_owner
+      assert page_content.title
+      assert resolved_ip == ip
+    end
+
+    test "bank" do
+      {bank, _} = NPCHelper.bank()
+
+      assert {:ok, {page_owner, page_content}, _} =
+        WebQuery.browse(NetworkHelper.internet_id, bank.anycast, Random.ipv4())
+
+      assert {:npc, :bank} == page_owner
+      assert page_content.title
+    end
+  end
 end
