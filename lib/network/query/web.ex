@@ -2,13 +2,24 @@ defmodule Helix.Network.Query.Web do
 
   alias HELL.IPv4
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Universe.NPC.Model.NPCType
+  alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.DNS, as: DNSQuery
 
+  @type page_content ::
+    term
+
+  @type page_owner ::
+    :account
+    | :clan
+    | {:npc, NPCType.types}
+
   @spec browse(Network.idt, String.t | IPv4.t, IPv4.t) ::
-    {:ok, {:npc | :vpc, term}, IPv4.t}
+    {:ok, {page_owner, page_content}, IPv4.t}
     | {:error, {:ip, :notfound}}
     | {:error, {:domain, :notfound}}
   @doc """
@@ -31,7 +42,7 @@ defmodule Helix.Network.Query.Web do
   end
 
   @spec browse_ip(Network.idt, IPv4.t) ::
-    {:ok, {:npc | :account | :clan, term}, IPv4.t}
+    {:ok, {page_owner, page_content}, IPv4.t}
     | {:error, {:ip, :notfound}}
   defp browse_ip(network, ip) do
     with \
@@ -40,15 +51,26 @@ defmodule Helix.Network.Query.Web do
       entity = %{} <- EntityQuery.fetch_by_server(server.server_id),
       {:ok, content} <- serve(network, ip)
     do
-      {:ok, {entity.entity_type, content}, ip}
+      {:ok, {get_page_owner(entity), content}, ip}
     else
       _ ->
         {:error, {:ip, :notfound}}
     end
   end
 
+  @spec get_page_owner(Entity.t) ::
+    page_owner
+  defp get_page_owner(%Entity{entity_type: :account}),
+    do: :account
+  defp get_page_owner(%Entity{entity_type: :clan}),
+    do: :clan
+  defp get_page_owner(entity = %Entity{entity_type: :npc}) do
+    npc = NPCQuery.fetch(entity.entity_id)
+    {:npc, npc.npc_type}
+  end
+
   @spec serve(Network.idt, IPv4.t) ::
-    {:ok, term}
+    {:ok, page_content}
     | {:error, :notfound}
   @doc """
   Returns the webserver content of the given NIP.

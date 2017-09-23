@@ -30,8 +30,15 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       assert_reply ref, :ok, response
 
       # It contains the web server content
-      assert {:npc, web_content} = response.data.webserver
-      assert web_content.title
+      assert response.data.meta
+      assert response.data.meta.title
+
+      # It contains metadata about the server type (and subtype if applicable)
+      assert response.data.type == "npc"
+      assert response.data.npc
+
+      # It returns the target nip
+      assert response.data.nip == [to_string(@internet_str), to_string(npc_ip)]
 
       # And the Database password info (in this case it's empty)
       refute response.data.password
@@ -56,8 +63,12 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       # It worked!
       assert_reply ref, :ok, response
 
-      assert {:npc, web_content} = response.data.webserver
-      assert web_content.title
+      # Resolved correctly
+      assert response.data.meta
+      assert response.data.meta.title
+      assert response.data.nip == [to_string(@internet_str), to_string(npc_ip)]
+
+      # No password
       refute response.data.password
 
       # TODO: Once Anycast is implemented, use it to determine whether the
@@ -82,8 +93,12 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       # It worked!
       assert_reply ref, :ok, response
 
-      assert {:npc, web_content} = response.data.webserver
-      assert web_content.title
+      # Resolved correctly
+      assert response.data.meta
+      assert response.data.meta.title
+      assert response.data.nip == [to_string(@internet_str), to_string(npc_ip)]
+
+      # No password
       refute response.data.password
 
       # TODO: Once Anycast is implemented, use it to determine whether the
@@ -129,5 +144,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
 
       CacheHelper.sync_test()
     end
+
+    @tag :pending
+    test "resolution returning password"
   end
 end

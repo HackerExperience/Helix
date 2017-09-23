@@ -11,23 +11,23 @@ defmodule Helix.Network.Query.WebTest do
     test "accepts ip" do
       {_, ip} = NPCHelper.download_center()
 
-      assert {:ok, resolution, resolved_ip} =
+      assert {:ok, {page_owner, page_content}, resolved_ip} =
         WebQuery.browse(NetworkHelper.internet_id, ip, Random.ipv4())
 
-      assert {:npc, content} = resolution
+      assert {:npc, _npc_type} = page_owner
+      assert page_content.title
       assert resolved_ip == ip
-      assert content.title
     end
 
     test "accepts name" do
       {dc, ip} = NPCHelper.download_center()
 
-      assert {:ok, resolution, resolved_ip} =
+      assert {:ok, {page_owner, page_content}, resolved_ip} =
         WebQuery.browse(NetworkHelper.internet_id, dc.anycast, Random.ipv4())
 
-      assert {:npc, content} = resolution
+      assert {:npc, _npc_type} = page_owner
+      assert page_content.title
       assert resolved_ip == ip
-      assert content.title
     end
 
     test "fails when ip doesnt exists" do

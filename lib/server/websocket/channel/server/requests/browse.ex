@@ -64,7 +64,29 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Browse do
       end
     end
 
-    def reply(request, socket),
-      do: WebsocketUtils.reply_ok(request.meta.web, socket)
+    def reply(request, socket) do
+      web = request.meta.web
+
+      [network_id, ip] = web.nip
+
+      data = %{
+        nip: [to_string(network_id), to_string(ip)],
+        meta: web.meta,
+        type: to_string(web.type),
+        password: web.password
+      }
+
+      # NPC servers have a custom `npc` field
+      npc = Map.get(web, :npc, false)
+
+      data =
+        if npc do
+          Map.put(data, :npc, npc)
+        else
+          data
+        end
+
+      WebsocketUtils.reply_ok(data, socket)
+    end
   end
 end
