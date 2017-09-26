@@ -1,5 +1,7 @@
 defmodule Helix.Story.Internal.Email do
 
+  import HELL.MacroHelpers
+
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.StoryEmail
@@ -12,7 +14,10 @@ defmodule Helix.Story.Internal.Email do
   @spec fetch(Entity.id, Step.contact) ::
     StoryEmail.t
     | nil
-  def fetch(entity_id, contact_id) do
+  docp """
+  Fetches the (entity, contact) entry, formatting it as required
+  """
+  defp fetch(entity_id, contact_id) do
     entry =
       entity_id
       |> StoryEmail.Query.by_entity()
@@ -26,6 +31,9 @@ defmodule Helix.Story.Internal.Email do
 
   @spec get_emails(Entity.id) ::
     [StoryEmail.t]
+  @doc """
+  Returns all emails from all contacts that Entity has ever interacted with.
+  """
   def get_emails(entity_id) do
     entity_id
     |> StoryEmail.Query.by_entity()
@@ -36,12 +44,18 @@ defmodule Helix.Story.Internal.Email do
   @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
     {:ok, StoryEmail.t}
     | :internal_error
+  @doc """
+  Sends an email from the contact to the player.
+  """
   def send_email(step, email_id, meta),
     do: generic_send(step, email_id, :contact, meta)
 
   @spec send_reply(Step.t(struct), Step.reply_id) ::
     {:ok, StoryEmail.t, StoryEmail.email}
     | :internal_error
+  @doc """
+  Sends a reply from the player to the contact.
+  """
   def send_reply(step, reply_id),
     do: generic_send(step, reply_id, :player)
 
@@ -64,6 +78,10 @@ defmodule Helix.Story.Internal.Email do
 
   @spec ensure_exists(Entity.id, Step.contact) ::
     :ok
+  docp """
+  If the email being sent is the very first one, i.e. it's the first interaction
+  from the player with the contact, then the contact is created.
+  """
   defp ensure_exists(entity_id, contact_id) do
     case fetch(entity_id, contact_id) do
       %StoryEmail{} ->
@@ -75,6 +93,9 @@ defmodule Helix.Story.Internal.Email do
 
   @spec add_contact(Entity.id, Step.contact) ::
     entry_email_repo_return
+  docp """
+  Creates that new contact for the player
+  """
   defp add_contact(entity_id, contact_id) do
     %{
       entity_id: entity_id,
@@ -87,7 +108,10 @@ defmodule Helix.Story.Internal.Email do
   @spec append_email(Entity.id, Step.contact, StoryEmail.email) ::
     {integer, nil | [term]}
     | no_return
-  def append_email(entity_id, contact_id, email) do
+  docp """
+  Appends the email to the previously sent emails, effectively saving it as sent
+  """
+  defp append_email(entity_id, contact_id, email) do
     entity_id
     |> StoryEmail.Query.by_entity()
     |> StoryEmail.Query.by_contact(contact_id)
@@ -97,7 +121,11 @@ defmodule Helix.Story.Internal.Email do
 
   @spec format(StoryEmail.t) ::
     StoryEmail.t
-  def format(entry),
+  docp """
+  Formats the entry, converting the email metadata back to Elixir maps, and
+  sorting all emails from oldest to newest
+  """
+  defp format(entry),
     do: StoryEmail.format(entry)
 
   @spec create_email(Step.email_id, StoryEmail.sender, Step.meta) ::

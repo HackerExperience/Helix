@@ -1,4 +1,12 @@
 defmodule Helix.Story.Model.Step.Macros do
+  @moduledoc """
+  Macros for the Step DSL.
+
+  You probably don't want to mess with this module directly. Read the Steppable
+  documentation instead.
+  """
+
+  import HELL.MacroHelpers
 
   alias HELL.Constant
   alias Helix.Story.Model.Step
@@ -211,6 +219,9 @@ defmodule Helix.Story.Model.Step.Macros do
     get_contact(mission_contact, step_module)
   end
 
+  docp """
+  Helper to ensure the given value is returned as a list.
+  """
   defp ensure_list(nil),
     do: []
   defp ensure_list(value) when is_list(value),
@@ -220,6 +231,10 @@ defmodule Helix.Story.Model.Step.Macros do
 
   @spec add_email(Step.email_id, term) ::
     Step.emails
+  docp """
+  Given an email id and its options, convert it to the internal format defined
+  by `Step.emails`, which is a map using `email_id` as lookup key.
+  """
   defp add_email(email_id, opts) do
     metadata = %{
       id: email_id,
@@ -232,6 +247,13 @@ defmodule Helix.Story.Model.Step.Macros do
 
   @spec get_emails_with_reply(Step.emails, Step.reply_id) ::
     [Step.email_id]
+  docp """
+  Helper used to identify all emails that can receive the given `reply_id`.
+
+  It is used to generate the `handle_event` filter by the `on_reply` macro,
+  ensuring that only the subset of (emails that expect reply_id) are pattern
+  matched against.
+  """
   defp get_emails_with_reply(emails, reply_id) do
     Enum.reduce(emails, [], fn {id, email}, acc ->
       cond do
@@ -247,17 +269,26 @@ defmodule Helix.Story.Model.Step.Macros do
 
   @spec email_exists?(Step.emails, Step.email_id) ::
     boolean
+  docp """
+  Helper to check whether the given email has been defined
+  """
   defp email_exists?(emails, email_id),
     do: Map.get(emails, email_id, false) && true
 
   @spec get_emails(Macro.Env.t) ::
     Step.emails
     | nil
+  docp """
+  Helper to read the module attribute `emails`
+  """
   defp get_emails(%Macro.Env{module: module}),
     do: Module.get_attribute(module, :emails)
 
   @spec set_emails(Macro.Env.t, Step.emails) ::
     :ok
+  docp """
+  Helper to set the module attribute `emails`
+  """
   defp set_emails(%Macro.Env{module: module}, emails),
     do: Module.put_attribute(module, :emails, emails)
 end

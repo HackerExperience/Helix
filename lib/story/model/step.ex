@@ -1,7 +1,13 @@
 defmodule Helix.Story.Model.Step do
   @moduledoc """
-  TODO
+  `Step` is a generic model for all steps, using the Steppable protocol as
+  wrapper.
+
+  For the most part, you probably want to read the Steppable documentation at
+  `lib/story/model/steppable.ex`
   """
+
+  import HELL.MacroHelpers
 
   alias HELL.Constant
   alias Helix.Event
@@ -42,9 +48,7 @@ defmodule Helix.Story.Model.Step do
   @spec new(t(struct), Event.t) ::
     t(struct)
   @doc """
-  Given the raw step name fetched from the Database (string, on the format
-  `mission_name@step_name`), figures out the corresponding Elixir module and
-  calls the `new` function, which will return a valid Step struct.
+  Returns a new step struct with the given event assigned to it.
   """
   def new(%{entity_id: entity_id, name: step_name, meta: meta}, event) do
     step_name
@@ -52,6 +56,12 @@ defmodule Helix.Story.Model.Step do
     |> apply(:new, [entity_id, meta, event])
   end
 
+  @spec fetch(step_name, Entity.id, meta) ::
+    t(struct)
+  @doc """
+  Given a step raw name (string), return its struct, assigning the correct
+  entity and meta to it.
+  """
   def fetch(step_name, entity_id, meta) do
     step_name
     |> get_module()
@@ -77,22 +87,42 @@ defmodule Helix.Story.Model.Step do
 
   @spec get_contact(t(struct)) ::
     contact
+  @doc """
+  Returns the Step contact id.
+  """
   def get_contact(step),
     do: Steppable.get_contact(step)
 
   @spec get_replies(t(struct), email_id) ::
     [reply_id]
+  @doc """
+  Returns the unlocked replies of the given email.
+  """
   def get_replies(step, email),
     do: Steppable.get_replies(step, email)
 
   @spec get_next_step(t(struct)) ::
     step_name
+  @doc """
+  Returns the next step name.
+  """
   def get_next_step(step),
     do: Steppable.next_step(step)
 
+  @spec format_meta(t(struct)) ::
+    meta
+  @doc """
+  Formats the step metadata to Helix internal data structures.
+  """
+  def format_meta(step),
+    do: Steppable.format_meta(step)
+
   @spec get_module(step_name) ::
     step_module :: Constant.t
-  def get_module(step_name) do
+  docp """
+  Returns the Elixir module (atom) to be used by `new/2` and `fetch/3`
+  """
+  defp get_module(step_name) do
     module_str =
       step_name
       |> Atom.to_string()

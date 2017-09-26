@@ -1,4 +1,16 @@
 defmodule Helix.Story.Model.StoryStep do
+  @moduledoc """
+  StoryStep is a persistent representation of the Player's current step.
+
+  It's only a helper to be used alongside Step, but a necessary one in order to
+  save state, like all emails that have been sent, or the allowed replies a
+  player may sent (including unlocked ones).
+
+  The `meta` field is the same one from Step meta. Since it's stored as JSONB,
+  it may lose internal Helix data structure representation, in which case
+  Steppable.format should be called in order to translate the record back to
+  Helix format.
+  """
 
   use Ecto.Schema
 
@@ -53,6 +65,10 @@ defmodule Helix.Story.Model.StoryStep do
 
   @spec replace_meta(t, Step.meta) ::
     changeset
+  @doc """
+  Overwrites the metadata field. Useful when a generated ID has changed, for
+  example.
+  """
   def replace_meta(entry, meta) when is_map(meta) do
     entry
     |> Changeset.change()
@@ -61,6 +77,11 @@ defmodule Helix.Story.Model.StoryStep do
 
   @spec unlock_reply(t, Step.reply_id) ::
     changeset
+  @doc """
+  Unlocks a reply, i.e. it adds the reply to the `allowed_replies` list,
+  allowing the user to use it as a reply. Useful when a Step reply depends
+  upon an external action/event made by the player.
+  """
   def unlock_reply(entry, reply_id) do
     entry
     |> Changeset.change()
@@ -69,6 +90,14 @@ defmodule Helix.Story.Model.StoryStep do
 
   @spec lock_reply(t, Step.reply_id) ::
     changeset
+  @doc """
+  Opposite of `unlock_reply`, i.e. it removes a reply from the list of allowed
+  replies. Called automatically after each reply sent by the user, avoiding
+  him from sending the same reply multiple times.
+
+  If a Step wants to support repeated replies by the user, it must explicitly
+  unlock the reply after it has been sent.
+  """
   def lock_reply(entry, reply_id) do
     entry
     |> Changeset.change()
@@ -77,6 +106,10 @@ defmodule Helix.Story.Model.StoryStep do
 
   @spec append_email(t, Step.email_id, [Step.email_id]) ::
     changeset
+  @doc """
+  Marks the given `email_id` as sent, saving alongside it a list of possible
+  replies.
+  """
   def append_email(entry, email_id, allowed_replies) do
     entry
     |> Changeset.change()
@@ -87,16 +120,30 @@ defmodule Helix.Story.Model.StoryStep do
   @spec get_current_email(t) ::
     last_email :: Step.email_id
     | nil
+  @doc """
+  Returns the current email, which is the last email on the `emails_sent` list
+  """
   def get_current_email(entry),
     do: List.last(entry.emails_sent)
 
   @spec can_send_reply?(t, Step.reply_id) ::
     boolean
+  @doc """
+  Verifies whether the player can send the given reply_id. There are two cases
+  the player may not be allowed to reply:
+  1 - When the reply_id does not exist for that email.
+  2 - When the reply_id is not listed on `allowed_replies`. Usually, the
+    reply_id is locked by default and the player did not performed the event
+    needed in order to unlock it.
+  """
   def can_send_reply?(entry, reply_id),
     do: Enum.member?(get_allowed_replies(entry), reply_id)
 
   @spec get_allowed_replies(t) ::
     [Step.reply_id]
+  @doc """
+  Returns all allowed replies by the player
+  """
   def get_allowed_replies(entry),
     do: entry.allowed_replies
 

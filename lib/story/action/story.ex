@@ -17,6 +17,13 @@ defmodule Helix.Story.Action.Story do
   @spec proceed_step(prev_step :: Step.t(struct), next_step :: Step.t(struct)) ::
     {:ok, StoryStep.t}
     | {:error, :internal}
+  @doc """
+  Proceeds to the next step.
+
+  If only one argument is passed, we assume the very first step is being created
+
+  For all other cases, the previous step is removed and the next step is created
+  """
   def proceed_step(first_step),
     do: StepInternal.proceed(first_step)
   def proceed_step(prev_step, next_step),
@@ -25,29 +32,51 @@ defmodule Helix.Story.Action.Story do
   @spec update_step_meta(Step.t(struct)) ::
     StepInternal.entry_step_repo_return
     | no_return
+  @doc """
+  Updates the StoryStep metadata.
+  """
   def update_step_meta(step),
     do: StepInternal.update_meta(step)
-
-  @spec update_step_emails(Step.t(struct), Step.email_id) ::
-    StepInternal.entry_step_repo_return
-    | no_return
-  def update_step_emails(step, email_sent),
-    do: StepInternal.save_email(step, email_sent)
 
   @spec unlock_reply(Step.t(struct), Step.reply_id) ::
     StepInternal.entry_step_repo_return
     | no_return
+  @doc """
+  Marks a reply as unlock, allowing the player to use it as a valid reply.
+  """
   def unlock_reply(step, reply_id),
     do: StepInternal.unlock_reply(step, reply_id)
 
+  @spec lock_reply(Step.t(struct), Step.reply_id) ::
+    StepInternal.entry_step_repo_return
+    | no_return
+  @doc """
+  Locks a reply, blocking the user from using it (again) as a valid reply
+  """
+  def lock_reply(step, reply_id),
+    do: StepInternal.lock_reply(step, reply_id)
+
   @spec notify_step(Step.t(struct), Step.t(struct)) ::
     [StepProceededEvent.t]
+  @doc """
+  Generates the StepProceededEvent, used to notify the client about the progress
+  made.
+  """
   def notify_step(prev_step, next_step),
     do: [step_proceeded_event(prev_step, next_step)]
 
   @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
     {:ok, [EmailSentEvent.t]}
     | {:error, :internal}
+  @doc """
+  Sends an email from the contact to the player.
+
+  When the email is sent (saved on StoryEmail), it is also saved on StoryStep,
+  maintaining the Step state.
+
+  During the StoryStep save, it overwrites the `allowed_replies` from the
+  previous email (if any) to the default allowed replies of the email_id.
+  """
   def send_email(step, email_id, meta) do
     Repo.transaction(fn ->
       with \
@@ -66,6 +95,16 @@ defmodule Helix.Story.Action.Story do
     {:ok, [ReplySentEvent.t]}
     | {:error, {:reply, :not_found}}
     | {:error, :internal}
+  @doc """
+  Sends a reply from the player to the contact
+
+  May fail with `{:reply, :not_found}` if the given reply is invalid within that
+  context, i.e. either the reply id does not exist or is not listed under the
+  allowed_replies entry.
+
+  After sent, the reply id is removed from the list of allowed_replies in order
+  to avoid the player from repeatedly sending the same reply.
+  """
   def send_reply(step, story_step, reply_id) do
     Repo.transaction(fn ->
       with \

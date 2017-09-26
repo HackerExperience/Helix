@@ -2,7 +2,6 @@ defmodule Helix.Story.Internal.Step do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.Steppable
   alias Helix.Story.Model.StoryStep
   alias Helix.Story.Repo
 
@@ -20,22 +19,33 @@ defmodule Helix.Story.Internal.Step do
     |> Repo.one!()
   end
 
-  @spec get_current_step(Entity.id) ::
-    StoryStep.t
+  @spec fetch_current_step(Entity.id) ::
+    %{
+      object: Step.t(struct),
+      entry: StoryStep.t
+    }
     | nil
-  def get_current_step(entity_id) do
+  @doc """
+  Returns the current step of the player, both the StoryStep entry, and the
+  Step struct, which we are calling `object`.
+
+  It also formats the Step metadata, converting it back to Helix internal format
+  """
+  def fetch_current_step(entity_id) do
     story_step =
       entity_id
       |> StoryStep.Query.by_entity()
       |> Repo.one()
 
     if story_step do
-      formatted_meta =
-        story_step.step_name
-        |> Step.fetch(story_step.entity_id, story_step.meta)
-        |> Steppable.format_meta()
+      step =
+        Step.fetch(story_step.step_name, story_step.entity_id, story_step.meta)
+      formatted_meta = Step.format_meta(step)
 
-      %{story_step|meta: formatted_meta}
+      %{
+        object: step,
+        entry: %{story_step| meta: formatted_meta}
+      }
     end
   end
 
@@ -44,6 +54,13 @@ defmodule Helix.Story.Internal.Step do
   @spec proceed(prev_step :: Step.t(struct), next_step :: Step.t(struct)) ::
     {:ok, StoryStep.t}
     | {:error, :internal}
+  @doc """
+  Proceeds to the next step.
+
+  If only one argument is passed, we assume the very first step is being created
+
+  For all other cases, the previous step is removed and the next step is created
+  """
   def proceed(next_step),
     do: create(next_step)
   def proceed(prev_step, next_step) do
@@ -54,7 +71,7 @@ defmodule Helix.Story.Internal.Step do
       do
         entry
       else
-        error ->
+        _ ->
           Repo.rollback(:internal)
       end
     end)
@@ -63,6 +80,9 @@ defmodule Helix.Story.Internal.Step do
   @spec update_meta(Step.t(struct)) ::
     entry_step_repo_return
     | no_return
+  @doc """
+  Updates the StoryStep metadata.
+  """
   def update_meta(step) do
     step
     |> fetch!()
@@ -73,6 +93,9 @@ defmodule Helix.Story.Internal.Step do
   @spec unlock_reply(Step.t(struct), Step.reply_id) ::
     entry_step_repo_return
     | no_return
+  @doc """
+  Marks a reply as unlock, allowing the player to use it as a valid reply.
+  """
   def unlock_reply(step, reply_id) do
     step
     |> fetch!()
@@ -80,25 +103,34 @@ defmodule Helix.Story.Internal.Step do
     |> update()
   end
 
+  @spec lock_reply(Step.t(struct), Step.reply_id) ::
+    entry_step_repo_return
+    | no_return
+  @doc """
+  Locks a reply, blocking the user from using it (again) as a valid reply
+  """
+  def lock_reply(step, reply_id) do
+    step
+    |> fetch!()
+    |> StoryStep.lock_reply(reply_id)
+    |> update()
+  end
+
   @spec save_email(Step.t(struct), Step.email_id) ::
     entry_step_repo_return
     | no_return
+  @doc """
+  Flags the given email as sent, so we know what the current step state is.
+
+  It also inserts along all allowed replies to the email (i.e. the ones that
+  are unlocked by default)
+  """
   def save_email(step, email_id) do
     replies = Step.get_replies(step, email_id)
 
     step
     |> fetch!()
     |> StoryStep.append_email(email_id, replies)
-    |> update()
-  end
-
-  @spec lock_reply(Step.t(struct), Step.reply_id) ::
-    entry_step_repo_return
-    | no_return
-  def lock_reply(step, reply_id) do
-    step
-    |> fetch!()
-    |> StoryStep.lock_reply(reply_id)
     |> update()
   end
 

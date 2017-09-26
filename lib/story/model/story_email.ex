@@ -1,4 +1,18 @@
 defmodule Helix.Story.Model.StoryEmail do
+  @moduledoc """
+  StoryEmail is a persistent storage on the Database holding information about
+  all Storyline Emails exchanged by the Player and the story Contacts.
+
+  It assumes that one contact may exchange multiple messages, hence a list of
+  emails is used for each contact.
+
+  These emails may have been sent either by the contact, or by the player. As
+  such, each one has a `sender` field, which may be one of `:contact` or
+  `:player`.
+
+  An email may have metadata, for the case where IDs or IPs must be saved along
+  with it.
+  """
 
   use Ecto.Schema
 
@@ -73,6 +87,10 @@ defmodule Helix.Story.Model.StoryEmail do
 
   @spec format(t) ::
     t
+  @doc """
+  Formats the email metadata, making sure it's a valid Elixir map. It also sorts
+  all emails from newest to oldest.
+  """
   def format(entry) do
     formatted_emails =
       entry.emails

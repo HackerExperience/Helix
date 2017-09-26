@@ -13,17 +13,20 @@ defmodule Helix.Story.Query.Story do
       entry: StoryStep.t
     }
     | nil
-  def fetch_current_step(entity_id) do
-    with story_step = %{} <- StepInternal.get_current_step(entity_id) do
-      %{
-        object: Step.fetch(story_step.step_name, entity_id, story_step.meta),
-        entry: story_step
-      }
-    end
-  end
+  @doc """
+  Returns the current step of the player, both the StoryStep entry and the Step
+  struct, which we are calling `object`.
+
+  The returned metadata is using Helix internal data structures.
+  """
+  defdelegate fetch_current_step(entity_id),
+    to: StepInternal
 
   @spec get_emails(Entity.id) ::
     [StoryEmail.t]
+  @doc """
+  Returns all emails from all contacts that Entity has ever interacted with.
+  """
   defdelegate get_emails(entity_id),
     to: EmailInternal
 end
