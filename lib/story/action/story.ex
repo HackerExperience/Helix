@@ -110,7 +110,7 @@ defmodule Helix.Story.Action.Story do
       with \
         true <-
           StoryStep.can_send_reply?(story_step, reply_id)
-          || {:reply, :notfound},
+          || {:reply, :not_found},
         {:ok, _, email} <- EmailInternal.send_reply(step, reply_id),
         {:ok, _} <- StepInternal.lock_reply(step, reply_id)
       do

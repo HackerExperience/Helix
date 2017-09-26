@@ -9,11 +9,11 @@ defmodule Helix.Story.Internal.StepTest do
   alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
-  describe "get_current_step/1" do
+  describe "fetch_current_step/1" do
     test "returns current step" do
       {story_step, _} = StorySetup.story_step()
 
-      current = StepInternal.get_current_step(story_step.entity_id)
+      %{entry: current} = StepInternal.fetch_current_step(story_step.entity_id)
 
       assert current == story_step
     end
@@ -25,13 +25,13 @@ defmodule Helix.Story.Internal.StepTest do
           meta: %{foo: :bar, id: Entity.ID.generate()}
         )
 
-      current = StepInternal.get_current_step(story_step.entity_id)
+      %{entry: current} = StepInternal.fetch_current_step(story_step.entity_id)
 
       assert current == story_step
     end
 
     test "returns nil when entity isn't part of any step" do
-      refute StepInternal.get_current_step(Entity.ID.generate())
+      refute StepInternal.fetch_current_step(Entity.ID.generate())
     end
   end
 
@@ -41,7 +41,7 @@ defmodule Helix.Story.Internal.StepTest do
       {first_step, _} = StorySetup.step(entity_id: entity_id)
 
       # Not part of any step
-      refute StepInternal.get_current_step(entity_id)
+      refute StepInternal.fetch_current_step(entity_id)
 
       # Proceeds to the first step
       assert {:ok, story_step} = StepInternal.proceed(first_step)
@@ -50,7 +50,7 @@ defmodule Helix.Story.Internal.StepTest do
       assert story_step.step_name == first_step.name
 
       # Retrieve from DB
-      db_entry = StepInternal.get_current_step(entity_id)
+      %{entry: db_entry} = StepInternal.fetch_current_step(entity_id)
       assert db_entry == story_step
     end
 
@@ -59,17 +59,15 @@ defmodule Helix.Story.Internal.StepTest do
         StorySetup.step_sequence()
 
       # Currently on `prev_step`
-      step_before = StepInternal.get_current_step(entity_id)
-      assert step_before.step_name == prev_step.name
-      assert step_before.meta == prev_step.meta
+      %{object: step_before} = StepInternal.fetch_current_step(entity_id)
+      assert step_before == prev_step
 
       # Proceeds to the next step
       StepInternal.proceed(prev_step, next_step)
 
       # It proceeded to the next step
-      step_after = StepInternal.get_current_step(entity_id)
-      assert step_after.step_name == next_step.name
-      assert step_after.meta == next_step.meta
+      %{object: step_after} = StepInternal.fetch_current_step(entity_id)
+      assert step_after == next_step
 
       # Make sure there's only one entry (the previous step was deleted)
       assert length(StoryHelper.get_steps_from_entity(entity_id)) == 1
@@ -82,7 +80,7 @@ defmodule Helix.Story.Internal.StepTest do
         StorySetup.story_step(name: :fake_steps@test_counter, meta: %{i: 0})
 
       # Current step has the original meta, as expected
-      story_step0 = StepInternal.get_current_step(entity_id)
+      %{entry: story_step0} = StepInternal.fetch_current_step(entity_id)
       assert story_step0.meta == %{i: 0}
 
       # Create a new step with a different meta
@@ -92,13 +90,13 @@ defmodule Helix.Story.Internal.StepTest do
       assert {:ok, _} = StepInternal.update_meta(new_step)
 
       # Ensure step meta changed
-      story_step1 = StepInternal.get_current_step(entity_id)
+      %{entry: story_step1} = StepInternal.fetch_current_step(entity_id)
       assert story_step1.meta == %{i: 1}
 
       # One more time!
       StepInternal.update_meta(%{step| meta: %{i: 2}})
 
-      story_step2 = StepInternal.get_current_step(entity_id)
+      %{entry: story_step2} = StepInternal.fetch_current_step(entity_id)
       assert story_step2.meta == %{i: 2}
     end
 
@@ -122,7 +120,9 @@ defmodule Helix.Story.Internal.StepTest do
       assert new_entry1.allowed_replies == [reply_id1]
 
       # Ensure data on DB is correct
-      db_entry1 = StepInternal.get_current_step(entity_id)
+      %{entry: db_entry1, object: fetched_step} =
+        StepInternal.fetch_current_step(entity_id)
+      assert fetched_step == step
       assert db_entry1.allowed_replies == [reply_id1]
 
       # Add another reply
@@ -130,7 +130,7 @@ defmodule Helix.Story.Internal.StepTest do
       assert new_entry2.allowed_replies == [reply_id1, reply_id2]
 
       # Ensure it got pushed into the list
-      db_entry2 = StepInternal.get_current_step(entity_id)
+      %{entry: db_entry2} = StepInternal.fetch_current_step(entity_id)
       assert db_entry2.allowed_replies == [reply_id1, reply_id2]
     end
 
@@ -143,7 +143,7 @@ defmodule Helix.Story.Internal.StepTest do
       assert {:ok, _} = StepInternal.unlock_reply(step, reply_id)
       assert {:ok, _} = StepInternal.unlock_reply(step, reply_id)
 
-      db_entry = StepInternal.get_current_step(entity_id)
+      %{entry: db_entry} = StepInternal.fetch_current_step(entity_id)
       assert db_entry.allowed_replies == [reply_id]
     end
 
@@ -164,7 +164,7 @@ defmodule Helix.Story.Internal.StepTest do
       reply_id = Enum.random(allowed_before)
 
       assert {:ok, _} = StepInternal.lock_reply(step, reply_id)
-      new_entry = StepInternal.get_current_step(entity_id)
+      %{entry: new_entry} = StepInternal.fetch_current_step(entity_id)
 
       allowed_after = StoryStep.get_allowed_replies(new_entry)
 
@@ -181,7 +181,7 @@ defmodule Helix.Story.Internal.StepTest do
       reply_id = "i_do_not_exist"
 
       assert {:ok, _} = StepInternal.lock_reply(step, reply_id)
-      new_entry = StepInternal.get_current_step(entity_id)
+      %{entry: new_entry} = StepInternal.fetch_current_step(entity_id)
 
       allowed_after = StoryStep.get_allowed_replies(new_entry)
 
@@ -202,7 +202,7 @@ defmodule Helix.Story.Internal.StepTest do
       assert new_entry1.emails_sent == [email_id1]
 
       # Ensure data on DB is correct
-      db_entry1 = StepInternal.get_current_step(entity_id)
+      %{entry: db_entry1} = StepInternal.fetch_current_step(entity_id)
       assert db_entry1.emails_sent == [email_id1]
 
       # Add another reply
@@ -210,7 +210,7 @@ defmodule Helix.Story.Internal.StepTest do
       assert new_entry2.emails_sent == [email_id1, email_id2]
 
       # Ensure it got pushed into the list
-      db_entry2 = StepInternal.get_current_step(entity_id)
+      %{entry: db_entry2} = StepInternal.fetch_current_step(entity_id)
       assert db_entry2.emails_sent == [email_id1, email_id2]
     end
 
@@ -223,7 +223,7 @@ defmodule Helix.Story.Internal.StepTest do
       assert {:ok, _} = StepInternal.save_email(step, email_id)
       assert {:ok, _} = StepInternal.save_email(step, email_id)
 
-      db_entry = StepInternal.get_current_step(entity_id)
+      %{entry: db_entry} = StepInternal.fetch_current_step(entity_id)
       assert db_entry.emails_sent == [email_id, email_id, email_id]
     end
 

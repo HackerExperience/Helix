@@ -52,7 +52,7 @@ defmodule Helix.Test.Story.Setup do
     {:ok, _} = StoryAction.proceed_step(step)
     {:ok, _, _} = Steppable.setup(step, %{})
 
-    inserted = StepInternal.get_current_step(step.entity_id)
+    %{entry: inserted} = StepInternal.fetch_current_step(step.entity_id)
     {inserted, related}
   end
 

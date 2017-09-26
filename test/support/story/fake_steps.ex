@@ -34,7 +34,7 @@ defmodule Helix.Test.Story.StepHelper do
     do: :test_contact
 end
 
-defmodule Helix.Story.Model.Mission.FakeSteps do
+defmodule Helix.Story.Mission.FakeSteps do
 
   import Helix.Story.Model.Step.Macros
 
@@ -85,7 +85,7 @@ defmodule Helix.Story.Model.Mission.FakeSteps do
     def format_meta(%{meta: meta}),
       do: %{step: String.to_existing_atom(meta["step"])}
 
-    next_step Helix.Story.Model.Mission.FakeSteps.TestTwo
+    next_step Helix.Story.Mission.FakeSteps.TestTwo
   end
 
   step TestTwo do
@@ -141,6 +141,6 @@ defmodule Helix.Story.Model.Mission.FakeSteps do
     def complete(step),
       do: {:ok, step, []}
 
-    next_step Helix.Story.Model.Mission.FakeSteps.TestSimple
+    next_step Helix.Story.Mission.FakeSteps.TestSimple
   end
 end

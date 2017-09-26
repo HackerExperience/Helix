@@ -130,7 +130,7 @@ defmodule Helix.Story.Model.Step do
       |> Enum.map(&Macro.camelize/1)
       |> Enum.join(".")
 
-    "Elixir.Helix.Story.Model.Mission." <>  module_str
+    "Elixir.Helix.Story.Mission." <>  module_str
     |> String.to_atom()
   end
 

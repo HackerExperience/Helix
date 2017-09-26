@@ -1,4 +1,4 @@
-defmodule Helix.Story.Model.Mission.Tutorial do
+defmodule Helix.Story.Mission.Tutorial do
 
   import Helix.Story.Model.Step.Macros
 
@@ -22,7 +22,7 @@ defmodule Helix.Story.Model.Mission.Tutorial do
       {:ok, step, []}
     end
 
-    next_step Helix.Story.Model.Mission.Tutorial.DownloadCrackerPublicFTP
+    next_step Helix.Story.Mission.Tutorial.DownloadCrackerPublicFTP
   end
 
   step DownloadCrackerPublicFTP do

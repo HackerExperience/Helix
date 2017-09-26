@@ -43,7 +43,7 @@ defmodule Helix.Story.Internal.Step do
       formatted_meta = Step.format_meta(step)
 
       %{
-        object: step,
+        object: %{step| meta: formatted_meta},
         entry: %{story_step| meta: formatted_meta}
       }
     end

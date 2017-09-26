@@ -14,10 +14,10 @@ defmodule Helix.Story.Internal.Email do
   @spec fetch(Entity.id, Step.contact) ::
     StoryEmail.t
     | nil
-  docp """
+  @doc """
   Fetches the (entity, contact) entry, formatting it as required
   """
-  defp fetch(entity_id, contact_id) do
+  def fetch(entity_id, contact_id) do
     entry =
       entity_id
       |> StoryEmail.Query.by_entity()
