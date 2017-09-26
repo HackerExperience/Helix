@@ -10,9 +10,11 @@ defmodule Helix.Story.Public.Story do
 
   @spec send_reply(Entity.id, Step.reply_id) ::
     :ok
-    | {:error, {:entity, :not_in_step}}
-    | {:error, {:reply, :not_found}}
+    | {:error, %{message: String.t}}
     | {:error, :internal}
+  @doc """
+  Sends a reply from the player to a contact.
+  """
   def send_reply(entity_id, reply_id) do
     flowing do
       with \
@@ -24,9 +26,14 @@ defmodule Helix.Story.Public.Story do
         :ok
       else
         :badstep ->
-          {:error, {:entity, :not_in_step}}
-        error ->
-          error
+          {:error, %{message: "not_in_step"}}
+        {:error, reason} ->
+          case reason do
+            {:reply, :not_found} ->
+              {:error, %{message: "reply_not_found"}}
+            :internal ->
+              {:error, %{message: "internal"}}
+          end
       end
     end
   end

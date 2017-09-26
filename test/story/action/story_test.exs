@@ -8,6 +8,7 @@ defmodule Helix.Story.Action.StoryTest do
   alias Helix.Story.Model.StoryStep
   alias Helix.Story.Query.Story, as: StoryQuery
 
+  alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "send_email/3" do
@@ -54,7 +55,7 @@ defmodule Helix.Story.Action.StoryTest do
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
       %{object: step, entry: entry} = StoryQuery.fetch_current_step(entity_id)
-      reply_id = get_allowed_reply(entry)
+      reply_id = StoryHelper.get_allowed_reply(entry)
 
       assert {:ok, [event]} = StoryAction.send_reply(step, entry, reply_id)
 
@@ -71,7 +72,7 @@ defmodule Helix.Story.Action.StoryTest do
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
       %{object: step, entry: entry} = StoryQuery.fetch_current_step(entity_id)
-      reply_id = get_allowed_reply(entry)
+      reply_id = StoryHelper.get_allowed_reply(entry)
 
       allowed_before = StoryStep.get_allowed_replies(entry)
       assert {:ok, _event} = StoryAction.send_reply(step, entry, reply_id)
@@ -93,12 +94,6 @@ defmodule Helix.Story.Action.StoryTest do
 
       assert {:error, reason} = StoryAction.send_reply(step, entry, reply_id)
       assert reason == {:reply, :not_found}
-    end
-
-    defp get_allowed_reply(entry) do
-      entry
-      |> StoryStep.get_allowed_replies()
-      |> Enum.random()
     end
   end
 end
