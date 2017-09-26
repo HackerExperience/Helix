@@ -1,9 +1,11 @@
 defmodule Helix.Test.Story.Setup do
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
+  alias Helix.Story.Model.Steppable
   alias Helix.Story.Model.StoryEmail
   alias Helix.Story.Model.StoryStep
   alias Helix.Story.Repo, as: StoryRepo
@@ -44,8 +46,13 @@ defmodule Helix.Test.Story.Setup do
   See doc on `fake_story_step/1`
   """
   def story_step(opts \\ []) do
-    {story_step, related} = fake_story_step(opts)
-    {:ok, inserted} = StoryRepo.insert(story_step)
+    {_, related = %{step: step}} = fake_story_step(opts)
+
+    # Save the step on DB and run its `setup`
+    {:ok, _} = StoryAction.proceed_step(step)
+    {:ok, _, _} = Steppable.setup(step, %{})
+
+    inserted = StepInternal.get_current_step(step.entity_id)
     {inserted, related}
   end
 
@@ -71,6 +78,7 @@ defmodule Helix.Test.Story.Setup do
       end
 
     entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+
     emails_sent = Keyword.get(opts, :emails_sent, [])
     allowed_replies = Keyword.get(opts, :allowed_replies, [])
 
@@ -216,7 +224,7 @@ defmodule Helix.Test.Story.Setup do
     email_id = Random.string(min: 4, max: 8)
     email_meta = %{}
 
-    {:ok, story_email} = EmailInternal.send_email(step, email_id, email_meta)
+    {:ok, story_email, _} = EmailInternal.send_email(step, email_id, email_meta)
 
     related = %{
       step: step,
@@ -266,7 +274,7 @@ defmodule Helix.Test.Story.Setup do
   defp sort_emails(entry) do
     emails =
       entry.emails
-      |> Enum.sort(&(&1.timestamp >= &2.timestamp))
+      |> Enum.sort(&(&2.timestamp >= &1.timestamp))
 
     %{entry| emails: emails}
   end

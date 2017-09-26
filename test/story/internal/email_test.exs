@@ -54,7 +54,8 @@ defmodule Helix.Story.Internal.EmailTest do
       email_id = "email_id"
 
       # Send email for the first time (contact must be created first)
-      assert {:ok, story_email} = EmailInternal.send_email(step, email_id, %{})
+      assert {:ok, story_email, _} =
+        EmailInternal.send_email(step, email_id, %{})
       assert story_email.entity_id == entity_id
 
       # Verify the email was sent with the correct data
@@ -80,7 +81,7 @@ defmodule Helix.Story.Internal.EmailTest do
       reply_id = "reply_id"
 
       # Send reply for the first time (contact must be created first)
-      assert {:ok, story_email} = EmailInternal.send_reply(step, reply_id)
+      assert {:ok, story_email, _} = EmailInternal.send_reply(step, reply_id)
       assert story_email.entity_id == entity_id
 
       # Verify the reply was sent with the correct data

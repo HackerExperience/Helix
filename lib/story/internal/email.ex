@@ -1,5 +1,6 @@
 defmodule Helix.Story.Internal.Email do
 
+  alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.StoryEmail
   alias Helix.Story.Repo
@@ -34,19 +35,19 @@ defmodule Helix.Story.Internal.Email do
 
   @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
     {:ok, StoryEmail.t}
-    | :error
+    | :internal_error
   def send_email(step, email_id, meta),
     do: generic_send(step, email_id, :contact, meta)
 
   @spec send_reply(Step.t(struct), Step.reply_id) ::
-    {:ok, StoryEmail.t}
-    | :error
+    {:ok, StoryEmail.t, StoryEmail.email}
+    | :internal_error
   def send_reply(step, reply_id),
     do: generic_send(step, reply_id, :player)
 
   @spec generic_send(term, id :: String.t, StoryEmail.sender, meta :: map) ::
-    {:ok, StoryEmail.t}
-    | :error
+    {:ok, StoryEmail.t, StoryEmail.email}
+    | :internal_error
   defp generic_send(step, id, sender, meta \\ %{}) do
     email = create_email(id, sender, meta)
     contact_id = Step.get_contact(step)
@@ -54,9 +55,10 @@ defmodule Helix.Story.Internal.Email do
     ensure_exists(step.entity_id, contact_id)
     case append_email(step.entity_id, contact_id, email) do
       {1, [story_email]} ->
-        {:ok, format(story_email)}
+        entry = format(story_email)
+        {:ok, entry, List.last(entry.emails)}
       _ ->
-        :error
+        :internal_error
     end
   end
 

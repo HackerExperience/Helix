@@ -67,13 +67,38 @@ defmodule Helix.Story.Model.StoryStep do
     |> do_unlock(reply_id)
   end
 
-  @spec append_email(t, Step.email_id) ::
+  @spec lock_reply(t, Step.reply_id) ::
     changeset
-  def append_email(entry, email_id) do
+  def lock_reply(entry, reply_id) do
+    entry
+    |> Changeset.change()
+    |> do_lock(reply_id)
+  end
+
+  @spec append_email(t, Step.email_id, [Step.email_id]) ::
+    changeset
+  def append_email(entry, email_id, allowed_replies) do
     entry
     |> Changeset.change()
     |> do_append(email_id)
+    |> put_change(:allowed_replies, allowed_replies)
   end
+
+  @spec get_current_email(t) ::
+    last_email :: Step.email_id
+    | nil
+  def get_current_email(entry),
+    do: List.last(entry.emails_sent)
+
+  @spec can_send_reply?(t, Step.reply_id) ::
+    boolean
+  def can_send_reply?(entry, reply_id),
+    do: Enum.member?(get_allowed_replies(entry), reply_id)
+
+  @spec get_allowed_replies(t) ::
+    [Step.reply_id]
+  def get_allowed_replies(entry),
+    do: entry.allowed_replies
 
   @spec do_unlock(changeset, Step.reply_id) ::
     changeset
@@ -84,6 +109,16 @@ defmodule Helix.Story.Model.StoryStep do
       previously_unlocked
       |> Kernel.++([reply_id])
       |> Enum.uniq()
+
+    changeset
+    |> put_change(:allowed_replies, new_replies)
+  end
+
+  @spec do_lock(changeset, Step.reply_id) ::
+    changeset
+  defp do_lock(changeset, reply_id) do
+    previously_unlocked = get_field(changeset, :allowed_replies, [])
+    new_replies = List.delete(previously_unlocked, reply_id)
 
     changeset
     |> put_change(:allowed_replies, new_replies)

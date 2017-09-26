@@ -10,6 +10,8 @@ defmodule Helix.Account.Websocket.Channel.Account do
   alias Helix.Account.Websocket.Channel.Account.Join, as: AccountJoin
   alias Helix.Account.Websocket.Channel.Account.Requests.Bootstrap,
     as: BootstrapRequest
+  alias Helix.Account.Websocket.Channel.Account.Requests.EmailReply,
+    as: EmailReplyRequest
 
   def join(topic, _params, socket) do
     request = AccountJoin.new(topic)
@@ -18,6 +20,11 @@ defmodule Helix.Account.Websocket.Channel.Account do
 
   def handle_in("bootstrap", _params, socket) do
     request = BootstrapRequest.new()
+    Websocket.handle_request(request, socket)
+  end
+
+  def handle_in("email.reply", params, socket) do
+    request = EmailReplyRequest.new(params)
     Websocket.handle_request(request, socket)
   end
 

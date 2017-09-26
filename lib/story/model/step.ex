@@ -31,25 +31,25 @@ defmodule Helix.Story.Model.Step do
 
   @type contact :: Constant.t
 
-  @type t(struct) :: %{
-    __struct__: struct,
-    event: Event.t,
-    step: step_name,
+  @type t(step_type) :: %{
+    __struct__: step_type,
+    event: Event.t | nil,
+    name: step_name,
     meta: meta,
     entity_id: Entity.id
   }
 
-  @spec new(%{name: step_name, meta: meta}, Event.t) ::
+  @spec new(t(struct), Event.t) ::
     t(struct)
   @doc """
   Given the raw step name fetched from the Database (string, on the format
   `mission_name@step_name`), figures out the corresponding Elixir module and
   calls the `new` function, which will return a valid Step struct.
   """
-  def new(%{name: step_name, meta: meta}, event) do
+  def new(%{entity_id: entity_id, name: step_name, meta: meta}, event) do
     step_name
     |> get_module()
-    |> apply(:new, [event, meta])
+    |> apply(:new, [entity_id, meta, event])
   end
 
   def fetch(step_name, entity_id, meta) do
@@ -75,12 +75,22 @@ defmodule Helix.Story.Model.Step do
     |> String.to_atom()
   end
 
-  @spec get_contact(Step.t(struct)) ::
-    Step.contact
+  @spec get_contact(t(struct)) ::
+    contact
   def get_contact(step),
     do: Steppable.get_contact(step)
 
-  @spec get_module(Step.step_name) ::
+  @spec get_replies(t(struct), email_id) ::
+    [reply_id]
+  def get_replies(step, email),
+    do: Steppable.get_replies(step, email)
+
+  @spec get_next_step(t(struct)) ::
+    step_name
+  def get_next_step(step),
+    do: Steppable.next_step(step)
+
+  @spec get_module(step_name) ::
     step_module :: Constant.t
   def get_module(step_name) do
     module_str =
@@ -99,6 +109,8 @@ defmodule Helix.Story.Model.Step do
   @doc """
   Given an event, figure out which entity is responsible for it.
   """
+  def get_entity(%_{entity_id: entity_id}),
+    do: entity_id
   def get_entity(%_{source_entity_id: entity_id}),
     do: entity_id
 
@@ -131,12 +143,12 @@ defmodule Helix.Story.Model.Step do
           }
         end
 
-        @spec new(Helix.Event.t, Step.meta) :: t
-        def new(event, meta) do
+        @spec new(Entity.id, Step.meta, Helix.Event.t) :: t
+        def new(entity_id, meta, event) do
           %__MODULE__{
             name: Step.get_name(__MODULE__),
             event: event,
-            entity_id: Step.get_entity(event),
+            entity_id: entity_id,
             meta: meta
           }
         end

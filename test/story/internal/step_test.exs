@@ -3,6 +3,7 @@ defmodule Helix.Story.Internal.StepTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Story.Model.StoryStep
   alias Helix.Story.Internal.Step, as: StepInternal
 
   alias Helix.Test.Story.Helper, as: StoryHelper
@@ -154,9 +155,44 @@ defmodule Helix.Story.Internal.StepTest do
     end
   end
 
+  describe "lock_reply/2" do
+    test "new reply is removed from story_step, marked as locked" do
+      {entry, %{step: step, entity_id: entity_id}} =
+        StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
+
+      allowed_before = StoryStep.get_allowed_replies(entry)
+      reply_id = Enum.random(allowed_before)
+
+      assert {:ok, _} = StepInternal.lock_reply(step, reply_id)
+      new_entry = StepInternal.get_current_step(entity_id)
+
+      allowed_after = StoryStep.get_allowed_replies(new_entry)
+
+      refute allowed_before == allowed_after
+      assert length(allowed_after) == length(allowed_before) - 1
+      refute Enum.member?(allowed_after, reply_id)
+    end
+
+    test "ignores if step is not found" do
+      {entry, %{step: step, entity_id: entity_id}} =
+        StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
+
+      allowed_before = StoryStep.get_allowed_replies(entry)
+      reply_id = "i_do_not_exist"
+
+      assert {:ok, _} = StepInternal.lock_reply(step, reply_id)
+      new_entry = StepInternal.get_current_step(entity_id)
+
+      allowed_after = StoryStep.get_allowed_replies(new_entry)
+
+      assert allowed_after == allowed_before
+    end
+  end
+
   describe "save_email/2" do
     test "new email is saved on the database" do
-      {_, %{step: step, entity_id: entity_id}} = StorySetup.story_step()
+      {_, %{step: step, entity_id: entity_id}} =
+        StorySetup.story_step(name: :fake_steps@test_simple, meta: %{})
 
       email_id1 = "1st_email"
       email_id2 = "2nd_email"

@@ -22,7 +22,7 @@ defprotocol Helix.Story.Model.Steppable do
   def fail(step)
 
   @spec next_step(generic_step) ::
-    Step.name
+    Step.step_name
   def next_step(step)
 
   @spec get_contact(generic_step) ::
@@ -32,4 +32,8 @@ defprotocol Helix.Story.Model.Steppable do
   @spec format_meta(generic_step) ::
     Step.meta
   def format_meta(step)
+
+  @spec get_replies(generic_step, Step.email_id) ::
+    [Step.reply_id]
+  def get_replies(step, email_id)
 end

@@ -100,16 +100,16 @@ defmodule Helix.Story.Model.StoryStepTest do
       {entry2, _} = StorySetup.fake_story_step(emails_sent: ["e1", "e2"])
       {entry3, _} = StorySetup.fake_story_step(emails_sent: ["e3", "e3"])
 
-      new_entry1 = StoryStep.append_email(entry1, "e3")
-      new_entry2 = StoryStep.append_email(entry2, "e3")
-      new_entry3 = StoryStep.append_email(entry3, "e3")
+      new_entry1 = StoryStep.append_email(entry1, "e3", ["r1"])
+      new_entry2 = StoryStep.append_email(entry2, "e3", ["r2"])
+      new_entry3 = StoryStep.append_email(entry3, "e3", ["r3"])
 
       # Resulting changeset is valid
       assert new_entry1.valid?
       assert new_entry2.valid?
       assert new_entry3.valid?
 
-      # And contains the new reply...
+      # And contains the new email...
       assert get_change(new_entry1, :emails_sent) == ["e3"]
 
       # Without overwriting the previous ones
@@ -117,6 +117,11 @@ defmodule Helix.Story.Model.StoryStepTest do
 
       # And not caring about repeated entries
       assert get_change(new_entry3, :emails_sent) == ["e3", "e3", "e3"]
+
+      # And allowed_replies is always overwritten
+      assert get_change(new_entry1, :allowed_replies) == ["r1"]
+      assert get_change(new_entry2, :allowed_replies) == ["r2"]
+      assert get_change(new_entry3, :allowed_replies) == ["r3"]
     end
   end
 end

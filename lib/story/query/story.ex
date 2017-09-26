@@ -1,28 +1,29 @@
 defmodule Helix.Story.Query.Story do
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
+  alias Helix.Story.Model.StoryEmail
+  alias Helix.Story.Model.StoryStep
 
   @spec fetch_current_step(Entity.id) ::
-    Spec.t(struct)
+    %{
+      object: Step.t(struct),
+      entry: StoryStep.t
+    }
     | nil
   def fetch_current_step(entity_id) do
-    with %{name: name, meta: meta} <- current_step_data(entity_id) do
-      Step.fetch(name, entity_id, meta)
+    with story_step = %{} <- StepInternal.get_current_step(entity_id) do
+      %{
+        object: Step.fetch(story_step.step_name, entity_id, story_step.meta),
+        entry: story_step
+      }
     end
   end
 
-  @spec current_step_data(Entity.id) ::
-    %{name: Step.step_name, meta: Step.meta}
-    | nil
-  def current_step_data(entity_id) do
-    with step = %{} <- StepInternal.current_step_data(entity_id) do
-      %{name: step.step_name, meta: step.meta}
-    end
-  end
-
-  def get_emails(entity_id) do
-    EmailInternal.get_emails(entity_id)
-  end
+  @spec get_emails(Entity.id) ::
+    [StoryEmail.t]
+  defdelegate get_emails(entity_id),
+    to: EmailInternal
 end

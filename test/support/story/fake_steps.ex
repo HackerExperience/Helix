@@ -111,4 +111,36 @@ defmodule Helix.Story.Model.Mission.FakeSteps do
       do: %{i: meta["i"]}
     next_step __MODULE__
   end
+
+  step TestMsg do
+    email "e1",
+      reply: ["reply_to_e1"],
+      locked: ["locked_reply_to_e1"]
+
+    email "e2",
+      reply: ["reply_to_e2"]
+
+    email "e3",
+      reply: ["reply_to_e3"]
+
+    on_reply "reply_to_e1" do
+      raise "replied_to_e1"
+    end
+
+    on_reply "reply_to_e2",
+      send: "e3"
+
+    on_reply "reply_to_e3",
+      complete: true
+
+    def setup(step, _) do
+      send_email step, "e1"
+      {:ok, step, []}
+    end
+
+    def complete(step),
+      do: {:ok, step, []}
+
+    next_step Helix.Story.Model.Mission.FakeSteps.TestSimple
+  end
 end

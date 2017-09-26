@@ -11,17 +11,17 @@ defmodule Helix.Story.Model.StoryEmail do
 
   @type sender :: :contact | :player
 
+  @type t :: %__MODULE__{
+    entity_id: Entity.id,
+    contact_id: Step.contact,
+    emails: [email]
+  }
+
   @type email :: %{
     timestamp: DateTime.t,
     id: Step.email_id,
     sender: sender,
     meta: Step.meta
-  }
-
-  @type t :: %__MODULE__{
-    entity_id: Entity.id,
-    contact_id: Step.contact,
-    emails: [email]
   }
 
   @type creation_params :: %{
@@ -77,7 +77,7 @@ defmodule Helix.Story.Model.StoryEmail do
     formatted_emails =
       entry.emails
       |> Enum.map(&format_email/1)
-      |> Enum.sort(&(&1.timestamp >= &2.timestamp))
+      |> Enum.sort(&(&2.timestamp >= &1.timestamp))
 
     %{entry| emails: formatted_emails}
   end

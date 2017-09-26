@@ -41,7 +41,8 @@ defmodule Helix.Server.Public.Index do
         %{
           server_id: Server.id,
           bounces: [Server.id]
-        }]
+        }
+      ]
     }
 
   @type rendered_gateway_server ::

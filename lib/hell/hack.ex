@@ -56,7 +56,8 @@ defmodule HELL.Hack.Experience do
         {:fail, 1},
         {:next_step, 1},
         {:get_contact, 1},
-        {:format_meta, 1}
+        {:format_meta, 1},
+        {:get_replies, 2}
       ]
     }
 

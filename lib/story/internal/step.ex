@@ -31,7 +31,8 @@ defmodule Helix.Story.Internal.Step do
 
     if story_step do
       formatted_meta =
-        Step.fetch(story_step.step_name, story_step.entity_id, story_step.meta)
+        story_step.step_name
+        |> Step.fetch(story_step.entity_id, story_step.meta)
         |> Steppable.format_meta()
 
       %{story_step|meta: formatted_meta}
@@ -42,7 +43,7 @@ defmodule Helix.Story.Internal.Step do
     entry_step_repo_return
   @spec proceed(prev_step :: Step.t(struct), next_step :: Step.t(struct)) ::
     {:ok, StoryStep.t}
-    | {:error, term}
+    | {:error, :internal}
   def proceed(next_step),
     do: create(next_step)
   def proceed(prev_step, next_step) do
@@ -54,10 +55,11 @@ defmodule Helix.Story.Internal.Step do
         entry
       else
         error ->
-          Repo.rollback(error)
+          Repo.rollback(:internal)
       end
     end)
   end
+
   @spec update_meta(Step.t(struct)) ::
     entry_step_repo_return
     | no_return
@@ -82,9 +84,21 @@ defmodule Helix.Story.Internal.Step do
     entry_step_repo_return
     | no_return
   def save_email(step, email_id) do
+    replies = Step.get_replies(step, email_id)
+
     step
     |> fetch!()
-    |> StoryStep.append_email(email_id)
+    |> StoryStep.append_email(email_id, replies)
+    |> update()
+  end
+
+  @spec lock_reply(Step.t(struct), Step.reply_id) ::
+    entry_step_repo_return
+    | no_return
+  def lock_reply(step, reply_id) do
+    step
+    |> fetch!()
+    |> StoryStep.lock_reply(reply_id)
     |> update()
   end
 

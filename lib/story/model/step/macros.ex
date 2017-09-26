@@ -2,6 +2,9 @@ defmodule Helix.Story.Model.Step.Macros do
 
   alias HELL.Constant
   alias Helix.Story.Model.Step
+  alias Helix.Story.Action.Story, as: StoryAction
+
+  alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
 
   defmacro step(name, contact \\ nil, do: block) do
     quote do
@@ -13,8 +16,7 @@ defmodule Helix.Story.Model.Step.Macros do
 
         defimpl Helix.Story.Model.Steppable do
 
-          alias Helix.Story.Action.Story, as: StoryAction
-
+          @emails Module.get_attribute(__MODULE__, :emails) || %{}
           @contact get_contact(unquote(contact), __MODULE__)
           @step_name Helix.Story.Model.Step.get_name(unquote(name))
 
@@ -36,6 +38,15 @@ defmodule Helix.Story.Model.Step.Macros do
           def get_contact(_),
             do: @contact
 
+          # Unlocked replies only
+          def get_replies(_step, email_id) do
+            case Map.get(@emails, email_id) do
+              email = %{} ->
+                email.replies
+              nil ->
+                []
+            end
+          end
         end
       end
     end
@@ -127,7 +138,10 @@ defmodule Helix.Story.Model.Step.Macros do
       quote do
         def handle_event(
           step,
-          %{email: unquote(email), reply: unquote(reply_id)},
+          %StoryReplySentEvent{
+            reply_id: unquote(reply_id),
+            reply_to: unquote(email)
+          },
           _meta)
         do
           unquote(
@@ -233,9 +247,8 @@ defmodule Helix.Story.Model.Step.Macros do
 
   @spec email_exists?(Step.emails, Step.email_id) ::
     boolean
-  defp email_exists?(emails, email_id) do
-    Map.get(emails, email_id, false) && true
-  end
+  defp email_exists?(emails, email_id),
+    do: Map.get(emails, email_id, false) && true
 
   @spec get_emails(Macro.Env.t) ::
     Step.emails

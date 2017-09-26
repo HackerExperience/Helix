@@ -6,15 +6,16 @@ defmodule Helix.Story.Event.Handler.Story do
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
+  alias Helix.Story.Query.Story, as: StoryQuery
 
   def step_handler(event) do
-    current_step =
+    step =
       event
       |> Step.get_entity()
-      |> MissionQuery.get_current_step()
+      |> StoryQuery.fetch_current_step()
 
-    if current_step do
-      current_step
+    if step do
+      step.object
       |> Step.new(event)
       |> step_flow()
     end
@@ -38,7 +39,7 @@ defmodule Helix.Story.Event.Handler.Story do
   defp handle_action(:complete, step) do
     with {:ok, step, events} <- Steppable.complete(step) do
       Event.emit(events)
-      next_step = Steppable.next_step(step)
+      next_step = Step.get_next_step(step)
       spawn fn ->
         update_next(step, next_step)
       end
@@ -49,14 +50,14 @@ defmodule Helix.Story.Event.Handler.Story do
   defp handle_action(:noop, _),
     do: :noop
 
-  @spec update_next(Step.t(struct), Steppable.next_step) ::
+  @spec update_next(Step.t(struct), Step.step_name) ::
     term
   defp update_next(prev_step = %{entity_id: entity_id}, next_step_name) do
     next_step = Step.fetch(next_step_name, entity_id, %{})
 
     flowing do
       with \
-        :ok <- StoryAction.proceed_step(prev_step, next_step),
+        {:ok, _} <- StoryAction.proceed_step(prev_step, next_step),
         # /\ Proceeds player to the next step
 
         # Generate next step data/meta
@@ -67,7 +68,7 @@ defmodule Helix.Story.Event.Handler.Story do
         {:ok, _} <- StoryAction.update_step_meta(next_step),
 
         # Notify about step progress
-        event = StoryAction.notify_step(next_step),
+        event = StoryAction.notify_step(prev_step, next_step),
         on_success(fn -> Event.emit(event) end)
       do
         :ok

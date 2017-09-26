@@ -84,7 +84,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
       end)
     end
 
-    test "sorts the email by timestamp, desc" do
+    test "sorts the email by timestamp, asc" do
       {entry, _} = StorySetup.fake_story_email(email_total: 5)
 
       # Ensure email order is messed up
@@ -95,7 +95,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
 
       formatted = StoryEmail.format(%{entry| emails: shuffled_emails})
 
-      sorted_emails = Enum.sort(entry.emails, &(&1.timestamp >= &2.timestamp))
+      sorted_emails = Enum.sort(entry.emails, &(&2.timestamp >= &1.timestamp))
 
       assert formatted.emails == sorted_emails
     end
