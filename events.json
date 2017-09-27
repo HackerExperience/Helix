@@ -1,0 +1,120 @@
+{
+  "handlers": {
+    "Account.Account": {
+      "receives": ["Account.Create"],
+      "emits": []
+    },
+    "Bank.Account": {
+      "receives": ["Bank.Account.Password.Reveal.Processed"],
+      "emits": ["Bank.Account.Password.Revealed"]
+    },
+    "Bank.Transfer": {
+      "receives": [
+          "Bank.Transfer.Completed",
+          "Bank.Transfer.Aborted"
+      ],
+      "emits": []
+    },
+    "Entity.Database": {
+        "receives": [
+            "Server.Password.Acquired",
+            "Bank.Account.Password.Revealed",
+            "Bank.Token.Acquired",
+            "Bank.Account.Login"
+        ],
+        "emits": []
+    },
+    "Software.File.Transfer": {
+        "receives": ["File.Transfer.Processed"],
+        "emits": [
+            "File.Downloaded",
+            "File.DownloadFailed",
+            "File.Uploaded",
+            "File.UploadFailed"
+        ]
+    },
+    "Software.Cracker": {
+        "receives": [
+            "Cracker.Bruteforce.Conclusion",
+            "Cracker.Overflow.Conclusion"
+        ],
+        "emits": [
+            "Server.Password.Acquired",
+            "Cracker.Bruteforce.Failed",
+            "Bank.Token.Acquired"
+        ]
+    },
+    "Software.Filesystem": {
+        "receives": [
+            "File.Downloaded",
+            "File.Uploaded"
+        ],
+        "emits": ["Filesystem.Changed"]
+    },
+    "Log.Log": {
+        "receives": [
+            "File.Downloaded",
+            "File.Uploaded",
+            "Log.Forge.Edited",
+            "Log.Forge.Created",
+            "Bank.Transfer.Completed",
+            "Connection.Started"
+        ],
+        "emits": [
+            "Log.Created",
+            "Log.Modified",
+            "Log.Deleted"
+        ]
+    },
+    "Process.TOP": {
+        "receives": ["Connection.Closed"],
+        "emits": []
+    },
+    "Network.Connection": {
+        "receives": [
+            "Bank.Transfer.Completed"
+        ],
+        "emits": [
+            "Connection.Closed"
+        ]
+    },
+    "Tunnel.Connection": {
+        "receives": ["Connection.Closed"],
+        "emits": []
+    }
+  },
+  "flows": {
+    "Bank.Account": [
+      "Bank.Account.Login",
+      "Connection.Started"
+    ],
+    "Bank.Transfer": [
+        "Connection.Started",
+        "Process.Created"
+    ],
+    "Software.File.Transfer": [
+        "Connection.Started",
+        "Process.Created"
+    ],
+    "Software.Software.Cracker": [
+        "Connection.Started",
+        "Process.Created"
+    ],
+    "Software.Software.Firewall": [
+        "Process.Created",
+        "Firewall.Started"
+    ],
+    "Software.Software.LogForger": [
+        "Process.Created"
+    ]
+  },
+  "notifiable": [
+    "Log.Created",
+    "Log.Modified",
+    "Log.Deleted",
+    "Server.Password.Acquired",
+    "Process.Created",
+    "Process.Conclusion",
+    "File.Uploaded"
+  ]
+}
