@@ -59,9 +59,8 @@ defmodule Helix.Test.Features.Hack do
 
       # The BruteforceProcess is running as expected
       process = ProcessQuery.fetch(response.data.process_id)
-      connection = TunnelQuery.fetch_connection(response.data.connection_id)
       assert process
-      assert connection
+      assert TunnelQuery.fetch_connection(response.data.access.connection_id)
 
       # Let's cheat and finish the process right now
       TOPHelper.force_completion(process)

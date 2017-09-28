@@ -39,17 +39,19 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BruteforceTest do
       assert_reply ref, :ok, response
 
       # All required fields are there
-      assert response.data.process_id
-      assert response.data.file_id
-      assert response.data.connection_id
-      assert response.data.network_id
-      assert response.data.source_ip
-      assert response.data.target_ip
       assert response.data.type == "cracker_bruteforce"
+      assert response.data.file
+      assert response.data.access.origin_id
+      assert response.data.access.priority
+      assert response.data.access.usage
+      assert response.data.network_id
+      assert response.data.state
+      assert response.data.progress
+      assert response.data.target_ip
 
       # It definitely worked. Yay!
       assert ProcessQuery.fetch(response.data.process_id)
-      assert TunnelQuery.fetch_connection(response.data.connection_id)
+      assert TunnelQuery.fetch_connection(response.data.access.connection_id)
 
       TOPHelper.top_stop(gateway.server_id)
     end

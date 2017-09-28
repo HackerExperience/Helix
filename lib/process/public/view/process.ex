@@ -27,8 +27,7 @@ defmodule Helix.Process.Public.View.Process do
       file: file,
       state: String.t,
       type: String.t,
-      access: access_type,
-      # data: term
+      access: access_type
     }
 
   @typep full_access ::

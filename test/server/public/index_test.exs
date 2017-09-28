@@ -3,6 +3,7 @@ defmodule Helix.Server.Public.IndexTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Server.Public.Index, as: ServerIndex
 
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
