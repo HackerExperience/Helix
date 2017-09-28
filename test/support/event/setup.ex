@@ -121,7 +121,7 @@ defmodule Helix.Test.Event.Setup do
   # Story events
   ##############################################################################
 
-  def email_sent_event(step, email_id, email_meta \\ %{}) do
+  def story_email_sent(step, email_id, email_meta \\ %{}) do
     %StoryEmailSentEvent{
       entity_id: step.entity_id,
       step: step.name,

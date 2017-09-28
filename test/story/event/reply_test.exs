@@ -1,4 +1,4 @@
-defmodule Helix.Story.Event.EmailTest do
+defmodule Helix.Story.Event.ReplyTest do
 
   use Helix.Test.Case.Integration
 
@@ -10,28 +10,28 @@ defmodule Helix.Story.Event.EmailTest do
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "Notificable.whom_to_notify/1" do
-    test "notifies only the player" do
-      {step, _} = StorySetup.step()
+    {step, _} = StorySetup.step()
 
-      event = EventSetup.story_email_sent(step, "emeiu_aidi")
+    event = EventSetup.story_reply_sent(step, "reply_id", "reply_to")
 
-      notification_list = Notificable.whom_to_notify(event)
-      assert notification_list == [ChannelHelper.to_topic(step.entity_id)]
-    end
+    notification_list = Notificable.whom_to_notify(event)
+    assert notification_list == [ChannelHelper.to_topic(step.entity_id)]
   end
 
   describe "Notificable.generate_payload/2" do
     {step, _} = StorySetup.step()
     socket = ChannelSetup.mock_account_socket()
 
-    email_id = "ceci n'est pas une emeiu"
-    event = EventSetup.story_email_sent(step, email_id)
+    reply_to = "all my exes"
+    reply_id = "live in texas"
+    event = EventSetup.story_reply_sent(step, reply_id, reply_to)
 
     assert {:ok, payload} = Notificable.generate_payload(event, socket)
 
-    assert payload.event == "story_email_sent"
+    assert payload.event == "story_reply_sent"
     assert payload.data.step == to_string(step.name)
-    assert payload.data.email_id == email_id
+    assert payload.data.reply_to == reply_to
+    assert payload.data.reply_id == reply_id
     refute is_map(payload.data.timestamp)
   end
 end

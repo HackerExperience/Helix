@@ -220,4 +220,14 @@ defmodule Helix.Test.Channel.Setup do
 
     %{assigns: assigns}
   end
+
+  @doc """
+  Opts:
+  - die
+  """
+  def mock_account_socket(_opts \\ []) do
+    assigns = %{}
+
+    %{assigns: assigns}
+  end
 end
