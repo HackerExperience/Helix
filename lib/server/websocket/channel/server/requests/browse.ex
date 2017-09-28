@@ -69,22 +69,21 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Browse do
 
       [network_id, ip] = web.nip
 
-      data = %{
-        nip: [to_string(network_id), to_string(ip)],
-        meta: web.meta,
-        type: to_string(web.type),
-        password: web.password
-      }
-
-      # NPC servers have a custom `npc` field
-      npc = Map.get(web, :npc, false)
-
-      data =
-        if npc do
-          Map.put(data, :npc, npc)
+      type =
+        if web.subtype do
+          to_string(web.type) <> "_" <> to_string(web.subtype)
         else
-          data
+          to_string(web.type)
         end
+
+      data = %{
+        content: web.content,
+        type: type,
+        meta: %{
+          nip: [to_string(network_id), to_string(ip)],
+          password: web.password
+        }
+      }
 
       WebsocketUtils.reply_ok(data, socket)
     end

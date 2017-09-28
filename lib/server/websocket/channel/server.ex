@@ -110,7 +110,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - "bad_origin" - The given origin is neither `gateway_id` nor `destination_id`
   + base errors
   """
-  def handle_in("network.browse", params, socket) do
+  def handle_in("browse", params, socket) do
     request = BrowseRequest.new(params)
     Websocket.handle_request(request, socket)
   end

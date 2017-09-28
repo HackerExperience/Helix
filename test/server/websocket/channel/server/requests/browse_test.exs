@@ -13,7 +13,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
 
   @internet_str to_string(NetworkHelper.internet_id())
 
-  describe "network.browse" do
+  describe "browse" do
     test "valid resolution, originating from my own server" do
       {socket, _} = ChannelSetup.join_server([own_server: true])
       {_, npc_ip} = NPCHelper.random()
@@ -24,29 +24,31 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip
-      ref = push socket, "network.browse", params
+      ref = push socket, "browse", params
 
       # Make sure the answer is an astounding :ok
       assert_reply ref, :ok, response
 
       # It contains the web server content
-      assert response.data.meta
-      assert response.data.meta.title
+      assert response.data.content
+      assert response.data.content.title
 
       # It contains metadata about the server type (and subtype if applicable)
-      assert response.data.type == "npc"
-      assert response.data.npc
+      # In this case, since it's an NPC, the string must start with `npc_`
+      # Example: `npc_download_center` or `npc_bank`
+      assert String.starts_with?(response.data.type, "npc_")
 
       # It returns the target nip
-      assert response.data.nip == [to_string(@internet_str), to_string(npc_ip)]
+      assert response.data.meta.nip ==
+        [to_string(@internet_str), to_string(npc_ip)]
 
       # And the Database password info (in this case it's empty)
-      refute response.data.password
+      refute response.data.meta.password
 
       CacheHelper.sync_test()
     end
 
-    # Context: If player A is connected to B, and makes a `network.browse`
+    # Context: If player A is connected to B, and makes a `browse`
     # request within the B channel, the source of the request must be server B.
     test "valid resolution, made by player on a remote server" do
       {socket, _} = ChannelSetup.join_server()
@@ -58,18 +60,19 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip
-      ref = push socket, "network.browse", params
+      ref = push socket, "browse", params
 
       # It worked!
       assert_reply ref, :ok, response
 
       # Resolved correctly
-      assert response.data.meta
-      assert response.data.meta.title
-      assert response.data.nip == [to_string(@internet_str), to_string(npc_ip)]
+      assert response.data.content
+      assert response.data.content.title
+      assert response.data.meta.nip ==
+        [to_string(@internet_str), to_string(npc_ip)]
 
       # No password
-      refute response.data.password
+      refute response.data.meta.password
 
       # TODO: Once Anycast is implemented, use it to determine whether the
       # correct servers were in fact used for resolution
@@ -88,18 +91,19 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip asking `gateway` to be used as origin
-      ref = push socket, "network.browse", params
+      ref = push socket, "browse", params
 
       # It worked!
       assert_reply ref, :ok, response
 
       # Resolved correctly
-      assert response.data.meta
-      assert response.data.meta.title
-      assert response.data.nip == [to_string(@internet_str), to_string(npc_ip)]
+      assert response.data.content
+      assert response.data.content.title
+      assert response.data.meta.nip ==
+        [to_string(@internet_str), to_string(npc_ip)]
 
       # No password
-      refute response.data.password
+      refute response.data.meta.password
 
       # TODO: Once Anycast is implemented, use it to determine whether the
       # correct servers were in fact used for resolution
@@ -118,7 +122,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip asking random server to be used as origin
-      ref = push socket, "network.browse", params
+      ref = push socket, "browse", params
 
       # It return an error!
       assert_reply ref, :error, response
@@ -136,7 +140,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to random IP
-      ref = push socket, "network.browse", params
+      ref = push socket, "browse", params
 
       # It return an error!
       assert_reply ref, :error, response
@@ -147,5 +151,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
 
     @tag :pending
     test "resolution returning password"
+
+    @tag :pending
+    test "resolution of VPC server"
   end
 end

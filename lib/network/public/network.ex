@@ -41,18 +41,12 @@ defmodule Helix.Network.Public.Network do
         end
 
       web_data = %{
-        meta: content,
+        content: content,
         password: password,
         type: owner_type,
+        subtype: owner_meta,
         nip: [network_id, dest_ip]
       }
-
-      web_data =
-        if owner_meta do
-          Map.put(web_data, owner_type, owner_meta)
-        else
-          web_data
-        end
 
       {:ok, web_data}
     else
