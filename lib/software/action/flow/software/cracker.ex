@@ -1,4 +1,4 @@
-defmodule Helix.Software.Action.Flow.File.Cracker do
+defmodule Helix.Software.Action.Flow.Software.Cracker do
 
   import HELF.Flow
 

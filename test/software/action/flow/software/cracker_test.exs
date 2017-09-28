@@ -1,10 +1,10 @@
-defmodule Helix.Software.Action.Flow.File.CrackerTest do
+defmodule Helix.Software.Action.Flow.Software.CrackerTest do
 
   use Helix.Test.Case.Integration
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
-  alias Helix.Software.Action.Flow.File.Cracker, as: CrackerFlow
+  alias Helix.Software.Action.Flow.Software.Cracker, as: CrackerFlow
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Process.TOPHelper

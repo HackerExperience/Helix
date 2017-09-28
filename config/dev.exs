@@ -14,5 +14,5 @@ config :helix, Helix.Endpoint,
     certfile: "priv/dev/ssl.crt"
   ],
   debug_errors: true,
-  code_reloader: true,
+  code_reloader: false,
   check_origin: false

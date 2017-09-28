@@ -1,4 +1,4 @@
-defmodule Helix.Software.Action.Flow.File.Firewall do
+defmodule Helix.Software.Action.Flow.Software.Firewall do
 
   import HELF.Flow
 

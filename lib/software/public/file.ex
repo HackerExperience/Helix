@@ -7,7 +7,7 @@ defmodule Helix.Software.Public.File do
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Action.Flow.File, as: FileFlow
-  alias Helix.Software.Action.Flow.FileDownload, as: FileDownloadFlow
+  alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
   alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
 
@@ -22,15 +22,22 @@ defmodule Helix.Software.Public.File do
     {:ok, destination_storage_ids} =
       CacheQuery.from_server_get_storages(destination_id)
 
-    gateway_storage = Enum.random(gateway_storage_ids)
+    storage = Enum.random(gateway_storage_ids)
+
+    network_info =
+      %{
+        gateway_id: gateway_id,
+        destination_id: destination_id,
+        network_id: tunnel.network_id,
+        bounces: [],  # TODO
+        tunnel: tunnel
+      }
 
     with \
       file = %{} <- FileQuery.fetch(file_id),
       true <- file.storage_id in destination_storage_ids,
-      {:ok, _process} <- FileDownloadFlow.start_download_process(
-        file,
-        gateway_storage,
-        tunnel)
+      {:ok, _process} <-
+        FileTransferFlow.transfer(:download, file, storage, network_info)
     do
       :ok
     else

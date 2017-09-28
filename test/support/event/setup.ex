@@ -11,7 +11,12 @@ defmodule Helix.Test.Event.Setup do
     as: BruteforceConclusionEvent
   alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
+<<<<<<< HEAD
   # alias Helix.Story.Event.StepProceeded, as: StoryStepProceededEvent
+=======
+  alias Helix.Software.Event.File.Transfer.Processed,
+    as: FileTransferProcessedEvent
+>>>>>>> Add FileTransfer abstraction
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
     as: BankAccountLoginEvent
@@ -79,6 +84,10 @@ defmodule Helix.Test.Event.Setup do
     process_created(gateway_id, target_id, gateway_entity, target_entity)
   end
 
+  ##############################################################################
+  # Process events
+  ##############################################################################
+
   @doc """
   Accepts: Process.t, (Connection.t, Server.id)
   """
@@ -114,6 +123,13 @@ defmodule Helix.Test.Event.Setup do
       target_server_ip: Random.ipv4()
     }
   end
+
+  # def file_transfer_processed(process = %Process{}) do
+  #   %FileTransferProcessedEvent{
+  #     entity_id: process.source_entity_id,
+  #     to_server_id: process.gateway_id
+  #   }
+  # end
 
   ##############################################################################
   # Network events

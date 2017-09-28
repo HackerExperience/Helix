@@ -1,6 +1,9 @@
 defmodule Helix.Test.Process.TOPHelper do
 
+  alias Ecto.Changeset
   alias Helix.Server.Model.Server
+  alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.State.TOP.Manager, as: TOPManager
   alias Helix.Process.State.TOP.Server, as: TOPServer
   alias Helix.Process.Repo, as: ProcessRepo
@@ -35,5 +38,10 @@ defmodule Helix.Test.Process.TOPHelper do
     %{process| processed: process.objective}
     |> Ecto.Changeset.change()
     |> ProcessRepo.update!()
+  end
+
+  def soft_complete(process = %Process{}) do
+    cs = Changeset.change(process)
+    ProcessType.state_change(process.process_data, cs, :running, :complete)
   end
 end

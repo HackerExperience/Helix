@@ -5,11 +5,14 @@ defmodule Helix.Event.Dispatcher.Helix do
 
   alias Helix.Account
   alias Helix.Entity
-  alias Helix.Log
   alias Helix.Network
   alias Helix.Process
   alias Helix.Software
   alias Helix.Universe
+
+  alias Helix.Log.Event.Handler, as: LogHandler
+  alias Helix.Software.Event, as: SoftwareEvent
+  alias Helix.Software.Event.Handler, as: SoftwareHandler
 
   ##############################################################################
   # Account events
@@ -29,7 +32,7 @@ defmodule Helix.Event.Dispatcher.Helix do
     :connection_closed
 
   event Network.Model.Connection.ConnectionStartedEvent,
-    Log.Event.Log,
+    LogHandler.Log,
     :connection_started
 
   ##############################################################################
@@ -43,27 +46,28 @@ defmodule Helix.Event.Dispatcher.Helix do
   # Software events
   ##############################################################################
   event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
-    Software.Event.Cracker,
+    SoftwareHandler.Cracker,
     :bruteforce_conclusion
 
   event Software.Model.Software.Cracker.Overflow.ConclusionEvent,
-    Software.Event.Cracker,
+    SoftwareHandler.Cracker,
     :overflow_conclusion
 
   event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
-    Software.Event.Decryptor,
+    SoftwareHandler.Decryptor,
     :complete
 
   event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
-    Software.Event.Encryptor,
+    SoftwareHandler.Encryptor,
     :complete
 
-  event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
-    Software.Event.FileDownload,
+  event SoftwareEvent.File.Transfer.Processed,
+    SoftwareHandler.File.Transfer,
     :complete
-  event Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
-    Log.Event.Log,
-    :file_download_conclusion
+
+  event SoftwareEvent.File.Downloaded,
+    LogHandler.Log,
+    :file_downloaded
 
   event Software.Model.SoftwareType.Firewall.FirewallStartedEvent,
     Process.Event.Cracker,
@@ -74,11 +78,11 @@ defmodule Helix.Event.Dispatcher.Helix do
     :firewall_stopped
 
   event Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
-    Log.Event.Log,
+    LogHandler.Log,
     :log_forge_conclusion
 
   event Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
-    Log.Event.Log,
+    LogHandler.Log,
     :log_forge_conclusion
 
   ##############################################################################
@@ -96,7 +100,7 @@ defmodule Helix.Event.Dispatcher.Helix do
     Universe.Bank.Event.BankTransfer,
     :transfer_aborted
   event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
-    Software.Event.Cracker,
+    SoftwareHandler.Cracker,
     :bank_transfer_aborted
 
   event Universe.Bank.Model.BankTokenAcquiredEvent,

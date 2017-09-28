@@ -6,7 +6,7 @@ defmodule Helix.Software.Event.CrackerTest do
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
-  alias Helix.Software.Event.Cracker, as: CrackerHandler
+  alias Helix.Software.Event.Handler.Cracker, as: CrackerHandler
 
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Event.Setup, as: EventSetup

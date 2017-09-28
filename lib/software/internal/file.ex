@@ -47,6 +47,7 @@ defmodule Helix.Software.Internal.File do
     | {:error, File.changeset}
   def copy(file, storage, path) do
     # TODO: allow copying to the same folder
+    # TODO: Check storage requirements
     file
     |> File.copy(storage, %{path: path})
     |> Repo.insert()

@@ -2,9 +2,9 @@ defmodule Helix.Software.Action.Flow.File do
 
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
-  alias Helix.Software.Action.Flow.File.Cracker, as: CrackerFlow
-  alias Helix.Software.Action.Flow.File.Firewall, as: FirewallFlow
-  alias Helix.Software.Action.Flow.File.LogForger, as: LogForgerFlow
+  alias Helix.Software.Action.Flow.Software.Cracker, as: CrackerFlow
+  alias Helix.Software.Action.Flow.Software.Firewall, as: FirewallFlow
+  alias Helix.Software.Action.Flow.Software.LogForger, as: LogForgerFlow
   alias Helix.Software.Model.File
 
   @type params ::

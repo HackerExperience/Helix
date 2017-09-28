@@ -1,9 +1,11 @@
 defmodule Helix.Test.Process.Setup do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Software.Action.Flow.File.Cracker, as: CrackerFlow
+  alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
+  alias Helix.Software.Action.Flow.Software.Cracker, as: CrackerFlow
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo, as: ProcessRepo
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -127,5 +129,44 @@ defmodule Helix.Test.Process.Setup do
     }
 
     {process, related}
+  end
+
+  # TODO: Move these _flow functions to a different module at Helix.Test.Process
+  def file_transfer_flow(type) do
+    {gateway, _} = ServerSetup.server()
+    {file, %{server_id: destination_id}} =
+      SoftwareSetup.file()
+
+    destination_server =
+      if type == :upload do
+        destination_id
+      else
+        gateway.server_id
+      end
+
+    destination_storage =
+      destination_server
+      |> CacheQuery.from_server_get_storages()
+      |> elem(1)
+      |> List.first()
+      |> StorageQuery.fetch()
+
+    network_info = %{
+      gateway_id: gateway.server_id,
+      destination_id: destination_id,
+      network_id: NetworkHelper.internet(),
+      bounces: [],
+      tunnel: nil
+    }
+
+    {:ok, process} =
+      FileTransferFlow.transfer(
+        type,
+        file,
+        destination_storage,
+        network_info
+      )
+
+    {process, %{}}
   end
 end
