@@ -29,7 +29,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
 
       {npc, _} = NPCHelper.random()
       server = List.first(npc.servers)
-      bank = NPCHelper.bank()
+      {bank, _} = NPCHelper.bank()
 
       # Removes stuff
       refute NPCInternal.fetch(npc.id)

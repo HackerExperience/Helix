@@ -41,7 +41,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
   - number: Bank account number.
   """
   def fake_account(opts \\ []) do
-    bank = NPCHelper.bank()
+    {bank, _} = NPCHelper.bank()
 
     atm_id =
       cond do

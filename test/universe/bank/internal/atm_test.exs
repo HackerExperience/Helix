@@ -12,17 +12,17 @@ defmodule Helix.Universe.Bank.Internal.ATMTest do
   describe "create/1" do
     test "with valid data" do
       {server, _} = ServerSetup.server()
-      bank_id = NPCHelper.bank().id
+      {bank, _} = NPCHelper.bank()
 
       params = %{
         atm_id: server.server_id,
-        bank_id: bank_id,
+        bank_id: bank.id,
         region: "Braziu"
       }
 
       assert {:ok, atm} = ATMInternal.create(params)
       assert_id atm.atm_id, server.server_id
-      assert_id atm.bank_id, bank_id
+      assert_id atm.bank_id, bank.id
     end
 
     test "with invalid data" do
@@ -35,7 +35,7 @@ defmodule Helix.Universe.Bank.Internal.ATMTest do
 
   describe "fetch/1" do
     test "with valid data" do
-      bank = NPCHelper.bank()
+      {bank, _} = NPCHelper.bank()
       atm = Enum.random(bank.servers)
       atm2 = ATMInternal.fetch(atm.id)
 
