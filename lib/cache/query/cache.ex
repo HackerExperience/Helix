@@ -38,7 +38,7 @@ defmodule Helix.Cache.Query.Cache do
   Given a server, return the nips (network_id, ip) linked to it.
   """
   def from_server_get_nips(server),
-    do:  CacheInternal.lookup({:server, :nips}, {server_to_id(server)})
+    do: CacheInternal.lookup({:server, :nips}, {server_to_id(server)})
 
   @spec from_server_get_storages(Server.idtb) ::
     {:ok, [Storage.id]}

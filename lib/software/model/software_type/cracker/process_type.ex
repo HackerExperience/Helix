@@ -146,18 +146,11 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   defimpl Helix.Process.Public.View.ProcessViewable do
     @moduledoc false
 
-    alias HELL.IPv4
-    alias Helix.Network.Model.Connection
-    alias Helix.Network.Model.Network
     alias Helix.Process.Model.Process
     alias Helix.Process.Public.View.Process, as: ProcessView
     alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
 
-    @type data ::
-      %{
-        :software_version => non_neg_integer,
-        :target_server_ip => IPv4.t
-      }
+    @type data :: %{}
 
     def get_scope(data, process, server, entity),
       do: ProcessViewHelper.get_default_scope(data, process, server, entity)
@@ -166,16 +159,8 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
       {ProcessView.full_process | ProcessView.partial_process, data}
     def render(data, process, scope) do
       rendered_process = take_data_from_process(process, scope)
-      rendered_data = take_complement_from_data(data, scope)
 
-      {rendered_process, rendered_data}
-    end
-
-    defp take_complement_from_data(data, _) do
-      %{
-        software_version: data.software_version,
-        target_server_ip: data.target_server_ip
-      }
+      {rendered_process, %{}}
     end
 
     defp take_data_from_process(process, scope),

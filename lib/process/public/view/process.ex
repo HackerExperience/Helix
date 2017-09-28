@@ -5,41 +5,72 @@ defmodule Helix.Process.Public.View.Process do
   use `ProcessView.render/4` instead.
   """
 
+  alias HELL.HETypes
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Public.View.ProcessViewable
 
-  @type partial_process ::
-    %{
-      :process_id => String.t,
-      :gateway_id => String.t,
-      :target_server_id => String.t,
-      :file_id => String.t | nil,
-      :network_id => String.t | nil,
-      :connection_id => String.t | nil,
-      :process_type => String.t
-    }
-
-  @type full_process ::
-    %{
-      :process_id => String.t,
-      :gateway_id => String.t,
-      :target_server_id => String.t,
-      :file_id => String.t | nil,
-      :network_id => String.t | nil,
-      :connection_id => String.t | nil,
-      :process_type => String.t,
-      :state => String.t,
-      :allocated => Resources.t,
-      :priority => 0..5,
-      :creation_time => String.t
-    }
+  @type full_process :: process(full_access)
+  @type partial_process :: process(partial_access)
 
   @type scopes ::
     :full
     | :partial
+
+  @typep process(access_type) ::
+    %{
+      process_id: String.t,
+      target_ip: String.t,
+      network_id: String.t,
+      progress: progress | nil,
+      file: file,
+      state: String.t,
+      type: String.t,
+      access: access_type,
+      # data: term
+    }
+
+  @typep full_access ::
+    %{
+      origin_id: String.t,
+      priority: 0..5,
+      usage: resources,
+      connection_id: String.t | nil
+    }
+
+  @typep partial_access ::
+    %{
+      connection_id: String.t | nil
+    }
+
+  @type file ::
+    %{
+      id: String.t | nil,
+      name: String.t,
+      version: float | nil
+    }
+
+  @type progress ::
+    %{
+      percentage: float | nil,
+      completion_date: HETypes.client_timestamp | nil,
+      creation_date: HETypes.client_timestamp
+    }
+
+  @type resources ::
+    %{
+      cpu: resource_usage,
+      ram: resource_usage,
+      ulk: resource_usage,
+      dlk: resource_usage
+    }
+
+  @typep resource_usage ::
+    %{
+      percentage: float,
+      absolute: non_neg_integer
+    }
 
   @spec render(data :: term, Process.t, Server.id, Entity.id) ::
     rendered_process :: term
@@ -53,6 +84,6 @@ defmodule Helix.Process.Public.View.Process do
     scope = ProcessViewable.get_scope(data, process, server_id, entity_id)
     {base, data} = ProcessViewable.render(data, process, scope)
 
-    Map.merge(base, data)
+    Map.merge(base, %{data: data})
   end
 end

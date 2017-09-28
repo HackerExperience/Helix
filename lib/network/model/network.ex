@@ -9,9 +9,12 @@ defmodule Helix.Network.Model.Network do
     network_id: id,
     name: String.t
   }
+
+  @type ip :: IPv4.t
+
   @type nip :: %{
     network_id: id,
-    ip: IPv4.t
+    ip: ip
   }
 
   schema "networks" do

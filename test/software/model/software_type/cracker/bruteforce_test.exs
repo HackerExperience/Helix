@@ -101,16 +101,15 @@ defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
       pview_victim = ProcessView.render(data, process, server_id, victim_id)
       pview_third = ProcessView.render(data, process, server_id, third_id)
 
-      full_process = pview_full()
-
-      assert full_process == Enum.sort(Map.keys(pview_attacker))
-      assert full_process == Enum.sort(Map.keys(pview_victim))
-      assert full_process == Enum.sort(Map.keys(pview_third))
+      ProcessViewHelper.assert_keys(pview_attacker, :full)
+      ProcessViewHelper.assert_keys(pview_victim, :full)
+      ProcessViewHelper.assert_keys(pview_third, :full)
     end
 
     test "full process for attacker AT attack_target" do
       {process, %{source_entity_id: entity_id}} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
+
       data = process.process_data
       server_id = process.target_server_id
 
@@ -118,14 +117,12 @@ defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
       # victim server, so `entity` has full access to the process.
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
-      keys = Map.keys(rendered)
-      expected = pview_full()
-
-      assert expected == Enum.sort(keys)
+      ProcessViewHelper.assert_keys(rendered, :full)
     end
 
     test "partial process for third AT attack_target" do
       {process, _} = ProcessSetup.process(fake_server: true, type: :bruteforce)
+
       data = process.process_data
       server_id = process.target_server_id
       entity_id = Entity.ID.generate()
@@ -134,15 +131,13 @@ defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
       # receiving end of the process (victim), so partial access is applied.
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
-      keys = Map.keys(rendered)
-      expected = pview_partial()
-
-      assert expected == Enum.sort(keys)
+      ProcessViewHelper.assert_keys(rendered, :partial)
     end
 
     test "partial process for victim AT attack_target" do
       {process, %{target_entity_id: entity_id}} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
+
       data = process.process_data
       server_id = process.target_server_id
 
@@ -151,21 +146,7 @@ defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
       # so she has limited access to the process.
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
-      keys = Map.keys(rendered)
-      expected = pview_partial()
-
-      assert expected == Enum.sort(keys)
-    end
-
-    defp pview_full do
-      ProcessViewHelper.pview_full()
-      |> Kernel.++(~w/software_version target_server_ip/a)
-      |> Enum.sort()
-    end
-    defp pview_partial do
-      ProcessViewHelper.pview_partial()
-      |> Kernel.++(~w/software_version target_server_ip/a)
-      |> Enum.sort()
+      ProcessViewHelper.assert_keys(rendered, :partial)
     end
   end
 
