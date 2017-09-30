@@ -2,6 +2,8 @@ defmodule Helix.Story.Public.StoryTest do
 
   use Helix.Test.Case.Integration
 
+  import ExUnit.CaptureLog
+
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Query.Story, as: StoryQuery
   alias Helix.Story.Public.Story, as: StoryPublic
@@ -18,7 +20,11 @@ defmodule Helix.Story.Public.StoryTest do
       %{entry: entry} = StoryQuery.fetch_current_step(entity_id)
       reply_id = StoryHelper.get_allowed_reply(entry)
 
-      assert :ok = StoryPublic.send_reply(entity_id, reply_id)
+      # `reply_to_e1` emits a log once handled, so we are capturing it here to
+      # avoid the Log output from polluting the test results.
+      capture_log(fn ->
+        assert :ok = StoryPublic.send_reply(entity_id, reply_id)
+      end)
     end
 
     test "fails when reply does not exist" do

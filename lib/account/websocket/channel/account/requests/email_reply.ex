@@ -39,7 +39,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Requests.EmailReply do
       end
     end
 
-    def reply(request, socket),
+    def reply(_request, socket),
       do: WebsocketUtils.reply_ok(%{}, socket)
   end
 end

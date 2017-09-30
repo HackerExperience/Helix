@@ -11,8 +11,6 @@ defmodule Helix.Test.Event.Setup do
     as: BruteforceConclusionEvent
   alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
-  alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
-  alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
   # alias Helix.Story.Event.StepProceeded, as: StoryStepProceededEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
@@ -114,30 +112,6 @@ defmodule Helix.Test.Event.Setup do
       network_id: @internet,
       target_server_id: ServerSetup.id(),
       target_server_ip: Random.ipv4()
-    }
-  end
-
-  ##############################################################################
-  # Story events
-  ##############################################################################
-
-  def story_email_sent(step, email_id, email_meta \\ %{}) do
-    %StoryEmailSentEvent{
-      entity_id: step.entity_id,
-      step: step.name,
-      email_id: email_id,
-      meta: email_meta,
-      timestamp: DateTime.utc_now()
-    }
-  end
-
-  def story_reply_sent(step, reply_id, reply_to) do
-    %StoryReplySentEvent{
-      entity_id: step.entity_id,
-      step: step.name,
-      reply_to: reply_to,
-      reply_id: reply_id,
-      timestamp: DateTime.utc_now()
     }
   end
 

@@ -1,6 +1,7 @@
 defmodule Helix.Story.Event.Handler.Story do
 
   import HELF.Flow
+  import HELL.MacroHelpers
 
   alias Helix.Event
   alias Helix.Story.Action.Story, as: StoryAction
@@ -39,8 +40,9 @@ defmodule Helix.Story.Event.Handler.Story do
   defp handle_action(:complete, step) do
     with {:ok, step, events} <- Steppable.complete(step) do
       Event.emit(events)
+
       next_step = Step.get_next_step(step)
-      spawn fn ->
+      hespawn fn ->
         update_next(step, next_step)
       end
     end

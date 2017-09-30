@@ -97,6 +97,7 @@ defmodule Helix.Story.Mission.FakeSteps do
 
     def format_meta(%{meta: meta}),
       do: %{step: String.to_existing_atom(meta["step"])}
+
     next_step __MODULE__
   end
 
@@ -109,10 +110,14 @@ defmodule Helix.Story.Mission.FakeSteps do
 
     def format_meta(%{meta: meta}),
       do: %{i: meta["i"]}
+
     next_step __MODULE__
   end
 
   step TestMsg do
+
+    require Logger
+
     email "e1",
       reply: ["reply_to_e1"],
       locked: ["locked_reply_to_e1"]
@@ -124,7 +129,7 @@ defmodule Helix.Story.Mission.FakeSteps do
       reply: ["reply_to_e3"]
 
     on_reply "reply_to_e1" do
-      raise "replied_to_e1"
+      Logger.warn "replied_to_e1"
     end
 
     on_reply "reply_to_e2",

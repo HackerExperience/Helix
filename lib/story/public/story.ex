@@ -14,6 +14,8 @@ defmodule Helix.Story.Public.Story do
     | {:error, :internal}
   @doc """
   Sends a reply from the player to a contact.
+
+  Emits: StoryReplySentEvent.t
   """
   def send_reply(entity_id, reply_id) do
     flowing do

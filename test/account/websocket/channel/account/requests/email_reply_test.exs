@@ -2,6 +2,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Requests.EmailReplyTest do
 
   use Helix.Test.Case.Integration
 
+  import ExUnit.CaptureLog
   import Phoenix.ChannelTest
 
   alias Helix.Story.Query.Story, as: StoryQuery
@@ -29,8 +30,12 @@ defmodule Helix.Account.Websocket.Channel.Account.Requests.EmailReplyTest do
 
       ref = push socket, "email.reply", params
 
-      assert_reply ref, :ok, response
-      assert response.data == %{}
+      # Wrapped into a `capture_log` because the reply will cause a log to be
+      # outputted. Capturing it here so it doesn't bloat the test results.
+      capture_log(fn ->
+        assert_reply ref, :ok, response
+        assert response.data == %{}
+      end)
     end
 
     test "fails if reply is invalid" do
