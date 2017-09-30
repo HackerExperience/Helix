@@ -1,0 +1,274 @@
+defmodule Helix.Server.State.Websocket.Channel do
+  @moduledoc """
+  # Overview
+
+  ServerWebsocketChannelState holds information about server channels in use by
+  players. It's basically a giant in-memory mapping of server IDs to server NIPs
+  {network_id, ip}.
+
+  It's most important use case is event notification, when we want to notify all
+  players logged into that one server that an event has occurred. Since the
+  server channel identifier is its NIP, and a server may have multiple NIPs,
+  it may be the case that the event should be broadcasted to multiple channels
+  which are different in name but represent the same server.
+
+  Another important case is our future goal of never leaking the internal server
+  ID to the client. This can only be achieved if we identify servers through
+  their NIPs, in which case the same server may have different channels, as
+  explained above.
+
+  # Implementation & API
+
+  The state is maintained on two ETS table, the `server` and `entity` one. The
+  `server` table maps the server ID to the corresponding NIP, and the `entity`
+  one maps an entity to the list of servers it is currently connected to.
+
+  Joining a server should notify the `join/4` function, which will sync the new
+  entity, server and nips to the state.
+
+  Leaving a server should notify the `leave/3` function, which will update the
+  `entity` table, making sure that given entity is no longer marked as logged.
+
+  Notice that it may be the case that this entity was the last one logged into
+  the server, and thus the server has no one else connected to it. However,
+  we keep the server on the `server` ETS table, since it's quite expensive to
+  verify all the time whether there's someone logged in.
+
+  Every hour or so, we run the `gc/0` method, which will garbage-collect the
+  `server` ETS table, removing servers that are not in use by anyone.
+
+  Notice that this module uses only strings internally, so it uses the `fmt/1`
+  method to convert Helix-formatted data (IDs) to string.
+  """
+
+  use GenServer
+
+  import HELL.MacroHelpers
+
+  alias HELL.IPv4
+  alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
+
+  @typep counter :: non_neg_integer
+
+  @registry_name :server_websocket_channel
+  @ets_table_server :ets_server_websocket_channel_server
+  @ets_table_entity :ets_server_websocket_channel_entity
+
+  def start_link do
+    {:ok, pid} = GenServer.start_link(__MODULE__, [], name: @registry_name)
+    GenServer.call(@registry_name, :setup)
+    {:ok, pid}
+  end
+
+  @doc """
+  Persists the information that `entity_id` just joined `server_id` using the
+  following `nip` and `counter`. Most of the times counter is 0.
+  """
+  @spec join(Entity.id, Server.id, {Network.id, IPv4.t}, counter) ::
+    {:ok, term}
+  def join(entity_id, server_id, {network_id, ip}, counter) do
+    [entity_id, server_id, network_id] = fmt([entity_id, server_id, network_id])
+    nip = {network_id, ip}
+
+    GenServer.call(@registry_name, {:join, entity_id, server_id, nip, counter})
+  end
+
+  @doc """
+  Persists the information that `entity_id` just logged out of `server_id`.
+
+  Notice that, as explained on the moduledoc, it may be the case that this
+  entity was the last one connected to the server. However, we do not perform
+  such verification here, as it's expensive. If the server is no longer in use,
+  it will remain temporarily on the `server` ETS table until this module's
+  garbage collector (`gc/0`) is ran, which should happen automatically and as a
+  background task.
+  """
+  @spec leave(Entity.id, Server.id, {Network.id, IPv4.t}, counter) ::
+    {:ok, term}
+  def leave(entity_id, server_id, {network_id, ip}, counter) do
+    [entity_id, server_id, network_id] = fmt([entity_id, server_id, network_id])
+    nip = {network_id, ip}
+
+    GenServer.call(@registry_name, {:leave, entity_id, server_id, nip, counter})
+  end
+
+  @doc """
+  Interface to the garbage collector method, which will remove from the `server`
+  ETS table any server that is no longer connected by anyone.
+  """
+  def gc do
+    GenServer.call(@registry_name, :gc)
+  end
+
+  @doc """
+  `invalidate_server/2` is useful when a given NIP is no longer valid (the
+  server IP has changed). It will scan the `server` ETS table and remove the
+  reference to the no-longer-valid NIP. Notice that, when this happens, the
+  method responsible for resetting the server IP should have already kicked out
+  all players connected to that specific server.
+  """
+  @spec invalidate_server(Server.id, {Network.id, IPv4.t}) ::
+    {:ok, term}
+  def invalidate_server(server_id, {network_id, ip}) do
+    [server_id, network_id] = fmt([server_id, network_id])
+    nip = {network_id, ip}
+
+    GenServer.call(@registry_name, {:invalidate_server, server_id, nip})
+  end
+
+  @spec fmt([struct]) ::
+    [String.t]
+  def fmt(values) when is_list(values) do
+    Enum.map(values, &(to_string(&1)))
+  end
+
+  # Callbacks
+
+  def init(_),
+    do: {:ok, []}
+
+  def handle_call(:setup, _from, state) do
+    :ets.new(@ets_table_server, [:set, :protected, :named_table])
+    :ets.new(@ets_table_entity, [:set, :protected, :named_table])
+    {:reply, :ok, state}
+  end
+
+  def handle_call({:join, entity_id, server_id, nip, counter}, _, state) do
+    entry_server = get_entry_server(server_id)
+    entry_entity = get_entry_entity(entity_id)
+
+    new_server = entry_server ++ [{nip, counter}]
+    new_entity = entry_entity ++ [{server_id, nip, counter}]
+
+    :ets.insert(@ets_table_server, {server_id, new_server})
+    :ets.insert(@ets_table_entity, {entity_id, new_entity})
+
+    {:reply, :ok, state}
+  end
+
+  def handle_call({:leave, entity_id, server_id, nip, counter}, _, state) do
+    new_entity =
+      entity_id
+      |> get_entry_entity()
+      |> leave_entity(server_id, nip, counter)
+
+    update_ets(@ets_table_entity, entity_id, new_entity)
+
+    {:reply, :ok, state}
+  end
+
+  def handle_call(:gc, _, state) do
+    table_server = :ets.match_object(@ets_table_server, :'$1')
+    table_entity = :ets.match_object(@ets_table_entity, :'$1')
+
+    gc(table_server, table_entity)
+
+    {:reply, :ok, state}
+  end
+
+  def handle_call({:invalidate_server, server_id, nip}, _, state) do
+    new_server =
+      server_id
+      |> get_entry_server()
+      |> leave_server(nip)
+
+    update_ets(@ets_table_server, server_id, new_server)
+
+    hespawn fn ->
+      table_entity = :ets.match_object(@ets_table_entity, :'$1')
+      remove_entities_from_server(table_entity, nip)
+    end
+
+    {:reply, :ok, state}
+  end
+
+  defp remove_entities_from_server(entity_table, nip) do
+    Enum.each(entity_table, fn {entity_id, entry_servers} ->
+      new_entry_servers =
+        Enum.reject(entry_servers, fn {_server, entry_nip, _counter} ->
+          entry_nip == nip
+        end)
+
+      unless new_entry_servers == entry_servers do
+        update_ets(@ets_table_entity, entity_id, entry_servers)
+      end
+    end)
+  end
+
+  docp """
+  Replaces the corresponding value with the new list. If this list is empty,
+  however, instead of replacing we'll remove the entry altogether.
+  """
+  defp update_ets(table, id, value) do
+    if Enum.empty?(value) do
+      :ets.delete(table, id)
+    else
+      :ets.insert(table, {id, value})
+    end
+  end
+
+  docp """
+  Garbage collection implementation. There's always room for optimization.
+  """
+  defp gc(servers_table, entities_table) do
+    servers = Enum.map(servers_table, fn {entry_id, _} -> entry_id end)
+
+    Enum.map(servers, fn server_id ->
+      in_use? =
+        Enum.reduce_while(entities_table, [], fn {_, entry_servers}, _a1 ->
+          found? =
+            Enum.reduce_while(entry_servers, [], fn {entry_server, _, _}, _a2 ->
+              if entry_server == server_id do
+                {:halt, true}
+              else
+                {:cont, false}
+              end
+            end)
+          if found? do
+            {:halt, true}
+          else
+            {:cont, false}
+          end
+        end)
+
+      {server_id, in_use?}
+    end)
+    |> Enum.each(&remove_unused_server/1)
+  end
+
+  defp remove_unused_server({_, true}),
+    do: :noop
+  defp remove_unused_server({server_id, false}) do
+    :ets.delete(@ets_table_server, server_id)
+  end
+
+  defp leave_server(entry, nip) do
+    Enum.reject(entry, fn {entry_nip, _} ->
+      entry_nip == nip
+    end)
+  end
+
+  defp leave_entity(entry, server_id, nip, counter) do
+    Enum.reject(entry, fn {entry_server, entry_nip, entry_count} ->
+      entry_server == server_id and entry_nip == nip and entry_count == counter
+    end)
+  end
+
+  defp get_entry_server(server_id),
+    do: get_entry(@ets_table_server, server_id)
+  defp get_entry_entity(entity_id),
+    do: get_entry(@ets_table_entity, entity_id)
+
+  defp get_entry(table, key) do
+    table
+    |> :ets.lookup(key)
+    |> case do
+         [{_key, entry}] ->
+           entry
+         [] ->
+           []
+       end
+  end
+end
