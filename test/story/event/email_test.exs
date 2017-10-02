@@ -4,7 +4,6 @@ defmodule Helix.Story.Event.EmailTest do
 
   alias Helix.Event.Notificable
 
-  alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Event.Setup, as: EventSetup
 
@@ -12,8 +11,8 @@ defmodule Helix.Story.Event.EmailTest do
     test "notifies only the player" do
       event = EventSetup.Story.email_sent()
 
-      notification_list = Notificable.whom_to_notify(event)
-      assert notification_list == [ChannelHelper.to_topic(event.entity_id)]
+      notify = Notificable.whom_to_notify(event)
+      assert notify == %{account: event.entity_id}
     end
   end
 

@@ -25,7 +25,6 @@ defmodule Helix.Story.Event.Reply do
       @moduledoc false
 
       alias HELL.ClientUtils
-      alias Helix.Event.Notificable.Helper, as: NotificableHelper
 
       @event "story_reply_sent"
 
@@ -41,7 +40,7 @@ defmodule Helix.Story.Event.Reply do
       end
 
       def whom_to_notify(event),
-        do: NotificableHelper.notify_account(event.entity_id)
+        do: %{account: event.entity_id}
     end
   end
 end

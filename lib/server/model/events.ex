@@ -55,10 +55,7 @@ defmodule Helix.Server.Model.Server.PasswordAcquiredEvent do
       {:ok, return}
     end
 
-    def whom_to_notify(event) do
-      [event.entity_id]
-      |> Enum.map(&("account:" <> to_string(&1)))
-    end
-
+    def whom_to_notify(event),
+      do: %{account: event.entity_id}
   end
 end

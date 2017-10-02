@@ -96,6 +96,15 @@ defprotocol Helix.Event.Notificable do
 
   alias Phoenix.Socket
 
+  alias Helix.Account.Model.Account
+  alias Helix.Server.Model.Server
+
+  @type whom_to_notify ::
+    %{
+      optional(:server) => [Server.id],
+      optional(:account) => [Account.id]
+    }
+
   @spec generate_payload(event :: struct, Socket.t) ::
     {:ok, %{data: payload :: term, event: String.t}}
     | :noreply
@@ -122,7 +131,7 @@ defprotocol Helix.Event.Notificable do
   def generate_payload(event, socket)
 
   @spec whom_to_notify(event :: struct) ::
-    [String.t]
+    whom_to_notify
   @doc """
   Specifies which topics should receive the event.
 
@@ -141,18 +150,4 @@ defprotocol Helix.Event.Notificable do
   implementing for Account or other channels)
   """
   def whom_to_notify(event)
-end
-
-defmodule Helix.Event.Notificable.Helper do
-
-  alias Helix.Account.Model.Account
-  alias Helix.Entity.Model.Entity
-
-  def notify_account(entity_id = %Entity.ID{}),
-    do: topic_account(entity_id)
-  def notify_account(account_id = %Account.ID{}),
-    do: topic_account(account_id)
-
-  defp topic_account(id),
-    do: ["account:" <> to_string(id)]
 end

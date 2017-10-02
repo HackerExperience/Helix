@@ -1,5 +1,5 @@
+# credo:disable-for-this-file
 defmodule HELL.DevTools do
-  # credo:disable-for-this-file
 
   defmodule Atoms do
     @moduledoc """
@@ -42,6 +42,18 @@ defmodule HELL.DevTools do
         _ ->
           []
       end
+    end
+  end
+
+  defmodule ETS do
+    @moduledoc """
+    ETS-related helper functions.
+    """
+
+    def dump_table(table) do
+      table
+      |> :ets.match_object(:'$1')
+      |> IO.inspect()
     end
   end
 end

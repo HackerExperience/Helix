@@ -118,11 +118,31 @@ defmodule Helix.Server.State.Websocket.Channel do
     GenServer.call(@registry_name, {:invalidate_server, server_id, nip})
   end
 
-  @spec fmt([struct]) ::
-    [String.t]
-  def fmt(values) when is_list(values) do
-    Enum.map(values, &(to_string(&1)))
+  @spec list_open_channels(Server.id) ::
+    [%{
+        network_id: String.t,
+        ip: String.t,
+        counter: counter
+      }]
+    | nil
+  @doc """
+  Lists all open channels on the given `server_id`.
+  """
+  def list_open_channels(server_id) do
+    server_id = fmt(server_id)
+
+    {:ok, server_list} =
+      GenServer.call(@registry_name, {:list_open_channels, server_id})
+
+    server_list
   end
+
+  @spec fmt([struct] | struct) ::
+    [String.t]
+  defp fmt(values) when is_list(values),
+    do: Enum.map(values, &(to_string(&1)))
+  defp fmt(value),
+    do: to_string(value)
 
   # Callbacks
 
@@ -182,6 +202,27 @@ defmodule Helix.Server.State.Websocket.Channel do
     end
 
     {:reply, :ok, state}
+  end
+
+  def handle_call({:list_open_channels, server_id}, _, state) do
+    result = :ets.lookup(@ets_table_server, server_id)
+
+    server_list =
+      if Enum.empty?(result) do
+        nil
+      else
+        [{_server_id, channels}] = result
+
+        Enum.map(channels, fn {{network_id, ip}, counter} ->
+          %{
+            network_id: network_id,
+            ip: ip,
+            counter: counter
+          }
+        end)
+      end
+
+    {:reply, {:ok, server_list}, state}
   end
 
   defp remove_entities_from_server(entity_table, nip) do

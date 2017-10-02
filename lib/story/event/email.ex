@@ -28,7 +28,6 @@ defmodule Helix.Story.Event.Email do
       """
 
       alias HELL.ClientUtils
-      alias Helix.Event.Notificable.Helper, as: NotificableHelper
 
       @event "story_email_sent"
 
@@ -47,7 +46,7 @@ defmodule Helix.Story.Event.Email do
       Notify the player on his own channel.
       """
       def whom_to_notify(event),
-        do: NotificableHelper.notify_account(event.entity_id)
+        do: %{account: event.entity_id}
     end
   end
 end

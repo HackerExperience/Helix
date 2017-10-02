@@ -22,12 +22,21 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Server.Websocket.Channel.Server.Requests.Bruteforce,
     as: BruteforceRequest
 
-  def join(topic = "server:" <> server_id, params, socket) do
+  @doc """
+  Joins a server. Expected channel name:
+
+  "server:<network_id>@<destination_ip>[#<counter>]"
+
+  [#<counter>] denotes optional argument. If omitted, counter=0 will be assumed.
+  """
+  # def join(topic = "server:" <> _ <> "@" <> _ <> "#" <> _, params, socket) do
+  def join(topic = "server:" <> _, params, socket) do
+    # TODO: verify format
     access_type =
-      if server_id == params["gateway_id"] do
-        :local
-      else
+      if params["gateway_ip"] do
         :remote
+      else
+        :local
       end
 
     request = ServerJoin.new(topic, params, access_type)
@@ -35,7 +44,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   end
 
   def handle_in("file.download", %{file_id: file_id}, socket) do
-    if socket.assigns.access_type == :remote do
+    if socket.assigns.meta.access_type == :remote do
       gateway_id = socket.assigns.gateway.server_id
       destination_id = socket.assigns.destination.server_id
       tunnel = socket.assigns.tunnel
@@ -128,4 +137,21 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   def handle_out("event", event, socket),
     do: Websocket.handle_event(event, socket, &push/3)
+
+  alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
+  def terminate(_reason, socket) do
+    entity_id = socket.assigns.gateway.entity_id
+    server_id = socket.assigns.destination.server_id
+    counter = socket.assigns.meta.counter
+    network_id = socket.assigns.meta.network_id
+    ip = socket.assigns.destination.ip
+
+    ServerWebsocketChannelState.leave(
+      entity_id,
+      server_id,
+      {network_id, ip},
+      counter
+    )
+    # ETS.remove()
+  end
 end
