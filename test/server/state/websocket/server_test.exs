@@ -297,7 +297,7 @@ defmodule Helix.Server.State.Websocket.ChannelTest do
       assert [channel] =
         ServerWebsocketChannelState.list_open_channels(server_id)
       assert channel.counter == 0
-      assert channel.network_id == to_string(network_id)
+      assert channel.network_id == network_id
       assert channel.ip == ip
     end
 

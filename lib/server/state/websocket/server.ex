@@ -50,7 +50,33 @@ defmodule Helix.Server.State.Websocket.Channel do
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
 
+  @typep server_table_name :: :ets_server_websocket_channel_server
+  @typep entity_table_name :: :ets_server_websocket_channel_entity
+
+  @typep server_table :: [server_entry]
+  @typep entity_table :: [entity_entry]
+
+  @typep server_entry ::
+    {server_id :: String.t, [server_entry_data]}
+
+  @typep server_entry_data ::
+    {nip, counter}
+
+  @typep entity_entry ::
+    {entity_id :: String.t, [entity_entry_data]}
+
+  @typep entity_entry_data ::
+    {server_id :: String.t, nip, counter}
+
+  @typep nip :: {network_id :: String.t, ip :: String.t}
   @typep counter :: non_neg_integer
+
+  @typep formatted_channel_data ::
+    %{
+      ip: String.t,
+      network_id: Network.id,
+      counter: counter
+    }
 
   @registry_name :server_websocket_channel
   @ets_table_server :ets_server_websocket_channel_server
@@ -118,11 +144,7 @@ defmodule Helix.Server.State.Websocket.Channel do
   end
 
   @spec list_open_channels(Server.id) ::
-    [%{
-        network_id: String.t,
-        ip: String.t,
-        counter: counter
-      }]
+    [formatted_channel_data]
     | nil
   @doc """
   Lists all open channels on the given `server_id`.
@@ -133,6 +155,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     GenServer.call(@registry_name, {:list_open_channels, server_id})
   end
 
+  @spec get_next_counter(Entity.id, Server.id, {Network.id, IPv4.t}) ::
+    counter
   @doc """
   Figures out the next counter for the `entity` on the `server` with the `nip`.
   """
@@ -143,6 +167,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     GenServer.call(@registry_name, {:next_counter, entity_id, server_id, nip})
   end
 
+  @spec valid_counter?(Entity.id, Server.id, {Network.id, IPv4.t}, counter) ::
+    boolean
   @doc """
   Checks whether the given counter is the next one
   """
@@ -150,7 +176,7 @@ defmodule Helix.Server.State.Websocket.Channel do
     do: get_next_counter(entity_id, server_id, nip) == counter
 
   @spec fmt([struct] | struct) ::
-    [String.t]
+    [String.t] | String.t
   defp fmt(values) when is_list(values),
     do: Enum.map(values, &(to_string(&1)))
   defp fmt(value),
@@ -161,12 +187,16 @@ defmodule Helix.Server.State.Websocket.Channel do
   def init(_),
     do: {:ok, []}
 
+  @spec handle_call(:setup, term, term) ::
+    {:reply, :ok, term}
   def handle_call(:setup, _from, state) do
     :ets.new(@ets_table_server, [:set, :protected, :named_table])
     :ets.new(@ets_table_entity, [:set, :protected, :named_table])
     {:reply, :ok, state}
   end
 
+  @spec handle_call({:join, String.t, String.t, nip, counter}, term, term) ::
+    {:reply, :ok, term}
   def handle_call({:join, entity_id, server_id, nip, counter}, _, state) do
     entry_server = get_entry_server(server_id)
     entry_entity = get_entry_entity(entity_id)
@@ -185,6 +215,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     {:reply, :ok, state}
   end
 
+  @spec handle_call({:leave, String.t, String.t, nip, counter}, term, term) ::
+    {:reply, :ok, term}
   def handle_call({:leave, entity_id, server_id, nip, counter}, _, state) do
     new_entity =
       entity_id
@@ -196,6 +228,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     {:reply, :ok, state}
   end
 
+  @spec handle_call(:gc, term, term) ::
+    {:reply, :ok, term}
   def handle_call(:gc, _, state) do
     table_server = :ets.match_object(@ets_table_server, :'$1')
     table_entity = :ets.match_object(@ets_table_entity, :'$1')
@@ -205,6 +239,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     {:reply, :ok, state}
   end
 
+  @spec handle_call({:invalidate_server, String.t, nip}, term, term) ::
+    {:reply, :ok, term}
   def handle_call({:invalidate_server, server_id, nip}, _, state) do
     new_server =
       server_id
@@ -221,6 +257,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     {:reply, :ok, state}
   end
 
+  @spec handle_call({:next_counter, String.t, String.t, nip}, term, term) ::
+    {:reply, counter, term}
   def handle_call({:next_counter, entity_id, server_id, nip}, _, state) do
     next_counter =
       @ets_table_entity
@@ -230,6 +268,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     {:reply, next_counter, state}
   end
 
+  @spec handle_call({:list_open_channels, String.t}, term, term) ::
+    {:reply, [formatted_channel_data], term}
   def handle_call({:list_open_channels, server_id}, _, state) do
     result = :ets.lookup(@ets_table_server, server_id)
 
@@ -241,7 +281,7 @@ defmodule Helix.Server.State.Websocket.Channel do
 
         Enum.map(channels, fn {{network_id, ip}, counter} ->
           %{
-            network_id: network_id,
+            network_id: Network.ID.cast!(network_id),
             ip: ip,
             counter: counter
           }
@@ -257,6 +297,8 @@ defmodule Helix.Server.State.Websocket.Channel do
   it ignores the request to add to the table. This ensures we won't have any
   repeated entries on the database.
   """
+  @spec join_server([server_entry_data], [entity_entry_data], term) ::
+    {[server_entry_data], [entity_entry_data]}
   defp join_server(entry_server, entry_entity, {server_id, nip, counter}) do
     new_server =
       if Enum.empty?(entry_server) do
@@ -287,6 +329,8 @@ defmodule Helix.Server.State.Websocket.Channel do
   case the algorithm below returns the gap first (in the example, 2). If no gap
   is found, return the next one (in the example it would be 5).
   """
+  @spec get_next([] | [entity_entry_data], {String.t, nip}) ::
+    next_counter :: counter
   defp get_next([], _),
     do: 0
   defp get_next([{_entity_id, servers}], {server_id, nip}) do
@@ -321,6 +365,8 @@ defmodule Helix.Server.State.Websocket.Channel do
     end
   end
 
+  @spec remove_entities_from_server(entity_table, nip) ::
+    term
   defp remove_entities_from_server(entity_table, nip) do
     Enum.each(entity_table, fn {entity_id, entry_servers} ->
       new_entry_servers =
@@ -338,6 +384,12 @@ defmodule Helix.Server.State.Websocket.Channel do
   Replaces the corresponding value with the new list. If this list is empty,
   however, instead of replacing we'll remove the entry altogether.
   """
+  @spec update_ets(
+    server_table_name | entity_table_name,
+    key :: String.t,
+    server_entry_data | entity_entry_data | [])
+  ::
+    term
   defp update_ets(table, id, value) do
     if Enum.empty?(value) do
       :ets.delete(table, id)
@@ -349,6 +401,8 @@ defmodule Helix.Server.State.Websocket.Channel do
   docp """
   Garbage collection implementation. There's always room for optimization.
   """
+  @spec gc(server_table, entity_table) ::
+    term
   defp gc(servers_table, entities_table) do
     servers = Enum.map(servers_table, fn {entry_id, _} -> entry_id end)
 
@@ -378,25 +432,36 @@ defmodule Helix.Server.State.Websocket.Channel do
     |> Enum.each(&remove_unused_server/1)
   end
 
+  @spec remove_unused_server({server_id :: String.t, in_use? :: boolean}) ::
+    term
   defp remove_unused_server({_, true}),
     do: :noop
   defp remove_unused_server({server_id, false}),
     do: :ets.delete(@ets_table_server, server_id)
 
+  @spec leave_server([server_entry_data], nip) ::
+    [server_entry_data]
   defp leave_server(entry, nip) do
     Enum.reject(entry, fn {entry_nip, _} ->
       entry_nip == nip
     end)
   end
 
+  @spec leave_entity([entity_entry_data], String.t, nip, counter) ::
+    [entity_entry_data]
   defp leave_entity(entry, server_id, nip, counter) do
     Enum.reject(entry, fn {entry_server, entry_nip, entry_count} ->
       entry_server == server_id and entry_nip == nip and entry_count == counter
     end)
   end
 
+  @spec get_entry_server(server_id :: String.t) ::
+    [server_entry_data]
   defp get_entry_server(server_id),
     do: get_entry(@ets_table_server, server_id)
+
+  @spec get_entry_entity(entity_id :: String.t) ::
+    [entity_entry_data]
   defp get_entry_entity(entity_id),
     do: get_entry(@ets_table_entity, entity_id)
 
