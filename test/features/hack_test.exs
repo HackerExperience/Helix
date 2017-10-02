@@ -34,7 +34,6 @@ defmodule Helix.Test.Features.Hack do
 
       {target, _} = ServerSetup.server()
 
-      {:ok, [source_nip]} = CacheQuery.from_server_get_nips(gateway.server_id)
       {:ok, [target_nip]} = CacheQuery.from_server_get_nips(target.server_id)
 
       SoftwareSetup.file([type: :cracker, server_id: gateway.server_id])

@@ -3,6 +3,8 @@ defmodule Helix.Test.Channel.Setup do
   import Phoenix.ChannelTest
 
   alias Helix.Websocket.Socket
+  alias Helix.Account.Model.Account
+  alias Helix.Account.Query.Account, as: AccountQuery
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -22,6 +24,7 @@ defmodule Helix.Test.Channel.Setup do
 
   @doc """
   - account: Specify which account to generate the socket to
+  - entity_id: Specify entity ID that socket should be generated to.
   - with_server: Whether to generate an account with server. Defaults to true.
 
   Related: Account.t, Server.t (when `with_server` is true)
@@ -31,6 +34,10 @@ defmodule Helix.Test.Channel.Setup do
       cond do
         opts[:with_server] ->
           AccountSetup.account([with_server: true])
+        opts[:entity_id] ->
+          account_id = Account.ID.cast!(to_string(opts[:entity_id]))
+          account = AccountQuery.fetch(account_id)
+          {account, %{}}
         opts[:account] ->
           {opts[:account], %{}}
         true ->

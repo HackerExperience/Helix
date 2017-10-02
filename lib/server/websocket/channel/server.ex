@@ -29,9 +29,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   [#<counter>] denotes optional argument. If omitted, counter=0 will be assumed.
   """
-  # def join(topic = "server:" <> _ <> "@" <> _ <> "#" <> _, params, socket) do
   def join(topic = "server:" <> _, params, socket) do
-    # TODO: verify format
     access_type =
       if params["gateway_ip"] do
         :remote

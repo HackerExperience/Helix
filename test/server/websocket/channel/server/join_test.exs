@@ -51,11 +51,24 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       CacheHelper.sync_test()
     end
 
-    @tag :pending
-    test "invalid format"
+    test "invalid format" do
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
 
-    @tag :pending
-    test "counter > 0"
+      network_id = @internet_id
+      str_network_id = to_string(network_id)
+      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+
+      bad_topic1 = "server:" <> gateway_ip <> "#0"
+      bad_topic2 = "server:" <> str_network_id <> "#0"
+      bad_topic3 = "server:" <> str_network_id <> "@" <> gateway_ip <> "bad#0"
+
+      assert {:error, reason1} = join(socket, bad_topic1, %{})
+      assert {:error, reason2} = join(socket, bad_topic2, %{})
+      assert {:error, reason3} = join(socket, bad_topic3, %{})
+
+      assert reason1 == reason2 and reason2 == reason3
+      assert reason1 == %{data: "bad_request"}
+    end
 
     test "can not connect locally to a server the player does not own" do
       {socket, _} = ChannelSetup.create_socket()
@@ -120,12 +133,12 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
       topic = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
 
-      join_msg = %{
+      params = %{
         "gateway_ip" => gateway_ip,
         "password" => destination.password
       }
 
-      assert {:ok, _, new_socket} = join(socket, topic, join_msg)
+      assert {:ok, _, new_socket} = join(socket, topic, params)
 
       # `gateway` data is correct
       assert new_socket.assigns.gateway.server_id == gateway.server_id
@@ -150,6 +163,113 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
     end
   end
 
+  describe "Channel counter" do
+    test "joins all servers when sequence is valid" do
+      {socket, %{server: gateway1}} = ChannelSetup.create_socket()
+      {gateway2, _} = ServerSetup.server(entity_id: socket.assigns.entity_id)
+      {destination, _} = ServerSetup.server()
+
+      network_id = @internet_id
+      gateway1_ip = ServerQuery.get_ip(gateway1.server_id, network_id)
+      gateway2_ip = ServerQuery.get_ip(gateway2.server_id, network_id)
+      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+
+      topic1 = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
+      topic2 = ChannelHelper.server_topic_name(network_id, destination_ip, 1)
+
+      params1 = %{
+        "gateway_ip" => gateway1_ip,
+        "password" => destination.password
+      }
+      params2 = %{
+        "gateway_ip" => gateway2_ip,
+        "password" => destination.password
+      }
+
+      assert {:ok, _, socket1} = join(socket, topic1, params1)
+      assert {:ok, _, socket2} = join(socket, topic2, params2)
+
+      assert socket1.assigns.meta.counter == 0
+      assert socket2.assigns.meta.counter == 1
+    end
+
+    test "fails if sequence is repeated" do
+      {socket, %{server: gateway1}} = ChannelSetup.create_socket()
+      {gateway2, _} = ServerSetup.server(entity_id: socket.assigns.entity_id)
+      {destination, _} = ServerSetup.server()
+
+      network_id = @internet_id
+      gateway1_ip = ServerQuery.get_ip(gateway1.server_id, network_id)
+      gateway2_ip = ServerQuery.get_ip(gateway2.server_id, network_id)
+      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+
+      topic1 = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
+      topic2 = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
+
+      params1 = %{
+        "gateway_ip" => gateway1_ip,
+        "password" => destination.password
+      }
+      params2 = %{
+        "gateway_ip" => gateway2_ip,
+        "password" => destination.password
+      }
+
+      assert {:ok, _, _} = join(socket, topic1, params1)
+      assert {:error, reason} = join(socket, topic2, params2)
+      assert reason == %{data: "bad_counter"}
+
+      # Also fails if tries to connect same server twice
+      # TODO: This will need some rework in order to support multiple clients or
+      # logins simultaneously. See issue #277
+      assert {:error, _} = join(socket, topic2, params1)
+      assert {:error, _} = join(socket, topic1, params1)
+    end
+
+    test "counter falls back to 0" do
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
+
+      network_id = @internet_id
+      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+
+      topic = "server:" <> to_string(network_id) <> "@" <> gateway_ip
+
+      assert {:ok, _, socket} = join(socket, topic, %{})
+      assert socket.assigns.meta.counter == 0
+    end
+
+    test "fails if given counter is not next in sequence" do
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
+      {destination, _} = ServerSetup.server()
+
+      network_id = @internet_id
+      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+
+      topic = ChannelHelper.server_topic_name(network_id, destination_ip, 666)
+
+      params = %{
+        "gateway_ip" => gateway_ip,
+        "password" => destination.password
+      }
+
+      assert {:error, reason} = join(socket, topic, params)
+      assert reason == %{data: "bad_counter"}
+    end
+
+    test "ignores counter on local joins" do
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
+
+      network_id = @internet_id
+      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+
+      topic = ChannelHelper.server_topic_name(network_id, gateway_ip, 666)
+
+      assert {:ok, _, socket} = join(socket, topic, %{})
+      assert socket.assigns.meta.counter == 0
+    end
+  end
+
   describe "ServerWebsocketChannelState" do
     test "Joining channel updates state (gateway)" do
       {socket, %{gateway: gateway, gateway_ip: gateway_ip}} =
@@ -159,7 +279,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       server_id = gateway.server_id
 
       # Checking Server table
-      assert [state_server] = ServerStateHelper.lookup_server(server_id)
+      assert state_server = ServerStateHelper.lookup_server(server_id)
       state_server = ServerStateHelper.cast_server_entry(state_server)
 
       assert state_server.server_id == gateway.server_id
@@ -170,7 +290,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert state_channel.counter == 0
 
       # Checking Entity table
-      assert [state_entity] = ServerStateHelper.lookup_entity(entity_id)
+      assert state_entity = ServerStateHelper.lookup_entity(entity_id)
       state_entity = ServerStateHelper.cast_entity_entry(state_entity)
 
       assert state_entity.entity_id == entity_id
@@ -199,7 +319,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       destination_entity_id = socket.assigns.destination.entity_id
 
       # Gateway owner has a valid entry on Entity table
-      assert [state_entity] = ServerStateHelper.lookup_entity(gateway_entity_id)
+      assert state_entity = ServerStateHelper.lookup_entity(gateway_entity_id)
       state_entity = ServerStateHelper.cast_entity_entry(state_entity)
 
       # Which has correct data on it
@@ -210,7 +330,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       refute ServerStateHelper.lookup_entity(destination_entity_id)
 
       # Destination server was mapped into the Server table
-      assert [state_server] = ServerStateHelper.lookup_server(destination_id)
+      assert state_server = ServerStateHelper.lookup_server(destination_id)
 
       state_server = ServerStateHelper.cast_server_entry(state_server)
       assert state_server.server_id == destination_id
@@ -218,9 +338,6 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       # Gateway server is completely unaffected
       refute ServerStateHelper.lookup_server(gateway_id)
     end
-
-    @tag :pending
-    test "multiple joins"
 
     test "leaving channel updates state (gateway)" do
       {socket, %{account: account, gateway: gateway}} =
@@ -234,7 +351,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
       # Notice that the Server table still has the server data, that's because
       # purging unused servers is asynchronous and happens as a background job
-      assert [_something] = ServerStateHelper.lookup_server(gateway.server_id)
+      assert _something = ServerStateHelper.lookup_server(gateway.server_id)
     end
 
     test "leaving channel updates state (remote)" do
@@ -251,11 +368,8 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
       # Notice that the Server table still has the server data, that's because
       # purging unused servers is asynchronous and happens as a background job
-      assert [_something] = ServerStateHelper.lookup_server(destination_id)
+      assert _something = ServerStateHelper.lookup_server(destination_id)
     end
-
-    @tag :pending
-    test "multiple leaves"
 
     defp find_state_server(entity_state, server_id),
       do: Enum.find(entity_state.servers, &(&1.server_id == server_id))

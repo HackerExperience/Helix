@@ -23,58 +23,26 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
 
   defimpl Helix.Websocket.Joinable do
 
-    alias HELL.IPv4
+    import HELL.MacroHelpers
 
+    alias HELL.IPv4
     alias Helix.Cache.Query.Cache, as: CacheQuery
     alias Helix.Entity.Query.Entity, as: EntityQuery
     alias Helix.Network.Model.Network
-    alias Helix.Server.Model.Server
     alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
     alias Helix.Server.Public.Server, as: ServerPublic
     alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
     alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
     alias Helix.Server.Websocket.Channel.Server.Join.Utils, as: ServerJoinUtils
 
-    defp get_topic_data("server:" <> topic) do
-      # Add default counter to the topic name, in case none was given
-      topic =
-        if String.contains?(topic, "#") do
-          topic
-        else
-          topic <> "#0"
-        end
-
-      # Below splits are equivalent to the following pattern match:
-      # `network_id <> "@" <> ip <> "#" <> counter`
-      # Unfortunately, pattern-matching on such string with variable byte size
-      # is not possible on erlang/elixir.
-      [network_id, topic] = String.split(topic, "@", parts: 2)
-      [ip, counter] = String.split(topic, "#", parts: 2)
-
-      try do
-        data =
-          %{
-            network_id: network_id,
-            ip: ip,
-            counter: String.to_integer(counter)
-          }
-
-        {:ok, data}
-      catch
-        _ ->
-          :error
-      end
-    end
-
     @doc """
     Verifies params for local server join.
     """
     def check_params(request = %ServerJoin{type: :local}, _socket) do
       with \
-        {:ok, data} = get_topic_data(request.topic),
+        {:ok, data} <- get_topic_data(request.topic),
         {:ok, network_id} <- Network.ID.cast(data.network_id),
         true <- IPv4.valid?(data.ip),
-        true <- data.counter >= 0,
         {:ok, server_id} <-
           CacheQuery.from_nip_get_server(network_id, data.ip)
       do
@@ -82,7 +50,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
           network_id: network_id,
           gateway_ip: data.ip,
           gateway_id: server_id,
-          counter: data.counter
+          counter: 0
         }
 
         {:ok, %{request| params: params}}
@@ -90,8 +58,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
         # Fix when elixir-lang issue #6426 gets fixed
         # :badserver ->
         #   {:error, %{message: "nip_not_found"}}
-        {:error, {:nip, :notfound}} ->
-          {:error, %{message: "nip_not_found"}}
+        :bad_counter ->
+          {:error, %{message: "bad_counter"}}
         _ ->
           {:error, %{message: "bad_request"}}
       end
@@ -100,20 +68,26 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
     @doc """
     Verifies params for remote server join.
     """
-    def check_params(request = %ServerJoin{type: :remote}, _socket) do
+    def check_params(request = %ServerJoin{type: :remote}, socket) do
       gateway_ip = request.unsafe["gateway_ip"]
 
       with \
-        {:ok, data} = get_topic_data(request.topic),
+        {:ok, data} <- get_topic_data(request.topic),
         {:ok, network_id} <- Network.ID.cast(data.network_id),
         true <- IPv4.valid?(data.ip),
         true <- IPv4.valid?(gateway_ip),
-        true <- data.counter >= 0,
         true <- not is_nil(gateway_ip),
         {:ok, gateway_id} <-
           CacheQuery.from_nip_get_server(network_id, gateway_ip),
         {:ok, destination_id} <-
-          CacheQuery.from_nip_get_server(network_id, data.ip)
+          CacheQuery.from_nip_get_server(network_id, data.ip),
+        true <-
+          ServerWebsocketChannelState.valid_counter?(
+            socket.assigns.entity_id,
+            destination_id,
+            {network_id, data.ip},
+            data.counter
+          ) || :bad_counter
       do
         params = %{
           network_id: network_id,
@@ -132,6 +106,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
         #   {:error, %{message: "nip_not_found"}}
         # :internal ->
         #   {:error, %{message: "internal"}}
+        :bad_counter ->
+          {:error, %{message: "bad_counter"}}
         _ ->
           {:error, %{message: "bad_request"}}
       end
@@ -293,6 +269,40 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
           |> assign.(:meta, build_meta(request))
 
         {:ok, socket}
+      end
+    end
+
+    docp """
+    Iterates through the topic name, extract all data from it.
+    """
+    defp get_topic_data("server:" <> topic) do
+      try do
+        # Add default counter to the topic name, in case none was given
+        topic =
+        if String.contains?(topic, "#") do
+          topic
+        else
+          topic <> "#0"
+        end
+
+        # Below splits are equivalent to the following pattern match:
+        # `network_id <> "@" <> ip <> "#" <> counter`
+        # Unfortunately, pattern-matching on such string with variable byte size
+        # is not possible on erlang/elixir.
+        [network_id, topic] = String.split(topic, "@", parts: 2)
+        [ip, counter] = String.split(topic, "#", parts: 2)
+
+        data =
+          %{
+            network_id: network_id,
+            ip: ip,
+            counter: String.to_integer(counter)
+          }
+
+        {:ok, data}
+      rescue
+        _ ->
+          :error
       end
     end
   end

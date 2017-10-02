@@ -52,7 +52,7 @@
         {Credo.Check.Readability.ParenthesesOnZeroArityDefs},
         {Credo.Check.Readability.ParenthesesInCondition},
         {Credo.Check.Readability.PredicateFunctionNames},
-        {Credo.Check.Readability.PreferImplicitTry},
+        {Credo.Check.Readability.PreferImplicitTry, false},
         {Credo.Check.Readability.StringSigils, false},
         {Credo.Check.Readability.RedundantBlankLines},
         {Credo.Check.Readability.TrailingBlankLine, false},
