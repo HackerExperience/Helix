@@ -15,12 +15,8 @@ defmodule Helix.Cache.State.QueueSyncTest do
   end
 
   describe "queue sync" do
-    @tag :slow
     test "it syncs periodically", context do
       server_id = context.server.server_id
-
-      # Set QueueSync interval to 1s
-      StateQueueSync.set_interval(1000)
 
       # First query, will fetch from origin and add entry to PurgeQueue
       {:ok, _} = CacheQuery.from_server_get_all(server_id)
@@ -30,8 +26,9 @@ defmodule Helix.Cache.State.QueueSyncTest do
       # Nothing on the DB..
       assert_miss CacheInternal.direct_query(:server, server_id)
 
-      # But once we give it enough time to sync...
-      :timer.sleep(1100)
+      # Set QueueSync interval to 50ms & give it enough time
+      StateQueueSync.set_interval(50)
+      :timer.sleep(100)
 
       # ...it will be added to the DB
       assert_hit CacheInternal.direct_query(:server, server_id)

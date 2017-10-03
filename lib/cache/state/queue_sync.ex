@@ -33,7 +33,6 @@ defmodule Helix.Cache.State.QueueSync do
     {:noreply, %{state | timer_ref: timer_ref}}
   end
 
-  defp schedule(interval) do
-    Process.send_after(@registry_name, :sync, interval)
-  end
+  defp schedule(interval),
+    do: Process.send_after(@registry_name, :sync, interval)
 end
