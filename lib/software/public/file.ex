@@ -10,39 +10,39 @@ defmodule Helix.Software.Public.File do
   alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
   alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
-  # TODO: This will hard fail if the user tries to download a file from their
-  #   own gateway for obvious reasons
-  # Review: this function returns seems awkward
   @spec download(Server.id, Server.id, Tunnel.t, File.id) ::
-    :ok
+    {:ok, Process.t}
     | :error
   def download(gateway_id, destination_id, tunnel, file_id) do
     {:ok, gateway_storage_ids} = CacheQuery.from_server_get_storages(gateway_id)
-    {:ok, destination_storage_ids} =
-      CacheQuery.from_server_get_storages(destination_id)
 
-    storage = Enum.random(gateway_storage_ids)
+    storage =
+      gateway_storage_ids
+      |> List.first()
+      |> StorageQuery.fetch()
 
     network_info =
       %{
         gateway_id: gateway_id,
         destination_id: destination_id,
         network_id: tunnel.network_id,
-        bounces: [],  # TODO
-        tunnel: tunnel
+        bounces: []  # TODO
       }
 
     with \
-      file = %{} <- FileQuery.fetch(file_id),
-      true <- file.storage_id in destination_storage_ids,
-      {:ok, _process} <-
+      true <- not is_nil(storage) || :internal,
+      file = %{} <- FileQuery.fetch(file_id) || :bad_file,
+      {:ok, process} <-
         FileTransferFlow.transfer(:download, file, storage, network_info)
     do
-      :ok
+      {:ok, process}
     else
-      _ ->
-        :error
+      :bad_file ->
+        {:error, %{message: "bad_file"}}
+      :internal ->
+        {:error, %{message: "internal"}}
     end
   end
 

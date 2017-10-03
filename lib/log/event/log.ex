@@ -18,38 +18,8 @@ defmodule Helix.Log.Event.Handler.Log do
 
   def file_downloaded(event = %FileDownloadedEvent{}) do
     event
-    # TODO essa coisa horrorosa
+    # TODO #278
   end
-
-  # @doc """
-  # Logs that a file was downloaded from a certain server
-  # """
-  # def file_download_conclusion(event = %DownloadComplete{}) do
-  #   from = event.from_server_id
-  #   to = event.to_server_id
-  #   ip_from = ServerQuery.get_ip(from, event.network_id)
-  #   ip_to = ServerQuery.get_ip(to, event.network_id)
-
-  #   entity = EntityQuery.fetch_by_server(to)
-
-  #   file = FileQuery.fetch(event.from_file_id)
-  #   # FIXME: move to a view helper
-  #   file_name =
-  #     file.full_path
-  #     |> String.split("/")
-  #     |> List.last()
-
-  #   message_from = "File #{file_name} downloaded by #{ip_to}"
-  #   message_to = "File #{file_name} downloaded from #{ip_from}"
-
-  #   {:ok, events} = Repo.transaction fn ->
-  #     {:ok, _, e1} = LogAction.create(from, entity, message_from)
-  #     {:ok, _, e2} = LogAction.create(to, entity, message_to)
-  #     e1 ++ e2
-  #   end
-
-  #   Event.emit(events)
-  # end
 
   @doc """
   Forges a revision onto a log or creates a fake new log

@@ -5,7 +5,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   alias Helix.Event
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Network
-  alias Helix.Network.Model.Tunnel
+  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
@@ -21,8 +21,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
     gateway_id: Server.id,
     destination_id: Server.id,
     network_id: Network.id,
-    bounces: [Server.id],
-    tunnel: Tunnel.t | nil
+    bounces: [Server.id]
   }
 
   @type transfer_ok ::
@@ -65,10 +64,10 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
     }
 
     start_connection = fn ->
-      # TODO: Create tunnel if `pftp`
-      # TunnelAction.start_connection(network_info.tunnel, connection_type)
+      network = NetworkQuery.fetch(network_info.network_id)
+
       TunnelAction.connect(
-        network_info.network_id,
+        network,
         network_info.gateway_id,
         network_info.destination_id,
         network_info.bounces,

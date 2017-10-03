@@ -1,8 +1,21 @@
 defmodule Helix.Test.Software.Helper do
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Software.Model.SoftwareType
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
   alias HELL.TestHelper.Random
+
+  @doc """
+  Returns the first `Storage.t` of the given server
+  """
+  def get_storage(server_id) do
+    server_id
+    |> CacheQuery.from_server_get_storages()
+    |> elem(1)
+    |> List.first()
+    |> StorageQuery.fetch()
+  end
 
   @doc """
   Generates the expected module for the given type.

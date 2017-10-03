@@ -6,6 +6,7 @@ defmodule Helix.Software.Public.FileTest do
   alias Helix.Software.Public.File, as: FilePublic
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
@@ -60,6 +61,29 @@ defmodule Helix.Software.Public.FileTest do
       assert msg == "cracker_not_found"
 
       CacheHelper.sync_test()
+    end
+  end
+
+  describe "download/4" do
+    test "starts download process" do
+      {gateway, _} = ServerSetup.server()
+      {file, %{server_id: destination_id}} = SoftwareSetup.file()
+
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway.server_id,
+          destination_id: destination_id
+        )
+
+      assert {:ok, process} =
+        FilePublic.download(gateway.server_id, destination_id, tunnel, file)
+
+      assert process.file_id == file.file_id
+      assert process.process_type == "file_download"
+      assert process.process_data.connection_type == :ftp
+      assert process.process_data.type == :download
+
+      TOPHelper.top_stop(gateway.server_id)
     end
   end
 end
