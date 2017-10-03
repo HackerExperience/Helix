@@ -11,7 +11,8 @@ config :helix,
     Helix.Universe.Repo,
     Helix.Process.Repo,
     Helix.Server.Repo,
-    Helix.Software.Repo
+    Helix.Software.Repo,
+    Helix.Story.Repo
   ]
 
 default_key = "asdfghjklzxcvbnm,./';[]-=1234567890!"

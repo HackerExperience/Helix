@@ -5,6 +5,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Websocket.Socket
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
   alias Helix.Test.Account.Setup, as: AccountSetup
@@ -45,7 +46,7 @@ defmodule Helix.Test.Channel.Setup do
   If `socket` is given, an `account_id` must be set as well. Same for the
   reverse case (if `account_id` is defined, a `socket` must be given.
 
-  Related: Account.id
+  Related: Account.id, Entity.id
   """
   def join_account(opts \\ []) do
     acc_without_socket = not is_nil(opts[:account_id]) and is_nil(opts[:socket])
@@ -70,6 +71,7 @@ defmodule Helix.Test.Channel.Setup do
 
     related = %{
       account_id: account_id,
+      entity_id: Entity.ID.cast!(to_string(account_id))
     }
 
     {socket, related}
@@ -215,6 +217,16 @@ defmodule Helix.Test.Channel.Setup do
       },
       access_type: access_type
     }
+
+    %{assigns: assigns}
+  end
+
+  @doc """
+  Opts:
+  - die
+  """
+  def mock_account_socket(_opts \\ []) do
+    assigns = %{}
 
     %{assigns: assigns}
   end

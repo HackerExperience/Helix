@@ -118,6 +118,10 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEvent do
       {:ok, return}
     end
 
+    @doc """
+    Both gateway and destination are notified. If they are the same, obviously
+    notifies only one.
+    """
     def whom_to_notify(event) do
       [event.gateway_id, event.target_id]
       |> Enum.uniq()

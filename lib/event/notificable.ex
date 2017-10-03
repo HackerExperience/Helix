@@ -142,3 +142,17 @@ defprotocol Helix.Event.Notificable do
   """
   def whom_to_notify(event)
 end
+
+defmodule Helix.Event.Notificable.Helper do
+
+  alias Helix.Account.Model.Account
+  alias Helix.Entity.Model.Entity
+
+  def notify_account(entity_id = %Entity.ID{}),
+    do: topic_account(entity_id)
+  def notify_account(account_id = %Account.ID{}),
+    do: topic_account(account_id)
+
+  defp topic_account(id),
+    do: ["account:" <> to_string(id)]
+end

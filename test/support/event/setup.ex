@@ -11,6 +11,7 @@ defmodule Helix.Test.Event.Setup do
     as: BruteforceConclusionEvent
   alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     as: OverflowConclusionEvent
+  # alias Helix.Story.Event.StepProceeded, as: StoryStepProceededEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
     as: BankAccountLoginEvent

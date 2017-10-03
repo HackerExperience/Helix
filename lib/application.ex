@@ -60,7 +60,8 @@ defmodule Helix.Application.DomainsSupervisor do
       supervisor(Helix.Universe.Supervisor, []),
       supervisor(Helix.Process.Supervisor, []),
       supervisor(Helix.Server.Supervisor, []),
-      supervisor(Helix.Software.Supervisor, [])
+      supervisor(Helix.Software.Supervisor, []),
+      supervisor(Helix.Story.Supervisor, [])
     ]
 
     supervise(children, strategy: :one_for_one)

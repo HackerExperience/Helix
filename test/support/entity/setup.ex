@@ -12,8 +12,8 @@ defmodule Helix.Test.Entity.Setup do
   end
 
   @doc """
-  Defaults to generating an account entity.
-  - type: account | npc (TODO)
+  Opts:
+  - type: account | npc (TODO). Defaults to generating an account entity.
   """
   def entity(opts \\ []) do
     if opts[:type] do

@@ -20,7 +20,7 @@ defmodule Helix.Account.Public.Account do
     bootstrap
   def bootstrap(entity_id) do
     %{
-      account: AccountIndex.index(),
+      account: AccountIndex.index(entity_id),
       servers: ServerIndex.index(entity_id)
     }
   end

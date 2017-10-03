@@ -15,3 +15,6 @@ config :helix, Helix.Endpoint,
     certfile: "priv/dev/ssl.crt"
   ],
   debug_errors: false
+
+config :helf,
+  driver: :sync

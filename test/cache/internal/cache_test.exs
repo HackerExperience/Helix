@@ -120,7 +120,10 @@ defmodule Helix.Cache.Internal.CacheTest do
       {:hit, server2} = CacheInternal.direct_query(:server, server_id)
 
       assert_id server2.server_id, server_id
-      assert server2.expiration_date > expired_date
+
+      # Ensure the new expiration date is set some time in the future
+      diff = DateTime.diff(server2.expiration_date, expired_date)
+      assert diff > 600
 
       CacheHelper.sync_test()
     end
