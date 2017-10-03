@@ -7,7 +7,7 @@ defmodule Helix.Cache.State.Supervisor do
   alias Helix.Cache.State.QueueSync, as: StateQueueSync
 
   @spec start_link() ::
-  Supervisor.on_start
+    Supervisor.on_start
   @doc false
   def start_link do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)

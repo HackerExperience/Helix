@@ -14,7 +14,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bootstrap do
 
     def check_permissions(request, socket) do
 
-      if socket.assigns.access_type == :remote do
+      if socket.assigns.meta.access_type == :remote do
         {:ok, request}
       else
         {:error, %{message: "own_server_bootstrap"}}

@@ -3,7 +3,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   `ServerChannel` handles incoming and outgoing messages between players and
   servers.
 
-  Common errors (applicable to all requests expected to reply something):
+  Base errors (applicable to all requests expected to reply something):
 
   - "bad_request" - One or more request params are invalid.
   - "internal" - Something unexpected happened.
@@ -22,12 +22,40 @@ defmodule Helix.Server.Websocket.Channel.Server do
   alias Helix.Server.Websocket.Channel.Server.Requests.Bruteforce,
     as: BruteforceRequest
 
-  def join(topic = "server:" <> server_id, params, socket) do
+  @doc """
+  Joins a server.
+
+  Topic:
+  "server:<network_id>@<destination_ip>[#<counter>]"
+
+  [#<counter>] denotes optional argument. If omitted, Helix will automatically
+  grab the correct counter.
+
+  `counter` must be set by the client if:
+  1) the player joins the same server multiple times, using different gateways
+  2) the client must know the topic name in advance
+
+  Otherwise, simply ignore `counter` and everything will be fine.
+
+  Params:
+  - gateway_ip: Notifies which gateway ip this connection is originating from.
+    If no `gateway_ip` is passed, a local gateway connection is assumed.
+  - password: Target server password. Required if the connection is remote.
+
+  Returns:
+  %{}  # TODO: Return server bootstrap
+
+  Errors:
+  - "nip_not_found": The `destination_ip` with `network_id` was not found.
+  - "bad_counter": The given counter is not valid.
+  + base errors
+  """
+  def join(topic = "server:" <> _, params, socket) do
     access_type =
-      if server_id == params["gateway_id"] do
-        :local
-      else
+      if params["gateway_ip"] do
         :remote
+      else
+        :local
       end
 
     request = ServerJoin.new(topic, params, access_type)
@@ -35,7 +63,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   end
 
   def handle_in("file.download", %{file_id: file_id}, socket) do
-    if socket.assigns.access_type == :remote do
+    if socket.assigns.meta.access_type == :remote do
       gateway_id = socket.assigns.gateway.server_id
       destination_id = socket.assigns.destination.server_id
       tunnel = socket.assigns.tunnel
@@ -78,6 +106,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   Errors:
   - "web_not_found" - The given address was not be found.
   - "bad_origin" - The given origin is neither `gateway_id` nor `destination_id`
+  + base errors
   """
   def handle_in("network.browse", params, socket) do
     request = BrowseRequest.new(params)
@@ -113,6 +142,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
     cannot be attacked.
   - "target_self" - Player is trying to hack herself...
   - "bad_attack_src" - Request originated from a remote server channel
+  + base errors
   """
   def handle_in("bruteforce", params, socket) do
     request = BruteforceRequest.new(params)
@@ -128,4 +158,21 @@ defmodule Helix.Server.Websocket.Channel.Server do
 
   def handle_out("event", event, socket),
     do: Websocket.handle_event(event, socket, &push/3)
+
+  alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
+  def terminate(_reason, socket) do
+    entity_id = socket.assigns.gateway.entity_id
+    server_id = socket.assigns.destination.server_id
+    counter = socket.assigns.meta.counter
+    network_id = socket.assigns.meta.network_id
+    ip = socket.assigns.destination.ip
+
+    ServerWebsocketChannelState.leave(
+      entity_id,
+      server_id,
+      {network_id, ip},
+      counter
+    )
+    # ETS.remove()
+  end
 end

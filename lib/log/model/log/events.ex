@@ -21,10 +21,8 @@ defmodule Helix.Log.Model.Log.LogCreatedEvent do
       {:ok, return}
     end
 
-    def whom_to_notify(event) do
-      [event.server_id]
-      |> Enum.map(&("server:" <> to_string(&1)))
-    end
+    def whom_to_notify(event),
+      do: %{server: event.server_id}
   end
 end
 
@@ -51,10 +49,8 @@ defmodule Helix.Log.Model.Log.LogModifiedEvent do
       {:ok, return}
     end
 
-    def whom_to_notify(event) do
-      [event.server_id]
-      |> Enum.map(&("server:" <> to_string(&1)))
-    end
+    def whom_to_notify(event),
+      do: %{server: event.server_id}
   end
 end
 
@@ -81,9 +77,7 @@ defmodule Helix.Log.Model.Log.LogDeletedEvent do
       {:ok, return}
     end
 
-    def whom_to_notify(event) do
-      [event.server_id]
-      |> Enum.map(&("server:" <> to_string(&1)))
-    end
+    def whom_to_notify(event),
+      do: %{server: event.server_id}
   end
 end

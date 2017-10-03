@@ -122,11 +122,8 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEvent do
     Both gateway and destination are notified. If they are the same, obviously
     notifies only one.
     """
-    def whom_to_notify(event) do
-      [event.gateway_id, event.target_id]
-      |> Enum.uniq()
-      |> Enum.map(&("server:" <> to_string(&1)))
-    end
+    def whom_to_notify(event),
+      do: %{server: [event.gateway_id, event.target_id]}
   end
 end
 
@@ -161,10 +158,7 @@ defmodule Helix.Process.Model.Process.ProcessConclusionEvent do
       {:ok, return}
     end
 
-    def whom_to_notify(event) do
-      [event.gateway_id, event.target_id]
-      |> Enum.uniq()
-      |> Enum.map(&("server:" <> to_string(&1)))
-    end
+    def whom_to_notify(event),
+      do: %{server: [event.gateway_id, event.target_id]}
   end
 end

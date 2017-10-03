@@ -13,6 +13,7 @@ defmodule Helix.Test.Features.Hack do
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
+  alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
@@ -33,8 +34,7 @@ defmodule Helix.Test.Features.Hack do
 
       {target, _} = ServerSetup.server()
 
-      {:ok, [target_nip]} =
-        CacheQuery.from_server_get_nips(target.server_id)
+      {:ok, [target_nip]} = CacheQuery.from_server_get_nips(target.server_id)
 
       SoftwareSetup.file([type: :cracker, server_id: gateway.server_id])
 
@@ -94,12 +94,11 @@ defmodule Helix.Test.Features.Hack do
 
       # And I can actually login into the recently hacked server
 
-      topic = "server:" <> to_string(target.server_id)
+      topic =
+        ChannelHelper.server_topic_name(target_nip.network_id, target_nip.ip)
       params = %{
-        "gateway_id" => gateway.server_id,
-        "network_id" => target_nip.network_id,
-        "password" => password_acquired_event.data.password,
-        "ip" => target_nip.ip
+        "gateway_ip" => socket.assigns.gateway.ip,
+        "password" => password_acquired_event.data.password
       }
 
       {:ok, _, new_socket} =
@@ -123,8 +122,7 @@ defmodule Helix.Test.Features.Hack do
 
       {target, _} = ServerSetup.server()
 
-      {:ok, [target_nip]} =
-        CacheQuery.from_server_get_nips(target.server_id)
+      {:ok, [target_nip]} = CacheQuery.from_server_get_nips(target.server_id)
 
       # To the client, login consists of two steps:
       #  1 - Joining the remote server channel
@@ -132,12 +130,11 @@ defmodule Helix.Test.Features.Hack do
       # To the backend, `login` is simply the act of joining another server's
       # channel (step 1 above).
 
-      topic = "server:" <> to_string(target.server_id)
+      topic =
+        ChannelHelper.server_topic_name(target_nip.network_id, target_nip.ip)
       params = %{
-        "gateway_id" => gateway.server_id,
-        "network_id" => target_nip.network_id,
-        "password" => target.password,
-        "ip" => target_nip.ip
+        "gateway_ip" => socket.assigns.gateway.ip,
+        "password" => target.password
       }
 
       # So, let's login!

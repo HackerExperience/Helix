@@ -11,14 +11,20 @@ defmodule Helix.Websocket.SocketTest do
 
   @endpoint Helix.Endpoint
 
-  test "socket is NOT connectable by anyone" do
-    assert :error = connect(Socket, %{})
-  end
+  describe "socket access" do
+    test "connection with valid token is allowed" do
+      account = AccountFactory.insert(:account)
+      {:ok, token} = SessionAction.generate_token(account)
 
-  test "socket is connectable only with valid token" do
-    account = AccountFactory.insert(:account)
-    {:ok, token} = SessionAction.generate_token(account)
+      assert {:ok, _} = connect(Socket, %{"token" => token})
+    end
 
-    assert {:ok, _} = connect(Socket, %{"token" => token})
+    test "'public' connection is refused" do
+      assert :error = connect(Socket, %{})
+    end
+
+    test "connection with wrong token is refused" do
+      assert :error = connect(Socket, %{"token" => "invalid"})
+    end
   end
 end

@@ -22,8 +22,6 @@ defmodule Helix.Story.Event.Step do
     defimpl Helix.Event.Notificable do
       @moduledoc false
 
-      alias Helix.Event.Notificable.Helper, as: NotificableHelper
-
       @event "story_step_proceeded"
 
       def generate_payload(event, _socket) do
@@ -39,7 +37,7 @@ defmodule Helix.Story.Event.Step do
       Notifies only the player
       """
       def whom_to_notify(event),
-        do: NotificableHelper.notify_account(event.entity_id)
+        do: %{account: event.entity_id}
     end
   end
 end

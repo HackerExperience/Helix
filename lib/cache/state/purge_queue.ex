@@ -144,5 +144,4 @@ defmodule Helix.Cache.State.PurgeQueue do
     :ets.delete(@ets_table_name, {model, key, action})
     {:noreply, state}
   end
-
 end

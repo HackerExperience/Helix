@@ -19,7 +19,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
           Network.ID.cast(request.unsafe["network_id"]),
         true <- IPv4.valid?(request.unsafe["ip"]),
         {:ok, bounces} = cast_bounces(request.unsafe["bounces"]),
-        true <- socket.assigns.access_type == :local || :bad_attack_src
+        true <- socket.assigns.meta.access_type == :local || :bad_attack_src
       do
         params = %{
           bounces: bounces,
@@ -39,7 +39,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
     def check_permissions(request, socket) do
       network_id = request.params.network_id
       source_id = socket.assigns.gateway.server_id
-      source_ip = socket.assigns.gateway.ips[network_id]
+      source_ip = socket.assigns.gateway.ip
       ip = request.params.ip
 
       can_bruteforce =
@@ -91,7 +91,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
         network_id: to_string(process.network_id),
         file_id: file_id,
         connection_id: connection_id,
-        source_ip: socket.assigns.gateway.ips[process.network_id],
+        source_ip: socket.assigns.gateway.ip,
         target_ip: request.params.ip
       }
 

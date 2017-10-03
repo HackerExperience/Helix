@@ -3,21 +3,28 @@ defmodule Helix.Test.Channel.Setup do
   import Phoenix.ChannelTest
 
   alias Helix.Websocket.Socket
+  alias Helix.Account.Model.Account
+  alias Helix.Account.Query.Account, as: AccountQuery
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
-  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Model.Entity
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
+  alias Helix.Test.Channel.Helper, as: ChannelHelper
 
   @endpoint Helix.Endpoint
 
+  @internet_id NetworkHelper.internet_id()
+
   @doc """
   - account: Specify which account to generate the socket to
+  - entity_id: Specify entity ID that socket should be generated to.
   - with_server: Whether to generate an account with server. Defaults to true.
 
   Related: Account.t, Server.t (when `with_server` is true)
@@ -27,6 +34,10 @@ defmodule Helix.Test.Channel.Setup do
       cond do
         opts[:with_server] ->
           AccountSetup.account([with_server: true])
+        opts[:entity_id] ->
+          account_id = Account.ID.cast!(to_string(opts[:entity_id]))
+          account = AccountQuery.fetch(account_id)
+          {account, %{}}
         opts[:account] ->
           {opts[:account], %{}}
         true ->
@@ -81,6 +92,7 @@ defmodule Helix.Test.Channel.Setup do
   - socket: Whether to reuse an existing socket.
   - own_server: Whether joining player's own server. No destination is created.
   - network_id: Specify network id. Not used if `own_server`
+  - counter: Specify counter (used by ServerWebsocketChannelState). Default is 0
   - bounces: List of bounces between each server. Not used if `own_server`.
     Expected type: [Server.id] TODO
   - gateway_files: Whether to generate random files on gateway. Defaults to
@@ -89,77 +101,99 @@ defmodule Helix.Test.Channel.Setup do
     to false.
 
   Related:
-    Account.t, gateway :: Server.t, destination :: Server.t | nil, \
+    Account.t, \
+    gateway :: Server.t, \
+    destination :: Server.t | nil, \
     destination_files :: [SoftwareSetup.file] | nil, \
-    gateway_files :: [SoftwareSetup.file] | nil,
+    gateway_files :: [SoftwareSetup.file] | nil, \
+    gateway_ip :: Network.ip, \
+    destination_ip :: Network.ip | nil
   """
-  def join_server(opts \\ [])
-  def join_server(opts = [own_server: true]) do
+  def join_server(opts \\ []) do
     {socket, %{account: account, server: gateway}} = create_socket()
 
-    gateway_id = to_string(gateway.server_id)
+    local? = Keyword.get(opts, :own_server, false)
 
-    topic = "server:" <> gateway_id
-    join_params = %{
-      "gateway_id" => gateway_id
-    }
+    {join, destination} =
+      if local? do
+        join = get_join_data(opts, gateway)
+
+        {join, nil}
+      else
+        {destination, _} = ServerSetup.server()
+        join = get_join_data(opts, gateway, destination)
+
+        {join, destination}
+      end
+
+    {:ok, _, socket} =
+      subscribe_and_join(socket, ServerChannel, join.topic, join.params)
 
     gateway_files = generate_files(opts[:gateway_files], gateway.server_id)
 
-    {:ok, _, socket} =
-      subscribe_and_join(socket, ServerChannel, topic, join_params)
-
-    related = %{
+    gateway_related = %{
       account: account,
       gateway: gateway,
-      gateway_files: gateway_files
+      gateway_ip: join.gateway_ip,
+      gateway_files: gateway_files,
     }
+
+    destination_related =
+      if local? do
+        %{}
+      else
+        destination_files =
+          generate_files(opts[:destination_files], destination.server_id)
+
+        %{
+          destination: destination,
+          destination_ip: join.destination_ip,
+          destination_files: destination_files
+        }
+      end
+
+    related = Map.merge(gateway_related, destination_related)
 
     CacheHelper.sync_test()
 
     {socket, related}
   end
 
-  def join_server(opts) do
-    {socket, %{account: account, server: gateway}} = create_socket()
+  defp get_join_data(opts, gateway, destination \\ false) do
+    network_id = Keyword.get(opts, :network_id, @internet_id)
 
-    {destination, _} = ServerSetup.server()
+    gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+    destination_ip =
+      if destination do
+        ServerQuery.get_ip(destination.server_id, network_id)
+      else
+        gateway_ip
+      end
 
-    gateway_id = to_string(gateway.server_id)
-    destination_id = to_string(destination.server_id)
-    network_id = Access.get(opts, :network_id, "::")
+    counter =
+      opts
+      |> Keyword.get(:counter, 0)
+      |> to_string()
 
-    {:ok, [target_nip]} = CacheQuery.from_server_get_nips(destination.server_id)
+    params =
+      if destination do
+        %{
+          "gateway_ip" => gateway_ip,
+          "password" => destination.password
+        }
+      else
+        %{}
+      end
 
-    # bounces = Access.get(opts, :bounces, [])
+    topic = ChannelHelper.server_topic_name(network_id, destination_ip, counter)
 
-    topic = "server:" <> destination_id
-    join_params = %{
-      "gateway_id" => gateway_id,
-      "network_id" => network_id,
-      "password" => destination.password,
-      "ip" => target_nip.ip
-      # bounces: bounces_string
+    %{
+      topic: topic,
+      gateway_ip: gateway_ip,
+      destination_ip: destination_ip,
+      network_id: network_id,
+      params: params
     }
-
-    gateway_files = generate_files(opts[:gateway_files], gateway.server_id)
-    destination_files =
-      generate_files(opts[:destination_files], destination.server_id)
-
-    {:ok, _, socket} =
-      subscribe_and_join(socket, ServerChannel, topic, join_params)
-
-    related = %{
-      account: account,
-      gateway: gateway,
-      destination: destination,
-      destination_files: destination_files,
-      gateway_files: gateway_files
-    }
-
-    CacheHelper.sync_test()
-
-    {socket, related}
   end
 
   defp generate_files(condition, server_id) do

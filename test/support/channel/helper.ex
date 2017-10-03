@@ -1,13 +1,9 @@
 defmodule Helix.Test.Channel.Helper do
 
-  alias Helix.Account.Model.Account
-  alias Helix.Entity.Model.Entity
-  alias Helix.Server.Model.Server
+  def server_topic_name(network_id, ip, counter \\ 0) do
+    network_id = to_string(network_id)
+    counter = to_string(counter)
 
-  def to_topic(server_id = %Server.ID{}),
-    do: "server:" <> to_string(server_id)
-  def to_topic(account_id = %Account.ID{}),
-    do: "account:" <> to_string(account_id)
-  def to_topic(entity_id = %Entity.ID{}),
-    do: "account:" <> to_string(entity_id)
+    "server:" <> network_id <> "@" <> ip <> "#" <> counter
+  end
 end

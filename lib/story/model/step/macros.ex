@@ -9,6 +9,7 @@ defmodule Helix.Story.Model.Step.Macros do
   import HELL.MacroHelpers
 
   alias HELL.Constant
+  alias HELL.Utils
   alias Helix.Story.Model.Step
   alias Helix.Story.Action.Story, as: StoryAction
 
@@ -231,16 +232,6 @@ defmodule Helix.Story.Model.Step.Macros do
     get_contact(mission_contact, step_module)
   end
 
-  docp """
-  Helper to ensure the given value is returned as a list.
-  """
-  defp ensure_list(nil),
-    do: []
-  defp ensure_list(value) when is_list(value),
-    do: value
-  defp ensure_list(value),
-    do: [value]
-
   @spec add_email(Step.email_id, term) ::
     Step.emails
   docp """
@@ -250,8 +241,8 @@ defmodule Helix.Story.Model.Step.Macros do
   defp add_email(email_id, opts) do
     metadata = %{
       id: email_id,
-      replies: ensure_list(opts[:reply]),
-      locked: ensure_list(opts[:locked])
+      replies: Utils.ensure_list(opts[:reply]),
+      locked: Utils.ensure_list(opts[:locked])
     }
 
     Map.put(%{}, email_id, metadata)
