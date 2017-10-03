@@ -58,8 +58,6 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
         # Fix when elixir-lang issue #6426 gets fixed
         # :badserver ->
         #   {:error, %{message: "nip_not_found"}}
-        :bad_counter ->
-          {:error, %{message: "bad_counter"}}
         _ ->
           {:error, %{message: "bad_request"}}
       end
@@ -70,6 +68,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
     """
     def check_params(request = %ServerJoin{type: :remote}, socket) do
       gateway_ip = request.unsafe["gateway_ip"]
+      entity_id = socket.assigns.entity_id
 
       with \
         {:ok, data} <- get_topic_data(request.topic),
@@ -81,13 +80,14 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
           CacheQuery.from_nip_get_server(network_id, gateway_ip),
         {:ok, destination_id} <-
           CacheQuery.from_nip_get_server(network_id, data.ip),
-        true <-
-          ServerWebsocketChannelState.valid_counter?(
-            socket.assigns.entity_id,
+        {valid_counter?, counter} =
+          validate_counter(
+            entity_id,
             destination_id,
             {network_id, data.ip},
             data.counter
-          ) || :bad_counter
+          ),
+        true <- valid_counter? || :bad_counter
       do
         params = %{
           network_id: network_id,
@@ -95,7 +95,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
           gateway_ip: gateway_ip,
           destination_id: destination_id,
           destination_ip: data.ip,
-          counter: data.counter,
+          counter: counter,
           password: request.unsafe["password"]
         }
 
@@ -277,26 +277,30 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
     """
     defp get_topic_data("server:" <> topic) do
       try do
-        # Add default counter to the topic name, in case none was given
-        topic =
-        if String.contains?(topic, "#") do
-          topic
-        else
-          topic <> "#0"
-        end
-
         # Below splits are equivalent to the following pattern match:
-        # `network_id <> "@" <> ip <> "#" <> counter`
-        # Unfortunately, pattern-matching on such string with variable byte size
-        # is not possible on erlang/elixir.
+        # `network_id <> "@" <> ip [<> "#" <> counter]`
+        # Unfortunately, pattern-matching on such string with dynamic byte size
+        # is not possible/trivial on erlang/elixir.
         [network_id, topic] = String.split(topic, "@", parts: 2)
-        [ip, counter] = String.split(topic, "#", parts: 2)
+
+        {ip, counter} =
+          # If `topic` contains "#" then a counter was explicitly set.
+          if String.contains?(topic, "#") do
+            [ip, counter] = String.split(topic, "#", parts: 2)
+            {ip, String.to_integer(counter)}
+
+          # If counter was not specified, set it as `nil`. Later, the request
+          # will figure out what is the next counter expected to be.
+          else
+            ip = topic
+            {ip, nil}
+          end
 
         data =
           %{
             network_id: network_id,
             ip: ip,
-            counter: String.to_integer(counter)
+            counter: counter
           }
 
         {:ok, data}
@@ -304,6 +308,29 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
         _ ->
           :error
       end
+    end
+
+    docp """
+    Validates and returns the next counter. If the given counter was `nil`, it
+    means the user did not specify a counter during the request, and as such
+    Helix should automatically set it to the correct result.
+    """
+    defp validate_counter(entity_id, server_id, nip, nil) do
+      next_counter =
+        ServerWebsocketChannelState.get_next_counter(entity_id, server_id, nip)
+
+      {true, next_counter}
+    end
+    defp validate_counter(entity_id, server_id, nip, counter) do
+      valid? =
+        ServerWebsocketChannelState.valid_counter?(
+          entity_id,
+          server_id,
+          nip,
+          counter
+        )
+
+      {valid?, counter}
     end
   end
 

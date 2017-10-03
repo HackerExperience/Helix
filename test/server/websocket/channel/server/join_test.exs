@@ -226,16 +226,42 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert {:error, _} = join(socket, topic1, params1)
     end
 
-    test "counter falls back to 0" do
+    test "counter is optional" do
       {socket, %{server: gateway}} = ChannelSetup.create_socket()
+
+      # Note that this test must happen with remote joins only, since counters
+      # are ignored at local/gateway servers joins.
+      {destination, _} = ServerSetup.server()
 
       network_id = @internet_id
       gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
 
-      topic = "server:" <> to_string(network_id) <> "@" <> gateway_ip
+      # We haven't specified the counter at the topic name
+      topic = "server:" <> to_string(network_id) <> "@" <> destination_ip
+      params = %{
+        "gateway_ip" => gateway_ip,
+        "password" => destination.password
+      }
 
-      assert {:ok, _, socket} = join(socket, topic, %{})
-      assert socket.assigns.meta.counter == 0
+      # Yet, it joined successfully and Helix automatically grabbed the
+      # expected counter.
+      assert {:ok, _, new_socket} = join(socket, topic, params)
+      assert new_socket.assigns.meta.counter == 0
+
+      # Let's do it again
+      {gateway2, _} = ServerSetup.server(entity_id: socket.assigns.entity_id)
+
+      gateway2_ip = ServerQuery.get_ip(gateway2.server_id, network_id)
+      params2 = %{
+        "gateway_ip" => gateway2_ip,
+        "password" => destination.password
+      }
+
+      # Now the next expected counter is 1, since we are joining for the second
+      # time in a row.
+      assert {:ok, _, new_socket2} = join(socket, topic, params2)
+      assert new_socket2.assigns.meta.counter == 1
     end
 
     test "fails if given counter is not next in sequence" do
