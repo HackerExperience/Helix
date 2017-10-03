@@ -6,12 +6,12 @@ defmodule Helix.Software.Event.Handler.File.TransferTest do
   alias Helix.Software.Event.Handler.File.Transfer, as: FileTransferHandler
   alias Helix.Software.Query.File, as: FileQuery
 
-  alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
+  alias Helix.Test.Software.Setup.Flow, as: SoftwareFlowSetup
 
   describe "complete/1" do
     test "file is transferred (download)" do
-      {process, _} = ProcessSetup.file_transfer_flow(:download)
+      {process, _} = SoftwareFlowSetup.file_transfer(:download)
 
       {_, [event]} = TOPHelper.soft_complete(process)
 
@@ -28,7 +28,7 @@ defmodule Helix.Software.Event.Handler.File.TransferTest do
     end
 
     test "file is transferred (upload)" do
-      {process, _} = ProcessSetup.file_transfer_flow(:upload)
+      {process, _} = SoftwareFlowSetup.file_transfer(:upload)
 
       {_, [event]} = TOPHelper.soft_complete(process)
 
@@ -45,7 +45,7 @@ defmodule Helix.Software.Event.Handler.File.TransferTest do
     end
 
     test "file is transferred (pftp_download)" do
-      {process, _} = ProcessSetup.file_transfer_flow(:pftp_download)
+      {process, _} = SoftwareFlowSetup.file_transfer(:pftp_download)
 
       {_, [event]} = TOPHelper.soft_complete(process)
 
@@ -60,5 +60,8 @@ defmodule Helix.Software.Event.Handler.File.TransferTest do
 
       TOPHelper.top_stop(process.gateway_id)
     end
+
+    @tag :pending
+    test "failure cases"
   end
 end

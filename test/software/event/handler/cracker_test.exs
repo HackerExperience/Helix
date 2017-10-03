@@ -10,9 +10,9 @@ defmodule Helix.Software.Event.CrackerTest do
 
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Event.Setup, as: EventSetup
-  alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
+  alias Helix.Test.Software.Setup.Flow, as: SoftwareFlowSetup
 
   describe "overflow_conclusion/1" do
     test "life cycle for overflow attack against wire transfer connection" do
@@ -115,7 +115,7 @@ defmodule Helix.Software.Event.CrackerTest do
 
   describe "bruteforce_conclusion/1" do
     test "retrieves the password on success" do
-      {process, _} = ProcessSetup.bruteforce_flow()
+      {process, _} = SoftwareFlowSetup.bruteforce()
 
       event = EventSetup.bruteforce_conclusion(process)
 

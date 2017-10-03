@@ -12,7 +12,7 @@ defmodule Helix.Software.Event.File do
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
-      file_id: File.id,
+      file: File.t,
       to_storage_id: Storage.id,
       network_id: Network.id,
       connection_type: :ftp | :public_ftp
@@ -22,7 +22,7 @@ defmodule Helix.Software.Event.File do
       :entity_id,
       :to_server_id,
       :from_server_id,
-      :file_id,
+      :file,
       :network_id,
       :connection_type
     ]
@@ -30,7 +30,7 @@ defmodule Helix.Software.Event.File do
       :entity_id,
       :to_server_id,
       :from_server_id,
-      :file_id,
+      :file,
       :to_storage_id,
       :network_id,
       :connection_type
@@ -90,7 +90,7 @@ defmodule Helix.Software.Event.File do
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
-      file_id: File.id,
+      file_id: File.t,
       to_storage_id: Storage.id,
       network_id: Network.id
     }
@@ -99,14 +99,14 @@ defmodule Helix.Software.Event.File do
       :entity_id,
       :to_server_id,
       :from_server_id,
-      :file_id,
+      :file,
       :network_id
     ]
     defstruct [
       :entity_id,
       :to_server_id,
       :from_server_id,
-      :file_id,
+      :file,
       :to_storage_id,
       :network_id
     ]

@@ -6,7 +6,7 @@ defmodule Helix.Log.Event.LogTest do
     as: LogForgeEditComplete
   alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
     as: LogForgeCreateComplete
-  alias Helix.Log.Event.Log, as: EventHandler
+  alias Helix.Log.Event.Handler.Log, as: EventHandler
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
 
@@ -20,6 +20,16 @@ defmodule Helix.Log.Event.LogTest do
   describe "when file is downloaded" do
     @tag :pending
     test "creates log"
+  end
+
+  describe "noix" do
+    test "lol" do
+      alias Helix.Test.Event.Setup, as: EventSetup
+
+      event = EventSetup.Software.file_downloaded()
+
+      EventHandler.file_downloaded(event)
+    end
   end
 
   describe "on log forger edit conclusion" do

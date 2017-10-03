@@ -1,4 +1,13 @@
 defmodule Helix.Software.Process.File.Transfer do
+  @moduledoc """
+  SoftwareFileTransferProcess is the process responsible for transferring files
+  from one storage to another. It currently implements the `download`, `upload`
+  and `pftp_download` backends.
+
+  Its process data consists basically of notifying what is the backend, and what
+  storage the file is being transferred to. All other information, like which
+  file is being transferred, is already present on the standard process data.
+  """
 
   alias Helix.Software.Model.Storage
 
@@ -17,6 +26,15 @@ defmodule Helix.Software.Process.File.Transfer do
     do: %{ulk: file.file_size}
 
   defimpl Helix.Process.Model.Process.ProcessType do
+    @moduledoc """
+    ProcessType handler for SoftwareFileTransferProcess
+
+    All events emitted here are generic, i.e. they are not directly related to
+    the backend using FileTransferProcess.
+
+    For example, FileTransferProcessedEvent is emitted on conclusion, regardless
+    if the backend is `download`, `upload` or `pftp_download`
+    """
 
     import Helix.Process.Model.Macros
 

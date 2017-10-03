@@ -16,6 +16,13 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
   @type status :: :completed | :failed
   @type reason :: Constant.t
 
+  @doc """
+  Handles the completion of the `FileTransferProcess`.
+
+  Emits:
+  FileDownloadedEvent | FileUploadedEvent, in case of success;
+  FileDownloadFailedEvent | FileUploadFailedEvent, in case of failure
+  """
   def complete(event = %FileTransferProcessedEvent{}) do
     path = "/Downloads"
 
@@ -51,7 +58,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
       from_server_id: event.from_server_id,
       network_id: event.network_id,
       connection_type: event.connection_type,
-      file_id: file.file_id
+      file: file
     }
   end
   defp get_event(event = %{type: :download}, :failed, reason) do
@@ -70,7 +77,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
       to_server_id: event.to_server_id,
       from_server_id: event.from_server_id,
       network_id: event.network_id,
-      file_id: file.file_id
+      file: file
     }
   end
   defp get_event(event = %{type: :upload}, :failed, reason) do
