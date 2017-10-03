@@ -3,6 +3,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
   alias HELL.Constant
   alias Helix.Event
   alias Helix.Software.Action.File, as: FileAction
+  alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
 
@@ -37,16 +38,18 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
 
       {:ok, file}
     else
-      error ->
+      _error ->
+        error = :todo
+
         event
         |> get_event(:failed, error)
         |> Event.emit()
 
-        error
+        {:error, error}
     end
   end
 
-  @spec get_event(FileTransferProcessedEvent.t, status, File.t | reason) ::
+  @spec get_event(FileTransferProcessedEvent.t, status, term) ::
     FileDownloadedEvent.t
     | FileDownloadFailedEvent.t
     | FileUploadedEvent.t
@@ -56,6 +59,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
       entity_id: event.entity_id,
       to_server_id: event.to_server_id,
       from_server_id: event.from_server_id,
+      to_storage_id: event.to_storage_id,
       network_id: event.network_id,
       connection_type: event.connection_type,
       file: file
@@ -76,6 +80,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
       entity_id: event.entity_id,
       to_server_id: event.to_server_id,
       from_server_id: event.from_server_id,
+      to_storage_id: event.to_storage_id,
       network_id: event.network_id,
       file: file
     }

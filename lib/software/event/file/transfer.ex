@@ -19,7 +19,7 @@ defmodule Helix.Software.Event.File.Transfer do
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @type t :: %{
+    @type t :: %__MODULE__{
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
@@ -65,7 +65,7 @@ defmodule Helix.Software.Event.File.Transfer do
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @type t :: %{
+    @type t :: %__MODULE__{
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
@@ -74,7 +74,7 @@ defmodule Helix.Software.Event.File.Transfer do
       network_id: Network.id,
       connection_type: :ftp | :public_ftp,
       type: :download | :upload,
-      reason: :file_deleted | :killed
+      reason: :file_deleted | :cancelled
     }
 
     @enforce_keys [

@@ -45,7 +45,7 @@ defmodule Helix.Server.Public.Server do
   end
 
   @spec file_download(Server.id, Server.id, Tunnel.t, File.id) ::
-    :ok
+    {:ok, Process.t}
     | :error
   defdelegate file_download(gateway_id, destination_id, tunnel, file_id),
     to: FilePublic,

@@ -13,7 +13,7 @@ defmodule Helix.Software.Event.File do
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @type t :: %{
+    @type t :: %__MODULE__{
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
@@ -29,7 +29,8 @@ defmodule Helix.Software.Event.File do
       :from_server_id,
       :file,
       :network_id,
-      :connection_type
+      :connection_type,
+      :to_storage_id
     ]
     defstruct [
       :entity_id,
@@ -50,7 +51,7 @@ defmodule Helix.Software.Event.File do
 
       def generate_payload(event, _socket) do
         data = %{
-          file_id: event.file.id
+          file: event.file.id
         }
 
         return = %{
@@ -86,7 +87,7 @@ defmodule Helix.Software.Event.File do
       | :file_not_found
       | :unknown
 
-    @type t :: %{
+    @type t :: %__MODULE__{
       reason: reason,
       entity_id: Entity.id,
       to_server_id: Server.id,
@@ -128,11 +129,11 @@ defmodule Helix.Software.Event.File do
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @type t :: %{
+    @type t :: %__MODULE__{
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
-      file_id: File.t,
+      file: File.t,
       to_storage_id: Storage.id,
       network_id: Network.id
     }
@@ -142,7 +143,8 @@ defmodule Helix.Software.Event.File do
       :to_server_id,
       :from_server_id,
       :file,
-      :network_id
+      :network_id,
+      :to_storage_id
     ]
     defstruct [
       :entity_id,
@@ -171,7 +173,7 @@ defmodule Helix.Software.Event.File do
       | :file_not_found
       | :unknown
 
-    @type t :: %{
+    @type t :: %__MODULE__{
       reason: reason,
       entity_id: Entity.id,
       to_server_id: Server.id,

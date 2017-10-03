@@ -10,6 +10,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
   @type transfer_type ::

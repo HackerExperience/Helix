@@ -68,15 +68,15 @@ defmodule Helix.Server.Websocket.Channel.Server do
       destination_id = socket.assigns.destination.server_id
       tunnel = socket.assigns.tunnel
 
-      download =
-        ServerPublic.file_download(gateway_id, destination_id, tunnel, file_id)
+      # download =
+      #   ServerPublic.file_download(gateway_id, destination_id, tunnel, file_id)
 
-      case download do
-        :ok ->
-          {:reply, :ok, socket}
-        :error ->
-          {:reply, :error, socket}
-      end
+      # case download do
+      #   :ok ->
+      #     {:reply, :ok, socket}
+      #   :error ->
+      #     {:reply, :error, socket}
+      # end
     else
       message = %{
         type: "error",

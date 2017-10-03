@@ -43,6 +43,8 @@ defmodule Helix.Software.Public.File do
         {:error, %{message: "bad_file"}}
       :internal ->
         {:error, %{message: "internal"}}
+      _ ->
+        {:error, %{message: "internal"}}
     end
   end
 
