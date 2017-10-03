@@ -3,7 +3,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   `ServerChannel` handles incoming and outgoing messages between players and
   servers.
 
-  Common errors (applicable to all requests expected to reply something):
+  Base errors (applicable to all requests expected to reply something):
 
   - "bad_request" - One or more request params are invalid.
   - "internal" - Something unexpected happened.
@@ -23,11 +23,32 @@ defmodule Helix.Server.Websocket.Channel.Server do
     as: BruteforceRequest
 
   @doc """
-  Joins a server. Expected channel name:
+  Joins a server.
 
+  Topic:
   "server:<network_id>@<destination_ip>[#<counter>]"
 
-  [#<counter>] denotes optional argument. If omitted, counter=0 will be assumed.
+  [#<counter>] denotes optional argument. If omitted, Helix will automatically
+  grab the correct counter.
+
+  `counter` must be set by the client if:
+  1) the player joins the same server multiple times, using different gateways
+  2) the client must know the topic name in advance
+
+  Otherwise, simply ignore `counter` and everything will be fine.
+
+  Params:
+  - gateway_ip: Notifies which gateway ip this connection is originating from.
+    If no `gateway_ip` is passed, a local gateway connection is assumed.
+  - password: Target server password. Required if the connection is remote.
+
+  Returns:
+  %{}  # TODO: Return server bootstrap
+
+  Errors:
+  - "nip_not_found": The `destination_ip` with `network_id` was not found.
+  - "bad_counter": The given counter is not valid.
+  + base errors
   """
   def join(topic = "server:" <> _, params, socket) do
     access_type =
@@ -85,6 +106,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   Errors:
   - "web_not_found" - The given address was not be found.
   - "bad_origin" - The given origin is neither `gateway_id` nor `destination_id`
+  + base errors
   """
   def handle_in("network.browse", params, socket) do
     request = BrowseRequest.new(params)
@@ -120,6 +142,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
     cannot be attacked.
   - "target_self" - Player is trying to hack herself...
   - "bad_attack_src" - Request originated from a remote server channel
+  + base errors
   """
   def handle_in("bruteforce", params, socket) do
     request = BruteforceRequest.new(params)
