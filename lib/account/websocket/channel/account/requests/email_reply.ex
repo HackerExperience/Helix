@@ -1,4 +1,8 @@
 defmodule Helix.Account.Websocket.Channel.Account.Requests.EmailReply do
+  @moduledoc """
+  Implementation of the `EmailReply` request, which allows the player to send
+  an (storyline) email reply to the Contact (story character)
+  """
 
   require Helix.Websocket.Request
 
@@ -24,6 +28,10 @@ defmodule Helix.Account.Websocket.Channel.Account.Requests.EmailReply do
       end
     end
 
+    @doc """
+    Permissions whether that reply is valid within the player's current context
+    are checked at StoryPublic- and StoryAction-level
+    """
     def check_permissions(request, _socket),
       do: {:ok, request}
 

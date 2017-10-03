@@ -133,7 +133,15 @@ defprotocol Helix.Story.Model.Steppable do
   alias Helix.Event
   alias Helix.Story.Model.Step
 
-  @type generic_step :: Step.t(struct)
+  @typedoc """
+  The `actions` type lists all possible actions returned by `handle_event/3`,
+  which will be interpreted by the StepFlow implemented at StoryEventHandler.
+  """
+  @type actions ::
+    :noop
+    | :complete
+    | :fail
+  @typep generic_step :: Step.t(struct)
 
   @spec setup(current_step :: generic_step, previous_step :: generic_step) ::
     {:ok | :error, generic_step, [Event.t]}
@@ -153,7 +161,7 @@ defprotocol Helix.Story.Model.Steppable do
   def setup(step, previous_step)
 
   @spec handle_event(generic_step, Event.t, Step.meta) ::
-    {:complete | :fail | :noop, generic_step, [Event.t]}
+    {actions, generic_step, [Event.t]}
   @doc """
   Generic filtering of events. Any event will be pattern-matched against the
   implementations of `handle_event` of the given Step.

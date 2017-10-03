@@ -66,7 +66,7 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
-  @spec handle_action(:complete | :fail | :noop, Step.t(struct)) ::
+  @spec handle_action(Steppable.actions, Step.t(struct)) ::
     term
   docp """
   When a step requests to be completed, we'll call `Steppable.complete/1`,

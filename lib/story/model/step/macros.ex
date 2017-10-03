@@ -17,12 +17,14 @@ defmodule Helix.Story.Model.Step.Macros do
   defmacro step(name, contact \\ nil, do: block) do
     quote do
       defmodule unquote(name) do
+        @moduledoc false
 
         require Helix.Story.Model.Step
 
         Helix.Story.Model.Step.register()
 
         defimpl Helix.Story.Model.Steppable do
+          @moduledoc false
 
           @emails Module.get_attribute(__MODULE__, :emails) || %{}
           @contact get_contact(unquote(contact), __MODULE__)
@@ -32,21 +34,26 @@ defmodule Helix.Story.Model.Step.Macros do
 
           # Most steps do not have a "fail" option. Those who do must manually
           # implement this protocol function.
+          @doc false
           def fail(_step),
             do: raise "Undefined fail handler at #{inspect unquote(__MODULE__)}"
 
           # Catch-all for unhandled events, otherwise any unexpected event would
           # thrown an exception here.
+          @doc false
           def handle_event(step, _event, _meta),
             do: {:noop, step, []}
 
+          @doc false
           def format_meta(%{meta: meta}),
             do: meta
 
+          @doc false
           def get_contact(_),
             do: @contact
 
           # Unlocked replies only
+          @doc false
           def get_replies(_step, email_id) do
             case Map.get(@emails, email_id) do
               email = %{} ->
@@ -72,6 +79,9 @@ defmodule Helix.Story.Model.Step.Macros do
       #   4 - We sort steps.ex from the last to the first step.
       # I don't want neither 3 or 4. Waiting for a cool hack on 1 or 2.
 
+      @doc """
+      Returns the next step module name.
+      """
       def next_step(_),
         do: Helix.Story.Model.Step.get_name(unquote(next_step_module))
     end
@@ -109,6 +119,7 @@ defmodule Helix.Story.Model.Step.Macros do
 
   defmacro filter(step, event, meta, opts) do
     quote do
+      @doc false
       def handle_event(unquote(step), unquote(event), unquote(meta)) do
         unquote(
           case opts do
@@ -144,6 +155,7 @@ defmodule Helix.Story.Model.Step.Macros do
 
     for email <- valid_emails do
       quote do
+        @doc false
         def handle_event(
           step,
           %StoryReplySentEvent{

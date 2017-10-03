@@ -7,9 +7,9 @@ defmodule Helix.Story.Action.Story do
   alias Helix.Story.Model.StoryStep
   alias Helix.Story.Repo
 
-  alias Helix.Story.Event.Step.Proceeded, as: StepProceededEvent
   alias Helix.Story.Event.Email.Sent, as: EmailSentEvent
   alias Helix.Story.Event.Reply.Sent, as: ReplySentEvent
+  alias Helix.Story.Event.Step.Proceeded, as: StepProceededEvent
 
   @spec proceed_step(first_step :: Step.t(struct)) ::
     {:ok, StoryStep.t}
