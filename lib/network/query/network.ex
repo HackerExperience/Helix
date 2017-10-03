@@ -26,5 +26,5 @@ defmodule Helix.Network.Query.Network do
   Returns the record for the global network called "The Internet"
   """
   def internet,
-    do: Repo.get(Network, "::")
+    do: @internet
 end

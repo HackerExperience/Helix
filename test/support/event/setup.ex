@@ -2,15 +2,10 @@ defmodule Helix.Test.Event.Setup do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
-  alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
 
   alias Helix.Network.Model.Connection.ConnectionClosedEvent
   alias Helix.Process.Model.Process.ProcessCreatedEvent
-  alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
-    as: BruteforceConclusionEvent
-  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
-    as: OverflowConclusionEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
     as: BankAccountLoginEvent
@@ -18,10 +13,8 @@ defmodule Helix.Test.Event.Setup do
     as: BankAccountPasswordRevealedEvent
 
   alias HELL.TestHelper.Random
-  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
-  alias Helix.Test.Server.Setup, as: ServerSetup
 
   @internet NetworkHelper.internet_id()
 
@@ -76,46 +69,6 @@ defmodule Helix.Test.Event.Setup do
     target_entity = Access.get(opts, :target_entity_id, Entity.ID.generate())
 
     process_created(gateway_id, target_id, gateway_entity, target_entity)
-  end
-
-  ##############################################################################
-  # Software? events
-  ##############################################################################
-
-  @doc """
-  Accepts: Process.t, (Connection.t, Server.id)
-  """
-  def overflow_conclusion(process = %Process{}) do
-    %OverflowConclusionEvent{
-      gateway_id: process.gateway_id,
-      target_process_id: process.process_id,
-      target_connection_id: nil
-    }
-  end
-  def overflow_conclusion(connection = %Connection{}, gateway_id) do
-    %OverflowConclusionEvent{
-      gateway_id: gateway_id,
-      target_process_id: nil,
-      target_connection_id: connection.connection_id
-    }
-  end
-
-  def bruteforce_conclusion(process = %Process{}) do
-    %BruteforceConclusionEvent{
-      source_entity_id: process.source_entity_id,
-      network_id: process.network_id,
-      target_server_id: process.target_server_id,
-      target_server_ip: process.process_data.target_server_ip,
-    }
-  end
-
-  def bruteforce_conclusion do
-    %BruteforceConclusionEvent{
-      source_entity_id: EntitySetup.id(),
-      network_id: @internet,
-      target_server_id: ServerSetup.id(),
-      target_server_ip: Random.ipv4()
-    }
   end
 
   ##############################################################################

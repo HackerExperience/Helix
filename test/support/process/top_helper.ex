@@ -44,4 +44,9 @@ defmodule Helix.Test.Process.TOPHelper do
     cs = Changeset.change(process)
     ProcessType.state_change(process.process_data, cs, :running, :complete)
   end
+
+  def soft_kill(process = %Process{}, reason \\ :normal) do
+    cs = Changeset.change(process)
+    ProcessType.kill(process.process_data, cs, reason)
+  end
 end

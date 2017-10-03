@@ -1,6 +1,11 @@
 defmodule Helix.Software.Event.File do
 
   defmodule Downloaded do
+    @moduledoc """
+    FileDownloadedEvent is fired when a FileTransfer process of type `download`
+    has finished successfully, in which case a new file has been transferred to
+    the corresponding server.
+    """
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
@@ -35,9 +40,41 @@ defmodule Helix.Software.Event.File do
       :network_id,
       :connection_type
     ]
+
+    defimpl Helix.Event.Notificable do
+      @moduledoc """
+      Notifies the Client that a file has been downloaded.
+      """
+
+      @event "file_downloaded"
+
+      def generate_payload(event, _socket) do
+        data = %{
+          file_id: event.file.id
+        }
+
+        return = %{
+          data: data,
+          event: @event
+        }
+
+        {:ok, return}
+      end
+
+      @doc """
+      We only notify the "downloader" server.
+      """
+      def whom_to_notify(event),
+        do: %{server: event.to_server_id}
+    end
   end
 
   defmodule DownloadFailed do
+    @moduledoc """
+    FileDownloadFailedEvent is fired when a FileTransfer process of type
+    `download` has finished with problems, in which case the transfer of the
+    file was NOT successful.
+    """
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
@@ -79,6 +116,11 @@ defmodule Helix.Software.Event.File do
   end
 
   defmodule Uploaded do
+    @moduledoc """
+    FileUploadedEvent is fired when a FileTransfer process of type `upload` has
+    finished successfully, in which case a new file has been transferred to the
+    corresponding server.
+    """
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
@@ -113,6 +155,11 @@ defmodule Helix.Software.Event.File do
   end
 
   defmodule UploadFailed do
+    @moduledoc """
+    FileUploadFailedEvent is fired when a FileTransfer process of type `upload`
+    has finished with problems, in which case the transfer of the file was NOT
+    successful.
+    """
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
@@ -148,8 +195,5 @@ defmodule Helix.Software.Event.File do
       :to_storage_id,
       :network_id
     ]
-  end
-
-  defmodule Aborted do
   end
 end

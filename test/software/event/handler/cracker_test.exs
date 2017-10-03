@@ -21,7 +21,7 @@ defmodule Helix.Software.Event.CrackerTest do
       transfer_id = process.process_data.transfer_id
 
       # Simulate completion of overflow process
-      event = EventSetup.overflow_conclusion(process)
+      event = EventSetup.Software.overflow_conclusion(process)
 
       # Returns a token
       assert {:ok, token_id} = CrackerHandler.overflow_conclusion(event)
@@ -61,7 +61,10 @@ defmodule Helix.Software.Event.CrackerTest do
 
       # Simulate completion of overflow process
       event =
-        EventSetup.overflow_conclusion(connection, attacker_server.server_id)
+        EventSetup.Software.overflow_conclusion(
+          connection,
+          attacker_server.server_id
+        )
 
       # Returns a token
       assert {:ok, token_id} = CrackerHandler.overflow_conclusion(event)
@@ -117,7 +120,7 @@ defmodule Helix.Software.Event.CrackerTest do
     test "retrieves the password on success" do
       {process, _} = SoftwareFlowSetup.bruteforce()
 
-      event = EventSetup.bruteforce_conclusion(process)
+      event = EventSetup.Software.bruteforce_conclusion(process)
 
       assert {:ok, _password} =
         CrackerHandler.bruteforce_conclusion(event)
@@ -126,7 +129,7 @@ defmodule Helix.Software.Event.CrackerTest do
     end
 
     test "fails when target server is not found" do
-      event = EventSetup.bruteforce_conclusion()
+      event = EventSetup.Software.bruteforce_conclusion()
 
       assert {:error, reason} =
         CrackerHandler.bruteforce_conclusion(event)

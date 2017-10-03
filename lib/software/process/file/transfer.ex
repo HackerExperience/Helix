@@ -38,6 +38,10 @@ defmodule Helix.Software.Process.File.Transfer do
 
     import Helix.Process.Model.Macros
 
+    alias Helix.Server.Model.Server
+
+    alias Helix.Software.Event.File.Transfer.Aborted,
+      as: FileTransferAbortedEvent
     alias Helix.Software.Event.File.Transfer.Processed,
       as: FileTransferProcessedEvent
 
@@ -49,33 +53,36 @@ defmodule Helix.Software.Process.File.Transfer do
     def minimum(_),
       do: %{}
 
-    def kill(_, process, _) do
-      {delete(process), []}
-    end
-
-    def state_change(data = %{type: :download}, process, _, :complete) do
+    def kill(data, process, _) do
       process = unchange(process)
 
-      from_server_id = process.target_server_id
-      to_server_id = process.gateway_id
+      context = get_servers_context(data, process)
+      event = process_abortion(data, process, context)
 
-      process_completion(from_server_id, to_server_id, data, process)
+      {delete(process), [event]}
     end
 
-    def state_change(data = %{type: :upload}, process, _, :complete) do
+    def state_change(data, process, _, :complete) do
       process = unchange(process)
 
-      from_server_id = process.gateway_id
-      to_server_id = process.target_server_id
+      context = get_servers_context(data, process)
+      event = process_completion(data, process, context)
 
-      process_completion(from_server_id, to_server_id, data, process)
+      {delete(process), [event]}
     end
 
     def state_change(_, process, _, _),
       do: {process, []}
 
-    defp process_completion(from_server_id, to_server_id, data, process) do
-      event = %FileTransferProcessedEvent{
+    @spec get_servers_context(data :: term, process :: term) ::
+      context :: {from_server :: Server.id, to_server :: Server.id}
+    defp get_servers_context(%{type: :download}, process),
+      do: {process.target_server_id, process.gateway_id}
+    defp get_servers_context(%{type: :upload}, process),
+      do: {process.gateway_id, process.target_server_id}
+
+    defp process_completion(data, process, {from_server_id, to_server_id}) do
+      %FileTransferProcessedEvent{
         entity_id: process.source_entity_id,
         to_server_id: to_server_id,
         from_server_id: from_server_id,
@@ -85,8 +92,20 @@ defmodule Helix.Software.Process.File.Transfer do
         connection_type: data.connection_type,
         type: data.type
       }
+    end
 
-      {delete(process), [event]}
+    defp process_abortion(data, process, {from_server_id, to_server_id}) do
+      %FileTransferAbortedEvent{
+        entity_id: process.source_entity_id,
+        to_server_id: to_server_id,
+        from_server_id: from_server_id,
+        file_id: process.file_id,
+        network_id: process.network_id,
+        to_storage_id: data.destination_storage_id,
+        connection_type: data.connection_type,
+        type: data.type,
+        reason: :killed
+      }
     end
 
     def conclusion(data, process),

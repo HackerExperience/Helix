@@ -140,7 +140,7 @@ defmodule Helix.Software.Internal.FileTest do
     end
 
     test "file is copied (different storage)" do
-      {file, %{server_id: server_id}} = SoftwareSetup.file()
+      {file, _} = SoftwareSetup.file()
       {destination, _} = ServerSetup.server()
 
       storage = SoftwareHelper.get_storage(destination.server_id)

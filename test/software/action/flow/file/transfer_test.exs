@@ -2,10 +2,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
-  alias Helix.Software.Query.Storage, as: StorageQuery
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
