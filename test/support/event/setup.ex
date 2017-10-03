@@ -2,6 +2,7 @@ defmodule Helix.Test.Event.Setup do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
+  alias Helix.Network.Repo, as: NetworkRepo
   alias Helix.Server.Model.Server
 
   alias Helix.Network.Model.Connection.ConnectionClosedEvent
@@ -85,10 +86,12 @@ defmodule Helix.Test.Event.Setup do
     network_id = Access.get(opts, :network_id, @internet)
     reason = Access.get(opts, :reason, :normal)
 
+    conn = NetworkRepo.preload(conn, :tunnel)
+
     %ConnectionClosedEvent{
       connection_id: conn.connection_id,
       network_id: network_id,
-      tunnel_id: conn.tunnel_id,
+      tunnel: conn.tunnel,
       meta: conn.meta,
       reason: reason,
       connection_type: conn.connection_type

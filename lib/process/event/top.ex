@@ -7,8 +7,8 @@ defmodule Helix.Process.Event.TOP do
 
   # TODO: Ensure that the processes are killed (by making `kill` blocking
   #   probably)
-  def connection_closed(%ConnectionClosedEvent{connection_id: connection}) do
-    connection
+  def connection_closed(%ConnectionClosedEvent{connection_id: connection_id}) do
+    connection_id
     |> ProcessQuery.get_processes_on_connection()
     |> Enum.each(&ProcessAction.kill(&1, :connection_closed))
   end

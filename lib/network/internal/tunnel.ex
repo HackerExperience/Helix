@@ -137,7 +137,7 @@ defmodule Helix.Network.Internal.Tunnel do
     with {:ok, connection} <- Repo.insert(cs) do
       event = %Connection.ConnectionStartedEvent{
         connection_id: connection.connection_id,
-        tunnel_id: connection.tunnel_id,
+        tunnel: tunnel,
         network_id: tunnel.network_id,
         connection_type: connection_type
       }
@@ -168,7 +168,7 @@ defmodule Helix.Network.Internal.Tunnel do
 
     event = %Connection.ConnectionClosedEvent{
       connection_id: connection.connection_id,
-      tunnel_id: connection.tunnel_id,
+      tunnel: connection.tunnel,
       network_id: connection.tunnel.network_id,
       meta: connection.meta,
       connection_type: connection.connection_type,

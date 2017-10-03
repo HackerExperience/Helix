@@ -14,6 +14,11 @@ defmodule Helix.Event.Dispatcher.Helix do
   alias Helix.Software.Event, as: SoftwareEvent
   alias Helix.Software.Event.Handler, as: SoftwareHandler
 
+  all_events LogHandler.Log, :handle_event,
+    skip: [Helix.Log.Model.Log.LogCreatedEvent]
+
+  event Helix.Log.Model.Log.LogCreatedEvent
+
   ##############################################################################
   # Account events
   ##############################################################################
@@ -30,10 +35,6 @@ defmodule Helix.Event.Dispatcher.Helix do
   event Network.Model.Connection.ConnectionClosedEvent,
     Process.Event.TOP,
     :connection_closed
-
-  event Network.Model.Connection.ConnectionStartedEvent,
-    LogHandler.Log,
-    :connection_started
 
   ##############################################################################
   # Server events
@@ -64,10 +65,6 @@ defmodule Helix.Event.Dispatcher.Helix do
   event SoftwareEvent.File.Transfer.Processed,
     SoftwareHandler.File.Transfer,
     :complete
-
-  event SoftwareEvent.File.Downloaded,
-    LogHandler.Log,
-    :file_downloaded
 
   event Software.Model.SoftwareType.Firewall.FirewallStartedEvent,
     Process.Event.Cracker,

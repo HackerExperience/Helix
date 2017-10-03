@@ -1,4 +1,4 @@
-defmodule Helix.Log.Event.LogTest do
+defmodule Helix.Log.Event.Handler.LogTest do
 
   use Helix.Test.Case.Integration
 
@@ -6,10 +6,11 @@ defmodule Helix.Log.Event.LogTest do
     as: LogForgeEditComplete
   alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
     as: LogForgeCreateComplete
-  alias Helix.Log.Event.Handler.Log, as: EventHandler
+  alias Helix.Log.Event.Handler.Log, as: LogHandler
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
 
+  alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Entity.Factory, as: EntityFactory
   alias Helix.Test.Server.Factory, as: ServerFactory
   alias Helix.Test.Log.Factory, as: LogFactory
@@ -22,17 +23,28 @@ defmodule Helix.Log.Event.LogTest do
     test "creates log"
   end
 
-  describe "noix" do
-    test "lol" do
-      alias Helix.Test.Event.Setup, as: EventSetup
-
+  describe "handle_event/1" do
+    test "follows the LoggableFlow" do
       event = EventSetup.Software.file_downloaded()
 
-      EventHandler.file_downloaded(event)
+      # Simulates the handler receiving the event
+      assert :ok == LogHandler.handle_event(event)
+
+      # Now we verify that the corresponding log has been saved on the relevant
+      # places.
+      [log_source] = LogQuery.get_logs_on_server(event.from_server_id)
+      assert log_source.server_id == event.from_server_id
+      assert log_source.entity_id == event.entity_id
+      assert log_source.message =~ "localhost downloaded"
+
+      [log_target] = LogQuery.get_logs_on_server(event.to_server_id)
+      assert log_target.server_id == event.to_server_id
+      assert log_target.entity_id == event.entity_id
+      assert log_target.message =~ "at localhost"
     end
   end
 
-  describe "on log forger edit conclusion" do
+  describe "log_forge_conclusion/1 for LogForge.Edit" do
     test "adds revision to target log" do
       target_log = LogFactory.insert(:log)
       entity = EntityFactory.insert(:entity)
@@ -46,7 +58,7 @@ defmodule Helix.Log.Event.LogTest do
       }
 
       revisions_before = LogQuery.count_revisions_of_entity(target_log, entity)
-      EventHandler.log_forge_conclusion(event)
+      LogHandler.log_forge_conclusion(event)
       revisions_after = LogQuery.count_revisions_of_entity(target_log, entity)
       target_log = LogQuery.fetch(target_log.log_id)
 
@@ -55,7 +67,7 @@ defmodule Helix.Log.Event.LogTest do
     end
   end
 
-  describe "on log forger create conclusion" do
+  describe "log_forge_conclusion/1 for LogForge.Create" do
     test "creates specified log on target server" do
       entity = EntityFactory.insert(:entity)
       server = ServerFactory.insert(:server)
@@ -68,7 +80,7 @@ defmodule Helix.Log.Event.LogTest do
         version: 456
       }
 
-      EventHandler.log_forge_conclusion(event)
+      LogHandler.log_forge_conclusion(event)
 
       assert [log] = LogQuery.get_logs_on_server(server)
       assert [%{forge_version: 456}] = Repo.preload(log, :revisions).revisions

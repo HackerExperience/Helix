@@ -11,10 +11,11 @@ defmodule HELL.Hack.Experience do
   defmacro protocolols do
 
     protocols = [
-      Helix.Cache.Model.Cacheable,
       Helix.Event.Notificable,
       Helix.Websocket.Requestable,
       Helix.Websocket.Joinable,
+      Helix.Cache.Model.Cacheable,
+      Helix.Log.Model.Loggable,
       Helix.Process.Model.Process.ProcessType,
       Helix.Process.Public.View.ProcessViewable,
       Helix.Story.Model.Steppable
@@ -58,6 +59,9 @@ defmodule HELL.Hack.Experience do
         {:get_contact, 1},
         {:format_meta, 1},
         {:get_replies, 2}
+      ],
+      "Elixir.Helix.Log.Model.Loggable" => [
+        {:generate, 1}
       ]
     }
 

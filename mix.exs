@@ -64,8 +64,8 @@ defmodule Helix.Mixfile do
       {:ecto, "~> 2.1"},
       {:postgrex, "~> 0.13.3"},
 
-      {:helf, github: "HackerExperience/HELF"},
-      {:poison, "~> 2.0"},
+      {:helf, "~> 0.0.1"},
+      {:poison, "~> 3.0"},
 
       {:comeonin, "~> 3.2"},
       {:timex, "~> 3.1"},

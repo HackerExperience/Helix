@@ -7,6 +7,7 @@ defmodule Helix.Log.Event.Handler.Log do
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Log.Action.Log, as: LogAction
+  alias Helix.Log.Model.Loggable
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
 
@@ -16,9 +17,17 @@ defmodule Helix.Log.Event.Handler.Log do
   alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
     as: LogForgeCreateComplete
 
-  def file_downloaded(event = %FileDownloadedEvent{}) do
-    event
-    # TODO #278
+  @doc """
+  Generic event handler for all Helix events. If the event implement the
+  Loggable protocol, it will guide it through the LoggableFlow, making sure
+  the relevant log entries are generated and saved
+  """
+  def handle_event(event) do
+    if Loggable.impl_for(event) do
+      event
+      |> Loggable.generate()
+      |> Loggable.Flow.save()
+    end
   end
 
   @doc """
@@ -41,37 +50,5 @@ defmodule Helix.Log.Event.Handler.Log do
       event.version)
 
     Event.emit(events)
-  end
-
-  @doc """
-  Logs that a server logged into another via SSH
-  """
-  def connection_started(
-    event = %ConnectionStartedEvent{connection_type: :ssh})
-  do
-    tunnel = TunnelQuery.fetch(event.tunnel_id)
-    network = event.network_id
-    gateway = tunnel.gateway_id
-    destination = tunnel.destination_id
-
-    gateway_ip = ServerQuery.get_ip(gateway, network)
-    destination_ip = ServerQuery.get_ip(destination, network)
-
-    entity = EntityQuery.fetch_by_server(gateway)
-
-    message_orig = "Logged into #{destination_ip}"
-    message_dest = "#{gateway_ip} logged in as root"
-
-    {:ok, events} = Repo.transaction fn ->
-      {:ok, _, e1} = LogAction.create(gateway, entity, message_orig)
-      {:ok, _, e2} = LogAction.create(destination, entity, message_dest)
-      e1 ++ e2
-    end
-
-    Event.emit(events)
-  end
-
-  def connection_started(_) do
-    :ignore
   end
 end
