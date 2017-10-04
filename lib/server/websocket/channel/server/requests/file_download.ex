@@ -15,6 +15,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
     defp get_download_storage(gateway_id) do
       gateway_id
       |> CacheQuery.from_server_get_storages()
+      |> elem(1)
       |> List.first()
     end
 
@@ -23,7 +24,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
         if Map.has_key?(request.unsafe, "storage_id") do
           request.unsafe["storage_id"]
         else
-          get_download_storage(socket.assigns.gateway.id)
+          get_download_storage(socket.assigns.gateway.server_id)
         end
 
       with \
@@ -46,8 +47,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
     end
 
     def check_permissions(request, socket) do
-      gateway_id = socket.assigns.gateway.id
-      destination_id = socket.assigns.destination.id
+      gateway_id = socket.assigns.gateway.server_id
+      destination_id = socket.assigns.destination.server_id
       file_id = request.params.file_id
       storage_id = request.params.storage_id
 

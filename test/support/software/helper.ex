@@ -11,10 +11,18 @@ defmodule Helix.Test.Software.Helper do
   """
   def get_storage(server_id) do
     server_id
+    |> get_storage_id()
+    |> StorageQuery.fetch()
+  end
+
+  @doc """
+  Returns the first `Storage.id` of the given server
+  """
+  def get_storage_id(server_id) do
+    server_id
     |> CacheQuery.from_server_get_storages()
     |> elem(1)
     |> List.first()
-    |> StorageQuery.fetch()
   end
 
   @doc """

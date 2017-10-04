@@ -100,14 +100,19 @@ defmodule Helix.Software.Henforcer.File do
         end
 
       with \
-         true <- gateway_id != endpoint_id,
-        {true, relay} <- FileHenforcer.belongs_to_server?(file_id, origin_id),
-        {true, _} <-
-          StorageHenforcer.belongs_to_server?(relay.storage, target_id),
-        {true, _} <-
-          StorageHenforcer.has_enough_space?(relay.storage, relay.file)
+         true <- gateway_id != endpoint_id || :self_target,
+        {true, %{file: file}} <-
+           FileHenforcer.belongs_to_server?(file_id, origin_id),
+        {true, %{storage: storage}} <-
+          StorageHenforcer.belongs_to_server?(storage_id, target_id),
+        {true, _} <- StorageHenforcer.has_enough_space?(storage, file)
       do
-        {true, relay}
+        {true, relay(%{storage: storage, file: file})}
+      else
+        :self_target ->
+          {false, {:target, :self}, %{}}
+        error ->
+          error
       end
     end
   end

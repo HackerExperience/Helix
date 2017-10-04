@@ -41,7 +41,7 @@ defmodule Helix.Server.Public.Server do
     do
       Event.emit(events)
 
-      {:ok, %{tunnel: tunnel}}
+      {:ok, tunnel}
     end
   end
 

@@ -8,9 +8,11 @@ defmodule Helix.Test.Process.TOPHelper do
   alias Helix.Process.State.TOP.Server, as: TOPServer
   alias Helix.Process.Repo, as: ProcessRepo
 
-  def top_stop(server) do
-    server
-    |> Server.ID.cast!()
+  def top_stop(server = %Server{}),
+    do: top_stop(server.server_id)
+  def top_stop(server_id = %Server.ID{}) do
+    server_id
+    # |> Server.ID.cast!()
     |> TOPManager.get()
     |> its_time_to_stop()
 

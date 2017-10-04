@@ -35,7 +35,7 @@ defmodule Helix.Software.Public.File do
     end
   end
 
-  def download(tunnel, storage = %Storage{}, file = %File{}) do
+  def download(tunnel = %Tunnel{}, storage = %Storage{}, file = %File{}) do
     network_info =
       %{
         gateway_id: tunnel.gateway_id,
