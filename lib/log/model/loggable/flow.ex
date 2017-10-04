@@ -14,6 +14,8 @@ defmodule Helix.Log.Model.Loggable.Flow do
   Finally, guided through the LogEventHandler, the `save/1` function is called,
   which will persist the entries on the database and emit the corresponding
   `LogCreatedEvent` for each inserted log.
+
+  For an implementation example, see `lib/software/event/file.ex`.
   """
 
   import HELL.MacroHelpers
@@ -42,6 +44,8 @@ defmodule Helix.Log.Model.Loggable.Flow do
       defimpl Helix.Log.Model.Loggable do
         @moduledoc false
 
+        @spec generate(unquote(__CALLER__.module).t) ::
+          [Helix.Log.Model.Loggable.Flow.log_entry]
         @doc false
         def generate(unquote(query)) do
           unquote(block)
@@ -63,7 +67,7 @@ defmodule Helix.Log.Model.Loggable.Flow do
   pattern-matched, and replaces it with the proper alias. The reason for this is
   that the generated macro won't play nicely with `__MODULE__`.
 
-  If no event is being pattern-matched, or it's not using `__MODULE__`, the
+  If no event is being pattern-matched, or it isn't using `__MODULE__`, the
   query remains unchanged.
 
   This is the classic DO NOT TOUCH function. The good news is, if you do touch
@@ -71,9 +75,16 @@ defmodule Helix.Log.Model.Loggable.Flow do
   """
   defp replace_module(query, caller) do
     {a, s, t} = query
+
+    # Verifies whether it's a pattern match (`var = :something`)
     if a == := do
       try do
+
+        # If the pattern below is valid, we are trying to match a named struct,
+        # either with `var = %__MODULE__{}` or `var = %ModuleName{}`. If it's
+        # the former, we "migrate" to the later format, using the `caller` name
         [e, {p1, p2, [r = {pattern, c, _}, p3]}] = t
+
         r =
           if pattern == :__MODULE__ do
             {:__aliases__, c, [caller]}
@@ -82,6 +93,9 @@ defmodule Helix.Log.Model.Loggable.Flow do
           end
 
         {a, s, [e, {p1, p2, [r, p3]}]}
+
+      # Rescuing means the pattern being matched is something else, maybe a
+      # plain map (`var = %{foo: :bar}`)
       rescue
         MatchError ->
           query

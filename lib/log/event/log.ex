@@ -2,16 +2,10 @@ defmodule Helix.Log.Event.Handler.Log do
   @moduledoc false
 
   alias Helix.Event
-  alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Connection.ConnectionStartedEvent
-  alias Helix.Network.Query.Tunnel, as: TunnelQuery
-  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Model.Loggable
   alias Helix.Log.Query.Log, as: LogQuery
-  alias Helix.Log.Repo
 
-  alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
   alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
     as: LogForgeEditComplete
   alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,

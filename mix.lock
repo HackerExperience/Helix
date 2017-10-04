@@ -21,7 +21,7 @@
   "exjsx": {:hex, :exjsx, "4.0.0", "60548841e0212df401e38e63c0078ec57b33e7ea49b032c796ccad8cde794b5c", [:mix], [{:jsx, "~> 2.8.0", [hex: :jsx, optional: false]}]},
   "gettext": {:hex, :gettext, "0.13.1", "5e0daf4e7636d771c4c71ad5f3f53ba09a9ae5c250e1ab9c42ba9edccc476263", [:mix], []},
   "hackney": {:hex, :hackney, "1.9.0", "51c506afc0a365868469dcfc79a9d0b94d896ec741cfd5bd338f49a5ec515bfe", [:rebar3], [{:certifi, "2.0.0", [hex: :certifi, optional: false]}, {:idna, "5.1.0", [hex: :idna, optional: false]}, {:metrics, "1.0.1", [hex: :metrics, optional: false]}, {:mimerl, "1.0.2", [hex: :mimerl, optional: false]}, {:ssl_verify_fun, "1.1.1", [hex: :ssl_verify_fun, optional: false]}]},
-  "helf": {:hex, :helf, "0.0.1", "a117f7224d45cdad64ebe5651dd5315c16affc72406a0b5f3d056f5d214df6d9", [:mix], [{:bamboo, "~> 0.8", [hex: :bamboo, optional: false]}, {:cowboy, "~> 1.1.2", [hex: :cowboy, optional: false]}, {:poison, "~> 3.1.0", [hex: :poison, optional: false]}]},
+  "helf": {:hex, :helf, "0.0.2", "3de3ad3c0344853bc84b6480db0ab8e0841ff78e3d2875eabc3059567c5f2240", [:mix], [{:bamboo, "~> 0.8", [hex: :bamboo, optional: false]}, {:cowboy, "~> 1.1.2", [hex: :cowboy, optional: false]}, {:poison, "~> 3.1.0", [hex: :poison, optional: false]}]},
   "idna": {:hex, :idna, "5.1.0", "d72b4effeb324ad5da3cab1767cb16b17939004e789d8c0ad5b70f3cea20c89a", [:rebar3], [{:unicode_util_compat, "0.3.1", [hex: :unicode_util_compat, optional: false]}]},
   "inch_ex": {:hex, :inch_ex, "0.5.6", "418357418a553baa6d04eccd1b44171936817db61f4c0840112b420b8e378e67", [:mix], [{:poison, "~> 1.5 or ~> 2.0 or ~> 3.0", [hex: :poison, optional: false]}]},
   "jsx": {:hex, :jsx, "2.8.2", "7acc7d785b5abe8a6e9adbde926a24e481f29956dd8b4df49e3e4e7bcc92a018", [:mix, :rebar3], []},
