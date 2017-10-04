@@ -17,10 +17,12 @@ defmodule Helix.Event.NotificationHandler do
   the event. Then, this event is broadcasted to each channel.
   """
   def notification_handler(event) do
-    event
-    |> Notificable.whom_to_notify()
-    |> channel_mapper()
-    |> Enum.each(&(Helix.Endpoint.broadcast(&1, "event", event)))
+    if Notificable.impl_for(event) do
+      event
+      |> Notificable.whom_to_notify()
+      |> channel_mapper()
+      |> Enum.each(&(Helix.Endpoint.broadcast(&1, "event", event)))
+    end
   end
 
   docp """

@@ -3,6 +3,7 @@ defmodule Helix.Event.Dispatcher.Helix do
 
   use HELF.Event
 
+  alias Helix.Event.NotificationHandler
   alias Helix.Account
   alias Helix.Entity
   alias Helix.Process
@@ -15,11 +16,19 @@ defmodule Helix.Event.Dispatcher.Helix do
   alias Helix.Network.Event.Handler, as: NetworkHandler
   alias Helix.Software.Event, as: SoftwareEvent
   alias Helix.Software.Event.Handler, as: SoftwareHandler
+  alias Helix.Story.Event, as: StoryEvent
+  alias Helix.Story.Event.Handler.Story, as: StoryHandler
+
+  ##############################################################################
+  # Global handlers
+  ##############################################################################
+
+  all_events NotificationHandler, :notification_handler
 
   all_events LogHandler.Log, :handle_event,
     skip: [LogEvent.Log.Created]
 
-  event LogEvent.Log.Created
+  all_events StoryHandler, :step_handler
 
   # TODO: Rearrange on PR 284
   event SoftwareEvent.File.Downloaded
@@ -45,6 +54,19 @@ defmodule Helix.Event.Dispatcher.Helix do
   event NetworkEvent.Connection.Closed,
     Process.Event.TOP,
     :connection_closed
+
+  ##############################################################################
+  # Log events
+  ##############################################################################
+  event LogEvent.Log.Created
+  event LogEvent.Log.Modified
+  event LogEvent.Log.Deleted
+
+  ##############################################################################
+  # Process events
+  ##############################################################################
+  event Process.Model.Process.ProcessCreatedEvent
+  event Process.Model.Process.ProcessConclusionEvent
 
   ##############################################################################
   # Server events
@@ -91,6 +113,12 @@ defmodule Helix.Event.Dispatcher.Helix do
   event Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
     LogHandler.Log,
     :log_forge_conclusion
+
+  ##############################################################################
+  # Universe events
+  ##############################################################################
+
+  event StoryEvent.Reply.Sent
 
   ##############################################################################
   # Universe events
