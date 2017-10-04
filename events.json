@@ -81,6 +81,18 @@
     "Tunnel.Connection": {
         "receives": ["Connection.Closed"],
         "emits": []
+    },
+    "Story.Story": {
+      "receives": ["All"],
+      "emits": [
+        "Story.Step.Proceeded",
+        "Story.Step.Failed",
+        "Steppable (custom)"
+      ]
+    },
+    "Notification": {
+      "receives": ["All"],
+      "emits": ["Notificable (custom)"]
     }
   },
   "flows": {
@@ -108,13 +120,29 @@
         "Process.Created"
     ]
   },
-  "notifiable": [
+  "notificable": [
     "Log.Created",
     "Log.Modified",
     "Log.Deleted",
     "Server.Password.Acquired",
     "Process.Created",
     "Process.Conclusion",
-    "File.Uploaded"
-  ]
+    "File.Uploaded",
+    "StoryEmailSentEvent",
+    "StoryReplySentEvent"
+  ],
+  "missions": {
+    "Tutorial": {
+      "steps": {
+        "SetupPC": {
+          "filters": ["Account.Created"],
+          "emits": []
+        },
+        "DownloadCrackerPublicFTP": {
+          "filters": ["File.Downloaded"],
+          "emits": []
+        }
+      }
+    }
+  }
 }
