@@ -1,9 +1,15 @@
 defmodule Helix.Server.Henforcer.Server do
 
-  alias Helix.Server.Model.Server
-  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Software.Model.File
+  alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server, as: ServerQuery
+
+  def has_enough_space?(_server_id = %Server.ID{}, _file = %File{}) do
+    # TODO #279
+    {:ok, %{}}
+  end
 
   @spec exists?(Server.id) ::
     boolean
