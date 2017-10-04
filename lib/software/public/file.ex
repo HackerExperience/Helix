@@ -9,41 +9,46 @@ defmodule Helix.Software.Public.File do
   alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
 
-  @spec download(Server.id, Server.id, Tunnel.t, File.id) ::
+  @spec download(Tunnel.t, Storage.idt, File.idt) ::
     {:ok, Process.t}
-    | :error
-  def download(gateway_id, destination_id, tunnel, file_id) do
-    {:ok, gateway_storage_ids} = CacheQuery.from_server_get_storages(gateway_id)
+    | {:error, %{message: String.t}}
+  def download(tunnel, storage, file_id = %File.ID{}) do
+    with file = %{} <- FileQuery.fetch(file_id) do
+      download(tunnel, storage, file)
+    else
+      _ ->
+        {:error, %{message: "bad_file"}}
+    end
+  end
 
-    storage =
-      gateway_storage_ids
-      |> List.first()
-      |> StorageQuery.fetch()
+  def download(tunnel, storage_id = %Storage.ID{}, file) do
+    storage = StorageQuery.fetch(storage_id)
 
+    if storage do
+      download(tunnel, storage, file)
+    else
+      {:error, %{message: "internal"}}
+    end
+  end
+
+  def download(tunnel, storage = %Storage{}, file = %File{}) do
     network_info =
       %{
-        gateway_id: gateway_id,
-        destination_id: destination_id,
+        gateway_id: tunnel.gateway_id,
+        destination_id: tunnel.destination_id,
         network_id: tunnel.network_id,
         bounces: []  # TODO
       }
 
-    with \
-      true <- not is_nil(storage) || :internal,
-      file = %{} <- FileQuery.fetch(file_id) || :bad_file,
-      {:ok, process} <-
-        FileTransferFlow.transfer(:download, file, storage, network_info)
-    do
-      {:ok, process}
-    else
-      :bad_file ->
-        {:error, %{message: "bad_file"}}
-      :internal ->
-        {:error, %{message: "internal"}}
-      _ ->
+    case FileTransferFlow.transfer(:download, file, storage, network_info) do
+      {:ok, process} ->
+        {:ok, process}
+
+      {:error, _} ->
         {:error, %{message: "internal"}}
     end
   end

@@ -11,6 +11,7 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Process.Model.Process
   alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Public.File, as: FilePublic
   alias Helix.Server.Model.Server
   alias Helix.Server.Public.Index, as: ServerIndex
@@ -44,10 +45,10 @@ defmodule Helix.Server.Public.Server do
     end
   end
 
-  @spec file_download(Server.id, Server.id, Tunnel.t, File.id) ::
+  @spec file_download(Tunnel.t, Storage.idt, File.idt) ::
     {:ok, Process.t}
-    | :error
-  defdelegate file_download(gateway_id, destination_id, tunnel, file_id),
+    | {:error, %{message: String.t}}
+  defdelegate file_download(tunnel, storage, file),
     to: FilePublic,
     as: :download
 

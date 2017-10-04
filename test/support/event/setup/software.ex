@@ -116,6 +116,7 @@ defmodule Helix.Test.Event.Setup.Software do
       entity_id: event.entity_id,
       to_server_id: event.to_server_id,
       from_server_id: event.from_server_id,
+      to_storage_id: event.to_storage_id,
       network_id: event.network_id,
       connection_type: event.connection_type,
       file: file
@@ -136,6 +137,7 @@ defmodule Helix.Test.Event.Setup.Software do
       entity_id: event.entity_id,
       to_server_id: event.to_server_id,
       from_server_id: event.from_server_id,
+      to_storage_id: event.to_storage_id,
       network_id: event.network_id,
       file: file
     }

@@ -4,6 +4,7 @@ defmodule Helix.Software.Public.FileTest do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Software.Public.File, as: FilePublic
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
@@ -64,7 +65,7 @@ defmodule Helix.Software.Public.FileTest do
     end
   end
 
-  describe "download/4" do
+  describe "download/3" do
     test "starts download process" do
       {gateway, _} = ServerSetup.server()
       {file, %{server_id: destination_id}} = SoftwareSetup.file()
@@ -75,8 +76,17 @@ defmodule Helix.Software.Public.FileTest do
           destination_id: destination_id
         )
 
+      storage =
+        destination_id
+        |> CacheQuery.from_server_get_storages()
+        |> elem(1)
+        |> List.first()
+        |> StorageQuery.fetch()
+
+      # Passing storage_id and file_id as arguments so we can see all the
+      # pattern matches for `download/3` in action
       assert {:ok, process} =
-        FilePublic.download(gateway.server_id, destination_id, tunnel, file)
+        FilePublic.download(tunnel, storage.storage_id, file.file_id)
 
       assert process.file_id == file.file_id
       assert process.process_type == "file_download"
