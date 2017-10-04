@@ -120,6 +120,12 @@
         "Process.Created"
     ]
   },
+  "process_conclusion": [
+    "File.Transfer.Processed",
+    "Bank.Account.Password.Reveal.Processed",
+    "Cracker.Bruteforce.Conclusion",
+    "Cracker.Overflow.Conclusion"
+  ],
   "notificable": [
     "Log.Created",
     "Log.Modified",

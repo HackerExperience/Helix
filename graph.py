@@ -8,6 +8,7 @@ handlers = events["handlers"]
 flows = events["flows"]
 notificable = events["notificable"]
 missions = events["missions"]
+process_conclusion = events["process_conclusion"]
 
 def is_notificable(name):
     return name in notificable
@@ -22,6 +23,9 @@ def node_handler(g, name):
 def node_flow(g, name):
     g.node(name, color='khaki', style='filled')
 
+def node_step(g, name):
+    g.node(name, color='darkolivegreen3', style='filled')
+
 def handler_graph(g):
     for entry in handlers:
         handler = entry + ' Handler'
@@ -35,6 +39,12 @@ def handler_graph(g):
             node_event(g, emit)
             node_handler(g, handler)
             g.edge(handler, emit, label='emits')
+
+    top = "On Process Completion"
+    for processed in process_conclusion:
+        node_event(g, processed)
+        node_handler(g, top)
+        g.edge(top, processed, label='emits')
 
     g.render()
 
@@ -53,7 +63,7 @@ def mission_graph(g):
     for mission in missions:
 
         with g.subgraph(name='cluster_' + mission) as gm:
-            gm.attr(label=mission + ' Mission')
+            gm.attr(label=mission + ' Mission', color='red')
 
             for step in missions[mission]['steps']:
                 step_data = missions[mission]['steps'][step]
@@ -61,12 +71,12 @@ def mission_graph(g):
 
                 for filtered in step_data['filters']:
                     node_event(gm, filtered)
-                    node_handler(gm, step)
+                    node_step(gm, step)
                     gm.edge(step, filtered, label='filters')
 
                 for emit in step_data['emits']:
                     node_event(gm, emit)
-                    node_handler(gm, step)
+                    node_step(gm, step)
                     gm.edge(step, emit, label='emits')
 
     g.render()
