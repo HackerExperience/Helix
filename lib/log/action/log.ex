@@ -21,9 +21,9 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Log.Internal.Log, as: LogInternal
   alias Helix.Log.Model.Log
 
-  alias Helix.Log.Model.Log.LogCreatedEvent
-  alias Helix.Log.Model.Log.LogDeletedEvent
-  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Log.Event.Log.Created, as: LogCreatedEvent
+  alias Helix.Log.Event.Log.Deleted, as: LogDeletedEvent
+  alias Helix.Log.Event.Log.Modified, as: LogModifiedEvent
 
   @spec create(Server.idt, Entity.idt, String.t, pos_integer | nil) ::
     {:ok, Log.t, [LogCreatedEvent.t]}

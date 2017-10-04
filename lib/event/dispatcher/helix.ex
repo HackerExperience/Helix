@@ -10,14 +10,15 @@ defmodule Helix.Event.Dispatcher.Helix do
   alias Helix.Software
   alias Helix.Universe
 
+  alias Helix.Log.Event, as: LogEvent
   alias Helix.Log.Event.Handler, as: LogHandler
   alias Helix.Software.Event, as: SoftwareEvent
   alias Helix.Software.Event.Handler, as: SoftwareHandler
 
   all_events LogHandler.Log, :handle_event,
-    skip: [Helix.Log.Model.Log.LogCreatedEvent]
+    skip: [LogEvent.Log.Created]
 
-  event Helix.Log.Model.Log.LogCreatedEvent
+  event LogEvent.Log.Created
 
   ##############################################################################
   # Account events

@@ -3,9 +3,10 @@ defmodule Helix.Event.Dispatcher.Notification do
   use HELF.Event
 
   alias Helix.Event.NotificationHandler
-  alias Helix.Log
   alias Helix.Process
   alias Helix.Server
+
+  alias Helix.Log.Event, as: LogEvent
 
   ##############################################################################
   # Process notifications
@@ -21,15 +22,15 @@ defmodule Helix.Event.Dispatcher.Notification do
   ##############################################################################
   # Log notifications
   ##############################################################################
-  event Log.Model.Log.LogCreatedEvent,
+  event LogEvent.Log.Created,
     NotificationHandler,
     :notification_handler
 
-  event Log.Model.Log.LogModifiedEvent,
+  event LogEvent.Log.Modified,
     NotificationHandler,
     :notification_handler
 
-  event Log.Model.Log.LogDeletedEvent,
+  event LogEvent.Log.Deleted,
     NotificationHandler,
     :notification_handler
 

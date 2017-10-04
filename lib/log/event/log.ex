@@ -1,48 +1,89 @@
-defmodule Helix.Log.Event.Handler.Log do
-  @moduledoc false
+defmodule Helix.Log.Event.Log do
 
-  alias Helix.Event
-  alias Helix.Log.Action.Log, as: LogAction
-  alias Helix.Log.Model.Loggable
-  alias Helix.Log.Query.Log, as: LogQuery
+  defmodule Created do
 
-  alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
-    as: LogForgeEditComplete
-  alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
-    as: LogForgeCreateComplete
+    alias Helix.Server.Model.Server
 
-  @doc """
-  Generic event handler for all Helix events. If the event implement the
-  Loggable protocol, it will guide it through the LoggableFlow, making sure
-  the relevant log entries are generated and saved
-  """
-  def handle_event(event) do
-    if Loggable.impl_for(event) do
-      event
-      |> Loggable.generate()
-      |> Loggable.Flow.save()
+    @type t :: %__MODULE__{server_id: Server.id}
+
+    @enforce_keys [:server_id]
+    defstruct [:server_id]
+
+    defimpl Helix.Event.Notificable do
+
+      @event "log_created"
+
+      def generate_payload(_event, _socket) do
+        data = %{}
+
+        return = %{
+          data: data,
+          event: @event
+        }
+
+        {:ok, return}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: event.server_id}
     end
   end
 
-  @doc """
-  Forges a revision onto a log or creates a fake new log
-  """
-  def log_forge_conclusion(event = %LogForgeEditComplete{}) do
-    {:ok, _, events} =
-      event.target_log_id
-      |> LogQuery.fetch()
-      |> LogAction.revise(event.entity_id, event.message, event.version)
+  defmodule Modified do
 
-    Event.emit(events)
+    alias Helix.Server.Model.Server
+
+    @type t :: %__MODULE__{server_id: Server.id}
+
+    @enforce_keys [:server_id]
+    defstruct [:server_id]
+
+    defimpl Helix.Event.Notificable do
+
+      @event "log_modified"
+
+      def generate_payload(_event, _socket) do
+        data = %{}
+
+        return = %{
+          data: data,
+          event: @event
+        }
+
+        {:ok, return}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: event.server_id}
+    end
   end
 
-  def log_forge_conclusion(event = %LogForgeCreateComplete{}) do
-    {:ok, _, events} = LogAction.create(
-      event.target_server_id,
-      event.entity_id,
-      event.message,
-      event.version)
+  defmodule Deleted do
 
-    Event.emit(events)
+    alias Helix.Server.Model.Server
+
+    @type t :: %__MODULE__{server_id: Server.id}
+
+    @enforce_keys [:server_id]
+    defstruct [:server_id]
+
+    defimpl Helix.Event.Notificable do
+
+      @event "log_deleted"
+
+      def generate_payload(_event, _socket) do
+        data = %{}
+
+        return = %{
+          data: data,
+          event: @event
+        }
+
+        {:ok, return}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: event.server_id}
+    end
   end
 end
