@@ -34,7 +34,6 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownloadTest do
       # Casted file_id into the expected format
       assert request.params.file_id == file_id
       assert request.params.storage_id == storage_id
-
     end
 
     test "generates a storage_id if none was given" do

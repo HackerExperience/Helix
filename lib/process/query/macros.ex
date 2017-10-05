@@ -1,5 +1,7 @@
 defmodule Helix.Process.Query.Process.Macros do
 
+  alias Helix.Process.Model.Process
+
   defmacro get_custom(type, meta, do: block) do
     quote do
 

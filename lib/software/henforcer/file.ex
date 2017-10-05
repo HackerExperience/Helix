@@ -65,7 +65,7 @@ defmodule Helix.Software.Henforcer.File do
 
   defmodule Transfer do
     @moduledoc """
-    Verifications related to file transfers.
+    Henforcers related to file transfer.
     """
 
     import Helix.Henforcer
