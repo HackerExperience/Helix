@@ -15,13 +15,19 @@ defmodule Helix.Software.Public.File do
 
   @spec download(Tunnel.t, Storage.idt, File.idt) ::
     {:ok, Process.t}
-    | {:error, %{message: String.t}}
+    | {:error, {:file, :not_found}}
+    | {:error, {:storage, :not_found}}
+    | {:error, :internal}
+  @doc """
+  Starts FileTransferProcess, responsible for downloading `file_id` into the
+  given storage.
+  """
   def download(tunnel, storage, file_id = %File.ID{}) do
     with file = %{} <- FileQuery.fetch(file_id) do
       download(tunnel, storage, file)
     else
       _ ->
-        {:error, %{message: "bad_file"}}
+        {:error, {:file, :not_found}}
     end
   end
 
@@ -31,7 +37,7 @@ defmodule Helix.Software.Public.File do
     if storage do
       download(tunnel, storage, file)
     else
-      {:error, %{message: "internal"}}
+      {:error, {:storage, :not_found}}
     end
   end
 
@@ -49,7 +55,7 @@ defmodule Helix.Software.Public.File do
         {:ok, process}
 
       {:error, _} ->
-        {:error, %{message: "internal"}}
+        {:error, :internal}
     end
   end
 

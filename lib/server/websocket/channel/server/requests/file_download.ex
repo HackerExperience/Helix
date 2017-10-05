@@ -6,20 +6,21 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
 
   defimpl Helix.Websocket.Requestable do
 
+    import HELL.MacroHelpers
+
+    alias Helix.Websocket.Utils, as: WebsocketUtils
     alias Helix.Cache.Query.Cache, as: CacheQuery
-    alias Helix.Server.Public.Server, as: ServerPublic
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
     alias Helix.Software.Henforcer.File.Transfer, as: FileTransferHenforcer
+    alias Helix.Server.Model.Server
+    alias Helix.Server.Public.Server, as: ServerPublic
 
-    defp get_download_storage(gateway_id) do
-      gateway_id
-      |> CacheQuery.from_server_get_storages()
-      |> elem(1)
-      |> List.first()
-    end
+    # Hack for elixir-lang issue #6577
+    @dialyzer({:nowarn_function, get_error: 1})
 
     def check_params(request, socket) do
+      # Fetches the server's main storage if none were specified
       unsafe_storage_id =
         if Map.has_key?(request.unsafe, "storage_id") do
           request.unsafe["storage_id"]
@@ -46,6 +47,14 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
       end
     end
 
+    @doc """
+    Verifies the permission for the download. Most of the permission logic
+    has been delegated to `FileTransferHenforcer.can_transfer?`, check it out.
+
+    This is where we verify the file being download exists, belongs to the
+    correct server, the storage belongs to the server, the user has access to
+    the storage, etc.
+    """
     def check_permissions(request, socket) do
       gateway_id = socket.assigns.gateway.server_id
       destination_id = socket.assigns.destination.server_id
@@ -71,21 +80,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
           {:ok, %{request| meta: meta}}
 
         {false, reason, _} ->
-          # We are actually always returning `file_not_found`, regardless of the
-          # internal error, but I'll leave the case here nonetheless
-          reason_str =
-            case reason do
-              {:file, :not_found} ->
-                "file_not_found"
-              {:file, :not_belongs} ->
-                "file_not_found"
-              {:storage, :full} ->
-                "storage_full"
-              {:storage, :not_found} ->
-                "bad_storage"
-            end
-
-          {:error, %{message: reason_str}}
+          {:error, %{message: get_error(reason)}}
       end
     end
 
@@ -100,12 +95,54 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
 
           {:ok, %{request| meta: meta}}
 
-        error = {:error, %{message: _}} ->
-          error  # TODO handle me
+        {:error, reason} ->
+          {:error, %{message: get_error(reason)}}
       end
     end
 
-    def reply(_request, _socket) do
+    def reply(request, socket) do
+      # TODO: Abstract me (#286)
+      process = request.meta.process
+
+      file_id = process.file_id && to_string(process.file_id)
+      connection_id = process.connection_id && to_string(process.connection_id)
+
+      data = %{
+        process_id: to_string(process.process_id),
+        type: to_string(process.process_type),
+        network_id: to_string(process.network_id),
+        file_id: file_id,
+        connection_id: connection_id,
+        source_ip: socket.assigns.gateway.ip,
+        target_ip: request.params.ip
+      }
+
+      WebsocketUtils.reply_ok(data, socket)
     end
+
+    @spec get_download_storage(Server.id) ::
+      Storage.id
+    defp get_download_storage(gateway_id) do
+      gateway_id
+      |> CacheQuery.from_server_get_storages()
+      |> elem(1)
+      |> List.first()
+    end
+
+    @spec get_error(reason :: {term, term} | term) ::
+      String.t
+    docp """
+    Error handler for FileDownloadRequest. Should handle all possible returns.
+    """
+    defp get_error({:file, :not_found}),
+      do: "file_not_found"
+    defp get_error({:file, :not_belongs}),
+      do: "file_not_found"
+    defp get_error({:storage, :full}),
+      do: "storage_full"
+    defp get_error({:storage, :not_found}),
+      do: "storage_not_found"
+    defp get_error(:internal),
+      do: "internal"
   end
 end

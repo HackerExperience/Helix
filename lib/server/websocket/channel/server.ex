@@ -12,7 +12,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Websocket.Socket, as: Websocket
-  alias Helix.Server.Public.Server, as: ServerPublic
 
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
   alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
@@ -78,7 +77,9 @@ defmodule Helix.Server.Websocket.Channel.Server do
   Errors:
   - "file_not_found": Requested file to be downloaded was not found
   - "storage_full": Not enough space on device to download the file
-  - "bad_storage": Requested storage is invalid / could not be found
+  - "storage_not_found": Requested storage is invalid / could not be found. This
+    This error is most likely NOT the user's fault, maybe some bad handling on
+    the client side.
   - "download_self": Trying to download a file from yourself
   + base errors
   """
