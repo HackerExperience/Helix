@@ -34,4 +34,9 @@ defmodule Helix.Software.Process.File.TransferTest do
       TOPHelper.top_stop(process.gateway_id)
     end
   end
+
+  # TODO: Waiting for #269 being merged, which changed ProcessViewHelper
+  # describe "ProcessView.render/4 for download" do
+  #   test "full process returns storage_id"
+  # end
 end

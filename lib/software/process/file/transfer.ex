@@ -116,6 +116,52 @@ defmodule Helix.Software.Process.File.Transfer do
   end
 
   defimpl Helix.Process.Public.View.ProcessViewable do
-    
+
+    alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
+
+    @type data ::
+      data_download_full
+      | data_download_partial
+      | data_upload
+
+    @typep data_download_full ::
+      %{
+        connection_type: String.t,
+        storage_id: String.t
+      }
+
+    @typep data_download_partial ::
+      %{
+        connection_type: String.t
+      }
+
+    @typep data_upload :: %{}
+
+    def get_scope(data, process, server, entity),
+      do: ProcessViewHelper.get_default_scope(data, process, server, entity)
+
+    def render(data, process, scope) do
+      base = render_process(process, scope)
+      complement = render_data(data, scope)
+
+      {base, complement}
+    end
+
+    defp render_data(data = %{type: :download}, :full) do
+      %{
+        connection_type: to_string(data.connection_type),
+        storage_id: to_string(data.destination_storage_id)
+      }
+    end
+    defp render_data(data = %{type: :download}, :partial) do
+      %{
+        connection_type: to_string(data.connection_type)
+      }
+    end
+    defp render_data(_, _),
+      do: %{}
+
+    defp render_process(process, scope),
+      do: ProcessViewHelper.default_process_render(process, scope)
   end
 end
