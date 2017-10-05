@@ -18,6 +18,8 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.Model.Process.State
 
+  @type type :: String.t
+
   @type t :: %__MODULE__{
     process_id: id,
     gateway_id: Server.id,

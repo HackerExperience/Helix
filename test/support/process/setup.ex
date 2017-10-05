@@ -29,7 +29,7 @@ defmodule Helix.Test.Process.Setup do
   - connection_id:
   - single_server:
   - type: Set process type. If not specified, a random one is generated.
-  - data: Data for that specific process type. Must be used when `type` is used
+  - data: Data for that specific process type. Ignored if `type` is not set.
 
   Related: source_entity_id :: Entity.id, target_entity_id :: Entity.id
   """
@@ -60,7 +60,7 @@ defmodule Helix.Test.Process.Setup do
       network_id: network_id
     }
 
-    {process_type, process_data} =
+    {process_type, process_data, meta} =
       if opts[:type] do
         ProcessDataSetup.custom(opts[:type], opts[:data] || [], meta)
       else
@@ -70,12 +70,12 @@ defmodule Helix.Test.Process.Setup do
     params = %{
       process_data: process_data,
       process_type: process_type,
-      gateway_id: gateway_id,
-      source_entity_id: source_entity_id,
-      target_server_id: target_server_id,
-      file_id: file_id,
-      network_id: network_id,
-      connection_id: connection_id
+      gateway_id: meta.gateway_id,
+      source_entity_id: meta.source_entity_id,
+      target_server_id: meta.target_server_id,
+      file_id: meta.file_id,
+      network_id: meta.network_id,
+      connection_id: meta.connection_id
     }
 
     process =

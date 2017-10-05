@@ -3,6 +3,7 @@ defmodule Helix.Process.Query.ProcessTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Model.Software.Decryptor.ProcessType, as: Decryptor
@@ -12,6 +13,8 @@ defmodule Helix.Process.Query.ProcessTest do
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Account.Factory, as: AccountFactory
+  # alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
 
   defp create_server do
@@ -146,6 +149,42 @@ defmodule Helix.Process.Query.ProcessTest do
 
       TOPHelper.top_stop(server1)
       TOPHelper.top_stop(server2)
+    end
+  end
+
+  describe "get_custom/3" do
+    test "returns expected processes" do
+      gateway_id = Server.ID.generate()
+
+      {download1, _} =
+        ProcessSetup.process(gateway_id: gateway_id, type: :file_download)
+
+      # Create another process of same type, just to make sure only one is
+      # returned
+      ProcessSetup.process(gateway_id: gateway_id, type: :file_download)
+
+      # Must find one process, `download1`, that matches both `type` and `meta`
+      # (one process of type `download` who is downloading that specific file)
+      assert [process] =
+        ProcessQuery.get_custom(
+          download1.process_type,
+          gateway_id,
+          %{file_id: download1.file_id}
+        )
+
+      assert process.process_id == download1.process_id
+
+      # Cannot find that same process with random file
+      refute \
+        ProcessQuery.get_custom(
+          download1.process_type,
+          gateway_id,
+          %{file_id: File.ID.generate()}
+        )
+    end
+
+    test "returns empty list if no process is found" do
+      refute ProcessQuery.get_custom("file_download", Server.ID.generate(), %{})
     end
   end
 end

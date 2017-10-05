@@ -3,7 +3,6 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
   alias HELL.Constant
   alias Helix.Event
   alias Helix.Software.Action.File, as: FileAction
-  alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
 

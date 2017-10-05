@@ -1,21 +1,100 @@
 defmodule Helix.Test.Process.Data.Setup do
+  @moduledoc """
+  Attention! If you want integrated data, ensured to exist on all domains,
+  use the corresponding `FlowSetup`, like `SoftwareFlowSetup`.
 
+  Data generated here has the correct format, with the correct types, but by
+  default generates only fake data.
+
+  It's possible to specify real data with custom opts, but you'd need to ensure
+  you've also specified the correct data for the process itself.
+  (For instance, a valid FileTransferProcess would need a valid `storage_id`
+  passed as data parameter, but also a valid `connection_id` and `file_id`
+  passed as parameter for the process itself.)
+
+  This is prone to error and, as such, you should use `*FlowSetup` instead.
+  """
+
+  alias Helix.Network.Model.Connection
   alias Helix.Log.Model.Log
+  alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
+
+  # Processes
   alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
   alias Helix.Software.Model.SoftwareType.LogForge
+  alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Log.Helper, as: LogHelper
 
   @doc """
   Chooses a random implementation and uses it. Beware that `data_opts`, used by
-  `custom/3`, is always an empty list.
+  `custom/3`, is always an empty list when called from `random/1`.
   """
   def random(meta) do
     custom_implementations()
     |> Enum.take_random(1)
     |> List.first()
     |> custom([], meta)
+  end
+
+  @doc """
+  Opts for file_download:
+  - type: Connection type. Either `:download` or `:pftp_download`.
+  - storage_id: Set storage_id.
+  """
+  def custom(:file_download, data_opts, meta) do
+    meta =
+      if meta.gateway_id == meta.target_server_id do
+        %{meta| target_server_id: Server.ID.generate()}
+      else
+        meta
+      end
+
+    connection_id = meta.connection_id || Connection.ID.generate()
+    file_id = meta.file_id || File.ID.generate()
+
+    connection_type = Keyword.get(data_opts, :type, :download)
+    storage_id = Keyword.get(data_opts, :storage_id, Storage.ID.generate())
+
+    data = %FileTransferProcess{
+      type: :download,
+      destination_storage_id: storage_id,
+      connection_type: connection_type
+    }
+
+    meta = %{meta| file_id: file_id, connection_id: connection_id}
+
+    {"file_download", data, meta}
+  end
+
+  @doc """
+  Opts for file_upload:
+  - storage_id: Set storage_id.
+  """
+  def custom(:file_upload, data_opts, meta) do
+    target_id = meta.gateway_id == meta.target_server_id || Server.ID.generate()
+    connection_id = meta.connection_id || Connection.ID.generate()
+    file_id = meta.file_id || File.ID.generate()
+
+    storage_id = Keyword.get(data_opts, :storage_id, Storage.ID.generate())
+
+    data = %FileTransferProcess{
+      type: :upload,
+      destination_storage_id: storage_id,
+      connection_type: :ftp
+    }
+
+    meta =
+      %{meta|
+        file_id: file_id,
+        connection_id: connection_id,
+        target_server_id: target_id
+       }
+
+    {"file_upload", data, meta}
   end
 
   @doc """
@@ -47,7 +126,7 @@ defmodule Helix.Test.Process.Data.Setup do
       software_version: software_version
     }
 
-    {"cracker_bruteforce", data}
+    {"cracker_bruteforce", data, meta}
   end
 
   @doc """
@@ -82,13 +161,14 @@ defmodule Helix.Test.Process.Data.Setup do
         data
       end
 
-    {"log_forger", data}
+    {"log_forger", data, meta}
   end
 
   defp custom_implementations do
     ~w/
     bruteforce
     forge
+    file_download
     /a
   end
 end

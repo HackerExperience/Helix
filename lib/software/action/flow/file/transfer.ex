@@ -1,6 +1,7 @@
 defmodule Helix.Software.Action.Flow.File.Transfer do
 
   import HELF.Flow
+  import HELL.MacroHelpers
 
   alias Helix.Event
   alias Helix.Network.Action.Tunnel, as: TunnelAction
@@ -8,6 +9,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
+  alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
@@ -34,16 +36,43 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   @spec transfer(transfer_type, File.t, Storage.t, network_info) ::
     transfer_ok
     | transfer_error
+  @doc """
+  Starts a FileTransfer process, which can be one of [pftp_]download or upload.
+
+  If that exact file is already being transferred to/by the gateway, the
+  existing process is returned and no new transfer is created. This ensures the
+  same file cannot be transferred multiple times to/from the same server.
+  """
   def transfer(type, file, destination_storage, network_info) do
-    {connection_type, process_type, transfer_type} =
-      case type do
-        :download ->
-          {:ftp, "file_download", :download}
-        :upload ->
-          {:ftp, "file_upload", :upload}
-        :pftp_download ->
-          {:public_ftp, "file_download", :download}
-      end
+    {_, process_type, _} = get_type_info(type)
+
+    # Verifies whether that file is already being transferred to/by the gateway
+    transfer_process =
+      ProcessQuery.get_custom(
+        process_type,
+        network_info.gateway_id,
+        %{file_id: file.file_id}
+      )
+
+    case transfer_process do
+      # A transfer already exists, so we simply return the corresponding process
+      [process] ->
+        {:ok, process}
+
+      # There's no transfer yet. We'll have to create a new one.
+      nil ->
+        new_transfer(type, file, destination_storage, network_info)
+    end
+  end
+
+  @spec new_transfer(transfer_type, File.t, Storage.t, network_info) ::
+    transfer_ok
+    | transfer_error
+  docp """
+  Starts a FileTransfer process, which can be one of [pftp_]download or upload.
+  """
+  defp new_transfer(type, file, destination_storage, network_info) do
+    {connection_type, process_type, transfer_type} = get_type_info(type)
 
     objective = FileTransferProcess.objective(transfer_type, file)
 
@@ -91,4 +120,14 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
       end
     end
   end
+
+  docp """
+  Given the transfer type, figure out all related types used by other services.
+  """
+  defp get_type_info(:download),
+    do: {:ftp, "file_download", :download}
+  defp get_type_info(:upload),
+    do: {:ftp, "file_upload", :upload}
+  defp get_type_info(:pftp_download),
+    do: {:public_ftp, "file_download", :download}
 end

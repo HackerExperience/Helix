@@ -45,6 +45,17 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       connection = TunnelQuery.fetch_connection(process.connection_id)
       assert connection.connection_type == :ftp
 
+      # Transferring again returns the same process (does not create a new one)
+      {:ok, process2} =
+        FileTransferFlow.transfer(
+          :download,
+          file,
+          destination_storage,
+          network_info
+        )
+
+      assert process2.process_id == process.process_id
+
       TOPHelper.top_stop(gateway.server_id)
     end
 
@@ -81,6 +92,17 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       connection = TunnelQuery.fetch_connection(process.connection_id)
       assert connection.connection_type == :ftp
 
+      # Transferring again returns the same process (does not create a new one)
+      {:ok, process2} =
+        FileTransferFlow.transfer(
+          :upload,
+          file,
+          destination_storage,
+          network_info
+        )
+
+      assert process2.process_id == process.process_id
+
       TOPHelper.top_stop(gateway.server_id)
     end
 
@@ -116,6 +138,17 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       # Generated connection is valid; tunnel was created
       connection = TunnelQuery.fetch_connection(process.connection_id)
       assert connection.connection_type == :public_ftp
+
+      # Transferring again returns the same process (does not create a new one)
+      {:ok, process2} =
+        FileTransferFlow.transfer(
+          :pftp_download,
+          file,
+          destination_storage,
+          network_info
+        )
+
+      assert process2.process_id == process.process_id
 
       TOPHelper.top_stop(gateway.server_id)
     end
