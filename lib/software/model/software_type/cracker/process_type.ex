@@ -157,7 +157,7 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
 
     @spec render(term, Process.t, ProcessView.scopes) ::
       {ProcessView.full_process | ProcessView.partial_process, data}
-    def render(data, process, scope) do
+    def render(_, process, scope) do
       rendered_process = take_data_from_process(process, scope)
 
       {rendered_process, %{}}

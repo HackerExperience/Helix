@@ -2,7 +2,6 @@ defmodule Helix.Process.Public.IndexTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Model.Server
   alias Helix.Process.Public.Index, as: ProcessIndex
 
   alias Helix.Test.Server.Setup, as: ServerSetup

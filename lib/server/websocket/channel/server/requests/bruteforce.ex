@@ -9,6 +9,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
     alias HELL.IPv4
     alias Helix.Websocket.Utils, as: WebsocketUtils
     alias Helix.Network.Model.Network
+    alias Helix.Process.Public.View.Process, as: ProcessView
     alias Helix.Software.Henforcer.File.Cracker, as: CrackerHenforcer
     alias Helix.Server.Model.Server
     alias Helix.Server.Public.Server, as: ServerPublic
@@ -81,21 +82,13 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
 
     def reply(request, socket) do
       process = request.meta.process
+      process_data = process.process_data
+      server_id = socket.assigns.gateway.server_id
+      entity_id = socket.assigns.entity_id
 
-      file_id = process.file_id && to_string(process.file_id)
-      connection_id = process.connection_id && to_string(process.connection_id)
+      pview = ProcessView.render(process_data, process, server_id, entity_id)
 
-      data = %{
-        process_id: to_string(process.process_id),
-        type: to_string(process.process_type),
-        network_id: to_string(process.network_id),
-        file_id: file_id,
-        connection_id: connection_id,
-        source_ip: socket.assigns.gateway.ip,
-        target_ip: request.params.ip
-      }
-
-      WebsocketUtils.reply_ok(data, socket)
+      WebsocketUtils.reply_ok(%{data: pview}, socket)
     end
 
     defp cast_bounces(bounces) when is_list(bounces),

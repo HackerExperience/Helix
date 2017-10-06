@@ -6,7 +6,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   alias Helix.Event
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Network
-  alias Helix.Network.Model.Tunnel
+  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -24,8 +24,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
     gateway_id: Server.id,
     destination_id: Server.id,
     network_id: Network.id,
-    bounces: [Server.id],
-    tunnel: Tunnel.t | nil
+    bounces: [Server.id]
   }
 
   @type transfer_ok ::
