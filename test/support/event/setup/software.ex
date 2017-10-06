@@ -1,17 +1,18 @@
 defmodule Helix.Test.Event.Setup.Software do
 
+  import HELL.MacroHelpers
+
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
+  alias Helix.Software.Internal.File, as: FileInternal
+  alias Helix.Software.Internal.Storage, as: StorageInternal
 
   alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
   alias Helix.Software.Event.File.DownloadFailed, as: FileDownloadFailedEvent
   alias Helix.Software.Event.File.Uploaded, as: FileUploadedEvent
   alias Helix.Software.Event.File.UploadFailed, as: FileUploadFailedEvent
-  # alias Helix.Software.Event.File.Transfer.Processed,
-  #   as: FileTransferProcessedEvent
-
   alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
     as: BruteforceConclusionEvent
   alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
@@ -61,21 +62,33 @@ defmodule Helix.Test.Event.Setup.Software do
     }
   end
 
+  @doc """
+  Generates a FileDownloaded event with real data.
+  """
   def file_downloaded do
     {event, _} = setup_env(:download, :completed)
     event
   end
 
+  @doc """
+  Generates a FileDownloadFailed event with real data.
+  """
   def file_download_failed(reason) do
     {event, _} = setup_env(:download, {:failed, reason})
     event
   end
 
+  @doc """
+  Generates a FileUploaded event with real data.
+  """
   def file_uploaded do
     {event, _} = setup_env(:upload, :completed)
     event
   end
 
+  @doc """
+  Generates a FileUploadFailed event with real data.
+  """
   def file_upload_failed(reason) do
     {event, _} = setup_env(:upload, {:failed, reason})
     event
@@ -83,6 +96,10 @@ defmodule Helix.Test.Event.Setup.Software do
 
   @spec setup_env(:download | :upload, :completed | :failed) ::
     {event :: term, related :: term}
+  docp """
+  `setup_env` is a helper to generate real FileTransfer data and return the
+  requested event (FileDownloaded/Uploaded/DownloadFailed/UploadFailed).
+  """
   defp setup_env(type, :completed) do
     # We'll generate the event data based on a real process.
     # That's not necessary, we could generate everything directly here, but by
@@ -152,8 +169,9 @@ defmodule Helix.Test.Event.Setup.Software do
     }
   end
 
-  alias Helix.Software.Internal.File, as: FileInternal
-  alias Helix.Software.Internal.Storage, as: StorageInternal
+  docp """
+  Helper that naively copies a file to a new storage, using Internal methods.
+  """
   defp copy_file(file_id, storage_id, path \\ nil) do
     file = FileInternal.fetch(file_id)
 

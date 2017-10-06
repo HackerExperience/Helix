@@ -1,4 +1,4 @@
-defmodule Helix.Network.Event.TunnelTest do
+defmodule Helix.Network.Event.Handler.TunnelTest do
 
   use Helix.Test.Case.Integration
 

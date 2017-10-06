@@ -20,7 +20,7 @@ defmodule Helix.Process.Event.TOPTest do
         connection_id: connection.connection_id
       )
 
-    event = EventSetup.connection_closed(connection)
+    event = EventSetup.Network.connection_closed(connection)
 
     assert ProcessQuery.fetch(process.process_id)
 

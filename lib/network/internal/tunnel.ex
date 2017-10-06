@@ -7,8 +7,8 @@ defmodule Helix.Network.Internal.Tunnel do
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
 
-  alias Helix.Network.Model.Connection.ConnectionClosedEvent
-  alias Helix.Network.Model.Connection.ConnectionStartedEvent
+  alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
+  alias Helix.Network.Event.Connection.Started, as: ConnectionStartedEvent
 
   @spec fetch(Tunnel.id) ::
     Tunnel.t
@@ -135,12 +135,7 @@ defmodule Helix.Network.Internal.Tunnel do
     cs = Connection.create(tunnel, connection_type, meta)
 
     with {:ok, connection} <- Repo.insert(cs) do
-      event = %Connection.ConnectionStartedEvent{
-        connection_id: connection.connection_id,
-        tunnel: tunnel,
-        network_id: tunnel.network_id,
-        connection_type: connection_type
-      }
+      event = ConnectionStartedEvent.new(connection)
 
       {:ok, connection, [event]}
     end
@@ -162,18 +157,9 @@ defmodule Helix.Network.Internal.Tunnel do
   The current reasons are valid: #{inspect Connection.close_reasons()}
   """
   def close_connection(connection = %Connection{}, reason \\ :normal) do
-    connection = Repo.preload(connection, :tunnel)
-
     Repo.delete!(connection)
 
-    event = %Connection.ConnectionClosedEvent{
-      connection_id: connection.connection_id,
-      tunnel: connection.tunnel,
-      network_id: connection.tunnel.network_id,
-      meta: connection.meta,
-      connection_type: connection.connection_type,
-      reason: reason
-    }
+    event = ConnectionClosedEvent.new(connection, reason)
 
     [event]
   end

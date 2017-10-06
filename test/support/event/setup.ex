@@ -1,11 +1,8 @@
 defmodule Helix.Test.Event.Setup do
 
   alias Helix.Entity.Model.Entity
-  alias Helix.Network.Model.Connection
-  alias Helix.Network.Repo, as: NetworkRepo
   alias Helix.Server.Model.Server
 
-  alias Helix.Network.Model.Connection.ConnectionClosedEvent
   alias Helix.Process.Model.Process.ProcessCreatedEvent
   alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
@@ -14,10 +11,7 @@ defmodule Helix.Test.Event.Setup do
     as: BankAccountPasswordRevealedEvent
 
   alias HELL.TestHelper.Random
-  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
-
-  @internet NetworkHelper.internet_id()
 
   ##############################################################################
   # Process events
@@ -70,32 +64,6 @@ defmodule Helix.Test.Event.Setup do
     target_entity = Access.get(opts, :target_entity_id, Entity.ID.generate())
 
     process_created(gateway_id, target_id, gateway_entity, target_entity)
-  end
-
-  ##############################################################################
-  # Network events
-  ##############################################################################
-
-  @doc """
-  Accepts: Connection.t
-
-  - network_id: Defaults to the internet
-  - reason: Defaults to `:normal`
-  """
-  def connection_closed(conn = %Connection{}, opts \\ []) do
-    network_id = Access.get(opts, :network_id, @internet)
-    reason = Access.get(opts, :reason, :normal)
-
-    conn = NetworkRepo.preload(conn, :tunnel)
-
-    %ConnectionClosedEvent{
-      connection_id: conn.connection_id,
-      network_id: network_id,
-      tunnel: conn.tunnel,
-      meta: conn.meta,
-      reason: reason,
-      connection_type: conn.connection_type
-    }
   end
 
   ##############################################################################

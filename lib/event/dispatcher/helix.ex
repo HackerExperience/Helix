@@ -5,13 +5,14 @@ defmodule Helix.Event.Dispatcher.Helix do
 
   alias Helix.Account
   alias Helix.Entity
-  alias Helix.Network
   alias Helix.Process
   alias Helix.Software
   alias Helix.Universe
 
   alias Helix.Log.Event, as: LogEvent
   alias Helix.Log.Event.Handler, as: LogHandler
+  alias Helix.Network.Event, as: NetworkEvent
+  alias Helix.Network.Event.Handler, as: NetworkHandler
   alias Helix.Software.Event, as: SoftwareEvent
   alias Helix.Software.Event.Handler, as: SoftwareHandler
 
@@ -19,6 +20,14 @@ defmodule Helix.Event.Dispatcher.Helix do
     skip: [LogEvent.Log.Created]
 
   event LogEvent.Log.Created
+
+  # TODO: Rearrange on PR 284
+  event SoftwareEvent.File.Downloaded
+  event SoftwareEvent.File.DownloadFailed
+  event SoftwareEvent.File.Uploaded
+  event SoftwareEvent.File.UploadFailed
+
+  event NetworkEvent.Connection.Started
 
   ##############################################################################
   # Account events
@@ -30,10 +39,10 @@ defmodule Helix.Event.Dispatcher.Helix do
   ##############################################################################
   # Network events
   ##############################################################################
-  event Network.Model.Connection.ConnectionClosedEvent,
-    Network.Event.Tunnel,
+  event NetworkEvent.Connection.Closed,
+    NetworkHandler.Tunnel,
     :connection_closed
-  event Network.Model.Connection.ConnectionClosedEvent,
+  event NetworkEvent.Connection.Closed,
     Process.Event.TOP,
     :connection_closed
 
@@ -91,7 +100,7 @@ defmodule Helix.Event.Dispatcher.Helix do
     Universe.Bank.Event.BankTransfer,
     :transfer_completed
   event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
-    Network.Event.Connection,
+    NetworkHandler.Connection,
     :bank_transfer_completed
 
   event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
