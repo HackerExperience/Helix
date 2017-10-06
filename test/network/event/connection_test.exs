@@ -2,6 +2,8 @@ defmodule Helix.Network.Event.ConnectionTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Log.Macros
+
   alias Helix.Event
   alias Helix.Log.Query.Log, as: LogQuery
 
@@ -22,16 +24,24 @@ defmodule Helix.Network.Event.ConnectionTest do
       destination_ip = ServerHelper.get_ip(event.tunnel.destination_id)
 
       [log_source] = LogQuery.get_logs_on_server(event.tunnel.gateway_id)
-      assert log_source.server_id == event.tunnel.gateway_id
-      assert log_source.entity_id == entity_id
-      assert log_source.message =~ "localhost logged into"
-      assert log_source.message =~ destination_ip
+
+      assert_log \
+        log_source,
+        event.tunnel.gateway_id,
+        entity_id,
+        "localhost logged into",
+        contains: destination_ip,
+        reject: gateway_ip
 
       [log_target] = LogQuery.get_logs_on_server(event.tunnel.destination_id)
-      assert log_target.server_id == event.tunnel.destination_id
-      assert log_target.entity_id == entity_id
-      assert log_target.message =~ "logged in as"
-      assert log_target.message =~ gateway_ip
+
+      assert_log \
+        log_target,
+        event.tunnel.destination_id,
+        entity_id,
+        "logged in as",
+        contains: gateway_ip,
+        reject: destination_ip
     end
   end
 
