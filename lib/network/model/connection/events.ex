@@ -1,7 +1,7 @@
 defmodule Helix.Network.Model.Connection.ConnectionStartedEvent do
   @moduledoc false
 
-  import Helix.Log.Model.Loggable.Flow
+  import Helix.Log.Loggable.Flow
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Connection

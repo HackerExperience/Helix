@@ -7,7 +7,7 @@ defmodule Helix.Software.Event.File do
     the corresponding server.
     """
 
-    import Helix.Log.Model.Loggable.Flow
+    import Helix.Log.Loggable.Flow
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network

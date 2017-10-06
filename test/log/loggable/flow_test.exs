@@ -1,10 +1,10 @@
-defmodule Helix.Log.Model.Loggable.FlowTest do
+defmodule Helix.Log.Loggable.FlowTest do
 
   use Helix.Test.Case.Integration
 
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
-  alias Helix.Log.Model.Loggable.Flow, as: LoggableFlow
+  alias Helix.Log.Loggable.Flow, as: LoggableFlow
   alias Helix.Log.Query.Log, as: LogQuery
 
   alias Helix.Test.Server.Setup, as: ServerSetup
