@@ -23,10 +23,6 @@ defmodule Helix.Hardware.Query.Motherboard do
   defdelegate fetch_by_nip(network_id, ip),
     to: MotherboardInternal
 
-  # TODO: Remove \/
-  defdelegate preload_components(mobo),
-    to: MotherboardInternal
-
   @spec get_slots(Motherboard.t | Component.idt) ::
     [MotherboardSlot.t]
   @doc """

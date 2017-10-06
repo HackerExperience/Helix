@@ -55,10 +55,8 @@ defmodule Helix.Server.Websocket.Channel.Server.EventsTest do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
 
-      # For some reason, below filtering isn't being needed anymore. This is
-      # good, but I have no idea why... I'll leave it here for some time...
-      # # Filter out the usual `LogCreatedEvent` after remote server join
-      # # assert_broadcast "event", _
+      # Filter out the usual `LogCreatedEvent` after remote server join
+      assert_broadcast "event", _
 
       gateway_entity_id = socket.assigns.gateway.entity_id
       destination_entity_id = socket.assigns.destination.entity_id

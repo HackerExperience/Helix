@@ -2,7 +2,15 @@ defmodule Helix.Process.Model.Macros do
 
   defmacro unchange(process) do
     quote do
-      Ecto.Changeset.apply_changes(unquote(process))
+
+      # The received process may be either a changeset or the model itself.....
+      var!(process) =
+        if unquote(process).__struct__ == Helix.Process.Model.Process do
+          unquote(process)
+        else
+          Ecto.Changeset.apply_changes(unquote(process))
+        end
+
     end
   end
 

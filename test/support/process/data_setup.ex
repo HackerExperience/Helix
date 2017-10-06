@@ -166,9 +166,9 @@ defmodule Helix.Test.Process.Data.Setup do
 
   defp custom_implementations do
     ~w/
-    bruteforce
-    forge
-    file_download
+      bruteforce
+      forge
+      file_download
     /a
   end
 end
