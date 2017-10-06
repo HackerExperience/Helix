@@ -39,6 +39,8 @@ defmodule Helix.Software.Process.File.Transfer do
     import Helix.Process.Model.Macros
 
     alias Helix.Server.Model.Server
+    alias Helix.Software.Model.Storage
+    alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
     alias Helix.Software.Event.File.Transfer.Aborted,
       as: FileTransferAbortedEvent
@@ -54,7 +56,7 @@ defmodule Helix.Software.Process.File.Transfer do
       do: %{}
 
     def kill(data, process, _) do
-      process = unchange(process)
+      unchange(process)
 
       context = get_servers_context(data, process)
       event = process_abortion(data, process, context)
@@ -63,7 +65,7 @@ defmodule Helix.Software.Process.File.Transfer do
     end
 
     def state_change(data, process, _, :complete) do
-      process = unchange(process)
+      unchange(process)
 
       context = get_servers_context(data, process)
       event = process_completion(data, process, context)
@@ -111,8 +113,13 @@ defmodule Helix.Software.Process.File.Transfer do
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
 
-    def after_read_hook(data),
-      do: data
+    def after_read_hook(data) do
+      %FileTransferProcess{
+        type: String.to_existing_atom(data.type),
+        destination_storage_id: Storage.ID.cast!(data.destination_storage_id),
+        connection_type: String.to_existing_atom(data.connection_type)
+      }
+    end
   end
 
   defimpl Helix.Process.Public.View.ProcessViewable do
