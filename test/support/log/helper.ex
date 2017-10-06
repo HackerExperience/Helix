@@ -9,7 +9,7 @@ defmodule Helix.Test.Log.Helper do
     %{
       log_id: log.log_id,
       message: List.first(log.revisions).message,
-      inserted_at: log.inserted_at
+      timestamp: log.creation_time
     }
   end
 

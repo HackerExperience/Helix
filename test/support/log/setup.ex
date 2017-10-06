@@ -63,7 +63,7 @@ defmodule Helix.Test.Log.Setup do
     log =
       changeset
       |> Ecto.Changeset.apply_changes()
-      |> Map.replace(:inserted_at, DateTime.utc_now())
+      |> Map.replace(:creation_time, DateTime.utc_now())
       |> Map.replace(:log_id, Log.ID.generate())
 
     related = %{

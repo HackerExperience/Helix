@@ -11,8 +11,9 @@ defmodule Helix.Log.Repo.Migrations.InitialSetup do
       add :message, :string, null: false
       add :crypto_version, :integer
 
-      timestamps()
+      timestamps()  # Removed
     end
+    create index(:logs, [:server_id, :inserted_at])  # Removed
 
     create table(:revisions, primary_key: false) do
       add :revision_id, :inet, primary_key: true
@@ -29,10 +30,8 @@ defmodule Helix.Log.Repo.Migrations.InitialSetup do
       add :message, :string, null: false
       add :forge_version, :integer
 
-      timestamps(type: :utc_datetime, updated_at: false)
+      timestamps(type: :utc_datetime, updated_at: false)  # Removed
     end
-
-    create index(:logs, [:server_id, :inserted_at])
 
     create table(:log_touches, primary_key: false) do
       add :log_id,

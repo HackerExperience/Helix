@@ -15,16 +15,13 @@ defmodule Helix.Log.Event.Handler.LogTest do
   alias Helix.Test.Server.Factory, as: ServerFactory
   alias Helix.Test.Log.Factory, as: LogFactory
 
-  # TODO: Depends on integration factory as it depends on a server being linked
-  #   to an entity and having a network_connection (and this depends on a nic
-  #   that depends on the motherboard and everything is just terrible)
-  describe "when file is downloaded" do
-    @tag :pending
-    test "creates log"
-  end
-
   describe "handle_event/1" do
     test "follows the LoggableFlow" do
+      # Note: We are using `FileDownloadedEvent` merely as a sample to make sure
+      # the LogHandler works as expected, this is not the place to test that
+      # EventX is correctly generating log entries. This should be tested
+      # elsewhere. That's why this same test also exists on
+      # FileDownloadedEventTest
       event = EventSetup.Software.file_downloaded()
 
       # Simulates the handler receiving the event
@@ -85,13 +82,5 @@ defmodule Helix.Log.Event.Handler.LogTest do
       assert [log] = LogQuery.get_logs_on_server(server)
       assert [%{forge_version: 456}] = Repo.preload(log, :revisions).revisions
     end
-  end
-
-  describe "when ssh connection is started" do
-    @tag :pending
-    test "logs on gateway"
-
-    @tag :pending
-    test "logs on destination"
   end
 end

@@ -19,8 +19,7 @@ defmodule Helix.Log.Model.Log do
     message: message,
     crypto_version: pos_integer | nil,
     revisions: term,
-    inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t
+    creation_time: DateTime.t
   }
 
   @type creation_params :: %{
@@ -52,24 +51,26 @@ defmodule Helix.Log.Model.Log do
     field :message, :string
     field :crypto_version, :integer
 
+    field :creation_time, :utc_datetime
+
     has_many :revisions, Revision,
       foreign_key: :log_id,
       references: :log_id,
       on_delete: :delete_all,
       on_replace: :delete
-
-    timestamps()
   end
 
   @spec create_changeset(creation_params) ::
     Changeset.t
   def create_changeset(params) do
     revision = Revision.changeset(%Revision{}, params)
+    revision_time = get_change(revision, :creation_time)
 
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
     |> put_assoc(:revisions, [revision])
+    |> put_change(:creation_time, revision_time)
   end
 
   @spec update_changeset(t | Changeset.t, update_params) ::
@@ -115,7 +116,7 @@ defmodule Helix.Log.Model.Log do
 
     @spec order_by_newest(Queryable.t) ::
       Queryable.t
-    def order_by_newest(query \\ Log),
-      do: order_by(query, [l], desc: l.inserted_at)
+    def order_by_newest(query),
+      do: order_by(query, [l], desc: l.creation_time)
   end
 end

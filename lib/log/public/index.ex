@@ -5,10 +5,10 @@ defmodule Helix.Log.Public.Index do
   alias Helix.Log.Query.Log, as: LogQuery
 
   @type index ::
-    [%{log_id: Log.id, message: Log.message, inserted_at: DateTime.t}]
+    [%{log_id: Log.id, message: Log.message, timestamp: DateTime.t}]
 
   @type rendered_index ::
-    [%{log_id: String.t, message: String.t, inserted_at: String.t}]
+    [%{log_id: String.t, message: String.t, timestamp: String.t}]
 
   @spec index(Server.id) ::
     index
@@ -26,7 +26,7 @@ defmodule Helix.Log.Public.Index do
       %{
         log_id: log.log_id,
         message: log.message,
-        inserted_at: log.inserted_at
+        timestamp: log.creation_time
       }
     end)
   end
@@ -41,7 +41,7 @@ defmodule Helix.Log.Public.Index do
       %{
         log_id: to_string(log.log_id),
         message: log.message,
-        inserted_at: to_string(log.inserted_at)
+        timestamp: to_string(log.timestamp)
       }
     end)
   end

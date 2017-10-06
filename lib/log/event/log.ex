@@ -36,7 +36,7 @@ defmodule Helix.Log.Event.Log do
         data = %{
           log_id: to_string(event.log.log_id),
           server_id: to_string(event.server_id),
-          timestamp: ClientUtils.to_timestamp(event.log.inserted_at),
+          timestamp: ClientUtils.to_timestamp(event.log.creation_time),
           message: event.log.message
         }
 
@@ -92,7 +92,7 @@ defmodule Helix.Log.Event.Log do
         data = %{
           log_id: to_string(event.log.log_id),
           server_id: to_string(event.server_id),
-          timestamp: ClientUtils.to_timestamp(event.log.inserted_at),
+          timestamp: ClientUtils.to_timestamp(event.log.creation_time),
           message: event.log.message
         }
 
