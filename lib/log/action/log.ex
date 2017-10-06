@@ -21,9 +21,9 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Log.Internal.Log, as: LogInternal
   alias Helix.Log.Model.Log
 
-  alias Helix.Log.Model.Log.LogCreatedEvent
-  alias Helix.Log.Model.Log.LogDeletedEvent
-  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Log.Event.Log.Created, as: LogCreatedEvent
+  alias Helix.Log.Event.Log.Deleted, as: LogDeletedEvent
+  alias Helix.Log.Event.Log.Modified, as: LogModifiedEvent
 
   @spec create(Server.idt, Entity.idt, String.t, pos_integer | nil) ::
     {:ok, Log.t, [LogCreatedEvent.t]}
@@ -33,7 +33,7 @@ defmodule Helix.Log.Action.Log do
   """
   def create(server, entity, message, forge \\ nil) do
     with {:ok, log} <- LogInternal.create(server, entity, message, forge) do
-      event = %LogCreatedEvent{server_id: log.server_id}
+      event = LogCreatedEvent.new(log)
 
       {:ok, log, [event]}
     end
@@ -59,23 +59,23 @@ defmodule Helix.Log.Action.Log do
     with \
       {:ok, log} <- LogInternal.revise(log, entity, message, forge_version)
     do
-      event = %LogModifiedEvent{server_id: log.server_id}
+      event = LogModifiedEvent.new(log)
 
       {:ok, log, [event]}
     end
   end
 
   @spec recover(Log.t) ::
-    {:ok, :recovered, [LogCreatedEvent.t]}
+    {:ok, :recovered, [LogModifiedEvent.t]}
     | {:ok, :deleted, [LogDeletedEvent.t]}
     | {:error, :original_revision}
   @doc """
   Recovers `log` to a previous revision.
 
   ### Notes
-  - If the log is in it's original state and it is not a forged log, the
+  - If the log is in its original state and it is not a forged log, the
   operation will fail with `{:error, :original_revision}`.
-  - If the log is in it's original state and it's forged, it will be deleted,
+  - If the log is in its original state and it is forged, it will be deleted,
   returning `{:ok, :deleted, [Helix.Event.t]}`.
   - Otherwise the revision will be deleted and the log will be updated to use
   the last revision's message, returning `{:ok, :recovered, [Helix.Event.t]}`.
@@ -83,11 +83,13 @@ defmodule Helix.Log.Action.Log do
   def recover(log) do
     case LogInternal.recover(log) do
       {:ok, :deleted} ->
-        event = %LogDeletedEvent{server_id: log.server_id}
+        event = LogDeletedEvent.new(log)
         {:ok, :deleted, [event]}
+
       {:ok, :recovered} ->
-        event = %LogModifiedEvent{server_id: log.server_id}
+        event = LogModifiedEvent.new(log)
         {:ok, :recovered, [event]}
+
       {:error, :original_revision} ->
         {:error, :original_revision}
     end

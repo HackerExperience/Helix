@@ -18,11 +18,11 @@ defmodule Helix.Log.Public.IndexTest do
 
       result_log1 = Enum.find(index, &(&1.log_id == log1.log_id))
       assert result_log1.message == log1.message
-      assert result_log1.inserted_at == log1.inserted_at
+      assert result_log1.timestamp == log1.creation_time
 
       result_log2 = Enum.find(index, &(&1.log_id == log2.log_id))
       assert result_log2.message == log2.message
-      assert result_log2.inserted_at == log2.inserted_at
+      assert result_log2.timestamp == log2.creation_time
     end
   end
 
@@ -42,8 +42,8 @@ defmodule Helix.Log.Public.IndexTest do
       assert is_binary(result_log1.log_id)
       assert is_binary(result_log2.log_id)
 
-      assert is_binary(result_log1.inserted_at)
-      assert is_binary(result_log2.inserted_at)
+      assert is_binary(result_log1.timestamp)
+      assert is_binary(result_log2.timestamp)
     end
   end
 end

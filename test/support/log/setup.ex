@@ -59,13 +59,19 @@ defmodule Helix.Test.Log.Setup do
       forge_version: forge_version
     }
 
-    log = Log.create_changeset(params)
+    changeset = Log.create_changeset(params)
+    log =
+      changeset
+      |> Ecto.Changeset.apply_changes()
+      |> Map.replace(:creation_time, DateTime.utc_now())
+      |> Map.replace(:log_id, Log.ID.generate())
 
     related = %{
       params: params,
       server: server,
       entity_id: entity_id,
-      message: message
+      message: message,
+      changeset: changeset
     }
 
     {log, related}
@@ -105,7 +111,7 @@ defmodule Helix.Test.Log.Setup do
           server_owner.entity_id
 
         # User asked for real entity
-        not opts[:fake_entity] ->
+        true == opts[:fake_entity] ->
           EntitySetup.entity!().entity_id
 
         # All else: generate a fake entity id.

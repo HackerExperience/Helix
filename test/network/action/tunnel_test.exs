@@ -34,7 +34,7 @@ defmodule Helix.Network.Action.TunnelTest do
         TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
 
       # Returned the correct event
-      assert event == EventSetup.connection_closed(ssh)
+      assert event == EventSetup.Network.connection_closed(ssh)
     end
 
     test "with multiple matches, no filter" do
@@ -73,9 +73,9 @@ defmodule Helix.Network.Action.TunnelTest do
 
       # Make sure it returned the correct events
       assert events ==
-        [EventSetup.connection_closed(ssh3),
-         EventSetup.connection_closed(ssh2),
-         EventSetup.connection_closed(ssh1)]
+        [EventSetup.Network.connection_closed(ssh3),
+         EventSetup.Network.connection_closed(ssh2),
+         EventSetup.Network.connection_closed(ssh1)]
     end
 
     test "with 1 match; with filter" do
@@ -123,7 +123,7 @@ defmodule Helix.Network.Action.TunnelTest do
       assert [ftp_ok1, ssh_ok2, ssh_ok1] ==
         TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
 
-      assert event == EventSetup.connection_closed(ssh_expired)
+      assert event == EventSetup.Network.connection_closed(ssh_expired)
     end
 
     test "with multiple matches; with filter" do
@@ -176,8 +176,8 @@ defmodule Helix.Network.Action.TunnelTest do
 
       # Make sure the return events are correct
       assert events ==
-        [EventSetup.connection_closed(ssh_expired2),
-         EventSetup.connection_closed(ssh_expired1)]
+        [EventSetup.Network.connection_closed(ssh_expired2),
+         EventSetup.Network.connection_closed(ssh_expired1)]
     end
 
     test "with no matches but existing connections" do

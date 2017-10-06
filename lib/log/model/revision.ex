@@ -22,7 +22,7 @@ defmodule Helix.Log.Model.Revision do
     message: String.t,
     forge_version: pos_integer | nil,
     log: term,
-    inserted_at: DateTime.t
+    creation_time: DateTime.t,
   }
 
   @type creation_params :: %{
@@ -44,12 +44,12 @@ defmodule Helix.Log.Model.Revision do
     field :message, :string
     field :forge_version, :integer
 
+    field :creation_time, :utc_datetime
+
     belongs_to :log, Log,
       foreign_key: :log_id,
       references: :log_id,
       define_field: false
-
-    timestamps(type: :utc_datetime, updated_at: false)
   end
 
   @spec create(Log.t, Entity.idtb, String.t, pos_integer | nil) ::
@@ -75,6 +75,7 @@ defmodule Helix.Log.Model.Revision do
     |> cast(params, @creation_fields)
     |> validate_required([:entity_id, :message])
     |> validate_number(:forge_version, greater_than: 0)
+    |> put_change(:creation_time, DateTime.utc_now())
   end
 
   defmodule Query do
@@ -107,10 +108,9 @@ defmodule Helix.Log.Model.Revision do
 
     @spec last(Queryable.t, non_neg_integer) ::
       Queryable.t
-    def last(query \\ Revision, n) do
+    def last(query, n) do
       query
-      # TODO: Use revision id to order (and remove inserted_at)
-      |> order_by([r], desc: r.inserted_at)
+      |> order_by([r], desc: r.creation_time)
       |> limit(^n)
     end
   end

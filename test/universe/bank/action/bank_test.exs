@@ -288,7 +288,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       refute TunnelQuery.fetch_connection(bank_connection.connection_id)
 
       # Ensure spilled event is the one expected
-      assert event == EventSetup.connection_closed(bank_connection)
+      assert event == EventSetup.Network.connection_closed(bank_connection)
     end
 
     test "unrelated connections are not removed" do
@@ -376,7 +376,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
         TunnelQuery.outbound_connections(player2.server_id)
 
       # Ensure logout event is the one expected
-      assert event == EventSetup.connection_closed(conn_p1a1)
+      assert event == EventSetup.Network.connection_closed(conn_p1a1)
     end
   end
 

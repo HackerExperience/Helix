@@ -6,9 +6,9 @@ defmodule Helix.Log.Action.LogTest do
   alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Model.Log
-  alias Helix.Log.Model.Log.LogCreatedEvent
-  alias Helix.Log.Model.Log.LogDeletedEvent
-  alias Helix.Log.Model.Log.LogModifiedEvent
+  alias Helix.Log.Event.Log.Created, as: LogCreatedEvent
+  alias Helix.Log.Event.Log.Deleted, as: LogDeletedEvent
+  alias Helix.Log.Event.Log.Modified, as: LogModifiedEvent
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
 

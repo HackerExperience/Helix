@@ -7,6 +7,8 @@ defmodule Helix.Software.Event.File do
     the corresponding server.
     """
 
+    import Helix.Log.Loggable.Flow
+
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
@@ -68,6 +70,21 @@ defmodule Helix.Software.Event.File do
       def whom_to_notify(event),
         do: %{server: event.to_server_id}
     end
+
+    log(event) do
+      ip_from = get_ip(event.from_server_id, event.network_id)
+      ip_to = get_ip(event.to_server_id, event.network_id)
+
+      file_name = get_file_name(event.file)
+
+      msg_from = "localhost downloaded file #{file_name} from #{ip_to}"
+      msg_to = "#{ip_from} downloaded file #{file_name} at localhost"
+
+      log_from = build_entry(event.from_server_id, event.entity_id, msg_from)
+      log_to = build_entry(event.to_server_id, event.entity_id, msg_to)
+
+      [log_from, log_to]
+    end
   end
 
   defmodule DownloadFailed do
@@ -80,7 +97,6 @@ defmodule Helix.Software.Event.File do
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
-    alias Helix.Software.Model.Storage
 
     @type reason ::
       :no_space_left
@@ -92,7 +108,6 @@ defmodule Helix.Software.Event.File do
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
-      to_storage_id: Storage.id,
       network_id: Network.id,
       connection_type: :ftp | :public_ftp
     }
@@ -110,7 +125,6 @@ defmodule Helix.Software.Event.File do
       :entity_id,
       :to_server_id,
       :from_server_id,
-      :to_storage_id,
       :network_id,
       :connection_type
     ]
@@ -166,7 +180,6 @@ defmodule Helix.Software.Event.File do
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
-    alias Helix.Software.Model.Storage
 
     @type reason ::
       :no_space_left
@@ -178,7 +191,6 @@ defmodule Helix.Software.Event.File do
       entity_id: Entity.id,
       to_server_id: Server.id,
       from_server_id: Server.id,
-      to_storage_id: Storage.id,
       network_id: Network.id
     }
 
@@ -194,7 +206,6 @@ defmodule Helix.Software.Event.File do
       :entity_id,
       :to_server_id,
       :from_server_id,
-      :to_storage_id,
       :network_id
     ]
   end

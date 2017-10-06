@@ -2,9 +2,7 @@ defmodule Helix.Process.Public.IndexTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Network.Model.Connection
   alias Helix.Server.Model.Server
-  alias Helix.Software.Model.File
   alias Helix.Process.Public.Index, as: ProcessIndex
 
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -17,7 +15,11 @@ defmodule Helix.Process.Public.IndexTest do
 
       # Process 1 affects player's own server; started by own player; has no
       # file / connection
-      process1_opts = [gateway_id: server.server_id, single_server: true]
+      process1_opts = [
+        gateway_id: server.server_id,
+        single_server: true,
+        type: :bruteforce
+      ]
       {process1, _} = ProcessSetup.process(process1_opts)
 
       # Process 2 affects another server; started by own player, has file and
@@ -25,8 +27,7 @@ defmodule Helix.Process.Public.IndexTest do
       process2_destination = Server.ID.generate()
       process2_opts = [
         gateway_id: server.server_id,
-        file_id: File.ID.generate(),
-        connection_id: Connection.ID.generate(),
+        type: :file_download,
         target_server_id: process2_destination
       ]
       {process2, _} = ProcessSetup.process(process2_opts)

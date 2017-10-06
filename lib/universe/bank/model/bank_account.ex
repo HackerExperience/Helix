@@ -8,17 +8,15 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
   alias HELL.Password
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
-  alias Helix.Universe.Bank.Model.Bank
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.NPC.Model.NPC
 
   @account_range 100_000..999_999
-  # TODO: Repeated for compatibility. Remove on next PR.
-  @type account_range :: 100_000..999_999
+
   @type account :: 100_000..999_999
 
   @type t :: %__MODULE__{
-    account_number: account_range,
+    account_number: account,
     bank_id: NPC.id,
     atm_id: ATM.id,
     password: String.t,
@@ -45,17 +43,6 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     field :balance, :integer
     field :owner_id, Account.ID
     field :creation_date, :utc_datetime
-
-    belongs_to :banks, Bank,
-      references: :npc_id,
-      foreign_key: :bank_id,
-      primary_key: false,
-      define_field: false
-    belongs_to :atms, ATM,
-      references: :npc_id,
-      foreign_key: :atm_id,
-      primary_key: false,
-      define_field: false
   end
 
   @spec create_changeset(creation_params) ::
@@ -128,7 +115,7 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
   end
 
   @spec generate_account_id ::
-    account_range
+    account
   defp generate_account_id,
     do: Enum.random(@account_range)
 

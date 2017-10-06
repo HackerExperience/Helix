@@ -1,77 +1,161 @@
-defmodule Helix.Log.Event.Handler.Log do
-  @moduledoc false
+defmodule Helix.Log.Event.Log do
 
-  alias Helix.Event
-  alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Connection.ConnectionStartedEvent
-  alias Helix.Network.Query.Tunnel, as: TunnelQuery
-  alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Log.Action.Log, as: LogAction
-  alias Helix.Log.Query.Log, as: LogQuery
-  alias Helix.Log.Repo
+  defmodule Created do
+    @moduledoc """
+    LogCreatedEvent is fired when a brand new log entry is added to the server.
+    """
 
-  alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
-  alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
-    as: LogForgeEditComplete
-  alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
-    as: LogForgeCreateComplete
+    alias Helix.Server.Model.Server
+    alias Helix.Log.Model.Log
 
-  def file_downloaded(event = %FileDownloadedEvent{}) do
-    event
-    # TODO #278
-  end
+    @type t ::
+      %__MODULE__{
+        log: Log.t,
+        server_id: Server.id
+      }
 
-  @doc """
-  Forges a revision onto a log or creates a fake new log
-  """
-  def log_forge_conclusion(event = %LogForgeEditComplete{}) do
-    {:ok, _, events} =
-      event.target_log_id
-      |> LogQuery.fetch()
-      |> LogAction.revise(event.entity_id, event.message, event.version)
+    @enforce_keys [:server_id, :log]
+    defstruct [:server_id, :log]
 
-    Event.emit(events)
-  end
-
-  def log_forge_conclusion(event = %LogForgeCreateComplete{}) do
-    {:ok, _, events} = LogAction.create(
-      event.target_server_id,
-      event.entity_id,
-      event.message,
-      event.version)
-
-    Event.emit(events)
-  end
-
-  @doc """
-  Logs that a server logged into another via SSH
-  """
-  def connection_started(
-    event = %ConnectionStartedEvent{connection_type: :ssh})
-  do
-    tunnel = TunnelQuery.fetch(event.tunnel_id)
-    network = event.network_id
-    gateway = tunnel.gateway_id
-    destination = tunnel.destination_id
-
-    gateway_ip = ServerQuery.get_ip(gateway, network)
-    destination_ip = ServerQuery.get_ip(destination, network)
-
-    entity = EntityQuery.fetch_by_server(gateway)
-
-    message_orig = "Logged into #{destination_ip}"
-    message_dest = "#{gateway_ip} logged in as root"
-
-    {:ok, events} = Repo.transaction fn ->
-      {:ok, _, e1} = LogAction.create(gateway, entity, message_orig)
-      {:ok, _, e2} = LogAction.create(destination, entity, message_dest)
-      e1 ++ e2
+    @spec new(Log.t) ::
+      t
+    def new(log = %Log{}) do
+      %__MODULE__{
+        log: log,
+        server_id: log.server_id
+      }
     end
 
-    Event.emit(events)
+    defimpl Helix.Event.Notificable do
+
+      alias HELL.ClientUtils
+
+      @event "log_created"
+
+      def generate_payload(event, _socket) do
+        data = %{
+          log_id: to_string(event.log.log_id),
+          server_id: to_string(event.server_id),
+          timestamp: ClientUtils.to_timestamp(event.log.creation_time),
+          message: event.log.message
+        }
+
+        return = %{
+          data: data,
+          event: @event
+        }
+
+        {:ok, return}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: event.server_id}
+    end
   end
 
-  def connection_started(_) do
-    :ignore
+  defmodule Modified do
+    @moduledoc """
+    LogModifiedEvent is fired when an existing log has changed (revised) or
+    has been recovered.
+
+    TODO: we'll probably want to create a LogRecovered event instead.
+    """
+
+    alias Helix.Server.Model.Server
+    alias Helix.Log.Model.Log
+
+    @type t ::
+      %__MODULE__{
+        log: Log.t,
+        server_id: Server.id
+      }
+
+    @enforce_keys [:server_id, :log]
+    defstruct [:server_id, :log]
+
+    @spec new(Log.t) ::
+      t
+    def new(log = %Log{}) do
+      %__MODULE__{
+        log: log,
+        server_id: log.server_id
+      }
+    end
+
+    defimpl Helix.Event.Notificable do
+
+      alias HELL.ClientUtils
+
+      @event "log_modified"
+
+      def generate_payload(event, _socket) do
+        data = %{
+          log_id: to_string(event.log.log_id),
+          server_id: to_string(event.server_id),
+          timestamp: ClientUtils.to_timestamp(event.log.creation_time),
+          message: event.log.message
+        }
+
+        return = %{
+          data: data,
+          event: @event
+        }
+
+        {:ok, return}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: event.server_id}
+    end
+  end
+
+  defmodule Deleted do
+    @moduledoc """
+    LogDeletedEvent is fired when a forged log is recovered beyond its original
+    revision, leading to the log deletion.
+    """
+
+    alias Helix.Server.Model.Server
+    alias Helix.Log.Model.Log
+
+    @type t ::
+      %__MODULE__{
+        log: Log.t,
+        server_id: Server.id
+      }
+
+    @enforce_keys [:server_id, :log]
+    defstruct [:server_id, :log]
+
+    @spec new(Log.t) ::
+      t
+    def new(log = %Log{}) do
+      %__MODULE__{
+        log: log,
+        server_id: log.server_id
+      }
+    end
+
+    defimpl Helix.Event.Notificable do
+
+      @event "log_deleted"
+
+      def generate_payload(event, _socket) do
+        data = %{
+          log_id: to_string(event.log.log_id),
+          server_id: to_string(event.server_id)
+        }
+
+        return = %{
+          data: data,
+          event: @event
+        }
+
+        {:ok, return}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: event.server_id}
+    end
   end
 end

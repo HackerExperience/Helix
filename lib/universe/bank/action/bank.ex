@@ -17,7 +17,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
-  alias Helix.Network.Model.Connection.ConnectionClosedEvent
+  alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
   alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
     as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,

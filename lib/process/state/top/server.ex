@@ -10,13 +10,12 @@ defmodule Helix.Process.State.TOP.Server do
 
   alias Ecto.Changeset
   alias Helix.Event
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Process.Internal.TOP.ServerResources, as: ServerResourcesTOP
   alias Helix.Process.Model.Process
+  alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.State.TOP.Domain, as: DomainTOP
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
   alias Helix.Process.Repo
@@ -81,12 +80,10 @@ defmodule Helix.Process.State.TOP.Server do
     | {:stop, reason :: term}
   @doc false
   def init(gateway) do
-    # FIXME: receive resources and processes on startup as a way to ensure that
-    #   this machine doesn't needs to query other domains (architecture choices)
     with \
-      {:ok, resources} <- get_resources(gateway),
-      {:ok, processes} <- get_processes(gateway)
+      {:ok, resources} <- get_resources(gateway)
     do
+      processes = ProcessQuery.get_processes_on_server(gateway)
       {:ok, domain} = DomainTOP.start_link(gateway, processes, resources)
 
       ManagerTOP.register(gateway)
@@ -224,34 +221,20 @@ defmodule Helix.Process.State.TOP.Server do
 
   @spec get_resources(Server.id) ::
     {:ok, ServerResourcesTOP.t}
-    | {:error, :server_not_assembled | :server_not_found}
-  defp get_resources(gateway) do
-    # FIXME
-    case ServerQuery.fetch(gateway) do
-      %{motherboard_id: motherboard = %Component.ID{}} ->
-        resources =
-          motherboard
-          |> ComponentQuery.fetch()
-          |> MotherboardQuery.fetch()
-          |> MotherboardQuery.resources()
-          |> ServerResourcesTOP.cast()
-        {:ok, resources}
-      %{} ->
-        {:error, :server_not_assembled}
-      nil ->
+    | {:error, :server_not_found}
+  defp get_resources(gateway_id) do
+    with server = %{} <- ServerQuery.fetch(gateway_id) do
+      resources =
+        server.motherboard_id
+        |> MotherboardQuery.fetch()
+        |> MotherboardQuery.resources()
+        |> Map.delete(:hdd)
+        |> ServerResourcesTOP.cast()
+
+      {:ok, resources}
+    else
+      _ ->
         {:error, :server_not_found}
     end
-  end
-
-  @spec get_processes(Server.id) ::
-    {:ok, [Process.t]}
-  defp get_processes(gateway) do
-    processes =
-      Process
-      |> Process.Query.by_gateway(gateway)
-      |> Repo.all()
-      |> Enum.map(&Process.load_virtual_data/1)
-
-    {:ok, processes}
   end
 end

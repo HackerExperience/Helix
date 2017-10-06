@@ -4,8 +4,7 @@ defmodule Helix.Event do
   alias Helix.Event.Dispatcher.Notification, as: NotificationDispatcher
   alias Helix.Event.Dispatcher.Story, as: StoryDispatcher
 
-  # TODO: This type belongs to HELF.Event
-  @type t :: struct
+  @type t :: HELF.Event.t
 
   def emit([]),
     do: :noop

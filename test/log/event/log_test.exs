@@ -2,84 +2,62 @@ defmodule Helix.Log.Event.LogTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
-    as: LogForgeEditComplete
-  alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
-    as: LogForgeCreateComplete
-  alias Helix.Log.Event.Handler.Log, as: EventHandler
-  alias Helix.Log.Query.Log, as: LogQuery
-  alias Helix.Log.Repo
+  alias Helix.Event.Notificable
 
-  alias Helix.Test.Entity.Factory, as: EntityFactory
-  alias Helix.Test.Server.Factory, as: ServerFactory
-  alias Helix.Test.Log.Factory, as: LogFactory
+  alias Helix.Test.Channel.Setup, as: ChannelSetup
+  alias Helix.Test.Event.Setup, as: EventSetup
 
-  # TODO: Depends on integration factory as it depends on a server being linked
-  #   to an entity and having a network_connection (and this depends on a nic
-  #   that depends on the motherboard and everything is just terrible)
-  describe "when file is downloaded" do
-    @tag :pending
-    test "creates log"
-  end
+  @mocked_socket ChannelSetup.mock_server_socket()
 
-  describe "noix" do
-    test "lol" do
-      alias Helix.Test.Event.Setup, as: EventSetup
+  describe "LogCreatedEvent" do
+    test "Notificable.generate_payload/2" do
+      event = EventSetup.Log.created()
 
-      event = EventSetup.Software.file_downloaded()
+      # Generates the payload
+      assert {:ok, return} = Notificable.generate_payload(event, @mocked_socket)
 
-      EventHandler.file_downloaded(event)
+      # Returned event is correct and json-friendly
+      assert return.event == "log_created"
+      assert return.data.log_id == to_string(event.log.log_id)
+      assert return.data.message == event.log.message
+      assert return.data.server_id == to_string(event.log.server_id)
+      refute is_map(return.data.timestamp)
+    end
+
+    test "Notificable.whom_to_notify/1" do
+      event = EventSetup.Log.created()
+      assert %{server: server_id} = Notificable.whom_to_notify(event)
+      assert server_id == event.log.server_id
     end
   end
 
-  describe "on log forger edit conclusion" do
-    test "adds revision to target log" do
-      target_log = LogFactory.insert(:log)
-      entity = EntityFactory.insert(:entity)
-      message = "I just got hidden"
+  describe "LogModifiedEvent" do
+    test "Notificable.generate_payload/2" do
+      event = EventSetup.Log.modified()
 
-      event = %LogForgeEditComplete{
-        target_log_id: target_log.log_id,
-        entity_id: entity.entity_id,
-        message: message,
-        version: 100
-      }
+      # Generates the payload
+      assert {:ok, return} = Notificable.generate_payload(event, @mocked_socket)
 
-      revisions_before = LogQuery.count_revisions_of_entity(target_log, entity)
-      EventHandler.log_forge_conclusion(event)
-      revisions_after = LogQuery.count_revisions_of_entity(target_log, entity)
-      target_log = LogQuery.fetch(target_log.log_id)
-
-      assert revisions_after == revisions_before + 1
-      assert message == target_log.message
+      # Returned event is correct and json-friendly
+      assert return.event == "log_modified"
+      assert return.data.log_id == to_string(event.log.log_id)
+      assert return.data.message == event.log.message
+      assert return.data.server_id == to_string(event.log.server_id)
+      refute is_map(return.data.timestamp)
     end
   end
 
-  describe "on log forger create conclusion" do
-    test "creates specified log on target server" do
-      entity = EntityFactory.insert(:entity)
-      server = ServerFactory.insert(:server)
-      message = "Mess with the best, die like the rest"
+  describe "LogDeletedEvent" do
+    test "Notificable.generate_payload/2" do
+      event = EventSetup.Log.deleted()
 
-      event = %LogForgeCreateComplete{
-        entity_id: entity.entity_id,
-        target_server_id: server.server_id,
-        message: message,
-        version: 456
-      }
+      # Generates the payload
+      assert {:ok, return} = Notificable.generate_payload(event, @mocked_socket)
 
-      EventHandler.log_forge_conclusion(event)
-
-      assert [log] = LogQuery.get_logs_on_server(server)
-      assert [%{forge_version: 456}] = Repo.preload(log, :revisions).revisions
+      # Returned event is correct and json-friendly
+      assert return.event == "log_deleted"
+      assert return.data.log_id == to_string(event.log.log_id)
+      assert return.data.server_id == to_string(event.log.server_id)
     end
-  end
-
-  describe "when ssh connection is started" do
-    @tag :pending
-    test "logs on gateway"
-
-    @tag :pending
-    test "logs on destination"
   end
 end

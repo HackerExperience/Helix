@@ -51,11 +51,6 @@ defmodule Helix.Hardware.Internal.Motherboard do
     end
   end
 
-  @spec preload_components(Motherboard.t) ::
-    Motherboard.t
-  def preload_components(motherboard),
-    do: Repo.preload(motherboard, slots: :component)
-
   @spec get_networks(Motherboard.t | Component.idt) ::
     [NetworkConnection.t]
   def get_networks(motherboard) do

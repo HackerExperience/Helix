@@ -4,7 +4,7 @@ defmodule HELL.ClientUtils do
 
   @spec to_timestamp(DateTime.t) ::
     HETypes.client_timestamp
-  def to_timestamp(datetime) do
+  def to_timestamp(datetime = %DateTime{}) do
     datetime
     |> DateTime.to_unix()
   end

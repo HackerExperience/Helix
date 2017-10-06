@@ -11,8 +11,8 @@ defmodule Helix.Network.Action.Tunnel do
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
-  alias Helix.Network.Model.Connection.ConnectionClosedEvent
-  alias Helix.Network.Model.Connection.ConnectionStartedEvent
+  alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
+  alias Helix.Network.Event.Connection.Started, as: ConnectionStartedEvent
 
   @type create_tunnel_errors ::
     {:error, {:gateway_id, :notfound}}
