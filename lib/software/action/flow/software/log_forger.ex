@@ -1,4 +1,4 @@
-defmodule Helix.Software.Action.Flow.File.LogForger do
+defmodule Helix.Software.Action.Flow.Software.LogForger do
 
   import HELF.Flow
 
@@ -12,6 +12,7 @@ defmodule Helix.Software.Action.Flow.File.LogForger do
   alias Helix.Software.Model.SoftwareType.LogForge
 
   @type params :: LogForge.create_params
+
   @type on_execute_error ::
     ProcessAction.on_create_error
     | {:error, {:log, :notfound}}

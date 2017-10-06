@@ -155,7 +155,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert new_socket.assigns.meta.network_id == network_id
 
       # Other stuff
-      assert new_socket.assigns.tunnel
+      assert new_socket.assigns.tunnel.tunnel_id
       assert new_socket.joined
       assert new_socket.topic == topic
 

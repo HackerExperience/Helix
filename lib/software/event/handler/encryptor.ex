@@ -1,4 +1,4 @@
-defmodule Helix.Software.Event.Encryptor do
+defmodule Helix.Software.Event.Handler.Encryptor do
 
   alias Helix.Event
   alias Helix.Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent

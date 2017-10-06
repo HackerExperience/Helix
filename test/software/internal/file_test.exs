@@ -7,7 +7,10 @@ defmodule Helix.Software.Internal.FileTest do
   alias Helix.Software.Model.SoftwareModule
   alias Helix.Software.Repo
 
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Factory
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   def generate_params do
     storage = Factory.insert(:storage)
@@ -111,38 +114,42 @@ defmodule Helix.Software.Internal.FileTest do
     end
   end
 
-  describe "copying" do
-    test "to another path in the same storage" do
-      path = "/baz"
-      origin = Factory.insert(:file)
+  describe "copy/3" do
+    test "file is copied (same storage, different path)" do
+      {file, %{server_id: server_id}} = SoftwareSetup.file()
+      path = SoftwareHelper.random_file_path()
 
-      {:ok, copy} = FileInternal.copy(origin, origin.storage, path)
+      storage = SoftwareHelper.get_storage(server_id)
 
-      assert FileInternal.fetch(origin.file_id)
-      assert FileInternal.fetch(copy.file_id)
-      assert path == copy.path
+      assert {:ok, new_file} = FileInternal.copy(file, storage, path)
+      assert new_file.storage_id == file.storage_id
+      assert new_file.software_type == file.software_type
+
+      # TODO: Uncomment after fixing File model
+      # assert new_file.type == file.type
+      # assert new_file.file_modules == file.file_modules
     end
 
-    test "to another storage" do
-      storage = Factory.insert(:storage)
-      origin = Factory.insert(:file)
+    test "refuses to copy file if it already exists (same path, storage)" do
+      {file, %{server_id: server_id}} = SoftwareSetup.file()
 
-      {:ok, copy} =
-        FileInternal.copy(origin, storage, origin.path)
+      storage = SoftwareHelper.get_storage(server_id)
 
-      assert FileInternal.fetch(origin.file_id)
-      assert FileInternal.fetch(copy.file_id)
-      assert storage.storage_id == copy.storage_id
-    end
-
-    test "fails on path identity conflict" do
-      origin = Factory.insert(:file)
-
-      {:error, result} = FileInternal.copy(
-        origin,
-        origin.storage,
-        origin.path)
+      assert {:error, result} = FileInternal.copy(file, storage, file.path)
       assert :full_path in Keyword.keys(result.errors)
+    end
+
+    test "file is copied (different storage)" do
+      {file, _} = SoftwareSetup.file()
+      {destination, _} = ServerSetup.server()
+
+      storage = SoftwareHelper.get_storage(destination.server_id)
+
+      assert {:ok, new_file} = FileInternal.copy(file, storage, file.path)
+
+      assert new_file.name == file.name
+      assert new_file.storage_id == storage.storage_id
+      refute new_file.storage_id == file.storage_id
     end
   end
 

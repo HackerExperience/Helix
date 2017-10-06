@@ -1,4 +1,4 @@
-defmodule Helix.Software.Event.Cracker do
+defmodule Helix.Software.Event.Handler.Cracker do
 
   import HELF.Flow
   import HELL.MacroHelpers

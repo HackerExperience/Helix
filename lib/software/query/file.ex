@@ -71,4 +71,16 @@ defmodule Helix.Software.Query.File do
     # Guaranteed to be the best
     List.first(files_of_type)
   end
+
+  @spec get_server_id(File.t) ::
+    {:ok, Server.id}
+    | {:error, :internal}
+  def get_server_id(file) do
+    case CacheQuery.from_storage_get_server(file.storage_id) do
+      {:ok, server_id} ->
+        {:ok, server_id}
+      _ ->
+        {:error, :internal}
+    end
+  end
 end

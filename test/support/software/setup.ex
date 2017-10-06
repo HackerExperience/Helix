@@ -179,7 +179,6 @@ defmodule Helix.Test.Software.Setup do
       overflow: overflow
     }
 
-    IO.puts "chamado"
     modules = SoftwareHelper.generate_module(:cracker, version_map)
 
     file(opts ++ [type: :cracker, modules: modules])

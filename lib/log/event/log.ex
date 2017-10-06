@@ -1,4 +1,4 @@
-defmodule Helix.Log.Event.Log do
+defmodule Helix.Log.Event.Handler.Log do
   @moduledoc false
 
   alias Helix.Event
@@ -6,46 +6,19 @@ defmodule Helix.Log.Event.Log do
   alias Helix.Network.Model.Connection.ConnectionStartedEvent
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
 
-  alias Helix.Software.Model.SoftwareType.FileDownload.ProcessConclusionEvent,
-    as: DownloadComplete
+  alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
   alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
     as: LogForgeEditComplete
   alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
     as: LogForgeCreateComplete
 
-  @doc """
-  Logs that a file was downloaded from a certain server
-  """
-  def file_download_conclusion(event = %DownloadComplete{}) do
-    from = event.from_server_id
-    to = event.to_server_id
-    ip_from = ServerQuery.get_ip(from, event.network_id)
-    ip_to = ServerQuery.get_ip(to, event.network_id)
-
-    entity = EntityQuery.fetch_by_server(to)
-
-    file = FileQuery.fetch(event.from_file_id)
-    # FIXME: move to a view helper
-    file_name =
-      file.full_path
-      |> String.split("/")
-      |> List.last()
-
-    message_from = "File #{file_name} downloaded by #{ip_to}"
-    message_to = "File #{file_name} downloaded from #{ip_from}"
-
-    {:ok, events} = Repo.transaction fn ->
-      {:ok, _, e1} = LogAction.create(from, entity, message_from)
-      {:ok, _, e2} = LogAction.create(to, entity, message_to)
-      e1 ++ e2
-    end
-
-    Event.emit(events)
+  def file_downloaded(event = %FileDownloadedEvent{}) do
+    event
+    # TODO #278
   end
 
   @doc """

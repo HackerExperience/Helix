@@ -1,5 +1,7 @@
 defmodule Helix.Process.Query.Process do
 
+  import __MODULE__.Macros
+
   alias Helix.Network.Model.Connection
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
@@ -98,4 +100,33 @@ defmodule Helix.Process.Query.Process do
   """
   defdelegate get_processes_on_connection(connection),
     to: ProcessInternal
+
+  get_custom "file_download", %{file_id: file_id},
+    do: &(&1.file_id == file_id)
+
+  get_custom "file_upload", %{file_id: file_id},
+    do: &(&1.file_id == file_id)
+
+  @spec get_custom(Process.type, Server.idt, meta :: map) ::
+    [Process.t]
+    | nil
+  @doc """
+  Specify custom type of processes to be returned. Useful to check whether a
+  process of type `type` with data matching `meta` exists on the server.
+
+  Its code is generated at `ProcessQuery.Macros`. It simply grabs the returned
+  function and uses it to filter all processes of that type within the server.
+
+  The generated code is something like:
+
+  ```
+    def get_custom(type = "process_type", server_id, %{file_id: file_id}) do
+      server_id
+      |> get_running_processes_of_type_on_server(type)
+      |> Enum.fiter(&(&1.file_id == file_id))
+      |> nilify_if_empty()
+    end
+  ```
+  """
+  get_custom()
 end

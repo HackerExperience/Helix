@@ -12,7 +12,6 @@ defmodule Helix.Server.Websocket.Channel.Server do
   use Phoenix.Channel
 
   alias Helix.Websocket.Socket, as: Websocket
-  alias Helix.Server.Public.Server, as: ServerPublic
 
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
   alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
@@ -21,6 +20,8 @@ defmodule Helix.Server.Websocket.Channel.Server do
     as: BrowseRequest
   alias Helix.Server.Websocket.Channel.Server.Requests.Bruteforce,
     as: BruteforceRequest
+  alias Helix.Server.Websocket.Channel.Server.Requests.FileDownload,
+    as: FileDownloadRequest
 
   @doc """
   Joins a server.
@@ -62,28 +63,29 @@ defmodule Helix.Server.Websocket.Channel.Server do
     Websocket.handle_join(request, socket, &assign/3)
   end
 
-  def handle_in("file.download", %{file_id: file_id}, socket) do
-    if socket.assigns.meta.access_type == :remote do
-      gateway_id = socket.assigns.gateway.server_id
-      destination_id = socket.assigns.destination.server_id
-      tunnel = socket.assigns.tunnel
+  @doc """
+  Starts the download of a file.
 
-      download =
-        ServerPublic.file_download(gateway_id, destination_id, tunnel, file_id)
+  Params:
+  - *file_id: Which file to download. Duh.
+  - storage_id: Specify which storage the file should be downloaded to. Defaults
+    to the main storage.
 
-      case download do
-        :ok ->
-          {:reply, :ok, socket}
-        :error ->
-          {:reply, :error, socket}
-      end
-    else
-      message = %{
-        type: "error",
-        data: %{message: "Can't download from own gateway"}
-      }
-      {:reply, {:error, message}, socket}
-    end
+  Returns:
+  %{}  # TODO handle process
+
+  Errors:
+  - "file_not_found": Requested file to be downloaded was not found
+  - "storage_full": Not enough space on device to download the file
+  - "storage_not_found": Requested storage is invalid / could not be found. This
+    This error is most likely NOT the user's fault, maybe some bad handling on
+    the client side.
+  - "download_self": Trying to download a file from yourself
+  + base errors
+  """
+  def handle_in("file.download", params, socket) do
+    request = FileDownloadRequest.new(params)
+    Websocket.handle_request(request, socket)
   end
 
   @doc """

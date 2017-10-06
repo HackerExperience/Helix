@@ -7,35 +7,55 @@ defmodule Helix.Software.Public.File do
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Action.Flow.File, as: FileFlow
-  alias Helix.Software.Action.Flow.FileDownload, as: FileDownloadFlow
+  alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Query.File, as: FileQuery
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
-  # TODO: This will hard fail if the user tries to download a file from their
-  #   own gateway for obvious reasons
-  # Review: this function returns seems awkward
-  @spec download(Server.id, Server.id, Tunnel.t, File.id) ::
-    :ok
-    | :error
-  def download(gateway_id, destination_id, tunnel, file_id) do
-    {:ok, gateway_storage_ids} = CacheQuery.from_server_get_storages(gateway_id)
-    {:ok, destination_storage_ids} =
-      CacheQuery.from_server_get_storages(destination_id)
-
-    gateway_storage = Enum.random(gateway_storage_ids)
-
-    with \
-      file = %{} <- FileQuery.fetch(file_id),
-      true <- file.storage_id in destination_storage_ids,
-      {:ok, _process} <- FileDownloadFlow.start_download_process(
-        file,
-        gateway_storage,
-        tunnel)
-    do
-      :ok
+  @spec download(Tunnel.t, Storage.idt, File.idt) ::
+    {:ok, Process.t}
+    | {:error, {:file, :not_found}}
+    | {:error, {:storage, :not_found}}
+    | {:error, :internal}
+  @doc """
+  Starts FileTransferProcess, responsible for downloading `file_id` into the
+  given storage.
+  """
+  def download(tunnel, storage, file_id = %File.ID{}) do
+    with file = %{} <- FileQuery.fetch(file_id) do
+      download(tunnel, storage, file)
     else
       _ ->
-        :error
+        {:error, {:file, :not_found}}
+    end
+  end
+
+  def download(tunnel, storage_id = %Storage.ID{}, file) do
+    storage = StorageQuery.fetch(storage_id)
+
+    if storage do
+      download(tunnel, storage, file)
+    else
+      {:error, {:storage, :not_found}}
+    end
+  end
+
+  def download(tunnel = %Tunnel{}, storage = %Storage{}, file = %File{}) do
+    network_info =
+      %{
+        gateway_id: tunnel.gateway_id,
+        destination_id: tunnel.destination_id,
+        network_id: tunnel.network_id,
+        bounces: []  # TODO
+      }
+
+    case FileTransferFlow.transfer(:download, file, storage, network_info) do
+      {:ok, process} ->
+        {:ok, process}
+
+      {:error, _} ->
+        {:error, :internal}
     end
   end
 
