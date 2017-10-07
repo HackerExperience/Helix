@@ -9,7 +9,6 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
     alias HELL.IPv4
     alias Helix.Websocket.Utils, as: WebsocketUtils
     alias Helix.Network.Model.Network
-    alias Helix.Process.Public.View.Process, as: ProcessView
     alias Helix.Software.Henforcer.File.Cracker, as: CrackerHenforcer
     alias Helix.Server.Model.Server
     alias Helix.Server.Public.Server, as: ServerPublic
@@ -80,16 +79,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
       end
     end
 
-    def reply(request, socket) do
-      process = request.meta.process
-      process_data = process.process_data
-      server_id = socket.assigns.gateway.server_id
-      entity_id = socket.assigns.entity_id
-
-      pview = ProcessView.render(process_data, process, server_id, entity_id)
-
-      WebsocketUtils.reply_ok(%{data: pview}, socket)
-    end
+    def reply(request, socket),
+      do: WebsocketUtils.reply_process(request.meta.process, socket)
 
     defp cast_bounces(bounces) when is_list(bounces),
       do: {:ok, Enum.map(bounces, &(Server.ID.cast!(&1)))}
