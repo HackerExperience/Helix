@@ -1,6 +1,6 @@
 defmodule Helix.Event do
 
-  alias Helix.Event.Dispatcher.Helix, as: HelixDispatcher
+  alias Helix.Event.Dispatcher, as: HelixDispatcher
 
   @type t :: HELF.Event.t
 

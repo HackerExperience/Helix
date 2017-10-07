@@ -1,5 +1,37 @@
-defmodule Helix.Event.Dispatcher.Helix do
-  @moduledoc false
+defmodule Helix.Event.Dispatcher do
+  @moduledoc """
+  This module is a centralized, declarative list of valid events within Helix.
+
+  It defines both the event itself and which handlers are supposed to listen to
+  them.
+
+  An event defined by the `event/3` macro will:
+
+  1) Let Helix know it exists
+  2) Register its handler module and function.
+
+  We have a special kind of event handler: Global Handlers. Global handlers will
+  listen to all events registered within this module. Hence, it may be the case
+  that an event exists, is handled globally, but it's not handled specifically
+  by one or two handlers, so we can't use `event/3`.
+
+  That's why, in these cases, we must use `event/1` macro. It notifies Helix
+  that the event exists and is valid, but it won't have a specific listener
+  subscribed to it.
+
+  TL;DR:
+
+  - All events declared here are automatically subscribed to the global handlers
+  - Events defined with a custom handler will also be subscribed to that handler
+  - Events not declared here will never be listened by any handler.
+  - An event may be declared multiple times.
+
+  ---
+
+  With the goal of enhancing documentation, we've started the convention to
+  always declare all events, grouped by service, and then declare the ones that
+  have custom handlers as well.
+  """
 
   use HELF.Event
 
@@ -30,17 +62,14 @@ defmodule Helix.Event.Dispatcher.Helix do
 
   all_events StoryHandler, :step_handler
 
-  # TODO: Rearrange on PR 284
-  event SoftwareEvent.File.Downloaded
-  event SoftwareEvent.File.DownloadFailed
-  event SoftwareEvent.File.Uploaded
-  event SoftwareEvent.File.UploadFailed
-
-  event NetworkEvent.Connection.Started
-
   ##############################################################################
   # Account events
   ##############################################################################
+
+  # All
+  event Account.Model.Account.AccountCreatedEvent
+
+  # Custom handlers
   event Account.Model.Account.AccountCreatedEvent,
     Account.Event.Account,
     :account_create
@@ -48,6 +77,12 @@ defmodule Helix.Event.Dispatcher.Helix do
   ##############################################################################
   # Network events
   ##############################################################################
+
+  # All
+  event NetworkEvent.Connection.Closed
+  event NetworkEvent.Connection.Started
+
+  # Custom handlers
   event NetworkEvent.Connection.Closed,
     NetworkHandler.Tunnel,
     :connection_closed
@@ -58,19 +93,28 @@ defmodule Helix.Event.Dispatcher.Helix do
   ##############################################################################
   # Log events
   ##############################################################################
+
+  # All
   event LogEvent.Log.Created
-  event LogEvent.Log.Modified
   event LogEvent.Log.Deleted
+  event LogEvent.Log.Modified
 
   ##############################################################################
   # Process events
   ##############################################################################
+
+  # All
   event Process.Model.Process.ProcessCreatedEvent
   event Process.Model.Process.ProcessConclusionEvent
 
   ##############################################################################
   # Server events
   ##############################################################################
+
+  # All
+  event Helix.Server.Model.Server.PasswordAcquiredEvent
+
+  # Custom handlers
   event Helix.Server.Model.Server.PasswordAcquiredEvent,
     Entity.Event.Database,
     :server_password_acquired
@@ -78,6 +122,23 @@ defmodule Helix.Event.Dispatcher.Helix do
   ##############################################################################
   # Software events
   ##############################################################################
+
+  # All
+  event SoftwareEvent.File.Downloaded
+  event SoftwareEvent.File.DownloadFailed
+  event SoftwareEvent.File.Uploaded
+  event SoftwareEvent.File.UploadFailed
+  event SoftwareEvent.File.Transfer.Processed
+  event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent
+  event Software.Model.Software.Cracker.Overflow.ConclusionEvent
+  event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent
+  event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent
+  event Software.Model.SoftwareType.Firewall.FirewallStartedEvent
+  event Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
+  event Software.Model.SoftwareType.LogForge.Create.ConclusionEvent
+  event Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent
+
+  # Custom handlers
   event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
     SoftwareHandler.Cracker,
     :bruteforce_conclusion
@@ -118,12 +179,24 @@ defmodule Helix.Event.Dispatcher.Helix do
   # Universe events
   ##############################################################################
 
+  # All
+  event StoryEvent.Email.Sent
   event StoryEvent.Reply.Sent
+  event StoryEvent.Step.Proceeded
 
   ##############################################################################
   # Universe events
   ##############################################################################
 
+  # All
+  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent
+  event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
+  event Universe.Bank.Model.BankTokenAcquiredEvent
+  event Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent
+  event Universe.Bank.Model.BankAccount.PasswordRevealedEvent
+  event Universe.Bank.Model.BankAccount.LoginEvent
+
+  # Custom handlers
   event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
     Universe.Bank.Event.BankTransfer,
     :transfer_completed
