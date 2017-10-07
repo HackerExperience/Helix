@@ -136,13 +136,19 @@ defmodule Helix.Story.Model.Step do
 
   @spec get_entity(Event.t) ::
     Entity.id
+    | false
   @doc """
   Given an event, figure out which entity is responsible for it.
+
+  If no entity_id is found, returns `false`, since an event lacking an
+  identifiable entity cannot not be filtered by Steppable.
   """
   def get_entity(%_{entity_id: entity_id}),
     do: entity_id
   def get_entity(%_{source_entity_id: entity_id}),
-    do: entity_id
+      do: entity_id
+  def get_entity(_),
+    do: false
 
   defmacro register do
 

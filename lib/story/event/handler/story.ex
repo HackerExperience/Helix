@@ -31,12 +31,10 @@ defmodule Helix.Story.Event.Handler.Story do
   - StepFailedEvent.t, StepRestartedEvent.t when action is :fail
   """
   def step_handler(event) do
-    step =
-      event
-      |> Step.get_entity()
-      |> StoryQuery.fetch_current_step()
-
-    if step do
+    with \
+      entity_id = %{} <- Step.get_entity(event),
+      step = %{} <- StoryQuery.fetch_current_step(entity_id)
+    do
       step.object
       |> Step.new(event)
       |> step_flow()
