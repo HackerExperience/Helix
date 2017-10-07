@@ -69,7 +69,10 @@ defmodule Helix.Test.Universe.NPC.Helper do
   end
 
   def bank do
-    Seed.search_by_type(:bank)
+    bank = Seed.search_by_type(:bank)
+    server = List.first(bank.servers)
+
+    {bank, server.static_ip}
   end
 
 end

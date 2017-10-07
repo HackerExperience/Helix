@@ -94,9 +94,10 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   describe "open_account/2" do
     test "default case" do
       {player, _} = AccountSetup.account()
-      bank = NPCHelper.bank()
+      {bank, _} = NPCHelper.bank()
+
       atm =
-        NPCHelper.bank()
+        bank
         |> Map.get(:servers)
         |> Enum.random()
         |> Map.get(:id)

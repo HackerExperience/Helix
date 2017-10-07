@@ -23,16 +23,29 @@ defmodule Helix.Network.Public.Network do
     origin_ip = get_origin_ip(network_id, origin_id)
 
     with \
-      {:ok, webserver, dest_ip} <-
+      {:ok, {page_owner, content}, dest_ip} <-
         WebQuery.browse(network_id, address, origin_ip),
       {:ok, server_id} <- CacheQuery.from_nip_get_server(network_id, dest_ip),
       entity = %{} <- EntityQuery.fetch_by_server(server_id)
     do
       password = DatabaseQuery.get_server_password(entity, network_id, dest_ip)
 
+      {owner_type, owner_meta} =
+        case page_owner do
+          :account ->
+            {:vpc, nil}
+          npc = {:npc, _} ->
+            npc
+          :clan ->
+            {:clan, nil}
+        end
+
       web_data = %{
-        webserver: webserver,
-        password: password
+        content: content,
+        password: password,
+        type: owner_type,
+        subtype: owner_meta,
+        nip: [network_id, dest_ip]
       }
 
       {:ok, web_data}

@@ -22,8 +22,10 @@ defmodule Helix.Network.Public.NetworkTest do
 
       assert {:ok, result} = NetworkPublic.browse(@internet, target_ip, gateway)
 
-      assert result.webserver == {:account, %{}}
+      assert result.type == :vpc
+      assert result.content == %{}
       refute result.password
+      refute result.subtype
     end
 
     test "valid resolution of NPC IP" do
@@ -32,7 +34,9 @@ defmodule Helix.Network.Public.NetworkTest do
 
       assert {:ok, result} = NetworkPublic.browse(@internet, dc_ip, gateway)
 
-      assert result.webserver == {:npc, WebSetup.npc(dc.id, dc_ip)}
+      assert result.type == :npc
+      assert result.content == WebSetup.npc(dc.id, dc_ip)
+      assert result.subtype
       refute result.password
     end
 

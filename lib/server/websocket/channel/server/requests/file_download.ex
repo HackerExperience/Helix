@@ -100,25 +100,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
       end
     end
 
-    def reply(request, socket) do
-      # TODO: Abstract me (#286)
-      process = request.meta.process
-
-      file_id = process.file_id && to_string(process.file_id)
-      connection_id = process.connection_id && to_string(process.connection_id)
-
-      data = %{
-        process_id: to_string(process.process_id),
-        type: to_string(process.process_type),
-        network_id: to_string(process.network_id),
-        file_id: file_id,
-        connection_id: connection_id,
-        source_ip: socket.assigns.gateway.ip,
-        target_ip: request.params.ip
-      }
-
-      WebsocketUtils.reply_ok(data, socket)
-    end
+    def reply(request, socket),
+      do: WebsocketUtils.reply_process(request.meta.process, socket)
 
     @spec get_download_storage(Server.id) ::
       Storage.id

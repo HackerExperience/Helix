@@ -81,7 +81,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
   describe "create/1" do
     test "with valid params" do
-      bank = NPCHelper.bank()
+      {bank, _} = NPCHelper.bank()
       atm_id = Enum.random(bank.servers).id
       owner_id = Random.pk()
 

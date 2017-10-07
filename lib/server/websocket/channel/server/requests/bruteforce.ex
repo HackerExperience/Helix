@@ -79,24 +79,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
       end
     end
 
-    def reply(request, socket) do
-      process = request.meta.process
-
-      file_id = process.file_id && to_string(process.file_id)
-      connection_id = process.connection_id && to_string(process.connection_id)
-
-      data = %{
-        process_id: to_string(process.process_id),
-        type: to_string(process.process_type),
-        network_id: to_string(process.network_id),
-        file_id: file_id,
-        connection_id: connection_id,
-        source_ip: socket.assigns.gateway.ip,
-        target_ip: request.params.ip
-      }
-
-      WebsocketUtils.reply_ok(data, socket)
-    end
+    def reply(request, socket),
+      do: WebsocketUtils.reply_process(request.meta.process, socket)
 
     defp cast_bounces(bounces) when is_list(bounces),
       do: {:ok, Enum.map(bounces, &(Server.ID.cast!(&1)))}

@@ -32,10 +32,11 @@ defmodule Helix.Universe.Bank.Internal.BankTest do
 
   describe "fetch/1" do
     test "fetches with valid data" do
-      bank_id = NPCHelper.bank().id
-      bank = BankInternal.fetch(bank_id)
-      assert bank
-      assert_id bank.bank_id, bank_id
+      {bank, _} = NPCHelper.bank()
+
+      entry = BankInternal.fetch(bank.id)
+      assert entry
+      assert_id entry.bank_id, bank.id
     end
   end
 end

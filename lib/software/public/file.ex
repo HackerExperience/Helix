@@ -13,11 +13,14 @@ defmodule Helix.Software.Public.File do
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
 
-  @spec download(Tunnel.t, Storage.idt, File.idt) ::
-    {:ok, Process.t}
-    | {:error, {:file, :not_found}}
+  @type download_errors ::
+    {:error, {:file, :not_found}}
     | {:error, {:storage, :not_found}}
     | {:error, :internal}
+
+  @spec download(Tunnel.t, Storage.idt, File.idt) ::
+    {:ok, Process.t}
+    | download_errors
   @doc """
   Starts FileTransferProcess, responsible for downloading `file_id` into the
   given storage.

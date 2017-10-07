@@ -4,6 +4,11 @@ defmodule Helix.Universe.NPC.Model.NPCType do
 
   alias HELL.Constant
 
+  @type types ::
+    :download_center
+    | :bank
+    | :atm
+
   @type t :: %__MODULE__{
     npc_type: Constant.t
   }

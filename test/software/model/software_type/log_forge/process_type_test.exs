@@ -69,7 +69,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       }
       params_create = %{
         "target_server_id" => to_string(Server.ID.generate()),
-        "message" => "A weapon to surpass Metal Gear",
+        "message" => "A weapon to surpass Datal Gear",
         "operation" => :create,
         "entity_id" => to_string(Entity.ID.generate())
       }
@@ -213,27 +213,18 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       attacker_view =
         ProcessView.render(data, process, victim_server, attacker_entity)
 
-      victim_keys = Map.keys(victim_view) |> Enum.sort()
-      attacker_keys = Map.keys(attacker_view) |> Enum.sort()
+      ProcessViewHelper.assert_keys(victim_view, :partial, &pview_edit_data/1)
+      ProcessViewHelper.assert_keys(attacker_view, :full, &pview_edit_data/1)
 
-      assert pview_edit_partial() == victim_keys
-      assert pview_edit_full() == attacker_keys
-
-      assert victim_view.target_log_id
-      assert is_binary(victim_view.target_log_id)
-      assert attacker_view.target_log_id == to_string(data.target_log_id)
+      assert victim_view.data.target_log_id
+      assert is_binary(victim_view.data.target_log_id)
+      assert attacker_view.data.target_log_id == to_string(data.target_log_id)
 
       TOPHelper.top_stop(process.gateway_id)
     end
 
-    defp pview_edit_full do
-      ProcessViewHelper.pview_full()
-      |> Kernel.++(~w/target_log_id/a)
-      |> Enum.sort()
-    end
-    defp pview_edit_partial do
-      ProcessViewHelper.pview_partial()
-      |> Kernel.++(~w/target_log_id/a)
+    defp pview_edit_data(_) do
+      [:target_log_id]
       |> Enum.sort()
     end
   end
@@ -256,11 +247,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       attacker_view =
         ProcessView.render(data, process, attacker_server, attacker_entity)
 
-      third_keys = Map.keys(third_view) |> Enum.sort()
-      attacker_keys = Map.keys(attacker_view) |> Enum.sort()
-
-      assert ProcessViewHelper.pview_partial() == third_keys
-      assert ProcessViewHelper.pview_full() == attacker_keys
+      ProcessViewHelper.assert_keys(attacker_view, :full)
+      ProcessViewHelper.assert_keys(third_view, :partial)
 
       TOPHelper.top_stop(process.gateway_id)
     end

@@ -64,7 +64,28 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.Browse do
       end
     end
 
-    def reply(request, socket),
-      do: WebsocketUtils.reply_ok(request.meta.web, socket)
+    def reply(request, socket) do
+      web = request.meta.web
+
+      [network_id, ip] = web.nip
+
+      type =
+        if web.subtype do
+          to_string(web.type) <> "_" <> to_string(web.subtype)
+        else
+          to_string(web.type)
+        end
+
+      data = %{
+        content: web.content,
+        type: type,
+        meta: %{
+          nip: [to_string(network_id), to_string(ip)],
+          password: web.password
+        }
+      }
+
+      WebsocketUtils.reply_ok(data, socket)
+    end
   end
 end
