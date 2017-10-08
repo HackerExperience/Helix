@@ -50,38 +50,32 @@ defmodule Helix.Mixfile do
 
   defp deps do
     [
-      {:distillery, "~>1.2", runtime: false},
+      {:distillery, "~>1.5.2", runtime: false},
 
       {:phoenix, "~> 1.3.0"},
-      {:phoenix_pubsub, "~> 1.0"},
-      {:cowboy, "~> 1.0"},
-      {:corsica, "~> 0.5"},
+      {:corsica, "~> 1.0"},
 
-      # Review: required for 1.5, why?
-      {:hackney, "~>1.8"},
-      {:poolboy, "~>1.5"},
-
-      {:ecto, "~> 2.1"},
+      {:ecto, "~> 2.2.6"},
       {:postgrex, "~> 0.13.3"},
 
       {:helf, "~> 0.0.2"},
-      {:poison, "~> 3.0"},
+      {:poison, "~> 3.1"},
 
       {:comeonin, "~> 4.0.3"},
       {:bcrypt_elixir, "~> 1.0"},
 
-      {:timex, "~> 3.1"},
+      {:timex, "~> 3.1.24"},
 
       {:burette, git: "https://github.com/HackerExperience/burette"},
 
-      {:ex_machina, "~> 1.0", only: :test},
-      {:earmark, "~> 1.1", only: :dev},
-      {:ex_doc, "~> 0.15", only: :dev},
+      {:ex_machina, "~> 2.1", only: :test},
+      {:earmark, "~> 1.2.3", only: :dev},
+      {:ex_doc, "~> 0.17.1", only: :dev},
 
       {:inch_ex, "~> 0.5.6", only: [:dev, :test]},
 
-      {:credo, "~> 0.8", only: [:dev, :test]},
-      {:excoveralls, "~> 0.7.2", only: [:dev, :test]}
+      {:credo, "~> 0.8.8", only: [:dev, :test]},
+      {:excoveralls, "~> 0.7.4", only: [:dev, :test]}
     ]
   end
 
