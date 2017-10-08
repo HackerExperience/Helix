@@ -1,7 +1,7 @@
 <p align="center"><img src="help/logo.png" /></p>
 
 
-# Helix [![Build Status](https://ci.hackerexperience.com/buildStatus/icon?job=HackerExperience/Helix/master)](https://ci.hackerexperience.com/job/HackerExperience/job/Helix/job/master) [![Coverage Status](https://coveralls.io/repos/github/HackerExperience/Helix/badge.svg?branch=master)](https://coveralls.io/github/HackerExperience/Helix?branch=master) [![Inline docs](http://inch-ci.org/github/HackerExperience/Helix.svg)](http://inch-ci.org/github/HackerExperience/Helix) [![Ebert](https://ebertapp.io/github/HackerExperience/Helix.svg)](https://ebertapp.io/github/HackerExperience/Helix) ![](https://tokei.rs/b1/github/hackerexperience/helix)
+# Helix [![Build Status](https://ci.hackerexperience.com/buildStatus/icon?job=HackerExperience/Helix/master)](https://ci.hackerexperience.com/job/HackerExperience/job/Helix/job/master) [![Coverage Status](https://coveralls.io/repos/github/HackerExperience/Helix/badge.svg?branch=master)](https://coveralls.io/github/HackerExperience/Helix?branch=master) [![Inline docs](http://inch-ci.org/github/HackerExperience/Helix.svg)](http://inch-ci.org/github/HackerExperience/Helix) [![Ebert](https://ebertapp.io/github/HackerExperience/Helix.svg)](https://ebertapp.io/github/HackerExperience/Helix) ![](https://tokei.rs/b1/github/hackerexperience/helix) [![Deps Status](https://beta.hexfaktor.org/badge/all/github/hackerexperience/helix.svg)](https://beta.hexfaktor.org/github/hackerexperience/helix)
 ---
 
 Helix is the backend powering the game **Hacker Experience 2**.
