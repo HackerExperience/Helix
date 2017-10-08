@@ -4,7 +4,7 @@ defmodule Helix.Software.Model.File do
   use HELL.ID, field: :file_id, meta: [0x0020]
 
   import Ecto.Changeset
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant

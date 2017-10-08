@@ -12,7 +12,7 @@ defmodule Helix.Cache.Internal.Populate do
   own logic for populating the cache database.
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Cache.Repo
   alias Helix.Cache.Model.Cacheable

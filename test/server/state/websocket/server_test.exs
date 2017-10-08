@@ -2,7 +2,7 @@ defmodule Helix.Server.State.Websocket.ChannelTest do
 
   use ExUnit.Case, async: true
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network

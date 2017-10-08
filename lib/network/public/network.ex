@@ -1,6 +1,6 @@
 defmodule Helix.Network.Public.Network do
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.IPv4
   alias Helix.Cache.Query.Cache, as: CacheQuery

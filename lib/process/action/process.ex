@@ -1,6 +1,6 @@
 defmodule Helix.Process.Action.Process do
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity

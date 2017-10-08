@@ -3,7 +3,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
   use ExUnit.Case, async: true
 
   import Ecto.Changeset
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.StoryEmail

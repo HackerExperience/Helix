@@ -3,7 +3,7 @@ defmodule Helix.Entity.Action.Database do
   API used to modify the Hacked Database.
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.IPv4
   alias Helix.Entity.Query.Entity, as: EntityQuery

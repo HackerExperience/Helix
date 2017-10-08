@@ -4,7 +4,7 @@ defmodule HELL.TestHelper.Random do
   alias HELL.TestHelper.Random.Alphabet.Alphanum
   alias HELL.TestHelper.Random.Alphabet.Digits
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   @type string_params :: [
     {:min, integer},

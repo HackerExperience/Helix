@@ -1,6 +1,6 @@
 defmodule Helix.Event.NotificationHandler do
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.Utils
   alias Helix.Event.Notificable

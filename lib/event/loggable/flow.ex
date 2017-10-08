@@ -18,7 +18,7 @@ defmodule Helix.Event.Loggable.Flow do
   For an implementation example, see `lib/software/event/file.ex`.
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.IPv4
   alias Helix.Event

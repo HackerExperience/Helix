@@ -3,7 +3,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
   Helper functions for `ProcessView` and `ProcessViewable`.
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.ClientUtils
   alias Helix.Cache.Query.Cache, as: CacheQuery

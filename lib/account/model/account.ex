@@ -4,7 +4,7 @@ defmodule Helix.Account.Model.Account do
   use HELL.ID, field: :account_id, meta: [0x0001]
 
   import Ecto.Changeset
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Comeonin.Bcrypt
   alias Ecto.Changeset

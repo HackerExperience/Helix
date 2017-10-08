@@ -1,7 +1,7 @@
 defmodule Helix.Software.Event.Handler.Cracker do
 
   import HELF.Flow
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery

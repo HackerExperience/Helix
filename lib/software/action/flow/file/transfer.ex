@@ -1,7 +1,7 @@
 defmodule Helix.Software.Action.Flow.File.Transfer do
 
   import HELF.Flow
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Event
   alias Helix.Network.Action.Tunnel, as: TunnelAction
