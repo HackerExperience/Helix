@@ -1,4 +1,4 @@
-defprotocol Helix.Log.Loggable do
+defprotocol Helix.Event.Loggable do
   @moduledoc """
   The Loggable protocol, alongside with the LoggableFlow, must be implemented by
   any event that would like to add a log entry to one or more servers.
@@ -9,7 +9,7 @@ defprotocol Helix.Log.Loggable do
   """
 
   alias Helix.Event
-  alias Helix.Log.Loggable.Flow, as: LoggableFlow
+  alias Helix.Event.Loggable.Flow, as: LoggableFlow
 
   @spec generate(Event.t) ::
     [LoggableFlow.log_entry]

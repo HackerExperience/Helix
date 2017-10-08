@@ -12,10 +12,10 @@ defmodule HELL.Hack.Experience do
 
     protocols = [
       Helix.Event.Notificable,
+      Helix.Event.Loggable,
       Helix.Websocket.Requestable,
       Helix.Websocket.Joinable,
       Helix.Cache.Model.Cacheable,
-      Helix.Log.Loggable,
       Helix.Process.Model.Process.ProcessType,
       Helix.Process.Public.View.ProcessViewable,
       Helix.Story.Model.Steppable
@@ -60,7 +60,7 @@ defmodule HELL.Hack.Experience do
         {:format_meta, 1},
         {:get_replies, 2}
       ],
-      "Elixir.Helix.Log.Loggable" => [
+      "Elixir.Helix.Event.Loggable" => [
         {:generate, 1}
       ]
     }

@@ -1,4 +1,4 @@
-defmodule Helix.Log.Loggable.Flow do
+defmodule Helix.Event.Loggable.Flow do
   @moduledoc """
   LoggableFlow is responsible for guiding all events through the Loggable steps,
   as well as implementing helper methods to aid a smooth Log support.
@@ -41,11 +41,11 @@ defmodule Helix.Log.Loggable.Flow do
 
     quote do
 
-      defimpl Helix.Log.Loggable do
+      defimpl Helix.Event.Loggable do
         @moduledoc false
 
         @spec generate(unquote(__CALLER__.module).t) ::
-          [Helix.Log.Loggable.Flow.log_entry]
+          [Helix.Event.Loggable.Flow.log_entry]
         @doc false
         def generate(unquote(query)) do
           unquote(block)
