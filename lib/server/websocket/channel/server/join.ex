@@ -23,7 +23,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
 
   defimpl Helix.Websocket.Joinable do
 
-    import HELL.MacroHelpers
+    import HELL.Macros
 
     alias HELL.IPv4
     alias Helix.Cache.Query.Cache, as: CacheQuery

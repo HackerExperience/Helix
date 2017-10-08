@@ -7,7 +7,7 @@ defmodule Helix.Cache.Internal.Cache do
   responsible for coordinating all other Internal modules.
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Cache.Model.Cacheable
   alias Helix.Cache.Model.ComponentCache

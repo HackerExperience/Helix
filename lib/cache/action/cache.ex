@@ -34,7 +34,7 @@ defmodule Helix.Cache.Action.Cache do
   Follow these rules and no one will get hurt.
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.IPv4
   alias Helix.Hardware.Model.Component

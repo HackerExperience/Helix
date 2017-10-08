@@ -1,7 +1,7 @@
 defmodule Helix.Process.Model.Process.NaiveStruct do
   @moduledoc false
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   docp """
   This module is a converter that transforms any struct into a non-struct map

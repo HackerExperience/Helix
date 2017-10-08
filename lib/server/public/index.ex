@@ -1,6 +1,6 @@
 defmodule Helix.Server.Public.Index do
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Model.Entity

@@ -1,4 +1,4 @@
-defmodule HELL.MacroHelpers do
+defmodule HELL.Macros do
   @moduledoc """
   Useful macros spread throughout Helix codebase.
   """

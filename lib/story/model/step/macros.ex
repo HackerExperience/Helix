@@ -6,7 +6,7 @@ defmodule Helix.Story.Model.Step.Macros do
   documentation instead.
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.Constant
   alias HELL.Utils

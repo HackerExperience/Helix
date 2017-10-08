@@ -1,6 +1,6 @@
 defmodule Helix.Network.Action.Tunnel do
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server

@@ -1,6 +1,6 @@
 defmodule Helix.Story.Internal.Email do
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step

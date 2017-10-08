@@ -6,7 +6,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownload do
 
   defimpl Helix.Websocket.Requestable do
 
-    import HELL.MacroHelpers
+    import HELL.Macros
 
     alias Helix.Websocket.Utils, as: WebsocketUtils
     alias Helix.Cache.Query.Cache, as: CacheQuery

@@ -9,7 +9,7 @@ defmodule Helix.Cache.Query.Cache do
   invalid data etc)
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity

@@ -43,7 +43,7 @@ defmodule Helix.Server.State.Websocket.Channel do
 
   use GenServer
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity

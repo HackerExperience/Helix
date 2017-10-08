@@ -7,7 +7,7 @@ defmodule Helix.Story.Model.Step do
   `lib/story/model/steppable.ex`
   """
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias HELL.Constant
   alias Helix.Event

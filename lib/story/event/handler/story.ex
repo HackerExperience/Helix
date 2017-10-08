@@ -10,7 +10,7 @@ defmodule Helix.Story.Event.Handler.Story do
   """
 
   import HELF.Flow
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Event
   alias Helix.Story.Action.Story, as: StoryAction

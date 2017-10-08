@@ -1,6 +1,6 @@
 defmodule Helix.Test.Event.Setup.Software do
 
-  import HELL.MacroHelpers
+  import HELL.Macros
 
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
