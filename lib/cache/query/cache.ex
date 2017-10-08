@@ -9,6 +9,8 @@ defmodule Helix.Cache.Query.Cache do
   invalid data etc)
   """
 
+  import HELL.MacroHelpers
+
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
   alias Helix.Hardware.Model.Component
@@ -20,6 +22,7 @@ defmodule Helix.Cache.Query.Cache do
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.WebCache
 
+  raisable {:from_server_get_all, 1}
   @spec from_server_get_all(Server.idtb) ::
     {:ok, ServerCache.t}
     | {:error, {:server, :notfound}}
@@ -30,6 +33,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_server_get_all(server),
     do: CacheInternal.lookup(:server, {server_to_id(server)})
 
+  raisable {:from_server_get_nips, 1}
   @spec from_server_get_nips(Server.id) ::
     {:ok, [Network.nip]}
     | {:error, {:server, :notfound}}
@@ -40,6 +44,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_server_get_nips(server),
     do: CacheInternal.lookup({:server, :nips}, {server_to_id(server)})
 
+  raisable {:from_server_get_storages, 1}
   @spec from_server_get_storages(Server.idtb) ::
     {:ok, [Storage.id]}
     | {:error, {:server, :notfound}}
@@ -50,6 +55,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_server_get_storages(server),
     do: CacheInternal.lookup({:server, :storages}, {server_to_id(server)})
 
+  raisable {:from_server_get_resources, 1}
   @spec from_server_get_resources(Server.idtb) ::
     {:ok, term}
     | {:error, {:server, :notfound}}
@@ -60,6 +66,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_server_get_resources(server),
     do: CacheInternal.lookup({:server, :resources}, {server_to_id(server)})
 
+  raisable {:from_server_get_components, 1}
   @spec from_server_get_components(Server.idtb) ::
     {:ok, [Component.id]}
     | {:error, {:server, :notfound}}
@@ -71,6 +78,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_server_get_components(server),
     do: CacheInternal.lookup({:server, :components}, {server_to_id(server)})
 
+  raisable {:from_motherboard_get_all, 1}
   @spec from_motherboard_get_all(Motherboard.t | Component.idtb) ::
     {:ok, ServerCache.t}
     | {:error, {:server, :notfound}}
@@ -82,6 +90,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_motherboard_get_all(motherboard),
     do: CacheInternal.lookup(:motherboard, {motherboard_to_id(motherboard)})
 
+  raisable {:from_motherboard_get_entity, 1}
   @spec from_motherboard_get_entity(Motherboard.idtb) ::
     {:ok, Entity.id}
     | {:error, {:server, :notfound}}
@@ -95,6 +104,7 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:motherboard, :entity}, {id})
   end
 
+  raisable {:from_motherboard_get_resources, 1}
   @spec from_motherboard_get_resources(Motherboard.idtb) ::
     {:ok, term}
     | {:error, {:server, :notfound}}
@@ -108,6 +118,7 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:motherboard, :resources}, {id})
   end
 
+  raisable {:from_motherboard_get_components, 1}
   @spec from_motherboard_get_components(Motherboard.idtb) ::
     {:ok, [Component.id]}
     | {:error, {:server, :notfound}}
@@ -121,6 +132,7 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:motherboard, :components}, {id})
   end
 
+  raisable {:from_entity_get_motherboard, 1}
   @spec from_entity_get_motherboard(Entity.idtb) ::
     {:ok, Motherboard.id}
     | {:error, {:server, :notfound}}
@@ -133,6 +145,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_entity_get_motherboard(entity),
     do: CacheInternal.lookup({:entity, :motherboard}, {entity_to_id(entity)})
 
+  raisable {:from_storage_get_server, 1}
   @spec from_storage_get_server(Storage.idtb) ::
     {:ok, Server.id}
     | {:error, {:storage, :notfound}}
@@ -145,6 +158,7 @@ defmodule Helix.Cache.Query.Cache do
   def from_storage_get_server(storage),
     do: CacheInternal.lookup({:storage, :server}, {storage_to_id(storage)})
 
+  raisable {:from_nip_get_server, 2}
   @spec from_nip_get_server(Network.idtb, IPv4.t) ::
     {:ok, Server.id}
     | {:error, {:nip, :notfound}}
@@ -158,6 +172,7 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:network, :server}, {network_id, ip})
   end
 
+  raisable {:from_nip_get_web, 2}
   @spec from_nip_get_web(Network.idtb, IPv4.t) ::
     {:ok, WebCache.t}
     | {:error, {:nip, :notfound}}
@@ -168,6 +183,7 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:web, :content}, {network_id, ip})
   end
 
+  raisable {:from_component_get_motherboard, 1}
   @spec from_component_get_motherboard(Component.idtb) ::
     {:ok, Motherboard.id}
     | {:error, {:component, :notfound}}
