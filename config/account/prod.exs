@@ -2,7 +2,7 @@ use Mix.Config
 
 prefix = "${HELIX_DB_PREFIX}"
 
-config :comeonin, :bcrypt_log_rounds, 14
+config :bcrypt_elixir, :log_rounds, 14
 
 config :helix, Helix.Account.Repo,
   pool_size: "${HELIX_DB_POOL_SIZE}",
