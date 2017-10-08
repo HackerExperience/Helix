@@ -3,7 +3,7 @@ defmodule Helix.Log.Event.Handler.Log do
 
   alias Helix.Event
   alias Helix.Log.Action.Log, as: LogAction
-  alias Helix.Log.Loggable
+  alias Helix.Event.Loggable
   alias Helix.Log.Query.Log, as: LogQuery
 
   alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
