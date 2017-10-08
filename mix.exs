@@ -67,7 +67,9 @@ defmodule Helix.Mixfile do
       {:helf, "~> 0.0.2"},
       {:poison, "~> 3.0"},
 
-      {:comeonin, "~> 3.2"},
+      {:comeonin, "~> 4.0.3"},
+      {:bcrypt_elixir, "~> 1.0"},
+
       {:timex, "~> 3.1"},
 
       {:burette, git: "https://github.com/HackerExperience/burette"},
