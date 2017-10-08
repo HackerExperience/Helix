@@ -1,4 +1,37 @@
 defmodule HELL.MacroHelpers do
+  @moduledoc """
+  Useful macros spread throughout Helix codebase.
+  """
+
+  alias HELL.Utils
+
+  @doc """
+  The `raisable/1` macro defines a raisable version of the given function
+  `name/arity`. It expects the successful result to be of format {:ok, _}.
+  """
+  defmacro raisable({name, arity}) do
+    fname =
+      name
+      |> Atom.to_string()
+      |> Utils.concat("!")
+      |> String.to_atom()
+
+    params =
+      1..arity
+      |> Enum.map(fn i ->
+        name = Utils.concat_atom(:arg, Integer.to_string(i))
+        Macro.var(name, nil)
+      end)
+
+    quote do
+
+      def unquote(fname)(unquote_splicing(params)) do
+        {:ok, result} = unquote(name)(unquote_splicing(params))
+        result
+      end
+
+    end
+  end
 
   @doc """
   On dev and prod environments, `hespawn` is the exact same thing as `spawn`.
