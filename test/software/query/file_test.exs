@@ -5,14 +5,16 @@ defmodule Helix.Software.Query.FileTest do
   alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
 
-  alias Helix.Test.Software.Factory
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   @moduletag :integration
 
   describe "fetch/1" do
     test "succeeds with valid input" do
-      file = Factory.insert(:file)
-      assert %File{} = FileQuery.fetch(file.file_id)
+      {file, _} = SoftwareSetup.file()
+
+      entry = FileQuery.fetch(file.file_id)
+      assert entry == file
     end
 
     test "fails when file doesn't exist" do
@@ -22,8 +24,9 @@ defmodule Helix.Software.Query.FileTest do
 
   describe "storage_contents/1" do
     test "succeeds with valid input" do
-      storage = Factory.insert(:storage)
-      factory_files = Factory.insert_list(5, :file, storage: storage)
+      {storage, _} = SoftwareSetup.storage()
+      file_opts = [storage_id: storage.storage_id]
+      gen_files = SoftwareSetup.random_files!(total: 3, file_opts: file_opts)
 
       contents = FileQuery.storage_contents(storage)
 
@@ -34,9 +37,9 @@ defmodule Helix.Software.Query.FileTest do
 
       # asserts that it gets the expected number of files and that these
       # files are consistently grouped by their path
-      assert Enum.count(factory_files) == Enum.count(files)
+      assert Enum.count(gen_files) == Enum.count(files)
 
-      expected = Enum.map(factory_files, &([path: &1.path, id: &1.file_id]))
+      expected = Enum.map(gen_files, &([path: &1.path, id: &1.file_id]))
       contents =
         contents
         |> Enum.map(fn {k, v} -> {k, Enum.map(v, &(&1.file_id))} end)
@@ -48,14 +51,16 @@ defmodule Helix.Software.Query.FileTest do
 
   describe "files_on_storage/1" do
     test "succeeds with valid input" do
-      storage = Factory.insert(:storage)
-      Factory.insert_list(5, :file, storage: storage)
+      {storage, _} = SoftwareSetup.storage()
+      file_opts = [storage_id: storage.storage_id]
+      SoftwareSetup.random_files!(total: 3, file_opts: file_opts)
+
       refute Enum.empty?(FileQuery.files_on_storage(storage))
     end
   end
 
   describe "fetch_best/3" do
-    @tag :pending  # Waiting `file_modules` refactor
+    @tag :pending  # Waiting `modules` refactor
     test "seila" do
       # {storage, _} = SoftwareSetup.storage()
 
