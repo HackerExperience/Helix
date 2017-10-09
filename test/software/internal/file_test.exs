@@ -4,56 +4,100 @@ defmodule Helix.Software.Internal.FileTest do
 
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareModule
-  alias Helix.Software.Repo
 
+  alias HELL.TestHelper.Random
   alias Helix.Test.Server.Setup, as: ServerSetup
-  alias Helix.Test.Software.Factory
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  def generate_params do
-    storage = Factory.insert(:storage)
-    file = Factory.build(:file)
+  describe "create/2" do
+    test "creates file and modules" do
+      {params, modules} = generate_params()
 
-    file
-    |> Map.take([:path, :file_size, :name, :software_type])
-    |> Map.put(:storage_id, storage.storage_id)
-  end
+      # Inserts the file
+      assert {:ok, file} = FileInternal.create(params, modules)
 
-  defp generate_software_modules(software_type) do
-    software_type
-    |> SoftwareModule.Query.by_software_type()
-    |> Repo.all()
-    |> Enum.into(%{}, &{&1.software_module, Burette.Number.number(1..1024)})
-  end
+      # Fetch from database
+      entry = FileInternal.fetch(file.file_id)
 
-  describe "creating" do
-    test "succeeds with valid params" do
-      params = generate_params()
-      {:ok, file} = FileInternal.create(params)
+      # File has been inserted with the expected data
+      assert entry
+      assert entry.storage_id == params.storage_id
+      assert entry.name == params.name
+      assert entry.software_type == params.software_type
 
-      got = Map.take(file, Map.keys(params))
-      assert params == got
+      # Modules are valid too
+      assert entry.modules
+
+      # They were created with the expected data and are `format/1`-ed
+      Enum.each(modules, fn {module, data} ->
+        assert entry_module = Map.fetch!(entry.modules, module)
+        assert entry_module.version == data.version
+      end)
     end
 
-    test "fails on path identity conflict" do
-      params = generate_params()
-      collision = Map.take(params, [:name, :path, :software_type, :storage_id])
+    test "fails when file path conflicts with another one" do
+      {params, modules} = generate_params()
 
-      {:ok, _} = FileInternal.create(params)
+      assert {:ok, _file1} = FileInternal.create(params, modules)
 
-      params = Map.merge(generate_params(), collision)
-
-      {:error, result} = FileInternal.create(params)
+      assert {:error, result} = FileInternal.create(params, modules)
       assert :full_path in Keyword.keys(result.errors)
     end
+
+    # TODO: Wait for SoftwareType refactor
+    @tag :pending
+    test "fails if passed modules are invalid" do
+      {params, _} = generate_params(:cracker)
+      {_, bad_modules} = generate_params(:hasher)
+
+      assert {:error, changeset} = FileInternal.create(params, bad_modules)
+
+      IO.inspect(changeset)
+    end
+
+    # TODO: Wait for issue #279
+    @tag :pending
+    test "fails if there's no space left on device"
+
+    defp generate_params(software_type \\ :cracker) do
+      {storage, _} = SoftwareSetup.storage()
+
+      params = %{
+        name: SoftwareHelper.random_file_name(),
+        path: SoftwareHelper.random_file_path(),
+        software_type: software_type,
+        storage_id: storage.storage_id,
+        file_size: SoftwareHelper.random_file_size()
+      }
+
+      modules = SoftwareHelper.get_modules(software_type)
+
+      {params, modules}
+    end
   end
 
-  describe "fetching" do
-    test "returns a record based on its identification" do
-      file = Factory.insert(:file)
-      assert %File{} = FileInternal.fetch(file.file_id)
+  describe "fetch/1" do
+    test "returns a valid and formatted entry" do
+      {file, _} = SoftwareSetup.file()
+
+      assert entry = FileInternal.fetch(file.file_id)
+
+      assert entry.file_id == file.file_id
+      assert entry.name == file.name
+      assert entry.path == file.path
+
+      # Modules were formatted:
+
+      # They are now a map
+      refute is_list(entry.modules)
+      assert is_map(entry.modules)
+
+      # And they are exactly the same from the original file
+      Enum.each(file.modules, fn {module_name, data} ->
+        assert Map.has_key?(entry.modules, module_name)
+        assert entry.modules[module_name].version == data.version
+      end)
     end
 
     test "returns nil if file doesn't exist" do
@@ -61,73 +105,131 @@ defmodule Helix.Software.Internal.FileTest do
     end
   end
 
-  describe "get_files_on_target_storage/1" do
+  describe "fetch_best/2" do
+    test "selects the best file" do
+      {storage, _} = SoftwareSetup.storage()
+
+      best_crc_module =
+        SoftwareHelper.generate_module(
+          :cracker,
+          %{bruteforce: 500, overflow: 1}
+        )
+
+      worst_crc_module =
+        SoftwareHelper.generate_module(
+          :cracker,
+          %{bruteforce: 1, overflow: 500}
+        )
+
+      mid_crc_1_module =
+        SoftwareHelper.generate_module(
+          :cracker,
+          %{bruteforce: 400, overflow: 200}
+        )
+
+      mid_crc_2_module =
+        SoftwareHelper.generate_module(
+          :cracker,
+          %{bruteforce: 200, overflow: 400}
+        )
+
+      best_fwl_module =
+        SoftwareHelper.generate_module(
+          :firewall,
+          %{fwl_active: 200, fwl_passive: 100}
+        )
+
+      worst_fwl_module =
+        SoftwareHelper.generate_module(
+          :firewall,
+          %{fwl_active: 100, fwl_passive: 200}
+        )
+
+      best_crc = add_file(storage, :cracker, best_crc_module)
+      worst_crc = add_file(storage, :cracker, worst_crc_module)
+      _mid_crc_1 = add_file(storage, :cracker, mid_crc_1_module)
+      _mid_crc_2 = add_file(storage, :cracker, mid_crc_2_module)
+      best_fwl = add_file(storage, :firewall, best_fwl_module)
+      worst_fwl = add_file(storage, :firewall, worst_fwl_module)
+
+      crc = FileInternal.fetch_best(storage, :bruteforce)
+      assert crc == best_crc
+
+      fwl = FileInternal.fetch_best(storage, :fwl_active)
+      assert fwl == best_fwl
+
+      # Now looking for the opposite modules, which we are calling `worst`
+      crc = FileInternal.fetch_best(storage, :overflow)
+      assert crc == worst_crc
+
+      fwl = FileInternal.fetch_best(storage, :fwl_passive)
+      assert fwl == worst_fwl
+    end
+
+    defp add_file(storage, type, modules) do
+      SoftwareSetup.file!(
+        storage_id: storage.storage_id,
+        type: type,
+        modules: modules
+      )
+    end
+  end
+
+  describe "get_files_on_storage/1" do
     test "returns non-encrypted files" do
-      target_storage = Factory.insert(:storage, %{files: []})
-      Factory.insert_list(5, :file, storage: target_storage)
+      {storage, _} = SoftwareSetup.storage()
 
-      files = FileInternal.get_files_on_target_storage(target_storage)
+      # Add 3 files into the storage
+      file_opts = [storage_id: storage.storage_id]
+      SoftwareSetup.random_files!(file_opts: file_opts, total: 3)
 
-      assert 5 == Enum.count(files)
+      files = FileInternal.get_files_on_storage(storage)
+
+      # All 3 unencrypted files have been fetched
+      assert 3 == Enum.count(files)
       assert Enum.all?(files, &(is_nil(&1.crypto_version)))
     end
 
     test "returns encrypted files" do
-      target_storage = Factory.insert(:storage, files: [])
-      Factory.insert_list(5, :file, storage: target_storage, crypto_version: 1)
+      {storage, _} = SoftwareSetup.storage()
 
-      files = FileInternal.get_files_on_target_storage(target_storage)
+      # Add 3 encrypted files into the storage
+      file_opts = [
+          storage_id: storage.storage_id,
+          crypto_version: Random.number(min: 1, max: 100)
+        ]
+      SoftwareSetup.random_files!(file_opts: file_opts, total: 3)
 
-      assert 5 == Enum.count(files)
+      files = FileInternal.get_files_on_storage(storage)
+
+      # All 3 encrypted files were fetched
+      assert 3 == Enum.count(files)
       assert Enum.all?(files, &(not is_nil(&1.crypto_version)))
-    end
-  end
-
-  describe "updating" do
-    # TODO: Chop the things that are tested here in three different tests
-    test "succeeds with valid params" do
-      file = Factory.insert(:file)
-
-      # update name
-      params = %{name: "some very random name"}
-      {:ok, updated} = FileInternal.update(file, params)
-
-      refute file.name == updated.name
-      assert params.name == updated.name
-
-      # update path
-      params = %{path: "/foo/bar"}
-      {:ok, updated} = FileInternal.update(file, params)
-
-      refute file.path == updated.path
-      assert params.path == updated.path
-    end
-
-    test "fails on file path identity conflict" do
-      file0 = Factory.insert(:file)
-      intersection = Map.take(file0, [:storage, :software_type])
-      file1 = Factory.insert(:file, intersection)
-      params = Map.take(file0, [:path, :name])
-
-      {:error, result} =  FileInternal.update(file1, params)
-      assert :full_path in Keyword.keys(result.errors)
     end
   end
 
   describe "copy/3" do
     test "file is copied (same storage, different path)" do
       {file, %{server_id: server_id}} = SoftwareSetup.file()
-      path = SoftwareHelper.random_file_path()
 
       storage = SoftwareHelper.get_storage(server_id)
 
-      assert {:ok, new_file} = FileInternal.copy(file, storage, path)
+      params = %{
+        path: SoftwareHelper.random_file_path(),
+        name: SoftwareHelper.random_file_name()
+      }
+
+      # New file was created
+      assert {:ok, new_file} = FileInternal.copy(file, storage, params)
       assert new_file.storage_id == file.storage_id
       assert new_file.software_type == file.software_type
 
-      # TODO: Uncomment after fixing File model
-      # assert new_file.type == file.type
-      # assert new_file.file_modules == file.file_modules
+      # Modules were copied correctly
+      assert new_file.type == file.type
+      assert new_file.modules == file.modules
+
+      # Source file hasn't changed in any way
+      assert FileInternal.fetch(file.file_id) == file
     end
 
     test "refuses to copy file if it already exists (same path, storage)" do
@@ -135,8 +237,26 @@ defmodule Helix.Software.Internal.FileTest do
 
       storage = SoftwareHelper.get_storage(server_id)
 
-      assert {:error, result} = FileInternal.copy(file, storage, file.path)
+      params = %{
+        name: file.name,
+        path: file.path
+      }
+
+      assert {:error, result} = FileInternal.copy(file, storage, params)
       assert :full_path in Keyword.keys(result.errors)
+    end
+
+    test "allows the file to be copied to the same path, different name" do
+      {file, %{server_id: server_id}} = SoftwareSetup.file()
+
+      storage = SoftwareHelper.get_storage(server_id)
+
+      params = %{
+        name: SoftwareHelper.random_file_name,
+        path: file.path
+      }
+
+      assert {:ok, _} = FileInternal.copy(file, storage, params)
     end
 
     test "file is copied (different storage)" do
@@ -145,88 +265,96 @@ defmodule Helix.Software.Internal.FileTest do
 
       storage = SoftwareHelper.get_storage(destination.server_id)
 
-      assert {:ok, new_file} = FileInternal.copy(file, storage, file.path)
+      params = %{
+        name: file.name,
+        path: file.path
+      }
+
+      assert {:ok, new_file} = FileInternal.copy(file, storage, params)
 
       assert new_file.name == file.name
       assert new_file.storage_id == storage.storage_id
       refute new_file.storage_id == file.storage_id
+
+      # Original file wasn't modified
+      assert FileInternal.fetch(file.file_id) == file
     end
   end
 
-  describe "moving" do
-    test "to another path" do
-      file = Factory.insert(:file)
-      path = Factory.build(:file).path
+  describe "rename/2" do
+    test "renames the file" do
+      {file, _} = SoftwareSetup.file()
 
-      {:ok, file} = FileInternal.move(file, path)
+      new_name = SoftwareHelper.random_file_name()
 
-      assert path == file.path
+      # File has been successfully renamed
+      assert {:ok, new_file} = FileInternal.rename(file, new_name)
+      assert new_file.file_id == file.file_id
+      assert new_file.name == new_name
     end
 
-    test "fails on path identity conflict" do
-      file0 = Factory.insert(:file)
-      similarities = Map.take(file0, [:name, :storage, :software_type])
-      file1 = Factory.insert(:file, similarities)
+    test "fails if new name generates a path conflict" do
+      {file1, %{storage_id: storage_id}} = SoftwareSetup.file()
 
-      {:error, result} = FileInternal.move(file1, file0.path)
+      storage = SoftwareHelper.get_storage(storage_id)
+
+      params = %{
+        name: SoftwareHelper.random_file_name(),
+        path: file1.path
+      }
+
+      # Context: `file1` and `file2` exist on the same directory, but they have
+      # different names. We'll rename `file1` to the same name of `file2`, which
+      # should generate a conflict
+      {:ok, file2} = FileInternal.copy(file1, storage, params)
+
+      assert {:error, result} = FileInternal.rename(file1, file2.name)
       assert :full_path in Keyword.keys(result.errors)
     end
   end
 
-  describe "renaming" do
-    test "succeeds with a valid non-conflicting name" do
-      file = Factory.insert(:file)
-      name = Factory.params_for(:file).name
+  describe "move/2" do
+    test "file is moved to a different path" do
+      {file, _} = SoftwareSetup.file()
 
-      {:ok, file} = FileInternal.rename(file, name)
+      new_path = SoftwareHelper.random_file_path()
 
-      assert name == file.name
+      # File has been successfully moved
+      assert {:ok, new_file} = FileInternal.move(file, new_path)
+      assert new_file.file_id == file.file_id
+      assert new_file.path == SoftwareHelper.format_path(new_path)
     end
 
-    test "fails on path identity conflict" do
-      file0 = Factory.insert(:file)
-      similarities = Map.take(file0, [:path, :software_type, :storage])
-      file1 = Factory.insert(:file, similarities)
+    test "fails to move if there's a conflict on the new path" do
+      {file1, %{storage_id: storage_id}} = SoftwareSetup.file()
 
-      # FIXME: this is thanks to how ExMachina works
-      file1 = Repo.update! File.update_changeset(file1, similarities)
+      storage = SoftwareHelper.get_storage(storage_id)
 
-      {:error, result} = FileInternal.rename(file1, file0.name)
+      params = %{
+        name: file1.name,
+        path: SoftwareHelper.random_file_path()
+      }
+
+      # Context: `file1` and `file2` have the same name, live on the same
+      # storage but have different paths.
+      # We'll move `file1` into the same path of `file2`, which should generate
+      # a conflict.
+      {:ok, file2} = FileInternal.copy(file1, storage, params)
+
+      assert {:error, result} = FileInternal.move(file1, file2.path)
       assert :full_path in Keyword.keys(result.errors)
-    end
-  end
-
-  test "setting modules" do
-    file = Factory.insert(:file)
-    modules = generate_software_modules(file.software_type)
-
-    {:ok, file2} = FileInternal.set_modules(file, modules)
-
-    # created modules from `modules`
-    assert FileInternal.get_modules(file2) == modules
-  end
-
-  describe "getting modules" do
-    test "returns file modules as a map" do
-      file = Factory.insert(:file)
-      modules = generate_software_modules(file.software_type)
-
-      FileInternal.set_modules(file, modules)
-
-      file_modules = FileInternal.get_modules(file)
-      assert modules == file_modules
     end
   end
 
   describe "delete/1" do
     test "removes entry" do
-      file = Factory.insert(:file)
+      {file, _} = SoftwareSetup.file()
 
-      assert Repo.get(File, file.file_id)
+      assert FileInternal.fetch(file.file_id)
 
       FileInternal.delete(file)
 
-      refute Repo.get(File, file.file_id)
+      refute FileInternal.fetch(file.file_id)
     end
   end
 end

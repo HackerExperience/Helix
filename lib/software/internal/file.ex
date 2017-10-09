@@ -1,65 +1,115 @@
 defmodule Helix.Software.Internal.File do
 
-  import Ecto.Query, only: [select: 3]
-
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
-  @spec create(File.creation_params) ::
-    {:ok, File.t}
-    | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
-    |> File.create_changeset()
-    |> Repo.insert()
-  end
-
   @spec fetch(File.id) ::
     File.t
     | nil
-  def fetch(file_id),
-    do: Repo.get(File, file_id)
+  def fetch(file_id) do
+    file =
+      file_id
+      |> File.Query.by_file()
+      |> Repo.one()
 
-  @spec get_files_on_target_storage(Storage.idt) ::
+    if file do
+      File.format(file)
+    end
+  end
+
+  @spec fetch_best(term, term) ::
+    best :: File.t
+    | nil
+  def fetch_best(storage, module) do
+    best =
+      storage
+      |> File.Query.by_version(module)
+      |> Repo.all()
+
+    case best do
+      [file_id] ->
+        # HACK: https://stackoverflow.com/q/46651888/1454986
+        fetch(file_id)
+      [] ->
+        nil
+    end
+  end
+
+  @spec get_files_on_storage(Storage.idt) ::
     [File.t]
   @doc """
-  Gets all files on `target_storage`
+  Gets all files on `storage`.
   """
-  def get_files_on_target_storage(target_storage) do
-    target_storage
+  def get_files_on_storage(storage) do
+    storage
     |> File.Query.by_storage()
     |> Repo.all()
+  end
+
+  @spec create(File.creation_params, File.modules_params) ::
+    {:ok, File.t}
+    | {:error, Ecto.Changeset.t}
+  @doc """
+  Creates a new file, according to the given params and modules.
+
+  Modules, if any, are inserted alongside the file, in a transaction.
+  """
+  def create(file_params, modules) do
+    # TODO: Check storage requirements
+    result =
+      file_params
+      |> File.create_changeset(modules)
+      |> Repo.insert()
+
+    with {:ok, file} <- result do
+      {:ok, File.format(file)}
+    end
   end
 
   @spec update(File.t, File.update_params) ::
     {:ok, File.t}
     | {:error, File.changeset}
-  def update(file, params) do
+  defp update(file, params) do
     file
     |> File.update_changeset(params)
     |> Repo.update()
   end
 
-  @spec copy(File.t, Storage.t, File.path) ::
+  @type copy_params ::
+    %{
+      path: File.path,
+      name: File.name
+    }
+
+  @spec copy(File.t, Storage.t, copy_params) ::
     {:ok, File.t}
     | {:error, File.changeset}
-  def copy(file, storage, path) do
-    # TODO: allow copying to the same folder
-    # TODO: Check storage requirements
-    file
-    |> File.copy(storage, %{path: path})
-    |> Repo.insert()
+  def copy(file, storage, params = %{}) do
+    params = %{
+      name: params.name,
+      path: params.path,
+      file_size: file.file_size,
+      storage_id: storage.storage_id,
+      software_type: file.software_type
+    }
+
+    modules =
+      Enum.reduce(file.modules, [], fn ({module, data}, acc) ->
+        acc ++ [{module, data}]
+      end)
+
+    create(params, modules)
   end
 
   @spec move(File.t, File.path) ::
     {:ok, File.t}
     | {:error, File.changeset}
   def move(file, path) do
-    file
-    |> File.update_changeset(%{path: path})
-    |> Repo.update()
+    params = %{path: path}
+
+    update(file, params)
   end
 
   @spec rename(File.t, File.name) ::
@@ -67,12 +117,11 @@ defmodule Helix.Software.Internal.File do
     | {:error, File.changeset}
   def rename(file, file_name) do
     params = %{name: file_name}
-    file
-    |> File.update_changeset(params)
-    |> Repo.update()
+
+    update(file, params)
   end
 
-  @spec encrypt(File.t, File.module_version) ::
+  @spec encrypt(File.t, FileModule.version) ::
     {:ok, File.changeset}
     | {:error, File.changeset}
   def encrypt(file = %File{}, version) when version >= 1 do
@@ -97,30 +146,4 @@ defmodule Helix.Software.Internal.File do
 
     :ok
   end
-
-  # TODO: Merge create + set_modules. Should be always called together.
-  @spec set_modules(File.t, File.modules) ::
-    {:ok, File.t}
-    | {:error, File.changeset}
-  def set_modules(file, modules) do
-    changeset =
-      file
-      |> Repo.preload(:file_modules)
-      |> File.set_modules(modules)
-
-    Repo.update(changeset)
-  end
-
-  @spec get_modules(File.t) ::
-    File.modules
-  def get_modules(file) do
-    file
-    |> FileModule.Query.by_file()
-    |> select([fm], {fm.software_module, fm.module_version})
-    |> Repo.all()
-    |> :maps.from_list()
-  end
-
-  def load_modules(file),
-    do: %{file| file_modules: get_modules(file)}
 end

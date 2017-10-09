@@ -24,12 +24,18 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
   FileDownloadFailedEvent | FileUploadFailedEvent, in case of failure
   """
   def complete(event = %FileTransferProcessedEvent{}) do
-    path = "/Downloads"
+    create_params = fn file ->
+      %{
+        path: "/Downloads",
+        name: file.name
+      }
+    end
 
     with \
       source_file = %{} <- FileQuery.fetch(event.file_id),
       storage = %{} <- StorageQuery.fetch(event.to_storage_id),
-      {:ok, file} <- FileAction.copy(source_file, storage, path)
+      params = create_params.(source_file),
+      {:ok, file} <- FileAction.copy(source_file, storage, params)
     do
       event
       |> get_event(:completed, file)

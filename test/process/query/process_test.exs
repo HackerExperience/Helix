@@ -5,7 +5,6 @@ defmodule Helix.Process.Query.ProcessTest do
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.Storage
   alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: Firewall
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Query.Process, as: ProcessQuery

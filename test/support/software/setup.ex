@@ -37,16 +37,23 @@ defmodule Helix.Test.Software.Setup do
   See doc on `fake_file/1`
   """
   def file(opts \\ []) do
-    {_, related = %{params: params}} = fake_file(opts)
-    {:ok, inserted} = FileInternal.create(params)
-    {:ok, inserted} = FileInternal.set_modules(inserted, params.modules)
+    {_, related = %{params: params, modules: modules}} = fake_file(opts)
+    {:ok, inserted} = FileInternal.create(params, modules)
+
+    file =
+      if params.crypto do
+        {:ok, f} = FileInternal.encrypt(inserted, params.crypto)
+        f
+      else
+        inserted
+      end
 
     # Sync here because internally we used a CacheQuery. If we don't, any tests
     # calling `SoftwareSetup.[random_]file` would have to sync, and in some
     # cases it wouldn't be obvious why they are required to sync
     CacheHelper.sync_test()
 
-    {inserted, related}
+    {file, related}
   end
 
   def file!(opts \\ []) do
@@ -59,14 +66,15 @@ defmodule Helix.Test.Software.Setup do
   - size: Set file size
   - type: Set file type. SoftwareType.t
   - path: Set file path
-  - module: Set file module. If set, `type` must also be set.
+  - modules: Set file module. If set, `type` must also be set.
   - server_id: Server that file belongs to. Will use the first storage it finds.
   - storage_id: Specify storage ID to use. If set, ignores server params, and no
     server is generated. Enhance as you see fit.
   - fake_server: Whether to use a fake server. Gives the option to create a
     storage without a server. Defaults to false.
+  - crypto_version: Mark that file as encrypted. Defaults to nil (unencrypted).
 
-  Related: File.creation_params, Storage.id, Server.id
+  Related: File.creation_params, File.modules_params, Storage.id, Server.id
   """
   def fake_file(opts \\ []) do
     if not is_nil(opts[:modules]) and is_nil(opts[:type]) do
@@ -77,6 +85,7 @@ defmodule Helix.Test.Software.Setup do
     name = Access.get(opts, :name, SoftwareHelper.random_file_name())
     path = Access.get(opts, :path, SoftwareHelper.random_file_path())
     type = Access.get(opts, :type, SoftwareHelper.random_file_type())
+    crypto = Access.get(opts, :crypto_version, nil)
     modules = Access.get(opts, :modules, SoftwareHelper.get_modules(type))
 
     {storage_id, server_id} = file_get_storage_and_server(opts)
@@ -87,12 +96,19 @@ defmodule Helix.Test.Software.Setup do
       software_type: type,
       path: path,
       storage_id: storage_id,
+      crypto: crypto
+    }
+
+    related = %{
+      params: params,
+      storage_id: storage_id,
+      server_id: server_id,
       modules: modules
     }
 
-    file = File.create_changeset(params)
+    file = File.create_changeset(params, modules)
 
-    {file, %{params: params, storage_id: storage_id, server_id: server_id}}
+    {file, related}
   end
 
   # This is actually a workaround for credo.
@@ -182,5 +198,12 @@ defmodule Helix.Test.Software.Setup do
     modules = SoftwareHelper.generate_module(:cracker, version_map)
 
     file(opts ++ [type: :cracker, modules: modules])
+  end
+
+  @doc """
+  Generates a non-executable file
+  """
+  def non_executable_file do
+    file(type: :crypto_key)
   end
 end

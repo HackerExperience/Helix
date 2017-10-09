@@ -184,7 +184,12 @@ defmodule Helix.Test.Event.Setup.Software do
         file.path
       end
 
-    {:ok, new_file} = FileInternal.copy(file, storage, path)
+    params = %{
+        path: path,
+        name: file.name
+      }
+
+    {:ok, new_file} = FileInternal.copy(file, storage, params)
     new_file
   end
 end

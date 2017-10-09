@@ -1,0 +1,24 @@
+defmodule Helix.Software.Model.FileTest do
+
+  use ExUnit.Case, async: true
+
+  alias Ecto.Changeset
+  alias Helix.Software.Model.File
+
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
+
+  describe "update_crypto_version/2" do
+
+    test "crypto_version is changed" do
+      {original_cs, _} = SoftwareSetup.fake_file()
+      version = 10
+
+      changeset = File.update_crypto_version(original_cs, version)
+
+      assert changeset.valid?
+      assert Changeset.get_change(changeset, :crypto_version) == version
+    end
+
+  end
+
+end

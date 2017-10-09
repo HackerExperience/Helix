@@ -1,4 +1,4 @@
-defmodule Helix.Software.Action.Flow.FileTest do
+defmodule Helix.Software.Action.Flow.Software.FirewallTest do
 
   use Helix.Test.Case.Integration
 

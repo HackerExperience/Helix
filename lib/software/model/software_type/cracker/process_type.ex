@@ -54,7 +54,7 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
     {:ok, t}
     | {:error, changeset}
   def create(file, params) do
-    version = %{software_version: file.file_modules.cracker_overflow}
+    version = %{software_version: file.modules.overflow.version}
 
     %__MODULE__{}
     |> cast(params, @create_params)
@@ -209,7 +209,7 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
     {:ok, t}
     | {:error, changeset}
   def create(file, params) do
-    version = %{software_version: file.file_modules.cracker_bruteforce}
+    version = %{software_version: file.modules.bruteforce.version}
 
     %__MODULE__{}
     |> cast(params, @create_params)

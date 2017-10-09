@@ -85,13 +85,13 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     case get_change(changeset, :operation) do
       :create ->
         changeset
-        |> cast(%{version: file.file_modules.log_forger_create}, [:version])
+        |> cast(%{version: file.modules.log_create.version}, [:version])
         |> cast(params, [:target_server_id])
         |> validate_required([:target_server_id, :version])
         |> validate_number(:version, greater_than: 0)
       :edit ->
         changeset
-        |> cast(%{version: file.file_modules.log_forger_edit}, [:version])
+        |> cast(%{version: file.modules.log_edit.version}, [:version])
         |> cast(params, [:target_log_id])
         |> validate_required([:target_log_id, :version])
         |> validate_number(:version, greater_than: 0)

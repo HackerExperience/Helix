@@ -4,7 +4,6 @@ defmodule Helix.Software.Action.Flow.Software.LogForgerTest do
 
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Model.Log
-  alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Action.Flow.Software.LogForger, as: LogForgerFlow
   alias Helix.Software.Model.SoftwareType.LogForge
 

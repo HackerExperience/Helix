@@ -7,34 +7,45 @@ defmodule Helix.Software.Model.FileModule do
   alias Ecto.Changeset
   alias HELL.Constant
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.FileModule.Data, as: FileModuleData
   alias Helix.Software.Model.SoftwareModule
 
-  @type t :: %__MODULE__{
-    module_version: pos_integer,
+  @type t :: %{
+    name => FileModuleData.t
+  }
+
+  @type schema :: %__MODULE__{
+    version: pos_integer,
     file: File.t,
     file_id: File.id,
-    software_module: Constant.t
+    name: Constant.t
   }
+
+  @type name :: Constant.t
+  @type version :: pos_integer
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{
-    file_id: File.id,
-    software_module: Constant.t,
-    module_version: pos_integer
-  }
-  @type update_params :: %{
-    module_version: pos_integer
+    name: Constant.t,
+    version: pos_integer
   }
 
-  @creation_fields ~w/file_id software_module module_version/a
-  @update_fields ~w/module_version/a
+  @type update_params :: %{
+    version: pos_integer
+  }
+
+  @creation_fields ~w/name version/a
+  @update_fields ~w/version/a
+  @required_fields ~w/name version/a
 
   @primary_key false
   schema "file_modules" do
     field :file_id, File.ID,
       primary_key: true
-    field :software_module, Constant,
+    field :name, Constant,
       primary_key: true
-    field :module_version, :integer
+    field :version, :integer
 
     belongs_to :file, File,
       foreign_key: :file_id,
@@ -44,11 +55,11 @@ defmodule Helix.Software.Model.FileModule do
   end
 
   @spec create_changeset(creation_params) ::
-    Changeset.t
+    changeset
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required([:file_id, :software_module, :module_version])
+    |> validate_required(@required_fields)
     |> generic_validations()
   end
 
@@ -64,17 +75,40 @@ defmodule Helix.Software.Model.FileModule do
     Changeset.t
   def generic_validations(changeset) do
     changeset
-    |> validate_number(:module_version, greater_than: 0)
-    |> validate_inclusion(:software_module, SoftwareModule.possible_modules())
+    |> validate_number(:version, greater_than: 0)
+    |> validate_inclusion(:name, SoftwareModule.possible_modules())
   end
 
-  @spec changeset(t | Changeset.t, creation_params) ::
-    Changeset.t
-  def changeset(struct, params) do
-    struct
-    |> cast(params, @creation_fields)
-    |> validate_required([:software_module, :module_version])
-    |> generic_validations()
+  @spec format(t) ::
+    FileModuleData.t
+  @doc """
+  Formats a FileModule 
+  """
+  def format(module = %__MODULE__{}) do
+    data = FileModuleData.new(module)
+
+    Map.put(%{}, module.name, data)
+  end
+
+  defmodule Data do
+
+    alias Helix.Software.Model.FileModule
+
+    @type t ::
+      %__MODULE__{
+        version: FileModule.version
+      }
+
+    @enforce_keys [:version]
+    defstruct [:version]
+
+    @spec new(FileModule.t) ::
+      t
+    def new(%{version: version}) do
+      %__MODULE__{
+        version: version
+      }
+    end
   end
 
   defmodule Query do
@@ -90,9 +124,9 @@ defmodule Helix.Software.Model.FileModule do
     def by_file(query \\ FileModule, id),
       do: where(query, [fm], fm.file_id == ^id)
 
-    @spec by_software_module(Queryable.t, Constant.t) ::
+    @spec by_name(Queryable.t, Constant.t) ::
       Queryable.t
-    def by_software_module(query \\ FileModule, software_module),
-      do: where(query, [fm], fm.software_module == ^software_module)
+    def by_name(query \\ FileModule, name),
+      do: where(query, [fm], fm.name == ^name)
   end
 end

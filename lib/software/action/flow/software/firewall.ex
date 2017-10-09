@@ -6,7 +6,6 @@ defmodule Helix.Software.Action.Flow.Software.Firewall do
   alias Helix.Process.Model.Process
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Server.Model.Server
-  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: FirewallPassive
 
@@ -15,12 +14,11 @@ defmodule Helix.Software.Action.Flow.Software.Firewall do
   @type params :: %{}
   @type on_execute_error :: ProcessAction.on_create_error
 
-  @spec execute_firewall(File.t_of_type(:firewall), Server.id, params) ::
+  @spec execute(File.t_of_type(:firewall), Server.id, params) ::
     {:ok, Process.t}
     | on_execute_error
-  def execute_firewall(file, server, _params) do
-    file = FileInternal.load_modules(file)
-    process_data = %FirewallPassive{version: file.file_modules.firewall_passive}
+  def execute(file, server, _params) do
+    process_data = %FirewallPassive{version: file.modules.fwl_passive.version}
 
     params = %{
       gateway_id: server,
@@ -32,7 +30,7 @@ defmodule Helix.Software.Action.Flow.Software.Firewall do
 
     event = %FirewallStartedEvent{
       gateway_id: server,
-      version: file.file_modules.firewall_passive
+      version: file.modules.fwl_passive.version
     }
 
     flowing do
