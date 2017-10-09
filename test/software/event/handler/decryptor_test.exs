@@ -1,78 +1,80 @@
-defmodule Helix.Software.Event.DecryptorTest do
+# defmodule Helix.Software.Event.DecryptorTest do
 
-  use Helix.Test.Case.Integration
+#   use Helix.Test.Case.Integration
 
-  alias Helix.Event
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Internal.CryptoKey, as: CryptoKeyInternal
-  alias Helix.Software.Model.CryptoKey
-  alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent
-  alias Helix.Software.Model.Storage
-  alias Helix.Software.Repo
+#   alias Helix.Event
+#   alias Helix.Server.Model.Server
+#   alias Helix.Software.Internal.CryptoKey, as: CryptoKeyInternal
+#   alias Helix.Software.Model.CryptoKey
+#   alias Helix.Software.Model.File
+#   alias Helix.Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent
+#   alias Helix.Software.Model.Storage
+#   alias Helix.Software.Repo
 
-  alias Helix.Test.Software.Factory
+#   alias Helix.Test.Software.Factory
+#   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  describe "when decryption is global" do
-    test "on conclusion, removes the crypto version of the target file" do
-      target_file = Factory.insert(:file, crypto_version: 6)
-      event = %ProcessConclusionEvent{
-        scope: :global,
-        target_file_id: target_file.file_id,
-        storage_id: Storage.ID.generate(),
-        target_server_id: Server.ID.generate()
-      }
+#   describe "when decryption is global" do
+#     test "on conclusion, removes the crypto version of the target file" do
+#       {file, _} = SoftwareSetup.file(crypto_version: 6)
 
-      Event.emit(event)
+#       event = %ProcessConclusionEvent{
+#         scope: :global,
+#         target_file_id: target_file.file_id,
+#         storage_id: Storage.ID.generate(),
+#         target_server_id: Server.ID.generate()
+#       }
 
-      target_file = Repo.get(File, target_file.file_id)
-      refute target_file.crypto_version
-    end
+#       Event.emit(event)
 
-    test "on conclusion, invalidates all keys that existed for a certain event" do
-      target_file = Factory.insert(:file, crypto_version: 6)
-      event = %ProcessConclusionEvent{
-        scope: :global,
-        target_file_id: target_file.file_id,
-        storage_id: Storage.ID.generate(),
-        target_server_id: Server.ID.generate()
-      }
+#       target_file = Repo.get(File, target_file.file_id)
+#       refute target_file.crypto_version
+#     end
 
-      # Create several keys for the file
-      storages_that_had_key = Factory.insert_list(5, :storage, files: [])
-      server_id = Server.ID.generate()
-      create_key = &CryptoKeyInternal.create(&1, server_id, target_file)
-      old_keys =
-        storages_that_had_key
-        |> Enum.map(create_key)
-        |> Enum.map(fn {:ok, key} -> key end)
+#     test "on conclusion, invalidates all keys that existed for a certain event" do
+#       target_file = Factory.insert(:file, crypto_version: 6)
+#       event = %ProcessConclusionEvent{
+#         scope: :global,
+#         target_file_id: target_file.file_id,
+#         storage_id: Storage.ID.generate(),
+#         target_server_id: Server.ID.generate()
+#       }
 
-      Event.emit(event)
+#       # Create several keys for the file
+#       storages_that_had_key = Factory.insert_list(5, :storage, files: [])
+#       server_id = Server.ID.generate()
+#       create_key = &CryptoKeyInternal.create(&1, server_id, target_file)
+#       old_keys =
+#         storages_that_had_key
+#         |> Enum.map(create_key)
+#         |> Enum.map(fn {:ok, key} -> key end)
 
-      new_keys = Enum.map(old_keys, &Repo.get(CryptoKey, &1.file_id))
+#       Event.emit(event)
 
-      assert Enum.all?(new_keys, &is_nil(&1.target_file_id))
-    end
-  end
+#       new_keys = Enum.map(old_keys, &Repo.get(CryptoKey, &1.file_id))
 
-  describe "when decryption is local" do
-    test "creates a new key file on storage that binds to target_file" do
-      storage = Factory.insert(:storage, files: [])
-      target_file = Factory.insert(:file)
-      server_id = Server.ID.generate()
-      event = %ProcessConclusionEvent{
-        scope: :local,
-        target_file_id: target_file.file_id,
-        target_server_id: server_id,
-        storage_id: storage.storage_id
-      }
+#       assert Enum.all?(new_keys, &is_nil(&1.target_file_id))
+#     end
+#   end
 
-      Event.emit(event)
+#   describe "when decryption is local" do
+#     test "creates a new key file on storage that binds to target_file" do
+#       storage = Factory.insert(:storage, files: [])
+#       target_file = Factory.insert(:file)
+#       server_id = Server.ID.generate()
+#       event = %ProcessConclusionEvent{
+#         scope: :local,
+#         target_file_id: target_file.file_id,
+#         target_server_id: server_id,
+#         storage_id: storage.storage_id
+#       }
 
-      [key] = CryptoKeyInternal.get_on_storage(storage)
+#       Event.emit(event)
 
-      assert target_file.file_id == key.target_file_id
-      assert server_id == key.target_server_id
-    end
-  end
-end
+#       [key] = CryptoKeyInternal.get_on_storage(storage)
+
+#       assert target_file.file_id == key.target_file_id
+#       assert server_id == key.target_server_id
+#     end
+#   end
+# end

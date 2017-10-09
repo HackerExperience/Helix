@@ -1,9 +1,9 @@
-defmodule Helix.Software.Model.CryptoKey.InvalidatedEvent do
+# defmodule Helix.Software.Model.CryptoKey.InvalidatedEvent do
 
-  alias Helix.Software.Model.CryptoKey
+#   alias Helix.Software.Model.CryptoKey
 
-  defstruct [:file_id]
+#   defstruct [:file_id]
 
-  def event(%CryptoKey{file_id: id}),
-    do: %__MODULE__{file_id: id}
-end
+#   def event(%CryptoKey{file_id: id}),
+#     do: %__MODULE__{file_id: id}
+# end
