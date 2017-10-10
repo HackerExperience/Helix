@@ -13,22 +13,6 @@ defmodule Helix.Software.Query.File do
   defdelegate fetch(file_id),
     to: FileInternal
 
-  # TODO: Maybe move to StorageQuery
-  @spec storage_contents(Storage.t) ::
-    %{folder :: File.path => [File.t]}
-  def storage_contents(storage) do
-    storage
-    |> FileInternal.get_files_on_storage()
-    |> Enum.group_by(&(&1.path))
-  end
-
-  # TODO: Maybe move to StorageQuery
-  @spec files_on_storage(Storage.t) ::
-    [File.t]
-  defdelegate files_on_storage(storage),
-    to: FileInternal,
-    as: :get_files_on_storage
-
   @spec fetch_best(Server.id, FileModule.name) ::
     File.t
     | nil
