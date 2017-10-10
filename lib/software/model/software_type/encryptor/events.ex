@@ -1,4 +1,4 @@
-# defmodule Helix.Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent do
+# module Helix.Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent do
 #   @moduledoc false
 
 #   @enforce_keys [:target_file_id, :target_server_id, :storage_id, :version]

@@ -26,7 +26,7 @@ defmodule Helix.Software.Model.File do
     storage: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t,
-    modules: FileModule.t | FileModule.schema,
+    modules: modules | FileModule.schema,
     crypto_version: crypto_version
   }
 
@@ -36,6 +36,7 @@ defmodule Helix.Software.Model.File do
   @type size :: pos_integer
   @type type :: SoftwareType.type
   @type crypto_version :: nil | pos_integer
+  @type modules :: FileModule.t
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -47,7 +48,7 @@ defmodule Helix.Software.Model.File do
     storage_id: Storage.idtb
   }
 
-  @type modules_params :: [{FileModule.name, FileModule.Data.t}]
+  @type module_params :: {FileModule.name, FileModule.Data.t}
 
   @type update_params :: %{
     optional(:name) => name,
@@ -94,7 +95,7 @@ defmodule Helix.Software.Model.File do
     timestamps()
   end
 
-  @spec create_changeset(creation_params, modules_params) ::
+  @spec create_changeset(creation_params, [module_params]) ::
     changeset
   @doc """
   Creates the `File` changeset, as well as its modules' associations.
@@ -105,17 +106,6 @@ defmodule Helix.Software.Model.File do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> put_assoc(:modules, modules)
-    |> validate_changeset(params)
-  end
-
-  # TODO: Used internally by cryptokey model. Use another name / refactor
-  @spec create(Storage.t, map) ::
-    Changeset.t
-  def create(storage = %Storage{}, params) do
-    IO.puts "DEPRECATED"
-    %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> put_assoc(:storage, storage)
     |> validate_changeset(params)
   end
 
@@ -135,7 +125,9 @@ defmodule Helix.Software.Model.File do
     %{file| modules: formatted_modules}
   end
 
-  def update_crypto_version(struct, version) do
+  @spec set_crypto_version(t | changeset, crypto_version) ::
+    changeset
+  def set_crypto_version(struct, version) do
     struct
     |> cast(%{crypto_version: version}, [:crypto_version])
     |> put_change(:crypto_version, version)
@@ -164,7 +156,7 @@ defmodule Helix.Software.Model.File do
     |> prepare_changes(&update_full_path/1)
   end
 
-  @spec create_module_assoc(modules_params) ::
+  @spec create_module_assoc(module_params) ::
     FileModule.changeset
   docp """
   Helper/wrapper to `FileModule.create_changeset/1`
@@ -237,11 +229,11 @@ defmodule Helix.Software.Model.File do
       do: where(query, [f], f.storage_id == ^id)
 
     def by_version(query \\ File, storage, module) do
-      File
-      |> where([f], f.storage_id == ^storage)
-      |> join(:left, [f], fm in FileModule, f.file_id == fm.file_id)
-      |> where([..., fm], fm.name == ^module)
-      |> order_by([..., fm], desc: fm.version)
+      query
+      |> by_storage(storage)
+      |> join_modules()
+      |> by_module(module)
+      |> order_by_version()
       |> select([fm], fm.file_id)
       |> limit(1)
     end

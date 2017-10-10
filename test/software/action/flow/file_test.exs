@@ -5,7 +5,6 @@ defmodule Helix.Software.Action.Flow.FileTest do
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Software.Action.Flow.File, as: FileFlow
-  alias Helix.Software.Action.Flow.File, as: SoftwareFlow
 
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -16,7 +15,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
     test "returns error if file isn't executable" do
       {file, _} = SoftwareSetup.non_executable_file()
 
-      assert {:error, reason} = SoftwareFlow.execute_file(file, %{}, %{}, %{})
+      assert {:error, reason} = FileFlow.execute_file(file, %{}, %{}, %{})
       assert reason == :not_executable
     end
 
@@ -47,7 +46,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
         entity_id: entity.entity_id
       }
 
-      assert {:ok, _} = SoftwareFlow.execute_file(file, server.server_id, params)
+      assert {:ok, _} = FileFlow.execute_file(file, server.server_id, params)
 
       TOPHelper.top_stop(server)
     end

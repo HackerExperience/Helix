@@ -51,9 +51,7 @@ defmodule Helix.Software.Internal.FileTest do
       {params, _} = generate_params(:cracker)
       {_, bad_modules} = generate_params(:hasher)
 
-      assert {:error, changeset} = FileInternal.create(params, bad_modules)
-
-      IO.inspect(changeset)
+      assert {:error, _changeset} = FileInternal.create(params, bad_modules)
     end
 
     # TODO: Wait for issue #279

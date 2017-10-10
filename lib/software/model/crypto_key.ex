@@ -62,7 +62,7 @@
 #       # FIXME: Use an apropriate
 #       name: "Key #{Enum.random(1..100_000_000)}",
 #       path: @default_path,
-#       # REVIEW: Make keys actually have a size? If so we'd have to check if the
+#     # REVIEW: Make keys actually have a size? If so we'd have to check if the
 #       #   storage can store them tho
 #       file_size: 1,
 #       software_type: @software_type,

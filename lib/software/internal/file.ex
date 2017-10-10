@@ -48,7 +48,7 @@ defmodule Helix.Software.Internal.File do
     |> Repo.all()
   end
 
-  @spec create(File.creation_params, File.modules_params) ::
+  @spec create(File.creation_params, [File.module_params]) ::
     {:ok, File.t}
     | {:error, Ecto.Changeset.t}
   @doc """

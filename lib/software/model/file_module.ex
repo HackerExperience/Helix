@@ -1,4 +1,15 @@
 defmodule Helix.Software.Model.FileModule do
+  @moduledoc """
+  A FileModule is a component of a File responsible for doing something. It
+  contains a version, which is a representation of how powerful that module is.
+
+  For example, take the Cracker. It may have Overflow and Bruteforce modules.
+  `Cracker` is a SoftwareType, and `Overflow` and `Bruteforce` are
+  SoftwareModules.
+
+  An instance of a Cracker is said to be a File, and the representation of each
+  File's modules are called FileModules.
+  """
 
   use Ecto.Schema
 
@@ -28,11 +39,11 @@ defmodule Helix.Software.Model.FileModule do
 
   @type creation_params :: %{
     name: Constant.t,
-    version: pos_integer
+    version: version
   }
 
   @type update_params :: %{
-    version: pos_integer
+    version: version
   }
 
   @creation_fields ~w/name version/a
@@ -79,8 +90,8 @@ defmodule Helix.Software.Model.FileModule do
     |> validate_inclusion(:name, SoftwareModule.possible_modules())
   end
 
-  @spec format(t) ::
-    FileModuleData.t
+  @spec format(schema) ::
+    t
   @doc """
   Formats a FileModule 
   """
@@ -91,6 +102,9 @@ defmodule Helix.Software.Model.FileModule do
   end
 
   defmodule Data do
+    @moduledoc """
+    FileModuleData contains information about the corresponding module.
+    """
 
     alias Helix.Software.Model.FileModule
 
@@ -102,7 +116,7 @@ defmodule Helix.Software.Model.FileModule do
     @enforce_keys [:version]
     defstruct [:version]
 
-    @spec new(FileModule.t) ::
+    @spec new(FileModule.schema) ::
       t
     def new(%{version: version}) do
       %__MODULE__{
@@ -112,6 +126,7 @@ defmodule Helix.Software.Model.FileModule do
   end
 
   defmodule Query do
+
     import Ecto.Query
 
     alias Ecto.Queryable

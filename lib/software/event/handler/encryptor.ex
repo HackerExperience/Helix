@@ -17,7 +17,7 @@
 #       events = CryptoKeyAction.invalidate_keys_for_file(target_file)
 
 #       {:ok, _} = FileAction.encrypt(target_file, event.version)
-#       {:ok, _} = CryptoKeyAction.create(storage, target_server_id, target_file)
+#     {:ok, _} = CryptoKeyAction.create(storage, target_server_id, target_file)
 
 #       events
 #     end

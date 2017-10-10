@@ -31,7 +31,7 @@
 #       refute target_file.crypto_version
 #     end
 
-#     test "on conclusion, invalidates all keys that existed for a certain event" do
+# est "on conclusion, invalidates all keys that existed for a certain event" do
 #       target_file = Factory.insert(:file, crypto_version: 6)
 #       event = %ProcessConclusionEvent{
 #         scope: :global,

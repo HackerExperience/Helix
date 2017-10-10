@@ -74,7 +74,7 @@ defmodule Helix.Test.Software.Setup do
     storage without a server. Defaults to false.
   - crypto_version: Mark that file as encrypted. Defaults to nil (unencrypted).
 
-  Related: File.creation_params, File.modules_params, Storage.id, Server.id
+  Related: File.creation_params, [File.module_params], Storage.id, Server.id
   """
   def fake_file(opts \\ []) do
     if not is_nil(opts[:modules]) and is_nil(opts[:type]) do

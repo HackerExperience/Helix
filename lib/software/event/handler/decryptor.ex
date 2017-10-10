@@ -29,7 +29,7 @@
 #     target_server_id = event.target_server_id
 
 #     transaction = fn ->
-#       {:ok, _} = CryptoKeyAction.create(storage, target_server_id, target_file)
+#     {:ok, _} = CryptoKeyAction.create(storage, target_server_id, target_file)
 #     end
 
 #     {:ok, _} = Repo.transaction(transaction)

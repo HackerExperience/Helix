@@ -4,7 +4,7 @@ defmodule Helix.Software.Action.File do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
-  @spec create(File.creation_params, File.modules_params) ::
+  @spec create(File.creation_params, [File.module_params]) ::
     {:ok, File.t}
     | {:error, Ecto.Changeset.t}
   def create(file_params, modules) do

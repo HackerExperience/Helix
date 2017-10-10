@@ -7,18 +7,16 @@ defmodule Helix.Software.Model.FileTest do
 
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  describe "update_crypto_version/2" do
+  describe "set_crypto_version/2" do
 
     test "crypto_version is changed" do
       {original_cs, _} = SoftwareSetup.fake_file()
       version = 10
 
-      changeset = File.update_crypto_version(original_cs, version)
+      changeset = File.set_crypto_version(original_cs, version)
 
       assert changeset.valid?
       assert Changeset.get_change(changeset, :crypto_version) == version
     end
-
   end
-
 end

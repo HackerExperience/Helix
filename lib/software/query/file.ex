@@ -3,6 +3,7 @@ defmodule Helix.Software.Query.File do
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
   alias Helix.Software.Internal.File, as: FileInternal
 
@@ -28,7 +29,7 @@ defmodule Helix.Software.Query.File do
     to: FileInternal,
     as: :get_files_on_storage
 
-  @spec fetch_best(Server.id, File.module_name) ::
+  @spec fetch_best(Server.id, FileModule.name) ::
     File.t
     | nil
   @doc """
@@ -43,7 +44,7 @@ defmodule Helix.Software.Query.File do
     fetch_best(List.first(storages), module)
   end
 
-  @spec fetch_best(Storage.t, File.module_name) ::
+  @spec fetch_best(Storage.t, FileModule.name) ::
     File.t
     | nil
   @doc """
