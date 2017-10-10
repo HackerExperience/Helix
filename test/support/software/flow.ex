@@ -67,7 +67,7 @@ defmodule Helix.Test.Software.Setup.Flow do
     }
 
     {:ok, process} =
-      CrackerFlow.execute_cracker(file, source_server.server_id, params, meta)
+      CrackerFlow.execute(file, source_server.server_id, params, meta)
 
     related = %{
       source_server: source_server,

@@ -13,7 +13,7 @@ Repo.transaction fn ->
     Enum.each(modules, fn module ->
       software_module = %SoftwareModule{
         software_type: type,
-        software_module: module
+        module: module
       }
 
       Repo.insert!(software_module, on_conflict: :nothing)

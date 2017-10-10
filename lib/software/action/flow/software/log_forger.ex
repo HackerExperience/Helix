@@ -7,7 +7,6 @@ defmodule Helix.Software.Action.Flow.Software.LogForger do
   alias Helix.Process.Model.Process
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Server.Model.Server
-  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.LogForge
 
@@ -18,10 +17,10 @@ defmodule Helix.Software.Action.Flow.Software.LogForger do
     | {:error, {:log, :notfound}}
     | {:error, Ecto.Changeset.t}
 
-  @spec execute_log_forger(File.t_of_type(:log_forger), Server.id, params) ::
+  @spec execute(File.t_of_type(:log_forger), Server.id, params) ::
     {:ok, Process.t}
     | on_execute_error
-  def execute_log_forger(file, server, params) do
+  def execute(file, server, params) do
     flowing do
       with \
         {:ok, data} <- prepare(file, params),
@@ -37,11 +36,8 @@ defmodule Helix.Software.Action.Flow.Software.LogForger do
   @spec prepare(File.t_of_type(:log_forger), params) ::
     {:ok, LogForge.t}
     | {:error, Ecto.Changeset.t}
-  defp prepare(file, params) do
-    file
-    |> FileInternal.load_modules()
-    |> LogForge.create(params)
-  end
+  defp prepare(file, params),
+    do: LogForge.create(file, params)
 
   @spec process_params(File.t_of_type(:log_forger), Server.id, LogForge.t) ::
     {:ok, Process.create_params}

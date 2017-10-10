@@ -6,7 +6,7 @@ defmodule Helix.Software.Model.SoftwareModule do
   alias Helix.Software.Model.SoftwareType
 
   @type t :: %__MODULE__{
-    software_module: Constant.t,
+    module: Constant.t,
     software_type: String.t
   }
 
@@ -16,7 +16,7 @@ defmodule Helix.Software.Model.SoftwareModule do
 
   @primary_key false
   schema "software_modules" do
-    field :software_module, Constant,
+    field :module, Constant,
       primary_key: true
 
     # FK to SoftwareType

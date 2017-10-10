@@ -25,17 +25,18 @@ defmodule Helix.Software.Model.File do
     storage_id: Storage.id,
     storage: term,
     inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t
+    updated_at: NaiveDateTime.t,
+    modules: modules | FileModule.schema,
+    crypto_version: crypto_version
   }
 
-  @type modules :: %{optional(module_name) => module_version}
-  @type module_name :: Constant.t
-  @type module_version :: pos_integer
   @type path :: String.t
   @type full_path :: path
   @type name :: String.t
   @type size :: pos_integer
   @type type :: SoftwareType.type
+  @type crypto_version :: nil | pos_integer
+  @type modules :: FileModule.t
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -47,17 +48,19 @@ defmodule Helix.Software.Model.File do
     storage_id: Storage.idtb
   }
 
+  @type module_params :: {FileModule.name, FileModule.Data.t}
+
   @type update_params :: %{
     optional(:name) => name,
     optional(:path) => path,
     optional(:crypto_version) => non_neg_integer | nil
   }
 
-  @creation_fields ~w/file_size software_type/a
+  @creation_fields ~w/name path storage_id file_size software_type/a
   @update_fields ~w/crypto_version/a
   @castable_fields ~w/name path/a
 
-  @required_fields ~w/name path file_size software_type/a
+  @required_fields ~w/name path file_size software_type storage_id/a
 
   @software_types Map.keys(SoftwareType.possible_types())
 
@@ -84,7 +87,7 @@ defmodule Helix.Software.Model.File do
       references: :storage_id,
       define_field: false
 
-    has_many :file_modules, FileModule,
+    has_many :modules, FileModule,
       foreign_key: :file_id,
       references: :file_id,
       on_replace: :delete
@@ -92,38 +95,44 @@ defmodule Helix.Software.Model.File do
     timestamps()
   end
 
-  @spec create(Storage.t, map) ::
-    Changeset.t
-  def create(storage = %Storage{}, params) do
+  @spec create_changeset(creation_params, [module_params]) ::
+    changeset
+  @doc """
+  Creates the `File` changeset, as well as its modules' associations.
+  """
+  def create_changeset(params, modules_params) do
+    modules = Enum.map(modules_params, &create_module_assoc/1)
+
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> put_assoc(:storage, storage)
-    |> changeset(params)
+    |> put_assoc(:modules, modules)
+    |> validate_changeset(params)
   end
 
-  @spec copy(t, Storage.t, map) ::
-    Changeset.t
-  def copy(file, storage, params) do
-    # dropping :file_id to avoid Ecto thinking this is an update
-    base =
-      file
-      |> Map.take(__schema__(:fields))
-      |> Map.drop([:file_id, :storage_id, :full_path])
+  @spec format(t) ::
+    t
+  @doc """
+  Formats the given `File`. Most notably, this function makes the File.Modules
+  interface more friendly.
+  """
+  def format(file) do
+    formatted_modules =
+      Enum.reduce(file.modules, %{}, fn module, acc ->
+        module = FileModule.format(module)
+        Map.merge(acc, module)
+      end)
 
-    __MODULE__
-    |> struct(base)
-    |> changeset(params)
-    |> put_assoc(:storage, storage)
+    %{file| modules: formatted_modules}
   end
 
-  @spec create_changeset(creation_params) ::
-    Changeset.t
-  def create_changeset(params) do
-    %__MODULE__{}
-    |> cast(params, @creation_fields)
-    |> cast(params, [:storage_id])
-    |> validate_required([:storage_id])
-    |> changeset(params)
+  @spec set_crypto_version(t | changeset, crypto_version) ::
+    changeset
+  def set_crypto_version(struct, version) do
+    struct
+    |> cast(%{crypto_version: version}, [:crypto_version])
+    |> put_change(:crypto_version, version)
+    |> validate_changeset(%{})
+    |> validate_number(:crypto_version, greater_than: 0)
   end
 
   @spec update_changeset(t | Changeset.t, update_params) ::
@@ -131,23 +140,11 @@ defmodule Helix.Software.Model.File do
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
-    |> changeset(params)
+    |> validate_changeset(params)
     |> validate_number(:crypto_version, greater_than: 0)
   end
 
-  @spec set_modules(t, modules) ::
-    Changeset.t
-  def set_modules(file, modules) do
-    modules = Enum.map(modules, fn {module, version} ->
-      %{software_module: module, module_version: version}
-    end)
-
-    file
-    |> cast(%{file_modules: modules}, [])
-    |> cast_assoc(:file_modules)
-  end
-
-  defp changeset(struct, params) do
+  defp validate_changeset(struct, params) do
     struct
     |> cast(params, @castable_fields)
     |> validate_required(@required_fields)
@@ -155,8 +152,22 @@ defmodule Helix.Software.Model.File do
     |> validate_inclusion(:software_type, @software_types)
     |> unique_constraint(:full_path, name: :files_storage_id_full_path_index)
     |> update_change(:path, &add_leading_slash/1)
-    |> update_change(:path, &remove_leading_slash/1)
+    |> update_change(:path, &remove_trailing_slash/1)
     |> prepare_changes(&update_full_path/1)
+  end
+
+  @spec create_module_assoc(module_params) ::
+    FileModule.changeset
+  docp """
+  Helper/wrapper to `FileModule.create_changeset/1`
+  """
+  defp create_module_assoc({name, data}) do
+    params = %{
+      name: name,
+      version: data.version
+    }
+
+    FileModule.create_changeset(params)
   end
 
   docp """
@@ -179,8 +190,11 @@ defmodule Helix.Software.Model.File do
   defp add_leading_slash(path),
     do: "/" <> path
 
-  # Removes the leading slash of a string if any unless it is the only char
-  defp remove_leading_slash(path) do
+  docp """
+  Removes the trailing slash of a path, if any. Does not apply when "/" is the
+  actual path.
+  """
+  defp remove_trailing_slash(path) do
     path_size = (byte_size(path) - 1) * 8
 
     case path do
@@ -192,33 +206,59 @@ defmodule Helix.Software.Model.File do
   end
 
   defmodule Query do
+
     import Ecto.Query
+    import HELL.Macros
 
     alias Ecto.Queryable
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
-    @spec by_id(Queryable.t, File.idtb) ::
+    @spec by_file(Queryable.t, File.idtb) ::
       Queryable.t
-    def by_id(query \\ File, id),
-      do: where(query, [f], f.file_id == ^id)
-
-    @spec from_id_list(Queryable.t, [File.idtb], :and | :or) ::
-      Queryable.t
-    def from_id_list(query \\ File, id_list, comparison_operator \\ :and)
-    def from_id_list(query, id_list, :and),
-      do: where(query, [f], f.file_id in ^id_list)
-    def from_id_list(query, id_list, :or),
-      do: or_where(query, [f], f.file_id in ^id_list)
+    def by_file(query \\ File, id) do
+      query
+      |> where([f], f.file_id == ^id)
+      |> join_assoc_modules()
+      |> preload_modules()
+    end
 
     @spec by_storage(Queryable.t, Storage.idtb) ::
       Queryable.t
     def by_storage(query \\ File, id),
       do: where(query, [f], f.storage_id == ^id)
 
+    def by_version(query \\ File, storage, module) do
+      query
+      |> by_storage(storage)
+      |> join_modules()
+      |> by_module(module)
+      |> order_by_version()
+      |> select([fm], fm.file_id)
+      |> limit(1)
+    end
+
+    def by_module(query, module_name),
+      do: where(query, [..., fm], fm.name == ^module_name)
+
+    def order_by_version(query),
+      do: order_by(query, [..., fm], desc: fm.version)
+
     @spec not_encrypted(Queryable.t) ::
       Queryable.t
     def not_encrypted(query \\ File),
       do: where(query, [f], is_nil(f.crypto_version))
+
+    defp join_modules(query),
+      do: join(query, :left, [f], fm in FileModule, fm.file_id == f.file_id)
+
+    defp join_assoc_modules(query),
+      do: join(query, :left, [f], fm in assoc(f, :modules))
+
+    docp """
+    Preloads FileModules into the schema
+    """
+    defp preload_modules(query),
+      do: preload(query, [..., m], [modules: m])
   end
 end

@@ -12,7 +12,6 @@ defmodule Helix.Software.Action.Flow.Software.Cracker do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
-  alias Helix.Software.Internal.File, as: FileInternal
 
   @type params :: CrackerBruteforce.create_params
 
@@ -24,13 +23,13 @@ defmodule Helix.Software.Action.Flow.Software.Cracker do
     ProcessAction.on_create_error
     | {:error, CrackerBruteforce.changeset}
 
-  @spec execute_cracker(File.t_of_type(:cracker), Server.id, params, meta) ::
+  @spec execute(File.t_of_type(:cracker), Server.id, params, meta) ::
     {:ok, Process.t}
     | on_execute_error
   @doc """
   Executes the cracker for the Bruteforce module
   """
-  def execute_cracker(file, server_id, params, meta) do
+  def execute(file, server_id, params, meta) do
     flowing do
       with \
         {:ok, data, firewall} <- prepare(file, params),
@@ -70,7 +69,6 @@ defmodule Helix.Software.Action.Flow.Software.Cracker do
 
     create_changeset = fn ->
       file
-      |> FileInternal.load_modules()
       |> CrackerBruteforce.create(params)
     end
 

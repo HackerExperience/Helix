@@ -26,34 +26,23 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
     create table(:files, primary_key: false) do
       add :file_id, :inet, primary_key: true
       add :software_type,
-        references(
-          :software_types,
-          column: :software_type,
-          type: :string),
+        references(:software_types, column: :software_type, type: :string),
         null: false
       add :name, :string
       add :path, :string, null: false
       add :full_path, :string, null: false
       add :file_size, :integer
-      add :storage_id,
-        references(
-          :storages,
-          column: :storage_id,
-          type: :inet)
+      add :storage_id, references(:storages, column: :storage_id, type: :inet)
       add :crypto_version, :integer
 
       timestamps()
     end
-
     create unique_index(:files, [:storage_id, :full_path])
 
     create table(:software_modules, primary_key: false) do
-      add :software_module, :string, primary_key: true
+      add :module, :string, primary_key: true
       add :software_type,
-        references(
-          :software_types,
-          column: :software_type,
-          type: :string),
+        references(:software_types, column: :software_type, type: :string),
         null: false
     end
 
@@ -65,19 +54,16 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
           type: :inet,
           on_delete: :delete_all),
         primary_key: true
-      add :software_module,
-        references(
-          :software_modules,
-          column: :software_module,
-          type: :string),
+      add :name,
+        references(:software_modules, column: :module, type: :string),
         primary_key: true
-      add :module_version, :integer, null: false
+      add :version, :integer, null: false
     end
 
     create constraint(
       :file_modules,
-      :module_version_must_be_positive,
-      check: "module_version > 0")
+      :version_must_be_positive,
+      check: "version > 0")
 
     # File specializations
     create table(:text_files, primary_key: false) do

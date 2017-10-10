@@ -131,8 +131,6 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.File.Transfer.Processed
   event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent
   event Software.Model.Software.Cracker.Overflow.ConclusionEvent
-  event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent
-  event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent
   event Software.Model.SoftwareType.Firewall.FirewallStartedEvent
   event Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
   event Software.Model.SoftwareType.LogForge.Create.ConclusionEvent
@@ -146,14 +144,6 @@ defmodule Helix.Event.Dispatcher do
   event Software.Model.Software.Cracker.Overflow.ConclusionEvent,
     SoftwareHandler.Cracker,
     :overflow_conclusion
-
-  event Software.Model.SoftwareType.Decryptor.ProcessConclusionEvent,
-    SoftwareHandler.Decryptor,
-    :complete
-
-  event Software.Model.SoftwareType.Encryptor.ProcessConclusionEvent,
-    SoftwareHandler.Encryptor,
-    :complete
 
   event SoftwareEvent.File.Transfer.Processed,
     SoftwareHandler.File.Transfer,

@@ -1,7 +1,9 @@
 defmodule Helix.Software.Query.Storage do
 
   alias Helix.Hardware.Model.Component
+  alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
@@ -16,6 +18,20 @@ defmodule Helix.Software.Query.Storage do
     | nil
   defdelegate fetch_by_hdd(hdd_id),
     to: StorageInternal
+
+  @spec storage_contents(Storage.t) ::
+    %{folder :: File.path => [File.t]}
+  def storage_contents(storage) do
+    storage
+    |> FileInternal.get_files_on_storage()
+    |> Enum.group_by(&(&1.path))
+  end
+
+  @spec files_on_storage(Storage.t) ::
+    [File.t]
+  defdelegate files_on_storage(storage),
+    to: FileInternal,
+    as: :get_files_on_storage
 
   @spec get_drive_ids(Storage.id) ::
     [Component.id]

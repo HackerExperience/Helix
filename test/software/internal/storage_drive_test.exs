@@ -6,11 +6,11 @@ defmodule Helix.Software.Internal.StorageDriveTest do
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Software.Factory
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   test "linking succeeds with a valid storage" do
     drive_id = Component.ID.generate()
-    storage = Factory.insert(:storage, %{drives: []})
+    {storage, _} = SoftwareSetup.storage()
 
     StorageDriveInternal.link_drive(storage, drive_id)
 
@@ -21,26 +21,41 @@ defmodule Helix.Software.Internal.StorageDriveTest do
 
   describe "getting" do
     test "returns every drive of given storage" do
-      storage = Factory.insert(:storage, %{drives: []})
-      expected_drives =
-        3
-        |> Factory.insert_list(:storage_drive, storage: storage)
-        |> Enum.map(&(&1.drive_id))
+      {storage, _} = SoftwareSetup.storage()
 
-      got_drives = StorageDriveInternal.get_storage_drives(storage)
-      assert Enum.sort(expected_drives) == Enum.sort(got_drives)
+      expected_drives =
+        1..3
+        |> Enum.map(fn _ ->
+          drive_id = Component.ID.generate()
+          StorageDriveInternal.link_drive(storage, drive_id)
+          drive_id
+        end)
+
+      storage_drives = StorageDriveInternal.get_storage_drives(storage)
+
+      Enum.each(expected_drives, fn drive_id ->
+        assert drive_id in storage_drives
+      end)
     end
 
-    test " returns an empty list when storage has no drives" do
-      driveless_storage = Factory.insert(:storage, %{drives: []})
-      got_drives = StorageDriveInternal.get_storage_drives(driveless_storage)
+    test "returns an empty list when storage has no drives" do
+      {storage, _} = SoftwareSetup.storage()
 
+      # Remove drive from storage
+      [drive_id] = StorageDriveInternal.get_storage_drives(storage)
+      StorageDriveInternal.unlink_drive(drive_id)
+
+      got_drives = StorageDriveInternal.get_storage_drives(storage)
       assert Enum.empty?(got_drives)
+
+      CacheHelper.sync_test()
     end
   end
 
   test "unlinking removes storage_drive" do
-    %{storage: storage, drive_id: drive_id} = Factory.insert(:storage_drive)
+    {storage, _} = SoftwareSetup.storage()
+
+    [drive_id] = StorageDriveInternal.get_storage_drives(storage)
 
     assert drive_id in StorageDriveInternal.get_storage_drives(storage)
     StorageDriveInternal.unlink_drive(drive_id)

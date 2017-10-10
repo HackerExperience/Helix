@@ -22,7 +22,7 @@ defmodule Helix.Software.Action.Flow.File do
     | %{}
 
   @type error ::
-    {:error, :notexecutable}
+    {:error, :not_executable}
     | execution_errors
 
   @spec execute_file(File.t, Server.id, params, meta) ::
@@ -31,20 +31,20 @@ defmodule Helix.Software.Action.Flow.File do
   @doc """
   Starts the process defined by `file` on `server`.
 
-  If `file` is not an executable software, returns `{:error, :notexecutable}`.
+  If `file` is not an executable software, returns `{:error, :not_executable}`.
 
   If the process can not be started on the server, returns the respective error.
   """
   def execute_file(file = %File{}, server, params, meta \\ %{}) do
     case file do
       %File{software_type: :cracker} ->
-        CrackerFlow.execute_cracker(file, server, params, meta)
+        CrackerFlow.execute(file, server, params, meta)
       %File{software_type: :firewall} ->
-        FirewallFlow.execute_firewall(file, server, params)
+        FirewallFlow.execute(file, server, params)
       %File{software_type: :log_forger} ->
-        LogForgerFlow.execute_log_forger(file, server, params)
+        LogForgerFlow.execute(file, server, params)
       %File{} ->
-        {:error, :notexecutable}
+        {:error, :not_executable}
     end
   end
 end

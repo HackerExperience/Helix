@@ -23,6 +23,12 @@ defmodule Helix.Software.Model.SoftwareType do
 
   # TODO: Add module types once file_module refactor is done
 
+  # TODO: Software macro:
+  # software \
+  #   type: :cracker,
+  #   extension: ".crc",
+  #   modules: [:bruteforce, :overflow]
+
   @primary_key false
   schema "software_types" do
     field :software_type, Constant,
@@ -40,49 +46,49 @@ defmodule Helix.Software.Model.SoftwareType do
       },
       cracker: %{
         extension: "crc",
-        modules: [:cracker_bruteforce, :cracker_overflow]
+        modules: [:bruteforce, :overflow]
       },
       exploit: %{
         extension: "exp",
-        modules: [:exploit_ftp, :exploit_ssh]
+        modules: [:ftp, :ssh]
       },
       firewall: %{
         extension: "fwl",
-        modules: [:firewall_active, :firewall_passive]
+        modules: [:fwl_active, :fwl_passive]
       },
       hasher: %{
         extension: "hash",
-        modules: [:hasher_password]
+        modules: [:password]
       },
       log_forger: %{
         extension: "logf",
-        modules: [:log_forger_create, :log_forger_edit]
+        modules: [:log_create, :log_edit]
       },
       log_recover: %{
         extension: "logr",
-        modules: [:log_recover_recover]
+        modules: [:log_recover]
       },
       encryptor: %{
         extension: "enc",
         modules: [
-          :encryptor_file,
-          :encryptor_log,
-          :encryptor_connection,
-          :encryptor_process
+          :encrypt_file,
+          :encrypt_log,
+          :encrypt_connection,
+          :encrypt_process
         ]
       },
       decryptor: %{
         extension: "dec",
         modules: [
-          :decryptor_file,
-          :decryptor_log,
-          :decryptor_connection,
-          :decryptor_process
+          :decrypt_file,
+          :decrypt_log,
+          :decrypt_connection,
+          :decrypt_process
         ]
       },
       anymap: %{
         extension: "map",
-        modules: [:anymap_geo, :anymap_inbound, :anymap_outbound]
+        modules: [:map_geo, :map_net]
       },
       crypto_key: %{
         extension: "key",

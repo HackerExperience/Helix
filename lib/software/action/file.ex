@@ -4,16 +4,18 @@ defmodule Helix.Software.Action.File do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
-  @spec create(File.creation_params) ::
+  @spec create(File.creation_params, [File.module_params]) ::
     {:ok, File.t}
     | {:error, Ecto.Changeset.t}
-  defdelegate create(params),
-    to: FileInternal
+  def create(file_params, modules) do
+    # TODO: Check storage size
+    FileInternal.create(file_params, modules)
+  end
 
-  @spec copy(File.t, Storage.t, path :: String.t) ::
+  @spec copy(File.t, Storage.t, FileInternal.copy_params) ::
     {:ok, File.t}
     | {:error, Ecto.Changeset.t}
-  defdelegate copy(file, storage, path),
+  defdelegate copy(file, storage, params),
     to: FileInternal
 
   @spec move(File.t, path :: String.t) ::

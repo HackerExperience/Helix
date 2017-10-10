@@ -4,7 +4,7 @@ defmodule Helix.Software.Public.Index do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Public.View.File, as: FileView
-  alias Helix.Software.Query.File, as: FileQuery
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
   @type index ::
     %{File.path => index_file}
@@ -36,7 +36,7 @@ defmodule Helix.Software.Public.Index do
     {:ok, storages} = CacheQuery.from_server_get_storages(server_id)
 
     storages
-    |> Enum.map(&FileQuery.storage_contents/1)
+    |> Enum.map(&StorageQuery.storage_contents/1)
     |> Enum.reduce(%{}, fn el, acc ->
       # Merge the maps, so %{"foo" => [1]} and %{"foo" => [2]} becomes
       # %{"foo" => [1, 2]}

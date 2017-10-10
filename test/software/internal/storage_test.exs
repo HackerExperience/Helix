@@ -6,7 +6,7 @@ defmodule Helix.Software.Internal.StorageTest do
   alias Helix.Software.Model.Storage
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Software.Factory
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "create/1" do
     test "it works" do
@@ -16,21 +16,22 @@ defmodule Helix.Software.Internal.StorageTest do
 
   describe "fetching" do
     test "returns a record based on its identification" do
-      storage = Factory.insert(:storage)
+      {storage, _} = SoftwareSetup.storage()
       assert %Storage{} = StorageInternal.fetch(storage.storage_id)
     end
 
-    test "returns nil if storage with id doesn't exists" do
-      storage_id = Storage.ID.generate()
-      refute StorageInternal.fetch(storage_id)
+    test "returns nil if storage doesn't exists" do
+      refute StorageInternal.fetch(Storage.ID.generate())
     end
   end
 
   test "delete/1 removes entry" do
-    storage = Factory.insert(:storage)
+    {storage, _} = SoftwareSetup.storage()
 
     assert StorageInternal.fetch(storage.storage_id)
+
     StorageInternal.delete(storage)
+
     refute StorageInternal.fetch(storage.storage_id)
 
     CacheHelper.sync_test()

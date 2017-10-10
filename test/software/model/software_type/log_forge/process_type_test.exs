@@ -14,17 +14,9 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
-  alias Helix.Test.Software.Factory, as: SoftwareFactory
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  # FIXME: this will be removed when file modules become just an attribute
-  @forger_file (
-    :file
-    |> SoftwareFactory.build(software_type: :log_forger)
-    |> Map.update!(:file_modules, fn xs ->
-      xs
-      |> Enum.map(&({&1.software_module, &1.module_version}))
-      |> :maps.from_list()
-    end))
+  @forger_file (SoftwareSetup.file!(type: :log_forger))
 
   describe "create/2" do
     test "returns changeset if invalid" do

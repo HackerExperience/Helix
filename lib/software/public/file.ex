@@ -89,7 +89,7 @@ defmodule Helix.Software.Public.File do
     end
 
     get_cracker = fn ->
-      FileQuery.fetch_best(gateway_id, :cracker, :cracker_bruteforce)
+      FileQuery.fetch_best(gateway_id, :bruteforce)
     end
 
     with \
