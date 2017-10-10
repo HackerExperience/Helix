@@ -106,7 +106,7 @@ defprotocol Helix.Event.Notificable do
     }
 
   @spec generate_payload(event :: struct, Socket.t) ::
-    {:ok, %{data: payload :: term, event: String.t}}
+    {:ok, payload :: term}
     | :noreply
   @doc """
   Generates the actual payload of the event for the given player, according to
@@ -150,4 +150,9 @@ defprotocol Helix.Event.Notificable do
   implementing for Account or other channels)
   """
   def whom_to_notify(event)
+
+  @doc """
+  Returns the name of the event that will be sent to the client.
+  """
+  def get_event_name(event)
 end
