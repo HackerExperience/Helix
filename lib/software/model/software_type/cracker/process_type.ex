@@ -222,7 +222,7 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
-    import Helix.Process.Model.Macros
+    import Helix.Process
 
     alias Helix.Network.Model.Connection
     alias Helix.Process.Model.Process

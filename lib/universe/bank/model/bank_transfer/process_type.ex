@@ -13,7 +13,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
-    import Helix.Process.Model.Macros
+    import Helix.Process
 
     alias Helix.Universe.Bank.Event.Bank.Transfer.Aborted,
       as: BankTransferAbortedEvent

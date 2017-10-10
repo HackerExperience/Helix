@@ -16,7 +16,7 @@ defmodule Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
-    import Helix.Process.Model.Macros
+    import Helix.Process
 
     alias Ecto.Changeset
     alias Helix.Universe.Bank.Event.RevealPassword.Processed,
