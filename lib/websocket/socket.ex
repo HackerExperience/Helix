@@ -89,6 +89,8 @@ defmodule Helix.Websocket.Socket do
     case Notificable.Flow.generate_event(event, socket) do
       {:ok, payload} ->
         channel_push.(socket, "event", payload)
+
+        WebsocketUtils.no_reply(socket)
       _ ->
         WebsocketUtils.no_reply(socket)
     end

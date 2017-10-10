@@ -45,14 +45,14 @@ defmodule Helix.Event.Notificable.Flow do
   def generate_event(event, socket) do
     case Notificable.generate_payload(event, socket) do
       {:ok, data} ->
-        event =
+        payload =
           %{
             data: data,
             event: Notificable.get_event_name(event),
             event_id: event.__eid__
           }
 
-        {:ok, event}
+        {:ok, payload}
 
       noreply ->
         noreply

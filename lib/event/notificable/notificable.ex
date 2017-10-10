@@ -91,7 +91,7 @@ defprotocol Helix.Event.Notificable do
   Note that this is true for the ServerChannel. Maybe in some other contexts
   we need to test other stuff as well.
 
-  Example test case: `test/process/model/process/event_test.exs`
+  Example test case: `test/process/event/process_created_test.exs`
   """
 
   alias Phoenix.Socket

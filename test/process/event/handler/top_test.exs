@@ -1,8 +1,8 @@
-defmodule Helix.Process.Event.TOPTest do
+defmodule Helix.Process.Event.Handler.TOPTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Process.Event.TOP, as: TOPEvent
+  alias Helix.Process.Event.Handler.TOP, as: TOPHandler
   alias Helix.Process.Query.Process, as: ProcessQuery
 
   alias Helix.Test.Event.Setup, as: EventSetup
@@ -24,7 +24,7 @@ defmodule Helix.Process.Event.TOPTest do
 
     assert ProcessQuery.fetch(process.process_id)
 
-    TOPEvent.connection_closed(event)
+    TOPHandler.connection_closed(event)
 
     # Give enough time for all the asynchronous stuff to happen
     :timer.sleep(50)

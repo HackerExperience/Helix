@@ -11,7 +11,7 @@ defmodule Helix.Software.Process.File.Transfer do
 
   alias Helix.Software.Model.Storage
 
-  @type t :: %{
+  @type t :: %__MODULE__{
     type: :download | :upload,
     destination_storage_id: Storage.id,
     connection_type: :ftp | :public_ftp
@@ -58,8 +58,11 @@ defmodule Helix.Software.Process.File.Transfer do
     def kill(data, process, _) do
       unchange(process)
 
-      context = get_servers_context(data, process)
-      event = process_abortion(data, process, context)
+      reason = :killed
+      {from_id, to_id} = get_servers_context(data, process)
+
+      event =
+        FileTransferAbortedEvent.new(process, data, from_id, to_id, reason)
 
       {delete(process), [event]}
     end
@@ -67,8 +70,8 @@ defmodule Helix.Software.Process.File.Transfer do
     def state_change(data, process, _, :complete) do
       unchange(process)
 
-      context = get_servers_context(data, process)
-      event = process_completion(data, process, context)
+      {from_id, to_id} = get_servers_context(data, process)
+      event = FileTransferProcessedEvent.new(process, data, from_id, to_id)
 
       {delete(process), [event]}
     end
@@ -82,33 +85,6 @@ defmodule Helix.Software.Process.File.Transfer do
       do: {process.target_server_id, process.gateway_id}
     defp get_servers_context(%{type: :upload}, process),
       do: {process.gateway_id, process.target_server_id}
-
-    defp process_completion(data, process, {from_server_id, to_server_id}) do
-      %FileTransferProcessedEvent{
-        entity_id: process.source_entity_id,
-        to_server_id: to_server_id,
-        from_server_id: from_server_id,
-        file_id: process.file_id,
-        network_id: process.network_id,
-        to_storage_id: data.destination_storage_id,
-        connection_type: data.connection_type,
-        type: data.type
-      }
-    end
-
-    defp process_abortion(data, process, {from_server_id, to_server_id}) do
-      %FileTransferAbortedEvent{
-        entity_id: process.source_entity_id,
-        to_server_id: to_server_id,
-        from_server_id: from_server_id,
-        file_id: process.file_id,
-        network_id: process.network_id,
-        to_storage_id: data.destination_storage_id,
-        connection_type: data.connection_type,
-        type: data.type,
-        reason: :killed
-      }
-    end
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)

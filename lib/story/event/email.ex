@@ -1,6 +1,8 @@
 defmodule Helix.Story.Event.Email do
 
-  defmodule Sent do
+  import Helix.Event
+
+  event Sent do
     @moduledoc """
     StoryEmailSentEvent is fired when a Contact (Storyline character) sends an
     email to the Player.
@@ -18,10 +20,9 @@ defmodule Helix.Story.Event.Email do
         timestamp: DateTime.t
       }
 
-    @enforce_keys [:entity_id, :step, :email_id, :meta, :timestamp]
-    defstruct [:entity_id, :step, :email_id, :meta, :timestamp]
+    event_struct [:entity_id, :step, :email_id, :meta, :timestamp]
 
-    defimpl Helix.Event.Notificable do
+    notify do
       @moduledoc """
       Logic of the notification that will be sent to the client once the event
       `StoryEmailSent` is fired.
@@ -29,7 +30,7 @@ defmodule Helix.Story.Event.Email do
 
       alias HELL.ClientUtils
 
-      @event "story_email_sent"
+      @event :story_email_sent
 
       def generate_payload(event, _socket) do
         data = %{
@@ -39,7 +40,7 @@ defmodule Helix.Story.Event.Email do
           timestamp: ClientUtils.to_timestamp(event.timestamp)
         }
 
-        {:ok, %{data: data, event: @event}}
+        {:ok, data}
       end
 
       @doc """

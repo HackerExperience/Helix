@@ -96,10 +96,11 @@ defmodule Helix.Test.Channel.Setup do
   @doc """
   - socket: Whether to reuse an existing socket.
   - own_server: Whether joining player's own server. No destination is created.
+  - destination_id: Specify destination server.
   - network_id: Specify network id. Not used if `own_server`
   - counter: Specify counter (used by ServerWebsocketChannelState). Default is 0
   - bounces: List of bounces between each server. Not used if `own_server`.
-    Expected type: [Server.id] TODO
+    Expected type: [Server.id]
   - gateway_files: Whether to generate random files on gateway. Defaults to
     false.
   - destination_files: Whether to generate random files on destination. Defaults
@@ -125,7 +126,8 @@ defmodule Helix.Test.Channel.Setup do
 
         {join, nil}
       else
-        {destination, _} = ServerSetup.server()
+        destination = ServerSetup.create_or_fetch(opts[:destination_id])
+
         join = get_join_data(opts, gateway, destination)
 
         {join, destination}

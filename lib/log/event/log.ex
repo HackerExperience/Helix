@@ -1,6 +1,8 @@
 defmodule Helix.Log.Event.Log do
 
-  defmodule Created do
+  import Helix.Event
+
+  event Created do
     @moduledoc """
     LogCreatedEvent is fired when a brand new log entry is added to the server.
     """
@@ -14,8 +16,7 @@ defmodule Helix.Log.Event.Log do
         server_id: Server.id
       }
 
-    @enforce_keys [:server_id, :log]
-    defstruct [:server_id, :log]
+    event_struct [:server_id, :log]
 
     @spec new(Log.t) ::
       t
@@ -26,11 +27,11 @@ defmodule Helix.Log.Event.Log do
       }
     end
 
-    defimpl Helix.Event.Notificable do
+    notify do
 
       alias HELL.ClientUtils
 
-      @event "log_created"
+      @event :log_created
 
       def generate_payload(event, _socket) do
         data = %{
@@ -40,12 +41,7 @@ defmodule Helix.Log.Event.Log do
           message: event.log.message
         }
 
-        return = %{
-          data: data,
-          event: @event
-        }
-
-        {:ok, return}
+        {:ok, data}
       end
 
       def whom_to_notify(event),
@@ -53,7 +49,7 @@ defmodule Helix.Log.Event.Log do
     end
   end
 
-  defmodule Modified do
+  event Modified do
     @moduledoc """
     LogModifiedEvent is fired when an existing log has changed (revised) or
     has been recovered.
@@ -70,8 +66,7 @@ defmodule Helix.Log.Event.Log do
         server_id: Server.id
       }
 
-    @enforce_keys [:server_id, :log]
-    defstruct [:server_id, :log]
+    event_struct [:server_id, :log]
 
     @spec new(Log.t) ::
       t
@@ -82,11 +77,11 @@ defmodule Helix.Log.Event.Log do
       }
     end
 
-    defimpl Helix.Event.Notificable do
+    notify do
 
       alias HELL.ClientUtils
 
-      @event "log_modified"
+      @event :log_modified
 
       def generate_payload(event, _socket) do
         data = %{
@@ -96,12 +91,7 @@ defmodule Helix.Log.Event.Log do
           message: event.log.message
         }
 
-        return = %{
-          data: data,
-          event: @event
-        }
-
-        {:ok, return}
+        {:ok, data}
       end
 
       def whom_to_notify(event),
@@ -109,7 +99,7 @@ defmodule Helix.Log.Event.Log do
     end
   end
 
-  defmodule Deleted do
+  event Deleted do
     @moduledoc """
     LogDeletedEvent is fired when a forged log is recovered beyond its original
     revision, leading to the log deletion.
@@ -124,8 +114,7 @@ defmodule Helix.Log.Event.Log do
         server_id: Server.id
       }
 
-    @enforce_keys [:server_id, :log]
-    defstruct [:server_id, :log]
+    event_struct [:server_id, :log]
 
     @spec new(Log.t) ::
       t
@@ -136,9 +125,9 @@ defmodule Helix.Log.Event.Log do
       }
     end
 
-    defimpl Helix.Event.Notificable do
+    notify do
 
-      @event "log_deleted"
+      @event :log_deleted
 
       def generate_payload(event, _socket) do
         data = %{
@@ -146,12 +135,7 @@ defmodule Helix.Log.Event.Log do
           server_id: to_string(event.server_id)
         }
 
-        return = %{
-          data: data,
-          event: @event
-        }
-
-        {:ok, return}
+        {:ok, data}
       end
 
       def whom_to_notify(event),

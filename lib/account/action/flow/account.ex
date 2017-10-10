@@ -2,14 +2,15 @@ defmodule Helix.Account.Action.Flow.Account do
 
   import HELF.Flow
 
+  alias Helix.Event
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
   alias Helix.Server.Model.Server
+  alias Helix.Account.Action.Account, as: AccountAction
   alias Helix.Account.Model.Account
-  alias Helix.Account.Query.Account, as: AccountQuery
 
-  @spec setup_account(Account.id | Account.t) ::
+  @spec setup_account(Account.t) ::
     {:ok, %{entity: Entity.t, server: Server.t}}
     | :error
   @doc """
@@ -31,9 +32,19 @@ defmodule Helix.Account.Action.Flow.Account do
       end
     end
   end
-  def setup_account(id = %Account.ID{}) do
-    id
-    |> AccountQuery.fetch()
-    |> setup_account()
+
+  @spec create(Account.email, Account.username, Account.password) ::
+    {:ok, Account.t}
+    | {:error, Ecto.Changeset.t}
+  def create(email, username, password) do
+    flowing do
+      with \
+        {:ok, account, events} <-
+          AccountAction.create(email, username, password),
+        on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, account}
+      end
+    end
   end
 end

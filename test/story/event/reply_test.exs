@@ -20,12 +20,13 @@ defmodule Helix.Story.Event.ReplyTest do
 
     event = EventSetup.Story.reply_sent()
 
-    assert {:ok, payload} = Notificable.generate_payload(event, socket)
+    assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-    assert payload.event == "story_reply_sent"
-    assert payload.data.step == to_string(event.step)
-    assert payload.data.reply_to == event.reply_to
-    assert payload.data.reply_id == event.reply_id
-    refute is_map(payload.data.timestamp)
+    assert data.step == to_string(event.step)
+    assert data.reply_to == event.reply_to
+    assert data.reply_id == event.reply_id
+    refute is_map(data.timestamp)
+
+    assert "story_reply_sent" == Notificable.get_event_name(event)
   end
 end

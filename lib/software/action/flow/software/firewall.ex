@@ -9,7 +9,7 @@ defmodule Helix.Software.Action.Flow.Software.Firewall do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: FirewallPassive
 
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
+  alias Helix.Software.Event.Firewall.Started, as: FirewallStartedEvent
 
   @type params :: %{}
   @type on_execute_error :: ProcessAction.on_create_error

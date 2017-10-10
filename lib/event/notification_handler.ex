@@ -18,8 +18,9 @@ defmodule Helix.Event.NotificationHandler do
   """
   def notification_handler(event) do
     if Notificable.impl_for(event) do
+      event = Notificable.Flow.add_event_identifier(event)
+
       event
-      |> Notificable.Flow.add_event_identifier()
       |> Notificable.whom_to_notify()
       |> channel_mapper()
       |> Enum.each(&(Helix.Endpoint.broadcast(&1, "event", event)))

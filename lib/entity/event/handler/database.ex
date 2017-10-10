@@ -1,16 +1,16 @@
-defmodule Helix.Entity.Event.Database do
+defmodule Helix.Entity.Event.Handler.Database do
 
-  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
   alias Helix.Entity.Action.Database, as: DatabaseAction
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
-  alias Helix.Server.Model.Server.PasswordAcquiredEvent,
+  alias Helix.Server.Event.Server.Password.Acquired,
     as: ServerPasswordAcquiredEvent
-  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
+  alias Helix.Universe.Bank.Event.Bank.Account.Password.Revealed,
     as: BankAccountPasswordRevealedEvent
-  alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
+  alias Helix.Universe.Bank.Event.Bank.Account.Login,
     as: BankAccountLoginEvent
-  alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Token.Acquired,
+    as: BankAccountTokenAcquiredEvent
 
   @doc """
   Handler called when a BruteforceProcess has finished and the target server
@@ -27,7 +27,8 @@ defmodule Helix.Entity.Event.Database do
       event.network_id,
       event.server_ip,
       event.server_id,
-      event.password)
+      event.password
+    )
   end
 
   @doc """
@@ -40,22 +41,23 @@ defmodule Helix.Entity.Event.Database do
   handler's goal is to store the newly discovered password into the Database.
   """
   def bank_password_revealed(event = %BankAccountPasswordRevealedEvent{}) do
-    account = BankQuery.fetch_account(event.atm_id, event.account_number)
-
     DatabaseAction.update_bank_password(
       event.entity_id,
-      account,
-      event.password)
+      event.account,
+      event.account.password
+    )
   end
 
   @doc """
   Handler called when a BankToken is successfully acquired, after an Overflow
   attack. Its goal is simple: store the new token on the Hacked Database.
   """
-  def bank_token_acquired(event = %BankTokenAcquiredEvent{}) do
-    account = BankQuery.fetch_account(event.atm_id, event.account_number)
-
-    DatabaseAction.update_bank_token(event.entity_id, account, event.token_id)
+  def bank_token_acquired(event = %BankAccountTokenAcquiredEvent{}) do
+    DatabaseAction.update_bank_token(
+      event.entity_id,
+      event.account,
+      event.token.token_id
+    )
   end
 
   @doc """
@@ -67,6 +69,7 @@ defmodule Helix.Entity.Event.Database do
     DatabaseAction.update_bank_login(
       event.entity_id,
       event.account,
-      event.token_id)
+      event.token_id
+    )
   end
 end

@@ -3,6 +3,7 @@ defmodule Helix.Process.State.TOP.Domain do
 
   alias Ecto.Changeset
   alias Helix.Server.Model.Server
+  alias Helix.Process.Event.Process.Completed, as: ProcessCompletedEvent
   alias Helix.Process.Internal.TOP.Allocator.Plan, as: PlanTOP
   alias Helix.Process.Internal.TOP.ServerResources, as: ServerResourcesTOP
   alias Helix.Process.Model.Process
@@ -134,17 +135,13 @@ defmodule Helix.Process.State.TOP.Domain do
             |> Process.calculate_work(now)
 
           if Process.complete?(process) do
-            # TODO: this is an awkward interface. Wrap into into a facade maybe?
             process_data = Changeset.get_field(process, :process_data)
             {processes, events} = ProcessType.conclusion(
               process_data,
               process)
 
-            # I think i should probably make this a function of the event module
-            process_conclusion = %Process.ProcessConclusionEvent{
-              gateway_id: Changeset.get_field(process, :gateway_id),
-              target_id: Changeset.get_field(process, :target_server_id)
-            }
+            process_completed =
+              ProcessCompletedEvent.new(Changeset.apply_changes(process))
 
             {delete, keep} =
               processes
@@ -159,7 +156,7 @@ defmodule Helix.Process.State.TOP.Domain do
             data_acc =
               data_acc
               |> store_processes(delete)
-              |> store_events([process_conclusion])
+              |> store_events([process_completed])
               |> store_events(events)
 
             {data_acc, keep ++ process_acc}

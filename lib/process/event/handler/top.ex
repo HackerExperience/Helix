@@ -1,4 +1,4 @@
-defmodule Helix.Process.Event.TOP do
+defmodule Helix.Process.Event.Handler.TOP do
   @moduledoc false
 
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent

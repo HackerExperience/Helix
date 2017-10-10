@@ -1,4 +1,4 @@
-defmodule Helix.Process.Event.Cracker do
+defmodule Helix.Process.Event.Handler.Cracker do
   @moduledoc false
 
   alias Ecto.Changeset
@@ -9,8 +9,8 @@ defmodule Helix.Process.Event.Cracker do
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Repo
 
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
-  alias Helix.Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
+  alias Helix.Software.Event.Firewall.Started, as: FirewallStartedEvent
+  alias Helix.Software.Event.Firewall.Stopped, as: FirewallStoppedEvent
 
   def firewall_started(event = %FirewallStartedEvent{}) do
     event.gateway_id

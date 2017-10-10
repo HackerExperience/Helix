@@ -10,7 +10,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
-  alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType,
     as: RevealPasswordProcessType
@@ -25,20 +24,22 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   It is a process managed by TOP, in the sense that the password reveal does
   not happen instantly. Completion is handled by `BankAccountEvent`.
+
+  Emits: ProcessCreatedEvent
   """
-  @spec reveal_password(ATM.id, BankAccount.account, BankToken.id, Server.id) ::
+  @spec reveal_password(BankAccount.t, BankToken.id, Server.id) ::
     {:ok, Process.t}
     | ProcessAction.on_create_error
-  def reveal_password(atm_id, account_number, token_id, gateway_id) do
+  def reveal_password(account, token_id, gateway_id) do
     process_data = %RevealPasswordProcessType{
       token_id: token_id,
-      atm_id: atm_id,
-      account_number: account_number
+      atm_id: account.atm_id,
+      account_number: account.account_number
     }
 
     params = %{
       gateway_id: gateway_id,
-      target_server_id: atm_id,
+      target_server_id: account.atm_id,
       network_id: NetworkQuery.internet().network_id,
       objective: %{cpu: 1},
       process_data: process_data,

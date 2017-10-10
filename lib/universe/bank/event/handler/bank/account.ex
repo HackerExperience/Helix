@@ -1,13 +1,12 @@
-defmodule Helix.Universe.Bank.Event.BankAccount do
+defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
 
   import HELF.Flow
 
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
-  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
-  alias Helix.Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent,
-    as: RevealPasswordConclusionEvent
+  alias Helix.Universe.Bank.Event.RevealPassword.Processed,
+    as: RevealPasswordProcessedEvent
 
   @doc """
   Handles the conclusion of a PasswordReveal process, described at
@@ -15,15 +14,19 @@ defmodule Helix.Universe.Bank.Event.BankAccount do
   only happens with the BankAccountPasswordRevealedEvent, since the conclusion
   of the `PasswordReveal` process does not imply that the password has been
   revealed (since the given input may be invalid).
+
+  Emits: BankAccountPasswordRevealedEvent
   """
-  def password_reveal_conclusion(event = %RevealPasswordConclusionEvent{}) do
+  def password_reveal_processed(event = %RevealPasswordProcessedEvent{}) do
     flowing do
       with \
-        account = %{} <-
-          BankQuery.fetch_account(event.atm_id, event.account_number),
         revealed_by = %{} <- EntityQuery.fetch_by_server(event.gateway_id),
         {:ok, _password, events} <-
-          BankAction.reveal_password(account, event.token_id, revealed_by),
+          BankAction.reveal_password(
+            event.account,
+            event.token_id,
+            revealed_by.entity_id
+          ),
         on_success(fn -> Event.emit(events) end)
       do
         :ok

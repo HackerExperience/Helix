@@ -44,7 +44,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
       {:ok, file}
     else
       _error ->
-        error = :todo
+        error = :unknown  # TODO
 
         event
         |> get_event(:failed, error)
@@ -59,44 +59,12 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
     | FileDownloadFailedEvent.t
     | FileUploadedEvent.t
     | FileUploadFailedEvent.t
-  defp get_event(event = %{type: :download}, :completed, file) do
-    %FileDownloadedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      to_storage_id: event.to_storage_id,
-      network_id: event.network_id,
-      connection_type: event.connection_type,
-      file: file
-    }
-  end
-  defp get_event(event = %{type: :download}, :failed, reason) do
-    %FileDownloadFailedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      network_id: event.network_id,
-      connection_type: event.connection_type,
-      reason: reason
-    }
-  end
-  defp get_event(event = %{type: :upload}, :completed, file) do
-    %FileUploadedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      to_storage_id: event.to_storage_id,
-      network_id: event.network_id,
-      file: file
-    }
-  end
-  defp get_event(event = %{type: :upload}, :failed, reason) do
-    %FileUploadFailedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      network_id: event.network_id,
-      reason: reason
-    }
-  end
+  defp get_event(transfer = %{type: :download}, :completed, file),
+    do: FileDownloadedEvent.new(transfer, file)
+  defp get_event(transfer = %{type: :download}, :failed, reason),
+    do: FileDownloadFailedEvent.new(transfer, reason)
+  defp get_event(transfer = %{type: :upload}, :completed, file),
+    do: FileUploadedEvent.new(transfer, file)
+  defp get_event(transfer = %{type: :upload}, :failed, reason),
+    do: FileUploadFailedEvent.new(transfer, reason)
 end

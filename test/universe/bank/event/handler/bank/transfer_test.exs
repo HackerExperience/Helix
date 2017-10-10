@@ -1,4 +1,4 @@
-defmodule Helix.Universe.Bank.Event.BankTransferTest do
+defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
 
   use Helix.Test.Case.Integration
 

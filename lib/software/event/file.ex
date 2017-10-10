@@ -1,19 +1,22 @@
 defmodule Helix.Software.Event.File do
 
-  defmodule Downloaded do
+  import Helix.Event
+
+  event Downloaded do
     @moduledoc """
     FileDownloadedEvent is fired when a FileTransfer process of type `download`
     has finished successfully, in which case a new file has been transferred to
     the corresponding server.
     """
 
-    import Helix.Event.Loggable.Flow
-
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
+
+    alias Helix.Software.Event.File.Transfer.Processed,
+      as: FileTransferProcessedEvent
 
     @type t :: %__MODULE__{
       entity_id: Entity.id,
@@ -25,16 +28,7 @@ defmodule Helix.Software.Event.File do
       connection_type: :ftp | :public_ftp
     }
 
-    @enforce_keys [
-      :entity_id,
-      :to_server_id,
-      :from_server_id,
-      :file,
-      :network_id,
-      :connection_type,
-      :to_storage_id
-    ]
-    defstruct [
+    event_struct [
       :entity_id,
       :to_server_id,
       :from_server_id,
@@ -44,24 +38,36 @@ defmodule Helix.Software.Event.File do
       :connection_type
     ]
 
-    defimpl Helix.Event.Notificable do
+    @spec new(FileTransferProcessedEvent.t, File.t) ::
+      t
+    def new(
+      transfer = %FileTransferProcessedEvent{type: :download},
+      file = %File{})
+    do
+      %__MODULE__{
+        entity_id: transfer.entity_id,
+        to_server_id: transfer.to_server_id,
+        from_server_id: transfer.from_server_id,
+        to_storage_id: transfer.to_storage_id,
+        network_id: transfer.network_id,
+        connection_type: transfer.connection_type,
+        file: file
+      }
+    end
+
+    notify do
       @moduledoc """
       Notifies the Client that a file has been downloaded.
       """
 
-      @event "file_downloaded"
+      @event :file_downloaded
 
       def generate_payload(event, _socket) do
         data = %{
           file: event.file.id
         }
 
-        return = %{
-          data: data,
-          event: @event
-        }
-
-        {:ok, return}
+        {:ok, data}
       end
 
       @doc """
@@ -87,7 +93,7 @@ defmodule Helix.Software.Event.File do
     end
   end
 
-  defmodule DownloadFailed do
+  event DownloadFailed do
     @moduledoc """
     FileDownloadFailedEvent is fired when a FileTransfer process of type
     `download` has finished with problems, in which case the transfer of the
@@ -97,6 +103,9 @@ defmodule Helix.Software.Event.File do
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
+
+    alias Helix.Software.Event.File.Transfer.Processed,
+      as: FileTransferProcessedEvent
 
     @type reason ::
       :no_space_left
@@ -112,7 +121,7 @@ defmodule Helix.Software.Event.File do
       connection_type: :ftp | :public_ftp
     }
 
-   @enforce_keys [
+    event_struct [
       :reason,
       :entity_id,
       :to_server_id,
@@ -120,17 +129,22 @@ defmodule Helix.Software.Event.File do
       :network_id,
       :connection_type
     ]
-    defstruct [
-      :reason,
-      :entity_id,
-      :to_server_id,
-      :from_server_id,
-      :network_id,
-      :connection_type
-    ]
+
+    @spec new(FileTransferProcessedEvent.t, reason) ::
+      t
+    def new(transfer = %FileTransferProcessedEvent{type: :download}, reason) do
+      %__MODULE__{
+        entity_id: transfer.entity_id,
+        to_server_id: transfer.to_server_id,
+        from_server_id: transfer.from_server_id,
+        network_id: transfer.network_id,
+        connection_type: transfer.connection_type,
+        reason: reason
+      }
+    end
   end
 
-  defmodule Uploaded do
+  event Uploaded do
     @moduledoc """
     FileUploadedEvent is fired when a FileTransfer process of type `upload` has
     finished successfully, in which case a new file has been transferred to the
@@ -143,6 +157,9 @@ defmodule Helix.Software.Event.File do
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 
+    alias Helix.Software.Event.File.Transfer.Processed,
+      as: FileTransferProcessedEvent
+
     @type t :: %__MODULE__{
       entity_id: Entity.id,
       to_server_id: Server.id,
@@ -152,15 +169,7 @@ defmodule Helix.Software.Event.File do
       network_id: Network.id
     }
 
-    @enforce_keys [
-      :entity_id,
-      :to_server_id,
-      :from_server_id,
-      :file,
-      :network_id,
-      :to_storage_id
-    ]
-    defstruct [
+    event_struct [
       :entity_id,
       :to_server_id,
       :from_server_id,
@@ -168,9 +177,25 @@ defmodule Helix.Software.Event.File do
       :to_storage_id,
       :network_id
     ]
+
+    @spec new(FileTransferProcessedEvent.t, File.t) ::
+      t
+    def new(
+      transfer = %FileTransferProcessedEvent{type: :upload},
+      file = %File{})
+    do
+      %__MODULE__{
+        entity_id: transfer.entity_id,
+        to_server_id: transfer.to_server_id,
+        from_server_id: transfer.from_server_id,
+        to_storage_id: transfer.to_storage_id,
+        network_id: transfer.network_id,
+        file: file
+      }
+    end
   end
 
-  defmodule UploadFailed do
+  event UploadFailed do
     @moduledoc """
     FileUploadFailedEvent is fired when a FileTransfer process of type `upload`
     has finished with problems, in which case the transfer of the file was NOT
@@ -180,6 +205,9 @@ defmodule Helix.Software.Event.File do
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
+
+    alias Helix.Software.Event.File.Transfer.Processed,
+      as: FileTransferProcessedEvent
 
     @type reason ::
       :no_space_left
@@ -194,19 +222,24 @@ defmodule Helix.Software.Event.File do
       network_id: Network.id
     }
 
-    @enforce_keys [
+    event_struct [
       :reason,
       :entity_id,
       :to_server_id,
       :from_server_id,
       :network_id
     ]
-    defstruct [
-      :reason,
-      :entity_id,
-      :to_server_id,
-      :from_server_id,
-      :network_id
-    ]
+
+    @spec new(FileTransferProcessedEvent.t, reason) ::
+      t
+    def new(transfer = %FileTransferProcessedEvent{type: :upload}, reason) do
+      %__MODULE__{
+        entity_id: transfer.entity_id,
+        to_server_id: transfer.to_server_id,
+        from_server_id: transfer.from_server_id,
+        network_id: transfer.network_id,
+        reason: reason
+      }
+    end
   end
 end

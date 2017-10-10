@@ -14,13 +14,14 @@ defmodule Helix.Software.Event.Handler.Cracker do
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
-  alias Helix.Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
-  alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
-    as: BruteforceConclusionEvent
-  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
-    as: OverflowConclusionEvent
+  alias Helix.Universe.Bank.Event.Bank.Transfer.Aborted,
+    as: BankTransferAbortedEvent
+  alias Helix.Software.Event.Cracker.Bruteforce.Processed,
+    as: BruteforceProcessedEvent
+  alias Helix.Software.Event.Cracker.Overflow.Processed,
+    as: OverflowProcessedEvent
 
-  @spec bruteforce_conclusion(BruteforceConclusionEvent.t) ::
+  @spec bruteforce_conclusion(BruteforceProcessedEvent.t) ::
     {:ok, Server.password}
     | {:error, {:nip, :notfound}}
     | {:error, :internal}
@@ -31,7 +32,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
 
   Emits: ServerPasswordAcquiredEvent | CrackerBruteforceFailedEvent
   """
-  def bruteforce_conclusion(event = %BruteforceConclusionEvent{}) do
+  def bruteforce_conclusion(event = %BruteforceProcessedEvent{}) do
     flowing do
       with \
         {:ok, password, events} <-
@@ -51,7 +52,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
     end
   end
 
-  @spec overflow_conclusion(OverflowConclusionEvent.t) ::
+  @spec overflow_conclusion(OverflowProcessedEvent.t) ::
     term
   @doc """
   Top-level handler of buffer overflow process conclusion. An overflow attack
@@ -66,7 +67,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
   events, e.g. the `BankTokenAcquiredEvent`.
   """
   def overflow_conclusion(
-    event = %OverflowConclusionEvent{target_connection_id: nil})
+    event = %OverflowProcessedEvent{target_connection_id: nil})
   do
     process = ProcessQuery.fetch(event.target_process_id)
 
@@ -77,7 +78,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
   end
 
   def overflow_conclusion(
-    event = %OverflowConclusionEvent{target_process_id: nil})
+    event = %OverflowProcessedEvent{target_process_id: nil})
   do
     connection = TunnelQuery.fetch_connection(event.target_connection_id)
 
@@ -87,8 +88,8 @@ defmodule Helix.Software.Event.Handler.Cracker do
     end
   end
 
-  @spec overflow_of_wire_transfer(Process.t, OverflowConclusionEvent.t) ::
-    {:ok, BankToken.id}
+  @spec overflow_of_wire_transfer(Process.t, OverflowProcessedEvent.t) ::
+    {:ok, BankToken.t}
     | term
   docp """
   Overflow attack on wire transfer generates an access token for the transfer's

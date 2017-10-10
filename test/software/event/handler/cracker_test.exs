@@ -24,13 +24,9 @@ defmodule Helix.Software.Event.CrackerTest do
       event = EventSetup.Software.overflow_conclusion(process)
 
       # Returns a token
-      assert {:ok, token_id} = CrackerHandler.overflow_conclusion(event)
+      assert {:ok, token} = CrackerHandler.overflow_conclusion(event)
 
-      # The returned token is valid
-      token = BankQuery.fetch_token(token_id)
-      assert token
-
-      # And belongs to the transfer's source account
+      # Token belongs to the transfer's source account
       transfer = BankQuery.fetch_transfer(transfer_id)
       assert token.atm_id == transfer.atm_from
       assert token.account_number == transfer.account_from
@@ -44,7 +40,7 @@ defmodule Helix.Software.Event.CrackerTest do
       database_entry = DatabaseQuery.fetch_bank_account(entity_id, acc1)
 
       assert database_entry
-      assert database_entry.token == token_id
+      assert database_entry.token == token.token_id
       assert database_entry.atm_id == acc1.atm_id
       assert database_entry.account_number == acc1.account_number
       refute database_entry.password
@@ -67,13 +63,9 @@ defmodule Helix.Software.Event.CrackerTest do
         )
 
       # Returns a token
-      assert {:ok, token_id} = CrackerHandler.overflow_conclusion(event)
+      assert {:ok, token} = CrackerHandler.overflow_conclusion(event)
 
-      # The returned token is valid
-      token = BankQuery.fetch_token(token_id)
-      assert token
-
-      # And belongs to the account being used by the connection
+      # Token belongs to the account being used by the connection
       assert token.atm_id == acc.atm_id
       assert token.account_number == acc.account_number
 
@@ -87,7 +79,7 @@ defmodule Helix.Software.Event.CrackerTest do
         DatabaseQuery.fetch_bank_account(attacker_entity_id, acc)
 
       assert database_entry
-      assert database_entry.token == token_id
+      assert database_entry.token == token.token_id
       assert database_entry.atm_id == acc.atm_id
       assert database_entry.account_number == acc.account_number
       refute database_entry.password
@@ -122,8 +114,7 @@ defmodule Helix.Software.Event.CrackerTest do
 
       event = EventSetup.Software.bruteforce_conclusion(process)
 
-      assert {:ok, _password} =
-        CrackerHandler.bruteforce_conclusion(event)
+      assert {:ok, _password} = CrackerHandler.bruteforce_conclusion(event)
 
       TOPHelper.top_stop(process.gateway_id)
     end
@@ -131,8 +122,7 @@ defmodule Helix.Software.Event.CrackerTest do
     test "fails when target server is not found" do
       event = EventSetup.Software.bruteforce_conclusion()
 
-      assert {:error, reason} =
-        CrackerHandler.bruteforce_conclusion(event)
+      assert {:error, reason} = CrackerHandler.bruteforce_conclusion(event)
 
       # Server not found! This may happen if target changed her IP mid-process
       assert reason == {:nip, :notfound}

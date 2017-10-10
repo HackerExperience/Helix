@@ -10,8 +10,8 @@ defmodule Helix.Process.Action.Process do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.File
+  alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.ProcessCreatedEvent
   alias Helix.Process.Model.Process.ProcessType
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
@@ -67,15 +67,13 @@ defmodule Helix.Process.Action.Process do
       pid = get_top(process_params),
       {:ok, process} <- ServerTOP.create(pid, process_params)
     do
-      event = %ProcessCreatedEvent{
-        process: process,
-        gateway_id: process.gateway_id,
-        target_id: process.target_server_id,
-        gateway_entity_id: source_entity_id,
-        target_entity_id: target_entity_id,
-        gateway_ip: gateway_ip,
-        target_ip: target_ip
-      }
+      event =
+        ProcessCreatedEvent.new(
+          process,
+          gateway_ip,
+          target_entity_id,
+          target_ip
+        )
 
       {:ok, process, [event]}
     end

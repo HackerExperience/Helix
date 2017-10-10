@@ -14,14 +14,16 @@ defmodule Helix.Log.Event.LogTest do
       event = EventSetup.Log.created()
 
       # Generates the payload
-      assert {:ok, return} = Notificable.generate_payload(event, @mocked_socket)
+      assert {:ok, data} = Notificable.generate_payload(event, @mocked_socket)
 
-      # Returned event is correct and json-friendly
-      assert return.event == "log_created"
-      assert return.data.log_id == to_string(event.log.log_id)
-      assert return.data.message == event.log.message
-      assert return.data.server_id == to_string(event.log.server_id)
-      refute is_map(return.data.timestamp)
+      # Returned payload and json-friendly
+      assert data.log_id == to_string(event.log.log_id)
+      assert data.message == event.log.message
+      assert data.server_id == to_string(event.log.server_id)
+      refute is_map(data.timestamp)
+
+      # Returned event is correct
+      assert "log_created" == Notificable.get_event_name(event)
     end
 
     test "Notificable.whom_to_notify/1" do
@@ -36,14 +38,16 @@ defmodule Helix.Log.Event.LogTest do
       event = EventSetup.Log.modified()
 
       # Generates the payload
-      assert {:ok, return} = Notificable.generate_payload(event, @mocked_socket)
+      assert {:ok, data} = Notificable.generate_payload(event, @mocked_socket)
 
-      # Returned event is correct and json-friendly
-      assert return.event == "log_modified"
-      assert return.data.log_id == to_string(event.log.log_id)
-      assert return.data.message == event.log.message
-      assert return.data.server_id == to_string(event.log.server_id)
-      refute is_map(return.data.timestamp)
+      # Returned payload is json-friendly
+      assert data.log_id == to_string(event.log.log_id)
+      assert data.message == event.log.message
+      assert data.server_id == to_string(event.log.server_id)
+      refute is_map(data.timestamp)
+
+      # Returned event is correct
+      assert "log_modified" == Notificable.get_event_name(event)
     end
   end
 
@@ -52,12 +56,14 @@ defmodule Helix.Log.Event.LogTest do
       event = EventSetup.Log.deleted()
 
       # Generates the payload
-      assert {:ok, return} = Notificable.generate_payload(event, @mocked_socket)
+      assert {:ok, data} = Notificable.generate_payload(event, @mocked_socket)
 
-      # Returned event is correct and json-friendly
-      assert return.event == "log_deleted"
-      assert return.data.log_id == to_string(event.log.log_id)
-      assert return.data.server_id == to_string(event.log.server_id)
+      # Returned payload is json-friendly
+      assert data.log_id == to_string(event.log.log_id)
+      assert data.server_id == to_string(event.log.server_id)
+
+      # Returned event is correct
+      assert "log_deleted" == Notificable.get_event_name(event)
     end
   end
 end

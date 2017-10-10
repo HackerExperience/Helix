@@ -38,7 +38,7 @@ defmodule Helix.Event do
     end
   end
 
-  @spec emit([t]) ::
+  @spec emit([t] | t) ::
     term
   @doc """
   Emits an event, or a list of events, through Helix Dispatcher.

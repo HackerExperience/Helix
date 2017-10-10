@@ -1,8 +1,8 @@
-defmodule Helix.Entity.Event.DatabaseTest do
+defmodule Helix.Entity.Event.Handler.DatabaseTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Event.Database, as: DatabaseHandler
+  alias Helix.Entity.Event.Handler.Database, as: DatabaseHandler
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
   alias Helix.Test.Event.Setup, as: EventSetup
@@ -22,7 +22,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
       password = "lulz"
 
       event =
-        EventSetup.bank_account_password_revealed(
+        EventSetup.Bank.password_revealed(
           acc,
           entry.entity_id,
           [password: password])
@@ -44,7 +44,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
       refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
       event =
-        EventSetup.bank_account_password_revealed(
+        EventSetup.Bank.password_revealed(
           acc,
           fake_entry.entity_id,
           [password: password])
@@ -64,7 +64,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
       token = Ecto.UUID.generate()
 
-      event = EventSetup.bank_token_acquired(token, acc, entry.entity_id)
+      event = EventSetup.Bank.token_acquired(token, acc, entry.entity_id)
 
       DatabaseHandler.bank_token_acquired(event)
 
@@ -82,7 +82,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
       refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
-      event = EventSetup.bank_token_acquired(token, acc, fake_entry.entity_id)
+      event = EventSetup.Bank.token_acquired(token, acc, fake_entry.entity_id)
 
       DatabaseHandler.bank_token_acquired(event)
 
@@ -99,7 +99,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
     test "the entry is updated" do
       {entry, %{acc: acc}} = DatabaseSetup.entry_bank_account()
 
-      event = EventSetup.bank_account_login(acc, entry.entity_id)
+      event = EventSetup.Bank.login(acc, entry.entity_id)
 
       DatabaseHandler.bank_account_login(event)
 
@@ -117,7 +117,7 @@ defmodule Helix.Entity.Event.DatabaseTest do
 
       refute DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
-      event = EventSetup.bank_account_login(acc, fake_entry.entity_id)
+      event = EventSetup.Bank.login(acc, fake_entry.entity_id)
 
       DatabaseHandler.bank_account_login(event)
 

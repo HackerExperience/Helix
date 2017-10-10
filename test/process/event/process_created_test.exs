@@ -1,4 +1,4 @@
-defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
+defmodule Helix.Process.Event.Process.CreatedTest do
 
   use Helix.Test.Case.Integration
 
@@ -29,7 +29,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
           :single_server,
           [gateway_id: action_server, gateway_entity_id: player_entity_id])
 
-      assert {:ok, %{data: data}} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
       assert_payload_full(data)
     end
@@ -58,7 +58,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
       refute event.target_entity_id == attacker_entity_id
 
       # Attacker has full access to the output payload
-      assert {:ok, %{data: data}} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
       assert_payload_full(data)
     end
@@ -79,7 +79,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
           victim_entity_id)
 
       # Attacker has full access to the output payload
-      assert {:ok, %{data: data}} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
       assert_payload_full(data)
     end
@@ -97,7 +97,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
            destination_entity_id: victim_entity_id])
 
       # Victim has full access to the output payload
-      assert {:ok, %{data: data}} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
       assert_payload_full(data)
     end
@@ -118,7 +118,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
           victim_entity_id)
 
       # Victim has full access to the output payload
-      assert {:ok, %{data: data}} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
       assert_payload_full(data)
     end
@@ -146,7 +146,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
       refute event.target_entity_id == third_entity_id
 
       # `third` sees everything
-      assert {:ok, %{data: data}} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
       # Third can see the full process, since it originated at `attack_source`
       assert_payload_full(data)
@@ -166,7 +166,7 @@ defmodule Helix.Process.Model.Process.ProcessCreatedEventTest do
           destination_entity_id: victim_entity_id])
 
       # `third` never gets the notification
-      assert {:ok, %{data: data}} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
       # Third-party can see the process exists, but not who created it.
       assert_payload_censored(data)

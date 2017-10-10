@@ -16,17 +16,19 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     account_to: BankAccount.account,
     atm_from: ATM.id,
     atm_to: ATM.id,
-    amount: pos_integer,
+    amount: amount,
     started_by: Account.id,
     started_time: DateTime.t,
   }
+
+  @type amount :: pos_integer
 
   @type creation_params :: %{
     account_from: BankAccount.account,
     account_to: BankAccount.account,
     atm_from: ATM.idtb,
     atm_to: ATM.idtb,
-    amount: pos_integer,
+    amount: amount,
     started_by: Account.idtb,
   }
 

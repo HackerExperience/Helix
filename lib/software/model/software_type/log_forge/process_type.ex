@@ -120,11 +120,11 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     alias Helix.Entity.Model.Entity
     alias Helix.Log.Model.Log
     alias Helix.Server.Model.Server
-    alias Helix.Software.Model.SoftwareType.LogForge
-    alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
-      as: EditConclusion
-    alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
-      as: CreateConclusion
+    alias Helix.Software.Model.SoftwareType.LogForge, as: LogForgeProcess
+    alias Helix.Software.Event.LogForge.LogEdit.Processed,
+      as: LogEditProcessedEvent
+    alias Helix.Software.Event.LogForge.LogCreate.Processed,
+      as: LogCreateProcessedEvent
 
     @ram_base_factor 5
     @ram_sqrt_factor 50
@@ -159,28 +159,16 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)
 
-    defp conclusion_event(data = %{operation: :edit}) do
-      %EditConclusion{
-        target_log_id: data.target_log_id,
-        entity_id: data.entity_id,
-        message: data.message,
-        version: data.version
-      }
-    end
+    defp conclusion_event(data = %{operation: :edit}),
+      do: LogEditProcessedEvent.new(data)
 
-    defp conclusion_event(data = %{operation: :create}) do
-      %CreateConclusion{
-        entity_id: data.entity_id,
-        target_server_id: data.target_server_id,
-        message: data.message,
-        version: data.version
-      }
-    end
+    defp conclusion_event(data = %{operation: :create}),
+      do: LogCreateProcessedEvent.new(data)
 
     def after_read_hook(data) do
       target_log_id = data.target_log_id && Log.ID.cast!(data.target_log_id)
 
-      %LogForge{
+      %LogForgeProcess{
         entity_id: Entity.ID.cast!(data.entity_id),
         target_log_id: target_log_id,
         target_server_id: Server.ID.cast!(data.target_server_id),

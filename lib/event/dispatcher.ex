@@ -36,20 +36,23 @@ defmodule Helix.Event.Dispatcher do
   use HELF.Event
 
   alias Helix.Event.NotificationHandler
-  alias Helix.Account
-  alias Helix.Entity
-  alias Helix.Process
-  alias Helix.Software
-  alias Helix.Universe
 
+  alias Helix.Account.Event, as: AccountEvent
+  alias Helix.Account.Event.Handler, as: AccountHandler
+  alias Helix.Entity.Event.Handler, as: EntityHandler
   alias Helix.Log.Event, as: LogEvent
   alias Helix.Log.Event.Handler, as: LogHandler
   alias Helix.Network.Event, as: NetworkEvent
   alias Helix.Network.Event.Handler, as: NetworkHandler
+  alias Helix.Process.Event, as: ProcessEvent
+  alias Helix.Process.Event.Handler, as: ProcessHandler
+  alias Helix.Server.Event, as: ServerEvent
   alias Helix.Software.Event, as: SoftwareEvent
   alias Helix.Software.Event.Handler, as: SoftwareHandler
   alias Helix.Story.Event, as: StoryEvent
   alias Helix.Story.Event.Handler.Story, as: StoryHandler
+  alias Helix.Universe.Bank.Event, as: BankEvent
+  alias Helix.Universe.Bank.Event.Handler, as: BankHandler
 
   ##############################################################################
   # Global handlers
@@ -67,12 +70,12 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
-  event Account.Model.Account.AccountCreatedEvent
+  event AccountEvent.Account.Created
 
   # Custom handlers
-  event Account.Model.Account.AccountCreatedEvent,
-    Account.Event.Account,
-    :account_create
+  event AccountEvent.Account.Created,
+    AccountHandler.Account,
+    :account_created
 
   ##############################################################################
   # Network events
@@ -87,7 +90,7 @@ defmodule Helix.Event.Dispatcher do
     NetworkHandler.Tunnel,
     :connection_closed
   event NetworkEvent.Connection.Closed,
-    Process.Event.TOP,
+    ProcessHandler.TOP,
     :connection_closed
 
   ##############################################################################
@@ -104,19 +107,19 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
-  event Process.Model.Process.ProcessCreatedEvent
-  event Process.Model.Process.ProcessConclusionEvent
+  event ProcessEvent.Process.Created
+  event ProcessEvent.Process.Completed
 
   ##############################################################################
   # Server events
   ##############################################################################
 
   # All
-  event Helix.Server.Model.Server.PasswordAcquiredEvent
+  event ServerEvent.Server.Password.Acquired
 
   # Custom handlers
-  event Helix.Server.Model.Server.PasswordAcquiredEvent,
-    Entity.Event.Database,
+  event ServerEvent.Server.Password.Acquired,
+    EntityHandler.Database,
     :server_password_acquired
 
   ##############################################################################
@@ -124,24 +127,25 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
+  event SoftwareEvent.Cracker.Bruteforce.Failed
+  event SoftwareEvent.Cracker.Bruteforce.Processed
+  event SoftwareEvent.Cracker.Overflow.Processed
   event SoftwareEvent.File.Downloaded
   event SoftwareEvent.File.DownloadFailed
   event SoftwareEvent.File.Uploaded
   event SoftwareEvent.File.UploadFailed
   event SoftwareEvent.File.Transfer.Processed
-  event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent
-  event Software.Model.Software.Cracker.Overflow.ConclusionEvent
-  event Software.Model.SoftwareType.Firewall.FirewallStartedEvent
-  event Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
-  event Software.Model.SoftwareType.LogForge.Create.ConclusionEvent
-  event Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent
+  event SoftwareEvent.Firewall.Started
+  event SoftwareEvent.Firewall.Stopped
+  event SoftwareEvent.LogForge.LogCreate.Processed
+  event SoftwareEvent.LogForge.LogEdit.Processed
 
   # Custom handlers
-  event Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
+  event SoftwareEvent.Cracker.Bruteforce.Processed,
     SoftwareHandler.Cracker,
     :bruteforce_conclusion
 
-  event Software.Model.Software.Cracker.Overflow.ConclusionEvent,
+  event SoftwareEvent.Cracker.Overflow.Processed,
     SoftwareHandler.Cracker,
     :overflow_conclusion
 
@@ -149,24 +153,24 @@ defmodule Helix.Event.Dispatcher do
     SoftwareHandler.File.Transfer,
     :complete
 
-  event Software.Model.SoftwareType.Firewall.FirewallStartedEvent,
-    Process.Event.Cracker,
+  event SoftwareEvent.Firewall.Started,
+    ProcessHandler.Cracker,
     :firewall_started
 
-  event Software.Model.SoftwareType.Firewall.FirewallStoppedEvent,
-    Process.Event.Cracker,
+  event SoftwareEvent.Firewall.Stopped,
+    ProcessHandler.Cracker,
     :firewall_stopped
 
-  event Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
+  event SoftwareEvent.LogForge.LogCreate.Processed,
     LogHandler.Log,
     :log_forge_conclusion
 
-  event Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
+  event SoftwareEvent.LogForge.LogEdit.Processed,
     LogHandler.Log,
     :log_forge_conclusion
 
   ##############################################################################
-  # Universe events
+  # Story events
   ##############################################################################
 
   # All
@@ -179,41 +183,41 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
-  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent
-  event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
-  event Universe.Bank.Model.BankTokenAcquiredEvent
-  event Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent
-  event Universe.Bank.Model.BankAccount.PasswordRevealedEvent
-  event Universe.Bank.Model.BankAccount.LoginEvent
+  event BankEvent.Bank.Account.Login
+  event BankEvent.Bank.Account.Password.Revealed
+  event BankEvent.Bank.Account.Token.Acquired
+  event BankEvent.Bank.Transfer.Processed
+  event BankEvent.Bank.Transfer.Aborted
+  event BankEvent.RevealPassword.Processed
 
   # Custom handlers
-  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
-    Universe.Bank.Event.BankTransfer,
-    :transfer_completed
-  event Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent,
+  event BankEvent.Bank.Transfer.Processed,
+    BankHandler.Bank.Transfer,
+    :transfer_processed
+  event BankEvent.Bank.Transfer.Processed,
     NetworkHandler.Connection,
-    :bank_transfer_completed
+    :bank_transfer_processed
 
-  event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
-    Universe.Bank.Event.BankTransfer,
+  event BankEvent.Bank.Transfer.Aborted,
+    BankHandler.Bank.Transfer,
     :transfer_aborted
-  event Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent,
+  event BankEvent.Bank.Transfer.Aborted,
     SoftwareHandler.Cracker,
     :bank_transfer_aborted
 
-  event Universe.Bank.Model.BankTokenAcquiredEvent,
-    Entity.Event.Database,
+  event BankEvent.Bank.Account.Token.Acquired,
+    EntityHandler.Database,
     :bank_token_acquired
 
-  event Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent,
-    Universe.Bank.Event.BankAccount,
-    :password_reveal_conclusion
+  event BankEvent.RevealPassword.Processed,
+    BankHandler.Bank.Account,
+    :password_reveal_processed
 
-  event Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
-    Entity.Event.Database,
+  event BankEvent.Bank.Account.Password.Revealed,
+    EntityHandler.Database,
     :bank_password_revealed
 
-  event Universe.Bank.Model.BankAccount.LoginEvent,
-    Entity.Event.Database,
+  event BankEvent.Bank.Account.Login,
+    EntityHandler.Database,
     :bank_account_login
 end

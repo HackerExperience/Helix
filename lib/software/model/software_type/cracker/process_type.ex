@@ -6,7 +6,6 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
   import Ecto.Changeset
 
   alias HELL.IPv4
-  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
@@ -91,8 +90,8 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Software.Model.Software.Cracker.Bruteforce
-    alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
-      as: CrackerBruteforceConclusionEvent
+    alias Helix.Software.Event.Cracker.Bruteforce.Processed,
+      as: BruteforceProcessedEvent
 
     @ram_base 3
 
@@ -115,14 +114,8 @@ defmodule Helix.Software.Model.Software.Cracker.Bruteforce do
         |> Ecto.Changeset.change()
         |> Map.put(:action, :delete)
 
-      source_entity_id = Changeset.get_field(process, :source_entity_id)
-
-      event = %CrackerBruteforceConclusionEvent{
-        source_entity_id: Entity.ID.cast!(source_entity_id),
-        network_id: Network.ID.cast!(data.network_id),
-        target_server_id: Server.ID.cast!(data.target_server_id),
-        target_server_ip: data.target_server_ip
-      }
+      event =
+        BruteforceProcessedEvent.new(Changeset.apply_changes(process), data)
 
       {process, [event]}
     end
@@ -178,8 +171,8 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
   alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
-    as: OverflowConclusionEvent
+  alias Helix.Software.Event.Cracker.Overflow.Processed,
+    as: OverflowProcessedEvent
 
   @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
 
@@ -229,9 +222,10 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
+    import Helix.Process.Model.Macros
+
     alias Helix.Network.Model.Connection
     alias Helix.Process.Model.Process
-    alias Helix.Server.Model.Server
 
     @moduledoc false
 
@@ -248,21 +242,14 @@ defmodule Helix.Software.Model.Software.Cracker.Overflow do
     end
 
     def kill(_, process, _),
-      do: {%{Ecto.Changeset.change(process)| action: :delete}, []}
+      do: {delete(process), []}
 
     def state_change(data, process, _, :complete) do
-      process =
-        process
-        |> Ecto.Changeset.change()
-        |> Map.put(:action, :delete)
+      unchange(process)
 
-      event = %OverflowConclusionEvent{
-        gateway_id: Server.ID.cast!(process.data.gateway_id),
-        target_process_id: Process.ID.cast!(data.target_process_id),
-        target_connection_id: Connection.ID.cast!(data.target_connection_id)
-      }
+      event = OverflowProcessedEvent.new(process, data)
 
-      {process, [event]}
+      {delete(process), [event]}
     end
 
     def state_change(_, process, _, _),

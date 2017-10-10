@@ -1,13 +1,24 @@
 defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
 
+  alias Helix.Universe.Bank.Model.BankTransfer
+
+  @type t ::
+    %__MODULE__{
+      transfer_id: BankTransfer.id,
+      amount: BankTransfer.amount
+    }
+
   @enforce_keys ~w/transfer_id amount/a
   defstruct ~w/transfer_id amount/a
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
-    alias Ecto.Changeset
-    alias Helix.Universe.Bank.Model.BankTransfer.BankTransferAbortedEvent
-    alias Helix.Universe.Bank.Model.BankTransfer.BankTransferCompletedEvent
+    import Helix.Process.Model.Macros
+
+    alias Helix.Universe.Bank.Event.Bank.Transfer.Aborted,
+      as: BankTransferAbortedEvent
+    alias Helix.Universe.Bank.Event.Bank.Transfer.Processed,
+      as: BankTransferProcessedEvent
 
     def dynamic_resources(_),
       do: [:cpu]
@@ -19,31 +30,19 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
       do: %{}
 
     def kill(data, process, _) do
-      process =
-        process
-        |> Changeset.change()
-        |> Map.put(:action, :delete)
+      unchange(process)
 
-      event = %BankTransferAbortedEvent{
-        transfer_id: data.transfer_id,
-        connection_id: process.data.connection_id
-      }
+      event = BankTransferAbortedEvent.new(process, data)
 
-      {process, [event]}
+      {delete(process), [event]}
     end
 
     def state_change(data, process, _, :complete) do
-      process =
-        process
-        |> Changeset.change()
-        |> Map.put(:action, :delete)
+      unchange(process)
 
-      event = %BankTransferCompletedEvent{
-        transfer_id: data.transfer_id,
-        connection_id: process.data.connection_id
-      }
+      event = BankTransferProcessedEvent.new(process, data)
 
-      {process, [event]}
+      {delete(process), [event]}
     end
 
     def conclusion(data, process),
