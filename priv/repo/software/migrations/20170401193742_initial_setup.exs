@@ -40,7 +40,7 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
     create unique_index(:files, [:storage_id, :full_path])
 
     create table(:software_modules, primary_key: false) do
-      add :module, :string, primary_key: true
+      add :software_module, :string, primary_key: true
       add :software_type,
         references(:software_types, column: :software_type, type: :string),
         null: false
@@ -54,16 +54,16 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
           type: :inet,
           on_delete: :delete_all),
         primary_key: true
-      add :name,
-        references(:software_modules, column: :module, type: :string),
+      add :software_module,
+        references(:software_modules, column: :software_module, type: :string),
         primary_key: true
-      add :version, :integer, null: false
+      add :module_version, :integer, null: false
     end
 
     create constraint(
       :file_modules,
-      :version_must_be_positive,
-      check: "version > 0")
+      :module_version_must_be_positive,
+      check: "module_version > 0")
 
     # File specializations
     create table(:text_files, primary_key: false) do
