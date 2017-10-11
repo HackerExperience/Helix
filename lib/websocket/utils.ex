@@ -36,19 +36,24 @@ defmodule Helix.Websocket.Utils do
 
   @spec reply_ok(term, socket) ::
     reply_ok
-  def reply_ok(data = %{data: _}, socket),
-    do: {:reply, {:ok, data}, socket}
   def reply_ok(data, socket),
-    do: reply_ok(%{data: data}, socket)
+    do: {:reply, {:ok, wrap_data(data)}, socket}
 
   @spec reply_error(term, socket) ::
     reply_error
   def reply_error(msg, socket) when is_binary(msg),
     do: reply_error(%{data: %{message: msg}}, socket)
-  def reply_error(error = %{message: _}, socket),
-    do: {:reply, {:error, %{data: error}}, socket}
-  def reply_error(error = %{data: _}, socket),
-    do: {:reply, {:error, error}, socket}
+  def reply_error(error, socket),
+    do: {:reply, {:error, wrap_data(error)}, socket}
+
+  @spec wrap_data(data) ::
+    data
+    | %{:data => data}
+    when data: map
+  def wrap_data(data = %{data: _}),
+    do: data
+  def wrap_data(data),
+    do: %{data: data}
 
   @spec internal_error(socket) ::
     reply_error
