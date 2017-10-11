@@ -26,6 +26,13 @@ defprotocol Helix.Websocket.Joinable do
   valid, since its permissions and params were already validated.
   """
 
+  alias Phoenix.Socket
+
+  @type request :: struct
+
+  @spec check_params(request, Socket.t) ::
+    {:ok, request}
+    | {:error, %{message: String.t}}
   @doc """
   Method meant to validate the given params in a request. The original params
   are stored on the `unsafe` entry of the Request.t struct.
@@ -40,6 +47,9 @@ defprotocol Helix.Websocket.Joinable do
   """
   def check_params(request, socket)
 
+  @spec check_permissions(request, Socket.t) ::
+    {:ok, request}
+    | {:error, %{message: String.t}}
   @doc """
   Decides whether to accept or deny access to the Channel.
 
@@ -51,6 +61,10 @@ defprotocol Helix.Websocket.Joinable do
   """
   def check_permissions(request, socket)
 
+  @spec join(request, Socket.t, assign_function :: term) ::
+    {:ok, Socket.t}
+    | {:ok, reply :: map, Socket.t}
+    | {:error, reply :: map}
   @doc """
   Joins the channel, assigning whatever needs to be assigned to the socket, and
   causing any side-effects that should be caused (either by direct action or

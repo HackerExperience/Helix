@@ -26,6 +26,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
     import HELL.Macros
 
     alias HELL.IPv4
+    alias Helix.Websocket.Utils, as: WebsocketUtils
     alias Helix.Cache.Query.Cache, as: CacheQuery
     alias Helix.Entity.Query.Entity, as: EntityQuery
     alias Helix.Network.Model.Network
@@ -212,7 +213,13 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
         |> assign.(:destination, gateway_data)
         |> assign.(:meta, build_meta(request))
 
-      {:ok, socket}
+      bootstrap =
+        gateway_id
+        |> ServerPublic.bootstrap(entity_id)
+        |> ServerPublic.render_bootstrap()
+        |> WebsocketUtils.wrap_data()
+
+      {:ok, bootstrap, socket}
     end
 
     @doc """
@@ -268,7 +275,13 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
           |> assign.(:destination, destination_data)
           |> assign.(:meta, build_meta(request))
 
-        {:ok, socket}
+        bootstrap =
+          destination_id
+          |> ServerPublic.bootstrap(destination_entity.entity_id)
+          |> ServerPublic.render_bootstrap()
+          |> WebsocketUtils.wrap_data()
+
+        {:ok, bootstrap, socket}
       end
     end
 

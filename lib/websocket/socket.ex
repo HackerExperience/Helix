@@ -46,10 +46,9 @@ defmodule Helix.Websocket.Socket do
   def handle_join(request, socket, assign) do
     with \
       {:ok, request} <- Joinable.check_params(request, socket),
-      {:ok, request} <- Joinable.check_permissions(request, socket),
-      {:ok, joined_socket} <- Joinable.join(request, socket, assign)
+      {:ok, request} <- Joinable.check_permissions(request, socket)
     do
-      {:ok, joined_socket}
+      Joinable.join(request, socket, assign)
     else
       {:error, %{message: msg}} ->
         {:error, %{data: msg}}

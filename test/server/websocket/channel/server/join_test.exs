@@ -29,7 +29,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       topic = ChannelHelper.server_topic_name(network_id, gateway_ip)
 
       # Joins the channel
-      assert {:ok, _, new_socket} = join(socket, topic, %{})
+      assert {:ok, bootstrap, new_socket} = join(socket, topic, %{})
 
       # `gateway` data is valid
       assert new_socket.assigns.gateway.server_id == gateway.server_id
@@ -47,6 +47,11 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       # Some other stuff
       assert new_socket.joined
       assert new_socket.topic == topic
+
+      # It returned the server bootstrap
+      assert bootstrap.data.filesystem
+      assert bootstrap.data.logs
+      assert bootstrap.data.processes
 
       CacheHelper.sync_test()
     end
@@ -138,7 +143,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
         "password" => destination.password
       }
 
-      assert {:ok, _, new_socket} = join(socket, topic, params)
+      assert {:ok, bootstrap, new_socket} = join(socket, topic, params)
 
       # `gateway` data is correct
       assert new_socket.assigns.gateway.server_id == gateway.server_id
@@ -158,6 +163,11 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert new_socket.assigns.tunnel.tunnel_id
       assert new_socket.joined
       assert new_socket.topic == topic
+
+      # It returned the server bootstrap
+      assert bootstrap.data.filesystem
+      assert bootstrap.data.logs
+      assert bootstrap.data.processes
 
       CacheHelper.sync_test()
     end

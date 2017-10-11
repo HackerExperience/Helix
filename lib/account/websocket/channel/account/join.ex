@@ -15,7 +15,9 @@ defmodule Helix.Account.Websocket.Channel.Account.Join do
 
   defimpl Helix.Websocket.Joinable do
 
+    alias Helix.Websocket.Utils, as: WebsocketUtils
     alias Helix.Account.Model.Account
+    alias Helix.Account.Public.Account, as: AccountPublic
 
     def check_params(request, _socket) do
       account_id = get_id_from_topic(request.topic)
@@ -46,8 +48,15 @@ defmodule Helix.Account.Websocket.Channel.Account.Join do
       end
     end
 
-    def join(_request, socket, _assign),
-      do: {:ok, socket}
+    def join(_request, socket, _assign) do
+      bootstrap =
+        socket.assigns.entity_id
+        |> AccountPublic.bootstrap()
+        |> AccountPublic.render_bootstrap()
+        |> WebsocketUtils.wrap_data()
+
+      {:ok, bootstrap, socket}
+    end
 
     defp get_id_from_topic(topic),
       do: List.last(String.split(topic, "account:"))
