@@ -9,10 +9,10 @@ defmodule Helix.Software.Model.File do
   alias Ecto.Changeset
   alias HELL.Constant
   alias Helix.Software.Model.FileModule
-  alias Helix.Software.Model.SoftwareType
+  alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
 
-  @type t :: t_of_type(SoftwareType.type)
+  @type t :: t_of_type(Software.type)
 
   @type t_of_type(type) :: %__MODULE__{
     file_id: id,
@@ -20,7 +20,7 @@ defmodule Helix.Software.Model.File do
     path: path,
     full_path: full_path,
     file_size: size,
-    type: SoftwareType.t,
+    type: Software.Type.t,
     software_type: type,
     storage_id: Storage.id,
     storage: term,
@@ -30,11 +30,12 @@ defmodule Helix.Software.Model.File do
     crypto_version: crypto_version
   }
 
+  @type extension :: String.t
   @type path :: String.t
   @type full_path :: path
   @type name :: String.t
   @type size :: pos_integer
-  @type type :: SoftwareType.type
+  @type type :: Software.type
   @type crypto_version :: nil | pos_integer
   @type modules :: FileModule.t
 
@@ -44,7 +45,7 @@ defmodule Helix.Software.Model.File do
     name: name,
     path: path,
     file_size: size,
-    software_type: SoftwareType.type,
+    software_type: Software.type,
     storage_id: Storage.idtb
   }
 
@@ -62,7 +63,7 @@ defmodule Helix.Software.Model.File do
 
   @required_fields ~w/name path file_size software_type storage_id/a
 
-  @software_types Map.keys(SoftwareType.possible_types())
+  @software_types Software.Type.all()
 
   schema "files" do
     field :file_id, ID,
@@ -78,9 +79,9 @@ defmodule Helix.Software.Model.File do
 
     field :full_path, :string
 
-    belongs_to :type, SoftwareType,
+    belongs_to :type, Software.Type,
       foreign_key: :software_type,
-      references: :software_type,
+      references: :type,
       define_field: false
     belongs_to :storage, Storage,
       foreign_key: :storage_id,
@@ -178,7 +179,7 @@ defmodule Helix.Software.Model.File do
     path = get_field(changeset, :path)
     name = get_field(changeset, :name)
     software_type = get_field(changeset, :software_type)
-    extension = SoftwareType.possible_types()[software_type].extension
+    extension = Software.Type.get(software_type).extension
 
     full_path = path <> "/" <> name <> "." <> extension
 

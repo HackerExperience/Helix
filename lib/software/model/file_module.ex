@@ -19,7 +19,7 @@ defmodule Helix.Software.Model.FileModule do
   alias HELL.Constant
   alias Helix.Software.Model.File
   alias Helix.Software.Model.FileModule.Data, as: FileModuleData
-  alias Helix.Software.Model.SoftwareModule
+  alias Helix.Software.Model.Software
 
   @type t :: %{
     name => FileModuleData.t
@@ -87,7 +87,7 @@ defmodule Helix.Software.Model.FileModule do
   def generic_validations(changeset) do
     changeset
     |> validate_number(:version, greater_than: 0)
-    |> validate_inclusion(:name, SoftwareModule.possible_modules())
+    |> validate_inclusion(:name, Software.Module.all())
   end
 
   @spec format(schema) ::
