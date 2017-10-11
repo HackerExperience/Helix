@@ -144,40 +144,42 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       entity_id = Entity.ID.generate()
       {acc, _} = BankSetup.account()
 
-      assert {:ok, token_id, [e]} =
+      assert {:ok, token, [e]} =
         BankAction.generate_token(acc, connection, entity_id)
 
-      assert BankQuery.fetch_token(token_id)
-      assert e == EventSetup.bank_token_acquired(token_id, acc, entity_id)
+      assert BankQuery.fetch_token(token.token_id)
+      assert e == EventSetup.Bank.token_acquired(token.token_id, acc, entity_id)
     end
 
     test "returns the token if it already exists" do
       connection = Connection.ID.generate()
       entity_id = Entity.ID.generate()
-      {token, %{acc: acc}} = BankSetup.token([connection_id: connection])
+      {gen_token, %{acc: acc}} = BankSetup.token([connection_id: connection])
 
-      assert {:ok, token_id, [e]} =
+      assert {:ok, db_token, [event]} =
         BankAction.generate_token(acc, connection, entity_id)
 
-      assert token_id == token.token_id
-      assert e == EventSetup.bank_token_acquired(token_id, acc, entity_id)
+      assert db_token.token_id == gen_token.token_id
+      assert event ==
+        EventSetup.Bank.token_acquired(db_token.token_id, acc, entity_id)
     end
 
     test "ignores existing tokens on different connections" do
       connection1 = Connection.ID.generate()
       connection2 = Connection.ID.generate()
       entity_id = Entity.ID.generate()
-      {token, %{acc: acc}} = BankSetup.token([connection_id: connection1])
+      {gen_token, %{acc: acc}} = BankSetup.token([connection_id: connection1])
 
-      assert {:ok, token_id, [e]} =
+      assert {:ok, db_token, [event]} =
         BankAction.generate_token(acc, connection2, entity_id)
 
-      refute token_id == token.token_id
-      assert e == EventSetup.bank_token_acquired(token_id, acc, entity_id)
+      refute db_token.token_id == gen_token.token_id
+      assert event ==
+        EventSetup.Bank.token_acquired(db_token.token_id, acc, entity_id)
 
       # Two connections, two tokens
-      assert BankQuery.fetch_token(token.token_id)
-      assert BankQuery.fetch_token(token_id)
+      assert BankQuery.fetch_token(gen_token.token_id)
+      assert BankQuery.fetch_token(db_token.token_id)
     end
   end
 
@@ -189,7 +191,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       assert {:ok, password, [e]} =
         BankAction.reveal_password(acc, token.token_id, entity_id)
       assert password == acc.password
-      assert e == EventSetup.bank_account_password_revealed(acc, entity_id)
+      assert e == EventSetup.Bank.password_revealed(acc, entity_id)
     end
 
     test "password is not revealed for non-existent token" do
@@ -227,7 +229,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       entity_id = Entity.ID.generate()
 
       {:ok, _, [e]} = BankAction.login_password(acc, acc.password, entity_id)
-      assert e == EventSetup.bank_account_login(acc, entity_id)
+      assert e == EventSetup.Bank.login(acc, entity_id)
     end
 
     test "login fails with invalid password" do
@@ -244,7 +246,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       entity_id = Entity.ID.generate()
 
       {:ok, _, [e]} = BankAction.login_token(acc, token.token_id, entity_id)
-      assert e == EventSetup.bank_account_login(acc, entity_id, token.token_id)
+      assert e == EventSetup.Bank.login(acc, entity_id, token.token_id)
     end
 
     test "login fails when given token belongs to a different account" do

@@ -1,6 +1,8 @@
 defmodule Helix.Story.Event.Step do
 
-  defmodule Proceeded do
+  import Helix.Event
+
+  event Proceeded do
     @moduledoc """
     StoryStepProceeded is fired when the Player's current step is changed,
     moving from a previous step (which may be empty) to the next one.
@@ -16,13 +18,12 @@ defmodule Helix.Story.Event.Step do
         next_step: Step.step_name
       }
 
-    @enforce_keys [:entity_id, :previous_step, :next_step]
-    defstruct [:entity_id, :previous_step, :next_step]
+    event_struct [:entity_id, :previous_step, :next_step]
 
-    defimpl Helix.Event.Notificable do
+    notify do
       @moduledoc false
 
-      @event "story_step_proceeded"
+      @event :story_step_proceeded
 
       def generate_payload(event, _socket) do
         data = %{
@@ -30,7 +31,7 @@ defmodule Helix.Story.Event.Step do
           next_step: event.next_step
         }
 
-        {:ok, %{data: data, event: @event}}
+        {:ok, data}
       end
 
       @doc """

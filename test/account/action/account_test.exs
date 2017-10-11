@@ -8,36 +8,17 @@ defmodule Helix.Account.Action.AccountTest do
 
   alias Helix.Test.Account.Factory
 
-  describe "create/1" do
-    test "succeeds with valid input" do
-      params = %{
-        email: "this_is_actually+0@a_valid_email.com",
-        username: "good_username0",
-        password: "Would you very kindly let me in, please, good sir"
-      }
-
-      assert {:ok, %Account{}} = AccountAction.create(params)
-
-      CacheHelper.sync_test()
-    end
-
-    test "returns changeset when input is invalid" do
-      params = %{}
-
-      assert {:error, %Ecto.Changeset{}} = AccountAction.create(params)
-
-      params = %{email: "invalid", username: "^invalid", password: "invalid"}
-      assert {:error, %Ecto.Changeset{}} = AccountAction.create(params)
-    end
-  end
-
   describe "create/3" do
     test "succeeds with valid input" do
       email = "this_is_actually+1@a_valid_email.com"
       username = "good_username1"
       password = "Would you very kindly let me in, please, good sir"
 
-      assert {:ok, %Account{}} = AccountAction.create(email, username, password)
+      assert {:ok, account, [event]} =
+        AccountAction.create(email, username, password)
+
+      assert %Account{} = account
+      assert event.account == account
 
       CacheHelper.sync_test()
     end

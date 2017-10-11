@@ -13,15 +13,16 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
-  alias Helix.Universe.Bank.Model.BankTokenAcquiredEvent
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
-  alias Helix.Universe.Bank.Model.BankAccount.PasswordRevealedEvent,
-    as: BankAccountPasswordRevealedEvent
-  alias Helix.Universe.Bank.Model.BankAccount.LoginEvent,
+  alias Helix.Universe.Bank.Event.Bank.Account.Login,
     as: BankAccountLoginEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Password.Revealed,
+    as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Token.Acquired,
+    as: BankAccountTokenAcquiredEvent
 
   @spec start_transfer(BankAccount.t, BankAccount.t, pos_integer, Account.idt) ::
     {:ok, BankTransfer.t}
@@ -117,7 +118,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
     as: :close
 
   @spec generate_token(BankAccount.t, Connection.idt, Entity.idt) ::
-    {:ok, BankToken.t, [BankTokenAcquiredEvent.t]}
+    {:ok, BankToken.t, [BankAccountTokenAcquiredEvent.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
   Returns the token for the given (BankAccount, Connection) tuple.
@@ -136,33 +137,22 @@ defmodule Helix.Universe.Bank.Action.Bank do
 
     token_result =
       if token do
-        {:ok, token.token_id}
+        {:ok, token}
       else
-        with {:ok, token} <- BankTokenInternal.generate(account, connection) do
-          {:ok, token.token_id}
-        end
+        BankTokenInternal.generate(account, connection)
       end
 
     case token_result do
       {:ok, token} ->
-        {:ok, token, [token_acquired_event(account, token, attacker_id)]}
+        event = BankAccountTokenAcquiredEvent.new(account, token, attacker_id)
+
+        {:ok, token, [event]}
       error ->
         error
     end
   end
 
-  @spec token_acquired_event(BankAccount.t, BankToken.id, Entity.idt) ::
-    BankTokenAcquiredEvent.t
-  defp token_acquired_event(account, token_id, entity_id) do
-    %BankTokenAcquiredEvent{
-      entity_id: entity_id,
-      token_id: token_id,
-      atm_id: account.atm_id,
-      account_number: account.account_number
-    }
-  end
-
-  @spec reveal_password(BankAccount.t, BankToken.id, Entity.t) ::
+  @spec reveal_password(BankAccount.t, BankToken.id, Entity.id) ::
     {:ok, String.t, [BankAccountPasswordRevealedEvent.t]}
     | {:error, {:token, :notfound}}
   @doc """
@@ -171,21 +161,14 @@ defmodule Helix.Universe.Bank.Action.Bank do
   attacks on WireTransfer or BankLogin connections.
   """
   def reveal_password(account, token_id, revealed_by) do
-    password_revealed_event = fn account ->
-      %BankAccountPasswordRevealedEvent{
-        entity_id: revealed_by,
-        atm_id: account.atm_id,
-        account_number: account.account_number,
-        password: account.password
-      }
-    end
-
     with \
       token = %{} <- BankQuery.fetch_token(token_id),
       true <- account.account_number == token.account_number,
       true <- account.atm_id == token.atm_id
     do
-      {:ok, account.password, [password_revealed_event.(account)]}
+      event = BankAccountPasswordRevealedEvent.new(account, revealed_by)
+
+      {:ok, account.password, [event]}
     else
       _ ->
         {:error, {:token, :notfound}}
@@ -203,7 +186,9 @@ defmodule Helix.Universe.Bank.Action.Bank do
   """
   def login_password(account, password, login_by) do
     with true <- account.password == password do
-      {:ok, account, [account_login_event(account, login_by)]}
+      event = BankAccountLoginEvent.new(account, login_by)
+
+      {:ok, account, [event]}
     end
   end
 
@@ -221,18 +206,10 @@ defmodule Helix.Universe.Bank.Action.Bank do
       token = %{} <- BankQuery.fetch_token(token_id),
       true <- token.account_number == account.account_number
     do
-      {:ok, account, [account_login_event(account, login_by, token_id)]}
-    end
-  end
+      event = BankAccountLoginEvent.new(account, login_by, token_id)
 
-  @spec account_login_event(BankAccount.t, Entity.idt, BankToken.id | nil) ::
-    BankAccountLoginEvent.t
-  defp account_login_event(account, login_by, token \\ nil) do
-    %BankAccountLoginEvent{
-      entity_id: login_by,
-      account: account,
-      token_id: token
-    }
+      {:ok, account, [event]}
+    end
   end
 
   @spec logout(BankAccount.t, Server.idt) ::

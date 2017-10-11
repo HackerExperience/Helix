@@ -13,10 +13,10 @@ defmodule Helix.Test.Event.Setup.Software do
   alias Helix.Software.Event.File.DownloadFailed, as: FileDownloadFailedEvent
   alias Helix.Software.Event.File.Uploaded, as: FileUploadedEvent
   alias Helix.Software.Event.File.UploadFailed, as: FileUploadFailedEvent
-  alias Helix.Software.Model.Software.Cracker.Bruteforce.ConclusionEvent,
-    as: BruteforceConclusionEvent
-  alias Helix.Software.Model.Software.Cracker.Overflow.ConclusionEvent,
-    as: OverflowConclusionEvent
+  alias Helix.Software.Event.Cracker.Bruteforce.Processed,
+    as: BruteforceProcessedEvent
+  alias Helix.Software.Event.Cracker.Overflow.Processed,
+    as: OverflowProcessedEvent
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -31,14 +31,14 @@ defmodule Helix.Test.Event.Setup.Software do
     | Connection.t, Server.id
   """
   def overflow_conclusion(process = %Process{}) do
-    %OverflowConclusionEvent{
+    %OverflowProcessedEvent{
       gateway_id: process.gateway_id,
       target_process_id: process.process_id,
       target_connection_id: nil
     }
   end
   def overflow_conclusion(connection = %Connection{}, gateway_id) do
-    %OverflowConclusionEvent{
+    %OverflowProcessedEvent{
       gateway_id: gateway_id,
       target_process_id: nil,
       target_connection_id: connection.connection_id
@@ -46,7 +46,7 @@ defmodule Helix.Test.Event.Setup.Software do
   end
 
   def bruteforce_conclusion(process = %Process{}) do
-    %BruteforceConclusionEvent{
+    %BruteforceProcessedEvent{
       source_entity_id: process.source_entity_id,
       network_id: process.network_id,
       target_server_id: process.target_server_id,
@@ -54,7 +54,7 @@ defmodule Helix.Test.Event.Setup.Software do
     }
   end
   def bruteforce_conclusion do
-    %BruteforceConclusionEvent{
+    %BruteforceProcessedEvent{
       source_entity_id: Entity.ID.generate(),
       network_id: @internet,
       target_server_id: Server.ID.generate(),
@@ -128,46 +128,14 @@ defmodule Helix.Test.Event.Setup.Software do
     {event, %{}}
   end
 
-  defp generate_event(event, :download, {:completed, file}) do
-    %FileDownloadedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      to_storage_id: event.to_storage_id,
-      network_id: event.network_id,
-      connection_type: event.connection_type,
-      file: file
-    }
-  end
-  defp generate_event(event, :download, {:failed, reason}) do
-    %FileDownloadFailedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      network_id: event.network_id,
-      connection_type: event.connection_type,
-      reason: reason
-    }
-  end
-  defp generate_event(event, :upload, {:completed, file}) do
-    %FileUploadedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      to_storage_id: event.to_storage_id,
-      network_id: event.network_id,
-      file: file
-    }
-  end
-  defp generate_event(event, :upload, {:failed, reason}) do
-    %FileUploadFailedEvent{
-      entity_id: event.entity_id,
-      to_server_id: event.to_server_id,
-      from_server_id: event.from_server_id,
-      network_id: event.network_id,
-      reason: reason
-    }
-  end
+  defp generate_event(transfer, :download, {:completed, file}),
+    do: FileDownloadedEvent.new(transfer, file)
+  defp generate_event(transfer, :download, {:failed, reason}),
+    do: FileDownloadFailedEvent.new(transfer, reason)
+  defp generate_event(transfer, :upload, {:completed, file}),
+    do: FileUploadedEvent.new(transfer, file)
+  defp generate_event(transfer, :upload, {:failed, reason}),
+    do: FileUploadFailedEvent.new(transfer, reason)
 
   docp """
   Helper that naively copies a file to a new storage, using Internal methods.

@@ -27,8 +27,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Create process to reveal password
       {:ok, process} =
         BankAccountFlow.reveal_password(
-          token.atm_id,
-          token.account_number,
+          acc,
           token.token_id,
           gateway.server_id
         )

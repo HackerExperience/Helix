@@ -2,9 +2,9 @@ defmodule Helix.Log.Event.Handler.LogTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
+  alias Helix.Software.Event.LogForge.LogEdit.Processed,
     as: LogForgeEditComplete
-  alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
+  alias Helix.Software.Event.LogForge.LogCreate.Processed,
     as: LogForgeCreateComplete
   alias Helix.Log.Event.Handler.Log, as: LogHandler
   alias Helix.Log.Query.Log, as: LogQuery

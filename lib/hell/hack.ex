@@ -25,7 +25,8 @@ defmodule HELL.Hack.Experience do
       "Elixir.Helix.Cache.Model.Cacheable" => [{:format_output, 1}],
       "Elixir.Helix.Event.Notificable" => [
         {:whom_to_notify, 1},
-        {:generate_payload, 2}
+        {:generate_payload, 2},
+        {:get_event_name, 1}
       ],
       "Elixir.Helix.Websocket.Requestable" => [
         {:check_params, 2},

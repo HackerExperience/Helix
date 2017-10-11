@@ -21,10 +21,11 @@ defmodule Helix.Story.Event.Step.ProceededTest do
 
     event = EventSetup.Story.step_proceeded()
 
-    assert {:ok, payload} = Notificable.generate_payload(event, socket)
+    assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-    assert payload.event == "story_step_proceeded"
-    assert payload.data.previous_step == event.previous_step
-    assert payload.data.next_step == event.next_step
+    assert data.previous_step == event.previous_step
+    assert data.next_step == event.next_step
+
+    assert "story_step_proceeded" == Notificable.get_event_name(event)
   end
 end

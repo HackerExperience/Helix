@@ -1,6 +1,8 @@
 defmodule Helix.Software.Event.File.Transfer do
 
-  defmodule Processed do
+  import Helix.Event
+
+  event Processed do
     @moduledoc """
     FileTransferProcessed follows the Process standard and, as the name
     suggests, represents the conclusion of the given process. It will be used
@@ -15,9 +17,11 @@ defmodule Helix.Software.Event.File.Transfer do
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
+    alias Helix.Process.Model.Process
     alias Helix.Server.Model.Server
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
+    alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
     @type t :: %__MODULE__{
       entity_id: Entity.id,
@@ -30,7 +34,7 @@ defmodule Helix.Software.Event.File.Transfer do
       type: :download | :upload
     }
 
-    @enforce_keys [
+    event_struct [
       :entity_id,
       :to_server_id,
       :from_server_id,
@@ -40,19 +44,29 @@ defmodule Helix.Software.Event.File.Transfer do
       :connection_type,
       :type
     ]
-    defstruct [
-      :entity_id,
-      :to_server_id,
-      :from_server_id,
-      :file_id,
-      :to_storage_id,
-      :network_id,
-      :connection_type,
-      :type
-    ]
+
+    @spec new(Process.t, FileTransferProcess.t, Server.id, Server.id) ::
+      t
+    def new(
+      process = %Process{},
+      data = %FileTransferProcess{},
+      from_server_id = %Server.ID{},
+      to_server_id = %Server.ID{})
+    do
+      %__MODULE__{
+        entity_id: process.source_entity_id,
+        to_server_id: to_server_id,
+        from_server_id: from_server_id,
+        file_id: process.file_id,
+        network_id: process.network_id,
+        to_storage_id: data.destination_storage_id,
+        connection_type: data.connection_type,
+        type: data.type
+      }
+    end
   end
 
-  defmodule Aborted do
+  event Aborted do
     @moduledoc """
     FileTransferAborted represents the moment a FileTransferProcess was aborted.
 
@@ -61,9 +75,11 @@ defmodule Helix.Software.Event.File.Transfer do
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
+    alias Helix.Process.Model.Process
     alias Helix.Server.Model.Server
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
+    alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
     @type t :: %__MODULE__{
       entity_id: Entity.id,
@@ -74,10 +90,12 @@ defmodule Helix.Software.Event.File.Transfer do
       network_id: Network.id,
       connection_type: :ftp | :public_ftp,
       type: :download | :upload,
-      reason: :file_deleted | :cancelled
+      reason: reason
     }
 
-    @enforce_keys [
+    @type reason :: :killed
+
+    event_struct [
       :entity_id,
       :to_server_id,
       :from_server_id,
@@ -88,16 +106,27 @@ defmodule Helix.Software.Event.File.Transfer do
       :type,
       :reason
     ]
-    defstruct [
-      :entity_id,
-      :to_server_id,
-      :from_server_id,
-      :file_id,
-      :to_storage_id,
-      :network_id,
-      :connection_type,
-      :type,
-      :reason
-    ]
+
+    @spec new(Process.t, FileTransferProcess.t, Server.id, Server.id, reason) ::
+      t
+    def new(
+      process = %Process{},
+      data = %FileTransferProcess{},
+      from_server_id = %Server.ID{},
+      to_server_id = %Server.ID{},
+      reason)
+    do
+      %__MODULE__{
+        entity_id: process.source_entity_id,
+        to_server_id: to_server_id,
+        from_server_id: from_server_id,
+        file_id: process.file_id,
+        network_id: process.network_id,
+        to_storage_id: data.destination_storage_id,
+        connection_type: data.connection_type,
+        type: data.type,
+        reason: reason
+      }
+    end
   end
 end

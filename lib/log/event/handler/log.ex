@@ -6,10 +6,10 @@ defmodule Helix.Log.Event.Handler.Log do
   alias Helix.Event.Loggable
   alias Helix.Log.Query.Log, as: LogQuery
 
-  alias Helix.Software.Model.SoftwareType.LogForge.Edit.ConclusionEvent,
-    as: LogForgeEditComplete
-  alias Helix.Software.Model.SoftwareType.LogForge.Create.ConclusionEvent,
+  alias Helix.Software.Event.LogForge.LogCreate.Processed,
     as: LogForgeCreateComplete
+  alias Helix.Software.Event.LogForge.LogEdit.Processed,
+    as: LogForgeEditComplete
 
   @doc """
   Generic event handler for all Helix events. If the event implement the

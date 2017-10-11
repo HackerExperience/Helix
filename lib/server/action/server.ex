@@ -10,10 +10,9 @@ defmodule Helix.Server.Action.Server do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
-  alias Helix.Software.Model.Software.Cracker.Bruteforce.FailedEvent,
-    as: CrackerBruteforceFailedEvent
-  alias Helix.Server.Model.Server.PasswordAcquiredEvent,
-    as: ServerPasswordAcquiredEvent
+  alias Helix.Server.Event.Server.Password.Acquired, as: PasswordAcquiredEvent
+  alias Helix.Software.Event.Cracker.Bruteforce.Failed,
+    as: BruteforceFailedEvent
 
   @spec create(Constant.t) ::
     {:ok, Server.t}
@@ -58,8 +57,8 @@ defmodule Helix.Server.Action.Server do
     to: ServerInternal
 
   @spec crack(Entity.id, Server.id, Network.id, IPv4.t) ::
-    {:ok, Server.password, [ServerPasswordAcquiredEvent.t]}
-    | {:error, :internal | {:nip, :notfound}, [CrackerBruteforceFailedEvent.t]}
+    {:ok, Server.password, [PasswordAcquiredEvent.t]}
+    | {:error, :internal | {:nip, :notfound}, [BruteforceFailedEvent.t]}
   @doc """
   Cracks a server, i.e. returns its password, as well as the relevant events.
 
@@ -77,7 +76,7 @@ defmodule Helix.Server.Action.Server do
       {:ok, password} <- ServerQuery.get_password(server_id)
     do
       event =
-        password_acquired_event(attacker, server_id, network_id, ip, password)
+        PasswordAcquiredEvent.new(attacker, server_id, network_id, ip, password)
 
       {:ok, password, [event]}
     else
@@ -96,45 +95,9 @@ defmodule Helix.Server.Action.Server do
             end
 
         failed_event =
-          crack_failed_event(attacker, server_id, network_id, ip, reason)
+          BruteforceFailedEvent.new(attacker, server_id, network_id, ip, reason)
 
         {:error, return, [failed_event]}
     end
-  end
-
-  @spec password_acquired_event(
-    Entity.id,
-    Server.id,
-    Network.id,
-    IPv4.t,
-    Server.password)
-  ::
-    ServerPasswordAcquiredEvent.t
-  defp password_acquired_event(attacker, server_id, network_id, ip, password) do
-    %ServerPasswordAcquiredEvent{
-      entity_id: attacker,
-      network_id: network_id,
-      server_id: server_id,
-      server_ip: ip,
-      password: password
-    }
-  end
-
-  @spec password_acquired_event(
-    Entity.id,
-    Server.id,
-    Network.id,
-    IPv4.t,
-    CrackerBruteforceFailedEvent.reason)
-  ::
-    ServerPasswordAcquiredEvent.t
-  defp crack_failed_event(attacker, server_id, network_id, ip, reason) do
-    %CrackerBruteforceFailedEvent{
-      entity_id: attacker,
-      network_id: network_id,
-      server_id: server_id,
-      server_ip: ip,
-      reason: reason
-    }
   end
 end

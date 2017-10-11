@@ -1,16 +1,24 @@
 defmodule Helix.Account.Event.Account do
 
-  alias Helix.Account.Model.Account.AccountCreatedEvent
-  alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  import Helix.Event
 
-  require Logger
+  event Created do
 
-  def account_create(event = %AccountCreatedEvent{}) do
-    case AccountFlow.setup_account(event.account_id) do
-      {:ok, _} ->
-        :ok
-      _ ->
-        Logger.error "Failed to setup account for account id #{inspect event.account_id}"
+    alias Helix.Account.Model.Account
+
+    @type t ::
+      %__MODULE__{
+        account: Account.t
+      }
+
+    event_struct [:account]
+
+    @spec new(Account.t) ::
+      t
+    def new(account = %Account{}) do
+      %__MODULE__{
+        account: account
+      }
     end
   end
 end

@@ -1,13 +1,26 @@
 defmodule Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
 
-  @enforce_keys ~w/token_id atm_id account_number/a
-  defstruct ~w/token_id atm_id account_number/a
+  alias Helix.Universe.Bank.Model.ATM
+  alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Universe.Bank.Model.BankToken
+
+  @type t ::
+    %__MODULE__{
+      token_id: BankToken.id,
+      atm_id: ATM.id,
+      account_number: BankAccount.account
+    }
+
+  @enforce_keys [:token_id, :atm_id, :account_number]
+  defstruct [:token_id, :atm_id, :account_number]
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
+    import Helix.Process
+
     alias Ecto.Changeset
-    alias Helix.Universe.Bank.Model.BankAccount.RevealPassword.ConclusionEvent,
-      as: RevealPasswordConclusionEvent
+    alias Helix.Universe.Bank.Event.RevealPassword.Processed,
+      as: RevealPasswordProcessedEvent
 
     def dynamic_resources(_),
       do: [:cpu]
@@ -25,19 +38,11 @@ defmodule Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
     end
 
     def state_change(data, process, _, :complete) do
-      process =
-        process
-        |> Changeset.change()
-        |> Map.put(:action, :delete)
+      unchange(process)
 
-      event = %RevealPasswordConclusionEvent{
-        gateway_id: process.data.gateway_id,
-        token_id: data.token_id,
-        atm_id: data.atm_id,
-        account_number: data.account_number
-      }
+      event = RevealPasswordProcessedEvent.new(process, data)
 
-      {process, [event]}
+      {delete(process), [event]}
     end
 
     def conclusion(data, process),

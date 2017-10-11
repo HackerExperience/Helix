@@ -9,8 +9,8 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
 
   defimpl Helix.Process.Model.Process.ProcessType do
 
-    alias Helix.Software.Model.SoftwareType.Firewall.FirewallStartedEvent
-    alias Helix.Software.Model.SoftwareType.Firewall.FirewallStoppedEvent
+    alias Helix.Software.Event.Firewall.Started, as: FirewallStartedEvent
+    alias Helix.Software.Event.Firewall.Stopped, as: FirewallStoppedEvent
 
     @ram_base_factor 5
     @cpu_base_factor 2

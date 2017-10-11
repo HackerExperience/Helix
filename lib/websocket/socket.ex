@@ -86,9 +86,9 @@ defmodule Helix.Websocket.Socket do
   function pointing to the Channel's `push` method, passed as argument.
   """
   def handle_event(event, socket, channel_push) do
-    case Notificable.generate_payload(event, socket) do
-      {:ok, data} ->
-        channel_push.(socket, "event", data)
+    case Notificable.Flow.generate_event(event, socket) do
+      {:ok, payload} ->
+        channel_push.(socket, "event", payload)
 
         WebsocketUtils.no_reply(socket)
       _ ->

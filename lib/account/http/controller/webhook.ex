@@ -4,7 +4,7 @@ defmodule Helix.Account.HTTP.Controller.Webhook do
 
   alias Helix.Event
   alias Helix.Account.Model.Account
-  alias Helix.Account.Model.Account.AccountCreatedEvent
+  alias Helix.Account.Event.Account.Created, as: AccountCreatedEvent
   alias Helix.Account.Repo
 
   import Plug.Conn
@@ -63,7 +63,7 @@ defmodule Helix.Account.HTTP.Controller.Webhook do
             confirmed: true
           }
           account = Repo.insert!(account)
-          event = %AccountCreatedEvent{account_id: account.account_id}
+          event = AccountCreatedEvent.new(account)
 
           {account, [event]}
         account ->
