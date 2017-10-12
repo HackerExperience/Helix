@@ -2,8 +2,8 @@ defmodule Helix.Test.Software.Helper do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Model.Server
-  alias Helix.Software.Model.FileModule
-  alias Helix.Software.Model.SoftwareType
+  alias Helix.Software.Model.File
+  alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
   alias Helix.Software.Query.Storage, as: StorageQuery
 
@@ -42,7 +42,7 @@ defmodule Helix.Test.Software.Helper do
     (:cracker, %{bruteforce: 20, overflow: 10})
   """
   def generate_module(type, version_map) do
-    modules = SoftwareType.possible_types()[type].modules
+    modules = Software.Type.get(type).modules
 
     Enum.reduce(modules, %{}, fn (module, acc) ->
       version = Map.fetch!(version_map, module)
@@ -57,7 +57,7 @@ defmodule Helix.Test.Software.Helper do
   Returns modules with random versions for the given file.
   """
   def get_modules(type) do
-    modules = SoftwareType.possible_types()[type].modules
+    modules = Software.Type.get(type).modules
 
     Enum.reduce(modules, %{}, fn (module, acc) ->
       module
@@ -67,7 +67,7 @@ defmodule Helix.Test.Software.Helper do
   end
 
   defp generate_file_module(module, version) do
-    data = FileModule.Data.new(%{version: version})
+    data = File.Module.Data.new(%{version: version})
 
     Map.put(%{}, module, data)
   end
@@ -85,10 +85,8 @@ defmodule Helix.Test.Software.Helper do
     |> Enum.join("/")
   end
 
-  def random_file_type do
-    {software_type, _} = Enum.random(SoftwareType.possible_types())
-    software_type
-  end
+  def random_file_type,
+    do: Enum.random(Software.Type.all())
 
   def random_version,
     do: Random.number(min: 10, max: 50)

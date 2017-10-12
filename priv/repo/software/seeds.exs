@@ -1,22 +1,26 @@
 alias Helix.Software.Repo
-alias Helix.Software.Model.SoftwareType
-alias Helix.Software.Model.SoftwareModule
+alias Helix.Software.Model.Software
 
 Repo.transaction fn ->
-  Enum.each(SoftwareType.possible_types(), fn {type, %{extension: extension}} ->
-    software_type = %SoftwareType{software_type: type, extension: extension}
+  all_software = Software.all()
 
-    Repo.insert!(software_type, on_conflict: :nothing)
-  end)
+  # Stores all software information (type and module)
+  Enum.each(all_software, fn software ->
+    # Insert software type entry
+    software
+    |> Software.Type.create_changeset()
+    |> Repo.insert!(on_conflict: :nothing)
 
-  Enum.each(SoftwareType.possible_types(), fn {type, %{modules: modules}} ->
-    Enum.each(modules, fn module ->
-      software_module = %SoftwareModule{
-        software_type: type,
+    # Insert entry for all modules that belong to this software
+    Enum.each(software.modules, fn module ->
+      params = %{
+        software_type: software.type,
         module: module
       }
 
-      Repo.insert!(software_module, on_conflict: :nothing)
+      params
+      |> Software.Module.create_changeset()
+      |> Repo.insert!(on_conflict: :nothing)
     end)
   end)
 end

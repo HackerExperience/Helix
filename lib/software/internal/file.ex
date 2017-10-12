@@ -1,7 +1,6 @@
 defmodule Helix.Software.Internal.File do
 
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
 
@@ -121,7 +120,7 @@ defmodule Helix.Software.Internal.File do
     update(file, params)
   end
 
-  @spec encrypt(File.t, FileModule.version) ::
+  @spec encrypt(File.t, File.Module.version) ::
     {:ok, File.changeset}
     | {:error, File.changeset}
   def encrypt(file = %File{}, version) when version >= 1 do

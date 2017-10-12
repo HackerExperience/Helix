@@ -64,7 +64,7 @@ defmodule Helix.Test.Software.Setup do
   @doc """
   - name: Set file name
   - size: Set file size
-  - type: Set file type. SoftwareType.t
+  - type: Set file type. Software.type
   - path: Set file path
   - modules: Set file module. If set, `type` must also be set.
   - server_id: Server that file belongs to. Will use the first storage it finds.

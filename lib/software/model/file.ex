@@ -8,11 +8,11 @@ defmodule Helix.Software.Model.File do
 
   alias Ecto.Changeset
   alias HELL.Constant
-  alias Helix.Software.Model.FileModule
-  alias Helix.Software.Model.SoftwareType
+  alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
+  alias __MODULE__, as: File
 
-  @type t :: t_of_type(SoftwareType.type)
+  @type t :: t_of_type(Software.type)
 
   @type t_of_type(type) :: %__MODULE__{
     file_id: id,
@@ -20,23 +20,24 @@ defmodule Helix.Software.Model.File do
     path: path,
     full_path: full_path,
     file_size: size,
-    type: SoftwareType.t,
+    type: Software.Type.t,
     software_type: type,
     storage_id: Storage.id,
     storage: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t,
-    modules: modules | FileModule.schema,
+    modules: modules | File.Module.schema,
     crypto_version: crypto_version
   }
 
+  @type extension :: String.t
   @type path :: String.t
   @type full_path :: path
   @type name :: String.t
   @type size :: pos_integer
-  @type type :: SoftwareType.type
+  @type type :: Software.type
   @type crypto_version :: nil | pos_integer
-  @type modules :: FileModule.t
+  @type modules :: File.Module.t
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -44,11 +45,11 @@ defmodule Helix.Software.Model.File do
     name: name,
     path: path,
     file_size: size,
-    software_type: SoftwareType.type,
+    software_type: Software.type,
     storage_id: Storage.idtb
   }
 
-  @type module_params :: {FileModule.name, FileModule.Data.t}
+  @type module_params :: {File.Module.name, File.Module.Data.t}
 
   @type update_params :: %{
     optional(:name) => name,
@@ -62,7 +63,7 @@ defmodule Helix.Software.Model.File do
 
   @required_fields ~w/name path file_size software_type storage_id/a
 
-  @software_types Map.keys(SoftwareType.possible_types())
+  @software_types Software.Type.all()
 
   schema "files" do
     field :file_id, ID,
@@ -78,16 +79,16 @@ defmodule Helix.Software.Model.File do
 
     field :full_path, :string
 
-    belongs_to :type, SoftwareType,
+    belongs_to :type, Software.Type,
       foreign_key: :software_type,
-      references: :software_type,
+      references: :type,
       define_field: false
     belongs_to :storage, Storage,
       foreign_key: :storage_id,
       references: :storage_id,
       define_field: false
 
-    has_many :modules, FileModule,
+    has_many :modules, File.Module,
       foreign_key: :file_id,
       references: :file_id,
       on_replace: :delete
@@ -118,7 +119,7 @@ defmodule Helix.Software.Model.File do
   def format(file) do
     formatted_modules =
       Enum.reduce(file.modules, %{}, fn module, acc ->
-        module = FileModule.format(module)
+        module = File.Module.format(module)
         Map.merge(acc, module)
       end)
 
@@ -157,9 +158,9 @@ defmodule Helix.Software.Model.File do
   end
 
   @spec create_module_assoc(module_params) ::
-    FileModule.changeset
+    File.Module.changeset
   docp """
-  Helper/wrapper to `FileModule.create_changeset/1`
+  Helper/wrapper to `File.Module.create_changeset/1`
   """
   defp create_module_assoc({name, data}) do
     params = %{
@@ -167,7 +168,7 @@ defmodule Helix.Software.Model.File do
       version: data.version
     }
 
-    FileModule.create_changeset(params)
+    File.Module.create_changeset(params)
   end
 
   docp """
@@ -178,7 +179,7 @@ defmodule Helix.Software.Model.File do
     path = get_field(changeset, :path)
     name = get_field(changeset, :name)
     software_type = get_field(changeset, :software_type)
-    extension = SoftwareType.possible_types()[software_type].extension
+    extension = Software.Type.get(software_type).extension
 
     full_path = path <> "/" <> name <> "." <> extension
 
@@ -250,13 +251,13 @@ defmodule Helix.Software.Model.File do
       do: where(query, [f], is_nil(f.crypto_version))
 
     defp join_modules(query),
-      do: join(query, :left, [f], fm in FileModule, fm.file_id == f.file_id)
+      do: join(query, :left, [f], fm in File.Module, fm.file_id == f.file_id)
 
     defp join_assoc_modules(query),
       do: join(query, :left, [f], fm in assoc(f, :modules))
 
     docp """
-    Preloads FileModules into the schema
+    Preloads File.Modules into the schema
     """
     defp preload_modules(query),
       do: preload(query, [..., m], [modules: m])
