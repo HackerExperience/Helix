@@ -1,6 +1,6 @@
-defmodule Helix.Software.Model.FileModule do
+defmodule Helix.Software.Model.File.Module do
   @moduledoc """
-  A FileModule is a component of a File responsible for doing something. It
+  A File.Module is a component of a File responsible for doing something. It
   contains a version, which is a representation of how powerful that module is.
 
   For example, take the Cracker. It may have Overflow and Bruteforce modules.
@@ -18,11 +18,11 @@ defmodule Helix.Software.Model.FileModule do
   alias Ecto.Changeset
   alias HELL.Constant
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.FileModule.Data, as: FileModuleData
   alias Helix.Software.Model.Software
+  alias __MODULE__, as: Module
 
   @type t :: %{
-    name => FileModuleData.t
+    name => Module.Data.t
   }
 
   @type schema :: %__MODULE__{
@@ -96,7 +96,7 @@ defmodule Helix.Software.Model.FileModule do
   Formats a FileModule 
   """
   def format(module = %__MODULE__{}) do
-    data = FileModuleData.new(module)
+    data = Module.Data.new(module)
 
     Map.put(%{}, module.name, data)
   end
@@ -106,17 +106,17 @@ defmodule Helix.Software.Model.FileModule do
     FileModuleData contains information about the corresponding module.
     """
 
-    alias Helix.Software.Model.FileModule
+    alias Helix.Software.Model.File
 
     @type t ::
       %__MODULE__{
-        version: FileModule.version
+        version: File.Module.version
       }
 
     @enforce_keys [:version]
     defstruct [:version]
 
-    @spec new(FileModule.schema) ::
+    @spec new(File.Module.schema) ::
       t
     def new(%{version: version}) do
       %__MODULE__{
@@ -132,16 +132,15 @@ defmodule Helix.Software.Model.FileModule do
     alias Ecto.Queryable
     alias HELL.Constant
     alias Helix.Software.Model.File
-    alias Helix.Software.Model.FileModule
 
     @spec by_file(Queryable.t, File.idtb) ::
       Queryable.t
-    def by_file(query \\ FileModule, id),
+    def by_file(query \\ File.Module, id),
       do: where(query, [fm], fm.file_id == ^id)
 
     @spec by_name(Queryable.t, Constant.t) ::
       Queryable.t
-    def by_name(query \\ FileModule, name),
+    def by_name(query \\ File.Module, name),
       do: where(query, [fm], fm.name == ^name)
   end
 end

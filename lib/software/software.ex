@@ -51,7 +51,6 @@ defmodule Helix.Software do
 
       alias HELL.Constant
       alias Helix.Software.Model.File
-      alias Helix.Software.Model.FileModule
 
       @type t :: %{
         type: type,
@@ -65,7 +64,7 @@ defmodule Helix.Software do
       @type modules :: Constant.t
 
       @type extension :: File.extension
-      @type module_name :: FileModule.name
+      @type module_name :: File.Module.name
 
       @spec all ::
         [t]

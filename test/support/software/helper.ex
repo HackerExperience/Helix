@@ -2,7 +2,7 @@ defmodule Helix.Test.Software.Helper do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Model.Server
-  alias Helix.Software.Model.FileModule
+  alias Helix.Software.Model.File
   alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
   alias Helix.Software.Query.Storage, as: StorageQuery
@@ -67,7 +67,7 @@ defmodule Helix.Test.Software.Helper do
   end
 
   defp generate_file_module(module, version) do
-    data = FileModule.Data.new(%{version: version})
+    data = File.Module.Data.new(%{version: version})
 
     Map.put(%{}, module, data)
   end

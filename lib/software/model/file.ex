@@ -8,9 +8,9 @@ defmodule Helix.Software.Model.File do
 
   alias Ecto.Changeset
   alias HELL.Constant
-  alias Helix.Software.Model.FileModule
   alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
+  alias __MODULE__, as: File
 
   @type t :: t_of_type(Software.type)
 
@@ -26,7 +26,7 @@ defmodule Helix.Software.Model.File do
     storage: term,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t,
-    modules: modules | FileModule.schema,
+    modules: modules | File.Module.schema,
     crypto_version: crypto_version
   }
 
@@ -37,7 +37,7 @@ defmodule Helix.Software.Model.File do
   @type size :: pos_integer
   @type type :: Software.type
   @type crypto_version :: nil | pos_integer
-  @type modules :: FileModule.t
+  @type modules :: File.Module.t
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -49,7 +49,7 @@ defmodule Helix.Software.Model.File do
     storage_id: Storage.idtb
   }
 
-  @type module_params :: {FileModule.name, FileModule.Data.t}
+  @type module_params :: {File.Module.name, File.Module.Data.t}
 
   @type update_params :: %{
     optional(:name) => name,
@@ -88,7 +88,7 @@ defmodule Helix.Software.Model.File do
       references: :storage_id,
       define_field: false
 
-    has_many :modules, FileModule,
+    has_many :modules, File.Module,
       foreign_key: :file_id,
       references: :file_id,
       on_replace: :delete
@@ -119,7 +119,7 @@ defmodule Helix.Software.Model.File do
   def format(file) do
     formatted_modules =
       Enum.reduce(file.modules, %{}, fn module, acc ->
-        module = FileModule.format(module)
+        module = File.Module.format(module)
         Map.merge(acc, module)
       end)
 
@@ -158,9 +158,9 @@ defmodule Helix.Software.Model.File do
   end
 
   @spec create_module_assoc(module_params) ::
-    FileModule.changeset
+    File.Module.changeset
   docp """
-  Helper/wrapper to `FileModule.create_changeset/1`
+  Helper/wrapper to `File.Module.create_changeset/1`
   """
   defp create_module_assoc({name, data}) do
     params = %{
@@ -168,7 +168,7 @@ defmodule Helix.Software.Model.File do
       version: data.version
     }
 
-    FileModule.create_changeset(params)
+    File.Module.create_changeset(params)
   end
 
   docp """
@@ -251,13 +251,13 @@ defmodule Helix.Software.Model.File do
       do: where(query, [f], is_nil(f.crypto_version))
 
     defp join_modules(query),
-      do: join(query, :left, [f], fm in FileModule, fm.file_id == f.file_id)
+      do: join(query, :left, [f], fm in File.Module, fm.file_id == f.file_id)
 
     defp join_assoc_modules(query),
       do: join(query, :left, [f], fm in assoc(f, :modules))
 
     docp """
-    Preloads FileModules into the schema
+    Preloads File.Modules into the schema
     """
     defp preload_modules(query),
       do: preload(query, [..., m], [modules: m])
