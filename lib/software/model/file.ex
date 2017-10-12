@@ -145,6 +145,13 @@ defmodule Helix.Software.Model.File do
     |> validate_number(:crypto_version, greater_than: 0)
   end
 
+  def hector_loader(repo, {columns, row}) do
+    file = apply(repo, :load, [File, {columns, row}])
+
+    apply(repo, :preload, [file, :modules])
+    |> format()
+  end
+
   defp validate_changeset(struct, params) do
     struct
     |> cast(params, @castable_fields)
