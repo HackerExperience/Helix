@@ -11,6 +11,12 @@ defmodule Helix.Software.Internal.PublicFTP do
     |> Repo.one()
   end
 
+  def fetch_file(server_id, file_id) do
+    server_id
+    |> PublicFTP.Files.Query.by_file(file_id)
+    |> Repo.one()
+  end
+
   def list_files(server_id) do
     query = PublicFTP.Query.list_files(server_id)
 
@@ -42,9 +48,9 @@ defmodule Helix.Software.Internal.PublicFTP do
   end
 
   def remove_file(pftp = %PublicFTP{}, file_id) do
-    # pftp.server_id
-    # |> PublicFTP.Files.remove_file(file_id)
-    # |> Repo.
+    pftp.server_id
+    |> PublicFTP.Files.Query.by_file(file_id)
+    |> Repo.delete()
   end
 
   defp update(changeset),

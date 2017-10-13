@@ -8,6 +8,12 @@ defmodule Helix.Software.Model.PublicFTP.Files do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.PublicFTP
 
+  @type t :: %__MODULE__{
+    server_id: Server.id,
+    file_id: File.id,
+    inserted_at: DateTime.t
+  }
+
   @creation_fields [:server_id, :file_id]
   @required_fields [:server_id, :file_id, :inserted_at]
 
@@ -49,4 +55,16 @@ defmodule Helix.Software.Model.PublicFTP.Files do
 
   defp add_timestamp(changeset),
     do: put_change(changeset, :inserted_at, DateTime.utc_now())
+
+  defmodule Query do
+
+    import Ecto.Query
+
+    alias Helix.Software.Model.PublicFTP
+
+    def by_file(query \\ PublicFTP.Files, server_id, file_id) do
+      where(query, [pf], pf.server_id == ^server_id and pf.file_id == ^file_id)
+    end
+
+  end
 end

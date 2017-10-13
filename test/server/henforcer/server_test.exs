@@ -14,13 +14,13 @@ defmodule Helix.Server.Henforcer.ServerTest do
     test "returns true when server exists" do
       server = Factory.insert(:server)
 
-      assert Henforcer.exists?(server.server_id)
+      assert {true, _} = Henforcer.server_exists?(server.server_id)
     end
 
     test "returns false when server doesn't exists" do
       # well, i personally find those test descriptions a litte too redundant
 
-      refute Henforcer.exists?(Server.ID.generate())
+      assert {false, _, _} = Henforcer.server_exists?(Server.ID.generate())
     end
   end
 
