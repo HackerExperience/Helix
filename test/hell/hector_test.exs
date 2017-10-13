@@ -2,8 +2,7 @@ defmodule HectorTest do
 
   use Helix.Test.Case.Integration
 
-  alias HELL.Hector
-
+  alias Hector
   alias Helix.Network.Repo, as: NetworkRepo
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
@@ -92,8 +91,13 @@ defmodule HectorTest do
       assert entry.path == file.path
       assert entry.inserted_at == file.inserted_at
 
-      # Except for the the associations...
-      refute entry.modules == file.modules
+      # The File association were loaded because the File schema has the method
+      # `hector_loader`.
+      assert entry.modules == file.modules
+
+      # But other associations, which are not handled by `hector_loader`, were
+      # not loaded
+      assert %Ecto.Association.NotLoaded{} = entry.storage
     end
 
     test "with simple loader (2)" do
@@ -318,11 +322,28 @@ defmodule HectorTest do
       assert q3 == r3
       assert q4 == r4
       assert q5 == r5
-      assert q6 == r6
-      assert q7 == r7
+      assert q6 == format_sql(r6)
+      assert q7 == format_sql(r7)
       assert q8 == r8
       assert q9 == r9
       assert q10 == r10
+    end
+
+    # Removes unnecessary spaces and line breaks. "trim on asteroids"
+    defp format_sql(sql) do
+      sql
+      |> String.replace("\n", " ")
+      |> remove_extra_spaces()
+    end
+
+    defp remove_extra_spaces(sql) do
+      if String.contains?(sql, "  ") do
+        sql
+        |> String.replace("  ", " ")
+        |> remove_extra_spaces()
+      else
+        sql
+      end
     end
   end
 end

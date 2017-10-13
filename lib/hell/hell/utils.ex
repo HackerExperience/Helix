@@ -46,4 +46,10 @@ defmodule HELL.Utils do
   """
   def concat(a, b) when is_binary(a) and is_binary(b),
     do: a <> b
+
+  def atom_contains?(a, value) when is_atom(a) do
+    a
+    |> Atom.to_string()
+    |> String.contains?(value)
+  end
 end

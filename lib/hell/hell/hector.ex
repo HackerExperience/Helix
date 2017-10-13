@@ -1,4 +1,4 @@
-defmodule HELL.Hector do
+defmodule Hector do
   @moduledoc """
   Hector is a helper to:
 
@@ -217,6 +217,22 @@ defmodule HELL.Hector do
     result
   end
 
+  defp format_str(sql) do
+    sql
+    |> String.replace("\n", " ")  # Remove newlines
+    |> remove_extra_spaces()
+  end
+
+  defp remove_extra_spaces(sql) do
+    if String.contains?(sql, "  ") do
+      sql
+      |> String.replace("  ", " ")
+      |> remove_extra_spaces()
+    else
+      sql
+    end
+  end
+
   @spec query(String.t, [term], term) ::
     {:ok, query :: String.t}
     | {:error, reason :: term}
@@ -228,6 +244,7 @@ defmodule HELL.Hector do
   def query(sql, params, caster \\ &std_caster/2) do
     {first, splits} =
       sql
+      |> format_str()
       |> String.split("##")
       |> List.pop_at(0)
 
@@ -273,6 +290,11 @@ defmodule HELL.Hector do
     end
   end
 
+  def query!(sql, params, caster \\ &std_caster/2) do
+    {:ok, query} = query(sql, params, caster)
+    query
+  end
+
   @doc """
   Hector default caster. It simply, naively and blindly ensures the given
   value is a string. This does not protect you against potential attacks. Read
@@ -300,7 +322,11 @@ defmodule HELL.Hector do
     columns = atomize_columns(result.columns)
 
     Enum.map(result.rows, fn row ->
-      apply(repo, :load, [module, {columns, row}])
+      if :erlang.function_exported(module, :hector_loader, 2) do
+        apply(module, :hector_loader, [repo, {columns, row}])
+      else
+        apply(repo, :load, [module, {columns, row}])
+      end
     end)
   end
 
@@ -336,17 +362,28 @@ defmodule HELL.Hector do
   end
 
   defp get_type(type) do
-
     next_parens = Enum.find_index(type, &(&1 == List.first(')')))
     next_space = Enum.find_index(type, &(&1 == List.first(' ')))
 
-    cond do
-      next_parens != nil ->
-        Enum.split(type, next_parens)
-      next_space != nil ->
-        Enum.split(type, next_space)
-      true ->
+    next_split =
+      if is_integer(next_parens) and is_integer(next_space) do
+        Enum.min([next_parens] ++ [next_space])
+      else
+        cond do
+          next_parens ->
+            next_parens
+          next_space ->
+            next_space
+          true ->
+            :norest
+        end
+      end
+
+    case next_split do
+      :norest ->
         {type, :norest}
+      split_index ->
+        Enum.split(type, split_index)
     end
   end
 end
