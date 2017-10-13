@@ -1,11 +1,14 @@
 defmodule Helix.Test.Software.Setup do
 
+  alias Ecto.Changeset
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
-  alias Helix.Hardware.Model.Component
+  alias Helix.Software.Model.PublicFTP
   alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Repo, as: SoftwareRepo
 
@@ -179,6 +182,128 @@ defmodule Helix.Test.Software.Setup do
     }
 
     {storage, related}
+  end
+
+  @doc """
+  See docs on `fake_pftp/1`
+  """
+  def pftp(opts \\ []) do
+    {pftp, related} = fake_pftp(opts)
+
+    {:ok, inserted} = SoftwareRepo.insert(pftp)
+
+    {inserted, related}
+  end
+
+  @doc """
+  Opts:
+  - server_id: Specify the server id. Defaults to generating a fake server id.
+  - active: Whether the generated pftp should be active. Defaults to true.
+  - real_server: Whether to generate real server. Defaults to false.
+
+  Related: Server.t if `real_server`
+  """
+  def fake_pftp(opts \\ []) do
+    if opts[:server_id] != nil and opts[:real_server] != nil do
+      raise "Cant use both `real_server` and `server_id` opts"
+    end
+
+    is_active = Keyword.get(opts, :active, true)
+
+    {server, server_id} =
+      cond do
+        opts[:real_server] ->
+          {server, _} = ServerSetup.server()
+          {server, server.server_id}
+        opts[:server_id] ->
+          {nil, opts[:server_id]}
+        true ->
+          {nil, Server.ID.generate()}
+      end
+
+    pftp =
+      %{server_id: server_id}
+      |> PublicFTP.create_changeset()
+      |> Changeset.force_change(:is_active, is_active)
+      |> Changeset.apply_changes()
+
+    related =
+      if server do
+        %{server: server}
+      else
+        %{}
+      end
+
+    {pftp, related}
+  end
+
+  @doc """
+  See doc on `fake_pftp_file/1`
+  """
+  def pftp_file(opts \\ []) do
+    {pftp_file, related} = fake_pftp_file(opts)
+
+    {:ok, inserted} = SoftwareRepo.insert(pftp_file)
+
+    {inserted, related}
+  end
+
+  @doc """
+  - file_id: Specify file id. Generates a real file if not specified.
+  - real_file: Whether to generate a real file. Defaults to true. Overwrites the
+    `file_id` option
+  - server_id: Which pftp server to link to. Generates a real pftp by default
+
+  Related:
+    File.t if `real_file` is true (default), \
+    PublicFTP.t when `server_id` isnt specified, \
+    Server.id,
+    File.id
+  """
+  def fake_pftp_file(opts \\ []) do
+    {file, file_related, file_id} =
+      cond do
+        opts[:real_file] == false ->
+          {nil, nil, File.ID.generate()}
+
+        opts[:file_id] ->
+          {nil, nil, File.ID.generate()}
+
+        true ->
+          {file, related} = file()
+          {file, related, file.file_id}
+      end
+
+    server_id =
+      if file do
+        Keyword.get(opts, :server_id, file_related.server_id)
+      else
+        Server.ID.generate()
+      end
+
+    if opts[:server_id] do
+    end
+
+    pftp =
+      if opts[:server_id] do
+        nil
+      else
+        pftp(server_id: server_id)
+      end
+
+    pftp_file =
+      server_id
+      |> PublicFTP.Files.add_file(file_id)
+      |> Changeset.apply_changes()
+
+    related = %{
+      pftp: pftp,
+      server_id: server_id,
+      file: file,
+      file_id: file_id
+    }
+
+    {pftp_file, related}
   end
 
   @doc """

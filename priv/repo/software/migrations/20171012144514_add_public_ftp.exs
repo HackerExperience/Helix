@@ -25,6 +25,6 @@ defmodule Helix.Software.Repo.Migrations.AddPublicFTP do
     end
 
     # Reverse index used to identify whether a file is being used on public FTP
-    create index(:pftp_files, [:file_id])
+    create unique_index(:pftp_files, [:file_id])
   end
 end
