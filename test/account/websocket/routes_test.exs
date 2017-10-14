@@ -2,7 +2,7 @@ defmodule Helix.Account.Websocket.RoutesTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Websocket.Socket
+  alias Helix.Websocket
   alias Helix.Account.Action.Session, as: SessionAction
 
   alias Helix.Test.Account.Factory
@@ -14,7 +14,7 @@ defmodule Helix.Account.Websocket.RoutesTest do
   setup do
     account = Factory.insert(:account)
     {:ok, token} = SessionAction.generate_token(account)
-    {:ok, socket} = connect(Socket, %{token: token})
+    {:ok, socket} = connect(Websocket, %{token: token})
     {:ok, _, socket} = join(socket, "requests")
 
     {:ok, account: account, token: token, socket: socket}
@@ -28,6 +28,6 @@ defmodule Helix.Account.Websocket.RoutesTest do
 
     refute Process.alive? context.socket.channel_pid
     # The token has been invalidated so we should not be able to use it again
-    assert :error == connect(Socket, %{token: context.token})
+    assert :error == connect(Websocket, %{token: context.token})
   end
 end

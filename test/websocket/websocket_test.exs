@@ -1,9 +1,9 @@
-defmodule Helix.Websocket.SocketTest do
+defmodule Helix.WebsocketTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Websocket
   alias Helix.Account.Action.Session, as: SessionAction
-  alias Helix.Websocket.Socket
 
   alias Helix.Test.Account.Factory, as: AccountFactory
 
@@ -16,15 +16,15 @@ defmodule Helix.Websocket.SocketTest do
       account = AccountFactory.insert(:account)
       {:ok, token} = SessionAction.generate_token(account)
 
-      assert {:ok, _} = connect(Socket, %{"token" => token})
+      assert {:ok, _} = connect(Websocket, %{"token" => token})
     end
 
     test "'public' connection is refused" do
-      assert :error = connect(Socket, %{})
+      assert :error = connect(Websocket, %{})
     end
 
     test "connection with wrong token is refused" do
-      assert :error = connect(Socket, %{"token" => "invalid"})
+      assert :error = connect(Websocket, %{"token" => "invalid"})
     end
   end
 end

@@ -4,7 +4,7 @@ defmodule Helix.Endpoint do
 
   require Helix.Appsignal
 
-  socket "/", Helix.Websocket.Socket
+  socket "/", Helix.Websocket
 
   plug Corsica,
     origins: Application.get_env(:helix, Helix.Endpoint)[:allowed_cors],

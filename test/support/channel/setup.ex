@@ -2,7 +2,7 @@ defmodule Helix.Test.Channel.Setup do
 
   import Phoenix.ChannelTest
 
-  alias Helix.Websocket.Socket
+  alias Helix.Websocket
   alias Helix.Account.Model.Account
   alias Helix.Account.Query.Account, as: AccountQuery
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
@@ -50,7 +50,7 @@ defmodule Helix.Test.Channel.Setup do
       end
 
     {token, _} = AccountSetup.token([account: account])
-    {:ok, socket} = connect(Socket, %{token: token})
+    {:ok, socket} = connect(Websocket, %{token: token})
 
     {socket, Map.merge(%{account: account}, related)}
   end
@@ -222,7 +222,7 @@ defmodule Helix.Test.Channel.Setup do
   - destination_entity_id
   - network_id
   - access_type: Inferred if not set
-  - own_server: Force socket to represent own server channel
+  - own_server: Force socket to represent own server channel. Defaults to false.
   - counter: Defaults to 0.
   """
   def mock_server_socket(opts \\ []) do
