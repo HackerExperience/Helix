@@ -1,4 +1,4 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
+defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
 
   use Helix.Test.Case.Integration
 
@@ -13,7 +13,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
 
   @internet_str to_string(NetworkHelper.internet_id())
 
-  describe "browse" do
+  describe "network.browse" do
     test "valid resolution, originating from my own server" do
       {socket, _} = ChannelSetup.join_server([own_server: true])
       {_, npc_ip} = NPCHelper.random()
@@ -24,7 +24,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # Make sure the answer is an astounding :ok
       assert_reply ref, :ok, response
@@ -60,7 +60,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It worked!
       assert_reply ref, :ok, response
@@ -91,7 +91,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip asking `gateway` to be used as origin
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It worked!
       assert_reply ref, :ok, response
@@ -122,7 +122,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip asking random server to be used as origin
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It return an error!
       assert_reply ref, :error, response
@@ -140,7 +140,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to random IP
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It return an error!
       assert_reply ref, :error, response
@@ -148,6 +148,9 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
 
       CacheHelper.sync_test()
     end
+
+    @tag :pending
+    test "resolution returns list of PublicFTP files"
 
     @tag :pending
     test "resolution returning password"

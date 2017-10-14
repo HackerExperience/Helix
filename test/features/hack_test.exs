@@ -45,7 +45,7 @@ defmodule Helix.Test.Features.Hack do
       }
 
       # Start the Bruteforce attack
-      ref = push socket, "bruteforce", params
+      ref = push socket, "cracker.bruteforce", params
 
       # Wait for response
       assert_reply ref, :ok, response
@@ -100,13 +100,18 @@ defmodule Helix.Test.Features.Hack do
         "password" => password_acquired_event.data.password
       }
 
-      {:ok, _, new_socket} =
+      {:ok, %{data: bootstrap}, new_socket} =
         subscribe_and_join(socket, ServerChannel, topic, params)
 
       # I'm in!
       assert new_socket.topic == topic
       assert new_socket.assigns.gateway.server_id == gateway.server_id
       assert new_socket.assigns.destination.server_id == target.server_id
+
+      # Logging in returns local server data, through bootstrap
+      assert bootstrap.filesystem
+      assert bootstrap.logs
+      assert bootstrap.processes
 
       :timer.sleep(50)
 
@@ -123,12 +128,6 @@ defmodule Helix.Test.Features.Hack do
 
       {:ok, [target_nip]} = CacheQuery.from_server_get_nips(target.server_id)
 
-      # To the client, login consists of two steps:
-      #  1 - Joining the remote server channel
-      #  2 - Retrieving data about the remote server
-      # To the backend, `login` is simply the act of joining another server's
-      # channel (step 1 above).
-
       topic =
         ChannelHelper.server_topic_name(target_nip.network_id, target_nip.ip)
       params = %{
@@ -137,7 +136,7 @@ defmodule Helix.Test.Features.Hack do
       }
 
       # So, let's login!
-      {:ok, _, new_socket} =
+      {:ok, %{data: bootstrap}, new_socket} =
         subscribe_and_join(socket, ServerChannel, topic, params)
 
       # Successfully joined the remote server channel
@@ -145,7 +144,10 @@ defmodule Helix.Test.Features.Hack do
       assert new_socket.assigns.gateway.server_id == gateway.server_id
       assert new_socket.assigns.destination.server_id == target.server_id
 
-      # Now let's retrieve information about that server
+      # Logging in returns the remote server data
+      assert bootstrap.filesystem
+      assert bootstrap.logs
+      assert bootstrap.processes
 
       :timer.sleep(50)
     end

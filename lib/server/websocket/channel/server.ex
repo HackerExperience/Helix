@@ -13,6 +13,11 @@ channel Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
+  alias Helix.Network.Websocket.Requests.Browse, as: BrowseRequest
+
+  alias Helix.Software.Websocket.Requests.Cracker.Bruteforce,
+    as: CrackerBruteforceRequest
+  alias Helix.Software.Websocket.Requests.File.Download, as: FileDownloadRequest
   alias Helix.Software.Websocket.Requests.PFTP.File.Add, as: PFTPFileAddRequest
   alias Helix.Software.Websocket.Requests.PFTP.File.Remove,
     as: PFTPFileRemoveRequest
@@ -24,12 +29,6 @@ channel Helix.Server.Websocket.Channel.Server do
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
   alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
     as: BootstrapRequest
-  alias Helix.Server.Websocket.Channel.Server.Requests.Browse,
-    as: BrowseRequest
-  alias Helix.Server.Websocket.Channel.Server.Requests.Bruteforce,
-    as: BruteforceRequest
-  alias Helix.Server.Websocket.Channel.Server.Requests.FileDownload,
-    as: FileDownloadRequest
 
   @doc """
   Joins a server.
@@ -142,7 +141,7 @@ channel Helix.Server.Websocket.Channel.Server do
   - "bad_origin" - The given origin is neither `gateway_id` nor `destination_id`
   + base errors
   """
-  topic "browse", BrowseRequest
+  topic "network.browse", BrowseRequest
 
   @doc """
   Starts a bruteforce attack.
@@ -175,7 +174,7 @@ channel Helix.Server.Websocket.Channel.Server do
   - "bad_attack_src" - Request originated from a remote server channel
   + base errors
   """
-  topic "bruteforce", BruteforceRequest
+  topic "cracker.bruteforce", CrackerBruteforceRequest
 
   @doc """
   Forces a bootstrap to happen. It is the exact same operation ran during join.

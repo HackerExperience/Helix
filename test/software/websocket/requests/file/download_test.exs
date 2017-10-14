@@ -1,12 +1,11 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.FileDownloadTest do
+defmodule Helix.Software.Websocket.Requests.File.DownloadTest do
 
   use Helix.Test.Case.Integration
 
   alias Helix.Websocket.Requestable
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
-  alias Helix.Server.Websocket.Channel.Server.Requests.FileDownload,
-    as: FileDownloadRequest
+  alias Helix.Software.Websocket.Requests.File.Download, as: FileDownloadRequest
 
   alias Helix.Test.Channel.Request.Helper, as: RequestHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup

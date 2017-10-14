@@ -1,12 +1,12 @@
 import Helix.Websocket.Request
 
-request Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
+request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
 
   alias HELL.IPv4
   alias Helix.Network.Model.Network
-  alias Helix.Software.Henforcer.File.Cracker, as: CrackerHenforcer
   alias Helix.Server.Model.Server
-  alias Helix.Server.Public.Server, as: ServerPublic
+  alias Helix.Software.Henforcer.File.Cracker, as: CrackerHenforcer
+  alias Helix.Software.Public.File, as: FilePublic
 
   def check_params(request, socket) do
     with \
@@ -54,7 +54,7 @@ request Helix.Server.Websocket.Channel.Server.Requests.Bruteforce do
     ip = request.params.ip
     bounces = request.params.bounces
 
-    case ServerPublic.bruteforce(source_id, network_id, ip, bounces) do
+    case FilePublic.bruteforce(source_id, network_id, ip, bounces) do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 

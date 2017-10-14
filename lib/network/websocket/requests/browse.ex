@@ -1,11 +1,11 @@
 import Helix.Websocket.Request
 
-request Helix.Server.Websocket.Channel.Server.Requests.Browse do
+request Helix.Network.Websocket.Requests.Browse do
 
+  alias Helix.Server.Model.Server
   alias Helix.Network.Model.Network
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
-  alias Helix.Server.Model.Server
-  alias Helix.Server.Public.Server, as: ServerPublic
+  alias Helix.Network.Public.Network, as: NetworkPublic
 
   def check_params(request, socket) do
     gateway_id = socket.assigns.gateway.server_id
@@ -49,7 +49,7 @@ request Helix.Server.Websocket.Channel.Server.Requests.Browse do
     origin_id = request.params.origin
     address = request.params.address
 
-    case ServerPublic.network_browse(network_id, address, origin_id) do
+    case NetworkPublic.browse(network_id, address, origin_id) do
       {:ok, web} ->
         update_meta(request, %{web: web}, reply: true)
 
