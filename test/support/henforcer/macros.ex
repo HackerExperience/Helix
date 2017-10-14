@@ -1,5 +1,10 @@
 defmodule Helix.Test.Henforcer.Macros do
 
+  @doc """
+  Basically, this macro ensures that the returned relay has the given keys and
+  only them. It did not return any extra keys. Useful to test that the relay
+  accumulation worked as expected.
+  """
   defmacro assert_relay(relay, keys) do
     quote do
       acc_relay =
