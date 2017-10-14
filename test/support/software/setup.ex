@@ -199,7 +199,7 @@ defmodule Helix.Test.Software.Setup do
   Opts:
   - server_id: Specify the server id. Defaults to generating a fake server id.
   - active: Whether the generated pftp should be active. Defaults to true.
-  - real_server: Whether to generate real server. Defaults to false.
+  - real_server: Whether to generate a real server (desktop). Defaults to false.
 
   Related: Server.t if `real_server`
   """
@@ -222,8 +222,8 @@ defmodule Helix.Test.Software.Setup do
       end
 
     pftp =
-      %{server_id: server_id}
-      |> PublicFTP.create_changeset()
+      server_id
+      |> PublicFTP.create_server()
       |> Changeset.force_change(:is_active, is_active)
       |> Changeset.apply_changes()
 
@@ -251,7 +251,7 @@ defmodule Helix.Test.Software.Setup do
   @doc """
   - file_id: Specify file id. Generates a real file if not specified.
   - real_file: Whether to generate a real file. Defaults to true. Overwrites the
-    `file_id` option
+    `file_id` option when set.
   - server_id: Which pftp server to link to. Generates a real pftp by default
 
   Related:
@@ -267,7 +267,7 @@ defmodule Helix.Test.Software.Setup do
           {nil, nil, File.ID.generate()}
 
         opts[:file_id] ->
-          {nil, nil, File.ID.generate()}
+          {nil, nil, opts[:file_id]}
 
         true ->
           {file, related} = file()
@@ -278,11 +278,8 @@ defmodule Helix.Test.Software.Setup do
       if file do
         Keyword.get(opts, :server_id, file_related.server_id)
       else
-        Server.ID.generate()
+        Keyword.get(opts, :server_id, Server.ID.generate())
       end
-
-    if opts[:server_id] do
-    end
 
     pftp =
       if opts[:server_id] do
@@ -293,7 +290,7 @@ defmodule Helix.Test.Software.Setup do
 
     pftp_file =
       server_id
-      |> PublicFTP.Files.add_file(file_id)
+      |> PublicFTP.File.add_file(file_id)
       |> Changeset.apply_changes()
 
     related = %{

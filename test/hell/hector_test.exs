@@ -91,13 +91,8 @@ defmodule HectorTest do
       assert entry.path == file.path
       assert entry.inserted_at == file.inserted_at
 
-      # The File association were loaded because the File schema has the method
-      # `hector_loader`.
-      assert entry.modules == file.modules
-
-      # But other associations, which are not handled by `hector_loader`, were
-      # not loaded
-      assert %Ecto.Association.NotLoaded{} = entry.storage
+      # File.Module association was not loaded
+      refute entry.modules == file.modules
     end
 
     test "with simple loader (2)" do

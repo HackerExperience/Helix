@@ -50,10 +50,29 @@ defmodule Helix.Software.Public.File do
         gateway_id: tunnel.gateway_id,
         destination_id: tunnel.destination_id,
         network_id: tunnel.network_id,
-        bounces: []  # TODO
+        bounces: []  # TODO 256
       }
 
-    case FileTransferFlow.transfer(:download, file, storage, network_info) do
+    download(:download, file, storage, network_info)
+  end
+
+  def pftp_download(network_id, gateway_id, pftp, storage, file) do
+    network_info =
+      %{
+        gateway_id: gateway_id,
+        destination_id: pftp.server_id,
+        network_id: network_id,
+        bounces: []  # TODO 256
+      }
+
+    download(:pftp_download, file, storage, network_info)
+  end
+
+  # def pftp_add_file(pftp = %PublicFTP{}, file = %File{}) do
+  # end
+
+  defp download(type, file, storage, network_info) do
+    case FileTransferFlow.transfer(type, file, storage, network_info) do
       {:ok, process} ->
         {:ok, process}
 

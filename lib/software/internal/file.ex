@@ -29,7 +29,6 @@ defmodule Helix.Software.Internal.File do
 
     case best do
       [file_id] ->
-        # HACK: https://stackoverflow.com/q/46651888/1454986
         fetch(file_id)
       [] ->
         nil

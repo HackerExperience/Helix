@@ -1,9 +1,10 @@
-defmodule Helix.Software.Model.PublicFTP.Files do
+defmodule Helix.Software.Model.PublicFTP.File do
 
   use Ecto.Schema
 
   import Ecto.Changeset
 
+  alias Ecto.Changeset
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.PublicFTP
@@ -12,6 +13,13 @@ defmodule Helix.Software.Model.PublicFTP.Files do
     server_id: Server.id,
     file_id: File.id,
     inserted_at: DateTime.t
+  }
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
+  @type creation_params :: %{
+    server_id: Server.idtb,
+    file_id: File.idtb
   }
 
   @creation_fields [:server_id, :file_id]
@@ -36,11 +44,15 @@ defmodule Helix.Software.Model.PublicFTP.Files do
       define_field: false
   end
 
+  @spec add_file(Server.id, File.id) ::
+    changeset
   def add_file(server_id, file_id) do
     %{server_id: server_id, file_id: file_id}
     |> create_changeset()
   end
 
+  @spec create_changeset(creation_params) ::
+    changeset
   defp create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -48,11 +60,15 @@ defmodule Helix.Software.Model.PublicFTP.Files do
     |> validate_changeset()
   end
 
+  @spec validate_changeset(changeset) ::
+    changeset
   defp validate_changeset(changeset) do
     changeset
     |> validate_required(@required_fields)
   end
 
+  @spec add_timestamp(changeset) ::
+    changeset
   defp add_timestamp(changeset),
     do: put_change(changeset, :inserted_at, DateTime.utc_now())
 
@@ -60,11 +76,19 @@ defmodule Helix.Software.Model.PublicFTP.Files do
 
     import Ecto.Query
 
+    alias Ecto.Queryable
+    alias Helix.Software.Model.File
     alias Helix.Software.Model.PublicFTP
 
-    def by_file(query \\ PublicFTP.Files, server_id, file_id) do
-      where(query, [pf], pf.server_id == ^server_id and pf.file_id == ^file_id)
+    @spec by_file(Queryable.t, File.idtb) ::
+      Queryable.t
+    @doc """
+    Searches by file, returning only if the underlying PFTP server is active.
+    """
+    def by_file(query \\ PublicFTP.File, file_id) do
+      query
+      |> join(:inner, [pf, p], pf in PublicFTP, pf.server_id == p.server_id)
+      |> where([pf, p], pf.file_id == ^file_id and p.is_active == true)
     end
-
   end
 end

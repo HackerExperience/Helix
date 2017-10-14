@@ -28,24 +28,34 @@ defmodule HELL.Utils do
   def ensure_list(value),
     do: [value]
 
+  @spec concat_atom(atom | String.t, atom | String.t) ::
+    atom
   @doc """
   Concatenates two elements, returning an atom.
   """
-  def concat_atom(a, b) when is_atom(a) and is_atom(b),
-    do: concat_atom(Atom.to_string(a), Atom.to_string(b))
-  def concat_atom(a, b) when is_binary(a) and is_atom(b),
-    do: concat_atom(a, Atom.to_string(b))
-  def concat_atom(a, b) when is_atom(a) and is_binary(b),
+  def concat_atom(a, b) when is_atom(a),
     do: concat_atom(Atom.to_string(a), b)
+  def concat_atom(a, b) when is_atom(b),
+    do: concat_atom(a, Atom.to_string(b))
   def concat_atom(a, b) when is_binary(a) and is_binary(b),
     do: String.to_atom(a <> b)
 
+  @spec concat(atom | String.t, atom | String.t) ::
+    String.t
   @doc """
   Concatenates two strings. It's a more readable option to Kernel.<>/2, intended
-  to be used on pipes.
+  to be used on pipes. It can also handle concatenation of atoms, in which case
+  this function will always return a string. See also `concat_atom/2`.
   """
+  def concat(a, b) when is_atom(a),
+    do: concat(Atom.to_string(a), b)
+  def concat(a, b) when is_atom(b),
+    do: concat(a, Atom.to_string(b))
   def concat(a, b) when is_binary(a) and is_binary(b),
     do: a <> b
+
+  def concat(a, b, c),
+    do: concat(a, b) |> concat(c)
 
   def atom_contains?(a, value) when is_atom(a) do
     a
