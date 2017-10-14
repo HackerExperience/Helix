@@ -1,5 +1,6 @@
 defmodule Helix.Websocket.Utils do
 
+  alias HELL.Utils
   alias Helix.Process.Model.Process
   alias Helix.Process.Public.View.Process, as: ProcessView
 
@@ -19,19 +20,19 @@ defmodule Helix.Websocket.Utils do
   def no_reply(socket),
     do: {:noreply, socket}
 
-  @spec reply_process(Process.t, socket) ::
-    reply_ok
+  @spec render_process(Process.t, socket) ::
+    %{data: map}
   @doc """
   Helper that automatically renders the reply with the recently created process.
   """
-  def reply_process(process = %Process{}, socket) do
+  def render_process(process = %Process{}, socket) do
     process_data = process.process_data
     server_id = socket.assigns.gateway.server_id
     entity_id = socket.assigns.entity_id
 
     pview = ProcessView.render(process_data, process, server_id, entity_id)
 
-    reply_ok(%{data: pview}, socket)
+    %{data: pview}
   end
 
   @spec reply_ok(term, socket) ::
@@ -59,4 +60,21 @@ defmodule Helix.Websocket.Utils do
     reply_error
   def internal_error(socket),
     do: reply_error("internal", socket)
+
+  @doc """
+  General purpose error code translator. If you want to specify or handle a
+  custom return for the errors below, make sure to add a pattern match before
+  calling this function. For an example, see FileDownloadRequest.
+
+  Most common translation pattern: {:error, :reason} => "error_reason".
+
+  For instance, {:storage, :full} or {:server, :not_found} are translated to
+  "storage_full" and "server_not_found", respectively.
+  """
+  def get_error(msg) when is_binary(msg),
+    do: msg
+  def get_error(:internal),
+    do: "internal"
+  def get_error({a, b}),
+    do: Utils.concat(a, "_", b)
 end

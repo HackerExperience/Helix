@@ -1,38 +1,41 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.Bootstrap do
+import Helix.Websocket.Request
 
-  require Helix.Websocket.Request
+request Helix.Server.Websocket.Channel.Server.Requests.Bootstrap do
+  @moduledoc """
+  ServerBootstrapRequest is used to allow the client to resync its local data
+  with the Helix server.
 
-  Helix.Websocket.Request.register()
+  It returns the ServerBootstrap, which is the exact same struct returned after
+  joining a local or remote server Channel.
+  """
 
-  defimpl Helix.Websocket.Requestable do
+  alias Helix.Server.Public.Server, as: ServerPublic
 
-    alias Helix.Websocket.Utils, as: WebsocketUtils
-    alias Helix.Server.Public.Server, as: ServerPublic
+  def check_params(request, _socket),
+    do: {:ok, request}
 
-    def check_params(request, _socket),
-      do: {:ok, request}
+  def check_permissions(request, socket) do
 
-    def check_permissions(request, socket) do
-
-      if socket.assigns.meta.access_type == :remote do
-        {:ok, request}
-      else
-        {:error, %{message: "own_server_bootstrap"}}
-      end
+    if socket.assigns.meta.access_type == :remote do
+      reply_ok(request)
+    else
+      reply_error("own_server_bootstrap")
     end
+  end
 
-    def handle_request(request, socket) do
-      entity_id = socket.assigns.entity_id
-      server_id = socket.assigns.destination.server_id
+  def handle_request(request, socket) do
+    entity_id = socket.assigns.entity_id
+    server_id = socket.assigns.destination.server_id
 
-      meta = %{bootstrap: ServerPublic.bootstrap(server_id, entity_id)}
+    meta = %{
+      bootstrap: ServerPublic.bootstrap(server_id, entity_id)
+    }
 
-      {:ok, %{request| meta: meta}}
-    end
+    update_meta(request, meta, reply: true)
+  end
 
-    def reply(request, socket) do
-      data = ServerPublic.render_bootstrap(request.meta.bootstrap)
-      WebsocketUtils.reply_ok(data, socket)
-    end
+  render(request, _socket) do
+    data = ServerPublic.render_bootstrap(request.meta.bootstrap)
+    {:ok, data}
   end
 end
