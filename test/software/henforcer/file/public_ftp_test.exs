@@ -13,7 +13,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
   describe "pftp_exists?/1" do
     test "accepts when pftp does exist" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
 
       assert {true, relay} = PFTPHenforcer.pftp_exists?(pftp.server_id)
       assert relay.pftp == pftp
@@ -23,14 +23,14 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "accepts regardless of the pftp status (enabled/disabled)" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true, active: false)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true, active: false)
 
       assert {true, relay} = PFTPHenforcer.pftp_exists?(pftp.server_id)
       assert relay.pftp == pftp
     end
 
     test "rejects when underlying server cant be found" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: false)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: false)
 
       assert {false, reason, _} = PFTPHenforcer.pftp_exists?(pftp.server_id)
       assert reason == {:server, :not_found}
@@ -46,9 +46,9 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
   describe "file_exists?/2" do
     test "accepts when file exists on pftp" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
       {pftp_file, %{file: file}} =
-        SoftwareSetup.pftp_file(server_id: pftp.server_id)
+        SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
       server_id = pftp_file.server_id
       file_id = pftp_file.file_id
@@ -62,8 +62,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "rejects when pftp is disabled" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true, active: false)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true, active: false)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
       server_id = pftp_file.server_id
       file_id = pftp_file.file_id
@@ -81,7 +81,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "rejects when file does not exist" do
-      {pftp, _} = SoftwareSetup.pftp()
+      {pftp, _} = SoftwareSetup.PFTP.pftp()
 
       assert {false, reason, _} =
         PFTPHenforcer.file_exists?(pftp.server_id, File.ID.generate())
@@ -92,7 +92,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
   describe "pftp_enabled?/1 and pftp_disabled?/1" do
     test "when pftp is enabled (with PublicFTP.t)" do
-      {pftp, _} = SoftwareSetup.fake_pftp(active: true)
+      {pftp, _} = SoftwareSetup.PFTP.fake_pftp(active: true)
 
       assert {true, %{}} == PFTPHenforcer.pftp_enabled?(pftp)
 
@@ -101,7 +101,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "when pftp is enabled (with Server.idt)" do
-      {pftp, _} = SoftwareSetup.pftp(active: true, real_server: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: true, real_server: true)
 
       assert {true, relay} = PFTPHenforcer.pftp_enabled?(pftp.server_id)
       assert relay.pftp == pftp
@@ -110,7 +110,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "when pftp is disabled (with PublicFTP.t)" do
-      {pftp, _} = SoftwareSetup.fake_pftp(active: false)
+      {pftp, _} = SoftwareSetup.PFTP.fake_pftp(active: false)
 
       assert {true, %{}} == PFTPHenforcer.pftp_disabled?(pftp)
 
@@ -119,7 +119,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "when pftp is disabled (with Server.idt)" do
-      {pftp, _} = SoftwareSetup.pftp(active: false, real_server: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: false, real_server: true)
 
       assert {true, relay} = PFTPHenforcer.pftp_disabled?(pftp.server_id)
       assert relay.pftp == pftp
@@ -131,7 +131,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
   describe "can_add_file?/3" do
     test "accepts when player can add file" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {_pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {_pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
       {file, _} = SoftwareSetup.file(server_id: server.server_id)
 
       assert {true, relay} =
@@ -149,8 +149,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
     test "rejects when file is already added to the public ftp" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {_pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: server.server_id)
+      {_pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: server.server_id)
 
       assert {false, reason, _} =
         PFTPHenforcer.can_add_file?(
@@ -162,7 +162,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "rejects when player is not owner of server" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
       {file, _} = SoftwareSetup.file(server_id: pftp.server_id)
       {entity, _} = EntitySetup.entity()
 
@@ -177,7 +177,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
     test "rejects when file does not belong to server" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
       {file, _} = SoftwareSetup.file()
 
       assert {false, reason, _} =
@@ -193,8 +193,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
   describe "can_remove_file?/3" do
     test "accepts when player can remove file" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {_pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: server.server_id)
+      {_pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: server.server_id)
 
       assert {true, relay} =
         PFTPHenforcer.can_remove_file?(
@@ -212,7 +212,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
     test "rejects when file does not exist on public ftp" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {_pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {_pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
       {file, _} = SoftwareSetup.file(server_id: server.server_id)
 
       assert {false, reason, _} =
@@ -227,8 +227,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
     test "rejects when public ftp isn't enabled" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {_, _} = SoftwareSetup.pftp(server_id: server.server_id, active: false)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: server.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: server.server_id, active: false)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: server.server_id)
 
       assert {false, reason, _} =
         PFTPHenforcer.can_remove_file?(
@@ -241,8 +241,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "rejects when server does not belong to the entity" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
       {entity, _} = EntitySetup.entity()
 
       assert {false, reason, _} =
@@ -270,7 +270,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
     test "rejects if the server is already enabled" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {_, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {_, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       assert {false, reason, _} =
         PFTPHenforcer.can_enable_server?(entity.entity_id, server.server_id)
@@ -290,7 +290,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
   describe "can_disable_server?/2" do
     test "accepts when everything is valid" do
       {server, %{entity: entity}} = ServerSetup.server()
-      {pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       assert {true, relay} =
         PFTPHenforcer.can_disable_server?(entity.entity_id, server.server_id)

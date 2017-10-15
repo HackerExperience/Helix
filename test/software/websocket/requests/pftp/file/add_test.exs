@@ -57,7 +57,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.AddTest do
       assert reason == "pftp_not_found"
 
       # Ok, run the PFTP Server
-      {pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       # Try again
       assert {:error, %{message: reason}} =
@@ -81,7 +81,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.AddTest do
     test "it uses the `pftp` and `file` returned on the `permissions` step" do
       {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
       {file, _} = SoftwareSetup.file(server_id: server.server_id)
-      SoftwareSetup.pftp(server_id: server.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       params = %{"file_id" => to_string(file.file_id)}
 

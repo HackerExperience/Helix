@@ -32,7 +32,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.Server.EnableTest do
       assert request.meta.server.server_id == socket.assigns.gateway.server_id
 
       # Now we'll enable pftp on that server, so the request should fail
-      SoftwareSetup.pftp(server_id: socket.assigns.gateway.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: socket.assigns.gateway.server_id)
 
       assert {:error, %{message: reason}} =
         Requestable.check_permissions(request, socket)

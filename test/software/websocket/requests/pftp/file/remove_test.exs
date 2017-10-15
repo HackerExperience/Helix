@@ -58,7 +58,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.RemoveTest do
       assert reason == "pftp_not_found"
 
       # Ok, run the PFTP Server
-      {pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       # Try again
       assert {:error, %{message: reason}} =
@@ -68,7 +68,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.RemoveTest do
       assert reason == "pftp_file_not_found"
 
       # Here, let's add a file
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: server.server_id)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: server.server_id)
       request = %{request| params: %{file_id: pftp_file.file_id}}
 
       # Worked like a PyCharm
@@ -81,8 +81,8 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.RemoveTest do
   describe "handle_request/2" do
     test "it uses the `pftp` and `file` returned on the `permissions` step" do
       {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
-      SoftwareSetup.pftp(server_id: server.server_id)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: server.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: server.server_id)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: server.server_id)
 
       params = %{"file_id" => to_string(pftp_file.file_id)}
 

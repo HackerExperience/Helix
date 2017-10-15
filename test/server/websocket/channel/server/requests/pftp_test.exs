@@ -37,7 +37,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
   describe "pftp.server.disable" do
     test "disables a server" do
       {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
-      SoftwareSetup.pftp(server_id: server.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       # I have a PFTP server
       assert PublicFTPQuery.fetch_server(server)
@@ -58,7 +58,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
     test "adds a file" do
       {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
       {file, _} = SoftwareSetup.file(server_id: server.server_id)
-      SoftwareSetup.pftp(server_id: server.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       params = %{
         "file_id": to_string(file.file_id)
@@ -77,8 +77,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
   describe "pftp.file.remove" do
     test "removes a file" do
       {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
-      SoftwareSetup.pftp(server_id: server.server_id)
-      {_, %{file: file}} = SoftwareSetup.pftp_file(server_id: server.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: server.server_id)
+      {_, %{file: file}} = SoftwareSetup.PFTP.file(server_id: server.server_id)
 
       # The file exists
       assert PublicFTPQuery.fetch_file(file)
@@ -100,8 +100,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
   describe "pftp.file.download" do
     test "starts the download of a PFTP file" do
       {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
-      {pftp, _} = SoftwareSetup.pftp(real_server: true)
-      {_, %{file: file}} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
+      {_, %{file: file}} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
       {:ok, [nip]} = CacheQuery.from_server_get_nips(pftp.server_id)
 

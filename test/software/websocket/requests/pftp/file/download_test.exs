@@ -99,8 +99,8 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
       assert msg == "pftp_file_not_found"
 
       # Run the PFTP server and add the file to it.
-      SoftwareSetup.pftp(server_id: destination.server_id)
-      SoftwareSetup.pftp_file(
+      SoftwareSetup.PFTP.pftp(server_id: destination.server_id)
+      SoftwareSetup.PFTP.file(
         server_id: destination.server_id,
         file_id: file.file_id
       )
@@ -125,8 +125,8 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
       {file, %{server_id: destination}} = SoftwareSetup.file()
 
       # Setup the PFTP server and file
-      SoftwareSetup.pftp(server_id: destination.server_id)
-      SoftwareSetup.pftp_file(
+      SoftwareSetup.PFTP.pftp(server_id: destination.server_id)
+      SoftwareSetup.PFTP.file(
         server_id: destination.server_id,
         file_id: file.file_id
       )

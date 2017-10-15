@@ -28,7 +28,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.Server.DisableTest do
       # permission test, see `FileHenforcer.PublicFTPTest`.
       request = PFTPServerDisableRequest.new(%{})
       {socket, %{gateway: server}} = ChannelSetup.join_server()
-      {pftp, _} = SoftwareSetup.pftp(server_id: server.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       assert {:ok, request} = Requestable.check_permissions(request, socket)
       assert request.meta.pftp == pftp
@@ -47,7 +47,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.Server.DisableTest do
     test "it uses the `pftp` returned on the `permissions` step" do
       request = PFTPServerDisableRequest.new(%{})
       {socket, %{gateway: server}} = ChannelSetup.join_server()
-      SoftwareSetup.pftp(server_id: server.server_id)
+      SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       assert {:ok, request} = Requestable.check_permissions(request, socket)
       assert {:ok, _request} = Requestable.handle_request(request, socket)

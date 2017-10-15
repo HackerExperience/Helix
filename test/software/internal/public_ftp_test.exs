@@ -10,14 +10,14 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "fetch/1" do
     test "returns the pftp server if found" do
-      {pftp, _} = SoftwareSetup.pftp()
+      {pftp, _} = SoftwareSetup.PFTP.pftp()
 
       entry  = PublicFTPInternal.fetch(pftp.server_id)
       assert entry == pftp
     end
 
     test "fetches pftp server even if it is disabled" do
-      {pftp, _} = SoftwareSetup.pftp(active: false)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: false)
       refute pftp.is_active
 
       entry  = PublicFTPInternal.fetch(pftp.server_id)
@@ -31,16 +31,16 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "fetch_file/1" do
     test "returns the corresponding PublicFTP.File entry if found" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
       entry = PublicFTPInternal.fetch_file(pftp_file.file_id)
       assert entry == pftp_file
     end
 
     test "does not fetch the file if the server is disabled" do
-      {pftp, _} = SoftwareSetup.pftp(active: false, real_server: true)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: false, real_server: true)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
       refute PublicFTPInternal.fetch_file(pftp_file.file_id)
     end
@@ -48,7 +48,7 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "list_files/1" do
     test "returns all files as File.t" do
-      {pftp, _} = SoftwareSetup.pftp(active: true, real_server: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: true, real_server: true)
 
       server_id = pftp.server_id
 
@@ -56,9 +56,9 @@ defmodule Helix.Software.Internal.PublicFTPTest do
       {file2, _} = SoftwareSetup.file(server_id: server_id)
       {file3, _} = SoftwareSetup.file(server_id: server_id)
 
-      SoftwareSetup.pftp_file(server_id: server_id, file_id: file1.file_id)
-      SoftwareSetup.pftp_file(server_id: server_id, file_id: file2.file_id)
-      SoftwareSetup.pftp_file(server_id: server_id, file_id: file3.file_id)
+      SoftwareSetup.PFTP.file(server_id: server_id, file_id: file1.file_id)
+      SoftwareSetup.PFTP.file(server_id: server_id, file_id: file2.file_id)
+      SoftwareSetup.PFTP.file(server_id: server_id, file_id: file3.file_id)
 
       files = PublicFTPInternal.list_files(pftp.server_id)
 
@@ -67,8 +67,8 @@ defmodule Helix.Software.Internal.PublicFTPTest do
     end
 
     test "returns nothing if server is disabled" do
-      {pftp, _} = SoftwareSetup.pftp(active: false, real_server: true)
-      {_, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: false, real_server: true)
+      {_, _} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
       # Got nothing, even though there is a file there.
       assert [] == PublicFTPInternal.list_files(pftp.server_id)
@@ -85,7 +85,7 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "enable_server/1" do
     test "enables an otherwise disabled server" do
-      {pftp, _} = SoftwareSetup.pftp(active: false)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: false)
       refute pftp.is_active
 
       assert {:ok, new_pftp} = PublicFTPInternal.enable_server(pftp)
@@ -96,7 +96,7 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "disable_server/1" do
     test "disables an otherwise enabled server" do
-      {pftp, _} = SoftwareSetup.pftp(active: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: true)
       assert pftp.is_active
 
       assert {:ok, new_pftp} = PublicFTPInternal.disable_server(pftp)
@@ -107,7 +107,7 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "add_file/2" do
     test "adds file to the server" do
-      {pftp, _} = SoftwareSetup.pftp(active: true, real_server: true)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(active: true, real_server: true)
       {file, _} = SoftwareSetup.file(server_id: pftp.server_id)
 
       assert {:ok, pftp_file} = PublicFTPInternal.add_file(pftp, file.file_id)
@@ -118,8 +118,8 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "remove_file/2" do
     test "removes file from the server" do
-      {pftp, _} = SoftwareSetup.pftp(real_server: true)
-      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
+      {pftp_file, _} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
       total = length(PublicFTPInternal.list_files(pftp_file.server_id))
       assert total == 1
