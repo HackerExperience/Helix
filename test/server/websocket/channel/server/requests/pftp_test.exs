@@ -4,11 +4,16 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
 
   import Phoenix.ChannelTest
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Software.Model.PublicFTP
   alias Helix.Software.Query.PublicFTP, as: PublicFTPQuery
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
+
+  @internet_id NetworkHelper.internet_id()
 
   describe "pftp.server.enable" do
     test "enables a server" do
@@ -89,6 +94,33 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
 
       # Now it doesn't
       refute PublicFTPQuery.fetch_file(file)
+    end
+  end
+
+  describe "pftp.file.download" do
+    test "starts the download of a PFTP file" do
+      {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
+      {pftp, _} = SoftwareSetup.pftp(real_server: true)
+      {_, %{file: file}} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
+
+      {:ok, [nip]} = CacheQuery.from_server_get_nips(pftp.server_id)
+
+      params = %{
+        "file_id" => to_string(file.file_id),
+        "ip" => nip.ip,
+        "network_id" => to_string(nip.network_id)
+      }
+
+      ref = push socket, "pftp.file.download", params
+
+      assert_reply ref, :ok, %{data: process}
+
+      assert process.file.id == to_string(file.file_id)
+      assert process.type == "file_download"
+      assert process.data.connection_type == "public_ftp"
+      assert process.network_id == to_string(@internet_id)
+
+      TOPHelper.top_stop(server)
     end
   end
 end

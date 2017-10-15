@@ -4,12 +4,11 @@ request Helix.Software.Websocket.Requests.File.Download do
 
   import HELL.Macros
 
-  alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Henforcer.File.Transfer, as: FileTransferHenforcer
   alias Helix.Software.Public.File, as: FilePublic
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
   # Hack for elixir-lang issue #6577
   @dialyzer {:nowarn_function, get_error: 1}
@@ -20,7 +19,7 @@ request Helix.Software.Websocket.Requests.File.Download do
       if Map.has_key?(request.unsafe, "storage_id") do
         request.unsafe["storage_id"]
       else
-        get_download_storage(socket.assigns.gateway.server_id)
+        StorageQuery.get_main_storage(socket.assigns.gateway.server_id)
       end
 
     with \
@@ -94,15 +93,6 @@ request Helix.Software.Websocket.Requests.File.Download do
   end
 
   render_process()
-
-  @spec get_download_storage(Server.id) ::
-    Storage.id
-  defp get_download_storage(gateway_id) do
-    gateway_id
-    |> CacheQuery.from_server_get_storages()
-    |> elem(1)
-    |> List.first()
-  end
 
   @spec get_error(reason :: {term, term} | term) ::
     String.t

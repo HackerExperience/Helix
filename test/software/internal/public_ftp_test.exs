@@ -31,7 +31,8 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "fetch_file/1" do
     test "returns the corresponding PublicFTP.File entry if found" do
-      {pftp_file, _} = SoftwareSetup.pftp_file()
+      {pftp, _} = SoftwareSetup.pftp(real_server: true)
+      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
 
       entry = PublicFTPInternal.fetch_file(pftp_file.file_id)
       assert entry == pftp_file
@@ -117,7 +118,8 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "remove_file/2" do
     test "removes file from the server" do
-      {pftp_file, _} = SoftwareSetup.pftp_file()
+      {pftp, _} = SoftwareSetup.pftp(real_server: true)
+      {pftp_file, _} = SoftwareSetup.pftp_file(server_id: pftp.server_id)
 
       total = length(PublicFTPInternal.list_files(pftp_file.server_id))
       assert total == 1

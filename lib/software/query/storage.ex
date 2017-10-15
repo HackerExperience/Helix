@@ -1,6 +1,8 @@
 defmodule Helix.Software.Query.Storage do
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Internal.File, as: FileInternal
@@ -45,4 +47,15 @@ defmodule Helix.Software.Query.Storage do
     [Component.id]
   defdelegate get_storage_drives(storage),
     to: StorageDriveInternal
+
+  # TODO Test
+  @spec get_main_storage(Server.idt) ::
+    Storage.id
+  def get_main_storage(server = %Server{}),
+    do: get_main_storage(server.server_id)
+  def get_main_storage(server_id = %Server.ID{}) do
+    server_id
+    |> CacheQuery.from_server_get_storages!()
+    |> List.first()
+  end
 end

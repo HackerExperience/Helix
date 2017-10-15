@@ -86,16 +86,15 @@ defmodule Helix.Software.Henforcer.Storage do
   end
 
   def belongs_to_server?(storage = %Storage{}, server = %Server{}) do
-    relay = %{server: server, storage: storage}
-
     with \
       {:ok, owner_id} <- CacheQuery.from_storage_get_server(storage),
       true <- owner_id == server.server_id || :not_belongs
     do
-      reply_ok(relay)
+      reply_ok()
     else
       _ ->
-        reply_error({:storage, :not_belongs},  relay)
+        reply_error({:storage, :not_belongs})
     end
+    |> wrap_relay(%{server: server, storage: storage})
   end
 end

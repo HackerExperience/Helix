@@ -24,7 +24,7 @@ defmodule Helix.Software.Henforcer.File do
     end
   end
 
-  @type belongs_to_server_relay :: file_exists_relay
+  @type belongs_to_server_relay :: %{file: File.t, server: Server.t}
   @type belongs_to_server_relay_partial :: file_exists_relay
   @type belongs_to_server_error ::
     {false, {:file, :not_belongs}, belongs_to_server_relay_partial}

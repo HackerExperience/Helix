@@ -13,12 +13,17 @@ channel Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
-  alias Helix.Network.Websocket.Requests.Browse, as: BrowseRequest
+  alias Helix.Network.Websocket.Requests.Browse,
+    as: BrowseRequest
 
   alias Helix.Software.Websocket.Requests.Cracker.Bruteforce,
     as: CrackerBruteforceRequest
-  alias Helix.Software.Websocket.Requests.File.Download, as: FileDownloadRequest
-  alias Helix.Software.Websocket.Requests.PFTP.File.Add, as: PFTPFileAddRequest
+  alias Helix.Software.Websocket.Requests.File.Download,
+    as: FileDownloadRequest
+  alias Helix.Software.Websocket.Requests.PFTP.File.Add,
+    as: PFTPFileAddRequest
+  alias Helix.Software.Websocket.Requests.PFTP.File.Download,
+    as: PFTPFileDownloadRequest
   alias Helix.Software.Websocket.Requests.PFTP.File.Remove,
     as: PFTPFileRemoveRequest
   alias Helix.Software.Websocket.Requests.PFTP.Server.Disable,
@@ -26,7 +31,8 @@ channel Helix.Server.Websocket.Channel.Server do
   alias Helix.Software.Websocket.Requests.PFTP.Server.Enable,
     as: PFTPServerEnableRequest
 
-  alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
+  alias Helix.Server.Websocket.Channel.Server.Join,
+    as: ServerJoin
   alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
     as: BootstrapRequest
 
@@ -114,10 +120,43 @@ channel Helix.Server.Websocket.Channel.Server do
 
   Params:
   - *file_id: Which file to add to the player's PFTP.
+
+  Errors:
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - Henforcer errors
   """
   topic "pftp.file.add", PFTPFileAddRequest
 
+  @doc """
+  Removes a file from the player's PublicFTP.
+
+  Params:
+  - *file_id: Which file should be removed from the player's PFTP.
+
+  Errors:
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - Henforcer errors
+  """
   topic "pftp.file.remove", PFTPFileRemoveRequest
+
+  @doc """
+  Downloads a file from a PublicFTP server.
+
+  Params:
+  - *ip: IP address of the PublicFTP server.
+  - *network_id: Network ID of the PublicFTP server.
+  - *file_id: ID of the file being downloaded.
+  - storage_id: Specify which storage the file should be downloaded to. Defaults
+    to the main storage.
+
+  Returns: RenderedProcess.t
+
+  Errors:
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - "nip_not_found": Could not find a server with the given NIP.
+  - Henforcer errors
+  """
+  topic "pftp.file.download", PFTPFileDownloadRequest
 
   @doc """
   Browses to the specified address, which may be an IPv4 or domain name.
@@ -154,16 +193,7 @@ channel Helix.Server.Websocket.Channel.Server do
   Note that all bruteforce attacks must originate from a server owned by the
   entity starting the attack.
 
-  Returns:
-    %{
-      process_id: Process.id,
-      type: Process.type,
-      network_id: Network.id,
-      file_id: File.id | nil,
-      connection_id: Connection.id | nil,
-      source_ip: IPv4.t,
-      target_ip: IPv4.t
-    }
+  Returns: RenderedProcess.t
 
   Errors:
   - "cracker_not_found" - Player attempting the attack does not have a valid

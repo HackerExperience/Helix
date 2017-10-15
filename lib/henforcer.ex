@@ -315,4 +315,40 @@ defmodule Helix.Henforcer do
       end
     end
   end
+
+  @doc """
+  Helper for when a sub-relay may have conflicting keys, in which case the
+  current henforcer must
+
+  1. Temporarily store the value
+  2. Remove the "conflictable" key
+  3. Assign the value to a new, conflict-less key.
+
+  This function makes all 3 steps in a single line (for the macro caller).
+
+  For a function that only performs the first two, check out `get_and_drop/2`.
+  """
+  defmacro replace(relay, cur_key, next_key) do
+    quote do
+      {new_relay, value} = get_and_drop(unquote(relay), unquote(cur_key))
+
+      Map.put(new_relay, unquote(next_key), value)
+    end
+  end
+
+  @doc """
+  Gets the relay value on `key` and removes it from the relay.
+
+  Returns the new relay (without the key) and the value that was inside the key.
+
+  Useful for when you have conflicting keys on a higher-level context. For an
+  example, check `FileHenforcer.Transfer.can_transfer?`
+  """
+  defmacro get_and_drop(relay, key) do
+    quote do
+      value = Map.get(unquote(relay), unquote(key))
+
+      {Map.delete(unquote(relay), unquote(key)), value}
+    end
+  end
 end

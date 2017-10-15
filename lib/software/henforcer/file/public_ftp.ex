@@ -55,7 +55,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
   `server` (if any).
 
   If there are no running PublicFTP servers, or if it's disabled, then this
-  henforce must return `false`.
+  henforce will return `false`.
   """
   def file_exists?(server, file_id = %File.ID{}) do
     henforce(FileHenforcer.file_exists?(file_id)) do

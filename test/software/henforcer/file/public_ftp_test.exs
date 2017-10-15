@@ -46,7 +46,9 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
   describe "file_exists?/2" do
     test "accepts when file exists on pftp" do
-      {pftp_file, %{file: file}} = SoftwareSetup.pftp_file()
+      {pftp, _} = SoftwareSetup.pftp(real_server: true)
+      {pftp_file, %{file: file}} =
+        SoftwareSetup.pftp_file(server_id: pftp.server_id)
 
       server_id = pftp_file.server_id
       file_id = pftp_file.file_id

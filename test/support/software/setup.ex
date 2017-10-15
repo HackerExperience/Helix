@@ -261,24 +261,21 @@ defmodule Helix.Test.Software.Setup do
     File.id
   """
   def fake_pftp_file(opts \\ []) do
-    {file, file_related, file_id} =
+    if opts[:file_id] != nil and is_nil(opts[:server_id]),
+      do: raise "pls specify both `file_id` and `server_id`"
+
+    {file, file_id, server_id} =
       cond do
         opts[:real_file] == false ->
-          {nil, nil, File.ID.generate()}
+          {nil, File.ID.generate(), Server.ID.generate()}
 
         opts[:file_id] ->
-          {nil, nil, opts[:file_id]}
+          {nil, opts[:file_id], opts[:server_id]}
 
         true ->
-          {file, related} = file()
-          {file, related, file.file_id}
-      end
-
-    server_id =
-      if file do
-        Keyword.get(opts, :server_id, file_related.server_id)
-      else
-        Keyword.get(opts, :server_id, Server.ID.generate())
+          server_id = Keyword.get(opts, :server_id, Server.ID.generate())
+          {file, _} = file(server_id: server_id)
+          {file, file.file_id, server_id}
       end
 
     pftp =
