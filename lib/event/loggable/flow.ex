@@ -43,6 +43,12 @@ defmodule Helix.Event.Loggable.Flow do
 
         unquote(block)
 
+        # Declaring the typespec for `generate/1` here, since the Event may
+        # implement multiple `log/2` patterns, but they all share the same
+        # signature
+        @spec generate(unquote(__CALLER__.module).t) ::
+          [Helix.Event.Loggable.Flow.log_entry]
+
         # Fallback
         def generate(_),
           do: []
@@ -56,13 +62,10 @@ defmodule Helix.Event.Loggable.Flow do
   defined, in which case the event will be pattern-matched against them.
   """
   defmacro log(query, do: block) do
-    module = MacroUtils.remove_protocol_namespace(__CALLER__.module, __MODULE__)
-    query = replace_module(query, module)
+    query = replace_module(query, __CALLER__.module)
 
     quote do
 
-        @spec generate(unquote(module).t) ::
-          [Helix.Event.Loggable.Flow.log_entry]
         def generate(unquote(query)) do
           unquote(block)
         end
@@ -84,6 +87,8 @@ defmodule Helix.Event.Loggable.Flow do
   and mess everything up, Helix won't compile.
   """
   defp replace_module(query, caller) do
+    caller = MacroUtils.remove_protocol_namespace(caller, Helix.Event.Loggable)
+
     {a, s, t} = query
 
     # Verifies whether it's a pattern match (`var = :something`)

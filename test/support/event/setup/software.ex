@@ -75,7 +75,6 @@ defmodule Helix.Test.Event.Setup.Software do
     event
   end
 
-
   @doc """
   Generates a FileDownloadFailed event with real data.
   """

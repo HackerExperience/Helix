@@ -48,12 +48,26 @@ defmodule Helix.Software.Query.Storage do
   defdelegate get_storage_drives(storage),
     to: StorageDriveInternal
 
-  # TODO Test
   @spec get_main_storage(Server.idt) ::
+    Storage.t
+  @doc """
+  Returns the "main" storage of a server, which, for the time being, is the only
+  storage a server may have.
+  """
+  def get_main_storage(server) do
+    server
+    |> get_main_storage_id()
+    |> fetch()
+  end
+
+  @spec get_main_storage_id(Server.idt) ::
     Storage.id
-  def get_main_storage(server = %Server{}),
-    do: get_main_storage(server.server_id)
-  def get_main_storage(server_id = %Server.ID{}) do
+  @doc """
+  Identical to `get_main_storage`, but only returns the server's storage id.
+  """
+  def get_main_storage_id(server = %Server{}),
+    do: get_main_storage_id(server.server_id)
+  def get_main_storage_id(server_id = %Server.ID{}) do
     server_id
     |> CacheQuery.from_server_get_storages!()
     |> List.first()

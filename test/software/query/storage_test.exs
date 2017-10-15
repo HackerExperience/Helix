@@ -4,6 +4,8 @@ defmodule Helix.Software.Query.StorageTest do
 
   alias Helix.Software.Query.Storage, as: StorageQuery
 
+  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "storage_contents/1" do
@@ -40,6 +42,28 @@ defmodule Helix.Software.Query.StorageTest do
       SoftwareSetup.random_files!(total: 3, file_opts: file_opts)
 
       refute Enum.empty?(StorageQuery.files_on_storage(storage))
+    end
+  end
+
+  describe "get_main_storage_id/1" do
+    test "returns the 'main' storage id of the server" do
+      {server, _} = ServerSetup.server()
+
+      storage = SoftwareHelper.get_storage(server)
+      main_storage_id = StorageQuery.get_main_storage_id(server)
+
+      assert storage.storage_id == main_storage_id
+    end
+  end
+
+  describe "get_main_storage/1" do
+    test "returns the 'main' storage of the server" do
+      {server, _} = ServerSetup.server()
+
+      storage = SoftwareHelper.get_storage(server)
+      main_storage = StorageQuery.get_main_storage(server)
+
+      assert storage == main_storage
     end
   end
 end
