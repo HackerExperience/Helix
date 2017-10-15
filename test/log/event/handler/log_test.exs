@@ -37,7 +37,7 @@ defmodule Helix.Log.Event.Handler.LogTest do
       [log_target] = LogQuery.get_logs_on_server(event.to_server_id)
       assert log_target.server_id == event.to_server_id
       assert log_target.entity_id == event.entity_id
-      assert log_target.message =~ "at localhost"
+      assert log_target.message =~ "from localhost"
     end
   end
 

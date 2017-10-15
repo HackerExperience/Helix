@@ -65,10 +65,16 @@ defmodule Helix.Test.Event.Setup.Software do
   @doc """
   Generates a FileDownloaded event with real data.
   """
+  def file_downloaded(connection_type: type) do
+    file_downloaded()
+    |> Map.replace(:connection_type, type)
+  end
+
   def file_downloaded do
     {event, _} = setup_env(:download, :completed)
     event
   end
+
 
   @doc """
   Generates a FileDownloadFailed event with real data.
