@@ -18,14 +18,14 @@ mix xref graph \
     --exclude lib/hell/mix/tasks/seeds.ex \
     --exclude lib/hell/mix/tasks/test.ex  \
     --exclude lib/release.ex \
-    --exclude lib/event.ex \
-    --exclude lib/event_dispatcher.ex >> /dev/null
+    --exclude lib/event/event.ex \
+    --exclude lib/event/dispatcher.ex >> /dev/null
 dot -Tpng xref_graph.dot -o graphs/overview.png
 
-mix xref graph --format dot --source lib/event_dispatcher.ex >> /dev/null
+mix xref graph --format dot --source lib/event/dispatcher.ex >> /dev/null
 dot -Tpng xref_graph.dot -o graphs/event_consumers.png
 
-mix xref graph --format dot --exclude lib/event_dispatcher.ex --sink lib/event.ex >> /dev/null
+mix xref graph --format dot --exclude lib/event/dispatcher.ex --sink lib/event/event.ex >> /dev/null
 dot -Tpng xref_graph.dot -o graphs/event_publishers.png
 
 mix xref graph --format dot
