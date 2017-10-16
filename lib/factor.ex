@@ -132,11 +132,13 @@ defmodule Helix.Factor do
   with a simple interface like:
 
   ```
-  get_fact :resources
-  get_fact :type
-  get_fact :uptime
-  get_fact: processes
-  get_fact :location
+  assembly(params, relay) do
+    get_fact :resources
+    get_fact :type
+    get_fact :uptime
+    get_fact: processes
+    get_fact :location
+  end
   ```
 
   That's all there is to it!
@@ -167,8 +169,8 @@ defmodule Helix.Factor do
   ### Peculiarities, dangers, gotchas and bewares
 
   Using a DSL is a joy as long as you are fully aware of everything it does
-  under the hood. There's (relatively) a lot we've abstract from the surface, so
-  here's a few things to keep in mind:
+  under the hood. There's (relatively) a lot we've abstracted from the surface,
+  so here's a few things to keep in mind:
 
   ##### `relay` is a "special" variable
 
