@@ -35,7 +35,7 @@ defmodule HELL.Macros do
 
   @doc """
   On dev and prod environments, `hespawn` is the exact same thing as `spawn`.
-  On test environments, `hespawn` will apply the given function synchronously.
+  On test environments, `hespawn` will call the given function synchronously.
   """
   defmacro hespawn(fun) do
     if Mix.env == :test do

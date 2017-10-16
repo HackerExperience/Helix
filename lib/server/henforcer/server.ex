@@ -1,5 +1,7 @@
 defmodule Helix.Server.Henforcer.Server do
 
+  import Helix.Henforcer
+
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Software.Model.File
@@ -11,11 +13,26 @@ defmodule Helix.Server.Henforcer.Server do
     {:ok, %{}}
   end
 
-  @spec exists?(Server.id) ::
-    boolean
-  def exists?(server) do
-    # TODO: Use a count(server_id) to waste less resources
-    !!ServerQuery.fetch(server)
+  @type server_exists_relay :: %{server: Server.t}
+  @type server_exists_relay_partial :: %{}
+  @type server_exists_error ::
+    {false, {:server, :not_found}, server_exists_relay_partial}
+
+  @spec server_exists?(Server.idt) ::
+    {true, server_exists_relay}
+    | server_exists_error
+  @doc """
+  Ensures the requested server exists on the database.
+  """
+  def server_exists?(server = %Server{}),
+    do: server_exists?(server.server_id)
+  def server_exists?(server_id = %Server.ID{}) do
+    with server = %Server{} <- ServerQuery.fetch(server_id) do
+      {true, relay(%{server: server})}
+    else
+      _ ->
+        reply_error({:server, :not_found})
+    end
   end
 
   @spec server_assembled?(Server.id) ::

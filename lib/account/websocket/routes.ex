@@ -1,6 +1,6 @@
 defmodule Helix.Account.Websocket.Routes do
 
-  alias Helix.Websocket.Socket
+  alias Helix.Websocket
   alias Helix.Account.Websocket.Controller.Account, as: AccountController
 
   # Note that this is somewhat a hack to allow us to break our request-response
@@ -12,7 +12,7 @@ defmodule Helix.Account.Websocket.Routes do
   def account_logout(socket) do
     AccountController.logout(socket.assigns, %{})
 
-    socket_id = Socket.id(socket)
+    socket_id = Websocket.id(socket)
     Helix.Endpoint.broadcast(socket_id, "disconnect", %{})
 
     # Logout will blacklist the token and stop the socket, so, this only makes

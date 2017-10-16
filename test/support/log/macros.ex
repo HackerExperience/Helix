@@ -1,6 +1,7 @@
 defmodule Helix.Test.Log.Macros do
 
   alias HELL.Utils
+  alias Helix.Event.Loggable.Utils, as: LoggableUtils
 
   @doc """
   Helper to assert the expected log was returned.
@@ -29,6 +30,12 @@ defmodule Helix.Test.Log.Macros do
         refute unquote(log).message =~ term
       end)
 
+    end
+  end
+
+  defmacro censor_ip(ip) do
+    quote do
+      LoggableUtils.censor_ip(unquote(ip))
     end
   end
 end

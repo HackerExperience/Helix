@@ -61,9 +61,12 @@ defmodule Helix.Server.Henforcer.Channel do
     :ok
     | {:error, :not_found}
   defp server_exists_check(server_id) do
-    ServerHenforcer.exists?(server_id)
-    && :ok
-    || {:error, {:server, :not_found}}
+    case ServerHenforcer.server_exists?(server_id) do
+      {true, _} ->
+        :ok
+      {false, _, _} ->
+        {:error, {:server, :not_found}}
+    end
   end
 
   @spec server_functioning_check(Server.id) ::

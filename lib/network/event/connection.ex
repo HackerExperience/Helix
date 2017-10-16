@@ -29,22 +29,25 @@ defmodule Helix.Network.Event.Connection do
       }
     end
 
-    log(event = %__MODULE__{type: :ssh}) do
-      gateway_id = event.tunnel.gateway_id
-      destination_id = event.tunnel.destination_id
+    loggable do
 
-      entity = EntityQuery.fetch_by_server(gateway_id)
+      log(event = %__MODULE__{type: :ssh}) do
+        gateway_id = event.tunnel.gateway_id
+        destination_id = event.tunnel.destination_id
 
-      ip_source = get_ip(gateway_id, event.tunnel.network_id)
-      ip_target = get_ip(destination_id, event.tunnel.network_id)
+        entity = EntityQuery.fetch_by_server(gateway_id)
 
-      msg_source = "localhost logged into #{ip_target}"
-      msg_target = "#{ip_source} logged in as root"
+        ip_source = get_ip(gateway_id, event.tunnel.network_id)
+        ip_target = get_ip(destination_id, event.tunnel.network_id)
 
-      log_source = build_entry(gateway_id, entity.entity_id, msg_source)
-      log_target = build_entry(destination_id, entity.entity_id, msg_target)
+        msg_source = "localhost logged into #{ip_target}"
+        msg_target = "#{ip_source} logged in as root"
 
-      [log_source, log_target]
+        log_source = build_entry(gateway_id, entity.entity_id, msg_source)
+        log_target = build_entry(destination_id, entity.entity_id, msg_target)
+
+        [log_source, log_target]
+      end
     end
   end
 

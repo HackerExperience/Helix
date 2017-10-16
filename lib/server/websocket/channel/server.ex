@@ -1,4 +1,6 @@
-defmodule Helix.Server.Websocket.Channel.Server do
+import Helix.Websocket.Channel
+
+channel Helix.Server.Websocket.Channel.Server do
   @moduledoc """
   `ServerChannel` handles incoming and outgoing messages between players and
   servers.
@@ -9,19 +11,30 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - "internal" - Something unexpected happened.
   """
 
-  use Phoenix.Channel
+  alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
-  alias Helix.Websocket.Socket, as: Websocket
+  alias Helix.Network.Websocket.Requests.Browse,
+    as: BrowseRequest
 
-  alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
+  alias Helix.Software.Websocket.Requests.Cracker.Bruteforce,
+    as: CrackerBruteforceRequest
+  alias Helix.Software.Websocket.Requests.File.Download,
+    as: FileDownloadRequest
+  alias Helix.Software.Websocket.Requests.PFTP.File.Add,
+    as: PFTPFileAddRequest
+  alias Helix.Software.Websocket.Requests.PFTP.File.Download,
+    as: PFTPFileDownloadRequest
+  alias Helix.Software.Websocket.Requests.PFTP.File.Remove,
+    as: PFTPFileRemoveRequest
+  alias Helix.Software.Websocket.Requests.PFTP.Server.Disable,
+    as: PFTPServerDisableRequest
+  alias Helix.Software.Websocket.Requests.PFTP.Server.Enable,
+    as: PFTPServerEnableRequest
+
+  alias Helix.Server.Websocket.Channel.Server.Join,
+    as: ServerJoin
   alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
     as: BootstrapRequest
-  alias Helix.Server.Websocket.Channel.Server.Requests.Browse,
-    as: BrowseRequest
-  alias Helix.Server.Websocket.Channel.Server.Requests.Bruteforce,
-    as: BruteforceRequest
-  alias Helix.Server.Websocket.Channel.Server.Requests.FileDownload,
-    as: FileDownloadRequest
 
   @doc """
   Joins a server.
@@ -43,25 +56,14 @@ defmodule Helix.Server.Websocket.Channel.Server do
     If no `gateway_ip` is passed, a local gateway connection is assumed.
   - password: Target server password. Required if the connection is remote.
 
-  Returns:
-  %{}  # TODO: Return server bootstrap
+  Returns: ServerBootstrap
 
   Errors:
   - "nip_not_found": The `destination_ip` with `network_id` was not found.
   - "bad_counter": The given counter is not valid.
   + base errors
   """
-  def join(topic = "server:" <> _, params, socket) do
-    access_type =
-      if params["gateway_ip"] do
-        :remote
-      else
-        :local
-      end
-
-    request = ServerJoin.new(topic, params, access_type)
-    Websocket.handle_join(request, socket, &assign/3)
-  end
+  join "server:" <> _, ServerJoin
 
   @doc """
   Starts the download of a file.
@@ -71,8 +73,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - storage_id: Specify which storage the file should be downloaded to. Defaults
     to the main storage.
 
-  Returns:
-  %{}  # TODO handle process
+  Returns: RenderedProcess.t
 
   Errors:
   - "file_not_found": Requested file to be downloaded was not found
@@ -83,10 +84,79 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - "download_self": Trying to download a file from yourself
   + base errors
   """
-  def handle_in("file.download", params, socket) do
-    request = FileDownloadRequest.new(params)
-    Websocket.handle_request(request, socket)
-  end
+  topic "file.download", FileDownloadRequest
+
+  @doc """
+  Activates/enables the PublicFTP server of the player. Creates a new PublicFTP
+  server if it's the first time being called.
+
+  Params: none
+
+  Returns: %{}
+
+  Errors:
+  - "pftp_already_enabled": Trying to enable an already enabled PFTP server.
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - Henforcer errors.
+  """
+  topic "pftp.server.enable", PFTPServerEnableRequest
+
+  @doc """
+  Disables the PublicFTP server of the player.
+
+  Params: none
+  
+  Returns: %{}
+
+  Errors:
+  - "pftp_already_disabled": Trying to disable an already disabled PFTP server.
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - Henforcer errors.
+  """
+  topic "pftp.server.disable", PFTPServerDisableRequest
+
+  @doc """
+  Adds a file into the player's PublicFTP.
+
+  Params:
+  - *file_id: Which file to add to the player's PFTP.
+
+  Errors:
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - Henforcer errors
+  """
+  topic "pftp.file.add", PFTPFileAddRequest
+
+  @doc """
+  Removes a file from the player's PublicFTP.
+
+  Params:
+  - *file_id: Which file should be removed from the player's PFTP.
+
+  Errors:
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - Henforcer errors
+  """
+  topic "pftp.file.remove", PFTPFileRemoveRequest
+
+  @doc """
+  Downloads a file from a PublicFTP server.
+
+  Params:
+  - *ip: IP address of the PublicFTP server.
+  - *network_id: Network ID of the PublicFTP server.
+  - *file_id: ID of the file being downloaded.
+  - storage_id: Specify which storage the file should be downloaded to. Defaults
+    to the main storage.
+
+  Returns: RenderedProcess.t
+
+  Errors:
+  - "pftp_must_be_local": PFTP operations must happen at the local socket.
+  - "nip_not_found": Could not find a server with the given NIP.
+  - Henforcer errors
+  """
+  topic "pftp.file.download", PFTPFileDownloadRequest
 
   @doc """
   Browses to the specified address, which may be an IPv4 or domain name.
@@ -110,10 +180,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - "bad_origin" - The given origin is neither `gateway_id` nor `destination_id`
   + base errors
   """
-  def handle_in("browse", params, socket) do
-    request = BrowseRequest.new(params)
-    Websocket.handle_request(request, socket)
-  end
+  topic "network.browse", BrowseRequest
 
   @doc """
   Starts a bruteforce attack.
@@ -126,16 +193,7 @@ defmodule Helix.Server.Websocket.Channel.Server do
   Note that all bruteforce attacks must originate from a server owned by the
   entity starting the attack.
 
-  Returns:
-    %{
-      process_id: Process.id,
-      type: Process.type,
-      network_id: Network.id,
-      file_id: File.id | nil,
-      connection_id: Connection.id | nil,
-      source_ip: IPv4.t,
-      target_ip: IPv4.t
-    }
+  Returns: RenderedProcess.t
 
   Errors:
   - "cracker_not_found" - Player attempting the attack does not have a valid
@@ -146,22 +204,31 @@ defmodule Helix.Server.Websocket.Channel.Server do
   - "bad_attack_src" - Request originated from a remote server channel
   + base errors
   """
-  def handle_in("bruteforce", params, socket) do
-    request = BruteforceRequest.new(params)
-    Websocket.handle_request(request, socket)
-  end
+  topic "cracker.bruteforce", CrackerBruteforceRequest
 
-  def handle_in("bootstrap", params, socket) do
-    request = BootstrapRequest.new(params)
-    Websocket.handle_request(request, socket)
-  end
+  @doc """
+  Forces a bootstrap to happen. It is the exact same operation ran during join.
+  Useful if the client wants to force a resynchronization of the local data.
 
-  intercept ["event"]
+  Params: none
 
-  def handle_out("event", event, socket),
-    do: Websocket.handle_event(event, socket, &push/3)
+  Returns: ServerBootstrap
 
-  alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
+  Errors:
+  - "own_server_bootstrap": You can only request the bootstrap of remote servers
+  (obsolete, let me know if you need local server bootstrap)
+  """
+  topic "bootstrap", BootstrapRequest
+
+  @doc """
+  Intercepts and handles outgoing events.
+  """
+  event_handler "event"
+
+  @doc """
+  When the client disconnects/leaves the Channel, we update the
+  ServerWebsocketChannelState.
+  """
   def terminate(_reason, socket) do
     entity_id = socket.assigns.gateway.entity_id
     server_id = socket.assigns.destination.server_id
@@ -175,6 +242,5 @@ defmodule Helix.Server.Websocket.Channel.Server do
       {network_id, ip},
       counter
     )
-    # ETS.remove()
   end
 end

@@ -20,24 +20,30 @@ defmodule Helix.Network.Public.NetworkTest do
 
       target_ip = ServerQuery.get_ip(target_server.server_id, @internet)
 
-      assert {:ok, result} = NetworkPublic.browse(@internet, target_ip, gateway)
+      assert {:ok, result, relay} =
+        NetworkPublic.browse(@internet, target_ip, gateway)
 
       assert result.type == :vpc
       assert result.content == %{}
       refute result.password
       refute result.subtype
+      assert relay.server_id == target_server.server_id
     end
 
     test "valid resolution of NPC IP" do
       {gateway, _} = ServerSetup.server()
       {dc, dc_ip} = NPCHelper.download_center()
 
-      assert {:ok, result} = NetworkPublic.browse(@internet, dc_ip, gateway)
+      dc_server_id = NPCHelper.get_server_id(dc)
+
+      assert {:ok, result, relay} =
+        NetworkPublic.browse(@internet, dc_ip, gateway)
 
       assert result.type == :npc
       assert result.content == WebSetup.npc(dc.id, dc_ip)
       assert result.subtype
       refute result.password
+      assert relay.server_id == dc_server_id
     end
 
     test "returns web_not_found error when IP doesnt exists" do

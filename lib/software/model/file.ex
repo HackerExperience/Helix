@@ -123,7 +123,12 @@ defmodule Helix.Software.Model.File do
         Map.merge(acc, module)
       end)
 
-    %{file| modules: formatted_modules}
+    file
+    |> Map.replace(:modules, formatted_modules)
+    # For some reason, Ecto assigns the `:built` state sometimes, which leads to
+    # some weird behaviour on some Repo inserts. As suggested here[1], we'll use
+    # Ecto.put_meta/2. [1] - https://github.com/Nebo15/ecto_mnesia/issues/20
+    |> Ecto.put_meta(state: :loaded)
   end
 
   @spec set_crypto_version(t | changeset, crypto_version) ::
@@ -217,6 +222,9 @@ defmodule Helix.Software.Model.File do
 
     @spec by_file(Queryable.t, File.idtb) ::
       Queryable.t
+    @doc """
+    Query by file id.
+    """
     def by_file(query \\ File, id) do
       query
       |> where([f], f.file_id == ^id)
@@ -226,9 +234,17 @@ defmodule Helix.Software.Model.File do
 
     @spec by_storage(Queryable.t, Storage.idtb) ::
       Queryable.t
+    @doc """
+    Query by storage id.
+    """
     def by_storage(query \\ File, id),
       do: where(query, [f], f.storage_id == ^id)
 
+    @spec by_version(Queryable.t, Storage.idtb, File.Module.name) ::
+      Queryable.t
+    @doc """
+    Query by (highest) File.Module.name version.
+    """
     def by_version(query \\ File, storage, module) do
       query
       |> by_storage(storage)
@@ -239,23 +255,48 @@ defmodule Helix.Software.Model.File do
       |> limit(1)
     end
 
+    @spec by_module(Queryable.t, File.Module.name) ::
+      Queryable.t
+    @doc """
+    Query by File.Module.name
+    """
     def by_module(query, module_name),
       do: where(query, [..., fm], fm.name == ^module_name)
 
+    @spec order_by_version(Queryable.t) ::
+      Queryable.t
+    @doc """
+    Order by File.Module version, descending.
+    """
     def order_by_version(query),
       do: order_by(query, [..., fm], desc: fm.version)
 
     @spec not_encrypted(Queryable.t) ::
       Queryable.t
+    @doc """
+    Filter out encrypted files.
+    """
     def not_encrypted(query \\ File),
       do: where(query, [f], is_nil(f.crypto_version))
 
+    @spec join_modules(Queryable.t) ::
+      Queryable.t
+    docp """
+    Join File.Module.
+    """
     defp join_modules(query),
       do: join(query, :left, [f], fm in File.Module, fm.file_id == f.file_id)
 
+    @spec join_assoc_modules(Queryable.t) ::
+      Queryable.t
+    docp """
+    Join File.Module through Ecto Schema's association.
+    """
     defp join_assoc_modules(query),
       do: join(query, :left, [f], fm in assoc(f, :modules))
 
+    @spec preload_modules(Queryable.t) ::
+      Queryable.t
     docp """
     Preloads File.Modules into the schema
     """

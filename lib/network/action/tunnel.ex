@@ -66,9 +66,9 @@ defmodule Helix.Network.Action.Tunnel do
   """
   defp create_tunnel(network, gateway, destination, bounces) do
     with \
-      exists? = &ServerHenforcer.exists?/1,
-      true <- exists?.(gateway) || {:gateway_id, :notfound},
-      true <- exists?.(destination) || {:destination_id, :notfound},
+      exists? = &ServerHenforcer.server_exists?/1,
+      {true, _} <- exists?.(gateway) || {:gateway_id, :notfound},
+      {true, _} <- exists?.(destination) || {:destination_id, :notfound},
       true <- Enum.all?(bounces, exists?) || {:links, :notfound},
       connected? = &NetworkHenforcer.node_connected?(&1, network.network_id),
       true <- connected?.(gateway) || {:gateway_id, :disconnected},

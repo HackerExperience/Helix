@@ -1,11 +1,11 @@
 defmodule Helix.Test.Software.Setup do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Hardware.Model.Component
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
-  alias Helix.Hardware.Model.Component
   alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Repo, as: SoftwareRepo
 

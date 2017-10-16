@@ -1,4 +1,4 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
+defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
 
   use Helix.Test.Case.Integration
 
@@ -8,12 +8,14 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   @internet_str to_string(NetworkHelper.internet_id())
 
-  describe "browse" do
+  describe "network.browse" do
     test "valid resolution, originating from my own server" do
       {socket, _} = ChannelSetup.join_server([own_server: true])
       {_, npc_ip} = NPCHelper.random()
@@ -24,7 +26,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # Make sure the answer is an astounding :ok
       assert_reply ref, :ok, response
@@ -60,7 +62,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It worked!
       assert_reply ref, :ok, response
@@ -91,7 +93,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip asking `gateway` to be used as origin
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It worked!
       assert_reply ref, :ok, response
@@ -122,7 +124,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to the NPC ip asking random server to be used as origin
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It return an error!
       assert_reply ref, :error, response
@@ -140,13 +142,43 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BrowseTest do
       }
 
       # Browse to random IP
-      ref = push socket, "browse", params
+      ref = push socket, "network.browse", params
 
       # It return an error!
       assert_reply ref, :error, response
       assert response.data.message == "web_not_found"
 
       CacheHelper.sync_test()
+    end
+
+    test "resolution returns list of PublicFTP files" do
+      {socket, _} = ChannelSetup.join_server([own_server: true])
+      {target, _} = ServerSetup.server()
+
+      # Let's enable the PFTP server on the target...
+      SoftwareSetup.PFTP.pftp(server_id: target.server_id)
+
+      # And add 3 files into it.
+      SoftwareSetup.PFTP.file(server_id: target.server_id)
+      SoftwareSetup.PFTP.file(server_id: target.server_id)
+      SoftwareSetup.PFTP.file(server_id: target.server_id)
+
+      target_ip = ServerHelper.get_ip(target)
+
+      params = %{
+        address: target_ip,
+        network_id: @internet_str
+      }
+
+      # Browse to the NPC ip
+      ref = push socket, "network.browse", params
+
+      # Make sure the answer is an astounding :ok
+      assert_reply ref, :ok, response
+
+      pftp_files = response.data.meta.public
+
+      assert length(pftp_files) == 3
     end
 
     @tag :pending

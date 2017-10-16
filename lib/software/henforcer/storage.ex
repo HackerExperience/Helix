@@ -4,14 +4,20 @@ defmodule Helix.Software.Henforcer.Storage do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Model.Server
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Henforcer.File, as: FileHenforcer
   alias Helix.Software.Query.Storage, as: StorageQuery
 
+  @type storage_exists_relay :: %{storage: Storage.t}
+  @type storage_exists_relay_partial :: %{}
+  @type storage_exists_error ::
+    {false, {:storage, :not_found}, storage_exists_relay_partial}
+
   @spec storage_exists?(Storage.id) ::
-    {true, %{storage: Storage.t}}
-    | {false, {:storage, :not_found}, %{}}
+    {true, storage_exists_relay}
+    | storage_exists_error
   @doc """
   Ensures the requested storage exists on the database.
   """
@@ -24,11 +30,16 @@ defmodule Helix.Software.Henforcer.Storage do
     end
   end
 
+  @type has_enough_space_relay :: %{storage: Storage.t, file: File.t}
+  @type has_enough_space_relay_partial :: has_enough_space_relay
+  @type has_enough_space_error ::
+    {false, {:storage, :full}, has_enough_space_relay_partial}
+    | storage_exists_error
+    | FileHenforcer.file_exists_error
+
   @spec has_enough_space?(Storage.idt, File.idt) ::
-    {true, %{storage: Storage.t, file: File.t}}
-    | {false, {:storage, :full}, %{storage: Storage.t, file: File.t}}
-    | {false, {:storage, :not_found}, %{}}
-    | {false, {:file, :not_found}, %{}}
+    {true, has_enough_space_relay}
+    | has_enough_space_error
   @doc """
   Verifies whether the given storage has enough space left to store `file`
   """
@@ -51,10 +62,14 @@ defmodule Helix.Software.Henforcer.Storage do
     reply_ok(relay)
   end
 
-  @spec belongs_to_server?(Storage.idt, Server.id) ::
-    {true, %{storage: Storage.t}}
-    | {false, {:storage, :not_belongs}, %{}}
-    | {false, {:server, :not_found}, %{}}
+  @type belongs_to_server_relay :: %{storage: Storage.t, server: Server.t}
+  @type belongs_to_server_relay_partial :: belongs_to_server_relay
+  @type belongs_to_server_error ::
+    {false, {:storage, :not_belongs}, belongs_to_server_relay_partial}
+
+  @spec belongs_to_server?(Storage.idt, Server.idt) ::
+    {true, belongs_to_server_relay}
+    | belongs_to_server_error
   @doc """
   Verifies whether the given storage belongs to the server.
   """
@@ -64,17 +79,22 @@ defmodule Helix.Software.Henforcer.Storage do
     end
   end
 
-  def belongs_to_server?(storage = %Storage{}, server_id) do
+  def belongs_to_server?(storage, server_id = %Server.ID{}) do
+    henforce ServerHenforcer.server_exists?(server_id) do
+      belongs_to_server?(storage, relay.server)
+    end
+  end
+
+  def belongs_to_server?(storage = %Storage{}, server = %Server{}) do
     with \
       {:ok, owner_id} <- CacheQuery.from_storage_get_server(storage),
-      true <- owner_id == server_id || :not_belongs
+      true <- owner_id == server.server_id || :not_belongs
     do
-      reply_ok(relay(%{storage: storage}))
+      reply_ok()
     else
-      :not_belongs ->
-        reply_error({:storage, :not_belongs})
       _ ->
-        reply_error({:server, :not_found})
+        reply_error({:storage, :not_belongs})
     end
+    |> wrap_relay(%{server: server, storage: storage})
   end
 end

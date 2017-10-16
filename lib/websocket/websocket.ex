@@ -1,13 +1,16 @@
-defmodule Helix.Websocket.Socket do
+defmodule Helix.Websocket do
 
   use Phoenix.Socket
 
+  alias Phoenix.Socket
   alias Helix.Event.Notificable
   alias Helix.Websocket.Joinable
   alias Helix.Websocket.Requestable
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Entity.Query.Entity, as: EntityQuery
+
+  @typep socket :: Socket.t
 
   transport :websocket, Phoenix.Transports.WebSocket
 
@@ -67,7 +70,9 @@ defmodule Helix.Websocket.Socket do
       {:ok, request} <- Requestable.check_permissions(request, socket),
       {:ok, request} <- Requestable.handle_request(request, socket)
     do
-      Requestable.reply(request, socket)
+      request
+      |> Requestable.reply(socket)
+      |> reply_request(socket)
     else
       {:error, %{message: msg}} ->
         WebsocketUtils.reply_error(msg, socket)
@@ -75,6 +80,17 @@ defmodule Helix.Websocket.Socket do
         WebsocketUtils.internal_error(socket)
     end
   end
+
+  @spec reply_request({:ok | :error} | :noreply, socket) ::
+    {:reply, {:ok, %{data: term}}, socket}
+    | {:reply, {:error, %{data: term}}, socket}
+    | {:noreply, socket}
+  defp reply_request({:ok, data}, socket),
+    do: WebsocketUtils.reply_ok(data, socket)
+  defp reply_request({:error, data}, socket),
+    do: WebsocketUtils.reply_error(data, socket)
+  defp reply_request(:noreply, socket),
+    do: WebsocketUtils.no_reply(socket)
 
   @doc """
   Generic notification ("event going out") handler. It guides the notification

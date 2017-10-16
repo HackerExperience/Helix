@@ -77,19 +77,51 @@ defmodule Helix.Software.Event.File do
         do: %{server: event.to_server_id}
     end
 
-    log(event) do
-      ip_from = get_ip(event.from_server_id, event.network_id)
-      ip_to = get_ip(event.to_server_id, event.network_id)
+    loggable do
 
-      file_name = get_file_name(event.file)
+      @doc """
+      Generates a log entry when a File has been downloaded from a Public FTP
+      server.
 
-      msg_from = "localhost downloaded file #{file_name} from #{ip_to}"
-      msg_to = "#{ip_from} downloaded file #{file_name} at localhost"
+      In this case, to protect the downloader's identity and honor the "public"
+      part, we censor the downloader's IP address, which will be saved on the
+      PublicFTP host server, but with 5 digits censored.
 
-      log_from = build_entry(event.from_server_id, event.entity_id, msg_from)
-      log_to = build_entry(event.to_server_id, event.entity_id, msg_to)
+      On the other hand, the host server IP address is not censored, and will be
+      saved fully on the downloader's server.
+      """
+      log(event = %{connection_type: :public_ftp}) do
+        ip_from = get_ip(event.from_server_id, event.network_id)
+        ip_to = get_ip(event.to_server_id, event.network_id) |> censor_ip()
 
-      [log_from, log_to]
+        file_name = get_file_name(event.file)
+
+        msg_to = "localhost downloaded file #{file_name} from Public FTP server #{ip_from}"
+        msg_from = "#{ip_to} downloaded file #{file_name} from localhost Public FTP"
+
+        log_from = build_entry(event.from_server_id, event.entity_id, msg_from)
+        log_to = build_entry(event.to_server_id, event.entity_id, msg_to)
+
+        [log_from, log_to]
+      end
+
+      @doc """
+      Generates a log  entry when a File has been downloaded from a server.
+      """
+      log(event = %{connection_type: :ftp}) do
+        ip_from = get_ip(event.from_server_id, event.network_id)
+        ip_to = get_ip(event.to_server_id, event.network_id)
+
+        file_name = get_file_name(event.file)
+
+        msg_to = "localhost downloaded file #{file_name} from #{ip_from}"
+        msg_from = "#{ip_to} downloaded file #{file_name} from localhost"
+
+        log_from = build_entry(event.from_server_id, event.entity_id, msg_from)
+        log_to = build_entry(event.to_server_id, event.entity_id, msg_to)
+
+        [log_from, log_to]
+      end
     end
   end
 

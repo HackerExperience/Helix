@@ -1,6 +1,8 @@
 defmodule Helix.Software.Query.Storage do
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Internal.File, as: FileInternal
@@ -45,4 +47,29 @@ defmodule Helix.Software.Query.Storage do
     [Component.id]
   defdelegate get_storage_drives(storage),
     to: StorageDriveInternal
+
+  @spec get_main_storage(Server.idt) ::
+    Storage.t
+  @doc """
+  Returns the "main" storage of a server, which, for the time being, is the only
+  storage a server may have.
+  """
+  def get_main_storage(server) do
+    server
+    |> get_main_storage_id()
+    |> fetch()
+  end
+
+  @spec get_main_storage_id(Server.idt) ::
+    Storage.id
+  @doc """
+  Identical to `get_main_storage`, but only returns the server's storage id.
+  """
+  def get_main_storage_id(server = %Server{}),
+    do: get_main_storage_id(server.server_id)
+  def get_main_storage_id(server_id = %Server.ID{}) do
+    server_id
+    |> CacheQuery.from_server_get_storages!()
+    |> List.first()
+  end
 end

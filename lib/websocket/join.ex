@@ -30,7 +30,7 @@ defmodule Helix.Websocket.Join do
     new =
       quote do
       @spec new(term, term, term) :: t
-      def new(topic, params \\ %{}, join_type \\ :default) do
+      def new(topic, params \\ %{}, join_type \\ nil) do
         %__MODULE__{
           unsafe: params,
           topic: topic,

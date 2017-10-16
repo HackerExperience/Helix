@@ -1,4 +1,4 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.BruteforceTest do
+defmodule Helix.Server.Websocket.Channel.Server.Requests.CrackerTest do
 
   use Helix.Test.Case.Integration
 
@@ -13,7 +13,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BruteforceTest do
   alias Helix.Test.Software.Setup, as: SoftwareSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
 
-  describe "bruteforce" do
+  describe "cracker.bruteforce" do
     test "bruteforce attack is started" do
       {socket, %{gateway: gateway}} =
         ChannelSetup.join_server([own_server: true])
@@ -33,7 +33,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BruteforceTest do
       }
 
       # Submit request
-      ref = push socket, "bruteforce", params
+      ref = push socket, "cracker.bruteforce", params
 
       # Wait for response
       assert_reply ref, :ok, response
@@ -72,7 +72,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.BruteforceTest do
       }
 
       # Submit request
-      ref = push socket, "bruteforce", params
+      ref = push socket, "cracker.bruteforce", params
 
       # Wait for response
       assert_reply ref, :error, response

@@ -37,6 +37,22 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
     alias Helix.Server.Websocket.Channel.Server.Join.Utils, as: ServerJoinUtils
 
     @doc """
+    Detects whether the join is local or remote, and delegates to the expected
+    method.
+    """
+    def check_params(request = %ServerJoin{type: nil}, socket) do
+      access_type =
+        if request.unsafe["gateway_ip"] do
+          :remote
+        else
+          :local
+        end
+
+      %{request| type: access_type}
+      |> check_params(socket)
+    end
+
+    @doc """
     Verifies params for local server join.
     """
     def check_params(request = %ServerJoin{type: :local}, _socket) do
@@ -325,7 +341,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
 
     docp """
     Validates and returns the next counter. If the given counter was `nil`, it
-    means the user did not specify a counter during the request, and as such
+
     Helix should automatically set it to the correct result.
     """
     defp validate_counter(entity_id, server_id, nip, nil) do

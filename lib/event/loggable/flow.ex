@@ -3,8 +3,8 @@ defmodule Helix.Event.Loggable.Flow do
   LoggableFlow is responsible for guiding all events through the Loggable steps,
   as well as implementing helper methods to aid a smooth Log support.
 
-  The main component is the `log` macro, which removes the boilerplate of the
-  Loggable protocol implementation.
+  The main components are the `loggable` and `log` macros, which remove the
+  boilerplate of the Loggable protocol implementation.
 
   The flow is quite simple: first, a log entry is generated. This log entry
   contains the `server_id` which that log should be saved at, the `entity_id`
@@ -20,13 +20,11 @@ defmodule Helix.Event.Loggable.Flow do
 
   import HELL.Macros
 
-  alias HELL.IPv4
+  alias HELL.Macros.Utils, as: MacroUtils
   alias Helix.Event
+  alias Helix.Event.Loggable.Utils, as: LoggableUtils
   alias Helix.Entity.Model.Entity
-  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
-  alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Software.Model.File
   alias Helix.Log.Action.Log, as: LogAction
 
   @type log_entry ::
@@ -34,28 +32,43 @@ defmodule Helix.Event.Loggable.Flow do
 
   @type log_msg :: String.t
 
-  @type log_file_name :: String.t
-
-  defmacro log(query, do: block) do
-    query = replace_module(query, __CALLER__.module)
-
+  @doc """
+  Top-level macro for events wanting to implement the Loggable protocol.
+  """
+  defmacro loggable(do: block) do
     quote do
 
       defimpl Helix.Event.Loggable do
         @moduledoc false
 
+        unquote(block)
+
+        # Declaring the typespec for `generate/1` here, since the Event may
+        # implement multiple `log/2` patterns, but they all share the same
+        # signature
         @spec generate(unquote(__CALLER__.module).t) ::
           [Helix.Event.Loggable.Flow.log_entry]
-        @doc false
-        def generate(unquote(query)) do
-          unquote(block)
-        end
 
         # Fallback
-        @doc false
         def generate(_),
           do: []
       end
+
+    end
+  end
+
+  @doc """
+  Inserts the Loggable's `generate` functions. Multiple `log` macros may be
+  defined, in which case the event will be pattern-matched against them.
+  """
+  defmacro log(query, do: block) do
+    query = replace_module(query, __CALLER__.module)
+
+    quote do
+
+        def generate(unquote(query)) do
+          unquote(block)
+        end
 
     end
   end
@@ -74,6 +87,8 @@ defmodule Helix.Event.Loggable.Flow do
   and mess everything up, Helix won't compile.
   """
   defp replace_module(query, caller) do
+    caller = MacroUtils.remove_protocol_namespace(caller, Helix.Event.Loggable)
+
     {a, s, t} = query
 
     # Verifies whether it's a pattern match (`var = :something`)
@@ -105,36 +120,14 @@ defmodule Helix.Event.Loggable.Flow do
     end
   end
 
-  @doc """
-  Log-focused method to figure out the file name that should be logged.
-  """
-  @spec get_file_name(File.t) ::
-    log_file_name
-  def get_file_name(file = %File{}) do
-    file.full_path
-    |> String.split("/")
-    |> List.last()
-  end
+  defdelegate get_file_name(file),
+    to: LoggableUtils
 
-  @spec get_ip(Server.id, Network.id) ::
-    IPv4.t
-    | String.t
-  @doc """
-  Log-focused method to fetch a server IP address. Returns an empty string if
-  the IP was not found.
-  """
-  def get_ip(server_id, network_id) do
-    case ServerQuery.get_ip(server_id, network_id) do
-      ip when is_binary(ip) ->
-        ip
-      nil ->
-        "Unknown"
-    end
-    |> format_ip()
-  end
+  defdelegate get_ip(server_id, network_id),
+    to: LoggableUtils
 
-  defp format_ip(ip),
-    do: "[" <> ip <> "]"
+  defdelegate censor_ip(ip),
+    to: LoggableUtils
 
   @spec build_entry(Server.id, Entity.id, log_msg) ::
     log_entry

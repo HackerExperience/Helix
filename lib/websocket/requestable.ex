@@ -95,11 +95,9 @@ defprotocol Helix.Websocket.Requestable do
   def handle_request(request, socket)
 
   @spec reply(Request.t(term), Socket.t) ::
-    {:reply, {:ok, reply :: map}, Socket.t}
-    | {:reply, :ok, Socket.t}
-    | {:stop, reason :: term, Socket.t}
-    | {:stop, reason :: term, reply :: term, Socket.t}
-    | {:noreply, Socket.t}
+    {:ok, reply :: map}
+    | {:error, reply :: map}
+    | :noreply
   @doc """
   Final step of the flow, which is only reached when all previous steps were
   successful.
@@ -119,13 +117,19 @@ defprotocol Helix.Websocket.Requestable do
 
   # Return
 
-  It's the return used by the Channel's `handle_in/3`, so must return any of:
+  `reply/2` is supposed to *render* the output to the client. The flow of the
+  whole Requestable protocol is controlled at Websocket.Socket, which will reply
+  to the request according to the return of `reply/2`.
 
-  - {:reply, {:ok, %{}}, socket}
-  - {:reply, :ok, socket}
-  - {:noreply, socket}
-  - {:stop, reason, socket}
-  - {:stop, reason, %{}, socket}
+  If `reply/2` returns a `{:ok, data :: map}` tuple, it is indicating that the
+  response should reach the user. On the other hand, if it returns a `:noreply`
+  atom, well, the user will get no reply.
+
+  A return of `{:error, data ::  map}` will send the rendered data to the client
+  with an error code.
+
+  This can further be extended to include all possible Channel responses, namely
+  missing the `{:stop, reason}` response.
   """
   def reply(request, socket)
 end

@@ -50,7 +50,7 @@ defmodule Helix.Software.Public.File do
         gateway_id: tunnel.gateway_id,
         destination_id: tunnel.destination_id,
         network_id: tunnel.network_id,
-        bounces: []  # TODO
+        bounces: []  # TODO 256
       }
 
     case FileTransferFlow.transfer(:download, file, storage, network_info) do

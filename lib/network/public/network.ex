@@ -11,7 +11,7 @@ defmodule Helix.Network.Public.Network do
   alias Helix.Network.Query.Web, as: WebQuery
 
   @spec browse(Network.idt, String.t | IPv4.t, Server.idt) ::
-    {:ok, term}
+    {:ok, term, relay :: %{server_id: Server.id}}
     | {:error, %{message: String.t}}
   @doc """
   Browses to an address (website or IP).  Regardless of the address type, the
@@ -48,7 +48,11 @@ defmodule Helix.Network.Public.Network do
         nip: [network_id, dest_ip]
       }
 
-      {:ok, web_data}
+      relay = %{
+        server_id: server_id
+      }
+
+      {:ok, web_data, relay}
     else
       _ ->
         {:error, %{message: "web_not_found"}}
