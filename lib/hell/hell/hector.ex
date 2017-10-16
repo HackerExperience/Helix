@@ -158,6 +158,19 @@ defmodule Hector do
   # %User{id: %ID{number: 1}, password: "s3cr3t", setting: #Ecto.Association}
   ```
 
+  ### Variant 4: Simple loader interface with custom loader capabilities
+
+  The simple loader interface is ideal: simple and readable. However, we may
+  want a custom loader that is shared between several queries.
+
+  In this case, The simple loader will always check whether the given module has
+  a `hector_loader/2` functions, which takes the two arguments a custom loader
+  would receive.
+
+  If this function exists, the simple loader variant will delegate the loading
+  to the `hector_loader/2` function, essentially acting as a custom loader that
+  may be shared with multiple different queries.
+
   ---
 
   For more examples, see tests at `test/hell/hector_test.exs`.

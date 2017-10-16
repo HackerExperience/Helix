@@ -16,9 +16,6 @@ defmodule Helix.Event.Loggable.Utils do
 
   @unknown_ip "Unknown"
 
-  def format_ip(ip),
-    do: "[" <> ip <> "]"
-
   @spec censor_ip(IPv4.t | unknown_ip) ::
     censored_ip :: IPv4.t | unknown_ip
   @doc """
@@ -76,8 +73,14 @@ defmodule Helix.Event.Loggable.Utils do
 
   docp """
   Helper to verify whether the ASCII char is a number.
+  48 is 0 and 57 is 9
   """
   defp char_is_number?(char),
-    # do: char in [48, 49, 50, 51, 52, 53, 54, 55, 56, 57]
     do: char >= 48 and char <= 57
+
+  docp """
+  Formats an IP address to the log display.
+  """
+  defp format_ip(ip),
+    do: "[" <> ip <> "]"
 end

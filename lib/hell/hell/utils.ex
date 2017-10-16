@@ -57,8 +57,13 @@ defmodule HELL.Utils do
   def concat(a, b, c),
     do: concat(a, b) |> concat(c)
 
-  def atom_contains?(a, value) when is_atom(a) do
-    a
+  @spec atom_contains?(atom, String.t) ::
+    boolean
+  @doc """
+  `String.contains?` applied to an atom.
+  """
+  def atom_contains?(atom, value) when is_atom(atom) do
+    atom
     |> Atom.to_string()
     |> String.contains?(value)
   end

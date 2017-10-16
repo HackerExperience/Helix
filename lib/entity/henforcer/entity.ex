@@ -28,7 +28,6 @@ defmodule Helix.Entity.Henforcer.Entity do
 
   @type owns_server_relay :: %{entity: Entity.t, server: Server.t}
   @type owns_server_relay_partial :: owns_server_relay
-
   @type owns_server_error ::
     {false, {:server, :not_belongs}, owns_server_relay_partial}
     | entity_exists_error

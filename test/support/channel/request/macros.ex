@@ -8,5 +8,4 @@ defmodule Helix.Test.Channel.Request.Macros do
       var!(request) = %{unquote(request)| params: new_params}
     end
   end
-
 end
