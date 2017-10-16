@@ -3,6 +3,7 @@ import Helix.Websocket.Request
 request Helix.Network.Websocket.Requests.Browse do
 
   alias Helix.Server.Model.Server
+  alias Helix.Software.Public.PFTP, as: PFTPPublic
   alias Helix.Network.Model.Network
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Network.Public.Network, as: NetworkPublic
@@ -50,8 +51,8 @@ request Helix.Network.Websocket.Requests.Browse do
     address = request.params.address
 
     case NetworkPublic.browse(network_id, address, origin_id) do
-      {:ok, web} ->
-        update_meta(request, %{web: web}, reply: true)
+      {:ok, web, relay} ->
+        update_meta(request, %{web: web, relay: relay}, reply: true)
 
       {:error, %{message: reason}} ->
         reply_error(reason)
@@ -60,8 +61,14 @@ request Helix.Network.Websocket.Requests.Browse do
 
   render(request, _socket) do
     web = request.meta.web
+    server_id = request.meta.relay.server_id
 
     [network_id, ip] = web.nip
+
+    pftp_files =
+      server_id
+      |> PFTPPublic.list_files()
+      |> PFTPPublic.render_list_files()
 
     type =
       if web.subtype do
@@ -75,7 +82,8 @@ request Helix.Network.Websocket.Requests.Browse do
       type: type,
       meta: %{
         nip: [to_string(network_id), to_string(ip)],
-        password: web.password
+        password: web.password,
+        public: pftp_files
       }
     }
 

@@ -28,7 +28,7 @@ defmodule Helix.Software.Query.PublicFTP do
   def fetch_server(server = %Server{}),
     do: PublicFTPInternal.fetch(server.server_id)
 
-  @spec list_files(Server.t) ::
+  @spec list_files(Server.idt) ::
     [File.t]
   @doc """
   Returns a list of all files that exist on the given PublicFTP server.
@@ -36,5 +36,7 @@ defmodule Helix.Software.Query.PublicFTP do
   Returns an empty list if the server is disabled, even if there are files on it 
   """
   def list_files(server = %Server{}),
-    do: PublicFTPInternal.list_files(server.server_id)
+    do: list_files(server.server_id)
+  def list_files(server_id = %Server.ID{}),
+    do: PublicFTPInternal.list_files(server_id)
 end

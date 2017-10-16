@@ -75,4 +75,6 @@ defmodule Helix.Test.Universe.NPC.Helper do
     {bank, server.static_ip}
   end
 
+  def get_server_id(%{servers: [server]}),
+    do: server.id
 end

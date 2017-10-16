@@ -4,12 +4,12 @@ defmodule Helix.Software.Public.FileTest do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Software.Public.File, as: FilePublic
-  alias Helix.Software.Query.Storage, as: StorageQuery
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "bruteforce/4" do
@@ -76,12 +76,7 @@ defmodule Helix.Software.Public.FileTest do
           destination_id: destination_id
         )
 
-      storage =
-        destination_id
-        |> CacheQuery.from_server_get_storages()
-        |> elem(1)
-        |> List.first()
-        |> StorageQuery.fetch()
+      storage = SoftwareHelper.get_storage(destination_id)
 
       # Passing storage_id and file_id as arguments so we can see all the
       # pattern matches for `download/3` in action

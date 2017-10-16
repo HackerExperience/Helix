@@ -2,6 +2,8 @@ defmodule Helix.Log.Event.Handler.LogTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Log.Macros
+
   alias Helix.Software.Event.LogForge.LogEdit.Processed,
     as: LogForgeEditComplete
   alias Helix.Software.Event.LogForge.LogCreate.Processed,
@@ -29,15 +31,19 @@ defmodule Helix.Log.Event.Handler.LogTest do
 
       # Now we verify that the corresponding log has been saved on the relevant
       # places.
-      [log_source] = LogQuery.get_logs_on_server(event.from_server_id)
-      assert log_source.server_id == event.from_server_id
-      assert log_source.entity_id == event.entity_id
-      assert log_source.message =~ "localhost downloaded"
+      [log_gateway] = LogQuery.get_logs_on_server(event.to_server_id)
+      assert_log \
+        log_gateway,
+        event.to_server_id,
+        event.entity_id,
+        "localhost downloaded"
 
-      [log_target] = LogQuery.get_logs_on_server(event.to_server_id)
-      assert log_target.server_id == event.to_server_id
-      assert log_target.entity_id == event.entity_id
-      assert log_target.message =~ "from localhost"
+      [log_destination] = LogQuery.get_logs_on_server(event.from_server_id)
+      assert_log \
+        log_destination,
+        event.from_server_id,
+        event.entity_id,
+        "from localhost"
     end
   end
 
