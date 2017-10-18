@@ -160,11 +160,50 @@ defmodule Helix.Factor do
 
   ### Testing
 
-  Yeah right
+  In order to test the return of a Factor, you may either use the client API
+  defined at `Helix.Factor.Client`, or call directly `assembly/3`, where the
+  last argument is the list of facts that should be retrieved. If omitted, all
+  facts will be retrieved.
 
   ### Handling relay data
 
-  TODO
+  #### For conflicts
+
+  On Henforcer, it's quite common to have conflicting relay keys. This happens
+  once you have a sub-Henforcer without context, and a parent-Henforcer with
+  context. For example, imagine the `can_transfer?` Henforcer. Its context has
+  two servers, `source` and `target`. Each one will be verified with the
+  `server_exists?` henforcer, which will return a contextless `%{server: _}`
+  relay. It's up to the parent Henforcer to shape the relay, otherwise the key
+  `server` would be overwritten on the second verification.
+
+  This is a lot less likely to happen on Factor, since we usually have only a
+  single context per Factor. Still, it's useful to keep that in mind.
+
+  (In fact, that's why relay handling is done under the hood on `Factor`, and
+  explicitly on `Henforcer`.)
+
+  So, if a conflict arises, it's possible to modify the `relay` variable
+  directly on the `assembly` scope. Beware that, due to alternative flows that
+  may be created on `Helix.Factor.Client`, that relay key may not exist some
+  times, so an existence check should be made beforehand.
+
+  #### For flexibility
+
+  A sub-factor may be called from an arbitrarily large number of parents, and a
+  fact may be called with a custom flow (specified by the `only` and `skip`
+  options on `Helix.Factor.Client`).
+
+  That's why, for greater flexibility, one must not assume a fact will always
+  have the expected relay data. It should pattern match and, in case the data is
+  missing, fetch and pass it upstream.
+
+  This can get quite cumbersome to implement upfront, so as a rule of thumb:
+
+  - Add a fact as usual, pattern-matching the required relay.
+  - If, on some alternative execution flow, the fact is reached without the full
+    relay, gather the required data and add a pattern-match for this subset.
+  - Repeat
 
   ### Interfacing with Factors
 
