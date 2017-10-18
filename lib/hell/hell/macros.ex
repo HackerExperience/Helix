@@ -25,6 +25,7 @@ defmodule HELL.Macros do
 
     quote do
 
+      @doc false
       def unquote(fname)(unquote_splicing(params)) do
         {:ok, result} = unquote(name)(unquote_splicing(params))
         result
