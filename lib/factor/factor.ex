@@ -13,7 +13,7 @@ defmodule Helix.Factor do
   Namely, the main two use-cases for Factors within Helix are:
 
   - Figuring out how long a process should take.
-  - Calculating difficulties, rewards, penalties based on, well, game factors.
+  - Calculating difficulties, rewards, penalties based on, well, game facts.
 
   One could split the implementation of a game design and balance in two parts:
 
@@ -166,6 +166,13 @@ defmodule Helix.Factor do
 
   TODO
 
+  ### Interfacing with Factors
+
+  Yo dawg, we heard you like APIs so we've created an API that interacts with
+  the Factor's API.
+
+  Check out `Helix.Factor.Client`.
+
   ### Peculiarities, dangers, gotchas and bewares
 
   Using a DSL is a joy as long as you are fully aware of everything it does
@@ -201,21 +208,21 @@ defmodule Helix.Factor do
   This accumulation is done automatically for you. You need not worry about it.
   But it's always good to know how it works, hence this section.
 
-  ##### There's an even more special variable called `factors`
+  ##### There's an even more special variable called `facts`
 
   On the example above, you can now (hopefully) understand why `relay` is being
   accumulated. But how about the Factor result?
 
-  Well, it is accumulated on an internal variable called `factors`. You need not
+  Well, it is accumulated on an internal variable called `facts`. You need not
   worry with it, and theoretically there's no possibility of key conflicts like
-  `relay`, since `factors` is a map which is accumulating the Factor struct's
+  `relay`, since `facts` is a map which is accumulating the Factor struct's
   response.
 
-  In other words, each fact result will populate the `factors` map under the key
-  with the same name of the fact. Under the hood, `factors` is automatically
+  In other words, each fact result will populate the `facts` map under the key
+  with the same name of the fact. Under the hood, `facts` is automatically
   accumulated on every `get_fact` call.
 
-  On the last `get_fact` call, the `factors` is a map identical to the struct,
+  On the last `get_fact` call, the `facts` is a map identical to the struct,
   except for the `__struct__` keyword! Then we simply add the `__struct__` key
   and voila, we have our final result, a valid Factor struct with all underlying
   facts and children (sub-Factors) queried in a fractal/hierarchical way.
@@ -224,12 +231,74 @@ defmodule Helix.Factor do
   import HELL.Macros
 
   @doc """
+  We `use` this module so we can accumulate the attributes below and perform
+  some compile-time checks.
+  """
+  defmacro __using__(_args) do
+    quote do
+
+      import unquote(__MODULE__)
+
+      Module.register_attribute(
+        __MODULE__,
+        :facts,
+        accumulate: false
+      )
+
+      Module.register_attribute(
+        __MODULE__,
+        :facts_called,
+        accumulate: true
+      )
+
+      Module.register_attribute(
+        __MODULE__,
+        :exec_facts,
+        accumulate: false
+      )
+
+      @before_compile unquote(__MODULE__)
+    end
+  end
+
+  @doc """
+  On this pre-compilation step we perform some verifications to make sure there
+  were no mistakes, like a fact that went unhandled by `assembly/4`. We also
+  create the `get_facts/0` function, which returns a list of all declared facts.
+  """
+  defmacro __before_compile__(_env) do
+    keys = Module.get_attribute(__CALLER__.module, :facts)
+    facts_called = Module.get_attribute(__CALLER__.module, :facts_called)
+
+    # Emits an warning if there are facts not being handled by `assembly/4`.
+    unless Enum.sort(keys) == Enum.sort(facts_called) do
+      warn_str = \
+        "One or more facts of module #{__CALLER__.module} are not being called"
+      :elixir_errors.warn __CALLER__.line, __CALLER__.file, warn_str
+    end
+
+    quote unquote: false do
+
+      @doc """
+      Returns a list of all facts checked by this #{__MODULE__}.
+      """
+      def get_facts do
+        @facts
+      end
+
+    end
+  end
+
+  @doc """
   Top-level macro for a Factor implementation. Pure syntactic sugar.
   """
   defmacro factor(name, do: block) do
     quote do
 
       defmodule unquote(name) do
+
+        use Helix.Factor
+
         unquote(block)
       end
 
@@ -240,11 +309,12 @@ defmodule Helix.Factor do
   Creates the Factor struct definition.
   """
   defmacro factor_struct(keys) do
-    quote do
+    # Stores, at compile-time, the information about which facts are declared.
+    Module.put_attribute(__CALLER__.module, :facts, keys)
 
+    quote do
       @enforce_keys unquote(keys)
       defstruct unquote(keys)
-
     end
   end
 
@@ -287,26 +357,35 @@ defmodule Helix.Factor do
   end
 
   @doc """
-  Generates the `assembly/2` function, which will guide the Factor data flow.
+  Generates the `assembly/3` function, which will guide the Factor data flow.
   """
-  defmacro assembly(params, relay \\ quote(do: %{}), do: block) do
-    assembler =
-      quote do
-        struct =
-          var!(factors)
-          |> Map.put(:__struct__, __MODULE__)
+  defmacro assembly(params, relay \\ quote(do: %{}), do: block),
+    do: assemble(params, relay, block)
 
-        {struct, var!(relay)}
-      end
-
+  docp """
+  Actual creation of the `assembly/3` function.
+  """
+  defp assemble(params, relay, block) do
     quote do
 
-      @spec assembly(params, relay :: term) ::
+      @spec assembly(params, relay :: term, exec_facts :: [atom] | :all) ::
         {factor, relay}
-      def assembly(unquote(params), unquote(relay) \\ %{}) do
-        var!(factors) = %{}
+      def assembly(var!(params) = unquote(params), unquote(relay), exec \\ :all) do
+        var!(exec_facts) = exec
+        var!(facts) = %{}
+
         unquote(block)
-        unquote(assembler)
+
+        # Puts `__struct__` info if all facts are being fetched, otherwise
+        # simply return the accumulated facts (which is a subset of the struct).
+        result =
+          if exec == :all do
+            Map.put(var!(facts), :__struct__, __MODULE__)
+          else
+            var!(facts)
+          end
+
+        {result, var!(relay)}
       end
 
     end
@@ -324,6 +403,7 @@ defmodule Helix.Factor do
 
   defmacro set_fact(fact, relay) do
     quote do
+      var!(relay)  # Marks variable as used
       {unquote(fact), unquote(relay)}
     end
   end
@@ -332,7 +412,7 @@ defmodule Helix.Factor do
   Function used by `assembly/2` to call the Factor's facts and children.
 
   This is where most of the "under-the-hood" magic happens, by automatically
-  accumulating the `relay` and `factors` variables.
+  accumulating the `relay` and `facts` variables.
   """
   defmacro get_fact(name) do
     quote do
@@ -341,23 +421,36 @@ defmodule Helix.Factor do
   end
 
   defmacro get_fact(name, params, relay) do
+    # Accumulate the soon-to-be-called fact to @facts_called attr. Used only at
+    # compile time for `assembly/4` macro verification
+    Module.put_attribute(__CALLER__.module, :facts_called, name)
+
+    # Define the name of the function we'll be calling
     fname = :"fact_#{name}"
+
     quote do
-      # Calls `fact_#{name}`
-      {fact, next_relay} = unquote(fname)(unquote(params), unquote(relay))
 
-      result = Map.put(%{}, unquote(name), fact)
+      {facts, relay} =
+        if :all == var!(exec_facts) or unquote(name) in var!(exec_facts) do
+          # Calls `fact_#{name}`
+          {fact, next_relay} = unquote(fname)(unquote(params), unquote(relay))
 
-      # Puts the result of `fact_#{name}` on the `factors` accumulators, under
-      # the `#{name}` key. Also accumulates the returned relay. Both `factors`
+          result = Map.put(%{}, unquote(name), fact)
+          {result, next_relay}
+        else
+          {var!(facts), var!(relay)}
+        end
+
+      # Puts the result of `fact_#{name}` on the `facts` accumulators, under
+      # the `#{name}` key. Also accumulates the returned relay. Both `facts`
       # and `relay` are unhygienic variables that will be used later, during
       # the final assembly steps.
-      var!(factors) = Map.merge(var!(factors), result)
-      var!(relay) = Map.merge(var!(relay), next_relay)
+      var!(facts) = Map.merge(var!(facts), facts)
+      var!(relay) = Map.merge(var!(relay), relay)
     end
   end
 
-  @spec get_child_module(parent :: atom, child_name :: String.t) ::
+  @spec get_child_module(parent :: atom, child_name :: atom) ::
     child_module :: atom
   docp """
   Helper to figure out the child's module based on the current Factor (parent).
