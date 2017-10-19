@@ -6,9 +6,7 @@ defmodule Helix.Test.Features.Hack do
   import Helix.Test.Case.ID
 
   alias HELL.Utils
-  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Database, as: DatabaseQuery
-  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
@@ -17,6 +15,7 @@ defmodule Helix.Test.Features.Hack do
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   @moduletag :feature
@@ -26,15 +25,15 @@ defmodule Helix.Test.Features.Hack do
       {socket, %{gateway: gateway, account: account}} =
         ChannelSetup.join_server([own_server: true])
 
-      player_entity = EntityQuery.get_entity_id(account.account_id)
+      player_entity_id = socket.assigns.gateway.entity_id
 
-      # Ensure we are listening to events on the Account channel.
+      # Ensure we are listening to events on the Account channel too.
       ChannelSetup.join_account(
         [account_id: account.account_id, socket: socket])
 
       {target, _} = ServerSetup.server()
 
-      {:ok, [target_nip]} = CacheQuery.from_server_get_nips(target.server_id)
+      target_nip = ServerHelper.get_nip(target)
 
       SoftwareSetup.file([type: :cracker, server_id: gateway.server_id])
 
@@ -82,7 +81,7 @@ defmodule Helix.Test.Features.Hack do
 
       db_server =
         DatabaseQuery.fetch_server(
-          player_entity,
+          player_entity_id,
           target_nip.network_id,
           target_nip.ip)
 
@@ -126,7 +125,7 @@ defmodule Helix.Test.Features.Hack do
 
       {target, _} = ServerSetup.server()
 
-      {:ok, [target_nip]} = CacheQuery.from_server_get_nips(target.server_id)
+      target_nip = ServerHelper.get_nip(target)
 
       topic =
         ChannelHelper.server_topic_name(target_nip.network_id, target_nip.ip)

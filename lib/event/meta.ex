@@ -6,12 +6,18 @@ defmodule Helix.Event.Meta do
   import HELL.Macros
 
   alias HELL.HETypes
+  alias HELL.Utils
   alias Helix.Event
   alias Helix.Process.Model.Process
 
   @type t :: %{
     event_id: HETypes.uuid | nil,
     process_id: Process.id | nil
+  }
+
+  @type rendered :: %{
+    event_id: String.t | nil,
+    process_id: String.t | nil
   }
 
   @meta_key :__meta__
@@ -41,12 +47,24 @@ defmodule Helix.Event.Meta do
   def meta_fields,
     do: @meta_fields
 
+  @spec render(Event.t) ::
+    rendered
+  @doc """
+  Renders the metadata of an event before sending it to the client
+  """
+  def render(event) do
+    %{
+      event_id: get_event_id(event),
+      process_id: get_process_id(event) |> Utils.stringify()
+    }
+  end
+
   # Generates getters and setters (java feelings)
   for field <- @meta_fields do
 
     @doc false
     def unquote(:"get_#{field}")(event),
-      do: event.__meta__.unquote(field)
+      do: Map.get(event.__meta__ || %{}, unquote(field), nil)
 
     @doc false
     def unquote(:"set_#{field}")(event, value) do

@@ -136,6 +136,7 @@ defmodule Helix.Process.Event.Process do
     This event is used solely to update the TOP display on the client.
     """
 
+    alias Helix.Event
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
 
@@ -159,8 +160,10 @@ defmodule Helix.Process.Event.Process do
 
       @event :process_completed
 
-      def generate_payload(_event, _socket) do
-        data = %{}
+      def generate_payload(event, _socket) do
+        data = %{
+          process_id: Event.get_process_id(event)
+        }
 
         {:ok, data}
       end

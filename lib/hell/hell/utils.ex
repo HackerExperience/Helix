@@ -67,4 +67,16 @@ defmodule HELL.Utils do
     |> Atom.to_string()
     |> String.contains?(value)
   end
+
+  @spec stringify(term) ::
+    String.t
+    | nil
+  @doc """
+  `stringify/1` is exactly the same thing as `to_string/1`, except it won't
+  convert `nil` values to `""`. `nil` values will keep being `nil`.
+  """
+  def stringify(nil),
+    do: nil
+  def stringify(value),
+    do: to_string(value)
 end
