@@ -36,7 +36,7 @@ defmodule Helix.Event.Notificable.Flow do
   end
 
   @spec generate_event(struct, Socket.t) ::
-    {:ok, %{data: term, event: String.t, event_id: event_id}}
+    {:ok, %{data: term, event: String.t, meta: Event.Meta.rendered}}
     | :noreply
   @doc """
   Attempts to generate the payload for that event. If the implementation of the
@@ -51,7 +51,7 @@ defmodule Helix.Event.Notificable.Flow do
           %{
             data: data,
             event: Notificable.get_event_name(event),
-            event_id: Event.get_event_id(event)
+            meta: Event.Meta.render(event)
           }
 
         {:ok, payload}

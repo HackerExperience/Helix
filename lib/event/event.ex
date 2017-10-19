@@ -4,6 +4,7 @@ defmodule Helix.Event do
 
   alias Helix.Event.Dispatcher, as: HelixDispatcher
   alias Helix.Event.Meta, as: EventMeta
+  alias Helix.Process.Model.Process
 
   @type t :: HELF.Event.t
 
@@ -49,14 +50,6 @@ defmodule Helix.Event do
       to: EventMeta
   end
 
-  docp """
-  The application wants to emit `event`, which is coming from `source`. On this
-  case, `event` will inherit the source's metadata according to the logic below.
-  """
-  defp inherit(event, source) do
-    event
-  end
-
   @spec emit([t] | t, from: t) ::
     term
   @doc """
@@ -66,7 +59,7 @@ defmodule Helix.Event do
   def emit([], from: _),
     do: :noop
   def emit(events = [_ | _], from: source_event),
-    do: Enum.each(events, &emit(&1, source_event))
+    do: Enum.each(events, &emit(&1, from: source_event))
   def emit(event, from: source_event) do
     event
     |> inherit(source_event)
@@ -84,4 +77,22 @@ defmodule Helix.Event do
     do: Enum.each(events, &emit/1)
   def emit(event),
     do: HelixDispatcher.emit(event)
+
+  docp """
+  The application wants to emit `event`, which is coming from `source`. On this
+  case, `event` will inherit the source's metadata according to the logic below.
+  """
+  defp inherit(event, source) do
+    # Relay the `process_id`
+    event =
+      case get_process_id(source) do
+        process_id = %Process.ID{} ->
+          set_process_id(event, process_id)
+        nil ->
+          event
+      end
+
+    # Everything has been inherited, we are ready to emit/1 the event.
+    event
+  end
 end

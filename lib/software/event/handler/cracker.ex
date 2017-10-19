@@ -42,12 +42,12 @@ defmodule Helix.Software.Event.Handler.Cracker do
             event.network_id,
             event.target_server_ip
           ),
-        on_success(fn -> Event.emit(events) end)
+        on_success(fn -> Event.emit(events, from: event) end)
       do
         {:ok, password}
       else
         {:error, reason, events} ->
-          Event.emit(events)
+          Event.emit(events, from: event)
           {:error, reason}
       end
     end
