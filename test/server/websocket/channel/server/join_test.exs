@@ -6,6 +6,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
   alias Helix.Server.Query.Server, as: ServerQuery
 
+  alias HELL.TestHelper.Random
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
@@ -90,6 +91,15 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert reason.data == "server_not_belongs"
     end
 
+    test "can not connect locally if a non-existing ip was used" do
+      {socket, _} = ChannelSetup.create_socket()
+
+      topic = ChannelHelper.server_topic_name(@internet_id, Random.ipv4())
+
+      assert {:error, reason} = join(socket, topic, %{})
+      assert reason.data == "nip_not_found"
+    end
+
     test "can not connect to a remote server with an incorrect password" do
       {socket, %{server: gateway}} = ChannelSetup.create_socket()
       {destination, _} = ServerSetup.server()
@@ -106,7 +116,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       }
 
       assert {:error, reason} = join(socket, topic, params)
-      assert reason.data == "server_password_invalid"
+      assert reason.data == "password_invalid"
     end
 
     test "can not connect to a remote server with an invalid gateway IP" do
