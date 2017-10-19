@@ -23,11 +23,9 @@ defmodule Helix.Story.Action.StoryTest do
 
       # Returned event is correct
       assert %StoryEmailSentEvent{} = event
-      assert event.email_id == email_id
       assert event.entity_id == entity_id
-      assert event.step == step.name
-      assert event.timestamp
-      assert event.meta
+      assert event.step == step
+      assert event.email.id == email_id
 
       # Ensure it got saved on the story step entry
       %{entry: story_step} = StoryQuery.fetch_current_step(entity_id)
@@ -61,10 +59,9 @@ defmodule Helix.Story.Action.StoryTest do
 
       # assert %StoryReplySentEvent{} = event
       assert event.entity_id == entity_id
-      assert event.reply_id == reply_id
+      assert event.reply.id == reply_id
       assert event.reply_to == StoryStep.get_current_email(entry)
-      assert event.timestamp
-      assert event.step == step.name
+      assert event.step == step
     end
 
     test "reply is removed from allowed_replies after message is sent" do

@@ -5,7 +5,7 @@ defmodule Helix.Story.Event.Step do
   event Proceeded do
     @moduledoc """
     StoryStepProceeded is fired when the Player's current step is changed,
-    moving from a previous step (which may be empty) to the next one.
+    moving from a previous step to the next one.
     """
 
     alias Helix.Entity.Model.Entity
@@ -14,11 +14,21 @@ defmodule Helix.Story.Event.Step do
     @type t ::
       %__MODULE__{
         entity_id: Entity.id,
-        previous_step: Step.step_name | nil,
-        next_step: Step.step_name
+        previous_step: Step.t(struct),
+        next_step: Step.t(struct)
       }
 
     event_struct [:entity_id, :previous_step, :next_step]
+
+    @spec new(Step.t(struct), Step.t(struct)) ::
+      t
+    def new(prev_step = %_{entity_id: _}, next_step = %_{entity_id: _}) do
+      %__MODULE__{
+        entity_id: prev_step.entity_id,
+        previous_step: prev_step,
+        next_step: next_step
+      }
+    end
 
     notify do
       @moduledoc false
@@ -27,8 +37,8 @@ defmodule Helix.Story.Event.Step do
 
       def generate_payload(event, _socket) do
         data = %{
-          previous_step: event.previous_step,
-          next_step: event.next_step
+          previous_step: to_string(event.previous_step.name),
+          next_step: to_string(event.next_step.name)
         }
 
         {:ok, data}

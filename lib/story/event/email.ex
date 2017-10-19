@@ -10,17 +10,26 @@ defmodule Helix.Story.Event.Email do
 
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
+    alias Helix.Story.Model.StoryEmail
 
     @type t ::
       %__MODULE__{
         entity_id: Entity.id,
-        step: Step.step_name,
-        email_id: Step.email_id,
-        meta: Step.email_meta,
-        timestamp: DateTime.t
+        step: Step.t(struct),
+        email: StoryEmail.email
       }
 
-    event_struct [:entity_id, :step, :email_id, :meta, :timestamp]
+    event_struct [:entity_id, :step, :email]
+
+    @spec new(Step.t(term), StoryEmail.email) ::
+      t
+    def new(step = %_{name: _, meta: _, entity_id: _}, email = %{id: _}) do
+      %__MODULE__{
+        entity_id: step.entity_id,
+        step: step,
+        email: email
+      }
+    end
 
     notify do
       @moduledoc """
@@ -33,12 +42,19 @@ defmodule Helix.Story.Event.Email do
       @event :story_email_sent
 
       def generate_payload(event, _socket) do
-        # TODO: contact id
+        contact_id = Step.get_contact(event.step) |> to_string()
+        replies =
+          event.step
+          |> Step.get_replies(event.email.id)
+          |> Enum.map(&to_string/1)
+
         data = %{
-          step: to_string(event.step),
-          email_id: event.email_id,
-          meta: event.meta,
-          timestamp: ClientUtils.to_timestamp(event.timestamp)
+          step: to_string(event.step.name),
+          contact_id: contact_id,
+          replies: replies,
+          email_id: event.email.id,
+          meta: event.email.meta,
+          timestamp: ClientUtils.to_timestamp(event.email.timestamp)
         }
 
         {:ok, data}

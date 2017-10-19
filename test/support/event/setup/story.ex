@@ -13,13 +13,9 @@ defmodule Helix.Test.Event.Setup.Story do
   end
 
   def email_sent(step, email_id, email_meta \\ %{}) do
-    %StoryEmailSentEvent{
-      entity_id: step.entity_id,
-      step: step.name,
-      email_id: email_id,
-      meta: email_meta,
-      timestamp: DateTime.utc_now()
-    }
+    {email, _} = StorySetup.fake_email(id: email_id, meta: email_meta)
+
+    StoryEmailSentEvent.new(step, email)
   end
 
   def reply_sent do
@@ -28,13 +24,9 @@ defmodule Helix.Test.Event.Setup.Story do
   end
 
   def reply_sent(step, reply_id, reply_to) do
-    %StoryReplySentEvent{
-      entity_id: step.entity_id,
-      step: step.name,
-      reply_to: reply_to,
-      reply_id: reply_id,
-      timestamp: DateTime.utc_now()
-    }
+    {reply, _} = StorySetup.fake_email(id: reply_id)
+
+    StoryReplySentEvent.new(step, reply, reply_to)
   end
 
   def step_proceeded do
@@ -43,10 +35,6 @@ defmodule Helix.Test.Event.Setup.Story do
   end
 
   def step_proceeded(prev_step, next_step) do
-    %StoryStepProceededEvent{
-      entity_id: next_step.entity_id,
-      previous_step: prev_step.name,
-      next_step: next_step.name
-    }
+    StoryStepProceededEvent.new(prev_step, next_step)
   end
 end

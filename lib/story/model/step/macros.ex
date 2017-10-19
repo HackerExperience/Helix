@@ -160,7 +160,7 @@ defmodule Helix.Story.Model.Step.Macros do
         def handle_event(
           step,
           %StoryReplySentEvent{
-            reply_id: unquote(reply_id),
+            reply: %{id: unquote(reply_id)},
             reply_to: unquote(email)
           },
           _meta)
