@@ -2,10 +2,11 @@ defmodule Helix.Server.Public.IndexTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Server.Public.Index, as: ServerIndex
 
+  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   describe "index/1" do
@@ -19,11 +20,9 @@ defmodule Helix.Server.Public.IndexTest do
 
       server1 = List.first(index.player)
 
-      assert server1.id == server.server_id
+      assert server1.server_id == server.server_id
       refute Enum.empty?(server1.nips)
       assert Enum.empty?(server1.endpoints)
-      assert server1.password == server.password
-      assert server1.name
       refute Map.has_key?(server1, :bounces)
     end
 
@@ -32,6 +31,9 @@ defmodule Helix.Server.Public.IndexTest do
 
       {target1, _} = ServerSetup.server()
       {target2, _} = ServerSetup.server()
+
+      target1_nip = ServerHelper.get_nip(target1)
+      target2_nip = ServerHelper.get_nip(target2)
 
       tunnel1_opts =
         [gateway_id: player.server_id,
@@ -47,25 +49,23 @@ defmodule Helix.Server.Public.IndexTest do
 
       index = ServerIndex.index(entity.entity_id)
 
-      result_gateway = Enum.find(index.player, &(&1.id == player.server_id))
+      result_gateway =
+        Enum.find(index.player, &(&1.server_id == player.server_id))
 
-      endpoint_target1 =
-        find_endpoint(result_gateway.endpoints, target1.server_id)
-      endpoint_target2 =
-        find_endpoint(result_gateway.endpoints, target2.server_id)
+      assert find_endpoint(result_gateway.endpoints, target1_nip)
+      assert find_endpoint(result_gateway.endpoints, target2_nip)
 
-      assert endpoint_target1.bounces == []
-      assert endpoint_target2.bounces == Enum.reverse(tunnel2_bounce)
+      endpoint_target1 = find_endpoint(index.remote, target1_nip)
+      endpoint_target2 = find_endpoint(index.remote, target2_nip)
 
-      result_target1 = Enum.find(index.remote, &(&1.id == target1.server_id))
-      result_target2 = Enum.find(index.remote, &(&1.id == target2.server_id))
+      assert endpoint_target1.bounce == []
+      # assert endpoint_target2.bounce == Enum.reverse(tunnel2_bounce) TODO 256
 
-      # Does not have gateway-specific data, like password or name
-      censored = [:password, :name, :endpoints]
-      Enum.each(censored, fn key ->
-        refute Map.has_key?(result_target1, key)
-        refute Map.has_key?(result_target2, key)
-      end)
+      assert endpoint_target1.password == target1.password
+      assert endpoint_target2.password == target2.password
+
+      assert endpoint_target1.network_id
+      assert endpoint_target1.ip
     end
 
     @tag :slow
@@ -75,6 +75,9 @@ defmodule Helix.Server.Public.IndexTest do
 
       {target1, _} = ServerSetup.server()
       {target2, _} = ServerSetup.server()
+
+      target1_nip = ServerHelper.get_nip(target1)
+      target2_nip = ServerHelper.get_nip(target2)
 
       # Gateway1 is connected to Target1 and Target2
       g1t1_opts =
@@ -100,13 +103,15 @@ defmodule Helix.Server.Public.IndexTest do
       assert length(index.player) == 2
       assert length(index.remote) == 2
 
-      result_gateway1 = Enum.find(index.player, &(&1.id == gateway1.server_id))
-      result_gateway2 = Enum.find(index.player, &(&1.id == gateway2.server_id))
+      result_gateway1 =
+        Enum.find(index.player, &(&1.server_id == gateway1.server_id))
+      result_gateway2 =
+        Enum.find(index.player, &(&1.server_id == gateway2.server_id))
 
       gateway1_endpoints =
         Enum.sort(
-          [%{server_id: target1.server_id, bounces: []},
-           %{server_id: target2.server_id, bounces: []}])
+          [%{network_id: target1_nip.network_id, ip: target1_nip.ip},
+           %{network_id: target2_nip.network_id, ip: target2_nip.ip}])
       # In this context, gateway2 endpoints are the same as gateway1
       gateway2_endpoints = gateway1_endpoints
 
@@ -121,6 +126,7 @@ defmodule Helix.Server.Public.IndexTest do
       {player, %{entity: entity}} = ServerSetup.server()
 
       {target, _} = ServerSetup.server()
+      target_nip = ServerHelper.get_nip(target)
 
       tunnel_bounce = [ServerSetup.id()]
       tunnel_opts =
@@ -133,56 +139,122 @@ defmodule Helix.Server.Public.IndexTest do
       rendered = ServerIndex.render_index(index)
 
       rendered_gateway =
-        Enum.find(rendered.player, &(&1.id == to_string(player.server_id)))
+        Enum.find(
+          rendered.player,
+          &(&1.server_id == to_string(player.server_id))
+        )
 
       rendered_endpoint =
-        Enum.find(rendered.remote, &(&1.id == to_string(target.server_id)))
+        Enum.find(
+          rendered.remote,
+          &(
+            &1.network_id == to_string(target_nip.network_id) and
+            &1.ip == target_nip.ip
+          )
+        )
 
-      # Server ID is a string
-      assert is_binary(rendered_gateway.id)
-      assert is_binary(rendered_endpoint.id)
+      # IDs are binary
+      assert is_binary(rendered_gateway.server_id)
+      assert is_binary(rendered_endpoint.network_id)
 
-      # (Endpoint, Bounce) list is a tuple made of strings
-      assert Enum.each(rendered_gateway.endpoints, fn [gateway, bounces] ->
-        assert is_binary(gateway)
-        assert Enum.all?(bounces, &(is_binary(&1)))
+      # Endpoints are binary
+      assert Enum.each(rendered_gateway.endpoints, fn nip ->
+        assert is_binary(nip.network_id)
+        assert is_binary(nip.ip)
       end)
 
-      # Nips are rendered as tuples
+      # Nips are binary
       Enum.each(rendered_gateway.nips, fn nip ->
-        assert is_list(nip)
-        assert length(nip) == 2
-      end)
-
-      Enum.each(rendered_endpoint.nips, fn nip ->
-        assert is_list(nip)
-        assert length(nip) == 2
+        assert is_binary(nip.network_id)
+        assert is_binary(nip.ip)
       end)
     end
   end
 
-  describe "remote_server_index/2" do
-    test "indexes the remote server" do
-      entity_id = Entity.ID.generate()
-      {remote, _} = ServerSetup.server()
+  describe "gateway/2" do
+    test "returns the gateway server" do
+      {server, %{entity: entity}} = ServerSetup.server()
+      server_nips = ServerHelper.get_all_nips(server)
 
-      index = ServerIndex.remote_server_index(remote.server_id, entity_id)
+      gateway = ServerIndex.gateway(server, entity.entity_id)
 
-      assert index.id == remote.server_id
+      # ServerIndex info
+      assert gateway.nips == server_nips
+      assert gateway.name
+      assert gateway.password == server.password
+
+      # Info retrieved from sub-Indexes
+      assert gateway.filesystem
+      assert gateway.logs
+      assert gateway.processes
+      assert gateway.tunnels
     end
   end
 
-  describe "render_remote_server_index/1" do
-    entity_id = Entity.ID.generate()
-    {remote, _} = ServerSetup.server()
+  describe "render_gateway/1" do
+    {server, %{entity: entity}} = ServerSetup.server()
 
-    index = ServerIndex.remote_server_index(remote.server_id, entity_id)
-    rendered_index = ServerIndex.render_remote_server_index(index)
+    rendered =
+      server
+      |> ServerIndex.gateway(entity.entity_id)
+      |> ServerIndex.render_gateway()
 
-    assert rendered_index.id == to_string(remote.server_id)
+    assert is_binary(rendered.name)
+    assert is_binary(rendered.password)
+
+    Enum.each(rendered.nips, fn [network_id, ip] ->
+      assert is_binary(network_id)
+      assert is_binary(ip)
+    end)
+
+    assert rendered.filesystem
+    assert rendered.logs
+    assert rendered.processes
+    assert rendered.tunnels
   end
 
-  defp find_endpoint(endpoints, server_id) do
-    Enum.find(endpoints, &(&1.server_id == server_id))
+  describe "remote/2" do
+    {server, _} = ServerSetup.server()
+    {entity, _} = EntitySetup.entity()
+    server_nips = ServerHelper.get_all_nips(server)
+
+    remote = ServerIndex.remote(server, entity.entity_id)
+
+    # ServerIndex info
+    assert remote.nips == server_nips
+
+    # Info specific to gateway
+    refute Map.has_key?(remote, :password)
+    refute Map.has_key?(remote, :name)
+
+    # Info retrieved from sub-Indexes
+    assert remote.filesystem
+    assert remote.logs
+    assert remote.processes
+    assert remote.tunnels
+  end
+
+  describe "render_remote/1" do
+    {server, _} = ServerSetup.server()
+    {entity, _} = EntitySetup.entity()
+
+    rendered =
+      server
+      |> ServerIndex.remote(entity.entity_id)
+      |> ServerIndex.render_remote()
+
+    Enum.each(rendered.nips, fn [network_id, ip] ->
+      assert is_binary(network_id)
+      assert is_binary(ip)
+    end)
+
+    assert rendered.filesystem
+    assert rendered.logs
+    assert rendered.processes
+    assert rendered.tunnels
+  end
+
+  defp find_endpoint(endpoints, %{network_id: network_id, ip: ip}) do
+    Enum.find(endpoints, &(&1.network_id == network_id and &1.ip == ip))
   end
 end

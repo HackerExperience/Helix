@@ -105,7 +105,7 @@ defmodule Helix.Network.Query.Tunnel do
   end
 
   @spec get_remote_endpoints([Server.id]) ::
-    Tunnel.remote_endpoints
+    Tunnel.gateway_endpoints
   @doc """
   Returns information about remote connections (endpoints). For each given
   server, returns remote connections (if any) including destination_id and

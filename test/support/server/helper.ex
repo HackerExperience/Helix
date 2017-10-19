@@ -1,5 +1,6 @@
 defmodule Helix.Test.Server.Helper do
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -16,4 +17,14 @@ defmodule Helix.Test.Server.Helper do
 
   def get_owner(server),
     do: EntityQuery.fetch_by_server(server)
+
+  def get_nip(server = %Server{}),
+    do: get_nip(server.server_id)
+  def get_nip(server_id = %Server.ID{}),
+      do: get_all_nips(server_id) |> List.first()
+
+  def get_all_nips(server = %Server{}),
+    do: get_all_nips(server.server_id)
+  def get_all_nips(server_id = %Server.ID{}),
+    do: CacheQuery.from_server_get_nips!(server_id)
 end

@@ -182,7 +182,7 @@ defmodule Helix.Network.Internal.Tunnel do
   end
 
   @spec get_remote_endpoints([Server.idt]) ::
-    Tunnel.remote_endpoints
+    Tunnel.gateway_endpoints
   def get_remote_endpoints(servers) do
     query =
       servers
@@ -191,13 +191,14 @@ defmodule Helix.Network.Internal.Tunnel do
     {:ok, result} = Ecto.Adapters.SQL.query(Repo, query, [])
 
     Enum.reduce(result.rows, %{}, fn row, acc ->
-      [gateway_id, destination_id, bounces] = row
+      [gateway_id, destination_id, network_id, bounces] = row
 
       gateway_id = Server.ID.cast!(gateway_id)
 
       data = %{
         destination_id: Server.ID.cast!(destination_id),
-        bounces: Enum.map(bounces, &(Server.ID.cast!(&1)))
+        bounces: Enum.map(bounces, &(Server.ID.cast!(&1))),
+        network_id: Network.ID.cast!(network_id)
       }
 
       acc

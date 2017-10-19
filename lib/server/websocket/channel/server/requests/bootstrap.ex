@@ -10,32 +10,38 @@ request Helix.Server.Websocket.Channel.Server.Requests.Bootstrap do
   """
 
   alias Helix.Server.Public.Server, as: ServerPublic
+  alias Helix.Server.Query.Server, as: ServerQuery
 
   def check_params(request, _socket),
     do: {:ok, request}
 
-  def check_permissions(request, socket) do
-
-    if socket.assigns.meta.access_type == :remote do
-      reply_ok(request)
-    else
-      reply_error("own_server_bootstrap")
-    end
-  end
+  def check_permissions(request, _socket),
+    do: {:ok, request}
 
   def handle_request(request, socket) do
     entity_id = socket.assigns.entity_id
     server_id = socket.assigns.destination.server_id
 
-    meta = %{
-      bootstrap: ServerPublic.bootstrap(server_id, entity_id)
-    }
+    server = ServerQuery.fetch(server_id)
 
-    update_meta(request, meta, reply: true)
+    bootstrap =
+      if socket.assigns.meta.access_type == :local do
+        ServerPublic.bootstrap_gateway(server, entity_id)
+      else
+        ServerPublic.bootstrap_remote(server, entity_id)
+      end
+
+    update_meta(request, %{bootstrap: bootstrap}, reply: true)
   end
 
-  render(request, _socket) do
-    data = ServerPublic.render_bootstrap(request.meta.bootstrap)
+  render(request, socket) do
+    data =
+      if socket.assigns.meta.access_type == :local do
+        ServerPublic.render_bootstrap_gateway(request.meta.bootstrap)
+      else
+        ServerPublic.render_bootstrap_remote(request.meta.bootstrap)
+      end
+
     {:ok, data}
   end
 end

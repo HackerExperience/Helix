@@ -15,6 +15,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Requests.BrowseTest do
 
       assert response.data.account
       assert response.data.servers
+      assert response.data.storyline
     end
   end
 end

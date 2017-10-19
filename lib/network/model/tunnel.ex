@@ -21,9 +21,11 @@ defmodule Helix.Network.Model.Tunnel do
     connections: term
   }
 
-  @type remote_endpoints ::
-    %{gateway :: Server.id =>
-      [%{bounces: [Server.id], destination_id: Server.id}]}
+  @type gateway_endpoints ::
+    %{gateway :: Server.id => [remote_endpoint]}
+
+  @type remote_endpoint ::
+    %{bounce: [Server.id], destination_id: Server.id, network_id: Network.id}
 
   schema "tunnels" do
     field :tunnel_id, ID,
@@ -143,7 +145,7 @@ defmodule Helix.Network.Model.Tunnel do
     def get_remote_endpoints(servers) do
       # FIXME: Translate me to Ecto pls
       raw = """
-        SELECT DISTINCT t.gateway_id, t.destination_id, (
+        SELECT DISTINCT t.gateway_id, t.destination_id, t.network_id, (
           SELECT ARRAY_REMOVE(ARRAY_AGG(source_id), t.gateway_id)
           FROM links
           WHERE tunnel_id = t.tunnel_id) as bounces

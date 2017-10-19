@@ -17,19 +17,54 @@ defmodule Helix.Server.Public.Index do
 
   @type index ::
     %{
-      player: [gateway_server],
-      remote: [remote_server]
+      player: [player_server_index],
+      remote: [remote_server_index]
+    }
+
+  @typep player_server_index ::
+    %{
+      server_id: Server.id,
+      nips: [Network.nip],
+      endpoints: [Network.nip]
+    }
+
+  @typep remote_server_index ::
+    %{
+      network_id: Network.id,
+      ip: Network.ip,
+      password: Server.password,
+      bounce: term
     }
 
   @type rendered_index ::
     %{
-      player: [rendered_gateway_server],
-      remote: [rendered_remote_server]
+      player: [rendered_player_server_index],
+      remote: [rendered_remote_server_index]
     }
 
-  @type gateway_server ::
+  @typep rendered_player_server_index ::
     %{
-      id: Server.id,
+      server_id: String.t,
+      nips: [rendered_nip],
+      endpoints: [rendered_nip]
+    }
+
+  @typep rendered_remote_server_index ::
+    %{
+      network_id: String.t,
+      ip: String.t,
+      password: String.t,
+      bounce: term
+    }
+
+  @typep rendered_nip ::
+    %{
+      network_id: String.t,
+      ip: String.t
+    }
+
+  @type gateway ::
+    %{
       name: String.t,
       password: Server.password,
       nips: [Network.nip],
@@ -37,17 +72,10 @@ defmodule Helix.Server.Public.Index do
       filesystem: FileIndex.index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index,
-      endpoints: [
-        %{
-          server_id: Server.id,
-          bounces: [Server.id]
-        }
-      ]
     }
 
-  @type rendered_gateway_server ::
+  @type rendered_gateway ::
     %{
-      id: String.t,
       name: String.t,
       password: String.t,
       nips: [[String.t]],
@@ -55,12 +83,10 @@ defmodule Helix.Server.Public.Index do
       filesystem: FileIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index,
-      endpoints: [[String.t]]
     }
 
-  @type remote_server ::
+  @type remote ::
     %{
-      id: Server.id,
       nips: [Network.nip],
       logs: LogIndex.index,
       filesystem: FileIndex.index,
@@ -68,23 +94,14 @@ defmodule Helix.Server.Public.Index do
       tunnels: NetworkIndex.index
     }
 
-  @type rendered_remote_server ::
+  @type rendered_remote ::
     %{
-      id: String.t,
       nips: [[String.t]],
       logs: LogIndex.rendered_index,
       filesystem: FileIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index
     }
-
-  @typedoc """
-  Note that as of now, `remote_server_index` is identical to `remote_server`.
-  There are no guarantees that this will remain true forever, and in fact it's
-  probably just a coincidence, hence the two different types.
-  """
-  @type remote_server_index :: remote_server
-  @type rendered_remote_server_index :: rendered_remote_server
 
   @spec index(Entity.id) ::
     index
@@ -104,23 +121,34 @@ defmodule Helix.Server.Public.Index do
     # Get all endpoints (any remote server the player is SSH-ed to)
     endpoints = TunnelQuery.get_remote_endpoints(player_servers)
 
-    %{local: local_servers, remote: remote_servers} =
-      player_servers
-      |> Enum.map(&(gateway_server(&1, entity_id, endpoints)))
-      |> Enum.reduce(%{remote: [], local: []}, fn {gateway, remotes}, acc ->
-        acc
-        |> Map.replace(:local, acc.local ++ [gateway])
-        |> Map.replace(:remote, acc.remote ++ remotes)
+    Enum.reduce(player_servers, %{}, fn server_id, acc ->
+      # Gets all endpoints that server is connected to
+      remotes = endpoints[server_id] || []
+
+      # Creates the remote index for this server
+      remote_index = Enum.map(remotes, fn remote ->
+        remote_server_index(remote)
       end)
 
-    # Remove duplicate remotes, if any. This may happen if two different gateway
-    # servers are connected to the same remote
-    unique_remotes = Enum.uniq_by(remote_servers, &(&1.id))
+      # Returns all endpoint nips which this server is connected to
+      endpoint_nips =
+        Enum.reduce(remote_index, [], fn endpoint, acc ->
+          nip = %{network_id: endpoint.network_id, ip: endpoint.ip}
 
-    %{
-      player: local_servers,
-      remote: unique_remotes
-    }
+          acc ++ [nip]
+        end)
+
+      # Generates the player's own server index
+      player_index = player_server_index(server_id, endpoint_nips)
+
+      acc_player = Map.get(acc, :player, []) ++ [player_index]
+      acc_remote = Map.get(acc, :remote, []) ++ remote_index |> Enum.uniq()
+
+      %{
+        player: acc_player,
+        remote: acc_remote
+      }
+    end)
   end
 
   @spec render_index(index) ::
@@ -130,87 +158,86 @@ defmodule Helix.Server.Public.Index do
   """
   def render_index(index) do
     %{
-      player: Enum.map(index.player, &(render_gateway_server(&1))),
-      remote: Enum.map(index.remote, &(render_remote_server(&1)))
+      player: Enum.map(index.player, &(render_player_server_index(&1))),
+      remote: Enum.map(index.remote, &(render_remote_server_index(&1)))
     }
   end
 
-  @spec remote_server_index(Server.id, Entity.id) ::
-    remote_server_index
-  @doc """
-  Generates the index for remote server bootstrap. Note that currently it is
-  identical to the remote server generated from account bootstrap, but that's
-  coincidence and likely they will differ, hence two different functions.
+  @spec player_server_index(Server.id, [Network.nip]) ::
+    player_server_index
+  defp player_server_index(server_id = %Server.ID{}, endpoint_nips) do
+    {:ok, nips} = CacheQuery.from_server_get_nips(server_id)
 
-  Called on Server Bootstrap, right after the player logs into a remote server.
-  """
-  def remote_server_index(server_id, entity_id),
-    do: remote_server(server_id, entity_id)
+    %{
+      server_id: server_id,
+      nips: nips,
+      endpoints: endpoint_nips
+    }
+  end
+
+  @spec render_player_server_index(player_server_index) ::
+    rendered_player_server_index
+  defp render_player_server_index(entry = %{server_id: _}) do
+    %{
+      server_id: to_string(entry.server_id),
+      nips: Enum.map(entry.nips, &render_nip/1),
+      endpoints: Enum.map(entry.endpoints, &render_nip/1)
+    }
+  end
+
+  @spec remote_server_index(Tunnel.remote_endpoint) ::
+    remote_server_index
+  defp remote_server_index(remote = %{destination_id: _, network_id: _}) do
+    ip = ServerQuery.get_ip(remote.destination_id, remote.network_id)
+    password = ServerQuery.fetch(remote.destination_id).password
+
+    %{
+      network_id: remote.network_id,
+      ip: ip,
+      password: password,
+      bounce: []  # TODO 256
+    }
+  end
 
   @spec render_remote_server_index(remote_server_index) ::
     rendered_remote_server_index
+  defp render_remote_server_index(entry = %{password: _}) do
+    %{
+      network_id: to_string(entry.network_id),
+      ip: entry.ip,
+      password: entry.password,
+      bounce: []
+    }
+  end
+
+  @spec gateway(Server.t, Entity.id) ::
+    gateway
   @doc """
-  Top-level renderer for Remote Server index (generated by
-  `remote_server_index/2`)
-  """
-  def render_remote_server_index(index),
-    do: render_remote_server(index)
-
-  @spec gateway_server(Server.id, Entity.id, Tunnel.remote_endpoints) ::
-    {gateway_server, [remote_server]}
-  docp """
   Generates one server entry under the context of gateway (i.e. this server
-  belongs to the player). It also generates one entry for each server that
-  gateway is connected to.
+  belongs to the player).
 
-  Scenario:
-  - On Account bootstrap, return servers owned by the player
+  Scenarios:
+  - On Server join, return information about the gateway
+  - Resync client data with `bootstrap` request
   """
-  defp gateway_server(server_id, entity_id, connections) do
-    endpoints =
-      if connections[server_id] do
-        connections[server_id]
-        |> Enum.map(&(%{server_id: &1.destination_id, bounces: &1.bounces}))
-      else
-        []
-      end
-
-    server = ServerQuery.fetch(server_id)
-    name = "Server1"
+  def gateway(server = %Server{}, entity_id) do
+    name = "Server1"  # TODO
 
     index = %{
-      endpoints: endpoints,
       password: server.password,
       name: name
     }
 
-    gateway = Map.merge(server_common(server_id, entity_id), index)
-
-    remotes =
-      if connections[server_id] do
-        Enum.map(connections[server_id], fn remote ->
-          remote_server(remote.destination_id, entity_id)
-        end)
-      else
-        []
-      end
-
-    {gateway, remotes}
+    Map.merge(server_common(server, entity_id), index)
   end
 
-  @spec render_gateway_server(gateway_server) ::
-    rendered_gateway_server
-  docp """
-  Renderer for `gateway_server/3`
+  @spec render_gateway(gateway) ::
+    rendered_gateway
+  @doc """
+  Renderer for `gateway/2`
   """
-  defp render_gateway_server(server) do
+  def render_gateway(server) do
     partial = %{
-      endpoints: Enum.map(server.endpoints, fn endpoint ->
-        [
-          to_string(endpoint.server_id),
-          Enum.map(endpoint.bounces, &(to_string(&1)))
-        ]
-      end),
       password: server.password,
       name: server.name
     }
@@ -218,44 +245,43 @@ defmodule Helix.Server.Public.Index do
     Map.merge(partial, render_server_common(server))
   end
 
-  @spec remote_server(Server.id, Entity.id) ::
-    remote_server
-  docp """
+  @spec remote(Server.t, Entity.id) ::
+    remote
+  @doc """
   Generates one server entry under the context of endpoint (i.e. this server
   does not belong to the player who made the request).
 
   Scenarios:
-  - on Account bootstrap, display remote servers I'm connected to
-  - after login into remote server, gibes me information about it.
+  - On Server join, return information about the endpoint
+  - Resync client data with `bootstrap` request
   """
-  defp remote_server(server_id, entity_id) do
-    server_common(server_id, entity_id)
+  def remote(server = %Server{}, entity_id) do
+    server_common(server, entity_id)
   end
 
-  @spec render_remote_server(remote_server) ::
-    rendered_remote_server
-  docp """
-  Renderer for `remote_server/3`
+  @spec render_remote(remote) ::
+    rendered_remote
+  @doc """
+  Renderer for `remote/2`
   """
-  defp render_remote_server(server) do
+  def render_remote(server) do
     render_server_common(server)
   end
 
-  @spec server_common(Server.id, Entity.id) ::
+  @spec server_common(Server.t, Entity.id) ::
     term
   docp """
   Common values to both local and remote servers being generated.
   """
-  defp server_common(server_id, entity_id) do
-    {:ok, nips} = CacheQuery.from_server_get_nips(server_id)
+  defp server_common(server = %Server{}, entity_id) do
+    {:ok, nips} = CacheQuery.from_server_get_nips(server.server_id)
 
-    log_index = LogIndex.index(server_id)
-    filesystem_index = FileIndex.index(server_id)
-    tunnel_index = NetworkIndex.index(server_id)
-    process_index = ProcessIndex.index(server_id, entity_id)
+    log_index = LogIndex.index(server.server_id)
+    filesystem_index = FileIndex.index(server.server_id)
+    tunnel_index = NetworkIndex.index(server.server_id)
+    process_index = ProcessIndex.index(server.server_id, entity_id)
 
     %{
-      id: server_id,
       nips: nips,
       logs: log_index,
       filesystem: filesystem_index,
@@ -264,7 +290,7 @@ defmodule Helix.Server.Public.Index do
     }
   end
 
-  @spec render_server_common(gateway_server | remote_server) ::
+  @spec render_server_common(gateway | remote) ::
     term
   docp """
   Renderer for `server_common/2`.
@@ -275,12 +301,20 @@ defmodule Helix.Server.Public.Index do
     end)
 
     %{
-      id: to_string(server.id),
       nips: nips,
       logs: LogIndex.render_index(server.logs),
       filesystem: FileIndex.render_index(server.filesystem),
       processes: server.processes,
       tunnels: NetworkIndex.render_index(server.tunnels)
+    }
+  end
+
+  @spec render_nip(Network.nip) ::
+    rendered_nip
+  defp render_nip(nip) do
+    %{
+      network_id: to_string(nip.network_id),
+      ip: nip.ip
     }
   end
 end

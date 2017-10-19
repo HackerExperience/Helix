@@ -12,6 +12,7 @@ defmodule Helix.Network.Internal.TunnelTest do
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
   @internet NetworkQuery.internet()
+  @internet_id @internet.network_id
 
   describe "connected?/3" do
     test "returns false if there is no tunnel open linking two nodes" do
@@ -350,13 +351,17 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       gateway1_result = Enum.sort(result[gateway1])
       gateway1_expected = Enum.sort([
-        %{destination_id: target2, bounces: []},
-        %{destination_id: target1, bounces: []}
+        %{destination_id: target2, bounces: [], network_id: @internet_id},
+        %{destination_id: target1, bounces: [], network_id: @internet_id}
       ])
 
       gateway2_result = Enum.sort(result[gateway2])
       gateway2_expected = Enum.sort([
-        %{destination_id: target3, bounces: Enum.reverse(g2_bounces)}
+        %{
+          destination_id: target3,
+          bounces: Enum.reverse(g2_bounces),
+          network_id: @internet_id
+        }
       ])
 
       assert gateway1_result == gateway1_expected

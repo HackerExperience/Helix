@@ -38,11 +38,19 @@ defmodule Helix.Server.Public.Server do
     end
   end
 
-  defdelegate bootstrap(server_id, entity_id),
+  defdelegate bootstrap_gateway(server_id, entity_id),
     to: ServerIndex,
-    as: :remote_server_index
+    as: :gateway
 
-  defdelegate render_bootstrap(bootstrap),
+  defdelegate bootstrap_remote(server_id, entity_id),
     to: ServerIndex,
-    as: :render_remote_server_index
+    as: :remote
+
+  defdelegate render_bootstrap_gateway(bootstrap),
+    to: ServerIndex,
+    as: :render_gateway
+
+  defdelegate render_bootstrap_remote(bootstrap),
+    to: ServerIndex,
+    as: :render_remote
 end
