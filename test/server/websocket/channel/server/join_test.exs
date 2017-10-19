@@ -87,7 +87,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       topic = ChannelHelper.server_topic_name(network_id, random_server_ip)
 
       assert {:error, reason} = join(socket, topic, %{})
-      assert reason.data == "server_bad_owner"
+      assert reason.data == "server_not_belongs"
     end
 
     test "can not connect to a remote server with an incorrect password" do
@@ -106,7 +106,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       }
 
       assert {:error, reason} = join(socket, topic, params)
-      assert reason.data == "server_bad_password"
+      assert reason.data == "server_password_invalid"
     end
 
     test "can not connect to a remote server with an invalid gateway IP" do
@@ -124,7 +124,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       }
 
       assert {:error, reason} = join(socket, topic, params)
-      assert reason.data == "server_bad_owner"
+      assert reason.data == "server_not_belongs"
     end
 
     test "can start connection with a remote server" do

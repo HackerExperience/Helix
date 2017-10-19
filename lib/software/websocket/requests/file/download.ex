@@ -97,7 +97,8 @@ request Helix.Software.Websocket.Requests.File.Download do
   @spec get_error(reason :: {term, term} | term) ::
     String.t
   docp """
-  Error handler for FileDownloadRequest. Should handle all possible returns.
+  Custom error handler for FileDownloadRequest. Unmatched terms will get handled
+  by general-purpose error translator at `WebsocketUtils.get_error/1`.
   """
   defp get_error({:file, :not_belongs}),
     do: "file_not_found"
