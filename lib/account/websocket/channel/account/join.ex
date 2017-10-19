@@ -1,4 +1,6 @@
-defmodule Helix.Account.Websocket.Channel.Account.Join do
+import Helix.Websocket.Join
+
+join Helix.Account.Websocket.Channel.Account.Join do
   @moduledoc """
   Joinable implementation for the Account channel.
 
@@ -9,56 +11,49 @@ defmodule Helix.Account.Websocket.Channel.Account.Join do
   belong to the authenticated user on the socket.
   """
 
-  require Helix.Websocket.Join
+  alias Helix.Websocket.Utils, as: WebsocketUtils
+  alias Helix.Account.Model.Account
+  alias Helix.Account.Public.Account, as: AccountPublic
 
-  Helix.Websocket.Join.register()
+  def check_params(request, _socket) do
+    account_id = get_id_from_topic(request.topic)
 
-  defimpl Helix.Websocket.Joinable do
+    with {:ok, account_id} <- Account.ID.cast(account_id) do
+      params = %{
+        account_id: account_id
+      }
 
-    alias Helix.Websocket.Utils, as: WebsocketUtils
-    alias Helix.Account.Model.Account
-    alias Helix.Account.Public.Account, as: AccountPublic
-
-    def check_params(request, _socket) do
-      account_id = get_id_from_topic(request.topic)
-
-      with {:ok, account_id} <- Account.ID.cast(account_id) do
-        params = %{
-          account_id: account_id
-        }
-
-        {:ok, %{request| params: params}}
-      else
-        _ ->
-          {:error, %{message: "bad_request"}}
-      end
+      update_params(request, params, reply: true)
+    else
+      _ ->
+        bad_request()
     end
-
-    @doc """
-    This is where we check the requested account is the same one currently
-    authenticated.
-    """
-    def check_permissions(request, socket) do
-      account_id = socket.assigns.account.account_id
-
-      if account_id == request.params.account_id do
-        {:ok, request}
-      else
-        {:error, %{message: "access_denied"}}
-      end
-    end
-
-    def join(_request, socket, _assign) do
-      bootstrap =
-        socket.assigns.entity_id
-        |> AccountPublic.bootstrap()
-        |> AccountPublic.render_bootstrap()
-        |> WebsocketUtils.wrap_data()
-
-      {:ok, bootstrap, socket}
-    end
-
-    defp get_id_from_topic(topic),
-      do: List.last(String.split(topic, "account:"))
   end
+
+  @doc """
+  This is where we check the requested account is the same one currently
+  authenticated.
+  """
+  def check_permissions(request, socket) do
+    account_id = socket.assigns.account.account_id
+
+    if account_id == request.params.account_id do
+      reply_ok(request)
+    else
+      reply_error("access_denied")
+    end
+  end
+
+  def join(_request, socket, _assign) do
+    bootstrap =
+      socket.assigns.entity_id
+      |> AccountPublic.bootstrap()
+      |> AccountPublic.render_bootstrap()
+      |> WebsocketUtils.wrap_data()
+
+    {:ok, bootstrap, socket}
+  end
+
+  defp get_id_from_topic(topic),
+    do: List.last(String.split(topic, "account:"))
 end
