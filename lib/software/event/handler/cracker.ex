@@ -40,7 +40,8 @@ defmodule Helix.Software.Event.Handler.Cracker do
             event.source_entity_id,
             event.target_server_id,
             event.network_id,
-            event.target_server_ip),
+            event.target_server_ip
+          ),
         on_success(fn -> Event.emit(events) end)
       do
         {:ok, password}

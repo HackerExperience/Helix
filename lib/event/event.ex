@@ -1,6 +1,9 @@
 defmodule Helix.Event do
 
+  import HELL.Macros
+
   alias Helix.Event.Dispatcher, as: HelixDispatcher
+  alias Helix.Event.Meta, as: EventMeta
 
   @type t :: HELF.Event.t
 
@@ -29,13 +32,21 @@ defmodule Helix.Event do
   By default it enforces all keys to be set.
   """
   defmacro event_struct(keys) do
-    meta_keys = [:__eid__]
+    meta_keys = [EventMeta.meta_key()]
     quote do
 
       @enforce_keys unquote(keys)
       defstruct unquote(keys) ++ unquote(meta_keys)
 
     end
+  end
+
+  # Delegates the `get_{field}` and `set_{field}` to Helix.Meta
+  for field <- EventMeta.meta_fields() do
+    defdelegate unquote(:"get_#{field}")(event),
+      to: EventMeta
+    defdelegate unquote(:"set_#{field}")(event, arg),
+      to: EventMeta
   end
 
   docp """
@@ -55,7 +66,7 @@ defmodule Helix.Event do
   def emit([], from: _),
     do: :noop
   def emit(events = [_ | _], from: source_event),
-    do: Enum.ech(events, &emit/2)
+    do: Enum.each(events, &emit(&1, source_event))
   def emit(event, from: source_event) do
     event
     |> inherit(source_event)

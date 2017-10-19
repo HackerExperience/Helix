@@ -39,7 +39,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
     do
       event
       |> get_event(:completed, file)
-      |> Event.emit()
+      |> Event.emit(from: event)
 
       {:ok, file}
     else
