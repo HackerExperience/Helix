@@ -29,7 +29,7 @@ defmodule Helix.Story.Event.EmailTest do
       assert is_binary(data.contact_id)
       assert data.meta
       assert data.replies
-      refute is_map(data.timestamp)
+      assert is_float(data.timestamp)
 
       assert "story_email_sent" == Notificable.get_event_name(event)
     end

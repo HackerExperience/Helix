@@ -28,7 +28,7 @@ defmodule Helix.Story.Event.ReplyTest do
       assert data.step == to_string(event.step.name)
       assert data.reply_to == event.reply_to
       assert data.reply_id == event.reply.id
-      refute is_map(data.timestamp)
+      assert is_float(data.timestamp)
 
       assert "story_reply_sent" == Notificable.get_event_name(event)
     end

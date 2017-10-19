@@ -20,7 +20,7 @@ defmodule Helix.Log.Event.LogTest do
       assert data.log_id == to_string(event.log.log_id)
       assert data.message == event.log.message
       assert data.server_id == to_string(event.log.server_id)
-      refute is_map(data.timestamp)
+      assert is_float(data.timestamp)
 
       # Returned event is correct
       assert "log_created" == Notificable.get_event_name(event)
@@ -44,7 +44,7 @@ defmodule Helix.Log.Event.LogTest do
       assert data.log_id == to_string(event.log.log_id)
       assert data.message == event.log.message
       assert data.server_id == to_string(event.log.server_id)
-      refute is_map(data.timestamp)
+      assert is_float(data.timestamp)
 
       # Returned event is correct
       assert "log_modified" == Notificable.get_event_name(event)

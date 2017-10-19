@@ -42,8 +42,8 @@ defmodule Helix.Log.Public.IndexTest do
       assert is_binary(result_log1.log_id)
       assert is_binary(result_log2.log_id)
 
-      assert is_binary(result_log1.timestamp)
-      assert is_binary(result_log2.timestamp)
+      assert is_float(result_log1.timestamp)
+      assert is_float(result_log2.timestamp)
     end
   end
 end

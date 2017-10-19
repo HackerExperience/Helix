@@ -6,6 +6,7 @@ defmodule HELL.ClientUtils do
     HETypes.client_timestamp
   def to_timestamp(datetime = %DateTime{}) do
     datetime
-    |> DateTime.to_unix()
+    |> DateTime.to_unix(:millisecond)
+    |> Kernel./(1)  # Make it a float...
   end
 end
