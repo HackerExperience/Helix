@@ -38,6 +38,30 @@ defmodule Helix.Event do
     end
   end
 
+  docp """
+  The application wants to emit `event`, which is coming from `source`. On this
+  case, `event` will inherit the source's metadata according to the logic below.
+  """
+  defp inherit(event, source) do
+    event
+  end
+
+  @spec emit([t] | t, from: t) ::
+    term
+  @doc """
+  Emits an event, inheriting data from the source event passed on the `from`
+  parameter. The inherited data is defined at `inherit/2`.
+  """
+  def emit([], from: _),
+    do: :noop
+  def emit(events = [_ | _], from: source_event),
+    do: Enum.ech(events, &emit/2)
+  def emit(event, from: source_event) do
+    event
+    |> inherit(source_event)
+    |> emit()
+  end
+
   @spec emit([t] | t) ::
     term
   @doc """
