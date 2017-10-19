@@ -14,7 +14,6 @@ defmodule Helix.Websocket.Request do
 
   import HELL.Macros
 
-  alias Helix.Websocket.Request.Utils, as: RequestUtils
   alias Helix.Websocket.Utils, as: WebsocketUtils
 
   @type t(struct) :: %{
@@ -33,6 +32,8 @@ defmodule Helix.Websocket.Request do
 
       defmodule unquote(name) do
         @moduledoc false
+
+        import Helix.Websocket.Flow
 
         @type t :: Helix.Websocket.Request.t(__MODULE__)
 
@@ -60,83 +61,6 @@ defmodule Helix.Websocket.Request do
         end
       end
 
-    end
-  end
-
-  @doc """
-  Interrupts the Request flow with an error message.
-
-  If the passed message is an atom, we assume it hasn't been translated to the
-  external format yet, so we call `get_error/1`.
-  """
-  defmacro reply_error(msg) when is_binary(msg) do
-    quote do
-      {:error, %{message: unquote(msg)}}
-    end
-  end
-
-  defmacro reply_error(reason) when is_atom(reason) or is_tuple(reason) do
-    quote do
-      {:error, %{message: get_error(unquote(reason))}}
-    end
-  end
-
-  @doc """
-  Shorthand for the `bad_request` error.
-  """
-  defmacro bad_request do
-    quote do
-      reply_error("bad_request")
-    end
-  end
-
-  @doc """
-  Shorthand for the `internal` error.
-  """
-  defmacro internal_error do
-    quote do
-      reply_error("internal")
-    end
-  end
-
-  @doc """
-  Proceeds with the Request flow by signaling everything is OK.
-  """
-  defmacro reply_ok(request) do
-    quote do
-      {:ok, unquote(request)}
-    end
-  end
-
-  @doc """
-  Updates the meta field with the given value. If `reply` opt is specified,
-  automatically return the expected OK response.
-  """
-  defmacro update_meta(request, meta, reply: true) do
-    quote do
-      reply_ok(%{unquote(request)| meta: unquote(meta)})
-    end
-  end
-
-  defmacro update_meta(request, meta) do
-    quote do
-      var!(request) = %{unquote(request)| meta: unquote(meta)}
-    end
-  end
-
-  @doc """
-  Updates the params field with the given value. If `reply` opt is specified,
-  automatically return the expected OK response.
-  """
-  defmacro update_params(request, params, reply: true) do
-    quote do
-      reply_ok(%{unquote(request)| params: unquote(params)})
-    end
-  end
-
-  defmacro update_params(request, params) do
-    quote do
-      var!(request) = %{unquote(request)| params: unquote(params)}
     end
   end
 
@@ -181,33 +105,6 @@ defmodule Helix.Websocket.Request do
         {:ok, %{}}
       end
 
-    end
-  end
-
-  defmacro validate_nip(network_id, ip) do
-    quote do
-      RequestUtils.validate_nip(unquote(network_id), unquote(ip))
-    end
-  end
-end
-
-defmodule Helix.Websocket.Request.Utils do
-
-  alias HELL.IPv4
-  alias Helix.Network.Model.Network
-
-  @spec validate_nip(unsafe_network_id :: String.t, unsafe_ip :: String.t) ::
-    {:ok, Network.id, IPv4.t}
-    | :bad_request
-  def validate_nip(unsafe_network_id, unsafe_ip) do
-    with \
-      {:ok, network_id} <- Network.ID.cast(unsafe_network_id),
-      true <- IPv4.valid?(unsafe_ip)
-    do
-      {:ok, network_id, unsafe_ip}
-    else
-      _ ->
-        :bad_request
     end
   end
 end

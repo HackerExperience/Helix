@@ -351,4 +351,15 @@ defmodule Helix.Henforcer do
       {Map.delete(unquote(relay), unquote(key)), value}
     end
   end
+
+  @doc """
+  Same as `replace/3`, but also returns the value that was on `cur_key`.
+  """
+  defmacro get_and_replace(relay, cur_key, next_key) do
+    quote do
+      {new_relay, value} = get_and_drop(unquote(relay), unquote(cur_key))
+
+      {Map.put(new_relay, unquote(next_key), value), value}
+    end
+  end
 end

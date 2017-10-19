@@ -2,52 +2,44 @@ defmodule Helix.Server.Henforcer.ServerTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Internal.Server, as: ServerInternal
-  alias Helix.Server.Henforcer.Server, as: Henforcer
+  import Helix.Test.Henforcer.Macros
+
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server
 
-  alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Hardware.Factory, as: HardwareFactory
-  alias Helix.Test.Server.Factory
+  alias Helix.Test.Server.Setup, as: ServerSetup
 
-  describe "exists?/1" do
-    test "returns true when server exists" do
-      server = Factory.insert(:server)
+  describe "server_exists?/1" do
+    test "accepts when server exists" do
+      {server, _} = ServerSetup.server()
 
-      assert {true, _} = Henforcer.server_exists?(server.server_id)
+      assert {true, relay} = ServerHenforcer.server_exists?(server.server_id)
+
+      assert_relay relay, [:server]
     end
 
-    test "returns false when server doesn't exists" do
-      # well, i personally find those test descriptions a litte too redundant
-
-      assert {false, _, _} = Henforcer.server_exists?(Server.ID.generate())
+    test "rejects when server doesn't exists" do
+      server_id = Server.ID.generate()
+      assert {false, reason, _} = ServerHenforcer.server_exists?(server_id)
+      assert reason == {:server, :not_found}
     end
   end
 
-  describe "functioning?/1" do
-    # TODO: link components on motherboard otherwise it fails
-    @tag :pending
-    test "returns true when server has motherboard attached" do
-      server = Factory.insert(:server)
-      motherboard = HardwareFactory.insert(:motherboard)
-      ServerInternal.attach(server, motherboard.motherboard_id)
+  describe "server_assembled?" do
+    test "accepts when server motherboard is assembled" do
+      {server, _} = ServerSetup.server()
 
-      assert Henforcer.functioning?(server.server_id)
-
-      CacheHelper.sync_test()
+      assert {true, relay} = ServerHenforcer.server_assembled?(server.server_id)
+      assert_relay relay, [:server]
     end
 
-    @tag :pending
-    test "returns false when motherboard doesn't have atleast cpu, hdd and ram"
+    test "rejects when server has no motherboard attached to it" do
+      {server, _} = ServerSetup.server
 
-    test "returns false if server has no motherboard attached" do
-      server = Factory.insert(:server)
+      server = %{server| motherboard_id: nil}
 
-      refute Henforcer.functioning?(server.server_id)
-    end
-
-    test "returns false if server doesn't exists" do
-      refute Henforcer.functioning?(Server.ID.generate())
+      assert {false, reason, _} = ServerHenforcer.server_assembled?(server)
+      assert reason == {:server, :not_assembled}
     end
   end
 end

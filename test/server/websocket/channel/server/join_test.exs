@@ -4,12 +4,12 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
   import Phoenix.ChannelTest
 
-  alias Helix.Server.Query.Server, as: ServerQuery
-
+  alias HELL.TestHelper.Random
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Server.State.Helper, as: ServerStateHelper
 
@@ -24,7 +24,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       entity_id = socket.assigns.entity_id
 
       network_id = @internet_id
-      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+      gateway_ip = ServerHelper.get_ip(gateway.server_id, network_id)
 
       topic = ChannelHelper.server_topic_name(network_id, gateway_ip)
 
@@ -63,7 +63,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
       network_id = @internet_id
       str_network_id = to_string(network_id)
-      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+      gateway_ip = ServerHelper.get_ip(gateway.server_id, network_id)
 
       bad_topic1 = "server:" <> gateway_ip <> "#0"
       bad_topic2 = "server:" <> str_network_id <> "#0"
@@ -82,23 +82,31 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       {random_server, _} = ServerSetup.server()
 
       network_id = @internet_id
-      random_server_ip = ServerQuery.get_ip(random_server.server_id, network_id)
+      random_server_ip = ServerHelper.get_ip(random_server)
 
       topic = ChannelHelper.server_topic_name(network_id, random_server_ip)
 
       assert {:error, reason} = join(socket, topic, %{})
-      assert reason.data == "server_bad_owner"
+      assert reason.data == "server_not_belongs"
+    end
+
+    test "can not connect locally if a non-existing ip was used" do
+      {socket, _} = ChannelSetup.create_socket()
+
+      topic = ChannelHelper.server_topic_name(@internet_id, Random.ipv4())
+
+      assert {:error, reason} = join(socket, topic, %{})
+      assert reason.data == "nip_not_found"
     end
 
     test "can not connect to a remote server with an incorrect password" do
       {socket, %{server: gateway}} = ChannelSetup.create_socket()
       {destination, _} = ServerSetup.server()
 
-      network_id = @internet_id
-      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
-      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+      gateway_ip = ServerHelper.get_ip(gateway)
+      destination_ip = ServerHelper.get_ip(destination)
 
-      topic = ChannelHelper.server_topic_name(network_id, destination_ip)
+      topic = ChannelHelper.server_topic_name(@internet_id, destination_ip)
 
       params = %{
         "gateway_ip" => gateway_ip,
@@ -106,17 +114,30 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       }
 
       assert {:error, reason} = join(socket, topic, params)
-      assert reason.data == "server_bad_password"
+      assert reason.data == "password_invalid"
+    end
+
+    test "can not connect to a remote server with a non-existing IP" do
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
+
+      topic = ChannelHelper.server_topic_name(@internet_id, Random.ipv4())
+
+      params = %{
+        "gateway_ip" => ServerHelper.get_ip(gateway),
+        "password" => "never_reaches_me"
+      }
+
+      assert {:error, reason} = join(socket, topic, params)
+      assert reason.data == "nip_not_found"
     end
 
     test "can not connect to a remote server with an invalid gateway IP" do
       {socket, _} = ChannelSetup.create_socket()
       {destination, _} = ServerSetup.server()
 
-      network_id = @internet_id
-      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+      destination_ip = ServerHelper.get_ip(destination)
 
-      topic = ChannelHelper.server_topic_name(network_id, destination_ip)
+      topic = ChannelHelper.server_topic_name(@internet_id, destination_ip)
 
       params = %{
         "gateway_ip" => destination_ip,
@@ -124,7 +145,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       }
 
       assert {:error, reason} = join(socket, topic, params)
-      assert reason.data == "server_bad_owner"
+      assert reason.data == "server_not_belongs"
     end
 
     test "can start connection with a remote server" do
@@ -134,11 +155,10 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       gateway_entity_id = socket.assigns.entity_id
       destination_entity_id = destination_entity.entity_id
 
-      network_id = @internet_id
-      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
-      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+      gateway_ip = ServerHelper.get_ip(gateway)
+      destination_ip = ServerHelper.get_ip(destination)
 
-      topic = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
+      topic = ChannelHelper.server_topic_name(@internet_id, destination_ip, 0)
 
       params = %{
         "gateway_ip" => gateway_ip,
@@ -159,7 +179,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
       # Metadata is correct
       assert new_socket.assigns.meta.access_type == :remote
-      assert new_socket.assigns.meta.network_id == network_id
+      assert new_socket.assigns.meta.network_id == @internet_id
 
       # Other stuff
       assert new_socket.assigns.tunnel.tunnel_id
@@ -185,13 +205,12 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       {gateway2, _} = ServerSetup.server(entity_id: socket.assigns.entity_id)
       {destination, _} = ServerSetup.server()
 
-      network_id = @internet_id
-      gateway1_ip = ServerQuery.get_ip(gateway1.server_id, network_id)
-      gateway2_ip = ServerQuery.get_ip(gateway2.server_id, network_id)
-      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+      gateway1_ip = ServerHelper.get_ip(gateway1)
+      gateway2_ip = ServerHelper.get_ip(gateway2)
+      destination_ip = ServerHelper.get_ip(destination)
 
-      topic1 = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
-      topic2 = ChannelHelper.server_topic_name(network_id, destination_ip, 1)
+      topic1 = ChannelHelper.server_topic_name(@internet_id, destination_ip, 0)
+      topic2 = ChannelHelper.server_topic_name(@internet_id, destination_ip, 1)
 
       params1 = %{
         "gateway_ip" => gateway1_ip,
@@ -214,13 +233,12 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       {gateway2, _} = ServerSetup.server(entity_id: socket.assigns.entity_id)
       {destination, _} = ServerSetup.server()
 
-      network_id = @internet_id
-      gateway1_ip = ServerQuery.get_ip(gateway1.server_id, network_id)
-      gateway2_ip = ServerQuery.get_ip(gateway2.server_id, network_id)
-      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+      gateway1_ip = ServerHelper.get_ip(gateway1)
+      gateway2_ip = ServerHelper.get_ip(gateway2)
+      destination_ip = ServerHelper.get_ip(destination)
 
-      topic1 = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
-      topic2 = ChannelHelper.server_topic_name(network_id, destination_ip, 0)
+      topic1 = ChannelHelper.server_topic_name(@internet_id, destination_ip, 0)
+      topic2 = ChannelHelper.server_topic_name(@internet_id, destination_ip, 0)
 
       params1 = %{
         "gateway_ip" => gateway1_ip,
@@ -248,8 +266,8 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       {destination, _} = ServerSetup.server()
 
       network_id = @internet_id
-      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
-      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+      gateway_ip = ServerHelper.get_ip(gateway)
+      destination_ip = ServerHelper.get_ip(destination)
 
       # We haven't specified the counter at the topic name
       topic = "server:" <> to_string(network_id) <> "@" <> destination_ip
@@ -266,7 +284,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       # Let's do it again
       {gateway2, _} = ServerSetup.server(entity_id: socket.assigns.entity_id)
 
-      gateway2_ip = ServerQuery.get_ip(gateway2.server_id, network_id)
+      gateway2_ip = ServerHelper.get_ip(gateway2)
       params2 = %{
         "gateway_ip" => gateway2_ip,
         "password" => destination.password
@@ -282,11 +300,10 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       {socket, %{server: gateway}} = ChannelSetup.create_socket()
       {destination, _} = ServerSetup.server()
 
-      network_id = @internet_id
-      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
-      destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
+      gateway_ip = ServerHelper.get_ip(gateway)
+      destination_ip = ServerHelper.get_ip(destination)
 
-      topic = ChannelHelper.server_topic_name(network_id, destination_ip, 666)
+      topic = ChannelHelper.server_topic_name(@internet_id, destination_ip, 666)
 
       params = %{
         "gateway_ip" => gateway_ip,
@@ -300,10 +317,9 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
     test "ignores counter on local joins" do
       {socket, %{server: gateway}} = ChannelSetup.create_socket()
 
-      network_id = @internet_id
-      gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
+      gateway_ip = ServerHelper.get_ip(gateway)
 
-      topic = ChannelHelper.server_topic_name(network_id, gateway_ip, 666)
+      topic = ChannelHelper.server_topic_name(@internet_id, gateway_ip, 666)
 
       assert {:ok, _, socket} = join(socket, topic, %{})
       assert socket.assigns.meta.counter == 0
