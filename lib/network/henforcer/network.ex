@@ -1,5 +1,22 @@
 defmodule Helix.Network.Henforcer.Network do
 
+  import Helix.Henforcer
+
+  alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Network.Model.Network
+
+  def nip_exists?(network_id = %Network.ID{}, ip) do
+    case CacheQuery.from_nip_get_server(network_id, ip) do
+      {:ok, server_id} ->
+        reply_ok(relay(%{server_id: server_id}))
+
+      {:error, _} ->
+        reply_error({:nip, :not_found})
+    end
+  end
+
+  ## Delete everything below this line ---
+
   alias Helix.Hardware.Query.Component, as: ComponentQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Model.Server
