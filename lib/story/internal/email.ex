@@ -42,7 +42,7 @@ defmodule Helix.Story.Internal.Email do
   end
 
   @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
-    {:ok, StoryEmail.t}
+    {:ok, StoryEmail.t, StoryEmail.email}
     | :internal_error
   @doc """
   Sends an email from the contact to the player.

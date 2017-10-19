@@ -13,13 +13,9 @@ defmodule Helix.Test.Event.Setup.Story do
   end
 
   def email_sent(step, email_id, email_meta \\ %{}) do
-    %StoryEmailSentEvent{
-      entity_id: step.entity_id,
-      step: step.name,
-      email_id: email_id,
-      meta: email_meta,
-      timestamp: DateTime.utc_now()
-    }
+    {email, _} = StorySetup.fake_email(id: email_id, meta: email_meta)
+
+    StoryEmailSentEvent.new(step, email)
   end
 
   def reply_sent do

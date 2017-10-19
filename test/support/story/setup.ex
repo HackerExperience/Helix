@@ -157,7 +157,7 @@ defmodule Helix.Test.Story.Setup do
     entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
     contact_id = Keyword.get(opts, :contact_id, StoryStepHelper.get_contact())
     email_total = Keyword.get(opts, :email_total, 1)
-    emails = Keyword.get(opts, :emails, emails(total: email_total))
+    emails = Keyword.get(opts, :emails, fake_emails(total: email_total))
 
     entry =
       %StoryEmail{
@@ -174,18 +174,18 @@ defmodule Helix.Test.Story.Setup do
 
   - total: Specify total of emails to be generated. Defaults to 4.
   """
-  def emails(opts \\ []) do
+  def fake_emails(opts \\ []) do
     total = Keyword.get(opts, :total, 4)
 
     1..total
-    |> Enum.map(fn _ -> email!() end)
+    |> Enum.map(fn _ -> fake_email!() end)
   end
 
   @doc """
   Ignores related. See doc on `email/1`
   """
-  def email!(opts \\ []) do
-    {email, _} = email(opts)
+  def fake_email!(opts \\ []) do
+    {email, _} = fake_email(opts)
     email
   end
 
@@ -198,7 +198,7 @@ defmodule Helix.Test.Story.Setup do
 
   Related: %{}
   """
-  def email(opts \\ []) do
+  def fake_email(opts \\ []) do
     id = Keyword.get(opts, :id, Random.string(min: 4, max: 8))
     meta = Keyword.get(opts, :meta, %{})
     sender = Keyword.get(opts, :sender, Enum.random([:player, :contact]))
@@ -250,9 +250,9 @@ defmodule Helix.Test.Story.Setup do
     c2 = :contact_2
     c3 = :contact_3
 
-    c1_emails = emails(total: 5)
-    c2_emails = emails(total: 3)
-    c3_emails = emails(total: 1)
+    c1_emails = fake_emails(total: 5)
+    c2_emails = fake_emails(total: 3)
+    c3_emails = fake_emails(total: 1)
 
     {e1, _} = story_email(entity_id: entity, contact_id: c1, emails: c1_emails)
     {e2, _} = story_email(entity_id: entity, contact_id: c2, emails: c2_emails)

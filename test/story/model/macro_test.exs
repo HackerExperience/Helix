@@ -29,7 +29,7 @@ defmodule Helix.Story.Model.MacroTest do
 
       assert action == :noop
       assert %StoryEmailSentEvent{} = event
-      assert event.email_id == "e3"
+      assert event.email.id == "e3"
 
       # reply_to_e3 tests the `complete` block
       r3_event = EventSetup.Story.reply_sent(step, "reply_to_e3", "e3")

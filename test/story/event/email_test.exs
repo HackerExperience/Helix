@@ -23,8 +23,11 @@ defmodule Helix.Story.Event.EmailTest do
 
     assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-    assert data.step == to_string(event.step)
-    assert data.email_id == event.email_id
+    assert data.step == to_string(event.step.name)
+    assert data.email_id == event.email.id
+    assert is_binary(data.contact_id)
+    assert data.meta
+    assert data.replies
     refute is_map(data.timestamp)
 
     assert "story_email_sent" == Notificable.get_event_name(event)

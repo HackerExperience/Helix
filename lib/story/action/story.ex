@@ -83,7 +83,7 @@ defmodule Helix.Story.Action.Story do
         {:ok, _, email} <- EmailInternal.send_email(step, email_id, meta),
         {:ok, _} <- StepInternal.save_email(step, email_id)
       do
-        [email_sent_event(step, email)]
+        [EmailSentEvent.new(step, email)]
       else
         _ ->
           Repo.rollback(:internal)
@@ -122,18 +122,6 @@ defmodule Helix.Story.Action.Story do
           Repo.rollback(error)
       end
     end)
-  end
-
-  @spec email_sent_event(Step.t(struct), StoryEmail.email) ::
-    EmailSentEvent.t
-  defp email_sent_event(step, email) do
-    %EmailSentEvent{
-      entity_id: step.entity_id,
-      step: step.name,
-      email_id: email.id,
-      meta: email.meta,
-      timestamp: email.timestamp
-    }
   end
 
   @spec reply_received_event(Step.t(struct), Step.reply_id, StoryEmail.email) ::

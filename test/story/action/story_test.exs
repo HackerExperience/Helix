@@ -23,11 +23,9 @@ defmodule Helix.Story.Action.StoryTest do
 
       # Returned event is correct
       assert %StoryEmailSentEvent{} = event
-      assert event.email_id == email_id
       assert event.entity_id == entity_id
-      assert event.step == step.name
-      assert event.timestamp
-      assert event.meta
+      assert event.step == step
+      assert event.email.id == email_id
 
       # Ensure it got saved on the story step entry
       %{entry: story_step} = StoryQuery.fetch_current_step(entity_id)
