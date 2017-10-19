@@ -4,6 +4,8 @@ defmodule Helix.Websocket.Flow do
   `Helix.Websocket.Join`.
   """
 
+  alias Helix.Websocket.Flow.Utils, as: FlowUtils
+
   @doc """
   Interrupts the Request/Join flow with an error message.
 
@@ -79,5 +81,73 @@ defmodule Helix.Websocket.Flow do
     quote do
       var!(request) = %{unquote(request)| params: unquote(params)}
     end
+  end
+
+  @doc """
+  Shorthand for `validate_nip` from `RequestUtils`.
+
+  This function does not check whether the nip exists!
+  """
+  defmacro validate_nip(network_id, ip) do
+    quote do
+      FlowUtils.validate_nip(unquote(network_id), unquote(ip))
+    end
+  end
+
+  defmacro validate_input(input, element, opts \\ quote(do: [])) do
+    quote do
+      FlowUtils.validate_input(unquote(input), unquote(element), unquote(opts))
+    end
+  end
+end
+
+defmodule Helix.Websocket.Flow.Utils do
+  @moduledoc """
+  Utils for `Helix.Websocket.Flow`
+  """
+
+  alias HELL.IPv4
+  alias Helix.Network.Model.Network
+
+  @spec validate_nip(unsafe :: String.t | Network.id, unsafe_ip :: String.t) ::
+    {:ok, Network.id, Network.ip}
+    | :bad_request
+  @doc """
+  Ensures the given nip, which is unsafe (user input), is valid and within the
+  expected format.
+
+  This function does not check whether the nip exists!
+  """
+  def validate_nip(unsafe_network_id, unsafe_ip) do
+    with \
+      {:ok, network_id} <- Network.ID.cast(unsafe_network_id),
+      true <- IPv4.valid?(unsafe_ip)
+    do
+      {:ok, network_id, unsafe_ip}
+    else
+      _ ->
+        :bad_request
+    end
+  end
+
+  @type input_element ::
+    :password
+
+  @spec validate_input(unsafe_input :: String.t, input_element, opts :: []) ::
+    {:ok, validated_input :: String.t}
+    | :bad_request
+  @doc """
+  This is a generic function meant to validate external input that does not
+  conform to a specific shape or format (like internal IDs or IP addresses).
+
+  The `element` argument identifies what the input is supposed to represent, and
+  we leverage this information to customize the validation for different kinds
+  of input.
+
+  TODO: This function should be somewhere else, since it may be re-used by other
+  modules, including Models doing "pure" verification.
+  """
+  def validate_input(input, :password, _) do
+    {:ok, input}  # Validation itself is also TODO :-)
   end
 end

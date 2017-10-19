@@ -21,11 +21,9 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
   import HELL.Macros
 
-  alias HELL.IPv4
   alias Helix.Websocket.Utils, as: WebsocketUtils
-  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Network
+  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Public.Server, as: ServerPublic
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
@@ -53,23 +51,26 @@ join Helix.Server.Websocket.Channel.Server.Join do
   def check_params(request = %ServerJoin{type: :local}, _socket) do
     with \
       {:ok, data} <- get_topic_data(request.topic),
-      {:ok, network_id} <- Network.ID.cast(data.network_id),
-      true <- IPv4.valid?(data.ip),
-      {:ok, server_id} <-
-        CacheQuery.from_nip_get_server(network_id, data.ip)
+      # /\ Parse the join topic and fetch data from it
+
+      # Validate gateway nip
+      {:ok, network_id, ip} <- validate_nip(data.network_id, data.ip),
+
+      # Ensure gateway nip exists
+      {true, relay} <- NetworkHenforcer.nip_exists?(network_id, ip)
     do
       params = %{
         network_id: network_id,
         gateway_ip: data.ip,
-        gateway_id: server_id,
+        gateway_id: relay.server_id,
         counter: 0
       }
 
       update_params(request, params, reply: true)
     else
-      # Fix when elixir-lang issue #6426 gets fixed
-      # :badserver ->
-      #   {:error, %{message: "nip_not_found"}}
+      {false, reason, _} ->
+        reply_error(reason)
+
       _ ->
         bad_request()
     end
@@ -84,19 +85,27 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
     with \
       {:ok, data} <- get_topic_data(request.topic),
-      {:ok, network_id} <- Network.ID.cast(data.network_id),
-      true <- IPv4.valid?(data.ip),
-      true <- IPv4.valid?(gateway_ip),
-      true <- not is_nil(gateway_ip),
-      {:ok, gateway_id} <-
-        CacheQuery.from_nip_get_server(network_id, gateway_ip),
-      {:ok, destination_id} <-
-        CacheQuery.from_nip_get_server(network_id, data.ip),
+      # /\ Parse the join topic and fetch data from it
+
+      # Validate the given NIPs are in the expected format
+      {:ok, network_id, destination_ip} <-
+         validate_nip(data.network_id, data.ip),
+      {:ok, _, gateway_ip} <- validate_nip(network_id, gateway_ip),
+
+      # Ensure the given nips exist on the DB
+      {true, relay} <- NetworkHenforcer.nip_exists?(network_id, gateway_ip),
+      gateway_id = relay.server_id,
+      {true, relay} <- NetworkHenforcer.nip_exists?(network_id, destination_ip),
+      destination_id = relay.server_id,
+
+      # Validate password
+      {:ok, password} <- validate_input(request.unsafe["password"], :password),
+
       {valid_counter?, counter} =
         validate_counter(
           entity_id,
           destination_id,
-          {network_id, data.ip},
+          {network_id, destination_ip},
           data.counter
         ),
       true <- valid_counter? || :bad_counter
@@ -106,20 +115,19 @@ join Helix.Server.Websocket.Channel.Server.Join do
         gateway_id: gateway_id,
         gateway_ip: gateway_ip,
         destination_id: destination_id,
-        destination_ip: data.ip,
+        destination_ip: destination_ip,
         counter: counter,
-        password: request.unsafe["password"]
+        password: password
       }
 
       update_params(request, params, reply: true)
     else
-      # Fix when elixir-lang issue #6426 gets fixed
-      # :badserver ->
-      #   {:error, %{message: "nip_not_found"}}
-      # :internal ->
-      #   {:error, %{message: "internal"}}
+      {false, reason, _} ->
+        reply_error(reason)
+
       :bad_counter ->
         reply_error("bad_counter")
+
       _ ->
         bad_request()
     end
@@ -180,7 +188,6 @@ join Helix.Server.Websocket.Channel.Server.Join do
     end
   end
 
-  # TODO: Verify if vulnerable: pass `password` param on gateway
   defp build_meta(request) do
     access_type =
       if Map.has_key?(request.params, :password) do

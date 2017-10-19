@@ -14,7 +14,6 @@ defmodule Helix.Websocket.Request do
 
   import HELL.Macros
 
-  alias Helix.Websocket.Request.Utils, as: RequestUtils
   alias Helix.Websocket.Utils, as: WebsocketUtils
 
   @type t(struct) :: %{
@@ -106,33 +105,6 @@ defmodule Helix.Websocket.Request do
         {:ok, %{}}
       end
 
-    end
-  end
-
-  defmacro validate_nip(network_id, ip) do
-    quote do
-      RequestUtils.validate_nip(unquote(network_id), unquote(ip))
-    end
-  end
-end
-
-defmodule Helix.Websocket.Request.Utils do
-
-  alias HELL.IPv4
-  alias Helix.Network.Model.Network
-
-  @spec validate_nip(unsafe_network_id :: String.t, unsafe_ip :: String.t) ::
-    {:ok, Network.id, IPv4.t}
-    | :bad_request
-  def validate_nip(unsafe_network_id, unsafe_ip) do
-    with \
-      {:ok, network_id} <- Network.ID.cast(unsafe_network_id),
-      true <- IPv4.valid?(unsafe_ip)
-    do
-      {:ok, network_id, unsafe_ip}
-    else
-      _ ->
-        :bad_request
     end
   end
 end
