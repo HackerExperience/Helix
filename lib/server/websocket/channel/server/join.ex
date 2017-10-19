@@ -32,6 +32,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
     alias Helix.Network.Model.Network
     alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
     alias Helix.Server.Public.Server, as: ServerPublic
+    alias Helix.Server.Query.Server, as: ServerQuery
     alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
     alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
     alias Helix.Server.Websocket.Channel.Server.Join.Utils, as: ServerJoinUtils
@@ -208,6 +209,9 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
       network_id = request.params.network_id
       counter = request.params.counter
 
+      # TODO
+      gateway = ServerQuery.fetch(gateway_id)
+
       # Updates websocket state
       ServerWebsocketChannelState.join(
         entity_id,
@@ -230,9 +234,9 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
         |> assign.(:meta, build_meta(request))
 
       bootstrap =
-        gateway_id
-        |> ServerPublic.bootstrap(entity_id)
-        |> ServerPublic.render_bootstrap()
+        gateway
+        |> ServerPublic.bootstrap_gateway(entity_id)
+        |> ServerPublic.render_bootstrap_gateway()
         |> WebsocketUtils.wrap_data()
 
       {:ok, bootstrap, socket}
@@ -256,6 +260,9 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
       destination_id = request.params.destination_id
       destination_ip = request.params.destination_ip
       counter = request.params.counter
+
+      # TODO
+      destination = ServerQuery.fetch(destination_id)
 
       # Updates websocket state
       ServerWebsocketChannelState.join(
@@ -292,9 +299,9 @@ defmodule Helix.Server.Websocket.Channel.Server.Join do
           |> assign.(:meta, build_meta(request))
 
         bootstrap =
-          destination_id
-          |> ServerPublic.bootstrap(destination_entity.entity_id)
-          |> ServerPublic.render_bootstrap()
+          destination
+          |> ServerPublic.bootstrap_remote(destination_entity.entity_id)
+          |> ServerPublic.render_bootstrap_remote()
           |> WebsocketUtils.wrap_data()
 
         {:ok, bootstrap, socket}

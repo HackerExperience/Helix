@@ -1,29 +1,20 @@
 defmodule Helix.Account.Public.Index do
 
   alias Helix.Entity.Model.Entity
-  alias Helix.Story.Public.Index, as: StoryIndex
 
-  @type index :: %{
-    storyline: StoryIndex.index
-  }
+  @type index :: %{}
 
-  @type rendered_index :: %{
-    storyline: StoryIndex.rendered_index
-  }
+  @type rendered_index :: %{}
 
   @spec index(Entity.id) ::
     index
-  def index(entity_id) do
-    %{
-      storyline: StoryIndex.index(entity_id)
-    }
+  def index(_entity_id) do
+    %{}
   end
 
   @spec render_index(index) ::
     rendered_index
-  def render_index(index) do
-    %{
-      storyline: StoryIndex.render_index(index.storyline)
-    }
+  def render_index(_index) do
+    %{}
   end
 end

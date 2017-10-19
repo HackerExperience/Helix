@@ -52,6 +52,8 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert bootstrap.data.filesystem
       assert bootstrap.data.logs
       assert bootstrap.data.processes
+      assert bootstrap.data.password
+      assert bootstrap.data.name
 
       CacheHelper.sync_test()
     end
@@ -169,6 +171,10 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert bootstrap.data.logs
       assert bootstrap.data.processes
 
+      # Keys below only exist on gateway bootstrap
+      refute Map.has_key?(bootstrap.data, :password)
+      refute Map.has_key?(bootstrap.data, :name)
+
       CacheHelper.sync_test()
     end
   end
@@ -229,9 +235,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert {:error, reason} = join(socket, topic2, params2)
       assert reason == %{data: "bad_counter"}
 
-      # Also fails if tries to connect same server twice
-      # TODO: This will need some rework in order to support multiple clients or
-      # logins simultaneously. See issue #277
+      # Also fails if tries to connect same server, with the same counter, twice
       assert {:error, _} = join(socket, topic2, params1)
       assert {:error, _} = join(socket, topic1, params1)
     end

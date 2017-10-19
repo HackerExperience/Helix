@@ -2,12 +2,21 @@ defmodule Helix.Account.Public.Account do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Public.Index, as: ServerIndex
+  alias Helix.Story.Public.Index, as: StoryIndex
   alias Helix.Account.Public.Index, as: AccountIndex
 
   @type bootstrap ::
     %{
       account: AccountIndex.index,
-      servers: ServerIndex.index
+      servers: ServerIndex.index,
+      storyline: StoryIndex.index
+    }
+
+  @type rendered_bootstrap ::
+    %{
+      account: AccountIndex.rendered_index,
+      servers: ServerIndex.rendered_index,
+      storyline: StoryIndex.rendered_index
     }
 
   @doc """
@@ -21,7 +30,8 @@ defmodule Helix.Account.Public.Account do
   def bootstrap(entity_id) do
     %{
       account: AccountIndex.index(entity_id),
-      servers: ServerIndex.index(entity_id)
+      servers: ServerIndex.index(entity_id),
+      storyline: StoryIndex.index(entity_id)
     }
   end
 
@@ -31,14 +41,12 @@ defmodule Helix.Account.Public.Account do
   Similar in purpose to `ProcessViewable`.
   """
   @spec render_bootstrap(bootstrap) ::
-    %{
-      account: AccountIndex.rendered_index,
-      servers: ServerIndex.rendered_index
-    }
+    rendered_bootstrap
   def render_bootstrap(bootstrap) do
     %{
       account: AccountIndex.render_index(bootstrap.account),
       servers: ServerIndex.render_index(bootstrap.servers),
+      storyline: StoryIndex.render_index(bootstrap.storyline)
     }
   end
 end

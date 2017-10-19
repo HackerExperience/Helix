@@ -1,12 +1,12 @@
 defmodule Helix.Server.Event.Server.Password do
-  @moduledoc """
-  The ServerPasswordAcquiredEvent is fired after a Bruteforce attack has been
-  completed, and the attacker discovered the target's server root password.
-  """
 
   import Helix.Event
 
   event Acquired do
+    @moduledoc """
+    The ServerPasswordAcquiredEvent is fired after a Bruteforce attack has been
+    completed, and the attacker discovered the target's server root password.
+    """
 
     alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
