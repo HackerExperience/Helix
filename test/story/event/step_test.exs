@@ -17,15 +17,17 @@ defmodule Helix.Story.Event.Step.ProceededTest do
   end
 
   describe "Notificable.generate_payload/2" do
-    socket = ChannelSetup.mock_account_socket()
+    test "generates the payload" do
+      socket = ChannelSetup.mock_account_socket()
 
-    event = EventSetup.Story.step_proceeded()
+      event = EventSetup.Story.step_proceeded()
 
-    assert {:ok, data} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-    assert data.previous_step == event.previous_step
-    assert data.next_step == event.next_step
+      assert data.previous_step == to_string(event.previous_step.name)
+      assert data.next_step == to_string(event.next_step.name)
 
-    assert "story_step_proceeded" == Notificable.get_event_name(event)
+      assert "story_step_proceeded" == Notificable.get_event_name(event)
+    end
   end
 end

@@ -17,19 +17,21 @@ defmodule Helix.Story.Event.EmailTest do
   end
 
   describe "Notificable.generate_payload/2" do
-    socket = ChannelSetup.mock_account_socket()
+    test "generates the payload" do
+      socket = ChannelSetup.mock_account_socket()
 
-    event = EventSetup.Story.email_sent()
+      event = EventSetup.Story.email_sent()
 
-    assert {:ok, data} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-    assert data.step == to_string(event.step.name)
-    assert data.email_id == event.email.id
-    assert is_binary(data.contact_id)
-    assert data.meta
-    assert data.replies
-    refute is_map(data.timestamp)
+      assert data.step == to_string(event.step.name)
+      assert data.email_id == event.email.id
+      assert is_binary(data.contact_id)
+      assert data.meta
+      assert data.replies
+      refute is_map(data.timestamp)
 
-    assert "story_email_sent" == Notificable.get_event_name(event)
+      assert "story_email_sent" == Notificable.get_event_name(event)
+    end
   end
 end

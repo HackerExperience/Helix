@@ -10,17 +10,28 @@ defmodule Helix.Story.Event.Reply do
 
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
+    alias Helix.Story.Model.StoryEmail
 
     @type t ::
       %__MODULE__{
         entity_id: Entity.id,
-        step: Step.step_name,
+        step: Step.t(struct),
         reply_to: Step.email_id,
-        reply_id: Step.reply_id,
-        timestamp: DateTime.t
+        reply: StoryEmail.email,
       }
 
-    event_struct [:entity_id, :step, :reply_to, :reply_id, :timestamp]
+    event_struct [:entity_id, :step, :reply_to, :reply]
+
+    @spec new(Step.t(struct), reply :: StoryEmail.email, Step.email_id) ::
+      t
+    def new(step = %_{name: _, entity_id: _}, reply = %{id: _}, reply_to) do
+      %__MODULE__{
+        entity_id: step.entity_id,
+        step: step,
+        reply_to: reply_to,
+        reply: reply
+      }
+    end
 
     notify do
       @moduledoc false
@@ -31,10 +42,10 @@ defmodule Helix.Story.Event.Reply do
 
       def generate_payload(event, _socket) do
         data = %{
-          step: to_string(event.step),
+          step: to_string(event.step.name),
           reply_to: event.reply_to,
-          reply_id: event.reply_id,
-          timestamp: ClientUtils.to_timestamp(event.timestamp)
+          reply_id: event.reply.id,
+          timestamp: ClientUtils.to_timestamp(event.reply.timestamp)
         }
 
         {:ok, data}

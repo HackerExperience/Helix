@@ -3,7 +3,6 @@ defmodule Helix.Story.Action.Story do
   alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.StoryEmail
   alias Helix.Story.Model.StoryStep
   alias Helix.Story.Repo
 
@@ -63,7 +62,7 @@ defmodule Helix.Story.Action.Story do
   made.
   """
   def notify_step(prev_step, next_step),
-    do: [step_proceeded_event(prev_step, next_step)]
+    do: [StepProceededEvent.new(prev_step, next_step)]
 
   @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
     {:ok, [EmailSentEvent.t]}
@@ -115,34 +114,12 @@ defmodule Helix.Story.Action.Story do
         {:ok, _} <- StepInternal.lock_reply(step, reply_id)
       do
         reply_to = StoryStep.get_current_email(story_step)
-        [reply_received_event(step, reply_to, email)]
+        [ReplySentEvent.new(step, email, reply_to)]
       else
         # When elixir-lang issue #6426 gets fixed, rewrite to use :badreply
         error ->
           Repo.rollback(error)
       end
     end)
-  end
-
-  @spec reply_received_event(Step.t(struct), Step.reply_id, StoryEmail.email) ::
-    ReplySentEvent.t
-  defp reply_received_event(step, reply_to, email) do
-    %ReplySentEvent{
-      entity_id: step.entity_id,
-      step: step.name,
-      reply_to: reply_to,
-      reply_id: email.id,
-      timestamp: email.timestamp
-    }
-  end
-
-  @spec step_proceeded_event(Step.t(struct), Step.t(struct)) ::
-    StepProceededEvent.t
-  defp step_proceeded_event(prev_step, next_step) do
-    %StepProceededEvent{
-      entity_id: next_step.entity_id,
-      previous_step: prev_step.name,
-      next_step: next_step.name
-    }
   end
 end
