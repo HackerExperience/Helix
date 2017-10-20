@@ -24,6 +24,8 @@ defmodule Helix.Factor.Client do
   defmacro get_factors(params, do: block) do
     quote do
 
+      @spec get_factors(map) ::
+        map
       def get_factors(unquote(params)) do
         var!(relay) = %{}
         var!(factors) = %{}
@@ -33,7 +35,8 @@ defmodule Helix.Factor.Client do
         var!(relay)  # Just to mark as used
 
         # Returns the accumulated factors
-        var!(factors)
+        Map.delete(var!(factors), :__struct__)
+        # var!(factors)
       end
 
     end

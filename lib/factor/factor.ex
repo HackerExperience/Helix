@@ -156,7 +156,9 @@ defmodule Helix.Factor do
   - **relay** - Specify the relay passed as parameter for `assembly/2`. Defaults
     to an empty map when not specified.
 
-  Typespecs for `fact_*` functions are TODO.
+  Types for `fact_*` functions must also be specified naming those types as:
+
+  `@type fact_{name} :: {fact}`, where `fact` is the fact returned by the method
 
   ### Testing
 
@@ -379,6 +381,8 @@ defmodule Helix.Factor do
     fname = :"fact_#{name}"
     quote do
 
+      @spec unquote(fname)(term, term) ::
+        {unquote(fname), term}
       def unquote(fname)(unquote(params), var!(relay) = unquote(relay)) do
         unquote(block)
       end
@@ -402,6 +406,7 @@ defmodule Helix.Factor do
 
       quote do
 
+        # @spec unquote(fname)(params, term) ::
         def unquote(:"fact_#{name}")(params, relay) do
           apply(unquote(child_module), :assembly, [params, relay, :all])
         end
@@ -428,8 +433,14 @@ defmodule Helix.Factor do
   defp assemble(params, relay, block) do
     quote do
 
-      @spec assembly(params, relay :: term, exec_facts :: [atom] | :all) ::
+      # Returns full `factor` and `relay` types if executing all facts
+      @spec assembly(params, relay :: term, exec_facts :: :all) ::
         {factor, relay}
+
+      # Returns a subset of `factor`/`relay` if executing only a subset of facts
+      @spec assembly(params, relay :: term, exec_facts :: [atom]) ::
+        {map, map}
+
       def assembly(var!(params) = unquote(params), var!(relay) = unquote(relay), exec) do
         var!(exec_facts) = exec
         var!(facts) = %{}
