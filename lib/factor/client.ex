@@ -36,7 +36,6 @@ defmodule Helix.Factor.Client do
 
         # Returns the accumulated factors
         Map.delete(var!(factors), :__struct__)
-        # var!(factors)
       end
 
     end

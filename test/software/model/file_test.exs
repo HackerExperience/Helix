@@ -10,7 +10,7 @@ defmodule Helix.Software.Model.FileTest do
   describe "set_crypto_version/2" do
 
     test "crypto_version is changed" do
-      {original_cs, _} = SoftwareSetup.fake_file()
+      {_, %{changeset: original_cs}} = SoftwareSetup.fake_file()
       version = 10
 
       changeset = File.set_crypto_version(original_cs, version)
