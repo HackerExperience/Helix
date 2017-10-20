@@ -1,5 +1,6 @@
 defmodule Helix.Log.Public.Index do
 
+  alias HELL.ClientUtils
   alias Helix.Server.Model.Server
   alias Helix.Log.Model.Log
   alias Helix.Log.Query.Log, as: LogQuery
@@ -41,7 +42,7 @@ defmodule Helix.Log.Public.Index do
       %{
         log_id: to_string(log.log_id),
         message: log.message,
-        timestamp: to_string(log.timestamp)
+        timestamp: ClientUtils.to_timestamp(log.timestamp)
       }
     end)
   end
