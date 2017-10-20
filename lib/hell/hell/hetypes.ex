@@ -5,4 +5,6 @@ defmodule HELL.HETypes do
 
   @type client_timestamp :: float
 
+  @type uuid :: String.t
+
 end

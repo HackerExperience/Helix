@@ -11,8 +11,6 @@ defmodule Helix.Software.Event.File.Transfer do
 
     It may have multiple backends (download/upload/pftp_download), as explained
     on FileTransferProcess.
-
-    Notification to the Client is useful so it can update the Task Manager view.
     """
 
     alias Helix.Entity.Model.Entity

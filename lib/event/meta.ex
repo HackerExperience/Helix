@@ -1,0 +1,92 @@
+defmodule Helix.Event.Meta do
+  @moduledoc """
+  Utils, getters and setters for `Helix.Event` metadata.
+  """
+
+  import HELL.Macros
+
+  alias HELL.HETypes
+  alias HELL.Utils
+  alias Helix.Event
+  alias Helix.Process.Model.Process
+
+  @type t :: %{
+    event_id: HETypes.uuid | nil,
+    process_id: Process.id | nil
+  }
+
+  @type rendered :: %{
+    event_id: String.t | nil,
+    process_id: String.t | nil
+  }
+
+  @meta_key :__meta__
+  @meta_fields [
+
+    # The `event_id` field is an unique identifier *per event*, used by the
+    # Client to identify whether that specific event has already been received
+    # by the player (may happen if there are multiple subscribers (channels) to
+    # on the same server)
+    :event_id,
+
+    # The `process_id` field is used to identify which process (if any) was
+    # responsible for the emission of the current event. Useful to correlate
+    # processes side-effects to their process ids on the Client.
+    :process_id
+  ]
+
+  @doc """
+  Returns the key name for the `meta` map.
+  """
+  def meta_key,
+    do: @meta_key
+
+  @doc """
+  Returns a list of all fields the `meta` map may have.
+  """
+  def meta_fields,
+    do: @meta_fields
+
+  @spec render(Event.t) ::
+    rendered
+  @doc """
+  Renders the metadata of an event before sending it to the client
+  """
+  def render(event) do
+    %{
+      event_id: get_event_id(event),
+      process_id: get_process_id(event) |> Utils.stringify()
+    }
+  end
+
+  # Generates getters and setters (java feelings)
+  for field <- @meta_fields do
+
+    @doc false
+    def unquote(:"get_#{field}")(event),
+      do: Map.get(event.__meta__ || %{}, unquote(field), nil)
+
+    @doc false
+    def unquote(:"set_#{field}")(event, value) do
+      opts = [{unquote(field), value}]
+      set_meta(event, opts)
+    end
+  end
+
+  @spec set_meta(Event.t, [{field :: atom, value :: term}]) ::
+    Event.t
+  docp """
+  Generic method to update the event meta, returning the event with the updated
+  meta.
+  """
+  defp set_meta(event, opts) do
+    original_meta = event.__meta__ || %{}
+
+    meta =
+      Enum.reduce(opts, original_meta, fn {key, val}, acc ->
+        Map.put(acc, key, val)
+      end)
+
+    %{event| __meta__: meta}
+  end
+end

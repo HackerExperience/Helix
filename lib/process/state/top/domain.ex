@@ -2,6 +2,7 @@ defmodule Helix.Process.State.TOP.Domain do
   @moduledoc false
 
   alias Ecto.Changeset
+  alias Helix.Event
   alias Helix.Server.Model.Server
   alias Helix.Process.Event.Process.Completed, as: ProcessCompletedEvent
   alias Helix.Process.Internal.TOP.Allocator.Plan, as: PlanTOP
@@ -140,8 +141,19 @@ defmodule Helix.Process.State.TOP.Domain do
               process_data,
               process)
 
+            # Add the process_id as metadata for both *ProcessedEvent and
+            # ProcessCompletedEvent
+            process_id = Changeset.get_field(process, :process_id)
+
+            events = Enum.map(events, fn event ->
+              Event.set_process_id(event, process_id)
+            end)
+
             process_completed =
-              ProcessCompletedEvent.new(Changeset.apply_changes(process))
+              process
+              |> Changeset.apply_changes()
+              |> ProcessCompletedEvent.new()
+              |> Event.set_process_id(process_id)
 
             {delete, keep} =
               processes

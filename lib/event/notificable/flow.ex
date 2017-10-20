@@ -3,9 +3,11 @@ defmodule Helix.Event.Notificable.Flow do
   import HELL.Macros
 
   alias Phoenix.Socket
+  alias HELL.HETypes
+  alias Helix.Event
   alias Helix.Event.Notificable
 
-  @type event_id :: String.t
+  @type event_id :: HETypes.uuid
 
   @doc """
   Top-level macro for an event that wants to implement the Notificable protocol.
@@ -34,7 +36,7 @@ defmodule Helix.Event.Notificable.Flow do
   end
 
   @spec generate_event(struct, Socket.t) ::
-    {:ok, %{data: term, event: String.t, event_id: event_id}}
+    {:ok, %{data: term, event: String.t, meta: Event.Meta.rendered}}
     | :noreply
   @doc """
   Attempts to generate the payload for that event. If the implementation of the
@@ -49,7 +51,7 @@ defmodule Helix.Event.Notificable.Flow do
           %{
             data: data,
             event: Notificable.get_event_name(event),
-            event_id: event.__eid__
+            meta: Event.Meta.render(event)
           }
 
         {:ok, payload}
@@ -69,7 +71,7 @@ defmodule Helix.Event.Notificable.Flow do
   each one of them will share the same event identifier.
   """
   def add_event_identifier(event),
-    do: %{event| __eid__: generate_event_uuid()}
+    do: Event.set_event_id(event, generate_event_uuid())
 
   @spec generate_event_uuid ::
     event_id
