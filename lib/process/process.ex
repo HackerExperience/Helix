@@ -10,6 +10,8 @@ defmodule Helix.Process do
 
         import Helix.Process.Objective
 
+        @type resource_usage :: Helix.Process.Objective.resource_usage
+
         unquote(block)
       end
 

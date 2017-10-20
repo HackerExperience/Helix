@@ -70,6 +70,9 @@ defmodule Helix.Process.Objective do
 
   import HELL.Macros
 
+  @type resource :: :dlk | :ulk | :cpu | :ram
+  @type resource_usage :: non_neg_integer
+
   @resources [:dlk, :ulk, :cpu, :ram]
 
   @doc """
@@ -129,8 +132,20 @@ defmodule Helix.Process.Objective do
 
         import Helix.Factor.Client
 
+        # Defining the typespecs of `calculate/3` outside of the macro/loop
+        # because it could be defined multiple times, raising dialyzer's
+        # overloaded contract warning.
+        @spec calculate(atom, params, factors) ::
+          Helix.Process.Objective.resource_usage | term  # elixir-lang 6426
+
         @spec calculate(params, factors) ::
           objectives :: map
+        @doc """
+        Coordinates the calculation of each hardware resource objective based on
+        the given `params` and `factors`.
+
+        It removes any non-objective (when required resource usage is 0).
+        """
         def calculate(params, factors) do
           %{
             cpu: calculate(:cpu, params, factors) || 0,
@@ -138,6 +153,8 @@ defmodule Helix.Process.Objective do
             dlk: calculate(:dlk, params, factors) || 0,
             ulk: calculate(:ulk, params, factors) || 0
           }
+          |> Enum.reject(&(&1 == 0))
+          |> Map.new()
         end
 
         unquote(block)
@@ -168,7 +185,7 @@ defmodule Helix.Process.Objective do
   defp set_resource(resource, params, block \\ nil) do
     quote do
 
-      # Notify resource is being handled; will be used later on `before_compile`
+      # Notify resource is being handled; will be used later at `before_compile`
       Module.put_attribute(__MODULE__, :handled_resources, unquote(resource))
 
       def calculate(unquote(resource), unquote(params), factors) do
