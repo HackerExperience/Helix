@@ -2,19 +2,22 @@ defmodule Helix.Software.Process.File.TransferTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Process.Macros
+
   alias Helix.Process.Model.Process.ProcessType
   alias Helix.Software.Model.Storage
+  alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
   alias Helix.Software.Event.File.Transfer.Aborted, as: FileTransferAbortedEvent
 
-  alias Helix.Test.Software.Setup.Flow, as: SoftwareFlowSetup
+  alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
-  alias Helix.Test.Process.Helper, as: ProcessHelper
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "Process Kill" do
     test "aborted event is emitted (download)" do
-      {process, _} = SoftwareFlowSetup.file_transfer(:download)
+      {process, _} = SoftwareSetup.Flow.file_transfer(:download)
 
       {_, [event]} = TOPHelper.soft_kill(process)
 
@@ -27,7 +30,7 @@ defmodule Helix.Software.Process.File.TransferTest do
     end
 
     test "aborted event is emitted (upload)" do
-      {process, _} = SoftwareFlowSetup.file_transfer(:upload)
+      {process, _} = SoftwareSetup.Flow.file_transfer(:upload)
 
       {_, [event]} = TOPHelper.soft_kill(process)
 
@@ -52,17 +55,30 @@ defmodule Helix.Software.Process.File.TransferTest do
       assert is_atom(serialized.connection_type)
       assert is_atom(serialized.type)
     end
+
+    defp transfer_process do
+      type = Enum.random([:file_download, :file_upload])
+
+      {process, _} = ProcessSetup.process(fake_server: true, type: type)
+      process
+    end
   end
 
-  defp transfer_process do
-    type = Enum.random([:file_download, :file_upload])
+  describe "Process.Objective" do
+    test "download uses dlk" do
+      {file, _} = SoftwareSetup.file()
 
-    {process, _} = ProcessSetup.process(fake_server: true, type: type)
-    process
+       resources = FileTransferProcess.objective(:download, file)
+
+       assert_objective resources, {:dlk, file.file_size}
+    end
+
+    test "upload uses ulk" do
+      {file, _} = SoftwareSetup.file()
+
+      resources = FileTransferProcess.objective(:upload, file)
+
+      assert_objective resources, {:ulk, file.file_size}
+    end
   end
-
-  # TODO: Waiting for #269 being merged, which changed ProcessViewHelper
-  # describe "ProcessView.render/4 for download" do
-  #   test "full process returns storage_id"
-  # end
 end

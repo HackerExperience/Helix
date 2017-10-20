@@ -153,7 +153,7 @@ defmodule Helix.Process.Objective do
             dlk: calculate(:dlk, params, factors) || 0,
             ulk: calculate(:ulk, params, factors) || 0
           }
-          |> Enum.reject(&(&1 == 0))
+          |> Enum.reject(fn {_, total} -> total == 0 end)
           |> Map.new()
         end
 
