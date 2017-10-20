@@ -316,13 +316,28 @@ defmodule Helix.Factor do
       :elixir_errors.warn __CALLER__.line, __CALLER__.file, warn_str
     end
 
-    quote unquote: false do
+    # Infer factor name based on module name
+    module_name =
+      __CALLER__.module
+      |> Module.split()
+      |> List.last()
+      |> String.downcase()
+      |> String.to_atom()
+
+    quote do
 
       @doc """
       Returns a list of all facts checked by this #{__MODULE__}.
       """
       def get_facts do
         @facts
+      end
+
+      @doc """
+      Returns the name of the Factor.
+      """
+      def get_name do
+        unquote(module_name)
       end
 
     end
@@ -387,9 +402,9 @@ defmodule Helix.Factor do
 
       quote do
 
-        defdelegate unquote(:"fact_#{name}")(params, relay),
-        to: unquote(child_module),
-        as: :assembly
+        def unquote(:"fact_#{name}")(params, relay) do
+          apply(unquote(child_module), :assembly, [params, relay, :all])
+        end
 
       end
     end)
@@ -398,8 +413,14 @@ defmodule Helix.Factor do
   @doc """
   Generates the `assembly/3` function, which will guide the Factor data flow.
   """
-  defmacro assembly(params, relay \\ quote(do: %{}), do: block),
-    do: assemble(params, relay, block)
+
+  defmacro assembly(
+    params \\ quote(do: var!(params)),
+    relay \\ quote(do: _),
+    do: block)
+  do
+    assemble(params, relay, block)
+  end
 
   docp """
   Actual creation of the `assembly/3` function.
@@ -409,7 +430,7 @@ defmodule Helix.Factor do
 
       @spec assembly(params, relay :: term, exec_facts :: [atom] | :all) ::
         {factor, relay}
-      def assembly(var!(params) = unquote(params), unquote(relay), exec \\ :all) do
+      def assembly(var!(params) = unquote(params), var!(relay) = unquote(relay), exec) do
         var!(exec_facts) = exec
         var!(facts) = %{}
 
