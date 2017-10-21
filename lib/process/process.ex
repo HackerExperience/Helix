@@ -8,11 +8,20 @@ defmodule Helix.Process do
 
       defmodule unquote(name) do
 
+        import Helix.Process.Executable
         import Helix.Process.Objective
 
         @type resource_usage :: Helix.Process.Objective.resource_usage
 
+        @process_type nil
+
         unquote(block)
+
+        defdelegate execute(gateway, target, params, meta),
+          to: __MODULE__.Executable
+
+        def get_process_type,
+          do: @process_type |> to_string()
       end
 
     end
