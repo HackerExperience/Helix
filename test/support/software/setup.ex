@@ -1,5 +1,6 @@
 defmodule Helix.Test.Software.Setup do
 
+  alias Ecto.Changeset
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Hardware.Model.Component
   alias Helix.Software.Internal.File, as: FileInternal
@@ -74,7 +75,11 @@ defmodule Helix.Test.Software.Setup do
     storage without a server. Defaults to false.
   - crypto_version: Mark that file as encrypted. Defaults to nil (unencrypted).
 
-  Related: File.creation_params, [File.module_params], Storage.id, Server.id
+  Related: \
+    File.changeset \
+    File.creation_params, \
+    [File.module_params], \
+    Storage.id, Server.id
   """
   def fake_file(opts \\ []) do
     if not is_nil(opts[:modules]) and is_nil(opts[:type]) do
@@ -99,14 +104,20 @@ defmodule Helix.Test.Software.Setup do
       crypto: crypto
     }
 
+    changeset = File.create_changeset(params, modules)
+
     related = %{
+      changeset: changeset,
       params: params,
       storage_id: storage_id,
       server_id: server_id,
       modules: modules
     }
 
-    file = File.create_changeset(params, modules)
+    file =
+      changeset
+      |> Changeset.apply_changes()
+      |> File.format()
 
     {file, related}
   end

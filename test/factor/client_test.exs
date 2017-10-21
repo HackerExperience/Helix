@@ -5,23 +5,35 @@ defmodule Helix.Factor.ClientTest do
   alias Helix.Factor.Client, as: FactorClient
 
   alias Helix.Test.Factor.FakeFactorClientOne
+  alias Helix.Test.Factor.FakeFactorClientTwo
+  alias Helix.Test.Factor.FakeFactorOne
+  alias Helix.Test.Factor.FakeFactorTwo
 
   describe "mock" do
     test "FakeFactorClientOne" do
-      # FakeFactorClientOne will get facts from both FakeFactorOne and Two,
-      # but only the `meaning_of_life` fact from One, and skipping `fact_three`
-      # from Two
+      # FakeFactorClientOne gets *all* facts from FakeFactorOne and Two.
       factors = FakeFactorClientOne.get_factors(%{})
 
+      # Returned the actual struct of the underlying factors
+      assert factors.fakefactorone.__struct__ == FakeFactorOne
+      assert factors.fakefactortwo.__struct__ == FakeFactorTwo
+    end
+
+    test "FakeFactorClientTwo" do
+      # FakeFactorClientTwo will get facts from both FakeFactorOne and Two,
+      # but only the `meaning_of_life` fact from One, and skipping `fact_three`
+      # from Two
+      factors = FakeFactorClientTwo.get_factors(%{})
+
       # Facts from FakeFactorOne
-      assert factors.sky_color
-      refute Map.has_key?(factors, :meaning_of_life)
+      assert factors.fakefactorone.sky_color
+      refute Map.has_key?(factors.fakefactorone, :meaning_of_life)
 
       # Facts from FakeFactorTwo
-      assert factors.fact_one
-      assert factors.fact_two
-      assert factors.lover
-      refute Map.has_key?(factors, :fact_three)
+      assert factors.fakefactortwo.fact_one
+      assert factors.fakefactortwo.fact_two
+      assert factors.fakefactortwo.lover
+      refute Map.has_key?(factors.fakefactortwo, :fact_three)
 
       # Returned factor is a map with multiple factors, it's not a struct.
       refute Map.has_key?(factors, :__struct__)

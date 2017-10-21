@@ -156,7 +156,9 @@ defmodule Helix.Factor do
   - **relay** - Specify the relay passed as parameter for `assembly/2`. Defaults
     to an empty map when not specified.
 
-  Typespecs for `fact_*` functions are TODO.
+  Types for `fact_*` functions must also be specified naming those types as:
+
+  `@type fact_{name} :: {fact}`, where `fact` is the fact returned by the method
 
   ### Testing
 
@@ -316,13 +318,28 @@ defmodule Helix.Factor do
       :elixir_errors.warn __CALLER__.line, __CALLER__.file, warn_str
     end
 
-    quote unquote: false do
+    # Infer factor name based on module name
+    module_name =
+      __CALLER__.module
+      |> Module.split()
+      |> List.last()
+      |> String.downcase()
+      |> String.to_atom()
+
+    quote do
 
       @doc """
       Returns a list of all facts checked by this #{__MODULE__}.
       """
       def get_facts do
         @facts
+      end
+
+      @doc """
+      Returns the name of the Factor.
+      """
+      def get_name do
+        unquote(module_name)
       end
 
     end
@@ -364,6 +381,8 @@ defmodule Helix.Factor do
     fname = :"fact_#{name}"
     quote do
 
+      @spec unquote(fname)(term, term) ::
+        {unquote(fname), term}
       def unquote(fname)(unquote(params), var!(relay) = unquote(relay)) do
         unquote(block)
       end
@@ -387,9 +406,10 @@ defmodule Helix.Factor do
 
       quote do
 
-        defdelegate unquote(:"fact_#{name}")(params, relay),
-        to: unquote(child_module),
-        as: :assembly
+        # @spec unquote(fname)(params, term) ::
+        def unquote(:"fact_#{name}")(params, relay) do
+          apply(unquote(child_module), :assembly, [params, relay, :all])
+        end
 
       end
     end)
@@ -398,8 +418,14 @@ defmodule Helix.Factor do
   @doc """
   Generates the `assembly/3` function, which will guide the Factor data flow.
   """
-  defmacro assembly(params, relay \\ quote(do: %{}), do: block),
-    do: assemble(params, relay, block)
+
+  defmacro assembly(
+    params \\ quote(do: var!(params)),
+    relay \\ quote(do: _),
+    do: block)
+  do
+    assemble(params, relay, block)
+  end
 
   docp """
   Actual creation of the `assembly/3` function.
@@ -407,9 +433,15 @@ defmodule Helix.Factor do
   defp assemble(params, relay, block) do
     quote do
 
-      @spec assembly(params, relay :: term, exec_facts :: [atom] | :all) ::
+      # Returns full `factor` and `relay` types if executing all facts
+      @spec assembly(params, relay :: term, exec_facts :: :all) ::
         {factor, relay}
-      def assembly(var!(params) = unquote(params), unquote(relay), exec \\ :all) do
+
+      # Returns a subset of `factor`/`relay` if executing only a subset of facts
+      @spec assembly(params, relay :: term, exec_facts :: [atom]) ::
+        {map, map}
+
+      def assembly(var!(params) = unquote(params), var!(relay) = unquote(relay), exec) do
         var!(exec_facts) = exec
         var!(facts) = %{}
 

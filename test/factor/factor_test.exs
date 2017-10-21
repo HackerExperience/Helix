@@ -2,12 +2,14 @@ defmodule Helix.FactorTest do
 
   use ExUnit.Case, async: true
 
+  import Helix.Test.Factor.Macros
+
   alias Helix.Test.Factor.FakeFactorOne
   alias Helix.Test.Factor.FakeFactorTwo
 
   describe "mocks" do
     test "FactorTestOne" do
-      {factor, relay} = FakeFactorOne.assembly(%{}, %{})
+      {factor, relay} = assembly(FakeFactorOne, %{})
 
       assert factor.sky_color == :blue
       assert factor.meaning_of_life == 42
@@ -19,7 +21,7 @@ defmodule Helix.FactorTest do
     end
 
     test "FactorTestTwo" do
-      {factor, relay} = FakeFactorTwo.assembly(%{}, %{})
+      {factor, relay} = assembly(FakeFactorTwo, %{})
 
       assert factor.lover.cake == :lie
       assert factor.fact_one

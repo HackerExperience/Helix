@@ -24,6 +24,8 @@ defmodule Helix.Factor.Client do
   defmacro get_factors(params, do: block) do
     quote do
 
+      @spec get_factors(map) ::
+        map
       def get_factors(unquote(params)) do
         var!(relay) = %{}
         var!(factors) = %{}
@@ -32,7 +34,7 @@ defmodule Helix.Factor.Client do
 
         var!(relay)  # Just to mark as used
 
-        # Returns the accumulated factors, without the `__struct__` (if any do)
+        # Returns the accumulated factors
         Map.delete(var!(factors), :__struct__)
       end
 
@@ -46,8 +48,9 @@ defmodule Helix.Factor.Client do
   It accepts the `only` and `skip` options, which enables the user to execute
   (or avoid execution of) specific facts.
   """
-  defmacro factor(module, params, opts) do
+  defmacro factor(module, params, opts \\ quote(do: [])) do
     all_facts = FactorClientUtils.get_all_facts(module, __CALLER__)
+    factor_name = FactorClientUtils.get_factor_name(module, __CALLER__)
     executable = FactorClientUtils.build_executable(opts, all_facts)
 
     quote do
@@ -59,8 +62,11 @@ defmodule Helix.Factor.Client do
           unquote(executable)
         )
 
+      factor = Map.put(%{}, unquote(factor_name), factor)
+
       var!(factors) = Map.merge(var!(factors), factor)
       var!(relay) = Map.merge(var!(relay), next_relay)
+
     end
   end
 
@@ -70,6 +76,12 @@ defmodule Helix.Factor.Client do
     """
 
     alias HELL.Utils
+
+    def get_factor_name(module, caller) do
+      caller.module
+      |> Module.eval_quoted(quote(do: unquote(module).get_name()))
+      |> elem(0)
+    end
 
     @doc """
     Helper to get all facts defined by `module`.

@@ -91,8 +91,6 @@ defmodule Helix.Test.Factor do
     child :lover
 
     assembly(params) do
-      relay = %{}
-
       get_fact :fact_one
       get_fact :fact_two
       get_fact :lover

@@ -7,9 +7,26 @@ defmodule Helix.Process do
     quote do
 
       defmodule unquote(name) do
+
+        import Helix.Process.Objective
+
+        @type resource_usage :: Helix.Process.Objective.resource_usage
+
         unquote(block)
       end
 
+    end
+  end
+
+  @doc """
+  `set_objective` will pass the given params to `Process.Objective.calculate/2`,
+  which will use its own flow to specify the required objectives the process
+  should need for each hardware resource.
+  """
+  defmacro set_objective(params) do
+    quote bind_quoted: [params: params] do
+      factors = __MODULE__.Objective.get_factors(params)
+      __MODULE__.Objective.calculate(params, factors)
     end
   end
 
@@ -72,7 +89,6 @@ defmodule Helix.Process do
         end
 
         unquote(block)
-
       end
 
     end

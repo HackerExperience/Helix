@@ -11,6 +11,7 @@ process Helix.Software.Process.File.Transfer do
   file is being transferred, is already present on the standard process data.
   """
 
+  alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
   @type t :: %__MODULE__{
@@ -19,12 +20,18 @@ process Helix.Software.Process.File.Transfer do
     connection_type: :ftp | :public_ftp
   }
 
+  @type objective ::
+    %{dlk: resource_usage}
+    | %{ulk: resource_usage}
+
   process_struct [:type, :destination_storage_id, :connection_type]
 
+  @spec objective(:download | :upload, File.t) ::
+    objective
   def objective(:download, file),
-    do: %{dlk: file.file_size}
+    do: set_objective %{type: :download, file: file}
   def objective(:upload, file),
-    do: %{ulk: file.file_size}
+    do: set_objective %{type: :upload, file: file}
 
   process_type do
     @moduledoc """
@@ -95,6 +102,50 @@ process Helix.Software.Process.File.Transfer do
         connection_type: String.to_existing_atom(data.connection_type)
       }
     end
+  end
+
+  process_objective do
+    @moduledoc """
+    Sets the objectives to FileTransferProcess
+    """
+
+    alias Helix.Software.Factor.File, as: FileFactor
+
+    @type params ::
+      %{
+        type: :download | :upload,
+        file: File.t
+      }
+
+    @type factors ::
+      %{
+        file: %{size: FileFactor.fact_size}
+      }
+
+    @doc """
+    We only need to know the file size to figure out the process objectives.
+    """
+    get_factors(params) do
+      factor Helix.Software.Factor.File, params, only: :size
+    end
+
+    @doc """
+    Uses the downlink resource during download.
+    """
+    dlk(%{type: :download}) do
+      f.file.size
+    end
+
+    @doc """
+    Uses the uplink resource during upload.
+    """
+    ulk(%{type: :upload}) do
+      f.file.size
+    end
+
+    # Safety fallbacks
+    dlk(%{type: :upload})
+    ulk(%{type: :download})
   end
 
   process_viewable do
