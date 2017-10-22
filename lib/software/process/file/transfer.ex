@@ -67,29 +67,23 @@ process Helix.Software.Process.File.Transfer do
     def minimum(_),
       do: %{}
 
-    def kill(data, process, _) do
-      unchange(process)
-
+    on_kill(data, _reason) do
       reason = :killed
       {from_id, to_id} = get_servers_context(data, process)
 
       event =
         FileTransferAbortedEvent.new(process, data, from_id, to_id, reason)
 
-      {delete(process), [event]}
+      {:ok, [event]}
     end
 
-    def state_change(data, process, _, :complete) do
-      unchange(process)
+    on_completion(data) do
 
       {from_id, to_id} = get_servers_context(data, process)
       event = FileTransferProcessedEvent.new(process, data, from_id, to_id)
 
-      {delete(process), [event]}
+      {:ok, [event]}
     end
-
-    def state_change(_, process, _, _),
-      do: {process, []}
 
     @spec get_servers_context(data :: term, process :: term) ::
       context :: {from_server :: Server.id, to_server :: Server.id}
@@ -97,9 +91,6 @@ process Helix.Software.Process.File.Transfer do
       do: {process.target_server_id, process.gateway_id}
     defp get_servers_context(%{type: :upload}, process),
       do: {process.gateway_id, process.target_server_id}
-
-    def conclusion(data, process),
-      do: state_change(data, process, :running, :complete)
 
     def after_read_hook(data) do
       %FileTransferProcess{

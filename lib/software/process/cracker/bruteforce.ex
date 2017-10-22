@@ -40,25 +40,11 @@ process Helix.Software.Process.Cracker.Bruteforce do
       }
     end
 
-    def kill(_data, process, _) do
-      unchange(process)
-
-      {delete(process), []}
-    end
-
-    def state_change(data, process, _, :complete) do
-      unchange(process)
-
+    on_completion(data) do
       event = BruteforceProcessedEvent.new(process, data)
 
-      {delete(process), [event]}
+      {:ok, [event]}
     end
-
-    def state_change(_, process, _, _),
-      do: {process, []}
-
-    def conclusion(data, process),
-      do: state_change(data, process, :running, :complete)
 
     def after_read_hook(data) do
       %BruteforceProcess{

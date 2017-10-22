@@ -1,8 +1,14 @@
-defmodule Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
+import Helix.Process
+
+process Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
 
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
+
+  process_struct [:token_id, :atm_id, :account_number]
+
+  @process_type :bank_reveal_password
 
   @type t ::
     %__MODULE__{
@@ -11,14 +17,8 @@ defmodule Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
       account_number: BankAccount.account
     }
 
-  @enforce_keys [:token_id, :atm_id, :account_number]
-  defstruct [:token_id, :atm_id, :account_number]
+  process_type do
 
-  defimpl Helix.Process.Model.Process.ProcessType do
-
-    import Helix.Process
-
-    alias Ecto.Changeset
     alias Helix.Universe.Bank.Event.RevealPassword.Processed,
       as: RevealPasswordProcessedEvent
 
@@ -28,27 +28,10 @@ defmodule Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
     def minimum(_),
       do: %{}
 
-    def kill(_, process, _) do
-      process =
-        process
-        |> Changeset.change()
-        |> Map.put(:action, :delete)
-
-      {process, []}
-    end
-
-    def state_change(data, process, _, :complete) do
-      unchange(process)
-
+    on_completion(data) do
       event = RevealPasswordProcessedEvent.new(process, data)
 
-      {delete(process), [event]}
+      {:ok, [event]}
     end
-
-    def conclusion(data, process),
-      do: state_change(data, process, :running, :complete)
-
-    def after_read_hook(data),
-      do: data
   end
 end

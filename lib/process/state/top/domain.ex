@@ -396,7 +396,7 @@ defmodule Helix.Process.State.TOP.Domain do
         [] ->
           {processes, remaining_resources}
         negative_resources ->
-          # If the server doesn't have enough resources to keep the instanciated
+          # If the server doesn't have enough resources to keep the instantiated
           # processes, run a procedure to free the minimum possible resources by
           # killing the most consuming processes that are over-reserving those
           # resources

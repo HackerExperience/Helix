@@ -1,6 +1,12 @@
-defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
+import Helix.Process
+
+process Helix.Universe.Bank.Model.BankTransfer.ProcessType do
 
   alias Helix.Universe.Bank.Model.BankTransfer
+
+  process_struct [:transfer_id, :amount]
+
+  @process_type :wire_transfer
 
   @type t ::
     %__MODULE__{
@@ -8,12 +14,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
       amount: BankTransfer.amount
     }
 
-  @enforce_keys ~w/transfer_id amount/a
-  defstruct ~w/transfer_id amount/a
-
-  defimpl Helix.Process.Model.Process.ProcessType do
-
-    import Helix.Process
+  process_type do
 
     alias Helix.Universe.Bank.Event.Bank.Transfer.Aborted,
       as: BankTransferAbortedEvent
@@ -29,24 +30,18 @@ defmodule Helix.Universe.Bank.Model.BankTransfer.ProcessType do
     def minimum(_),
       do: %{}
 
-    def kill(data, process, _) do
-      unchange(process)
-
+    on_kill(data, _reason) do
       event = BankTransferAbortedEvent.new(process, data)
 
-      {delete(process), [event]}
+      {:ok, [event]}
     end
 
-    def state_change(data, process, _, :complete) do
-      unchange(process)
+    on_completion(data) do
 
       event = BankTransferProcessedEvent.new(process, data)
 
-      {delete(process), [event]}
+      {:ok, [event]}
     end
-
-    def conclusion(data, process),
-      do: state_change(data, process, :running, :complete)
 
     def after_read_hook(data),
       do: data
