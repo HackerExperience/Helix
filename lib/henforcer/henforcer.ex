@@ -346,9 +346,18 @@ defmodule Helix.Henforcer do
   """
   defmacro get_and_drop(relay, key) do
     quote do
-      value = Map.get(unquote(relay), unquote(key))
+      value = Map.fetch!(unquote(relay), unquote(key))
 
       {Map.delete(unquote(relay), unquote(key)), value}
+    end
+  end
+
+  @doc """
+  Returns a new relay without `key`.
+  """
+  defmacro drop(relay, key) do
+    quote do
+      Map.delete(unquote(relay), unquote(key))
     end
   end
 

@@ -4,9 +4,10 @@ defmodule Helix.Network.Henforcer.Network do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Model.Server
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Network.Model.Network
 
-  @type nip_exists_relay :: %{server_id: Server.id}
+  @type nip_exists_relay :: %{server: Server.t}
   @type nip_exists_relay_partial :: %{}
   @type nip_exists_error ::
     {false, {:nip, :not_found}, nip_exists_relay_partial}
@@ -21,7 +22,10 @@ defmodule Helix.Network.Henforcer.Network do
   def nip_exists?(network_id = %Network.ID{}, ip) do
     case CacheQuery.from_nip_get_server(network_id, ip) do
       {:ok, server_id} ->
-        reply_ok(%{server_id: server_id})
+        henforce_else(
+          ServerHenforcer.server_exists?(server_id),
+          {:nip, :not_found}
+        )
 
       {:error, _} ->
         reply_error({:nip, :not_found})

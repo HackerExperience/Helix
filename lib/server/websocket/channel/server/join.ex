@@ -54,16 +54,11 @@ join Helix.Server.Websocket.Channel.Server.Join do
       # /\ Parse the join topic and fetch data from it
 
       # Validate gateway nip
-      {:ok, network_id, ip} <- validate_nip(data.network_id, data.ip),
-
-      # Ensure gateway nip exists
-      {true, relay} <- NetworkHenforcer.nip_exists?(network_id, ip)
+      {:ok, network_id, ip} <- validate_nip(data.network_id, data.ip)
     do
       params = %{
         network_id: network_id,
-        gateway_ip: data.ip,
-        gateway_id: relay.server_id,
-        counter: 0
+        gateway_ip: ip
       }
 
       update_params(request, params, reply: true)
@@ -79,9 +74,8 @@ join Helix.Server.Websocket.Channel.Server.Join do
   @doc """
   Verifies params for remote server join.
   """
-  def check_params(request = %ServerJoin{type: :remote}, socket) do
+  def check_params(request = %ServerJoin{type: :remote}, _socket) do
     gateway_ip = request.unsafe["gateway_ip"]
-    entity_id = socket.assigns.entity_id
 
     with \
       {:ok, data} <- get_topic_data(request.topic),
@@ -92,41 +86,21 @@ join Helix.Server.Websocket.Channel.Server.Join do
          validate_nip(data.network_id, data.ip),
       {:ok, _, gateway_ip} <- validate_nip(network_id, gateway_ip),
 
-      # Ensure the given nips exist on the DB
-      {true, relay} <- NetworkHenforcer.nip_exists?(network_id, gateway_ip),
-      gateway_id = relay.server_id,
-      {true, relay} <- NetworkHenforcer.nip_exists?(network_id, destination_ip),
-      destination_id = relay.server_id,
-
       # Validate password
-      {:ok, password} <- validate_input(request.unsafe["password"], :password),
-
-      {valid_counter?, counter} =
-        validate_counter(
-          entity_id,
-          destination_id,
-          {network_id, destination_ip},
-          data.counter
-        ),
-      true <- valid_counter? || :bad_counter
+      {:ok, password} <- validate_input(request.unsafe["password"], :password)
     do
       params = %{
         network_id: network_id,
-        gateway_id: gateway_id,
         gateway_ip: gateway_ip,
-        destination_id: destination_id,
         destination_ip: destination_ip,
-        counter: counter,
-        password: password
+        password: password,
+        unsafe_counter: data.counter
       }
 
       update_params(request, params, reply: true)
     else
       {false, reason, _} ->
         reply_error(reason)
-
-      :bad_counter ->
-        reply_error("bad_counter")
 
       _ ->
         bad_request()
@@ -139,14 +113,22 @@ join Helix.Server.Websocket.Channel.Server.Join do
   """
   def check_permissions(request = %ServerJoin{type: :local}, socket) do
     entity_id = socket.assigns.entity_id
-    gateway_id = request.params.gateway_id
+    network_id = request.params.network_id
+    gateway_ip = request.params.gateway_ip
 
-    case ChannelHenforcer.local_join_allowed?(entity_id, gateway_id) do
-      {true, relay} ->
-        meta = %{gateway: relay.server, entity: relay.entity}
+    with \
+      {true, r1} <- NetworkHenforcer.nip_exists?(network_id, gateway_ip),
+      gateway = r1.server,
+      {true, r2} <- ChannelHenforcer.local_join_allowed?(entity_id, gateway)
+    do
+      meta = %{
+        gateway: gateway,
+        entity: r2.entity,
+        counter: 0
+      }
 
-        update_meta(request, meta, reply: true)
-
+      update_meta(request, meta, reply: true)
+    else
       {false, reason, _} ->
         reply_error(reason)
     end
@@ -160,28 +142,46 @@ join Helix.Server.Websocket.Channel.Server.Join do
   3 - The given NIP must match one of the server's NIP.
   """
   def check_permissions(request = %ServerJoin{type: :remote}, socket) do
-    entity_id = socket.assigns.entity_id
-    gateway_id = request.params.gateway_id
-    destination_id = request.params.destination_id
     password = request.params.password
+    network_id = request.params.network_id
+    gateway_ip = request.params.gateway_ip
+    destination_ip = request.params.destination_ip
+    entity_id = socket.assigns.entity_id
+    unsafe_counter = request.params.unsafe_counter
 
-    remote_join_allowed? =
+    remote_join_allowed? = fn gateway, destination ->
       ChannelHenforcer.remote_join_allowed?(
-        entity_id,
-        gateway_id,
-        destination_id,
-        password
+        entity_id, gateway, destination, password
       )
+    end
 
-    case remote_join_allowed? do
-      {true, relay} ->
-        meta = %{
-          gateway: relay.gateway,
-          destination: relay.destination,
-          entity: relay.entity
-        }
+    valid_counter? = fn destination ->
+      ChannelHenforcer.valid_counter?(
+        entity_id, destination, {network_id, destination_ip}, unsafe_counter
+      )
+    end
 
-        update_meta(request, meta, reply: true)
+    with \
+      {true, r1} <- NetworkHenforcer.nip_exists?(network_id, gateway_ip),
+      gateway = r1.server,
+      {true, r2} <- NetworkHenforcer.nip_exists?(network_id, destination_ip),
+      destination = r2.server,
+      {true, r3} <- remote_join_allowed?.(gateway, destination),
+      entity = r3.entity,
+      {true, r4} <- valid_counter?.(destination),
+      counter = r4.counter
+    do
+      meta = %{
+        gateway: gateway,
+        destination: destination,
+        entity: entity,
+        counter: counter
+      }
+
+      update_meta(request, meta, reply: true)
+    else
+      {false, {:counter, :invalid}, _} ->
+        reply_error("bad_counter")
 
       {false, reason, _} ->
         reply_error(reason)
@@ -197,7 +197,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
       end
 
     %{
-      counter: request.params.counter,
+      counter: request.meta.counter,
       network_id: request.params.network_id,
       access_type: access_type
     }
@@ -213,7 +213,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
   def join(request = %ServerJoin{type: :local}, socket, assign) do
     gateway_ip = request.params.gateway_ip
     network_id = request.params.network_id
-    counter = request.params.counter
+    counter = request.meta.counter
 
     entity = request.meta.entity
     gateway = request.meta.gateway
@@ -262,7 +262,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
     network_id = request.params.network_id
     gateway_ip = request.params.gateway_ip
     destination_ip = request.params.destination_ip
-    counter = request.params.counter
+    counter = request.meta.counter
 
     gateway = request.meta.gateway
     destination = request.meta.destination
@@ -349,28 +349,5 @@ join Helix.Server.Websocket.Channel.Server.Join do
       _ ->
         :error
     end
-  end
-
-  docp """
-  Validates and returns the next counter. If the given counter was `nil`, it
-
-  Helix should automatically set it to the correct result.
-  """
-  defp validate_counter(entity_id, server_id, nip, nil) do
-    next_counter =
-      ServerWebsocketChannelState.get_next_counter(entity_id, server_id, nip)
-
-    {true, next_counter}
-  end
-  defp validate_counter(entity_id, server_id, nip, counter) do
-    valid? =
-      ServerWebsocketChannelState.valid_counter?(
-        entity_id,
-        server_id,
-        nip,
-        counter
-      )
-
-    {valid?, counter}
   end
 end

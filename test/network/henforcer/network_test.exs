@@ -18,7 +18,9 @@ defmodule Helix.Network.Henforcer.NetworkTest do
 
       assert {true, relay} =
         NetworkHenforcer.nip_exists?(nip.network_id, nip.ip)
-      assert_relay relay, [:server_id]
+
+      assert relay.server == server
+      assert_relay relay, [:server]
     end
 
     test "rejects when nip is not found" do
