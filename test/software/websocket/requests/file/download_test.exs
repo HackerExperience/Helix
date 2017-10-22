@@ -93,8 +93,10 @@ defmodule Helix.Software.Websocket.Requests.File.DownloadTest do
       request = RequestHelper.mock_request(FileDownloadRequest, params)
       assert {:ok, request} = Requestable.check_permissions(request, socket)
 
-      assert request.meta.file.file_id == file.file_id
+      assert request.meta.file == file
       assert request.meta.storage == storage
+      assert request.meta.gateway == gateway
+      assert request.meta.destination == destination
     end
 
     test "rejects if invalid file was passed" do

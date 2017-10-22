@@ -67,6 +67,8 @@ request Helix.Software.Websocket.Requests.File.Download do
     case can_transfer? do
       {true, relay} ->
         meta = %{
+          gateway: relay.gateway,
+          destination: relay.destination,
           file: relay.file,
           storage: relay.storage
         }
@@ -82,8 +84,10 @@ request Helix.Software.Websocket.Requests.File.Download do
     file = request.meta.file
     storage = request.meta.storage
     tunnel = socket.assigns.tunnel
+    gateway = request.meta.gateway
+    destination = request.meta.destination
 
-    case FilePublic.download(tunnel, storage, file) do
+    case FilePublic.download(gateway, destination, tunnel, storage, file) do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 

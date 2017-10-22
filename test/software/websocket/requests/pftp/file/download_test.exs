@@ -111,8 +111,8 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
       # Assigned correct fields to the meta
       assert request.meta.file == file
       assert request.meta.storage
-      assert request.meta.pftp_file.server_id == destination.server_id
-      assert request.meta.pftp_file.file_id == file.file_id
+      assert request.meta.gateway.server_id == socket.assigns.gateway.server_id
+      assert request.meta.destination == destination
 
       # The destination storage is NOT the origin's file storage.
       refute request.meta.storage.storage_id == file.storage_id

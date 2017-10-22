@@ -2,6 +2,7 @@ defmodule Helix.Software.Public.PFTPTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Public.PFTP, as: PFTPPublic
 
   alias Helix.Test.Process.TOPHelper
@@ -13,13 +14,13 @@ defmodule Helix.Software.Public.PFTPTest do
     test "starts a pftp download process" do
       {gateway, _} = ServerSetup.server()
       {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
-      {pftp_file, %{file: file}} =
-        SoftwareSetup.PFTP.file(server_id: pftp.server_id)
+      {_, %{file: file}} = SoftwareSetup.PFTP.file(server_id: pftp.server_id)
 
+      destination = ServerQuery.fetch(pftp.server_id)
       storage = SoftwareHelper.get_storage(pftp.server_id)
 
       assert {:ok, process} =
-        PFTPPublic.download(gateway.server_id, pftp_file, storage, file)
+        PFTPPublic.download(gateway, destination, storage, file)
 
       assert process.gateway_id == gateway.server_id
       assert process.target_server_id == pftp.server_id

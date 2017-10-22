@@ -65,30 +65,31 @@ defmodule Helix.Software.Public.FileTest do
     end
   end
 
-  describe "download/3" do
+  describe "download/5" do
     test "starts download process" do
       {gateway, _} = ServerSetup.server()
-      {file, %{server_id: destination_id}} = SoftwareSetup.file()
+      {destination, _} = ServerSetup.server()
+      {file, _} = SoftwareSetup.file(server_id: destination.server_id)
 
       {tunnel, _} =
         NetworkSetup.tunnel(
           gateway_id: gateway.server_id,
-          destination_id: destination_id
+          destination_id: destination.server_id
         )
 
-      storage = SoftwareHelper.get_storage(destination_id)
+      storage = SoftwareHelper.get_storage(destination)
 
-      # Passing storage_id and file_id as arguments so we can see all the
-      # pattern matches for `download/3` in action
       assert {:ok, process} =
-        FilePublic.download(tunnel, storage.storage_id, file.file_id)
+        FilePublic.download(
+          gateway, destination, tunnel, storage, file
+        )
 
       assert process.file_id == file.file_id
       assert process.process_type == "file_download"
       assert process.process_data.connection_type == :ftp
       assert process.process_data.type == :download
 
-      TOPHelper.top_stop(gateway.server_id)
+      TOPHelper.top_stop(gateway)
     end
   end
 end

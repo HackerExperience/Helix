@@ -113,7 +113,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
 
       ref = push socket, "pftp.file.download", params
 
-      assert_reply ref, :ok, %{data: process}
+      assert_reply ref, :ok, %{data: process}, 300
 
       assert process.file.id == to_string(file.file_id)
       assert process.type == "file_download"
