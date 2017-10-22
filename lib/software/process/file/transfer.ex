@@ -26,12 +26,18 @@ process Helix.Software.Process.File.Transfer do
 
   process_struct [:type, :destination_storage_id, :connection_type]
 
-  @spec objective(:download | :upload, File.t) ::
-    objective
-  def objective(:download, file),
-    do: set_objective %{type: :download, file: file}
-  def objective(:upload, file),
-    do: set_objective %{type: :upload, file: file}
+  def new(params = %{destination_storage_id: %Storage.ID{}}) do
+    %__MODULE__{
+      type: params.type,
+      destination_storage_id: params.destination_storage_id,
+      connection_type: params.connection_type
+    }
+  end
+
+  # @spec objective(:download | :upload, File.t) ::
+    # objective
+  def objective(params = %{type: _, file: _}),
+    do: set_objective params
 
   process_type do
     @moduledoc """
@@ -146,6 +152,26 @@ process Helix.Software.Process.File.Transfer do
     # Safety fallbacks
     dlk(%{type: :upload})
     ulk(%{type: :download})
+  end
+
+  executable do
+
+    @process Helix.Software.Process.File.Transfer
+
+    objective(_, _, params, meta) do
+      %{
+        type: params.type,
+        file: meta.file
+      }
+    end
+
+    file(_gateway, _target, _params, %{file: file}) do
+      file.file_id
+    end
+
+    connection(_gateway, _target, params, _) do
+      {:create, params.connection_type}
+    end
   end
 
   process_viewable do

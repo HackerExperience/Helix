@@ -68,17 +68,21 @@ defmodule Helix.Software.Process.File.TransferTest do
     test "download uses dlk" do
       {file, _} = SoftwareSetup.file()
 
-       resources = FileTransferProcess.objective(:download, file)
+      resources = FileTransferProcess.objective(%{type: :download, file: file})
 
-       assert_objective resources, {:dlk, file.file_size}
+      assert_objective resources, {:dlk, file.file_size}
     end
 
     test "upload uses ulk" do
       {file, _} = SoftwareSetup.file()
 
-      resources = FileTransferProcess.objective(:upload, file)
+      resources = FileTransferProcess.objective(%{type: :upload, file: file})
 
       assert_objective resources, {:ulk, file.file_size}
     end
+  end
+
+  describe "Process.Executable" do
+    # Tested at `FileTransferFlowTest`
   end
 end
