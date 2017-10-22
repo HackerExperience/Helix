@@ -1,7 +1,5 @@
 defmodule Helix.Software.Public.File do
 
-  alias HELL.IPv4
-  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
@@ -48,49 +46,39 @@ defmodule Helix.Software.Public.File do
     end
   end
 
-  @spec bruteforce(Server.id, Network.id, IPv4.t, [Server.id]) ::
+  @spec bruteforce(
+    File.t_of_type(:cracker),
+    gateway :: Server.t,
+    target :: Server.t,
+    Network.id,
+    Network.ip,
+    term)
+  ::
     {:ok, Process.t}
-    | {:error, %{message: String.t}}
+    | {:error, %{message: String.t}}  # TODO
     | FileFlow.error
   @doc """
   Starts a bruteforce attack against `(network_id, target_ip)`, originating from
   `gateway_id` and having `bounces` as intermediaries.
   """
-  def bruteforce(gateway_id, network_id, target_ip, bounces) do
-    create_params = fn ->
-      with \
-        {:ok, target_server_id} <-
-          CacheQuery.from_nip_get_server(network_id, target_ip)
-      do
-        %{
-          target_server_id: target_server_id,
-          network_id: network_id,
-          target_server_ip: target_ip
-        }
-      end
-    end
+  def bruteforce(
+    cracker = %File{software_type: :cracker},
+    gateway = %Server{},
+    target = %Server{},
+    network_id = %Network.ID{},
+    target_ip,
+    bounce_id)
+  do
+    params = %{
+      target_server_ip: target_ip
+    }
 
-    create_meta = fn ->
-      %{bounces: bounces}
-    end
+    meta = %{
+      bounce: bounce_id,
+      network_id: network_id,
+      cracker: cracker
+    }
 
-    get_cracker = fn ->
-      FileQuery.fetch_best(gateway_id, :bruteforce)
-    end
-
-    with \
-      params = %{} <- create_params.(),
-      meta = create_meta.(),
-      cracker = %{} <- get_cracker.() || :no_cracker,
-      {:ok, process} <-
-        FileFlow.execute_file(cracker, gateway_id, params, meta)
-    do
-      {:ok, process}
-    else
-      :no_cracker ->
-        {:error, %{message: "cracker_not_found"}}
-      error ->
-        error
-    end
+    FileFlow.execute_file(cracker, :bruteforce, gateway, target, params, meta)
   end
 end

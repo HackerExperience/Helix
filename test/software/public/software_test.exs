@@ -12,7 +12,7 @@ defmodule Helix.Software.Public.FileTest do
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  describe "bruteforce/4" do
+  describe "bruteforce/6" do
     test "starts a bruteforce attack" do
       {source_server, %{entity: source_entity}} = ServerSetup.server()
       {target_server, _} = ServerSetup.server()
@@ -26,10 +26,13 @@ defmodule Helix.Software.Public.FileTest do
       # Start the process from public
       assert {:ok, process} =
         FilePublic.bruteforce(
-          source_server.server_id,
+          cracker,
+          source_server,
+          target_server,
           target_nip.network_id,
           target_nip.ip,
-          [])
+          []
+        )
 
       assert process.connection_id
       assert process.gateway_id == source_server.server_id
@@ -39,28 +42,8 @@ defmodule Helix.Software.Public.FileTest do
       assert process.source_entity_id == source_entity.entity_id
       assert process.process_data.target_server_ip == target_nip.ip
 
-      :timer.sleep(100)
+      # :timer.sleep(100)
       TOPHelper.top_stop(source_server.server_id)
-      CacheHelper.sync_test()
-    end
-
-    test "fails if no cracker is present" do
-      {source_server, _} = ServerSetup.server()
-      {target_server, _} = ServerSetup.server()
-
-      {:ok, [target_nip]} =
-        CacheQuery.from_server_get_nips(target_server.server_id)
-
-      # Attempts to start the process on a server that has no cracker
-      assert {:error, %{message: msg}} =
-        FilePublic.bruteforce(
-          source_server.server_id,
-          target_nip.network_id,
-          target_nip.ip,
-          [])
-
-      assert msg == "cracker_not_found"
-
       CacheHelper.sync_test()
     end
   end

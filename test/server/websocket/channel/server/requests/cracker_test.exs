@@ -53,7 +53,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.CrackerTest do
       assert ProcessQuery.fetch(response.data.process_id)
       assert TunnelQuery.fetch_connection(response.data.access.connection_id)
 
-      TOPHelper.top_stop(gateway.server_id)
+      TOPHelper.top_stop(gateway)
     end
 
     test "attempt to crack without a cracker" do
