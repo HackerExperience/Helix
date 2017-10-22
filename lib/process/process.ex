@@ -117,6 +117,18 @@ defmodule Helix.Process do
     end
   end
 
+  defmacro render_empty_data do
+    quote do
+
+      @spec render_data(process :: struct, :full | :partial) ::
+        data
+      defp render_data(_, _) do
+        %{}
+      end
+
+    end
+  end
+
   @doc """
   Helper to make sure the given process is a valid Process.t, not a changeset.
 

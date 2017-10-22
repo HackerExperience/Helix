@@ -11,7 +11,7 @@ defmodule Helix.Software.Event.Cracker.Overflow do
     alias Helix.Network.Model.Connection
     alias Helix.Process.Model.Process
     alias Helix.Server.Model.Server
-    alias Helix.Software.Model.Software.Cracker.Overflow, as: OverflowProcess
+    alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
 
     @type t :: %__MODULE__{
       gateway_id: Server.id,

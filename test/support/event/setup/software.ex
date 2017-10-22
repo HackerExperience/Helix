@@ -45,14 +45,8 @@ defmodule Helix.Test.Event.Setup.Software do
     }
   end
 
-  def bruteforce_conclusion(process = %Process{}) do
-    %BruteforceProcessedEvent{
-      source_entity_id: process.source_entity_id,
-      network_id: process.network_id,
-      target_server_id: process.target_server_id,
-      target_server_ip: process.process_data.target_server_ip,
-    }
-  end
+  def bruteforce_conclusion(process = %Process{}),
+    do: BruteforceProcessedEvent.new(process, process.process_data)
   def bruteforce_conclusion do
     %BruteforceProcessedEvent{
       source_entity_id: Entity.ID.generate(),

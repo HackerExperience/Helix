@@ -1,73 +1,83 @@
 defmodule Helix.Test.Software.Setup.Flow do
 
-  alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
-  alias Helix.Software.Action.Flow.Software.Cracker, as: CrackerFlow
-  alias Helix.Software.Query.Storage, as: StorageQuery
+  alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
+  alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
+  @doc """
+  Starts a FileTransferProcess (download or upload).
+  """
   def file_transfer(type) do
     {gateway, _} = ServerSetup.server()
-    {file, %{server_id: destination_id}} = SoftwareSetup.file()
+    {destination, _} = ServerSetup.server()
+    {file, _} = SoftwareSetup.file(server_id: destination.server_id)
+
+    {connection_type, process_type, transfer_type} = get_type_info(type)
 
     destination_server =
       if type == :upload do
-        destination_id
+        destination
       else
-        gateway.server_id
+        gateway
       end
 
-    destination_storage =
-      destination_server
-      |> CacheQuery.from_server_get_storages()
-      |> elem(1)
-      |> List.first()
-      |> StorageQuery.fetch()
+    destination_storage = SoftwareHelper.get_storage(destination_server)
 
-    network_info = %{
-      gateway_id: gateway.server_id,
-      destination_id: destination_id,
-      network_id: NetworkHelper.internet(),
-      bounces: [],
-      tunnel: nil
+    params = %{
+      type: transfer_type,
+      connection_type: connection_type,
+      destination_storage_id: destination_storage.storage_id
+    }
+
+    meta = %{
+      network_id: NetworkHelper.internet_id(),
+      bounce: [],
+      file: file,
+      process_type: process_type
     }
 
     {:ok, process} =
-      FileTransferFlow.transfer(
-        type,
-        file,
-        destination_storage,
-        network_info
-      )
+      FileTransferProcess.execute(gateway, destination, params, meta)
 
     {process, %{}}
   end
 
+  defp get_type_info(:download),
+    do: {:ftp, "file_download", :download}
+  defp get_type_info(:upload),
+    do: {:ftp, "file_upload", :upload}
+  defp get_type_info(:pftp_download),
+    do: {:public_ftp, "file_download", :download}
+
+  @doc """
+  Starts a BruteforceProcess.
+  """
   def bruteforce do
     {source_server, %{entity: source_entity}} = ServerSetup.server()
     {target_server, _} = ServerSetup.server()
 
-    {:ok, [target_nip]} =
-      CacheQuery.from_server_get_nips(target_server.server_id)
+    target_nip = ServerHelper.get_nip(target_server)
 
     {file, _} =
       SoftwareSetup.file([type: :cracker, server_id: source_server.server_id])
 
     params = %{
-      target_server_id: target_server.server_id,
-      network_id: target_nip.network_id,
       target_server_ip: target_nip.ip
     }
 
     meta = %{
-      bounces: []
+      network_id: target_nip.network_id,
+      bounce: [],
+      cracker: file
     }
 
     {:ok, process} =
-      CrackerFlow.execute(file, source_server.server_id, params, meta)
+      BruteforceProcess.execute(source_server, target_server, params, meta)
 
     related = %{
       source_server: source_server,

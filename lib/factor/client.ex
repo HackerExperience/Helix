@@ -93,7 +93,7 @@ defmodule Helix.Factor.Client do
     Retrieve the Factor's name.
     """
     def get_factor_name(module, caller) do
-      caller.module
+      caller
       |> Module.eval_quoted(quote(do: unquote(module).get_name()))
       |> elem(0)
     end
@@ -104,7 +104,7 @@ defmodule Helix.Factor.Client do
     It uses a trick from Module's `eval_quoted`. Shh!
     """
     def get_all_facts(module, caller) do
-      caller.module
+      caller
       |> Module.eval_quoted(quote(do: unquote(module).get_facts()))
       |> elem(0)
     end

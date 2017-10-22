@@ -13,7 +13,7 @@ defmodule Helix.Software.Event.Cracker.Bruteforce do
     alias Helix.Network.Model.Network
     alias Helix.Process.Model.Process
     alias Helix.Server.Model.Server
-    alias Helix.Software.Model.Software.Cracker.Bruteforce,
+    alias Helix.Software.Process.Cracker.Bruteforce,
       as: BruteforceProcess
 
     @type t :: %__MODULE__{
@@ -35,8 +35,8 @@ defmodule Helix.Software.Event.Cracker.Bruteforce do
     def new(process = %Process{}, data = %BruteforceProcess{}) do
       %__MODULE__{
         source_entity_id: process.source_entity_id,
-        network_id: data.network_id,
-        target_server_id: data.target_server_id,
+        network_id: process.network_id,
+        target_server_id: process.target_server_id,
         target_server_ip: data.target_server_ip
       }
     end
