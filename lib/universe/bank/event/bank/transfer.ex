@@ -11,8 +11,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Transfer do
     alias Helix.Network.Model.Connection
     alias Helix.Process.Model.Process
     alias Helix.Universe.Bank.Model.BankTransfer
-    alias Helix.Universe.Bank.Model.BankTransfer.ProcessType,
-      as: BankTransferProcess
+    alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
 
     @type t ::
       %__MODULE__{
@@ -42,8 +41,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Transfer do
     alias Helix.Process.Model.Process
     alias Helix.Process.Model.Process
     alias Helix.Universe.Bank.Model.BankTransfer
-    alias Helix.Universe.Bank.Model.BankTransfer.ProcessType,
-      as: BankTransferProcess
+    alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
 
     @type t ::
       %__MODULE__{

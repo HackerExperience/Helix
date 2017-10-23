@@ -1,6 +1,6 @@
 import Helix.Process
 
-process Helix.Universe.Bank.Model.BankTransfer.ProcessType do
+process Helix.Universe.Bank.Process.Bank.Transfer do
 
   alias Helix.Universe.Bank.Model.BankTransfer
 
@@ -14,7 +14,16 @@ process Helix.Universe.Bank.Model.BankTransfer.ProcessType do
       amount: BankTransfer.amount
     }
 
-  process_type do
+  @spec new(BankTransfer.t) ::
+    t
+  def new(transfer = %BankTransfer{}) do
+    %__MODULE__{
+      transfer_id: transfer.transfer_id,
+      amount: transfer.amount
+    }
+  end
+
+  processable do
 
     alias Helix.Universe.Bank.Event.Bank.Transfer.Aborted,
       as: BankTransferAbortedEvent
@@ -37,7 +46,6 @@ process Helix.Universe.Bank.Model.BankTransfer.ProcessType do
     end
 
     on_completion(data) do
-
       event = BankTransferProcessedEvent.new(process, data)
 
       {:ok, [event]}

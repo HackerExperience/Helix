@@ -1,6 +1,6 @@
 import Helix.Process
 
-process Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
+process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
 
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
@@ -17,7 +17,17 @@ process Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType do
       account_number: BankAccount.account
     }
 
-  process_type do
+  @spec new(BankToken.id, BankAccount.t) ::
+    t
+  def new(token_id, account = %BankAccount{}) do
+    %__MODULE__{
+      token_id: token_id,
+      atm_id: account.atm_id,
+      account_number: account.account_number
+    }
+  end
+
+  processable do
 
     alias Helix.Universe.Bank.Event.RevealPassword.Processed,
       as: RevealPasswordProcessedEvent

@@ -11,8 +11,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Model.BankAccount
-  alias Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType,
-    as: RevealPasswordProcessType
+  alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
+    as: BankAccountRevealPasswordProcess
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
@@ -31,7 +31,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
     {:ok, Process.t}
     | ProcessAction.on_create_error
   def reveal_password(account, token_id, gateway_id) do
-    process_data = %RevealPasswordProcessType{
+    process_data = %BankAccountRevealPasswordProcess{
       token_id: token_id,
       atm_id: account.atm_id,
       account_number: account.account_number

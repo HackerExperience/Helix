@@ -13,7 +13,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankTransfer
-  alias Helix.Universe.Bank.Model.BankTransfer.ProcessType
+  alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
 
   @spec start(
     from_account :: BankAccount.t,
@@ -84,7 +84,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
         network_id: NetworkQuery.internet().network_id,
         objective: %{cpu: amount},
         connection_id: connection.connection_id,
-        process_data: %ProcessType{
+        process_data: %BankTransferProcess{
           transfer_id: transfer.transfer_id,
           amount: amount
         },
