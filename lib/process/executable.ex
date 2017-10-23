@@ -1,13 +1,26 @@
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Process.Executable do
+  @moduledoc """
+  Process.Executable is a simple and declarative approach describing what should
+  happen when a given process is executed.
+
+  What `file` should this process modify? Is it related to a connection? Should
+  a connection be created? What is the process data? And so on.
+
+  Too tired to write proper API usage documentation. Please refer to existing
+  Processes to learn how to use `Process.Executable`.
+  """
 
   alias Helix.Event
   alias Helix.Network.Action.Tunnel, as: TunnelAction
-  alias Helix.Network.Query.Network, as: NetworkQuery
-  alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Process.Action.Process, as: ProcessAction
 
+  @doc """
+  We `use` Process.Executable because of the accumulated attribute `@process`.
+  """
   defmacro __using__(_args) do
     quote do
 
@@ -21,6 +34,7 @@ defmodule Helix.Process.Executable do
     end
   end
 
+  # TODO: Try to move the functions below to a custom module
   defmacro __before_compile__(_env) do
     quote do
 
@@ -125,6 +139,9 @@ defmodule Helix.Process.Executable do
     end
   end
 
+  @doc """
+  Top-level macro for defining the `Process.Executable` behavior.
+  """
   defmacro executable(do: block) do
     quote do
 
@@ -138,11 +155,17 @@ defmodule Helix.Process.Executable do
     end
   end
 
+  @doc """
+  Entry point for process executions. Implements the complete Executable flow.
+  """
   defmacro execute(gateway, target, params, meta) do
     args = [gateway, target, params, meta]
 
     quote do
 
+      @doc """
+      Executes the process.
+      """
       def execute(unquote_splicing(args)) do
         process_data = get_process_data(unquote(params))
         objective = get_objective(unquote_splicing(args))
@@ -184,20 +207,35 @@ defmodule Helix.Process.Executable do
     end
   end
 
+  @doc """
+  Returns the raw result of the Executable's `connection` section. It will
+  be later interpreted by `setup_connection`, which will make sense whether
+  a new connection should be created, and what the process' `connection_id`
+  should be set to.
+  """
   defmacro connection(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
 
     quote do
+
+      @doc false
       defp get_connection(unquote_splicing(args)) do
         unquote(block)
       end
+
     end
   end
 
+  @doc """
+  Returns the process' `objective`, calling the process' `new/1` with the
+  parameters defined on the `objective` section of the Process.Executable.
+  """
   defmacro objective(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
 
     quote do
+
+      @doc false
       defp get_objective(unquote_splicing(args)) do
         params = unquote(block)
 
@@ -205,18 +243,26 @@ defmodule Helix.Process.Executable do
 
         %{objective: objective}
       end
+
     end
   end
 
+  @doc """
+  Returns the process' `file_id`, as defined on the `file` section of the
+  Process.Executable.
+  """
   defmacro file(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
 
     quote do
+
+      @doc false
       defp get_file(unquote_splicing(args)) do
         file_id = unquote(block)
 
         %{file_id: file_id}
       end
+
     end
   end
 end

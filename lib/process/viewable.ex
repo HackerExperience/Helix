@@ -1,4 +1,12 @@
 defmodule Helix.Process.Viewable do
+  @moduledoc """
+  Process.Viewable is called when we want to render the process, usually as part
+  of a response's payload.
+
+  This is only an interface for `Helix.Process.Public.View.ProcessViewable`,
+  meant to facilitate the end-user's (programmer's) interface. If you want to
+  understand what will be rendered, and how the rendering works, check that out.
+  """
 
   @doc """
   Macro for implementation of the ProcessViewable protocol.
@@ -18,10 +26,12 @@ defmodule Helix.Process.Viewable do
 
         alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
 
+        @doc false
         def get_scope(data, process, server, entity) do
           ProcessViewHelper.get_default_scope(data, process, server, entity)
         end
 
+        @doc false
         def render(data, process, scope) do
           base = render_process(process, scope)
           complement = render_data(data, scope)
@@ -29,6 +39,7 @@ defmodule Helix.Process.Viewable do
           {base, complement}
         end
 
+        @doc false
         defp render_process(process, scope) do
           ProcessViewHelper.default_process_render(process, scope)
         end
@@ -53,6 +64,9 @@ defmodule Helix.Process.Viewable do
     end
   end
 
+  @doc """
+  Shorthand for when the process has no meaningful metadata to be rendered.
+  """
   defmacro render_empty_data do
     quote do
 

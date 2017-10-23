@@ -40,9 +40,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       # Executes Cracker.bruteforce against the target server
       assert {:ok, process} =
-        BruteforceProcess.Executable.execute(
-          source_server, target_server, params, meta
-        )
+        BruteforceProcess.execute(source_server, target_server, params, meta)
 
       # Process data is correct
       assert process.connection_id

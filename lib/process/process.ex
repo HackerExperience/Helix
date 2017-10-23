@@ -8,6 +8,7 @@ defmodule Helix.Process do
 
       defmodule unquote(name) do
 
+        # Imports all sub-modules that, together, will define the Process.
         import Helix.Process.Executable
         import Helix.Process.Objective
         import Helix.Process.Processable
@@ -19,9 +20,15 @@ defmodule Helix.Process do
 
         unquote(block)
 
+        @doc """
+        Entry point for execution of the process.
+        """
         defdelegate execute(gateway, target, params, meta),
           to: __MODULE__.Executable
 
+        @doc """
+        Returns the process type.
+        """
         def get_process_type,
           do: @process_type |> to_string()
       end
