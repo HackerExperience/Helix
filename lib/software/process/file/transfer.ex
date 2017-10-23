@@ -39,9 +39,9 @@ process Helix.Software.Process.File.Transfer do
   def objective(params = %{type: _, file: _}),
     do: set_objective params
 
-  process_type do
+  processable do
     @moduledoc """
-    ProcessType handler for SoftwareFileTransferProcess
+    Processable handler for SoftwareFileTransferProcess
 
     All events emitted here are generic, i.e. they are not directly related to
     the backend using FileTransferProcess.

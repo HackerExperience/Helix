@@ -1,3 +1,4 @@
+# TODO: This whole module needs to be rewritten with the new Process interface.
 defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
 
   @type t :: %__MODULE__{
@@ -7,7 +8,7 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
   @enforce_keys [:version]
   defstruct [:version]
 
-  defimpl Helix.Process.Model.Process.ProcessType do
+  defimpl Helix.Process.Model.Processable do
 
     alias Helix.Software.Event.Firewall.Started, as: FirewallStartedEvent
     alias Helix.Software.Event.Firewall.Stopped, as: FirewallStoppedEvent

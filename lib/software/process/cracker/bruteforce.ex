@@ -23,7 +23,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
   def objective(params = %{cracker: %File{}, hasher: _}),
     do: set_objective params
 
-  process_type do
+  processable do
 
     alias Helix.Network.Model.Network
     alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess

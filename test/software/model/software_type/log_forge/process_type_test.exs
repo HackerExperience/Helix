@@ -5,7 +5,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Ecto.Changeset
   alias Helix.Log.Model.Log
   alias Helix.Entity.Model.Entity
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
   alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.LogForge
@@ -254,8 +254,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       db_create = ProcessHelper.raw_get(process_create.process_id)
       db_edit = ProcessHelper.raw_get(process_edit.process_id)
 
-      serialized_create = ProcessType.after_read_hook(db_create.process_data)
-      serialized_edit = ProcessType.after_read_hook(db_edit.process_data)
+      serialized_create = Processable.after_read_hook(db_create.process_data)
+      serialized_edit = Processable.after_read_hook(db_edit.process_data)
 
       # Create process has `target_log_id` equals nil
       refute serialized_create.target_log_id

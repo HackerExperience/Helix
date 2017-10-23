@@ -3,12 +3,12 @@ defmodule Helix.Process.Processable do
   alias Helix.Process.Model.Process
 
   @doc """
-  Macro for implementation of the ProcessType protocol.
+  Macro for implementation of the Processable protocol.
   """
-  defmacro process_type(do: block) do
+  defmacro processable(do: block) do
     quote location: :keep do
 
-      defimpl Helix.Process.Model.Process.ProcessType do
+      defimpl Helix.Process.Model.Processable do
 
         unquote(block)
 

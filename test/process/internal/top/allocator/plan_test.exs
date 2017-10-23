@@ -6,21 +6,21 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
   alias Helix.Process.Model.Process
   alias Helix.Process.Internal.TOP.Allocator.Plan
   alias Helix.Process.Internal.TOP.ServerResources
-  alias Helix.Test.Process.ProcessTypeExample
-  alias Helix.Test.Process.StaticProcessTypeExample
+  alias Helix.Test.Process.ProcessableExample
+  alias Helix.Test.Process.StaticProcessableExample
 
   @moduletag :unit
 
-  # NOTE THAT MOST TESTS ASSERT THAT THE VALUE IS INSIDE A RANGE. THIS IS DONE
-  # BECAUSE THE ALLOCATION ALGORITHM MIGHT NOT ALLOCATE 100% OF THE RESOURCES
-  # BECAUSE IT'S ALLOCATION LOGIC IS NAIVE (i might fix it or worsen it in the
+  # Note that most tests assert that the value is inside a range. this is done
+  # because the allocation algorithm might not allocate 100% of the resources
+  # because it's allocation logic is naive (i might fix it or worsen it in the
   # future)
 
   test "allocating to a static process doesn't affects it" do
     params = %{
       gateway_id: Server.ID.generate(),
       target_server_id: Server.ID.generate(),
-      process_data: %StaticProcessTypeExample{},
+      process_data: %StaticProcessableExample{},
       objective: %{
         cpu: 100_000
       }
@@ -68,7 +68,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
     params = %{
       gateway_id: Server.ID.generate(),
       target_server_id: Server.ID.generate(),
-      process_data: %ProcessTypeExample{},
+      process_data: %ProcessableExample{},
       objective: %{
         cpu: 100_000
       }
@@ -113,7 +113,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
     params = %{
       gateway_id: Server.ID.generate(),
       target_server_id: Server.ID.generate(),
-      process_data: %ProcessTypeExample{},
+      process_data: %ProcessableExample{},
       objective: %{
         cpu: 100_000
       }
@@ -160,7 +160,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
     params = %{
       gateway_id: Server.ID.generate(),
       target_server_id: Server.ID.generate(),
-      process_data: %ProcessTypeExample{},
+      process_data: %ProcessableExample{},
       objective: %{
         cpu: 100_000
       }
@@ -214,7 +214,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
     params = %{
       gateway_id: Server.ID.generate(),
       target_server_id: Server.ID.generate(),
-      process_data: %ProcessTypeExample{},
+      process_data: %ProcessableExample{},
       objective: %{
         cpu: 100_000
       }
@@ -276,7 +276,7 @@ defmodule Helix.Process.Internal.TOP.Allocator.PlanTest do
     params = %{
       gateway_id: Server.ID.generate(),
       target_server_id: Server.ID.generate(),
-      process_data: %ProcessTypeExample{},
+      process_data: %ProcessableExample{},
       objective: %{
         cpu: 100_000
       }

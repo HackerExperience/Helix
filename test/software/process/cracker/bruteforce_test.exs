@@ -4,7 +4,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
   alias Helix.Process.Public.View.Process, as: ProcessView
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
@@ -145,7 +145,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       db_process = ProcessHelper.raw_get(process.process_id)
 
-      serialized = ProcessType.after_read_hook(db_process.process_data)
+      serialized = Processable.after_read_hook(db_process.process_data)
 
       assert serialized.target_server_ip
     end

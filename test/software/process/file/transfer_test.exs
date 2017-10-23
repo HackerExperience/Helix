@@ -4,7 +4,7 @@ defmodule Helix.Software.Process.File.TransferTest do
 
   import Helix.Test.Process.Macros
 
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
   alias Helix.Software.Model.Storage
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
@@ -43,13 +43,13 @@ defmodule Helix.Software.Process.File.TransferTest do
     end
   end
 
-  describe "ProcessType.after_read_hook/1" do
+  describe "Processable.after_read_hook/1" do
     test "converts correctly" do
       process = transfer_process()
 
       db_process = ProcessHelper.raw_get(process)
 
-      serialized = ProcessType.after_read_hook(db_process.process_data)
+      serialized = Processable.after_read_hook(db_process.process_data)
 
       assert %Storage.ID{} = serialized.destination_storage_id
       assert is_atom(serialized.connection_type)

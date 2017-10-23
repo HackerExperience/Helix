@@ -3,7 +3,7 @@ defmodule Helix.Test.Process.TOPHelper do
   alias Ecto.Changeset
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Repo, as: ProcessRepo
   alias Helix.Process.State.TOP.Manager, as: TOPManager
@@ -53,16 +53,16 @@ defmodule Helix.Test.Process.TOPHelper do
   """
   def soft_complete(process = %Process{}) do
     cs = Changeset.change(process)
-    ProcessType.state_change(process.process_data, cs, :running, :complete)
+    Processable.state_change(process.process_data, cs, :running, :complete)
   end
 
   @doc """
-  Simulates the `kill` of a process, executing the `ProcessType` relevant code.
+  Simulates the `kill` of a process, executing the `Processable` relevant code.
   It won't update the status on DB, nor emit events about the kill.
   """
   def soft_kill(process = %Process{}, reason \\ :normal) do
     cs = Changeset.change(process)
-    ProcessType.kill(process.process_data, cs, reason)
+    Processable.kill(process.process_data, cs, reason)
   end
 
   defp mark_as_finished(process) do

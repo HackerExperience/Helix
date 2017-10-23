@@ -1,3 +1,4 @@
+# TODO: This whole module needs to be rewritten with the new Process interface.
 defmodule Helix.Software.Model.SoftwareType.LogForge do
 
   use Ecto.Schema
@@ -114,7 +115,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   defp factorial(n),
     do: Enum.reduce(1..n, &(&1 * &2))
 
-  defimpl Helix.Process.Model.Process.ProcessType do
+  defimpl Helix.Process.Model.Processable do
 
     alias Ecto.Changeset
     alias Helix.Entity.Model.Entity

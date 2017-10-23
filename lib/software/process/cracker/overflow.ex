@@ -32,7 +32,7 @@ process Helix.Software.Process.Cracker.Overflow do
   def objective(params = %{cracker: %File{}}),
     do: set_objective params
 
-  process_type do
+  processable do
 
     alias Helix.Network.Model.Connection
     alias Helix.Process.Model.Process

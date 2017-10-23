@@ -8,7 +8,7 @@ defmodule Helix.Process.State.TOP.Domain do
   alias Helix.Process.Internal.TOP.Allocator.Plan, as: PlanTOP
   alias Helix.Process.Internal.TOP.ServerResources, as: ServerResourcesTOP
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
 
   @behaviour :gen_statem
 
@@ -137,9 +137,7 @@ defmodule Helix.Process.State.TOP.Domain do
 
           if Process.complete?(process) do
             process_data = Changeset.get_field(process, :process_data)
-            {processes, events} = ProcessType.conclusion(
-              process_data,
-              process)
+            {processes, events} = Processable.conclusion(process_data, process)
 
             # Add the process_id as metadata for both *ProcessedEvent and
             # ProcessCompletedEvent

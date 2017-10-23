@@ -24,7 +24,6 @@ defmodule Helix.Process do
 
         def get_process_type,
           do: @process_type |> to_string()
-
       end
 
     end
