@@ -19,10 +19,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       destination_storage = SoftwareHelper.get_storage(gateway.server_id)
 
-      net = %{
-        network_id: NetworkHelper.internet_id(),
-        bounces: []
-      }
+      net = NetworkHelper.net()
 
       {:ok, process} =
         FileTransferFlow.transfer(
@@ -59,10 +56,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       destination_storage = SoftwareHelper.get_storage(destination)
 
-      net = %{
-        network_id: NetworkHelper.internet_id(),
-        bounces: []
-      }
+      net = NetworkHelper.net()
 
       {:ok, process} =
         FileTransferFlow.transfer(
@@ -99,10 +93,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       destination_storage = SoftwareHelper.get_storage(gateway)
 
-      net = %{
-        network_id: NetworkHelper.internet_id(),
-        bounces: []
-      }
+      net = NetworkHelper.net()
 
       {:ok, process} =
         FileTransferFlow.transfer(

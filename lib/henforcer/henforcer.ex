@@ -327,10 +327,23 @@ defmodule Helix.Henforcer do
   This function makes all 3 steps in a single line (for the macro caller).
 
   For a function that only performs the first two, check out `get_and_drop/2`.
+
+  Within the last optional paramater, `opts`, you can specify that the relay
+  should return `only` the new key that has been replaced. This way you are able
+  to safely control the data flow coming from downstream henforcers.
   """
-  defmacro replace(relay, cur_key, next_key) do
+  defmacro replace(relay, cur_key, next_key, opts \\ quote(do: [])) do
     quote do
-      {new_relay, value} = get_and_drop(unquote(relay), unquote(cur_key))
+      filtered_relay =
+        if unquote(opts)[:only] do
+          unquote(relay)
+          |> Enum.filter(fn {k, _v} -> k == unquote(cur_key) end)
+          |> Map.new()
+        else
+          unquote(relay)
+        end
+
+      {new_relay, value} = get_and_drop(filtered_relay, unquote(cur_key))
 
       Map.put(new_relay, unquote(next_key), value)
     end

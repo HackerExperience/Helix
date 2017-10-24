@@ -73,10 +73,10 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
     end
 
     test "rejects when file exists but not on pftp" do
-      {file, %{server_id: server_id}} = SoftwareSetup.file()
+      {file, %{server: server}} = SoftwareSetup.file()
 
       assert {false, reason, _} =
-        PFTPHenforcer.file_exists?(server_id, file.file_id)
+        PFTPHenforcer.file_exists?(server.server_id, file.file_id)
       assert reason == {:pftp_file, :not_found}
     end
 

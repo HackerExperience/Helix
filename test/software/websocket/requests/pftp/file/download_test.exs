@@ -67,7 +67,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
   describe "check_permission/2" do
     test "henforces the request" do
       {socket, _} = ChannelSetup.join_server(own_server: true)
-      {file, %{server_id: destination}} = SoftwareSetup.file()
+      {file, %{server: destination}} = SoftwareSetup.file()
 
       {:ok, [nip]} = CacheQuery.from_server_get_nips(destination)
 
@@ -122,7 +122,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
   describe "handle_Request/2" do
     test "it uses values returned on previous step" do
       {socket, %{gateway: gateway}} = ChannelSetup.join_server(own_server: true)
-      {file, %{server_id: destination}} = SoftwareSetup.file()
+      {file, %{server: destination}} = SoftwareSetup.file()
 
       # Setup the PFTP server and file
       SoftwareSetup.PFTP.pftp(server_id: destination.server_id)
