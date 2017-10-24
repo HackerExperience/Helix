@@ -4,6 +4,7 @@ defmodule Helix.Server.Henforcer.Channel do
 
   alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
   alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
@@ -60,6 +61,19 @@ defmodule Helix.Server.Henforcer.Channel do
     |> wrap_relay(%{gateway: gateway, destination: destination})
   end
 
+  @type valid_counter_relay :: %{counter: ServerWebsocketChannelState.counter}
+  @type valid_counter_relay_partial :: %{}
+  @type valid_counter_error ::
+    {false, {:counter, :invalid}, valid_counter_relay_partial}
+
+  @spec valid_counter?(
+      Entity.id,
+      Server.t,
+      {Network.id, Network.ip},
+      ServerWebsocketChannelState.counter | nil)
+  ::
+    {true, valid_counter_relay}
+    | valid_counter_error
   def valid_counter?(entity_id, server = %Server{}, nip, nil) do
     next_counter =
       ServerWebsocketChannelState.get_next_counter(

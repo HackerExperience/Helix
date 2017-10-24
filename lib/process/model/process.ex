@@ -29,7 +29,7 @@ defmodule Helix.Process.Model.Process do
     network_id: Network.id | nil,
     connection_id: Connection.id | nil,
     process_data: Processable.t,
-    process_type: String.t,
+    process_type: type,
     state: State.state,
     limitations: Limitations.t,
     objective: Resources.t,

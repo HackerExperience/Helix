@@ -14,14 +14,29 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       amount: BankTransfer.amount
     }
 
-  @spec new(BankTransfer.t) ::
+  @type creation_params ::
+    %{
+      transfer: BankTransfer.t
+    }
+
+  @type objective :: %{cpu: resource_usage}
+
+  @type objective_params ::
+    %{
+      transfer: BankTransfer.t
+    }
+
+  @spec new(creation_params) ::
     t
-  def new(transfer = %BankTransfer{}) do
+  def new(%{transfer: transfer = %BankTransfer{}}) do
     %__MODULE__{
       transfer_id: transfer.transfer_id,
       amount: transfer.amount
     }
   end
+
+  def objective(params = %{transfer: %BankTransfer{}}),
+    do: set_objective params
 
   processable do
 
@@ -53,5 +68,35 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
 
     def after_read_hook(data),
       do: data
+  end
+
+  process_objective do
+
+    alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
+
+    @type params :: BankTransferProcess.objective_params
+    @type factors :: term
+
+    get_factors(%{transfer: _}) do end
+
+    cpu(%{transfer: transfer}) do
+      transfer.amount
+    end
+  end
+
+  executable do
+
+    alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
+
+    @type params :: BankTransferProcess.creation_params
+    @type meta :: term
+
+    objective(_gateway, _atm, %{transfer: transfer}, _meta) do
+      %{transfer: transfer}
+    end
+
+    connection(_gateway, _atm, _, _) do
+      {:create, :wire_transfer}
+    end
   end
 end

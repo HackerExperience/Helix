@@ -31,9 +31,9 @@ defmodule Helix.Process.Action.Process do
       :target_server_id => Server.idtb,
       :process_data => Processable.t,
       :process_type => String.t,
-      optional(:file_id) => File.idtb,
-      optional(:network_id) => Network.idtb,
-      optional(:connection_id) => Connection.idtb,
+      optional(:file_id) => File.idtb | nil,
+      optional(:network_id) => Network.idtb | nil,
+      optional(:connection_id) => Connection.idtb | nil,
       optional(:objective) => map
     }
 

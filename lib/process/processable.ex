@@ -109,7 +109,6 @@ defmodule Helix.Process.Processable do
   defmacro on_kill(data, reason \\ quote(do: _), do: block) do
     quote do
 
-      @doc false
       def kill(unquote(data), process, unquote(reason)) do
         var!(process) = unchange(process)
 
@@ -128,7 +127,6 @@ defmodule Helix.Process.Processable do
   defmacro on_completion(data, do: block) do
     quote do
 
-      @doc false
       def state_change(unquote(data), process, _, :complete) do
         var!(process) = unchange(process)
 

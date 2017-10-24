@@ -1,29 +1,54 @@
 import Helix.Process
 
 process Helix.Software.Process.Cracker.Bruteforce do
-  @moduledoc false
+  @moduledoc """
+  The BruteforceProcess is launched when a user wants to figure out the root
+  password of the target server (identified by `target_server_ip` and
+  `target_server_id`).
+  """
 
   alias Helix.Network.Model.Network
   alias Helix.Software.Model.File
-
-  @type t :: %__MODULE__{
-    target_server_ip: Network.ip
-  }
 
   process_struct [:target_server_ip]
 
   @process_type :cracker_bruteforce
 
+  @type t ::
+    %__MODULE__{
+      target_server_ip: Network.ip
+    }
+
+  @type creation_params ::
+    %{
+      target_server_ip: Network.ip
+    }
+
+  @type objective :: %{cpu: resource_usage}
+
+  @type objective_params ::
+    %{
+      cracker: File.t_of_type(:cracker),
+      hasher: File.t_of_type(:hasher) | nil
+    }
+
+  @spec new(creation_params) ::
+    t
   def new(%{target_server_ip: ip}) do
     %__MODULE__{
       target_server_ip: ip
     }
   end
 
+  @spec objective(objective_params) ::
+    objective
   def objective(params = %{cracker: %File{}, hasher: _}),
     do: set_objective params
 
   processable do
+    @moduledoc """
+    Defines the BruteforceProcess lifecycle behavior.
+    """
 
     alias Helix.Network.Model.Network
     alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
@@ -54,13 +79,27 @@ process Helix.Software.Process.Cracker.Bruteforce do
   end
 
   process_objective do
+    @moduledoc """
+    Defines how long a BruteforceProcess should take, resource usage, etc.
+    """
 
     alias Helix.Software.Factor.File, as: FileFactor
     alias Helix.Software.Model.File
+    alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
 
-    @type params :: term
-    @type factors :: term
+    @type params :: BruteforceProcess.objective_params
 
+    @type factors ::
+      %{
+        :cracker => %{version: FileFactor.fact_version},
+        optional(:hasher) => %{version: FileFactor.fact_version}
+      }
+
+    @doc """
+    At first all we care about is the attacker's Cracker version and the
+    victim's Hasher version (if any). In the future we'll probably want to add
+    extra factors, like Boost/Skills.
+    """
     get_factors(%{cracker: cracker, hasher: hasher}) do
 
       # Retrieves information about the cracker
@@ -76,6 +115,9 @@ process Helix.Software.Process.Cracker.Bruteforce do
     end
 
     # TODO: Testing and proper balance
+    @doc """
+    BruteforceProcess only uses CPU.
+    """
     cpu(%{hasher: nil}) do
       f.cracker.version.bruteforce
     end
@@ -85,18 +127,21 @@ process Helix.Software.Process.Cracker.Bruteforce do
     end
   end
 
-  process_viewable do
-
-    @type data :: %{}
-
-    render_empty_data()
-  end
-
   executable do
+    @moduledoc """
+    Defines how a BruteforceProcess should be executed.
+    """
 
+    alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
     alias Helix.Software.Query.File, as: FileQuery
 
-    @process Helix.Software.Process.Cracker.Bruteforce
+    @type params :: BruteforceProcess.creation_params
+
+    @type meta ::
+      %{
+        :cracker => File.t,
+        optional(atom) => term
+      }
 
     objective(_, target, _, %{cracker: cracker}) do
       hasher = FileQuery.fetch_best(target, :password)
@@ -114,5 +159,16 @@ process Helix.Software.Process.Cracker.Bruteforce do
     connection(_gateway, _target, _params, _meta) do
       {:create, :cracker_bruteforce}
     end
+  end
+
+  process_viewable do
+    @moduledoc """
+    Renders the BruteforceProcess. As of now, ignores any custom data and uses
+    the default process renderer (defined at `ProcessViewHelper`)
+    """
+
+    @type data :: %{}
+
+    render_empty_data()
   end
 end

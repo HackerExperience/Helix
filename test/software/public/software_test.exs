@@ -63,9 +63,7 @@ defmodule Helix.Software.Public.FileTest do
       storage = SoftwareHelper.get_storage(destination)
 
       assert {:ok, process} =
-        FilePublic.download(
-          gateway, destination, tunnel, storage, file
-        )
+        FilePublic.download(gateway, destination, tunnel, storage, file)
 
       assert process.file_id == file.file_id
       assert process.process_type == "file_download"

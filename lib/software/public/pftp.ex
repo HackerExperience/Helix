@@ -3,6 +3,7 @@ defmodule Helix.Software.Public.PFTP do
   Public layer of the PublicFTP feature -- shortened to PFTP to avoid confusion.
   """
 
+  alias Helix.Network.Model.Net
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
@@ -96,9 +97,9 @@ defmodule Helix.Software.Public.PFTP do
     end)
   end
 
-  # @spec download(Server.t, PublicFTP.File.t, Storage.t, File.t) ::
-  #   {:ok, Process.t}
-  #   | {:error, :internal}
+  @spec download(Server.t, Server.t, Storage.t, File.t) ::
+    {:ok, Process.t}
+    | FileTransferFlow.transfer_error
   @doc """
   Starts the download process of a file on a PublicFTP server.
   """
@@ -111,11 +112,7 @@ defmodule Helix.Software.Public.PFTP do
     # PFTP downloads are "public", so must always happen over the internet.
     network_id = @internet_id
 
-    net =
-      %{
-        network_id: network_id,
-        bounces: []  # TODO 256
-      }
+    net = Net.new(network_id, [])
 
     transfer =
       FileTransferFlow.transfer(

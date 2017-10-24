@@ -13,7 +13,7 @@ defmodule Helix.Software.Query.File do
   defdelegate fetch(file_id),
     to: FileInternal
 
-  @spec fetch_best(Server.id, File.Module.name) ::
+  @spec fetch_best(Server.idt, File.Module.name) ::
     File.t
     | nil
   @doc """

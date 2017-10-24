@@ -9,6 +9,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
 
   alias Helix.Test.Account.Setup, as: AccountSetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
@@ -20,8 +21,11 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       {acc2, _} = BankSetup.account([atm_seq: 2])
       {player, %{server: gateway}} = AccountSetup.account([with_server: true])
 
+      net = NetworkHelper.net()
+
       # They see me flowin', they hatin'
-      {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
+      {:ok, process} =
+        BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
       transfer_id = process.process_data.transfer_id
 
       # Transfer was added to the DB
@@ -60,7 +64,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       refute TunnelQuery.fetch_connection(process.connection_id)
       refute TunnelQuery.fetch(connection.tunnel_id)
 
-      TOPHelper.top_stop(process.gateway_id)
+      TOPHelper.top_stop(gateway)
     end
   end
 
@@ -70,7 +74,10 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
     {acc2, _} = BankSetup.account([atm_seq: 1])
     {player, %{server: gateway}} = AccountSetup.account([with_server: true])
 
-    {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
+    net = NetworkHelper.net()
+
+    {:ok, process} =
+      BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
 
     # Get connection data
     connection = TunnelQuery.fetch_connection(process.connection_id)
@@ -82,6 +89,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
     hops = TunnelQuery.get_hops(tunnel.tunnel_id)
     assert hops == [gateway.server_id, acc2.atm_id]
 
-    TOPHelper.top_stop(process.gateway_id)
+    TOPHelper.top_stop(gateway)
   end
 end

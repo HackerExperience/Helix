@@ -14,7 +14,11 @@ defmodule Helix.Process do
         import Helix.Process.Processable
         import Helix.Process.Viewable
 
+        # Static types
         @type resource_usage :: Helix.Process.Objective.resource_usage
+
+        # Custom types
+        @type executable_error :: __MODULE__.Executable.executable_error
 
         @process_type nil
 

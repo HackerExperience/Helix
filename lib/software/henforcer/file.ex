@@ -49,6 +49,14 @@ defmodule Helix.Software.Henforcer.File do
     )
   end
 
+  @type exists_software_module_relay :: %{server: Server.t, file: File.t}
+  @type exists_software_module_relay_partial :: %{server: Server.t}
+  @type exists_software_module_error ::
+    {false, {:module, :not_found}, exists_software_module_relay_partial}
+
+  @spec exists_software_module?(File.Module.name, Server.t) ::
+    {true, exists_software_module_relay}
+    | exists_software_module_error
   @doc """
   Henforces that at least one file with the given software module exists on the
   server, sorting by the module version (so it automatically fetches the best

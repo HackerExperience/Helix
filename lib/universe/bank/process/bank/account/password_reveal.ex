@@ -17,15 +17,32 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
       account_number: BankAccount.account
     }
 
-  @spec new(BankToken.id, BankAccount.t) ::
+  @type creation_params ::
+    %{
+      token_id: BankToken.id,
+      account: BankAccount.t
+    }
+
+  @type objective :: %{cpu: resource_usage}
+  @type objective_params ::
+    %{
+      account: BankAccount.t
+    }
+
+  @spec new(creation_params) ::
     t
-  def new(token_id, account = %BankAccount{}) do
+  def new(%{token_id: token_id, account: account = %BankAccount{}}) do
     %__MODULE__{
       token_id: token_id,
       atm_id: account.atm_id,
       account_number: account.account_number
     }
   end
+
+  @spec objective(objective_params) ::
+    objective
+  def objective(params = %{account: %BankAccount{}}),
+    do: set_objective params
 
   processable do
 
@@ -42,6 +59,39 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
       event = RevealPasswordProcessedEvent.new(process, data)
 
       {:ok, [event]}
+    end
+  end
+
+  process_objective do
+
+    alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
+      as: RevealPasswordProcess
+
+    @type params :: RevealPasswordProcess.objective_params
+    @type factors :: term
+
+    # TODO proper balance
+    get_factors(%{account: _account}) do end
+
+    cpu(_) do
+      1
+    end
+  end
+
+  executable do
+
+    alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
+      as: RevealPasswordProcess
+
+    @type params :: RevealPasswordProcess.creation_params
+
+    @type meta ::
+      %{
+        optional(atom) => term
+      }
+
+    objective(_, _, %{account: account}, _) do
+      %{account: account}
     end
   end
 end

@@ -1,4 +1,3 @@
-# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Process.Executable do
   @moduledoc """
   Process.Executable is a simple and declarative approach describing what should
@@ -11,33 +10,36 @@ defmodule Helix.Process.Executable do
   Processes to learn how to use `Process.Executable`.
   """
 
+  import HELL.Macros
+
   alias Helix.Event
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
   alias Helix.Process.Action.Process, as: ProcessAction
+  alias Helix.Process.Model.Process
 
   @doc """
-  We `use` Process.Executable because of the accumulated attribute `@process`.
+  Figures out the Process module based on the Executable's path.
   """
-  defmacro __using__(_args) do
-    quote do
-
-      import HELF.Flow
-      import HELL.Macros
-      import Helix.Process.Executable
-
-      @before_compile unquote(__MODULE__)
-
-      execute(gateway, target, params, meta)
-    end
+  def get_process(caller) do
+    caller.module
+    |> Module.split()
+    |> Enum.drop(-1)
+    |> Module.concat()
   end
 
-  # TODO: Try to move the functions below to a custom module
-  defmacro __before_compile__(_env) do
+  docp """
+  Collection of "handlers", i.e. methods that will make sense of the result and
+  create a meaningful Process.base_params.
+  """
+  defp handlers(process) do
     quote do
-
+      @spec get_process_data(params) ::
+        %{process_data: unquote(process).t}
       docp """
       Retrieves the `process_data`, according to how it was defined at the
       Process' `new/1`. Subset of the full process params.
@@ -47,6 +49,11 @@ defmodule Helix.Process.Executable do
         %{process_data: data}
       end
 
+      @spec get_ownership(Server.t, Server.t, params, meta) ::
+        %{
+          gateway_id: Server.id,
+          target_server_id: Server.id
+        }
       docp """
       Infers ownership information about the process, which is a subset of the
       full process params.
@@ -58,6 +65,8 @@ defmodule Helix.Process.Executable do
         }
       end
 
+      @spec get_process_type(term) ::
+        %{process_type: Process.type}
       docp """
       Returns the `process_type` parameter, a subset of the full process params.
       """
@@ -68,6 +77,8 @@ defmodule Helix.Process.Executable do
         %{process_type: process_type}
       end
 
+      @spec get_network_id(term) ::
+        %{network_id: Network.id | nil}
       docp """
       Returns the `network_id` parameter, a subset of the full process params.
       """
@@ -76,14 +87,8 @@ defmodule Helix.Process.Executable do
       defp get_network_id(_),
         do: %{network_id: nil}
 
-      docp """
-      Helper used to call functions on the Process' module directly.
-      """
-      defp call_process(function),
-        do: apply(@process, function, [])
-      defp call_process(function, params),
-        do: apply(@process, function, [params])
-
+      @spec create_process_params(partial :: map, term) ::
+        ProcessAction.base_params
       docp """
       Merges the partial process params with other data (connection_id).
       """
@@ -91,16 +96,41 @@ defmodule Helix.Process.Executable do
         do: Map.put(partial, :connection_id, connection_id)
       defp create_process_params(partial, nil),
         do: Map.put(partial, :connection_id, nil)
+    end
+  end
 
+  docp """
+  Utils for Process.Executable inner workings.
+  """
+  defp utils(process) do
+    quote do
+
+      @spec call_process(atom) ::
+        term
+      docp """
+      Helper used to call functions on the Process' module directly.
+      """
+      defp call_process(function),
+        do: apply(unquote(process), function, [])
+      defp call_process(function, params),
+        do: apply(unquote(process), function, [params])
+
+      @spec close_connection_on_fail(nil) :: :noop
+      @spec close_connection_on_fail(Connection.t) :: term
       docp """
       Helper called when `flow` of `execute/4` fails, and a connection may have
       to be closed as a result.
       """
       defp close_connection_on_fail(nil),
         do: :noop
-      defp close_connection_on_fail(connection),
-        do: TunnelAction.close_connection(connection)
+      defp close_connection_on_fail(connection) do
+        connection
+        |> TunnelAction.close_connection()
+        |> Event.emit()
+      end
 
+      @spec setup_connection(Server.t, Server.t, term, meta, {:create, term}) ::
+        {:ok, Connection.t, [event :: term]}
       docp """
       Interprets the result of `get_connection/4` and, if required, creates a
       new connection.
@@ -115,9 +145,13 @@ defmodule Helix.Process.Executable do
         )
       end
 
+      @spec setup_connection(term, term, term, term, nil | :ok | :noop) ::
+        {:ok, nil, []}
       defp setup_connection(_, _, _, _, _),
         do: {:ok, nil, []}
 
+      @spec create_connection(Network.id, Server.id, Server.id, term, term) ::
+        {:ok, Connection.t, [event :: term]}
       docp """
       Creates a new connection.
       """
@@ -143,15 +177,40 @@ defmodule Helix.Process.Executable do
   Top-level macro for defining the `Process.Executable` behavior.
   """
   defmacro executable(do: block) do
-    quote do
+    process = __CALLER__.module
+
+    quote location: :keep do
 
       defmodule Executable do
 
-        use Helix.Process.Executable
+        import HELF.Flow
+        import HELL.Macros
+        import Helix.Process.Executable
+
+        @type executable_error ::
+          {:error, :resources}
+          | {:error, :internal}
+
+        # Generates the entry point for Process.Executable
+        execute(gateway, target, params, meta)
 
         unquote(block)
-      end
 
+        # Generates the handlers
+        unquote(handlers(process))
+
+        # Generates the utils
+        unquote(utils(process))
+
+        # Defaults: in case these functions were not defined, we assume the
+        # process is not interested on this (optional) data.
+
+        defp get_file(_, _, _, _),
+          do: %{file_id: nil}
+
+        defp get_connection(_, _, _, _),
+          do: nil
+      end
     end
   end
 
@@ -161,8 +220,11 @@ defmodule Helix.Process.Executable do
   defmacro execute(gateway, target, params, meta) do
     args = [gateway, target, params, meta]
 
-    quote do
+    quote location: :keep do
 
+      @spec execute(Server.t, Server.t, params, meta) ::
+        {:ok, Process.t}
+        | executable_error
       @doc """
       Executes the process.
       """
@@ -200,6 +262,12 @@ defmodule Helix.Process.Executable do
             on_success(fn -> Event.emit(events) end)
           do
             {:ok, process}
+          else
+            {:error, :resources} ->
+              {:error, :resources}
+
+            {:error, %Ecto.Changeset{}} ->
+              {:error, :internal}
           end
         end
       end
@@ -218,6 +286,9 @@ defmodule Helix.Process.Executable do
 
     quote do
 
+      @spec get_connection(term, term, term, term) ::
+        {:create, Connection.type}
+        | nil
       @doc false
       defp get_connection(unquote_splicing(args)) do
         unquote(block)
@@ -232,9 +303,12 @@ defmodule Helix.Process.Executable do
   """
   defmacro objective(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
+    process = get_process(__CALLER__)
 
     quote do
 
+      @spec get_objective(term, term, term, term) ::
+        %{objective: unquote(process).objective}
       @doc false
       defp get_objective(unquote_splicing(args)) do
         params = unquote(block)
@@ -256,6 +330,8 @@ defmodule Helix.Process.Executable do
 
     quote do
 
+      @spec get_file(term, term, term, term) ::
+        %{file_id: File.t | nil}
       @doc false
       defp get_file(unquote_splicing(args)) do
         file_id = unquote(block)

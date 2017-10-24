@@ -7,27 +7,26 @@ defmodule Helix.Software.Action.Flow.File do
   alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
 
   @type params ::
-    CrackerFlow.params
-    | FirewallFlow.params
-    | LogForgerFlow.params
+    BruteforceProcess.creation_params
 
-  @type execution_errors ::
-    CrackerFlow.on_execute_error
-    | FirewallFlow.on_execute_error
-    | LogForgerFlow.on_execute_error
+  @type executable_errors ::
+    bruteforce_execution_error
 
   @type meta ::
-    CrackerFlow.meta
-    | %{}
+    BruteforceProcess.Executable.meta
 
-  @type error ::
-    {:error, :not_executable}
-    | execution_errors
+  # Accumulation of all possible executable errors. The types below are useful
+  # for caller methods, who are interested in knowing the possible return types
+  # without having to alias the corresponding Process (which is an
+  # implementation detail).
+  @type bruteforce_execution_error :: BruteforceProcess.executable_error
 
-  # @spec
-  #execute_file(File.t, File.Module.name, Server.t, Server.t, params, meta) ::
-  #   {:ok, Process.t}
-  #   | error
+  @typep file_module :: File.Module.name
+
+  @spec execute_file(File.t, file_module, Server.t, Server.t, params, meta) ::
+    {:ok, Process.t}
+    | executable_errors
+    | {:error, :not_executable}
   @doc """
   Starts the process defined by `file` on `server`. Since a File may have
   multiple different modules, and each module has its own execution logic, the

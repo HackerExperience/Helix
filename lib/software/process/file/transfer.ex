@@ -14,18 +14,29 @@ process Helix.Software.Process.File.Transfer do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
+  process_struct [:type, :destination_storage_id, :connection_type]
+
   @type t :: %__MODULE__{
-    type: :download | :upload,
+    type: transfer_type,
     destination_storage_id: Storage.id,
-    connection_type: :ftp | :public_ftp
+    connection_type: connection_type
   }
 
   @type objective ::
     %{dlk: resource_usage}
     | %{ulk: resource_usage}
 
-  process_struct [:type, :destination_storage_id, :connection_type]
+  @type transfer_type :: :download | :upload
+  @type connection_type :: :ftp | :public_ftp
 
+  @type creation_params :: %{
+    type: transfer_type,
+    connection_type: connection_type,
+    destination_storage_id: Storage.id
+  }
+
+  @spec new(creation_params) ::
+    t
   def new(params = %{destination_storage_id: %Storage.ID{}}) do
     %__MODULE__{
       type: params.type,
@@ -34,8 +45,13 @@ process Helix.Software.Process.File.Transfer do
     }
   end
 
-  # @spec objective(:download | :upload, File.t) ::
-    # objective
+  @type objective_params :: %{
+    type: transfer_type,
+    file: File.t
+  }
+
+  @spec objective(objective_params) ::
+    objective
   def objective(params = %{type: _, file: _}),
     do: set_objective params
 
@@ -67,6 +83,9 @@ process Helix.Software.Process.File.Transfer do
     def minimum(_),
       do: %{}
 
+    @doc """
+    Emits `FileTransferAbortedEvent.t` when/if process gets killed.
+    """
     on_kill(data, _reason) do
       reason = :killed
       {from_id, to_id} = get_servers_context(data, process)
@@ -77,6 +96,9 @@ process Helix.Software.Process.File.Transfer do
       {:ok, [event]}
     end
 
+    @doc """
+    Emits `FileTransferProcessedEvent.t` when process completes.
+    """
     on_completion(data) do
 
       {from_id, to_id} = get_servers_context(data, process)
@@ -146,8 +168,19 @@ process Helix.Software.Process.File.Transfer do
   end
 
   executable do
+    @moduledoc """
+    Defines how FileTransferProcess should be executed.
+    """
 
-    @process Helix.Software.Process.File.Transfer
+    alias Helix.Software.Model.File
+    alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
+
+    @type params :: FileTransferProcess.creation_params
+
+    @type meta :: %{
+      :file => File.t,
+      optional(atom) => term
+    }
 
     objective(_, _, params, meta) do
       %{
@@ -166,6 +199,9 @@ process Helix.Software.Process.File.Transfer do
   end
 
   process_viewable do
+    @moduledoc """
+    Renders the FileTransferProcess to the client.
+    """
 
     @type data ::
       data_download_full

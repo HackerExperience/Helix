@@ -6,6 +6,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
   alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Action.Flow.BankAccount, as: BankAccountFlow
 
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
@@ -24,12 +25,15 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       old_entry = DatabaseQuery.fetch_bank_account(entity, acc)
       refute old_entry.password
 
+      atm = ServerQuery.fetch(acc.atm_id)
+
       # Create process to reveal password
       {:ok, process} =
         BankAccountFlow.reveal_password(
           acc,
           token.token_id,
-          gateway.server_id
+          gateway,
+          atm
         )
 
       # Ensure process is valid
@@ -80,9 +84,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Ensure correct elements and order on connection
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
       assert [server.server_id, acc.atm_id] == TunnelQuery.get_hops(tunnel)
-
-      # Wait for events
-      :timer.sleep(100)
 
       # Ensure it updated the Database entry accordingly
       db_entry = DatabaseQuery.fetch_bank_account(entity, acc)
@@ -142,9 +143,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # No connections were created
       assert Enum.empty?(TunnelQuery.connections_through_node(server))
 
-      # Wait for events (none should occur, but if they do, we need this timer)
-      :timer.sleep(100)
-
       # Ensure nothing was added to the DB
       refute DatabaseQuery.fetch_bank_account(entity, acc)
     end
@@ -175,9 +173,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Ensure correct elements and order on connection
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
       assert [server.server_id, acc.atm_id] == TunnelQuery.get_hops(tunnel)
-
-      # Wait for events
-      :timer.sleep(100)
 
       # # Ensure it updated the Database entry accordingly
       db_entry = DatabaseQuery.fetch_bank_account(entity, acc)
@@ -216,9 +211,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
       assert [server.server_id, acc.atm_id] == TunnelQuery.get_hops(tunnel)
 
-      # Wait for events
-      :timer.sleep(100)
-
       # Nothing was added to the Hacked Database... because it's MY account!
       refute DatabaseQuery.fetch_bank_account(entity, acc)
     end
@@ -240,9 +232,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # No connections were created
       assert Enum.empty?(TunnelQuery.connections_through_node(server))
 
-      # Wait for events (none should occur, but if they do, we need this timer)
-      :timer.sleep(100)
-
       # Ensure nothing was added to the DB
       refute DatabaseQuery.fetch_bank_account(entity, acc)
     end
@@ -263,9 +252,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
 
       # No connections were created
       assert Enum.empty?(TunnelQuery.connections_through_node(server))
-
-      # Wait for events (none should occur, but if they do, we need this timer)
-      :timer.sleep(100)
 
       # Ensure nothing was added to the DB
       refute DatabaseQuery.fetch_bank_account(entity, acc)

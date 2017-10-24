@@ -2,7 +2,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
   import HELL.Macros
 
-  alias Helix.Network.Model.Network
+  alias Helix.Network.Model.Net
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Model.Server
@@ -10,27 +10,16 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
-  @type transfer_type ::
+  @typep type ::
     :download
     | :pftp_download
     | :upload
 
-  @type network_info :: %{
-    gateway_id: Server.id,
-    destination_id: Server.id,
-    network_id: Network.id,
-    bounces: [Server.id]
-  }
+  @type transfer_error :: FileTransferProcess.executable_error
 
-  @type transfer_ok ::
+  @spec transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t) ::
     {:ok, Process.t}
-
-  @type transfer_error ::
-    term
-
-  # @spec transfer(transfer_type, File.t, Storage.t, network_info) ::
-  #   transfer_ok
-  #   | transfer_error
+    | transfer_error
   @doc """
   Starts a FileTransfer process, which can be one of [pftp_]download or upload.
 
@@ -60,9 +49,9 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
     end
   end
 
-  # @spec new_transfer(transfer_type, File.t, Storage.t, network_info) ::
-  #   transfer_ok
-  #   | transfer_error
+  @spec new_transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t) ::
+    {:ok, Process.t}
+    | transfer_error
   docp """
   Starts a FileTransfer process, which can be one of download or upload.
   """
@@ -77,7 +66,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
     meta = %{
       network_id: net.network_id,
-      bounce: net.bounces,
+      bounce: net.bounce_id,
       file: file,
       process_type: process_type
     }

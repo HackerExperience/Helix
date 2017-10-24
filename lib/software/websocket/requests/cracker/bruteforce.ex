@@ -8,6 +8,9 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
   alias Helix.Software.Henforcer.Software.Cracker, as: CrackerHenforcer
   alias Helix.Software.Public.File, as: FilePublic
 
+  # HACK for elixir-lang issue #6577
+  @dialyzer {:nowarn_function, handle_request: 2}
+
   def check_params(request, socket) do
     with \
       {:ok, network_id} <-
@@ -70,17 +73,13 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 
-      # HACK: Workaround for https://github.com/elixir-lang/elixir/issues/6426
-      error = {_, m} ->
-        if Map.has_key?(m, :message) do
-          error
-        else
-          internal_error()
-        end
-      # error = {:error, %{message: _}} ->
-      #   error
-      # _ ->
-      #   {:error, %{message: "internal"}}
+      {false, reason, _} ->
+        reply_error(reason)
+
+      error = {:error, %{message: _}} ->
+        error
+      _ ->
+        {:error, %{message: "internal"}}
     end
   end
 

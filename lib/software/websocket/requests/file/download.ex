@@ -10,7 +10,7 @@ request Helix.Software.Websocket.Requests.File.Download do
   alias Helix.Software.Public.File, as: FilePublic
   alias Helix.Software.Query.Storage, as: StorageQuery
 
-  # Hack for elixir-lang issue #6577
+  # HACK for elixir-lang issue #6577
   @dialyzer {:nowarn_function, get_error: 1}
 
   def check_params(request, socket) do

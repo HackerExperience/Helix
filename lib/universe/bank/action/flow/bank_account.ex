@@ -6,7 +6,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Query.Network, as: NetworkQuery
-  alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
@@ -27,33 +26,21 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   Emits: ProcessCreatedEvent
   """
-  @spec reveal_password(BankAccount.t, BankToken.id, Server.id) ::
+  @spec reveal_password(BankAccount.t, BankToken.id, Server.t, Server.t) ::
     {:ok, Process.t}
-    | ProcessAction.on_create_error
-  def reveal_password(account, token_id, gateway_id) do
-    process_data = %BankAccountRevealPasswordProcess{
-      token_id: token_id,
-      atm_id: account.atm_id,
-      account_number: account.account_number
-    }
-
+    | BankAccountRevealPasswordProcess.executable_error
+  def reveal_password(account, token_id, gateway, atm) do
     params = %{
-      gateway_id: gateway_id,
-      target_server_id: account.atm_id,
-      network_id: NetworkQuery.internet().network_id,
-      objective: %{cpu: 1},
-      process_data: process_data,
-      process_type: "bank_reveal_password"
+      token_id: token_id,
+      account: account
     }
 
-    flowing do
-      with \
-        {:ok, process, events} <- ProcessAction.create(params),
-        on_success(fn -> Event.emit(events) end)
-      do
-        {:ok, process}
-      end
-    end
+    meta = %{
+      network_id: NetworkQuery.internet().network_id,
+      bounce: []
+    }
+
+    BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta)
   end
 
   @doc """

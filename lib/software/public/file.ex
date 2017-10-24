@@ -1,5 +1,6 @@
 defmodule Helix.Software.Public.File do
 
+  alias Helix.Network.Model.Net
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
@@ -14,9 +15,9 @@ defmodule Helix.Software.Public.File do
     | {:error, {:storage, :not_found}}
     | {:error, :internal}
 
-  # @spec download(Tunnel.t, Storage.idt, File.idt) ::
-  #   {:ok, Process.t}
-  #   | download_errors
+  @spec download(Server.t, Server.t, Tunnel.t, Storage.t, File.t) ::
+    {:ok, Process.t}
+    | FileTransferFlow.transfer_error
   @doc """
   Starts FileTransferProcess, responsible for downloading `file_id` into the
   given storage.
@@ -28,11 +29,7 @@ defmodule Helix.Software.Public.File do
     storage = %Storage{},
     file = %File{})
   do
-    net =
-      %{
-        network_id: tunnel.network_id,
-        bounces: []  # TODO 256
-      }
+    net = Net.new(tunnel)
 
     transfer =
       FileTransferFlow.transfer(:download, gateway, target, file, storage, net)
@@ -55,8 +52,7 @@ defmodule Helix.Software.Public.File do
     term)
   ::
     {:ok, Process.t}
-    | {:error, %{message: String.t}}  # TODO
-    | FileFlow.error
+    | FileFlow.bruteforce_execution_error
   @doc """
   Starts a bruteforce attack against `(network_id, target_ip)`, originating from
   `gateway_id` and having `bounces` as intermediaries.

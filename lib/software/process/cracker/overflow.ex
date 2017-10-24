@@ -7,16 +7,31 @@ process Helix.Software.Process.Cracker.Overflow do
   alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
 
-  @type creation_params ::
-    %{
-      target_process_id: Process.idtb | nil,
-      target_connection_id: Connection.idtb | nil
+  process_struct [:target_process_id, :target_connection_id]
+
+  @type t ::
+    %__MODULE__{
+      target_process_id: Process.id | nil,
+      target_connection_id: Connection.id | nil
     }
 
-  process_struct [:target_process_id, :target_connection_id]
+  @type creation_params ::
+    %{
+      target_process_id: Process.id | nil,
+      target_connection_id: Connection.id | nil
+    }
+
+  @type objective :: %{cpu: resource_usage}
+
+  @type objective_params ::
+    %{
+      cracker: File.t
+    }
 
   @process_type :cracker_overflow
 
+  @spec new(creation_params) ::
+    t
   def new(%{target_process_id: target_process_id}),
       do: new(target_process_id, nil)
   def new(%{target_connection_id: target_connection_id}),
@@ -29,6 +44,8 @@ process Helix.Software.Process.Cracker.Overflow do
     }
   end
 
+  @spec objective(objective_params) ::
+    objective
   def objective(params = %{cracker: %File{}}),
     do: set_objective params
 
@@ -73,9 +90,14 @@ process Helix.Software.Process.Cracker.Overflow do
   process_objective do
 
     alias Helix.Software.Factor.File, as: FileFactor
+    alias Helix.Software.Model.File
+    alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
 
-    @type params :: term
-    @type factors :: term
+    @type params :: OverflowProcess.objective_params
+    @type factors ::
+      %{
+        cracker: %{version: FileFactor.fact_version}
+      }
 
     get_factors(%{cracker: cracker}) do
       factor FileFactor, %{file: cracker},
@@ -91,7 +113,15 @@ process Helix.Software.Process.Cracker.Overflow do
 
   executable do
 
-    @process Helix.Software.Process.Cracker.Overflow
+    alias Helix.Software.Model.File
+    alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
+
+    @type params :: OverflowProcess.creation_params
+    @type meta ::
+      %{
+        :cracker => File.t,
+        optional(atom) => term
+      }
 
     objective(_, _, _, %{cracker: cracker}) do
       %{cracker: cracker}
@@ -103,9 +133,8 @@ process Helix.Software.Process.Cracker.Overflow do
 
     connection(_, _, _, _) do
       # TODO
-      :ok
+      nil
     end
-
   end
 
   process_viewable do

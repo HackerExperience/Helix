@@ -9,10 +9,6 @@ defmodule Helix.Server.Henforcer.ChannelTest do
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Setup, as: ServerSetup
 
-  # Parei aqui
-  # arrumar e incluir essas mudancas no ultimo commit (amend)
-  # weat
-
   describe "local_join_allowed?/2" do
     test "accepts when everything is ok" do
       {server, %{entity: entity}} = ServerSetup.server()
