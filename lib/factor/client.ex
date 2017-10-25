@@ -55,18 +55,30 @@ defmodule Helix.Factor.Client do
 
     quote do
       # Call module's `assembly/3`
-      {factor, next_relay} =
-        unquote(module).assembly(
-          unquote(params),
-          var!(relay),
-          unquote(executable)
-        )
+      condition = Keyword.get(unquote(opts), :if, true)
 
-      factor = Map.put(%{}, unquote(factor_name), factor)
+      {new_factors, new_relay} =
+        if condition do
+          {factor, next_relay} =
+            unquote(module).assembly(
+              unquote(params),
+              var!(relay),
+              unquote(executable)
+            )
 
-      var!(factors) = Map.merge(var!(factors), factor)
-      var!(relay) = Map.merge(var!(relay), next_relay)
+          factor_key = Keyword.get(unquote(opts), :as, unquote(factor_name))
+          factor = Map.put(%{}, factor_key, factor)
 
+          merged_factor = Map.merge(var!(factors), factor)
+          merged_relay = Map.merge(var!(relay), next_relay)
+
+          {merged_factor, merged_relay}
+        else
+          {var!(factors), var!(relay)}
+        end
+
+      var!(factors) = new_factors
+      var!(relay) = new_relay
     end
   end
 
@@ -77,8 +89,11 @@ defmodule Helix.Factor.Client do
 
     alias HELL.Utils
 
+    @doc """
+    Retrieve the Factor's name.
+    """
     def get_factor_name(module, caller) do
-      caller.module
+      caller
       |> Module.eval_quoted(quote(do: unquote(module).get_name()))
       |> elem(0)
     end
@@ -89,7 +104,7 @@ defmodule Helix.Factor.Client do
     It uses a trick from Module's `eval_quoted`. Shh!
     """
     def get_all_facts(module, caller) do
-      caller.module
+      caller
       |> Module.eval_quoted(quote(do: unquote(module).get_facts()))
       |> elem(0)
     end

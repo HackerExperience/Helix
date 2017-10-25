@@ -1,81 +1,76 @@
-defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
+defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
   use Helix.Test.Case.Integration
 
-  alias Ecto.Changeset
-  alias HELL.IPv4
   alias Helix.Entity.Model.Entity
-  alias Helix.Network.Model.Network
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Process.Model.Processable
   alias Helix.Process.Public.View.Process, as: ProcessView
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
 
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  @cracker_file (SoftwareSetup.file!(type: :cracker))
+  alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
 
-  describe "create/2" do
-    test "returns changeset if invalid" do
-      assert {:error, changeset} = CrackerBruteforce.create(@cracker_file, %{})
-      assert %Changeset{valid?: false} = changeset
-    end
+  describe "Process.Executable" do
+    test "starts the bruteforce process when everything is OK" do
+      {source_server, %{entity: source_entity}} = ServerSetup.server()
+      {target_server, _} = ServerSetup.server()
 
-    # REVIEW: Why cracker isn't using file_id?
-    @required_fields ~w/
-      network_id
-      target_server_id
-      target_server_ip/a
-    @field_names @required_fields |> Enum.map(&to_string/1) |> Enum.join(", ")
-    test "requires #{@field_names}" do
-      assert {:error, changeset} = CrackerBruteforce.create(@cracker_file, %{})
-      errors = Keyword.keys(changeset.errors)
-      assert Enum.sort(@required_fields) == Enum.sort(errors)
+      {file, _} =
+        SoftwareSetup.file([type: :cracker, server_id: source_server.server_id])
+
+      target_nip = ServerHelper.get_nip(target_server)
+
+      params = %{
+        target_server_ip: target_nip.ip
+      }
+
+      meta = %{
+        network_id: target_nip.network_id,
+        bounce: [],
+        cracker: file
+      }
+
+      # Executes Cracker.bruteforce against the target server
+      assert {:ok, process} =
+        BruteforceProcess.execute(source_server, target_server, params, meta)
+
+      # Process data is correct
+      assert process.connection_id
+      assert process.file_id == file.file_id
+      assert process.process_type == "cracker_bruteforce"
+      assert process.gateway_id == source_server.server_id
+      assert process.source_entity_id == source_entity.entity_id
+      assert process.target_server_id == target_server.server_id
+      assert process.network_id == target_nip.network_id
+      assert process.process_data.target_server_ip == target_nip.ip
+
+      # CrackerBruteforce connection is correct
+      connection = TunnelQuery.fetch_connection(process.connection_id)
+
+      assert connection.connection_type == :cracker_bruteforce
+
+      # Underlying tunnel is correct
+      tunnel = TunnelQuery.fetch(connection.tunnel_id)
+
+      assert tunnel.gateway_id == source_server.server_id
+      assert tunnel.destination_id == target_server.server_id
+      assert tunnel.network_id == target_nip.network_id
+
+      # :timer.sleep(100)
+      TOPHelper.top_stop(source_server)
+      CacheHelper.sync_test()
     end
   end
 
-  describe "objective/1" do
-    test "returns a higher objective the higher the firewall version is" do
-      cracker = %CrackerBruteforce{
-        network_id: Network.ID.generate(),
-        target_server_id: Server.ID.generate(),
-        target_server_ip: IPv4.autogenerate(),
-        software_version: 100
-      }
-
-      obj1 = CrackerBruteforce.objective(cracker, 100)
-      obj2 = CrackerBruteforce.objective(cracker, 200)
-      obj3 = CrackerBruteforce.objective(cracker, 300)
-      obj4 = CrackerBruteforce.objective(cracker, 900)
-
-      assert obj2 > obj1
-      assert obj3 > obj2
-      assert obj4 > obj3
-    end
-
-    test "returns a lower objective the higher the cracker version is" do
-      cracker = %CrackerBruteforce{
-        network_id: Network.ID.generate(),
-        target_server_id: Server.ID.generate(),
-        target_server_ip: IPv4.autogenerate(),
-        software_version: 100
-      }
-
-      obj1 = CrackerBruteforce.objective(cracker, 900)
-      obj2 = CrackerBruteforce.objective(%{cracker| software_version: 200}, 900)
-      obj3 = CrackerBruteforce.objective(%{cracker| software_version: 300}, 900)
-      obj4 = CrackerBruteforce.objective(%{cracker| software_version: 900}, 900)
-
-      assert obj2 < obj1
-      assert obj3 < obj2
-      assert obj4 < obj3
-    end
-  end
-
-  describe "ProcessView.render/4" do
+  describe "Process.Viewable" do
     test "full process for any AT attack_source" do
       {process, meta} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
@@ -142,16 +137,15 @@ defmodule Helix.Software.Model.Software.Cracker.BruteforceTest do
     end
   end
 
-  describe "after_read_hook/1" do
-    {process, _} = ProcessSetup.process(fake_server: true, type: :bruteforce)
+  describe "Processable" do
+    test "after_read_hook/1" do
+      {process, _} = ProcessSetup.process(fake_server: true, type: :bruteforce)
 
-    db_process = ProcessHelper.raw_get(process.process_id)
+      db_process = ProcessHelper.raw_get(process.process_id)
 
-    serialized = ProcessType.after_read_hook(db_process.process_data)
+      serialized = Processable.after_read_hook(db_process.process_data)
 
-    assert %Network.ID{} = serialized.network_id
-    assert %Server.ID{} = serialized.target_server_id
-    assert serialized.software_version
-    assert serialized.target_server_ip
+      assert serialized.target_server_ip
+    end
   end
 end

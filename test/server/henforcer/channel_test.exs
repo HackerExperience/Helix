@@ -14,7 +14,10 @@ defmodule Helix.Server.Henforcer.ChannelTest do
       {server, %{entity: entity}} = ServerSetup.server()
 
       assert {true, relay} =
-        ChannelHenforcer.local_join_allowed?(entity.entity_id, server.server_id)
+        ChannelHenforcer.local_join_allowed?(entity.entity_id, server)
+
+      assert relay.server == server
+      assert relay.entity == entity
       assert_relay relay, [:server, :entity]
     end
 
@@ -23,23 +26,24 @@ defmodule Helix.Server.Henforcer.ChannelTest do
       {entity, _} = EntitySetup.entity()
 
       assert {false, reason, _} =
-        ChannelHenforcer.local_join_allowed?(entity.entity_id, server.server_id)
+        ChannelHenforcer.local_join_allowed?(entity.entity_id, server)
       assert reason == {:server, :not_belongs}
     end
   end
 
-  describe "remote_join_allowed?/4" do
+  describe "remote_join_allowed?/6" do
     test "accepts when everything is ok" do
       {gateway, %{entity: entity}} = ServerSetup.server()
       {destination, _} = ServerSetup.server()
 
       assert {true, relay} =
         ChannelHenforcer.remote_join_allowed?(
-          entity.entity_id,
-          gateway.server_id,
-          destination.server_id,
-          destination.password
+          entity.entity_id, gateway, destination, destination.password
         )
+
+      assert relay.destination == destination
+      assert relay.gateway == gateway
+      assert relay.entity == entity
 
       assert_relay relay, [:destination, :gateway, :entity]
     end
@@ -48,12 +52,10 @@ defmodule Helix.Server.Henforcer.ChannelTest do
       {gateway, %{entity: entity}} = ServerSetup.server()
       {destination, _} = ServerSetup.server()
 
+      # Notice we are using gateway password, which is incorrect!
       assert {false, reason, _} =
         ChannelHenforcer.remote_join_allowed?(
-          entity.entity_id,
-          gateway.server_id,
-          destination.server_id,
-          gateway.password  # Using gateway password, which is incorrect!
+          entity.entity_id, gateway, destination, gateway.password
         )
 
       assert reason == {:password, :invalid}
@@ -65,10 +67,7 @@ defmodule Helix.Server.Henforcer.ChannelTest do
 
       assert {false, reason, _} =
         ChannelHenforcer.remote_join_allowed?(
-          bad_entity.entity_id,
-          gateway.server_id,
-          destination.server_id,
-          destination.password
+          bad_entity.entity_id, gateway, destination, destination.password
         )
 
       assert reason == {:server, :not_belongs}

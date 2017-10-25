@@ -208,9 +208,9 @@ defmodule Helix.Software.Internal.FileTest do
 
   describe "copy/3" do
     test "file is copied (same storage, different path)" do
-      {file, %{server_id: server_id}} = SoftwareSetup.file()
+      {file, %{server: server}} = SoftwareSetup.file()
 
-      storage = SoftwareHelper.get_storage(server_id)
+      storage = SoftwareHelper.get_storage(server)
 
       params = %{
         path: SoftwareHelper.random_file_path(),
@@ -231,9 +231,9 @@ defmodule Helix.Software.Internal.FileTest do
     end
 
     test "refuses to copy file if it already exists (same path, storage)" do
-      {file, %{server_id: server_id}} = SoftwareSetup.file()
+      {file, %{server: server}} = SoftwareSetup.file()
 
-      storage = SoftwareHelper.get_storage(server_id)
+      storage = SoftwareHelper.get_storage(server)
 
       params = %{
         name: file.name,
@@ -245,9 +245,9 @@ defmodule Helix.Software.Internal.FileTest do
     end
 
     test "allows the file to be copied to the same path, different name" do
-      {file, %{server_id: server_id}} = SoftwareSetup.file()
+      {file, %{server: server}} = SoftwareSetup.file()
 
-      storage = SoftwareHelper.get_storage(server_id)
+      storage = SoftwareHelper.get_storage(server)
 
       params = %{
         name: SoftwareHelper.random_file_name,

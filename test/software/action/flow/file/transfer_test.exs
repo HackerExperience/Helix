@@ -14,23 +14,16 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
   describe "transfer/4" do
     test "valid file download" do
       {gateway, _} = ServerSetup.server()
-      {file, %{server_id: destination_id}} = SoftwareSetup.file()
+      {destination, _} = ServerSetup.server()
+      {file, _} = SoftwareSetup.file(server_id: destination.server_id)
 
       destination_storage = SoftwareHelper.get_storage(gateway.server_id)
 
-      network_info = %{
-        gateway_id: gateway.server_id,
-        destination_id: destination_id,
-        network_id: NetworkHelper.internet(),
-        bounces: []
-      }
+      net = NetworkHelper.net()
 
       {:ok, process} =
         FileTransferFlow.transfer(
-          :download,
-          file,
-          destination_storage,
-          network_info
+          :download, gateway, destination, file, destination_storage, net
         )
 
       # Generated process has the expected data
@@ -48,36 +41,26 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
         FileTransferFlow.transfer(
-          :download,
-          file,
-          destination_storage,
-          network_info
+          :download, gateway, destination, file, destination_storage, net
         )
 
       assert process2.process_id == process.process_id
 
-      TOPHelper.top_stop(gateway.server_id)
+      TOPHelper.top_stop(gateway)
     end
 
     test "valid file upload" do
       {gateway, _} = ServerSetup.server()
-      {file, %{server_id: destination_id}} = SoftwareSetup.file()
+      {destination, _} = ServerSetup.server()
+      {file, _} = SoftwareSetup.file(server_id: destination.server_id)
 
-      destination_storage = SoftwareHelper.get_storage(destination_id)
+      destination_storage = SoftwareHelper.get_storage(destination)
 
-      network_info = %{
-        gateway_id: gateway.server_id,
-        destination_id: destination_id,
-        network_id: NetworkHelper.internet(),
-        bounces: []
-      }
+      net = NetworkHelper.net()
 
       {:ok, process} =
         FileTransferFlow.transfer(
-          :upload,
-          file,
-          destination_storage,
-          network_info
+          :upload, gateway, destination, file, destination_storage, net
         )
 
       # Generated process has the expected data
@@ -95,36 +78,26 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
         FileTransferFlow.transfer(
-          :upload,
-          file,
-          destination_storage,
-          network_info
+          :upload, gateway, destination, file, destination_storage, net
         )
 
       assert process2.process_id == process.process_id
 
-      TOPHelper.top_stop(gateway.server_id)
+      TOPHelper.top_stop(gateway)
     end
 
     test "valid file pftp_download" do
       {gateway, _} = ServerSetup.server()
-      {file, %{server_id: destination_id}} = SoftwareSetup.file()
+      {destination, _} = ServerSetup.server()
+      {file, _} = SoftwareSetup.file(server_id: destination.server_id)
 
-      destination_storage = SoftwareHelper.get_storage(gateway.server_id)
+      destination_storage = SoftwareHelper.get_storage(gateway)
 
-      network_info = %{
-        gateway_id: gateway.server_id,
-        destination_id: destination_id,
-        network_id: NetworkHelper.internet(),
-        bounces: []
-      }
+      net = NetworkHelper.net()
 
       {:ok, process} =
         FileTransferFlow.transfer(
-          :pftp_download,
-          file,
-          destination_storage,
-          network_info
+          :pftp_download, gateway, destination, file, destination_storage, net
         )
 
       # Generated process has the expected data
@@ -142,18 +115,12 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
         FileTransferFlow.transfer(
-          :pftp_download,
-          file,
-          destination_storage,
-          network_info
+          :pftp_download, gateway, destination, file, destination_storage, net
         )
 
       assert process2.process_id == process.process_id
 
       TOPHelper.top_stop(gateway.server_id)
     end
-
-    @tag :pending
-    test "rejects repeated transfers"
   end
 end

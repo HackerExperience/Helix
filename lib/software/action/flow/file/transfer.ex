@@ -1,13 +1,8 @@
 defmodule Helix.Software.Action.Flow.File.Transfer do
 
-  import HELF.Flow
   import HELL.Macros
 
-  alias Helix.Event
-  alias Helix.Network.Action.Tunnel, as: TunnelAction
-  alias Helix.Network.Model.Network
-  alias Helix.Network.Query.Network, as: NetworkQuery
-  alias Helix.Process.Action.Process, as: ProcessAction
+  alias Helix.Network.Model.Net
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Model.Server
@@ -15,26 +10,15 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
-  @type transfer_type ::
+  @typep type ::
     :download
     | :pftp_download
     | :upload
 
-  @type network_info :: %{
-    gateway_id: Server.id,
-    destination_id: Server.id,
-    network_id: Network.id,
-    bounces: [Server.id]
-  }
+  @type transfer_error :: FileTransferProcess.executable_error
 
-  @type transfer_ok ::
+  @spec transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t) ::
     {:ok, Process.t}
-
-  @type transfer_error ::
-    term
-
-  @spec transfer(transfer_type, File.t, Storage.t, network_info) ::
-    transfer_ok
     | transfer_error
   @doc """
   Starts a FileTransfer process, which can be one of [pftp_]download or upload.
@@ -43,14 +27,14 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   existing process is returned and no new transfer is created. This ensures the
   same file cannot be transferred multiple times to/from the same server.
   """
-  def transfer(type, file, destination_storage, network_info) do
+  def transfer(type, gateway, endpoint, file, storage, net) do
     {_, process_type, _} = get_type_info(type)
 
     # Verifies whether that file is already being transferred to/by the gateway
     transfer_process =
       ProcessQuery.get_custom(
         process_type,
-        network_info.gateway_id,
+        gateway.server_id,
         %{file_id: file.file_id}
       )
 
@@ -61,64 +45,33 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
       # There's no transfer yet. We'll have to create a new one.
       nil ->
-        new_transfer(type, file, destination_storage, network_info)
+        new_transfer(type, gateway, endpoint, file, storage, net)
     end
   end
 
-  @spec new_transfer(transfer_type, File.t, Storage.t, network_info) ::
-    transfer_ok
+  @spec new_transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t) ::
+    {:ok, Process.t}
     | transfer_error
   docp """
-  Starts a FileTransfer process, which can be one of [pftp_]download or upload.
+  Starts a FileTransfer process, which can be one of download or upload.
   """
-  defp new_transfer(type, file, destination_storage, network_info) do
+  defp new_transfer(type, gateway, endpoint, file, storage, net) do
     {connection_type, process_type, transfer_type} = get_type_info(type)
 
-    objective = FileTransferProcess.objective(transfer_type, file)
-
-    process_data = %FileTransferProcess{
+    params = %{
       type: transfer_type,
-      destination_storage_id: destination_storage.storage_id,
+      destination_storage_id: storage.storage_id,
       connection_type: connection_type
     }
 
-    params = %{
-      gateway_id: network_info.gateway_id,
-      target_server_id: network_info.destination_id,
-      network_id: network_info.network_id,
-      file_id: file.file_id,
-      connection_id: nil,
-      objective: objective,
-      process_data: process_data,
+    meta = %{
+      network_id: net.network_id,
+      bounce: net.bounce_id,
+      file: file,
       process_type: process_type
     }
 
-    start_connection = fn ->
-      network = NetworkQuery.fetch(network_info.network_id)
-
-      TunnelAction.connect(
-        network,
-        network_info.gateway_id,
-        network_info.destination_id,
-        network_info.bounces,
-        connection_type
-      )
-    end
-
-    flowing do
-      with \
-        {:ok, connection, events} <- start_connection.(),
-        on_fail(fn -> TunnelAction.close_connection(connection) end),
-        on_success(fn -> Event.emit(events) end),
-
-        params = %{params| connection_id: connection.connection_id},
-
-        {:ok, process, events} = ProcessAction.create(params),
-        on_success(fn -> Event.emit(events) end)
-      do
-        {:ok, process}
-      end
-    end
+    FileTransferProcess.execute(gateway, endpoint, params, meta)
   end
 
   docp """

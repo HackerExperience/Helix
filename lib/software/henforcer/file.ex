@@ -49,22 +49,26 @@ defmodule Helix.Software.Henforcer.File do
     )
   end
 
-  defmodule Cracker do
+  @type exists_software_module_relay :: %{server: Server.t, file: File.t}
+  @type exists_software_module_relay_partial :: %{server: Server.t}
+  @type exists_software_module_error ::
+    {false, {:module, :not_found}, exists_software_module_relay_partial}
 
-    alias HELL.IPv4
-    alias Helix.Network.Model.Network
-    alias Helix.Server.Model.Server
-
-    @spec can_bruteforce(Server.id, IPv4.t, Network.id, IPv4.t) ::
-      :ok
-      | {:error, {:target, :self}}
-    def can_bruteforce(_source_id, source_ip, _network_id, target_ip) do
-      # TODO: Check for noob protection
-      if source_ip == target_ip do
-        {:error, {:target, :self}}
-      else
-        :ok
-      end
+  @spec exists_software_module?(File.Module.name, Server.t) ::
+    {true, exists_software_module_relay}
+    | exists_software_module_error
+  @doc """
+  Henforces that at least one file with the given software module exists on the
+  server, sorting by the module version (so it automatically fetches the best
+  software of that module/type on the server).
+  """
+  def exists_software_module?(module, server = %Server{}) do
+    with file = %{} <- FileQuery.fetch_best(server.server_id, module) do
+      reply_ok(%{file: file})
+    else
+      _ ->
+        reply_error({:module, :not_found})
     end
+    |> wrap_relay(%{server: server})
   end
 end

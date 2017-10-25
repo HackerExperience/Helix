@@ -12,7 +12,7 @@ defmodule Helix.Process.Action.Process do
   alias Helix.Software.Model.File
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
   alias Helix.Process.State.TOP.Server, as: ServerTOP
@@ -29,11 +29,11 @@ defmodule Helix.Process.Action.Process do
     %{
       :gateway_id => Server.idtb,
       :target_server_id => Server.idtb,
-      :process_data => ProcessType.t,
+      :process_data => Processable.t,
       :process_type => String.t,
-      optional(:file_id) => File.idtb,
-      optional(:network_id) => Network.idtb,
-      optional(:connection_id) => Connection.idtb,
+      optional(:file_id) => File.idtb | nil,
+      optional(:network_id) => Network.idtb | nil,
+      optional(:connection_id) => Connection.idtb | nil,
       optional(:objective) => map
     }
 
@@ -54,7 +54,7 @@ defmodule Helix.Process.Action.Process do
         gateway_id: "aa::bb",
         target_server_id: "aa::bb",
         file_id: "1:2::3",
-        process_data: %Firewall.ProcessType.Passive{version: 1},
+        process_data: %FirewallProcess{version: 1},
         process_type: "firewall_passive"
       })
       {:ok, %Process{}, [%{}]}

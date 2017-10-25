@@ -52,6 +52,7 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
           }
 
           create!(params)
+
         {:error, e} ->
           Repo.rollback(e)
       end

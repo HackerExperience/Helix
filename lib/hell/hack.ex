@@ -16,7 +16,7 @@ defmodule HELL.Hack.Experience do
       Helix.Websocket.Requestable,
       Helix.Websocket.Joinable,
       Helix.Cache.Model.Cacheable,
-      Helix.Process.Model.Process.ProcessType,
+      Helix.Process.Model.Processable,
       Helix.Process.Public.View.ProcessViewable,
       Helix.Story.Model.Steppable
     ]
@@ -39,7 +39,7 @@ defmodule HELL.Hack.Experience do
         {:check_permissions, 2},
         {:join, 3}
       ],
-      "Elixir.Helix.Process.Model.Process.ProcessType" => [
+      "Elixir.Helix.Process.Model.Processable" => [
         {:dynamic_resources, 1},
         {:state_change, 4},
         {:kill, 3},

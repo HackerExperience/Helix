@@ -5,8 +5,11 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
   alias HELL.IPv4
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
-  alias Helix.Software.Henforcer.File.Cracker, as: CrackerHenforcer
+  alias Helix.Software.Henforcer.Software.Cracker, as: CrackerHenforcer
   alias Helix.Software.Public.File, as: FilePublic
+
+  # HACK for elixir-lang issue #6577
+  @dialyzer {:nowarn_function, handle_request: 2}
 
   def check_params(request, socket) do
     with \
@@ -34,41 +37,49 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
   def check_permissions(request, socket) do
     network_id = request.params.network_id
     source_id = socket.assigns.gateway.server_id
-    source_ip = socket.assigns.gateway.ip
+    entity_id = socket.assigns.entity_id
     ip = request.params.ip
 
     can_bruteforce =
-      CrackerHenforcer.can_bruteforce(source_id, source_ip, network_id, ip)
+      CrackerHenforcer.can_bruteforce?(entity_id, source_id, network_id, ip)
 
     case can_bruteforce do
-      :ok ->
-        reply_ok(request)
-      {:error, {:target, :self}} ->
-        reply_error("target_self")
+      {true, relay} ->
+        meta = %{
+          gateway: relay.gateway,
+          target: relay.target,
+          cracker: relay.cracker
+        }
+
+        update_meta(request, meta, reply: true)
+
+      {false, reason, _} ->
+        reply_error(reason)
     end
   end
 
-  def handle_request(request, socket) do
-    source_id = socket.assigns.gateway.server_id
+  def handle_request(request, _socket) do
     network_id = request.params.network_id
     ip = request.params.ip
     bounces = request.params.bounces
+    cracker = request.meta.cracker
+    gateway = request.meta.gateway
+    target = request.meta.target
 
-    case FilePublic.bruteforce(source_id, network_id, ip, bounces) do
+    bruteforce =
+      FilePublic.bruteforce(cracker, gateway, target, network_id, ip, bounces)
+
+    case bruteforce do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 
-      # HACK: Workaround for https://github.com/elixir-lang/elixir/issues/6426
-      error = {_, m} ->
-        if Map.has_key?(m, :message) do
-          error
-        else
-          internal_error()
-        end
-      # error = {:error, %{message: _}} ->
-      #   error
-      # _ ->
-      #   {:error, %{message: "internal"}}
+      {false, reason, _} ->
+        reply_error(reason)
+
+      error = {:error, %{message: _}} ->
+        error
+      _ ->
+        {:error, %{message: "internal"}}
     end
   end
 

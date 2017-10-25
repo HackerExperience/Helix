@@ -8,11 +8,33 @@ defmodule Helix.Process do
 
       defmodule unquote(name) do
 
+        # Imports all sub-modules that, together, will define the Process.
+        import Helix.Process.Executable
         import Helix.Process.Objective
+        import Helix.Process.Processable
+        import Helix.Process.Viewable
 
+        # Static types
         @type resource_usage :: Helix.Process.Objective.resource_usage
 
+        # Custom types
+        @type executable_error :: __MODULE__.Executable.executable_error
+
+        @process_type nil
+
         unquote(block)
+
+        @doc """
+        Entry point for execution of the process.
+        """
+        defdelegate execute(gateway, target, params, meta),
+          to: __MODULE__.Executable
+
+        @doc """
+        Returns the process type.
+        """
+        def get_process_type,
+          do: @process_type |> to_string()
       end
 
     end
@@ -39,105 +61,6 @@ defmodule Helix.Process do
       @enforce_keys unquote(keys)
       defstruct unquote(keys)
 
-    end
-  end
-
-  @doc """
-  Macro for implementation of the ProcessType protocol.
-  """
-  defmacro process_type(do: block) do
-    quote do
-
-      defimpl Helix.Process.Model.Process.ProcessType do
-        unquote(block)
-      end
-
-    end
-  end
-
-  @doc """
-  Macro for implementation of the ProcessViewable protocol.
-
-  It removes most of the boiler plate, making the process having to define only
-  the custom `render_data` function.
-
-  The boilerplate below, which uses `default_process_render`, is suitable for
-  most processes. If one processes needs to have a custom behaviour, it should
-  implement the ProcessViewable protocol directly, without using this macro.
-  """
-  defmacro process_viewable(do: block) do
-    quote do
-
-      defimpl Helix.Process.Public.View.ProcessViewable do
-        @moduledoc false
-
-        alias Helix.Process.Public.View.Process.Helper, as: ProcessViewHelper
-
-        def get_scope(data, process, server, entity) do
-          ProcessViewHelper.get_default_scope(data, process, server, entity)
-        end
-
-        def render(data, process, scope) do
-          base = render_process(process, scope)
-          complement = render_data(data, scope)
-
-          {base, complement}
-        end
-
-        defp render_process(process, scope) do
-          ProcessViewHelper.default_process_render(process, scope)
-        end
-
-        unquote(block)
-      end
-
-    end
-  end
-
-  @doc """
-  Macro for implementing the `render_data/2` function required by the
-  `process_viewable` macro.
-  """
-  defmacro render_data(data, scope, do: block) do
-    quote do
-
-      defp render_data(unquote(data), unquote(scope)) do
-        unquote(block)
-      end
-
-    end
-  end
-
-  @doc """
-  Helper to make sure the given process is a valid Process.t, not a changeset.
-
-  Non-hygienic macro, i.e. a new variable process is returned.
-  """
-  defmacro unchange(process) do
-    quote do
-
-      # The received process may be either a changeset or the model itself.....
-      var!(process) =
-        if unquote(process).__struct__ == Helix.Process.Model.Process do
-          unquote(process)
-        else
-          Ecto.Changeset.apply_changes(unquote(process))
-        end
-
-    end
-  end
-
-  @doc """
-  Helper to mark the process Changeset as deleted.
-
-  Note both `delete/1` and `unchange/1` macros are a technical debt of a poor
-  TOP interface. They should be removed once TOP is rewritten (#291).
-  """
-  defmacro delete(process) do
-    quote do
-      unquote(process)
-      |> Ecto.Changeset.change()
-      |> Map.put(:action, :delete)
     end
   end
 end

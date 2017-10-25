@@ -22,7 +22,7 @@ defmodule Helix.Test.Process.Data.Setup do
   alias Helix.Software.Model.Storage
 
   # Processes
-  alias Helix.Software.Model.Software.Cracker.Bruteforce, as: CrackerBruteforce
+  alias Helix.Software.Process.Cracker.Bruteforce, as: CrackerBruteforce
   alias Helix.Software.Model.SoftwareType.LogForge
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
@@ -105,8 +105,6 @@ defmodule Helix.Test.Process.Data.Setup do
   All others are automatically derived from process meta data.
   """
   def custom(:bruteforce, data_opts, meta) do
-    target_server_id =
-      Keyword.get(data_opts, :target_server_id, meta.target_server_id)
     target_server_ip =
       cond do
         data_opts[:target_server_ip] ->
@@ -116,15 +114,8 @@ defmodule Helix.Test.Process.Data.Setup do
         true ->
           Random.ipv4()
       end
-    software_version = Keyword.get(data_opts, :software_version, 10)
-    network_id = Keyword.get(data_opts, :network_id, meta.network_id)
 
-    data = %CrackerBruteforce{
-      network_id: network_id,
-      target_server_id: target_server_id,
-      target_server_ip: target_server_ip,
-      software_version: software_version
-    }
+    data = CrackerBruteforce.new(%{target_server_ip: target_server_ip})
 
     {"cracker_bruteforce", data, meta}
   end

@@ -3,6 +3,7 @@ defmodule Helix.Test.Software.Setup do
   alias Ecto.Changeset
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.File
@@ -110,9 +111,23 @@ defmodule Helix.Test.Software.Setup do
       changeset: changeset,
       params: params,
       storage_id: storage_id,
-      server_id: server_id,
       modules: modules
     }
+
+    # The `server_id` may either be a Server.t, Server.id or nil depending on
+    # the arguments passed. So we adapt the resulting `related` map to make sure
+    # users of this function do not get a surprise.
+    server_map =
+      case server_id do
+        %Server{} ->
+          %{server: server_id}
+        %Server.ID{} ->
+          %{server_id: server_id}
+        nil ->
+          %{}
+      end
+
+    related = Map.merge(related, server_map)
 
     file =
       changeset

@@ -53,11 +53,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
 
     can_transfer? =
       FileHenforcer.Transfer.can_transfer?(
-        :download,
-        server_id,
-        target_id,
-        storage_id,
-        file_id
+        :download, server_id, target_id, storage_id, file_id
       )
 
     with \
@@ -65,14 +61,16 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
        # /\ Ensures we can download the file
       file = r1.file,
       destination = r1.destination,
+      gateway = r1.gateway,
 
       # Make sure the file exists on a PublicFTP server.
-      {true, r2} <- FileHenforcer.PublicFTP.file_exists?(destination, file)
+      {true, _} <- FileHenforcer.PublicFTP.file_exists?(destination, file)
     do
       meta = %{
+        gateway: gateway,
+        destination: destination,
         file: file,
         storage: r1.storage,
-        pftp_file: r2.pftp_file
       }
 
       update_meta(request, meta, reply: true)
@@ -82,13 +80,14 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
     end
   end
 
-  def handle_request(request, socket) do
-    gateway_id = socket.assigns.gateway.server_id
-    pftp_file = request.meta.pftp_file
-    storage = request.meta.storage
+  def handle_request(request, _socket) do
+    gateway = request.meta.gateway
+    destination = request.meta.destination
     file = request.meta.file
+    storage = request.meta.storage
 
-    case PFTPPublic.download(gateway_id, pftp_file, storage, file) do
+    #
+    case PFTPPublic.download(gateway, destination, storage, file) do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 

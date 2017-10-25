@@ -13,6 +13,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Account.Setup, as: AccountSetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
@@ -207,16 +208,33 @@ defmodule Helix.Test.Universe.Bank.Setup do
   end
 
   @doc """
-  Related data: acc1 :: BankAccount.t, acc2 :: BankAccount.t, Account.t
+  Related data:
+    acc1 :: BankAccount.t, \
+    acc2 :: BankAccount.t, \
+    Account.t, \
+    Net.t, \
+    Server.t
   """
   def wire_transfer_flow do
     amount = 1
     {acc1, _} = account([balance: amount, atm_seq: 1])
     {acc2, _} = account([atm_seq: 2])
-    {player, _} = AccountSetup.account([with_server: true])
+    {player, %{server: gateway}} = AccountSetup.account([with_server: true])
 
-    {:ok, process} = BankTransferFlow.start(acc1, acc2, amount, player)
-    {process, %{acc1: acc1, acc2: acc2, player: player}}
+    net = NetworkHelper.net()
+
+    {:ok, process} =
+      BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
+
+    related = %{
+      acc1: acc1,
+      acc2: acc2,
+      player: player,
+      net: net,
+      gateway: gateway
+    }
+
+    {process, related}
   end
 
   @doc """

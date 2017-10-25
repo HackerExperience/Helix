@@ -6,10 +6,10 @@ defmodule Helix.Process.Model.ProcessTest do
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.Resources
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
 
-  alias Helix.Test.Process.ProcessTypeExample
-  alias Helix.Test.Process.StaticProcessTypeExample
+  alias Helix.Test.Process.ProcessableExample
+  alias Helix.Test.Process.StaticProcessableExample
 
   @moduletag :unit
 
@@ -18,7 +18,7 @@ defmodule Helix.Process.Model.ProcessTest do
       %{
         gateway_id: Server.ID.generate(),
         target_server_id: Server.ID.generate(),
-        process_data: %ProcessTypeExample{}
+        process_data: %ProcessableExample{}
       }
       |> Process.create_changeset()
       |> Changeset.apply_changes()
@@ -39,14 +39,14 @@ defmodule Helix.Process.Model.ProcessTest do
       assert :process_data in error_fields(p)
     end
 
-    test "a struct is only valid if it implements ProcessType protocol" do
+    test "a struct is only valid if it implements Processable protocol" do
       p = Process.create_changeset(%{process_data: %File.Stream{}})
 
       assert :process_data in error_fields(p)
     end
 
-    test "as long as the struct implements ProcessType, everything will be alright" do
-      params = %{process_data: %ProcessTypeExample{}}
+    test "works as long as the struct implements Processabe" do
+      params = %{process_data: %ProcessableExample{}}
       p = Process.create_changeset(params)
 
       refute :process_data in error_fields(p)
@@ -158,7 +158,7 @@ defmodule Helix.Process.Model.ProcessTest do
       assert 2 === Process.allocation_shares(process)
     end
 
-    test "can only allocate if the ProcessType allows", %{process: process} do
+    test "can only allocate if the Processable allows", %{process: process} do
       priority = 2
       process =
         process
@@ -167,10 +167,10 @@ defmodule Helix.Process.Model.ProcessTest do
         |> Changeset.apply_changes()
 
       assert 2 === Process.allocation_shares(process)
-      p2 = %{process| process_data: %StaticProcessTypeExample{}}
+      p2 = %{process| process_data: %StaticProcessableExample{}}
 
-      process_type = %StaticProcessTypeExample{}
-      assert [] === ProcessType.dynamic_resources(process_type)
+      process_type = %StaticProcessableExample{}
+      assert [] === Processable.dynamic_resources(process_type)
       assert 0 === Process.allocation_shares(p2)
     end
   end

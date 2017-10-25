@@ -8,7 +8,7 @@ defmodule Helix.Universe.Bank.Event.RevealPassword do
     alias Helix.Server.Model.Server
     alias Helix.Universe.Bank.Model.BankAccount
     alias Helix.Universe.Bank.Model.BankToken
-    alias Helix.Universe.Bank.Model.BankAccount.RevealPassword.ProcessType,
+    alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
       as: RevealPasswordProcess
     alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 

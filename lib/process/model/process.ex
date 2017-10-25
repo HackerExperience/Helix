@@ -15,7 +15,7 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Process.Model.Process.MapServerToProcess
   alias Helix.Process.Model.Process.NaiveStruct
   alias Helix.Process.Model.Process.Resources
-  alias Helix.Process.Model.Process.ProcessType
+  alias Helix.Process.Model.Processable
   alias Helix.Process.Model.Process.State
 
   @type type :: String.t
@@ -28,8 +28,8 @@ defmodule Helix.Process.Model.Process do
     file_id: File.id | nil,
     network_id: Network.id | nil,
     connection_id: Connection.id | nil,
-    process_data: ProcessType.t,
-    process_type: String.t,
+    process_data: Processable.t,
+    process_type: type,
     state: State.state,
     limitations: Limitations.t,
     objective: Resources.t,
@@ -48,7 +48,7 @@ defmodule Helix.Process.Model.Process do
     :gateway_id => Server.idtb,
     :source_entity_id => Entity.idtb,
     :target_server_id => Server.idtb,
-    :process_data => ProcessType.t,
+    :process_data => Processable.t,
     :process_type => String.t,
     optional(:file_id) => File.idtb,
     optional(:network_id) => Network.idtb,
@@ -67,7 +67,7 @@ defmodule Helix.Process.Model.Process do
     optional(:processed) => map,
     optional(:allocated) => map,
     optional(:minimum) => map,
-    optional(:process_data) => ProcessType.t
+    optional(:process_data) => Processable.t
   }
 
   @creation_fields ~w/
@@ -164,9 +164,9 @@ defmodule Helix.Process.Model.Process do
     |> put_change(:creation_time, now)
     |> put_change(:updated_time, now)
     |> validate_change(:process_data, fn :process_data, value ->
-      # Only accepts as input structs that implement protocol ProcessType to
+      # Only accepts as input structs that implement protocol Processable to
       # ensure that they will be properly processed
-      if ProcessType.impl_for(value),
+      if Processable.impl_for(value),
         do: [],
         else: [process_data: "invalid value"]
     end)
@@ -231,7 +231,7 @@ defmodule Helix.Process.Model.Process do
   Updates `minimum` and `estimated_time`  into the process
   """
   def load_virtual_data(process) do
-    minimum = ProcessType.minimum(process.process_data)
+    minimum = Processable.minimum(process.process_data)
 
     process
     |> estimate_conclusion()
@@ -245,11 +245,11 @@ defmodule Helix.Process.Model.Process do
 
   Notably, it:
   - Adds virtual data (derived data not stored on DB).
-  - Converts the ProcessType (defined at `process_data`) into Helix internal
-    format, by using the `after_read_hook/1` implemented by each ProcessType
+  - Converts the Processable (defined at `process_data`) into Helix internal
+    format, by using the `after_read_hook/1` implemented by each Processable
   """
   def format(process) do
-    data = ProcessType.after_read_hook(process.process_data)
+    data = Processable.after_read_hook(process.process_data)
 
     process
     |> load_virtual_data()
@@ -265,9 +265,9 @@ defmodule Helix.Process.Model.Process do
   @spec kill(process, atom) ::
     {[process] | process, [struct]}
   def kill(process = %__MODULE__{}, reason),
-    do: ProcessType.kill(process.process_data, process, reason)
+    do: Processable.kill(process.process_data, process, reason)
   def kill(process = %Ecto.Changeset{}, reason),
-    do: ProcessType.kill(get_change(process, :process_data), process, reason)
+    do: Processable.kill(get_change(process, :process_data), process, reason)
 
   @spec allocate_minimum(process) ::
     Changeset.t
@@ -345,7 +345,7 @@ defmodule Helix.Process.Model.Process do
 
       changeset
       |> get_field(:process_data)
-      |> ProcessType.state_change(changeset, state, :paused)
+      |> Processable.state_change(changeset, state, :paused)
     end
   end
 
@@ -367,7 +367,7 @@ defmodule Helix.Process.Model.Process do
 
       changeset
       |> get_field(:process_data)
-      |> ProcessType.state_change(changeset, state, :running)
+      |> Processable.state_change(changeset, state, :running)
     else
       changeset
     end
@@ -481,7 +481,7 @@ defmodule Helix.Process.Model.Process do
   def can_allocate(process = %Changeset{}),
     do: can_allocate(apply_changes(process))
   def can_allocate(process = %__MODULE__{}) do
-    dynamic_resources = ProcessType.dynamic_resources(process.process_data)
+    dynamic_resources = Processable.dynamic_resources(process.process_data)
 
     allowed =
       case process.objective do

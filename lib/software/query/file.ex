@@ -5,6 +5,7 @@ defmodule Helix.Software.Query.File do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Internal.File, as: FileInternal
+  alias Helix.Software.Query.Storage, as: StorageQuery
 
   @spec fetch(File.id) ::
     File.t
@@ -12,7 +13,7 @@ defmodule Helix.Software.Query.File do
   defdelegate fetch(file_id),
     to: FileInternal
 
-  @spec fetch_best(Server.id, File.Module.name) ::
+  @spec fetch_best(Server.idt, File.Module.name) ::
     File.t
     | nil
   @doc """
@@ -21,10 +22,12 @@ defmodule Helix.Software.Query.File do
   Future enhancement: find the best software of the server by looking at *all*
   storages
   """
+  def fetch_best(server = %Server{}, module),
+    do: fetch_best(server.server_id, module)
   def fetch_best(server_id = %Server.ID{}, module) do
-    {:ok, storages} = CacheQuery.from_server_get_storages(server_id)
-
-    fetch_best(List.first(storages), module)
+    server_id
+    |> StorageQuery.get_main_storage()
+    |> fetch_best(module)
   end
 
   @spec fetch_best(Storage.t, File.Module.name) ::

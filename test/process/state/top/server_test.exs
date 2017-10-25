@@ -2,7 +2,7 @@ defmodule Helix.Process.State.TOP.TOPServerTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Test.Process.StaticProcessTypeExample
+  alias Helix.Test.Process.StaticProcessableExample
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
   alias Helix.Process.State.TOP.Server, as: TOPServer
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -12,7 +12,7 @@ defmodule Helix.Process.State.TOP.TOPServerTest do
 
   defmodule ProcessThatCausesOverflow do
     defstruct []
-    defimpl Helix.Process.Model.Process.ProcessType do
+    defimpl Helix.Process.Model.Processable do
       def dynamic_resources(_),
         do: []
       def minimum(_),
@@ -41,7 +41,7 @@ defmodule Helix.Process.State.TOP.TOPServerTest do
     params = %{
       gateway_id: server_id,
       target_server_id: server_id,
-      process_data: %StaticProcessTypeExample{},
+      process_data: %StaticProcessableExample{},
       process_type: "static_example_process",
       objective: %{cpu: 9_999_999}
     }
@@ -62,7 +62,7 @@ defmodule Helix.Process.State.TOP.TOPServerTest do
       params = %{
         gateway_id: context.server.server_id,
         target_server_id: context.server.server_id,
-        process_data: %StaticProcessTypeExample{},
+        process_data: %StaticProcessableExample{},
         process_type: "static_example_process",
         objective: %{cpu: 9_999_999}
       }

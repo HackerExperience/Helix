@@ -1,10 +1,10 @@
 # TODO: Delete this ? Yes please.
 
-defmodule Helix.Test.Process.ProcessTypeExample do
+defmodule Helix.Test.Process.ProcessableExample do
 
   defstruct []
 
-  defimpl Helix.Process.Model.Process.ProcessType do
+  defimpl Helix.Process.Model.Processable do
     def dynamic_resources(_),
       do: [:cpu, :dlk, :ulk]
     def minimum(_),
@@ -28,11 +28,11 @@ defmodule Helix.Test.Process.ProcessTypeExample do
   end
 end
 
-defmodule Helix.Test.Process.StaticProcessTypeExample do
+defmodule Helix.Test.Process.StaticProcessableExample do
 
   defstruct []
 
-  defimpl Helix.Process.Model.Process.ProcessType do
+  defimpl Helix.Process.Model.Processable do
     def dynamic_resources(_),
       do: []
     def minimum(_),

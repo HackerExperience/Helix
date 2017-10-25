@@ -1,4 +1,4 @@
-defprotocol Helix.Process.Model.Process.ProcessType do
+defprotocol Helix.Process.Model.Processable do
 
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.State
@@ -28,7 +28,7 @@ defprotocol Helix.Process.Model.Process.ProcessType do
   @spec after_read_hook(term) ::
     t
   @doc """
-  Process metadata (ProcessType) is stored as JSONB on Postgres. After
+  Process metadata (Processable) is stored as JSONB on Postgres. After
   retrieval, we may lose some internal data representation, like Helix IDs or
   atoms, which are both converted to string. This method purpose is somewhat
   similar to serialization.

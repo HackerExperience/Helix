@@ -47,7 +47,7 @@ defmodule Helix.Test.Features.Hack do
       ref = push socket, "cracker.bruteforce", params
 
       # Wait for response
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, 300  # TODO
 
       # The response includes the Bruteforce process information
       assert response.data.process_id

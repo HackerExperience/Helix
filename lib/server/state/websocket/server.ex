@@ -50,6 +50,8 @@ defmodule Helix.Server.State.Websocket.Channel do
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
 
+  @type counter :: non_neg_integer
+
   @typep server_table_name :: :ets_server_websocket_channel_server
   @typep entity_table_name :: :ets_server_websocket_channel_entity
 
@@ -69,7 +71,6 @@ defmodule Helix.Server.State.Websocket.Channel do
     {server_id :: String.t, nip, counter}
 
   @typep nip :: {network_id :: String.t, ip :: String.t}
-  @typep counter :: non_neg_integer
 
   @typep formatted_channel_data ::
     %{

@@ -125,7 +125,7 @@ defmodule Helix.Process.Objective do
   flow which will be called from `Helix.Process`.
   """
   defmacro process_objective(do: block) do
-    quote do
+    quote location: :keep do
       defmodule Objective do
 
         use Helix.Process.Objective
@@ -148,12 +148,13 @@ defmodule Helix.Process.Objective do
         """
         def calculate(params, factors) do
           %{
-            cpu: calculate(:cpu, params, factors) || 0,
-            ram: calculate(:ram, params, factors) || 0,
-            dlk: calculate(:dlk, params, factors) || 0,
-            ulk: calculate(:ulk, params, factors) || 0
+            cpu: calculate(:cpu, params, factors),
+            ram: calculate(:ram, params, factors),
+            dlk: calculate(:dlk, params, factors),
+            ulk: calculate(:ulk, params, factors)
           }
-          |> Enum.reject(&(&1 == 0))
+          |> Enum.reject(fn {_, total} -> total == nil end)  # Test me
+          |> Enum.reject(fn {_, total} -> total == 0 end)
           |> Map.new()
         end
 

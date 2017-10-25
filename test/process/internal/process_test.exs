@@ -4,14 +4,20 @@ defmodule Helix.Process.Internal.ProcessTest do
 
   alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
-  alias Helix.Process.Repo
 
-  alias Helix.Test.Process.Factory
+  alias Helix.Test.Process.Setup, as: ProcessSetup
 
   describe "fetching" do
     test "succeeds by id" do
-      process = Factory.insert(:process)
-      assert %Process{} = ProcessInternal.fetch(process.process_id)
+      {process, _} = ProcessSetup.process()
+      entry = ProcessInternal.fetch(process.process_id)
+
+      # Returned the correct entry
+      assert entry.process_id == process.process_id
+
+      # Loaded/formatted the entry from DB (virtual data)
+      assert entry.minimum
+      assert Map.has_key?(entry, :estimated_time)
     end
 
     test "fails when process doesn't exists" do
@@ -21,11 +27,16 @@ defmodule Helix.Process.Internal.ProcessTest do
 
   describe "delete/1" do
     test "removes entry" do
-      process = Factory.insert(:process)
+      {process, _} = ProcessSetup.process()
 
-      assert Repo.get(Process, process.process_id)
+      # It is on the DB
+      assert ProcessInternal.fetch(process.process_id)
+
+      # Request to remove the process
       ProcessInternal.delete(process)
-      refute Repo.get(Process, process.process_id)
+
+      # No longer on DB
+      refute ProcessInternal.fetch(process.process_id)
     end
   end
 end
