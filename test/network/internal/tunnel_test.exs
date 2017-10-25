@@ -270,7 +270,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       connections = TunnelInternal.connections_originating_from(gateway_id)
 
       assert length(connections) == 2
-      assert connections == [c2t1, c1t1]
+      assert Enum.sort(connections) == Enum.sort([c2t1, c1t1])
     end
   end
 
@@ -303,7 +303,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       connections = TunnelInternal.connections_destined_to(server_id)
 
       assert length(connections) == 2
-      assert connections == [c2t2, c1t2]
+      assert Enum.sort(connections) == Enum.sort([c2t2, c1t2])
     end
   end
 

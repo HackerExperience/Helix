@@ -24,6 +24,7 @@ defmodule Helix.Event do
 
       defmodule unquote(name) do
 
+        import Helix.Event.Listenable.Flow
         import Helix.Event.Loggable.Flow
         import Helix.Event.Notificable.Flow
 

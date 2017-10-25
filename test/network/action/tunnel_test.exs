@@ -21,9 +21,13 @@ defmodule Helix.Network.Action.TunnelTest do
       {ftp, _} =
         NetworkSetup.connection([tunnel_id: tunnel.tunnel_id, type: :ftp])
 
+      connections =
+        gateway_id
+        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> Enum.sort()
+
       # Make sure the connections are there
-      assert [ftp, ssh] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+      assert Enum.sort([ftp, ssh]) == connections
 
       # Conditionally close connections of type :ssh
       assert [event] =
@@ -59,23 +63,32 @@ defmodule Helix.Network.Action.TunnelTest do
       {login1, _} =
         NetworkSetup.connection([tunnel_id: tunnel_id, type: :bank_login])
 
+      connections =
+        gateway_id
+        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> Enum.sort()
+
       # Make sure the connections are there
-      assert [login1, wire1, ftp2, ftp1, ssh3, ssh2, ssh1] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+      assert Enum.sort([login1, wire1, ftp2, ftp1, ssh3, ssh2, ssh1]) ==
+        connections
 
       # Conditionally close connections of type :ssh
       assert events =
         TunnelAction.close_connections_where(gateway_id, destination_id, :ssh)
 
+      connections =
+        gateway_id
+        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> Enum.sort()
+
       # Only the SSH connections were removed
-      assert [login1, wire1, ftp2, ftp1] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+      assert Enum.sort([login1, wire1, ftp2, ftp1]) == connections
 
       # Make sure it returned the correct events
-      assert events ==
+      assert Enum.sort(events) ==
         [EventSetup.Network.connection_closed(ssh3),
          EventSetup.Network.connection_closed(ssh2),
-         EventSetup.Network.connection_closed(ssh1)]
+         EventSetup.Network.connection_closed(ssh1)] |> Enum.sort()
     end
 
     test "with 1 match; with filter" do
@@ -100,9 +113,13 @@ defmodule Helix.Network.Action.TunnelTest do
         NetworkSetup.connection(
           [tunnel_id: tunnel_id, type: :ftp, meta: %{"expired" => true}])
 
+      connections =
+        gateway_id
+        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> Enum.sort()
+
       # Make sure the connections are there
-      assert [ftp_ok1, ssh_ok2, ssh_ok1, ssh_expired] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+      assert Enum.sort([ftp_ok1, ssh_ok2, ssh_ok1, ssh_expired]) == connections
 
       # From the resulting set, filter (for deletion) connections where
       # `expired == true`
@@ -119,9 +136,13 @@ defmodule Helix.Network.Action.TunnelTest do
           :ssh,
           filter)
 
+      connections =
+        gateway_id
+        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> Enum.sort()
+
       # The SSH connection was removed, the FTP one wasn't
-      assert [ftp_ok1, ssh_ok2, ssh_ok1] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+      assert Enum.sort([ftp_ok1, ssh_ok2, ssh_ok1]) == connections
 
       assert event == EventSetup.Network.connection_closed(ssh_expired)
     end
@@ -151,9 +172,14 @@ defmodule Helix.Network.Action.TunnelTest do
         NetworkSetup.connection(
           [tunnel_id: tunnel_id, type: :ftp, meta: %{"expired" => true}])
 
+      connections =
+        gateway_id
+        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> Enum.sort()
+
       # Make sure the connections are there
-      assert [ftp_ok1, ssh_ok2, ssh_ok1, ssh_expired2, ssh_expired1] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+      assert connections ==
+        Enum.sort([ftp_ok1, ssh_ok2, ssh_ok1, ssh_expired2, ssh_expired1])
 
       # From the resulting set, filter (for deletion) connections where
       # `expired == true`
@@ -170,14 +196,18 @@ defmodule Helix.Network.Action.TunnelTest do
           :ssh,
           filter)
 
+      connections =
+        gateway_id
+        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> Enum.sort()
+
       # The SSH connection was removed, the FTP one wasn't
-      assert [ftp_ok1, ssh_ok2, ssh_ok1] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+      assert Enum.sort([ftp_ok1, ssh_ok2, ssh_ok1]) == connections
 
       # Make sure the return events are correct
-      assert events ==
+      assert Enum.sort(events) ==
         [EventSetup.Network.connection_closed(ssh_expired2),
-         EventSetup.Network.connection_closed(ssh_expired1)]
+         EventSetup.Network.connection_closed(ssh_expired1)] |> Enum.sort()
     end
 
     test "with no matches but existing connections" do

@@ -123,6 +123,10 @@ defmodule Helix.Software.Event.File do
         [log_from, log_to]
       end
     end
+
+    listenable(event) do
+      [event.file.file_id]
+    end
   end
 
   event DownloadFailed do
