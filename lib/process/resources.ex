@@ -33,6 +33,9 @@ defmodule Helix.Process.Resources do
         end)
       )
 
+      def map(res_a, fun),
+        do: dispatch(:map, res_a, [fun])
+
       def sum(res_a, res_b),
         do: dispatch_merge(:sum, res_a, res_b)
 
@@ -44,6 +47,31 @@ defmodule Helix.Process.Resources do
 
       def div(res_a, res_b),
         do: dispatch_merge(:div, res_a, res_b)
+
+      def gt(res_a, res_b),
+        do: dispatch_merge(:gt, res_a, res_b)
+
+      def reduce(resource, initial, function),
+        do: dispatch(:reduce, resource, [initial, function])
+
+      def completed?(processed, objective) do
+        :completed?
+        |> dispatch_merge(processed, objective)
+        |> reduce(true, fn acc, v -> acc && v || false end)
+        |> Enum.all?(fn {_res, status} -> status == true end)
+      end
+
+      def max(resources) do
+        resources
+        |> reduce(0, fn acc, v -> max(acc, v) end)
+
+        # Select highest usage among all resource
+        |> Enum.sort_by(fn {_res, max} -> max end)
+
+        # Make sure to return only the *usage* of the highest resource
+        |> List.last()
+        |> elem(1)
+      end
 
       def get_shares(process),
         do: dispatch_create :get_shares, [process]
@@ -198,7 +226,6 @@ defmodule Helix.Process.Resources do
 
         def unquote(op)(unquote(a), unquote(b)) do
           unquote(block)
-          # |> ensure_float()
           |> build()
         end
 

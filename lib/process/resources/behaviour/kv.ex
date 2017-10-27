@@ -12,6 +12,22 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       @name unquote(name)
       @key Keyword.fetch!(unquote(args), :key)
 
+      def map(resource, function) do
+        Enum.reduce(resource, %{}, fn {key, value}, acc ->
+          new_value = function.(value)
+
+          %{}
+          |> Map.put(key, new_value)
+          |> Map.merge(acc)
+        end)
+      end
+
+      def reduce(resource, initial, function) do
+        Enum.reduce(resource, initial, fn {key, value}, acc ->
+          function.(acc, value)
+        end)
+      end
+
       def build([%{}]),
         do: %{}
       def build(entries) do
@@ -26,39 +42,61 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       def initial,
         do: build([])
 
-      sum(a, b) do
+      def op_map(a, b, fun) do
         keys = get_keys(a, b)
 
         Map.merge(a, Map.take(b, keys), fn _, v1, v2 ->
-          v1 + v2
+          fun.(v1, v2)
         end)
+      end
+
+      sum(a, b) do
+        op_map(a, b, &Kernel.+/2)
       end
 
       sub(a, b) do
-        keys = get_keys(a, b)
-
-        Map.merge(a, Map.take(b, keys), fn _, v1, v2 ->
-          v1 - v2
-        end)
+        op_map(a, b, &Kernel.-/2)
       end
 
       mul(a, b) do
-        keys = get_keys(a, b)
-
-        Map.merge(a, Map.take(b, keys), fn _, v1, v2 ->
-          v1 * v2
-        end)
+        op_map(a, b, &Kernel.*/2)
       end
 
       div(a, b) do
-        keys = get_keys(a, b)
+        op_map(a, b, &safe_div/2)
+      end
 
-        Map.merge(a, Map.take(b, keys), fn _, v1, v2 ->
-          safe_div(v1, v2)
+      def completed?(processed, objective) do
+        Enum.reduce(processed, %{}, fn {key, value}, acc ->
+          # If the corresponding objective is `nil`, then by definition this
+          # resource is completed
+          result =
+            if objective[key] do
+              value > objective[key]
+            else
+              true
+            end
+
+          %{}
+          |> Map.put(key, result)
+          |> Map.merge(acc)
         end)
       end
 
-      defp safe_div(dividend, divisor) when divisor > 1,
+      defp can_allocate?(%{processed: nil}, _),
+        do: true
+      defp can_allocate?(%{processed: processed, objective: objective}, key) do
+        value_objective = objective[@name][key]
+        value_processed = processed[@name][key]
+
+        # Convert `nil` and `%{}` to `0.0`
+        value_objective = is_number(value_objective) && value_objective || 0.0
+        value_processed = is_number(value_processed) && value_processed || 0.0
+
+        value_objective > value_processed
+      end
+
+      defp safe_div(dividend, divisor) when divisor > 0,
         do: dividend / divisor
       defp safe_div(_, 0.0),
         do: initial()
@@ -69,7 +107,8 @@ defmodule Helix.Process.Resources.Behaviour.KV do
         with \
           true <- @name in dynamic,
           key = get_key(process),
-          true <- key != nil
+          true <- key != nil,
+          true <- can_allocate?(process, key)
         do
           Map.put(%{}, key, priority)
         else
@@ -106,11 +145,18 @@ defmodule Helix.Process.Resources.Behaviour.KV do
             initial()
 
           key ->
-            [{key, alloc}]
+            Map.put(%{}, key, alloc)
         end
       end
 
       allocate_dynamic(shares, res_per_share, %{dynamic: dynamic}) do
+        # TODO: Test if, by merging the operations into `map`, this is still
+        # needed
+        shares =
+          Enum.reduce(get_keys(shares, res_per_share), shares, fn key, acc ->
+            Map.put_new(acc, key, 0)
+          end)
+
         if @name in dynamic do
           mul(shares, res_per_share)
         else

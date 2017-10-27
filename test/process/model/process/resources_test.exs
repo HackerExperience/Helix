@@ -7,7 +7,7 @@ defmodule Helix.Process.Model.Process.ResourcesTest do
   alias Helix.Test.Process.Setup.TOP, as: TOPSetup
 
   defp gen_resource do
-    {res, _} = TOPSetup.Resources.resources(:valid)
+    {res, _} = TOPSetup.Resources.resources()
     res
   end
 

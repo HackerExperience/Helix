@@ -120,4 +120,55 @@ defmodule Helix.Process.Model.Process.Resources.DLKTest do
       assert %{} == ResourceDLK.allocate_static(process)
     end
   end
+
+  describe "completed?/2" do
+    test "true when all processed values are greater than their objectives" do
+      processed = %{net1: 200, net2: 1}
+      objective = %{net1: 101, net2: 10}
+
+      result = ResourceDLK.completed?(processed, objective)
+
+      assert result == %{net1: true, net2: false}
+    end
+
+    test "true when there is no objective" do
+      processed = %{net: 100}
+      objective = %{}
+
+      assert %{net: true} == ResourceDLK.completed?(processed, objective)
+    end
+  end
+
+  describe "map/2" do
+    test "applies to each value" do
+
+      res = %{net1: true, net2: false, net3: true}
+
+      function = fn val -> not val end
+
+      result = ResourceDLK.map(res, function)
+
+      assert result == %{net1: false, net2: true, net3: false}
+    end
+  end
+
+  describe "reduce/2" do
+    test "works" do
+      r1 = %{net1: 100, net2: 300}
+      f1 = fn acc, v -> acc + v end
+      i1 = 0
+
+      assert 400 == ResourceDLK.reduce(r1, i1, f1)
+
+      r2 = %{net1: true, net2: true, net3: true}
+      f2 = fn acc, v -> acc && v || false end
+      i2 = true
+
+      assert ResourceDLK.reduce(r2, i2, f2)
+
+      r3 = %{net1: true, net2: true, net3: false}
+
+      refute ResourceDLK.reduce(r3, i2, f2)
+    end
+  end
 end

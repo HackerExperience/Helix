@@ -11,6 +11,18 @@ defmodule Helix.Process.Resources.Behaviour.Default do
 
       @name unquote(name)
 
+      def op_map(a, b, function) do
+        function.(a, b)
+      end
+
+      def map(resource, function) do
+        function.(resource)
+      end
+
+      def reduce(resource, initial, function) do
+        function.(initial, resource)
+      end
+
       def build(value),
         do: value |> ResourceUtils.ensure_float()
 
@@ -33,20 +45,41 @@ defmodule Helix.Process.Resources.Behaviour.Default do
         a * b
       end
 
-      defp safe_div(dividend, divisor) when divisor > 1,
+      def gt(a, b) do
+        a > b
+      end
+
+      def max(resource) do
+        resource
+      end
+
+      defp safe_div(dividend, divisor) when divisor > 0,
         do: dividend / divisor
       defp safe_div(_, 0.0),
         do: 0
       defp save_div(_, 0),
         do: 0
 
-      get_shares(%{priority: priority, dynamic: dynamic_res}) do
-        if @name in dynamic_res do
+      def completed?(processed, objective) do
+        processed > objective
+      end
+
+      get_shares(process = %{priority: priority, dynamic: dynamic_res}) do
+        with \
+          true <- @name in dynamic_res,
+          true <- can_allocate?(process)
+        do
           priority
         else
-          initial()
+          _ ->
+            initial()
         end
       end
+
+      defp can_allocate?(%{processed: nil}),
+        do: true
+      defp can_allocate?(%{processed: processed, objective: objective}),
+        do: gt(Map.fetch!(objective, @name), Map.get(processed, @name, 0))
 
       resource_per_share(resources, shares) do
         __MODULE__.div(resources, shares)
