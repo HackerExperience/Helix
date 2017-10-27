@@ -48,4 +48,13 @@ defmodule Helix.Test.Process.Helper.TOP.Resources do
       paused: paused_static
     }
   end
+
+  def objective do
+    %{
+      cpu: 999_999,
+      ram: 999_999,
+      dlk: %{},
+      ulk: %{}
+    }
+  end
 end

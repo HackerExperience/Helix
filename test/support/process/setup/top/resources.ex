@@ -6,6 +6,7 @@ defmodule Helix.Test.Process.Setup.TOP.Resources do
   @internet_id NetworkHelper.internet_id()
 
   def resources(opts \\ []) do
+    network_id = Keyword.get(opts, :network_id, @internet_id)
 
     cpu = Random.number(min: 100, max: 20_000)
     ram = Random.number(min: 100, max: 20_000)
@@ -15,8 +16,8 @@ defmodule Helix.Test.Process.Setup.TOP.Resources do
     total = %{
       cpu: cpu,
       ram: ram,
-      ulk: Map.put(%{}, @internet_id, ulk),
-      dlk: Map.put(%{}, @internet_id, dlk)
+      ulk: Map.put(%{}, network_id, ulk),
+      dlk: Map.put(%{}, network_id, dlk)
     }
 
     {total, %{}}

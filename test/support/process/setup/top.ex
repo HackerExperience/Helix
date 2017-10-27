@@ -29,12 +29,22 @@ defmodule Helix.Test.Process.Setup.TOP do
 
     static = TOPHelper.Resources.calculate_static(opts, res_usage)
 
+    processed = Keyword.get(opts, :processed, nil)
+    objective = Keyword.get(opts, :objective, TOPHelper.Resources.objective())
+    allocated = Keyword.get(opts, :allocated, nil)
+
+    last_checkpoint_time = Keyword.get(opts, :last_checkpoint_time, nil)
+
     %{
+      objective: objective,
+      processed: processed,
+      allocated: allocated,
       priority: priority,
       state: state,
       static: static,
       dynamic: dynamic,
-      network_id: network_id
+      network_id: network_id,
+      last_checkpoint_time: last_checkpoint_time
     }
   end
 end

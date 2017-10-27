@@ -91,6 +91,7 @@ defmodule Helix.Process.Model.TOP.Allocator do
 
         # Acc (sum)
         shares = Process.Resources.sum(shares, proc_shares)
+
         proc_share_info = [{process, proc_static_allocation, proc_shares}]
 
         {shares, acc ++ proc_share_info}
