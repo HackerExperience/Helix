@@ -22,6 +22,13 @@ process Helix.Software.Process.File.Transfer do
     connection_type: connection_type
   }
 
+  @type resources ::
+    %{
+      objective: objective,
+      dynamic: [:dlk] | [:ulk],
+      static: map
+    }
+
   @type objective ::
     %{dlk: resource_usage}
     | %{ulk: resource_usage}
@@ -29,10 +36,15 @@ process Helix.Software.Process.File.Transfer do
   @type transfer_type :: :download | :upload
   @type connection_type :: :ftp | :public_ftp
 
-  @type creation_params :: %{
+  @typep creation_params :: %{
     type: transfer_type,
     connection_type: connection_type,
     destination_storage_id: Storage.id
+  }
+
+  @typep resources_params :: %{
+    type: transfer_type,
+    file: File.t
   }
 
   @spec new(creation_params) ::
@@ -45,15 +57,10 @@ process Helix.Software.Process.File.Transfer do
     }
   end
 
-  @type objective_params :: %{
-    type: transfer_type,
-    file: File.t
-  }
-
-  @spec objective(objective_params) ::
-    objective
-  def objective(params = %{type: _, file: _}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{type: _, file: _}),
+    do: get_resources params
 
   processable do
     @moduledoc """
@@ -74,14 +81,6 @@ process Helix.Software.Process.File.Transfer do
       as: FileTransferAbortedEvent
     alias Helix.Software.Event.File.Transfer.Processed,
       as: FileTransferProcessedEvent
-
-    def dynamic_resources(%{type: :download}),
-      do: [:dlk]
-    def dynamic_resources(%{type: :upload}),
-      do: [:ulk]
-
-    def minimum(_),
-      do: %{}
 
     @doc """
     Emits `FileTransferAbortedEvent.t` when/if process gets killed.
@@ -112,7 +111,7 @@ process Helix.Software.Process.File.Transfer do
     defp get_servers_context(%{type: :download}, process),
       do: {process.target_server_id, process.gateway_id}
     defp get_servers_context(%{type: :upload}, process),
-      do: {process.gateway_id, process.target_server_id}
+        do: {process.gateway_id, process.target_server_id}
 
     def after_read_hook(data) do
       %FileTransferProcess{
@@ -123,7 +122,7 @@ process Helix.Software.Process.File.Transfer do
     end
   end
 
-  process_objective do
+  resourceable do
     @moduledoc """
     Sets the objectives to FileTransferProcess
     """
@@ -165,6 +164,21 @@ process Helix.Software.Process.File.Transfer do
     # Safety fallbacks
     dlk(%{type: :upload})
     ulk(%{type: :download})
+
+    dynamic(%{type: :download}) do
+      [:dlk]
+    end
+
+    dynamic(%{type: :upload}) do
+      [:ulk]
+    end
+
+    static do
+      %{
+        paused: %{ram: 10},
+        running: %{ram: 20}
+      }
+    end
   end
 
   executable do
@@ -182,7 +196,7 @@ process Helix.Software.Process.File.Transfer do
       optional(atom) => term
     }
 
-    objective(_, _, params, meta) do
+    resources(_, _, params, meta) do
       %{
         type: params.type,
         file: meta.file

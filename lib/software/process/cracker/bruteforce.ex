@@ -19,14 +19,21 @@ process Helix.Software.Process.Cracker.Bruteforce do
       target_server_ip: Network.ip
     }
 
-  @type creation_params ::
+  @typep creation_params ::
     %{
       target_server_ip: Network.ip
     }
 
   @type objective :: %{cpu: resource_usage}
 
-  @type objective_params ::
+  @type resources ::
+    %{
+      objective: objective,
+      static: map,
+      dynamic: [:cpu]
+    }
+
+  @typep resources_params ::
     %{
       cracker: File.t_of_type(:cracker),
       hasher: File.t_of_type(:hasher) | nil
@@ -40,10 +47,10 @@ process Helix.Software.Process.Cracker.Bruteforce do
     }
   end
 
-  @spec objective(objective_params) ::
-    objective
-  def objective(params = %{cracker: %File{}, hasher: _}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{cracker: %File{}, hasher: _}),
+    do: get_resources params
 
   processable do
     @moduledoc """
@@ -54,16 +61,6 @@ process Helix.Software.Process.Cracker.Bruteforce do
     alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
     alias Helix.Software.Event.Cracker.Bruteforce.Processed,
       as: BruteforceProcessedEvent
-
-    def dynamic_resources(_),
-      do: [:cpu]
-
-    def minimum(_) do
-      %{
-        paused: %{ram: 500},
-        running: %{ram: 500}
-      }
-    end
 
     on_completion(data) do
       event = BruteforceProcessedEvent.new(process, data)
@@ -78,7 +75,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
     end
   end
 
-  process_objective do
+  resourceable do
     @moduledoc """
     Defines how long a BruteforceProcess should take, resource usage, etc.
     """
@@ -125,6 +122,17 @@ process Helix.Software.Process.Cracker.Bruteforce do
     cpu(%{hasher: %File{}}) do
       f.cracker.version.bruteforce * f.hasher.version.password
     end
+
+    static do
+      %{
+        paused: %{ram: 100},
+        running: %{ram: 200}
+      }
+    end
+
+    dynamic do
+      [:cpu]
+    end
   end
 
   executable do
@@ -143,7 +151,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
         optional(atom) => term
       }
 
-    objective(_, target, _, %{cracker: cracker}) do
+    resources(_, target, _, %{cracker: cracker}) do
       hasher = FileQuery.fetch_best(target, :password)
 
       %{

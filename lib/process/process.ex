@@ -10,12 +10,12 @@ defmodule Helix.Process do
 
         # Imports all sub-modules that, together, will define the Process.
         import Helix.Process.Executable
-        import Helix.Process.Objective
+        import Helix.Process.Resourceable
         import Helix.Process.Processable
         import Helix.Process.Viewable
 
         # Static types
-        @type resource_usage :: Helix.Process.Objective.resource_usage
+        @type resource_usage :: Helix.Process.Resourceable.resource_usage
 
         # Custom types
         @type executable_error :: __MODULE__.Executable.executable_error
@@ -34,21 +34,31 @@ defmodule Helix.Process do
         Returns the process type.
         """
         def get_process_type,
-          do: @process_type |> to_string()
+          do: @process_type
       end
 
     end
   end
 
   @doc """
-  `set_objective` will pass the given params to `Process.Objective.calculate/2`,
-  which will use its own flow to specify the required objectives the process
-  should need for each hardware resource.
+  `get_resources` will pass the given params to `Process.Resourceable`, which
+  will use its own flow to specify the required objectives the process should
+  need for each hardware resource, as well as static and dynamic resource
+  allocation usage.
   """
-  defmacro set_objective(params) do
+  defmacro get_resources(params) do
     quote bind_quoted: [params: params] do
-      factors = __MODULE__.Objective.get_factors(params)
-      __MODULE__.Objective.calculate(params, factors)
+      factors = __MODULE__.Resourceable.get_factors(params)
+
+      objective = __MODULE__.Resourceable.calculate(params, factors)
+      static = __MODULE__.Resourceable.static(params, factors)
+      dynamic = __MODULE__.Resourceable.dynamic(params, factors)
+
+      %{
+        objective: objective,
+        static: static,
+        dynamic: dynamic
+      }
     end
   end
 

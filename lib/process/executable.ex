@@ -71,7 +71,7 @@ defmodule Helix.Process.Executable do
       Returns the `process_type` parameter, a subset of the full process params.
       """
       defp get_process_type(%{process_type: process_type}),
-        do: %{process_type: process_type |> to_string()}
+        do: %{process_type: process_type}
       defp get_process_type(_) do
         process_type = call_process(:get_process_type)
         %{process_type: process_type}
@@ -230,7 +230,7 @@ defmodule Helix.Process.Executable do
       """
       def execute(unquote_splicing(args)) do
         process_data = get_process_data(unquote(params))
-        objective = get_objective(unquote_splicing(args))
+        resources = get_resources(unquote_splicing(args))
         file = get_file(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
         process_type = get_process_type(unquote(meta))
@@ -239,7 +239,7 @@ defmodule Helix.Process.Executable do
         partial =
           %{}
           |> Map.merge(process_data)
-          |> Map.merge(objective)
+          |> Map.merge(resources)
           |> Map.merge(file)
           |> Map.merge(ownership)
           |> Map.merge(process_type)
@@ -298,24 +298,25 @@ defmodule Helix.Process.Executable do
   end
 
   @doc """
-  Returns the process' `objective`, calling the process' `new/1` with the
-  parameters defined on the `objective` section of the Process.Executable.
+  Returns information about the resource usage of that process, including:
+
+  - what is the process objective
+  - which resources can be allocated dynamically
+  - what are the statically allocated resources
   """
-  defmacro objective(gateway, target, params, meta, do: block) do
+  defmacro resources(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
     process = get_process(__CALLER__)
 
     quote do
 
-      @spec get_objective(term, term, term, term) ::
-        %{objective: unquote(process).objective}
+      @spec get_resources(term, term, term, term) ::
+        unquote(process).resources
       @doc false
-      defp get_objective(unquote_splicing(args)) do
+      defp get_resources(unquote_splicing(args)) do
         params = unquote(block)
 
-        objective = call_process(:objective, params)
-
-        %{objective: objective}
+        call_process(:resources, params)
       end
 
     end

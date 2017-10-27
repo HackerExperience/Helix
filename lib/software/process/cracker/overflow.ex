@@ -15,7 +15,7 @@ process Helix.Software.Process.Cracker.Overflow do
       target_connection_id: Connection.id | nil
     }
 
-  @type creation_params ::
+  @typep creation_params ::
     %{
       target_process_id: Process.id | nil,
       target_connection_id: Connection.id | nil
@@ -23,7 +23,14 @@ process Helix.Software.Process.Cracker.Overflow do
 
   @type objective :: %{cpu: resource_usage}
 
-  @type objective_params ::
+  @type resources ::
+    %{
+      objective: objective,
+      static: map,
+      dynamic: [:cpu]
+    }
+
+  @typep resources_params ::
     %{
       cracker: File.t
     }
@@ -44,10 +51,10 @@ process Helix.Software.Process.Cracker.Overflow do
     }
   end
 
-  @spec objective(objective_params) ::
-    objective
-  def objective(params = %{cracker: %File{}}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{cracker: %File{}}),
+    do: get_resources params
 
   processable do
 
@@ -57,16 +64,6 @@ process Helix.Software.Process.Cracker.Overflow do
 
     alias Helix.Software.Event.Cracker.Overflow.Processed,
       as: OverflowProcessedEvent
-
-    def dynamic_resources(_),
-      do: [:cpu]
-
-    def minimum(_) do
-      %{
-        paused: %{ram: 24},
-        running: %{ram: 24}
-      }
-    end
 
     on_completion(data) do
       event = OverflowProcessedEvent.new(process, data)
@@ -87,7 +84,7 @@ process Helix.Software.Process.Cracker.Overflow do
     end
   end
 
-  process_objective do
+  resourceable do
 
     alias Helix.Software.Factor.File, as: FileFactor
     alias Helix.Software.Model.File
@@ -109,6 +106,17 @@ process Helix.Software.Process.Cracker.Overflow do
     cpu do
       f.cracker.version.overflow
     end
+
+    dynamic do
+      [:cpu]
+    end
+
+    static do
+      %{
+        paused: %{ram: 100},
+        running: %{ram: 200}
+      }
+    end
   end
 
   executable do
@@ -123,7 +131,7 @@ process Helix.Software.Process.Cracker.Overflow do
         optional(atom) => term
       }
 
-    objective(_, _, _, %{cracker: cracker}) do
+    resources(_, _, _, %{cracker: cracker}) do
       %{cracker: cracker}
     end
 

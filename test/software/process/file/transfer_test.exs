@@ -64,21 +64,37 @@ defmodule Helix.Software.Process.File.TransferTest do
     end
   end
 
-  describe "Process.Objective" do
+  describe "Process.Resourceable" do
     test "download uses dlk" do
       {file, _} = SoftwareSetup.file()
 
-      resources = FileTransferProcess.objective(%{type: :download, file: file})
+      resources = FileTransferProcess.resources(%{type: :download, file: file})
 
-      assert_objective resources, {:dlk, file.file_size}
+      # Uses DLK resource
+      assert resources.dynamic == [:dlk]
+
+      # Objective depends on file size
+      assert_objective resources.objective, {:dlk, file.file_size}
+
+      # Uses RAM while paused and running
+      assert resources.static.running.ram
+      assert resources.static.paused.ram
     end
 
     test "upload uses ulk" do
       {file, _} = SoftwareSetup.file()
 
-      resources = FileTransferProcess.objective(%{type: :upload, file: file})
+      resources = FileTransferProcess.resources(%{type: :upload, file: file})
 
-      assert_objective resources, {:ulk, file.file_size}
+      # Uses ULK
+      assert resources.dynamic == [:ulk]
+
+      # Objective depends on file size
+      assert_objective resources.objective, {:ulk, file.file_size}
+
+      # Uses RAM while paused and running
+      assert resources.static.running.ram
+      assert resources.static.paused.ram
     end
   end
 

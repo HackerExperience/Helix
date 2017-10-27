@@ -1,13 +1,24 @@
-defmodule Helix.Process.Objective do
+defmodule Helix.Process.Resourceable do
   @moduledoc """
-  `Process.Objective` is a DSL to calculate how many resources, for each type of
-  hardware resource, a process should use.
+  # Resourceable
+
+  `Process.Resourceable` is a DSL to calculate how many resources, for each type
+  of hardware resource, a process should use. This usage involves:
+
+  - Figuring out the process' objective, the total amount of work a process
+    should perform before being deemed completed.
+  - How many resources the project should allocate statically, whether it's
+    paused or running.
+  - What resources can be dynamically allocated, according to the server's total
+    available resources.
 
   It builds upon `Helix.Factor` and its `FactorClient` API, which will
   efficiently retrieve all data you need to figure out the correct resource
   usage for that process.
 
   Once you have the factors, each resource will be called:
+
+  ### Objective
 
   - cpu (Processor usage)
   - ram (Memory usage)
@@ -20,15 +31,20 @@ defmodule Helix.Process.Objective do
   These resource blocks should return either `nil` or an integer that represents
   how much the process should work - its objectives.
 
+  ### Allocation:
+
+  - static(params, factors) -- Specifies static resource allocation 
+  - dynamic(params, factors) -- List of dynamically allocated resources
+
   The resource blocks argument is the `params` specified at Process's top-level
   `objective/n`. On top of that, within the block scope you have access to the
   `f` variable, which is a map containing all factors returned from the
   `get_factors` function you defined beforehand.
 
-  ### Usage example
+  # Usage example
 
   ```
-  process_objective do
+  resourceable do
 
     @type params :: %{type: :download | :upload}
 
@@ -52,6 +68,21 @@ defmodule Helix.Process.Objective do
     # Safety fallbacks (see section below)
     dlk(%{type: :upload})
     ulk(%{type: :download})
+
+    # Static allocation
+
+    static do
+      %{paused: %{ram: 50}}
+    end
+
+    # Dynamic allocation
+    dynamic(%{type: :download}) do
+      [:dlk]
+    end
+
+    dynamic(%{type: :upload}) do
+      [:ulk]
+    end
   end
   ```
 
@@ -76,7 +107,7 @@ defmodule Helix.Process.Objective do
   @resources [:dlk, :ulk, :cpu, :ram]
 
   @doc """
-  We have to `use` `Helix.Process.Objective` so we can verify
+  We have to `use` Resourceable so we can perform some compile-time checks.
   """
   defmacro __using__(_args) do
     quote do
@@ -107,28 +138,43 @@ defmodule Helix.Process.Objective do
 
     # Declares handlers for unused resources (only the ones who were not
     # defined; see "Safety Fallbacks" section on moduledoc for more info.)
-    for resource <- unhandled_resources do
+    fallback_objective =
+      for resource <- unhandled_resources do
+        quote do
+
+          @doc false
+          def calculate(unquote(resource), _, _),
+            do: 0
+
+        end
+      end
+
+    # Fallbacks in case the user did not specify static and dynamic allocations
+    fallback_allocations =
       quote do
+        @doc false
+        def static(_, _),
+          do: %{}
 
         @doc false
-        def calculate(unquote(resource), _, _),
-          do: 0
-
+        def dynamic(_, _),
+          do: []
       end
-    end
+
+    [fallback_allocations, fallback_objective]
   end
 
   @doc """
-  Top-level macro for `Process.Objective`.
+  Top-level macro for `Process.Resourceable`.
 
   Automatically imports `Helix.Factor.Client`; also defines the `calculate/2`
   flow which will be called from `Helix.Process`.
   """
-  defmacro process_objective(do: block) do
+  defmacro resourceable(do: block) do
     quote location: :keep do
-      defmodule Objective do
+      defmodule Resourceable do
 
-        use Helix.Process.Objective
+        use Helix.Process.Resourceable
 
         import Helix.Factor.Client
 
@@ -136,7 +182,7 @@ defmodule Helix.Process.Objective do
         # because it could be defined multiple times, raising dialyzer's
         # overloaded contract warning.
         @spec calculate(atom, params, factors) ::
-          Helix.Process.Objective.resource_usage | term  # elixir-lang 6426
+          Helix.Process.Resourceable.resource_usage | term  # elixir-lang 6426
 
         @spec calculate(params, factors) ::
           objectives :: map
@@ -176,7 +222,6 @@ defmodule Helix.Process.Objective do
       do: set_resource(unquote(resource), fallback)
   end
 
-  # Actually generate the resources' macros
   docp """
   Generates the macros for each resource.
 
@@ -194,6 +239,46 @@ defmodule Helix.Process.Objective do
         var!(f) = factors
 
         var!(f)  # Marks the variable as used
+
+        unquote(block)
+      end
+
+    end
+  end
+
+  defmacro static(params, do: block),
+    do: set_static(params, block)
+  defmacro static(do: block),
+    do: set_static(quote(do: _params), block)
+
+  defp set_static(params, block) do
+    quote do
+
+      def static(unquote(params), factors) do
+        # Assigns variable `f` to caller's scope
+        var!(f) = factors
+
+        var!(f)  # Mark as used
+
+        unquote(block)
+      end
+
+    end
+  end
+
+  defmacro dynamic(params, do: block),
+    do: set_dynamic(params, block)
+  defmacro dynamic(do: block),
+    do: set_dynamic(quote(do: _params), block)
+
+  defp set_dynamic(params, block) do
+    quote do
+
+      def dynamic(unquote(params), factors) do
+        # Assigns variable `f` to caller's scope
+        var!(f) = factors
+
+        var!(f)  # Mark as used
 
         unquote(block)
       end
