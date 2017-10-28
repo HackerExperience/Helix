@@ -101,10 +101,10 @@ defmodule Helix.Process.Query.Process do
   defdelegate get_processes_on_connection(connection),
     to: ProcessInternal
 
-  get_custom "file_download", %{file_id: file_id},
+  get_custom :file_download, %{file_id: file_id},
     do: &(&1.file_id == file_id)
 
-  get_custom "file_upload", %{file_id: file_id},
+  get_custom :file_upload, %{file_id: file_id},
     do: &(&1.file_id == file_id)
 
   @spec get_custom(Process.type, Server.idt, meta :: map) ::

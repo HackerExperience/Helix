@@ -39,14 +39,14 @@ defmodule Helix.Process.Executable do
   defp handlers(process) do
     quote do
       @spec get_process_data(params) ::
-        %{process_data: unquote(process).t}
+        %{data: unquote(process).t}
       docp """
       Retrieves the `process_data`, according to how it was defined at the
       Process' `new/1`. Subset of the full process params.
       """
       defp get_process_data(params) do
         data = call_process(:new, params)
-        %{process_data: data}
+        %{data: data}
       end
 
       @spec get_ownership(Server.t, Server.t, params, meta) ::
@@ -66,15 +66,15 @@ defmodule Helix.Process.Executable do
       end
 
       @spec get_process_type(term) ::
-        %{process_type: Process.type}
+        %{type: Process.type}
       docp """
       Returns the `process_type` parameter, a subset of the full process params.
       """
       defp get_process_type(%{process_type: process_type}),
-        do: %{process_type: process_type}
+        do: %{type: process_type}
       defp get_process_type(_) do
         process_type = call_process(:get_process_type)
-        %{process_type: process_type}
+        %{type: process_type}
       end
 
       @spec get_network_id(term) ::

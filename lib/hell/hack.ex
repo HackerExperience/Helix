@@ -41,10 +41,7 @@ defmodule HELL.Hack.Experience do
         {:join, 3}
       ],
       "Elixir.Helix.Process.Model.Processable" => [
-        {:dynamic_resources, 1},
-        {:state_change, 4},
         {:kill, 3},
-        {:minimum, 1},
         {:conclusion, 2},
         {:after_read_hook, 1}
       ],

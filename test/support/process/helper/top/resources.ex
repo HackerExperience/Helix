@@ -49,12 +49,28 @@ defmodule Helix.Test.Process.Helper.TOP.Resources do
     }
   end
 
-  def objective do
+  def objective(opts \\ []) do
+    if not is_nil(opts[:dlk]) or not is_nil(opts[:ulk]) do
+      opts[:network_id] || raise "I need a network_id too!"
+    end
+
+    # %{} (empty) if not defined
+    ulk = opts[:ulk] && Map.put(%{}, opts[:network_id], opts[:ulk]) || %{}
+    dlk = opts[:dlk] && Map.put(%{}, opts[:network_id], opts[:dlk]) || %{}
+
     %{
-      cpu: 999_999,
-      ram: 999_999,
-      dlk: %{},
-      ulk: %{}
+      cpu: opts[:cpu] || 999_999,
+      ram: opts[:ram] || 999_999,
+      dlk: dlk,
+      ulk: ulk
+    }
+  end
+
+  def random_static(_opts \\ []) do
+    # Guaranteed to be random
+    %{
+      paused: %{ram: 10},
+      running: %{ram: 20}
     }
   end
 end

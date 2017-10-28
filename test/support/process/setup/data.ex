@@ -28,6 +28,7 @@ defmodule Helix.Test.Process.Data.Setup do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Log.Helper, as: LogHelper
+  alias Helix.Test.Process.Helper.TOP, as: TOPHelper
 
   @doc """
   Chooses a random implementation and uses it. Beware that `data_opts`, used by
@@ -67,7 +68,17 @@ defmodule Helix.Test.Process.Data.Setup do
 
     meta = %{meta| file_id: file_id, connection_id: connection_id}
 
-    {"file_download", data, meta}
+    objective =
+      TOPHelper.Resources.objective(dlk: 500, network_id: meta.network_id)
+
+    resources =
+      %{
+        dynamic: [:dlk],
+        static: TOPHelper.Resources.random_static(),
+        objective: objective
+      }
+
+    {:file_download, data, meta, resources}
   end
 
   @doc """
@@ -94,7 +105,17 @@ defmodule Helix.Test.Process.Data.Setup do
         target_server_id: target_id
        }
 
-    {"file_upload", data, meta}
+    objective =
+      TOPHelper.Resources.objective(ulk: 500, network_id: meta.network_id)
+
+    resources =
+      %{
+        dynamic: [:ulk],
+        objective: objective,
+        static: TOPHelper.Resources.random_static()
+      }
+
+    {:file_upload, data, meta, resources}
   end
 
   @doc """
@@ -117,7 +138,14 @@ defmodule Helix.Test.Process.Data.Setup do
 
     data = CrackerBruteforce.new(%{target_server_ip: target_server_ip})
 
-    {"cracker_bruteforce", data, meta}
+    resources =
+      %{
+        dynamic: [:cpu],
+        static: TOPHelper.Resources.random_static(),
+        objective: TOPHelper.Resources.objective(cpu: 500)
+      }
+
+    {:cracker_bruteforce, data, meta, resources}
   end
 
   @doc """
@@ -152,7 +180,14 @@ defmodule Helix.Test.Process.Data.Setup do
         data
       end
 
-    {"log_forger", data, meta}
+    resources =
+      %{
+        dynamic: [:cpu],
+        static: TOPHelper.Resources.random_static(),
+        objective: TOPHelper.Resources.objective(cpu: 500)
+      }
+
+    {:log_forger, data, meta, resources}
   end
 
   defp custom_implementations do
