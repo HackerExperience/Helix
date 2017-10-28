@@ -5,12 +5,15 @@ defmodule Helix.Process.Resources.Behaviour.KV do
   def generate_behaviour(name, args) do
     quote location: :keep do
 
+      formatter = unquote(args)[:formatter]
+
       alias Helix.Process.Resources.Utils, as: ResourceUtils
 
       @behaviour Helix.Process.Resources.Behaviour
 
       @name unquote(name)
       @key Keyword.fetch!(unquote(args), :key)
+      @formatter unquote(args)[:formatter] || &__MODULE__.default_formatter/2
 
       def map(resource, function) do
         Enum.reduce(resource, %{}, fn {key, value}, acc ->
@@ -25,6 +28,20 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       def reduce(resource, initial, function) do
         Enum.reduce(resource, initial, fn {key, value}, acc ->
           function.(acc, value)
+        end)
+      end
+
+      def default_formatter(k, v) do
+        {k, v}
+      end
+
+      def format(resource) do
+        Enum.reduce(resource, %{}, fn {key, value}, acc ->
+          {k, v} = @formatter.(key, value)
+
+          %{}
+          |> Map.put(k, v)
+          |> Map.merge(acc)
         end)
       end
 

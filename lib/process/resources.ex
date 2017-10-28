@@ -54,6 +54,34 @@ defmodule Helix.Process.Resources do
       def reduce(resource, initial, function),
         do: dispatch(:reduce, resource, [initial, function])
 
+      def format(resources) do
+        # First and foremost, we must ensure that all keys have been transformed
+        # into atoms. If they came from the DB, they will be a string.
+        resources =
+          Enum.reduce(resources, %{}, fn {key, val}, acc ->
+            valid_key = is_atom(key) && key || String.to_existing_atom(key)
+
+            %{}
+            |> Map.put(valid_key, val)
+            |> Map.merge(acc)
+          end)
+
+        # Fill up empty/undefined/missing resources with their initial values
+        missing_resources = @resources -- Map.keys(resources)
+
+        resources =
+          Enum.reduce(missing_resources, resources, fn res, acc ->
+            initial = call_resource(res, :initial, [])
+
+            Map.put(acc, res, initial)
+          end)
+
+        # Now that we've prepared the resource, we can dispatch to each
+        # resource's own implementation, which will take care of formatting
+        # themselves.
+        dispatch(:format, resources)
+      end
+
       def completed?(processed, objective) do
         :completed?
         |> dispatch_merge(processed, objective)

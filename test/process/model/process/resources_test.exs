@@ -2,6 +2,7 @@ defmodule Helix.Process.Model.Process.ResourcesTest do
 
   use ExUnit.Case, async: true
 
+  alias Helix.Network.Model.Network
   alias Helix.Process.Model.Process
 
   alias Helix.Test.Process.Setup.TOP, as: TOPSetup
@@ -79,6 +80,58 @@ defmodule Helix.Process.Model.Process.ResourcesTest do
       assert initial.ram == Process.Resources.RAM.initial()
       assert initial.dlk == Process.Resources.DLK.initial()
       assert initial.ulk == Process.Resources.ULK.initial()
+    end
+  end
+
+  describe "format/1" do
+    test "converts string keys to atoms" do
+      res =
+        %{
+          "cpu" => 100,
+          "ram" => 200,
+          "ulk" => %{},
+          "dlk" => %{}
+        }
+
+      assert %{
+        cpu: 100,
+        ram: 200,
+        ulk: %{},
+        dlk: %{}
+      } == Process.Resources.format(res)
+    end
+
+    test "fills up undefined/missing resources with their initial values" do
+      res =
+        %{
+          cpu: 100,
+          dlk: %{}
+        }
+
+      assert %{
+        cpu: 100,
+        ram: Process.Resources.RAM.initial(),
+        dlk: %{},
+        ulk: Process.Resources.ULK.initial()
+      } == Process.Resources.format(res)
+    end
+
+    test "network-related keys are converted to Helix.IDs" do
+      network_id = Network.ID.cast!("::")
+      res =
+        %{
+          dlk: %{"::" => 100},
+          ulk: Map.put(%{}, network_id, 200),
+          cpu: 0,
+          ram: 0
+        }
+
+      assert %{
+        dlk: Map.put(%{}, network_id, 100),
+        ulk: Map.put(%{}, network_id, 200),
+        ram: 0,
+        cpu: 0
+      } == Process.Resources.format(res)
     end
   end
 end

@@ -2,7 +2,7 @@ defmodule Helix.Process.Resources.Behaviour.Default do
 
   import Helix.Process.Resources
 
-  def generate_behaviour(name, _args) do
+  def generate_behaviour(name, args) do
     quote location: :keep do
 
       alias Helix.Process.Resources.Utils, as: ResourceUtils
@@ -10,6 +10,7 @@ defmodule Helix.Process.Resources.Behaviour.Default do
       @behaviour Helix.Process.Resources.Behaviour
 
       @name unquote(name)
+      @formatter unquote(args)[:formatter] || &__MODULE__.default_formatter/1
 
       def op_map(a, b, function) do
         function.(a, b)
@@ -21,6 +22,14 @@ defmodule Helix.Process.Resources.Behaviour.Default do
 
       def reduce(resource, initial, function) do
         function.(initial, resource)
+      end
+
+      def format(resource) do
+        @formatter.(resource)
+      end
+
+      def default_formatter(v) do
+        v
       end
 
       def build(value),
