@@ -1,4 +1,8 @@
 defmodule Helix.Core.Listener.Event.Handler.Listener do
+  @moduledoc """
+  Listens to all events, verifying whether any of them is of interest to other
+  services, and executes the callback if so.
+  """
 
   alias Helix.Event
   alias Helix.Event.Listenable
@@ -7,6 +11,11 @@ defmodule Helix.Core.Listener.Event.Handler.Listener do
 
   @spec listener_handler(Event.t) ::
     term
+  @doc """
+  `listener_handler/1` is responsible for listening to all events and, in case
+  it implements the `Listenable` protocol, it will check if there are any
+  services subscribed to that specific event under that specific object ID.
+  """
   def listener_handler(event) do
     if Listenable.impl_for(event) do
       event
