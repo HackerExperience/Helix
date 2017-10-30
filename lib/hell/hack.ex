@@ -12,6 +12,7 @@ defmodule HELL.Hack.Experience do
 
     protocols = [
       Helix.Event.Notificable,
+      Helix.Event.Listenable,
       Helix.Event.Loggable,
       Helix.Websocket.Requestable,
       Helix.Websocket.Joinable,
@@ -60,6 +61,9 @@ defmodule HELL.Hack.Experience do
         {:get_contact, 1},
         {:format_meta, 1},
         {:get_replies, 2}
+      ],
+      "Elixir.Helix.Event.Listenable" => [
+        {:get_objects, 1}
       ],
       "Elixir.Helix.Event.Loggable" => [
         {:generate, 1}

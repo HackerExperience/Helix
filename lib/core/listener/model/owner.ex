@@ -3,12 +3,23 @@ defmodule Helix.Core.Listener.Model.Owner do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import HELL.Macros
 
   alias Ecto.Changeset
   alias Helix.Core.Listener.Model.Listener
 
   @type t :: term
+
+  @type id :: String.t
+
+  @typedoc """
+  A `subscriber` is used as an optional, internal identifier, for the case when
+  different services are interested on the same {object_id, event}. On this 
+  scenario, the `subscriber` can be used as an identifier to make sure the
+  owner is deleting/updating the subscription made by himself.
+  It's optional but good practice to set the subscriber name.
+  """
+  @type subscriber :: String.t
+
   @type changeset :: %Changeset{data: %__MODULE__{}}
   @type creation_params :: term
 
@@ -40,16 +51,25 @@ defmodule Helix.Core.Listener.Model.Owner do
 
     import Ecto.Query
 
+    alias Ecto.Queryable
+    alias Helix.Core.Listener.Model.Listener
     alias Helix.Core.Listener.Model.Owner
 
+    @spec find_listener(
+      Queryable.t,
+      Owner.id,
+      Listener.object_id,
+      Listener.hashed_event,
+      Owner.subscriber
+    ) ::
+      Queryable.t
     def find_listener(query \\ Owner, owner_id, object_id, event, subscriber) do
-      from owner in Owner,
+      from owner in query,
         where: owner.owner_id == ^owner_id,
         where: owner.object_id == ^object_id,
         where: owner.event == ^event,
         where: owner.subscriber == ^subscriber,
         preload: [:listener]
     end
-
   end
 end

@@ -2,9 +2,11 @@ defmodule Helix.Core.Listener.Event.Handler.Listener do
 
   alias Helix.Event
   alias Helix.Event.Listenable
-  alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
+  alias Helix.Core.Listener.Model.Listener
   alias Helix.Core.Listener.Query.Listener, as: ListenerQuery
 
+  @spec listener_handler(Event.t) ::
+    term
   def listener_handler(event) do
     if Listenable.impl_for(event) do
       event
@@ -13,12 +15,16 @@ defmodule Helix.Core.Listener.Event.Handler.Listener do
     end
   end
 
+  @spec find_listeners(term | Listener.object_id, Event.t) ::
+    term
   defp find_listeners(object_id, event) do
     object_id
     |> ListenerQuery.get_listeners(event.__struct__)
     |> Enum.each(fn listener -> execute_callback(listener, event) end)
   end
 
+  @spec execute_callback(Listener.info, Event.t) ::
+    term
   defp execute_callback(%{module: module, method: method, meta: meta}, event) do
     module = String.to_atom(module)
     method = String.to_atom(method)

@@ -18,7 +18,7 @@ defmodule Helix.Core.Listener do
     do: do_listen(object_id, [event], callback, opts)
 
   def do_listen(object_id, events, {module, method}, opts) do
-    owner_id = opts[:owner_id] || raise "abc"
+    owner_id = opts[:owner_id] || raise "Please specify owner id"
     subscriber = Keyword.get(opts, :subscriber, nil)
     meta = Keyword.get(opts, :meta, nil)
 
