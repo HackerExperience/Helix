@@ -1,11 +1,23 @@
 defmodule Helix.Process.Model.TOP.Scheduler do
 
+  alias Ecto.Changeset
   alias Helix.Process.Model.Process
 
   def simulate(process = %{state: :paused}),
     do: {:paused, process}
-  def simulate(process = %{allocated: nil}),
-    do: {:waiting_alloc, process}
+
+  def simulate(process = %{state: :waiting_allocation}) do
+    processed = process.processed || Process.Resources.initial()
+
+    process =
+      %{process|
+        processed: processed,
+        state: :running
+       }
+
+    {:running, process}
+  end
+
   def simulate(process) do
     # Based on the last checkpoint, figure out how long this simulation should
     # run
@@ -55,6 +67,10 @@ defmodule Helix.Process.Model.TOP.Scheduler do
         -1 ->
           %{acc| completed: acc.completed ++ [process]}
 
+        # Process would need to run for almost zero seconds... it's completed.
+        0.0 ->
+          %{acc| completed: acc.completed ++ [process]}
+
         # Add the process to the list of running processes, and maybe select it
         # to be marked as `next`, depending on whether it would be completed
         # first.
@@ -73,16 +89,16 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     |> seconds_for_completion()
   end
 
-  def checkpoint(p = %{allocated: alloc}, alloc),
-    do: {p, false}
-  def checkpoint(process, new_alloc) do
-    process =
-      %{process|
-        allocated: new_alloc,
-        last_checkpoint_time: DateTime.utc_now()
-       }
+  def checkpoint(p = %{allocated: alloc, next_allocation: alloc}),
+    do: false
+  def checkpoint(process = %{next_allocation: next_allocation}) do
+    changeset =
+      process
+      |> Changeset.change()
+      |> Changeset.put_change(:allocated, next_allocation)
+      |> Changeset.put_change(:last_checkpoint_time, DateTime.utc_now())
 
-    {process, true}
+    {true, changeset}
   end
 
   defp get_simulation_duration(process) do
@@ -95,8 +111,8 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     end
   end
 
-  defp seconds_for_completion({:waiting_alloc, process}),
-    do: {process, :infinity}
+  # defp seconds_for_completion({:waiting_alloc, process}),
+  #   do: {process, :infinity}
   defp seconds_for_completion({:paused, process}),
     do: {process, :infinity}
   defp seconds_for_completion({:completed, process}),
@@ -106,7 +122,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     remaining_work = Process.Resources.sub(process.objective, process.processed)
 
     # Convert allocation to millisecond (TODO: Store on DB using this format)
-    alloc = Process.Resources.map(process.allocated, &(&1 / 1000))
+    alloc = Process.Resources.map(process.next_allocation, &(&1 / 1000))
 
     # Figure out the work left in order to complete each resource
     work_left = Process.Resources.div(remaining_work, alloc)

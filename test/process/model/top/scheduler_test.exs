@@ -131,6 +131,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
           processed: nil,
           objective: %{cpu: 100, ram: 100, dlk: %{}, ulk: %{}},
           allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
+          next_allocation: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
           last_checkpoint_time: nil,
           creation_time: DateTime.utc_now(),
           state: :running
@@ -157,6 +158,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
           processed: nil,
           objective: %{cpu: 1, ram: 10, dlk: %{net: 100}, ulk: %{net: 50}},
           allocated: %{cpu: 1, ram: 50, dlk: %{net: 20}, ulk: %{net: 25}},
+          next_allocation: %{cpu: 1, ram: 50, dlk: %{net: 20}, ulk: %{net: 25}},
           last_checkpoint_time: nil,
           creation_time: DateTime.utc_now(),
           state: :running
@@ -177,6 +179,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
           processed: %{cpu: 11, ram: 11, dlk: %{}, ulk: %{}},
           objective: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
           allocated: %{cpu: 1, ram: 1, dlk: %{}, ulk: %{}},
+          next_allocation: %{cpu: 1, ram: 1, dlk: %{}, ulk: %{}},
           last_checkpoint_time: nil,
           creation_time: DateTime.utc_now(),
           state: :running
@@ -318,6 +321,58 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
       assert length(paused) == 3
     end
 
+    test "processes 'waiting_allocation' are accurately forecast" do
+      # Describe the problem
+
+      # p5 represents a recently created process, going through the allocator
+      # (and forecast) for the very first time.
+      # Without using the `next_allocation` virtual field of process, we'd lose
+      # this iteration, and on the forecast the `p5` would be marked as `paused`
+      # (since its state is `waiting_allocation`).
+      # However, when it goes through the forecast, it has already gone through
+      # the Allocator, so it *must have received* the allocation, it simply
+      # wasn't saved yet to the process model.
+      # That's why we use `waiting_allocation`: With this field, the `forecast`
+      # method knows that it should estimate the completion of this process
+      # based on its `next_allocation`, even though `allocated` is nil.
+      p5 = p5()
+
+      %{completed: [], next: {process, time_left}, paused: []} =
+        Scheduler.forecast([p5])
+
+      # ~3.3s to complete
+      assert_in_delta time_left, 3.3, 0.1
+      assert process.state == :running
+    end
+
+    test "tricky scenario" do
+      # Context: the process below has processed very little. At the current
+      # rate (presented on `allocated`), it would complete in ~4 seconds, being
+      # CPU the bottleneck. Since the last processed time was 2 seconds ago,
+      # the correct result would be two seconds left for completion....
+      # HOWEVER, on the `next_allocation`, the CPU allocation would skyrocket to
+      # `80`, reducing the CPU completion to less than a second, but the DLK
+      # allocation would go down to 1 unit per second, meaning it would take
+      # ~9 seconds for completion. This is the correct result.
+      # (After simulation, DLK would go to 40; then, on forecast estimation,
+      # an extra 10 units would be needed. At 1 unit/s, it takes 10 seconds.
+      # However, one unit of DLK has already been processed before. Hence, 9s).
+      p =
+        %{
+          processed: %{cpu: 1, ram: 1, dlk: %{net: 1}, ulk: %{}},
+          objective: %{cpu: 100, ram: 20, dlk: %{net: 50}, ulk: %{}},
+          allocated: %{cpu: 25, ram: 10, dlk: %{net: 20}, ulk: %{}},
+          next_allocation: %{cpu: 80, ram: 5, dlk: %{net: 1}, ulk: %{}},
+          last_checkpoint_time: Utils.date_before(2000, :millisecond),
+          creation_time: nil,
+          state: :running
+        }
+
+      assert %{next: {_, time_left}} = Scheduler.forecast([p])
+
+      assert_in_delta time_left, 9, 0.1
+    end
+
     defp p1 do
       # P1 is running and takes about ~10 seconds to complete
       %{
@@ -325,6 +380,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         processed: nil,
         objective: %{cpu: 10, ram: 15, dlk: %{}, ulk: %{}},
         allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
+        next_allocation: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
         state: :running
@@ -338,6 +394,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         processed: nil,
         objective: %{cpu: 10, ram: 0, dlk: %{net: 10}, ulk: %{net: 10}},
         allocated: %{cpu: 5, ram: 0, dlk: %{net: 2}, ulk: %{net: 3}},
+        next_allocation: %{cpu: 5, ram: 0, dlk: %{net: 2}, ulk: %{net: 3}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
         state: :running
@@ -351,6 +408,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         processed: %{cpu: 100, ram: 100, dlk: %{net: 100}, ulk: %{}},
         objective: %{cpu: 99, ram: 99, dlk: %{net: 99}, ulk: %{}},
         allocated: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
+        next_allocation: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
         state: :running
@@ -358,36 +416,55 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
     end
 
     defp p4 do
-      # P4 would complete after 1 second... if only it wasn't paused
+      # P4 would complete in less than 1 second... if only it wasn't paused
       %{
         id: 4,
         processed: nil,
         objective: %{cpu: 10, ram: 0, dlk: %{net: 10}, ulk: %{net: 10}},
         allocated: %{cpu: 9, ram: 0, dlk: %{net: 9}, ulk: %{net: 9}},
+        next_allocation: %{cpu: 9, ram: 0, dlk: %{net: 9}, ulk: %{net: 9}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
         state: :paused
       }
     end
+
+    defp p5 do
+      # P5 was recently created and is going through the forecast/simulation for
+      # the very first time.
+      %{
+        id: 5,
+        processed: nil,
+        objective: %{cpu: 10, ram: 0, dlk: %{net: 10}, ulk: %{net: 10}},
+        allocated: nil,
+        next_allocation: %{cpu: 5, ram: 0, dlk: %{net: 10}, ulk: %{net: 3}},
+        last_checkpoint_time: nil,
+        creation_time: DateTime.utc_now(),
+        state: :waiting_allocation
+      }
+    end
   end
 
-  describe "checkpoint/2" do
+  describe "checkpoint/1" do
     test "sets allocation; last_checkpoint_time" do
+      # This is the new allocation of p1, given by the Allocator
+      next_allocation = %{cpu: 100, ram: 0, dlk: %{}, ulk: %{}}
+
       # P1 was never processed nor allocated before. It represents a recently
       # created process.
-      [p1] = TOPSetup.fake_process()
+      [p1] = TOPSetup.fake_process(next_allocation: next_allocation)
       refute p1.processed
       refute p1.allocated
       refute p1.last_checkpoint_time
-
-      # This is the new allocation of p1, given by the Allocator
-      allocated = %{cpu: 100, ram: 0, dlk: %{}, ulk: %{}}
+      assert p1.next_allocation
 
       # `checkpoint/2` is telling us that the process should be updated
-      assert {new_proc, true} = Scheduler.checkpoint(p1, allocated)
+      assert {true, changeset} = Scheduler.checkpoint(p1)
+
+      new_proc = Ecto.Changeset.apply_changes(changeset)
 
       # The given allocation was saved on the process
-      assert new_proc.allocated == allocated
+      assert new_proc.allocated == next_allocation
 
       # Checkpoint time was set
       assert new_proc.last_checkpoint_time
@@ -400,13 +477,14 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
     test "does not change the model when the allocation remains unchanged" do
       allocated = %{cpu: 100, ram: 0, dlk: %{}, ulk: %{}}
 
-      [p1] = TOPSetup.fake_process(allocated: allocated)
+      [p1] =
+        TOPSetup.fake_process(allocated: allocated, next_allocation: allocated)
 
       # The process and the resulting allocation are the same
       assert p1.allocated == allocated
 
-      # Returned the same, unchanged process; telling us not to update it.
-      assert {p1, false} == Scheduler.checkpoint(p1, allocated)
+      # Returns `false`, meaning "do not update"
+      refute Scheduler.checkpoint(p1)
     end
   end
 end

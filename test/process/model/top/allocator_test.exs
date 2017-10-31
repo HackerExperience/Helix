@@ -12,7 +12,6 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
   alias HELL.TestHelper.Random
 
   describe "allocate/2" do
-
     test "one process; all resources" do
       {total_resources, _} = TOPSetup.Resources.resources()
 
@@ -21,16 +20,18 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
           total_resources: total_resources, dynamic: [:cpu, :ram, :ulk, :dlk]
         )
 
-      assert [{returned_proc, alloc}] =
+      proc1 = Map.put(proc1, :id, 1)
+
+      assert {:ok, %{allocated: [p], dropped: []}} =
         TOPAllocator.allocate(total_resources, [proc1])
 
-      assert returned_proc == proc1
+      assert p.id == proc1.id
 
-      # Allocation of one process will receive all available resources
-      assert_resource alloc.cpu, total_resources.cpu
-      assert_resource alloc.ram, total_resources.ram
-      assert_resource alloc.dlk, total_resources.dlk
-      assert_resource alloc.ulk, total_resources.ulk
+      # Alloc of one process will receive all available resources
+      assert_resource p.next_allocation.cpu, total_resources.cpu
+      assert_resource p.next_allocation.ram, total_resources.ram
+      assert_resource p.next_allocation.dlk, total_resources.dlk
+      assert_resource p.next_allocation.ulk, total_resources.ulk
     end
 
     test "two processes; non-overlapping dynamic; non-overlapping static" do
@@ -40,59 +41,75 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
         TOPSetup.fake_process(total_resources: total_resources, total: 4)
 
       # Proc1 has dynamic CPU resource and does not use any other static res
-      proc1 = %{proc1| dynamic: [:cpu]}
-      proc1 = put_in(proc1, [:static, :running, :ram], 0)
-      proc1 = put_in(proc1, [:static, :running, :ulk], 0)
-      proc1 = put_in(proc1, [:static, :running, :dlk], 0)
+      proc1 =
+        proc1
+        |> Map.from_struct()
+        |> Map.replace(:dynamic, [:cpu])
+        |> Map.put(:id, 1)
+        |> put_in([:static, :running, :ram], 0)
+        |> put_in([:static, :running, :ulk], 0)
+        |> put_in([:static, :running, :dlk], 0)
 
       # Proc2 has dynamic RAM resource and does not use any other static res
-      proc2 = %{proc2| dynamic: [:ram]}
-      proc2 = put_in(proc2, [:static, :running, :cpu], 0)
-      proc2 = put_in(proc2, [:static, :running, :ulk], 0)
-      proc2 = put_in(proc2, [:static, :running, :dlk], 0)
+      proc2 =
+        proc2
+        |> Map.from_struct()
+        |> Map.replace(:dynamic, [:ram])
+        |> Map.put(:id, 2)
+        |> put_in([:static, :running, :cpu], 0)
+        |> put_in([:static, :running, :ulk], 0)
+        |> put_in([:static, :running, :dlk], 0)
 
       # Proc3 has dynamic ULK resource and does not use any other static res
-      proc3 = %{proc3| dynamic: [:ulk]}
-      proc3 = put_in(proc3, [:static, :running, :cpu], 0)
-      proc3 = put_in(proc3, [:static, :running, :ram], 0)
-      proc3 = put_in(proc3, [:static, :running, :dlk], 0)
+      proc3 =
+        proc3
+        |> Map.from_struct()
+        |> Map.replace(:dynamic, [:ulk])
+        |> Map.put(:id, 3)
+        |> put_in([:static, :running, :cpu], 0)
+        |> put_in([:static, :running, :ram], 0)
+        |> put_in([:static, :running, :dlk], 0)
 
       # Proc4 has dynamic DLK resource and does not use any other static res
-      proc4 = %{proc4| dynamic: [:dlk]}
-      proc4 = put_in(proc4, [:static, :running, :cpu], 0)
-      proc4 = put_in(proc4, [:static, :running, :ram], 0)
-      proc4 = put_in(proc4, [:static, :running, :ulk], 0)
+      proc4 =
+        proc4
+        |> Map.from_struct()
+        |> Map.replace(:dynamic, [:dlk])
+        |> Map.put(:id, 4)
+        |> put_in([:static, :running, :cpu], 0)
+        |> put_in([:static, :running, :ram], 0)
+        |> put_in([:static, :running, :ulk], 0)
 
       procs = [proc1, proc2, proc3, proc4]
 
-      assert [{p1, alloc1}, {p2, alloc2}, {p3, alloc3}, {p4, alloc4}] =
+      assert {:ok, %{allocated: [p1, p2, p3, p4], dropped: []}} =
         TOPAllocator.allocate(total_resources, procs)
 
-      assert p1 == proc1
-      assert p2 == proc2
-      assert p3 == proc3
-      assert p4 == proc4
+      assert p1.id == proc1.id
+      assert p2.id == proc2.id
+      assert p3.id == proc3.id
+      assert p4.id == proc4.id
 
       # Allocated all available server resources
-      assert_resource alloc1.cpu, total_resources.cpu
-      assert_resource alloc1.ram, 0
-      assert_resource alloc1.ulk, 0
-      assert_resource alloc1.dlk, 0
+      assert_resource p1.next_allocation.cpu, total_resources.cpu
+      assert_resource p1.next_allocation.ram, 0
+      assert_resource p1.next_allocation.ulk, 0
+      assert_resource p1.next_allocation.dlk, 0
 
-      assert_resource alloc2.cpu, 0
-      assert_resource alloc2.ram, total_resources.ram
-      assert_resource alloc2.ulk, 0
-      assert_resource alloc2.dlk, 0
+      assert_resource p2.next_allocation.cpu, 0
+      assert_resource p2.next_allocation.ram, total_resources.ram
+      assert_resource p2.next_allocation.ulk, 0
+      assert_resource p2.next_allocation.dlk, 0
 
-      assert_resource alloc3.cpu, 0
-      assert_resource alloc3.ram, 0
-      assert_resource alloc3.ulk, total_resources.ulk
-      assert_resource alloc3.dlk, 0
+      assert_resource p3.next_allocation.cpu, 0
+      assert_resource p3.next_allocation.ram, 0
+      assert_resource p3.next_allocation.ulk, total_resources.ulk
+      assert_resource p3.next_allocation.dlk, 0
 
-      assert_resource alloc4.cpu, 0
-      assert_resource alloc4.ram, 0
-      assert_resource alloc4.ulk, 0
-      assert_resource alloc4.dlk, total_resources.dlk
+      assert_resource p4.next_allocation.cpu, 0
+      assert_resource p4.next_allocation.ram, 0
+      assert_resource p4.next_allocation.ulk, 0
+      assert_resource p4.next_allocation.dlk, total_resources.dlk
     end
 
     test "two processes; non-overlapping dynamic; overlapping static" do
@@ -107,13 +124,20 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       proc1 = %{proc1| dynamic: [:cpu]}
       proc2 = %{proc2| dynamic: [:ram]}
 
+      # Put some identifiers
+      proc1 = Map.put(proc1, :id, 1)
+      proc2 = Map.put(proc2, :id, 2)
+
       procs = [proc1, proc2]
 
-      assert [{p1, alloc1}, {p2, alloc2}] =
+      assert {:ok, %{allocated: [p1, p2], dropped: []}} =
         TOPAllocator.allocate(total_resources, procs)
 
-      assert p1 == proc1
-      assert p2 == proc2
+      assert p1.id == proc1.id
+      assert p2.id == proc2.id
+
+      alloc1 = p1.next_allocation
+      alloc2 = p2.next_allocation
 
       # Allocated all available server resources
       assert_resource alloc1.cpu + alloc2.cpu, total_resources.cpu
@@ -127,8 +151,16 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
         total_resources: total_resources, total: 2, dynamic: [:cpu, :ram]
       )
 
-      assert [{_p1, alloc1}, {_p2, alloc2}] =
-        TOPAllocator.allocate(total_resources, procs)
+      assert {
+        :ok,
+        %{
+          allocated: [p1, p2],
+          dropped: []
+        }
+      } = TOPAllocator.allocate(total_resources, procs)
+
+      alloc1 = p1.next_allocation
+      alloc2 = p2.next_allocation
 
       # Allocated all available server resources
       assert_resource alloc1.cpu + alloc2.cpu, total_resources.cpu
@@ -148,11 +180,12 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
         )
 
       # Allocates all `n` processes
-      results = TOPAllocator.allocate(total_resources, procs)
+      assert {:ok, %{allocated: allocations, dropped: []}} =
+        TOPAllocator.allocate(total_resources, procs)
 
       accumulated_resources =
-        Enum.reduce(results, initial, fn {_process, alloc}, acc ->
-          Process.Resources.sum(acc, alloc)
+        Enum.reduce(allocations, initial, fn process, acc ->
+          Process.Resources.sum(acc, process.next_allocation)
         end)
 
       # The accumulation (sum) of all processes' resources must be equal to the
@@ -301,7 +334,10 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
           network_id: :net
         }
 
-      [{_p, alloc}] = TOPAllocator.allocate(total_resources, [proc])
+      assert {:ok, %{allocated: [p], dropped: []}} =
+        TOPAllocator.allocate(total_resources, [proc])
+
+      alloc = p.next_allocation
 
       # Allocated the expected CPU for the process
       assert_resource alloc.cpu, total_resources.cpu
@@ -322,11 +358,18 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       # has full ULK access.
       proc2 = %{proc| processed: nil}
 
-      assert [{p1, alloc1}, {p2, alloc2}] =
+      # Put some identifiers
+      proc = Map.put(proc, :id, 1)
+      proc2 = Map.put(proc2, :id, 2)
+
+      assert {:ok, %{allocated: [p1, p2], dropped: []}} =
         TOPAllocator.allocate(total_resources, [proc, proc2])
 
-      assert p1 == proc
-      assert p2 == proc2
+      assert p1.id == proc.id
+      assert p2.id == proc2.id
+
+      alloc1 = p1.next_allocation
+      alloc2 = p2.next_allocation
 
       # `proc` got 50% of CPU and no RAM
       assert_resource alloc1.cpu, total_resources.cpu / 2
@@ -369,16 +412,14 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
           network_id: :net
          }
 
-      [{_p, alloc}] = TOPAllocator.allocate(total_resources, [proc])
+      assert {:ok, %{allocated: [p], dropped: []}} =
+        TOPAllocator.allocate(total_resources, [proc])
 
       # Allocated all CPU to the process
-      assert_resource alloc.cpu, total_resources.cpu
+      assert_resource p.next_allocation.cpu, total_resources.cpu
 
       # Allocated only the required static resources on RAM
-      assert alloc.ram == proc.static.running.ram
-
-      # # But did not allocate any ram to it, since it's in use
-      # assert alloc.ram == 0.0
+      assert p.next_allocation.ram == proc.static.running.ram
     end
   end
 end

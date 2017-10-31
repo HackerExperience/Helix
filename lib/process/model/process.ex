@@ -157,6 +157,12 @@ defmodule Helix.Process.Model.Process do
 
     ### Metadata
 
+    # Used by the Scheduler to accurately forecast the process, taking into
+    # consideration both the current allocation (`allocated`) and the next
+    # allocation, as defined by the Allocator.
+    field :next_allocation, :map,
+      virtual: true
+
     # Process state (`:running`, `:stopped`). Used internally for an easier
     # abstraction over `priority` (which is used to define the process state)
     field :state, Constant,

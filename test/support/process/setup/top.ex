@@ -1,7 +1,10 @@
 defmodule Helix.Test.Process.Setup.TOP do
 
-  alias Helix.Test.Process.Helper.TOP, as: TOPHelper
+  alias Helix.Process.Model.Process
+
+  alias HELL.TestHelper.Random
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Process.Helper.TOP, as: TOPHelper
 
   @internet_id NetworkHelper.internet_id()
 
@@ -32,6 +35,7 @@ defmodule Helix.Test.Process.Setup.TOP do
     processed = Keyword.get(opts, :processed, nil)
     objective = Keyword.get(opts, :objective, TOPHelper.Resources.objective())
     allocated = Keyword.get(opts, :allocated, nil)
+    next_allocation = Keyword.get(opts, :next_allocation, nil)
 
     last_checkpoint_time = Keyword.get(opts, :last_checkpoint_time, nil)
 
@@ -40,6 +44,7 @@ defmodule Helix.Test.Process.Setup.TOP do
       objective: objective,
       processed: processed,
       allocated: allocated,
+      next_allocation: next_allocation,
       priority: priority,
       state: state,
       static: static,
