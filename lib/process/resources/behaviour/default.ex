@@ -70,7 +70,7 @@ defmodule Helix.Process.Resources.Behaviour.Default do
         do: 0
 
       def completed?(processed, objective) do
-        processed > objective
+        processed >= objective
       end
 
       get_shares(process = %{priority: priority, dynamic: dynamic_res}) do
@@ -91,7 +91,9 @@ defmodule Helix.Process.Resources.Behaviour.Default do
         do: gt(Map.fetch!(objective, @name), Map.get(processed, @name, 0))
 
       resource_per_share(resources, shares) do
-        __MODULE__.div(resources, shares)
+        res_per_share = __MODULE__.div(resources, shares)
+
+        res_per_share >= 0 && res_per_share || 0.0
       end
 
       allocate_static(%{static: static, state: state}) do

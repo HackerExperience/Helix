@@ -72,6 +72,12 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       end
 
       sub(a, b) do
+        # TODO: Abstract. also used on `res_per_share/2`
+        a =
+          Enum.reduce(get_keys(a, b), a, fn key, acc ->
+            Map.put_new(acc, key, 0)
+          end)
+
         op_map(a, b, &Kernel.-/2)
       end
 
@@ -186,7 +192,32 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       end
 
       def overflow?(res, allocated_processes) do
-        false  # TODO
+        overflowed? =
+          reduce(res, false, fn acc, val ->
+            # Slack for rounding errors
+            if val >= -1 do
+              acc
+            else
+              true
+            end
+          end)
+
+        if overflowed? do
+          {true, find_heaviest(allocated_processes)}
+        else
+          false
+        end
+      end
+
+      defp find_heaviest(allocated_processes) do
+        allocated_processes
+        |> Enum.sort_by(fn {process, resources} ->
+          resources
+          |> Map.fetch!(@name)
+          |> Map.fetch!(get_key(process))
+        end)
+        |> List.last()
+        |> elem(0)
       end
 
       defp get_key(process),

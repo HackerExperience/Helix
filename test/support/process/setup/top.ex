@@ -35,7 +35,8 @@ defmodule Helix.Test.Process.Setup.TOP do
 
     last_checkpoint_time = Keyword.get(opts, :last_checkpoint_time, nil)
 
-    %{
+    %Process{
+      process_id: Random.number(),
       objective: objective,
       processed: processed,
       allocated: allocated,

@@ -170,13 +170,119 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       assert reason == :resources
     end
 
-    @tag :pending
-    test "on overflow, returns reference to overflowed process"
+    test "rejects when there would be overflow of DLK/ULK" do
+      {total_resources, _} = TOPSetup.Resources.resources(network_id: :net)
 
-    @tag :pending
-    test "picks the heaviest process among multiple overflowing processes"
+      [proc] = TOPSetup.fake_process(network_id: :net)
 
-    # Context:
+      total_resources =
+        total_resources
+        |> put_in([:dlk, :net], 0)
+        |> put_in([:ulk, :net], 0)
+        |> Map.replace(:cpu, proc.objective.cpu)
+        |> Map.replace(:ram, proc.objective.ram)
+
+      assert {:error, reason, _} =
+        TOPAllocator.allocate(total_resources, [proc])
+      assert reason == :resources
+    end
+
+    test "picks the heaviest process among multiple overflowing processes" do
+      initial = Process.Resources.initial()
+      [proc] = TOPSetup.fake_process()
+
+      # One process which overflows on all resources
+      assert {:error, :resources, [heaviest]} =
+        TOPAllocator.allocate(initial, [proc])
+
+      assert heaviest.process_id == proc.process_id
+
+      # Let's increase the fun
+
+      {total_resources, _} = TOPSetup.Resources.resources(network_id: :net)
+      [proc1, proc2] =
+        TOPSetup.fake_process(
+          total_resources: total_resources, network_id: :net, total: 2,
+          static_ulk: 0, static_dlk: 0
+        )
+
+      # Both `proc1` and `proc2` are overflowing. Notice `proc2` requires more
+      # CPU power than `proc1`, hence it's the heaviest
+      # Also note that all other resources are NOT overflowed
+      proc1 =
+        proc1
+        |> Map.from_struct()
+        |> put_in([:static, :running, :cpu], total_resources.cpu + 2)
+
+      proc2 =
+        proc2
+        |> Map.from_struct()
+        |> put_in([:static, :running, :cpu], total_resources.cpu + 3)
+
+      assert {:error, :resources, [heaviest]} =
+        TOPAllocator.allocate(total_resources, [proc1, proc2])
+
+      assert heaviest.process_id == proc2.process_id
+
+      # More more fun
+
+      # Now we'll make `proc1` overflow on RAM. On this new scenario, `proc1`
+      # is overflowing (RAM) and `proc2` is overflowing too (CPU)
+      proc1 =
+        proc1
+        |> put_in([:static, :running, :ram], total_resources.ram)
+
+      # Allocate will return both processes as heaviest, since each one
+      # overflows a different resource
+      assert {:error, :resources, heaviest} =
+        TOPAllocator.allocate(total_resources, [proc1, proc2])
+
+      assert length(heaviest) == 2
+
+      # Now `proc1` consumes 1 MHz more than `proc2`, so it's the heaviest
+      # process on both RAM and CPU consumption
+      proc1 =
+        proc1
+        |> put_in([:static, :running, :cpu], total_resources.cpu + 4)
+
+      # Allocator only returns one process
+      assert {:error, :resources, [heaviest]} =
+        TOPAllocator.allocate(total_resources, [proc1, proc2])
+
+      assert heaviest.process_id == proc1.process_id
+
+      # MOARRRR FUN
+      # Now we'll overflow DLK and ULK resources, so we can test KV Behaviour
+
+      # `proc1` overflows CPU and RAM (from above experiments), and now DLK too
+      proc1 =
+        proc1
+        |> put_in([:static, :running, :dlk], total_resources.dlk.net + 2)
+
+      # `proc2`, on the other hand, overflows on ULK
+      proc2 =
+        proc2
+        |> put_in([:static, :running, :ulk], total_resources.ulk.net + 2)
+
+      [proc3] = TOPSetup.fake_process(network_id: :net)
+
+      # `proc3` is a valid process, which consumes no static resources but would
+      # like to receive dynamic shares (if any are available).
+      proc3 =
+        proc3
+        |> Map.from_struct()
+        |> put_in([:static, :running, :cpu], 0)
+        |> put_in([:static, :running, :ram], 0)
+        |> put_in([:static, :running, :dlk], 0)
+        |> put_in([:static, :running, :ulk], 0)
+
+      # Returned `proc1` and `proc2` as overflowers (overflowed?)
+      assert {:error, :resources, heaviest} =
+        TOPAllocator.allocate(total_resources, [proc1, proc2, proc3])
+
+      assert length(heaviest) == 2
+    end
+
     test "does not allocate dyn resources on partially completed objectives" do
       {total_resources, _} = TOPSetup.Resources.resources(network_id: :net)
 
