@@ -37,6 +37,7 @@ defmodule Helix.Event.Dispatcher do
 
   alias Helix.Event.NotificationHandler
 
+  alias Helix.Core.Listener.Event.Handler.Listener, as: ListenerHandler
   alias Helix.Account.Event, as: AccountEvent
   alias Helix.Account.Event.Handler, as: AccountHandler
   alias Helix.Entity.Event.Handler, as: EntityHandler
@@ -64,6 +65,8 @@ defmodule Helix.Event.Dispatcher do
     skip: [LogEvent.Log.Created]
 
   all_events StoryHandler, :step_handler
+
+  all_events ListenerHandler, :listener_handler
 
   ##############################################################################
   # Account events

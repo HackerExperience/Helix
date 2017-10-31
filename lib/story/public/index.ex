@@ -52,7 +52,8 @@ defmodule Helix.Story.Public.Index do
       |> Enum.map(fn story_email ->
           %{
             contact_id: story_email.contact_id,
-            messages: messages(story_email.emails)
+            messages: messages(story_email.emails),
+            replies: []  # TODO
           }
         end)
 
