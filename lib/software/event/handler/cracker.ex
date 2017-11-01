@@ -72,8 +72,8 @@ defmodule Helix.Software.Event.Handler.Cracker do
   do
     process = ProcessQuery.fetch(event.target_process_id)
 
-    case process.process_type do
-      "wire_transfer" ->
+    case process.type do
+      :wire_transfer ->
         overflow_of_wire_transfer(process, event)
     end
   end
@@ -103,7 +103,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
   Emits: BankTokenAcquiredEvent.t
   """
   defp overflow_of_wire_transfer(process, event) do
-    transfer_id = process.process_data.transfer_id
+    transfer_id = process.data.transfer_id
     connection_id = process.connection_id
 
     flowing do

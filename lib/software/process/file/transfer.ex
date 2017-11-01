@@ -11,6 +11,7 @@ process Helix.Software.Process.File.Transfer do
   file is being transferred, is already present on the standard process data.
   """
 
+  alias Helix.Network.Model.Network
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
@@ -44,7 +45,8 @@ process Helix.Software.Process.File.Transfer do
 
   @typep resources_params :: %{
     type: transfer_type,
-    file: File.t
+    file: File.t,
+    network_id: Network.id
   }
 
   @spec new(creation_params) ::
@@ -59,7 +61,7 @@ process Helix.Software.Process.File.Transfer do
 
   @spec resources(resources_params) ::
     resources
-  def resources(params = %{type: _, file: _}),
+  def resources(params = %{type: _, file: _, network_id: _}),
     do: get_resources params
 
   processable do
@@ -129,11 +131,7 @@ process Helix.Software.Process.File.Transfer do
 
     alias Helix.Software.Factor.File, as: FileFactor
 
-    @type params ::
-      %{
-        type: :download | :upload,
-        file: File.t
-      }
+    @type params :: FileFactor.resources_params
 
     @type factors ::
       %{
@@ -159,6 +157,10 @@ process Helix.Software.Process.File.Transfer do
     """
     ulk(%{type: :upload}) do
       f.file.size
+    end
+
+    network(%{network_id: network_id}) do
+      network_id
     end
 
     # Safety fallbacks
@@ -199,7 +201,8 @@ process Helix.Software.Process.File.Transfer do
     resources(_, _, params, meta) do
       %{
         type: params.type,
-        file: meta.file
+        file: meta.file,
+        network_id: meta.network_id
       }
     end
 

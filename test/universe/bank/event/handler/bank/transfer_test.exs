@@ -24,7 +24,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
 
       {:ok, process} =
         BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
-      transfer_id = process.process_data.transfer_id
+      transfer_id = process.data.transfer_id
 
       assert ProcessQuery.fetch(process)
       assert BankTransferInternal.fetch(transfer_id)

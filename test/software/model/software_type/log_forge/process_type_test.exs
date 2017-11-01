@@ -192,7 +192,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   describe "ProcessView.render/4 for edit operation" do
     test "both partial and full processes returns target_log_id" do
       {process, %{target_entity_id: victim_entity}} = log_forger_process(:edit)
-      data = process.process_data
+      data = process.data
 
       victim_server = process.target_server_id
       attacker_entity = process.source_entity_id
@@ -224,7 +224,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   describe "ProcessView.render/4 for create operation" do
     test "both partial and full process adds no complement" do
       {process, _} = log_forger_process(:create)
-      data = process.process_data
+      data = process.data
 
       attacker_server = process.gateway_id
       victim_server = process.target_server_id

@@ -118,7 +118,7 @@ defmodule Helix.Process.Query.ProcessTest do
       # (one process of type `download` who is downloading that specific file)
       assert [process] =
         ProcessQuery.get_custom(
-          download1.process_type,
+          download1.type,
           gateway_id,
           %{file_id: download1.file_id}
         )
@@ -128,7 +128,7 @@ defmodule Helix.Process.Query.ProcessTest do
       # Cannot find that same process with random file
       refute \
         ProcessQuery.get_custom(
-          download1.process_type,
+          download1.type,
           gateway_id,
           %{file_id: File.ID.generate()}
         )

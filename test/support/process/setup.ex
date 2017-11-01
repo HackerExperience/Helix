@@ -24,6 +24,7 @@ defmodule Helix.Test.Process.Setup do
   Opts:
   - gateway_id:
   - target_server_id:
+  - entity_id: source entity id.
   - file_id:
   - network_id:
   - connection_id:
@@ -49,8 +50,6 @@ defmodule Helix.Test.Process.Setup do
     file_id = Keyword.get(opts, :file_id, nil)
     connection_id = Keyword.get(opts, :connection_id, nil)
     network_id = Keyword.get(opts, :network_id, @internet)
-
-    dynamic = Keyword.get(opts, :dynamic, [:cpu, :ram])
 
     meta = %{
       source_entity_id: source_entity_id,

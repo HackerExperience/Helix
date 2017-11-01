@@ -40,7 +40,7 @@ defmodule Helix.Software.Public.FileTest do
       assert process.network_id == target_nip.network_id
       assert process.file_id == cracker.file_id
       assert process.source_entity_id == source_entity.entity_id
-      assert process.process_data.target_server_ip == target_nip.ip
+      assert process.data.target_server_ip == target_nip.ip
 
       # :timer.sleep(100)
       TOPHelper.top_stop(source_server.server_id)
@@ -66,9 +66,9 @@ defmodule Helix.Software.Public.FileTest do
         FilePublic.download(gateway, destination, tunnel, storage, file)
 
       assert process.file_id == file.file_id
-      assert process.process_type == "file_download"
-      assert process.process_data.connection_type == :ftp
-      assert process.process_data.type == :download
+      assert process.type == :file_download
+      assert process.data.connection_type == :ftp
+      assert process.data.type == :download
 
       TOPHelper.top_stop(gateway)
     end

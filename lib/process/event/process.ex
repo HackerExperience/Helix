@@ -4,44 +4,43 @@ defmodule Helix.Process.Event.Process do
 
   event Created do
 
-    alias Helix.Entity.Model.Entity
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
 
     @type t :: %__MODULE__{
       process: Process.t,
+      confirmed: boolean,
       gateway_id: Server.id,
       target_id: Server.id,
-      gateway_entity_id: Entity.id,
-      target_entity_id: Entity.id,
       gateway_ip: Network.ip,
       target_ip: Network.ip
     }
 
     event_struct [
       :process,
+      :confirmed,
       :gateway_id,
       :target_id,
-      :gateway_entity_id,
-      :target_entity_id,
       :gateway_ip,
       :target_ip
     ]
 
-    @spec new(Process.t, Network.ip, Entity.id, Network.ip) ::
-      t
-    def new(process = %Process{}, source_ip, target_entity_id, target_ip) do
+    # @spec new(Process.t, Network.ip, Network.ip, [optimistic: boolean]) ::
+    #   t
+    def new(process = %Process{}, source_ip, target_ip, confirmed: confirmed) do
       %__MODULE__{
         process: process,
+        confirmed: confirmed,
         gateway_id: process.gateway_id,
-        target_id: process.target_server_id,
-        gateway_entity_id: process.source_entity_id,
-        target_entity_id: target_entity_id,
+        target_id: process.target_id,
         gateway_ip: source_ip,
         target_ip: target_ip
       }
     end
+
+    def new(event = %__MODULE__{confirmed: false}),
+      do: %{event| confirmed: true}
 
     notify do
 
@@ -66,7 +65,7 @@ defmodule Helix.Process.Event.Process do
       process because of 1. Hence, this rule (3) only applies to third-parties
       connecting to the attack target.
       """
-      def generate_payload(event, socket) do
+      def generate_payload(event = %_{confirmed: true}, socket) do
         gateway_id = socket.assigns.gateway.server_id
         destination_id = socket.assigns.destination.server_id
 
@@ -102,7 +101,7 @@ defmodule Helix.Process.Event.Process do
 
         data = %{
           process_id: to_string(event.process.process_id),
-          type: to_string(event.process.process_type),
+          type: to_string(event.process.type),
           network_id: to_string(event.process.network_id),
           file_id: file_id,
           connection_id: connection_id,
@@ -121,6 +120,10 @@ defmodule Helix.Process.Event.Process do
 
         {:ok, data}
       end
+
+      # Internal event used for optimistic (asynchronous) processing
+      def generate_payload(%_{confirmed: false}, _),
+        do: :noreply
 
       @doc """
       Both gateway and destination are notified. If they are the same, obviously
@@ -152,7 +155,7 @@ defmodule Helix.Process.Event.Process do
     def new(process = %Process{}) do
       %__MODULE__{
         gateway_id: process.gateway_id,
-        target_id: process.target_server_id
+        target_id: process.target_id
       }
     end
 

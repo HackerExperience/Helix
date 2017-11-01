@@ -68,7 +68,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
       network_id: net.network_id,
       bounce: net.bounce_id,
       file: file,
-      process_type: process_type
+      type: process_type
     }
 
     FileTransferProcess.execute(gateway, endpoint, params, meta)
@@ -78,9 +78,9 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   Given the transfer type, figure out all related types used by other services.
   """
   defp get_type_info(:download),
-    do: {:ftp, "file_download", :download}
+    do: {:ftp, :file_download, :download}
   defp get_type_info(:upload),
-    do: {:ftp, "file_upload", :upload}
+    do: {:ftp, :file_upload, :upload}
   defp get_type_info(:pftp_download),
-    do: {:public_ftp, "file_download", :download}
+    do: {:public_ftp, :file_download, :download}
 end

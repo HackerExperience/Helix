@@ -49,7 +49,7 @@ defmodule Helix.Software.Process.File.TransferTest do
 
       db_process = ProcessHelper.raw_get(process)
 
-      serialized = Processable.after_read_hook(db_process.process_data)
+      serialized = Processable.after_read_hook(db_process.data)
 
       assert %Storage.ID{} = serialized.destination_storage_id
       assert is_atom(serialized.connection_type)

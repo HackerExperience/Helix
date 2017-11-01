@@ -32,11 +32,11 @@ defmodule Helix.Process.Public.Index do
 
     rendered_processes_on_server =
       Enum.map(processes_on_server, fn process ->
-        ProcessView.render(process.process_data, process, server_id, entity_id)
+        ProcessView.render(process.data, process, server_id, entity_id)
       end)
     rendered_processes_targeting_server =
       Enum.map(processes_targeting_server, fn process ->
-        ProcessView.render(process.process_data, process, server_id, entity_id)
+        ProcessView.render(process.data, process, server_id, entity_id)
       end)
 
     %{

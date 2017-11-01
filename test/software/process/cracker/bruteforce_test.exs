@@ -45,12 +45,12 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       # Process data is correct
       assert process.connection_id
       assert process.file_id == file.file_id
-      assert process.process_type == "cracker_bruteforce"
+      assert process.type == :cracker_bruteforce
       assert process.gateway_id == source_server.server_id
       assert process.source_entity_id == source_entity.entity_id
       assert process.target_server_id == target_server.server_id
       assert process.network_id == target_nip.network_id
-      assert process.process_data.target_server_ip == target_nip.ip
+      assert process.data.target_server_ip == target_nip.ip
 
       # CrackerBruteforce connection is correct
       connection = TunnelQuery.fetch_connection(process.connection_id)
@@ -74,7 +74,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
     test "full process for any AT attack_source" do
       {process, meta} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
-      data = process.process_data
+      data = process.data
       server_id = process.gateway_id
 
       attacker_id = meta.source_entity_id
@@ -97,7 +97,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       {process, %{source_entity_id: entity_id}} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
 
-      data = process.process_data
+      data = process.data
       server_id = process.target_server_id
 
       # `entity` is the one who started the process, and is listing at the
@@ -110,7 +110,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
     test "partial process for third AT attack_target" do
       {process, _} = ProcessSetup.process(fake_server: true, type: :bruteforce)
 
-      data = process.process_data
+      data = process.data
       server_id = process.target_server_id
       entity_id = Entity.ID.generate()
 
@@ -125,7 +125,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       {process, %{target_entity_id: entity_id}} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
 
-      data = process.process_data
+      data = process.data
       server_id = process.target_server_id
 
       # `entity` is the victim, owner of the server receiving the process.
@@ -143,7 +143,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       db_process = ProcessHelper.raw_get(process.process_id)
 
-      serialized = Processable.after_read_hook(db_process.process_data)
+      serialized = Processable.after_read_hook(db_process.data)
 
       assert serialized.target_server_ip
     end

@@ -48,8 +48,8 @@
 
 #       result = LogForgerFlow.execute(file, server.server_id, params)
 #       assert {:ok, process} = result
-#       assert %LogForge{} = process.process_data
-#       assert "log_forger" == process.process_type
+#       assert %LogForge{} = process.data
+#       assert "log_forger" == process.type
 
 #       TOPHelper.top_stop(server)
 #     end
@@ -71,8 +71,8 @@
 
 #       result = LogForgerFlow.execute(file, server.server_id, params)
 #       assert {:ok, process} = result
-#       assert %LogForge{} = process.process_data
-#       assert "log_forger" == process.process_type
+#       assert %LogForge{} = process.data
+#       assert "log_forger" == process.type
 
 #       TOPHelper.top_stop(server)
 #     end

@@ -50,7 +50,7 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Make sure all we need is on the process return
       assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.process_type
+      assert notification.data.type == event.process.type
       assert_id notification.data.file_id, event.process.file_id
       assert_id notification.data.connection_id, event.process.connection_id
       assert_id notification.data.network_id, event.process.network_id
@@ -98,7 +98,7 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Make sure all we need is on the process return
       assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.process_type
+      assert notification.data.type == event.process.type
       assert_id notification.data.file_id, event.process.file_id
       assert_id notification.data.connection_id, event.process.connection_id
       assert_id notification.data.network_id, event.process.network_id

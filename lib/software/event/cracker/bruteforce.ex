@@ -36,7 +36,7 @@ defmodule Helix.Software.Event.Cracker.Bruteforce do
       %__MODULE__{
         source_entity_id: process.source_entity_id,
         network_id: process.network_id,
-        target_server_id: process.target_server_id,
+        target_server_id: process.target_id,
         target_server_ip: data.target_server_ip
       }
     end
