@@ -174,11 +174,11 @@ defmodule Helix.Process.Resources.Behaviour.KV do
           # If the corresponding objective is `nil`, then by definition this
           # resource is completed
           result =
-          if objective[key] do
-            value > objective[key]
-          else
-            true
-          end
+            if objective[key] do
+              value >= objective[key]
+            else
+              true
+            end
 
           %{}
           |> Map.put(key, result)

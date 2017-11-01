@@ -77,7 +77,8 @@ defmodule Helix.Test.Features.Hack do
       assert password_acquired_event.data.server_ip == target_nip.ip
       assert password_acquired_event.data.password
 
-      :timer.sleep(50)
+      # Not sure if needed. I'll leave here for some time.
+      # :timer.sleep(50)
 
       db_server =
         DatabaseQuery.fetch_server(
@@ -113,10 +114,6 @@ defmodule Helix.Test.Features.Hack do
       assert bootstrap.filesystem
       assert bootstrap.logs
       assert bootstrap.processes
-
-      :timer.sleep(50)
-
-      TOPHelper.top_stop(gateway.server_id)
     end
   end
 

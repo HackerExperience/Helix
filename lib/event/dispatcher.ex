@@ -112,6 +112,16 @@ defmodule Helix.Event.Dispatcher do
   # All
   event ProcessEvent.Process.Created
   event ProcessEvent.Process.Completed
+  event ProcessEvent.TOP.BringMeToLife
+
+  # Custom handlers
+  event ProcessEvent.Process.Created,
+    ProcessHandler.TOP,
+    :recalque_handler
+
+  event ProcessEvent.TOP.BringMeToLife,
+    ProcessHandler.TOP,
+    :wake_me_up
 
   ##############################################################################
   # Server events

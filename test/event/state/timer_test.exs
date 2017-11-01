@@ -33,5 +33,4 @@ defmodule Helix.Event.State.TimerTest do
       assert new_step.name == Step.get_next_step(step)
     end
   end
-
 end
