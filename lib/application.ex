@@ -6,7 +6,6 @@ defmodule Helix.Application do
 
   def start(_type, _args) do
     children = [
-      # worker(HELF.Broker, []),
       supervisor(Helix.Endpoint, []),
       supervisor(Helix.Application.DomainsSupervisor, [])
     ]
@@ -54,6 +53,7 @@ defmodule Helix.Application.DomainsSupervisor do
       supervisor(Helix.Account.Supervisor, []),
       supervisor(Helix.Cache.Supervisor, []),
       supervisor(Helix.Core.Supervisor, []),
+      supervisor(Helix.Event.Supervisor, []),
       supervisor(Helix.Entity.Supervisor, []),
       supervisor(Helix.Hardware.Supervisor, []),
       supervisor(Helix.Log.Supervisor, []),
