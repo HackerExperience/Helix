@@ -10,6 +10,7 @@ defmodule Helix.Event do
 
   alias Helix.Event.Dispatcher, as: HelixDispatcher
   alias Helix.Event.Meta, as: EventMeta
+  alias Helix.Event.State.Timer, as: EventTimer
   alias Helix.Process.Model.Process
 
   @type t :: HELF.Event.t
@@ -84,6 +85,18 @@ defmodule Helix.Event do
     do: Enum.each(events, &emit/1)
   def emit(event),
     do: HelixDispatcher.emit(event)
+
+  @spec emit_after([t] | t, interval :: float | non_neg_integer) ::
+    term
+  @doc """
+  Emits the given event(s) after `interval` milliseconds have passed.
+  """
+  def emit_after([], _),
+    do: :noop
+  def emit_after(events = [_|_], interval),
+    do: Enum.each(events, &(emit_after(&1, interval)))
+  def emit_after(event, interval),
+    do: EventTimer.emit_after(event, interval)
 
   @spec inherit(t, t) ::
     t
