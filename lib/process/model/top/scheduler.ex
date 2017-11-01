@@ -26,7 +26,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     # Create an empty resource map in case it never went through a checkpoint
     processed = process.processed || Process.Resources.initial()
 
-    # Convert allocation to millisecond (TODO: Store on DB using this format)
+    # Convert allocation to millisecond
     alloc = Process.Resources.map(process.allocated, &(&1 / 1000))
 
     # Calculate how many resource units have been processed since the last
@@ -121,7 +121,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     # This is the amount of work left for completion of the process
     remaining_work = Process.Resources.sub(process.objective, process.processed)
 
-    # Convert allocation to millisecond (TODO: Store on DB using this format)
+    # Convert allocation to millisecond
     alloc = Process.Resources.map(process.next_allocation, &(&1 / 1000))
 
     # Figure out the work left in order to complete each resource

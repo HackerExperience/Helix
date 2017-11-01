@@ -4,7 +4,6 @@ defmodule Helix.Process.Model.TOP.Allocator do
 
   # @spec allocate(server_resources, [Process.t]) ::
   #   [{Process.t, allocated_resources}]
-  # def allocate(total_resources, processes, kill: kill?) when is_list(processes) do
   def allocate(total_resources, processes, opts \\ []) do
     forced_allocation? = opts[:force] || false
 

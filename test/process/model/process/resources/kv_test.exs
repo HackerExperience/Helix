@@ -62,7 +62,7 @@ defmodule Helix.Process.Model.Process.Resources.DLKTest do
       a = %{net1: 2, net2: 2}
       b = %{net1: 5, net3: 3}
 
-      assert %{net1: 10, net2: 2, net3: 3} == ResourceDLK.mul(a, b)
+      assert %{net1: 10.0, net2: 2.0, net3: 3.0} == ResourceDLK.mul(a, b)
     end
   end
 

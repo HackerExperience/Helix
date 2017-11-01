@@ -5,12 +5,10 @@ defmodule Helix.Process.Resources.Utils do
   def ensure_float(map) when map_size(map) == 0,
     do: 0.0
 
-  # We should never reach this function!! Left here as a temporary workaround.
-  # (We all know how these "temporary" workarounds work...)
-  def ensure_float(i) do
-    Enum.map(i, fn {_k, v} ->
-      ensure_float(v)
-    end)
-    |> List.first()
-  end
+  def safe_div(dividend, divisor, _initial) when divisor > 0,
+    do: dividend / divisor
+  def safe_div(_, 0.0, initial),
+    do: initial.()
+  def safe_div(_, 0, initial),
+    do: initial.()
 end

@@ -353,7 +353,7 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
 
       # `proc2` is a copy of `proc`, but it has never processed anything.
       # So, if we try to allocate both `proc` and `proc2` at the same time, the
-      # Allocator should give 50% CPU to both, and 100% RAMA to `proc2`.
+      # Allocator should give 50% CPU to both, and 100% RAM to `proc2`.
       # Same applies to DLK/ULK: both should receive half of DLK, while `proc2`
       # has full ULK access.
       proc2 = %{proc| processed: nil}
@@ -401,14 +401,7 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
         %{proc|
           processed: %{cpu: 0, ram: 100, dlk: %{}, ulk: %{}},
           objective: %{cpu: 50, ram: 99.9, dlk: %{}, ulk: %{}},
-          static: %{
-            running: %{
-              cpu: 10,
-              ram: 20,
-              ulk: Map.put(%{}, :net, 30),
-              dlk: Map.put(%{}, :net, 40),
-            }
-          },
+          static: %{running: %{cpu: 10, ram: 20, ulk: 30, dlk: 40}},
           network_id: :net
          }
 

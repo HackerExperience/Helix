@@ -97,6 +97,8 @@ defmodule Helix.Process.Model.Process do
     :priority
   ]
 
+  # Similar to `task_struct` on `sched.h` ;-)
+  @primary_key false
   schema "processes" do
     field :process_id, ID,
       primary_key: true
@@ -258,5 +260,52 @@ defmodule Helix.Process.Model.Process do
       Queryable.t
     def by_id(query \\ Process, id),
       do: where(query, [p], p.process_id == ^id)
+
+    @spec from_type_list(Queryable.t, [String.t]) ::
+      Queryable.t
+    def from_type_list(query \\ Process, type_list),
+      do: where(query, [p], p.type in ^type_list)
+
+    @spec by_gateway(Queryable.t, Server.idtb) ::
+      Queryable.t
+    def by_gateway(query \\ Process, id),
+      do: where(query, [p], p.gateway_id == ^id)
+
+    @spec by_target(Queryable.t, Server.idtb) ::
+      Queryable.t
+    def by_target(query \\ Process, id),
+      do: where(query, [p], p.target_id == ^id)
+
+    @spec by_file(Queryable.t, File.idtb) ::
+      Queryable.t
+    def by_file(query \\ Process, id),
+      do: where(query, [p], p.file_id == ^id)
+
+    @spec by_network(Queryable.t, Network.idtb) ::
+      Queryable.t
+    def by_network(query \\ Process, id),
+      do: where(query, [p], p.network_id == ^id)
+
+    @spec by_connection(Queryable.t, Connection.idtb) ::
+      Queryable.t
+    def by_connection(query \\ Process, id),
+      do: where(query, [p], p.connection_id == ^id)
+
+    @spec by_type(Queryable.t, String.t) ::
+      Queryable.t
+    def by_type(query \\ Process, type),
+      do: where(query, [p], p.type == ^type)
+
+    @spec by_state(Queryable.t, :running | :paused) ::
+      Queryable.t
+    def by_state(query, :running),
+      do: where(query, [p], p.priority > 1)
+    def by_state(query, :paused),
+      do: where(query, [p], p.priority == 0)
+
+    @spec not_targeting_gateway(Queryable.t) ::
+      Queryable.t
+    def not_targeting_gateway(query \\ Process),
+      do: where(query, [p], p.gateway_id != p.target_id)
   end
 end

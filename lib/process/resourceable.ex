@@ -159,6 +159,10 @@ defmodule Helix.Process.Resourceable do
         @doc false
         def dynamic(_, _),
           do: []
+
+        @doc false
+        def set_network(_, _),
+          do: nil
       end
 
     [fallback_allocations, fallback_objective]
@@ -193,13 +197,21 @@ defmodule Helix.Process.Resourceable do
         It removes any non-objective (when required resource usage is 0).
         """
         def calculate(params, factors) do
+          network_id = set_network(params, factors)
+
+          dlk = calculate(:dlk, params, factors)
+          ulk = calculate(:ulk, params, factors)
+
+          dlk = dlk && Map.put(%{}, network_id, dlk) || 0
+          ulk = ulk && Map.put(%{}, network_id, ulk) || 0
+
           %{
             cpu: calculate(:cpu, params, factors),
             ram: calculate(:ram, params, factors),
-            dlk: calculate(:dlk, params, factors),
-            ulk: calculate(:ulk, params, factors)
+            dlk: dlk,
+            ulk: ulk
           }
-          |> Enum.reject(fn {_, total} -> total == nil end)  # Test me
+          |> Enum.reject(fn {_, total} -> total == nil end)  # Test me TODO
           |> Enum.reject(fn {_, total} -> total == 0 end)
           |> Map.new()
         end
@@ -220,6 +232,22 @@ defmodule Helix.Process.Resourceable do
     # Used for safe fallbacks: non-catch-all fail-safe of pattern match
     defmacro unquote(resource)(fallback),
       do: set_resource(unquote(resource), fallback)
+  end
+
+  # Special macro used to determine the process' network
+  defmacro network(params, do: block) do
+    quote do
+
+      def set_network(unquote(params), factors) do
+        # Special variable `f` holds previously calculated `factors`
+        var!(f) = factors
+
+        var!(f)  # Mark as used
+
+        unquote(block)
+      end
+
+    end
   end
 
   docp """

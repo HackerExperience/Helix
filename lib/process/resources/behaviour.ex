@@ -2,7 +2,7 @@ defmodule Helix.Process.Resources.Behaviour do
 
   # Would love to generate those automatically, based on resources that call
   # the `resource/2` macro...
-  @type resource :: struct
+  @type resource :: term
 
   @type process :: term
 

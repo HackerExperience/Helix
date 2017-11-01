@@ -15,6 +15,8 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       @key Keyword.fetch!(unquote(args), :key)
       @formatter unquote(args)[:formatter] || &__MODULE__.default_formatter/2
 
+      # Generic data manipulation
+
       def map(resource, function) do
         Enum.reduce(resource, %{}, fn {key, value}, acc ->
           new_value = function.(value)
@@ -31,19 +33,15 @@ defmodule Helix.Process.Resources.Behaviour.KV do
         end)
       end
 
-      def default_formatter(k, v) do
-        {k, v}
-      end
+      def op_map(a, b, fun) do
+        keys = get_keys(a, b)
 
-      def format(resource) do
-        Enum.reduce(resource, %{}, fn {key, value}, acc ->
-          {k, v} = @formatter.(key, value)
-
-          %{}
-          |> Map.put(k, v)
-          |> Map.merge(acc)
+        Map.merge(a, Map.take(b, keys), fn _, v1, v2 ->
+          fun.(v1, v2)
         end)
       end
+
+      # Creation & formatting of resource
 
       def build([%{}]),
         do: %{}
@@ -59,24 +57,28 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       def initial,
         do: build([])
 
-      def op_map(a, b, fun) do
-        keys = get_keys(a, b)
+      def format(resource) do
+        Enum.reduce(resource, %{}, fn {key, value}, acc ->
+          {k, v} = @formatter.(key, value)
 
-        Map.merge(a, Map.take(b, keys), fn _, v1, v2 ->
-          fun.(v1, v2)
+          %{}
+          |> Map.put(k, v)
+          |> Map.merge(acc)
         end)
       end
+
+      def default_formatter(k, v),
+        do: {k, v}
+
+      # Basic operations
 
       sum(a, b) do
         op_map(a, b, &Kernel.+/2)
       end
 
       sub(a, b) do
-        # TODO: Abstract. also used on `res_per_share/2`
-        a =
-          Enum.reduce(get_keys(a, b), a, fn key, acc ->
-            Map.put_new(acc, key, 0)
-          end)
+        # Ensure missing elements (exist on `b` but not on `a`) are filled as 0.
+        # a = fill_missing(a, b)
 
         op_map(a, b, &Kernel.-/2)
       end
@@ -86,45 +88,16 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       end
 
       div(a, b) do
-        op_map(a, b, &safe_div/2)
+        op_map(a, b, fn a, b -> ResourceUtils.safe_div(a, b, &initial/0) end)
       end
 
-      def completed?(processed, objective) do
-        Enum.reduce(processed, %{}, fn {key, value}, acc ->
-          # If the corresponding objective is `nil`, then by definition this
-          # resource is completed
-          result =
-            if objective[key] do
-              value > objective[key]
-            else
-              true
-            end
+      # Allocation logic
 
-          %{}
-          |> Map.put(key, result)
-          |> Map.merge(acc)
+      defp fill_missing(a, b, value \\ 0) do
+        Enum.reduce(get_keys(a, b), a, fn key, acc ->
+          Map.put_new(acc, key, value)
         end)
       end
-
-      defp can_allocate?(%{processed: nil}, _),
-        do: true
-      defp can_allocate?(%{processed: processed, objective: objective}, key) do
-        value_objective = objective[@name][key]
-        value_processed = processed[@name][key]
-
-        # Convert `nil` and `%{}` to `0.0`
-        value_objective = is_number(value_objective) && value_objective || 0.0
-        value_processed = is_number(value_processed) && value_processed || 0.0
-
-        value_objective > value_processed
-      end
-
-      defp safe_div(dividend, divisor) when divisor > 0,
-        do: dividend / divisor
-      defp safe_div(_, 0.0),
-        do: initial()
-      defp safe_div(_, 0),
-        do: initial()
 
       get_shares(process = %{priority: priority, dynamic: dynamic}) do
         with \
@@ -140,21 +113,31 @@ defmodule Helix.Process.Resources.Behaviour.KV do
         end
       end
 
-      resource_per_share(resources, shares) do
-        keys = get_keys(resources, shares)
+      defp can_allocate?(%{processed: nil}, _),
+        do: true
+      defp can_allocate?(%{processed: processed, objective: objective}, key) do
+        value_objective = objective[@name][key]
+        value_processed = processed[@name][key]
 
+        # Convert `nil` and `%{}` to `0.0`
+        value_objective = is_number(value_objective) && value_objective || 0.0
+        value_processed = is_number(value_processed) && value_processed || 0.0
+
+        value_objective > value_processed
+      end
+
+      resource_per_share(resources, shares) do
         # If there are fields defined on `resources` which are not on `shares`,
         # then we must "fill" `shares` with zero, since this means that the
         # allocator is not supposed to add any share to it. If we don't, once
         # we call `div/2` both maps will be merged, and no div operation would
         # be performed on `resources`.
         # TL;DR: Make sure we multiply by zero when we have no shares.
-        shares =
-          Enum.reduce(keys, shares, fn key, acc ->
-            Map.put_new(acc, key, 0)
-          end)
+        shares = fill_missing(shares, resources)
 
-        __MODULE__.div(resources, shares)
+        res_per_share = __MODULE__.div(resources, shares)
+
+        res_per_share >= 0 && res_per_share || 0.0
       end
 
       allocate_static(process = %{static: static, state: state}) do
@@ -173,12 +156,7 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       end
 
       allocate_dynamic(shares, res_per_share, %{dynamic: dynamic}) do
-        # TODO: Test if, by merging the operations into `map`, this is still
-        # needed
-        shares =
-          Enum.reduce(get_keys(shares, res_per_share), shares, fn key, acc ->
-            Map.put_new(acc, key, 0)
-          end)
+        shares = fill_missing(shares, res_per_share)
 
         if @name in dynamic do
           mul(shares, res_per_share)
@@ -189,6 +167,23 @@ defmodule Helix.Process.Resources.Behaviour.KV do
 
       allocate(dynamic_alloc, static_alloc) do
         sum(dynamic_alloc, static_alloc)
+      end
+
+      def completed?(processed, objective) do
+        Enum.reduce(processed, %{}, fn {key, value}, acc ->
+          # If the corresponding objective is `nil`, then by definition this
+          # resource is completed
+          result =
+          if objective[key] do
+            value > objective[key]
+          else
+            true
+          end
+
+          %{}
+          |> Map.put(key, result)
+          |> Map.merge(acc)
+        end)
       end
 
       def overflow?(res, allocated_processes) do

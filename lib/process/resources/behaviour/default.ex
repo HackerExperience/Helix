@@ -12,31 +12,32 @@ defmodule Helix.Process.Resources.Behaviour.Default do
       @name unquote(name)
       @formatter unquote(args)[:formatter] || &__MODULE__.default_formatter/1
 
-      def op_map(a, b, function) do
-        function.(a, b)
-      end
+      # Generic data manipulation
 
-      def map(resource, function) do
-        function.(resource)
-      end
+      def reduce(resource, initial, function),
+        do: function.(initial, resource)
 
-      def reduce(resource, initial, function) do
-        function.(initial, resource)
-      end
+      def map(resource, function),
+        do: function.(resource)
 
-      def format(resource) do
-        @formatter.(resource)
-      end
+      def op_map(a, b, function),
+        do: function.(a, b)
 
-      def default_formatter(v) do
-        v
-      end
+      # Creation & formatting of resource
 
       def build(value),
         do: value |> ResourceUtils.ensure_float()
 
       def initial,
         do: build(0)
+
+      def format(resource),
+        do: @formatter.(resource)
+
+      def default_formatter(v),
+        do: v
+
+      # Basic operations
 
       sum(a, b) do
         a + b
@@ -47,31 +48,14 @@ defmodule Helix.Process.Resources.Behaviour.Default do
       end
 
       div(a, b) do
-        safe_div(a, b)
+        ResourceUtils.safe_div(a, b, &initial/0)
       end
 
       mul(a, b) do
         a * b
       end
 
-      def gt(a, b) do
-        a > b
-      end
-
-      def max(resource) do
-        resource
-      end
-
-      defp safe_div(dividend, divisor) when divisor > 0,
-        do: dividend / divisor
-      defp safe_div(_, 0.0),
-        do: 0
-      defp save_div(_, 0),
-        do: 0
-
-      def completed?(processed, objective) do
-        processed >= objective
-      end
+      # Allocation logic
 
       get_shares(process = %{priority: priority, dynamic: dynamic_res}) do
         with \
@@ -88,7 +72,7 @@ defmodule Helix.Process.Resources.Behaviour.Default do
       defp can_allocate?(%{processed: nil}),
         do: true
       defp can_allocate?(%{processed: processed, objective: objective}),
-        do: gt(Map.fetch!(objective, @name), Map.get(processed, @name, 0))
+        do: Map.fetch!(objective, @name) >= Map.get(processed, @name, 0)
 
       resource_per_share(resources, shares) do
         res_per_share = __MODULE__.div(resources, shares)
@@ -113,6 +97,9 @@ defmodule Helix.Process.Resources.Behaviour.Default do
       allocate(dynamic_alloc, static_alloc) do
         sum(dynamic_alloc, static_alloc)
       end
+
+      def completed?(processed, objective),
+        do: processed >= objective
 
       def overflow?(res, allocated_processes) do
         # Due to rounding errors, we may have a "valid overflow" of a few units

@@ -7,7 +7,6 @@ defmodule Helix.Process.Resources do
 
       import Helix.Process.Resources
 
-
       Module.register_attribute(
         __MODULE__,
         :resources,
@@ -36,23 +35,8 @@ defmodule Helix.Process.Resources do
       def map(res_a, fun),
         do: dispatch(:map, res_a, [fun])
 
-      def sum(res_a, res_b),
-        do: dispatch_merge(:sum, res_a, res_b)
-
-      def sub(res_a, res_b),
-        do: dispatch_merge(:sub, res_a, res_b)
-
-      def mul(res_a, res_b),
-        do: dispatch_merge(:mul, res_a, res_b)
-
-      def div(res_a, res_b),
-        do: dispatch_merge(:div, res_a, res_b)
-
-      def gt(res_a, res_b),
-        do: dispatch_merge(:gt, res_a, res_b)
-
-      def reduce(resource, initial, function),
-        do: dispatch(:reduce, resource, [initial, function])
+      def initial,
+        do: dispatch_create :initial
 
       def format(resources) do
         # First and foremost, we must ensure that all keys have been transformed
@@ -82,24 +66,20 @@ defmodule Helix.Process.Resources do
         dispatch(:format, resources)
       end
 
-      def completed?(processed, objective) do
-        :completed?
-        |> dispatch_merge(processed, objective)
-        |> reduce(true, fn acc, v -> acc && v || false end)
-        |> Enum.all?(fn {_res, status} -> status == true end)
-      end
+      def reduce(resource, initial, function),
+        do: dispatch(:reduce, resource, [initial, function])
 
-      def max(resources) do
-        resources
-        |> reduce(0, fn acc, v -> max(acc, v) end)
+      def sum(res_a, res_b),
+        do: dispatch_merge(:sum, res_a, res_b)
 
-        # Select highest usage among all resource
-        |> Enum.sort_by(fn {_res, max} -> max end)
+      def sub(res_a, res_b),
+        do: dispatch_merge(:sub, res_a, res_b)
 
-        # Make sure to return only the *usage* of the highest resource
-        |> List.last()
-        |> elem(1)
-      end
+      def mul(res_a, res_b),
+        do: dispatch_merge(:mul, res_a, res_b)
+
+      def div(res_a, res_b),
+        do: dispatch_merge(:div, res_a, res_b)
 
       def get_shares(process),
         do: dispatch_create :get_shares, [process]
@@ -116,11 +96,27 @@ defmodule Helix.Process.Resources do
       def allocate(dynamic_alloc, static_alloc),
         do: dispatch_merge :allocate, dynamic_alloc, static_alloc
 
-      def initial,
-        do: dispatch_create :initial
+      def completed?(processed, objective) do
+        :completed?
+        |> dispatch_merge(processed, objective)
+        |> reduce(true, fn acc, v -> acc && v || false end)
+        |> Enum.all?(fn {_res, status} -> status == true end)
+      end
 
       def overflow?(resources, processes),
         do: dispatch(:overflow?, resources, [processes])
+
+      def max(resources) do
+        resources
+        |> reduce(0, fn acc, v -> max(acc, v) end)
+
+        # Select highest usage among all resource
+        |> Enum.sort_by(fn {_res, max} -> max end)
+
+        # Make sure to return only the *usage* of the highest resource
+        |> List.last()
+        |> elem(1)
+      end
     end
   end
 
