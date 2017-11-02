@@ -39,6 +39,17 @@ defmodule Helix.Process.Resources do
         do: dispatch_create :initial
 
       def format(resources) do
+        # Make sure our keys are valid, and all keys are defined on the resource
+        # (If any key is missing, it will be populated to its initial value)
+        resources = prepare(resources)
+
+        # Now that we've prepared the resource, we can dispatch to each
+        # resource's own implementation, which will take care of formatting
+        # themselves.
+        dispatch(:format, resources)
+      end
+
+      def prepare(resources) do
         # First and foremost, we must ensure that all keys have been transformed
         # into atoms. If they came from the DB, they will be a string.
         resources =
@@ -53,17 +64,11 @@ defmodule Helix.Process.Resources do
         # Fill up empty/undefined/missing resources with their initial values
         missing_resources = @resources -- Map.keys(resources)
 
-        resources =
-          Enum.reduce(missing_resources, resources, fn res, acc ->
-            initial = call_resource(res, :initial, [])
+        Enum.reduce(missing_resources, resources, fn res, acc ->
+          initial = call_resource(res, :initial, [])
 
-            Map.put(acc, res, initial)
-          end)
-
-        # Now that we've prepared the resource, we can dispatch to each
-        # resource's own implementation, which will take care of formatting
-        # themselves.
-        dispatch(:format, resources)
+          Map.put(acc, res, initial)
+        end)
       end
 
       def reduce(resource, initial, function),
@@ -116,6 +121,14 @@ defmodule Helix.Process.Resources do
         # Make sure to return only the *usage* of the highest resource
         |> List.last()
         |> elem(1)
+      end
+
+      def min(res1, res2) do
+        :op_map
+        |> dispatch_merge(res1, res2, [&min/2])
+
+        # Prepare the result, so if any keys are missing, they will be filled.
+        |> prepare()
       end
     end
   end

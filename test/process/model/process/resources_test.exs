@@ -72,6 +72,72 @@ defmodule Helix.Process.Model.Process.ResourcesTest do
     end
   end
 
+  describe "min/1" do
+    test "returns minimum value of resources" do
+      res1 =
+        %{
+          cpu: 100,
+          ram: 30,
+          dlk: %{net: 150},
+          ulk: %{net: 250}
+        }
+
+      res2 =
+        %{
+          cpu: 50,
+          ram: 90,
+          dlk: %{net: 240},
+          ulk: %{net: 0}
+        }
+
+      min = Process.Resources.min(res1, res2)
+
+      assert min == %{cpu: 50, ram: 30, dlk: %{net: 150}, ulk: %{net: 0}}
+    end
+
+    test "fills missing keys" do
+      res1 =
+        %{
+          cpu: 100,
+          dlk: %{net: 150},
+          ulk: %{net: 250}
+        }
+
+      res2 =
+        %{
+          cpu: 50,
+          ram: 90,
+          dlk: %{net: 240, net2: 500},
+          ulk: %{}
+        }
+
+      assert %{
+        cpu: 50,
+        ram: 90,
+        dlk: %{net: 150, net2: 500},
+        ulk: %{net: 250}
+      } == Process.Resources.min(res1, res2)
+    end
+
+    test "handles empty resource" do
+      res1 =
+        %{
+          cpu: 100,
+          dlk: %{net: 150},
+          ulk: %{net: 250}
+        }
+
+      res2 = %{}
+
+      assert %{
+        cpu: 100,
+        ram: 0,
+        dlk: %{net: 150},
+        ulk: %{net: 250}
+      } == Process.Resources.min(res1, res2)
+    end
+  end
+
   describe "initial/0" do
     test "initializes all resources" do
       initial = Process.Resources.initial()

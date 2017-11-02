@@ -11,7 +11,7 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
 
   alias HELL.TestHelper.Random
 
-  describe "allocate/2" do
+  describe "allocate/2 (without limit)" do
     test "one process; all resources" do
       {total_resources, _} = TOPSetup.Resources.resources()
 
@@ -359,14 +359,14 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       proc2 = %{proc| processed: nil}
 
       # Put some identifiers
-      proc = Map.put(proc, :id, 1)
-      proc2 = Map.put(proc2, :id, 2)
+      proc = Map.put(proc, :process_id, 1)
+      proc2 = Map.put(proc2, :process_id, 2)
 
       assert {:ok, %{allocated: [p1, p2], dropped: []}} =
         TOPAllocator.allocate(total_resources, [proc, proc2])
 
-      assert p1.id == proc.id
-      assert p2.id == proc2.id
+      assert p1.process_id == proc.process_id
+      assert p2.process_id == proc2.process_id
 
       alloc1 = p1.next_allocation
       alloc2 = p2.next_allocation
@@ -413,6 +413,86 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
 
       # Allocated only the required static resources on RAM
       assert p.next_allocation.ram == proc.static.running.ram
+    end
+  end
+
+  describe "allocate/2 with resource limitation" do
+    test "limits resource usage" do
+      {total_resources, _} = TOPSetup.Resources.resources(network_id: :net)
+
+      total_resources =
+        %{
+          cpu: 100,
+          ram: 200,
+          dlk: %{net: 100},
+          ulk: %{net: 100}
+        }
+
+      # `proc` is limited on all resources. Some of these limits are greater to
+      # what the server can handle, so they are ignored.
+      [proc] =
+        TOPSetup.fake_process(
+          total_resources: total_resources,
+          dynamic: [:cpu, :ram, :dlk, :ulk],
+          limit: %{cpu: 500, ram: 50, dlk: %{net: 60}, ulk: %{net: 200}},
+          static: %{},
+          network_id: :net
+        )
+
+      assert {:ok, %{allocated: [p], dropped: []}} =
+        TOPAllocator.allocate(total_resources, [proc])
+
+      assert_resource p.next_allocation.cpu, 100
+      assert_resource p.next_allocation.ram, 50
+      assert_resource p.next_allocation.dlk.net, 60
+      assert_resource p.next_allocation.ulk.net, 100
+    end
+
+    test "redistributes unclaimed resources to processes not bound to limits" do
+      {total_resources, _} = TOPSetup.Resources.resources(network_id: :net)
+
+      total_resources =
+        %{
+          cpu: 100,
+          ram: 200,
+          dlk: %{net: 100},
+          ulk: %{net: 100}
+        }
+
+      [proc] =
+        TOPSetup.fake_process(
+          total_resources: total_resources,
+          dynamic: [:cpu, :ram, :dlk, :ulk],
+          limit: %{ram: 50, dlk: %{net: 30}, ulk: %{}},
+          static: %{},
+          network_id: :net
+        )
+
+      [proc2] =
+        TOPSetup.fake_process(
+          total_resources: total_resources,
+          dynamic: [:cpu, :ram, :dlk, :ulk],
+          static: %{},
+          network_id: :net
+        )
+
+      assert {:ok, %{allocated: allocated, dropped: []}} =
+        TOPAllocator.allocate(total_resources, [proc, proc2])
+
+      [p1, p2] = allocated
+
+      assert p1.process_id == proc.process_id
+      assert p2.process_id == proc2.process_id
+
+      assert_resource p1.next_allocation.cpu, 50
+      assert_resource p1.next_allocation.ram, 50
+      assert_resource p1.next_allocation.dlk.net, 30
+      assert_resource p1.next_allocation.ulk.net, 50
+
+      assert_resource p2.next_allocation.cpu, 50
+      assert_resource p2.next_allocation.ram, 150
+      assert_resource p2.next_allocation.dlk.net, 70
+      assert_resource p2.next_allocation.ulk.net, 50
     end
   end
 end

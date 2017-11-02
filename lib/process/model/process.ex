@@ -148,6 +148,9 @@ defmodule Helix.Process.Model.Process do
     # Amount of resources that this process has allocated to it
     field :allocated, :map
 
+    # Limitations
+    field :limit, :map
+
     # Date when the process was last simulated during a `TOPAction.recalque/2`
     field :last_checkpoint_time, :utc_datetime
 

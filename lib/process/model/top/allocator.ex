@@ -27,6 +27,16 @@ defmodule Helix.Process.Model.TOP.Allocator do
     remaining_resources =
       Process.Resources.sub(remaining_resources, dynamic_resources_usage)
 
+    # Now we'll take another pass, in order to give a change for processes to
+    # claim unused resources. This may happen when a resource is reserved to a
+    # process, but the process does not allocate it due to upper limitations
+    {remaining_resources_usage, allocated_processes} =
+      remaining_allocation(remaining_resources, allocated_processes)
+
+    # Again again
+    remaining_resources =
+      Process.Resources.sub(remaining_resources, remaining_resources_usage)
+
     case overflow?(remaining_resources, allocated_processes) do
       false ->
         # No overflow, we did it!
@@ -132,17 +142,64 @@ defmodule Helix.Process.Model.TOP.Allocator do
     Enum.reduce(process_shares, {initial, []}, fn allocated_shared_proc, {total_alloc, acc} ->
       {process, proc_static_allocation, proc_shares} = allocated_shared_proc
 
-      # Allocates dynamic resources
+      # Allocates dynamic resources. "Naive" because it has not taken into
+      # consideration the process limitations yet
+      naive_dynamic_alloc =
+        Process.Resources.allocate_dynamic(
+          proc_shares, resource_per_share, process
+        )
+
+      # Now we take the naive allocated amount and apply the process limitations
       proc_dynamic_alloc =
-        Process.Resources.allocate_dynamic(proc_shares, resource_per_share, process)
+        Process.Resources.min(naive_dynamic_alloc, process.limit)
 
       # Sums static and dynamic allocation, resulting on the final allocation
       proc_allocation =
         Process.Resources.allocate(proc_dynamic_alloc, proc_static_allocation)
 
+      # Accumulate total alloc, in order to know how many resources were used
       total_alloc = Process.Resources.sum(total_alloc, proc_dynamic_alloc)
 
       {total_alloc, acc ++ [{process, proc_allocation}]}
     end)
+
+  end
+
+  def remaining_allocation(available_resources, allocated_processes) do
+    # Exclude processes that have limits
+    # Note that this is wrong: it's possible that a process with limits would
+    # benefit from a second pass, in the case that one of its resources were
+    # limited, but the others weren't. We can safely skip this for now since
+    # we don't have this scenario, but this could change in the future.
+    processes =
+      Enum.filter(allocated_processes, fn {process, _} ->
+        process.limit == %{}
+      end)
+
+    skipped_processes = allocated_processes -- processes
+
+    # Make a second pass on dynamic allocation, now only with processes that are
+    # not being limited.
+    {remaining_resources, processes} =
+      dynamic_allocation(available_resources, processes)
+
+    # Reorder the processes in the same order they were passed originally
+    # Useful for tests, probably irrelevant to production code. Maybe macro it.
+    ordered_processes =
+      Enum.reduce(allocated_processes, [], fn allocated = {process, _}, acc ->
+
+        if allocated in skipped_processes do
+          acc ++ [allocated]
+        else
+          proc =
+            Enum.find(
+              processes, fn {p, _} -> p.process_id == process.process_id end
+            )
+
+          acc ++ [proc]
+        end
+      end)
+
+    {remaining_resources, ordered_processes}
   end
 end
