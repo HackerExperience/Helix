@@ -8,6 +8,7 @@ defmodule Helix.Process.Action.TOP do
   alias Helix.Process.Model.Processable
   alias Helix.Process.Model.TOP
   alias Helix.Process.Query.Process, as: ProcessQuery
+  alias Helix.Process.Query.TOP, as: TOPQuery
 
   alias Helix.Process.Event.Process.Completed, as: ProcessCompletedEvent
   alias Helix.Process.Event.TOP.BringMeToLife, as: TOPBringMeToLifeEvent
@@ -27,54 +28,18 @@ defmodule Helix.Process.Action.TOP do
   end
 
   def recalque(server_id = %Server.ID{}, alloc_opts \\ []) do
-    alias Helix.Server.Query.Server, as: ServerQuery
-    alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-    server = ServerQuery.fetch(server_id)
-
-    # TODO: Move method below to TOPQuery/ProcessQuery
-    resources =
-      server.motherboard_id
-      |> MotherboardQuery.fetch()
-      |> MotherboardQuery.resources()
-
-    {server_dlk, server_ulk} =
-      Enum.reduce(
-        resources.net,
-        {%{}, %{}},
-        fn {network, %{downlink: dlk, uplink: ulk}}, {acc_dlk, acc_ulk} ->
-
-        acc_dlk =
-          %{}
-          |> Map.put(network, dlk)
-          |> Map.merge(acc_dlk)
-
-        acc_ulk =
-          %{}
-          |> Map.put(network, ulk)
-          |> Map.merge(acc_ulk)
-
-        {acc_dlk, acc_ulk}
-      end)
-
-    server_resources =
-      %{
-        cpu: resources.cpu,
-        ram: resources.ram,
-        dlk: server_dlk,
-        ulk: server_ulk
-      }
-
+    top_resources = TOPQuery.load_top_resources(server_id)
     processes = ProcessQuery.get_processes_on_server(server_id)
 
-    case TOP.Allocator.allocate(server_resources, processes, alloc_opts) do
-      {:error, :resources, _} ->
-        {:error, :resources}
-
+    case TOP.Allocator.allocate(top_resources, processes, alloc_opts) do
       {:ok, allocation_result} ->
         processes = schedule(allocation_result)
 
         event = []  # TOPRecalcado
         {:ok, processes, [event]}
+
+      {:error, :resources, _} ->
+        {:error, :resources}
     end
   end
 
@@ -132,11 +97,33 @@ defmodule Helix.Process.Action.TOP do
     processes
   end
 
+  docp """
+  `handle_forecast` aggregates the `Scheduler.forecast/1` result and guides it
+  to the corresponding handlers. Check `handle_completed/1` and `handle_next/1`
+  for detailed explanation of each one.
+  """
   defp handle_forecast(%{completed: completed, next: next}) do
     handle_completed(completed)
     handle_next(next)
   end
 
+  docp """
+  `handle_completed` receives processes that according to `Schedule.forecast/1`
+  have already finished. We'll then complete each one and Emit their
+  corresponding events.
+
+  For most recalques and forecasts, this function should receive an empty list.
+  This is sort-of a "never should happen" scenario, but one which we are able to
+  handle gracefully if it does.
+
+  Most process completion cases are handled either by `TOPBringMeToLifeEvent` or
+  calling `TOPAction.complete/1` directly once the Helix application boots up.
+
+  Note that this function emits an event. This is "wrong", as "Action-style",
+  within our architecture, are not supposed to emit events. However,
+  `handle_completed` happens within a spawned process, and as such the resulting
+  events cannot be sent back to the original Handler/ActionFlow caller.
+  """
   defp handle_completed([]),
     do: :noop
   defp handle_completed(completed) do
@@ -147,6 +134,14 @@ defmodule Helix.Process.Action.TOP do
     end)
   end
 
+  docp """
+  `handle_next` will receive the "next-to-be-completed" process, as defined by
+  `Scheduler.forecast/1`. If a tuple is received, then we know there's a process
+  that will be completed soon, and we'll sleep during the remaining time.
+  Once the process is (supposedly) completed, TOP will receive the
+  `TOPBringMeToLifeEvent`, which shall confirm the completion and actually
+  complete the task.
+  """
   defp handle_next({process, time_left}) do
     wake_me_up = TOPBringMeToLifeEvent.new(process)
     save_me = time_left * 1000 |> trunc()
@@ -158,8 +153,19 @@ defmodule Helix.Process.Action.TOP do
     do: :noop
 
   alias Helix.Process.Internal.Process, as: ProcessInternal
-  defp handle_checkpoint(wut) do
-    # Updates process with new `allocated`, `last_checkpoint_time`
-    ProcessInternal.batch_update(wut)
-  end
+  docp """
+  `handle_checkpoint` is responsible for handling the result of
+  `Scheduler.checkpoint/1`, called during the `recalque` above.
+
+  It receives the *changeset* of the process, ready to be updated directly. No
+  further changes are required (as far as TOP is concerned).
+
+  These changes include the new `allocated` information, as well as the updated
+  `last_checkpoint_time`.
+
+  Ideally these changes should occur in an atomic (as in ACID-atomic) way. The
+  `ProcessInternal.batch_update/1` handles the transaction details.
+  """
+  defp handle_checkpoint(processes),
+    do: ProcessInternal.batch_update(processes)
 end
