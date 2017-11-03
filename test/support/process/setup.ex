@@ -68,6 +68,11 @@ defmodule Helix.Test.Process.Setup do
         ProcessDataSetup.random(meta)
       end
 
+    l_limit = Keyword.get(opts, :l_limit, %{})
+    r_limit = Keyword.get(opts, :r_limit, %{})
+
+    static = Keyword.get(opts, :static, resources.static)
+
     params = %{
       data: process_data,
       type: process_type,
@@ -77,8 +82,11 @@ defmodule Helix.Test.Process.Setup do
       file_id: meta.file_id,
       network_id: meta.network_id,
       connection_id: meta.connection_id,
-      static: resources.static,
-      dynamic: resources.dynamic,
+      static: static,
+      l_limit: l_limit,
+      r_limit: r_limit,
+      l_dynamic: resources.l_dynamic,
+      r_dynamic: resources.r_dynamic,
       objective: resources.objective
     }
 

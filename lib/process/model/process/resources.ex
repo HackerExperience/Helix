@@ -24,10 +24,12 @@ resources Helix.Process.Model.Process.Resources do
   resource DLK,
     behaviour: Behaviour.KV,
     key: :network_id,
-    formatter: &ResourcesUtils.format_network/2
+    formatter: &ResourcesUtils.format_network/2,
+    mirror: :ulk
 
   resource ULK,
     behaviour: Behaviour.KV,
     key: :network_id,
-    formatter: &ResourcesUtils.format_network/2
+    formatter: &ResourcesUtils.format_network/2,
+    mirror: :dlk
 end

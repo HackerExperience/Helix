@@ -52,12 +52,14 @@ defmodule Helix.Process do
 
       objective = __MODULE__.Resourceable.calculate(params, factors)
       static = __MODULE__.Resourceable.static(params, factors)
-      dynamic = __MODULE__.Resourceable.dynamic(params, factors)
+      l_dynamic = __MODULE__.Resourceable.l_dynamic(params, factors)
+      r_dynamic = __MODULE__.Resourceable.r_dynamic(params, factors)
 
       %{
         objective: objective,
         static: static,
-        dynamic: dynamic
+        l_dynamic: l_dynamic,
+        r_dynamic: r_dynamic
       }
     end
   end

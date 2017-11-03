@@ -94,6 +94,10 @@ defmodule Helix.Process.Event.Process do
         end
       end
 
+      # Internal event used for optimistic (asynchronous) processing
+      def generate_payload(%_{confirmed: false}, _),
+        do: :noreply
+
       defp do_payload(event, _socket, opts \\ []) do
         file_id = event.process.file_id && to_string(event.process.file_id)
         connection_id =
@@ -120,10 +124,6 @@ defmodule Helix.Process.Event.Process do
 
         {:ok, data}
       end
-
-      # Internal event used for optimistic (asynchronous) processing
-      def generate_payload(%_{confirmed: false}, _),
-        do: :noreply
 
       @doc """
       Both gateway and destination are notified. If they are the same, obviously

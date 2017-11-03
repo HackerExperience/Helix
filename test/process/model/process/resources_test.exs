@@ -131,10 +131,13 @@ defmodule Helix.Process.Model.Process.ResourcesTest do
 
       assert %{
         cpu: 100,
-        ram: 0,
         dlk: %{net: 150},
         ulk: %{net: 250}
       } == Process.Resources.min(res1, res2)
+    end
+
+    test "hello emptiness my old friend" do
+      assert %{} == Process.Resources.min(%{}, %{})
     end
   end
 

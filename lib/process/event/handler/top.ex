@@ -3,7 +3,6 @@ defmodule Helix.Process.Event.Handler.TOP do
 
   alias Helix.Event
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
-  alias Helix.Server.Model.Server
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Action.TOP, as: TOPAction
   alias Helix.Process.Model.Process
@@ -20,14 +19,14 @@ defmodule Helix.Process.Event.Handler.TOP do
         Event.emit(events)
 
       # Can't wake up
-      {:error, _} ->
+      {:error, {:process, :running}, []} ->
         # This shouldn't happen... recalculate the TOP just in case
-        call_recalque(process.gateway_id)
+        call_recalque(process)
     end
   end
 
   def recalque_handler(event = %ProcessCreatedEvent{confirmed: false}) do
-    case call_recalque(event.process.gateway_id) do
+    case call_recalque(event.process) do
       {true, _} ->
         event
         |> ProcessCreatedEvent.new()
@@ -43,16 +42,33 @@ defmodule Helix.Process.Event.Handler.TOP do
   def recalque_handler(%_{confirmed: true}),
     do: :noop
 
-  defp call_recalque(server_id = %Server.ID{}) do
-    case TOPAction.recalque(server_id) do
-      {:ok, processes, events} ->
-        Event.emit(events)
+  defp call_recalque(process = %Process{}) do
+    %{gateway: gateway_recalque, target: target_recalque} =
+      TOPAction.recalque(process.gateway_id, process.target_id)
 
-        {true, processes}
+    gateway_recalque =
+      case gateway_recalque do
+        {:ok, processes, events} ->
+          Event.emit(events)
 
-      _ ->
-        false
-    end
+          {true, processes}
+
+        _ ->
+          false
+      end
+
+    target_recalque =
+      case target_recalque do
+        {:ok, processes, events} ->
+          Event.emit(events)
+
+          {true, processes}
+
+        _ ->
+          false
+      end
+
+    {true, :todo}
   end
 
   # TODO: Ensure that the processes are killed (by making `kill` blocking

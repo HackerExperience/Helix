@@ -42,7 +42,7 @@ defmodule Helix.Hardware.Internal.NetworkConnection do
     end
   end
 
-  @spec update_ip(NetworkConnection.t | NetworkConnection.id, NetworkConnection.ip) ::
+  @spec update_ip(NetworkConnection.idt, NetworkConnection.ip) ::
     {:ok, NetworkConnection}
     | {:error, Ecto.Changeset.t}
   def update_ip(nc = %NetworkConnection{}, new_ip) do

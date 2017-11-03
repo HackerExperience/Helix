@@ -12,6 +12,7 @@ defmodule Helix.Process.Action.TOP do
 
   alias Helix.Process.Event.Process.Completed, as: ProcessCompletedEvent
   alias Helix.Process.Event.TOP.BringMeToLife, as: TOPBringMeToLifeEvent
+  alias Helix.Process.Event.TOP.Recalcado, as: TOPRecalcadoEvent
 
   def complete(process) do
     case TOP.Scheduler.simulate(process) do
@@ -27,41 +28,77 @@ defmodule Helix.Process.Action.TOP do
     end
   end
 
-  def recalque(server_id = %Server.ID{}, alloc_opts \\ []) do
-    top_resources = TOPQuery.load_top_resources(server_id)
-    processes = ProcessQuery.get_processes_on_server(server_id)
+  def recalque(gateway_id = %Server.ID{}, target_id, alloc_opts \\ []) do
+    gateway_resources = TOPQuery.load_top_resources(gateway_id)
+    gateway_processes = ProcessQuery.get_processes_on_server(gateway_id)
 
-    case TOP.Allocator.allocate(top_resources, processes, alloc_opts) do
-      {:ok, allocation_result} ->
-        processes = schedule(allocation_result)
+    gateway_recalque =
+      case TOP.Allocator.allocate(gateway_id, gateway_resources, gateway_processes, alloc_opts) do
+        {:ok, allocation_result} ->
+          processes = schedule(allocation_result)
+          event = TOPRecalcadoEvent.new(gateway_id)
 
-        event = []  # TOPRecalcado
-        {:ok, processes, [event]}
+          {:ok, processes, [event]}
 
-      {:error, :resources, _} ->
-        {:error, :resources}
-    end
+        {:error, :resources, _} ->
+          {:error, :resources}
+      end
+
+    target_resources = TOPQuery.load_top_resources(target_id)
+    target_processes = ProcessQuery.get_processes_targeting_server(target_id)
+
+    target_recalque =
+      case TOP.Allocator.allocate(target_id, target_resources, target_processes, alloc_opts) do
+        {:ok, allocation_result} ->
+          processes = schedule(allocation_result)
+          event = TOPRecalcadoEvent.new(target_id)
+
+          {:ok, processes, [event]}
+
+        {:error, :resources, _} ->
+          {:error, :resources}
+      end
+
+    %{
+      gateway: gateway_recalque,
+      target: target_recalque
+    }
   end
 
   defp schedule(%{allocated: processes, dropped: _dropped}) do
+    # Organize all processes in two groups: the local ones and the remote ones
+    # A local process was started on this very server, while a remote process
+    # was started somewhere else and *targets* this server.
+    # (The `local?` variable was set on the Allocator).
+    # This organization is useful because we can only forecast local processes.
+    # (A process may be completed only on its local server; so the remote
+    # processes here that are not being forecast will be forecast during *their*
+    # server's TOP recalque, which should happen shortly).
+    local_processes = Enum.filter(processes, &(&1.local? == true))
+    remote_processes = Enum.filter(processes, &(&1.local? == false))
+
     # Forecast will be used to figure out which process is the next to be
     # completed. This is the first - and only - time these processes will be
     # simulated, so we have to ensure the return of `forecast/1` is served as
     # input for the Checkpoint step below.
-    forecast = TOP.Scheduler.forecast(processes)
+    forecast = TOP.Scheduler.forecast(local_processes)
 
-    # This is our new list of processes. It accounts for all process that are
-    # not completed, so it contains:
+    # This is our new list of (local) processes. It accounts for all processes
+    # that are not completed, so it contains:
     # - paused processes
     # - running processes
     # - processes awaiting allocation
-    processes = forecast.paused ++ forecast.running
+    local_processes = forecast.paused ++ forecast.running
 
     # On a separate thread, we'll "handle" the forecast above. Basically we'll
     # track the completion date of the `next`-to-be-completed process.
     # Here we also deal with processes that were deemed already completed by the
     # simulation.
     hespawn fn -> handle_forecast(forecast) end
+
+    # Recreate the complete process list, filtering out the ones that were
+    # already completed (see Forecast step above)
+    processes = local_processes ++ remote_processes
 
     # The Checkpoint step is done to update the processes with their new
     # allocation, as well as the amount of work done previously on `processed`.

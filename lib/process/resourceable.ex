@@ -157,7 +157,11 @@ defmodule Helix.Process.Resourceable do
           do: %{}
 
         @doc false
-        def dynamic(_, _),
+        def l_dynamic(_, _),
+          do: []
+
+        @doc false
+        def r_dynamic(_, _),
           do: []
 
         @doc false
@@ -199,11 +203,18 @@ defmodule Helix.Process.Resourceable do
         def calculate(params, factors) do
           network_id = set_network(params, factors)
 
-          dlk = calculate(:dlk, params, factors)
-          ulk = calculate(:ulk, params, factors)
+          {dlk, ulk} =
+            if network_id do
+              dlk = calculate(:dlk, params, factors)
+              ulk = calculate(:ulk, params, factors)
 
-          dlk = dlk && Map.put(%{}, network_id, dlk) || 0
-          ulk = ulk && Map.put(%{}, network_id, ulk) || 0
+              dlk = dlk && Map.put(%{}, network_id, dlk) || 0
+              ulk = ulk && Map.put(%{}, network_id, ulk) || 0
+
+              {dlk, ulk}
+            else
+              {%{}, %{}}
+            end
 
           %{
             cpu: calculate(:cpu, params, factors),
@@ -294,6 +305,26 @@ defmodule Helix.Process.Resourceable do
     end
   end
 
+  defmacro r_dynamic(params, do: block),
+    do: set_r_dynamic(params, block)
+  defmacro r_dynamic(do: block),
+    do: set_r_dynamic(quote(do: _params), block)
+
+  defp set_r_dynamic(params, block) do
+    quote do
+
+      def r_dynamic(unquote(params), factors) do
+        # Assigns variable `f` to caller's scope
+        var!(f) = factors
+
+        var!(f)  # Mark as used
+
+        unquote(block)
+      end
+
+    end
+  end
+
   defmacro dynamic(params, do: block),
     do: set_dynamic(params, block)
   defmacro dynamic(do: block),
@@ -302,7 +333,7 @@ defmodule Helix.Process.Resourceable do
   defp set_dynamic(params, block) do
     quote do
 
-      def dynamic(unquote(params), factors) do
+      def l_dynamic(unquote(params), factors) do
         # Assigns variable `f` to caller's scope
         var!(f) = factors
 

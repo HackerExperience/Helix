@@ -49,6 +49,13 @@ defmodule Helix.Process.Resources do
         dispatch(:format, resources)
       end
 
+      def reject_empty(resources) do
+        Enum.reject(resources, fn {res, val} ->
+          val == call_resource(res, :initial, [])
+        end)
+        |> Map.new()
+      end
+
       def prepare(resources) do
         # First and foremost, we must ensure that all keys have been transformed
         # into atoms. If they came from the DB, they will be a string.
@@ -111,6 +118,16 @@ defmodule Helix.Process.Resources do
       def overflow?(resources, processes),
         do: dispatch(:overflow?, resources, [processes])
 
+      def mirror(resources) do
+        Enum.reduce(resources, %{}, fn {res, val}, acc ->
+          mirror_res = call_resource(res, :mirror, [])
+
+          %{}
+          |> Map.put(mirror_res, val)
+          |> Map.merge(acc)
+        end)
+      end
+
       def max(resources) do
         resources
         |> reduce(0, fn acc, v -> max(acc, v) end)
@@ -126,9 +143,10 @@ defmodule Helix.Process.Resources do
       def min(res1, res2) do
         :op_map
         |> dispatch_merge(res1, res2, [&min/2])
-
-        # Prepare the result, so if any keys are missing, they will be filled.
-        |> prepare()
+        |> Enum.reject(fn {res, val} ->
+          val == call_resource(res, :initial, [])
+        end)
+        |> Map.new()
       end
     end
   end
@@ -234,11 +252,13 @@ defmodule Helix.Process.Resources do
     end
   end
 
-  defp do_resource(module_name, resource_name, behaviour: behaviour_block) do
+  defp do_resource(module_name, _resource_name, behaviour: behaviour_block) do
     quote location: :keep do
+
       resource unquote(module_name) do
         unquote(behaviour_block)
       end
+
     end
   end
 

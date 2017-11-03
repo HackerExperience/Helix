@@ -5,6 +5,12 @@ defmodule Helix.Process.Internal.Process do
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
 
+  def create(params) do
+    params
+    |> Process.create_changeset()
+    |> Repo.insert()
+  end
+
   @spec fetch(Process.id) ::
     Process.t
     | nil
@@ -13,6 +19,8 @@ defmodule Helix.Process.Internal.Process do
       Process.format(process)
     end
   end
+
+  #####  old \/ ### new /\ #####
 
   @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
     [Process.t]
@@ -62,6 +70,13 @@ defmodule Helix.Process.Internal.Process do
     |> Process.Query.by_connection()
     |> Repo.all()
     |> Enum.map(&Process.format/1)
+  end
+
+  def batch_update(processes) do
+    # TODO: Transaction
+    Enum.each(processes, fn process ->
+      Repo.update(process)
+    end)
   end
 
   @spec delete(Process.t) ::

@@ -5,12 +5,14 @@ defmodule Helix.Process.Resources.Behaviour.Default do
   def generate_behaviour(name, args) do
     quote location: :keep do
 
+      alias Helix.Process.Model.Process
       alias Helix.Process.Resources.Utils, as: ResourceUtils
 
       @behaviour Helix.Process.Resources.Behaviour
 
       @name unquote(name)
       @formatter unquote(args)[:formatter] || &__MODULE__.default_formatter/1
+      @mirror unquote(args)[:mirror] || @name
 
       # Generic data manipulation
 
@@ -57,7 +59,9 @@ defmodule Helix.Process.Resources.Behaviour.Default do
 
       # Allocation logic
 
-      get_shares(process = %{priority: priority, dynamic: dynamic_res}) do
+      get_shares(process = %{priority: priority}) do
+        dynamic_res = Process.get_dynamic(process)
+
         with \
           true <- @name in dynamic_res,
           true <- can_allocate?(process)
@@ -67,6 +71,10 @@ defmodule Helix.Process.Resources.Behaviour.Default do
           _ ->
             initial()
         end
+      end
+
+      def mirror do
+        @mirror
       end
 
       defp can_allocate?(%{processed: nil}),
@@ -80,13 +88,26 @@ defmodule Helix.Process.Resources.Behaviour.Default do
         res_per_share >= 0 && res_per_share || 0.0
       end
 
-      allocate_static(%{static: static, state: state}) do
-        static
-        |> Map.get(state, %{})
-        |> Map.get(@name, 0)
+      allocate_static(%{local?: false}) do
+        initial()
       end
 
-      allocate_dynamic(shares, res_per_share, %{dynamic: dynamic}) do
+      allocate_static(%{static: static, state: state}) do
+        state =
+          if state == :waiting_allocation do
+            :running
+          else
+            state
+          end
+
+        static
+        |> Map.get(state, %{})
+        |> Map.get(@name, initial())
+      end
+
+      allocate_dynamic(shares, res_per_share, process) do
+        dynamic = Process.get_dynamic(process)
+
         if @name in dynamic do
           mul(shares, res_per_share)
         else

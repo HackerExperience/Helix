@@ -5,7 +5,6 @@ defmodule Helix.Process.Model.TOP.Scheduler do
 
   def simulate(process = %{state: :paused}),
     do: {:paused, process}
-
   def simulate(process = %{state: :waiting_allocation}) do
     processed = process.processed || Process.Resources.initial()
 
@@ -27,7 +26,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     processed = process.processed || Process.Resources.initial()
 
     # Convert allocation to millisecond
-    alloc = Process.Resources.map(process.allocated, &(&1 / 1000))
+    alloc = Process.Resources.map(process.l_allocated, &(&1 / 1000))
 
     # Calculate how many resource units have been processed since the last
     # checkpoint. This is the amount that should be added to the process.
@@ -89,14 +88,25 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     |> seconds_for_completion()
   end
 
-  def checkpoint(p = %{allocated: alloc, next_allocation: alloc}),
+  def checkpoint(%{l_reserved: alloc, next_allocation: alloc, local?: true}),
     do: false
-  def checkpoint(process = %{next_allocation: next_allocation}) do
+  def checkpoint(%{r_reserved: alloc, next_allocation: alloc, local?: false}),
+    do: false
+  def checkpoint(proc = %{next_allocation: next_allocation, local?: true}) do
     changeset =
-      process
+      proc
       |> Changeset.change()
-      |> Changeset.put_change(:allocated, next_allocation)
+      |> Changeset.put_change(:l_reserved, next_allocation)
       |> Changeset.put_change(:last_checkpoint_time, DateTime.utc_now())
+      # |> Changeset.put_change(:processed, proc.processed)
+
+    {true, changeset}
+  end
+  def checkpoint(proc = %{next_allocation: next_allocation, local?: false}) do
+    changeset =
+      proc
+      |> Changeset.change()
+      |> Changeset.put_change(:r_reserved, next_allocation)
 
     {true, changeset}
   end
@@ -111,8 +121,6 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     end
   end
 
-  # defp seconds_for_completion({:waiting_alloc, process}),
-  #   do: {process, :infinity}
   defp seconds_for_completion({:paused, process}),
     do: {process, :infinity}
   defp seconds_for_completion({:completed, process}),

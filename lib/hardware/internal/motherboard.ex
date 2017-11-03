@@ -102,26 +102,26 @@ defmodule Helix.Hardware.Internal.Motherboard do
     |> get_hdds_from_ids()
   end
 
-  defp get_cpus_from_ids(components) do
+  def get_cpus_from_ids(components) do
     components
     |> Component.CPU.Query.from_components_ids()
     |> Repo.all()
   end
 
-  defp get_rams_from_ids(components) do
+  def get_rams_from_ids(components) do
     components
     |> Component.RAM.Query.from_components_ids()
     |> Repo.all()
   end
 
-  defp get_nics_from_ids(components) do
+  def get_nics_from_ids(components) do
     components
     |> Component.NIC.Query.from_components_ids()
     |> Component.NIC.Query.inner_join_network_connection()
     |> Repo.all()
   end
 
-  defp get_hdds_from_ids(components) do
+  def get_hdds_from_ids(components) do
     components
     |> Component.HDD.Query.from_components_ids()
     |> Repo.all()
@@ -132,7 +132,13 @@ defmodule Helix.Hardware.Internal.Motherboard do
       cpu: non_neg_integer,
       ram: non_neg_integer,
       hdd: non_neg_integer,
-      net: %{String.t => %{uplink: non_neg_integer, downlink: non_neg_integer}}
+      net: %{
+        Network.id =>
+        %{
+          uplink: non_neg_integer,
+          downlink: non_neg_integer
+        }
+      }
     }
   def resources(motherboard) do
     components_ids = get_components_ids(motherboard)
@@ -155,7 +161,7 @@ defmodule Helix.Hardware.Internal.Motherboard do
       components_ids
       |> get_nics_from_ids()
       |> Enum.reduce(%{}, fn el, acc ->
-        network = to_string(el.network_connection.network_id)
+        network = el.network_connection.network_id
         value = Map.take(el.network_connection, [:uplink, :downlink])
 
         sum_map_values = &Map.merge(&1, value, fn _, v1, v2 -> v1 + v2 end)

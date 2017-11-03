@@ -113,6 +113,7 @@ defmodule Helix.Event.Dispatcher do
   event ProcessEvent.Process.Created
   event ProcessEvent.Process.Completed
   event ProcessEvent.TOP.BringMeToLife
+  event ProcessEvent.TOP.Recalcado
 
   # Custom handlers
   event ProcessEvent.Process.Created,

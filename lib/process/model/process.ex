@@ -5,7 +5,6 @@ defmodule Helix.Process.Model.Process do
 
   import Ecto.Changeset
 
-  alias Ecto.Changeset
   alias HELL.Constant
   alias HELL.MapUtils
   alias HELL.NaiveStruct
@@ -42,7 +41,7 @@ defmodule Helix.Process.Model.Process do
   #   estimated_time: DateTime.t | nil
   # }
 
-  @type process :: %__MODULE__{} | %Ecto.Changeset{data: %__MODULE__{}}
+  # @type process :: %__MODULE__{}
 
   @type creation_params :: %{
     # :gateway_id => Server.idtb,
@@ -81,7 +80,10 @@ defmodule Helix.Process.Model.Process do
     :type,
     :objective,
     :static,
-    :dynamic
+    :l_dynamic,
+    :r_dynamic,
+    :l_limit,
+    :r_limit
   ]
 
   @required_fields [
@@ -93,7 +95,7 @@ defmodule Helix.Process.Model.Process do
     :objective,
     :static,
     :priority,
-    :dynamic,
+    :l_dynamic,
     :priority
   ]
 
@@ -146,10 +148,21 @@ defmodule Helix.Process.Model.Process do
     field :processed, :map
 
     # Amount of resources that this process has allocated to it
-    field :allocated, :map
+    field :l_allocated, :map,
+      virtual: true
+    field :r_allocated, :map,
+      virtual: true
 
     # Limitations
-    field :limit, :map
+    field :r_limit, :map,
+      default: %{}
+    field :l_limit, :map,
+      default: %{}
+
+    field :l_reserved, :map,
+      default: %{}
+    field :r_reserved, :map,
+      default: %{}
 
     # Date when the process was last simulated during a `TOPAction.recalque/2`
     field :last_checkpoint_time, :utc_datetime
@@ -158,9 +171,17 @@ defmodule Helix.Process.Model.Process do
     field :static, :map
 
     # List of dynamically allocated resources
-    field :dynamic, {:array, Constant}
+    field :l_dynamic, {:array, Constant}
+    field :r_dynamic, {:array, Constant},
+      default: []
 
     ### Metadata
+
+    # Used internally by Allocator to identify whether the process is local (it
+    # was started on this server) or remote (started somewhere else, and targets
+    # the current server).
+    field :local?, :boolean,
+      virtual: true
 
     # Used by the Scheduler to accurately forecast the process, taking into
     # consideration both the current allocation (`allocated`) and the next
@@ -201,24 +222,61 @@ defmodule Helix.Process.Model.Process do
     process
     |> load_virtual_data()
     |> format_resources()
+    |> infer_usage()
     |> Map.replace(:data, formatted_data)
+  end
+
+  def get_dynamic(%{local?: true, l_dynamic: dynamic}),
+    do: dynamic
+  def get_dynamic(%{local?: false, r_dynamic: dynamic}),
+    do: dynamic
+
+  def get_limit(%{local?: true, l_limit: limit}),
+    do: limit
+  def get_limit(%{local?: false, r_limit: limit}),
+    do: limit
+
+  def infer_usage(process) do
+    l_alloc = Process.Resources.min(process.l_limit, process.l_reserved)
+    r_alloc = Process.Resources.min(process.r_limit, process.r_reserved)
+
+    {l_alloc, r_alloc} =
+      # Assumes that, if remote allocation was not defined, then the process is
+      # oblivious to the remote server's resources
+      if r_alloc == %{} do
+        {l_alloc, Process.Resources.initial()}
+
+      # On the other hand, if there are remote allocations/limitations, we'll
+      # immediately mirror its resources and potentially limit the local
+      # allocation
+      else
+        mirrored_transfer_resources =
+          r_alloc
+          |> Process.Resources.mirror()
+          |> Map.drop([:cpu, :ram])
+
+        l_alloc = Process.Resources.min(mirrored_transfer_resources, l_alloc)
+
+        {l_alloc, r_alloc}
+      end
+
+    %{process|
+      l_allocated: l_alloc |> Process.Resources.prepare(),
+      r_allocated: r_alloc |> Process.Resources.prepare()
+    }
   end
 
   defp format_resources(process = %Process{}) do
     process
     |> format_objective()
-    |> format_allocated()
     |> format_processed()
     |> format_static()
+    |> format_limits()
+    |> format_reserved()
   end
 
   defp format_objective(p = %{objective: objective}),
     do: %{p| objective: Process.Resources.format(objective)}
-
-  defp format_allocated(p = %{allocated: nil}),
-    do: p
-  defp format_allocated(p = %{allocated: allocated}),
-    do: %{p| allocated: Process.Resources.format(allocated)}
 
   defp format_processed(p = %{processed: nil}),
     do: p
@@ -231,17 +289,44 @@ defmodule Helix.Process.Model.Process do
     %{p| static: static}
   end
 
+  defp format_limits(p) do
+    l_limit =
+      p.l_limit
+      |> Process.Resources.format()
+      |> Process.Resources.reject_empty()
+
+    r_limit =
+      p.r_limit
+      |> Process.Resources.format()
+      |> Process.Resources.reject_empty()
+
+    %{p|
+      l_limit: l_limit,
+      r_limit: r_limit
+    }
+  end
+
+  defp format_reserved(p) do
+    %{p|
+      l_reserved: Process.Resources.format(p.l_reserved),
+      r_reserved: Process.Resources.format(p.r_reserved)
+    }
+  end
+
   defp load_virtual_data(process = %Process{}) do
     process
     |> Map.put(:state, get_state(process))
   end
 
-  defp get_state(%{allocated: nil}),
-    do: :waiting_allocation
   defp get_state(%{priority: 0}),
     do: :paused
-  defp get_state(_),
-    do: :running
+  defp get_state(process) do
+    if process.l_reserved == %{} do
+      :waiting_allocation
+    else
+      :running
+    end
+  end
 
   defp put_defaults(changeset) do
     changeset

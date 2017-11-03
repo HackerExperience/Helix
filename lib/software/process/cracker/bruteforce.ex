@@ -107,7 +107,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
       # Retrieves information about the target's hasher (if any)
       factor FileFactor, %{file: hasher},
         if: not is_nil(hasher),
-        only: :size,
+        only: :version,
         as: :hasher
     end
 
@@ -116,7 +116,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
     BruteforceProcess only uses CPU.
     """
     cpu(%{hasher: nil}) do
-      f.cracker.version.bruteforce
+      10_000 - 100 * f.cracker.version.bruteforce
     end
 
     cpu(%{hasher: %File{}}) do
@@ -125,8 +125,8 @@ process Helix.Software.Process.Cracker.Bruteforce do
 
     static do
       %{
-        paused: %{ram: 100},
-        running: %{ram: 200}
+        paused: %{ram: 20},
+        running: %{ram: 50}
       }
     end
 

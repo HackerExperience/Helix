@@ -27,9 +27,17 @@ defmodule Helix.Process.Repo.Migrations.TOPRewrite do
       # Resources
       add :objective, :jsonb, null: false
       add :processed, :jsonb
-      add :allocated, :jsonb
+
+      add :l_reserved, :jsonb
+      add :r_reserved, :jsonb
+
+      add :l_limit, :jsonb
+      add :r_limit, :jsonb
+
+      add :l_dynamic, {:array, :string}, null: false
+      add :r_dynamic, {:array, :string}
+
       add :static, :jsonb, null: false
-      add :dynamic, {:array, :string}, null: false
       add :last_checkpoint_time, :utc_datetime
 
       # Metadata

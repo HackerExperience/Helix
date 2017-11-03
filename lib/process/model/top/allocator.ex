@@ -2,10 +2,27 @@ defmodule Helix.Process.Model.TOP.Allocator do
 
   alias Helix.Process.Model.Process
 
+  defp identify_origin(server_id, processes) do
+    Enum.map(processes, fn process ->
+      local? =
+        if process.target_id == server_id do
+          false
+        else
+          true
+        end
+
+      %{process| local?: local?}
+    end)
+  end
+
   # @spec allocate(server_resources, [Process.t]) ::
   #   [{Process.t, allocated_resources}]
-  def allocate(total_resources, processes, opts \\ []) do
+  def allocate(server_id, total_resources, processes, opts \\ []) do
     forced_allocation? = opts[:force] || false
+
+    # Assign the process' "identity" from the TOP's point of view. It may either
+    # be local (gateway_id == server_id) or remote (target_id == server_id).
+    processes = identify_origin(server_id, processes)
 
     # Calculates the static resources that should be allocated to each process
     {static_resources_usage, allocated_processes} = static_allocation(processes)
@@ -22,8 +39,7 @@ defmodule Helix.Process.Model.TOP.Allocator do
       dynamic_allocation(remaining_resources, allocated_processes)
 
     # Subtracts the resources remaining (after the static allocation) with the
-    # newly allocated dynamic resources. If there was no overflow on this second
-    # step (dynamic_allocation), the allocation was successful.
+    # newly allocated dynamic resources.
     remaining_resources =
       Process.Resources.sub(remaining_resources, dynamic_resources_usage)
 
@@ -33,13 +49,15 @@ defmodule Helix.Process.Model.TOP.Allocator do
     {remaining_resources_usage, allocated_processes} =
       remaining_allocation(remaining_resources, allocated_processes)
 
-    # Again again
+    # Subtract again. Now we should be very close to 100% utilization. We'll
+    # check to make sure it didn't overflow - if it didn't, the allocation was
+    # successful.
     remaining_resources =
       Process.Resources.sub(remaining_resources, remaining_resources_usage)
 
     case overflow?(remaining_resources, allocated_processes) do
+      # No overflow, we did it!
       false ->
-        # No overflow, we did it!
 
         # Modify the Process model to include the `next_allocation`
         allocated_processes = merge_allocation(allocated_processes)
@@ -52,8 +70,8 @@ defmodule Helix.Process.Model.TOP.Allocator do
 
         {:ok, result}
 
+      # Allocated more than we could handle :(
       {true, heaviest} ->
-        # Allocated more than we could handle :(
         {:error, :resources, heaviest}
 
     end
@@ -149,9 +167,10 @@ defmodule Helix.Process.Model.TOP.Allocator do
           proc_shares, resource_per_share, process
         )
 
+      limit = Process.get_limit(process)
+
       # Now we take the naive allocated amount and apply the process limitations
-      proc_dynamic_alloc =
-        Process.Resources.min(naive_dynamic_alloc, process.limit)
+      proc_dynamic_alloc = Process.Resources.min(naive_dynamic_alloc, limit)
 
       # Sums static and dynamic allocation, resulting on the final allocation
       proc_allocation =
@@ -173,7 +192,7 @@ defmodule Helix.Process.Model.TOP.Allocator do
     # we don't have this scenario, but this could change in the future.
     processes =
       Enum.filter(allocated_processes, fn {process, _} ->
-        process.limit == %{}
+        Process.get_limit(process) == %{}
       end)
 
     skipped_processes = allocated_processes -- processes

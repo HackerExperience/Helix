@@ -7,6 +7,7 @@ defmodule Helix.Process.Resources.Behaviour.KV do
 
       formatter = unquote(args)[:formatter]
 
+      alias Helix.Process.Model.Process
       alias Helix.Process.Resources.Utils, as: ResourceUtils
 
       @behaviour Helix.Process.Resources.Behaviour
@@ -14,6 +15,7 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       @name unquote(name)
       @key Keyword.fetch!(unquote(args), :key)
       @formatter unquote(args)[:formatter] || &__MODULE__.default_formatter/2
+      @mirror unquote(args)[:mirror] || @name
 
       # Generic data manipulation
 
@@ -99,7 +101,9 @@ defmodule Helix.Process.Resources.Behaviour.KV do
         end)
       end
 
-      get_shares(process = %{priority: priority, dynamic: dynamic}) do
+      get_shares(process = %{priority: priority}) do
+        dynamic = Process.get_dynamic(process)
+
         with \
           true <- @name in dynamic,
           key = get_key(process),
@@ -111,6 +115,10 @@ defmodule Helix.Process.Resources.Behaviour.KV do
           _ ->
             initial()
         end
+      end
+
+      def mirror do
+        @mirror
       end
 
       defp can_allocate?(%{processed: nil}, _),
@@ -140,7 +148,21 @@ defmodule Helix.Process.Resources.Behaviour.KV do
         res_per_share >= 0 && res_per_share || 0.0
       end
 
+      # At least currently, only local process may allocate static resources
+      # This means that e.g. a FileDownload may consume RAM on the local server
+      # but none on the remote one.
+      allocate_static(%{local?: false}) do
+        initial()
+      end
+
       allocate_static(process = %{static: static, state: state}) do
+        state =
+          if state == :waiting_allocation do
+            :running
+          else
+            state
+          end
+
         alloc =
           static
           |> Map.get(state, %{})
@@ -155,7 +177,9 @@ defmodule Helix.Process.Resources.Behaviour.KV do
         end
       end
 
-      allocate_dynamic(shares, res_per_share, %{dynamic: dynamic}) do
+      allocate_dynamic(shares, res_per_share, process) do
+        dynamic = Process.get_dynamic(process)
+
         shares = fill_missing(shares, res_per_share)
 
         if @name in dynamic do

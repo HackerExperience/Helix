@@ -7,7 +7,8 @@ defmodule Helix.Test.Process.TOPHelper do
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Repo, as: ProcessRepo
   alias Helix.Process.State.TOP.Manager, as: TOPManager
-  alias Helix.Process.State.TOP.Server, as: TOPServer
+
+  alias Helix.Process.Action.TOP, as: TOPAction
 
   @doc """
   Stops the TOP of a server.
@@ -37,14 +38,15 @@ defmodule Helix.Test.Process.TOPHelper do
     |> force_completion()
   end
   def force_completion(process = %Process{}) do
-    finished_process = mark_as_finished(process)
+    # Update the DB process entry, now it has magically reached its objective
+    process
+    |> Changeset.change()
+    |> Changeset.put_change(:allocated, %{})  # Avoids `:waiting_alloc` status
+    |> Changeset.put_change(:processed, process.objective)
+    |> ProcessRepo.update()
 
-    process.gateway_id
-    |> TOPManager.get()
-    |> TOPServer.reset_processes([finished_process])
-
-    # Sync TOP events. Required after apply.
-    :timer.sleep(50)
+    # Force a recalque on the server
+    TOPAction.recalque(process.gateway_id, process.target_id)
   end
 
   @doc """
@@ -53,7 +55,7 @@ defmodule Helix.Test.Process.TOPHelper do
   """
   def soft_complete(process = %Process{}) do
     cs = Changeset.change(process)
-    Processable.state_change(process.process_data, cs, :running, :complete)
+    Processable.state_change(process.data, cs, :running, :complete)
   end
 
   @doc """
@@ -62,12 +64,6 @@ defmodule Helix.Test.Process.TOPHelper do
   """
   def soft_kill(process = %Process{}, reason \\ :normal) do
     cs = Changeset.change(process)
-    Processable.kill(process.process_data, cs, reason)
-  end
-
-  defp mark_as_finished(process) do
-    %{process| processed: process.objective}
-    |> Ecto.Changeset.change()
-    |> ProcessRepo.update!()
+    Processable.kill(process.data, cs, reason)
   end
 end

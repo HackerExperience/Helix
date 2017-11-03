@@ -3,6 +3,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
   use ExUnit.Case, async: true
 
   alias HELL.Utils
+  alias Helix.Process.Model.Process
   alias Helix.Process.Model.TOP.Scheduler
 
   alias Helix.Test.Process.Setup.TOP, as: TOPSetup
@@ -10,7 +11,6 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
   @slack 5
 
   describe "simulate/1" do
-
     test "simulates progress" do
       # The process below has an objective of cpu: 100, ram: 100; and have
       # allocated to it cpu: 1, ram: 5. The allocation part will be added to the
@@ -19,7 +19,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: nil,
           objective: %{cpu: 100, ram: 100, dlk: %{}, ulk: %{}},
-          allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
+          l_allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
           last_checkpoint_time: nil,
           creation_time: Utils.date_before(10),
           state: :running
@@ -58,7 +58,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: nil,
           objective: %{cpu: 10, ram: 5, dlk: %{net: 100}, ulk: %{net: 50}},
-          allocated: %{cpu: 1, ram: 5, dlk: %{net: 1}, ulk: %{net: 0.5}},
+          l_allocated: %{cpu: 1, ram: 5, dlk: %{net: 1}, ulk: %{net: 0.5}},
           last_checkpoint_time: nil,
           creation_time: Utils.date_before(10),
           state: :running
@@ -97,7 +97,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: nil,
           objective: %{cpu: 100, ram: 100, dlk: %{}, ulk: %{}},
-          allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
+          l_allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
           last_checkpoint_time: Utils.date_before(10),
           creation_time: Utils.date_before(86_400),
           state: :running
@@ -130,7 +130,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: nil,
           objective: %{cpu: 100, ram: 100, dlk: %{}, ulk: %{}},
-          allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
+          l_allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
           next_allocation: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
           last_checkpoint_time: nil,
           creation_time: DateTime.utc_now(),
@@ -157,7 +157,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: nil,
           objective: %{cpu: 1, ram: 10, dlk: %{net: 100}, ulk: %{net: 50}},
-          allocated: %{cpu: 1, ram: 50, dlk: %{net: 20}, ulk: %{net: 25}},
+          l_allocated: %{cpu: 1, ram: 50, dlk: %{net: 20}, ulk: %{net: 25}},
           next_allocation: %{cpu: 1, ram: 50, dlk: %{net: 20}, ulk: %{net: 25}},
           last_checkpoint_time: nil,
           creation_time: DateTime.utc_now(),
@@ -178,7 +178,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: %{cpu: 11, ram: 11, dlk: %{}, ulk: %{}},
           objective: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
-          allocated: %{cpu: 1, ram: 1, dlk: %{}, ulk: %{}},
+          l_allocated: %{cpu: 1, ram: 1, dlk: %{}, ulk: %{}},
           next_allocation: %{cpu: 1, ram: 1, dlk: %{}, ulk: %{}},
           last_checkpoint_time: nil,
           creation_time: DateTime.utc_now(),
@@ -194,7 +194,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: :i,
           objective: :dont,
-          allocated: :care,
+          l_allocated: :care,
           state: :paused
         }
 
@@ -361,7 +361,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         %{
           processed: %{cpu: 1, ram: 1, dlk: %{net: 1}, ulk: %{}},
           objective: %{cpu: 100, ram: 20, dlk: %{net: 50}, ulk: %{}},
-          allocated: %{cpu: 25, ram: 10, dlk: %{net: 20}, ulk: %{}},
+          l_allocated: %{cpu: 25, ram: 10, dlk: %{net: 20}, ulk: %{}},
           next_allocation: %{cpu: 80, ram: 5, dlk: %{net: 1}, ulk: %{}},
           last_checkpoint_time: Utils.date_before(2000, :millisecond),
           creation_time: nil,
@@ -379,7 +379,8 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         id: 1,
         processed: nil,
         objective: %{cpu: 10, ram: 15, dlk: %{}, ulk: %{}},
-        allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
+        l_reserved: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
+        l_allocated: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
         next_allocation: %{cpu: 1, ram: 5, dlk: %{}, ulk: %{}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
@@ -393,7 +394,8 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         id: 2,
         processed: nil,
         objective: %{cpu: 10, ram: 0, dlk: %{net: 10}, ulk: %{net: 10}},
-        allocated: %{cpu: 5, ram: 0, dlk: %{net: 2}, ulk: %{net: 3}},
+        l_reserved: %{cpu: 5, ram: 0, dlk: %{net: 2}, ulk: %{net: 3}},
+        l_allocated: %{cpu: 5, ram: 0, dlk: %{net: 2}, ulk: %{net: 3}},
         next_allocation: %{cpu: 5, ram: 0, dlk: %{net: 2}, ulk: %{net: 3}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
@@ -407,7 +409,8 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         id: 3,
         processed: %{cpu: 100, ram: 100, dlk: %{net: 100}, ulk: %{}},
         objective: %{cpu: 99, ram: 99, dlk: %{net: 99}, ulk: %{}},
-        allocated: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
+        l_reserved: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
+        l_allocated: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
         next_allocation: %{cpu: 10, ram: 10, dlk: %{}, ulk: %{}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
@@ -421,7 +424,8 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         id: 4,
         processed: nil,
         objective: %{cpu: 10, ram: 0, dlk: %{net: 10}, ulk: %{net: 10}},
-        allocated: %{cpu: 9, ram: 0, dlk: %{net: 9}, ulk: %{net: 9}},
+        l_allocated: %{cpu: 9, ram: 0, dlk: %{net: 9}, ulk: %{net: 9}},
+        l_reserved: %{cpu: 9, ram: 0, dlk: %{net: 9}, ulk: %{net: 9}},
         next_allocation: %{cpu: 9, ram: 0, dlk: %{net: 9}, ulk: %{net: 9}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
@@ -436,7 +440,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
         id: 5,
         processed: nil,
         objective: %{cpu: 10, ram: 0, dlk: %{net: 10}, ulk: %{net: 10}},
-        allocated: nil,
+        l_reserved: %{},
         next_allocation: %{cpu: 5, ram: 0, dlk: %{net: 10}, ulk: %{net: 3}},
         last_checkpoint_time: nil,
         creation_time: DateTime.utc_now(),
@@ -452,9 +456,12 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
 
       # P1 was never processed nor allocated before. It represents a recently
       # created process.
-      [p1] = TOPSetup.fake_process(next_allocation: next_allocation)
+      [p1] =
+        TOPSetup.fake_process(next_allocation: next_allocation, local?: true)
+
       refute p1.processed
-      refute p1.allocated
+      assert p1.l_reserved == %{}
+      assert p1.l_allocated == Process.Resources.initial()
       refute p1.last_checkpoint_time
       assert p1.next_allocation
 
@@ -464,7 +471,7 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
       new_proc = Ecto.Changeset.apply_changes(changeset)
 
       # The given allocation was saved on the process
-      assert new_proc.allocated == next_allocation
+      assert new_proc.l_reserved == next_allocation
 
       # Checkpoint time was set
       assert new_proc.last_checkpoint_time
@@ -478,10 +485,12 @@ defmodule Helix.Process.Model.TOP.SchedulerTest do
       allocated = %{cpu: 100, ram: 0, dlk: %{}, ulk: %{}}
 
       [p1] =
-        TOPSetup.fake_process(allocated: allocated, next_allocation: allocated)
+        TOPSetup.fake_process(
+          l_reserved: allocated, next_allocation: allocated, local?: true
+        )
 
       # The process and the resulting allocation are the same
-      assert p1.allocated == allocated
+      assert p1.l_reserved == allocated
 
       # Returns `false`, meaning "do not update"
       refute Scheduler.checkpoint(p1)

@@ -28,7 +28,9 @@ defmodule Helix.Test.Process.Setup.TOP do
     state = Keyword.get(opts, :state, :running)
 
     network_id = Keyword.get(opts, :network_id, @internet_id)
-    dynamic = Keyword.get(opts, :dynamic, [:cpu, :ram])
+
+    l_dynamic = Keyword.get(opts, :l_dynamic, [:cpu, :ram])
+    r_dynamic = Keyword.get(opts, :r_dynamic, [])
 
     static =
       if opts[:static] do
@@ -39,27 +41,50 @@ defmodule Helix.Test.Process.Setup.TOP do
 
     processed = Keyword.get(opts, :processed, nil)
     objective = Keyword.get(opts, :objective, TOPHelper.Resources.objective())
-    allocated = Keyword.get(opts, :allocated, nil)
     next_allocation = Keyword.get(opts, :next_allocation, nil)
-    limit = Keyword.get(opts, :limit, %{})
+
+    l_limit = Keyword.get(opts, :l_limit, %{})
+    r_limit = Keyword.get(opts, :r_limit, %{})
+
+    l_reserved = Keyword.get(opts, :l_reserved, %{})
+    r_reserved = Keyword.get(opts, :r_reserved, %{})
 
     creation_time = Keyword.get(opts, :creation_time, DateTime.utc_now())
     last_checkpoint_time = Keyword.get(opts, :last_checkpoint_time, nil)
 
+    gateway_id = Keyword.get(opts, :gateway_id, :gateway)
+    target_id = Keyword.get(opts, :target_id, :target)
+    local? = Keyword.get(opts, :local?, nil)
+
+    initial = Process.Resources.initial()
+    l_allocated = Keyword.get(opts, :l_allocated, initial)
+    r_allocated = Keyword.get(opts, :r_allocated, initial)
+
+    data = Keyword.get(opts, :data, nil)
+
     %Process{
       process_id: Random.number(),
+      gateway_id: gateway_id,
+      target_id: target_id,
+      data: data,
       objective: objective,
       processed: processed,
-      allocated: allocated,
       next_allocation: next_allocation,
       priority: priority,
       state: state,
       static: static,
-      dynamic: dynamic,
-      limit: limit,
+      l_dynamic: l_dynamic,
+      r_dynamic: r_dynamic,
+      l_limit: l_limit,
+      r_limit: r_limit,
+      l_reserved: l_reserved,
+      r_reserved: r_reserved,
+      l_allocated: l_allocated,
+      r_allocated: r_allocated,
       network_id: network_id,
       creation_time: creation_time,
-      last_checkpoint_time: last_checkpoint_time
+      last_checkpoint_time: last_checkpoint_time,
+      local?: local?
     }
   end
 end

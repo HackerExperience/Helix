@@ -111,9 +111,9 @@ process Helix.Software.Process.File.Transfer do
     @spec get_servers_context(data :: term, process :: term) ::
       context :: {from_server :: Server.id, to_server :: Server.id}
     defp get_servers_context(%{type: :download}, process),
-      do: {process.target_server_id, process.gateway_id}
+      do: {process.target_id, process.gateway_id}
     defp get_servers_context(%{type: :upload}, process),
-        do: {process.gateway_id, process.target_server_id}
+        do: {process.gateway_id, process.target_id}
 
     def after_read_hook(data) do
       %FileTransferProcess{
@@ -180,6 +180,14 @@ process Helix.Software.Process.File.Transfer do
         paused: %{ram: 10},
         running: %{ram: 20}
       }
+    end
+
+    r_dynamic(%{type: :download}) do
+      [:ulk]
+    end
+
+    r_dynamic(%{type: :upload}) do
+      [:dlk]
     end
   end
 

@@ -19,4 +19,40 @@ defmodule Helix.Process.Event.TOP do
       }
     end
   end
+
+  event Recalcado do
+
+    alias Helix.Server.Model.Server
+
+    @type t :: term
+
+    event_struct [:server_id]
+
+    def new(server_id = %Server.ID{}) do
+      %__MODULE__{
+        server_id: server_id
+      }
+    end
+
+    notify do
+      @moduledoc """
+      Notifies a client that the TOP has changed. Instead of sending a diff of
+      what has changed, we send the whole TOP, as the Client would receive if it
+      were logging in for the first time.
+      """
+
+      alias Helix.Process.Public.Index, as: ProcessIndex
+
+      @event :top_recalcado
+
+      def generate_payload(event, socket) do
+        data = ProcessIndex.index(event.server_id, socket.assigns.entity_id)
+
+        {:ok, data}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: event.server_id}
+    end
+  end
 end

@@ -73,7 +73,8 @@ defmodule Helix.Test.Process.Data.Setup do
 
     resources =
       %{
-        dynamic: [:dlk],
+        l_dynamic: [:dlk],
+        r_dynamic: [:ulk],
         static: TOPHelper.Resources.random_static(),
         objective: objective
       }
@@ -110,7 +111,8 @@ defmodule Helix.Test.Process.Data.Setup do
 
     resources =
       %{
-        dynamic: [:ulk],
+        l_dynamic: [:ulk],
+        r_dynamic: [:dlk],
         objective: objective,
         static: TOPHelper.Resources.random_static()
       }
@@ -140,7 +142,8 @@ defmodule Helix.Test.Process.Data.Setup do
 
     resources =
       %{
-        dynamic: [:cpu],
+        l_dynamic: [:cpu],
+        r_dynamic: [],
         static: TOPHelper.Resources.random_static(),
         objective: TOPHelper.Resources.objective(cpu: 500)
       }
@@ -182,7 +185,8 @@ defmodule Helix.Test.Process.Data.Setup do
 
     resources =
       %{
-        dynamic: [:cpu],
+        l_dynamic: [:cpu],
+        r_dynamic: [],
         static: TOPHelper.Resources.random_static(),
         objective: TOPHelper.Resources.objective(cpu: 500)
       }

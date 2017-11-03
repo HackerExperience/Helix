@@ -1,24 +1,18 @@
-defmodule Helix.Test.Features.ProcessLifecycle do
+defmodule Helix.Test.Features.Process.Lifecycle do
 
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
-  import Helix.Test.Case.ID
+  import Helix.Test.Process.Macros
 
-  alias HELL.Utils
-  alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Software.Query.Storage, as: StorageQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
-  alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
-  alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
-  alias Helix.Test.Process.TOPHelper
-  alias Helix.Test.Server.Helper, as: ServerHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   @moduletag :feature
@@ -31,10 +25,6 @@ defmodule Helix.Test.Features.ProcessLifecycle do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
 
-      player_entity_id = socket.assigns.gateway.entity_id
-
-      target_nip = ServerHelper.get_nip(destination)
-
       # Create the File that we'll downloaded
       {file, _} = SoftwareSetup.file(server_id: destination.server_id)
 
@@ -45,20 +35,24 @@ defmodule Helix.Test.Features.ProcessLifecycle do
       # Starts the file download
       ref = push socket, "file.download", params
 
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, 200
 
       # The process was created
       assert response.data.process_id
       process_id = Process.ID.cast!(response.data.process_id)
 
-      # Wait a bit to ensure the process has received allocation
-      :timer.sleep(10)
+      assert_push "event", top_recalcado
+      assert_push "event", process_created
+
+      assert top_recalcado.event == "top_recalcado"
+      assert process_created.event == "process_created"
 
       # Let's fetch the process, just to make sure
       process = ProcessQuery.fetch(process_id)
 
       # The process received allocation
-      assert process.allocated
+      refute Enum.empty?(process.l_reserved)
+      refute Enum.empty?(process.r_reserved)
 
       resources =
         gateway.motherboard_id
@@ -67,13 +61,13 @@ defmodule Helix.Test.Features.ProcessLifecycle do
 
       server_dlk = resources.net[@internet_id].downlink
 
-      # Process received no allocations of CPU, RAM or ULK
-      assert process.allocated.cpu == 0.0
-      assert process.allocated.ram == 0.0
-      assert process.allocated.ulk[@internet_id] == 0.0
+      # Process received no allocations of CPU/ULK (some RAM for static usage)
+      assert process.l_allocated.cpu == 0.0
+      assert process.l_allocated.ulk[@internet_id] == 0.0
+      assert process.l_allocated.ram > 0
 
       # But received 100% of server DLK resources
-      assert_in_delta process.allocated.dlk[@internet_id], server_dlk, 0.1
+      assert_resource process.l_allocated.dlk[@internet_id], server_dlk
     end
 
     # This is pretty much the same test above, but now we'll focus on the other
@@ -82,12 +76,9 @@ defmodule Helix.Test.Features.ProcessLifecycle do
     # In order to do that we create a very small process which needs to transfer
     # a file of about ~1kb, taking less than a second.
     test "spontaneous completion" do
+      # TODO: Local socket for local TOPREcalcado event
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
-
-      player_entity_id = socket.assigns.gateway.entity_id
-
-      target_nip = ServerHelper.get_nip(destination)
 
       # Create the File that we'll downloaded
       {file, _} = SoftwareSetup.file(server_id: destination.server_id, size: 10)
@@ -98,17 +89,8 @@ defmodule Helix.Test.Features.ProcessLifecycle do
 
       # Starts the file download
       ref = push socket, "file.download", params
+      assert_reply ref, :ok, _
 
-      assert_reply ref, :ok, response
-
-      # The process was created
-      assert response.data.process_id
-      process_id = Process.ID.cast!(response.data.process_id)
-
-      process = ProcessQuery.fetch(process_id)
-
-      alias Helix.Test.Software.Helper, as: SoftwareHelper
-      alias Helix.Software.Query.Storage, as: StorageQuery
       gateway_storage = SoftwareHelper.get_storage(gateway)
 
       # No files on gateway server. Download process started but not completed.

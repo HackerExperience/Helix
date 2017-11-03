@@ -52,7 +52,7 @@ defmodule Helix.Process.Executable do
       @spec get_ownership(Server.t, Server.t, params, meta) ::
         %{
           gateway_id: Server.id,
-          target_server_id: Server.id
+          target_id: Server.id
         }
       docp """
       Infers ownership information about the process, which is a subset of the
@@ -61,7 +61,7 @@ defmodule Helix.Process.Executable do
       defp get_ownership(gateway, target, params, meta) do
         %{
           gateway_id: gateway.server_id,
-          target_server_id: target.server_id
+          target_id: target.server_id
         }
       end
 
@@ -70,7 +70,7 @@ defmodule Helix.Process.Executable do
       docp """
       Returns the `process_type` parameter, a subset of the full process params.
       """
-      defp get_process_type(%{process_type: process_type}),
+      defp get_process_type(%{type: process_type}),
         do: %{type: process_type}
       defp get_process_type(_) do
         process_type = call_process(:get_process_type)
