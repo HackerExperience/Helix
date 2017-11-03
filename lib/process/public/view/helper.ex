@@ -125,8 +125,8 @@ defmodule Helix.Process.Public.View.Process.Helper do
     ProcessView.progress
   defp build_progress(process = %Process{}) do
     completion_date =
-      if process.estimated_time do
-        ClientUtils.to_timestamp(process.estimated_time)
+      if process.completion_date do
+        ClientUtils.to_timestamp(process.completion_date)
       else
         nil
       end

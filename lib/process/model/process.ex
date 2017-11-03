@@ -8,12 +8,14 @@ defmodule Helix.Process.Model.Process do
   alias HELL.Constant
   alias HELL.MapUtils
   alias HELL.NaiveStruct
+  alias HELL.Utils
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Process.Model.Processable
+  alias Helix.Process.Model.TOP
   alias __MODULE__, as: Process
 
   @type type :: String.t
@@ -197,7 +199,10 @@ defmodule Helix.Process.Model.Process do
     field :creation_time, :utc_datetime
 
     # Estimated date of completion
-    field :estimated_time, :utc_datetime,
+    field :time_left, :float,
+      virtual: true
+
+    field :completion_date, :utc_datetime,
       virtual: true
   end
 
@@ -220,10 +225,11 @@ defmodule Helix.Process.Model.Process do
     formatted_data = Processable.after_read_hook(process.data)
 
     process
-    |> load_virtual_data()
+    |> Map.replace(:state, get_state(process))
+    |> Map.replace(:data, formatted_data)
     |> format_resources()
     |> infer_usage()
-    |> Map.replace(:data, formatted_data)
+    |> estimate_duration()
   end
 
   def get_dynamic(%{local?: true, l_dynamic: dynamic}),
@@ -235,6 +241,11 @@ defmodule Helix.Process.Model.Process do
     do: limit
   def get_limit(%{local?: false, r_limit: limit}),
     do: limit
+
+  def get_last_update(p = %{last_checkpoint_time: nil}),
+    do: p.creation_time
+  def get_last_update(%{last_checkpoint_time: last_checkpoint_time}),
+    do: last_checkpoint_time
 
   def infer_usage(process) do
     l_alloc = Process.Resources.min(process.l_limit, process.l_reserved)
@@ -264,6 +275,31 @@ defmodule Helix.Process.Model.Process do
       l_allocated: l_alloc |> Process.Resources.prepare(),
       r_allocated: r_alloc |> Process.Resources.prepare()
     }
+  end
+
+  defp estimate_duration(process = %Process{}) do
+    {_, time_left} = TOP.Scheduler.estimate_completion(process)
+
+    completion_date =
+      if time_left == :infinity do
+        nil
+      else
+        previous_update = get_last_update(process)
+
+        ms_left =
+          time_left
+          |> Kernel.*(1000)  # From second to millisecond
+          |> trunc()
+
+        previous_update
+        |> DateTime.to_unix(:millisecond)
+        |> Kernel.+(ms_left)
+        |> DateTime.from_unix!(:millisecond)
+      end
+
+    process
+    |> Map.replace(:completion_date, completion_date)
+    |> Map.replace(:time_left, time_left)
   end
 
   defp format_resources(process = %Process{}) do
@@ -316,6 +352,7 @@ defmodule Helix.Process.Model.Process do
   defp load_virtual_data(process = %Process{}) do
     process
     |> Map.put(:state, get_state(process))
+    # |> Map.put(:completion-date, TOP.Scheduler.estimate_completion(process))
   end
 
   defp get_state(%{priority: 0}),

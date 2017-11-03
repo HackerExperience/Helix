@@ -3,6 +3,7 @@ defmodule Helix.Test.Features.Process.Recalque do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
   import Helix.Test.Process.Macros
 
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -113,7 +114,10 @@ defmodule Helix.Test.Features.Process.Recalque do
       downloadA2 = ProcessQuery.fetch(downloadA_id)
 
       # After recalque, the Download process remains unchanged
-      assert downloadA2 == downloadA
+      # (The time_left may have changed a little bit, but that's because some
+      # time has passed since it was created :)
+      # assert downloadA2 == downloadA
+      assert_map downloadA2, downloadA, skip: [:time_left, :completion_date]
 
       ### Chapter 3 ###
 
@@ -138,6 +142,10 @@ defmodule Helix.Test.Features.Process.Recalque do
       # Now, downloadA is using half of B's ULK as well
       assert_resource downloadA.l_allocated.dlk[@internet_id], resB.ulk / 2
       assert_resource downloadA.r_allocated.ulk[@internet_id], resB.ulk / 2
+
+      # The process duration has roughly doubled, since it's using half of the
+      # resources from before
+      assert_in_delta downloadA.time_left, orig_downloadA.time_left * 2, 1
 
       # TODO Verify whether this is correct
       assert downloadA.processed == orig_downloadA.processed

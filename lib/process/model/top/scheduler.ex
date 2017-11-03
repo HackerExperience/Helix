@@ -113,12 +113,9 @@ defmodule Helix.Process.Model.TOP.Scheduler do
 
   defp get_simulation_duration(process) do
     now = DateTime.utc_now()
+    last_update = Process.get_last_update(process)
 
-    if process.last_checkpoint_time do
-      DateTime.diff(now, process.last_checkpoint_time, :millisecond)
-    else
-      DateTime.diff(now, process.creation_time, :millisecond)
-    end
+    DateTime.diff(now, last_update, :millisecond)
   end
 
   defp seconds_for_completion({:paused, process}),
@@ -129,8 +126,10 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     # This is the amount of work left for completion of the process
     remaining_work = Process.Resources.sub(process.objective, process.processed)
 
+    next_allocation = process.next_allocation || process.l_allocated
+
     # Convert allocation to millisecond
-    alloc = Process.Resources.map(process.next_allocation, &(&1 / 1000))
+    alloc = Process.Resources.map(next_allocation, &(&1 / 1000))
 
     # Figure out the work left in order to complete each resource
     work_left = Process.Resources.div(remaining_work, alloc)

@@ -182,6 +182,16 @@ defmodule Helix.Process.Model.ProcessTest do
       assert process.r_allocated.ram == 30
       assert process.r_allocated.dlk[@internet_id] == 20
       assert process.r_allocated.ulk == %{}
+
+      # Estimated duration
+
+      assert_in_delta process.time_left, 500, 1
+      assert process.completion_date
+
+      diff =
+        DateTime.diff(process.completion_date, Process.get_last_update(process))
+
+      assert_in_delta diff, 500, 1
     end
 
     test "gives :waiting_allocation state when process hasn't received alloc" do
@@ -194,6 +204,7 @@ defmodule Helix.Process.Model.ProcessTest do
           l_dynamic: [:dlk],
           r_dynamic: [:ulk],
           network_id: "::",
+          objective: %{ulk: %{"::" => 999}},
           data: FakeFileTransfer.new()
         )
 
