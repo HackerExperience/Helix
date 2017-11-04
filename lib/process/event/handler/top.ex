@@ -44,7 +44,7 @@ defmodule Helix.Process.Event.Handler.TOP do
 
   defp call_recalque(process = %Process{}) do
     %{gateway: gateway_recalque, target: target_recalque} =
-      TOPAction.recalque(process.gateway_id, process.target_id)
+      TOPAction.recalque(process)
 
     gateway_recalque =
       case gateway_recalque do

@@ -46,7 +46,7 @@ defmodule Helix.Test.Process.TOPHelper do
     |> ProcessRepo.update()
 
     # Force a recalque on the server
-    TOPAction.recalque(process.gateway_id, process.target_id)
+    TOPAction.recalque(process)
   end
 
   @doc """

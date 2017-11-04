@@ -123,6 +123,8 @@ defmodule Helix.Process.Resources.Behaviour.KV do
 
       defp can_allocate?(%{processed: nil}, _),
         do: true
+      defp can_allocate?(%{local?: false}, _),
+        do: true
       defp can_allocate?(%{processed: processed, objective: objective}, key) do
         value_objective = objective[@name][key]
         value_processed = processed[@name][key]

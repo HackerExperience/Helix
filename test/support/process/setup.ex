@@ -73,6 +73,8 @@ defmodule Helix.Test.Process.Setup do
 
     static = Keyword.get(opts, :static, resources.static)
 
+    objective = Keyword.get(opts, :objective, resources.objective)
+
     params = %{
       data: process_data,
       type: process_type,
@@ -87,7 +89,7 @@ defmodule Helix.Test.Process.Setup do
       r_limit: r_limit,
       l_dynamic: resources.l_dynamic,
       r_dynamic: resources.r_dynamic,
-      objective: resources.objective
+      objective: objective
     }
 
     process =

@@ -11,6 +11,7 @@ defmodule Helix.Test.Features.Process.Recalque do
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
@@ -130,7 +131,7 @@ defmodule Helix.Test.Features.Process.Recalque do
       assert {:ok, %{process_id: downloadC_id}} =
         FilePublic.download(serverC, serverB, tunnelCB, storageC, dl_file)
 
-      :timer.sleep(50)
+      # :timer.sleep(50)
 
       downloadC = ProcessQuery.fetch(downloadC_id)
       downloadA = ProcessQuery.fetch(downloadA_id)
@@ -147,8 +148,15 @@ defmodule Helix.Test.Features.Process.Recalque do
       # resources from before
       assert_in_delta downloadA.time_left, orig_downloadA.time_left * 2, 1
 
-      # TODO Verify whether this is correct
-      assert downloadA.processed == orig_downloadA.processed
+      # downloadA has processed a little bit during this time
+      refute downloadA.processed == orig_downloadA.processed
+      refute \
+        downloadA.last_checkpoint_time == orig_downloadA.last_checkpoint_time
+
+      # This `processed` information is actually saved on the DB
+      raw_downloadA = ProcessHelper.raw_get(downloadA_id)
+      assert raw_downloadA.processed["dlk"]["::"] > 0
+      assert raw_downloadA.processed["ram"] > 0
     end
   end
 end

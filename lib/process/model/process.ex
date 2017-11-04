@@ -391,6 +391,14 @@ defmodule Helix.Process.Model.Process do
     def from_type_list(query \\ Process, type_list),
       do: where(query, [p], p.type in ^type_list)
 
+    @spec on_server(Queryable.t, Server.idt) ::
+      Queryable.t
+    def on_server(query \\ Process, server_id) do
+      query
+      |> where([p], p.gateway_id == ^server_id)
+      |> or_where([p], p.target_id == ^server_id)
+    end
+
     @spec by_gateway(Queryable.t, Server.idtb) ::
       Queryable.t
     def by_gateway(query \\ Process, id),

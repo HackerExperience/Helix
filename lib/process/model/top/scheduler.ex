@@ -98,15 +98,25 @@ defmodule Helix.Process.Model.TOP.Scheduler do
       |> Changeset.change()
       |> Changeset.put_change(:l_reserved, next_allocation)
       |> Changeset.put_change(:last_checkpoint_time, DateTime.utc_now())
-      # |> Changeset.put_change(:processed, proc.processed)
+
+    changeset =
+      if proc.processed == Process.Resources.initial() do
+        changeset
+      else
+        Changeset.force_change(changeset, :processed, proc.processed)
+      end
 
     {true, changeset}
   end
   def checkpoint(proc = %{next_allocation: next_allocation, local?: false}) do
+    {_, proc} = simulate(proc)
+
     changeset =
       proc
       |> Changeset.change()
       |> Changeset.put_change(:r_reserved, next_allocation)
+      |> Changeset.put_change(:last_checkpoint_time, DateTime.utc_now())
+      |> Changeset.force_change(:processed, proc.processed)
 
     {true, changeset}
   end

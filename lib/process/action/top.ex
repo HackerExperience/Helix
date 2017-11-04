@@ -28,41 +28,31 @@ defmodule Helix.Process.Action.TOP do
     end
   end
 
-  def recalque(gateway_id = %Server.ID{}, target_id, alloc_opts \\ []) do
-    gateway_resources = TOPQuery.load_top_resources(gateway_id)
-    gateway_processes = ProcessQuery.get_processes_on_server(gateway_id)
+  def recalque(process_or_server, alloc_opts \\ [])
 
-    gateway_recalque =
-      case TOP.Allocator.allocate(gateway_id, gateway_resources, gateway_processes, alloc_opts) do
-        {:ok, allocation_result} ->
-          processes = schedule(allocation_result)
-          event = TOPRecalcadoEvent.new(gateway_id)
-
-          {:ok, processes, [event]}
-
-        {:error, :resources, _} ->
-          {:error, :resources}
-      end
-
-    target_resources = TOPQuery.load_top_resources(target_id)
-    target_processes = ProcessQuery.get_processes_targeting_server(target_id)
-
-    target_recalque =
-      case TOP.Allocator.allocate(target_id, target_resources, target_processes, alloc_opts) do
-        {:ok, allocation_result} ->
-          processes = schedule(allocation_result)
-          event = TOPRecalcadoEvent.new(target_id)
-
-          {:ok, processes, [event]}
-
-        {:error, :resources, _} ->
-          {:error, :resources}
-      end
-
+  def recalque(%Process{gateway_id: gateway_id, target_id: target_id}, opts) do
     %{
-      gateway: gateway_recalque,
-      target: target_recalque
+      gateway: do_recalque(gateway_id, opts),
+      target: do_recalque(target_id, opts)
     }
+  end
+  def recalque(server_id = %Server.ID{}, opts),
+    do: do_recalque(server_id, opts)
+
+  defp do_recalque(server_id, alloc_opts) do
+    resources = TOPQuery.load_top_resources(server_id)
+    processes = ProcessQuery.get_processes_on_server(server_id)
+
+    case TOP.Allocator.allocate(server_id, resources, processes, alloc_opts) do
+      {:ok, allocation_result} ->
+        processes = schedule(allocation_result)
+        event = TOPRecalcadoEvent.new(server_id)
+
+        {:ok, processes, [event]}
+
+      {:error, :resources, _} ->
+        {:error, :resources}
+    end
   end
 
   defp schedule(%{allocated: processes, dropped: _dropped}) do

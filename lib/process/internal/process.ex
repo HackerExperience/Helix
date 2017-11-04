@@ -20,6 +20,15 @@ defmodule Helix.Process.Internal.Process do
     end
   end
 
+  @spec get_processes_on_server(Server.idt) ::
+    [Process.t]
+  def get_processes_on_server(server_id) do
+    server_id
+    |> Process.Query.on_server()
+    |> Repo.all()
+    |> Enum.map(&Process.format/1)
+  end
+
   #####  old \/ ### new /\ #####
 
   @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
@@ -29,15 +38,6 @@ defmodule Helix.Process.Internal.Process do
     |> Process.Query.by_gateway()
     |> Process.Query.by_type(type)
     |> Process.Query.by_state(:running)
-    |> Repo.all()
-    |> Enum.map(&Process.format/1)
-  end
-
-  @spec get_processes_on_server(Server.idt) ::
-    [Process.t]
-  def get_processes_on_server(gateway_id) do
-    gateway_id
-    |> Process.Query.by_gateway()
     |> Repo.all()
     |> Enum.map(&Process.format/1)
   end

@@ -31,40 +31,57 @@ defmodule Helix.Test.Server.Helper do
   # HACK
   # This is a giant hack because the current Hardware service lacks the proper
   # API. It will probably be my next PR....
-  def update_server_specs(
-    server = %Server{},
-    %{cpu: cpu, ram: ram, dlk: dlk, ulk: ulk})
-  do
+  def update_server_specs(server = %Server{}, new_specs) do
 
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-  alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Hardware.Repo, as: HardwareRepo
+    alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
+    alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
+    alias Helix.Hardware.Repo, as: HardwareRepo
 
-  components =
-    server.motherboard_id
-    |> MotherboardQuery.fetch()
-    |> MotherboardInternal.get_components_ids()
+    new_cpu = new_specs[:cpu]
 
-  [comp_cpu] = MotherboardInternal.get_cpus_from_ids(components)
-  [comp_ram] = MotherboardInternal.get_rams_from_ids(components)
-  [comp_nic] = MotherboardInternal.get_nics_from_ids(components)
+    components =
+      server.motherboard_id
+      |> MotherboardQuery.fetch()
+      |> MotherboardInternal.get_components_ids()
 
-  comp_cpu
-  |> Ecto.Changeset.change()
-  |> Ecto.Changeset.put_change(:clock, cpu)
-  |> HardwareRepo.update()
+    [comp_cpu] = MotherboardInternal.get_cpus_from_ids(components)
+    [comp_ram] = MotherboardInternal.get_rams_from_ids(components)
+    [comp_nic] = MotherboardInternal.get_nics_from_ids(components)
 
-  comp_ram
-  |> Ecto.Changeset.change()
-  |> Ecto.Changeset.put_change(:ram_size, ram)
-  |> HardwareRepo.update()
+    if new_specs[:cpu] do
+      comp_cpu
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.put_change(:clock, new_specs[:cpu])
+      |> HardwareRepo.update()
+    end
 
-  nc = comp_nic.network_connection
+    if new_specs[:ram] do
+      comp_ram
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.put_change(:ram_size, new_specs[:ram])
+      |> HardwareRepo.update()
+    end
 
-  nc
-  |> Ecto.Changeset.change()
-  |> Ecto.Changeset.put_change(:downlink, dlk)
-  |> Ecto.Changeset.put_change(:uplink, ulk)
-  |> HardwareRepo.update()
+    nc = comp_nic.network_connection
+
+    if not is_nil(new_specs[:dlk]) or not is_nil(new_specs[:ulk]) do
+      cs = Ecto.Changeset.change(nc)
+
+      cs =
+        if new_specs[:dlk] do
+          Ecto.Changeset.put_change(cs, :downlink, new_specs[:dlk])
+        else
+          cs
+        end
+
+      cs =
+        if new_specs[:ulk] do
+          Ecto.Changeset.put_change(cs, :uplink, new_specs[:ulk])
+        else
+          cs
+        end
+
+      HardwareRepo.update(cs)
+    end
   end
 end
