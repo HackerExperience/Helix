@@ -53,6 +53,10 @@ defmodule Helix.Process.Action.Process do
     end
   end
 
+  def delete(process = %Process{}) do
+    ProcessInternal.delete(process)
+  end
+
   @spec pause(Process.t) ::
     :ok
   @doc """

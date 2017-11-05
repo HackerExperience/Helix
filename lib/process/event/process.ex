@@ -136,26 +136,34 @@ defmodule Helix.Process.Event.Process do
 
   event Completed do
     @moduledoc """
-    This event is used solely to update the TOP display on the client.
+    `ProcessCompletedEvent` is fired after a process has met its objective, and
+    the corresponding `Processable.conclusion/2` callback was executed.
+
+    It's used in two scenarios:
+
+    1. Notify the Client a process has finished.
+    2. Remove the process from the database, or update its target.
     """
 
     alias Helix.Event
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
 
+    event_struct [:process, :action]
+
     @type t :: %__MODULE__{
-      gateway_id: Server.id,
-      target_id: Server.id
+      process: Process.t,
+      action: action
     }
 
-    event_struct [:gateway_id, :target_id]
+    @type action :: [:delete]
 
-    @spec new(Process.t) ::
+    @spec new(Process.t, action) ::
       t
-    def new(process = %Process{}) do
+    def new(process = %Process{}, action) do
       %__MODULE__{
-        gateway_id: process.gateway_id,
-        target_id: process.target_id
+        process: process,
+        action: action
       }
     end
 
@@ -172,7 +180,7 @@ defmodule Helix.Process.Event.Process do
       end
 
       def whom_to_notify(event),
-        do: %{server: [event.gateway_id, event.target_id]}
+        do: %{server: [event.process.gateway_id, event.process.target_id]}
     end
   end
 end

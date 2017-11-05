@@ -19,7 +19,7 @@ defmodule Helix.Process.Action.TOP do
       {:completed, _process} ->
         {_, e1} = Processable.conclusion(process.data, process)
 
-        e2 = ProcessCompletedEvent.new(process)
+        e2 = ProcessCompletedEvent.new(process, :delete)
 
         {:ok, e1 ++ [e2]}
 

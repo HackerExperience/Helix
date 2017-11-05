@@ -6,7 +6,6 @@ defmodule Helix.Test.Process.TOPHelper do
   alias Helix.Process.Model.Processable
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Repo, as: ProcessRepo
-  alias Helix.Process.State.TOP.Manager, as: TOPManager
 
   alias Helix.Process.Action.TOP, as: TOPAction
 
@@ -16,18 +15,13 @@ defmodule Helix.Test.Process.TOPHelper do
   def top_stop(server = %Server{}),
     do: top_stop(server.server_id)
   def top_stop(server_id = %Server.ID{}) do
-    server_id
-    |> TOPManager.get()
-    |> its_time_to_stop()
+    # server_id
+    # |> TOPManager.get()
+    # |> its_time_to_stop()
 
-    # Sync TOP events. Required after apply.
-    :timer.sleep(50)
+    # # Sync TOP events. Required after apply.
+    # :timer.sleep(50)
   end
-
-  defp its_time_to_stop(nil),
-    do: :ok
-  defp its_time_to_stop(pid),
-    do: GenServer.stop(pid)
 
   @doc """
   Completes the process, emitting the related events and removing from the db.

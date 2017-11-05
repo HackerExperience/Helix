@@ -1,4 +1,13 @@
 defmodule Helix.Process.Model.Process do
+  @moduledoc """
+  The Process model is responsible for persisting all in-game processes.
+
+  Compared to other models within the Process service, this model is quite
+  simple and straightforward. Other than the usual model responsibilities (like
+  ensuring the data is stored correctly and providing ways to query the data),
+  it plays a major role when formatting the process before giving it back to
+  whoever asked for it.
+  """
 
   use Ecto.Schema
   use HELL.ID, field: :process_id, meta: [0x0021]
@@ -25,7 +34,7 @@ defmodule Helix.Process.Model.Process do
   #   process_id: id,
   #   gateway_id: Server.id,
   #   source_entity_id: Entity.id,
-  #   target_server_id: Server.id,
+  #   target_id: Server.id,
   #   file_id: File.id | nil,
   #   network_id: Network.id | nil,
   #   connection_id: Connection.id | nil,
@@ -48,7 +57,7 @@ defmodule Helix.Process.Model.Process do
   @type creation_params :: %{
     # :gateway_id => Server.idtb,
     # :source_entity_id => Entity.idtb,
-    # :target_server_id => Server.idtb,
+    # :target_id => Server.idtb,
     # :process_data => Processable.t,
     # :process_type => String.t,
     # optional(:file_id) => File.idtb,
@@ -220,6 +229,9 @@ defmodule Helix.Process.Model.Process do
   - Adds virtual data (derived data not stored on DB).
   - Converts the Processable (defined at `process_data`) into Helix internal
   format, by using the `after_read_hook/1` implemented by each Processable
+  - Converts all resources (objective, limit, reserved etc) into Helix format.
+  - Infers the actual process usage, based on what was reserved for it.
+  - Estimates the completion date and time left
   """
   def format(process = %Process{}) do
     formatted_data = Processable.after_read_hook(process.data)
