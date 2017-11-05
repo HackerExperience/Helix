@@ -38,8 +38,8 @@ defmodule Helix.Software.Event.Handler.File.TransferTest do
       new_file = FileQuery.fetch(new_file.file_id)
       {:ok, server_id} = CacheQuery.from_storage_get_server(new_file.storage_id)
 
-      # The new file has been saved on `target_server_id` (it was uploaded)
-      assert server_id == process.target_server_id
+      # The new file has been saved on `target_id` (it was uploaded)
+      assert server_id == process.target_id
 
       TOPHelper.top_stop(process.gateway_id)
     end

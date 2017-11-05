@@ -15,7 +15,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   # TODO: Remove `entity_id` and `version` when `Balance` module is implemented
   @type t :: %__MODULE__{
     target_log_id: Log.id | nil,
-    target_server_id: Server.id | nil,
+    target_id: Server.id | nil,
     entity_id: Entity.id,
     operation: :edit | :create,
     message: String.t,
@@ -27,7 +27,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
       :entity_id => Entity.idtb,
       :operation => :edit | :create,
       :message => String.t,
-      optional(:target_server_id) => Server.idtb,
+      optional(:target_id) => Server.idtb,
       optional(:target_log_id) => Log.idtb,
       optional(atom) => any
     }
@@ -40,7 +40,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
   embedded_schema do
     field :target_log_id, Log.ID
     field :entity_id, Entity.ID
-    field :target_server_id, Server.ID
+    field :target_id, Server.ID
 
     field :operation, Constant
 
@@ -87,8 +87,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
       :create ->
         changeset
         |> cast(%{version: file.modules.log_create.version}, [:version])
-        |> cast(params, [:target_server_id])
-        |> validate_required([:target_server_id, :version])
+        |> cast(params, [:target_id])
+        |> validate_required([:target_id, :version])
         |> validate_number(:version, greater_than: 0)
       :edit ->
         changeset
@@ -172,7 +172,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
       %LogForgeProcess{
         entity_id: Entity.ID.cast!(data.entity_id),
         target_log_id: target_log_id,
-        target_server_id: Server.ID.cast!(data.target_server_id),
+        target_id: Server.ID.cast!(data.target_id),
         operation: String.to_existing_atom(data.operation),
         message: data.message,
         version: data.version

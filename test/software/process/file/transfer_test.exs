@@ -24,7 +24,7 @@ defmodule Helix.Software.Process.File.TransferTest do
       assert %FileTransferAbortedEvent{} = event
       assert event.reason == :killed
       assert event.to_server_id == process.gateway_id
-      assert event.from_server_id == process.target_server_id
+      assert event.from_server_id == process.target_id
 
       TOPHelper.top_stop(process.gateway_id)
     end
@@ -36,7 +36,7 @@ defmodule Helix.Software.Process.File.TransferTest do
 
       assert %FileTransferAbortedEvent{} = event
       assert event.reason == :killed
-      assert event.to_server_id == process.target_server_id
+      assert event.to_server_id == process.target_id
       assert event.from_server_id == process.gateway_id
 
       TOPHelper.top_stop(process.gateway_id)

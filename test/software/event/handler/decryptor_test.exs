@@ -22,7 +22,7 @@
 #         scope: :global,
 #         target_file_id: target_file.file_id,
 #         storage_id: Storage.ID.generate(),
-#         target_server_id: Server.ID.generate()
+#         target_id: Server.ID.generate()
 #       }
 
 #       Event.emit(event)
@@ -37,7 +37,7 @@
 #         scope: :global,
 #         target_file_id: target_file.file_id,
 #         storage_id: Storage.ID.generate(),
-#         target_server_id: Server.ID.generate()
+#         target_id: Server.ID.generate()
 #       }
 
 #       # Create several keys for the file
@@ -65,7 +65,7 @@
 #       event = %ProcessConclusionEvent{
 #         scope: :local,
 #         target_file_id: target_file.file_id,
-#         target_server_id: server_id,
+#         target_id: server_id,
 #         storage_id: storage.storage_id
 #       }
 
@@ -74,7 +74,7 @@
 #       [key] = CryptoKeyInternal.get_on_storage(storage)
 
 #       assert target_file.file_id == key.target_file_id
-#       assert server_id == key.target_server_id
+#       assert server_id == key.target_id
 #     end
 #   end
 # end

@@ -78,7 +78,7 @@ defmodule Helix.Log.Event.Handler.LogTest do
 
       event = %LogForgeCreateComplete{
         entity_id: entity.entity_id,
-        target_server_id: server.server_id,
+        target_id: server.server_id,
         message: message,
         version: 456
       }

@@ -23,7 +23,7 @@ defmodule Helix.Test.Process.Setup do
 
   Opts:
   - gateway_id:
-  - target_server_id:
+  - target_id:
   - entity_id: source entity id.
   - file_id:
   - network_id:
@@ -37,12 +37,12 @@ defmodule Helix.Test.Process.Setup do
   def fake_process(opts \\ []) do
     gateway_id = Keyword.get(opts, :gateway_id, ServerSetup.id())
     source_entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
-    {target_server_id, target_entity_id} =
+    {target_id, target_entity_id} =
       cond do
         opts[:single_server] ->
           {gateway_id, source_entity_id}
-        opts[:target_server_id] ->
-          {opts[:target_server_id], nil}
+        opts[:target_id] ->
+          {opts[:target_id], nil}
         true ->
           {ServerSetup.id(), EntitySetup.id()}
       end
@@ -55,7 +55,7 @@ defmodule Helix.Test.Process.Setup do
       source_entity_id: source_entity_id,
       gateway_id: gateway_id,
       target_entity_id: target_entity_id,
-      target_server_id: target_server_id,
+      target_id: target_id,
       file_id: file_id,
       connection_id: connection_id,
       network_id: network_id
@@ -80,7 +80,7 @@ defmodule Helix.Test.Process.Setup do
       type: process_type,
       gateway_id: meta.gateway_id,
       source_entity_id: meta.source_entity_id,
-      target_id: meta.target_server_id,
+      target_id: meta.target_id,
       file_id: meta.file_id,
       network_id: meta.network_id,
       connection_id: meta.connection_id,

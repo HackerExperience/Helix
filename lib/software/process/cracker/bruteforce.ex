@@ -4,7 +4,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
   @moduledoc """
   The BruteforceProcess is launched when a user wants to figure out the root
   password of the target server (identified by `target_server_ip` and
-  `target_server_id`).
+  `target_id`).
   """
 
   alias Helix.Network.Model.Network

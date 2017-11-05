@@ -35,7 +35,7 @@
 
 #       event = %ProcessConclusionEvent{
 #         target_file_id: data.target_file_id,
-#       target_server_id: Ecto.Changeset.get_field(process, :target_server_id),
+#       target_id: Ecto.Changeset.get_field(process, :target_id),
 #         storage_id: data.storage_id,
 #         scope: data.scope
 #       }

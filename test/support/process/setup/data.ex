@@ -48,8 +48,8 @@ defmodule Helix.Test.Process.Data.Setup do
   """
   def custom(:file_download, data_opts, meta) do
     meta =
-      if meta.gateway_id == meta.target_server_id do
-        %{meta| target_server_id: Server.ID.generate()}
+      if meta.gateway_id == meta.target_id do
+        %{meta| target_id: Server.ID.generate()}
       else
         meta
       end
@@ -87,7 +87,7 @@ defmodule Helix.Test.Process.Data.Setup do
   - storage_id: Set storage_id.
   """
   def custom(:file_upload, data_opts, meta) do
-    target_id = meta.gateway_id == meta.target_server_id || Server.ID.generate()
+    target_id = meta.gateway_id == meta.target_id || Server.ID.generate()
     connection_id = meta.connection_id || Connection.ID.generate()
     file_id = meta.file_id || File.ID.generate()
 
@@ -103,7 +103,7 @@ defmodule Helix.Test.Process.Data.Setup do
       %{meta|
         file_id: file_id,
         connection_id: connection_id,
-        target_server_id: target_id
+        target_id: target_id
        }
 
     objective =
@@ -160,7 +160,7 @@ defmodule Helix.Test.Process.Data.Setup do
   All others are automatically derived from process meta data.
   """
   def custom(:forge, data_opts, meta) do
-    target_server_id = meta.target_server_id
+    target_id = meta.target_id
     target_log_id = Keyword.get(data_opts, :target_log_id, Log.ID.generate())
     entity_id = meta.source_entity_id
     operation = Keyword.get(data_opts, :operation, :edit)
@@ -169,7 +169,7 @@ defmodule Helix.Test.Process.Data.Setup do
 
     data =
       %LogForge{
-        target_server_id: target_server_id,
+        target_id: target_id,
         entity_id: entity_id,
         operation: operation,
         message: message,

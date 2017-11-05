@@ -39,7 +39,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.CrackerTest do
       assert_reply ref, :ok, response
 
       # All required fields are there
-      assert response.data.type == :cracker_bruteforce
+      assert response.data.type == "cracker_bruteforce"
       assert response.data.file
       assert response.data.access.origin_id
       assert response.data.access.priority

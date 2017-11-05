@@ -145,7 +145,7 @@ defmodule Helix.Process.Action.TOPTest do
       {proc, _} =
         ProcessSetup.process(
           gateway_id: gateway.server_id,
-          target_server_id: target.server_id,
+          target_id: target.server_id,
           type: :file_download,
           l_limit: %{dlk: %{"::" => 50}},
           r_limit: %{ulk: %{"::" => 20}},

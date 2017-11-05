@@ -116,7 +116,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
       assert_reply ref, :ok, %{data: process}, 300
 
       assert process.file.id == to_string(file.file_id)
-      assert process.type == :file_download
+      assert process.type == "file_download"
       assert process.data.connection_type == "public_ftp"
       assert process.network_id == to_string(@internet_id)
 

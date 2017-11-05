@@ -48,7 +48,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       assert process.type == :cracker_bruteforce
       assert process.gateway_id == source_server.server_id
       assert process.source_entity_id == source_entity.entity_id
-      assert process.target_server_id == target_server.server_id
+      assert process.target_id == target_server.server_id
       assert process.network_id == target_nip.network_id
       assert process.data.target_server_ip == target_nip.ip
 
@@ -98,7 +98,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
         ProcessSetup.process(fake_server: true, type: :bruteforce)
 
       data = process.data
-      server_id = process.target_server_id
+      server_id = process.target_id
 
       # `entity` is the one who started the process, and is listing at the
       # victim server, so `entity` has full access to the process.
@@ -111,7 +111,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       {process, _} = ProcessSetup.process(fake_server: true, type: :bruteforce)
 
       data = process.data
-      server_id = process.target_server_id
+      server_id = process.target_id
       entity_id = Entity.ID.generate()
 
       # `entity` is unrelated to the process, and it's being rendering on the
@@ -126,7 +126,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
         ProcessSetup.process(fake_server: true, type: :bruteforce)
 
       data = process.data
-      server_id = process.target_server_id
+      server_id = process.target_id
 
       # `entity` is the victim, owner of the server receiving the process.
       # She's rendering at her own server, but she did not start the process,

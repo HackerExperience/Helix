@@ -51,7 +51,7 @@ defmodule Helix.Test.Event.Setup.Software do
     %BruteforceProcessedEvent{
       source_entity_id: Entity.ID.generate(),
       network_id: @internet,
-      target_server_id: Server.ID.generate(),
+      target_id: Server.ID.generate(),
       target_server_ip: Random.ipv4()
     }
   end

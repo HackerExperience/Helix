@@ -38,7 +38,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
 
       # Ensure process is valid
       assert process.gateway_id == gateway.server_id
-      assert process.target_server_id == acc.atm_id
+      assert process.target_id == acc.atm_id
       assert process.data.token_id == token.token_id
       assert process.data.atm_id == acc.atm_id
       assert process.data.account_number == acc.account_number

@@ -38,7 +38,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
         {:ok, password, events} <-
           ServerAction.crack(
             event.source_entity_id,
-            event.target_server_id,
+            event.target_id,
             event.network_id,
             event.target_server_ip
           ),

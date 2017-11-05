@@ -63,7 +63,7 @@
 #      {file, _} = SoftwareSetup.file(type: :log_forger, storage_id: storage_id)
 
 #       params = %{
-#         target_server_id: server,
+#         target_id: server,
 #         message: "",
 #         operation: :create,
 #         entity_id: entity.entity_id

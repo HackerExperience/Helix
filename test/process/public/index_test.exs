@@ -28,7 +28,7 @@ defmodule Helix.Process.Public.IndexTest do
       process2_opts = [
         gateway_id: server.server_id,
         type: :file_download,
-        target_server_id: process2_destination
+        target_id: process2_destination
       ]
       {process2, _} = ProcessSetup.process(process2_opts)
 
@@ -36,7 +36,7 @@ defmodule Helix.Process.Public.IndexTest do
       process3_gateway = remote.server_id
       process3_opts = [
         gateway_id: process3_gateway,
-        target_server_id: server.server_id
+        target_id: server.server_id
       ]
       {process3, _} = ProcessSetup.process(process3_opts)
 

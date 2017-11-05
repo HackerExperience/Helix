@@ -19,7 +19,7 @@
 #       server_id = Server.ID.generate()
 #       event = %ProcessConclusionEvent{
 #         target_file_id: target_file.file_id,
-#         target_server_id: server_id,
+#         target_id: server_id,
 #         storage_id: storage.storage_id,
 #         version: Enum.random(1..32)
 #       }
@@ -29,7 +29,7 @@
 #       [key] = CryptoKeyInternal.get_on_storage(storage)
 
 #       assert target_file.file_id == key.target_file_id
-#       assert server_id == key.target_server_id
+#       assert server_id == key.target_id
 #     end
 
 #     test "changes the crypto version of the target file" do
@@ -38,7 +38,7 @@
 #       server_id = Server.ID.generate()
 #       event = %ProcessConclusionEvent{
 #         target_file_id: target_file.file_id,
-#         target_server_id: server_id,
+#         target_id: server_id,
 #         storage_id: storage.storage_id,
 #         version: Enum.random(1..32)
 #       }
@@ -55,7 +55,7 @@
 #       server_id = Server.ID.generate()
 #       event = %ProcessConclusionEvent{
 #         target_file_id: target_file.file_id,
-#         target_server_id: server_id,
+#         target_id: server_id,
 #         storage_id: storage.storage_id,
 #         version: Enum.random(1..32)
 #       }

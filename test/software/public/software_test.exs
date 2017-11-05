@@ -36,7 +36,7 @@ defmodule Helix.Software.Public.FileTest do
 
       assert process.connection_id
       assert process.gateway_id == source_server.server_id
-      assert process.target_server_id == target_server.server_id
+      assert process.target_id == target_server.server_id
       assert process.network_id == target_nip.network_id
       assert process.file_id == cracker.file_id
       assert process.source_entity_id == source_entity.entity_id

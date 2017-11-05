@@ -23,7 +23,7 @@ defmodule Helix.Software.Public.PFTPTest do
         PFTPPublic.download(gateway, destination, storage, file)
 
       assert process.gateway_id == gateway.server_id
-      assert process.target_server_id == pftp.server_id
+      assert process.target_id == pftp.server_id
       assert process.file_id == file.file_id
       assert process.type == :file_download
       assert process.data.connection_type == :public_ftp
