@@ -87,25 +87,25 @@ process Helix.Software.Process.File.Transfer do
     @doc """
     Emits `FileTransferAbortedEvent.t` when/if process gets killed.
     """
-    on_kill(data, _reason) do
+    on_kill(process, data, _reason) do
       reason = :killed
       {from_id, to_id} = get_servers_context(data, process)
 
       event =
         FileTransferAbortedEvent.new(process, data, from_id, to_id, reason)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     @doc """
     Emits `FileTransferProcessedEvent.t` when process completes.
     """
-    on_completion(data) do
+    on_completion(process, data) do
 
       {from_id, to_id} = get_servers_context(data, process)
       event = FileTransferProcessedEvent.new(process, data, from_id, to_id)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     @spec get_servers_context(data :: term, process :: term) ::

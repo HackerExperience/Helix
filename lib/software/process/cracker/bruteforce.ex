@@ -62,10 +62,10 @@ process Helix.Software.Process.Cracker.Bruteforce do
     alias Helix.Software.Event.Cracker.Bruteforce.Processed,
       as: BruteforceProcessedEvent
 
-    on_completion(data) do
+    on_completion(process, data) do
       event = BruteforceProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     def after_read_hook(data) do

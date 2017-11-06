@@ -183,4 +183,25 @@ defmodule Helix.Process.Event.Process do
         do: %{server: [event.process.gateway_id, event.process.target_id]}
     end
   end
+
+  event Signaled do
+    @moduledoc """
+    `ProcessSignaledEvent` is fired when the process receives a signal. A signal
+    is an instruction to the process, which shall be handled by `Processable`.
+    If the process does not implement the corresponding handler, then the
+    signal's default action will be performed.
+    """
+
+    alias Helix.Process.Model.Process
+
+    event_struct [:process, :action, :signal]
+
+    def new(signal, process = %Process{}, action) do
+      %__MODULE__{
+        signal: signal,
+        process: process,
+        action: action
+      }
+    end
+  end
 end

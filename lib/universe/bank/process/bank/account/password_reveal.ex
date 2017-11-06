@@ -56,10 +56,10 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
     alias Helix.Universe.Bank.Event.RevealPassword.Processed,
       as: RevealPasswordProcessedEvent
 
-    on_completion(data) do
+    on_completion(process, data) do
       event = RevealPasswordProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
   end
 

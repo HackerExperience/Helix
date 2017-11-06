@@ -48,8 +48,7 @@ defmodule Helix.Test.Process.TOPHelper do
   actually modify the database, nor emit the conclusion events.
   """
   def soft_complete(process = %Process{}) do
-    cs = Changeset.change(process)
-    Processable.state_change(process.data, cs, :running, :complete)
+    Processable.complete(process.data, process)
   end
 
   @doc """
@@ -57,7 +56,6 @@ defmodule Helix.Test.Process.TOPHelper do
   It won't update the status on DB, nor emit events about the kill.
   """
   def soft_kill(process = %Process{}, reason \\ :normal) do
-    cs = Changeset.change(process)
-    Processable.kill(process.data, cs, reason)
+    Processable.kill(process.data, process, reason)
   end
 end

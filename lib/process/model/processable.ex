@@ -5,12 +5,12 @@ defprotocol Helix.Process.Model.Processable do
 
   @type resource :: :cpu | :ram | :dlk | :ulk
 
-  @spec conclusion(t, Process.t | Ecto.Changeset.t) ::
-    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
-  def conclusion(data, process)
+  # @spec complete(t, Process.t | Ecto.Changeset.t) ::
+  #   {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  def complete(data, process)
 
-  @spec kill(t, Process.t | Ecto.Changeset.t, atom) ::
-    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  # @spec kill(t, Process.t | Ecto.Changeset.t, atom) ::
+  #   {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
   def kill(data, process, reason)
 
   @spec after_read_hook(term) ::

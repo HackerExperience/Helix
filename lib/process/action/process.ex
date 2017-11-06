@@ -9,13 +9,15 @@ defmodule Helix.Process.Action.Process do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.File
-  alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Processable
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
   alias Helix.Process.State.TOP.Server, as: ServerTOP
+
+  alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
+  alias Helix.Process.Event.Process.Signaled, as: ProcessSignaledEvent
 
   @type on_create ::
     {:ok, Process.t, [ProcessCreatedEvent.t]}
@@ -55,6 +57,18 @@ defmodule Helix.Process.Action.Process do
 
   def delete(process = %Process{}) do
     ProcessInternal.delete(process)
+  end
+
+  def signal(process = %Process{}, signal, params \\ %{}) do
+    {action, events} =
+      case signal do
+        :SIGKILL ->
+          Processable.kill(process.data, process, params.reason)
+      end
+
+    signaled_event = ProcessSignaledEvent.new(signal, process, action)
+
+    {:ok, events ++ [signaled_event]}
   end
 
   @spec pause(Process.t) ::

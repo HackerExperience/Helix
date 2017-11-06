@@ -17,7 +17,7 @@ defmodule Helix.Process.Action.TOP do
   def complete(process) do
     case TOP.Scheduler.simulate(process) do
       {:completed, _process} ->
-        {_, e1} = Processable.conclusion(process.data, process)
+        {_, e1} = Processable.complete(process.data, process)
 
         e2 = ProcessCompletedEvent.new(process, :delete)
 

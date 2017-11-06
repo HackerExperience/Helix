@@ -10,10 +10,13 @@ defmodule Helix.Software.Process.File.TransferTest do
 
   alias Helix.Software.Event.File.Transfer.Aborted, as: FileTransferAbortedEvent
 
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
+
+  @internet_id NetworkHelper.internet_id()
 
   describe "Process Kill" do
     test "aborted event is emitted (download)" do
@@ -68,13 +71,18 @@ defmodule Helix.Software.Process.File.TransferTest do
     test "download uses dlk" do
       {file, _} = SoftwareSetup.file()
 
-      resources = FileTransferProcess.resources(%{type: :download, file: file})
+      resources =
+        FileTransferProcess.resources(
+          %{type: :download, file: file, network_id: @internet_id}
+        )
 
-      # Uses DLK resource
-      assert resources.dynamic == [:dlk]
+      # Uses DLK on gateway, ULK on remote
+      assert resources.l_dynamic == [:dlk]
+      assert resources.r_dynamic == [:ulk]
 
       # Objective depends on file size
-      assert_objective resources.objective, {:dlk, file.file_size}
+      assert resources.objective.dlk[@internet_id] == file.file_size
+      refute Map.has_key?(resources.objective, :ulk)
 
       # Uses RAM while paused and running
       assert resources.static.running.ram
@@ -84,13 +92,18 @@ defmodule Helix.Software.Process.File.TransferTest do
     test "upload uses ulk" do
       {file, _} = SoftwareSetup.file()
 
-      resources = FileTransferProcess.resources(%{type: :upload, file: file})
+      resources =
+        FileTransferProcess.resources(
+          %{type: :upload, file: file, network_id: @internet_id}
+        )
 
-      # Uses ULK
-      assert resources.dynamic == [:ulk]
+      # Uses ULK on gateway, DLK on remote
+      assert resources.l_dynamic == [:ulk]
+      assert resources.r_dynamic == [:dlk]
 
       # Objective depends on file size
-      assert_objective resources.objective, {:ulk, file.file_size}
+      assert resources.objective.ulk[@internet_id] == file.file_size
+      refute Map.has_key?(resources.objective, :dlk)
 
       # Uses RAM while paused and running
       assert resources.static.running.ram

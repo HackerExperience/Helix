@@ -42,7 +42,7 @@ defmodule HELL.Hack.Experience do
       ],
       "Elixir.Helix.Process.Model.Processable" => [
         {:kill, 3},
-        {:conclusion, 2},
+        {:complete, 2},
         {:after_read_hook, 1}
       ],
       "Elixir.Helix.Process.Public.View.ProcessViewable" => [

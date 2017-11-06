@@ -34,67 +34,6 @@ defmodule Helix.Process.Processable do
         @doc false
         def after_read_hook(data),
           do: data
-
-        # Required by current TOP API
-
-        @doc false
-        def state_change(_, process, _, _),
-          do: {process, []}
-
-        @doc false
-        def conclusion(data, process),
-          do: state_change(data, process, :running, :complete)
-
-        # Utils
-
-        docp """
-        Makes available, within the scope of all public Processable methods, the
-        variable `process`, which is of type `Process.t`. This is required since
-        because, for legacy reasons, TOP feeds the Changeset as argument, making
-        the handling of `process` a lot harder.
-
-        Well, this function -- and the way it's called from this module's macros
-        -- ensures that a Processable method always deal with `Process.t`. as it
-        should be.
-        """
-        defp unchange(process = %Process{}),
-          do: process
-        defp unchange(process = %Ecto.Changeset{}),
-          do: Ecto.Changeset.apply_changes(process)
-
-        docp """
-        Flags the process for deletion.
-
-        Current TOP needs that we return a process changeset with `action` set
-        to `:delete`, so that's what we do here.
-        """
-        defp delete(process = %Process{}) do
-          process
-          |> Ecto.Changeset.change()
-          |> delete()
-        end
-        defp delete(process = %Ecto.Changeset{}),
-          do: %{process| action: :delete}
-
-        # Result handlers
-
-        docp """
-        Called when `on_completion` finishes. Currently it supports:
-
-        - `{:ok, events :: [Event.t]}`: Process is flagged for deletion and the
-          corresponding events are emitted.
-        """
-        defp handle_completion_result({:ok, events}, process),
-          do: {delete(process), events}
-
-        docp """
-        Called when `on_kill` finishes. Currently it supports:
-
-        - `{:ok, events :: [Event.t]}`: Process is flagged for deletion and the
-          corresponding events are emitted.
-        """
-        defp handle_kill_result({:ok, events}, process),
-          do: {delete(process), events}
       end
 
     end
@@ -103,17 +42,12 @@ defmodule Helix.Process.Processable do
   @doc """
   Defines what happens should the process get killed. Reason is also passed as
   argument.
-
-  The result will be interpreted by `handle_kill_result/2`.
   """
-  defmacro on_kill(data, reason \\ quote(do: _), do: block) do
+  defmacro on_kill(process, data, reason \\ quote(do: _), do: block) do
     quote do
 
-      def kill(unquote(data), process, unquote(reason)) do
-        var!(process) = unchange(process)
-
+      def kill(unquote(data), unquote(process), unquote(reason)) do
         unquote(block)
-        |> handle_kill_result(var!(process))
       end
 
     end
@@ -121,17 +55,12 @@ defmodule Helix.Process.Processable do
 
   @doc """
   Defines what should happen when the process completes (finishes).
-
-  The result will be interpreted by `handle_completion_result/2`.
   """
-  defmacro on_completion(data, do: block) do
+  defmacro on_completion(process, data, do: block) do
     quote do
 
-      def state_change(unquote(data), process, _, :complete) do
-        var!(process) = unchange(process)
-
+      def complete(unquote(data), unquote(process)) do
         unquote(block)
-        |> handle_completion_result(var!(process))
       end
 
     end

@@ -65,10 +65,10 @@ process Helix.Software.Process.Cracker.Overflow do
     alias Helix.Software.Event.Cracker.Overflow.Processed,
       as: OverflowProcessedEvent
 
-    on_completion(data) do
+    on_completion(process, data) do
       event = OverflowProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     def after_read_hook(data = %{target_connection_id: nil}),

@@ -112,6 +112,7 @@ defmodule Helix.Event.Dispatcher do
   # All
   event ProcessEvent.Process.Created
   event ProcessEvent.Process.Completed
+  event ProcessEvent.Process.Signaled
   event ProcessEvent.TOP.BringMeToLife
   event ProcessEvent.TOP.Recalcado
 
@@ -127,6 +128,10 @@ defmodule Helix.Event.Dispatcher do
   event ProcessEvent.Process.Completed,
     ProcessHandler.Process,
     :process_completed
+
+  event ProcessEvent.Process.Signaled,
+    ProcessHandler.Process,
+    :signal_handler
 
   ##############################################################################
   # Server events

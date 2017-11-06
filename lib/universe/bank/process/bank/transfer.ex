@@ -53,16 +53,16 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
     alias Helix.Universe.Bank.Event.Bank.Transfer.Processed,
       as: BankTransferProcessedEvent
 
-    on_kill(data, _reason) do
+    on_kill(process, data, _reason) do
       event = BankTransferAbortedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
-    on_completion(data) do
+    on_completion(process, data) do
       event = BankTransferProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     def after_read_hook(data),
