@@ -7,6 +7,7 @@ defmodule Helix.Process.Internal.ProcessTest do
 
   alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.TOPHelper
 
   describe "create/1" do
     test "inserts the process on the database" do
@@ -66,6 +67,7 @@ defmodule Helix.Process.Internal.ProcessTest do
       # which did not send our process to `format/1`.
 
       # Anyway, testing `format/1` is not our goal. See `Process.format/1`.
+      TOPHelper.top_stop()
     end
   end
 
@@ -94,6 +96,8 @@ defmodule Helix.Process.Internal.ProcessTest do
       assert entry.state
       assert entry.time_left
       assert entry.completion_date
+
+      TOPHelper.top_stop()
     end
 
     test "returns empty when process does not exist" do
@@ -113,6 +117,8 @@ defmodule Helix.Process.Internal.ProcessTest do
 
       # No longer on DB
       refute ProcessInternal.fetch(process.process_id)
+
+      TOPHelper.top_stop()
     end
   end
 end

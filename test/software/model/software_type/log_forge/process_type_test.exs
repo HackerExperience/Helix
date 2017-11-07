@@ -16,18 +16,20 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  @forger_file (SoftwareSetup.file!(type: :log_forger))
+  defp forger_file do
+    SoftwareSetup.file!(type: :log_forger)
+  end
 
   describe "create/2" do
     test "returns changeset if invalid" do
-      assert {:error, changeset} = LogForge.create(@forger_file, %{})
+      assert {:error, changeset} = LogForge.create(forger_file(), %{})
       assert %Changeset{valid?: false} = changeset
     end
 
     test "requires operation and entity_id" do
       expected_errors = [:operation, :entity_id]
 
-      assert {:error, changeset} = LogForge.create(@forger_file, %{})
+      assert {:error, changeset} = LogForge.create(forger_file(), %{})
       errors = Keyword.keys(changeset.errors)
       assert Enum.sort(expected_errors) == Enum.sort(errors)
     end
@@ -37,7 +39,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
       expected_errors = [:target_log_id]
 
-      assert {:error, changeset} = LogForge.create(@forger_file, params)
+      assert {:error, changeset} = LogForge.create(forger_file(), params)
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
@@ -47,7 +49,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
       expected_errors = [:target_id]
 
-      assert {:error, changeset} = LogForge.create(@forger_file, params)
+      assert {:error, changeset} = LogForge.create(forger_file(), params)
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
@@ -66,8 +68,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         "entity_id" => to_string(Entity.ID.generate())
       }
 
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_edit)
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_create)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_edit)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_create)
     end
 
     test "accepts native erlang term entries" do
@@ -84,8 +86,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         entity_id: Entity.ID.generate()
       }
 
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_edit)
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_create)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_edit)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_create)
     end
   end
 
@@ -273,8 +275,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       assert serialized_edit.message
       assert serialized_edit.version
 
-      TOPHelper.top_stop(process_create.gateway_id)
-      TOPHelper.top_stop(process_edit.gateway_id)
+      TOPHelper.top_stop()
     end
   end
 

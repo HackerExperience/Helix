@@ -8,6 +8,7 @@ defmodule Helix.Process.Query.ProcessTest do
 
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.TOPHelper
 
   describe "get_processes_on_server/1" do
     test "returns both local and remote servers" do
@@ -48,6 +49,8 @@ defmodule Helix.Process.Query.ProcessTest do
       assert Enum.find(processes, &(&1.process_id == process1.process_id))
       assert Enum.find(processes, &(&1.process_id == process2.process_id))
       assert Enum.find(processes, &(&1.process_id == process3.process_id))
+
+      TOPHelper.top_stop()
     end
   end
 
@@ -80,6 +83,8 @@ defmodule Helix.Process.Query.ProcessTest do
           gateway_id,
           %{file_id: File.ID.generate()}
         )
+
+      TOPHelper.top_stop()
     end
 
     test "returns empty list if no process is found" do

@@ -99,8 +99,6 @@ defmodule Helix.Software.Event.CrackerTest do
       # Abort transfer
       ProcessAction.kill(process, :normal)
 
-      :timer.sleep(100)
-
       TOPHelper.top_stop(process.gateway_id)
     end
   end

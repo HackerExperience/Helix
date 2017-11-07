@@ -208,8 +208,22 @@ defmodule Helix.Process.Resourceable do
               dlk = calculate(:dlk, params, factors)
               ulk = calculate(:ulk, params, factors)
 
-              dlk = dlk && Map.put(%{}, network_id, dlk) || 0
-              ulk = ulk && Map.put(%{}, network_id, ulk) || 0
+              dlk = Map.put(%{}, network_id, dlk)
+              ulk = Map.put(%{}, network_id, ulk)
+
+              dlk =
+                dlk
+                |> Enum.filter(fn {_net_id, val} ->
+                  is_number(val) && val > 0
+                end)
+                |> Map.new()
+
+              ulk =
+                ulk
+                |> Enum.filter(fn {_net_id, val} ->
+                  is_number(val) && val > 0
+                end)
+                |> Map.new()
 
               {dlk, ulk}
             else
@@ -222,7 +236,7 @@ defmodule Helix.Process.Resourceable do
             dlk: dlk,
             ulk: ulk
           }
-          |> Enum.reject(fn {_, total} -> total == nil end)  # Test me TODO
+          |> Enum.reject(fn {_, total} -> total == %{} end)
           |> Enum.reject(fn {_, total} -> total == 0 end)
           |> Map.new()
         end

@@ -7,6 +7,7 @@ defmodule Helix.Process.Action.ProcessTest do
 
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.TOPHelper
 
   describe "create/1" do
     test "process is created; event is defined" do
@@ -31,6 +32,8 @@ defmodule Helix.Process.Action.ProcessTest do
 
       # Process hasn't been confirmed (allocated) yet.
       assert event.confirmed == false
+
+      TOPHelper.top_stop()
     end
   end
 end

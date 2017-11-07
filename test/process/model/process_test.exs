@@ -191,7 +191,7 @@ defmodule Helix.Process.Model.ProcessTest do
       diff =
         DateTime.diff(process.completion_date, Process.get_last_update(process))
 
-      assert_in_delta diff, 500, 1
+      assert_in_delta diff, 500, 1.1
     end
 
     test "gives :waiting_allocation state when process hasn't received alloc" do

@@ -319,7 +319,11 @@ defmodule Helix.Cache.Action.CacheTest do
 
       # Fresh entry from db
       web2 = assert_hit CacheInternal.direct_query({:web, :content}, nip)
-      assert web2.expiration_date > web1.expiration_date
+      diff =
+        DateTime.diff(web2.expiration_date, web1.expiration_date, :millisecond)
+
+      assert diff > 0
+
       assert web2.content == web1.content
     end
   end

@@ -11,10 +11,10 @@ defmodule Helix.Test.Process.TOPHelper do
   @doc """
   Stops the TOP of a server.
   """
-  def top_stop(_) do
-    # noop (Legacy call from previous TOP implementation)
-    # Left as a gentle reminder of those days of yore
-  end
+  def top_stop(_),
+    do: top_stop()
+  def top_stop,
+    do: GenServer.stop(:event_timer)
 
   @doc """
   Completes the process, emitting the related events and removing from the db.

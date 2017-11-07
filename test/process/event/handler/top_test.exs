@@ -10,6 +10,7 @@ defmodule Helix.Process.Event.Handler.TOPTest do
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.FakeDefaultProcess
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   test "process is killed when its connection is closed" do
@@ -42,5 +43,7 @@ defmodule Helix.Process.Event.Handler.TOPTest do
 
     # Process no longer exists
     refute ProcessQuery.fetch(process.process_id)
+
+    TOPHelper.top_stop()
   end
 end

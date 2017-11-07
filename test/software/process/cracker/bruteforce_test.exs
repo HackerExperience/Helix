@@ -64,7 +64,6 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       assert tunnel.destination_id == target_server.server_id
       assert tunnel.network_id == target_nip.network_id
 
-      # :timer.sleep(100)
       TOPHelper.top_stop(source_server)
       CacheHelper.sync_test()
     end
@@ -91,6 +90,8 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       ProcessViewHelper.assert_keys(pview_attacker, :full)
       ProcessViewHelper.assert_keys(pview_victim, :full)
       ProcessViewHelper.assert_keys(pview_third, :full)
+
+      TOPHelper.top_stop()
     end
 
     test "full process for attacker AT attack_target" do
@@ -105,6 +106,8 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
       ProcessViewHelper.assert_keys(rendered, :full)
+
+      TOPHelper.top_stop()
     end
 
     test "partial process for third AT attack_target" do
@@ -119,6 +122,8 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
       ProcessViewHelper.assert_keys(rendered, :partial)
+
+      TOPHelper.top_stop()
     end
 
     test "partial process for victim AT attack_target" do
@@ -134,6 +139,8 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
       ProcessViewHelper.assert_keys(rendered, :partial)
+
+      TOPHelper.top_stop()
     end
   end
 
@@ -146,6 +153,8 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       serialized = Processable.after_read_hook(db_process.data)
 
       assert serialized.target_server_ip
+
+      TOPHelper.top_stop()
     end
   end
 end

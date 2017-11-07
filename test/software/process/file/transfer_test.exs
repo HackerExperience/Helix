@@ -55,6 +55,8 @@ defmodule Helix.Software.Process.File.TransferTest do
       assert %Storage.ID{} = serialized.destination_storage_id
       assert is_atom(serialized.connection_type)
       assert is_atom(serialized.type)
+
+      TOPHelper.top_stop()
     end
 
     defp transfer_process do

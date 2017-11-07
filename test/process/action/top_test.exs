@@ -13,6 +13,7 @@ defmodule Helix.Process.Action.TOPTest do
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.TOPHelper
 
   @internet_id NetworkHelper.internet_id()
 
@@ -136,6 +137,8 @@ defmodule Helix.Process.Action.TOPTest do
 
       # Yep, it's saved there
       assert raw_proc.processed["cpu"] > 0
+
+      TOPHelper.top_stop()
     end
 
     test "performs recalque of both gateway and target (for inter-top procs)" do
@@ -174,6 +177,7 @@ defmodule Helix.Process.Action.TOPTest do
 
       # More tests exploring edge-cases of Inter-TOP allocation at
       # `test/features/process/*`.
+      TOPHelper.top_stop()
     end
   end
 end

@@ -57,20 +57,22 @@ defmodule Helix.Hardware.Action.MotherboardTest do
   end
 
   describe "unlink/1 is idempotent" do
-    slot = Factory.insert(:motherboard_slot)
+    test "unlinks slot" do
+      slot = Factory.insert(:motherboard_slot)
 
-    component = Factory.insert(slot.link_component_type)
-    {:ok, slot} = MotherboardAction.link(slot, component.component)
+      component = Factory.insert(slot.link_component_type)
+      {:ok, slot} = MotherboardAction.link(slot, component.component)
 
-    assert slot.link_component_id
+      assert slot.link_component_id
 
-    MotherboardAction.unlink(slot)
-    MotherboardAction.unlink(slot)
+      MotherboardAction.unlink(slot)
+      MotherboardAction.unlink(slot)
 
-    result = Repo.get(MotherboardSlot, slot.slot_id)
-    refute result.link_component_id
+      result = Repo.get(MotherboardSlot, slot.slot_id)
+      refute result.link_component_id
 
-    CacheHelper.sync_test()
+      CacheHelper.sync_test()
+    end
   end
 
   describe "delete/1" do

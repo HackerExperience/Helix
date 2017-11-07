@@ -34,8 +34,6 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
       # Kill (abort)
       ProcessPublic.kill(process, :porquesim)
 
-      :timer.sleep(100)
-
       # Ensure bank data is consistent
       refute BankTransferInternal.fetch(transfer_id)
       assert amount == BankAccountInternal.get_balance(acc1)

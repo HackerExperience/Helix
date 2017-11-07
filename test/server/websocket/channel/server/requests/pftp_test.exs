@@ -1,4 +1,4 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTP do
+defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
 
   use Helix.Test.Case.Integration
 
