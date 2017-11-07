@@ -46,46 +46,11 @@ defmodule Helix.Process.Query.Process do
   @spec get_processes_on_server(Server.idt) ::
     [Process.t]
   @doc """
-  Fetches processes running on `gateway`
+  Fetches *all* processes running on the given server.
 
-  ### Examples
-
-      iex> get_processes_on_server("aa::bb")
-      [%Process{}, %Process{}, %Process{}, %Process{}, %Process{}]
+  Returns both local and remote processes.
   """
   defdelegate get_processes_on_server(gateway_id),
-    to: ProcessInternal
-
-  @spec get_processes_targeting_server(Server.idt) ::
-    [Process.t]
-  @doc """
-  Fetches remote processes affecting `gateway`
-
-  Note that this will **not** include processes running on `gateway` even if
-  they affect it
-
-  ### Examples
-
-      iex> get_processes_targeting_server("aa::bb")
-      [%Process{}]
-  """
-  defdelegate get_processes_targeting_server(gateway_id),
-    to: ProcessInternal
-
-  @spec get_processes_of_type_targeting_server(Server.idt, String.t) ::
-    [Process.t]
-  @doc """
-  Fetches remote processes of type `type` affecting `gateway`
-
-  Note that this will **not** include processes running on `gateway` even if
-  they affect it
-
-  ### Examples
-
-      iex> get_processes_of_type_targeting_server("aa::bb", "cracker")
-      [%Process{}, %Process{}]
-  """
-  defdelegate get_processes_of_type_targeting_server(gateway_id, type),
     to: ProcessInternal
 
   @spec get_processes_on_connection(Connection.idt) ::

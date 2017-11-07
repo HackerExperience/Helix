@@ -2,104 +2,52 @@ defmodule Helix.Process.Query.ProcessTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Account.Action.Flow.Account, as: AccountFlow
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.SoftwareType.Firewall.Passive, as: Firewall
-  alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Query.Process, as: ProcessQuery
 
-  alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Account.Factory, as: AccountFactory
-  # alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Process.Setup, as: ProcessSetup
-  alias Helix.Test.Process.TOPHelper
-
-  defp create_server do
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-
-    CacheHelper.sync_test()
-
-    server
-  end
-
-  describe "get_running_processes_of_type_on_server/2" do
-    test "returns what it should" do
-      server = create_server()
-
-      firewall = %{
-        gateway_id: server.server_id,
-        target_server_id: server.server_id,
-        file_id: File.ID.generate(),
-        process_data: %Firewall{version: 1},
-        process_type: "firewall_passive"
-      }
-
-      {:ok, firewall1, _} = ProcessAction.create(firewall)
-      {:ok, firewall2, _} = ProcessAction.create(firewall)
-
-      expected = MapSet.new([firewall1, firewall2], &(&1.process_id))
-
-      result =
-        server
-        |> ProcessQuery.get_running_processes_of_type_on_server("firewall_passive")
-        |> MapSet.new(&(&1.process_id))
-
-      assert MapSet.equal?(expected, result)
-
-      TOPHelper.top_stop(server)
-    end
-  end
 
   describe "get_processes_on_server/1" do
-    test "returns all processes on server" do
-      server = create_server()
+    test "returns both local and remote servers" do
+      {server, _} = ServerSetup.server()
+      {remote, _} = ServerSetup.server()
 
-      firewall = %{
+      # Process 1 affects player's own server; started by own player; has no
+      # file / connection
+      process1_opts = [
         gateway_id: server.server_id,
-        target_server_id: server.server_id,
-        file_id: File.ID.generate(),
-        process_data: %Firewall{version: 1},
-        process_type: "firewall_passive"
-      }
+        single_server: true,
+        type: :bruteforce
+      ]
+      {process1, _} = ProcessSetup.process(process1_opts)
 
-      {:ok, _, _} = ProcessAction.create(firewall)
-      {:ok, _, _} = ProcessAction.create(firewall)
+      # Process 2 affects another server; started by own player, has file and
+      # connection
+      process2_destination = remote.server_id
+      process2_opts = [
+        gateway_id: server.server_id,
+        type: :file_download,
+        target_id: process2_destination
+      ]
+      {process2, _} = ProcessSetup.process(process2_opts)
 
-      processes_on_server =
-        server
-        |> ProcessQuery.get_processes_on_server()
-        |> Enum.count()
+      # Process 3 affects player's own server, started by third-party.
+      process3_gateway = remote.server_id
+      process3_opts = [
+        gateway_id: process3_gateway,
+        target_id: server.server_id
+      ]
+      {process3, _} = ProcessSetup.process(process3_opts)
 
-      assert 2 == processes_on_server
+      processes = ProcessQuery.get_processes_on_server(server.server_id)
 
-      TOPHelper.top_stop(server)
-    end
-  end
+      assert length(processes) == 3
 
-  describe "get_processes_of_type_targeting_server" do
-    @tag :pending
-    test "returns expected external processes"
-  end
-
-  describe "get_processes_targeting_server/1" do
-    test "returns processes that are not running on the gateway" do
-      server1 = create_server()
-
-      firewall = %{
-        gateway_id: server1.server_id,
-        target_server_id: server1.server_id,
-        file_id: File.ID.generate(),
-        process_data: %Firewall{version: 1},
-        process_type: "firewall_passive"
-      }
-
-      {:ok, _, _} = ProcessAction.create(firewall)
-
-      [] = ProcessQuery.get_processes_targeting_server(server1.server_id)
-
-      TOPHelper.top_stop(server1)
+      assert Enum.find(processes, &(&1.process_id == process1.process_id))
+      assert Enum.find(processes, &(&1.process_id == process2.process_id))
+      assert Enum.find(processes, &(&1.process_id == process3.process_id))
     end
   end
 

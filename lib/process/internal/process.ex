@@ -29,8 +29,6 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.format/1)
   end
 
-  #####  old \/ ### new /\ #####
-
   @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
     [Process.t]
   def get_running_processes_of_type_on_server(gateway_id, type) do
@@ -38,27 +36,6 @@ defmodule Helix.Process.Internal.Process do
     |> Process.Query.by_gateway()
     |> Process.Query.by_type(type)
     |> Process.Query.by_state(:running)
-    |> Repo.all()
-    |> Enum.map(&Process.format/1)
-  end
-
-  @spec get_processes_targeting_server(Server.idt) ::
-    [Process.t]
-  def get_processes_targeting_server(gateway_id) do
-    gateway_id
-    |> Process.Query.by_target()
-    |> Process.Query.not_targeting_gateway()
-    |> Repo.all()
-    |> Enum.map(&Process.format/1)
-  end
-
-  @spec get_processes_of_type_targeting_server(Server.idt, String.t) ::
-    [Process.t]
-  def get_processes_of_type_targeting_server(gateway_id, type) do
-    gateway_id
-    |> Process.Query.by_target()
-    |> Process.Query.not_targeting_gateway()
-    |> Process.Query.by_type(type)
     |> Repo.all()
     |> Enum.map(&Process.format/1)
   end
@@ -81,6 +58,18 @@ defmodule Helix.Process.Internal.Process do
 
   @spec delete(Process.t) ::
     :ok
+  @doc """
+  Deletes a process.
+
+  Using `Repo.delete_all/1` is a better idea than `Repo.delete/1`, since it may
+  happen that TOP would attempt to delete so-called "stale" Repo structs.
+
+  This happens when the side-effect of a process would lead to itself being
+  deleted. Example: When completing a BankTransferProcess, the underlying
+  connection will be closed. But when a ConnectionClosedEvent is emitted, any
+  underlying Process with such connection would also be closed. This race
+  condition is "harmless" in our context.
+  """
   def delete(process) do
     process.process_id
     |> Process.Query.by_id()

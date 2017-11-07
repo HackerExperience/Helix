@@ -7,12 +7,12 @@ defmodule Helix.Process.Public.Index do
 
   @type index ::
     %{
-      owned: owned_process,
-      targeting: targeting_process
+      local: [local_process],
+      remote: [remote_process]
     }
 
-  @type owned_process :: [map]
-  @type targeting_process :: [map]
+  @type local_process :: map
+  @type remote_process :: map
 
   @spec index(Server.id, Entity.id) ::
     index
@@ -25,23 +25,23 @@ defmodule Helix.Process.Public.Index do
   the return of this function is already rendered and ready for the client.
   """
   def index(server_id, entity_id) do
-    processes_on_server = ProcessQuery.get_processes_on_server(server_id)
+    processes = ProcessQuery.get_processes_on_server(server_id)
 
-    processes_targeting_server =
-      ProcessQuery.get_processes_targeting_server(server_id)
+    local_processes = Enum.filter(processes, &(&1.gateway_id == server_id))
+    remote_processes = processes -- local_processes
 
-    rendered_processes_on_server =
-      Enum.map(processes_on_server, fn process ->
+    rendered_local_processes =
+      Enum.map(local_processes, fn process ->
         ProcessView.render(process.data, process, server_id, entity_id)
       end)
-    rendered_processes_targeting_server =
-      Enum.map(processes_targeting_server, fn process ->
+    rendered_remote_processes =
+      Enum.map(remote_processes, fn process ->
         ProcessView.render(process.data, process, server_id, entity_id)
       end)
 
     %{
-      owned: rendered_processes_on_server,
-      targeting: rendered_processes_targeting_server
+      local: rendered_local_processes,
+      remote: rendered_remote_processes
     }
   end
 end

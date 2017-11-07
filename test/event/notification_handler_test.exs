@@ -29,10 +29,7 @@ defmodule Helix.Event.NotificationHandlerTest do
       {_socket, %{gateway: gateway}} =
         ChannelSetup.join_server([own_server: true])
 
-      event =
-        EventSetup.process_created(
-          :single_server,
-          [gateway_id: gateway.server_id])
+      event = EventSetup.Process.created(gateway.server_id)
 
       # Process happens on the same server
       assert event.gateway_id == event.target_id
@@ -50,7 +47,7 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Make sure all we need is on the process return
       assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.type
+      assert notification.data.type == event.process.type |> to_string()
       assert_id notification.data.file_id, event.process.file_id
       assert_id notification.data.connection_id, event.process.connection_id
       assert_id notification.data.network_id, event.process.network_id
@@ -76,11 +73,7 @@ defmodule Helix.Event.NotificationHandlerTest do
       destination_entity_id = socket.assigns.destination.entity_id
 
       event =
-        EventSetup.process_created(
-          gateway.server_id,
-          destination.server_id,
-          gateway_entity_id,
-          destination_entity_id)
+        EventSetup.Process.created(gateway.server_id, destination.server_id)
 
       # Process happens on two different servers
       refute event.gateway_id == event.target_id
@@ -98,7 +91,7 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Make sure all we need is on the process return
       assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.type
+      assert notification.data.type == event.process.type |> to_string()
       assert_id notification.data.file_id, event.process.file_id
       assert_id notification.data.connection_id, event.process.connection_id
       assert_id notification.data.network_id, event.process.network_id
