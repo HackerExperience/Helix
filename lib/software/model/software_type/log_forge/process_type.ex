@@ -143,19 +143,26 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
         }
     }
 
-    def kill(_, process, _),
-      do: {%{Changeset.change(process)| action: :delete}, []}
+    def kill(_, _, _),
+      do: {:delete, []}
 
-    def state_change(data, process, _, :complete) do
+    def complete(data, process) do
       process = %{Changeset.change(process)| action: :delete}
 
       event = conclusion_event(data)
 
-      {process, [event]}
+      {:delete, [event]}
+    end
+
+    def connection_closed(_, _, _) do
+      {:delete, []}
     end
 
     def state_change(_, process, _, _),
       do: {process, []}
+
+    def complete(data, process) do
+    end
 
     def conclusion(data, process),
       do: state_change(data, process, :running, :complete)

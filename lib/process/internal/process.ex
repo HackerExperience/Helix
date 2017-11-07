@@ -82,7 +82,9 @@ defmodule Helix.Process.Internal.Process do
   @spec delete(Process.t) ::
     :ok
   def delete(process) do
-    Repo.delete(process)
+    process.process_id
+    |> Process.Query.by_id()
+    |> Repo.delete_all()
 
     :ok
   end

@@ -25,7 +25,8 @@ defmodule Helix.Process.Internal.ProcessTest do
       assert process.type == params.type
       assert process.objective == params.objective
       assert process.static == params.static
-      assert process.dynamic == params.dynamic
+      assert process.l_dynamic == params.l_dynamic
+      assert process.r_dynamic == params.r_dynamic
 
       # Generated / default data is correct
       assert process.creation_time
@@ -48,7 +49,8 @@ defmodule Helix.Process.Internal.ProcessTest do
       assert entry.connection_id == process.connection_id
 
       # Atoms, or a list of them, are converted automatically back to atoms
-      assert entry.dynamic == process.dynamic
+      assert entry.l_dynamic == process.l_dynamic
+      assert entry.r_dynamic == process.r_dynamic
       assert entry.type == process.type
 
       # Because of NaiveStruct type, we have the Struct loaded
@@ -63,7 +65,7 @@ defmodule Helix.Process.Internal.ProcessTest do
       # Notice this wasn't the case here because we've executed a "raw_query",
       # which did not send our process to `format/1`.
 
-      # Anyway, testing `format/1` is not our goal. Try `fetch/1` or `format/1`.
+      # Anyway, testing `format/1` is not our goal. See `Process.format/1`.
     end
   end
 
@@ -84,8 +86,14 @@ defmodule Helix.Process.Internal.ProcessTest do
       # Resource data is identical
       assert entry.objective == process.objective
       assert entry.processed == process.processed
-      assert entry.allocated == process.allocated
       assert entry.static == process.static
+
+      # Populated derived data
+      assert entry.l_allocated
+      assert entry.r_allocated
+      assert entry.state
+      assert entry.time_left
+      assert entry.completion_date
     end
 
     test "returns empty when process does not exist" do

@@ -4,6 +4,7 @@ defmodule Helix.Process.Action.TOP do
 
   alias Helix.Event
   alias Helix.Server.Model.Server
+  alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Processable
   alias Helix.Process.Model.TOP
@@ -17,11 +18,7 @@ defmodule Helix.Process.Action.TOP do
   def complete(process) do
     case TOP.Scheduler.simulate(process) do
       {:completed, _process} ->
-        {_, e1} = Processable.complete(process.data, process)
-
-        e2 = ProcessCompletedEvent.new(process, :delete)
-
-        {:ok, e1 ++ [e2]}
+        ProcessAction.signal(process, :SIGTERM, %{reason: :completed})
 
       {:running, _process} ->
         {:error, {:process, :running}, []}

@@ -142,12 +142,13 @@ defmodule Helix.Event.NotificationHandlerTest do
       ref = push socket, "cracker.bruteforce", params
 
       # Wait for response
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, 300
 
       # The response includes the Bruteforce process information
       assert response.data.process_id
 
       # Wait for generic ProcessCreatedEvent
+      assert_push "event", _top_recalcado_event
       assert_push "event", process_created_event
       assert process_created_event.event == "process_created"
 
@@ -162,32 +163,34 @@ defmodule Helix.Event.NotificationHandlerTest do
       # Notificable protocol.
       # We are getting them here so we can inspect the actual metadata of
       # both `ProcessCompletedEvent` and `PasswordAcquiredEvent`
-      assert_broadcast "event", _process_created_event
-      assert_broadcast "event", process_completed_event
+      assert_broadcast "event", _top_recalcado_event
+      assert_broadcast "event", _process_created_t
+      assert_broadcast "event", _process_created_f
       assert_broadcast "event", server_password_acquired_event
+      assert_broadcast "event", process_completed_event
 
       # They have the process IDs!
       assert process_id == process_completed_event.__meta__.process_id
       assert process_id == server_password_acquired_event.__meta__.process_id
 
+      # We'll receive the PasswordAcquiredEvent
+      assert_push "event", password_acquired_event
+      assert password_acquired_event.event == "server_password_acquired"
+
+      # Which has a valid `process_id` on the event metadata!
+      assert to_string(process_id) == password_acquired_event.meta.process_id
+
       # And if `ServerPasswordAcquiredEvent` has the process_id, then
       # `BruteforceProcessedEvent` have it as well, and as such TOP should be
       # working for all kinds of events.
 
-      # We'll receive the generic ProcessCompletedEvent
+      # Soon we'll receive the generic ProcessCompletedEvent
       assert_push "event", process_conclusion_event
       assert process_conclusion_event.event == "process_completed"
 
       # As long as we are here, let's test that the metadata sent to the client
       # has been converted to JSON-friendly strings
       assert to_string(process_id) == process_conclusion_event.meta.process_id
-
-      # And soon we'll receive the PasswordAcquiredEvent
-      assert_push "event", password_acquired_event
-      assert password_acquired_event.event == "server_password_acquired"
-
-      # Which has a valid `process_id` on the event metadata!
-      assert to_string(process_id) == password_acquired_event.meta.process_id
     end
   end
 end

@@ -53,6 +53,7 @@ defmodule Helix.Test.Features.Hack do
       assert response.data.process_id
 
       # Wait for generic ProcessCreatedEvent
+      assert_push "event", _top_recalcado_event
       assert_push "event", process_created_event
       assert process_created_event.event == "process_created"
 
@@ -64,10 +65,6 @@ defmodule Helix.Test.Features.Hack do
       # Let's cheat and finish the process right now
       TOPHelper.force_completion(process)
 
-      # We'll receive the generic ProcessCompletedEvent
-      assert_push "event", process_conclusion_event
-      assert process_conclusion_event.event == "process_completed"
-
       # And soon we'll receive the PasswordAcquiredEvent
       assert_push "event", password_acquired_event
       assert password_acquired_event.event == "server_password_acquired"
@@ -77,8 +74,9 @@ defmodule Helix.Test.Features.Hack do
       assert password_acquired_event.data.server_ip == target_nip.ip
       assert password_acquired_event.data.password
 
-      # Not sure if needed. I'll leave here for some time.
-      # :timer.sleep(50)
+      # We'll receive the generic ProcessCompletedEvent
+      assert_push "event", process_conclusion_event
+      assert process_conclusion_event.event == "process_completed"
 
       db_server =
         DatabaseQuery.fetch_server(

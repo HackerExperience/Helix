@@ -125,10 +125,6 @@ defmodule Helix.Event.Dispatcher do
     ProcessHandler.TOP,
     :wake_me_up
 
-  event ProcessEvent.Process.Completed,
-    ProcessHandler.Process,
-    :process_completed
-
   event ProcessEvent.Process.Signaled,
     ProcessHandler.Process,
     :signal_handler

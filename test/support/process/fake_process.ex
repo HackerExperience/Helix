@@ -50,7 +50,6 @@ defmodule Helix.Test.Process do
       def dynamic(%{type: :upload}) do
         [:ulk]
       end
-
     end
 
     executable do
@@ -61,7 +60,49 @@ defmodule Helix.Test.Process do
       resources(_, _, _, _) do
         %{}
       end
+    end
+  end
 
+  process FakeDefaultProcess do
+
+    process_struct [:foo]
+
+    def new do
+      %__MODULE__{
+        foo: :bar
+      }
+    end
+
+    # Inherits default Processable callbacks
+    processable do
+    end
+
+    resourceable do
+
+      @type params :: term
+      @type factors :: term
+
+      get_factors(_) do
+        :noop
+      end
+
+      cpu(_) do
+        5000
+      end
+
+      def dynamic(_) do
+        [:cpu]
+      end
+    end
+
+    executable do
+
+      @type params :: term
+      @type meta :: term
+
+      resources(_, _, _, _) do
+        %{}
+      end
     end
   end
 end

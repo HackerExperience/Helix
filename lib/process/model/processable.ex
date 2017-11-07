@@ -3,7 +3,14 @@ defprotocol Helix.Process.Model.Processable do
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Process.State
 
-  @type resource :: :cpu | :ram | :dlk | :ulk
+  # @type resource :: :cpu | :ram | :dlk | :ulk
+
+  @type action ::
+    :delete
+    | :pause
+    | :resume
+    | :renice
+    | :restart
 
   # @spec complete(t, Process.t | Ecto.Changeset.t) ::
   #   {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
@@ -12,6 +19,8 @@ defprotocol Helix.Process.Model.Processable do
   # @spec kill(t, Process.t | Ecto.Changeset.t, atom) ::
   #   {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
   def kill(data, process, reason)
+
+  def connection_closed(data, process, connection)
 
   @spec after_read_hook(term) ::
     t

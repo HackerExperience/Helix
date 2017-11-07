@@ -139,31 +139,24 @@ defmodule Helix.Process.Event.Process do
     `ProcessCompletedEvent` is fired after a process has met its objective, and
     the corresponding `Processable.conclusion/2` callback was executed.
 
-    It's used in two scenarios:
-
-    1. Notify the Client a process has finished.
-    2. Remove the process from the database, or update its target.
+    It's used to notify the Client a process has finished.
     """
 
     alias Helix.Event
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
 
-    event_struct [:process, :action]
+    event_struct [:process]
 
     @type t :: %__MODULE__{
-      process: Process.t,
-      action: action
+      process: Process.t
     }
 
-    @type action :: [:delete]
-
-    @spec new(Process.t, action) ::
+    @spec new(Process.t) ::
       t
-    def new(process = %Process{}, action) do
+    def new(process = %Process{}) do
       %__MODULE__{
-        process: process,
-        action: action
+        process: process
       }
     end
 
@@ -173,7 +166,7 @@ defmodule Helix.Process.Event.Process do
 
       def generate_payload(event, _socket) do
         data = %{
-          process_id: Event.get_process_id(event)
+          process_id: event.process.process_id
         }
 
         {:ok, data}
@@ -190,17 +183,27 @@ defmodule Helix.Process.Event.Process do
     is an instruction to the process, which shall be handled by `Processable`.
     If the process does not implement the corresponding handler, then the
     signal's default action will be performed.
+
+    This is the probably the single most important event of the TOP - and the
+    game - since all changes in a process, including its completion, are handled
+    by signals being delivered to it.
+
+    Granted, `ProcessSignaledEvent` is emitted *after* the signal was delivered
+    and handled by the corresponding Processable implementation, but the actual
+    change to the process (defined at `action`) will be performed once this
+    event is emitted.
     """
 
     alias Helix.Process.Model.Process
 
-    event_struct [:process, :action, :signal]
+    event_struct [:process, :action, :signal, :params]
 
-    def new(signal, process = %Process{}, action) do
+    def new(signal, process = %Process{}, action, params) do
       %__MODULE__{
         signal: signal,
         process: process,
-        action: action
+        action: action,
+        params: params
       }
     end
   end

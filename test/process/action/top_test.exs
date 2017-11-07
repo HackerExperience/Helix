@@ -25,7 +25,7 @@ defmodule Helix.Process.Action.TOPTest do
         %{proc|
           processed: proc.objective,
           l_allocated: %{cpu: 1, ram: 1, ulk: %{}, dlk: %{}}
-         }
+        }
 
       assert {:ok, events} = TOPAction.complete(proc)
 

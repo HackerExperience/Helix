@@ -16,6 +16,7 @@ defmodule Helix.Process.Action.Process do
   alias Helix.Process.State.TOP.Manager, as: ManagerTOP
   alias Helix.Process.State.TOP.Server, as: ServerTOP
 
+  alias Helix.Process.Event.Process.Completed, as: ProcessCompletedEvent
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Process.Event.Process.Signaled, as: ProcessSignaledEvent
 
@@ -55,21 +56,55 @@ defmodule Helix.Process.Action.Process do
     end
   end
 
-  def delete(process = %Process{}) do
+  def delete(process = %Process{}, reason) do
     ProcessInternal.delete(process)
+
+    event =
+      # if reason == :completed do
+        ProcessCompletedEvent.new(process)
+      # else
+        # ProcessKilledEvent.new(process)
+      # end
+
+    {:ok, [event]}
   end
 
-  def signal(process = %Process{}, signal, params \\ %{}) do
-    {action, events} =
-      case signal do
-        :SIGKILL ->
-          Processable.kill(process.data, process, params.reason)
-      end
+  # def pause(process = %Process{}) do
+  #   ProcessInternal.pause(process)
 
-    signaled_event = ProcessSignaledEvent.new(signal, process, action)
+  #   event = ProcessPausedEvent.new(process)
+
+  #   {:ok, [event]}
+  # end
+
+  def signal(process = %Process{}, signal, params \\ %{}) do
+    {action, events} = signal_handler(signal, process, params)
+
+    signaled_event = ProcessSignaledEvent.new(signal, process, action, params)
 
     {:ok, events ++ [signaled_event]}
   end
+
+  defp signal_handler(:SIGTERM, process, _),
+    do: Processable.complete(process.data, process)
+
+  defp signal_handler(:SIGKILL, process, %{reason: reason}),
+    do: Processable.kill(process.data, process, reason)
+
+  # defp signal_handler(:SIGSTOP, process, _),
+  #   do: Processable.stop(process.data, process)
+
+  # defp signal_handler(:SIGCONT, process, _),
+  #   do: Processable.resume(process.data, process, reason)
+
+  # defp signal_handler(:SIGPRIO, process, %{priority: priority}),
+  #   do: Processable.priority(process.data, process, priority)
+
+  defp signal_handler(:SIGCONND, process, %{connection: connection}),
+    do: Processable.connection_closed(process.data, process, connection)
+
+  # defp signal_handler(:SIGFILED, process, %{file: file}),
+  #   do: Processable.file_deleted(process.data, process, file)
 
   @spec pause(Process.t) ::
     :ok

@@ -13,6 +13,7 @@ defmodule Helix.Process.Processable do
 
   import HELL.Macros
 
+  alias Helix.Event
   alias Helix.Process.Model.Process
 
   @doc """
@@ -27,13 +28,25 @@ defmodule Helix.Process.Processable do
 
         # Fallbacks
 
-        on_kill(_data, _reason) do
-          {:ok, []}
+        on_kill(_process, _data, _reason) do
+          {:delete, []}
+        end
+
+        on_connection_closed(_process, _data, _connection) do
+          {:delete, []}
         end
 
         @doc false
         def after_read_hook(data),
           do: data
+
+        # Utils
+
+        defp add_fingerprint({action, events}, %{process_id: process_id}) do
+          events = Enum.map(events, &(Event.set_process_id(&1, process_id)))
+
+          {action, events}
+        end
       end
 
     end
@@ -46,8 +59,9 @@ defmodule Helix.Process.Processable do
   defmacro on_kill(process, data, reason \\ quote(do: _), do: block) do
     quote do
 
-      def kill(unquote(data), unquote(process), unquote(reason)) do
+      def kill(unquote(data), p = unquote(process), unquote(reason)) do
         unquote(block)
+        |> add_fingerprint(p)
       end
 
     end
@@ -59,8 +73,20 @@ defmodule Helix.Process.Processable do
   defmacro on_completion(process, data, do: block) do
     quote do
 
-      def complete(unquote(data), unquote(process)) do
+      def complete(unquote(data), p = unquote(process)) do
         unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  defmacro on_connection_closed(process, data, connection, do: block) do
+    quote do
+
+      def connection_closed(unquote(data), p = unquote(process), unquote(connection)) do
+        unquote(block)
+        |> add_fingerprint(p)
       end
 
     end

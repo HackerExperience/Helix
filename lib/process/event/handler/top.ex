@@ -3,7 +3,7 @@ defmodule Helix.Process.Event.Handler.TOP do
 
   alias Helix.Event
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
-  alias Helix.Process.Action.Process, as: ProcessAction
+  alias Helix.Process.Action.Flow.Process, as: ProcessFlow
   alias Helix.Process.Action.TOP, as: TOPAction
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -14,14 +14,16 @@ defmodule Helix.Process.Event.Handler.TOP do
   def wake_me_up(event = %TOPBringMeToLifeEvent{}) do
     process = ProcessQuery.fetch(event.process_id)
 
-    case TOPAction.complete(process) do
-      {:ok, events} ->
-        Event.emit(events)
+    if process do
+      case TOPAction.complete(process) do
+        {:ok, events} ->
+          Event.emit(events)
 
-      # Can't wake up
-      {:error, {:process, :running}, []} ->
-        # This shouldn't happen... recalculate the TOP just in case
-        call_recalque(process)
+        # Can't wake up
+        {:error, {:process, :running}, []} ->
+          # This shouldn't happen... recalculate the TOP just in case
+          call_recalque(process)
+      end
     end
   end
 
@@ -71,11 +73,9 @@ defmodule Helix.Process.Event.Handler.TOP do
     {true, :todo}
   end
 
-  # TODO: Ensure that the processes are killed (by making `kill` blocking
-  #   probably)
   def connection_closed(event = %ConnectionClosedEvent{}) do
     event.connection.connection_id
     |> ProcessQuery.get_processes_on_connection()
-    |> Enum.each(&ProcessAction.kill(&1, :connection_closed))
+    |> Enum.each(&ProcessFlow.signal(&1, :SIGCONND, event))
   end
 end
