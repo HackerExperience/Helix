@@ -1,7 +1,6 @@
 defmodule Helix.Test.Process.TOPHelper do
 
   alias Ecto.Changeset
-  alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Processable
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -12,15 +11,9 @@ defmodule Helix.Test.Process.TOPHelper do
   @doc """
   Stops the TOP of a server.
   """
-  def top_stop(server = %Server{}),
-    do: top_stop(server.server_id)
-  def top_stop(server_id = %Server.ID{}) do
-    # server_id
-    # |> TOPManager.get()
-    # |> its_time_to_stop()
-
-    # # Sync TOP events. Required after apply.
-    # :timer.sleep(50)
+  def top_stop(_) do
+    # noop (Legacy call from previous TOP implementation)
+    # Left as a gentle reminder of those days of yore
   end
 
   @doc """

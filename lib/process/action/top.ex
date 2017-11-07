@@ -6,12 +6,10 @@ defmodule Helix.Process.Action.TOP do
   alias Helix.Server.Model.Server
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Processable
   alias Helix.Process.Model.TOP
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Query.TOP, as: TOPQuery
 
-  alias Helix.Process.Event.Process.Completed, as: ProcessCompletedEvent
   alias Helix.Process.Event.TOP.BringMeToLife, as: TOPBringMeToLifeEvent
   alias Helix.Process.Event.TOP.Recalcado, as: TOPRecalcadoEvent
 

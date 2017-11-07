@@ -41,16 +41,20 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
         gateway_id: Ecto.Changeset.get_field(process, :gateway_id)
       }
 
-      {process, [event]}
+      {:delete, [event]}
     end
 
-    def state_change(data, process, :running, :paused) do
+    def complete(data, process) do
       event = %FirewallStoppedEvent{
         version: data.version,
         gateway_id: Ecto.Changeset.get_field(process, :gateway_id)
       }
 
-      {process, [event]}
+      {:delete, [event]}
+    end
+
+    def connection_closed(_, _, _) do
+      {:delete, []}
     end
 
     def state_change(data, process, :paused, :running) do

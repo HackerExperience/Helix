@@ -160,7 +160,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
   defp sort_next_completion(%{next: nil}, {process, seconds}),
     do: {process, seconds}
   defp sort_next_completion(%{next: current}, candidate) do
-    {cur_proc, cur_seconds} = current
+    {_, cur_seconds} = current
     {_, candidate_seconds} = candidate
 
     # If the currently selected process is bound to finish before the candidate,

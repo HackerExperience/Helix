@@ -2,8 +2,6 @@ defmodule Helix.Software.Process.File.TransferTest do
 
   use Helix.Test.Case.Integration
 
-  import Helix.Test.Process.Macros
-
   alias Helix.Process.Model.Processable
   alias Helix.Software.Model.Storage
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess

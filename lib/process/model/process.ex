@@ -17,7 +17,6 @@ defmodule Helix.Process.Model.Process do
   alias HELL.Constant
   alias HELL.MapUtils
   alias HELL.NaiveStruct
-  alias HELL.Utils
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
@@ -359,12 +358,6 @@ defmodule Helix.Process.Model.Process do
       l_reserved: Process.Resources.format(p.l_reserved),
       r_reserved: Process.Resources.format(p.r_reserved)
     }
-  end
-
-  defp load_virtual_data(process = %Process{}) do
-    process
-    |> Map.put(:state, get_state(process))
-    # |> Map.put(:completion-date, TOP.Scheduler.estimate_completion(process))
   end
 
   defp get_state(%{priority: 0}),

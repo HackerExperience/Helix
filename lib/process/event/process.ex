@@ -142,8 +142,6 @@ defmodule Helix.Process.Event.Process do
     It's used to notify the Client a process has finished.
     """
 
-    alias Helix.Event
-    alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
 
     event_struct [:process]

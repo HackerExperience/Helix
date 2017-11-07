@@ -1,7 +1,6 @@
 defprotocol Helix.Process.Model.Processable do
 
-  alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.State
+  # alias Helix.Process.Model.Process
 
   # @type resource :: :cpu | :ram | :dlk | :ulk
 

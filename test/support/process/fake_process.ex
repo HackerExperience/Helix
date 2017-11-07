@@ -21,6 +21,9 @@ defmodule Helix.Test.Process do
     end
 
     processable do
+      on_completion(_process, _data) do
+        {:delete, []}
+      end
     end
 
     resourceable do
@@ -75,6 +78,9 @@ defmodule Helix.Test.Process do
 
     # Inherits default Processable callbacks
     processable do
+      on_completion(_process, _data) do
+        {:delete, []}
+      end
     end
 
     resourceable do

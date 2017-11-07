@@ -63,14 +63,11 @@ defmodule Helix.Event.NotificationHandlerTest do
     end
 
     test "multi-server" do
-      {socket, %{gateway: gateway, destination: destination}} =
+      {_, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
 
       # Filter out the usual `LogCreatedEvent` after remote server join
       assert_broadcast "event", _
-
-      gateway_entity_id = socket.assigns.gateway.entity_id
-      destination_entity_id = socket.assigns.destination.entity_id
 
       event =
         EventSetup.Process.created(gateway.server_id, destination.server_id)

@@ -37,8 +37,6 @@ defmodule Helix.Test.Server.Helper do
     alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
     alias Helix.Hardware.Repo, as: HardwareRepo
 
-    new_cpu = new_specs[:cpu]
-
     components =
       server.motherboard_id
       |> MotherboardQuery.fetch()

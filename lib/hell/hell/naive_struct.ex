@@ -9,7 +9,6 @@ defmodule HELL.NaiveStruct do
   """
 
   @behaviour Ecto.Type
-  import HELL.Macros
 
   def type, do: :map
 

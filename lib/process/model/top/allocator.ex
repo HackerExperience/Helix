@@ -17,8 +17,8 @@ defmodule Helix.Process.Model.TOP.Allocator do
 
   # @spec allocate(server_resources, [Process.t]) ::
   #   [{Process.t, allocated_resources}]
-  def allocate(server_id, total_resources, processes, opts \\ []) do
-    forced_allocation? = opts[:force] || false
+  def allocate(server_id, total_resources, processes, _opts \\ []) do
+    # forced_allocation? = opts[:force] || false
 
     # Assign the process' "identity" from the TOP's point of view. It may either
     # be local (gateway_id == server_id) or remote (target_id == server_id).
@@ -115,20 +115,19 @@ defmodule Helix.Process.Model.TOP.Allocator do
   def static_allocation(processes) do
     initial = Process.Resources.initial()
 
-    {static_resources_usage, allocated_processes} =
-      Enum.reduce(processes, {initial, []}, fn process, {allocated, acc} ->
+    Enum.reduce(processes, {initial, []}, fn process, {allocated, acc} ->
 
-        # Calculates how many resources should be allocated statically
-        proc_static_allocation = Process.Resources.allocate_static(process)
+      # Calculates how many resources should be allocated statically
+      proc_static_allocation = Process.Resources.allocate_static(process)
 
-        # Accumulates total static resources allocated by all processes
-        allocated = Process.Resources.sum(allocated, proc_static_allocation)
+      # Accumulates total static resources allocated by all processes
+      allocated = Process.Resources.sum(allocated, proc_static_allocation)
 
-        # This 2-tuple associates the process to its static allocation
-        proc_alloc_info = [{process, proc_static_allocation}]
+      # This 2-tuple associates the process to its static allocation
+      proc_alloc_info = [{process, proc_static_allocation}]
 
-        {allocated, acc ++ proc_alloc_info}
-      end)
+      {allocated, acc ++ proc_alloc_info}
+    end)
   end
 
   # @type share :: %{cpu: ....}

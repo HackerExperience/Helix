@@ -11,10 +11,7 @@ defmodule Helix.Process.Processable do
   side-effects.
   """
 
-  import HELL.Macros
-
   alias Helix.Event
-  alias Helix.Process.Model.Process
 
   @doc """
   Macro for implementation of the Processable protocol.
