@@ -80,9 +80,9 @@ defmodule Helix.Process.Model.Process do
     | %{connection: Connection.t}
     | %{file: File.t}
 
-    @type kill_reason ::
-      :completed
-      | :killed
+  @type kill_reason ::
+    :completed
+    | :killed
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 

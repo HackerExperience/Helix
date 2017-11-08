@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Process.Helper.TOP.Resources do
 
   alias HELL.TestHelper.Random

@@ -1,3 +1,5 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
+# credo:disable-for-this-file Credo.Check.Refactor.LongQuoteBlocks
 defmodule Helix.Process.Resources do
 
   alias HELL.Utils
@@ -323,7 +325,6 @@ defmodule Helix.Process.Resources do
       op = unquote(op)
 
       quote location: :keep do
-
 
         def unquote(op)(unquote(a), unquote(b)) do
           unquote(block)

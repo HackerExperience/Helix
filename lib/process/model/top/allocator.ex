@@ -113,12 +113,14 @@ defmodule Helix.Process.Model.TOP.Allocator do
     overflow? =
       Process.Resources.overflow?(remaining_resources, allocated_processes)
 
+    empty_acc = {false, []}
+
     # The Enum below is used to detect that, in case more than one resource is
     # overflowed, the corresponding `heaviest` process is accumulated. This is
     # used to inform the top-level all the heaviest processes that should be
     # removed (if the `force` flag was passed as argument to the Allocator).
     {overflow?, heaviest} =
-      Enum.reduce(overflow?, {false, []}, fn {_res, result}, {status, heaviest} ->
+      Enum.reduce(overflow?, empty_acc, fn {_res, result}, {status, heaviest} ->
         case result do
           false ->
             {status, heaviest}
@@ -161,9 +163,10 @@ defmodule Helix.Process.Model.TOP.Allocator do
     {Process.Resources.t, [allocated_process]}
   def dynamic_allocation(available_resources, allocated_processes) do
     initial = Process.Resources.initial()
+    i = {initial, []}
 
-    {total_shares, process_shares} =
-      Enum.reduce(allocated_processes, {initial, []}, fn allocated_process, {shares, acc} ->
+    {total_shares, proc_shares} =
+      Enum.reduce(allocated_processes, i, fn allocated_process, {shares, acc} ->
         {process, proc_static_allocation} = allocated_process
 
         # Calculates number of shares the process should receive
@@ -184,7 +187,7 @@ defmodule Helix.Process.Model.TOP.Allocator do
     resource_per_share =
       Process.Resources.resource_per_share(available_resources, total_shares)
 
-    Enum.reduce(process_shares, {initial, []}, fn allocated_shared_proc, {total_alloc, acc} ->
+    Enum.reduce(proc_shares, i, fn allocated_shared_proc, {total_alloc, acc} ->
       {process, proc_static_allocation, proc_shares} = allocated_shared_proc
 
       # Allocates dynamic resources. "Naive" because it has not taken into

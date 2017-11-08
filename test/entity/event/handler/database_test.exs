@@ -35,7 +35,7 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       refute on_db.token
       refute on_db.last_login_date
 
-      diff = DateTime.diff(on_db.last_update, entry.last_update, :millisecond)
+      diff = DateTime.diff(on_db.last_update, entry.last_update, :microsecond)
       assert diff > 0
     end
 
@@ -59,7 +59,7 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       refute on_db.last_login_date
 
       diff =
-        DateTime.diff(on_db.last_update, fake_entry.last_update, :millisecond)
+        DateTime.diff(on_db.last_update, fake_entry.last_update, :microsecond)
       assert diff > 0
     end
   end
@@ -79,7 +79,7 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       refute on_db.password
       refute on_db.last_login_date
 
-      diff = DateTime.diff(on_db.last_update, entry.last_update, :millisecond)
+      diff = DateTime.diff(on_db.last_update, entry.last_update, :microsecond)
       assert diff > 0
     end
 
@@ -100,7 +100,7 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       refute on_db.last_login_date
 
       diff =
-        DateTime.diff(on_db.last_update, fake_entry.last_update, :millisecond)
+        DateTime.diff(on_db.last_update, fake_entry.last_update, :microsecond)
       assert diff > 0
     end
   end
@@ -120,7 +120,7 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       assert on_db.last_login_date
       assert on_db.known_balance == acc.balance
 
-      diff = DateTime.diff(on_db.last_update, entry.last_update, :millisecond)
+      diff = DateTime.diff(on_db.last_update, entry.last_update, :microsecond)
       assert diff > 0
     end
 
@@ -141,7 +141,7 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       assert on_db.known_balance == acc.balance
 
       diff =
-        DateTime.diff(on_db.last_update, fake_entry.last_update, :millisecond)
+        DateTime.diff(on_db.last_update, fake_entry.last_update, :microsecond)
       assert diff > 0
     end
   end

@@ -42,7 +42,7 @@ defmodule Helix.Process.Action.TOPTest do
           l_allocated: %{cpu: 1, ram: 1, dlk: %{}, ulk: %{}}
         )
 
-      assert {:error, reason, []} = TOPAction.complete(proc)
+      assert {:error, reason} = TOPAction.complete(proc)
       assert reason == {:process, :running}
     end
   end

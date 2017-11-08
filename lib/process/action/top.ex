@@ -7,7 +7,6 @@ defmodule Helix.Process.Action.TOP do
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Processable
   alias Helix.Process.Model.TOP
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Query.TOP, as: TOPQuery

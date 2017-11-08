@@ -1,3 +1,5 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
+# credo:disable-for-this-file Credo.Check.Refactor.LongQuoteBlocks
 defmodule Helix.Process.Resources.Behaviour.Default do
 
   import Helix.Process.Resources
