@@ -92,10 +92,12 @@ defmodule Helix.Test.Features.Hack do
 
       # And I can actually login into the recently hacked server
 
+      gateway_ip = ServerHelper.get_ip(gateway)
+
       topic =
         ChannelHelper.server_topic_name(target_nip.network_id, target_nip.ip)
       params = %{
-        "gateway_ip" => socket.assigns.gateway.ip,
+        "gateway_ip" => gateway_ip,
         "password" => password_acquired_event.data.password
       }
 
@@ -127,10 +129,12 @@ defmodule Helix.Test.Features.Hack do
 
       target_nip = ServerHelper.get_nip(target)
 
+      gateway_ip = ServerHelper.get_ip(gateway)
+
       topic =
         ChannelHelper.server_topic_name(target_nip.network_id, target_nip.ip)
       params = %{
-        "gateway_ip" => socket.assigns.gateway.ip,
+        "gateway_ip" => gateway_ip,
         "password" => target.password
       }
 
