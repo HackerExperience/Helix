@@ -8,6 +8,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
 
@@ -166,31 +167,18 @@ defmodule Helix.Test.Channel.Setup do
     {socket, related}
   end
 
-  defp get_join_data(opts, gateway, destination \\ false) do
+  defp get_join_data(opts, gateway = %Server{}, destination = %Server{}) do
     network_id = Keyword.get(opts, :network_id, @internet_id)
 
     gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
-    destination_ip =
-      if destination do
-        ServerQuery.get_ip(destination.server_id, network_id)
-      else
-        gateway_ip
-      end
+    destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
 
     counter =
       opts
       |> Keyword.get(:counter, 0)
       |> to_string()
 
-    params =
-      if destination do
-        %{
-          "gateway_ip" => gateway_ip,
-          "password" => destination.password
-        }
-      else
-        %{}
-      end
+    params = %{"gateway_ip" => gateway_ip, "password" => destination.password}
 
     topic = ChannelHelper.server_topic_name(network_id, destination_ip, counter)
 
@@ -200,6 +188,14 @@ defmodule Helix.Test.Channel.Setup do
       destination_ip: destination_ip,
       network_id: network_id,
       params: params
+    }
+  end
+
+  defp get_join_data(_opts, gateway) do
+    %{
+      topic: ChannelHelper.server_topic_name(gateway.server_id),
+      params: %{},
+      gateway_ip: nil
     }
   end
 

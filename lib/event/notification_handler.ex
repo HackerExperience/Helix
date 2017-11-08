@@ -66,20 +66,25 @@ defmodule Helix.Event.NotificationHandler do
   defp get_server_channels(servers) when is_list(servers),
     do: Enum.map(servers, &get_server_channels/1)
   defp get_server_channels(server_id) do
-    server_channels = ServerWebsocketChannelState.list_open_channels(server_id)
+    open_channels = ServerWebsocketChannelState.list_open_channels(server_id)
 
-    if server_channels do
-      Enum.map(server_channels, fn channel ->
-        "server:"
-        |> concat(channel.network_id)
-        |> concat("@")
-        |> concat(channel.ip)
-        |> concat("#")
-        |> concat(channel.counter)
-      end)
-    else
-      []
-    end
+    # Returns remote channels (joined using nips)
+    nips =
+      if open_channels do
+        Enum.map(open_channels, fn channel ->
+          "server:"
+          |> concat(channel.network_id)
+          |> concat("@")
+          |> concat(channel.ip)
+          |> concat("#")
+          |> concat(channel.counter)
+        end)
+      else
+        []
+      end
+
+    # Also include the server ID as channel (used on local (gateway) join)
+    nips ++ ["server:" <> to_string(server_id)]
   end
 
   @spec get_account_channels([channel_account_id] | channel_account_id) ::

@@ -14,7 +14,7 @@ defmodule Helix.Server.Henforcer.ChannelTest do
       {server, %{entity: entity}} = ServerSetup.server()
 
       assert {true, relay} =
-        ChannelHenforcer.local_join_allowed?(entity.entity_id, server)
+        ChannelHenforcer.local_join_allowed?(entity.entity_id, server.server_id)
 
       assert relay.server == server
       assert relay.entity == entity
@@ -26,7 +26,7 @@ defmodule Helix.Server.Henforcer.ChannelTest do
       {entity, _} = EntitySetup.entity()
 
       assert {false, reason, _} =
-        ChannelHenforcer.local_join_allowed?(entity.entity_id, server)
+        ChannelHenforcer.local_join_allowed?(entity.entity_id, server.server_id)
       assert reason == {:server, :not_belongs}
     end
   end

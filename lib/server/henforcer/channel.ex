@@ -14,16 +14,18 @@ defmodule Helix.Server.Henforcer.Channel do
     EntityHenforcer.owns_server_error
     | ServerHenforcer.server_assembled_error
 
-  @spec local_join_allowed?(Entity.id, Server.t) ::
+  @spec local_join_allowed?(Entity.id, Server.id) ::
     {true, local_join_allowed_relay}
     | local_join_allowed_error
   @doc """
   Henforces that `entity_id` can join `gateway_id` on a local connection.
   """
-  def local_join_allowed?(entity_id, gateway = %Server{}) do
+  def local_join_allowed?(entity_id, gateway_id = %Server.ID{}) do
     with \
-      {true, r1} <- EntityHenforcer.owns_server?(entity_id, gateway),
-      {true, r2} <- ServerHenforcer.server_assembled?(gateway)
+      {true, r1} <- ServerHenforcer.server_exists?(gateway_id),
+      gateway = r1.server,
+      {true, r2} <- EntityHenforcer.owns_server?(entity_id, gateway),
+      {true, _} <- ServerHenforcer.server_assembled?(gateway)
     do
       reply_ok(relay(r1, r2))
     end

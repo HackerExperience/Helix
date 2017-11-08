@@ -39,8 +39,20 @@ channel Helix.Server.Websocket.Channel.Server do
   @doc """
   Joins a server.
 
-  Topic:
-  "server:<network_id>@<destination_ip>[#<counter>]"
+  ### Local join (gateway)
+
+  Topic: "server:<server_id>"
+
+  Params: %{}
+
+  Returns: ServerBootstrap
+
+  Errors:
+  - base errors
+
+  ### Remote join (endpoint)
+
+  Topic: "server:<network_id>@<destination_ip>[#<counter>]"
 
   [#<counter>] denotes optional argument. If omitted, Helix will automatically
   grab the correct counter.
@@ -226,21 +238,23 @@ channel Helix.Server.Websocket.Channel.Server do
   event_handler "event"
 
   @doc """
-  When the client disconnects/leaves the Channel, we update the
+  When the client disconnects/leaves a remote Channel, we update the
   ServerWebsocketChannelState.
   """
   def terminate(_reason, socket) do
-    entity_id = socket.assigns.gateway.entity_id
-    server_id = socket.assigns.destination.server_id
-    counter = socket.assigns.meta.counter
-    network_id = socket.assigns.meta.network_id
-    ip = socket.assigns.destination.ip
+    if socket.assigns.meta.access_type == :remote do
+      entity_id = socket.assigns.gateway.entity_id
+      server_id = socket.assigns.destination.server_id
+      counter = socket.assigns.meta.counter
+      network_id = socket.assigns.meta.network_id
+      ip = socket.assigns.destination.ip
 
-    ServerWebsocketChannelState.leave(
-      entity_id,
-      server_id,
-      {network_id, ip},
-      counter
-    )
+      ServerWebsocketChannelState.leave(
+        entity_id,
+        server_id,
+        {network_id, ip},
+        counter
+      )
+    end
   end
 end
