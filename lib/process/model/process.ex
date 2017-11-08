@@ -14,6 +14,7 @@ defmodule Helix.Process.Model.Process do
 
   import Ecto.Changeset
 
+  alias Ecto.Changeset
   alias HELL.Constant
   alias HELL.MapUtils
   alias HELL.NaiveStruct
@@ -26,57 +27,78 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Process.Model.TOP
   alias __MODULE__, as: Process
 
-  @type type :: String.t
+  @type t ::
+    %__MODULE__{
+      process_id: id,
+      gateway_id: Server.id,
+      source_entity_id: Entity.id,
+      target_id: Server.id,
+      file_id: File.id | nil,
+      connection_id: Connection.id | nil,
+      network_id: Network.id | nil,
+      data: term,
+      type: type,
+      priority: term,
+      l_allocated: Process.Resources.t | nil,
+      r_allocated: Process.Resources.t | nil,
+      r_limit: limit,
+      l_limit: limit,
+      l_reserved: Process.Resources.t,
+      r_reserved: Process.Resources.t,
+      last_checkpoint_time: DateTime.t,
+      static: static,
+      l_dynamic: dynamic,
+      r_dynamic: dynamic,
+      local?: boolean | nil,
+      next_allocation: Process.Resources.t | nil,
+      state: state | nil,
+      creation_time: DateTime.t,
+      time_left: non_neg_integer | nil,
+      completion_date: DateTime.t | nil
+    }
 
-  @type t :: term
-  # @type t :: %__MODULE__{
-  #   process_id: id,
-  #   gateway_id: Server.id,
-  #   source_entity_id: Entity.id,
-  #   target_id: Server.id,
-  #   file_id: File.id | nil,
-  #   network_id: Network.id | nil,
-  #   connection_id: Connection.id | nil,
-  #   process_data: Processable.t,
-  #   process_type: type,
-  #   state: State.state,
-  #   limitations: Limitations.t,
-  #   objective: Resources.t,
-  #   processed: Resources.t,
-  #   allocated: Resources.t,
-  #   priority: 0..5,
-  #   minimum: map,
-  #   creation_time: DateTime.t,
-  #   updated_time: DateTime.t,
-  #   estimated_time: DateTime.t | nil
-  # }
+  @typep limit :: Process.Resources.t | %{}
 
-  # @type process :: %__MODULE__{}
+  @type type ::
+    :file_upload
+    | :file_download
+    | :cracker_bruteforce
+    | :cracker_overflow
+
+  @type signal ::
+    :SIGTERM
+    | :SIGKILL
+    | :SIGSTOP
+    | :SIGCONT
+    | :SIGPRIO
+    | :SIGCONND
+    | :SIGFILED
+
+  @type signal_params ::
+    %{reason: kill_reason}
+    | %{priority: term}
+    | %{connection: Connection.t}
+    | %{file: File.t}
+
+    @type kill_reason ::
+      :completed
+      | :killed
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{
-    # :gateway_id => Server.idtb,
-    # :source_entity_id => Entity.idtb,
-    # :target_id => Server.idtb,
-    # :process_data => Processable.t,
-    # :process_type => String.t,
-    # optional(:file_id) => File.idtb,
-    # optional(:network_id) => Network.idtb,
-    # optional(:connection_id) => Connection.idtb,
-    # optional(:objective) => map
-  }
-
-  @type update_params :: %{
-    # optional(:state) => State.state,
-    # optional(:priority) => 0..5,
-    # optional(:creation_time) => DateTime.t,
-    # optional(:updated_time) => DateTime.t,
-    # optional(:estimated_time) => DateTime.t | nil,
-    # optional(:limitations) => map,
-    # optional(:objective) => map,
-    # optional(:processed) => map,
-    # optional(:allocated) => map,
-    # optional(:minimum) => map,
-    # optional(:process_data) => Processable.t
+    :gateway_id => Server.id,
+    :source_entity_id => Entity.id,
+    :target_id => Server.id,
+    :data => Processable.t,
+    :type => type,
+    :network_id => Network.id | nil,
+    :file_id => File.id | nil,
+    :connection_id => Connection.id | nil,
+    :objective => map,
+    :l_dynamic => dynamic,
+    :r_dynamic => dynamic,
+    :static => static,
   }
 
   @creation_fields [
@@ -108,6 +130,35 @@ defmodule Helix.Process.Model.Process do
     :l_dynamic,
     :priority
   ]
+
+  @type state ::
+    :waiting_allocation
+    | :running
+    | :paused
+
+  @type time_left :: float
+
+  @type resource ::
+    :cpu
+    | :ram
+    | :dlk
+    | :ulk
+
+  @type dynamic :: [resource]
+
+  @type static ::
+    %{
+      paused: static_usage,
+      running: static_usage
+    }
+
+  @typep static_usage ::
+    %{
+      cpu: non_neg_integer,
+      ram: non_neg_integer,
+      dlk: non_neg_integer,
+      ulk: non_neg_integer
+    }
 
   # Similar to `task_struct` on `sched.h` ;-)
   @primary_key false
@@ -214,6 +265,8 @@ defmodule Helix.Process.Model.Process do
       virtual: true
   end
 
+  @spec create_changeset(creation_params) ::
+    changeset
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -221,6 +274,8 @@ defmodule Helix.Process.Model.Process do
     |> put_defaults()
   end
 
+  @spec format(raw_process :: t) ::
+    t
   @doc """
   Converts the retrieved process from the Database into TOP's internal format.
   Notably, it:
@@ -243,21 +298,29 @@ defmodule Helix.Process.Model.Process do
     |> estimate_duration()
   end
 
+  @spec get_dynamic(t) ::
+    [resource]
   def get_dynamic(%{local?: true, l_dynamic: dynamic}),
     do: dynamic
   def get_dynamic(%{local?: false, r_dynamic: dynamic}),
     do: dynamic
 
+  @spec get_limit(t) ::
+    limit
   def get_limit(%{local?: true, l_limit: limit}),
     do: limit
   def get_limit(%{local?: false, r_limit: limit}),
     do: limit
 
+  @spec get_last_update(t) ::
+    DateTime.t
   def get_last_update(p = %{last_checkpoint_time: nil}),
     do: p.creation_time
   def get_last_update(%{last_checkpoint_time: last_checkpoint_time}),
     do: last_checkpoint_time
 
+  @spec infer_usage(t) ::
+    t
   def infer_usage(process) do
     l_alloc = Process.Resources.min(process.l_limit, process.l_reserved)
     r_alloc = Process.Resources.min(process.r_limit, process.r_reserved)
@@ -288,6 +351,8 @@ defmodule Helix.Process.Model.Process do
     }
   end
 
+  @spec estimate_duration(t) ::
+    t
   defp estimate_duration(process = %Process{}) do
     {_, time_left} = TOP.Scheduler.estimate_completion(process)
 
@@ -313,6 +378,8 @@ defmodule Helix.Process.Model.Process do
     |> Map.replace(:time_left, time_left)
   end
 
+  @spec format_resources(t) ::
+    t
   defp format_resources(process = %Process{}) do
     process
     |> format_objective()
@@ -322,20 +389,28 @@ defmodule Helix.Process.Model.Process do
     |> format_reserved()
   end
 
+  @spec format_objective(t) ::
+    t
   defp format_objective(p = %{objective: objective}),
     do: %{p| objective: Process.Resources.format(objective)}
 
+  @spec format_processed(t) ::
+    t
   defp format_processed(p = %{processed: nil}),
     do: p
   defp format_processed(p = %{processed: processed}),
     do: %{p| processed: Process.Resources.format(processed)}
 
+  @spec format_static(t) ::
+    t
   defp format_static(p = %{static: static}) do
     static = MapUtils.atomize_keys(static)
 
     %{p| static: static}
   end
 
+  @spec format_limits(t) ::
+    t
   defp format_limits(p) do
     l_limit =
       p.l_limit
@@ -353,6 +428,8 @@ defmodule Helix.Process.Model.Process do
     }
   end
 
+  @spec format_reserved(t) ::
+    t
   defp format_reserved(p) do
     %{p|
       l_reserved: Process.Resources.format(p.l_reserved),
@@ -360,6 +437,8 @@ defmodule Helix.Process.Model.Process do
     }
   end
 
+  @spec get_state(t) ::
+    state
   defp get_state(%{priority: 0}),
     do: :paused
   defp get_state(process) do
@@ -370,6 +449,8 @@ defmodule Helix.Process.Model.Process do
     end
   end
 
+  @spec put_defaults(changeset) ::
+    changeset
   defp put_defaults(changeset) do
     changeset
     |> put_change(:creation_time, DateTime.utc_now())
@@ -391,7 +472,7 @@ defmodule Helix.Process.Model.Process do
     def by_id(query \\ Process, id),
       do: where(query, [p], p.process_id == ^id)
 
-    @spec from_type_list(Queryable.t, [String.t]) ::
+    @spec from_type_list(Queryable.t, [Process.type]) ::
       Queryable.t
     def from_type_list(query \\ Process, type_list),
       do: where(query, [p], p.type in ^type_list)
@@ -429,7 +510,7 @@ defmodule Helix.Process.Model.Process do
     def by_connection(query \\ Process, id),
       do: where(query, [p], p.connection_id == ^id)
 
-    @spec by_type(Queryable.t, String.t) ::
+    @spec by_type(Queryable.t, Process.type) ::
       Queryable.t
     def by_type(query \\ Process, type),
       do: where(query, [p], p.type == ^type)

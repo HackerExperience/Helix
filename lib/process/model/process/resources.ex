@@ -2,6 +2,8 @@ defmodule Helix.Process.Model.Process.Resources.Utils do
 
   alias Helix.Network.Model.Network
 
+  @spec format_network(Network.idtb, term) ::
+    {Network.id, term}
   def format_network(key = %Network.ID{}, value),
     do: {key, value}
   def format_network(key, value),
@@ -12,8 +14,25 @@ import Helix.Process.Resources
 
 resources Helix.Process.Model.Process.Resources do
 
-  alias Helix.Process.Resources.Behaviour
+  alias Helix.Network.Model.Network
   alias Helix.Process.Model.Process.Resources.Utils, as: ResourcesUtils
+  alias Helix.Process.Resources.Behaviour
+
+  @type t ::
+    %{
+      ram: number,
+      cpu: number,
+      dlk: %{Network.id => number},
+      ulk: %{Network.id => number}
+    }
+
+  @type map_t(type) ::
+    %{
+      ram: type,
+      cpu: type,
+      dlk: %{Network.id => type},
+      ulk: %{Network.id => type}
+    }
 
   resource RAM,
     behaviour: Behaviour.Default

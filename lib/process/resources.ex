@@ -22,6 +22,9 @@ defmodule Helix.Process.Resources do
   defmacro __before_compile__(_) do
     quote do
 
+      alias Helix.Process.Model.Process
+      alias Helix.Process.Model.TOP
+
       # Maps the resource (name) to its module.
       @res_modules (
         Enum.reduce(@resources, %{}, fn resource, acc ->
@@ -32,12 +35,23 @@ defmodule Helix.Process.Resources do
         end)
       )
 
+      @spec map(t, function) ::
+        map_t(term)
       def map(res_a, fun),
         do: dispatch(:map, res_a, [fun])
 
+      @spec reduce(t, term, function) ::
+        term
+      def reduce(resource, initial, function),
+        do: dispatch(:reduce, resource, [initial, function])
+
+      @spec initial ::
+        t
       def initial,
         do: dispatch_create :initial
 
+      @spec format(t) ::
+        t
       def format(resources) do
         # Make sure our keys are valid, and all keys are defined on the resource
         # (If any key is missing, it will be populated to its initial value)
@@ -49,6 +63,8 @@ defmodule Helix.Process.Resources do
         dispatch(:format, resources)
       end
 
+      @spec reject_empty(t) ::
+        t | %{}
       def reject_empty(resources) do
         Enum.reject(resources, fn {res, val} ->
           val == call_resource(res, :initial, [])
@@ -56,6 +72,8 @@ defmodule Helix.Process.Resources do
         |> Map.new()
       end
 
+      @spec prepare(t) ::
+        t
       def prepare(resources) do
         # First and foremost, we must ensure that all keys have been transformed
         # into atoms. If they came from the DB, they will be a string.
@@ -78,36 +96,53 @@ defmodule Helix.Process.Resources do
         end)
       end
 
-      def reduce(resource, initial, function),
-        do: dispatch(:reduce, resource, [initial, function])
-
+      @spec sum(t, t) ::
+        t
       def sum(res_a, res_b),
         do: dispatch_merge(:sum, res_a, res_b)
 
+      @spec sub(t, t) ::
+        t
       def sub(res_a, res_b),
         do: dispatch_merge(:sub, res_a, res_b)
 
+      @spec mul(t, t) ::
+        t
       def mul(res_a, res_b),
         do: dispatch_merge(:mul, res_a, res_b)
 
+      @spec div(t, t) ::
+        t
       def div(res_a, res_b),
         do: dispatch_merge(:div, res_a, res_b)
 
+      @spec get_shares(Process.t) ::
+        t
       def get_shares(process),
         do: dispatch_create :get_shares, [process]
 
+      @spec resource_per_share(t, t) ::
+        t
       def resource_per_share(resources, shares),
         do: dispatch_merge :resource_per_share, resources, shares
 
+      @spec allocate_static(Process.t) ::
+        t
       def allocate_static(process),
         do: dispatch_create :allocate_static, [process]
 
+      @spec allocate_dynamic(t, t, Process.t) ::
+        t
       def allocate_dynamic(shares, res_per_share, process),
         do: dispatch_merge :allocate_dynamic, shares, res_per_share, [process]
 
+      @spec allocate(t, t) ::
+        t
       def allocate(dynamic_alloc, static_alloc),
         do: dispatch_merge :allocate, dynamic_alloc, static_alloc
 
+      @spec completed?(t, t) ::
+        boolean
       def completed?(processed, objective) do
         :completed?
         |> dispatch_merge(processed, objective)
@@ -115,9 +150,13 @@ defmodule Helix.Process.Resources do
         |> Enum.all?(fn {_res, status} -> status == true end)
       end
 
+      @spec overflow?(t, [TOP.Allocator.allocated_process]) ::
+        map_t({true, Process.t} | false)
       def overflow?(resources, processes),
         do: dispatch(:overflow?, resources, [processes])
 
+      @spec mirror(t) ::
+        map_t(Process.resource)
       def mirror(resources) do
         Enum.reduce(resources, %{}, fn {res, val}, acc ->
           mirror_res = call_resource(res, :mirror, [])
@@ -128,6 +167,8 @@ defmodule Helix.Process.Resources do
         end)
       end
 
+      @spec max(t) ::
+        number
       def max(resources) do
         resources
         |> reduce(0, fn acc, v -> max(acc, v) end)
@@ -140,6 +181,8 @@ defmodule Helix.Process.Resources do
         |> elem(1)
       end
 
+      @spec min(t, t) ::
+        t | %{}
       def min(res1, res2) do
         :op_map
         |> dispatch_merge(res1, res2, [&min/2])
@@ -280,6 +323,7 @@ defmodule Helix.Process.Resources do
       op = unquote(op)
 
       quote location: :keep do
+
 
         def unquote(op)(unquote(a), unquote(b)) do
           unquote(block)

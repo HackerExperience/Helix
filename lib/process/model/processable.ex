@@ -1,8 +1,10 @@
 defprotocol Helix.Process.Model.Processable do
 
-  # alias Helix.Process.Model.Process
-
   # @type resource :: :cpu | :ram | :dlk | :ulk
+
+  alias Helix.Event
+  alias Helix.Network.Model.Connection
+  alias Helix.Process.Model.Process
 
   @type action ::
     :delete
@@ -11,14 +13,16 @@ defprotocol Helix.Process.Model.Processable do
     | :renice
     | :restart
 
-  # @spec complete(t, Process.t | Ecto.Changeset.t) ::
-  #   {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  @spec complete(t, Process.t) ::
+    {action, [Event.t]}
   def complete(data, process)
 
-  # @spec kill(t, Process.t | Ecto.Changeset.t, atom) ::
-  #   {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  @spec kill(t, Process.t, Process.kill_reason) ::
+    {action, [Event.t]}
   def kill(data, process, reason)
 
+  @spec connection_closed(t, Process.t, Connection.t) ::
+    {action, [Event.t]}
   def connection_closed(data, process, connection)
 
   @spec after_read_hook(term) ::

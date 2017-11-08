@@ -1,7 +1,12 @@
 defmodule Helix.Process.Model.TOP.Allocator do
 
+  alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
 
+  @type shares :: number
+
+  @spec identify_origin(Server.id, [Process.t]) ::
+    [Process.t]
   defp identify_origin(server_id, processes) do
     Enum.map(processes, fn process ->
       local? =
@@ -15,8 +20,23 @@ defmodule Helix.Process.Model.TOP.Allocator do
     end)
   end
 
-  # @spec allocate(server_resources, [Process.t]) ::
-  #   [{Process.t, allocated_resources}]
+  @type allocated_process :: {Process.t | term, Process.Resources.t | term}
+
+  @type allocation_successful ::
+    %{
+      dropped: [Process.t],
+      allocated: [Process.t]
+    }
+
+  @type allocation_failed ::
+    {:error, :resources, [Process.t]}
+
+  @type allocation_result ::
+    {:ok, allocation_successful}
+    | allocation_failed
+
+  @spec allocate(Server.id, Process.Resources.t, [Process.t], opts :: term) ::
+    allocation_result
   def allocate(server_id, total_resources, processes, _opts \\ []) do
     # forced_allocation? = opts[:force] || false
 
@@ -77,12 +97,17 @@ defmodule Helix.Process.Model.TOP.Allocator do
     end
   end
 
+  @spec merge_allocation([allocated_process]) ::
+    [Process.t]
   defp merge_allocation(allocated_processes) do
     Enum.map(allocated_processes, fn {process, new_alloc} ->
       %{process| next_allocation: new_alloc}
     end)
   end
 
+  @spec overflow?(Process.Resources.t, [allocated_process]) ::
+    {true, heaviest :: [Process.t]}
+    | false
   defp overflow?(remaining_resources, allocated_processes) do
     # Checks whether any of the resources are in overflow (usage > available)
     overflow? =
@@ -112,6 +137,8 @@ defmodule Helix.Process.Model.TOP.Allocator do
     end
   end
 
+  @spec static_allocation([Process.t]) ::
+    {allocated :: Process.Resources.t, [allocated_process]}
   def static_allocation(processes) do
     initial = Process.Resources.initial()
 
@@ -130,7 +157,8 @@ defmodule Helix.Process.Model.TOP.Allocator do
     end)
   end
 
-  # @type share :: %{cpu: ....}
+  @spec dynamic_allocation(Process.Resources.t, [allocated_process]) ::
+    {Process.Resources.t, [allocated_process]}
   def dynamic_allocation(available_resources, allocated_processes) do
     initial = Process.Resources.initial()
 
@@ -180,9 +208,10 @@ defmodule Helix.Process.Model.TOP.Allocator do
 
       {total_alloc, acc ++ [{process, proc_allocation}]}
     end)
-
   end
 
+  @spec remaining_allocation(Process.Resources.t, [allocated_process]) ::
+    {Process.Resources.t, [allocated_process]}
   def remaining_allocation(available_resources, allocated_processes) do
     # Exclude processes that have limits
     # Note that this is wrong: it's possible that a process with limits would

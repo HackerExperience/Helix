@@ -268,6 +268,9 @@ defmodule Helix.Process.Executable do
 
             {:error, %Ecto.Changeset{}} ->
               {:error, :internal}
+
+            _ ->
+              {:error, :internal}
           end
         end
       end

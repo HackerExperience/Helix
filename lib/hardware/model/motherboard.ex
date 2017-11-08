@@ -5,6 +5,7 @@ defmodule Helix.Hardware.Model.Motherboard do
   import Ecto.Changeset
 
   alias Ecto.Changeset
+  alias Helix.Network.Model.Network
   alias Helix.Hardware.Model.Component
   alias Helix.Hardware.Model.ComponentSpec
   alias Helix.Hardware.Model.MotherboardSlot
@@ -22,6 +23,20 @@ defmodule Helix.Hardware.Model.Motherboard do
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
+
+  @type resources ::
+    %{
+      cpu: non_neg_integer,
+      ram: non_neg_integer,
+      hdd: non_neg_integer,
+      net: %{
+        Network.id =>
+        %{
+          uplink: non_neg_integer,
+          downlink: non_neg_integer
+        }
+      }
+    }
 
   @primary_key false
   schema "motherboards" do

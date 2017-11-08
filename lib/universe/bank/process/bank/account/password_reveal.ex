@@ -28,10 +28,11 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
   @type resources :: %{
     objective: objective,
     static: map,
-    dynamic: [:cpu]
+    l_dynamic: [:cpu],
+    r_dynamic: []
   }
 
-  @typep resources_params ::
+  @type resources_params ::
     %{
       account: BankAccount.t
     }
@@ -68,7 +69,7 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
     alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
       as: RevealPasswordProcess
 
-    @type params :: RevealPasswordProcess.objective_params
+    @type params :: RevealPasswordProcess.resources_params
     @type factors :: term
 
     # TODO proper balance

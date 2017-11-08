@@ -26,7 +26,8 @@ process Helix.Software.Process.File.Transfer do
   @type resources ::
     %{
       objective: objective,
-      dynamic: [:dlk] | [:ulk],
+      l_dynamic: [:dlk] | [:ulk],
+      r_dynamic: [:ulk] | [:dlk],
       static: map
     }
 
@@ -37,13 +38,13 @@ process Helix.Software.Process.File.Transfer do
   @type transfer_type :: :download | :upload
   @type connection_type :: :ftp | :public_ftp
 
-  @typep creation_params :: %{
+  @type creation_params :: %{
     type: transfer_type,
     connection_type: connection_type,
     destination_storage_id: Storage.id
   }
 
-  @typep resources_params :: %{
+  @type resources_params :: %{
     type: transfer_type,
     file: File.t,
     network_id: Network.id
@@ -129,9 +130,10 @@ process Helix.Software.Process.File.Transfer do
     Sets the objectives to FileTransferProcess
     """
 
+    alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
     alias Helix.Software.Factor.File, as: FileFactor
 
-    @type params :: FileFactor.resources_params
+    @type params :: FileTransferProcess.resources_params
 
     @type factors ::
       %{

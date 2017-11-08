@@ -14,7 +14,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       amount: BankTransfer.amount
     }
 
-  @typep creation_params ::
+  @type creation_params ::
     %{
       transfer: BankTransfer.t
     }
@@ -24,10 +24,11 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
   @type resources :: %{
     objective: objective,
     static: map,
-    dynamic: []
+    l_dynamic: [],
+    r_dynamic: []
   }
 
-  @typep resources_params ::
+  @type resources_params ::
     %{
       transfer: BankTransfer.t
     }
@@ -73,7 +74,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
 
     alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
 
-    @type params :: BankTransferProcess.objective_params
+    @type params :: BankTransferProcess.resources_params
     @type factors :: term
 
     get_factors(%{transfer: _}) do end

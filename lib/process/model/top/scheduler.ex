@@ -3,6 +3,18 @@ defmodule Helix.Process.Model.TOP.Scheduler do
   alias Ecto.Changeset
   alias Helix.Process.Model.Process
 
+  @type forecast ::
+    %{
+      next: {Process.t, Process.time_left} | nil,
+      paused: [Process.t],
+      completed: [Process.t],
+      running: [Process.t]
+    }
+
+  @spec simulate(Process.t) ::
+    {:completed, Process.t}
+    | {:running, Process.t}
+    | {:paused, Process.t}
   def simulate(process = %{state: :paused}),
     do: {:paused, process}
   def simulate(process = %{state: :waiting_allocation}) do
@@ -50,6 +62,8 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     end
   end
 
+  @spec forecast([Process.t]) ::
+    forecast
   def forecast(processes) do
     initial_acc = %{next: nil, paused: [], completed: [], running: []}
 
@@ -76,18 +90,23 @@ defmodule Helix.Process.Model.TOP.Scheduler do
         seconds ->
           %{acc|
             running: acc.running ++ [process],
-            next: sort_next_completion(acc, {process, seconds})
+            next: sort_next_completion(acc.next, {process, seconds})
            }
       end
     end)
   end
 
+  @spec estimate_completion(Process.t) ::
+    {Process.t, Process.time_left | -1 | :infinity}
   def estimate_completion(process) do
     process
     |> simulate()
     |> seconds_for_completion()
   end
 
+  @spec checkpoint(Process.t) ::
+    {true, Process.changeset}
+    | false
   def checkpoint(%{l_reserved: alloc, next_allocation: alloc, local?: true}),
     do: false
   def checkpoint(%{r_reserved: alloc, next_allocation: alloc, local?: false}),
@@ -121,6 +140,8 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     {true, changeset}
   end
 
+  @spec get_simulation_duration(Process.t) ::
+    pos_integer
   defp get_simulation_duration(process) do
     now = DateTime.utc_now()
     last_update = Process.get_last_update(process)
@@ -128,6 +149,8 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     DateTime.diff(now, last_update, :millisecond)
   end
 
+  @spec seconds_for_completion({:paused | :completed | :running, Process.t}) ::
+    {Process.t, Process.time_left | -1 | :infinity}
   defp seconds_for_completion({:paused, process}),
     do: {process, :infinity}
   defp seconds_for_completion({:completed, process}),
@@ -157,9 +180,11 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     {process, estimated_seconds}
   end
 
-  defp sort_next_completion(%{next: nil}, {process, seconds}),
+  @spec sort_next_completion(nil | {Process.t, term}, {Process.t, term}) ::
+    {Process.t, term}
+  defp sort_next_completion(nil, {process, seconds}),
     do: {process, seconds}
-  defp sort_next_completion(%{next: current}, candidate) do
+  defp sort_next_completion(current, candidate) do
     {_, cur_seconds} = current
     {_, candidate_seconds} = candidate
 

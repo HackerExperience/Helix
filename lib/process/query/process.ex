@@ -24,7 +24,7 @@ defmodule Helix.Process.Query.Process do
   defdelegate fetch(id),
     to: ProcessInternal
 
-  @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
+  @spec get_running_processes_of_type_on_server(Server.idt, Process.type) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway` that are of `type`
@@ -85,7 +85,7 @@ defmodule Helix.Process.Query.Process do
   The generated code is something like:
 
   ```
-    def get_custom(type = "process_type", server_id, %{file_id: file_id}) do
+    def get_custom(type = :process_type, server_id, %{file_id: file_id}) do
       server_id
       |> get_running_processes_of_type_on_server(type)
       |> Enum.fiter(&(&1.file_id == file_id))

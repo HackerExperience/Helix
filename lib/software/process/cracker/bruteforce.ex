@@ -19,7 +19,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
       target_server_ip: Network.ip
     }
 
-  @typep creation_params ::
+  @type creation_params ::
     %{
       target_server_ip: Network.ip
     }
@@ -30,10 +30,11 @@ process Helix.Software.Process.Cracker.Bruteforce do
     %{
       objective: objective,
       static: map,
-      dynamic: [:cpu]
+      l_dynamic: [:cpu],
+      r_dynamic: []
     }
 
-  @typep resources_params ::
+  @type resources_params ::
     %{
       cracker: File.t_of_type(:cracker),
       hasher: File.t_of_type(:hasher) | nil
@@ -84,7 +85,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
     alias Helix.Software.Model.File
     alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
 
-    @type params :: BruteforceProcess.objective_params
+    @type params :: BruteforceProcess.resources_params
 
     @type factors ::
       %{

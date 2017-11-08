@@ -20,8 +20,8 @@ defmodule Helix.Process.Event.Handler.TOP do
           Event.emit(events)
 
         # Can't wake up
-        {:error, {:process, :running}, []} ->
-          # This shouldn't happen... recalculate the TOP just in case
+        {:error, {:process, :running}} ->
+          # Weird but could happen. Recalculate the TOP just in case
           call_recalque(process)
       end
     end
@@ -44,16 +44,17 @@ defmodule Helix.Process.Event.Handler.TOP do
   def recalque_handler(%_{confirmed: true}),
     do: :noop
 
+  @spec call_recalque(Process.t) ::
+    {gateway_recalque :: boolean, target_recalque :: boolean}
   defp call_recalque(process = %Process{}) do
     %{gateway: gateway_recalque, target: target_recalque} =
       TOPAction.recalque(process)
 
     gateway_recalque =
       case gateway_recalque do
-        {:ok, processes, events} ->
+        {:ok, _processes, events} ->
           Event.emit(events)
-
-          {true, processes}
+          true
 
         _ ->
           false
@@ -61,16 +62,15 @@ defmodule Helix.Process.Event.Handler.TOP do
 
     target_recalque =
       case target_recalque do
-        {:ok, processes, events} ->
+        {:ok, _processes, events} ->
           Event.emit(events)
-
-          {true, processes}
+          true
 
         _ ->
           false
       end
 
-    {true, :todo}
+    {gateway_recalque, target_recalque}
   end
 
   def connection_closed(event = %ConnectionClosedEvent{}) do

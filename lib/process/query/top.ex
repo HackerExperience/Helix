@@ -3,13 +3,10 @@ defmodule Helix.Process.Query.TOP do
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Process.Model.Process
 
-  def load_top_resources(server_id = %Server.ID{}) do
-    server_id
-    |> ServerQuery.fetch()
-    |> load_top_resources()
-  end
-
+  @spec load_top_resources(Server.idt) ::
+    Process.Resources.t
   def load_top_resources(server = %Server{}) do
     resources =
       server.motherboard_id
@@ -41,5 +38,11 @@ defmodule Helix.Process.Query.TOP do
       dlk: server_dlk,
       ulk: server_ulk
     }
+  end
+
+  def load_top_resources(server_id = %Server.ID{}) do
+    server_id
+    |> ServerQuery.fetch()
+    |> load_top_resources()
   end
 end

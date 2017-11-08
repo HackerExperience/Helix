@@ -32,9 +32,11 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       on_db = DatabaseQuery.fetch_bank_account(entry.entity_id, acc)
 
       assert on_db.password == password
-      assert on_db.last_update > entry.last_update
       refute on_db.token
       refute on_db.last_login_date
+
+      diff = DateTime.diff(on_db.last_update, entry.last_update, :millisecond)
+      assert diff > 0
     end
 
     test "a new entry is created in case it did not exist before" do
@@ -54,8 +56,11 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       on_db = DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
       assert on_db.password == password
-      assert on_db.last_update > fake_entry.last_update
       refute on_db.last_login_date
+
+      diff =
+        DateTime.diff(on_db.last_update, fake_entry.last_update, :millisecond)
+      assert diff > 0
     end
   end
 
@@ -71,9 +76,11 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       on_db = DatabaseQuery.fetch_bank_account(entry.entity_id, acc)
 
       assert on_db.token == token
-      assert on_db.last_update > entry.last_update
       refute on_db.password
       refute on_db.last_login_date
+
+      diff = DateTime.diff(on_db.last_update, entry.last_update, :millisecond)
+      assert diff > 0
     end
 
     test "a new entry is created in case it did not exist before" do
@@ -89,9 +96,12 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       on_db = DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
       assert on_db.token == token
-      assert on_db.last_update > fake_entry.last_update
       refute on_db.password
       refute on_db.last_login_date
+
+      diff =
+        DateTime.diff(on_db.last_update, fake_entry.last_update, :millisecond)
+      assert diff > 0
     end
   end
 
@@ -106,10 +116,12 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       on_db = DatabaseQuery.fetch_bank_account(entry.entity_id, acc)
 
       refute on_db.token
-      assert on_db.last_update > entry.last_update
       assert on_db.password == acc.password
       assert on_db.last_login_date
       assert on_db.known_balance == acc.balance
+
+      diff = DateTime.diff(on_db.last_update, entry.last_update, :millisecond)
+      assert diff > 0
     end
 
     test "a new entry is created in case it did not exist before" do
@@ -124,10 +136,13 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       on_db = DatabaseQuery.fetch_bank_account(fake_entry.entity_id, acc)
 
       refute on_db.token
-      assert on_db.last_update > fake_entry.last_update
       assert on_db.password == acc.password
       assert on_db.last_login_date
       assert on_db.known_balance == acc.balance
+
+      diff =
+        DateTime.diff(on_db.last_update, fake_entry.last_update, :millisecond)
+      assert diff > 0
     end
   end
 end

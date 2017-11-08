@@ -88,7 +88,7 @@ defmodule Helix.Process.Query.ProcessTest do
     end
 
     test "returns empty list if no process is found" do
-      refute ProcessQuery.get_custom("file_download", Server.ID.generate(), %{})
+      refute ProcessQuery.get_custom(:file_download, Server.ID.generate(), %{})
     end
   end
 end

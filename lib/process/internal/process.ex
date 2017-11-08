@@ -5,6 +5,9 @@ defmodule Helix.Process.Internal.Process do
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
 
+  @spec create(Process.creation_params) ::
+    {:ok, Process.t}
+    | {:error, Process.changeset}
   def create(params) do
     params
     |> Process.create_changeset()
@@ -29,7 +32,7 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.format/1)
   end
 
-  @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
+  @spec get_running_processes_of_type_on_server(Server.idt, Process.type) ::
     [Process.t]
   def get_running_processes_of_type_on_server(gateway_id, type) do
     gateway_id

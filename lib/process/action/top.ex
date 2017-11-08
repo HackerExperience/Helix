@@ -5,7 +5,9 @@ defmodule Helix.Process.Action.TOP do
   alias Helix.Event
   alias Helix.Server.Model.Server
   alias Helix.Process.Action.Process, as: ProcessAction
+  alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
+  alias Helix.Process.Model.Processable
   alias Helix.Process.Model.TOP
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Process.Query.TOP, as: TOPQuery
@@ -13,16 +15,32 @@ defmodule Helix.Process.Action.TOP do
   alias Helix.Process.Event.TOP.BringMeToLife, as: TOPBringMeToLifeEvent
   alias Helix.Process.Event.TOP.Recalcado, as: TOPRecalcadoEvent
 
+  @type recalque_result ::
+    {:ok, [Process.t], [TOPRecalcadoEvent.t]}
+    | {:error, :resources}
+
+  @typep recalque_opts :: term
+
+  @spec complete(Process.t) ::
+    {:ok, [Event.t]}
+    | {:error, {:process, :running}}
   def complete(process) do
     case TOP.Scheduler.simulate(process) do
       {:completed, _process} ->
         ProcessAction.signal(process, :SIGTERM, %{reason: :completed})
 
       {:running, _process} ->
-        {:error, {:process, :running}, []}
+        {:error, {:process, :running}}
     end
   end
 
+  @spec recalque(Server.id, recalque_opts) ::
+    recalque_result
+  @spec recalque(Process.t, recalque_opts) ::
+    %{
+      gateway: recalque_result,
+      target: recalque_result
+    }
   def recalque(process_or_server, alloc_opts \\ [])
 
   def recalque(%Process{gateway_id: gateway_id, target_id: target_id}, opts) do
@@ -34,6 +52,8 @@ defmodule Helix.Process.Action.TOP do
   def recalque(server_id = %Server.ID{}, opts),
     do: do_recalque(server_id, opts)
 
+  @spec do_recalque(Server.id, recalque_opts) ::
+    recalque_result
   defp do_recalque(server_id, alloc_opts) do
     resources = TOPQuery.load_top_resources(server_id)
     processes = ProcessQuery.get_processes_on_server(server_id)
@@ -50,6 +70,8 @@ defmodule Helix.Process.Action.TOP do
     end
   end
 
+  @spec schedule(TOP.Allocator.allocation_successful) ::
+    [Process.t]
   defp schedule(%{allocated: processes, dropped: _dropped}) do
     # Organize all processes in two groups: the local ones and the remote ones
     # A local process was started on this very server, while a remote process
@@ -119,6 +141,8 @@ defmodule Helix.Process.Action.TOP do
     processes
   end
 
+  @spec handle_forecast(TOP.Scheduler.forecast) ::
+    term
   docp """
   `handle_forecast` aggregates the `Scheduler.forecast/1` result and guides it
   to the corresponding handlers. Check `handle_completed/1` and `handle_next/1`
@@ -129,6 +153,8 @@ defmodule Helix.Process.Action.TOP do
     handle_next(next)
   end
 
+  @spec handle_completed([Process.t]) ::
+    term
   docp """
   `handle_completed` receives processes that according to `Schedule.forecast/1`
   have already finished. We'll then complete each one and Emit their
@@ -145,6 +171,8 @@ defmodule Helix.Process.Action.TOP do
   within our architecture, are not supposed to emit events. However,
   `handle_completed` happens within a spawned process, and as such the resulting
   events cannot be sent back to the original Handler/ActionFlow caller.
+
+  Emits event.
   """
   defp handle_completed([]),
     do: :noop
@@ -156,6 +184,8 @@ defmodule Helix.Process.Action.TOP do
     end)
   end
 
+  @spec handle_next({Process.t, Process.time_left}) ::
+    term
   docp """
   `handle_next` will receive the "next-to-be-completed" process, as defined by
   `Scheduler.forecast/1`. If a tuple is received, then we know there's a process
@@ -163,6 +193,8 @@ defmodule Helix.Process.Action.TOP do
   Once the process is (supposedly) completed, TOP will receive the
   `TOPBringMeToLifeEvent`, which shall confirm the completion and actually
   complete the task.
+
+  Emits TOPBringMeToLifeEvent.t after `time_left` seconds have elapsed.
   """
   defp handle_next({process, time_left}) do
     wake_me_up = TOPBringMeToLifeEvent.new(process)
@@ -174,7 +206,8 @@ defmodule Helix.Process.Action.TOP do
   defp handle_next(_),
     do: :noop
 
-  alias Helix.Process.Internal.Process, as: ProcessInternal
+  @spec handle_checkpoint([Process.t]) ::
+    term
   docp """
   `handle_checkpoint` is responsible for handling the result of
   `Scheduler.checkpoint/1`, called during the `recalque` above.

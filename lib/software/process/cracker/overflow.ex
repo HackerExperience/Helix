@@ -15,7 +15,7 @@ process Helix.Software.Process.Cracker.Overflow do
       target_connection_id: Connection.id | nil
     }
 
-  @typep creation_params ::
+  @type creation_params ::
     %{
       target_process_id: Process.id | nil,
       target_connection_id: Connection.id | nil
@@ -27,10 +27,11 @@ process Helix.Software.Process.Cracker.Overflow do
     %{
       objective: objective,
       static: map,
-      dynamic: [:cpu]
+      l_dynamic: [:cpu],
+      r_dynamic: []
     }
 
-  @typep resources_params ::
+  @type resources_params ::
     %{
       cracker: File.t
     }
@@ -90,7 +91,7 @@ process Helix.Software.Process.Cracker.Overflow do
     alias Helix.Software.Model.File
     alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
 
-    @type params :: OverflowProcess.objective_params
+    @type params :: OverflowProcess.resources_params
     @type factors ::
       %{
         cracker: %{version: FileFactor.fact_version}
