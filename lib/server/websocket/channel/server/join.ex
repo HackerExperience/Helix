@@ -25,6 +25,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
+  alias Helix.Server.Model.Server
   alias Helix.Server.Public.Server, as: ServerPublic
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
@@ -50,16 +51,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
   """
   def check_params(request = %ServerJoin{type: :local}, _socket) do
     with \
-      {:ok, data} <- get_topic_data(request.topic),
-      # /\ Parse the join topic and fetch data from it
-
-      # Validate gateway nip
-      {:ok, network_id, ip} <- validate_nip(data.network_id, data.ip)
+      "server:" <> server_id <- request.topic,
+      {:ok, server_id} <- Server.ID.cast(server_id)
     do
-      params = %{
-        network_id: network_id,
-        gateway_ip: ip
-      }
+      params = %{gateway_id: server_id}
 
       update_params(request, params, reply: true)
     else
@@ -113,18 +108,14 @@ join Helix.Server.Websocket.Channel.Server.Join do
   """
   def check_permissions(request = %ServerJoin{type: :local}, socket) do
     entity_id = socket.assigns.entity_id
-    network_id = request.params.network_id
-    gateway_ip = request.params.gateway_ip
+    gateway_id = request.params.gateway_id
 
     with \
-      {true, r1} <- NetworkHenforcer.nip_exists?(network_id, gateway_ip),
-      gateway = r1.server,
-      {true, r2} <- ChannelHenforcer.local_join_allowed?(entity_id, gateway)
+      {true, r1} <- ChannelHenforcer.local_join_allowed?(entity_id, gateway_id)
     do
       meta = %{
-        gateway: gateway,
-        entity: r2.entity,
-        counter: 0
+        gateway: r1.server,
+        entity: r1.entity
       }
 
       update_meta(request, meta, reply: true)
@@ -188,18 +179,17 @@ join Helix.Server.Websocket.Channel.Server.Join do
     end
   end
 
-  defp build_meta(request) do
-    access_type =
-      if Map.has_key?(request.params, :password) do
-        :remote
-      else
-        :local
-      end
-
+  defp build_meta(%ServerJoin{type: :local}) do
     %{
+      access_type: :local
+    }
+  end
+
+  defp build_meta(request = %ServerJoin{type: :remote}) do
+    %{
+      access_type: :remote,
       counter: request.meta.counter,
-      network_id: request.params.network_id,
-      access_type: access_type
+      network_id: request.params.network_id
     }
   end
 
@@ -211,25 +201,12 @@ join Helix.Server.Websocket.Channel.Server.Join do
   is responsible for mapping NIPs to server IDs.
   """
   def join(request = %ServerJoin{type: :local}, socket, assign) do
-    gateway_ip = request.params.gateway_ip
-    network_id = request.params.network_id
-    counter = request.meta.counter
-
     entity = request.meta.entity
     gateway = request.meta.gateway
 
-    # Updates websocket state
-    ServerWebsocketChannelState.join(
-      entity.entity_id,
-      gateway.server_id,
-      {network_id, gateway_ip},
-      counter
-    )
-
     gateway_data = %{
       server_id: gateway.server_id,
-      entity_id: entity.entity_id,
-      ip: gateway_ip
+      entity_id: entity.entity_id
     }
 
     socket =
