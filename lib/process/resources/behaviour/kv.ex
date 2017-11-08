@@ -116,9 +116,6 @@ defmodule Helix.Process.Resources.Behaviour.KV do
       @spec sub(t, t) ::
         t
       sub(a, b) do
-        # Ensure missing elements (exist on `b` but not on `a`) are filled as 0.
-        # a = fill_missing(a, b)
-
         op_map(a, b, &Kernel.-/2)
       end
 
@@ -146,6 +143,9 @@ defmodule Helix.Process.Resources.Behaviour.KV do
 
       @spec get_shares(Process.t) ::
         t
+      @doc """
+      Calculates how many resource shares that process should receive.
+      """
       get_shares(process = %{priority: priority}) do
         dynamic = Process.get_dynamic(process)
 
@@ -201,11 +201,17 @@ defmodule Helix.Process.Resources.Behaviour.KV do
         map(res_per_share, fn v -> is_number(v) && v >= 0 && v || 0.0 end)
       end
 
-      # At least currently, only local process may allocate static resources
-      # This means that e.g. a FileDownload may consume RAM on the local server
-      # but none on the remote one.
       @spec allocate_static(Process.t) ::
         t
+      @doc """
+      Performs static allocation on the process. `state` is used to figure out
+      how many resources should be allocated, since it may differ from `paused`
+      to `running` processes.
+
+      At least currently, only local process may allocate static resources.
+      This means that e.g. a FileDownload may consume RAM on the local server
+      but none on the remote one.
+      """
       allocate_static(%{local?: false}) do
         initial()
       end
@@ -234,6 +240,13 @@ defmodule Helix.Process.Resources.Behaviour.KV do
 
       @spec allocate_dynamic(t, t, Process.t) ::
         t
+      @doc """
+      Dynamic allocation is quite simple. It simply multiplies the total shares
+      that process received with the resources per share.
+
+      Before doing so, it checks whether the process is supposed to have dynamic
+      allocation on that resource.
+      """
       allocate_dynamic(shares, res_per_share, process) do
         dynamic = Process.get_dynamic(process)
 
@@ -248,14 +261,17 @@ defmodule Helix.Process.Resources.Behaviour.KV do
 
       @spec allocate(t, t) ::
         t
+      @doc """
+      Final allocation step. Simply adds the dynamic allocation with the static.
+      """
       allocate(dynamic_alloc, static_alloc) do
         sum(dynamic_alloc, static_alloc)
       end
 
       @spec completed?(t, t) ::
-        t
+        boolean
       def completed?(processed, objective) do
-        Enum.reduce(processed, %{}, fn {key, value}, acc ->
+        Enum.reduce(processed, true, fn {key, value}, acc ->
           # If the corresponding objective is `nil`, then by definition this
           # resource is completed
           result =
@@ -265,9 +281,7 @@ defmodule Helix.Process.Resources.Behaviour.KV do
               true
             end
 
-          %{}
-          |> Map.put(key, result)
-          |> Map.merge(acc)
+          acc && result
         end)
       end
 

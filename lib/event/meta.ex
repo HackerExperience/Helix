@@ -34,6 +34,8 @@ defmodule Helix.Event.Meta do
     # processes side-effects to their process ids on the Client.
     :process_id,
 
+    # The `stack` field is a rudimentary stacktrace. Every time an event is
+    # emitted from another one, the previous event name is stored on this stack.
     :stack
   ]
 

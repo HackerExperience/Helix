@@ -36,7 +36,7 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.format/1)
   end
 
-  @spec get_running_processes_of_type_on_server(Server.idt, Process.type) ::
+  @spec get_running_processes_of_type_on_server(Server.id, Process.type) ::
     [Process.t]
   def get_running_processes_of_type_on_server(gateway_id, type) do
     gateway_id
@@ -47,7 +47,7 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.format/1)
   end
 
-  @spec get_processes_on_connection(Connection.idt) ::
+  @spec get_processes_on_connection(Connection.id) ::
     [Process.t]
   def get_processes_on_connection(connection_id) do
     connection_id

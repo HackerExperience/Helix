@@ -212,7 +212,6 @@ defmodule Helix.Process.Resources do
       def completed?(processed, objective) do
         :completed?
         |> dispatch_merge(processed, objective)
-        |> reduce(true, fn acc, v -> acc && v || false end)
         |> Enum.all?(fn {_res, status} -> status == true end)
       end
 

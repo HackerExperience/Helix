@@ -1,18 +1,11 @@
-defmodule Helix.Process.Model.Process.Resources.Utils do
-
-  alias Helix.Network.Model.Network
-
-  @spec format_network(Network.idtb, term) ::
-    {Network.id, term}
-  def format_network(key = %Network.ID{}, value),
-    do: {key, value}
-  def format_network(key, value),
-    do: {Network.ID.cast!(key), value}
-end
-
 import Helix.Process.Resources
 
 resources Helix.Process.Model.Process.Resources do
+  @moduledoc """
+  This is where we define all resources that may be used by a process.
+
+  It's also where we define how each resource should *behave*.
+  """
 
   alias Helix.Network.Model.Network
   alias Helix.Process.Model.Process.Resources.Utils, as: ResourcesUtils

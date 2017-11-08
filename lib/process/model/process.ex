@@ -326,10 +326,11 @@ defmodule Helix.Process.Model.Process do
 
     field :creation_time, :utc_datetime
 
-    # Estimated date of completion
+    # Estimated time left for completion of the process. Seconds.
     field :time_left, :float,
       virtual: true
 
+    # Estimated completion date for the process.
     field :completion_date, :utc_datetime,
       virtual: true
   end
@@ -567,11 +568,6 @@ defmodule Helix.Process.Model.Process do
     def by_id(query \\ Process, id),
       do: where(query, [p], p.process_id == ^id)
 
-    @spec from_type_list(Queryable.t, [Process.type]) ::
-      Queryable.t
-    def from_type_list(query \\ Process, type_list),
-      do: where(query, [p], p.type in ^type_list)
-
     @spec on_server(Queryable.t, Server.idt) ::
       Queryable.t
     def on_server(query \\ Process, server_id) do
@@ -600,7 +596,7 @@ defmodule Helix.Process.Model.Process do
     def by_network(query \\ Process, id),
       do: where(query, [p], p.network_id == ^id)
 
-    @spec by_connection(Queryable.t, Connection.idtb) ::
+    @spec by_connection(Queryable.t, Connection.id) ::
       Queryable.t
     def by_connection(query \\ Process, id),
       do: where(query, [p], p.connection_id == ^id)
@@ -616,10 +612,5 @@ defmodule Helix.Process.Model.Process do
       do: where(query, [p], p.priority > 1)
     def by_state(query, :paused),
       do: where(query, [p], p.priority == 0)
-
-    @spec not_targeting_gateway(Queryable.t) ::
-      Queryable.t
-    def not_targeting_gateway(query \\ Process),
-      do: where(query, [p], p.gateway_id != p.target_id)
   end
 end

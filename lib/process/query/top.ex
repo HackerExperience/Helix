@@ -7,12 +7,16 @@ defmodule Helix.Process.Query.TOP do
 
   @spec load_top_resources(Server.idt) ::
     Process.Resources.t
+  @doc """
+  Returns the total TOP resources that the server supports.
+  """
   def load_top_resources(server = %Server{}) do
     resources =
       server.motherboard_id
       |> MotherboardQuery.fetch()
       |> MotherboardQuery.resources()
 
+    # Convert server resource format into TOP resource format
     {server_dlk, server_ulk} =
       Enum.reduce(
         resources.net,

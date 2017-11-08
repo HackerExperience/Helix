@@ -123,19 +123,24 @@ defmodule Helix.Process.Model.Process.Resources.DLKTest do
 
   describe "completed?/2" do
     test "true when all processed values are greater than their objectives" do
-      processed = %{net1: 200, net2: 1}
+      processed = %{net1: 200, net2: 11}
       objective = %{net1: 101, net2: 10}
 
-      result = ResourceDLK.completed?(processed, objective)
+      assert ResourceDLK.completed?(processed, objective)
+    end
 
-      assert result == %{net1: true, net2: false}
+    test "false when one or more keys still need to be processed" do
+      processed = %{net1: 50, net2: 20}
+      objective = %{net1: 40, net2: 30}
+
+      refute ResourceDLK.completed?(processed, objective)
     end
 
     test "true when there is no objective" do
       processed = %{net: 100}
       objective = %{}
 
-      assert %{net: true} == ResourceDLK.completed?(processed, objective)
+      assert ResourceDLK.completed?(processed, objective)
     end
   end
 

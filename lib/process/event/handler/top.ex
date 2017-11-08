@@ -99,10 +99,12 @@ defmodule Helix.Process.Event.Handler.TOP do
   won't receive the corresponding signal. See `filter_self_message/2`.
   """
   def object_handler(event = %ConnectionClosedEvent{}) do
+    signal_param = %{connection: event.connection}
+
     event.connection.connection_id
     |> ProcessQuery.get_processes_on_connection()
     |> filter_self_message(event)
-    |> Enum.each(&ProcessFlow.signal(&1, :SIGCONND, event))
+    |> Enum.each(&ProcessFlow.signal(&1, :SIGCONND, signal_param))
   end
 
   docp """

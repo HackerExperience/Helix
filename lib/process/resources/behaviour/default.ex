@@ -126,6 +126,7 @@ defmodule Helix.Process.Resources.Behaviour.Default do
       resource_per_share(resources, shares) do
         res_per_share = __MODULE__.div(resources, shares)
 
+        # Ensure it's a valid value (not negative)
         res_per_share >= 0 && res_per_share || 0.0
       end
 
