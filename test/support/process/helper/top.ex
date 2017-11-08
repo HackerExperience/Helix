@@ -40,15 +40,13 @@ defmodule Helix.Test.Process.TOPHelper do
   Runs the logic that would be ran if the process was completed, but does not
   actually modify the database, nor emit the conclusion events.
   """
-  def soft_complete(process = %Process{}) do
-    Processable.complete(process.data, process)
-  end
+  def soft_complete(process = %Process{}),
+    do: Processable.complete(process.data, process)
 
   @doc """
   Simulates the `kill` of a process, executing the `Processable` relevant code.
   It won't update the status on DB, nor emit events about the kill.
   """
-  def soft_kill(process = %Process{}, reason \\ :normal) do
-    Processable.kill(process.data, process, reason)
-  end
+  def soft_kill(process = %Process{}, reason \\ :killed),
+    do: Processable.kill(process.data, process, reason)
 end

@@ -3,6 +3,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.CrackerTest do
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
+  import Helix.Test.Macros
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
@@ -36,7 +37,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.CrackerTest do
       ref = push socket, "cracker.bruteforce", params
 
       # Wait for response
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout(:slow)
 
       # All required fields are there
       assert response.data.type == "cracker_bruteforce"
@@ -73,9 +74,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.CrackerTest do
 
       # Submit request
       ref = push socket, "cracker.bruteforce", params
-
-      # Wait for response
-      assert_reply ref, :error, response
+      assert_reply ref, :error, response, timeout(:fast)
 
       assert response.data.message == "cracker_not_found"
     end

@@ -121,7 +121,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       assert [server.server_id, acc.atm_id] == TunnelQuery.get_hops(tunnel)
 
       # Wait for events
-      :timer.sleep(100)
+      # :timer.sleep(100)
 
       # Nothing was added to the Hacked Database... because it's MY account!
       refute DatabaseQuery.fetch_bank_account(entity, acc)

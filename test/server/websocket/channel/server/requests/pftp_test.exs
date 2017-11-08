@@ -3,6 +3,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
+  import Helix.Test.Macros
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Software.Model.PublicFTP
@@ -26,7 +27,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
       ref = push socket, "pftp.server.enable", %{}
 
       # Wait for the response, which is empty (but :ok)
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
       assert response.data == %{}
 
       # I have a PublicFTP server :)
@@ -46,7 +47,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
       ref = push socket, "pftp.server.disable", %{}
 
       # Wait for the response, which is empty (but :ok)
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
       assert response.data == %{}
 
       # My PFTP server is now disabled
@@ -60,13 +61,11 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
       {file, _} = SoftwareSetup.file(server_id: server.server_id)
       SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
-      params = %{
-        "file_id": to_string(file.file_id)
-      }
+      params = %{"file_id": to_string(file.file_id)}
 
       ref = push socket, "pftp.file.add", params
 
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
       assert response.data == %{}
 
       [entry] = PublicFTPQuery.list_files(server)
@@ -83,13 +82,11 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
       # The file exists
       assert PublicFTPQuery.fetch_file(file)
 
-      params = %{
-        "file_id" => to_string(file.file_id)
-      }
+      params = %{"file_id" => to_string(file.file_id)}
 
       ref = push socket, "pftp.file.remove", params
 
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
       assert response.data == %{}
 
       # Now it doesn't
@@ -113,7 +110,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
 
       ref = push socket, "pftp.file.download", params
 
-      assert_reply ref, :ok, %{data: process}, 300
+      assert_reply ref, :ok, %{data: process}, timeout(:slow)
 
       assert process.file.id == to_string(file.file_id)
       assert process.type == "file_download"

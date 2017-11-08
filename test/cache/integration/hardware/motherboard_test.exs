@@ -2,13 +2,14 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Test.Hardware.Factory, as: HardwareFactory
   alias Helix.Hardware.Internal.Component, as: ComponentInternal
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+
+  alias Helix.Test.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Cache.Helper, as: CacheHelper
 
   setup do
     CacheHelper.cache_context()
@@ -87,7 +88,6 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
 
-      alias Helix.Cache.Internal.Builder, as: BuilderInternal
       {:ok, server} = BuilderInternal.by_server(server_id)
 
       nip = Enum.random(server.networks)

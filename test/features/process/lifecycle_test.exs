@@ -3,6 +3,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
+  import Helix.Test.Macros
   import Helix.Test.Process.Macros
 
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
@@ -35,14 +36,14 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       # Starts the file download
       ref = push socket, "file.download", params
 
-      assert_reply ref, :ok, response, 200
+      assert_reply ref, :ok, response, timeout(:slow)
 
       # The process was created
       assert response.data.process_id
       process_id = Process.ID.cast!(response.data.process_id)
 
-      assert_push "event", top_recalcado
-      assert_push "event", process_created
+      assert_push "event", top_recalcado, timeout()
+      assert_push "event", process_created, timeout()
 
       assert top_recalcado.event == "top_recalcado"
       assert process_created.event == "process_created"
@@ -89,7 +90,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
 
       # Starts the file download
       ref = push socket, "file.download", params
-      assert_reply ref, :ok, _
+      assert_reply ref, :ok, _, timeout(:slow)
 
       gateway_storage = SoftwareHelper.get_storage(gateway)
 

@@ -4,6 +4,7 @@ defmodule Helix.Event.NotificationHandlerTest do
 
   import Phoenix.ChannelTest
   import Helix.Test.Case.ID
+  import Helix.Test.Macros
   import Helix.Test.Event.Macros
 
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -38,11 +39,11 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Broadcast is before inspecting the event with `handle_out`, so this
       # isn't the final output to the client
-      assert_broadcast "event", internal_broadcast
+      assert_broadcast "event", internal_broadcast, timeout()
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", notification
+      assert_push "event", notification, timeout()
       assert notification.event == "process_created"
 
       # Make sure all we need is on the process return
@@ -67,7 +68,7 @@ defmodule Helix.Event.NotificationHandlerTest do
         ChannelSetup.join_server()
 
       # Filter out the usual `LogCreatedEvent` after remote server join
-      assert_broadcast "event", _
+      assert_broadcast "event", _, timeout()
 
       event =
         EventSetup.Process.created(gateway.server_id, destination.server_id)
@@ -79,11 +80,11 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Broadcast is before inspecting the event with `handle_out`, so this
       # isn't the final output to the client
-      assert_broadcast "event", internal_broadcast
+      assert_broadcast "event", internal_broadcast, timeout()
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", notification
+      assert_push "event", notification, timeout()
       assert notification.event == "process_created"
 
       # Make sure all we need is on the process return
@@ -130,16 +131,14 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Start the Bruteforce attack
       ref = push socket, "cracker.bruteforce", params
-
-      # Wait for response
-      assert_reply ref, :ok, response, 300
+      assert_reply ref, :ok, response, timeout(:slow)
 
       # The response includes the Bruteforce process information
       assert response.data.process_id
 
       # Wait for generic ProcessCreatedEvent
-      assert_push "event", _top_recalcado_event
-      assert_push "event", process_created_event
+      assert_push "event", _top_recalcado_event, timeout()
+      assert_push "event", process_created_event, timeout()
       assert process_created_event.event == "process_created"
 
       # Let's cheat and finish the process right now
@@ -153,18 +152,18 @@ defmodule Helix.Event.NotificationHandlerTest do
       # Notificable protocol.
       # We are getting them here so we can inspect the actual metadata of
       # both `ProcessCompletedEvent` and `PasswordAcquiredEvent`
-      assert_broadcast "event", _top_recalcado_event
-      assert_broadcast "event", _process_created_t
-      assert_broadcast "event", _process_created_f
-      assert_broadcast "event", server_password_acquired_event
-      assert_broadcast "event", process_completed_event
+      assert_broadcast "event", _top_recalcado_event, timeout()
+      assert_broadcast "event", _process_created_t, timeout()
+      assert_broadcast "event", _process_created_f, timeout()
+      assert_broadcast "event", server_password_acquired_event, timeout()
+      assert_broadcast "event", process_completed_event, timeout()
 
       # They have the process IDs!
       assert process_id == process_completed_event.__meta__.process_id
       assert process_id == server_password_acquired_event.__meta__.process_id
 
       # We'll receive the PasswordAcquiredEvent
-      assert_push "event", password_acquired_event
+      assert_push "event", password_acquired_event, timeout()
       assert password_acquired_event.event == "server_password_acquired"
 
       # Which has a valid `process_id` on the event metadata!
@@ -175,7 +174,7 @@ defmodule Helix.Event.NotificationHandlerTest do
       # working for all kinds of events.
 
       # Soon we'll receive the generic ProcessCompletedEvent
-      assert_push "event", process_conclusion_event
+      assert_push "event", process_conclusion_event, timeout()
       assert process_conclusion_event.event == "process_completed"
 
       # As long as we are here, let's test that the metadata sent to the client
