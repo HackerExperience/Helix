@@ -3,6 +3,21 @@ defmodule Helix.Process.Event.Process do
   import Helix.Event
 
   event Created do
+    @moduledoc """
+    `ProcessCreatedEvent` is fired when a process is created. This event has an
+    initial optimistic behaviour, so it is fired in two different moments.
+
+    First, it is fired from ProcessAction, right after the process is created
+    and inserted on the database. On this stage, the Process is said to be
+    optimistic (unconfirmed) because the server may not be able to allocate
+    resources to this process.
+
+    This same event may be fired again from the TOPHandler, in which case the
+    allocation was successful and the process creation has been confirmed. We
+    only notify the Client if the process is confirmed as created.
+
+    If creation fails, we emit the `ProcessCreateFailedEvent`.
+    """
 
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
@@ -26,8 +41,12 @@ defmodule Helix.Process.Event.Process do
       :target_ip
     ]
 
-    # @spec new(Process.t, Network.ip, Network.ip, [optimistic: boolean]) ::
-    #   t
+    @spec new(Process.t, Network.ip, Network.ip, [confirmed: boolean]) ::
+      t
+    @doc """
+    Creates the process struct when it is unconfirmed (we don't know yet whether
+    the allocation will be successful).
+    """
     def new(process = %Process{}, source_ip, target_ip, confirmed: confirmed) do
       %__MODULE__{
         process: process,
@@ -39,6 +58,12 @@ defmodule Helix.Process.Event.Process do
       }
     end
 
+    @spec new(t) ::
+      t
+    @doc """
+    When recreating the process from a previous event, we are effectively saying
+    that the process creation has been confirmed.
+    """
     def new(event = %__MODULE__{confirmed: false}),
       do: %{event| confirmed: true}
 
@@ -164,7 +189,7 @@ defmodule Helix.Process.Event.Process do
 
       def generate_payload(event, _socket) do
         data = %{
-          process_id: event.process.process_id
+          process_id: event.process.process_id |> to_string()
         }
 
         {:ok, data}
@@ -203,6 +228,51 @@ defmodule Helix.Process.Event.Process do
         action: action,
         params: params
       }
+    end
+  end
+
+  event Killed do
+    @moduledoc """
+    `ProcessKilledEvent` is fired when a process has been killed. The process
+    no longer exists on the database on the moment this event was created.
+    """
+
+    alias Helix.Process.Model.Process
+
+    event_struct [:process, :reason]
+
+    @type t ::
+      %__MODULE__{
+        process: Process.t,
+        reason: Process.kill_reason
+      }
+
+    @spec new(Process.t, Process.kill_reason) ::
+      t
+    def new(process = %Process{}, reason) do
+      %__MODULE__{
+        process: process,
+        reason: reason
+      }
+    end
+
+    notify do
+
+      @event :process_killed
+
+      @doc false
+      def generate_payload(event, _socket) do
+        data = %{
+          process_id: event.process.process_id |> to_string(),
+          reason: event.reason |> to_string()
+        }
+
+        {:ok, data}
+      end
+
+      @doc false
+      def whom_to_notify(event),
+        do: %{server: [event.process.gateway_id, event.process.target_id]}
     end
   end
 end

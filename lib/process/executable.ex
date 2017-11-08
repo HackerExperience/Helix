@@ -13,6 +13,8 @@ defmodule Helix.Process.Executable do
   import HELL.Macros
 
   alias Helix.Event
+  alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
@@ -34,7 +36,7 @@ defmodule Helix.Process.Executable do
 
   docp """
   Collection of "handlers", i.e. methods that will make sense of the result and
-  create a meaningful Process.base_params.
+  create the desired Process.creation_params
   """
   defp handlers(process) do
     quote do
@@ -52,16 +54,19 @@ defmodule Helix.Process.Executable do
       @spec get_ownership(Server.t, Server.t, params, meta) ::
         %{
           gateway_id: Server.id,
-          target_id: Server.id
+          target_id: Server.id,
+          source_entity_id: Entity.id
         }
       docp """
       Infers ownership information about the process, which is a subset of the
       full process params.
       """
       defp get_ownership(gateway, target, params, meta) do
+        entity = EntityQuery.fetch_by_server(gateway.server_id)
         %{
           gateway_id: gateway.server_id,
-          target_id: target.server_id
+          target_id: target.server_id,
+          source_entity_id: entity.entity_id
         }
       end
 
@@ -88,7 +93,7 @@ defmodule Helix.Process.Executable do
         do: %{network_id: nil}
 
       @spec create_process_params(partial :: map, term) ::
-        ProcessAction.base_params
+        Process.creation_params
       docp """
       Merges the partial process params with other data (connection_id).
       """

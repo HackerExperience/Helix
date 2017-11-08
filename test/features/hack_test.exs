@@ -147,8 +147,6 @@ defmodule Helix.Test.Features.Hack do
       assert bootstrap.filesystem
       assert bootstrap.logs
       assert bootstrap.processes
-
-      :timer.sleep(50)
     end
 
     @tag :pending

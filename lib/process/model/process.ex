@@ -65,6 +65,69 @@ defmodule Helix.Process.Model.Process do
     | :cracker_bruteforce
     | :cracker_overflow
 
+  @typedoc """
+  List of signals a process may receive during its lifetime.
+
+  # Process lifecycle signals
+
+  The processes below are related to the lifecycle of a process.
+
+  ## SIGTERM
+
+  Process reached its objective. Handled by Processable's `on_completion`.
+  This callback must be implemented by the process.
+
+  Note that, despite the name, it has no similarities with UNIX's SIGTERM.
+
+  Most common action is to `:delete` the process. `:find_next_target` is also a
+  valid option, depending on the Process behaviour.
+
+  ## SIGKILL
+
+  Signal sent when the process was asked to terminate. Must be accompanied by a
+  `kill_reason`. Note that when a process is completed, it is killed with reason
+  `:completed`.
+
+  Default action is to delete the process.
+
+  ## SIGSTOP
+
+  Signal sent when the user requested the process to be paused.
+
+  Default action is to pause the process.
+
+  ## SIGCONT
+
+  Signal sent when the user requested the process to be resumed.
+
+  Default action is to resume the process.
+
+  ## SIGPRIO
+
+  Signal sent when the user changed the priority of the process.
+
+  Default action is to `:renice`, i.e. change the process' priority.
+
+  # Object-related signals
+
+  The signals below are meant to notify the process that one of the objects the
+  process is using or modifying has changed.
+
+  Note that these signals are NOT sent to the process that originated them. See
+  `TOPHandler.filter_self_message/2` for context.
+
+  ## SIGCONND
+
+  Signal sent when the Process underlying `connection_id` was closed.
+
+  Default action is to send itself a SIGKILL with `:connection_closed` reason.
+
+  ## SIGFILED
+
+  Signal sent when the Process underlying `file_id` was deleted.
+
+  Default action is to send itself a SIGKILL with `:file_deleted` reason.
+  """
   @type signal ::
     :SIGTERM
     | :SIGKILL
@@ -74,15 +137,23 @@ defmodule Helix.Process.Model.Process do
     | :SIGCONND
     | :SIGFILED
 
+  @typedoc """
+  Valid params for each type of signal.
+  """
   @type signal_params ::
     %{reason: kill_reason}
     | %{priority: term}
     | %{connection: Connection.t}
     | %{file: File.t}
 
+  @typedoc """
+  Valid reasons for which a Process may be killed.
+  """
   @type kill_reason ::
     :completed
     | :killed
+    | :connection_closed
+    | :file_deleted
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -138,11 +209,7 @@ defmodule Helix.Process.Model.Process do
 
   @type time_left :: float
 
-  @type resource ::
-    :cpu
-    | :ram
-    | :dlk
-    | :ulk
+  @type resource :: :cpu | :ram | :dlk | :ulk
 
   @type dynamic :: [resource]
 
@@ -151,14 +218,16 @@ defmodule Helix.Process.Model.Process do
       paused: static_usage,
       running: static_usage
     }
+    | %{}
 
   @typep static_usage ::
     %{
-      cpu: non_neg_integer,
-      ram: non_neg_integer,
-      dlk: non_neg_integer,
-      ulk: non_neg_integer
+      cpu: number,
+      ram: number,
+      dlk: number,
+      ulk: number
     }
+    | %{}
 
   # Similar to `task_struct` on `sched.h` ;-)
   @primary_key false
@@ -267,6 +336,12 @@ defmodule Helix.Process.Model.Process do
 
   @spec create_changeset(creation_params) ::
     changeset
+  @doc """
+  Creates the changeset of a process, casting the expected fields and putting
+  the defaults (like creation time).
+
+  This is the moment a process is born.
+  """
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -300,6 +375,10 @@ defmodule Helix.Process.Model.Process do
 
   @spec get_dynamic(t) ::
     [resource]
+  @doc """
+  Context-aware getter for the list of resources the process is supposed to
+  allocate dynamically.
+  """
   def get_dynamic(%{local?: true, l_dynamic: dynamic}),
     do: dynamic
   def get_dynamic(%{local?: false, r_dynamic: dynamic}),
@@ -307,6 +386,9 @@ defmodule Helix.Process.Model.Process do
 
   @spec get_limit(t) ::
     limit
+  @doc """
+  Context-aware getter for the limits of a process' resource consumption.
+  """
   def get_limit(%{local?: true, l_limit: limit}),
     do: limit
   def get_limit(%{local?: false, r_limit: limit}),
@@ -314,6 +396,10 @@ defmodule Helix.Process.Model.Process do
 
   @spec get_last_update(t) ::
     DateTime.t
+  @doc """
+  Returns the last time the process was updated. It may be either the creation
+  time or the `last_checkpoint_time`, whichever came first.
+  """
   def get_last_update(p = %{last_checkpoint_time: nil}),
     do: p.creation_time
   def get_last_update(%{last_checkpoint_time: last_checkpoint_time}),
@@ -321,6 +407,15 @@ defmodule Helix.Process.Model.Process do
 
   @spec infer_usage(t) ::
     t
+  @doc """
+  Based on what resources the process can allocate locally and remotely, and
+  considering its limitations, infer the actual amount of resources the process
+  will allocate, both locally and remotely.
+
+  Mind you, this function is where all the hard work of the TOP, Scheduler and
+  Allocator yields its final result: how many resources a process has allocated
+  to itself.
+  """
   def infer_usage(process) do
     l_alloc = Process.Resources.min(process.l_limit, process.l_reserved)
     r_alloc = Process.Resources.min(process.r_limit, process.r_reserved)

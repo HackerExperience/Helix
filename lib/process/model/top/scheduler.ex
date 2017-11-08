@@ -1,4 +1,14 @@
 defmodule Helix.Process.Model.TOP.Scheduler do
+  @moduledoc """
+  The `TOP.Scheduler` receives a process, or a list of processes, that were
+  previously Allocated and figures out stuff like:
+
+  - How long will it take for it to be completed?
+  - Oh, is it already completed?
+  - From all processes on the server, which is the next one to be completed?
+  """
+
+  import HELL.Macros
 
   alias Ecto.Changeset
   alias Helix.Process.Model.Process
@@ -15,6 +25,26 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     {:completed, Process.t}
     | {:running, Process.t}
     | {:paused, Process.t}
+  @doc """
+  `simulate/1` will simulate how many resources were computed/processed by the
+  process since the last time it changed (may be its creation date or the last
+  checkpoint date).
+
+  Then, based on the process allocation, figures out whether it is still running
+  or completed. It also modifies the Process struct with the updated `processed`
+  information.
+
+  Note that `simulate/1` uses `l_allocated`, i.e. the "currently" allocated
+  resources. That's because `simulate/1` happens from the past (last update) to
+  the present time. It does not consider would-be allocations in the future. For
+  this, check `seconds_for_completion`.
+
+  It has a special behaviour if the process' state is `:waiting_allocation`: it
+  will modify the process state to `:running`. This is done because `simulate/1`
+  (and all methods on `TOP.Scheduler`) are called from `TOP.Action`, after the
+  process was allocated. So it's safe to update the Process state to `:running`.
+
+  """
   def simulate(process = %{state: :paused}),
     do: {:paused, process}
   def simulate(process = %{state: :waiting_allocation}) do
@@ -64,6 +94,16 @@ defmodule Helix.Process.Model.TOP.Scheduler do
 
   @spec forecast([Process.t]) ::
     forecast
+  @doc """
+  `forecast/1` is a high-level function that receives a list of all processes
+  on a server, after they received allocation, and returns some useful data,
+  including:
+
+  - The next-to-be-completed process (if any), and how many seconds are left.
+  - A list of processes that are already completed.
+  - A list of processes that are running (includes the `next`-to-be-completed).
+  - A list of processes that are paused.
+  """
   def forecast(processes) do
     initial_acc = %{next: nil, paused: [], completed: [], running: []}
 
@@ -98,6 +138,13 @@ defmodule Helix.Process.Model.TOP.Scheduler do
 
   @spec estimate_completion(Process.t) ::
     {Process.t, Process.time_left | -1 | :infinity}
+  @doc """
+  `estimate_completion/1` will, as the name says, estimate how long it will take
+  for the process to reach its current objectives.
+
+  It may return `:infinity` if the process is paused or do not have allocated
+  resources to it; and `-1` if the process is already completed.
+  """
   def estimate_completion(process) do
     process
     |> simulate()
@@ -107,6 +154,23 @@ defmodule Helix.Process.Model.TOP.Scheduler do
   @spec checkpoint(Process.t) ::
     {true, Process.changeset}
     | false
+  @doc """
+  `checkpoint/1` marks a milestone on the Process. When the process allocation
+  changes, it will store on the database how many resources have already been
+  `processed` by the process on the previous allocation. This is important so
+  we do not lose track of previous progress done towards the final objective.
+
+  Notice that if the allocation did not change (i.e. the `next_allocation` is
+  exactly equal to `[l|r]_reserved`) we do not need to update this information,
+  since the next time the process would be fetched, `simulate/1`, `forecast/1`
+  and `estimate_completion/1` would all be able to predict exactly how many
+  resources were processed in the meantime between the last update.
+
+  However, if the allocation changes, that's not possible to do without having
+  an extra input - the previously `processed` resources. That's why here on
+  `checkpoint/1` we update the Process' `last_checkpoint_time`. Everything that
+  happened *before* the `last_checkpoint_time` is already saved on `processed`.
+  """
   def checkpoint(%{l_reserved: alloc, next_allocation: alloc, local?: true}),
     do: false
   def checkpoint(%{r_reserved: alloc, next_allocation: alloc, local?: false}),
@@ -142,6 +206,12 @@ defmodule Helix.Process.Model.TOP.Scheduler do
 
   @spec get_simulation_duration(Process.t) ::
     pos_integer
+  docp """
+  Figures out for how long the simulation performed at `simulate/1` should take.
+
+  See doc on `checkpoint/1` to understand why we need to select earliest of
+  `last_checkpoint_time` or `creation_date`.
+  """
   defp get_simulation_duration(process) do
     now = DateTime.utc_now()
     last_update = Process.get_last_update(process)
@@ -151,6 +221,18 @@ defmodule Helix.Process.Model.TOP.Scheduler do
 
   @spec seconds_for_completion({:paused | :completed | :running, Process.t}) ::
     {Process.t, Process.time_left | -1 | :infinity}
+  docp """
+  `seconds_for_completion/1` will calculate the time left in order for the
+  process to reach its `objective`.
+
+  Notice it uses `next_allocation` (if available), so if the process allocation
+  changed, it will consider the new allocation. That's OK because we are
+  considering what would happen from the present time to the future, which uses
+  the new allocation.
+
+  Contrast it to `simulate/1`, which simulates the process from the past (last
+  update time) to the present.
+  """
   defp seconds_for_completion({:paused, process}),
     do: {process, :infinity}
   defp seconds_for_completion({:completed, process}),
@@ -165,7 +247,13 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     alloc = Process.Resources.map(next_allocation, &(&1 / 1000))
 
     # Figure out the work left in order to complete each resource
-    work_left = Process.Resources.div(remaining_work, alloc)
+    work_left =
+      if alloc == Process.Resources.initial() do
+        remaining_work
+      else
+        # TODO: Div is not correct when alloc is 0 (see `safe_div/1`)
+        Process.Resources.div(remaining_work, alloc)
+      end
 
     # Return a raw number (float) representing how many seconds it would need
     # to complete the resource with more work left to do.
@@ -182,6 +270,12 @@ defmodule Helix.Process.Model.TOP.Scheduler do
 
   @spec sort_next_completion(nil | {Process.t, term}, {Process.t, term}) ::
     {Process.t, term}
+  docp """
+  Helper of `forecast/1`, used to determine whether the candidate process would
+  finish before the currently selected "next-to-finish" process. If so, we need
+  to replace the selected process with the candidate one, as we want to return
+  the first process that will be completed.
+  """
   defp sort_next_completion(nil, {process, seconds}),
     do: {process, seconds}
   defp sort_next_completion(current, candidate) do

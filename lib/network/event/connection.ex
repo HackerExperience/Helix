@@ -1,9 +1,9 @@
 defmodule Helix.Network.Event.Connection do
 
-  defmodule Started do
-    @moduledoc false
+  import Helix.Event
 
-    import Helix.Event.Loggable.Flow
+  event Started do
+    @moduledoc false
 
     alias Helix.Entity.Query.Entity, as: EntityQuery
     alias Helix.Network.Model.Connection
@@ -16,9 +16,10 @@ defmodule Helix.Network.Event.Connection do
       type: Connection.type
     }
 
-    @enforce_keys [:connection, :tunnel, :type]
-    defstruct [:connection, :tunnel, :type]
+    event_struct [:connection, :tunnel, :type]
 
+    @spec new(Connection.t) ::
+      t
     def new(connection = %Connection{}) do
       connection = Repo.preload(connection, :tunnel)
 
@@ -51,7 +52,7 @@ defmodule Helix.Network.Event.Connection do
     end
   end
 
-  defmodule Closed do
+  event Closed do
     @moduledoc false
 
     alias Helix.Network.Model.Connection
@@ -65,9 +66,10 @@ defmodule Helix.Network.Event.Connection do
       reason: Connection.close_reasons
     }
 
-    @enforce_keys [:connection, :tunnel, :type, :reason]
-    defstruct [:connection, :tunnel, :type, :reason]
+    event_struct [:connection, :tunnel, :type, :reason]
 
+    @spec new(Connection.t, Connection.close_reasons) ::
+      t
     def new(connection = %Connection{}, reason \\ :normal) do
       connection = Repo.preload(connection, :tunnel)
 

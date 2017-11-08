@@ -101,8 +101,10 @@ defmodule Helix.Process.Resourceable do
 
   import HELL.Macros
 
-  @type resource :: :dlk | :ulk | :cpu | :ram
-  @type resource_usage :: non_neg_integer
+  alias Helix.Process.Model.Process
+
+  @type resource :: Process.resource
+  @type resource_usage :: number
 
   @resources [:dlk, :ulk, :cpu, :ram]
 
@@ -186,11 +188,20 @@ defmodule Helix.Process.Resourceable do
 
         import Helix.Factor.Client
 
-        # Defining the typespecs of `calculate/3` outside of the macro/loop
-        # because it could be defined multiple times, raising dialyzer's
-        # overloaded contract warning.
+        # Defining the typespecs below outside of the macro/loop because it
+        # could be defined multiple times, raising dialyzer's overloaded
+        # contract warning.
         @spec calculate(atom, params, factors) ::
           Helix.Process.Resourceable.resource_usage | term  # elixir-lang 6426
+
+        @spec static(params, factors) ::
+          Process.static
+
+        @spec l_dynamic(params, factors) ::
+          Process.dynamic
+
+        @spec r_dynamic(params, factors) ::
+          Process.dynamic
 
         @spec calculate(params, factors) ::
           objectives :: map
@@ -319,6 +330,9 @@ defmodule Helix.Process.Resourceable do
     end
   end
 
+  @doc """
+  Set which resources the process may allocate dynamically on the remote server.
+  """
   defmacro r_dynamic(params, do: block),
     do: set_r_dynamic(params, block)
   defmacro r_dynamic(do: block),
@@ -339,6 +353,9 @@ defmodule Helix.Process.Resourceable do
     end
   end
 
+  @doc """
+  Set which resources the process may allocate dynamically on the local server.
+  """
   defmacro dynamic(params, do: block),
     do: set_dynamic(params, block)
   defmacro dynamic(do: block),

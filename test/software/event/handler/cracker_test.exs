@@ -31,9 +31,6 @@ defmodule Helix.Software.Event.CrackerTest do
       assert token.atm_id == transfer.atm_from
       assert token.account_number == transfer.account_from
 
-      # Wait for events
-      :timer.sleep(100)
-
       # It added the token to the Hacked Database
       entity_id = EntityQuery.get_entity_id(player)
 
@@ -68,9 +65,6 @@ defmodule Helix.Software.Event.CrackerTest do
       # Token belongs to the account being used by the connection
       assert token.atm_id == acc.atm_id
       assert token.account_number == acc.account_number
-
-      # Wait for events
-      :timer.sleep(100)
 
       # It added the token to the Hacked Database
       attacker_entity_id = EntityQuery.get_entity_id(attacker_player)

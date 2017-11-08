@@ -1,6 +1,16 @@
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 # credo:disable-for-this-file Credo.Check.Refactor.LongQuoteBlocks
 defmodule Helix.Process.Resources.Behaviour.KV do
+  @moduledoc """
+  The `KVBehaviour` is a more complex resource behaviour when compared to the
+  `DefaultBehaviour`. `KVBehaviour` is responsible for implementing DLK and ULK
+  resources.
+
+  These resources are represented as KVs because the total resources a server
+  may use or allocate depends e.g. on which Network.id we are using. In this
+  example, Network.id is the key, and the value is the raw number (float) that
+  represents the unit (in our case MB/s or KB/s).
+  """
 
   import Helix.Process.Resources
 

@@ -3,7 +3,6 @@ defmodule Helix.Server.State.Websocket.GCTest do
   use ExUnit.Case, async: true
 
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
-  alias Helix.Server.State.Websocket.GC, as: ServerWebsocketGC
 
   alias Helix.Test.Server.State.Helper, as: ServerStateHelper
 
@@ -22,8 +21,8 @@ defmodule Helix.Server.State.Websocket.GCTest do
       assert ServerStateHelper.lookup_server("s2")
 
       # We'll set GCTimer interval to 50ms & wait for it
-      ServerWebsocketGC.set_interval(50)
-      :timer.sleep(100)
+      Kernel.send(:server_channel_gc, :sync)
+      :timer.sleep(50)
 
       # It's gone
       refute ServerStateHelper.lookup_server("s1")

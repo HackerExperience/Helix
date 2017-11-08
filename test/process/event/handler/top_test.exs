@@ -2,7 +2,7 @@ defmodule Helix.Process.Event.Handler.TOPTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Process.Event.Handler.TOP, as: TOPHandler
+  alias Helix.Event
   alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Query.Process, as: ProcessQuery
 
@@ -39,7 +39,7 @@ defmodule Helix.Process.Event.Handler.TOPTest do
     assert ProcessQuery.fetch(process.process_id)
 
     # Simulate emission of ConnectionClosedEvent
-    TOPHandler.connection_closed(event)
+    Event.emit(event)
 
     # Process no longer exists
     refute ProcessQuery.fetch(process.process_id)

@@ -1,6 +1,12 @@
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 # credo:disable-for-this-file Credo.Check.Refactor.LongQuoteBlocks
 defmodule Helix.Process.Resources do
+  @moduledoc """
+  `Process.Resources` is the top-level definition of a server's TOP resources. A
+  list of all resources can be found at `ProcessModel.Resources`.
+
+  `Process.Resources` acts as an aggregator of all existing resources.
+  """
 
   alias HELL.Utils
 
@@ -39,21 +45,34 @@ defmodule Helix.Process.Resources do
 
       @spec map(t, function) ::
         map_t(term)
+      @doc """
+      Applies `fun/1` to all resources' units.
+      """
       def map(res_a, fun),
         do: dispatch(:map, res_a, [fun])
 
       @spec reduce(t, term, function) ::
         term
+      @doc """
+      Reduces all resources using `function/2`.
+      """
       def reduce(resource, initial, function),
         do: dispatch(:reduce, resource, [initial, function])
 
       @spec initial ::
         t
+      @doc """
+      Creates the initial (empty) resource, which is an aggregate of all
+      resources' initial values.
+      """
       def initial,
         do: dispatch_create :initial
 
       @spec format(t) ::
         t
+      @doc """
+      Formats all resources, making sure to atomize and fill in missing keys.
+      """
       def format(resources) do
         # Make sure our keys are valid, and all keys are defined on the resource
         # (If any key is missing, it will be populated to its initial value)
@@ -67,6 +86,10 @@ defmodule Helix.Process.Resources do
 
       @spec reject_empty(t) ::
         t | %{}
+      @doc """
+      Removes from the given input all resources that are considered empty - ie
+      they are identical to the resource's initial value.
+      """
       def reject_empty(resources) do
         Enum.reject(resources, fn {res, val} ->
           val == call_resource(res, :initial, [])
@@ -76,6 +99,12 @@ defmodule Helix.Process.Resources do
 
       @spec prepare(t) ::
         t
+      @doc """
+      "Prepares" a resource, making sure all keys are atomized and present.
+
+      May be used as an alternative to `format/1` when the user wants to prepare
+      the resource without dispatching `format/1` to all underlying resources.
+      """
       def prepare(resources) do
         # First and foremost, we must ensure that all keys have been transformed
         # into atoms. If they came from the DB, they will be a string.
@@ -100,51 +129,86 @@ defmodule Helix.Process.Resources do
 
       @spec sum(t, t) ::
         t
+      @doc """
+      Adds two resources.
+      """
       def sum(res_a, res_b),
         do: dispatch_merge(:sum, res_a, res_b)
 
       @spec sub(t, t) ::
         t
+      @doc """
+      Subtracts two resources.
+      """
       def sub(res_a, res_b),
         do: dispatch_merge(:sub, res_a, res_b)
 
       @spec mul(t, t) ::
         t
+      @doc """
+      Multiplies two resources.
+      """
       def mul(res_a, res_b),
         do: dispatch_merge(:mul, res_a, res_b)
 
       @spec div(t, t) ::
         t
+      @doc """
+      Divides two resources.
+      """
       def div(res_a, res_b),
         do: dispatch_merge(:div, res_a, res_b)
 
       @spec get_shares(Process.t) ::
         t
+      @doc """
+      Returns the total number of shares each resource may allocate on the given
+      process.
+      """
       def get_shares(process),
         do: dispatch_create :get_shares, [process]
 
       @spec resource_per_share(t, t) ::
         t
+      @doc """
+      Returns the total amount of resource units that should be multiplied to
+      each resource share.
+      """
       def resource_per_share(resources, shares),
         do: dispatch_merge :resource_per_share, resources, shares
 
       @spec allocate_static(Process.t) ::
         t
+      @doc """
+      Based on the process' `static` information, return how many resources
+      should be allocated to it.
+      """
       def allocate_static(process),
         do: dispatch_create :allocate_static, [process]
 
       @spec allocate_dynamic(t, t, Process.t) ::
         t
+      @doc """
+      Based on the previously calculated `shares` and `res_per_shares`, (which
+      are resources themselves), figure out how many resources should be
+      allocated to the given `process`.
+      """
       def allocate_dynamic(shares, res_per_share, process),
         do: dispatch_merge :allocate_dynamic, shares, res_per_share, [process]
 
       @spec allocate(t, t) ::
         t
+      @doc """
+      Merge the static and the dynamic allocation into one final allocation.
+      """
       def allocate(dynamic_alloc, static_alloc),
         do: dispatch_merge :allocate, dynamic_alloc, static_alloc
 
       @spec completed?(t, t) ::
         boolean
+      @doc """
+      Verifies whether all resources reached their objective (completed).
+      """
       def completed?(processed, objective) do
         :completed?
         |> dispatch_merge(processed, objective)
@@ -154,11 +218,22 @@ defmodule Helix.Process.Resources do
 
       @spec overflow?(t, [TOP.Allocator.allocated_process]) ::
         map_t({true, Process.t} | false)
+      @doc """
+      Verifies whether the new resulting server resources' usage is overflowed,
+      returning the heaviest process (process that consumes more of each
+      resource) if so.
+      """
       def overflow?(resources, processes),
         do: dispatch(:overflow?, resources, [processes])
 
       @spec mirror(t) ::
         map_t(Process.resource)
+      @doc """
+      For each resource, return the corresponding mirror resource.
+
+      Used for cross-server limitation (eg a remote's DLK will limit the local's
+      ULK usage).
+      """
       def mirror(resources) do
         Enum.reduce(resources, %{}, fn {res, val}, acc ->
           mirror_res = call_resource(res, :mirror, [])
@@ -171,6 +246,9 @@ defmodule Helix.Process.Resources do
 
       @spec max(t) ::
         number
+      @doc """
+      Figure out which single resource has the greatest value.
+      """
       def max(resources) do
         resources
         |> reduce(0, fn acc, v -> max(acc, v) end)
@@ -185,6 +263,9 @@ defmodule Helix.Process.Resources do
 
       @spec min(t, t) ::
         t | %{}
+      @doc """
+      Compares two structs and returns the minimum (lower) resource for each one
+      """
       def min(res1, res2) do
         :op_map
         |> dispatch_merge(res1, res2, [&min/2])
@@ -196,6 +277,10 @@ defmodule Helix.Process.Resources do
     end
   end
 
+  @doc """
+  `dispatch` is used to call a method on all underlying resources, returning an
+  arbitrary result (not necessarily another `Process.Resource.t`).
+  """
   defmacro dispatch(method, resources, params \\ quote(do: [])) do
     quote do
       Enum.reduce(@resources, %{}, fn resource_name, acc ->
@@ -212,6 +297,12 @@ defmodule Helix.Process.Resources do
     end
   end
 
+  @doc """
+  `dispatch_merge` is used when an operation is performed on two existing
+  `Process.Resource.t`, returning a new one.
+
+  Examples: all operations (`sum`, `mul`), `allocate_dynamic`.
+  """
   defmacro dispatch_merge(method, res_a, res_b, params \\ quote(do: [])) do
     quote do
       unquote(res_a)
@@ -221,6 +312,12 @@ defmodule Helix.Process.Resources do
     end
   end
 
+  @doc """
+  `dispatch_create` is used when a new `Process.Resource.t` struct is created
+  from the given parameters.
+
+  Examples: `initial/0`, `allocate_static/1`
+  """
   defmacro dispatch_create(method, params \\ quote(do: [])) do
     quote do
       Enum.reduce(@resources, %{}, fn resource, acc ->
@@ -250,6 +347,9 @@ defmodule Helix.Process.Resources do
     Module.concat(caller, module_name)
   end
 
+  @doc """
+  Top-level declaration of a single resource.
+  """
   defmacro resources(name, do: block) do
     quote location: :keep do
 

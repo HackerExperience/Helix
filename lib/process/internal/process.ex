@@ -25,6 +25,10 @@ defmodule Helix.Process.Internal.Process do
 
   @spec get_processes_on_server(Server.idt) ::
     [Process.t]
+  @doc """
+  Returns all processes on the server. This include processes that were started
+  at that server (`local`) and processes that target that server (`remote`).
+  """
   def get_processes_on_server(server_id) do
     server_id
     |> Process.Query.on_server()
@@ -52,10 +56,17 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.format/1)
   end
 
+  @spec batch_update([Process.t]) ::
+    term
+  @doc """
+  Updates all processes at once, with whatever changes were made during the
+  recalque step.
+  """
   def batch_update(processes) do
-    # TODO: Transaction
-    Enum.each(processes, fn process ->
-      Repo.update(process)
+    Repo.transaction(fn ->
+      Enum.each(processes, fn process ->
+        Repo.update(process)
+      end)
     end)
   end
 

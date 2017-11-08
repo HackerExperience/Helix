@@ -94,7 +94,7 @@ defmodule Helix.Event.Dispatcher do
     :connection_closed
   event NetworkEvent.Connection.Closed,
     ProcessHandler.TOP,
-    :connection_closed
+    :object_handler
 
   ##############################################################################
   # Log events
@@ -112,6 +112,7 @@ defmodule Helix.Event.Dispatcher do
   # All
   event ProcessEvent.Process.Created
   event ProcessEvent.Process.Completed
+  event ProcessEvent.Process.Killed
   event ProcessEvent.Process.Signaled
   event ProcessEvent.TOP.BringMeToLife
   event ProcessEvent.TOP.Recalcado

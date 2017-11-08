@@ -32,7 +32,9 @@ defmodule Helix.Event.Meta do
     # The `process_id` field is used to identify which process (if any) was
     # responsible for the emission of the current event. Useful to correlate
     # processes side-effects to their process ids on the Client.
-    :process_id
+    :process_id,
+
+    :stack
   ]
 
   @doc """

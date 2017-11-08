@@ -1,54 +1,34 @@
 defmodule Helix.Process.Action.Process do
 
+  import HELL.Macros
+
   alias Helix.Event
-  alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Software.Model.File
   alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
   alias Helix.Process.Model.Processable
 
   alias Helix.Process.Event.Process.Completed, as: ProcessCompletedEvent
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
+  alias Helix.Process.Event.Process.Killed, as: ProcessKilledEvent
   alias Helix.Process.Event.Process.Signaled, as: ProcessSignaledEvent
 
-  @type on_create ::
-    {:ok, Process.t, [ProcessCreatedEvent.t]}
-    | on_create_error
-
-  @type on_create_error ::
-    {:error, Ecto.Changeset.t}
-    | {:error, :resources}
-
-  @type base_params ::
-    %{
-      :gateway_id => Server.id,
-      :target_id => Server.id,
-      :data => Processable.t,
-      :type => Process.type,
-      :file_id => File.id | nil,
-      :network_id => Network.id | nil,
-      :connection_id => Connection.id | nil,
-      :objective => map,
-      :l_dynamic => Process.dynamic,
-      :r_dynamic => Process.dynamic,
-      :static => Process.static
-    }
-
-  @spec create(base_params) ::
+  @spec create(Process.creation_params) ::
     {:ok, Process.t, [ProcessCreatedEvent.t]}
     | {:error, Process.changeset}
+  @doc """
+  Creates a process.
+
+  This function is optimistic; the server may not have enough resources to
+  allocate the process, in which case eventually a `ProcessCreateFailedEvent`
+  will be emitted - but that's not our problem. We only create a process and
+  let the world know about it.
+  """
   def create(params) do
-    with \
-      source_entity = EntityQuery.fetch_by_server(params.gateway_id),
-      {gateway_ip, target_ip} <- get_process_ips(params),
-      process_params = prepare_create_params(params, source_entity.entity_id),
-      {:ok, process} <- ProcessInternal.create(process_params)
-    do
+    with {:ok, process} <- ProcessInternal.create(params) do
+      {gateway_ip, target_ip} = get_process_ips(params)
+
       event =
         ProcessCreatedEvent.new(
           process, gateway_ip, target_ip, confirmed: false
@@ -59,7 +39,14 @@ defmodule Helix.Process.Action.Process do
   end
 
   @spec delete(Process.t, Process.kill_reason) ::
-    {:ok, [ProcessCompletedEvent.t]}
+    {:ok, [ProcessCompletedEvent.t | ProcessKilledEvent.t]}
+  @doc """
+  Deletes a process.
+
+  If the `reason` for deletion is `:completed`, it means the Process received a
+  SIGTERM and has reach its objective, so a `ProcessCompletedEvent` shall be
+  returned. Otherwise, a `ProcessKilledEvent` is returned.
+  """
   def delete(process = %Process{}, reason) do
     ProcessInternal.delete(process)
 
@@ -67,8 +54,7 @@ defmodule Helix.Process.Action.Process do
       if reason == :completed do
         ProcessCompletedEvent.new(process)
       else
-        ProcessCompletedEvent.new(process)
-        # ProcessKilledEvent.new(process)
+        ProcessKilledEvent.new(process, reason)
       end
 
     {:ok, [event]}
@@ -84,6 +70,12 @@ defmodule Helix.Process.Action.Process do
 
   @spec signal(Process.t, Process.signal, Process.signal_params) ::
     {:ok, [Event.t]}
+  @doc """
+  Delivers the given `signal` to the Processable implemented by `process.data`.
+
+  After delivering the signal, other than accumulating the events defined at the
+  Processable implementation, also accumulates a `ProcessSignaledEvent`.
+  """
   def signal(process = %Process{}, signal, params \\ %{}) do
     {action, events} = signal_handler(signal, process, params)
 
@@ -94,6 +86,9 @@ defmodule Helix.Process.Action.Process do
 
   @spec signal_handler(Process.signal, Process.t, Process.signal_params) ::
     {Processable.action, [Event.t]}
+  docp """
+  Actually calls the corresponding signal callback, relaying the required info.
+  """
   defp signal_handler(:SIGTERM, process, _),
     do: Processable.complete(process.data, process)
 
@@ -115,14 +110,12 @@ defmodule Helix.Process.Action.Process do
   # defp signal_handler(:SIGFILED, process, %{file: file}),
   #   do: Processable.file_deleted(process.data, process, file)
 
-  @spec prepare_create_params(base_params, Entity.id) ::
-    Process.creation_params
-  defp prepare_create_params(params, source_entity_id),
-    do: Map.put(params, :source_entity_id, source_entity_id)
-
-  @spec get_process_ips(base_params) ::
+  @spec get_process_ips(Process.creation_params) ::
     {gateway_ip :: Network.ip, target_ip :: Network.ip}
     | {nil, nil}
+  docp """
+  I haz get process ips, which shall be used by ProcessCreatedEvent.
+  """
   defp get_process_ips(%{network_id: nil}),
     do: {nil, nil}
   defp get_process_ips(params) do

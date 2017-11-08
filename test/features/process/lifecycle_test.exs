@@ -99,6 +99,8 @@ defmodule Helix.Test.Features.Process.Lifecycle do
 
       # Wait for process completion (Process itself takes about 100ms)
       # Extra time is desired to let all "spawned" connections close
+      # Below timer is required because we want to let the process complete by
+      # itself, without using `force_completion`
       :timer.sleep(200)
 
       # I haz file!11

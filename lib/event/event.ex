@@ -114,6 +114,12 @@ defmodule Helix.Event do
           event
       end
 
+    # Accumulate source event on the stacktrace, and save it on the next event
+    stack = get_stack(source) || []
+    new_stack = stack ++ [source.__struct__]
+
+    event = set_stack(event, new_stack)
+
     # Everything has been inherited, we are ready to emit/1 the event.
     event
   end

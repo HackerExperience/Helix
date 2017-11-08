@@ -1,4 +1,9 @@
 defmodule Helix.Process.Resources.Behaviour do
+  @moduledoc """
+  A `ResourceBehaviour` is a generic interface that, once implemented, has full
+  support on the TOP/Process API, meaning it can be used as a Server resource by
+  processes.
+  """
 
   # Would love to generate those automatically, based on resources that call
   # the `resource/2` macro...

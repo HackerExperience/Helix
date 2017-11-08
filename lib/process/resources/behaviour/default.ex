@@ -1,6 +1,12 @@
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 # credo:disable-for-this-file Credo.Check.Refactor.LongQuoteBlocks
 defmodule Helix.Process.Resources.Behaviour.Default do
+  @moduledoc """
+  The `DefaultBehaviour` of a TOP resource is the simpler form of a resource,
+  which is used when dealing with raw numbers (floats) directly. Examples of
+  DefaultBehaviours are CPU and RAM. A CPU is represented by a unit in MHz,
+  while RAM is represented by its total in MB or KB.
+  """
 
   import Helix.Process.Resources
 

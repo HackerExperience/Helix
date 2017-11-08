@@ -23,6 +23,20 @@ defmodule Helix.Process.Action.TOP do
   @spec complete(Process.t) ::
     {:ok, [Event.t]}
     | {:error, {:process, :running}}
+  @doc """
+  Completes a process.
+
+  This function may be called in two occasions:
+
+  - When TOPBringMeToLifeEvent is fired, meaning the next process to be
+    completed is supposedly finished.
+  - When a TOP recalque happens and the Scheduler.forecast returns that it was
+    already completed.
+
+  Either way, a simulation is performed to make sure the process actually
+  finished and, if so, a SIGTERM signal is send to the process, which will
+  effectively complete it.
+  """
   def complete(process) do
     case TOP.Scheduler.simulate(process) do
       {:completed, _process} ->
@@ -38,10 +52,26 @@ defmodule Helix.Process.Action.TOP do
   @spec recalque(Process.t, recalque_opts) ::
     %{
       gateway: recalque_result,
-      target: recalque_result
+      target: recalque_result | :noop
     }
+  @doc """
+  `recalque/2` performs a recalque on the server. If a Server.id is passed as
+  parameter, the recalque happens in a single server. If a Process.t is passed,
+  however, a recalque will be made on both the process gateway and the process
+  target.
+
+  A "recalque" is the step of recalculating the allocation of all processes
+  within the given server. A recalque must be performed every time the total
+  available resources on the process changes.
+  """
   def recalque(process_or_server, alloc_opts \\ [])
 
+  def recalque(%Process{gateway_id: gateway_id, target_id: gateway_id}, opts) do
+    %{
+      gateway: do_recalque(gateway_id, opts),
+      target: :noop
+    }
+  end
   def recalque(%Process{gateway_id: gateway_id, target_id: target_id}, opts) do
     %{
       gateway: do_recalque(gateway_id, opts),
@@ -71,6 +101,10 @@ defmodule Helix.Process.Action.TOP do
 
   @spec schedule(TOP.Allocator.allocation_successful) ::
     [Process.t]
+  docp """
+  Top-level guide that "interprets" the Allocation results and performs the
+  required actions.
+  """
   defp schedule(%{allocated: processes, dropped: _dropped}) do
     # Organize all processes in two groups: the local ones and the remote ones
     # A local process was started on this very server, while a remote process
