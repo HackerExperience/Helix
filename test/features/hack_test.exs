@@ -4,6 +4,7 @@ defmodule Helix.Test.Features.Hack do
 
   import Phoenix.ChannelTest
   import Helix.Test.Case.ID
+  import Helix.Test.Macros
 
   alias HELL.Utils
   alias Helix.Entity.Query.Database, as: DatabaseQuery
@@ -47,13 +48,14 @@ defmodule Helix.Test.Features.Hack do
       ref = push socket, "cracker.bruteforce", params
 
       # Wait for response
-      assert_reply ref, :ok, response, 300  # TODO
+      assert_reply ref, :ok, response, timeout(:slow)
 
       # The response includes the Bruteforce process information
       assert response.data.process_id
 
       # Wait for generic ProcessCreatedEvent
-      assert_push "event", process_created_event
+      assert_push "event", _top_recalcado_event, timeout()
+      assert_push "event", process_created_event, timeout()
       assert process_created_event.event == "process_created"
 
       # The BruteforceProcess is running as expected
@@ -64,12 +66,8 @@ defmodule Helix.Test.Features.Hack do
       # Let's cheat and finish the process right now
       TOPHelper.force_completion(process)
 
-      # We'll receive the generic ProcessCompletedEvent
-      assert_push "event", process_conclusion_event
-      assert process_conclusion_event.event == "process_completed"
-
       # And soon we'll receive the PasswordAcquiredEvent
-      assert_push "event", password_acquired_event
+      assert_push "event", password_acquired_event, timeout()
       assert password_acquired_event.event == "server_password_acquired"
 
       # Which includes data about the server we've just hacked!
@@ -77,7 +75,9 @@ defmodule Helix.Test.Features.Hack do
       assert password_acquired_event.data.server_ip == target_nip.ip
       assert password_acquired_event.data.password
 
-      :timer.sleep(50)
+      # We'll receive the generic ProcessCompletedEvent
+      assert_push "event", process_conclusion_event, timeout()
+      assert process_conclusion_event.event == "process_completed"
 
       db_server =
         DatabaseQuery.fetch_server(
@@ -113,10 +113,6 @@ defmodule Helix.Test.Features.Hack do
       assert bootstrap.filesystem
       assert bootstrap.logs
       assert bootstrap.processes
-
-      :timer.sleep(50)
-
-      TOPHelper.top_stop(gateway.server_id)
     end
   end
 
@@ -151,8 +147,6 @@ defmodule Helix.Test.Features.Hack do
       assert bootstrap.filesystem
       assert bootstrap.logs
       assert bootstrap.processes
-
-      :timer.sleep(50)
     end
 
     @tag :pending

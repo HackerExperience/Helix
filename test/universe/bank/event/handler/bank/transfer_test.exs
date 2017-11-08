@@ -2,7 +2,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Process.Action.Process, as: ProcessAction
+  alias Helix.Process.Public.Process, as: ProcessPublic
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Universe.Bank.Action.Flow.BankTransfer, as: BankTransferFlow
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
@@ -24,7 +24,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
 
       {:ok, process} =
         BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
-      transfer_id = process.process_data.transfer_id
+      transfer_id = process.data.transfer_id
 
       assert ProcessQuery.fetch(process)
       assert BankTransferInternal.fetch(transfer_id)
@@ -32,9 +32,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
       assert 0 == BankAccountInternal.get_balance(acc2)
 
       # Kill (abort)
-      ProcessAction.kill(process, :porquesim)
-
-      :timer.sleep(100)
+      ProcessPublic.kill(process, :porquesim)
 
       # Ensure bank data is consistent
       refute BankTransferInternal.fetch(transfer_id)

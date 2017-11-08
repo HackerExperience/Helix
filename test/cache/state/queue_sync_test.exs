@@ -8,7 +8,6 @@ defmodule Helix.Cache.State.QueueSyncTest do
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
-  alias Helix.Cache.State.QueueSync, as: StateQueueSync
 
   setup do
     CacheHelper.cache_context()
@@ -26,9 +25,9 @@ defmodule Helix.Cache.State.QueueSyncTest do
       # Nothing on the DB..
       assert_miss CacheInternal.direct_query(:server, server_id)
 
-      # Set QueueSync interval to 50ms & give it enough time
-      StateQueueSync.set_interval(50)
-      :timer.sleep(100)
+      # Simulate QueueSync receiving a `:sync` message after timer is triggered
+      Kernel.send(:cache_queue_sync, :sync)
+      :timer.sleep(50)
 
       # ...it will be added to the DB
       assert_hit CacheInternal.direct_query(:server, server_id)

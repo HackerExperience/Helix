@@ -48,8 +48,8 @@
 
 #       result = LogForgerFlow.execute(file, server.server_id, params)
 #       assert {:ok, process} = result
-#       assert %LogForge{} = process.process_data
-#       assert "log_forger" == process.process_type
+#       assert %LogForge{} = process.data
+#       assert "log_forger" == process.type
 
 #       TOPHelper.top_stop(server)
 #     end
@@ -63,7 +63,7 @@
 #      {file, _} = SoftwareSetup.file(type: :log_forger, storage_id: storage_id)
 
 #       params = %{
-#         target_server_id: server,
+#         target_id: server,
 #         message: "",
 #         operation: :create,
 #         entity_id: entity.entity_id
@@ -71,8 +71,8 @@
 
 #       result = LogForgerFlow.execute(file, server.server_id, params)
 #       assert {:ok, process} = result
-#       assert %LogForge{} = process.process_data
-#       assert "log_forger" == process.process_type
+#       assert %LogForge{} = process.data
+#       assert "log_forger" == process.type
 
 #       TOPHelper.top_stop(server)
 #     end

@@ -4,7 +4,6 @@ defmodule Helix.Process.Supervisor do
   use Supervisor
 
   alias Helix.Process.Repo
-  alias Helix.Process.State.TOP.Supervisor, as: TOPSupervisor
 
   @doc false
   def start_link do
@@ -14,8 +13,7 @@ defmodule Helix.Process.Supervisor do
   @doc false
   def init(_) do
     children = [
-      worker(Repo, []),
-      supervisor(TOPSupervisor, [])
+      worker(Repo, [])
     ]
 
     supervise(children, strategy: :rest_for_one)

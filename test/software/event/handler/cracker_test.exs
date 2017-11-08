@@ -18,7 +18,7 @@ defmodule Helix.Software.Event.CrackerTest do
     test "life cycle for overflow attack against wire transfer connection" do
       {process, %{acc1: acc1, player: player}} =
         BankSetup.wire_transfer_flow()
-      transfer_id = process.process_data.transfer_id
+      transfer_id = process.data.transfer_id
 
       # Simulate completion of overflow process
       event = EventSetup.Software.overflow_conclusion(process)
@@ -30,9 +30,6 @@ defmodule Helix.Software.Event.CrackerTest do
       transfer = BankQuery.fetch_transfer(transfer_id)
       assert token.atm_id == transfer.atm_from
       assert token.account_number == transfer.account_from
-
-      # Wait for events
-      :timer.sleep(100)
 
       # It added the token to the Hacked Database
       entity_id = EntityQuery.get_entity_id(player)
@@ -69,9 +66,6 @@ defmodule Helix.Software.Event.CrackerTest do
       assert token.atm_id == acc.atm_id
       assert token.account_number == acc.account_number
 
-      # Wait for events
-      :timer.sleep(100)
-
       # It added the token to the Hacked Database
       attacker_entity_id = EntityQuery.get_entity_id(attacker_player)
 
@@ -94,12 +88,10 @@ defmodule Helix.Software.Event.CrackerTest do
   describe "bank_transfer_aborted/1" do
     test "it stops all overflow attacks running on aborted transfer" do
       {process, _} = BankSetup.wire_transfer_flow()
-      # transfer_id = process.process_data.transfer_id
+      # transfer_id = process.data.transfer_id
 
       # Abort transfer
       ProcessAction.kill(process, :normal)
-
-      :timer.sleep(100)
 
       TOPHelper.top_stop(process.gateway_id)
     end

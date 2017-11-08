@@ -46,12 +46,12 @@ defmodule Helix.Test.Event.Setup.Software do
   end
 
   def bruteforce_conclusion(process = %Process{}),
-    do: BruteforceProcessedEvent.new(process, process.process_data)
+    do: BruteforceProcessedEvent.new(process, process.data)
   def bruteforce_conclusion do
     %BruteforceProcessedEvent{
       source_entity_id: Entity.ID.generate(),
       network_id: @internet,
-      target_server_id: Server.ID.generate(),
+      target_id: Server.ID.generate(),
       target_server_ip: Random.ipv4()
     }
   end
@@ -112,7 +112,7 @@ defmodule Helix.Test.Event.Setup.Software do
     TOPHelper.top_stop(process.gateway_id)
 
     new_file =
-      copy_file(process.file_id, process.process_data.destination_storage_id)
+      copy_file(process.file_id, process.data.destination_storage_id)
 
     event = generate_event(event, type, {:completed, new_file})
     {event, %{}}

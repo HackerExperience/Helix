@@ -64,6 +64,7 @@ defmodule Helix.Websocket do
   Generic request handler. It guides the request through the Requestable flow,
   replying the result back to the client.
   """
+  # TODO: Adicionar ReqMeta aqui \/; passar diretamente p/ `handle_request/2`
   def handle_request(request, socket) do
     with \
       {:ok, request} <- Requestable.check_params(request, socket),

@@ -132,7 +132,7 @@ defmodule Helix.Software.Websocket.Requests.File.DownloadTest do
       assert request.meta.process.process_id
       assert request.meta.process.file_id == file.file_id
       assert request.meta.process.gateway_id == gateway.server_id
-      assert request.meta.process.target_server_id == destination.server_id
+      assert request.meta.process.target_id == destination.server_id
 
       TOPHelper.top_stop(gateway)
     end

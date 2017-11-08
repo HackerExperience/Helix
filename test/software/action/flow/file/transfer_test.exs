@@ -27,11 +27,11 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
         )
 
       # Generated process has the expected data
-      assert process.process_type == "file_download"
+      assert process.type == :file_download
       assert process.file_id == file.file_id
-      assert process.process_data.type == :download
-      assert process.process_data.connection_type == :ftp
-      assert process.process_data.destination_storage_id ==
+      assert process.data.type == :download
+      assert process.data.connection_type == :ftp
+      assert process.data.destination_storage_id ==
         destination_storage.storage_id
 
       # Generated connection is valid
@@ -64,11 +64,11 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
         )
 
       # Generated process has the expected data
-      assert process.process_type == "file_upload"
+      assert process.type == :file_upload
       assert process.file_id == file.file_id
-      assert process.process_data.type == :upload
-      assert process.process_data.connection_type == :ftp
-      assert process.process_data.destination_storage_id ==
+      assert process.data.type == :upload
+      assert process.data.connection_type == :ftp
+      assert process.data.destination_storage_id ==
         destination_storage.storage_id
 
       # Generated connection is valid
@@ -101,11 +101,11 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
         )
 
       # Generated process has the expected data
-      assert process.process_type == "file_download"
+      assert process.type == :file_download
       assert process.file_id == file.file_id
-      assert process.process_data.type == :download
-      assert process.process_data.connection_type == :public_ftp
-      assert process.process_data.destination_storage_id ==
+      assert process.data.type == :download
+      assert process.data.connection_type == :public_ftp
+      assert process.data.destination_storage_id ==
         destination_storage.storage_id
 
       # Generated connection is valid; tunnel was created

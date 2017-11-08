@@ -16,18 +16,9 @@ defmodule Helix.Server.State.Websocket.GC do
   def start_link(interval \\ @interval),
     do: GenServer.start_link(__MODULE__, interval, name: @registry_name)
 
-  def set_interval(interval),
-    do: GenServer.call(@registry_name, {:set_interval, interval})
-
   def init(interval) do
     timer_ref = schedule(interval)
     {:ok, %{timer_ref: timer_ref, interval: interval}}
-  end
-
-  def handle_call({:set_interval, new_interval}, _from, state) do
-    Process.cancel_timer(state.timer_ref)
-    new_timer = schedule(new_interval)
-    {:reply, :ok, %{timer_ref: new_timer, interval: new_interval}}
   end
 
   def handle_info(:sync, state) do

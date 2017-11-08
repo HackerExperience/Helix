@@ -53,7 +53,7 @@
 
 #       process_params = %{
 #         gateway_id: server_id,
-#         target_server_id: log.server_id,
+#         target_id: log.server_id,
 #         file_id: file.file_id,
 #         objective: objective,
 #         process_data: data,
@@ -69,7 +69,7 @@
 
 #     process_params = %{
 #       gateway_id: server,
-#       target_server_id: data.target_server_id,
+#       target_id: data.target_id,
 #       file_id: file.file_id,
 #       objective: objective,
 #       process_data: data,

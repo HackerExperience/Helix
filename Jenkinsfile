@@ -105,7 +105,7 @@ retry(2) {
             unstash 'source'
             unstash 'build-test'
 
-            withEnv (['MIX_ENV=test', 'HELIX_SKIP_WARNINGS=false']) {
+            withEnv (['MIX_ENV=test', 'HELIX_SKIP_WARNINGS=false', 'HELIX_TEST_ENV=jenkins']) {
               // HACK: mix complains if I don't run deps.get again, not sure why
               // TODO: it's compiling everything again, find out why
               sh 'mix deps.get'

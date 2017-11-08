@@ -1,6 +1,6 @@
 defmodule Helix.Entity.Model.DatabaseBankAccountTest do
 
-  use ExUnit.Case, async: true
+  use Helix.Test.Case.Integration
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.DatabaseBankAccount

@@ -1,29 +1,102 @@
 defprotocol Helix.Process.Model.Processable do
+  @moduledoc """
+  The Processable protocol is responsible for implementing a bunch of callbacks
+  that will be executed when the underlying Process receives a signal.
 
+  For a list of valid signals and when they occur, see typedoc at ProcessModel.
+
+  Notice that the Processable model below is the bare bones implementation of
+  Processable. The actual interface a Process uses, however, is slightly simpler
+  and is defined at `Helix.Process.Processable`.
+  """
+
+  alias Helix.Event
+  alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.State
 
-  @type resource :: :cpu | :ram | :dlk | :ulk
+  @typedoc """
+  The actions below are valid actions that will be performed on the process if
+  they are returned on one of the callbacks below.
 
-  @spec dynamic_resources(t) ::
-    [resource]
-  def dynamic_resources(data)
+  ## :delete
 
-  @spec conclusion(t, Process.t | Ecto.Changeset.t) ::
-    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
-  def conclusion(data, process)
+  Obliterate the process, forever.
 
-  @spec state_change(t, Ecto.Changeset.t, State.state, State.state) ::
-    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
-  def state_change(data, process, from, to)
+  Once this happens, a `ProcessDeletedEvent` is emitted.
 
-  @spec kill(t, Process.t | Ecto.Changeset.t, atom) ::
-    {[Process.t | Ecto.Changeset.t] | Process.t | Ecto.Changeset.t, [struct]}
+  ## :pause
+
+  Pauses a process.
+
+  Emits `ProcessPausedEvent`.
+
+  If the process is already paused, it remains paused (it's idempotent). In that
+  case, however, the `ProcessPausedEvent` is not emitted.
+
+  ## :resume
+
+  Resumes a process.
+
+  Emits `ProcessResumedEvent`.
+
+  If the process is already resumed, it remains resumed (it's idempotent). In
+  that case, however, the `ProcessResumedEvent` is not emitted.
+
+  ## :renice
+
+  Modifies the priority of the event.
+
+  Emits `ProcessPriorityChangedEvent`
+
+  ## :restart
+
+  Not implemented yet.
+
+  ## {:SIGKILL, <reason>}
+
+  Sends a SIGKILL to itself, with the given reason as a parameter.
+
+  Emits a `ProcessSignaledEvent`. 
+
+  Later on, the process *might* be killed. Depends on how it implements the
+  `on_kill` callback.
+
+  ## :noop
+
+  Makes a lot of nada.
+
+  Does not emit anything.
+  """
+  @type action ::
+    :delete
+    | :pause
+    | :resume
+    | :renice
+    | :restart
+    | {:SIGKILL, Process.kill_reason}
+    | :noop
+
+  @spec complete(t, Process.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIGTERM.
+  """
+  def complete(data, process)
+
+  @spec kill(t, Process.t, Process.kill_reason) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIGKILL. Also receives the kill reason.
+  """
   def kill(data, process, reason)
 
-  @spec minimum(t) ::
-    %{optional(State.state) => %{resource => non_neg_integer}}
-  def minimum(data)
+  @spec connection_closed(t, Process.t, Connection.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIGCONND. Also receives the connection that
+  was recently closed.
+  """
+  def connection_closed(data, process, connection)
 
   @spec after_read_hook(term) ::
     t

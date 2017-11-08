@@ -13,6 +13,8 @@ defmodule Helix.Process.Executable do
   import HELL.Macros
 
   alias Helix.Event
+  alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Action.Tunnel, as: TunnelAction
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
@@ -34,47 +36,50 @@ defmodule Helix.Process.Executable do
 
   docp """
   Collection of "handlers", i.e. methods that will make sense of the result and
-  create a meaningful Process.base_params.
+  create the desired Process.creation_params
   """
   defp handlers(process) do
     quote do
       @spec get_process_data(params) ::
-        %{process_data: unquote(process).t}
+        %{data: unquote(process).t}
       docp """
       Retrieves the `process_data`, according to how it was defined at the
       Process' `new/1`. Subset of the full process params.
       """
       defp get_process_data(params) do
         data = call_process(:new, params)
-        %{process_data: data}
+        %{data: data}
       end
 
       @spec get_ownership(Server.t, Server.t, params, meta) ::
         %{
           gateway_id: Server.id,
-          target_server_id: Server.id
+          target_id: Server.id,
+          source_entity_id: Entity.id
         }
       docp """
       Infers ownership information about the process, which is a subset of the
       full process params.
       """
       defp get_ownership(gateway, target, params, meta) do
+        entity = EntityQuery.fetch_by_server(gateway.server_id)
         %{
           gateway_id: gateway.server_id,
-          target_server_id: target.server_id
+          target_id: target.server_id,
+          source_entity_id: entity.entity_id
         }
       end
 
       @spec get_process_type(term) ::
-        %{process_type: Process.type}
+        %{type: Process.type}
       docp """
       Returns the `process_type` parameter, a subset of the full process params.
       """
-      defp get_process_type(%{process_type: process_type}),
-        do: %{process_type: process_type |> to_string()}
+      defp get_process_type(%{type: process_type}),
+        do: %{type: process_type}
       defp get_process_type(_) do
         process_type = call_process(:get_process_type)
-        %{process_type: process_type}
+        %{type: process_type}
       end
 
       @spec get_network_id(term) ::
@@ -88,7 +93,7 @@ defmodule Helix.Process.Executable do
         do: %{network_id: nil}
 
       @spec create_process_params(partial :: map, term) ::
-        ProcessAction.base_params
+        Process.creation_params
       docp """
       Merges the partial process params with other data (connection_id).
       """
@@ -230,7 +235,7 @@ defmodule Helix.Process.Executable do
       """
       def execute(unquote_splicing(args)) do
         process_data = get_process_data(unquote(params))
-        objective = get_objective(unquote_splicing(args))
+        resources = get_resources(unquote_splicing(args))
         file = get_file(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
         process_type = get_process_type(unquote(meta))
@@ -239,7 +244,7 @@ defmodule Helix.Process.Executable do
         partial =
           %{}
           |> Map.merge(process_data)
-          |> Map.merge(objective)
+          |> Map.merge(resources)
           |> Map.merge(file)
           |> Map.merge(ownership)
           |> Map.merge(process_type)
@@ -298,24 +303,25 @@ defmodule Helix.Process.Executable do
   end
 
   @doc """
-  Returns the process' `objective`, calling the process' `new/1` with the
-  parameters defined on the `objective` section of the Process.Executable.
+  Returns information about the resource usage of that process, including:
+
+  - what is the process objective
+  - which resources can be allocated dynamically
+  - what are the statically allocated resources
   """
-  defmacro objective(gateway, target, params, meta, do: block) do
+  defmacro resources(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
     process = get_process(__CALLER__)
 
     quote do
 
-      @spec get_objective(term, term, term, term) ::
-        %{objective: unquote(process).objective}
+      @spec get_resources(term, term, term, term) ::
+        unquote(process).resources
       @doc false
-      defp get_objective(unquote_splicing(args)) do
+      defp get_resources(unquote_splicing(args)) do
         params = unquote(block)
 
-        objective = call_process(:objective, params)
-
-        %{objective: objective}
+        call_process(:resources, params)
       end
 
     end

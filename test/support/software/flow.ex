@@ -38,7 +38,7 @@ defmodule Helix.Test.Software.Setup.Flow do
       network_id: NetworkHelper.internet_id(),
       bounce: [],
       file: file,
-      process_type: process_type
+      type: process_type
     }
 
     {:ok, process} =
@@ -48,11 +48,11 @@ defmodule Helix.Test.Software.Setup.Flow do
   end
 
   defp get_type_info(:download),
-    do: {:ftp, "file_download", :download}
+    do: {:ftp, :file_download, :download}
   defp get_type_info(:upload),
-    do: {:ftp, "file_upload", :upload}
+    do: {:ftp, :file_upload, :upload}
   defp get_type_info(:pftp_download),
-    do: {:public_ftp, "file_download", :download}
+    do: {:public_ftp, :file_download, :download}
 
   @doc """
   Starts a BruteforceProcess.

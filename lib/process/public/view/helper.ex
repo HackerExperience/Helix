@@ -77,7 +77,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
       state: to_string(process.state),
       network_id: network_id,
       target_ip: target_ip,
-      type: to_string(process.process_type)
+      type: to_string(process.type)
     }
   end
 
@@ -125,8 +125,8 @@ defmodule Helix.Process.Public.View.Process.Helper do
     ProcessView.progress
   defp build_progress(process = %Process{}) do
     completion_date =
-      if process.estimated_time do
-        ClientUtils.to_timestamp(process.estimated_time)
+      if process.completion_date do
+        ClientUtils.to_timestamp(process.completion_date)
       else
         nil
       end
@@ -152,7 +152,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
   @spec get_target_ip(Process.t) ::
     String.t
   defp get_target_ip(process = %Process{}) do
-    case CacheQuery.from_server_get_nips(process.target_server_id) do
+    case CacheQuery.from_server_get_nips(process.target_id) do
       {:ok, nips} ->
         nips
         |> Enum.find(&(&1.network_id == process.network_id))

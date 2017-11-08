@@ -10,6 +10,7 @@ defmodule Helix.Event do
 
   alias Helix.Event.Dispatcher, as: HelixDispatcher
   alias Helix.Event.Meta, as: EventMeta
+  alias Helix.Event.State.Timer, as: EventTimer
   alias Helix.Process.Model.Process
 
   @type t :: HELF.Event.t
@@ -85,6 +86,18 @@ defmodule Helix.Event do
   def emit(event),
     do: HelixDispatcher.emit(event)
 
+  @spec emit_after([t] | t, interval :: float | non_neg_integer) ::
+    term
+  @doc """
+  Emits the given event(s) after `interval` milliseconds have passed.
+  """
+  def emit_after([], _),
+    do: :noop
+  def emit_after(events = [_|_], interval),
+    do: Enum.each(events, &(emit_after(&1, interval)))
+  def emit_after(event, interval),
+    do: EventTimer.emit_after(event, interval)
+
   @spec inherit(t, t) ::
     t
   docp """
@@ -100,6 +113,12 @@ defmodule Helix.Event do
         nil ->
           event
       end
+
+    # Accumulate source event on the stacktrace, and save it on the next event
+    stack = get_stack(source) || []
+    new_stack = stack ++ [source.__struct__]
+
+    event = set_stack(event, new_stack)
 
     # Everything has been inherited, we are ready to emit/1 the event.
     event

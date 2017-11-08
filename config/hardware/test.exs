@@ -4,4 +4,5 @@ prefix = System.get_env("HELIX_DB_PREFIX") || "helix"
 
 config :helix, Helix.Hardware.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
-  database: prefix <> "_test_hardware"
+  database: prefix <> "_test_hardware",
+  ownership_timeout: 90_000

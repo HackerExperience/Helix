@@ -1,368 +1,234 @@
 defmodule Helix.Process.Model.ProcessTest do
 
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
-  alias Ecto.Changeset
-  alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
-  alias Helix.Process.Model.Process.Resources
-  alias Helix.Process.Model.Processable
 
-  alias Helix.Test.Process.ProcessableExample
-  alias Helix.Test.Process.StaticProcessableExample
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Process.FakeFileTransfer
+  alias Helix.Test.Process.Setup.TOP, as: TOPSetup
 
-  @moduletag :unit
+  @internet_id NetworkHelper.internet_id()
 
-  setup do
-    process =
-      %{
-        gateway_id: Server.ID.generate(),
-        target_server_id: Server.ID.generate(),
-        process_data: %ProcessableExample{}
-      }
-      |> Process.create_changeset()
-      |> Changeset.apply_changes()
+  describe "infer_usage/1" do
+    test "infers usage on remote process" do
+      [proc] = TOPSetup.fake_process()
 
-    {:ok, process: process}
-  end
+      # Process below is probably a file transfer
+      # Locally, it uses DLK and has reserved 50 units of it
+      # On the remote, however, it is limited by the remote's ULK, at 20 units
+      # The actual allocated resources are 20 DLK for local, 20 ULK for remote
+      # (Plus the other unrelated stuff that was reserved before)
+      proc =
+        proc
+        |> Map.put(:l_limit, %{})
+        |> Map.put(:l_reserved, %{cpu: 72, ram: 20, dlk: %{net: 50}, ulk: %{}})
+        |> Map.put(:r_limit, %{ulk: %{net: 20}})
+        |> Map.put(:r_reserved, %{dlk: %{}, cpu: 0, ram: 0, ulk: %{net: 20}})
 
-  defp error_fields(changeset) do
-    changeset
-    |> Changeset.traverse_errors(&(&1))
-    |> Map.keys()
-  end
+      process = Process.infer_usage(proc)
 
-  describe "process data" do
-    test "process data must be a struct" do
-      p = Process.create_changeset(%{process_data: %{foo: :bar}})
+      assert process.l_allocated.cpu == 72
+      assert process.l_allocated.ram == 20.0
+      assert process.l_allocated.dlk.net == 20
+      assert process.l_allocated.ulk == %{}
 
-      assert :process_data in error_fields(p)
+      assert process.r_allocated.ulk.net == 20
+      assert process.r_allocated.cpu == 0
+      assert process.r_allocated.ram == 0
+      assert process.r_allocated.dlk == %{}
     end
 
-    test "a struct is only valid if it implements Processable protocol" do
-      p = Process.create_changeset(%{process_data: %File.Stream{}})
+    test "ignores r_allocated when remote resources are not relevant" do
+      [proc] = TOPSetup.fake_process()
 
-      assert :process_data in error_fields(p)
+      # Process below has its own rules for limitations and allocation, but it's
+      # completely independent of the remote server's behaviour/resources.
+      proc =
+        proc
+        |> Map.put(:l_limit, %{ram: 10})
+        |> Map.put(:l_reserved, %{cpu: 72, ram: 20, dlk: %{net: 50}, ulk: %{}})
+        |> Map.put(:r_limit, %{})
+        |> Map.put(:r_reserved, %{})
+
+      process = Process.infer_usage(proc)
+
+      assert process.l_allocated.cpu == 72
+      assert process.l_allocated.ram == 10
+      assert process.l_allocated.dlk.net == 50
+      assert process.l_allocated.ulk == %{}
+
+      assert process.r_allocated.ulk == %{}
+      assert process.r_allocated.cpu == 0
+      assert process.r_allocated.ram == 0
+      assert process.r_allocated.dlk == %{}
     end
 
-    test "works as long as the struct implements Processabe" do
-      params = %{process_data: %ProcessableExample{}}
-      p = Process.create_changeset(params)
+    test "mirrors DLK and ULK resources" do
+      # Notice that in `proc`, both DLK and ULK are being limited by remote
+      [proc] =
+        TOPSetup.fake_process(
+          l_limit: %{ram: 30},
+          r_limit: %{dlk: %{net: 20}},
+          l_reserved: %{cpu: 0, ram: 40, ulk: %{net: 30}, dlk: %{}},
+          r_reserved: %{cpu: 10, ram: 20, ulk: %{net: 15}, dlk: %{net: 20}},
+        )
 
-      refute :process_data in error_fields(p)
-    end
-  end
+      process = Process.infer_usage(proc)
 
-  describe "objective" do
-    test "objective is optional" do
-      p = Process.create_changeset(%{})
-      refute :objective in error_fields(p)
-    end
+      assert process.l_allocated.cpu == 0
+      assert process.l_allocated.ram == 30
+      assert process.l_allocated.ulk.net == 20
+      assert process.l_allocated.dlk.net == 15
 
-    test "objective is a map whose values are integers" do
-      p = Process.create_changeset(%{objective: %{cpu: :foo}})
-      assert :objective in error_fields(p)
+      assert process.r_allocated.cpu == 10
+      assert process.r_allocated.ram == 20
+      assert process.r_allocated.dlk.net == 20
+      assert process.r_allocated.ulk.net == 15
 
-      p = Process.create_changeset(%{objective: :foo})
-      assert :objective in error_fields(p)
+      # We'll now modify `proc` so that the `l_reserved` is the min value
+      # (this means DLK/ULK will be limited by local resources)
 
-      p = Process.create_changeset(%{objective: %{cpu: 0.5}})
-      assert :objective in error_fields(p)
+      proc =
+        %{proc|
+          l_limit: %{},
+          r_limit: %{},
+          l_reserved: %{cpu: 10, ram: 20, ulk: %{net: 15}, dlk: %{net: 20}},
+          r_reserved: %{cpu: 0, ram: 40, ulk: %{net: 30}, dlk: %{}}
+         }
 
-      p = Process.create_changeset(%{objective: %{cpu: 50}})
-      refute :objective in error_fields(p)
-    end
+      process = Process.infer_usage(proc)
 
-    test "objective values must be non-negative" do
-      p = Process.create_changeset(%{objective: %{cpu: -50}})
-      assert :objective in error_fields(p)
-    end
-  end
+      assert process.l_allocated.cpu == 10
+      assert process.l_allocated.ram == 20
+      assert process.l_allocated.ulk.net == 15
+      assert process.l_allocated.dlk.net == 20
 
-  describe "ttl" do
-    test "seconds_to_change defaults to :infinity if nothing is going to change" do
-      now = DateTime.from_unix!(1_470_000_000)
-
-      params = %{allocated: %{cpu: 0, dlk: 0}, updated_time: now}
-
-      process =
-        %{objective: %{cpu: 50}}
-        |> Process.create_changeset()
-        |> Process.update_changeset(params)
-        |> Changeset.apply_changes()
-
-      assert :infinity == Process.seconds_to_change(process)
-    end
-
-    test "seconds_to_change returns amount of seconds to the next change on a process resource consumption" do
-      now = DateTime.from_unix!(1_470_000_000)
-
-      params = %{allocated: %{cpu: 10, dlk: 10}, updated_time: now}
-
-      process =
-        %{objective: %{cpu: 50, dlk: 100}}
-        |> Process.create_changeset()
-        |> Process.update_changeset(params)
-        |> Changeset.apply_changes()
-
-      assert 5 === Process.seconds_to_change(process)
-    end
-
-    test "estimate_conclusion is the value of the longest-to-complete objective (or nil if infinity)" do
-      now = DateTime.from_unix!(1_470_000_000)
-
-      p =
-        %{objective: %{cpu: 50, dlk: 100}}
-        |> Process.create_changeset()
-        |> Process.update_changeset(%{allocated: %{dlk: 10}, updated_time: now})
-        |> Changeset.apply_changes()
-
-      p1 = Process.estimate_conclusion(p)
-
-      refute p1.estimated_time
-
-      p2 =
-        p
-        |> Process.update_changeset(%{allocated: %{cpu: 1, dlk: 10}})
-        |> Changeset.apply_changes()
-        |> Process.estimate_conclusion()
-
-      future = DateTime.from_unix!(1_470_000_050)
-
-      assert :eq === DateTime.compare(future, p2.estimated_time)
+      assert process.r_allocated.cpu == 0
+      assert process.r_allocated.ram == 40
+      assert process.r_allocated.ulk.net == 30
+      assert process.r_allocated.dlk == %{}
     end
   end
 
-  describe "allocation_shares" do
-    test "returns 0 when paused", %{process: process} do
-      process =
-        process
-        |> Process.pause()
-        |> elem(0)
-        |> Changeset.apply_changes()
+  describe "format/1" do
+    test "formats the process data" do
 
-      assert 0 === Process.allocation_shares(process)
+      [proc] =
+        TOPSetup.fake_process(
+          l_limit: %{ram: 30},
+          r_limit: %{dlk: %{"::" => 20}, cpu: 10},
+          l_reserved: %{cpu: 0, ram: 20, ulk: %{"::" => 50}, dlk: %{}},
+          r_reserved: %{cpu: 30, ram: 30, ulk: %{}, dlk: %{"::" => 20}},
+          l_dynamic: [:ulk],
+          r_dynamic: [:dlk],
+          objective: %{cpu: 0, ram: 0, dlk: %{}, ulk: %{"::" => 9999}},
+          network_id: "::",
+          data: FakeFileTransfer.new()
+        )
+
+      process = Process.format(proc)
+
+      assert process.data == proc.data
+
+      # Never went through a checkpoint
+      refute process.last_checkpoint_time
+
+      ### Formatted resources
+
+      # Objective
+
+      assert process.objective.cpu == 0
+      assert process.objective.ram == 0
+      assert process.objective.dlk == %{}
+      assert process.objective.ulk[@internet_id] == 9999
+
+      # Limits
+
+      assert process.l_limit.ram == 30
+      refute Map.has_key?(process.l_limit, :cpu)
+      refute Map.has_key?(process.l_limit, :dlk)
+      refute Map.has_key?(process.l_limit, :ulk)
+
+      assert process.r_limit.cpu == 10
+      assert process.r_limit.dlk[@internet_id] == 20
+      refute Map.has_key?(process.r_limit, :ram)
+      refute Map.has_key?(process.r_limit, :ulk)
+
+      # Reservation
+
+      assert process.l_reserved.cpu == 0
+      assert process.l_reserved.ram == 20
+      assert process.l_reserved.dlk == %{}
+      assert process.l_reserved.ulk[@internet_id] == 50
+
+      assert process.r_reserved.cpu == 30
+      assert process.r_reserved.ram == 30
+      assert process.r_reserved.dlk[@internet_id] == 20
+      assert process.r_reserved.ulk == %{}
+
+      ### Virtual data
+
+      # The process has reserved resources and it's not paused, so it's running
+      assert process.state == :running
+
+      # Correct allocation (see more tests on `infer_usage/1`)
+      assert process.l_allocated.cpu == 0
+      assert process.l_allocated.ram == 20
+      assert process.l_allocated.dlk == %{}
+      assert process.l_allocated.ulk[@internet_id] == 20
+
+      assert process.r_allocated.cpu == 10
+      assert process.r_allocated.ram == 30
+      assert process.r_allocated.dlk[@internet_id] == 20
+      assert process.r_allocated.ulk == %{}
+
+      # Estimated duration
+
+      assert_in_delta process.time_left, 500, 1
+      assert process.completion_date
+
+      diff =
+        DateTime.diff(process.completion_date, Process.get_last_update(process))
+
+      assert_in_delta diff, 500, 1.1
     end
 
-    test \
-      "returns the priority value when the process still requires resources",
-      %{process: process}
-    do
-      priority = 2
-      process =
-        process
-        |> Changeset.cast(%{priority: priority}, [:priority])
-        |> Changeset.put_embed(:objective, %{cpu: 1_000})
-        |> Changeset.apply_changes()
+    test "gives :waiting_allocation state when process hasn't received alloc" do
+      [proc] =
+        TOPSetup.fake_process(
+          l_limit: %{ram: 30},
+          r_limit: %{dlk: %{"::" => 20}, cpu: 10},
+          l_reserved: %{},
+          r_reserved: %{},
+          l_dynamic: [:dlk],
+          r_dynamic: [:ulk],
+          network_id: "::",
+          objective: %{ulk: %{"::" => 999}},
+          data: FakeFileTransfer.new()
+        )
 
-      assert 2 === Process.allocation_shares(process)
+      process = Process.format(proc)
+
+      assert process.state == :waiting_allocation
     end
 
-    test "can only allocate if the Processable allows", %{process: process} do
-      priority = 2
-      process =
-        process
-        |> Changeset.cast(%{priority: priority}, [:priority])
-        |> Changeset.put_embed(:objective, %{cpu: 1_000})
-        |> Changeset.apply_changes()
+    test "gives :paused state when process priority is 0" do
+      [proc] =
+        TOPSetup.fake_process(
+          priority: 0,
+          l_limit: %{ram: 30},
+          r_limit: %{dlk: %{"::" => 20}, cpu: 10},
+          l_reserved: %{cpu: 0, ram: 20, ulk: %{"::" => 50}, dlk: %{}},
+          r_reserved: %{cpu: 30, ram: 30, ulk: %{}, dlk: %{"::" => 20}},
+          r_dynamic: [:ulk],
+          network_id: "::",
+          data: FakeFileTransfer.new()
+        )
 
-      assert 2 === Process.allocation_shares(process)
-      p2 = %{process| process_data: %StaticProcessableExample{}}
+      process = Process.format(proc)
 
-      process_type = %StaticProcessableExample{}
-      assert [] === Processable.dynamic_resources(process_type)
-      assert 0 === Process.allocation_shares(p2)
-    end
-  end
-
-  describe "pause" do
-    test "pause changes the state of the process", %{process: process} do
-      process =
-        process
-        |> Process.update_changeset(%{state: :running})
-        |> Changeset.apply_changes()
-        |> Process.pause()
-        |> elem(0)
-        |> Changeset.apply_changes()
-
-      assert :paused === process.state
-    end
-
-    test "on pause allocates minimum", %{process: process} do
-      params = %{
-        objective: %{cpu: 1_000},
-        allocated: %{cpu: 100, ram: 200},
-        minimum: %{paused: %{ram: 155}}
-      }
-
-      process =
-        process
-        |> Changeset.cast(params, [:minimum])
-        |> Changeset.cast_embed(:objective)
-        |> Changeset.cast_embed(:allocated)
-        |> Changeset.apply_changes()
-        |> Process.pause()
-        |> elem(0)
-        |> Changeset.apply_changes()
-
-      assert 0 === process.allocated.cpu
-      assert 155 === process.allocated.ram
-    end
-  end
-
-  describe "completeness" do
-    test "is complete if state is :complete", %{process: process} do
-      process =
-        process
-        |> Process.update_changeset(%{state: :complete})
-        |> Changeset.apply_changes()
-
-      assert Process.complete?(process)
-    end
-
-    test "is complete if objective has been reached", %{process: process} do
-      params = %{
-        objective: %{cpu: 100, dlk: 20},
-        processed: %{cpu: 100, dlk: 20}
-      }
-
-      process =
-        process
-        |> Process.update_changeset(params)
-        |> Changeset.apply_changes()
-
-      assert Process.complete?(process)
-    end
-
-    test \
-      "is not complete if state is not complete and objective not reached",
-      %{process: process}
-    do
-      params = %{
-        state: :running,
-        processed: %{cpu: 10},
-        objective: %{cpu: 500}
-      }
-
-      process =
-        process
-        |> Process.update_changeset(params)
-        |> Changeset.apply_changes()
-
-      refute Process.complete?(process)
-    end
-  end
-
-  describe "minimum allocation" do
-    test \
-      "defaults to 0 when a value is not specified for the state",
-      %{process: process}
-    do
-      resources = %Resources{cpu: 100}
-
-      process =
-        process
-        |> Process.allocate(resources)
-        |> Process.update_changeset(%{minimum: %{}})
-        |> Changeset.apply_changes()
-
-      assert 100 === process.allocated.cpu
-
-      process =
-        process
-        |> Process.allocate_minimum()
-        |> Changeset.apply_changes()
-
-      assert 0 === process.allocated.cpu
-    end
-
-    test "uses the values for each specified state", %{process: process} do
-      resources = %Resources{cpu: 900, ram: 600}
-      minimum = %{paused: %{ram: 300}, running: %{cpu: 100, ram: 600}}
-
-      process =
-        process
-        |> Process.allocate(resources)
-        |> Process.update_changeset(%{state: :running, minimum: minimum})
-        |> Changeset.apply_changes()
-
-      assert 900 === process.allocated.cpu
-      assert 600 === process.allocated.ram
-
-      process =
-        process
-        |> Process.allocate_minimum()
-        |> Changeset.apply_changes()
-
-      assert 100 === process.allocated.cpu
-      assert 600 === process.allocated.ram
-
-      process =
-        process
-        |> Process.update_changeset(%{state: :paused})
-        |> Process.allocate_minimum()
-        |> Changeset.apply_changes()
-
-      assert 0 === process.allocated.cpu
-      assert 300 === process.allocated.ram
-
-      process =
-        process
-        |> Process.update_changeset(%{state: :complete})
-        |> Process.allocate_minimum()
-        |> Changeset.apply_changes()
-
-      # When a value is not specified for a certain state, it assumes that
-      # everything should be 0
-      assert 0 === process.allocated.cpu
-      assert 0 === process.allocated.ram
-    end
-  end
-
-  describe "resume" do
-    test "doesn't change when process is not paused", %{process: process} do
-      changeset =
-        process
-        |> Process.update_changeset(%{state: :running, allocated: %{cpu: 100}})
-        |> Changeset.apply_changes()
-        |> Process.resume()
-
-      # IE: no changes on the changeset
-      assert 0 === map_size(changeset.changes)
-    end
-
-    test \
-      "changes state and updated_time and allocates minimum",
-      %{process: process}
-    do
-      resources = %Resources{ram: 300}
-      minimum = %{running: %{ram: 600}}
-      last_updated =
-        {{2000, 01, 01}, {01, 01, 01}}
-        |> NaiveDateTime.from_erl!()
-        |> DateTime.from_naive!("Etc/UTC")
-      params = %{state: :paused, minimum: minimum, updated_time: last_updated}
-      now = DateTime.utc_now()
-
-      process =
-        process
-        |> Process.allocate(resources)
-        |> Process.update_changeset(params)
-        |> Changeset.apply_changes()
-
-      assert :paused === process.state
-      assert 300 === process.allocated.ram
-      assert 2000 === process.updated_time.year
-
-      process =
-        process
-        |> Process.resume()
-        |> elem(0)
-        |> Changeset.apply_changes()
-
-      assert :running === process.state
-      assert 600 === process.allocated.ram
-      assert now.year === process.updated_time.year
+      assert process.state == :paused
     end
   end
 end

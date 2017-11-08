@@ -11,6 +11,7 @@ process Helix.Software.Process.File.Transfer do
   file is being transferred, is already present on the standard process data.
   """
 
+  alias Helix.Network.Model.Network
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
 
@@ -21,6 +22,14 @@ process Helix.Software.Process.File.Transfer do
     destination_storage_id: Storage.id,
     connection_type: connection_type
   }
+
+  @type resources ::
+    %{
+      objective: objective,
+      l_dynamic: [:dlk] | [:ulk],
+      r_dynamic: [:ulk] | [:dlk],
+      static: map
+    }
 
   @type objective ::
     %{dlk: resource_usage}
@@ -35,6 +44,12 @@ process Helix.Software.Process.File.Transfer do
     destination_storage_id: Storage.id
   }
 
+  @type resources_params :: %{
+    type: transfer_type,
+    file: File.t,
+    network_id: Network.id
+  }
+
   @spec new(creation_params) ::
     t
   def new(params = %{destination_storage_id: %Storage.ID{}}) do
@@ -45,15 +60,10 @@ process Helix.Software.Process.File.Transfer do
     }
   end
 
-  @type objective_params :: %{
-    type: transfer_type,
-    file: File.t
-  }
-
-  @spec objective(objective_params) ::
-    objective
-  def objective(params = %{type: _, file: _}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{type: _, file: _, network_id: _}),
+    do: get_resources params
 
   processable do
     @moduledoc """
@@ -75,44 +85,36 @@ process Helix.Software.Process.File.Transfer do
     alias Helix.Software.Event.File.Transfer.Processed,
       as: FileTransferProcessedEvent
 
-    def dynamic_resources(%{type: :download}),
-      do: [:dlk]
-    def dynamic_resources(%{type: :upload}),
-      do: [:ulk]
-
-    def minimum(_),
-      do: %{}
-
     @doc """
     Emits `FileTransferAbortedEvent.t` when/if process gets killed.
     """
-    on_kill(data, _reason) do
+    on_kill(process, data, _reason) do
       reason = :killed
       {from_id, to_id} = get_servers_context(data, process)
 
       event =
         FileTransferAbortedEvent.new(process, data, from_id, to_id, reason)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     @doc """
     Emits `FileTransferProcessedEvent.t` when process completes.
     """
-    on_completion(data) do
+    on_completion(process, data) do
 
       {from_id, to_id} = get_servers_context(data, process)
       event = FileTransferProcessedEvent.new(process, data, from_id, to_id)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     @spec get_servers_context(data :: term, process :: term) ::
       context :: {from_server :: Server.id, to_server :: Server.id}
     defp get_servers_context(%{type: :download}, process),
-      do: {process.target_server_id, process.gateway_id}
+      do: {process.target_id, process.gateway_id}
     defp get_servers_context(%{type: :upload}, process),
-      do: {process.gateway_id, process.target_server_id}
+        do: {process.gateway_id, process.target_id}
 
     def after_read_hook(data) do
       %FileTransferProcess{
@@ -123,18 +125,15 @@ process Helix.Software.Process.File.Transfer do
     end
   end
 
-  process_objective do
+  resourceable do
     @moduledoc """
     Sets the objectives to FileTransferProcess
     """
 
+    alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
     alias Helix.Software.Factor.File, as: FileFactor
 
-    @type params ::
-      %{
-        type: :download | :upload,
-        file: File.t
-      }
+    @type params :: FileTransferProcess.resources_params
 
     @type factors ::
       %{
@@ -162,9 +161,36 @@ process Helix.Software.Process.File.Transfer do
       f.file.size
     end
 
+    network(%{network_id: network_id}) do
+      network_id
+    end
+
     # Safety fallbacks
     dlk(%{type: :upload})
     ulk(%{type: :download})
+
+    dynamic(%{type: :download}) do
+      [:dlk]
+    end
+
+    dynamic(%{type: :upload}) do
+      [:ulk]
+    end
+
+    static do
+      %{
+        paused: %{ram: 10},
+        running: %{ram: 20}
+      }
+    end
+
+    r_dynamic(%{type: :download}) do
+      [:ulk]
+    end
+
+    r_dynamic(%{type: :upload}) do
+      [:dlk]
+    end
   end
 
   executable do
@@ -182,10 +208,11 @@ process Helix.Software.Process.File.Transfer do
       optional(atom) => term
     }
 
-    objective(_, _, params, meta) do
+    resources(_, _, params, meta) do
       %{
         type: params.type,
-        file: meta.file
+        file: meta.file,
+        network_id: meta.network_id
       }
     end
 

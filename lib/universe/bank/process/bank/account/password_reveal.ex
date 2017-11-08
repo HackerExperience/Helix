@@ -24,7 +24,15 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
     }
 
   @type objective :: %{cpu: resource_usage}
-  @type objective_params ::
+
+  @type resources :: %{
+    objective: objective,
+    static: map,
+    l_dynamic: [:cpu],
+    r_dynamic: []
+  }
+
+  @type resources_params ::
     %{
       account: BankAccount.t
     }
@@ -39,35 +47,29 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
     }
   end
 
-  @spec objective(objective_params) ::
-    objective
-  def objective(params = %{account: %BankAccount{}}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{account: %BankAccount{}}),
+    do: get_resources params
 
   processable do
 
     alias Helix.Universe.Bank.Event.RevealPassword.Processed,
       as: RevealPasswordProcessedEvent
 
-    def dynamic_resources(_),
-      do: [:cpu]
-
-    def minimum(_),
-      do: %{}
-
-    on_completion(data) do
+    on_completion(process, data) do
       event = RevealPasswordProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
   end
 
-  process_objective do
+  resourceable do
 
     alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
       as: RevealPasswordProcess
 
-    @type params :: RevealPasswordProcess.objective_params
+    @type params :: RevealPasswordProcess.resources_params
     @type factors :: term
 
     # TODO proper balance
@@ -75,6 +77,10 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
 
     cpu(_) do
       1
+    end
+
+    dynamic do
+      [:cpu]
     end
   end
 
@@ -90,7 +96,7 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
         optional(atom) => term
       }
 
-    objective(_, _, %{account: account}, _) do
+    resources(_, _, %{account: account}, _) do
       %{account: account}
     end
   end

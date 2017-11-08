@@ -4,7 +4,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
   @moduledoc """
   The BruteforceProcess is launched when a user wants to figure out the root
   password of the target server (identified by `target_server_ip` and
-  `target_server_id`).
+  `target_id`).
   """
 
   alias Helix.Network.Model.Network
@@ -26,7 +26,15 @@ process Helix.Software.Process.Cracker.Bruteforce do
 
   @type objective :: %{cpu: resource_usage}
 
-  @type objective_params ::
+  @type resources ::
+    %{
+      objective: objective,
+      static: map,
+      l_dynamic: [:cpu],
+      r_dynamic: []
+    }
+
+  @type resources_params ::
     %{
       cracker: File.t_of_type(:cracker),
       hasher: File.t_of_type(:hasher) | nil
@@ -40,10 +48,10 @@ process Helix.Software.Process.Cracker.Bruteforce do
     }
   end
 
-  @spec objective(objective_params) ::
-    objective
-  def objective(params = %{cracker: %File{}, hasher: _}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{cracker: %File{}, hasher: _}),
+    do: get_resources params
 
   processable do
     @moduledoc """
@@ -55,20 +63,10 @@ process Helix.Software.Process.Cracker.Bruteforce do
     alias Helix.Software.Event.Cracker.Bruteforce.Processed,
       as: BruteforceProcessedEvent
 
-    def dynamic_resources(_),
-      do: [:cpu]
-
-    def minimum(_) do
-      %{
-        paused: %{ram: 500},
-        running: %{ram: 500}
-      }
-    end
-
-    on_completion(data) do
+    on_completion(process, data) do
       event = BruteforceProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     def after_read_hook(data) do
@@ -78,7 +76,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
     end
   end
 
-  process_objective do
+  resourceable do
     @moduledoc """
     Defines how long a BruteforceProcess should take, resource usage, etc.
     """
@@ -87,7 +85,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
     alias Helix.Software.Model.File
     alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
 
-    @type params :: BruteforceProcess.objective_params
+    @type params :: BruteforceProcess.resources_params
 
     @type factors ::
       %{
@@ -110,7 +108,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
       # Retrieves information about the target's hasher (if any)
       factor FileFactor, %{file: hasher},
         if: not is_nil(hasher),
-        only: :size,
+        only: :version,
         as: :hasher
     end
 
@@ -119,11 +117,22 @@ process Helix.Software.Process.Cracker.Bruteforce do
     BruteforceProcess only uses CPU.
     """
     cpu(%{hasher: nil}) do
-      f.cracker.version.bruteforce
+      10_000 - 100 * f.cracker.version.bruteforce
     end
 
     cpu(%{hasher: %File{}}) do
       f.cracker.version.bruteforce * f.hasher.version.password
+    end
+
+    static do
+      %{
+        paused: %{ram: 20},
+        running: %{ram: 50}
+      }
+    end
+
+    dynamic do
+      [:cpu]
     end
   end
 
@@ -143,7 +152,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
         optional(atom) => term
       }
 
-    objective(_, target, _, %{cracker: cracker}) do
+    resources(_, target, _, %{cracker: cracker}) do
       hasher = FileQuery.fetch_best(target, :password)
 
       %{

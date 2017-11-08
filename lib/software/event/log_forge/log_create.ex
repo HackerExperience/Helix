@@ -9,19 +9,19 @@ defmodule Helix.Software.Event.LogForge.LogCreate do
     alias Helix.Software.Model.SoftwareType.LogForge, as: LogForgeProcess
 
     @type t :: %__MODULE__{
-      target_server_id: Server.id,
+      target_id: Server.id,
       entity_id: Entity.id,
       message: String.t,
       version: pos_integer
     }
 
-    event_struct [:target_server_id, :entity_id, :message, :version]
+    event_struct [:target_id, :entity_id, :message, :version]
 
     @spec new(LogForgeProcess.t) ::
       t
     def new(data = %LogForgeProcess{operation: :create}) do
       %__MODULE__{
-        target_server_id: data.target_server_id,
+        target_id: data.target_id,
         entity_id: data.entity_id,
         message: data.message,
         version: data.version

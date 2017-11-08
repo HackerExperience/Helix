@@ -23,7 +23,15 @@ process Helix.Software.Process.Cracker.Overflow do
 
   @type objective :: %{cpu: resource_usage}
 
-  @type objective_params ::
+  @type resources ::
+    %{
+      objective: objective,
+      static: map,
+      l_dynamic: [:cpu],
+      r_dynamic: []
+    }
+
+  @type resources_params ::
     %{
       cracker: File.t
     }
@@ -44,10 +52,10 @@ process Helix.Software.Process.Cracker.Overflow do
     }
   end
 
-  @spec objective(objective_params) ::
-    objective
-  def objective(params = %{cracker: %File{}}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{cracker: %File{}}),
+    do: get_resources params
 
   processable do
 
@@ -58,20 +66,10 @@ process Helix.Software.Process.Cracker.Overflow do
     alias Helix.Software.Event.Cracker.Overflow.Processed,
       as: OverflowProcessedEvent
 
-    def dynamic_resources(_),
-      do: [:cpu]
-
-    def minimum(_) do
-      %{
-        paused: %{ram: 24},
-        running: %{ram: 24}
-      }
-    end
-
-    on_completion(data) do
+    on_completion(process, data) do
       event = OverflowProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     def after_read_hook(data = %{target_connection_id: nil}),
@@ -87,13 +85,13 @@ process Helix.Software.Process.Cracker.Overflow do
     end
   end
 
-  process_objective do
+  resourceable do
 
     alias Helix.Software.Factor.File, as: FileFactor
     alias Helix.Software.Model.File
     alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
 
-    @type params :: OverflowProcess.objective_params
+    @type params :: OverflowProcess.resources_params
     @type factors ::
       %{
         cracker: %{version: FileFactor.fact_version}
@@ -109,6 +107,17 @@ process Helix.Software.Process.Cracker.Overflow do
     cpu do
       f.cracker.version.overflow
     end
+
+    dynamic do
+      [:cpu]
+    end
+
+    static do
+      %{
+        paused: %{ram: 100},
+        running: %{ram: 200}
+      }
+    end
   end
 
   executable do
@@ -123,7 +132,7 @@ process Helix.Software.Process.Cracker.Overflow do
         optional(atom) => term
       }
 
-    objective(_, _, _, %{cracker: cracker}) do
+    resources(_, _, _, %{cracker: cracker}) do
       %{cracker: cracker}
     end
 

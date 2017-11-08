@@ -228,7 +228,7 @@ defmodule Helix.Software.Model.File do
     def by_file(query \\ File, id) do
       query
       |> where([f], f.file_id == ^id)
-      |> join_assoc_modules()
+      |> join_modules()
       |> preload_modules()
     end
 
@@ -237,8 +237,12 @@ defmodule Helix.Software.Model.File do
     @doc """
     Query by storage id.
     """
-    def by_storage(query \\ File, id),
-      do: where(query, [f], f.storage_id == ^id)
+    def by_storage(query \\ File, id) do
+      query
+      |> where([f], f.storage_id == ^id)
+      |> join_modules()
+      |> preload_modules()
+    end
 
     @spec by_version(Queryable.t, Storage.idtb, File.Module.name) ::
       Queryable.t
@@ -247,7 +251,7 @@ defmodule Helix.Software.Model.File do
     """
     def by_version(query \\ File, storage, module) do
       query
-      |> by_storage(storage)
+      |> where([f], f.storage_id == ^storage)
       |> join_modules()
       |> by_module(module)
       |> order_by_version()
@@ -282,17 +286,9 @@ defmodule Helix.Software.Model.File do
     @spec join_modules(Queryable.t) ::
       Queryable.t
     docp """
-    Join File.Module.
-    """
-    defp join_modules(query),
-      do: join(query, :left, [f], fm in File.Module, fm.file_id == f.file_id)
-
-    @spec join_assoc_modules(Queryable.t) ::
-      Queryable.t
-    docp """
     Join File.Module through Ecto Schema's association.
     """
-    defp join_assoc_modules(query),
+    defp join_modules(query),
       do: join(query, :left, [f], fm in assoc(f, :modules))
 
     @spec preload_modules(Queryable.t) ::

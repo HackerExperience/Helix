@@ -24,7 +24,7 @@ defmodule Helix.Process.Query.Process do
   defdelegate fetch(id),
     to: ProcessInternal
 
-  @spec get_running_processes_of_type_on_server(Server.idt, String.t) ::
+  @spec get_running_processes_of_type_on_server(Server.idt, Process.type) ::
     [Process.t]
   @doc """
   Fetches processes running on `gateway` that are of `type`
@@ -46,46 +46,11 @@ defmodule Helix.Process.Query.Process do
   @spec get_processes_on_server(Server.idt) ::
     [Process.t]
   @doc """
-  Fetches processes running on `gateway`
+  Fetches *all* processes running on the given server.
 
-  ### Examples
-
-      iex> get_processes_on_server("aa::bb")
-      [%Process{}, %Process{}, %Process{}, %Process{}, %Process{}]
+  Returns both local and remote processes.
   """
   defdelegate get_processes_on_server(gateway_id),
-    to: ProcessInternal
-
-  @spec get_processes_targeting_server(Server.idt) ::
-    [Process.t]
-  @doc """
-  Fetches remote processes affecting `gateway`
-
-  Note that this will **not** include processes running on `gateway` even if
-  they affect it
-
-  ### Examples
-
-      iex> get_processes_targeting_server("aa::bb")
-      [%Process{}]
-  """
-  defdelegate get_processes_targeting_server(gateway_id),
-    to: ProcessInternal
-
-  @spec get_processes_of_type_targeting_server(Server.idt, String.t) ::
-    [Process.t]
-  @doc """
-  Fetches remote processes of type `type` affecting `gateway`
-
-  Note that this will **not** include processes running on `gateway` even if
-  they affect it
-
-  ### Examples
-
-      iex> get_processes_of_type_targeting_server("aa::bb", "cracker")
-      [%Process{}, %Process{}]
-  """
-  defdelegate get_processes_of_type_targeting_server(gateway_id, type),
     to: ProcessInternal
 
   @spec get_processes_on_connection(Connection.idt) ::
@@ -101,10 +66,10 @@ defmodule Helix.Process.Query.Process do
   defdelegate get_processes_on_connection(connection),
     to: ProcessInternal
 
-  get_custom "file_download", %{file_id: file_id},
+  get_custom :file_download, %{file_id: file_id},
     do: &(&1.file_id == file_id)
 
-  get_custom "file_upload", %{file_id: file_id},
+  get_custom :file_upload, %{file_id: file_id},
     do: &(&1.file_id == file_id)
 
   @spec get_custom(Process.type, Server.idt, meta :: map) ::
@@ -120,7 +85,7 @@ defmodule Helix.Process.Query.Process do
   The generated code is something like:
 
   ```
-    def get_custom(type = "process_type", server_id, %{file_id: file_id}) do
+    def get_custom(type = :process_type, server_id, %{file_id: file_id}) do
       server_id
       |> get_running_processes_of_type_on_server(type)
       |> Enum.fiter(&(&1.file_id == file_id))

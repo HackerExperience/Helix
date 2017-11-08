@@ -23,7 +23,7 @@
 
 #     params = %{
 #       gateway_id: server,
-#       target_server_id: server,
+#       target_id: server,
 #       file_id: file.file_id,
 #       process_data: process_data,
 #       process_type: "firewall_passive"

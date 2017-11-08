@@ -192,66 +192,72 @@ defmodule Helix.Server.Public.IndexTest do
   end
 
   describe "render_gateway/1" do
-    {server, %{entity: entity}} = ServerSetup.server()
+    test "renders the gateway index" do
+      {server, %{entity: entity}} = ServerSetup.server()
 
-    rendered =
-      server
-      |> ServerIndex.gateway(entity.entity_id)
-      |> ServerIndex.render_gateway()
+      rendered =
+        server
+        |> ServerIndex.gateway(entity.entity_id)
+        |> ServerIndex.render_gateway()
 
-    assert is_binary(rendered.name)
-    assert is_binary(rendered.password)
+      assert is_binary(rendered.name)
+      assert is_binary(rendered.password)
 
-    Enum.each(rendered.nips, fn [network_id, ip] ->
-      assert is_binary(network_id)
-      assert is_binary(ip)
-    end)
+      Enum.each(rendered.nips, fn [network_id, ip] ->
+        assert is_binary(network_id)
+        assert is_binary(ip)
+      end)
 
-    assert rendered.filesystem
-    assert rendered.logs
-    assert rendered.processes
-    assert rendered.tunnels
+      assert rendered.filesystem
+      assert rendered.logs
+      assert rendered.processes
+      assert rendered.tunnels
+    end
   end
 
   describe "remote/2" do
-    {server, _} = ServerSetup.server()
-    {entity, _} = EntitySetup.entity()
-    server_nips = ServerHelper.get_all_nips(server)
+    test "returns the remote server" do
+      {server, _} = ServerSetup.server()
+      {entity, _} = EntitySetup.entity()
+      server_nips = ServerHelper.get_all_nips(server)
 
-    remote = ServerIndex.remote(server, entity.entity_id)
+      remote = ServerIndex.remote(server, entity.entity_id)
 
-    # ServerIndex info
-    assert remote.nips == server_nips
+      # ServerIndex info
+      assert remote.nips == server_nips
 
-    # Info specific to gateway
-    refute Map.has_key?(remote, :password)
-    refute Map.has_key?(remote, :name)
+      # Info specific to gateway
+      refute Map.has_key?(remote, :password)
+      refute Map.has_key?(remote, :name)
 
-    # Info retrieved from sub-Indexes
-    assert remote.filesystem
-    assert remote.logs
-    assert remote.processes
-    assert remote.tunnels
+      # Info retrieved from sub-Indexes
+      assert remote.filesystem
+      assert remote.logs
+      assert remote.processes
+      assert remote.tunnels
+    end
   end
 
   describe "render_remote/1" do
-    {server, _} = ServerSetup.server()
-    {entity, _} = EntitySetup.entity()
+    test "renders the remote index" do
+      {server, _} = ServerSetup.server()
+      {entity, _} = EntitySetup.entity()
 
-    rendered =
-      server
-      |> ServerIndex.remote(entity.entity_id)
-      |> ServerIndex.render_remote()
+      rendered =
+        server
+        |> ServerIndex.remote(entity.entity_id)
+        |> ServerIndex.render_remote()
 
-    Enum.each(rendered.nips, fn [network_id, ip] ->
-      assert is_binary(network_id)
-      assert is_binary(ip)
-    end)
+      Enum.each(rendered.nips, fn [network_id, ip] ->
+        assert is_binary(network_id)
+        assert is_binary(ip)
+      end)
 
-    assert rendered.filesystem
-    assert rendered.logs
-    assert rendered.processes
-    assert rendered.tunnels
+      assert rendered.filesystem
+      assert rendered.logs
+      assert rendered.processes
+      assert rendered.tunnels
+    end
   end
 
   defp find_endpoint(endpoints, %{network_id: network_id, ip: ip}) do

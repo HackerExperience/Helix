@@ -1,7 +1,7 @@
 defmodule Helix.Test.Process.Setup do
 
+  alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
-  alias Helix.Process.Repo, as: ProcessRepo
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -11,8 +11,8 @@ defmodule Helix.Test.Process.Setup do
   @internet NetworkHelper.internet_id()
 
   def process(opts \\ []) do
-    {process, related} = fake_process(opts)
-    {:ok, inserted} = ProcessRepo.insert(process)
+    {_, related = %{params: params}} = fake_process(opts)
+    {:ok, inserted} = ProcessInternal.create(params)
     {inserted, related}
   end
 
@@ -23,7 +23,8 @@ defmodule Helix.Test.Process.Setup do
 
   Opts:
   - gateway_id:
-  - target_server_id:
+  - target_id:
+  - entity_id: source entity id.
   - file_id:
   - network_id:
   - connection_id:
@@ -34,48 +35,61 @@ defmodule Helix.Test.Process.Setup do
   Related: source_entity_id :: Entity.id, target_entity_id :: Entity.id
   """
   def fake_process(opts \\ []) do
-    gateway_id = Access.get(opts, :gateway_id, ServerSetup.id())
-    source_entity_id = Access.get(opts, :entity_id, EntitySetup.id())
-    {target_server_id, target_entity_id} =
+    gateway_id = Keyword.get(opts, :gateway_id, ServerSetup.id())
+    source_entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
+    {target_id, target_entity_id} =
       cond do
         opts[:single_server] ->
           {gateway_id, source_entity_id}
-        opts[:target_server_id] ->
-          {opts[:target_server_id], nil}
+        opts[:target_id] ->
+          {opts[:target_id], nil}
         true ->
           {ServerSetup.id(), EntitySetup.id()}
       end
 
-    file_id = Access.get(opts, :file_id, nil)
-    connection_id = Access.get(opts, :connection_id, nil)
-    network_id = Access.get(opts, :network_id, @internet)
+    file_id = Keyword.get(opts, :file_id, nil)
+    connection_id = Keyword.get(opts, :connection_id, nil)
+    network_id = Keyword.get(opts, :network_id, @internet)
 
     meta = %{
       source_entity_id: source_entity_id,
       gateway_id: gateway_id,
       target_entity_id: target_entity_id,
-      target_server_id: target_server_id,
+      target_id: target_id,
       file_id: file_id,
       connection_id: connection_id,
       network_id: network_id
     }
 
-    {process_type, process_data, meta} =
+    {process_type, process_data, meta, resources} =
       if opts[:type] do
         ProcessDataSetup.custom(opts[:type], opts[:data] || [], meta)
       else
         ProcessDataSetup.random(meta)
       end
 
+    l_limit = Keyword.get(opts, :l_limit, %{})
+    r_limit = Keyword.get(opts, :r_limit, %{})
+
+    static = Keyword.get(opts, :static, resources.static)
+
+    objective = Keyword.get(opts, :objective, resources.objective)
+
     params = %{
-      process_data: process_data,
-      process_type: process_type,
+      data: process_data,
+      type: process_type,
       gateway_id: meta.gateway_id,
       source_entity_id: meta.source_entity_id,
-      target_server_id: meta.target_server_id,
+      target_id: meta.target_id,
       file_id: meta.file_id,
       network_id: meta.network_id,
-      connection_id: meta.connection_id
+      connection_id: meta.connection_id,
+      static: static,
+      l_limit: l_limit,
+      r_limit: r_limit,
+      l_dynamic: resources.l_dynamic,
+      r_dynamic: resources.r_dynamic,
+      objective: objective
     }
 
     process =
@@ -86,7 +100,8 @@ defmodule Helix.Test.Process.Setup do
 
     related = %{
       source_entity_id: source_entity_id,
-      target_entity_id: target_entity_id
+      target_entity_id: target_entity_id,
+      params: params
     }
 
     {process, related}

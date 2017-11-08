@@ -22,3 +22,4 @@ env:
     - HELIX_ENDPOINT_SECRET=uhauhauhhauuhahuahuaha
     - HELIX_NODE_NAME=travis
     - HELIX_CLUSTER_COOKIE=uehauehuaheuaheuaheuhe
+    - HELIX_TEST_ENV=travis

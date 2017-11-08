@@ -12,7 +12,7 @@
 #   @type t :: %__MODULE__{
 #     file_id: File.id,
 #     target_file_id: File.id | nil,
-#     target_server_id: Server.id,
+#     target_id: Server.id,
 #     file: term,
 #     target_file: term
 #   }
@@ -26,7 +26,7 @@
 #       primary_key: true
 
 #     field :target_file_id, File.ID
-#     field :target_server_id, Server.ID
+#     field :target_id, Server.ID
 
 #     belongs_to :file, File,
 #       foreign_key: :file_id,
@@ -51,10 +51,10 @@
 #     file = generate_file(storage)
 
 #     %__MODULE__{}
-#     |> cast(%{target_server_id: server}, [:target_server_id])
+#     |> cast(%{target_id: server}, [:target_id])
 #     |> put_assoc(:target_file, target_file, required: true)
 #     |> put_assoc(:file, file, required: true)
-#     |> validate_required([:target_server_id])
+#     |> validate_required([:target_id])
 #   end
 
 #   defp generate_file(storage) do

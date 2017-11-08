@@ -27,8 +27,6 @@ defmodule Helix.Core.Listener.Internal.ListenerTest do
       refute listener.event == event
 
       # Make sure the Owner entry was created too
-      # assert OwnerInternal.fetch()  # Parei aqui
-
       assert %{owner: owner} =
         ListenerInternal.fetch_owner(
           owner_id, object_id, listener.event, subscriber

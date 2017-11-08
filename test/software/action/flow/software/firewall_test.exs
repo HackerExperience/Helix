@@ -19,8 +19,8 @@
 
 #       result = FirewallFlow.execute(file, server.server_id, %{})
 #       assert {:ok, process} = result
-#       assert %FirewallPassive{} = process.process_data
-#       assert "firewall_passive" == process.process_type
+#       assert %FirewallPassive{} = process.data
+#       assert "firewall_passive" == process.type
 
 #       TOPHelper.top_stop(server)
 #     end

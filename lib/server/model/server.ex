@@ -9,6 +9,7 @@ defmodule Helix.Server.Model.Server do
   alias HELL.Constant
   alias HELL.Password
   alias Helix.Hardware.Model.Component
+  alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Model.ServerType
 
   @type password :: String.t
@@ -21,6 +22,8 @@ defmodule Helix.Server.Model.Server do
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
+
+  @type resources :: Motherboard.resources
 
   @type creation_params :: %{
     :server_type => Constant.t,

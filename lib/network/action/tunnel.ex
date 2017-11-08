@@ -1,10 +1,6 @@
 defmodule Helix.Network.Action.Tunnel do
 
-  import HELL.Macros
-
-  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server
-  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
@@ -57,29 +53,8 @@ defmodule Helix.Network.Action.Tunnel do
 
   @spec create_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
-    | create_tunnel_errors
-  docp """
-  Checks if gateway, destination and bounces are valid servers, and if they
-  are connected to network
-  Note that those are more or less redundant since the interface (WS or HTTP)
-  have to convert the input IPs into server_ids anyway
-  """
   defp create_tunnel(network, gateway, destination, bounces) do
-    with \
-      exists? = &ServerHenforcer.server_exists?/1,
-      {true, _} <- exists?.(gateway) || {:gateway_id, :notfound},
-      {true, _} <- exists?.(destination) || {:destination_id, :notfound},
-      true <- Enum.all?(bounces, exists?) || {:links, :notfound},
-      connected? = &NetworkHenforcer.node_connected?(&1, network.network_id),
-      true <- connected?.(gateway) || {:gateway_id, :disconnected},
-      true <- connected?.(destination) || {:destination_id, :disconnected},
-      true <- Enum.all?(bounces, connected?) || {:links, :disconnected}
-    do
-      TunnelInternal.create(network, gateway, destination, bounces)
-    else
-      error ->
-        {:error, error}
-    end
+    TunnelInternal.create(network, gateway, destination, bounces)
   end
 
   @spec delete(Tunnel.idt) ::

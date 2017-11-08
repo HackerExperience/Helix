@@ -20,14 +20,14 @@ defmodule Helix.Software.Event.Cracker.Bruteforce do
       source_entity_id: Entity.id,
       network_id: Network.id,
       target_server_ip: IPv4.t,
-      target_server_id: Server.id,
+      target_id: Server.id,
     }
 
     event_struct [
       :source_entity_id,
       :network_id,
       :target_server_ip,
-      :target_server_id
+      :target_id
     ]
 
     @spec new(Process.t, BruteforceProcess.t) ::
@@ -36,7 +36,7 @@ defmodule Helix.Software.Event.Cracker.Bruteforce do
       %__MODULE__{
         source_entity_id: process.source_entity_id,
         network_id: process.network_id,
-        target_server_id: process.target_server_id,
+        target_id: process.target_id,
         target_server_ip: data.target_server_ip
       }
     end

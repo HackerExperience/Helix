@@ -16,18 +16,20 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  @forger_file (SoftwareSetup.file!(type: :log_forger))
+  defp forger_file do
+    SoftwareSetup.file!(type: :log_forger)
+  end
 
   describe "create/2" do
     test "returns changeset if invalid" do
-      assert {:error, changeset} = LogForge.create(@forger_file, %{})
+      assert {:error, changeset} = LogForge.create(forger_file(), %{})
       assert %Changeset{valid?: false} = changeset
     end
 
     test "requires operation and entity_id" do
       expected_errors = [:operation, :entity_id]
 
-      assert {:error, changeset} = LogForge.create(@forger_file, %{})
+      assert {:error, changeset} = LogForge.create(forger_file(), %{})
       errors = Keyword.keys(changeset.errors)
       assert Enum.sort(expected_errors) == Enum.sort(errors)
     end
@@ -37,17 +39,17 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
       expected_errors = [:target_log_id]
 
-      assert {:error, changeset} = LogForge.create(@forger_file, params)
+      assert {:error, changeset} = LogForge.create(forger_file(), params)
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
 
-    test "requires target_server_id when operation is create" do
+    test "requires target_id when operation is create" do
       params = %{message: "", operation: :create}
 
-      expected_errors = [:target_server_id]
+      expected_errors = [:target_id]
 
-      assert {:error, changeset} = LogForge.create(@forger_file, params)
+      assert {:error, changeset} = LogForge.create(forger_file(), params)
       errors = Keyword.keys(changeset.errors)
       assert Enum.all?(expected_errors, &(&1 in errors))
     end
@@ -60,14 +62,14 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         "entity_id" => to_string(Entity.ID.generate())
       }
       params_create = %{
-        "target_server_id" => to_string(Server.ID.generate()),
+        "target_id" => to_string(Server.ID.generate()),
         "message" => "A weapon to surpass Datal Gear",
         "operation" => :create,
         "entity_id" => to_string(Entity.ID.generate())
       }
 
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_edit)
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_create)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_edit)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_create)
     end
 
     test "accepts native erlang term entries" do
@@ -78,14 +80,14 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
         entity_id: Entity.ID.generate()
       }
       params_create = %{
-        target_server_id: Server.ID.generate(),
+        target_id: Server.ID.generate(),
         message: "Oh noes",
         operation: :create,
         entity_id: Entity.ID.generate()
       }
 
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_edit)
-      assert {:ok, %LogForge{}} = LogForge.create(@forger_file, params_create)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_edit)
+      assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_create)
     end
   end
 
@@ -171,7 +173,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   describe "create_objective/1" do
     test "returns a higher objective the higher the forger version is" do
       data = %LogForge{
-        target_server_id: Server.ID.generate(),
+        target_id: Server.ID.generate(),
         entity_id: Entity.ID.generate(),
         operation: :create,
         message: "Digital style",
@@ -192,9 +194,9 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   describe "ProcessView.render/4 for edit operation" do
     test "both partial and full processes returns target_log_id" do
       {process, %{target_entity_id: victim_entity}} = log_forger_process(:edit)
-      data = process.process_data
+      data = process.data
 
-      victim_server = process.target_server_id
+      victim_server = process.target_id
       attacker_entity = process.source_entity_id
 
       # Victim rendering Log process on her own server. Partial access.
@@ -224,10 +226,10 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   describe "ProcessView.render/4 for create operation" do
     test "both partial and full process adds no complement" do
       {process, _} = log_forger_process(:create)
-      data = process.process_data
+      data = process.data
 
       attacker_server = process.gateway_id
-      victim_server = process.target_server_id
+      victim_server = process.target_id
       attacker_entity = process.source_entity_id
       third_entity = Entity.ID.generate()
 
@@ -254,13 +256,13 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       db_create = ProcessHelper.raw_get(process_create.process_id)
       db_edit = ProcessHelper.raw_get(process_edit.process_id)
 
-      serialized_create = Processable.after_read_hook(db_create.process_data)
-      serialized_edit = Processable.after_read_hook(db_edit.process_data)
+      serialized_create = Processable.after_read_hook(db_create.data)
+      serialized_edit = Processable.after_read_hook(db_edit.data)
 
       # Create process has `target_log_id` equals nil
       refute serialized_create.target_log_id
       assert %Entity.ID{} = serialized_create.entity_id
-      assert %Server.ID{} = serialized_create.target_server_id
+      assert %Server.ID{} = serialized_create.target_id
       assert serialized_create.operation == :create
       assert serialized_create.message
       assert serialized_create.version
@@ -268,13 +270,12 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       # Edit has valid `target_log_id`
       assert %Entity.ID{} = serialized_edit.entity_id
       assert %Log.ID{} = serialized_edit.target_log_id
-      assert %Server.ID{} = serialized_edit.target_server_id
+      assert %Server.ID{} = serialized_edit.target_id
       assert serialized_edit.operation == :edit
       assert serialized_edit.message
       assert serialized_edit.version
 
-      TOPHelper.top_stop(process_create.gateway_id)
-      TOPHelper.top_stop(process_edit.gateway_id)
+      TOPHelper.top_stop()
     end
   end
 

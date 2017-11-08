@@ -1,4 +1,13 @@
 defmodule Helix.Process.Model.Process do
+  @moduledoc """
+  The Process model is responsible for persisting all in-game processes.
+
+  Compared to other models within the Process service, this model is quite
+  simple and straightforward. Other than the usual model responsibilities (like
+  ensuring the data is stored correctly and providing ways to query the data),
+  it plays a major role when formatting the process before giving it back to
+  whoever asked for it.
+  """
 
   use Ecto.Schema
   use HELL.ID, field: :process_id, meta: [0x0021]
@@ -6,557 +15,545 @@ defmodule Helix.Process.Model.Process do
   import Ecto.Changeset
 
   alias Ecto.Changeset
+  alias HELL.Constant
+  alias HELL.MapUtils
+  alias HELL.NaiveStruct
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
-  alias Helix.Process.Model.Process.Limitations
-  alias Helix.Process.Model.Process.MapServerToProcess
-  alias Helix.Process.Model.Process.NaiveStruct
-  alias Helix.Process.Model.Process.Resources
   alias Helix.Process.Model.Processable
-  alias Helix.Process.Model.Process.State
+  alias Helix.Process.Model.TOP
+  alias __MODULE__, as: Process
 
-  @type type :: String.t
+  @type t ::
+    %__MODULE__{
+      process_id: id,
+      gateway_id: Server.id,
+      source_entity_id: Entity.id,
+      target_id: Server.id,
+      file_id: File.id | nil,
+      connection_id: Connection.id | nil,
+      network_id: Network.id | nil,
+      data: term,
+      type: type,
+      priority: term,
+      l_allocated: Process.Resources.t | nil,
+      r_allocated: Process.Resources.t | nil,
+      r_limit: limit,
+      l_limit: limit,
+      l_reserved: Process.Resources.t,
+      r_reserved: Process.Resources.t,
+      last_checkpoint_time: DateTime.t,
+      static: static,
+      l_dynamic: dynamic,
+      r_dynamic: dynamic,
+      local?: boolean | nil,
+      next_allocation: Process.Resources.t | nil,
+      state: state | nil,
+      creation_time: DateTime.t,
+      time_left: non_neg_integer | nil,
+      completion_date: DateTime.t | nil
+    }
 
-  @type t :: %__MODULE__{
-    process_id: id,
-    gateway_id: Server.id,
-    source_entity_id: Entity.id,
-    target_server_id: Server.id,
-    file_id: File.id | nil,
-    network_id: Network.id | nil,
-    connection_id: Connection.id | nil,
-    process_data: Processable.t,
-    process_type: type,
-    state: State.state,
-    limitations: Limitations.t,
-    objective: Resources.t,
-    processed: Resources.t,
-    allocated: Resources.t,
-    priority: 0..5,
-    minimum: map,
-    creation_time: DateTime.t,
-    updated_time: DateTime.t,
-    estimated_time: DateTime.t | nil
+  @typep limit :: Process.Resources.t | %{}
+
+  @type type ::
+    :file_upload
+    | :file_download
+    | :cracker_bruteforce
+    | :cracker_overflow
+
+  @typedoc """
+  List of signals a process may receive during its lifetime.
+
+  # Process lifecycle signals
+
+  The processes below are related to the lifecycle of a process.
+
+  ## SIGTERM
+
+  Process reached its objective. Handled by Processable's `on_completion`.
+  This callback must be implemented by the process.
+
+  Note that, despite the name, it has no similarities with UNIX's SIGTERM.
+
+  Most common action is to `:delete` the process. `:find_next_target` is also a
+  valid option, depending on the Process behaviour.
+
+  ## SIGKILL
+
+  Signal sent when the process was asked to terminate. Must be accompanied by a
+  `kill_reason`. Note that when a process is completed, it is killed with reason
+  `:completed`.
+
+  Default action is to delete the process.
+
+  ## SIGSTOP
+
+  Signal sent when the user requested the process to be paused.
+
+  Default action is to pause the process.
+
+  ## SIGCONT
+
+  Signal sent when the user requested the process to be resumed.
+
+  Default action is to resume the process.
+
+  ## SIGPRIO
+
+  Signal sent when the user changed the priority of the process.
+
+  Default action is to `:renice`, i.e. change the process' priority.
+
+  # Object-related signals
+
+  The signals below are meant to notify the process that one of the objects the
+  process is using or modifying has changed.
+
+  Note that these signals are NOT sent to the process that originated them. See
+  `TOPHandler.filter_self_message/2` for context.
+
+  ## SIGCONND
+
+  Signal sent when the Process underlying `connection_id` was closed.
+
+  Default action is to send itself a SIGKILL with `:connection_closed` reason.
+
+  ## SIGFILED
+
+  Signal sent when the Process underlying `file_id` was deleted.
+
+  Default action is to send itself a SIGKILL with `:file_deleted` reason.
+  """
+  @type signal ::
+    :SIGTERM
+    | :SIGKILL
+    | :SIGSTOP
+    | :SIGCONT
+    | :SIGPRIO
+    | :SIGCONND
+    | :SIGFILED
+
+  @typedoc """
+  Valid params for each type of signal.
+  """
+  @type signal_params ::
+    %{reason: kill_reason}
+    | %{priority: term}
+    | %{connection: Connection.t}
+    | %{file: File.t}
+
+  @typedoc """
+  Valid reasons for which a Process may be killed.
+  """
+  @type kill_reason ::
+    :completed
+    | :killed
+    | :connection_closed
+    | :file_deleted
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
+  @type creation_params :: %{
+    :gateway_id => Server.id,
+    :source_entity_id => Entity.id,
+    :target_id => Server.id,
+    :data => Processable.t,
+    :type => type,
+    :network_id => Network.id | nil,
+    :file_id => File.id | nil,
+    :connection_id => Connection.id | nil,
+    :objective => map,
+    :l_dynamic => dynamic,
+    :r_dynamic => dynamic,
+    :static => static,
   }
 
-  @type process :: %__MODULE__{} | %Ecto.Changeset{data: %__MODULE__{}}
+  @creation_fields [
+    :gateway_id,
+    :source_entity_id,
+    :target_id,
+    :file_id,
+    :network_id,
+    :connection_id,
+    :data,
+    :type,
+    :objective,
+    :static,
+    :l_dynamic,
+    :r_dynamic,
+    :l_limit,
+    :r_limit
+  ]
 
-  @type create_params :: %{
-    :gateway_id => Server.idtb,
-    :source_entity_id => Entity.idtb,
-    :target_server_id => Server.idtb,
-    :process_data => Processable.t,
-    :process_type => String.t,
-    optional(:file_id) => File.idtb,
-    optional(:network_id) => Network.idtb,
-    optional(:connection_id) => Connection.idtb,
-    optional(:objective) => map
-  }
+  @required_fields [
+    :gateway_id,
+    :source_entity_id,
+    :target_id,
+    :data,
+    :type,
+    :objective,
+    :static,
+    :priority,
+    :l_dynamic,
+    :priority
+  ]
 
-  @type update_params :: %{
-    optional(:state) => State.state,
-    optional(:priority) => 0..5,
-    optional(:creation_time) => DateTime.t,
-    optional(:updated_time) => DateTime.t,
-    optional(:estimated_time) => DateTime.t | nil,
-    optional(:limitations) => map,
-    optional(:objective) => map,
-    optional(:processed) => map,
-    optional(:allocated) => map,
-    optional(:minimum) => map,
-    optional(:process_data) => Processable.t
-  }
+  @type state ::
+    :waiting_allocation
+    | :running
+    | :paused
 
-  @creation_fields ~w/
-    process_data
-    process_type
-    gateway_id
-    source_entity_id
-    target_server_id
-    file_id
-    network_id
-    connection_id/a
-  @update_fields ~w/state priority updated_time estimated_time minimum/a
+  @type time_left :: float
 
-  @required_fields ~w/
-    gateway_id
-    target_server_id
-    process_data
-    process_type/a
+  @type resource :: :cpu | :ram | :dlk | :ulk
 
+  @type dynamic :: [resource]
+
+  @type static ::
+    %{
+      paused: static_usage,
+      running: static_usage
+    }
+    | %{}
+
+  @typep static_usage ::
+    %{
+      cpu: number,
+      ram: number,
+      dlk: number,
+      ulk: number
+    }
+    | %{}
+
+  # Similar to `task_struct` on `sched.h` ;-)
+  @primary_key false
   schema "processes" do
     field :process_id, ID,
       primary_key: true
 
+    ### Identifiers
+
     # The gateway that started the process
     field :gateway_id, Server.ID
+
     # The entity that started the process
     field :source_entity_id, Entity.ID
+
     # The server where the target object of this process action is
-    field :target_server_id, Server.ID
-    # Which file (if any) contains the "executable" of this process
+    field :target_id, Server.ID
+
+    ### Custom keys
+
+    # Which file (if any) is the relevant target of this process
     field :file_id, File.ID
-    # Which network is this process bound to (if any)
+
+    # Which network (if any) is this process bound to
     field :network_id, Network.ID
-    # Which connection is the transport method for this process (if any).
-    # Obviously if the connection is closed, the process will be killed. In the
-    # future it might make sense to have processes that might survive after a
-    # connection shutdown but right now, it's a kill
+
+    # Which connection (if any) is the transport method for this process
     field :connection_id, Connection.ID
 
-    # Data that is used by the specific implementation of the process
-    # side-effects
-    field :process_data, NaiveStruct
+    ### Helix.Process required data
 
-    # The type of process that defines this process behaviour.
-    # This field might sound redundant when `:process_data` is a struct that
-    # might allow us to infer the type of process, but this field is included to
-    # allow filtering by process_type (and even blocking more than one process
-    # of certain process_type from running on a server) from the db
-    field :process_type, :string
+    # Data used by the specific implementation for side-effects generation
+    field :data, NaiveStruct
 
-    # Which state in the process FSM the process is currently on
-    field :state, State,
-      default: :running
-    # What is the process priority on the Table of Processes (only affects
-    # dynamic allocation)
+    # The process type identifier
+    field :type, Constant
+
+    # Process priority.
     field :priority, :integer,
       default: 3
 
-    embeds_one :objective, Resources,
-      on_replace: :delete
-    embeds_one :processed, Resources,
-      on_replace: :delete
-    embeds_one :allocated, Resources,
-      on_replace: :delete
-    embeds_one :limitations, Limitations,
-      on_replace: :delete
+    ### Resource usage information
 
-    # The minimum amount of resources this process requires (aka the static
-    # amount of resources this process uses)
-    field :minimum, :map,
-      default: %{},
+    # Amount of resources required in order to consider the process completed.
+    field :objective, :map
+
+    # Amount of resources that this process has already processed.
+    field :processed, :map
+
+    # Amount of resources that this process has allocated to it
+    field :l_allocated, :map,
+      virtual: true
+    field :r_allocated, :map,
+      virtual: true
+
+    # Limitations
+    field :r_limit, :map,
+      default: %{}
+    field :l_limit, :map,
+      default: %{}
+
+    field :l_reserved, :map,
+      default: %{}
+    field :r_reserved, :map,
+      default: %{}
+
+    # Date when the process was last simulated during a `TOPAction.recalque/2`
+    field :last_checkpoint_time, :utc_datetime
+
+    # Static amount of resources used by the process
+    field :static, :map
+
+    # List of dynamically allocated resources
+    field :l_dynamic, {:array, Constant}
+    field :r_dynamic, {:array, Constant},
+      default: []
+
+    ### Metadata
+
+    # Used internally by Allocator to identify whether the process is local (it
+    # was started on this server) or remote (started somewhere else, and targets
+    # the current server).
+    field :local?, :boolean,
+      virtual: true
+
+    # Used by the Scheduler to accurately forecast the process, taking into
+    # consideration both the current allocation (`allocated`) and the next
+    # allocation, as defined by the Allocator.
+    field :next_allocation, :map,
+      virtual: true
+
+    # Process state (`:running`, `:stopped`). Used internally for an easier
+    # abstraction over `priority` (which is used to define the process state)
+    field :state, Constant,
       virtual: true
 
     field :creation_time, :utc_datetime
-    field :updated_time, :utc_datetime
-    field :estimated_time, :utc_datetime,
+
+    # Estimated time left for completion of the process. Seconds.
+    field :time_left, :float,
       virtual: true
 
-    # Pretend this doesn't exists. This is included on the vschema solely to
-    # ensure with ease that those entries will be inserted in the same
-    # transaction but only after the process is inserted
-    has_many :server_to_process_map, MapServerToProcess,
-      foreign_key: :process_id,
-      references: :process_id
+    # Estimated completion date for the process.
+    field :completion_date, :utc_datetime,
+      virtual: true
   end
 
-  @spec create_changeset(create_params) ::
-    Changeset.t
-  def create_changeset(params) do
-    now = DateTime.utc_now()
+  @spec create_changeset(creation_params) ::
+    changeset
+  @doc """
+  Creates the changeset of a process, casting the expected fields and putting
+  the defaults (like creation time).
 
+  This is the moment a process is born.
+  """
+  def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> put_change(:creation_time, now)
-    |> put_change(:updated_time, now)
-    |> validate_change(:process_data, fn :process_data, value ->
-      # Only accepts as input structs that implement protocol Processable to
-      # ensure that they will be properly processed
-      if Processable.impl_for(value),
-        do: [],
-        else: [process_data: "invalid value"]
-    end)
-    |> put_defaults()
-    |> changeset(params)
-    |> server_to_process_map()
-    |> Map.put(:action, :insert)
-  end
-
-  @spec put_defaults(Changeset.t) ::
-    Changeset.t
-  defp put_defaults(changeset) do
-    cs =
-      get_change(changeset, :limitations)
-      && changeset
-      || put_embed(changeset, :limitations, %{})
-
-    cs
-    |> put_embed(:processed, %{})
-    |> put_embed(:allocated, %{})
-  end
-
-  @spec update_changeset(process, update_params) ::
-    Changeset.t
-  def update_changeset(process, params) do
-    process
-    |> cast(params, @update_fields)
-    |> cast_embed(:processed)
-    |> cast_embed(:allocated)
-    |> cast_embed(:limitations)
-    |> validate_process_data(params)
-    |> changeset(params)
-    |> Map.put(:action, :update)
-  end
-
-  defp validate_process_data(changeset, params) do
-    process_data = get_field(changeset, :process_data)
-
-    changeset
-    |> cast(params, [:process_data])
-    |> validate_change(:process_data, fn :process_data, new_data ->
-      if process_data.__struct__ == new_data.__struct__,
-        do: [],
-        else: [process_data: "type changed"]
-    end)
-  end
-
-  @spec changeset(process, map) ::
-    Changeset.t
-  @doc false
-  def changeset(struct, params) do
-    struct
-    |> cast(params, [:updated_time])
-    |> cast_embed(:objective)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:priority, 0..5)
+    |> put_defaults()
   end
 
-  @spec load_virtual_data(t) ::
-    t
-  @doc """
-  Updates `minimum` and `estimated_time`  into the process
-  """
-  def load_virtual_data(process) do
-    minimum = Processable.minimum(process.process_data)
-
-    process
-    |> estimate_conclusion()
-    |> Map.put(:minimum, minimum)
-  end
-
-  @spec format(t) ::
+  @spec format(raw_process :: t) ::
     t
   @doc """
   Converts the retrieved process from the Database into TOP's internal format.
-
   Notably, it:
+
   - Adds virtual data (derived data not stored on DB).
   - Converts the Processable (defined at `process_data`) into Helix internal
-    format, by using the `after_read_hook/1` implemented by each Processable
+  format, by using the `after_read_hook/1` implemented by each Processable
+  - Converts all resources (objective, limit, reserved etc) into Helix format.
+  - Infers the actual process usage, based on what was reserved for it.
+  - Estimates the completion date and time left
   """
-  def format(process) do
-    data = Processable.after_read_hook(process.process_data)
+  def format(process = %Process{}) do
+    formatted_data = Processable.after_read_hook(process.data)
 
     process
-    |> load_virtual_data()
-    |> Map.replace(:process_data, data)
+    |> Map.replace(:state, get_state(process))
+    |> Map.replace(:data, formatted_data)
+    |> format_resources()
+    |> infer_usage()
+    |> estimate_duration()
   end
 
-  @spec complete?(process) :: boolean
-  def complete?(process = %Ecto.Changeset{}),
-    do: complete?(apply_changes(process))
-  def complete?(p = %__MODULE__{}),
-    do: p.state == :complete or (p.objective && p.objective == p.processed)
+  @spec get_dynamic(t) ::
+    [resource]
+  @doc """
+  Context-aware getter for the list of resources the process is supposed to
+  allocate dynamically.
+  """
+  def get_dynamic(%{local?: true, l_dynamic: dynamic}),
+    do: dynamic
+  def get_dynamic(%{local?: false, r_dynamic: dynamic}),
+    do: dynamic
 
-  @spec kill(process, atom) ::
-    {[process] | process, [struct]}
-  def kill(process = %__MODULE__{}, reason),
-    do: Processable.kill(process.process_data, process, reason)
-  def kill(process = %Ecto.Changeset{}, reason),
-    do: Processable.kill(get_change(process, :process_data), process, reason)
+  @spec get_limit(t) ::
+    limit
+  @doc """
+  Context-aware getter for the limits of a process' resource consumption.
+  """
+  def get_limit(%{local?: true, l_limit: limit}),
+    do: limit
+  def get_limit(%{local?: false, r_limit: limit}),
+    do: limit
 
-  @spec allocate_minimum(process) ::
-    Changeset.t
-  def allocate_minimum(process) do
-    process = change(process)
+  @spec get_last_update(t) ::
+    DateTime.t
+  @doc """
+  Returns the last time the process was updated. It may be either the creation
+  time or the `last_checkpoint_time`, whichever came first.
+  """
+  def get_last_update(p = %{last_checkpoint_time: nil}),
+    do: p.creation_time
+  def get_last_update(%{last_checkpoint_time: last_checkpoint_time}),
+    do: last_checkpoint_time
 
-    minimum =
-      process
-      |> get_field(:minimum)
-      |> Map.get(get_field(process, :state), %{})
+  @spec infer_usage(t) ::
+    t
+  @doc """
+  Based on what resources the process can allocate locally and remotely, and
+  considering its limitations, infer the actual amount of resources the process
+  will allocate, both locally and remotely.
 
-    update_changeset(process, %{allocated: minimum})
-  end
+  Mind you, this function is where all the hard work of the TOP, Scheduler and
+  Allocator yields its final result: how many resources a process has allocated
+  to itself.
+  """
+  def infer_usage(process) do
+    l_alloc = Process.Resources.min(process.l_limit, process.l_reserved)
+    r_alloc = Process.Resources.min(process.r_limit, process.r_reserved)
 
-  @spec allocate(process, Resources.resourceable) ::
-    Changeset.t
-  def allocate(process, amount) do
-    cs = change(process)
+    {l_alloc, r_alloc} =
+      # Assumes that, if remote allocation was not defined, then the process is
+      # oblivious to the remote server's resources
+      if r_alloc == %{} do
+        {l_alloc, Process.Resources.initial()}
 
-    # The amount we want to allocate
-    allocable =
-      cs
-      |> get_field(:allocated)
-      |> Resources.sum(amount)
-
-    allocated =
-      cs
-      |> get_field(:limitations)
-      |> Limitations.to_list()
-      |> Enum.reduce(allocable, fn
-        {_, nil}, acc ->
-          acc
-        {field, value}, acc ->
-          # If there is a limit to certain resource, don't allow the allocation
-          # to exceed that limit
-          Map.update!(acc, field, &min(&1, value))
-      end)
-      |> Map.from_struct()
-
-    update_changeset(cs, %{allocated: allocated})
-  end
-
-  @spec allocation_shares(process) ::
-    non_neg_integer
-  def allocation_shares(process) do
-    case process do
-      %__MODULE__{state: state, priority: priority}
-      when state in [:standby, :running] ->
-        can_allocate?(process)
-        && priority
-        || 0
-      %__MODULE__{} ->
-        0
-      %Ecto.Changeset{} ->
-        process
-        |> apply_changes()
-        |> allocation_shares()
-    end
-  end
-
-  @spec pause(process) ::
-    {[t | Ecto.Changeset.t] | t | Ecto.Changeset.t, [struct]}
-  def pause(process) do
-    changeset = change(process)
-    state = get_field(changeset, :state)
-
-    if :paused == state do
-      {changeset, []}
-    else
-      changeset =
-        changeset
-        |> calculate_work(DateTime.utc_now())
-        |> update_changeset(%{state: :paused, estimated_time: nil})
-        |> allocate_minimum()
-
-      changeset
-      |> get_field(:process_data)
-      |> Processable.state_change(changeset, state, :paused)
-    end
-  end
-
-  @spec resume(process) ::
-    {[t | Ecto.Changeset.t] | t | Ecto.Changeset.t, [struct]}
-  def resume(process) do
-    changeset = change(process)
-    state = get_field(changeset, :state)
-
-    if :paused == state do
-      # FIXME: state can be "standby" on some cases
-      changeset =
-        changeset
-        |> update_changeset(%{
-          state: :running,
-          updated_time: DateTime.utc_now()})
-        |> allocate_minimum()
-        |> estimate_conclusion()
-
-      changeset
-      |> get_field(:process_data)
-      |> Processable.state_change(changeset, state, :running)
-    else
-      changeset
-    end
-  end
-
-  @spec calculate_work(elem, DateTime.t) ::
-    elem when elem: process
-  def calculate_work(p = %__MODULE__{}, now) do
-    p
-    |> change()
-    |> calculate_work(now)
-    |> apply_changes()
-  end
-
-  def calculate_work(process, now) do
-    if :running == get_field(process, :state) do
-      diff =
-        process
-        |> get_field(:updated_time)
-        |> diff_in_seconds(now)
-
-      processed = calculate_processed(process, diff)
-
-      update_changeset(process, %{updated_time: now, processed: processed})
-    else
-      process
-    end
-  end
-
-  @spec estimate_conclusion(elem) ::
-    elem when elem: process
-  def estimate_conclusion(process = %__MODULE__{}) do
-    process
-    |> change()
-    |> estimate_conclusion()
-    |> apply_changes()
-  end
-
-  def estimate_conclusion(process) do
-    objective = get_field(process, :objective)
-    processed = get_field(process, :processed)
-    allocated = get_field(process, :allocated)
-
-    conclusion =
-      if objective do
-        ttl =
-          objective
-          |> Resources.sub(processed)
-          |> Resources.div(allocated)
-          |> Resources.to_list()
-          # Returns a list of "seconds to fulfill resource"
-          |> Enum.filter(fn {_, x} -> x != 0 end)
-          |> Enum.map(&elem(&1, 1))
-          |> Enum.reduce(0, &max/2)
-
-        case ttl do
-          x when not x in [0, nil] ->
-            process
-            |> get_field(:updated_time)
-            |> Timex.shift(seconds: x)
-          _ ->
-            # Exceptional case when all resources are "0" (ie: nothing to do)
-            # Also includes the case of when a certain resource will never be
-            # completed
-            nil
-        end
+      # On the other hand, if there are remote allocations/limitations, we'll
+      # immediately mirror its resources and potentially limit the local
+      # allocation
       else
+        mirrored_transfer_resources =
+          r_alloc
+          |> Process.Resources.mirror()
+          |> Map.drop([:cpu, :ram])
+
+        l_alloc = Process.Resources.min(mirrored_transfer_resources, l_alloc)
+
+        {l_alloc, r_alloc}
+      end
+
+    %{process|
+      l_allocated: l_alloc |> Process.Resources.prepare(),
+      r_allocated: r_alloc |> Process.Resources.prepare()
+    }
+  end
+
+  @spec estimate_duration(t) ::
+    t
+  defp estimate_duration(process = %Process{}) do
+    {_, time_left} = TOP.Scheduler.estimate_completion(process)
+
+    completion_date =
+      if time_left == :infinity do
         nil
+      else
+        previous_update = get_last_update(process)
+
+        ms_left =
+          time_left
+          |> Kernel.*(1000)  # From second to millisecond
+          |> trunc()
+
+        previous_update
+        |> DateTime.to_unix(:millisecond)
+        |> Kernel.+(ms_left)
+        |> DateTime.from_unix!(:millisecond)
       end
 
-    update_changeset(process, %{estimated_time: conclusion})
+    process
+    |> Map.replace(:completion_date, completion_date)
+    |> Map.replace(:time_left, time_left)
   end
 
-  @spec seconds_to_change(process) ::
-    non_neg_integer
-    | :infinity
-  @doc """
-  How many seconds until the `process` change state or frees some resource from
-  completing part of it's objective
-  """
-  def seconds_to_change(p = %Changeset{}),
-    do: seconds_to_change(apply_changes(p))
-  def seconds_to_change(%{objective: nil}),
-    do: :infinity
-  def seconds_to_change(process) do
-    process.objective
-    |> Resources.sub(process.processed)
-    |> Resources.div(process.allocated)
-    |> Resources.to_list()
-    |> Keyword.values()
-    |> Enum.filter(&(is_integer(&1) and &1 > 0))
-    |> Enum.reduce(:infinity, &min/2) # Note that atom > int
+  @spec format_resources(t) ::
+    t
+  defp format_resources(process = %Process{}) do
+    process
+    |> format_objective()
+    |> format_processed()
+    |> format_static()
+    |> format_limits()
+    |> format_reserved()
   end
 
-  @spec can_allocate?(process, res | [res]) ::
-    boolean when res: (:cpu | :ram | :dlk | :ulk)
-  @doc """
-  Checks if the `process` can allocate any of the specified `resources`
-  """
-  def can_allocate?(process, resources  \\ [:cpu, :ram, :dlk, :ulk]) do
-    resources = List.wrap(resources)
-    Enum.any?(can_allocate(process), &(&1 in resources))
+  @spec format_objective(t) ::
+    t
+  defp format_objective(p = %{objective: objective}),
+    do: %{p| objective: Process.Resources.format(objective)}
+
+  @spec format_processed(t) ::
+    t
+  defp format_processed(p = %{processed: nil}),
+    do: p
+  defp format_processed(p = %{processed: processed}),
+    do: %{p| processed: Process.Resources.format(processed)}
+
+  @spec format_static(t) ::
+    t
+  defp format_static(p = %{static: static}) do
+    static = MapUtils.atomize_keys(static)
+
+    %{p| static: static}
   end
 
-  # TODO: rename this
-  @spec can_allocate(process) ::
-    [:cpu | :ram | :dlk | :ulk]
-  @doc """
-  Returns a list with all resources that the `process` can allocate
-  """
-  def can_allocate(process = %Changeset{}),
-    do: can_allocate(apply_changes(process))
-  def can_allocate(process = %__MODULE__{}) do
-    dynamic_resources = Processable.dynamic_resources(process.process_data)
+  @spec format_limits(t) ::
+    t
+  defp format_limits(p) do
+    l_limit =
+      p.l_limit
+      |> Process.Resources.format()
+      |> Process.Resources.reject_empty()
 
-    allowed =
-      case process.objective do
-        nil ->
-          []
-        objective ->
-          remaining = Resources.sub(objective, process.processed)
+    r_limit =
+      p.r_limit
+      |> Process.Resources.format()
+      |> Process.Resources.reject_empty()
 
-          Enum.filter(dynamic_resources, fn resource ->
-            remaining = Map.get(remaining, resource)
-            is_integer(remaining) and remaining > 0
-          end)
-      end
-
-    dynamic_resources
-    |> Enum.filter(fn resource ->
-      # Note that this is `nil` unless a value is specified.
-      # Also note that nil is greater than any integer :)
-      limitations = Map.get(process.limitations, resource)
-      allocated = Map.get(process.allocated, resource)
-
-      resource in allowed and limitations > allocated
-    end)
-  end
-
-  @spec server_to_process_map(Changeset.t) ::
-    Changeset.t
-  defp server_to_process_map(changeset) do
-    process_type = get_field(changeset, :process_type)
-
-    params1 = %{
-      server_id: get_field(changeset, :gateway_id),
-      process_type: process_type
+    %{p|
+      l_limit: l_limit,
+      r_limit: r_limit
     }
-    params2 = %{
-      server_id: get_field(changeset, :target_server_id),
-      process_type: process_type
-    }
-
-    # Should both records be identical, dedup will remove one of them
-    records = Enum.dedup([params1, params2])
-
-    put_assoc(changeset, :server_to_process_map, records)
   end
 
-  @spec diff_in_seconds(DateTime.t, DateTime.t) ::
-    non_neg_integer
-    | nil
-  # Returns the difference in seconds from `start` to `finish`.
-  # This assumes that both the inputs are using UTC.
-  defp diff_in_seconds(%DateTime{}, nil),
-    do: nil
-  defp diff_in_seconds(start = %DateTime{}, finish = %DateTime{}),
-    do: Timex.diff(finish, start, :seconds)
+  @spec format_reserved(t) ::
+    t
+  defp format_reserved(p) do
+    %{p|
+      l_reserved: Process.Resources.format(p.l_reserved),
+      r_reserved: Process.Resources.format(p.r_reserved)
+    }
+  end
 
-  @spec calculate_processed(process, non_neg_integer) ::
-    Resources.t
-  # Returns the value of resources processed by `process` after adding the
-  # amount processed in `seconds_passed`
-  defp calculate_processed(process, seconds_passed) do
-    cs = change(process)
+  @spec get_state(t) ::
+    state
+  defp get_state(%{priority: 0}),
+    do: :paused
+  defp get_state(process) do
+    if process.l_reserved == %{} do
+      :waiting_allocation
+    else
+      :running
+    end
+  end
 
-    diff =
-      cs
-      |> get_field(:allocated)
-      |> Resources.mul(seconds_passed)
-
-    cs
-    |> get_field(:processed)
-    |> Resources.sum(diff)
-    |> Resources.min(get_field(cs, :objective))
-    |> Map.from_struct()
+  @spec put_defaults(changeset) ::
+    changeset
+  defp put_defaults(changeset) do
+    changeset
+    |> put_change(:creation_time, DateTime.utc_now())
   end
 
   defmodule Query do
+
     import Ecto.Query
 
     alias Ecto.Queryable
@@ -565,23 +562,19 @@ defmodule Helix.Process.Model.Process do
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
-    alias Helix.Process.Model.Process.MapServerToProcess
-    alias Helix.Process.Model.Process.State
 
     @spec by_id(Queryable.t, Process.idtb) ::
       Queryable.t
     def by_id(query \\ Process, id),
       do: where(query, [p], p.process_id == ^id)
 
-    @spec from_type_list(Queryable.t, [String.t]) ::
+    @spec on_server(Queryable.t, Server.idt) ::
       Queryable.t
-    def from_type_list(query \\ Process, type_list),
-      do: where(query, [p], p.process_type in ^type_list)
-
-    @spec from_state_list(Queryable.t, [State.state]) ::
-      Queryable.t
-    def from_state_list(query \\ Process, state_list),
-      do: where(query, [p], p.state in ^state_list)
+    def on_server(query \\ Process, server_id) do
+      query
+      |> where([p], p.gateway_id == ^server_id)
+      |> or_where([p], p.target_id == ^server_id)
+    end
 
     @spec by_gateway(Queryable.t, Server.idtb) ::
       Queryable.t
@@ -591,7 +584,7 @@ defmodule Helix.Process.Model.Process do
     @spec by_target(Queryable.t, Server.idtb) ::
       Queryable.t
     def by_target(query \\ Process, id),
-      do: where(query, [p], p.target_server_id == ^id)
+      do: where(query, [p], p.target_id == ^id)
 
     @spec by_file(Queryable.t, File.idtb) ::
       Queryable.t
@@ -603,39 +596,21 @@ defmodule Helix.Process.Model.Process do
     def by_network(query \\ Process, id),
       do: where(query, [p], p.network_id == ^id)
 
-    @spec by_connection(Queryable.t, Connection.idtb) ::
+    @spec by_connection(Queryable.t, Connection.id) ::
       Queryable.t
     def by_connection(query \\ Process, id),
       do: where(query, [p], p.connection_id == ^id)
 
-    @spec by_type(Queryable.t, String.t) ::
+    @spec by_type(Queryable.t, Process.type) ::
       Queryable.t
-    def by_type(query \\ Process, process_type),
-      do: where(query, [p], p.process_type == ^process_type)
+    def by_type(query \\ Process, type),
+      do: where(query, [p], p.type == ^type)
 
-    @spec by_state(Queryable.t, State.state) ::
+    @spec by_state(Queryable.t, :running | :paused) ::
       Queryable.t
-    def by_state(query \\ Process, state),
-      do: where(query, [p], p.state == ^state)
-
-    @spec not_targeting_gateway(Queryable.t) ::
-      Queryable.t
-    def not_targeting_gateway(query \\ Process),
-      do: where(query, [p], p.gateway_id != p.target_server_id)
-
-    @spec related_to_server(Queryable.t, Server.idtb) ::
-      Queryable.t
-    @doc """
-    Filter processes that are running on `server_id` or affect it
-    """
-    def related_to_server(query \\ Process, id) do
-      query
-      |> join(
-        :inner,
-        [p],
-        m in MapServerToProcess,
-        m.process_id == p.process_id)
-      |> where([p, ..., m], m.server_id == ^id)
-    end
+    def by_state(query, :running),
+      do: where(query, [p], p.priority > 1)
+    def by_state(query, :paused),
+      do: where(query, [p], p.priority == 0)
   end
 end

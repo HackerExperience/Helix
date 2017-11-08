@@ -38,10 +38,10 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
 
       # Ensure process is valid
       assert process.gateway_id == gateway.server_id
-      assert process.target_server_id == acc.atm_id
-      assert process.process_data.token_id == token.token_id
-      assert process.process_data.atm_id == acc.atm_id
-      assert process.process_data.account_number == acc.account_number
+      assert process.target_id == acc.atm_id
+      assert process.data.token_id == token.token_id
+      assert process.data.atm_id == acc.atm_id
+      assert process.data.account_number == acc.account_number
 
       TOPHelper.force_completion(process)
 
@@ -121,7 +121,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       assert [server.server_id, acc.atm_id] == TunnelQuery.get_hops(tunnel)
 
       # Wait for events
-      :timer.sleep(100)
+      # :timer.sleep(100)
 
       # Nothing was added to the Hacked Database... because it's MY account!
       refute DatabaseQuery.fetch_bank_account(entity, acc)

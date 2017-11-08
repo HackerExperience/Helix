@@ -3,45 +3,69 @@ defmodule Helix.Process.Event.Process do
   import Helix.Event
 
   event Created do
+    @moduledoc """
+    `ProcessCreatedEvent` is fired when a process is created. This event has an
+    initial optimistic behaviour, so it is fired in two different moments.
 
-    alias Helix.Entity.Model.Entity
+    First, it is fired from ProcessAction, right after the process is created
+    and inserted on the database. On this stage, the Process is said to be
+    optimistic (unconfirmed) because the server may not be able to allocate
+    resources to this process.
+
+    This same event may be fired again from the TOPHandler, in which case the
+    allocation was successful and the process creation has been confirmed. We
+    only notify the Client if the process is confirmed as created.
+
+    If creation fails, we emit the `ProcessCreateFailedEvent`.
+    """
+
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
 
     @type t :: %__MODULE__{
       process: Process.t,
+      confirmed: boolean,
       gateway_id: Server.id,
       target_id: Server.id,
-      gateway_entity_id: Entity.id,
-      target_entity_id: Entity.id,
       gateway_ip: Network.ip,
       target_ip: Network.ip
     }
 
     event_struct [
       :process,
+      :confirmed,
       :gateway_id,
       :target_id,
-      :gateway_entity_id,
-      :target_entity_id,
       :gateway_ip,
       :target_ip
     ]
 
-    @spec new(Process.t, Network.ip, Entity.id, Network.ip) ::
+    @spec new(Process.t, Network.ip, Network.ip, [confirmed: boolean]) ::
       t
-    def new(process = %Process{}, source_ip, target_entity_id, target_ip) do
+    @doc """
+    Creates the process struct when it is unconfirmed (we don't know yet whether
+    the allocation will be successful).
+    """
+    def new(process = %Process{}, source_ip, target_ip, confirmed: confirmed) do
       %__MODULE__{
         process: process,
+        confirmed: confirmed,
         gateway_id: process.gateway_id,
-        target_id: process.target_server_id,
-        gateway_entity_id: process.source_entity_id,
-        target_entity_id: target_entity_id,
+        target_id: process.target_id,
         gateway_ip: source_ip,
         target_ip: target_ip
       }
     end
+
+    @spec new(t) ::
+      t
+    @doc """
+    When recreating the process from a previous event, we are effectively saying
+    that the process creation has been confirmed.
+    """
+    def new(event = %__MODULE__{confirmed: false}),
+      do: %{event| confirmed: true}
 
     notify do
 
@@ -66,7 +90,7 @@ defmodule Helix.Process.Event.Process do
       process because of 1. Hence, this rule (3) only applies to third-parties
       connecting to the attack target.
       """
-      def generate_payload(event, socket) do
+      def generate_payload(event = %_{confirmed: true}, socket) do
         gateway_id = socket.assigns.gateway.server_id
         destination_id = socket.assigns.destination.server_id
 
@@ -95,6 +119,10 @@ defmodule Helix.Process.Event.Process do
         end
       end
 
+      # Internal event used for optimistic (asynchronous) processing
+      def generate_payload(%_{confirmed: false}, _),
+        do: :noreply
+
       defp do_payload(event, _socket, opts \\ []) do
         file_id = event.process.file_id && to_string(event.process.file_id)
         connection_id =
@@ -102,7 +130,7 @@ defmodule Helix.Process.Event.Process do
 
         data = %{
           process_id: to_string(event.process.process_id),
-          type: to_string(event.process.process_type),
+          type: to_string(event.process.type),
           network_id: to_string(event.process.network_id),
           file_id: file_id,
           connection_id: connection_id,
@@ -133,26 +161,25 @@ defmodule Helix.Process.Event.Process do
 
   event Completed do
     @moduledoc """
-    This event is used solely to update the TOP display on the client.
+    `ProcessCompletedEvent` is fired after a process has met its objective, and
+    the corresponding `Processable.conclusion/2` callback was executed.
+
+    It's used to notify the Client a process has finished.
     """
 
-    alias Helix.Event
-    alias Helix.Server.Model.Server
     alias Helix.Process.Model.Process
 
-    @type t :: %__MODULE__{
-      gateway_id: Server.id,
-      target_id: Server.id
-    }
+    event_struct [:process]
 
-    event_struct [:gateway_id, :target_id]
+    @type t :: %__MODULE__{
+      process: Process.t
+    }
 
     @spec new(Process.t) ::
       t
     def new(process = %Process{}) do
       %__MODULE__{
-        gateway_id: process.gateway_id,
-        target_id: process.target_server_id
+        process: process
       }
     end
 
@@ -162,14 +189,90 @@ defmodule Helix.Process.Event.Process do
 
       def generate_payload(event, _socket) do
         data = %{
-          process_id: Event.get_process_id(event)
+          process_id: event.process.process_id |> to_string()
         }
 
         {:ok, data}
       end
 
       def whom_to_notify(event),
-        do: %{server: [event.gateway_id, event.target_id]}
+        do: %{server: [event.process.gateway_id, event.process.target_id]}
+    end
+  end
+
+  event Signaled do
+    @moduledoc """
+    `ProcessSignaledEvent` is fired when the process receives a signal. A signal
+    is an instruction to the process, which shall be handled by `Processable`.
+    If the process does not implement the corresponding handler, then the
+    signal's default action will be performed.
+
+    This is the probably the single most important event of the TOP - and the
+    game - since all changes in a process, including its completion, are handled
+    by signals being delivered to it.
+
+    Granted, `ProcessSignaledEvent` is emitted *after* the signal was delivered
+    and handled by the corresponding Processable implementation, but the actual
+    change to the process (defined at `action`) will be performed once this
+    event is emitted.
+    """
+
+    alias Helix.Process.Model.Process
+
+    event_struct [:process, :action, :signal, :params]
+
+    def new(signal, process = %Process{}, action, params) do
+      %__MODULE__{
+        signal: signal,
+        process: process,
+        action: action,
+        params: params
+      }
+    end
+  end
+
+  event Killed do
+    @moduledoc """
+    `ProcessKilledEvent` is fired when a process has been killed. The process
+    no longer exists on the database on the moment this event was created.
+    """
+
+    alias Helix.Process.Model.Process
+
+    event_struct [:process, :reason]
+
+    @type t ::
+      %__MODULE__{
+        process: Process.t,
+        reason: Process.kill_reason
+      }
+
+    @spec new(Process.t, Process.kill_reason) ::
+      t
+    def new(process = %Process{}, reason) do
+      %__MODULE__{
+        process: process,
+        reason: reason
+      }
+    end
+
+    notify do
+
+      @event :process_killed
+
+      @doc false
+      def generate_payload(event, _socket) do
+        data = %{
+          process_id: event.process.process_id |> to_string(),
+          reason: event.reason |> to_string()
+        }
+
+        {:ok, data}
+      end
+
+      @doc false
+      def whom_to_notify(event),
+        do: %{server: [event.process.gateway_id, event.process.target_id]}
     end
   end
 end

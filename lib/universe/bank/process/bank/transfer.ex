@@ -21,7 +21,14 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
 
   @type objective :: %{cpu: resource_usage}
 
-  @type objective_params ::
+  @type resources :: %{
+    objective: objective,
+    static: map,
+    l_dynamic: [],
+    r_dynamic: []
+  }
+
+  @type resources_params ::
     %{
       transfer: BankTransfer.t
     }
@@ -35,8 +42,10 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
     }
   end
 
-  def objective(params = %{transfer: %BankTransfer{}}),
-    do: set_objective params
+  @spec resources(resources_params) ::
+    resources
+  def resources(params = %{transfer: %BankTransfer{}}),
+    do: get_resources params
 
   processable do
 
@@ -45,42 +54,47 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
     alias Helix.Universe.Bank.Event.Bank.Transfer.Processed,
       as: BankTransferProcessedEvent
 
-    def dynamic_resources(_),
-      do: [:cpu]
-
-    # Review: Not exactly what I want. Where do I put limitations?
-    # TODO: Once TOP supports it, `minimum` should refer to raw time, not
-    # hardware resources like cpu
-    def minimum(_),
-      do: %{}
-
-    on_kill(data, _reason) do
+    on_kill(process, data, _reason) do
       event = BankTransferAbortedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
-    on_completion(data) do
+    on_completion(process, data) do
       event = BankTransferProcessedEvent.new(process, data)
 
-      {:ok, [event]}
+      {:delete, [event]}
     end
 
     def after_read_hook(data),
       do: data
   end
 
-  process_objective do
+  resourceable do
 
     alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
 
-    @type params :: BankTransferProcess.objective_params
+    @type params :: BankTransferProcess.resources_params
     @type factors :: term
 
     get_factors(%{transfer: _}) do end
 
+    # TODO: Use Time, not CPU
     cpu(%{transfer: transfer}) do
       transfer.amount
+    end
+
+    dynamic do
+      []
+    end
+
+    # Review: Not exactly what I want. Where do I put limitations?
+    # TODO: Add ResourceTime; specify to the size of the transfer.
+    static do
+      %{
+        paused: %{ram: 50},
+        running: %{ram: 100}
+      }
     end
   end
 
@@ -91,7 +105,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
     @type params :: BankTransferProcess.creation_params
     @type meta :: term
 
-    objective(_gateway, _atm, %{transfer: transfer}, _meta) do
+    resources(_gateway, _atm, %{transfer: transfer}, _meta) do
       %{transfer: transfer}
     end
 

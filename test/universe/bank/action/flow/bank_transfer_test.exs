@@ -26,7 +26,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       # They see me flowin', they hatin'
       {:ok, process} =
         BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
-      transfer_id = process.process_data.transfer_id
+      transfer_id = process.data.transfer_id
 
       # Transfer was added to the DB
       assert BankTransferInternal.fetch(transfer_id)

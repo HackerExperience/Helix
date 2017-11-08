@@ -3,6 +3,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
+  import Helix.Test.Macros
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Cache.Helper, as: CacheHelper
@@ -29,7 +30,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
       ref = push socket, "network.browse", params
 
       # Make sure the answer is an astounding :ok
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
 
       # It contains the web server content
       assert response.data.content
@@ -65,7 +66,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
       ref = push socket, "network.browse", params
 
       # It worked!
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
 
       # Resolved correctly
       assert response.data.content
@@ -96,7 +97,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
       ref = push socket, "network.browse", params
 
       # It worked!
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
 
       # Resolved correctly
       assert response.data.content
@@ -127,7 +128,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
       ref = push socket, "network.browse", params
 
       # It return an error!
-      assert_reply ref, :error, response
+      assert_reply ref, :error, response, timeout(:fast)
       assert response.data.message == "bad_origin"
 
       CacheHelper.sync_test()
@@ -145,7 +146,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
       ref = push socket, "network.browse", params
 
       # It return an error!
-      assert_reply ref, :error, response
+      assert_reply ref, :error, response, timeout(:fast)
       assert response.data.message == "web_not_found"
 
       CacheHelper.sync_test()
@@ -174,7 +175,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
       ref = push socket, "network.browse", params
 
       # Make sure the answer is an astounding :ok
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout()
 
       pftp_files = response.data.meta.public
 

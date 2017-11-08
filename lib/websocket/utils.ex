@@ -26,7 +26,7 @@ defmodule Helix.Websocket.Utils do
   Helper that automatically renders the reply with the recently created process.
   """
   def render_process(process = %Process{}, socket) do
-    process_data = process.process_data
+    process_data = process.data
     server_id = socket.assigns.gateway.server_id
     entity_id = socket.assigns.entity_id
 

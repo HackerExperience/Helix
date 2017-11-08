@@ -26,10 +26,10 @@
 #   def complete(event = %ProcessConclusionEvent{scope: :local}) do
 #     storage = StorageQuery.fetch(event.storage_id)
 #     target_file = FileQuery.fetch(event.target_file_id)
-#     target_server_id = event.target_server_id
+#     target_id = event.target_id
 
 #     transaction = fn ->
-#     {:ok, _} = CryptoKeyAction.create(storage, target_server_id, target_file)
+#     {:ok, _} = CryptoKeyAction.create(storage, target_id, target_file)
 #     end
 
 #     {:ok, _} = Repo.transaction(transaction)

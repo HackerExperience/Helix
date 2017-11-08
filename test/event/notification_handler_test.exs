@@ -4,6 +4,7 @@ defmodule Helix.Event.NotificationHandlerTest do
 
   import Phoenix.ChannelTest
   import Helix.Test.Case.ID
+  import Helix.Test.Macros
   import Helix.Test.Event.Macros
 
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -29,10 +30,7 @@ defmodule Helix.Event.NotificationHandlerTest do
       {_socket, %{gateway: gateway}} =
         ChannelSetup.join_server([own_server: true])
 
-      event =
-        EventSetup.process_created(
-          :single_server,
-          [gateway_id: gateway.server_id])
+      event = EventSetup.Process.created(gateway.server_id)
 
       # Process happens on the same server
       assert event.gateway_id == event.target_id
@@ -41,16 +39,16 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Broadcast is before inspecting the event with `handle_out`, so this
       # isn't the final output to the client
-      assert_broadcast "event", internal_broadcast
+      assert_broadcast "event", internal_broadcast, timeout()
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", notification
+      assert_push "event", notification, timeout()
       assert notification.event == "process_created"
 
       # Make sure all we need is on the process return
       assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.process_type
+      assert notification.data.type == event.process.type |> to_string()
       assert_id notification.data.file_id, event.process.file_id
       assert_id notification.data.connection_id, event.process.connection_id
       assert_id notification.data.network_id, event.process.network_id
@@ -66,21 +64,14 @@ defmodule Helix.Event.NotificationHandlerTest do
     end
 
     test "multi-server" do
-      {socket, %{gateway: gateway, destination: destination}} =
+      {_, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
 
       # Filter out the usual `LogCreatedEvent` after remote server join
-      assert_broadcast "event", _
-
-      gateway_entity_id = socket.assigns.gateway.entity_id
-      destination_entity_id = socket.assigns.destination.entity_id
+      assert_broadcast "event", _, timeout()
 
       event =
-        EventSetup.process_created(
-          gateway.server_id,
-          destination.server_id,
-          gateway_entity_id,
-          destination_entity_id)
+        EventSetup.Process.created(gateway.server_id, destination.server_id)
 
       # Process happens on two different servers
       refute event.gateway_id == event.target_id
@@ -89,16 +80,16 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Broadcast is before inspecting the event with `handle_out`, so this
       # isn't the final output to the client
-      assert_broadcast "event", internal_broadcast
+      assert_broadcast "event", internal_broadcast, timeout()
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", notification
+      assert_push "event", notification, timeout()
       assert notification.event == "process_created"
 
       # Make sure all we need is on the process return
       assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.process_type
+      assert notification.data.type == event.process.type |> to_string()
       assert_id notification.data.file_id, event.process.file_id
       assert_id notification.data.connection_id, event.process.connection_id
       assert_id notification.data.network_id, event.process.network_id
@@ -140,15 +131,14 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Start the Bruteforce attack
       ref = push socket, "cracker.bruteforce", params
-
-      # Wait for response
-      assert_reply ref, :ok, response
+      assert_reply ref, :ok, response, timeout(:slow)
 
       # The response includes the Bruteforce process information
       assert response.data.process_id
 
       # Wait for generic ProcessCreatedEvent
-      assert_push "event", process_created_event
+      assert_push "event", _top_recalcado_event, timeout()
+      assert_push "event", process_created_event, timeout()
       assert process_created_event.event == "process_created"
 
       # Let's cheat and finish the process right now
@@ -162,32 +152,34 @@ defmodule Helix.Event.NotificationHandlerTest do
       # Notificable protocol.
       # We are getting them here so we can inspect the actual metadata of
       # both `ProcessCompletedEvent` and `PasswordAcquiredEvent`
-      assert_broadcast "event", _process_created_event
-      assert_broadcast "event", process_completed_event
-      assert_broadcast "event", server_password_acquired_event
+      assert_broadcast "event", _top_recalcado_event, timeout()
+      assert_broadcast "event", _process_created_t, timeout()
+      assert_broadcast "event", _process_created_f, timeout()
+      assert_broadcast "event", server_password_acquired_event, timeout()
+      assert_broadcast "event", process_completed_event, timeout()
 
       # They have the process IDs!
       assert process_id == process_completed_event.__meta__.process_id
       assert process_id == server_password_acquired_event.__meta__.process_id
 
+      # We'll receive the PasswordAcquiredEvent
+      assert_push "event", password_acquired_event, timeout()
+      assert password_acquired_event.event == "server_password_acquired"
+
+      # Which has a valid `process_id` on the event metadata!
+      assert to_string(process_id) == password_acquired_event.meta.process_id
+
       # And if `ServerPasswordAcquiredEvent` has the process_id, then
       # `BruteforceProcessedEvent` have it as well, and as such TOP should be
       # working for all kinds of events.
 
-      # We'll receive the generic ProcessCompletedEvent
-      assert_push "event", process_conclusion_event
+      # Soon we'll receive the generic ProcessCompletedEvent
+      assert_push "event", process_conclusion_event, timeout()
       assert process_conclusion_event.event == "process_completed"
 
       # As long as we are here, let's test that the metadata sent to the client
       # has been converted to JSON-friendly strings
       assert to_string(process_id) == process_conclusion_event.meta.process_id
-
-      # And soon we'll receive the PasswordAcquiredEvent
-      assert_push "event", password_acquired_event
-      assert password_acquired_event.event == "server_password_acquired"
-
-      # Which has a valid `process_id` on the event metadata!
-      assert to_string(process_id) == password_acquired_event.meta.process_id
     end
   end
 end

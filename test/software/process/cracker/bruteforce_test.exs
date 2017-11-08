@@ -45,12 +45,12 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       # Process data is correct
       assert process.connection_id
       assert process.file_id == file.file_id
-      assert process.process_type == "cracker_bruteforce"
+      assert process.type == :cracker_bruteforce
       assert process.gateway_id == source_server.server_id
       assert process.source_entity_id == source_entity.entity_id
-      assert process.target_server_id == target_server.server_id
+      assert process.target_id == target_server.server_id
       assert process.network_id == target_nip.network_id
-      assert process.process_data.target_server_ip == target_nip.ip
+      assert process.data.target_server_ip == target_nip.ip
 
       # CrackerBruteforce connection is correct
       connection = TunnelQuery.fetch_connection(process.connection_id)
@@ -64,7 +64,6 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       assert tunnel.destination_id == target_server.server_id
       assert tunnel.network_id == target_nip.network_id
 
-      # :timer.sleep(100)
       TOPHelper.top_stop(source_server)
       CacheHelper.sync_test()
     end
@@ -74,7 +73,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
     test "full process for any AT attack_source" do
       {process, meta} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
-      data = process.process_data
+      data = process.data
       server_id = process.gateway_id
 
       attacker_id = meta.source_entity_id
@@ -91,27 +90,31 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       ProcessViewHelper.assert_keys(pview_attacker, :full)
       ProcessViewHelper.assert_keys(pview_victim, :full)
       ProcessViewHelper.assert_keys(pview_third, :full)
+
+      TOPHelper.top_stop()
     end
 
     test "full process for attacker AT attack_target" do
       {process, %{source_entity_id: entity_id}} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
 
-      data = process.process_data
-      server_id = process.target_server_id
+      data = process.data
+      server_id = process.target_id
 
       # `entity` is the one who started the process, and is listing at the
       # victim server, so `entity` has full access to the process.
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
       ProcessViewHelper.assert_keys(rendered, :full)
+
+      TOPHelper.top_stop()
     end
 
     test "partial process for third AT attack_target" do
       {process, _} = ProcessSetup.process(fake_server: true, type: :bruteforce)
 
-      data = process.process_data
-      server_id = process.target_server_id
+      data = process.data
+      server_id = process.target_id
       entity_id = Entity.ID.generate()
 
       # `entity` is unrelated to the process, and it's being rendering on the
@@ -119,14 +122,16 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
       ProcessViewHelper.assert_keys(rendered, :partial)
+
+      TOPHelper.top_stop()
     end
 
     test "partial process for victim AT attack_target" do
       {process, %{target_entity_id: entity_id}} =
         ProcessSetup.process(fake_server: true, type: :bruteforce)
 
-      data = process.process_data
-      server_id = process.target_server_id
+      data = process.data
+      server_id = process.target_id
 
       # `entity` is the victim, owner of the server receiving the process.
       # She's rendering at her own server, but she did not start the process,
@@ -134,6 +139,8 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       rendered = ProcessView.render(data, process, server_id, entity_id)
 
       ProcessViewHelper.assert_keys(rendered, :partial)
+
+      TOPHelper.top_stop()
     end
   end
 
@@ -143,9 +150,11 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       db_process = ProcessHelper.raw_get(process.process_id)
 
-      serialized = Processable.after_read_hook(db_process.process_data)
+      serialized = Processable.after_read_hook(db_process.data)
 
       assert serialized.target_server_ip
+
+      TOPHelper.top_stop()
     end
   end
 end
