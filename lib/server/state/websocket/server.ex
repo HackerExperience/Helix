@@ -6,7 +6,7 @@ defmodule Helix.Server.State.Websocket.Channel do
   players. It's basically a giant in-memory mapping of server IDs to server NIPs
   {network_id, ip}.
 
-  It's most important use case is event notification, when we want to notify all
+  Its most important use case is event notification, when we want to notify all
   players logged into that one server that an event has occurred. Since the
   server channel identifier is its NIP, and a server may have multiple NIPs,
   it may be the case that the event should be broadcasted to multiple channels
@@ -17,14 +17,17 @@ defmodule Helix.Server.State.Websocket.Channel do
   their NIPs, in which case the same server may have different channels, as
   explained above.
 
+  Note that this state is only used on *remote* joins. Local joins are performed
+  using the gateway's server ID, and as such this mapping is unnecessary.
+
   # Implementation & API
 
   The state is maintained on two ETS table, the `server` and `entity` one. The
   `server` table maps the server ID to the corresponding NIP, and the `entity`
   one maps an entity to the list of servers it is currently connected to.
 
-  Joining a server should notify the `join/4` function, which will sync the new
-  entity, server and nips to the state.
+  Joining a server remotely should notify the `join/4` function, which will sync
+  the new entity, server and nips to the state.
 
   Leaving a server should notify the `leave/3` function, which will update the
   `entity` table, making sure that given entity is no longer marked as logged.
