@@ -15,20 +15,27 @@ defmodule Helix.Websocket.Request do
   import HELL.Macros
 
   alias Helix.Websocket.Utils, as: WebsocketUtils
+  alias Helix.Websocket.Request.Relay, as: RequestRelay
+
+  @type t :: t(struct)
 
   @type t(struct) :: %{
     __struct__: struct,
     unsafe: map,
-    params: map,
-    meta: map
+    params: params,
+    meta: meta,
+    relay: RequestRelay.t
   }
+
+  @type params :: map
+  @type meta :: map
 
   @doc """
   Top-level macro for creating a Websocket Request, which can be handled by any
   channel. It must implement the Requestable protocol.
   """
   defmacro request(name, do: block) do
-    quote do
+    quote location: :keep do
 
       defmodule unquote(name) do
         @moduledoc false
@@ -37,14 +44,15 @@ defmodule Helix.Websocket.Request do
 
         @type t :: Helix.Websocket.Request.t(__MODULE__)
 
-        @enforce_keys [:unsafe]
-        defstruct [:unsafe, params: %{}, meta: %{}]
+        @enforce_keys [:unsafe, :relay]
+        defstruct [:unsafe, :relay, params: %{}, meta: %{}]
 
         @spec new(term) ::
           t
         def new(params \\ %{}) do
           %__MODULE__{
-            unsafe: params
+            unsafe: params,
+            relay: RequestRelay.new(params)
           }
         end
 

@@ -42,7 +42,7 @@ defmodule Helix.Test.Software.Setup.Flow do
     }
 
     {:ok, process} =
-      FileTransferProcess.execute(gateway, destination, params, meta)
+      FileTransferProcess.execute(gateway, destination, params, meta, nil)
 
     {process, %{}}
   end
@@ -77,7 +77,7 @@ defmodule Helix.Test.Software.Setup.Flow do
     }
 
     {:ok, process} =
-      BruteforceProcess.execute(source_server, target_server, params, meta)
+      BruteforceProcess.execute(source_server, target_server, params, meta, nil)
 
     related = %{
       source_server: source_server,

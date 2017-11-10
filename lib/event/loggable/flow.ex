@@ -138,14 +138,15 @@ defmodule Helix.Event.Loggable.Flow do
     do: {server_id, entity_id, msg}
 
   @spec save([log_entry] | log_entry) ::
-    term
+    [Event.t]
   @doc """
-  Receives the list of generated entries, which is returned by each event
-  that implements the Loggable protocol, and inserts them into the game
-  database, emitting the relevant `LogCreatedEvent`
+  Receives the list of generated entries, which is returned by each event that
+  implements the Loggable protocol, and inserts them into the game database.
+  Accumulates the corresponding `LogCreatedEvent`s, which shall be emitted by
+  the caller.
   """
   def save([]),
-    do: :ok
+    do: []
   def save(log_entry = {_, _, _}),
     do: save([log_entry])
   def save(logs) do
@@ -155,6 +156,5 @@ defmodule Helix.Event.Loggable.Flow do
       events
     end)
     |> List.flatten()
-    |> Enum.each(&Event.emit/1)
   end
 end

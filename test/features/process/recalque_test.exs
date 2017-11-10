@@ -19,6 +19,7 @@ defmodule Helix.Test.Features.Process.Recalque do
 
   @moduletag :feature
 
+  @relay nil
   @internet_id NetworkHelper.internet_id()
 
   describe "recalque" do
@@ -55,7 +56,9 @@ defmodule Helix.Test.Features.Process.Recalque do
 
       # Create a download process
       assert {:ok, %{process_id: downloadA_id}} =
-        FilePublic.download(serverA, serverB, tunnelAB, storageA, dl_file)
+        FilePublic.download(
+          serverA, serverB, tunnelAB, storageA, dl_file, @relay
+        )
 
       # Give some time for allocation
       # :timer.sleep(50)
@@ -92,7 +95,9 @@ defmodule Helix.Test.Features.Process.Recalque do
 
       # Start the Bruteforce attack
       assert {:ok, %{process_id: bruteforce_id}} =
-        FilePublic.bruteforce(cracker, serverA, serverB, @internet_id, ipB, [])
+        FilePublic.bruteforce(
+          cracker, serverA, serverB, {@internet_id, ipB}, [], @relay
+        )
 
       # Give some time for allocation
       # :timer.sleep(50)
@@ -129,7 +134,9 @@ defmodule Helix.Test.Features.Process.Recalque do
       # will be recalculate on C and B. Then, it should recalculate A.
 
       assert {:ok, %{process_id: downloadC_id}} =
-        FilePublic.download(serverC, serverB, tunnelCB, storageC, dl_file)
+        FilePublic.download(
+          serverC, serverB, tunnelCB, storageC, dl_file, @relay
+        )
 
       # :timer.sleep(50)
 

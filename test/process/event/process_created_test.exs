@@ -7,6 +7,7 @@ defmodule Helix.Process.Event.Process.CreatedTest do
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Event.Setup, as: EventSetup
+  alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
 
   describe "Notificable.whom_to_notify/1" do
     test "servers are listed correctly" do
@@ -19,24 +20,40 @@ defmodule Helix.Process.Event.Process.CreatedTest do
 
   describe "Notificable.generate_payload/2" do
     test "single server process create (player AT action_server)" do
-      socket = ChannelSetup.mock_server_socket([own_server: true])
+      socket = ChannelSetup.mock_server_socket(own_server: true)
 
       gateway_id = socket.assigns.gateway.server_id
+      entity_id = socket.assigns.gateway.entity_id
 
       # Player doing an action on his own server
-      event = EventSetup.Process.created(gateway_id)
+      event =
+        EventSetup.Process.created(
+          gateway_id: gateway_id,
+          target_id: gateway_id,
+          entity_id: entity_id,
+          type: :bruteforce
+        )
 
       assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-      assert_payload_full(data)
+      ProcessViewHelper.assert_keys(data, :full)
     end
 
     test "multi server process create (attacker AT attack_source)" do
       socket = ChannelSetup.mock_server_socket()
 
       attack_source_id = socket.assigns.gateway.server_id
+      attacker_entity_id = socket.assigns.gateway.entity_id
+      attack_target_id = socket.assigns.destination.server_id
 
-      event = EventSetup.Process.created(attack_source_id, Server.ID.generate())
+      # Simulate event between `attacker` and `victim`
+      event =
+        EventSetup.Process.created(
+          gateway_id: attack_source_id,
+          target_id: attack_target_id,
+          entity_id: attacker_entity_id,
+          type: :bruteforce
+        )
 
       # Event originated on attack_source
       assert event.gateway_id == attack_source_id
@@ -47,31 +64,52 @@ defmodule Helix.Process.Event.Process.CreatedTest do
       # Attacker has full access to the output payload
       assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-      assert_payload_full(data)
+      ProcessViewHelper.assert_keys(data, :full)
     end
 
     test "multi server process create (attacker AT attack_target)" do
       socket = ChannelSetup.mock_server_socket()
 
+      attacker_entity_id = socket.assigns.gateway.entity_id
       attack_source_id = socket.assigns.gateway.server_id
       attack_target_id = socket.assigns.destination.server_id
 
-      event = EventSetup.Process.created(attack_source_id, attack_target_id)
+      # Simulate event between `attacker` and `victim`
+      event =
+        EventSetup.Process.created(
+          gateway_id: attack_source_id,
+          target_id: attack_target_id,
+          entity_id: attacker_entity_id,
+          type: :bruteforce
+        )
 
       # Attacker has full access to the output payload
       assert {:ok, data} = Notificable.generate_payload(event, socket)
 
-      assert_payload_full(data)
+      ProcessViewHelper.assert_keys(data, :full)
     end
 
     test "multi server process create (third AT attack_source)" do
+      # `attacker` is doing some nasty stuff on someone
       socket = ChannelSetup.mock_server_socket()
+      attacker_entity_id = socket.assigns.gateway.entity_id
+      attack_source_id = socket.assigns.gateway.server_id
 
-      third_server_id = socket.assigns.gateway.server_id
-      attack_source_id = socket.assigns.destination.server_id
+      # Third is absolutely random to `attacker`. But `third` is connected to
+      # `attacker`. In the socket created below, `attacker` is the destination
+      # of `third`.
+      third_socket =
+        ChannelSetup.mock_server_socket(destination_id: attack_source_id)
+      third_server_id = third_socket.assigns.gateway.server_id
 
-      # Action from `attack_source` to `attack_target`
-      event = EventSetup.Process.created(attack_source_id, Server.ID.generate())
+      # Simulate event/action from `attack_source` to `attack_target`
+      event =
+        EventSetup.Process.created(
+          gateway_id: attack_source_id,
+          target_id: Server.ID.generate(),
+          entity_id: attacker_entity_id,
+          type: :bruteforce
+        )
 
       # Attack originated on `attack_source`, owned by `attacker`
       assert event.gateway_id == attack_source_id
@@ -80,48 +118,40 @@ defmodule Helix.Process.Event.Process.CreatedTest do
       # And it targets `attack_target`, totally unrelated to `third`
       refute event.target_id == third_server_id
 
-      # `third` sees everything
-      assert {:ok, data} = Notificable.generate_payload(event, socket)
+      # Generates the payload as if `third` was receiving it
+      assert {:ok, data} = Notificable.generate_payload(event, third_socket)
 
-      # Third can see the full process, since it originated at `attack_source`
-      assert_payload_full(data)
+      # Third can see the full process, since the process originated at
+      # `attack_source` and `third` is connected to `attack_source`.
+      ProcessViewHelper.assert_keys(data, :full)
     end
 
     test "multi server process create (third AT attack_target)" do
+      # `victim` is being attacked by someone
       socket = ChannelSetup.mock_server_socket()
+      attacker_entity_id = socket.assigns.gateway.entity_id
+      attack_target_id = socket.assigns.destination.server_id
 
-      target_id = socket.assigns.destination.server_id
+      # Third is absolutely random to `victim`. But `third` is connected to
+      # `victim`. In the socket created below, `victim` is the destination
+      # of `third`.
+      third_socket =
+        ChannelSetup.mock_server_socket(destination_id: attack_target_id)
 
-      # Action from `attack_source` to `attack_target`
-      event = EventSetup.Process.created(Server.ID.generate(), target_id)
+      # Simulate event/action from random `attacker` targeting `victim`.
+      event =
+        EventSetup.Process.created(
+          gateway_id: Server.ID.generate(),
+          target_id: attack_target_id,
+          entity_id: attacker_entity_id,
+          type: :bruteforce
+        )
 
       # `third` never gets the notification
-      assert {:ok, data} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Notificable.generate_payload(event, third_socket)
 
       # Third-party can see the process exists, but not who created it.
-      assert_payload_censored(data)
-    end
-
-    defp assert_payload_full(data) do
-      expected_keys =
-        [:process_id, :type, :network_id, :file_id, :source_ip, :target_ip,
-         :connection_id]
-
-      Enum.each(expected_keys, fn key ->
-        assert Map.has_key?(data, key)
-      end)
-    end
-
-    defp assert_payload_censored(data) do
-      expected_keys = [:process_id, :type, :network_id, :file_id, :target_ip]
-      rejected_keys = [:source_ip, :connection_id]
-
-      Enum.each(expected_keys, fn key ->
-        assert Map.has_key?(data, key)
-      end)
-      Enum.each(rejected_keys, fn key ->
-        refute Map.has_key?(data, key)
-      end)
+      ProcessViewHelper.assert_keys(data, :partial)
     end
   end
 end

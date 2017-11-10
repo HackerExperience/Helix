@@ -13,6 +13,8 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
+  @relay nil
+
   describe "transfer_aborted/1" do
     test "life cycle" do
       amount = 100_000_000
@@ -23,7 +25,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
       net = NetworkHelper.net()
 
       {:ok, process} =
-        BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
+        BankTransferFlow.start(acc1, acc2, amount, player, gateway, net, @relay)
       transfer_id = process.data.transfer_id
 
       assert ProcessQuery.fetch(process)

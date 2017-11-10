@@ -19,12 +19,13 @@ defmodule Helix.Test.Process.TOPHelper do
   @doc """
   Completes the process, emitting the related events and removing from the db.
   """
-  def force_completion(process_id = %Process.ID{}) do
+  def force_completion(process_idt, opts \\ [])
+  def force_completion(process_id = %Process.ID{}, opts) do
     process_id
     |> ProcessQuery.fetch()
-    |> force_completion()
+    |> force_completion(opts)
   end
-  def force_completion(process = %Process{}) do
+  def force_completion(process = %Process{}, opts) do
     # Update the DB process entry, now it has magically reached its objective
     process
     |> Changeset.change()
@@ -33,7 +34,11 @@ defmodule Helix.Test.Process.TOPHelper do
     |> ProcessRepo.update()
 
     # Force a recalque on the server
-    TOPAction.recalque(process)
+    if opts[:from] do
+      TOPAction.recalque(process, opts[:from])
+    else
+      TOPAction.recalque(process)
+    end
   end
 
   @doc """

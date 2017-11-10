@@ -12,12 +12,15 @@ defmodule Helix.Event.Meta do
 
   @type t :: %{
     event_id: HETypes.uuid | nil,
-    process_id: Process.id | nil
+    process_id: Process.id | nil,
+    stack: [Event.t] | nil,
+    request_id: binary | nil
   }
 
   @type rendered :: %{
     event_id: String.t | nil,
-    process_id: String.t | nil
+    process_id: String.t | nil,
+    request_id: binary | nil
   }
 
   @meta_key :__meta__
@@ -36,7 +39,11 @@ defmodule Helix.Event.Meta do
 
     # The `stack` field is a rudimentary stacktrace. Every time an event is
     # emitted from another one, the previous event name is stored on this stack.
-    :stack
+    :stack,
+
+    # The `request_id` field associates which request was responsible for this
+    # event. Subsequent events will carry on (relay) this request_id as well.
+    :request_id
   ]
 
   @doc """
@@ -59,7 +66,8 @@ defmodule Helix.Event.Meta do
   def render(event) do
     %{
       event_id: get_event_id(event),
-      process_id: get_process_id(event) |> Utils.stringify()
+      process_id: get_process_id(event) |> Utils.stringify(),
+      request_id: get_request_id(event)
     }
   end
 

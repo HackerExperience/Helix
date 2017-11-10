@@ -27,7 +27,7 @@ defmodule Helix.Process do
         @doc """
         Entry point for execution of the process.
         """
-        defdelegate execute(gateway, target, params, meta),
+        defdelegate execute(gateway, target, params, meta, relay),
           to: __MODULE__.Executable
 
         @doc """

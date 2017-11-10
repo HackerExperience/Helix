@@ -8,8 +8,7 @@ defmodule Helix.Endpoint do
 
   plug Corsica,
     origins: Application.get_env(:helix, Helix.Endpoint)[:allowed_cors],
-    allow_headers: ["content-type", "x-request-id"],
-    expose_headers: ["X-Request-Id"]
+    allow_headers: ["content-type", "x-request-id"]
 
   plug Plug.Static,
     at: "/",

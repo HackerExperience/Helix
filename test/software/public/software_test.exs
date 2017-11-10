@@ -12,6 +12,8 @@ defmodule Helix.Software.Public.FileTest do
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
+  @relay nil
+
   describe "bruteforce/6" do
     test "starts a bruteforce attack" do
       {source_server, %{entity: source_entity}} = ServerSetup.server()
@@ -29,9 +31,9 @@ defmodule Helix.Software.Public.FileTest do
           cracker,
           source_server,
           target_server,
-          target_nip.network_id,
-          target_nip.ip,
-          []
+          {target_nip.network_id, target_nip.ip},
+          [],
+          @relay
         )
 
       assert process.connection_id
@@ -63,7 +65,7 @@ defmodule Helix.Software.Public.FileTest do
       storage = SoftwareHelper.get_storage(destination)
 
       assert {:ok, process} =
-        FilePublic.download(gateway, destination, tunnel, storage, file)
+        FilePublic.download(gateway, destination, tunnel, storage, file, @relay)
 
       assert process.file_id == file.file_id
       assert process.type == :file_download

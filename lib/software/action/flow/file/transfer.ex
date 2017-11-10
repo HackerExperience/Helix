@@ -2,6 +2,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
   import HELL.Macros
 
+  alias Helix.Event
   alias Helix.Network.Model.Net
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -10,24 +11,54 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
+  @type transfer_result ::
+    {:ok, Process.t}
+    | transfer_error
+
+  @type transfer_error ::
+    FileTransferProcess.executable_error
+
   @typep type ::
     :download
     | :pftp_download
     | :upload
 
-  @type transfer_error :: FileTransferProcess.executable_error
+  @typep relay :: Event.relay
 
-  @spec transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t) ::
-    {:ok, Process.t}
-    | transfer_error
+  @spec download(Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+    transfer_result
   @doc """
+  Starts a FileDownload process.
+  """
+  def download(gateway, endpoint, file, storage, net, relay),
+    do: transfer(:download, gateway, endpoint, file, storage, net, relay)
+
+  @spec upload(Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+    transfer_result
+  @doc """
+  Starts a FileUpload process.
+  """
+  def upload(gateway, endpoint, file, storage, net, relay),
+    do: transfer(:upload, gateway, endpoint, file, storage, net, relay)
+
+  @spec pftp_download(Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+    transfer_result
+  @doc """
+  Starts a PFTPDownload process.
+  """
+  def pftp_download(gateway, endpoint, file, storage, net, relay),
+    do: transfer(:pftp_download, gateway, endpoint, file, storage, net, relay)
+
+  @spec transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+    transfer_result
+  docp """
   Starts a FileTransfer process, which can be one of [pftp_]download or upload.
 
   If that exact file is already being transferred to/by the gateway, the
   existing process is returned and no new transfer is created. This ensures the
   same file cannot be transferred multiple times to/from the same server.
   """
-  def transfer(type, gateway, endpoint, file, storage, net) do
+  defp transfer(type, gateway, endpoint, file, storage, net, relay) do
     {_, process_type, _} = get_type_info(type)
 
     # Verifies whether that file is already being transferred to/by the gateway
@@ -45,17 +76,16 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
       # There's no transfer yet. We'll have to create a new one.
       nil ->
-        new_transfer(type, gateway, endpoint, file, storage, net)
+        do_transfer(type, gateway, endpoint, file, storage, net, relay)
     end
   end
 
-  @spec new_transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t) ::
-    {:ok, Process.t}
-    | transfer_error
+  @spec do_transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+    transfer_result
   docp """
   Starts a FileTransfer process, which can be one of download or upload.
   """
-  defp new_transfer(type, gateway, endpoint, file, storage, net) do
+  defp do_transfer(type, gateway, endpoint, file, storage, net, relay) do
     {connection_type, process_type, transfer_type} = get_type_info(type)
 
     params = %{
@@ -71,7 +101,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
       type: process_type
     }
 
-    FileTransferProcess.execute(gateway, endpoint, params, meta)
+    FileTransferProcess.execute(gateway, endpoint, params, meta, relay)
   end
 
   docp """

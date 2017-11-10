@@ -6,6 +6,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Model.Processable
   alias Helix.Process.Public.View.Process, as: ProcessView
+  alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Process.Helper, as: ProcessHelper
@@ -16,7 +17,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
+  @relay nil
 
   describe "Process.Executable" do
     test "starts the bruteforce process when everything is OK" do
@@ -40,7 +41,9 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       # Executes Cracker.bruteforce against the target server
       assert {:ok, process} =
-        BruteforceProcess.execute(source_server, target_server, params, meta)
+        BruteforceProcess.execute(
+          source_server, target_server, params, meta, @relay
+        )
 
       # Process data is correct
       assert process.connection_id

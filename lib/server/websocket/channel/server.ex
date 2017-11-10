@@ -85,7 +85,7 @@ channel Helix.Server.Websocket.Channel.Server do
   - storage_id: Specify which storage the file should be downloaded to. Defaults
     to the main storage.
 
-  Returns: RenderedProcess.t
+  Returns: :ok
 
   Errors:
   - "file_not_found": Requested file to be downloaded was not found
@@ -161,7 +161,7 @@ channel Helix.Server.Websocket.Channel.Server do
   - storage_id: Specify which storage the file should be downloaded to. Defaults
     to the main storage.
 
-  Returns: RenderedProcess.t
+  Returns: :ok
 
   Errors:
   - "pftp_must_be_local": PFTP operations must happen at the local socket.
@@ -205,7 +205,7 @@ channel Helix.Server.Websocket.Channel.Server do
   Note that all bruteforce attacks must originate from a server owned by the
   entity starting the attack.
 
-  Returns: RenderedProcess.t
+  Returns: :ok
 
   Errors:
   - "cracker_not_found" - Player attempting the attack does not have a valid

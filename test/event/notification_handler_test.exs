@@ -7,7 +7,7 @@ defmodule Helix.Event.NotificationHandlerTest do
   import Helix.Test.Macros
   import Helix.Test.Event.Macros
 
-  alias Helix.Process.Query.Process, as: ProcessQuery
+  alias Helix.Process.Model.Process
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Process.TOPHelper
@@ -28,9 +28,14 @@ defmodule Helix.Event.NotificationHandlerTest do
   describe "notification_handler/1" do
     test "notifies gateway that a process was created (single-server)" do
       {_socket, %{gateway: gateway}} =
-        ChannelSetup.join_server([own_server: true])
+        ChannelSetup.join_server(own_server: true)
 
-      event = EventSetup.Process.created(gateway.server_id)
+      event =
+        EventSetup.Process.created(
+          gateway_id: gateway.server_id,
+          target_id: gateway.server_id,
+          type: :bruteforce
+        )
 
       # Process happens on the same server
       assert event.gateway_id == event.target_id
@@ -46,14 +51,15 @@ defmodule Helix.Event.NotificationHandlerTest do
       assert_push "event", notification, timeout()
       assert notification.event == "process_created"
 
+      process = notification.data
+
       # Make sure all we need is on the process return
-      assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.type |> to_string()
-      assert_id notification.data.file_id, event.process.file_id
-      assert_id notification.data.connection_id, event.process.connection_id
-      assert_id notification.data.network_id, event.process.network_id
-      assert notification.data.target_ip
-      assert notification.data.source_ip
+      assert_id process.process_id, event.process.process_id
+      assert process.type == event.process.type |> to_string()
+      assert_id process.file.id, event.process.file_id
+      assert_id process.access.connection_id, event.process.connection_id
+      assert_id process.network_id, event.process.network_id
+      assert process.target_ip
 
       # Event id was generated
       assert notification.meta.event_id
@@ -71,7 +77,11 @@ defmodule Helix.Event.NotificationHandlerTest do
       assert_broadcast "event", _, timeout()
 
       event =
-        EventSetup.Process.created(gateway.server_id, destination.server_id)
+        EventSetup.Process.created(
+          gateway_id: gateway.server_id,
+          target_id: destination.server_id,
+          type: :bruteforce
+        )
 
       # Process happens on two different servers
       refute event.gateway_id == event.target_id
@@ -87,14 +97,15 @@ defmodule Helix.Event.NotificationHandlerTest do
       assert_push "event", notification, timeout()
       assert notification.event == "process_created"
 
+      process = notification.data
+
       # Make sure all we need is on the process return
-      assert_id notification.data.process_id, event.process.process_id
-      assert notification.data.type == event.process.type |> to_string()
-      assert_id notification.data.file_id, event.process.file_id
-      assert_id notification.data.connection_id, event.process.connection_id
-      assert_id notification.data.network_id, event.process.network_id
-      assert notification.data.target_ip
-      assert notification.data.source_ip
+      assert_id process.process_id, event.process.process_id
+      assert process.type == event.process.type |> to_string()
+      assert_id process.file.id, event.process.file_id
+      assert_id process.access.connection_id, event.process.connection_id
+      assert_id process.network_id, event.process.network_id
+      assert process.target_ip
 
       # Event id was generated
       assert notification.meta.event_id
@@ -131,20 +142,17 @@ defmodule Helix.Event.NotificationHandlerTest do
 
       # Start the Bruteforce attack
       ref = push socket, "cracker.bruteforce", params
-      assert_reply ref, :ok, response, timeout(:slow)
-
-      # The response includes the Bruteforce process information
-      assert response.data.process_id
+      assert_reply ref, :ok, %{}, timeout(:slow)
 
       # Wait for generic ProcessCreatedEvent
       assert_push "event", _top_recalcado_event, timeout()
       assert_push "event", process_created_event, timeout()
+
       assert process_created_event.event == "process_created"
+      process_id = Process.ID.cast!(process_created_event.data.process_id)
 
       # Let's cheat and finish the process right now
-      process = ProcessQuery.fetch(response.data.process_id)
-      process_id = process.process_id
-      TOPHelper.force_completion(process)
+      TOPHelper.force_completion(process_id)
 
       # Intercept Helix internal events.
       # Note these events won't (necessarily) go out to the Client, they will

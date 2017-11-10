@@ -127,12 +127,7 @@ defmodule Helix.Software.Websocket.Requests.File.DownloadTest do
 
       request = RequestHelper.mock_request(FileDownloadRequest, params)
       {:ok, request} = Requestable.check_permissions(request, socket)
-      assert {:ok, request} = Requestable.handle_request(request, socket)
-
-      assert request.meta.process.process_id
-      assert request.meta.process.file_id == file.file_id
-      assert request.meta.process.gateway_id == gateway.server_id
-      assert request.meta.process.target_id == destination.server_id
+      assert {:ok, _request} = Requestable.handle_request(request, socket)
 
       TOPHelper.top_stop(gateway)
     end

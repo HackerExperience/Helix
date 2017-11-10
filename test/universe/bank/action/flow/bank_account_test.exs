@@ -14,6 +14,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
+  @relay nil
+
   describe "reveal_password/4" do
     @tag :slow
     test "default life cycle" do
@@ -30,10 +32,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Create process to reveal password
       {:ok, process} =
         BankAccountFlow.reveal_password(
-          acc,
-          token.token_id,
-          gateway,
-          atm
+          acc, token.token_id, gateway, atm, @relay
         )
 
       # Ensure process is valid

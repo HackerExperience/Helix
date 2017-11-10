@@ -23,7 +23,9 @@ defmodule Helix.Event.Loggable.FlowTest do
       msg = "foobar"
       entry = LoggableFlow.build_entry(server.server_id, entity.entity_id, msg)
 
-      assert :ok == LoggableFlow.save(entry)
+      # Saves the entry; returns LogCreatedEvent
+      assert [event] = LoggableFlow.save(entry)
+      assert event.__struct__ == Helix.Log.Event.Log.Created
 
       [log] = LogQuery.get_logs_on_server(server)
       assert log.message == msg
@@ -32,7 +34,7 @@ defmodule Helix.Event.Loggable.FlowTest do
     end
 
     test "performs a noop on empty list" do
-      assert :ok == LoggableFlow.save([])
+      assert [] == LoggableFlow.save([])
     end
   end
 end

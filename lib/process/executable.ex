@@ -120,18 +120,18 @@ defmodule Helix.Process.Executable do
       defp call_process(function, params),
         do: apply(unquote(process), function, [params])
 
-      @spec close_connection_on_fail(nil) :: :noop
-      @spec close_connection_on_fail(Connection.t) :: term
+      @spec close_connection_on_fail(nil, Event.relay) :: :noop
+      @spec close_connection_on_fail(Connection.t, Event.relay) :: term
       docp """
       Helper called when `flow` of `execute/4` fails, and a connection may have
       to be closed as a result.
       """
-      defp close_connection_on_fail(nil),
+      defp close_connection_on_fail(nil, _),
         do: :noop
-      defp close_connection_on_fail(connection) do
+      defp close_connection_on_fail(connection, relay) do
         connection
         |> TunnelAction.close_connection()
-        |> Event.emit()
+        |> Event.emit(from: relay)
       end
 
       @spec setup_connection(Server.t, Server.t, term, meta, {:create, term}) ::
@@ -227,13 +227,13 @@ defmodule Helix.Process.Executable do
 
     quote location: :keep do
 
-      @spec execute(Server.t, Server.t, params, meta) ::
+      @spec execute(Server.t, Server.t, params, meta, Event.relay) ::
         {:ok, Process.t}
         | executable_error
       @doc """
       Executes the process.
       """
-      def execute(unquote_splicing(args)) do
+      def execute(unquote_splicing(args), relay) do
         process_data = get_process_data(unquote(params))
         resources = get_resources(unquote_splicing(args))
         file = get_file(unquote_splicing(args))
@@ -257,14 +257,14 @@ defmodule Helix.Process.Executable do
             {:ok, connection, events} <-
               setup_connection(unquote_splicing(args), connection_info),
 
-            on_success(fn -> Event.emit(events) end),
-            on_fail(fn -> close_connection_on_fail(connection) end),
+            on_success(fn -> Event.emit(events, from: relay) end),
+            on_fail(fn -> close_connection_on_fail(connection, relay) end),
 
             params = create_process_params(partial, connection),
 
             {:ok, process, events} <- ProcessAction.create(params),
 
-            on_success(fn -> Event.emit(events) end)
+            on_success(fn -> Event.emit(events, from: relay) end)
           do
             {:ok, process}
           else

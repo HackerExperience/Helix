@@ -5,16 +5,31 @@ defmodule Helix.Websocket do
   alias Phoenix.Socket
   alias Helix.Event.Notificable
   alias Helix.Websocket.Joinable
+  alias Helix.Websocket.Request
   alias Helix.Websocket.Requestable
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
-  @typep socket :: Socket.t
+  @type replies ::
+    reply_ok
+    | reply_error
+    | reply_stop
+    | no_reply
+
+  @type reply_ok :: {:reply, {:ok, payload}, socket}
+  @type reply_error :: {:reply, {:error, payload}, socket}
+  @type reply_stop :: {:stop, term, socket}
+  @type no_reply :: {:noreply, socket}
+
+  @type meta :: %{request_id: binary | nil}
+  @type payload :: %{data: term, meta: meta} | %{data: term}
+
+  @type socket :: Socket.t
+  @type t :: socket
 
   transport :websocket, Phoenix.Transports.WebSocket
 
-  channel "requests", Helix.Websocket.RequestsChannel
   channel "account:*", Helix.Account.Websocket.Channel.Account
   channel "server:*", Helix.Server.Websocket.Channel.Server
 
@@ -35,9 +50,8 @@ defmodule Helix.Websocket do
     end
   end
 
-  def connect(_, _) do
-    :error
-  end
+  def connect(_, _),
+    do: :error
 
   def id(socket),
     do: "session:" <> socket.assigns.session
@@ -64,7 +78,6 @@ defmodule Helix.Websocket do
   Generic request handler. It guides the request through the Requestable flow,
   replying the result back to the client.
   """
-  # TODO: Adicionar ReqMeta aqui \/; passar diretamente p/ `handle_request/2`
   def handle_request(request, socket) do
     with \
       {:ok, request} <- Requestable.check_params(request, socket),
@@ -73,25 +86,52 @@ defmodule Helix.Websocket do
     do
       request
       |> Requestable.reply(socket)
-      |> reply_request(socket)
+      |> handle_response(request, socket)
     else
-      {:error, %{message: msg}} ->
-        WebsocketUtils.reply_error(msg, socket)
+      error = {:error, %{message: _}} ->
+        error
+        |> handle_response(request, socket)
+
       _ ->
-        WebsocketUtils.internal_error(socket)
+        WebsocketUtils.reply_internal_error(socket)
     end
   end
 
-  @spec reply_request({:ok | :error} | :noreply, socket) ::
-    {:reply, {:ok, %{data: term}}, socket}
-    | {:reply, {:error, %{data: term}}, socket}
-    | {:noreply, socket}
-  defp reply_request({:ok, data}, socket),
-    do: WebsocketUtils.reply_ok(data, socket)
-  defp reply_request({:error, data}, socket),
-    do: WebsocketUtils.reply_error(data, socket)
-  defp reply_request(:noreply, socket),
+  @spec generate_payload(term, Request.t) ::
+    payload
+  defp generate_payload(data, request) do
+    %{}
+    |> Map.merge(WebsocketUtils.wrap_data(data))
+    |> Map.merge(%{meta: generate_meta(request)})
+  end
+
+  @spec generate_meta(Request.t) ::
+    meta
+  defp generate_meta(%{relay: %{request_id: request_id}}),
+    do: %{request_id: request_id}
+
+  @spec reply_request({:ok | :error, payload}, socket) ::
+    {:reply, {:ok, payload}, socket}
+    | {:reply, {:error, payload}, socket}
+  defp reply_request({:ok, payload}, socket),
+    do: WebsocketUtils.reply_ok(payload, socket)
+  defp reply_request({:error, payload}, socket),
+    do: WebsocketUtils.reply_error(payload, socket)
+
+  @spec handle_response({:stop, term}, Request.t, socket) :: reply_stop
+  @spec handle_response(:noreply, Request.t, socket) :: no_reply
+  @spec handle_response({:ok | :error, term}, Request.t, socket) ::
+    reply_ok
+    | reply_error
+  defp handle_response({:stop, reason}, _request, socket),
+    do: WebsocketUtils.stop(reason, socket)
+  defp handle_response(:noreply, _, socket),
     do: WebsocketUtils.no_reply(socket)
+  defp handle_response({status, data}, request, socket) do
+    payload = generate_payload(data, request)
+
+    reply_request({status, payload}, socket)
+  end
 
   @doc """
   Generic notification ("event going out") handler. It guides the notification

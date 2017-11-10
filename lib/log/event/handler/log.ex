@@ -15,12 +15,15 @@ defmodule Helix.Log.Event.Handler.Log do
   Generic event handler for all Helix events. If the event implement the
   Loggable protocol, it will guide it through the LoggableFlow, making sure
   the relevant log entries are generated and saved
+
+  Emits `LogCreatedEvent`
   """
   def handle_event(event) do
     if Loggable.impl_for(event) do
       event
       |> Loggable.generate()
       |> Loggable.Flow.save()
+      |> Event.emit(from: event)
     end
   end
 
@@ -33,7 +36,7 @@ defmodule Helix.Log.Event.Handler.Log do
       |> LogQuery.fetch()
       |> LogAction.revise(event.entity_id, event.message, event.version)
 
-    Event.emit(events)
+    Event.emit(events, from: event)
   end
 
   def log_forge_conclusion(event = %LogForgeCreateComplete{}) do
@@ -43,6 +46,6 @@ defmodule Helix.Log.Event.Handler.Log do
       event.message,
       event.version)
 
-    Event.emit(events)
+    Event.emit(events, from: event)
   end
 end

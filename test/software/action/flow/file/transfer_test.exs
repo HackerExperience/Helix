@@ -11,6 +11,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
+  @relay nil
+
   describe "transfer/4" do
     test "valid file download" do
       {gateway, _} = ServerSetup.server()
@@ -22,8 +24,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       net = NetworkHelper.net()
 
       {:ok, process} =
-        FileTransferFlow.transfer(
-          :download, gateway, destination, file, destination_storage, net
+        FileTransferFlow.download(
+          gateway, destination, file, destination_storage, net, @relay
         )
 
       # Generated process has the expected data
@@ -40,8 +42,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
-        FileTransferFlow.transfer(
-          :download, gateway, destination, file, destination_storage, net
+        FileTransferFlow.download(
+          gateway, destination, file, destination_storage, net, @relay
         )
 
       assert process2.process_id == process.process_id
@@ -59,8 +61,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       net = NetworkHelper.net()
 
       {:ok, process} =
-        FileTransferFlow.transfer(
-          :upload, gateway, destination, file, destination_storage, net
+        FileTransferFlow.upload(
+          gateway, destination, file, destination_storage, net, @relay
         )
 
       # Generated process has the expected data
@@ -77,8 +79,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
-        FileTransferFlow.transfer(
-          :upload, gateway, destination, file, destination_storage, net
+        FileTransferFlow.upload(
+          gateway, destination, file, destination_storage, net, @relay
         )
 
       assert process2.process_id == process.process_id
@@ -96,8 +98,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       net = NetworkHelper.net()
 
       {:ok, process} =
-        FileTransferFlow.transfer(
-          :pftp_download, gateway, destination, file, destination_storage, net
+        FileTransferFlow.pftp_download(
+          gateway, destination, file, destination_storage, net, @relay
         )
 
       # Generated process has the expected data
@@ -114,8 +116,8 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
-        FileTransferFlow.transfer(
-          :pftp_download, gateway, destination, file, destination_storage, net
+        FileTransferFlow.pftp_download(
+          gateway, destination, file, destination_storage, net, @relay
         )
 
       assert process2.process_id == process.process_id

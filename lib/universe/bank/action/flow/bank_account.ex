@@ -15,6 +15,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
+  @typep relay :: Event.relay
+
   @doc """
   Starts the `bank_reveal_password` process.
 
@@ -26,10 +28,10 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   Emits: ProcessCreatedEvent
   """
-  @spec reveal_password(BankAccount.t, BankToken.id, Server.t, Server.t) ::
+  @spec reveal_password(BankAccount.t, BankToken.id, Server.t, Server.t, relay) ::
     {:ok, Process.t}
     | BankAccountRevealPasswordProcess.executable_error
-  def reveal_password(account, token_id, gateway, atm) do
+  def reveal_password(account, token_id, gateway, atm, relay) do
     params = %{
       token_id: token_id,
       account: account
@@ -40,7 +42,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
       bounce: []
     }
 
-    BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta)
+    BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta, relay)
   end
 
   @doc """
