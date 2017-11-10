@@ -4,6 +4,7 @@ defmodule Helix.Test.Features.File.TransferTest do
 
   import Phoenix.ChannelTest
   import Helix.Test.Macros
+  import Helix.Test.Channel.Macros
 
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Software.Model.File
@@ -43,17 +44,12 @@ defmodule Helix.Test.Features.File.TransferTest do
       assert response.meta.request_id == request_id
       assert response.data == %{}
 
-      # After a while, client receives the new event through top recalque
-      assert_push "event", l_top_recalcado_event, timeout(:fast)
-      assert_push "event", _r_top_recalcado_event, timeout(:fast)
-      assert_push "event", l_process_created_event, timeout(:fast)
-      assert_push "event", _r_process_created_event, timeout(:fast)
+      # After a while, client receives the new process through top recalque
+      [l_top_recalcado_event, l_process_created_event] =
+        wait_events [:top_recalcado, :process_created]
 
       # Each one have the client-defined request_id
-      assert l_top_recalcado_event.event == "top_recalcado"
       assert l_top_recalcado_event.meta.request_id == request_id
-
-      assert l_process_created_event.event == "process_created"
       assert l_process_created_event.meta.request_id == request_id
 
       # Force completion of the process
@@ -64,29 +60,26 @@ defmodule Helix.Test.Features.File.TransferTest do
       TOPHelper.force_completion(process)
 
       # Note we are subscribed to events on both the `gateway` and `destination`
-      assert_push "event", _r_log_created_event, timeout(:fast)
-      assert_push "event", _l_log_created_event, timeout(:fast)
-      assert_push "event", file_downloaded_event, timeout(:fast)
-      assert_push "event", _l_process_completed, timeout(:fast)
-      assert_push "event", _r_process_completed, timeout(:fast)
-
-      assert file_downloaded_event.event == "file_downloaded"
+      [file_downloaded_event, file_added_event] =
+        wait_events [:file_downloaded, :file_added]
 
       # Process no longer exists
       refute ProcessQuery.fetch(process.process_id)
 
       # The new file exists on my server
-      file =
+      new_file =
         file_downloaded_event.data.file.file_id
         |> File.ID.cast!()
         |> FileQuery.fetch()
 
-      assert file.storage_id == gateway_storage.storage_id
+      assert new_file.storage_id == gateway_storage.storage_id
 
       # The old file still exists on the target server, as expected
       r_file = FileQuery.fetch(dl_file.file_id)
-
       assert r_file.storage_id == SoftwareHelper.get_storage_id(destination)
+
+      # Client received the FileAddedEvent
+      assert file_added_event.data.file.file_id == to_string(new_file.file_id)
 
       TOPHelper.top_stop(gateway)
     end

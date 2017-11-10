@@ -2,6 +2,54 @@ defmodule Helix.Software.Event.File do
 
   import Helix.Event
 
+  event Added do
+    @moduledoc """
+    FileAddedEvent is fired when a new file is added to the filesystem. Most of
+    the times is called as a result of FileDownloadedEvent or FileUploadedEvent.
+    """
+
+    alias Helix.Server.Model.Server
+    alias Helix.Software.Model.File
+
+    @type t ::
+      %__MODULE__{
+        file: File.t,
+        server_id: Server.id
+      }
+
+    event_struct [:file, :server_id]
+
+    @spec new(File.t, Server.id) ::
+      t
+    def new(file = %File{}, server_id = %Server.ID{}) do
+      %__MODULE__{
+        file: file,
+        server_id: server_id
+      }
+    end
+
+    notify do
+      @moduledoc """
+      Pushes the notification to the Client, so it can display the new file.
+      """
+
+      alias Helix.Software.Public.Index, as: SoftwareIndex
+
+      @event :file_added
+
+      def generate_payload(event, _socket) do
+        data = %{
+          file: SoftwareIndex.render_file(event.file)
+        }
+
+        {:ok, data}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: [event.server_id]}
+    end
+  end
+
   event Downloaded do
     @moduledoc """
     FileDownloadedEvent is fired when a FileTransfer process of type `download`

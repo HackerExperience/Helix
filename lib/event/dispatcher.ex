@@ -150,6 +150,7 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Cracker.Bruteforce.Failed
   event SoftwareEvent.Cracker.Bruteforce.Processed
   event SoftwareEvent.Cracker.Overflow.Processed
+  event SoftwareEvent.File.Added
   event SoftwareEvent.File.Downloaded
   event SoftwareEvent.File.DownloadFailed
   event SoftwareEvent.File.Uploaded
@@ -168,6 +169,14 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Cracker.Overflow.Processed,
     SoftwareHandler.Cracker,
     :overflow_conclusion
+
+  event SoftwareEvent.File.Downloaded,
+    SoftwareHandler.Filesystem,
+    :filesystem_handler
+
+  event SoftwareEvent.File.Uploaded,
+    SoftwareHandler.Filesystem,
+    :filesystem_handler
 
   event SoftwareEvent.File.Transfer.Processed,
     SoftwareHandler.File.Transfer,
