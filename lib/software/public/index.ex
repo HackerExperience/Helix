@@ -53,6 +53,8 @@ defmodule Helix.Software.Public.Index do
     end)
   end
 
+  @spec render_file(File.t) ::
+    rendered_index_file
   def render_file(file = %File{}) do
     %{
       file_id: to_string(file.file_id),
