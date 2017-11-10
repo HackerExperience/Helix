@@ -65,9 +65,12 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
     cracker = request.meta.cracker
     gateway = request.meta.gateway
     target = request.meta.target
+    relay = request.relay
 
     bruteforce =
-      FilePublic.bruteforce(cracker, gateway, target, network_id, ip, bounces)
+      FilePublic.bruteforce(
+        cracker, gateway, target, {network_id, ip}, bounces, relay
+      )
 
     case bruteforce do
       {:ok, process} ->
@@ -83,7 +86,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
     end
   end
 
-  render_process()
+  render_empty()
 
   defp cast_bounces(bounces) when is_list(bounces),
     do: {:ok, Enum.map(bounces, &(Server.ID.cast!(&1)))}

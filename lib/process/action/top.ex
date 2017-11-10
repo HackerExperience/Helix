@@ -18,6 +18,7 @@ defmodule Helix.Process.Action.TOP do
     {:ok, [Process.t], [TOPRecalcadoEvent.t]}
     | {:error, :resources}
 
+  @typep relay :: Event.relay | nil
   @typep recalque_opts :: term
 
   @spec complete(Process.t) ::
@@ -64,7 +65,7 @@ defmodule Helix.Process.Action.TOP do
   within the given server. A recalque must be performed every time the total
   available resources on the process changes.
   """
-  def recalque(process_or_server, alloc_opts \\ [])
+  def recalque(process_or_server, opts \\ [])
 
   def recalque(%Process{gateway_id: gateway_id, target_id: gateway_id}, opts) do
     %{
@@ -83,13 +84,14 @@ defmodule Helix.Process.Action.TOP do
 
   @spec do_recalque(Server.id, recalque_opts) ::
     recalque_result
-  defp do_recalque(server_id, alloc_opts) do
+  defp do_recalque(server_id, opts) do
     resources = TOPQuery.load_top_resources(server_id)
     processes = ProcessQuery.get_processes_on_server(server_id)
 
-    case TOP.Allocator.allocate(server_id, resources, processes, alloc_opts) do
+    case TOP.Allocator.allocate(server_id, resources, processes, opts) do
       {:ok, allocation_result} ->
-        processes = schedule(allocation_result)
+        source = Keyword.get(opts, :source)
+        processes = schedule(allocation_result, source)
         event = TOPRecalcadoEvent.new(server_id)
 
         {:ok, processes, [event]}
@@ -99,13 +101,13 @@ defmodule Helix.Process.Action.TOP do
     end
   end
 
-  @spec schedule(TOP.Allocator.allocation_successful) ::
+  @spec schedule(TOP.Allocator.allocation_successful, relay) ::
     [Process.t]
   docp """
   Top-level guide that "interprets" the Allocation results and performs the
   required actions.
   """
-  defp schedule(%{allocated: processes, dropped: _dropped}) do
+  defp schedule(%{allocated: processes, dropped: _dropped}, relay) do
     # Organize all processes in two groups: the local ones and the remote ones
     # A local process was started on this very server, while a remote process
     # was started somewhere else and *targets* this server.
@@ -134,7 +136,7 @@ defmodule Helix.Process.Action.TOP do
     # track the completion date of the `next`-to-be-completed process.
     # Here we also deal with processes that were deemed already completed by the
     # simulation.
-    hespawn fn -> handle_forecast(forecast) end
+    hespawn fn -> handle_forecast(forecast, relay) end
 
     # Recreate the complete process list, filtering out the ones that were
     # already completed (see Forecast step above)
@@ -174,19 +176,19 @@ defmodule Helix.Process.Action.TOP do
     processes
   end
 
-  @spec handle_forecast(TOP.Scheduler.forecast) ::
+  @spec handle_forecast(TOP.Scheduler.forecast, relay) ::
     term
   docp """
   `handle_forecast` aggregates the `Scheduler.forecast/1` result and guides it
   to the corresponding handlers. Check `handle_completed/1` and `handle_next/1`
   for detailed explanation of each one.
   """
-  defp handle_forecast(%{completed: completed, next: next}) do
-    handle_completed(completed)
-    handle_next(next)
+  defp handle_forecast(%{completed: completed, next: next}, relay) do
+    handle_completed(completed, relay)
+    handle_next(next, relay)
   end
 
-  @spec handle_completed([Process.t]) ::
+  @spec handle_completed([Process.t], relay) ::
     term
   docp """
   `handle_completed` receives processes that according to `Schedule.forecast/1`
@@ -207,17 +209,17 @@ defmodule Helix.Process.Action.TOP do
 
   Emits event.
   """
-  defp handle_completed([]),
+  defp handle_completed([], _),
     do: :noop
-  defp handle_completed(completed) do
+  defp handle_completed(completed, source) do
     Enum.each(completed, fn completed_process ->
       with {:ok, events} <- complete(completed_process) do
-        Event.emit(events)
+        Event.emit(events, from: source)
       end
     end)
   end
 
-  @spec handle_next({Process.t, Process.time_left}) ::
+  @spec handle_next({Process.t, Process.time_left}, relay) ::
     term
   docp """
   `handle_next` will receive the "next-to-be-completed" process, as defined by
@@ -229,14 +231,14 @@ defmodule Helix.Process.Action.TOP do
 
   Emits TOPBringMeToLifeEvent.t after `time_left` seconds have elapsed.
   """
-  defp handle_next({process, time_left}) do
+  defp handle_next({process, time_left}, _) do
     wake_me_up = TOPBringMeToLifeEvent.new(process)
     save_me = time_left * 1000 |> trunc()
 
     # Wakes me up inside
     Event.emit_after(wake_me_up, save_me)
   end
-  defp handle_next(_),
+  defp handle_next(_, _),
     do: :noop
 
   @spec handle_checkpoint([Process.t]) ::

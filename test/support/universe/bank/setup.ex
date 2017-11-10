@@ -224,7 +224,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
     net = NetworkHelper.net()
 
     {:ok, process} =
-      BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
+      BankTransferFlow.start(acc1, acc2, amount, player, gateway, net, nil)
 
     related = %{
       acc1: acc1,

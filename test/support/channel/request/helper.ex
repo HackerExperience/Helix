@@ -4,7 +4,8 @@ defmodule Helix.Test.Channel.Request.Helper do
     %{
       __struct__: module,
       params: params,
-      meta: meta
+      meta: meta,
+      relay: Helix.Websocket.Request.Relay.new(params)
     }
   end
 end

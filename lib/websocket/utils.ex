@@ -1,26 +1,11 @@
 defmodule Helix.Websocket.Utils do
 
   alias HELL.Utils
+  alias Helix.Websocket
   alias Helix.Process.Model.Process
   alias Helix.Process.Public.View.Process, as: ProcessView
 
-  @type socket :: term
-
-  @type reply_ok ::
-    {:reply, {:ok, term}, socket}
-
-  @type reply_error ::
-    {:reply, {:error, %{data: term}}, socket}
-
-  @type no_reply ::
-    {:noreply, socket}
-
-  @spec no_reply(socket) ::
-    no_reply
-  def no_reply(socket),
-    do: {:noreply, socket}
-
-  @spec render_process(Process.t, socket) ::
+  @spec render_process(Process.t, Websocket.t) ::
     %{data: map}
   @doc """
   Helper that automatically renders the reply with the recently created process.
@@ -30,22 +15,28 @@ defmodule Helix.Websocket.Utils do
     server_id = socket.assigns.gateway.server_id
     entity_id = socket.assigns.entity_id
 
-    pview = ProcessView.render(process_data, process, server_id, entity_id)
-
-    %{data: pview}
+    ProcessView.render(process_data, process, server_id, entity_id)
   end
 
-  @spec reply_ok(term, socket) ::
-    reply_ok
-  def reply_ok(data, socket),
-    do: {:reply, {:ok, wrap_data(data)}, socket}
+  @spec reply_ok(Websocket.payload, Websocket.t) ::
+    Websocket.reply_ok
+  def reply_ok(payload, socket),
+    do: {:reply, {:ok, payload}, socket}
 
-  @spec reply_error(term, socket) ::
-    reply_error
-  def reply_error(msg, socket) when is_binary(msg),
-    do: reply_error(%{data: %{message: msg}}, socket)
-  def reply_error(error, socket),
-    do: {:reply, {:error, wrap_data(error)}, socket}
+  @spec reply_error(Websocket.payload, Websocket.t) ::
+    Websocket.reply_error
+  def reply_error(payload, socket),
+    do: {:reply, {:error, payload}, socket}
+
+  @spec stop(term, Websocket.t) ::
+    Websocket.reply_stop
+  def stop(reason, socket),
+    do: {:stop, reason, socket}
+
+  @spec no_reply(Websocket.t) ::
+    Websocket.no_reply
+  def no_reply(socket),
+    do: {:noreply, socket}
 
   @spec wrap_data(data) ::
     data
@@ -56,10 +47,10 @@ defmodule Helix.Websocket.Utils do
   def wrap_data(data),
     do: %{data: data}
 
-  @spec internal_error(socket) ::
-    reply_error
-  def internal_error(socket),
-    do: reply_error("internal", socket)
+  @spec reply_internal_error(Websocket.t) ::
+    Websocket.reply_error
+  def reply_internal_error(socket),
+    do: reply_error(%{data: %{message: "internal"}}, socket)
 
   @doc """
   General purpose error code translator. If you want to specify or handle a

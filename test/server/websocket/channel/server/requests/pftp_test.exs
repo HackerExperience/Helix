@@ -110,12 +110,15 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.PFTPTest do
 
       ref = push socket, "pftp.file.download", params
 
-      assert_reply ref, :ok, %{data: process}, timeout(:slow)
+      assert_reply ref, :ok, %{}, timeout(:slow)
 
-      assert process.file.id == to_string(file.file_id)
-      assert process.type == "file_download"
-      assert process.data.connection_type == "public_ftp"
-      assert process.network_id == to_string(@internet_id)
+      assert_push "event", _top_recalcado_event, timeout()
+      assert_push "event", process_created_event, timeout()
+
+      assert process_created_event.data.file.id == to_string(file.file_id)
+      assert process_created_event.data.type == "file_download"
+      assert process_created_event.data.data.connection_type == "public_ftp"
+      assert process_created_event.data.network_id == to_string(@internet_id)
 
       TOPHelper.top_stop(server)
     end

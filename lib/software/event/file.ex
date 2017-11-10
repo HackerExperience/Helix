@@ -60,11 +60,13 @@ defmodule Helix.Software.Event.File do
       Notifies the Client that a file has been downloaded.
       """
 
+      alias Helix.Software.Public.Index, as: SoftwareIndex
+
       @event :file_downloaded
 
       def generate_payload(event, _socket) do
         data = %{
-          file: event.file.id
+          file: SoftwareIndex.render_file(event.file)
         }
 
         {:ok, data}

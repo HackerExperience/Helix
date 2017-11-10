@@ -3,12 +3,11 @@ defmodule Helix.Software.Action.Flow.FileTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  # alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Software.Action.Flow.File, as: FileFlow
+  alias Helix.Server.Model.Server
 
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
-  # alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "execute_file/1" do
@@ -16,7 +15,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       {file, _} = SoftwareSetup.non_executable_file()
 
       assert {:error, reason} =
-        FileFlow.execute_file(file, :wat, %{}, %{}, %{}, %{})
+        FileFlow.execute_file({file, :wat}, %Server{}, %Server{}, %{}, %{}, nil)
       assert reason == :not_executable
     end
 
@@ -76,7 +75,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
       # Executes Cracker.bruteforce against the target server
       assert {:ok, _} =
         FileFlow.execute_file(
-          file, :bruteforce, source_server, target_server, params, meta
+          {file, :bruteforce}, source_server, target_server, params, meta, nil
         )
 
       TOPHelper.top_stop(source_server)

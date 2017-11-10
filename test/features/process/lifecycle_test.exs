@@ -35,18 +35,18 @@ defmodule Helix.Test.Features.Process.Lifecycle do
 
       # Starts the file download
       ref = push socket, "file.download", params
-
       assert_reply ref, :ok, response, timeout(:slow)
 
       # The process was created
-      assert response.data.process_id
-      process_id = Process.ID.cast!(response.data.process_id)
+      assert response.data == %{}
 
-      assert_push "event", top_recalcado, timeout()
-      assert_push "event", process_created, timeout()
+      assert_push "event", top_recalcado_event, timeout()
+      assert_push "event", process_created_event, timeout()
 
-      assert top_recalcado.event == "top_recalcado"
-      assert process_created.event == "process_created"
+      process_id = Process.ID.cast!(process_created_event.data.process_id)
+
+      assert top_recalcado_event.event == "top_recalcado"
+      assert process_created_event.event == "process_created"
 
       # Let's fetch the process, just to make sure
       process = ProcessQuery.fetch(process_id)
@@ -75,8 +75,9 @@ defmodule Helix.Test.Features.Process.Lifecycle do
     # half: completing the process. We want to avoid using `force_completion`
     # from TOPHelper, so the completion is actually spontaneous.
     # In order to do that we create a very small process which needs to transfer
-    # a file of about ~1kb, taking less than a second.
+    # a file of about ~1kb, which takes less than a second.
     test "spontaneous completion" do
+      # TODO Agora dah
       # TODO: Local socket for local TOPREcalcado event
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()

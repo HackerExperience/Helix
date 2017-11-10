@@ -69,6 +69,8 @@ defmodule Helix.Process.Event.Process do
 
     notify do
 
+      alias Helix.Process.Public.View.Process, as: ProcessView
+
       @event :process_created
 
       @doc """
@@ -89,66 +91,25 @@ defmodule Helix.Process.Event.Process do
       Note that if third party `A` is connected to `S`, she can see the full
       process because of 1. Hence, this rule (3) only applies to third-parties
       connecting to the attack target.
+
+      All this logic is handled by `ProcessView` and, under the hood,
+      `ProcessViewable`.
       """
       def generate_payload(event = %_{confirmed: true}, socket) do
-        gateway_id = socket.assigns.gateway.server_id
-        destination_id = socket.assigns.destination.server_id
+        server_id = socket.assigns.destination.server_id
+        entity_id = socket.assigns.gateway.entity_id
 
-        cond do
-          # attacker AT attack_source;
-          # victim AT attack_target;
-          # player AT action_server;
-          gateway_id == destination_id ->
-            do_payload(event, socket)
+        data =
+          ProcessView.render(
+            event.process.data, event.process, server_id, entity_id
+          )
 
-          # attacker AT attack_target
-          event.gateway_id == gateway_id ->
-            do_payload(event, socket)
-
-          # victim AT attack_source
-          event.target_id == gateway_id ->
-            do_payload(event, socket)
-
-          # third AT attack_source
-          event.gateway_id == destination_id ->
-            do_payload(event, socket)
-
-          # third AT attack_target
-          true ->
-            do_payload(event, socket, [partial: true])
-        end
+        {:ok, data}
       end
 
       # Internal event used for optimistic (asynchronous) processing
       def generate_payload(%_{confirmed: false}, _),
         do: :noreply
-
-      defp do_payload(event, _socket, opts \\ []) do
-        file_id = event.process.file_id && to_string(event.process.file_id)
-        connection_id =
-          event.process.connection_id && to_string(event.process.connection_id)
-
-        data = %{
-          process_id: to_string(event.process.process_id),
-          type: to_string(event.process.type),
-          network_id: to_string(event.process.network_id),
-          file_id: file_id,
-          connection_id: connection_id,
-          source_ip: event.gateway_ip,
-          target_ip: event.target_ip
-        }
-
-        data =
-          if opts[:partial] do
-            data
-            |> Map.drop([:connection_id])
-            |> Map.drop([:source_ip])
-          else
-            data
-          end
-
-        {:ok, data}
-      end
 
       @doc """
       Both gateway and destination are notified. If they are the same, obviously

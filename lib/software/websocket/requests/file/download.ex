@@ -86,17 +86,21 @@ request Helix.Software.Websocket.Requests.File.Download do
     tunnel = socket.assigns.tunnel
     gateway = request.meta.gateway
     destination = request.meta.destination
+    relay = request.relay
 
-    case FilePublic.download(gateway, destination, tunnel, storage, file) do
-      {:ok, process} ->
-        update_meta(request, %{process: process}, reply: true)
+    download =
+      FilePublic.download(gateway, destination, tunnel, storage, file, relay)
+
+    case download do
+      {:ok, _process} ->
+        reply_ok(request)
 
       {:error, reason} ->
         reply_error(reason)
     end
   end
 
-  render_process()
+  render_empty()
 
   @spec get_error(reason :: {term, term} | term) ::
     String.t

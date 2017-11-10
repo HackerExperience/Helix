@@ -38,10 +38,10 @@ defprotocol Helix.Websocket.Requestable do
   an actual Channel socket.
   """
 
-  alias Phoenix.Socket
+  alias Helix.Websocket
   alias Helix.Websocket.Request
 
-  @spec check_params(Request.t(term), Socket.t) ::
+  @spec check_params(Request.t(term), Websocket.t) ::
     {:ok, Request.t(term)}
     | {:error, term}
   @doc """
@@ -58,7 +58,7 @@ defprotocol Helix.Websocket.Requestable do
   """
   def check_params(request, socket)
 
-  @spec check_permissions(Request.t(term), Socket.t) ::
+  @spec check_permissions(Request.t(term), Websocket.t) ::
     {:ok, Request.t(term)}
     | {:error, term}
   @doc """
@@ -76,7 +76,7 @@ defprotocol Helix.Websocket.Requestable do
   """
   def check_permissions(request, socket)
 
-  @spec handle_request(Request.t(term), Socket.t) ::
+  @spec handle_request(Request.t(term), Websocket.t) ::
     {:ok, Request.t(term)}
     | {:error, term}
   @doc """
@@ -94,9 +94,10 @@ defprotocol Helix.Websocket.Requestable do
   """
   def handle_request(request, socket)
 
-  @spec reply(Request.t(term), Socket.t) ::
+  @spec reply(Request.t(term), Websocket.t) ::
     {:ok, reply :: map}
     | {:error, reply :: map}
+    | {:stop, reason :: term}
     | :noreply
   @doc """
   Final step of the flow, which is only reached when all previous steps were

@@ -48,7 +48,7 @@ defmodule Helix.Software.Event.Handler.File.Transfer do
 
         event
         |> get_event(:failed, error)
-        |> Event.emit()
+        |> Event.emit(from: event)
 
         {:error, error}
     end

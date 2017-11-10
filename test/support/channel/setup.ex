@@ -53,7 +53,12 @@ defmodule Helix.Test.Channel.Setup do
     {token, _} = AccountSetup.token([account: account])
     {:ok, socket} = connect(Websocket, %{token: token})
 
-    {socket, Map.merge(%{account: account}, related)}
+    related =
+      related
+      |> Map.merge(%{account: account})
+      |> Map.merge(%{token: token})
+
+    {socket, related}
   end
 
   @doc """
@@ -73,13 +78,13 @@ defmodule Helix.Test.Channel.Setup do
       raise "You must specify both :account_id and :socket"
     end
 
-    {socket, account_id} =
+    {socket, account_id, socket_related} =
       if opts[:socket] do
-        {opts[:socket], opts[:account_id]}
+        {opts[:socket], opts[:account_id], %{}}
       else
-        {socket, %{account: account}} = create_socket()
+        {socket, related} = create_socket()
 
-        {socket, account.account_id}
+        {socket, related.account.account_id, related}
       end
 
     topic = "account:" <> to_string(account_id)
@@ -90,6 +95,7 @@ defmodule Helix.Test.Channel.Setup do
       account_id: account_id,
       entity_id: Entity.ID.cast!(to_string(account_id))
     }
+    |> Map.merge(socket_related)
 
     {socket, related}
   end
@@ -117,7 +123,14 @@ defmodule Helix.Test.Channel.Setup do
     destination_ip :: Network.ip | nil
   """
   def join_server(opts \\ []) do
-    {socket, %{account: account, server: gateway}} = create_socket()
+    {socket, %{account: account, server: gateway}} =
+      if opts[:socket] do
+        gateway = opts[:socket].assigns.gateway.server_id |> ServerQuery.fetch()
+
+        {opts[:socket], %{account: nil, server: gateway}}
+      else
+        create_socket()
+      end
 
     local? = Keyword.get(opts, :own_server, false)
 

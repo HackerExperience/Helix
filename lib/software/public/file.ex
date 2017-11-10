@@ -1,5 +1,6 @@
 defmodule Helix.Software.Public.File do
 
+  alias Helix.Event
   alias Helix.Network.Model.Net
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
@@ -15,7 +16,9 @@ defmodule Helix.Software.Public.File do
     | {:error, {:storage, :not_found}}
     | {:error, :internal}
 
-  @spec download(Server.t, Server.t, Tunnel.t, Storage.t, File.t) ::
+  @typep relay :: Event.relay
+
+  @spec download(Server.t, Server.t, Tunnel.t, Storage.t, File.t, relay) ::
     {:ok, Process.t}
     | FileTransferFlow.transfer_error
   @doc """
@@ -27,12 +30,13 @@ defmodule Helix.Software.Public.File do
     target = %Server{},
     tunnel = %Tunnel{},
     storage = %Storage{},
-    file = %File{})
+    file = %File{},
+    relay)
   do
     net = Net.new(tunnel)
 
     transfer =
-      FileTransferFlow.transfer(:download, gateway, target, file, storage, net)
+      FileTransferFlow.download(gateway, target, file, storage, net, relay)
 
     case transfer do
       {:ok, process} ->
@@ -47,9 +51,9 @@ defmodule Helix.Software.Public.File do
     File.t_of_type(:cracker),
     gateway :: Server.t,
     target :: Server.t,
-    Network.id,
-    Network.ip,
-    term)
+    target_nip :: {Network.id, Network.ip},
+    term,
+    relay)
   ::
     {:ok, Process.t}
     | FileFlow.bruteforce_execution_error
@@ -61,9 +65,9 @@ defmodule Helix.Software.Public.File do
     cracker = %File{software_type: :cracker},
     gateway = %Server{},
     target = %Server{},
-    network_id = %Network.ID{},
-    target_ip,
-    bounce_id)
+    {network_id = %Network.ID{}, target_ip},
+    bounce_id,
+    relay)
   do
     params = %{
       target_server_ip: target_ip
@@ -75,6 +79,8 @@ defmodule Helix.Software.Public.File do
       cracker: cracker
     }
 
-    FileFlow.execute_file(cracker, :bruteforce, gateway, target, params, meta)
+    FileFlow.execute_file(
+      {cracker, :bruteforce}, gateway, target, params, meta, relay
+    )
   end
 end

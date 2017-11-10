@@ -1,5 +1,6 @@
 defmodule Helix.Software.Action.Flow.File do
 
+  alias Helix.Event
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
@@ -21,9 +22,11 @@ defmodule Helix.Software.Action.Flow.File do
   # implementation detail).
   @type bruteforce_execution_error :: BruteforceProcess.executable_error
 
-  @typep file_module :: File.Module.name
+  @type executable :: {File.t, File.Module.name}
 
-  @spec execute_file(File.t, file_module, Server.t, Server.t, params, meta) ::
+  @typep relay :: Event.relay
+
+  @spec execute_file(executable, Server.t, Server.t, params, meta, relay) ::
     {:ok, Process.t}
     | executable_errors
     | {:error, :not_executable}
@@ -37,10 +40,17 @@ defmodule Helix.Software.Action.Flow.File do
   If the process can not be started on the server, returns the corresponding
   error.
   """
-  def execute_file(file = %File{}, module, gateway, target, params, meta) do
-    case {file, module} do
+  def execute_file(
+    executable = {%File{}, _},
+    gateway = %Server{},
+    target = %Server{},
+    params,
+    meta,
+    relay)
+  do
+    case executable do
       {%File{software_type: :cracker}, :bruteforce} ->
-        BruteforceProcess.execute(gateway, target, params, meta)
+        BruteforceProcess.execute(gateway, target, params, meta, relay)
 
       # %File{software_type: :firewall} ->
       #   FirewallFlow.execute(file, server, params)

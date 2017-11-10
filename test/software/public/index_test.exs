@@ -8,6 +8,7 @@ defmodule Helix.Software.Public.IndexTest do
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "index/1" do
+    # TODO: Test it hides hidden/encrypted files, etc.
     test "indexes correctly" do
       {server, _} = ServerSetup.server()
 
@@ -21,15 +22,9 @@ defmodule Helix.Software.Public.IndexTest do
       result_file2 = Enum.find(index[file2.path], &(find_by_id(&1, file2)))
       result_file3 = Enum.find(index[file3.path], &(find_by_id(&1, file3)))
 
-      assert result_file1.path == file1.full_path
-      assert result_file1.size == file1.file_size
-      assert result_file1.software_type == file1.software_type
-
-      # TODO: This function is not testing modules
-      # TODO: Test it hides hidden/encrypted files, etc.
-
-      assert result_file2.path == file2.full_path
-      assert result_file3.path == file3.full_path
+      assert result_file1 == file1
+      assert result_file2 == file2
+      assert result_file3 == file3
     end
   end
 

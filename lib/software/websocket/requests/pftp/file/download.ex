@@ -85,9 +85,9 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
     destination = request.meta.destination
     file = request.meta.file
     storage = request.meta.storage
+    relay = request.relay
 
-    #
-    case PFTPPublic.download(gateway, destination, storage, file) do
+    case PFTPPublic.download(gateway, destination, storage, file, relay) do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 
@@ -96,5 +96,5 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
     end
   end
 
-  render_process()
+  render_empty()
 end

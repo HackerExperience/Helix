@@ -8,12 +8,15 @@ defmodule Helix.Event do
 
   import HELL.Macros
 
+  alias Helix.Websocket.Request.Relay, as: RequestRelay
+  alias Helix.Process.Model.Process
   alias Helix.Event.Dispatcher, as: HelixDispatcher
   alias Helix.Event.Meta, as: EventMeta
   alias Helix.Event.State.Timer, as: EventTimer
-  alias Helix.Process.Model.Process
 
   @type t :: HELF.Event.t
+  @type source :: t | RequestRelay.t
+  @type relay :: source
 
   @doc """
   Top-level macro for an event.
@@ -58,6 +61,20 @@ defmodule Helix.Event do
       to: EventMeta
   end
 
+  @doc """
+  This is pure syntactic sugar for: set_{field}(event, get_{field}(source))
+
+  I.e. we get {field} from `source` and assign it to `event`.
+  """
+  defmacro relay(event, field, source) do
+    quote do
+      event = unquote(event)
+      source = unquote(source)
+
+      unquote(:"set_#{field}")(event, unquote(:"get_#{field}")(source))
+    end
+  end
+
   @spec emit([t] | t, from: t) ::
     term
   @doc """
@@ -98,12 +115,21 @@ defmodule Helix.Event do
   def emit_after(event, interval),
     do: EventTimer.emit_after(event, interval)
 
-  @spec inherit(t, t) ::
+  @spec inherit(t, source) ::
     t
   docp """
   The application wants to emit `event`, which is coming from `source`. On this
   case, `event` will inherit the source's metadata according to the logic below.
+
+  Note that `source` may either be another event (`t`) or a request relay
+  (`RequestRelay.t`). If it's a RequestRelay, then this event is being emitted
+  as a result of a direct action from the player. On the other hand, if `source`
+  is an event, it means this event is a side-effect of another event.
   """
+  defp inherit(event, nil),
+    do: event
+  defp inherit(event, relay = %RequestRelay{}),
+    do: set_request_id(event, relay.request_id)
   defp inherit(event, source) do
     # Relay the `process_id`
     event =
@@ -116,9 +142,10 @@ defmodule Helix.Event do
 
     # Accumulate source event on the stacktrace, and save it on the next event
     stack = get_stack(source) || []
-    new_stack = stack ++ [source.__struct__]
+    event = set_stack(event, stack ++ [source.__struct__])
 
-    event = set_stack(event, new_stack)
+    # Relay the request_id information
+    event = relay(event, :request_id, source)
 
     # Everything has been inherited, we are ready to emit/1 the event.
     event

@@ -1,5 +1,7 @@
+# credo:disable-for-this-file Credo.Check.Refactor.FunctionArity
 defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
 
+  alias Helix.Event
   alias Helix.Account.Model.Account
   alias Helix.Network.Model.Net
   alias Helix.Process.Model.Process
@@ -14,9 +16,10 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
     from_account :: BankAccount.t,
     to_account :: BankAccount.t,
     amount :: BankTransfer.amount,
-    started_by :: Account.idt,
+    started_by :: Account.t,
     gateway :: Server.t,
-    Net.t)
+    Net.t,
+    Event.relay)
   ::
     {:ok, Process.t}
     | {:error, {:funds, :insufficient}}
@@ -29,7 +32,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
   `BankAction.start_transfer()`, it also is responsible for creating the
   transfer process to be managed by TOP.
   """
-  def start(from_account, to_account, amount, started_by, gateway, net) do
+  def start(from_account, to_account, amount, started_by, gateway, net, relay) do
     start_transfer = fn ->
       BankAction.start_transfer(
         from_account, to_account, amount, started_by.account_id
@@ -60,7 +63,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
         bounce: bounces
       }
 
-      BankTransferProcess.execute(gateway, target_atm, params, meta)
+      BankTransferProcess.execute(gateway, target_atm, params, meta, relay)
 
     else
       error = {:error, {_, _}} ->

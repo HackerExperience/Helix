@@ -13,6 +13,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
+  @relay nil
+
   describe "start/1" do
     @tag :slow
     test "default life cycle (different atms)" do
@@ -25,7 +27,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
 
       # They see me flowin', they hatin'
       {:ok, process} =
-        BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
+        BankTransferFlow.start(acc1, acc2, amount, player, gateway, net, @relay)
       transfer_id = process.data.transfer_id
 
       # Transfer was added to the DB
@@ -77,7 +79,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
     net = NetworkHelper.net()
 
     {:ok, process} =
-      BankTransferFlow.start(acc1, acc2, amount, player, gateway, net)
+      BankTransferFlow.start(acc1, acc2, amount, player, gateway, net, @relay)
 
     # Get connection data
     connection = TunnelQuery.fetch_connection(process.connection_id)
