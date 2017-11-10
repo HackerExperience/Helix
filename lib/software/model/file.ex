@@ -60,7 +60,6 @@ defmodule Helix.Software.Model.File do
   @creation_fields ~w/name path storage_id file_size software_type/a
   @update_fields ~w/crypto_version/a
   @castable_fields ~w/name path/a
-
   @required_fields ~w/name path file_size software_type storage_id/a
 
   @software_types Software.Type.all()

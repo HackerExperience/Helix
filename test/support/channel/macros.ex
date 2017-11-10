@@ -1,5 +1,9 @@
 defmodule Helix.Test.Channel.Macros do
 
+  @doc """
+  The `wait_events` helper will wait for the requested events in a deterministic
+  way, i.e. it doesn't matter the order they arrived.
+  """
   defmacro wait_events(events) do
     events = Enum.map(events, &to_string/1)
     quote do
