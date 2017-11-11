@@ -12,6 +12,7 @@ join Helix.Account.Websocket.Channel.Account.Join do
   """
 
   alias Helix.Websocket.Utils, as: WebsocketUtils
+  alias Helix.Client.Public, as: ClientPublic
   alias Helix.Account.Model.Account
   alias Helix.Account.Public.Account, as: AccountPublic
 
@@ -45,10 +46,22 @@ join Helix.Account.Websocket.Channel.Account.Join do
   end
 
   def join(_request, socket, _assign) do
-    bootstrap =
-      socket.assigns.entity_id
+    entity_id = socket.assigns.entity_id
+    # client = socket.assigns.client
+    client = :web1
+
+    account_bootstrap =
+      entity_id
       |> AccountPublic.bootstrap()
       |> AccountPublic.render_bootstrap()
+
+    client_bootstrap =
+      client
+      |> ClientPublic.bootstrap(entity_id)
+
+    bootstrap =
+      account_bootstrap
+      |> Map.merge(client_bootstrap)
       |> WebsocketUtils.wrap_data()
 
     {:ok, bootstrap, socket}

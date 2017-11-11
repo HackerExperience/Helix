@@ -92,6 +92,9 @@ defmodule Helix.Websocket do
         error
         |> handle_response(request, socket)
 
+      {:error, %{__ready__: error_data}} ->
+        handle_response({:error, error_data}, request, socket)
+
       _ ->
         WebsocketUtils.reply_internal_error(socket)
     end

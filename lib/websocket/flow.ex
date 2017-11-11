@@ -11,6 +11,11 @@ defmodule Helix.Websocket.Flow do
 
   If the passed message is an atom, we assume it hasn't been translated to the
   external format yet, so we call `get_error/1`.
+
+  If `ready: true` is passed as opts, we assume the error response is already
+  formatted and send it without any modification. The `__ready__` flag is used
+  internally by `Helix.Websocket` so it knows it's supposed to relay that value
+  directly to the client too.
   """
   defmacro reply_error(msg) when is_binary(msg) do
     quote do
@@ -21,6 +26,12 @@ defmodule Helix.Websocket.Flow do
   defmacro reply_error(reason) when is_atom(reason) or is_tuple(reason) do
     quote do
       {:error, %{message: get_error(unquote(reason))}}
+    end
+  end
+
+  defmacro reply_error(data, ready: true) do
+    quote do
+      {:error, %{__ready__: unquote(data)}}
     end
   end
 
@@ -132,6 +143,7 @@ defmodule Helix.Websocket.Flow.Utils do
 
   @type input_element ::
     :password
+    | :hostname
 
   @spec validate_input(unsafe_input :: String.t, input_element, opts :: []) ::
     {:ok, validated_input :: String.t}
@@ -150,4 +162,12 @@ defmodule Helix.Websocket.Flow.Utils do
   def validate_input(input, :password, _) do
     {:ok, input}  # Validation itself is also TODO :-)
   end
+
+  def validate_input(input, :hostname, _),
+    do: validate_hostname(input)
+
+  defp validate_hostname(v) when not is_binary(v),
+    do: :bad_request
+  defp validate_hostname(v),
+    do: {:ok, v}
 end

@@ -35,6 +35,8 @@ channel Helix.Server.Websocket.Channel.Server do
     as: ServerJoin
   alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
     as: BootstrapRequest
+  alias Helix.Server.Websocket.Requests.Config.Set,
+    as: ConfigSetRequest
 
   @doc """
   Joins a server.
@@ -76,6 +78,8 @@ channel Helix.Server.Websocket.Channel.Server do
   + base errors
   """
   join "server:" <> _, ServerJoin
+
+  topic "config.set", ConfigSetRequest
 
   @doc """
   Starts the download of a file.

@@ -18,6 +18,9 @@ defmodule Helix.Account.Websocket.Channel.Account.JoinTest do
     # Returns the account bootstrap as reply
     assert bootstrap.data.servers
     assert bootstrap.data.account
+
+    # Also returns client-specific stuff
+    assert new_socket.assigns.client
   end
 
   test "an user can't join another user's notification channel" do
