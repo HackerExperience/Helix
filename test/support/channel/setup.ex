@@ -51,7 +51,14 @@ defmodule Helix.Test.Channel.Setup do
       end
 
     {token, _} = AccountSetup.token([account: account])
-    {:ok, socket} = connect(Websocket, %{token: token})
+
+    params =
+      %{
+        token: token,
+        client: "web2"
+      }
+
+    {:ok, socket} = connect(Websocket, params)
 
     related =
       related

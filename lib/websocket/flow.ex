@@ -90,7 +90,7 @@ defmodule Helix.Websocket.Flow do
 
   defmacro update_params(request, params) do
     quote do
-      var!(request) = %{unquote(request)| params: unquote(params)}
+      %{unquote(request)| params: unquote(params)}
     end
   end
 

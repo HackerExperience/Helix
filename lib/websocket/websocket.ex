@@ -4,12 +4,14 @@ defmodule Helix.Websocket do
 
   alias Phoenix.Socket
   alias Helix.Event.Notificable
+  alias Helix.Account.Model.AccountSession
+  alias Helix.Account.Action.Session, as: SessionAction
+  alias Helix.Client.Model.Client
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Websocket.Joinable
   alias Helix.Websocket.Request
   alias Helix.Websocket.Requestable
   alias Helix.Websocket.Utils, as: WebsocketUtils
-  alias Helix.Account.Action.Session, as: SessionAction
-  alias Helix.Entity.Query.Entity, as: EntityQuery
 
   @type replies ::
     reply_ok
@@ -33,25 +35,43 @@ defmodule Helix.Websocket do
   channel "account:*", Helix.Account.Websocket.Channel.Account
   channel "server:*", Helix.Server.Websocket.Channel.Server
 
-  def connect(%{"token" => token}, socket) do
+  def connect(%{"token" => token, "client" => client}, socket) do
+    client =
+      if Client.valid_client?(client) do
+        String.to_existing_atom(client)
+      else
+        :unknown
+      end
+
+    do_connect(token, client, socket)
+  end
+
+  def connect(%{"token" => token}, socket),
+    do: do_connect(token, :unknown, socket)
+
+  def connect(_, _),
+    do: :error
+
+  @spec do_connect(AccountSession.token, Client.client, socket) ::
+    {:ok, socket}
+    | :error
+  defp do_connect(token, client, socket) do
     case SessionAction.validate_token(token) do
       {:ok, account, session} ->
         entity_id = EntityQuery.get_entity_id(account.account_id)
 
         socket =
           socket
-          |> assign(:account, account)
+          |> assign(:account_id, account.account_id)
           |> assign(:session, session)
           |> assign(:entity_id, entity_id)
+          |> assign(:client, client)
 
         {:ok, socket}
       _ ->
         :error
     end
   end
-
-  def connect(_, _),
-    do: :error
 
   def id(socket),
     do: "session:" <> socket.assigns.session

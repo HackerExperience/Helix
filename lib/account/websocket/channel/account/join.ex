@@ -36,7 +36,7 @@ join Helix.Account.Websocket.Channel.Account.Join do
   authenticated.
   """
   def check_permissions(request, socket) do
-    account_id = socket.assigns.account.account_id
+    account_id = socket.assigns.account_id
 
     if account_id == request.params.account_id do
       reply_ok(request)

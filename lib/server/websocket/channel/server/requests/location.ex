@@ -30,7 +30,5 @@ request Helix.Server.Websocket.Requests.Location do
     end
   end
 
-  def reply(request, _socket) do
-    {:ok, %{}}
-  end
+  render_empty()
 end
