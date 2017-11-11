@@ -118,6 +118,7 @@ defmodule Helix.Websocket.Flow.Utils do
   """
 
   alias HELL.IPv4
+  alias Helix.Core.Validator
   alias Helix.Network.Model.Network
 
   @spec validate_nip(unsafe :: String.t | Network.id, unsafe_ip :: String.t) ::
@@ -141,33 +142,16 @@ defmodule Helix.Websocket.Flow.Utils do
     end
   end
 
-  @type input_element ::
-    :password
-    | :hostname
-
-  @spec validate_input(unsafe_input :: String.t, input_element, opts :: []) ::
+  @spec validate_input(unsafe_input :: String.t, Validator.input_type, term) ::
     {:ok, validated_input :: String.t}
     | :bad_request
-  @doc """
-  This is a generic function meant to validate external input that does not
-  conform to a specific shape or format (like internal IDs or IP addresses).
+  def validate_input(input, type, opts) do
+    case Validator.validate_input(input, type, opts) do
+      {:ok, valid_input} ->
+        {:ok, valid_input}
 
-  The `element` argument identifies what the input is supposed to represent, and
-  we leverage this information to customize the validation for different kinds
-  of input.
-
-  TODO: This function should be somewhere else, since it may be re-used by other
-  modules, including Models doing "pure" verification.
-  """
-  def validate_input(input, :password, _) do
-    {:ok, input}  # Validation itself is also TODO :-)
+      :error ->
+        :bad_request
+    end
   end
-
-  def validate_input(input, :hostname, _),
-    do: validate_hostname(input)
-
-  defp validate_hostname(v) when not is_binary(v),
-    do: :bad_request
-  defp validate_hostname(v),
-    do: {:ok, v}
 end
