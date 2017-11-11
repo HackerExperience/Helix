@@ -5,6 +5,10 @@ defmodule Helix.Server.Internal.Server do
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
+  @typep repo_return ::
+    {:ok, Server.t}
+    | {:error, Server.changeset}
+
   @spec fetch(Server.id) ::
     Server.t
     | nil
@@ -21,19 +25,29 @@ defmodule Helix.Server.Internal.Server do
   end
 
   @spec create(Server.creation_params) ::
-    {:ok, Server.t}
-    | {:error, Ecto.Changeset.t}
+    repo_return
   def create(params) do
     params
     |> Server.create_changeset()
     |> Repo.insert()
   end
 
+  @spec set_hostname(Server.t, Server.hostname) ::
+    repo_return
+  @doc """
+  Updates the server hostname.
+  """
+  def set_hostname(server, hostname) do
+    server
+    |> Server.set_hostname(hostname)
+    |> update()
+  end
+
   @spec attach(Server.t, Motherboard.id) ::
-    {:ok, Server.t}
-    | {:error, Ecto.Changeset.t}
+    repo_return
   def attach(server, mobo_id) do
-    result = server
+    result =
+      server
       |> Server.update_changeset(%{motherboard_id: mobo_id})
       |> Repo.update()
 
@@ -66,4 +80,9 @@ defmodule Helix.Server.Internal.Server do
 
     :ok
   end
+
+  @spec update(Server.changeset) ::
+    repo_return
+  defp update(changeset),
+    do: Repo.update(changeset)
 end

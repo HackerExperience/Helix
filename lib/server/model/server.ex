@@ -12,16 +12,22 @@ defmodule Helix.Server.Model.Server do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Model.ServerType
 
-  @type password :: String.t
-
   @type t :: %__MODULE__{
     server_id: id,
     server_type: Constant.t,
     motherboard_id: Component.id |  nil,
     password: password,
     inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t
+    updated_at: NaiveDateTime.t,
+    hostname: hostname
   }
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
+  @type hostname :: String.t
+  @type name :: hostname
+
+  @type password :: String.t
 
   @type resources :: Motherboard.resources
 
@@ -29,6 +35,7 @@ defmodule Helix.Server.Model.Server do
     :server_type => Constant.t,
     optional(:motherboard_id) => Component.idtb | nil
   }
+
   @type update_params :: %{
     optional(:motherboard_id) => Component.idtb | nil
   }
@@ -42,6 +49,7 @@ defmodule Helix.Server.Model.Server do
     field :motherboard_id, Component.ID
     field :server_type, Constant
 
+    field :hostname, :string
     field :password, :string
 
     timestamps()
@@ -65,6 +73,12 @@ defmodule Helix.Server.Model.Server do
     |> cast(params, [])
     |> unique_constraint(:motherboard_id)
     |> attach_motherboard(params)
+  end
+
+  def set_hostname(server, hostname) do
+    server
+    |> change()
+    |> put_change(:hostname, hostname)
   end
 
   @spec detach_motherboard(t | Changeset.t) ::

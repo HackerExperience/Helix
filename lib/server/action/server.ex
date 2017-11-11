@@ -24,6 +24,22 @@ defmodule Helix.Server.Action.Server do
     ServerInternal.create(%{server_type: server_type})
   end
 
+  @spec set_hostname(Server.t, Server.hostname) ::
+    {:ok, Server.t}
+    | {:error, :internal}
+  @doc """
+  Updates the server hostname
+  """
+  def set_hostname(server, hostname) do
+    case ServerInternal.set_hostname(server, hostname) do
+      {:ok, server} ->
+        {:ok, server}
+
+      {:error, _} ->
+        {:error, :internal}
+    end
+  end
+
   @spec attach(Server.t, Motherboard.id) ::
     {:ok, Server.t}
     | {:error, Ecto.Changeset.t}

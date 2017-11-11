@@ -8,38 +8,12 @@ defmodule Helix.Server.Internal.ServerTest do
   alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
-  alias Helix.Server.Repo
 
-  alias Helix.Test.Server.Factory
-
-  # FIXME: add more tests
-  setup do
-    alias Helix.Test.Account.Factory, as: AccountFactory
-    alias Helix.Account.Action.Flow.Account, as: AccountFlow
-
-    account = AccountFactory.insert(:account)
-    {:ok, %{server: server}} = AccountFlow.setup_account(account)
-
-    CacheHelper.sync_test()
-
-    {:ok, account: account, server: server}
-  end
-
-  describe "creating" do
-    test "succeeds with valid server_type" do
-      params = %{server_type: Factory.random_server_type()}
-      assert {:ok, _} = ServerInternal.create(params)
-    end
-
-    test "fails with invalid server_type" do
-      {:error, cs} = ServerInternal.create(%{server_type: :foobar})
-      assert :server_type in Keyword.keys(cs.errors)
-    end
-  end
+  alias Helix.Test.Server.Setup, as: ServerSetup
 
   describe "fetch/1" do
     test "succeeds by id" do
-      server = Factory.insert(:server)
+      {server, _} = ServerSetup.server
       assert %Server{} = ServerInternal.fetch(server.server_id)
     end
 
@@ -49,8 +23,9 @@ defmodule Helix.Server.Internal.ServerTest do
   end
 
   describe "fetch_by_motherboard/1" do
-    test "succeeds with mobo id", context do
-      server = context.server
+    test "succeeds with mobo id" do
+      {server, _} = ServerSetup.server()
+
       result = ServerInternal.fetch_by_motherboard(server.motherboard_id)
       assert server.server_id == result.server_id
     end
@@ -59,12 +34,13 @@ defmodule Helix.Server.Internal.ServerTest do
       refute ServerInternal.fetch_by_motherboard(Component.ID.generate())
     end
 
-    test "succeeds with mobo component", context do
-      server = context.server
+    test "succeeds with mobo component" do
+      {server, _} = ServerSetup.server()
+
       motherboard = MotherboardInternal.fetch(server.motherboard_id)
       result = ServerInternal.fetch_by_motherboard(motherboard)
 
-      assert result.server_id == context.server.server_id
+      assert result.server_id == server.server_id
     end
 
     test "fails with non-existing component" do
@@ -73,14 +49,47 @@ defmodule Helix.Server.Internal.ServerTest do
     end
   end
 
-  test "delete/1 removes entry" do
-    server = Factory.insert(:server)
-    assert Repo.get(Server, server.server_id)
+  describe "creating" do
+    test "succeeds with valid server_type" do
+      params = %{server_type: :desktop}
 
-    ServerInternal.delete(server)
+      assert {:ok, _} = ServerInternal.create(params)
+    end
 
-    refute Repo.get(Server, server.server_id)
+    test "fails with invalid server_type" do
+      {:error, cs} = ServerInternal.create(%{server_type: :foobar})
+      assert :server_type in Keyword.keys(cs.errors)
+    end
+  end
 
-    CacheHelper.sync_test()
+  describe "set_hostname/2" do
+    test "updates hostname" do
+      {server, _} = ServerSetup.server()
+
+      hostname = "transltr"
+      refute server.hostname == hostname
+
+      assert {:ok, updated} = ServerInternal.set_hostname(server, hostname)
+      assert updated.hostname == hostname
+
+      entry = ServerInternal.fetch(server.server_id)
+      assert entry.hostname == hostname
+    end
+  end
+
+  describe "delete/1" do
+    test "removes entry" do
+      {server, _} = ServerSetup.server()
+
+      # Server exists
+      assert ServerInternal.fetch(server.server_id)
+
+      ServerInternal.delete(server)
+
+      # No longer exists
+      refute ServerInternal.fetch(server.server_id)
+
+      CacheHelper.sync_test()
+    end
   end
 end
