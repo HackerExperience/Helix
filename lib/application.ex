@@ -52,6 +52,7 @@ defmodule Helix.Application.DomainsSupervisor do
     children = [
       supervisor(Helix.Account.Supervisor, []),
       supervisor(Helix.Cache.Supervisor, []),
+      supervisor(Helix.Client.Supervisor, []),
       supervisor(Helix.Core.Supervisor, []),
       supervisor(Helix.Event.Supervisor, []),
       supervisor(Helix.Entity.Supervisor, []),

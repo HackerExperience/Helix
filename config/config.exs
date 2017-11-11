@@ -4,6 +4,7 @@ config :helix,
   ecto_repos: [
     Helix.Account.Repo,
     Helix.Cache.Repo,
+    Helix.Client.Repo,
     Helix.Core.Repo,
     Helix.Entity.Repo,
     Helix.Hardware.Repo,
