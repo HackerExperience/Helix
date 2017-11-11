@@ -13,8 +13,7 @@ channel Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
-  alias Helix.Network.Websocket.Requests.Browse,
-    as: BrowseRequest
+  alias Helix.Network.Websocket.Requests.Browse, as: BrowseRequest
 
   alias Helix.Software.Websocket.Requests.Cracker.Bruteforce,
     as: CrackerBruteforceRequest
@@ -31,14 +30,11 @@ channel Helix.Server.Websocket.Channel.Server do
   alias Helix.Software.Websocket.Requests.PFTP.Server.Enable,
     as: PFTPServerEnableRequest
 
-  alias Helix.Server.Websocket.Channel.Server.Join,
-    as: ServerJoin
-  alias Helix.Server.Websocket.Requests.Bootstrap,
-    as: BootstrapRequest
-  alias Helix.Server.Websocket.Requests.Config.Set,
-    as: ConfigSetRequest
-  alias Helix.Server.Websocket.Requests.SetHostname,
-    as: SetHostnameRequest
+  alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
+  alias Helix.Server.Websocket.Requests.Bootstrap, as: BootstrapRequest
+  alias Helix.Server.Websocket.Requests.Config.Check, as: ConfigCheckRequest
+  alias Helix.Server.Websocket.Requests.Config.Set, as: ConfigSetRequest
+  alias Helix.Server.Websocket.Requests.SetHostname, as: SetHostnameRequest
 
   @doc """
   Joins a server.
@@ -112,6 +108,7 @@ channel Helix.Server.Websocket.Channel.Server do
   + base errors
   """
   topic "config.set", ConfigSetRequest
+  topic "config.check", ConfigCheckRequest
 
   @doc """
   Updates the server hostname.

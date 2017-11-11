@@ -85,4 +85,40 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.ConfigTest do
       refute Map.has_key?(response.data, "hostname")
     end
   end
+
+  describe "config.check" do
+    test "returns empty successful message when input is valid" do
+      {socket, _} = ChannelSetup.join_server()
+
+      params =
+        %{
+          "key" => "hostname",
+          "value" => %{"hostname" => "watson"},
+          "request_id" => "I'm something else"
+        }
+
+      # Perform the request
+      ref = push socket, "config.check", params
+      assert_reply ref, :ok, response, timeout()
+
+      assert response.data == %{}
+    end
+
+    test "returns error when invalid characters are detected" do
+      {socket, _} = ChannelSetup.join_server()
+
+      params =
+        %{
+          "key" => "hostname",
+          "value" => %{"hostname" => "abc)dfj"},
+          "request_id" => "I'm something else"
+        }
+
+      # Perform the request
+      ref = push socket, "config.check", params
+      assert_reply ref, :error, response, timeout()
+
+      assert response.data.message == "hostname_invalid"
+    end
+  end
 end

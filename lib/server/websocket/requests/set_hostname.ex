@@ -8,7 +8,7 @@ request Helix.Server.Websocket.Requests.SetHostname do
   def check_params(request, _socket) do
     with \
       true <- not is_nil(request.unsafe["hostname"]),
-      {:ok, hostname} <- validate_input(request.unsafe["hostname"], :hostname)
+      hostname = request.unsafe["hostname"]
     do
       update_params(request, %{hostname: hostname}, reply: true)
     else

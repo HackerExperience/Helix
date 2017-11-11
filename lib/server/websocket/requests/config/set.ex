@@ -3,24 +3,19 @@ import Helix.Websocket.Request
 request Helix.Server.Websocket.Requests.Config.Set do
 
   alias Helix.Websocket.Requestable
-
-  alias Helix.Server.Websocket.Requests.SetHostname, as: SetHostnameRequest
-  alias Helix.Server.Websocket.Requests.Location, as: LocationRequest
-
-  @valid_keys [:hostname, :location]
-  @valid_keys_str Enum.map(@valid_keys, &to_string/1)
+  alias Helix.Server.Websocket.Requests.Utils.Config, as: ConfigUtils
 
   def check_params(request, socket) do
     keys =
       Enum.reduce(request.unsafe, [], fn {key, _}, acc ->
-        if key in @valid_keys_str do
+        if key in ConfigUtils.valid_keys_str() do
           acc ++ [String.to_existing_atom(key)]
         else
           acc
         end
       end)
 
-    backends = Enum.map(keys, fn key -> {key, get_backend(key)} end)
+    backends = Enum.map(keys, fn key -> {key, ConfigUtils.get_backend(key)} end)
 
     sub_requests =
       backends
@@ -62,11 +57,6 @@ request Helix.Server.Websocket.Requests.Config.Set do
   end
 
   render_empty()
-
-  defp get_backend(:hostname),
-    do: SetHostnameRequest
-  defp get_backend(:location),
-    do: LocationRequest
 
   defp parse_responses(responses) do
     acc0 = {%{}, %{}}

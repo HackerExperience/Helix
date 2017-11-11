@@ -128,7 +128,7 @@ defmodule Helix.Server.Henforcer.Server do
       # Ensure the entity owns the server
 
       # Ensure the given hostname is valid
-      {true, r2} <- hostname_valid?(hostname),
+      {true, r2} <- hostname_valid?(hostname)
     do
       reply_ok(relay(r1, r2))
     else
