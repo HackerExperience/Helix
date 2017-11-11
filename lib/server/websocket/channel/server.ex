@@ -33,7 +33,7 @@ channel Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Server.Websocket.Channel.Server.Join,
     as: ServerJoin
-  alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
+  alias Helix.Server.Websocket.Requests.Bootstrap,
     as: BootstrapRequest
   alias Helix.Server.Websocket.Requests.Config.Set,
     as: ConfigSetRequest

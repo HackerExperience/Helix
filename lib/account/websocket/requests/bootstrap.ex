@@ -1,6 +1,6 @@
 import Helix.Websocket.Request
 
-request Helix.Account.Websocket.Channel.Account.Requests.Bootstrap do
+request Helix.Account.Websocket.Requests.Bootstrap do
 
   alias Helix.Account.Public.Account, as: AccountPublic
 

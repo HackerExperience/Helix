@@ -6,12 +6,9 @@ channel Helix.Account.Websocket.Channel.Account do
   """
 
   alias Helix.Account.Websocket.Channel.Account.Join, as: AccountJoin
-  alias Helix.Account.Websocket.Channel.Account.Requests.Bootstrap,
-    as: BootstrapRequest
-  alias Helix.Account.Websocket.Channel.Account.Requests.EmailReply,
-    as: EmailReplyRequest
-  alias Helix.Account.Websocket.Channel.Account.Requests.Logout,
-    as: LogoutRequest
+  alias Helix.Account.Websocket.Requests.Bootstrap, as: BootstrapRequest
+  alias Helix.Account.Websocket.Requests.EmailReply, as: EmailReplyRequest
+  alias Helix.Account.Websocket.Requests.Logout, as: LogoutRequest
 
   join _, AccountJoin
 

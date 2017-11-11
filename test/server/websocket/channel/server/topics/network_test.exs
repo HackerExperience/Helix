@@ -1,4 +1,4 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.NetworkTest do
+defmodule Helix.Server.Websocket.Channel.Server.Topics.NetworkTest do
 
   use Helix.Test.Case.Integration
 

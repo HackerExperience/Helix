@@ -1,6 +1,6 @@
 import Helix.Websocket.Request
 
-request Helix.Account.Websocket.Channel.Account.Requests.Logout do
+request Helix.Account.Websocket.Requests.Logout do
   @moduledoc """
   Invalidates the session token and shuts down the socket.
   """

@@ -1,4 +1,4 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.BootstrapTest do
+defmodule Helix.Server.Websocket.Channel.Server.Topics.BootstrapTest do
 
   use Helix.Test.Case.Integration
 

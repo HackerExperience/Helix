@@ -1,6 +1,6 @@
 import Helix.Websocket.Request
 
-request Helix.Account.Websocket.Channel.Account.Requests.EmailReply do
+request Helix.Account.Websocket.Requests.EmailReply do
   @moduledoc """
   Implementation of the `EmailReply` request, which allows the player to send
   an (storyline) email reply to the Contact (story character)

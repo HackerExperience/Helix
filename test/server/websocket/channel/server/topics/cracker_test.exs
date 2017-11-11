@@ -1,4 +1,4 @@
-defmodule Helix.Server.Websocket.Channel.Server.Requests.CrackerTest do
+defmodule Helix.Server.Websocket.Channel.Server.Topics.CrackerTest do
 
   use Helix.Test.Case.Integration
 

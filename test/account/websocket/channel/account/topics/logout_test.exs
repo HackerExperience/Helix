@@ -1,4 +1,4 @@
-defmodule Helix.Account.Websocket.Channel.Account.Requests.LogoutTest do
+defmodule Helix.Account.Websocket.Channel.Account.Topics.LogoutTest do
 
   use Helix.Test.Case.Integration
 

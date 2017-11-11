@@ -1,6 +1,6 @@
 import Helix.Websocket.Request
 
-request Helix.Server.Websocket.Channel.Server.Requests.Bootstrap do
+request Helix.Server.Websocket.Requests.Bootstrap do
   @moduledoc """
   ServerBootstrapRequest is used to allow the client to resync its local data
   with the Helix server.

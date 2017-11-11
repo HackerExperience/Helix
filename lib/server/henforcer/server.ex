@@ -93,6 +93,10 @@ defmodule Helix.Server.Henforcer.Server do
   @spec hostname_valid?(Server.hostname) ::
     {true, hostname_valid_relay}
     | hostname_valid_error
+  @doc """
+  Henforces the given `hostname` is within the expected format, as set forth by
+  the Validator.
+  """
   def hostname_valid?(hostname) do
     case Validator.validate_input(hostname, :hostname) do
       {:ok, _} ->
@@ -115,6 +119,9 @@ defmodule Helix.Server.Henforcer.Server do
   @spec can_set_hostname?(Entity.id, Server.id, Server.hostname) ::
     {true, can_set_hostname_relay}
     | can_set_hostname_error
+  @doc """
+  Henforces the `entity` can modify the `server` with such `hostname`
+  """
   def can_set_hostname?(entity_id, server_id, hostname) do
     with \
       {true, r1} <- EntityHenforcer.owns_server?(entity_id, server_id),
@@ -122,7 +129,6 @@ defmodule Helix.Server.Henforcer.Server do
 
       # Ensure the given hostname is valid
       {true, r2} <- hostname_valid?(hostname),
-      hostname = r2.hostname
     do
       reply_ok(relay(r1, r2))
     else

@@ -1,4 +1,4 @@
-defmodule Helix.Account.Websocket.Channel.Account.Requests.BrowseTest do
+defmodule Helix.Account.Websocket.Channel.Account.Topics.BrowseTest do
 
   use Helix.Test.Case.Integration
 

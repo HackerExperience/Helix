@@ -1,4 +1,4 @@
-defmodule Helix.Account.Websocket.Channel.Account.Requests.EmailReplyTest do
+defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
 
   use Helix.Test.Case.Integration
 
