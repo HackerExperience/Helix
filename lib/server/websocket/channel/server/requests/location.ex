@@ -18,12 +18,7 @@ request Helix.Server.Websocket.Requests.Location do
   end
 
   def check_permissions(request, _socket) do
-    # HACK: See `ConfigTest` (@ ServerRequests) for context
-    if request.params.lon == 66.6 do
-      reply_error("some_permission_error")
-    else
-      {:ok, request}
-    end
+    {:ok, request}
   end
 
   def handle_request(request, _socket) do

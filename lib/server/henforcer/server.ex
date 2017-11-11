@@ -2,6 +2,9 @@ defmodule Helix.Server.Henforcer.Server do
 
   import Helix.Henforcer
 
+  alias Helix.Core.Validator
+  alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
@@ -80,5 +83,51 @@ defmodule Helix.Server.Henforcer.Server do
       reply_error({:password, :invalid})
     end
     |> wrap_relay(%{server: server})
+  end
+
+  @type hostname_valid_relay :: %{hostname: Server.hostname}
+  @type hostname_valid_relay_partial :: %{}
+  @type hostname_valid_error ::
+    {false, {:hostname, :invalid}, hostname_valid_relay_partial}
+
+  @spec hostname_valid?(Server.hostname) ::
+    {true, hostname_valid_relay}
+    | hostname_valid_error
+  def hostname_valid?(hostname) do
+    case Validator.validate_input(hostname, :hostname) do
+      {:ok, _} ->
+        reply_ok(%{hostname: hostname})
+
+      :error ->
+        reply_error({:hostname, :invalid})
+    end
+  end
+
+  @type can_set_hostname_relay ::
+    %{entity: Entity.t, server: Server.t, hostname: Server.hostname}
+  @type can_set_hostname_partial ::
+    EntityHenforcer.owns_server_relay_partial
+    | hostname_valid_relay_partial
+  @type can_set_hostname_error ::
+    hostname_valid_error
+    | EntityHenforcer.owns_server_error
+
+  @spec can_set_hostname?(Entity.id, Server.id, Server.hostname) ::
+    {true, can_set_hostname_relay}
+    | can_set_hostname_error
+  def can_set_hostname?(entity_id, server_id, hostname) do
+    with \
+      {true, r1} <- EntityHenforcer.owns_server?(entity_id, server_id),
+      # Ensure the entity owns the server
+
+      # Ensure the given hostname is valid
+      {true, r2} <- hostname_valid?(hostname),
+      hostname = r2.hostname
+    do
+      reply_ok(relay(r1, r2))
+    else
+      error ->
+        error
+    end
   end
 end

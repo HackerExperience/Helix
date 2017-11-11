@@ -37,6 +37,8 @@ channel Helix.Server.Websocket.Channel.Server do
     as: BootstrapRequest
   alias Helix.Server.Websocket.Requests.Config.Set,
     as: ConfigSetRequest
+  alias Helix.Server.Websocket.Requests.SetHostname,
+    as: SetHostnameRequest
 
   @doc """
   Joins a server.
@@ -79,7 +81,51 @@ channel Helix.Server.Websocket.Channel.Server do
   """
   join "server:" <> _, ServerJoin
 
+  @doc """
+  Sets one or more server-related configuration
+
+  - <config_key>: <config_params> where:
+
+  `config_key` denotes what is being set/configured, and `config_params` is the
+  new value.
+
+  Valid config_keys:
+
+  Params:
+  - hostname: Specify server hostname. Expected data: %{hostname: String}
+  - location: Specify server location. Expected data: %{lat: Float, lon: Float}
+
+  Errors:
+  For each key that fails to be set, the corresponding error will be returned.
+
+  Example:
+
+  Supposed the client asked to `config.set` both `location` and `hostname`, and
+  Helix replies with the following error:
+
+    %{"hostname" => "invalid_hostname"}
+
+  Notice that `location` was not included. This means only `hostname` is wrong.
+  However, if an error was returned, no configs were updated, even if some of
+  them were correct.
+
+  + base errors
+  """
   topic "config.set", ConfigSetRequest
+
+  @doc """
+  Updates the server hostname.
+
+  Params:
+  - *hostname: Desired hostname
+
+  Returns: :ok
+
+  Errors:
+  - invalid_hostname
+  + base errors
+  """
+  topic "set_hostname", SetHostnameRequest
 
   @doc """
   Starts the download of a file.

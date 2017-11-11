@@ -5,17 +5,19 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.ConfigTest do
   import Phoenix.ChannelTest
   import Helix.Test.Macros
 
+  alias Helix.Server.Query.Server, as: ServerQuery
+
   alias Helix.Test.Channel.Setup, as: ChannelSetup
 
-  # TODO: Move most of these tests to `websocket/requests`, without creating a
-  # channel for each of them
   describe "config.set" do
     test "returns empty successful message when all params are valid" do
-      {socket, _} = ChannelSetup.join_server()
+      {socket, %{gateway: server}} = ChannelSetup.join_server()
+
+      hostname = "transltr"
 
       params =
         %{
-          "hostname" => %{"hostname" => "transltr"},
+          "hostname" => %{"hostname" => hostname},
           "location" => %{"lat" => "23.3", "lon" => "24.4"},
           "ignores_me" => %{"wa" => "t"},
           "request_id" => "I'm something else"
@@ -31,8 +33,9 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.ConfigTest do
       assert response.data == %{}
       assert response.meta.request_id == params["request_id"]
 
-      # TODO: Once the underlying requests are done, make sure *here* that they
-      # were actually set.
+      # Actually modified the server hostname
+      new_server = ServerQuery.fetch(server.server_id)
+      assert new_server.hostname == hostname
     end
 
     test "returns errors when something is wrong (during check_params)" do
@@ -56,33 +59,6 @@ defmodule Helix.Server.Websocket.Channel.Server.Requests.ConfigTest do
 
       # `location` was correct so it's not included in the response payload
       refute Map.has_key?(response.data, "location")
-    end
-
-    test "returns errors when something is wrong (during check_permissions)" do
-      {socket, _} = ChannelSetup.join_server()
-
-      # HACK: `66.6` is a magic number that will always return a permission
-      # error at LocationRequest. This is done because the Request itself isn't
-      # implemented, so we can't simulate a scenario where the permission is
-      # invalid.
-      params =
-        %{
-          "hostname" => %{"hostname" => "transltr"},
-          "location" => %{"lat" => "23.3", "lon" => "66.6"},
-          "request_id" => "I'm something else"
-        }
-
-      # Perform the request
-      ref = push socket, "config.set", params
-
-      # Error!
-      assert_reply ref, :error, response, timeout()
-
-      # Detected and returned the error at `location`
-      assert response.data.location == "some_permission_error"
-
-      # `hostname` was correct so it's not included in the response payload
-      refute Map.has_key?(response.data, "hostname")
     end
 
     test "returns errors when something is wrong (during handle_request)" do
