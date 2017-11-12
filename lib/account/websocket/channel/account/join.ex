@@ -12,6 +12,7 @@ join Helix.Account.Websocket.Channel.Account.Join do
   """
 
   alias Helix.Websocket.Utils, as: WebsocketUtils
+  alias Helix.Client.Public.Client, as: ClientPublic
   alias Helix.Account.Model.Account
   alias Helix.Account.Public.Account, as: AccountPublic
 
@@ -35,7 +36,7 @@ join Helix.Account.Websocket.Channel.Account.Join do
   authenticated.
   """
   def check_permissions(request, socket) do
-    account_id = socket.assigns.account.account_id
+    account_id = socket.assigns.account_id
 
     if account_id == request.params.account_id do
       reply_ok(request)
@@ -45,10 +46,20 @@ join Helix.Account.Websocket.Channel.Account.Join do
   end
 
   def join(_request, socket, _assign) do
-    bootstrap =
-      socket.assigns.entity_id
+    entity_id = socket.assigns.entity_id
+    client = socket.assigns.client
+
+    account_bootstrap =
+      entity_id
       |> AccountPublic.bootstrap()
       |> AccountPublic.render_bootstrap()
+
+    client_bootstrap = ClientPublic.bootstrap(client, entity_id)
+    client_bootstrap = ClientPublic.render_bootstrap(client, client_bootstrap)
+
+    bootstrap =
+      account_bootstrap
+      |> Map.merge(client_bootstrap)
       |> WebsocketUtils.wrap_data()
 
     {:ok, bootstrap, socket}

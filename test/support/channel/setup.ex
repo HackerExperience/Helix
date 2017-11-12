@@ -29,14 +29,17 @@ defmodule Helix.Test.Channel.Setup do
   - account: Specify which account to generate the socket to
   - entity_id: Specify entity ID that socket should be generated to.
   - with_server: Whether to generate an account with server. Defaults to true.
+  - client: Specify which `client` should be used. Defaults to "web2".
 
   Related: Account.t, Server.t (when `with_server` is true)
   """
-  def create_socket(opts \\ [with_server: true]) do
+  def create_socket(opts \\ []) do
+    with_server? = Keyword.get(opts, :with_server, true)
+
     {account, related} =
       cond do
-        opts[:with_server] ->
-          AccountSetup.account([with_server: true])
+        with_server? ->
+          AccountSetup.account(with_server: true)
 
         opts[:entity_id] ->
           account_id = Account.ID.cast!(to_string(opts[:entity_id]))
@@ -50,8 +53,17 @@ defmodule Helix.Test.Channel.Setup do
           AccountSetup.account()
       end
 
+    client = Keyword.get(opts, :client, :web2) |> to_string()
+
     {token, _} = AccountSetup.token([account: account])
-    {:ok, socket} = connect(Websocket, %{token: token})
+
+    params =
+      %{
+        token: token,
+        client: client
+      }
+
+    {:ok, socket} = connect(Websocket, params)
 
     related =
       related
@@ -64,6 +76,7 @@ defmodule Helix.Test.Channel.Setup do
   @doc """
   - account_id: Specify channel to join. Creates a new account if none is set.
   - socket: Specify which socket to use. Generates a new one if not set.
+  - socket_opts: Relays opts to the `create_socket/1` method (if applicable)
 
   If `socket` is given, an `account_id` must be set as well. Same for the
   reverse case (if `account_id` is defined, a `socket` must be given.
@@ -82,7 +95,7 @@ defmodule Helix.Test.Channel.Setup do
       if opts[:socket] do
         {opts[:socket], opts[:account_id], %{}}
       else
-        {socket, related} = create_socket()
+        {socket, related} = create_socket(opts[:socket_opts] || [])
 
         {socket, related.account.account_id, related}
       end
@@ -112,6 +125,7 @@ defmodule Helix.Test.Channel.Setup do
     false.
   - destination_files: Whether to generate random files on destination. Defaults
     to false.
+  - socket_opts: Relays opts to the `create_socket/1` method (if applicable)
 
   Related:
     Account.t, \
@@ -129,7 +143,7 @@ defmodule Helix.Test.Channel.Setup do
 
         {opts[:socket], %{account: nil, server: gateway}}
       else
-        create_socket()
+        create_socket(opts[:socket_opts] || [])
       end
 
     local? = Keyword.get(opts, :own_server, false)
@@ -233,6 +247,7 @@ defmodule Helix.Test.Channel.Setup do
   - access_type: Inferred if not set
   - own_server: Force socket to represent own server channel. Defaults to false.
   - counter: Defaults to 0.
+  - connect_opts: Opts that will be relayed to the `mock_connection_socket`
   """
   def mock_server_socket(opts \\ []) do
     gateway_id = Access.get(opts, :gateway_id, ServerSetup.id())
@@ -270,7 +285,7 @@ defmodule Helix.Test.Channel.Setup do
       counter: counter
     }
 
-    assigns = %{
+    server_assigns = %{
       gateway: %{
         server_id: gateway_id,
         ip: gateway_ip,
@@ -284,16 +299,49 @@ defmodule Helix.Test.Channel.Setup do
       meta: meta
     }
 
+    assigns =
+      opts[:connect_opts] || []
+      |> fake_connection_socket_assigns()
+      |> Map.merge(server_assigns)
+
     %{assigns: assigns}
   end
 
   @doc """
   Opts:
-  - die
+  - connect_opts: Opts that will be relayed to the `mock_connection_socket`
   """
-  def mock_account_socket(_opts \\ []) do
-    assigns = %{}
+  def mock_account_socket(opts \\ []) do
+    acc_assigns = %{}
+
+    assigns =
+      opts[:connect_opts] || []
+      |> fake_connection_socket_assigns()
+      |> Map.merge(acc_assigns)
 
     %{assigns: assigns}
+  end
+
+  @doc """
+  Opts:
+
+  - entity_id: Set entity_id. Defaults to a random fake entity_id
+  - account_id: Set account_id. Defaults to the corresponding Entity.ID
+  - client: Set the client platform/version. Defaults to `web2`
+  """
+  def fake_connection_socket_assigns(opts \\ []) do
+    gen_account_id = fn entity_id ->
+      entity_id |> to_string() |> Account.ID.cast!()
+    end
+
+    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    account_id = Keyword.get(opts, :account_id, gen_account_id.(entity_id))
+    client = Keyword.get(opts, :client, :web2)
+
+    %{
+      entity_id: entity_id,
+      account_id: account_id,
+      client: client
+    }
   end
 end

@@ -11,6 +11,11 @@ defmodule Helix.Websocket.Flow do
 
   If the passed message is an atom, we assume it hasn't been translated to the
   external format yet, so we call `get_error/1`.
+
+  If `ready: true` is passed as opts, we assume the error response is already
+  formatted and send it without any modification. The `__ready__` flag is used
+  internally by `Helix.Websocket` so it knows it's supposed to relay that value
+  directly to the client too.
   """
   defmacro reply_error(msg) when is_binary(msg) do
     quote do
@@ -21,6 +26,12 @@ defmodule Helix.Websocket.Flow do
   defmacro reply_error(reason) when is_atom(reason) or is_tuple(reason) do
     quote do
       {:error, %{message: get_error(unquote(reason))}}
+    end
+  end
+
+  defmacro reply_error(data, ready: true) do
+    quote do
+      {:error, %{__ready__: unquote(data)}}
     end
   end
 
@@ -79,7 +90,7 @@ defmodule Helix.Websocket.Flow do
 
   defmacro update_params(request, params) do
     quote do
-      var!(request) = %{unquote(request)| params: unquote(params)}
+      %{unquote(request)| params: unquote(params)}
     end
   end
 
@@ -107,6 +118,7 @@ defmodule Helix.Websocket.Flow.Utils do
   """
 
   alias HELL.IPv4
+  alias Helix.Core.Validator
   alias Helix.Network.Model.Network
 
   @spec validate_nip(unsafe :: String.t | Network.id, unsafe_ip :: String.t) ::
@@ -130,24 +142,16 @@ defmodule Helix.Websocket.Flow.Utils do
     end
   end
 
-  @type input_element ::
-    :password
-
-  @spec validate_input(unsafe_input :: String.t, input_element, opts :: []) ::
+  @spec validate_input(unsafe_input :: String.t, Validator.input_type, term) ::
     {:ok, validated_input :: String.t}
     | :bad_request
-  @doc """
-  This is a generic function meant to validate external input that does not
-  conform to a specific shape or format (like internal IDs or IP addresses).
+  def validate_input(input, type, opts) do
+    case Validator.validate_input(input, type, opts) do
+      {:ok, valid_input} ->
+        {:ok, valid_input}
 
-  The `element` argument identifies what the input is supposed to represent, and
-  we leverage this information to customize the validation for different kinds
-  of input.
-
-  TODO: This function should be somewhere else, since it may be re-used by other
-  modules, including Models doing "pure" verification.
-  """
-  def validate_input(input, :password, _) do
-    {:ok, input}  # Validation itself is also TODO :-)
+      :error ->
+        :bad_request
+    end
   end
 end

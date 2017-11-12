@@ -2,6 +2,7 @@ defmodule Helix.Server.Action.Flow.Server do
 
   import HELF.Flow
 
+  alias Helix.Event
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Model.Entity
   alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
@@ -28,4 +29,15 @@ defmodule Helix.Server.Action.Flow.Server do
       end
     end
   end
+
+  @spec set_hostname(Server.t, Server.hostname, Event.relay) ::
+    {:ok, Server.t}
+    | {:error, :internal}
+  @doc """
+  Updates the server hostname.
+
+  Currently does not emit anything.
+  """
+  def set_hostname(server, hostname, _relay),
+    do: ServerAction.set_hostname(server, hostname)
 end

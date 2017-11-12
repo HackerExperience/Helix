@@ -13,8 +13,7 @@ channel Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
-  alias Helix.Network.Websocket.Requests.Browse,
-    as: BrowseRequest
+  alias Helix.Network.Websocket.Requests.Browse, as: BrowseRequest
 
   alias Helix.Software.Websocket.Requests.Cracker.Bruteforce,
     as: CrackerBruteforceRequest
@@ -31,10 +30,11 @@ channel Helix.Server.Websocket.Channel.Server do
   alias Helix.Software.Websocket.Requests.PFTP.Server.Enable,
     as: PFTPServerEnableRequest
 
-  alias Helix.Server.Websocket.Channel.Server.Join,
-    as: ServerJoin
-  alias Helix.Server.Websocket.Channel.Server.Requests.Bootstrap,
-    as: BootstrapRequest
+  alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
+  alias Helix.Server.Websocket.Requests.Bootstrap, as: BootstrapRequest
+  alias Helix.Server.Websocket.Requests.Config.Check, as: ConfigCheckRequest
+  alias Helix.Server.Websocket.Requests.Config.Set, as: ConfigSetRequest
+  alias Helix.Server.Websocket.Requests.SetHostname, as: SetHostnameRequest
 
   @doc """
   Joins a server.
@@ -76,6 +76,67 @@ channel Helix.Server.Websocket.Channel.Server do
   + base errors
   """
   join "server:" <> _, ServerJoin
+
+  @doc """
+  Sets one or more server-related configuration
+
+  - <config_key>: <config_params> where:
+
+  `config_key` denotes what is being set/configured, and `config_params` is the
+  new value.
+
+  Valid config_keys:
+  - hostname: See docs on request `set_hostname`
+  - location: TODO
+
+  Params:
+  - hostname: Specify server hostname. Expected data: %{hostname: String}
+  - location: Specify server location. Expected data: %{lat: Float, lon: Float}
+
+  Errors:
+  For each key that fails to be set, the corresponding error will be returned.
+
+  Example:
+
+  Supposed the client asked to `config.set` both `location` and `hostname`, and
+  Helix replies with the following error:
+
+    %{"hostname" => "invalid_hostname"}
+
+  Notice that `location` was not included. This means only `hostname` is wrong.
+  However, if an error was returned, no configs were updated, even if some of
+  them were correct.
+
+  + base errors
+  """
+  topic "config.set", ConfigSetRequest
+
+  @doc """
+  Checks / verifies that the value set at `value` is valid for the config
+  defined at `key`. Used as a companion of `config.set`, mostly to increase UX.
+
+  Params:
+  - *key: Valid config keys (see docs on `config.set`)
+  - *value: Expected values (see docs on `config.set`)
+
+  Errors:
+  May return the corresponding permission error defined for each key.
+  """
+  topic "config.check", ConfigCheckRequest
+
+  @doc """
+  Updates the server hostname.
+
+  Params:
+  - *hostname: Desired hostname
+
+  Returns: :ok
+
+  Errors:
+  - invalid_hostname
+  + base errors
+  """
+  topic "set_hostname", SetHostnameRequest
 
   @doc """
   Starts the download of a file.

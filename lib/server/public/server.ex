@@ -7,6 +7,7 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Server
+  alias Helix.Server.Action.Flow.Server, as: ServerFlow
   alias Helix.Server.Public.Index, as: ServerIndex
 
   @spec connect_to_server(Server.id, Server.id, [Server.id]) ::
@@ -37,6 +38,9 @@ defmodule Helix.Server.Public.Server do
       {:ok, tunnel}
     end
   end
+
+  defdelegate set_hostname(server, hostname, relay),
+    to: ServerFlow
 
   defdelegate bootstrap_gateway(server_id, entity_id),
     to: ServerIndex,

@@ -7,8 +7,6 @@ defmodule Helix.Account.Model.AccountSession do
   alias Ecto.Changeset
   alias Helix.Account.Model.Account
 
-  @type id :: String.t
-  @type token :: String.t
   @type t :: %__MODULE__{
     session_id: id,
     account_id: Account.id,
@@ -16,6 +14,9 @@ defmodule Helix.Account.Model.AccountSession do
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
+
+  @type id :: String.t
+  @type token :: String.t
 
   @primary_key false
   @ecto_autogenerate {:session_id, {Ecto.UUID, :generate, []}}
@@ -42,6 +43,7 @@ defmodule Helix.Account.Model.AccountSession do
   end
 
   defmodule Query do
+
     import Ecto.Query
 
     alias Ecto.Queryable
