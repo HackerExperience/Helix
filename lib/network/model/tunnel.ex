@@ -74,7 +74,7 @@ defmodule Helix.Network.Model.Tunnel do
     |> Enum.join("_")
   end
 
-  # TODO: Refactor this ?
+  # TODO: Refactor this ? YES PLEASE #256
   defp bounce(changeset, [gateway| bounces]) do
     set = MapSet.new([gateway])
     result = Enum.reduce_while(bounces, {[], gateway, set, 0}, fn

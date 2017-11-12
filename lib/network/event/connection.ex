@@ -8,7 +8,6 @@ defmodule Helix.Network.Event.Connection do
     alias Helix.Entity.Query.Entity, as: EntityQuery
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Tunnel
-    alias Helix.Network.Repo
 
     @type t :: %__MODULE__{
       connection: Connection.t,
@@ -21,8 +20,6 @@ defmodule Helix.Network.Event.Connection do
     @spec new(Connection.t) ::
       t
     def new(connection = %Connection{}) do
-      connection = Repo.preload(connection, :tunnel)
-
       %__MODULE__{
         connection: connection,
         tunnel: connection.tunnel,
@@ -57,7 +54,6 @@ defmodule Helix.Network.Event.Connection do
 
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Tunnel
-    alias Helix.Network.Repo
 
     @type t :: %__MODULE__{
       connection: Connection.t,
@@ -71,8 +67,6 @@ defmodule Helix.Network.Event.Connection do
     @spec new(Connection.t, Connection.close_reasons) ::
       t
     def new(connection = %Connection{}, reason \\ :normal) do
-      connection = Repo.preload(connection, :tunnel)
-
       %__MODULE__{
         connection: connection,
         tunnel: connection.tunnel,

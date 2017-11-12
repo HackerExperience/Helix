@@ -141,7 +141,7 @@ defmodule Helix.Story.Event.Handler.Story do
   Emits: StepFailedEvent.t, StepRestartedEvent.t
   """
   defp fail_step(_step) do
-    # Default fail_step implementation is todo.
+    # Default fail_step implementation is TODO.
     # Possible implementation:
     #   1 - Remove all emails/replies sent through that step
     #   2 - Undo/delete all objects generated on `Steppable.setup`*
@@ -150,9 +150,12 @@ defmodule Helix.Story.Event.Handler.Story do
     # Possible problems:
     #   1 - Email/reply ids are not unique across steps, so step 1 should take
     #     this into consideration.
+    #   /\ - add counter of emails sent during the current step
+    #
     #   2 - UX: If mission is reset right after it's failed, the client may
     #     receive the `stepproceeded**` event almost at the same time as
     #     `stepfailed` event, so user experience should be considered
+    #   /\ - see note; use `StepRestartedEvent`
     #
     # Notes:
     # * - This should be done at `Steppable.fail`

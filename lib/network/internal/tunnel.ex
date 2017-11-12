@@ -135,7 +135,10 @@ defmodule Helix.Network.Internal.Tunnel do
     cs = Connection.create(tunnel, connection_type, meta)
 
     with {:ok, connection} <- Repo.insert(cs) do
-      event = ConnectionStartedEvent.new(connection)
+      event =
+        connection
+        |> Repo.preload(:tunnel)
+        |> ConnectionStartedEvent.new()
 
       {:ok, connection, [event]}
     end
@@ -157,9 +160,12 @@ defmodule Helix.Network.Internal.Tunnel do
   The current reasons are valid: #{inspect Connection.close_reasons()}
   """
   def close_connection(connection = %Connection{}, reason \\ :normal) do
-    Repo.delete!(connection)
+    event =
+      connection
+      |> Repo.preload(:tunnel)
+      |> ConnectionClosedEvent.new(reason)
 
-    event = ConnectionClosedEvent.new(connection, reason)
+    Repo.delete!(connection)
 
     [event]
   end

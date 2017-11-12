@@ -11,13 +11,13 @@ defmodule Helix.Network.Model.Net do
   defstruct [:network_id, :bounce_id]
 
   @type t ::
-  %__MODULE__{
-    network_id: Network.id,
-    bounce_id: term
-  }
+    %__MODULE__{
+      network_id: Network.id,
+      bounce_id: term
+    }
 
   @spec new(Network.id, term) ::
-  t
+    t
   def new(network_id = %Network.ID{}, bounce_id) do
     %__MODULE__{
       network_id: network_id,
@@ -26,7 +26,7 @@ defmodule Helix.Network.Model.Net do
   end
 
   @spec new(Tunnel.t) ::
-  t
+    t
   def new(tunnel = %Tunnel{}) do
     %__MODULE__{
       network_id: tunnel.network_id,
