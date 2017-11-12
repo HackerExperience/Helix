@@ -247,6 +247,7 @@ defmodule Helix.Test.Channel.Setup do
   - access_type: Inferred if not set
   - own_server: Force socket to represent own server channel. Defaults to false.
   - counter: Defaults to 0.
+  - connect_opts: Opts that will be relayed to the `mock_connection_socket`
   """
   def mock_server_socket(opts \\ []) do
     gateway_id = Access.get(opts, :gateway_id, ServerSetup.id())
@@ -284,7 +285,7 @@ defmodule Helix.Test.Channel.Setup do
       counter: counter
     }
 
-    assigns = %{
+    server_assigns = %{
       gateway: %{
         server_id: gateway_id,
         ip: gateway_ip,
@@ -298,16 +299,49 @@ defmodule Helix.Test.Channel.Setup do
       meta: meta
     }
 
+    assigns =
+      opts[:connect_opts] || []
+      |> fake_connection_socket_assigns()
+      |> Map.merge(server_assigns)
+
     %{assigns: assigns}
   end
 
   @doc """
   Opts:
-  - die
+  - connect_opts: Opts that will be relayed to the `mock_connection_socket`
   """
-  def mock_account_socket(_opts \\ []) do
-    assigns = %{}
+  def mock_account_socket(opts \\ []) do
+    acc_assigns = %{}
+
+    assigns =
+      opts[:connect_opts] || []
+      |> fake_connection_socket_assigns()
+      |> Map.merge(acc_assigns)
 
     %{assigns: assigns}
+  end
+
+  @doc """
+  Opts:
+
+  - entity_id: Set entity_id. Defaults to a random fake entity_id
+  - account_id: Set account_id. Defaults to the corresponding Entity.ID
+  - client: Set the client platform/version. Defaults to `web2`
+  """
+  def fake_connection_socket_assigns(opts \\ []) do
+    gen_account_id = fn entity_id ->
+      entity_id |> to_string() |> Account.ID.cast!()
+    end
+
+    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    account_id = Keyword.get(opts, :account_id, gen_account_id.(entity_id))
+    client = Keyword.get(opts, :client, :web2)
+
+    %{
+      entity_id: entity_id,
+      account_id: account_id,
+      client: client
+    }
   end
 end

@@ -19,6 +19,7 @@ defmodule Helix.Websocket.Requests.ProxyTest do
 
       params =
         %{
+          "pages" => ["welcome"],
           "request_id" => "id"
         }
 

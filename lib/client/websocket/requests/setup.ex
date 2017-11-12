@@ -7,7 +7,7 @@ proxy_request Helix.Client.Websocket.Requests.Setup do
 
   alias Helix.Client.Web1.Websocket.Requests.Setup, as: Web1SetupRequest
 
-  select_backend(request, socket) do
+  select_backend(_request, socket) do
     case socket.assigns.client do
       :web1 ->
         Web1SetupRequest

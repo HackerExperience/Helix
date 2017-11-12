@@ -12,7 +12,7 @@ join Helix.Account.Websocket.Channel.Account.Join do
   """
 
   alias Helix.Websocket.Utils, as: WebsocketUtils
-  alias Helix.Client.Public, as: ClientPublic
+  alias Helix.Client.Public.Client, as: ClientPublic
   alias Helix.Account.Model.Account
   alias Helix.Account.Public.Account, as: AccountPublic
 
@@ -54,9 +54,8 @@ join Helix.Account.Websocket.Channel.Account.Join do
       |> AccountPublic.bootstrap()
       |> AccountPublic.render_bootstrap()
 
-    client_bootstrap =
-      client
-      |> ClientPublic.bootstrap(entity_id)
+    client_bootstrap = ClientPublic.bootstrap(client, entity_id)
+    client_bootstrap = ClientPublic.render_bootstrap(client, client_bootstrap)
 
     bootstrap =
       account_bootstrap

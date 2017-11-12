@@ -1,5 +1,6 @@
 defmodule Helix.Client.Model.Client do
 
+  @type t :: client
   @type client ::
     :web1
     | :web2
