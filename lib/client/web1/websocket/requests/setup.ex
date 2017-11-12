@@ -3,7 +3,7 @@ import Helix.Websocket.Request
 request Helix.Client.Web1.Websocket.Requests.Setup do
 
   alias Helix.Client.Web1.Model.Setup
-  alias Helix.Client.Web1.Public, as: Web1Public
+  alias Helix.Client.Web1.Public.Setup, as: SetupPublic
 
   @valid_pages_str Enum.map(Setup.valid_pages(), &to_string/1)
 
@@ -34,7 +34,7 @@ request Helix.Client.Web1.Websocket.Requests.Setup do
     entity_id = socket.assigns.entity_id
     pages = request.params.pages
 
-    case Web1Public.add_setup_pages(entity_id, pages) do
+    case SetupPublic.add_pages(entity_id, pages) do
       {:ok, _} ->
         reply_ok(request)
 

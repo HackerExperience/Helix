@@ -1,9 +1,8 @@
-defmodule Helix.Client.Web1.Public do
+defmodule Helix.Client.Web1.Public.Bootstrap do
 
   alias Helix.Entity.Model.Entity
-  alias Helix.Client.Web1.Action, as: Web1Action
   alias Helix.Client.Web1.Model.Setup
-  alias Helix.Client.Web1.Query, as: Web1Query
+  alias Helix.Client.Web1.Query.Setup, as: SetupQuery
 
   @type bootstrap ::
     %{
@@ -24,7 +23,7 @@ defmodule Helix.Client.Web1.Public do
   def bootstrap(entity_id) do
     %{
       setup: %{
-        pages: Web1Query.get_setup_pages(entity_id)
+        pages: SetupQuery.get_pages(entity_id)
       }
     }
   end
@@ -38,7 +37,4 @@ defmodule Helix.Client.Web1.Public do
       }
     }
   end
-
-  defdelegate add_setup_pages(entity_id, pages),
-    to: Web1Action
 end

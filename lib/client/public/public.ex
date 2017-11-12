@@ -6,10 +6,10 @@ defmodule Helix.Client.Public.Client do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Client.Model.Client
-  alias Helix.Client.Web1.Public, as: Web1Public
+  alias Helix.Client.Web1.Public.Bootstrap, as: Web1Bootstrap
 
-  @typep bootstrap_result :: Web1Public.bootstrap
-  @typep render_bootstrap_result :: Web1Public.rendered_bootstrap
+  @typep bootstrap_result :: Web1Bootstrap.bootstrap
+  @typep render_bootstrap_result :: Web1Bootstrap.rendered_bootstrap
 
   @spec bootstrap(Client.t, Entity.id) ::
     %{client: bootstrap_result}
@@ -30,14 +30,14 @@ defmodule Helix.Client.Public.Client do
   @spec dispatch(Client.t, :bootstrap, Entity.id) ::
     bootstrap_result
   defp dispatch(:web1, :bootstrap, entity_id),
-    do: Web1Public.bootstrap(entity_id)
+    do: Web1Bootstrap.bootstrap(entity_id)
   defp dispatch(_, :bootstrap, _),
     do: %{}
 
   @spec dispatch(Client.t, :render_bootstrap, bootstrap_result) ::
     render_bootstrap_result
   defp dispatch(:web1, :render_bootstrap, bootstrap),
-    do: Web1Public.render_bootstrap(bootstrap)
+    do: Web1Bootstrap.render_bootstrap(bootstrap)
   defp dispatch(_, :render_bootstrap, _),
     do: %{}
 end

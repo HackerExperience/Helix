@@ -41,12 +41,3 @@ defmodule Helix.Test.Client.Web1.Setup do
     {changeset, related}
   end
 end
-
-defmodule Helix.Test.Client.Web1.Helper do
-
-  def random_pages do
-    # Guaranteed to be random
-    [:welcome]
-  end
-
-end
