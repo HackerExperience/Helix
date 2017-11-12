@@ -7,4 +7,7 @@ defmodule Helix.Client.Public do
 
   defp dispatch_bootstrap(:web1, entity_id),
     do: Web1Public.bootstrap(entity_id)
+
+  defp dispatch_bootstrap(_, _),
+    do: %{}
 end

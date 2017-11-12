@@ -47,8 +47,7 @@ join Helix.Account.Websocket.Channel.Account.Join do
 
   def join(_request, socket, _assign) do
     entity_id = socket.assigns.entity_id
-    # client = socket.assigns.client
-    client = :web1
+    client = socket.assigns.client
 
     account_bootstrap =
       entity_id

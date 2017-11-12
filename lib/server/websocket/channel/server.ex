@@ -86,6 +86,8 @@ channel Helix.Server.Websocket.Channel.Server do
   new value.
 
   Valid config_keys:
+  - hostname: See docs on request `set_hostname`
+  - location: TODO
 
   Params:
   - hostname: Specify server hostname. Expected data: %{hostname: String}
@@ -108,6 +110,18 @@ channel Helix.Server.Websocket.Channel.Server do
   + base errors
   """
   topic "config.set", ConfigSetRequest
+
+  @doc """
+  Checks / verifies that the value set at `value` is valid for the config
+  defined at `key`. Used as a companion of `config.set`, mostly to increase UX.
+
+  Params:
+  - *key: Valid config keys (see docs on `config.set`)
+  - *value: Expected values (see docs on `config.set`)
+
+  Errors:
+  May return the corresponding permission error defined for each key.
+  """
   topic "config.check", ConfigCheckRequest
 
   @doc """

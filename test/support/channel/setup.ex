@@ -29,14 +29,17 @@ defmodule Helix.Test.Channel.Setup do
   - account: Specify which account to generate the socket to
   - entity_id: Specify entity ID that socket should be generated to.
   - with_server: Whether to generate an account with server. Defaults to true.
+  - client: Specify which `client` should be used. Defaults to "web2".
 
   Related: Account.t, Server.t (when `with_server` is true)
   """
-  def create_socket(opts \\ [with_server: true]) do
+  def create_socket(opts \\ []) do
+    with_server? = Keyword.get(opts, :with_server, true)
+
     {account, related} =
       cond do
-        opts[:with_server] ->
-          AccountSetup.account([with_server: true])
+        with_server? ->
+          AccountSetup.account(with_server: true)
 
         opts[:entity_id] ->
           account_id = Account.ID.cast!(to_string(opts[:entity_id]))
@@ -50,12 +53,14 @@ defmodule Helix.Test.Channel.Setup do
           AccountSetup.account()
       end
 
+    client = Keyword.get(opts, :client, :web2) |> to_string()
+
     {token, _} = AccountSetup.token([account: account])
 
     params =
       %{
         token: token,
-        client: "web2"
+        client: client
       }
 
     {:ok, socket} = connect(Websocket, params)
@@ -71,6 +76,7 @@ defmodule Helix.Test.Channel.Setup do
   @doc """
   - account_id: Specify channel to join. Creates a new account if none is set.
   - socket: Specify which socket to use. Generates a new one if not set.
+  - socket_opts: Relays opts to the `create_socket/1` method (if applicable)
 
   If `socket` is given, an `account_id` must be set as well. Same for the
   reverse case (if `account_id` is defined, a `socket` must be given.
@@ -89,7 +95,7 @@ defmodule Helix.Test.Channel.Setup do
       if opts[:socket] do
         {opts[:socket], opts[:account_id], %{}}
       else
-        {socket, related} = create_socket()
+        {socket, related} = create_socket(opts[:socket_opts] || [])
 
         {socket, related.account.account_id, related}
       end
@@ -119,6 +125,7 @@ defmodule Helix.Test.Channel.Setup do
     false.
   - destination_files: Whether to generate random files on destination. Defaults
     to false.
+  - socket_opts: Relays opts to the `create_socket/1` method (if applicable)
 
   Related:
     Account.t, \
@@ -136,7 +143,7 @@ defmodule Helix.Test.Channel.Setup do
 
         {opts[:socket], %{account: nil, server: gateway}}
       else
-        create_socket()
+        create_socket(opts[:socket_opts] || [])
       end
 
     local? = Keyword.get(opts, :own_server, false)

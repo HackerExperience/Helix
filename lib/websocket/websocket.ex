@@ -109,8 +109,7 @@ defmodule Helix.Websocket do
       |> handle_response(request, socket)
     else
       error = {:error, %{message: _}} ->
-        error
-        |> handle_response(request, socket)
+        handle_response(error, request, socket)
 
       {:error, %{__ready__: error_data}} ->
         handle_response({:error, error_data}, request, socket)
