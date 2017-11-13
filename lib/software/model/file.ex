@@ -14,23 +14,23 @@ defmodule Helix.Software.Model.File do
 
   @type t :: t_of_type(Software.type)
 
-  @type t_of_type(type) :: %__MODULE__{
-    file_id: id,
-    name: name,
-    path: path,
-    full_path: full_path,
-    file_size: size,
-    type: Software.Type.t,
-    software_type: type,
-    storage_id: Storage.id,
-    storage: term,
-    inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t,
-    modules: modules | File.Module.schema,
-    crypto_version: crypto_version
-  }
+  @type t_of_type(custom_type) ::
+    %__MODULE__{
+      file_id: id,
+      name: name,
+      path: path,
+      full_path: full_path,
+      file_size: size,
+      software_type: custom_type,
+      storage_id: Storage.id,
+      storage: term,
+      inserted_at: NaiveDateTime.t,
+      updated_at: NaiveDateTime.t,
+      modules: modules | File.Module.schema,
+      crypto_version: crypto_version
+    }
 
-  @type extension :: String.t
+  @type extension :: Software.extension
   @type path :: String.t
   @type full_path :: path
   @type name :: String.t
@@ -183,7 +183,7 @@ defmodule Helix.Software.Model.File do
     path = get_field(changeset, :path)
     name = get_field(changeset, :name)
     software_type = get_field(changeset, :software_type)
-    extension = Software.Type.get(software_type).extension
+    extension = Software.Type.get(software_type).extension |> to_string()
 
     full_path = path <> "/" <> name <> "." <> extension
 
@@ -212,11 +212,14 @@ defmodule Helix.Software.Model.File do
 
   # TODO
   defmodule Default do
+    @moduledoc """
+    File.Default returns the default value expected for the file. Us 2k
+    """
 
     def name(type, _modules),
       do: type |> to_string()
 
-    def size(type, _modules),
+    def size(_type, _modules),
       do: 500
 
     def path,

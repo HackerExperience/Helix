@@ -18,6 +18,8 @@ defmodule Helix.Story.Event.Handler.Story do
   alias Helix.Story.Model.Steppable
   alias Helix.Story.Query.Story, as: StoryQuery
 
+  alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
+
   @doc """
   Main step handler. Its first role is to figure out the entity that event
   belongs to, and then fetching that entity's current step.
@@ -30,7 +32,7 @@ defmodule Helix.Story.Event.Handler.Story do
   - StepProceededEvent.t when action is :complete
   - StepFailedEvent.t, StepRestartedEvent.t when action is :fail
   """
-  def step_handler(event) do
+  def event_handler(event) do
     with \
       entity_id = %{} <- Step.get_entity(event),
       step = %{} <- StoryQuery.fetch_current_step(entity_id)
@@ -41,7 +43,6 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
-  alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
   def action_handler(event = %StepActionRequestedEvent{}) do
     with %{object: step} <- StoryQuery.fetch_current_step(event.entity_id) do
       step = Step.new(step, event)
@@ -65,7 +66,7 @@ defmodule Helix.Story.Event.Handler.Story do
       with \
         {action, step, events} <-
           Steppable.handle_event(step, step.event, step.meta),
-        on_success(fn -> Event.emit(events) end),
+        on_success(fn -> Event.emit(events, from: step.event) end),
         handle_action(action, step)
       do
         :ok
@@ -81,7 +82,7 @@ defmodule Helix.Story.Event.Handler.Story do
   """
   defp handle_action(:complete, step) do
     with {:ok, step, events} <- Steppable.complete(step) do
-      Event.emit(events)
+      Event.emit(events, from: step.event)
 
       next_step = Step.get_next_step(step)
       hespawn fn ->
@@ -96,7 +97,7 @@ defmodule Helix.Story.Event.Handler.Story do
   """
   defp handle_action(:fail, step) do
     with {:ok, step, events} <- Steppable.fail(step) do
-      Event.emit(events)
+      Event.emit(events, from: step.event)
 
       hespawn fn ->
         fail_step(step)
@@ -120,8 +121,8 @@ defmodule Helix.Story.Event.Handler.Story do
 
   Emits: StepProceededEvent.t
   """
-  defp update_next(prev_step = %{entity_id: entity_id}, next_step_name) do
-    next_step = Step.fetch(next_step_name, entity_id, %{})
+  defp update_next(prev_step, next_step_name) do
+    next_step = Step.fetch(next_step_name, prev_step.entity_id, %{})
 
     with \
       {:ok, _} <- StoryAction.proceed_step(prev_step, next_step),
@@ -129,14 +130,14 @@ defmodule Helix.Story.Event.Handler.Story do
 
       # Generate next step data/meta
       {:ok, next_step, events} <- Steppable.setup(next_step, prev_step),
-      Event.emit(events),
+      Event.emit(events, from: prev_step.event),
 
       # Update step meta
       {:ok, _} <- StoryAction.update_step_meta(next_step),
 
       # Notify about step progress
       event = StoryAction.notify_step(prev_step, next_step),
-      Event.emit(event)
+      Event.emit(event, from: prev_step.event)
     do
       :ok
     end

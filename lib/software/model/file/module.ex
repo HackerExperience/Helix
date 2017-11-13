@@ -29,16 +29,16 @@ defmodule Helix.Software.Model.File.Module do
     version: pos_integer,
     file: File.t,
     file_id: File.id,
-    name: Constant.t
+    name: name
   }
 
-  @type name :: Constant.t
+  @type name :: Software.module_name
   @type version :: pos_integer
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{
-    name: Constant.t,
+    name: name,
     version: version
   }
 
@@ -116,7 +116,7 @@ defmodule Helix.Software.Model.File.Module do
     @enforce_keys [:version]
     defstruct [:version]
 
-    @spec new(File.Module.schema) ::
+    @spec new(File.Module.schema | %{version: File.Module.version}) ::
       t
     def new(%{version: version}) do
       %__MODULE__{

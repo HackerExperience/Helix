@@ -5,6 +5,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
   import Phoenix.ChannelTest
   import Helix.Test.Macros
   import Helix.Test.Channel.Macros
+  import Helix.Test.Story.Macros
 
   alias Helix.Story.Query.Story, as: StoryQuery
 
@@ -13,7 +14,6 @@ defmodule Helix.Test.Features.Storyline.Flow do
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Story.Setup, as: StorySetup
 
   @internet_id NetworkHelper.internet_id()
@@ -22,7 +22,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
 
   describe "tutorial" do
     test "flow" do
-      {server_socket, %{gateway: server, account: account}} =
+      {server_socket, %{gateway: _server, account: account}} =
         ChannelSetup.join_server(own_server: true)
 
       entity = EntityHelper.fetch_entity_from_account(account)
@@ -35,10 +35,9 @@ defmodule Helix.Test.Features.Storyline.Flow do
 
       # Register player at the first step
       # TODO: This should be done as a response of AccountCreatedEvent
-      {story_step, %{step: step}} =
-        StorySetup.story_step(
-          entity_id: entity_id, name: :tutorial@SetupPc, meta: %{}
-        )
+      StorySetup.story_step(
+        entity_id: entity_id, name: :tutorial@SetupPc, meta: %{}
+      )
 
       # Player is on mission
       assert %{object: %{name: step_name}} =
@@ -48,18 +47,12 @@ defmodule Helix.Test.Features.Storyline.Flow do
       # We'll now complete the first mission by replying to the email
       params = %{"reply_id" => "back_thanks"}
       ref = push account_socket, "email.reply", params
-      assert_reply ref, :ok, response, timeout(:slow)
+      assert_reply ref, :ok, _, timeout(:slow)
 
       # Now we've proceeded to the next step
-      [story_email_sent, story_step_proceeded] =
-        wait_events [:story_email_sent, :story_step_proceeded]
+      [story_step_proceeded] = wait_events [:story_step_proceeded]
 
-      assert String.contains?(
-        story_step_proceeded.data.previous_step, "setup_pc"
-      )
-      assert String.contains?(
-        story_step_proceeded.data.next_step, "download_cracker"
-      )
+      assert_transition story_step_proceeded, "setup_pc", "download_cracker"
 
       # Fetch setup data
       %{object: cur_step} = StoryQuery.fetch_current_step(entity_id)
@@ -77,7 +70,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
 
       # Start the download (using the PublicFTP)
       ref = push server_socket, "pftp.file.download", params
-      assert_reply ref, :ok, response, timeout(:slow)
+      assert_reply ref, :ok, _, timeout(:slow)
 
       [process_created] = wait_events [:process_created], timeout()
 
@@ -87,9 +80,8 @@ defmodule Helix.Test.Features.Storyline.Flow do
       # We've proceeded to the next step!
       [story_step_proceeded] = wait_events [:story_step_proceeded]
 
-      assert String.contains?(
-        story_step_proceeded.data.previous_step, "download_cracker"
-      )
+      assert_transition \
+        story_step_proceeded, "download_cracker", "download_cracker"
     end
   end
 end

@@ -14,6 +14,14 @@ defmodule Helix.Story.Model.Step do
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Steppable
 
+  @type t(step_type) :: %{
+    __struct__: step_type,
+    event: Event.t | nil,
+    name: step_name,
+    meta: meta,
+    entity_id: Entity.id
+  }
+
   @type email_id :: String.t
   @type reply_id :: String.t
 
@@ -37,13 +45,11 @@ defmodule Helix.Story.Model.Step do
 
   @type contact :: Constant.t
 
-  @type t(step_type) :: %{
-    __struct__: step_type,
-    event: Event.t | nil,
-    name: step_name,
-    meta: meta,
-    entity_id: Entity.id
-  }
+  @type callback_action ::
+    :complete
+    | :fail
+    | :regenerate
+    | :noop
 
   @spec new(t(struct), Event.t) ::
     t(struct)
