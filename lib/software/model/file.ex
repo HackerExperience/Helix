@@ -124,6 +124,7 @@ defmodule Helix.Software.Model.File do
 
     file
     |> Map.replace(:modules, formatted_modules)
+
     # For some reason, Ecto assigns the `:built` state sometimes, which leads to
     # some weird behaviour on some Repo inserts. As suggested here[1], we'll use
     # Ecto.put_meta/2. [1] - https://github.com/Nebo15/ecto_mnesia/issues/20
@@ -210,18 +211,25 @@ defmodule Helix.Software.Model.File do
     end
   end
 
-  # TODO
   defmodule Default do
     @moduledoc """
-    File.Default returns the default value expected for the file. Us 2k
+    File.Default returns the default value expected for the file.
     """
 
+    alias Helix.Software.Model.File
+
+    @spec name(File.type, File.modules) ::
+      File.name
     def name(type, _modules),
       do: type |> to_string()
 
+    @spec size(File.type, File.modules) ::
+      File.size
     def size(_type, _modules),
       do: 500
 
+    @spec path() ::
+      File.path
     def path,
       do: "/"
   end
