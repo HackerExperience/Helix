@@ -26,7 +26,7 @@ defmodule Helix.Server.Model.Server do
 
   @type hostname :: String.t
   @type name :: hostname
-
+  @type type :: Constant.t
   @type password :: String.t
 
   @type resources :: Motherboard.resources

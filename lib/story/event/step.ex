@@ -51,4 +51,19 @@ defmodule Helix.Story.Event.Step do
         do: %{account: event.entity_id}
     end
   end
+
+  event ActionRequested do
+
+    @type t :: term
+
+    event_struct [:action, :entity_id]
+
+    def new(action, entity_id) do
+      %__MODULE__{
+        action: action,
+        entity_id: entity_id
+      }
+    end
+
+  end
 end

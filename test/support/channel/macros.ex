@@ -4,10 +4,10 @@ defmodule Helix.Test.Channel.Macros do
   The `wait_events` helper will wait for the requested events in a deterministic
   way, i.e. it doesn't matter the order they arrived.
   """
-  defmacro wait_events(events) do
+  defmacro wait_events(events, timeout \\ quote(do: 50)) do
     events = Enum.map(events, &to_string/1)
     quote do
-      all_events = unquote(wait_all())
+      all_events = unquote(wait_all(timeout))
 
       Enum.reduce(unquote(events), [], fn event, acc ->
         case Enum.find(all_events, &(&1.event == event)) do
@@ -22,7 +22,7 @@ defmodule Helix.Test.Channel.Macros do
     end
   end
 
-  def wait_all do
+  def wait_all(timeout \\ 50) do
     quote do
       Enum.reduce_while(1..10, [], fn _, acc ->
         receive do
@@ -30,9 +30,18 @@ defmodule Helix.Test.Channel.Macros do
             {:cont, acc ++ [event]}
 
           after
-            50 -> {:halt, acc}
+            unquote(timeout) -> {:halt, acc}
         end
       end)
+    end
+  end
+
+  @doc """
+  Debugger/helper that lists all events in the mailbox.
+  """
+  defmacro list_events do
+    quote do
+      unquote(wait_all())
     end
   end
 end

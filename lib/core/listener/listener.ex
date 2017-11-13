@@ -4,18 +4,20 @@ defmodule Helix.Core.Listener do
   events happening a specific `object_id`.
   """
 
+  import HELL.Macros
+
   alias Helix.Core.Listener.Action.Listener, as: ListenerAction
 
   @doc """
-  Subscribes to `event` on `object_id`, calling `method` as a callback once/if
+  Subscribes to `events` on `object_id`, calling `method` as a callback once/if
   the event happens.
   """
-  defmacro listen(object_id, event, method, opts) do
+  defmacro listen(object_id, events, method, opts) do
     module = __CALLER__.module
     quote do
       do_listen(
         unquote(object_id),
-        unquote(event),
+        unquote(events),
         {unquote(module), unquote(method)},
         unquote(opts)
       )
@@ -31,6 +33,8 @@ defmodule Helix.Core.Listener do
     meta = Keyword.get(opts, :meta, nil)
 
     Enum.each(events, fn event ->
+      assert_aliased(event)
+
       ListenerAction.listen(
         object_id, event, {module, method}, meta, owner_id, subscriber
       )
@@ -45,4 +49,20 @@ defmodule Helix.Core.Listener do
   """
   def unlisten(owner_id, object_id, event, subscriber),
     do: ListenerAction.unlisten(owner_id, object_id, event, subscriber)
+
+  docp """
+  `assert_aliased` makes sure that the given event has been aliased by whoever
+  is trying to subscribe to events on it. The reason being that, if not aliased,
+  the module will be able to listen on a bogus event and no warnings will be
+  emitted.
+  """
+  defp assert_aliased(event) do
+    module_depth =
+      event
+      |> Module.split()
+      |> length()
+
+    if module_depth == 1,
+      do: raise "Event #{event} isn't aliased"
+  end
 end

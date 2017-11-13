@@ -12,13 +12,13 @@ defmodule Helix.Universe.NPC.Model.NPC do
 
   @type t :: %__MODULE__{
     npc_id: id,
-    npc_type: NPCType.types,
+    npc_type: NPCType.type,
     inserted_at: NaiveDateTime.t,
     updated_at: NaiveDateTime.t
   }
 
   @type creation_params :: %{
-    :npc_type => NPCType.types
+    :npc_type => NPCType.type
   }
 
   @creation_fields ~w/npc_type/a

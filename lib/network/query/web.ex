@@ -16,7 +16,7 @@ defmodule Helix.Network.Query.Web do
   @type page_owner ::
     :account
     | :clan
-    | {:npc, NPCType.types}
+    | {:npc, NPCType.type}
 
   @spec browse(Network.idt, String.t | IPv4.t, IPv4.t) ::
     {:ok, {page_owner, page_content}, IPv4.t}

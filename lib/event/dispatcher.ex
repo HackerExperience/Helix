@@ -64,6 +64,7 @@ defmodule Helix.Event.Dispatcher do
   all_events LogHandler.Log, :handle_event,
     skip: [LogEvent.Log.Created]
 
+  # TODO: Still global with Listener?
   all_events StoryHandler, :step_handler
 
   all_events ListenerHandler, :listener_handler
@@ -206,6 +207,12 @@ defmodule Helix.Event.Dispatcher do
   event StoryEvent.Email.Sent
   event StoryEvent.Reply.Sent
   event StoryEvent.Step.Proceeded
+  event StoryEvent.Step.ActionRequested
+
+  # Custom handlers
+  event StoryEvent.Step.ActionRequested,
+    StoryHandler,
+    :action_handler
 
   ##############################################################################
   # Universe events

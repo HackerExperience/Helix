@@ -23,3 +23,7 @@ erl_crash.dump
 # xref graphs
 xref_graph.dot
 /graphs
+
+**GPATH
+**GRTAGS
+**GTAGS

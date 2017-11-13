@@ -4,14 +4,17 @@ defmodule Helix.Universe.NPC.Model.NPCType do
 
   alias HELL.Constant
 
-  @type types ::
+  @type type ::
     :download_center
     | :bank
     | :atm
+    | :story_char
 
   @type t :: %__MODULE__{
-    npc_type: Constant.t
+    npc_type: type
   }
+
+  @npc_types [:download_center, :bank, :atm, :story_char]
 
   @primary_key false
   schema "npc_types" do
@@ -20,7 +23,6 @@ defmodule Helix.Universe.NPC.Model.NPCType do
   end
 
   @doc false
-  def possible_types do
-    ~w/download_center bank atm/a
-  end
+  def possible_types,
+    do: @npc_types
 end

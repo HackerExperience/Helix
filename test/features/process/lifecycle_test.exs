@@ -77,6 +77,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
     # In order to do that we create a very small process which needs to transfer
     # a file of about ~1kb, which takes less than a second.
     test "spontaneous completion" do
+      # TODO ready
       # TODO Agora dah
       # TODO: Local socket for local TOPREcalcado event
       {socket, %{gateway: gateway, destination: destination}} =

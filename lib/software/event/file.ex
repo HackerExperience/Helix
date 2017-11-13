@@ -73,7 +73,8 @@ defmodule Helix.Software.Event.File do
       file: File.t,
       to_storage_id: Storage.id,
       network_id: Network.id,
-      connection_type: :ftp | :public_ftp
+      connection_type: :ftp | :public_ftp,
+      source_file_id: File.id,
     }
 
     event_struct [
@@ -83,7 +84,8 @@ defmodule Helix.Software.Event.File do
       :file,
       :to_storage_id,
       :network_id,
-      :connection_type
+      :connection_type,
+      :source_file_id
     ]
 
     @spec new(FileTransferProcessedEvent.t, File.t) ::
@@ -99,7 +101,8 @@ defmodule Helix.Software.Event.File do
         to_storage_id: transfer.to_storage_id,
         network_id: transfer.network_id,
         connection_type: transfer.connection_type,
-        file: file
+        file: file,
+        source_file_id: transfer.file_id
       }
     end
 
@@ -175,7 +178,7 @@ defmodule Helix.Software.Event.File do
     end
 
     listenable(event) do
-      [event.file.file_id]
+      [event.source_file_id]
     end
   end
 

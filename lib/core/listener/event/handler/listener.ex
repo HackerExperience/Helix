@@ -47,6 +47,6 @@ defmodule Helix.Core.Listener.Event.Handler.Listener do
 
     {:ok, events} = apply(module, method, params)
 
-    Event.emit(events)
+    Event.emit(events, from: event)
   end
 end

@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Story.Model.Step.Macros do
   @moduledoc """
   Macros for the Step DSL.
@@ -10,10 +11,12 @@ defmodule Helix.Story.Model.Step.Macros do
 
   alias HELL.Constant
   alias HELL.Utils
+  alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
   alias Helix.Story.Action.Story, as: StoryAction
 
   alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
+  alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
 
   defmacro step(name, contact \\ nil, do: block) do
     quote do
@@ -30,6 +33,7 @@ defmodule Helix.Story.Model.Step.Macros do
           @emails Module.get_attribute(__MODULE__, :emails) || %{}
           @contact get_contact(unquote(contact), __MODULE__)
           @step_name Helix.Story.Model.Step.get_name(unquote(name))
+          @set false
 
           unquote(block)
 
@@ -63,8 +67,92 @@ defmodule Helix.Story.Model.Step.Macros do
                 []
             end
           end
+
+          defp handle_callback(action, entity_id) when not is_tuple(action),
+            do: handle_callback({action, []}, entity_id)
+
+          defp handle_callback({action, events}, entity_id) do
+            request_action = StepActionRequestedEvent.new(action, entity_id)
+
+            {:ok, events ++ [request_action]}
+          end
+
+          callback :callback_complete do
+            :complete
+          end
+
+          callback :callback_fail do
+            :fail
+          end
+
+          callback :callback_regenerate do
+            :regenerate
+          end
         end
       end
+    end
+  end
+
+  defmacro callback(
+    name,
+    event \\ quote(do: _),
+    meta \\ quote(do: _),
+    do: block)
+  do
+    quote do
+
+      def unquote(name)(var!(event) = unquote(event), m = unquote(meta)) do
+        step_entity_id = m["step_entity_id"] |> Entity.ID.cast!()
+
+        var!(event)  # Mark as used
+
+        unquote(block)
+        |> handle_callback(step_entity_id)
+      end
+
+    end
+  end
+
+  defmacro story_listen(element_id, events, do: action) do
+
+    quote do
+      callback_name = Utils.concat_atom(:callback_, unquote(action))
+
+      story_listen(unquote(element_id), unquote(events), callback_name)
+    end
+
+  end
+
+  defmacro story_listen(element_id, events, callback) do
+    macro = has_macro?(__CALLER__, Helix.Core.Listener)
+    import_block = is_nil(macro) && quote(do: import Helix.Core.Listener) || []
+
+    quote do
+
+      unquote(import_block)
+
+      listen unquote(element_id), unquote(events), unquote(callback),
+        owner_id: var!(step).entity_id,
+        subscriber: @step_name,
+        meta: %{step_entity_id: var!(step).entity_id}
+
+    end
+  end
+
+  defp has_macro?(env, macro),
+    do: Enum.find(env.macros, fn {module, _} -> module == macro end)
+
+  defmacro format_meta(do: block) do
+    quote do
+
+      def format_meta(%{meta: empty_map}) when empty_map ==  %{},
+        do: %{}
+
+      def format_meta(%{meta: meta}) do
+        var!(meta) = HELL.MapUtils.atomize_keys(meta)
+        unquote(block)
+      end
+
     end
   end
 
@@ -109,9 +197,7 @@ defmodule Helix.Story.Model.Step.Macros do
     quote do
       {:ok, events} =
         StoryAction.send_email(
-          unquote(step),
-          unquote(email_id),
-          unquote(email_meta)
+          unquote(step), unquote(email_id), unquote(email_meta)
         )
 
       events
@@ -120,12 +206,14 @@ defmodule Helix.Story.Model.Step.Macros do
 
   defmacro filter(step, event, meta, opts) do
     quote do
+
       @doc false
       def handle_event(unquote(step), unquote(event), unquote(meta)) do
         unquote(
           case opts do
             [do: block] ->
               block
+
             [send: email_id] ->
               quote do
                 event =
@@ -133,12 +221,15 @@ defmodule Helix.Story.Model.Step.Macros do
                     unquote(step),
                     unquote(email_id),
                     Keyword.get(unquote(opts), :meta, %{})
+
                 {:noop, unquote(step), event}
               end
+
             [complete: true] ->
               quote do
                 {:complete, unquote(step), []}
               end
+
             [fail: true] ->
               quote do
                 {:fail, unquote(step), []}
@@ -146,6 +237,7 @@ defmodule Helix.Story.Model.Step.Macros do
           end
         )
       end
+
     end
   end
 
@@ -156,6 +248,7 @@ defmodule Helix.Story.Model.Step.Macros do
 
     for email <- valid_emails do
       quote do
+
         @doc false
         def handle_event(
           step,
@@ -174,16 +267,20 @@ defmodule Helix.Story.Model.Step.Macros do
                       step,
                       unquote(email_id),
                       Keyword.get(unquote(opts), :meta, %{})
+
                   {:noop, step, event}
                 end
+
               [do: block] ->
                 quote do
                   unquote(block)
                 end
-              [complete: true] ->
+
+              :complete ->
                 quote do
                   {:complete, step, []}
                 end
+
               _ ->
                 quote do
                   {:noop, step, []}
@@ -191,6 +288,7 @@ defmodule Helix.Story.Model.Step.Macros do
             end
           )
         end
+
       end
     end
   end

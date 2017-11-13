@@ -41,6 +41,15 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
+  alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
+  def action_handler(event = %StepActionRequestedEvent{}) do
+    with %{object: step} <- StoryQuery.fetch_current_step(event.entity_id) do
+      step = Step.new(step, event)
+
+      handle_action(event.action, step)
+    end
+  end
+
   docp """
   The StepFlow guides the step, allowing it to react to the received event.
 
@@ -114,24 +123,22 @@ defmodule Helix.Story.Event.Handler.Story do
   defp update_next(prev_step = %{entity_id: entity_id}, next_step_name) do
     next_step = Step.fetch(next_step_name, entity_id, %{})
 
-    flowing do
-      with \
-        {:ok, _} <- StoryAction.proceed_step(prev_step, next_step),
-        # /\ Proceeds player to the next step
+    with \
+      {:ok, _} <- StoryAction.proceed_step(prev_step, next_step),
+      # /\ Proceeds player to the next step
 
-        # Generate next step data/meta
-        {:ok, next_step, events} <- Steppable.setup(next_step, prev_step),
-        on_success(fn -> Event.emit(events) end),
+      # Generate next step data/meta
+      {:ok, next_step, events} <- Steppable.setup(next_step, prev_step),
+      Event.emit(events),
 
-        # Update step meta
-        {:ok, _} <- StoryAction.update_step_meta(next_step),
+      # Update step meta
+      {:ok, _} <- StoryAction.update_step_meta(next_step),
 
-        # Notify about step progress
-        event = StoryAction.notify_step(prev_step, next_step),
-        on_success(fn -> Event.emit(event) end)
-      do
-        :ok
-      end
+      # Notify about step progress
+      event = StoryAction.notify_step(prev_step, next_step),
+      Event.emit(event)
+    do
+      :ok
     end
   end
 

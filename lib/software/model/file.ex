@@ -210,6 +210,19 @@ defmodule Helix.Software.Model.File do
     end
   end
 
+  # TODO
+  defmodule Default do
+
+    def name(type, _modules),
+      do: type |> to_string()
+
+    def size(type, _modules),
+      do: 500
+
+    def path,
+      do: "/"
+  end
+
   defmodule Query do
 
     import Ecto.Query

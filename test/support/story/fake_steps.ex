@@ -136,7 +136,7 @@ defmodule Helix.Story.Mission.FakeSteps do
       send: "e3"
 
     on_reply "reply_to_e3",
-      complete: true
+      :complete
 
     def setup(step, _) do
       send_email step, "e1"
