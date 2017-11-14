@@ -4,6 +4,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
 
   import Phoenix.ChannelTest
   import Helix.Test.Macros
+  import Helix.Test.Channel.Macros
   import Helix.Test.Process.Macros
 
   alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
@@ -104,8 +105,6 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       # Below timer is required because we want to let the process complete by
       # itself, without using `force_completion`
       sleep(200)
-
-      import Helix.Test.Channel.Macros
 
       wait_events [:top_recalcado, :top_recalcado, :file_downloaded]
 

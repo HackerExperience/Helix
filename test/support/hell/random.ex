@@ -168,7 +168,7 @@ defmodule HELL.TestHelper.Random do
     end
 
     email_part0 = string(min: 3)
-    email_part1 = Enum.join(repeat(build_email_part, min: 0, max: 5))
+    email_part1 = Enum.join(repeat(2..4, build_email_part))
     email_part = email_part0 <> email_part1
 
     email_part <> "@" <> hostname
@@ -178,7 +178,7 @@ defmodule HELL.TestHelper.Random do
   Generates a random hostname
   """
   def hostname do
-    parts = repeat(fn -> string(min: 2, max: 10) end, min: 1, max: 4)
+    parts = repeat(3..5, fn -> string(min: 5) end)
     name = Enum.join(parts, ".")
 
     name <> Enum.random(@tlds)
