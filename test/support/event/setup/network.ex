@@ -1,6 +1,7 @@
 defmodule Helix.Test.Event.Setup.Network do
 
   alias Helix.Network.Model.Connection
+  alias Helix.Network.Repo
 
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
   alias Helix.Network.Event.Connection.Started, as: ConnectionStartedEvent
@@ -11,7 +12,9 @@ defmodule Helix.Test.Event.Setup.Network do
     do: connection_started(generate_connection())
 
   def connection_started(connection = %Connection{}) do
-    ConnectionStartedEvent.new(connection)
+    connection
+    |> Repo.preload(:tunnel)
+    |> ConnectionStartedEvent.new()
   end
 
   def connection_closed,
@@ -20,7 +23,9 @@ defmodule Helix.Test.Event.Setup.Network do
   def connection_closed(connection = %Connection{}, opts \\ []) do
     reason = Keyword.get(opts, :reason, :normal)
 
-    ConnectionClosedEvent.new(connection, reason)
+    connection
+    |> Repo.preload(:tunnel)
+    |> ConnectionClosedEvent.new(reason)
   end
 
   defp generate_connection do

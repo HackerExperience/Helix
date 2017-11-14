@@ -10,9 +10,9 @@ defmodule Helix.Network.Model.DNS.Unicast do
   @type t :: %__MODULE__{}
 
   @type creation_params :: %{
-    :network_id => Network.idtb,
-    :name => String.t,
-    :ip => IPv4.t
+    network_id: Network.id,
+    name: String.t,
+    ip: Network.ip
   }
 
   @one_nip_per_name :dns_unicast_nip_unique_index
@@ -23,6 +23,7 @@ defmodule Helix.Network.Model.DNS.Unicast do
   schema "dns_unicast" do
     field :network_id, Network.ID,
       primary_key: true
+
     field :name, :string,
       primary_key: true
     field :ip, IPv4
@@ -44,12 +45,12 @@ defmodule Helix.Network.Model.DNS.Unicast do
     alias Helix.Network.Model.DNS.Unicast
     alias Helix.Network.Model.Network
 
-    @spec by_net_and_name(Queryable.t, Network.idtb, String.t) ::
+    @spec by_net_and_name(Queryable.t, Network.id, String.t) ::
       Queryable.t
     def by_net_and_name(query \\ Unicast, network, name),
       do: where(query, [u], u.network_id == ^network and u.name == ^name)
 
-    @spec by_nip(Queryable.t, Network.idtb, IPv4.t) ::
+    @spec by_nip(Queryable.t, Network.id, IPv4.t) ::
       Queryable.t
     def by_nip(query \\ Unicast, network, ip),
       do: where(query, [u], u.network_id == ^network and u.ip == ^ip)

@@ -62,8 +62,8 @@ defprotocol Helix.Story.Model.Steppable do
   The `on_reply` macro can have 3 blocks: `send`, `complete` and `do`.
 
   Send means that, when a reply is received, Helix should send the specified
-  email. If `complete: true` is given, Helix will call the `complete/1`
-  function. The `do` block means an arbitrary command will be executed.
+  email. If `:complete` is given, Helix will call the `complete/1` function. The
+  `do` block means an arbitrary command will be executed.
 
   ## Setting up a new step with `setup/2`
 

@@ -49,23 +49,6 @@ defmodule Helix.Software do
       ensure_unique_software(all_software)
       ensure_unique_modules(all_modules)
 
-      alias HELL.Constant
-      alias Helix.Software.Model.File
-
-      @type t :: %{
-        type: type,
-        extension: File.extension,
-        modules: [module_name]
-      }
-
-      # TODO: Once I get a better grasp of macros, generate the types below
-      # extensively, from `all_software` and `all_modules`
-      @type type :: Constant.t
-      @type modules :: Constant.t
-
-      @type extension :: File.extension
-      @type module_name :: File.Module.name
-
       @spec all ::
         [t]
       @doc """
@@ -103,7 +86,8 @@ defmodule Helix.Software do
         schema "software_types" do
           field :type, Constant,
             primary_key: true
-          field :extension, :string
+
+          field :extension, Constant
         end
 
         @spec create_changeset(creation_params) ::

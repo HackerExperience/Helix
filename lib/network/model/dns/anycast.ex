@@ -9,8 +9,8 @@ defmodule Helix.Network.Model.DNS.Anycast do
   @type t :: %__MODULE__{}
 
   @type creation_params :: %{
-    :name => String.t,
-    :npc_id => NPC.idtb
+    name: String.t,
+    npc_id: NPC.id
   }
 
   @one_npc_per_name :dns_anycast_npc_unique_index

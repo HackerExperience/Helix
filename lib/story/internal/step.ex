@@ -40,6 +40,7 @@ defmodule Helix.Story.Internal.Step do
     if story_step do
       step =
         Step.fetch(story_step.step_name, story_step.entity_id, story_step.meta)
+
       formatted_meta = Step.format_meta(step)
 
       %{

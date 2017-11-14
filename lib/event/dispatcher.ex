@@ -64,8 +64,6 @@ defmodule Helix.Event.Dispatcher do
   all_events LogHandler.Log, :handle_event,
     skip: [LogEvent.Log.Created]
 
-  all_events StoryHandler, :step_handler
-
   all_events ListenerHandler, :listener_handler
 
   ##############################################################################
@@ -205,7 +203,17 @@ defmodule Helix.Event.Dispatcher do
   # All
   event StoryEvent.Email.Sent
   event StoryEvent.Reply.Sent
+  event StoryEvent.Step.ActionRequested
   event StoryEvent.Step.Proceeded
+
+  # Custom handlers
+  event StoryEvent.Reply.Sent,
+    StoryHandler,
+    :event_handler
+
+  event StoryEvent.Step.ActionRequested,
+    StoryHandler,
+    :action_handler
 
   ##############################################################################
   # Universe events

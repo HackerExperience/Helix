@@ -107,6 +107,7 @@ defmodule Helix.Universe.NPC.Seed do
     end
   end
 
+  # #246
   # TODO: Remove need for cache clean up by adding the `SKIP_CACHE` flag.
   # Note that, as long as the seed process takes less than the PurgeQueue
   # sync_interval, we don't even have to clean the cache, since teardown

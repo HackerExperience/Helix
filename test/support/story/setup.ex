@@ -91,13 +91,7 @@ defmodule Helix.Test.Story.Setup do
         allowed_replies: allowed_replies
       }
 
-    step =
-      try do
-        Step.fetch(name, entity_id, meta)
-      rescue
-        _ ->
-          %{}
-      end
+    step = Step.fetch(name, entity_id, meta)
 
     related = %{
       step: step,

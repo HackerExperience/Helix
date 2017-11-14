@@ -19,7 +19,9 @@ defmodule Helix.Test.Process.TOPHelper do
   @doc """
   Completes the process, emitting the related events and removing from the db.
   """
-  def force_completion(process_idt, opts \\ [])
+  def force_completion(process_idtb, opts \\ [])
+  def force_completion(process_idb, opts) when is_binary(process_idb),
+    do: force_completion(process_idb |> Process.ID.cast!(), opts)
   def force_completion(process_id = %Process.ID{}, opts) do
     process_id
     |> ProcessQuery.fetch()

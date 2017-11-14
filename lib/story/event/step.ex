@@ -51,4 +51,35 @@ defmodule Helix.Story.Event.Step do
         do: %{account: event.entity_id}
     end
   end
+
+  event ActionRequested do
+    @moduledoc """
+    `StepActionRequestedEvent` is fired when a callback, declared at the Step
+    definition, has been called as a reaction of a previously subscribed event.
+    This callback may request that an action be performed on the step, like
+    `:complete`, `:fail` or `:regenerate`.
+
+    StepHandler will handle this event and perform the requested action.
+    """
+
+    alias Helix.Entity.Model.Entity
+    alias Helix.Story.Model.Step
+
+    event_struct [:action, :entity_id]
+
+    @type t ::
+      %__MODULE__{
+        action: Step.callback_action,
+        entity_id: Entity.id
+      }
+
+    @spec new(Step.callback_action, Entity.id) ::
+      t
+    def new(action, entity_id) do
+      %__MODULE__{
+        action: action,
+        entity_id: entity_id
+      }
+    end
+  end
 end

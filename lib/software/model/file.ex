@@ -14,23 +14,23 @@ defmodule Helix.Software.Model.File do
 
   @type t :: t_of_type(Software.type)
 
-  @type t_of_type(type) :: %__MODULE__{
-    file_id: id,
-    name: name,
-    path: path,
-    full_path: full_path,
-    file_size: size,
-    type: Software.Type.t,
-    software_type: type,
-    storage_id: Storage.id,
-    storage: term,
-    inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t,
-    modules: modules | File.Module.schema,
-    crypto_version: crypto_version
-  }
+  @type t_of_type(custom_type) ::
+    %__MODULE__{
+      file_id: id,
+      name: name,
+      path: path,
+      full_path: full_path,
+      file_size: size,
+      software_type: custom_type,
+      storage_id: Storage.id,
+      storage: term,
+      inserted_at: NaiveDateTime.t,
+      updated_at: NaiveDateTime.t,
+      modules: modules | File.Module.schema,
+      crypto_version: crypto_version
+    }
 
-  @type extension :: String.t
+  @type extension :: Software.extension
   @type path :: String.t
   @type full_path :: path
   @type name :: String.t
@@ -46,10 +46,8 @@ defmodule Helix.Software.Model.File do
     path: path,
     file_size: size,
     software_type: Software.type,
-    storage_id: Storage.idtb
+    storage_id: Storage.id
   }
-
-  @type module_params :: {File.Module.name, File.Module.Data.t}
 
   @type update_params :: %{
     optional(:name) => name,
@@ -95,7 +93,7 @@ defmodule Helix.Software.Model.File do
     timestamps()
   end
 
-  @spec create_changeset(creation_params, [module_params]) ::
+  @spec create_changeset(creation_params, modules) ::
     changeset
   @doc """
   Creates the `File` changeset, as well as its modules' associations.
@@ -124,6 +122,7 @@ defmodule Helix.Software.Model.File do
 
     file
     |> Map.replace(:modules, formatted_modules)
+
     # For some reason, Ecto assigns the `:built` state sometimes, which leads to
     # some weird behaviour on some Repo inserts. As suggested here[1], we'll use
     # Ecto.put_meta/2. [1] - https://github.com/Nebo15/ecto_mnesia/issues/20
@@ -161,7 +160,7 @@ defmodule Helix.Software.Model.File do
     |> prepare_changes(&update_full_path/1)
   end
 
-  @spec create_module_assoc(module_params) ::
+  @spec create_module_assoc({File.Module.name, File.Module.Data.t}) ::
     File.Module.changeset
   docp """
   Helper/wrapper to `File.Module.create_changeset/1`
@@ -183,7 +182,7 @@ defmodule Helix.Software.Model.File do
     path = get_field(changeset, :path)
     name = get_field(changeset, :name)
     software_type = get_field(changeset, :software_type)
-    extension = Software.Type.get(software_type).extension
+    extension = Software.Type.get(software_type).extension |> to_string()
 
     full_path = path <> "/" <> name <> "." <> extension
 
@@ -208,6 +207,29 @@ defmodule Helix.Software.Model.File do
       path ->
         path
     end
+  end
+
+  defmodule Default do
+    @moduledoc """
+    File.Default returns the default value expected for the file.
+    """
+
+    alias Helix.Software.Model.File
+
+    @spec name(File.type, File.modules) ::
+      File.name
+    def name(type, _modules),
+      do: type |> to_string()
+
+    @spec size(File.type, File.modules) ::
+      File.size
+    def size(_type, _modules),
+      do: 500
+
+    @spec path() ::
+      File.path
+    def path,
+      do: "/"
   end
 
   defmodule Query do

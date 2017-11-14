@@ -77,10 +77,11 @@ defmodule Helix.Test.Features.Process.Lifecycle do
     # In order to do that we create a very small process which needs to transfer
     # a file of about ~1kb, which takes less than a second.
     test "spontaneous completion" do
-      # TODO Agora dah
-      # TODO: Local socket for local TOPREcalcado event
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
+
+      # Connect to gateway channel too, so we can receive gateway notifications
+      ChannelSetup.join_server(socket: socket, own_server: true)
 
       # Create the File that we'll downloaded
       {file, _} = SoftwareSetup.file(server_id: destination.server_id, size: 10)
@@ -102,7 +103,11 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       # Extra time is desired to let all "spawned" connections close
       # Below timer is required because we want to let the process complete by
       # itself, without using `force_completion`
-      :timer.sleep(200)
+      sleep(200)
+
+      import Helix.Test.Channel.Macros
+
+      wait_events [:top_recalcado, :top_recalcado, :file_downloaded]
 
       # I haz file!11
       assert [downloaded_file] = StorageQuery.files_on_storage(gateway_storage)

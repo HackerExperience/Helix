@@ -2,7 +2,6 @@ defmodule Helix.Network.Public.Network do
 
   import HELL.Macros
 
-  alias HELL.IPv4
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
@@ -10,7 +9,7 @@ defmodule Helix.Network.Public.Network do
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Web, as: WebQuery
 
-  @spec browse(Network.idt, String.t | IPv4.t, Server.idt) ::
+  @spec browse(Network.idt, String.t | Network.ip, Server.idt) ::
     {:ok, term, relay :: %{server_id: Server.id}}
     | {:error, %{message: String.t}}
   @doc """
@@ -60,7 +59,7 @@ defmodule Helix.Network.Public.Network do
   end
 
   @spec get_origin_ip(Network.id, Server.idt) ::
-    IPv4.t
+    Network.ip
   docp """
   Internal helper to quickly figure out what is the IP address of the given
   server.

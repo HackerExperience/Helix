@@ -7,9 +7,10 @@ defmodule Helix.Network.Model.Network do
 
   @type t :: %__MODULE__{
     network_id: id,
-    name: String.t
+    name: name
   }
 
+  @type name :: String.t
   @type ip :: IPv4.t
 
   @type nip :: %{
