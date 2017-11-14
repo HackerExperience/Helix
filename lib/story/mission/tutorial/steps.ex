@@ -53,10 +53,12 @@ defmodule Helix.Story.Mission.Tutorial do
     on_reply "more_info",
       send: "give_more_info"
 
+    # TODO: Wait for more steps and then abstract me.
+    # Make sure my state (this char's server) is persisted.
     defp create_char do
       MakeNPC.story_char()
       |> MakeEntity.entity()
-      |> MakeServer.server(%{type: :desktop})
+      |> MakeServer.desktop()
     end
 
     def setup(step, _) do

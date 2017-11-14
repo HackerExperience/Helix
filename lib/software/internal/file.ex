@@ -47,7 +47,7 @@ defmodule Helix.Software.Internal.File do
     |> Enum.map(&File.format/1)
   end
 
-  @spec create(File.creation_params, [File.module_params]) ::
+  @spec create(File.creation_params, File.modules) ::
     {:ok, File.t}
     | {:error, Ecto.Changeset.t}
   @doc """

@@ -17,6 +17,16 @@ defmodule Helix.Test.Macros do
     end
   end
 
+  defmacro sleep(duration) do
+    env = System.get_env("HELIX_TEST_ENV")
+    env_multiplier = get_env_multiplier(env)
+    sleep_duration = duration * env_multiplier
+
+    quote do
+      :timer.sleep(unquote(sleep_duration))
+    end
+  end
+
   defp get_env_multiplier("travis"),
     do: 4
   defp get_env_multiplier("jenkins"),

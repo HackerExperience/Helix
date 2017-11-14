@@ -3,7 +3,7 @@ defmodule Helix.Universe.NPC.Action.NPC do
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
 
-  @spec create(NCP.type) ::
+  @spec create(NPC.type) ::
     {:ok, NPC.t}
     | {:error, :internal}
   def create(type) do

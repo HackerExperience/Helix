@@ -32,17 +32,15 @@ defmodule Helix.Story.Model.Step do
       locked: [reply_id]
     }
 
-  @type email_meta :: map
-
   @type emails ::
     %{
       email_id => email
     }
 
+  @type email_meta :: map
+
   @type meta :: map
-
   @type step_name :: Constant.t
-
   @type contact :: Constant.t
 
   @type callback_action ::

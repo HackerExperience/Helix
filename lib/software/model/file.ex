@@ -46,10 +46,8 @@ defmodule Helix.Software.Model.File do
     path: path,
     file_size: size,
     software_type: Software.type,
-    storage_id: Storage.idtb
+    storage_id: Storage.id
   }
-
-  @type module_params :: {File.Module.name, File.Module.Data.t}
 
   @type update_params :: %{
     optional(:name) => name,
@@ -95,7 +93,7 @@ defmodule Helix.Software.Model.File do
     timestamps()
   end
 
-  @spec create_changeset(creation_params, [module_params]) ::
+  @spec create_changeset(creation_params, modules) ::
     changeset
   @doc """
   Creates the `File` changeset, as well as its modules' associations.
@@ -162,7 +160,7 @@ defmodule Helix.Software.Model.File do
     |> prepare_changes(&update_full_path/1)
   end
 
-  @spec create_module_assoc(module_params) ::
+  @spec create_module_assoc({File.Module.name, File.Module.Data.t}) ::
     File.Module.changeset
   docp """
   Helper/wrapper to `File.Module.create_changeset/1`

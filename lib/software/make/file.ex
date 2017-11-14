@@ -52,7 +52,7 @@ defmodule Helix.Software.Make.File do
   end
 
   @spec format_modules(Software.type, modules) ::
-    File.Module.t | term  # dialyzer blows up if `term` is removed
+    File.Module.t | term  # Requires OTP 20.1 or higher
   defp format_modules(type, version_map) do
     modules = Software.Type.get(type).modules
 
