@@ -12,23 +12,9 @@ defmodule Helix.Software.Public.PFTP do
   alias Helix.Software.Action.Flow.PublicFTP, as: PublicFTPFlow
   alias Helix.Software.Model.File
   alias Helix.Software.Model.PublicFTP
-  alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
   alias Helix.Software.Query.PublicFTP, as: PublicFTPQuery
-
-  @type rendered_file ::
-    %{
-      id: String.t,
-      name: String.t,
-      extension: String.t,
-      type: String.t,
-      modules: [
-        %{
-          name: String.t,
-          version: integer
-        }
-      ]
-    }
+  alias Helix.Software.Public.Index, as: SoftwareIndex
 
   @internet_id NetworkQuery.internet().network_id
 
@@ -69,34 +55,13 @@ defmodule Helix.Software.Public.PFTP do
     do: PublicFTPQuery.list_files(server_id)
 
   @spec render_list_files([File.t]) ::
-    [rendered_file]
+    [SoftwareIndex.rendered_index_file]
   @doc """
   Renders the list of files in a Public FTP (retrieved from `list_files/1`) into
   a JSON-friendly format.
   """
-  def render_list_files(files) do
-    render_modules = fn modules ->
-      Enum.map(modules, fn {module_name, module_data} ->
-        %{
-          name: to_string(module_name),
-          version: module_data.version
-        }
-      end)
-    end
-
-    Enum.map(files, fn file ->
-      extension = Software.Type.get(file.software_type).extension |> to_string()
-      modules = render_modules.(file.modules)
-
-      %{
-        id: to_string(file.file_id),
-        name: file.name,
-        extension: extension,
-        type: to_string(file.software_type),
-        modules: modules
-      }
-    end)
-  end
+  def render_list_files(files),
+    do: Enum.map(files, &SoftwareIndex.render_file/1)
 
   @spec download(Server.t, Server.t, Storage.t, File.t, Event.relay) ::
     {:ok, Process.t}

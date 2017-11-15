@@ -41,14 +41,16 @@ defmodule Helix.Software.Public.IndexTest do
 
       result_file1 = Enum.find(rendered[file1.path], &(find_by_id(&1, file1)))
 
-      assert is_binary(result_file1.file_id)
-      assert is_binary(result_file1.software_type)
+      assert is_binary(result_file1.id)
+      assert is_binary(result_file1.type)
 
       assert Enum.find(rendered[file2.path], &(find_by_id(&1, file2)))
       assert Enum.find(rendered[file3.path], &(find_by_id(&1, file3)))
     end
   end
 
+  defp find_by_id(result = %{file_id: _}, expected),
+    do: result.file_id == expected.file_id
   defp find_by_id(result, expected),
-    do: to_string(result.file_id) == to_string(expected.file_id)
+    do: result.id == to_string(expected.file_id)
 end

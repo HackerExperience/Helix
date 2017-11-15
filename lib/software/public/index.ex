@@ -3,6 +3,7 @@ defmodule Helix.Software.Public.Index do
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Software
   alias Helix.Software.Query.Storage, as: StorageQuery
 
   @type index ::
@@ -22,12 +23,22 @@ defmodule Helix.Software.Public.Index do
 
   @type rendered_index_file ::
     %{
-      file_id: String.t,
+      id: String.t,
       path: String.t,
       size: File.size,
-      software_type: String.t,
-      modules: map
+      type: String.t,
+      modules: modules,
+      name: String.t,
+      extension: String.t
     }
+
+  @typep modules ::
+    [
+      %{
+        name: String.t,
+        version: pos_integer
+      }
+    ]
 
   @spec index(Server.id) ::
     index
@@ -56,12 +67,25 @@ defmodule Helix.Software.Public.Index do
   @spec render_file(File.t) ::
     rendered_index_file
   def render_file(file = %File{}) do
+    extension = Software.Type.get(file.software_type).extension |> to_string()
+    render_modules =
+      fn modules ->
+        Enum.map(modules, fn {module_name, module_data} ->
+          %{
+            name: to_string(module_name),
+            version: module_data.version
+          }
+        end)
+      end
+
     %{
-      file_id: to_string(file.file_id),
-      path: file.full_path,
+      id: to_string(file.file_id),
+      path: file.path,
       size: file.file_size,
-      software_type: to_string(file.software_type),
-      modules: file.modules
+      type: to_string(file.software_type),
+      modules: render_modules.(file.modules),
+      name: to_string(file.name),
+      extension: extension
     }
   end
 end
