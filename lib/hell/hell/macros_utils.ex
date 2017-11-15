@@ -28,6 +28,23 @@ defmodule HELL.Macros.Utils do
     |> Module.concat()
   end
 
+  def atomize_module_name({_a, _s, [t]}),
+    do: atomize_module_name(t)
+  def atomize_module_name(module) when is_atom(module) do
+    module
+    |> Atom.to_string()
+    |> String.downcase()
+    |> String.to_atom()
+  end
+
+
+  def get_parent_module(module) do
+    module
+    |> Module.split()
+    |> Enum.drop(-1)
+    |> Module.concat()
+  end
+
   docp """
   Small workaround for greater flexibility of `remove_protocol_namespace/2`.
   In some cases, the removal may happen at the protocol's flow instead of the
