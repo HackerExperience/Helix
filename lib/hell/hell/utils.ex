@@ -40,6 +40,20 @@ defmodule HELL.Utils do
   def concat_atom(a, b) when is_binary(a) and is_binary(b),
     do: String.to_atom(a <> b)
 
+  def upcase_atom(a) when is_atom(a) do
+    a
+    |> Atom.to_string()
+    |> String.upcase()
+    |> String.to_atom()
+  end
+
+  def downcase_atom(a) when is_atom(a) do
+    a
+    |> Atom.to_string()
+    |> String.downcase()
+    |> String.to_atom()
+  end
+
   @spec concat(atom | String.t, atom | String.t) ::
     String.t
   @doc """
@@ -79,4 +93,6 @@ defmodule HELL.Utils do
     do: nil
   def stringify(value),
     do: to_string(value)
+
+  # TODO: Make Atom.upcase & Atom.downcase
 end

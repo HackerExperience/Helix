@@ -37,7 +37,6 @@ defmodule HELL.Macros.Utils do
     |> String.to_atom()
   end
 
-
   def get_parent_module(module) do
     module
     |> Module.split()

@@ -1,7 +1,8 @@
 defmodule Helix.Server.Seed do
 
-  alias Helix.Server.Component.Specs, as: ComponentSpecs
-
+  alias HELL.Utils
+  alias Helix.Server.Component.Specable
+  alias Helix.Server.Model.Component
   alias Helix.Server.Repo
 
   def migrate do
@@ -10,7 +11,7 @@ defmodule Helix.Server.Seed do
   end
 
   defp add_component_types do
-    # TODO
+    # TODO ComponentType
     alias Helix.Hardware.Model.ComponentType
     Repo.transaction fn ->
       Enum.each(ComponentType.possible_types, fn type ->
@@ -21,16 +22,14 @@ defmodule Helix.Server.Seed do
 
   defp add_component_specs do
 
-    ComponentSpecs.generate_specs()
+    Specable.generate_specs()
     |> Enum.each(fn {component_type, specs} ->
       Enum.each(specs, fn spec ->
-
-        ComponentSpecs.create_changeset(spec.spec_id, component_type, spec)
-        |> Repo.insert()
-
+        spec.spec_id
+        |> Utils.downcase_atom()
+        |> Component.Spec.create_changeset(component_type, spec)
+        |> Repo.insert(on_conflict: :nothing)
       end)
     end)
-
   end
-
 end

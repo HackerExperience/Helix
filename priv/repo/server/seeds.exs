@@ -6,3 +6,9 @@ Repo.transaction fn ->
     Repo.insert!(%ServerType{server_type: type}, on_conflict: :nothing)
   end)
 end
+
+# TODO: /\ refactor above
+
+alias Helix.Server.Seed
+
+Seed.migrate()
