@@ -43,6 +43,7 @@ defmodule Helix.Software.Public.IndexTest do
 
       assert is_binary(result_file1.id)
       assert is_binary(result_file1.type)
+      assert is_map(result_file1.modules)
 
       assert Enum.find(rendered[file2.path], &(find_by_id(&1, file2)))
       assert Enum.find(rendered[file3.path], &(find_by_id(&1, file3)))

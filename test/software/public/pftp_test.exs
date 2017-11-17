@@ -74,10 +74,9 @@ defmodule Helix.Software.Public.PFTPTest do
 
       crc_modules = crc.modules |> Map.keys() |> Enum.map(&to_string/1)
 
-      Enum.each(rendered.modules, fn module ->
-        assert module.name in crc_modules
-        assert module.version ==
-          crc.modules[String.to_atom(module.name)].version
+      Enum.each(rendered.modules, fn {module, data} ->
+        assert module in crc_modules
+        assert data.version == crc.modules[String.to_atom(module)].version
       end)
     end
   end

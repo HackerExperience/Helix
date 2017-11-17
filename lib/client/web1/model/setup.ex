@@ -26,7 +26,7 @@ defmodule Helix.Client.Web1.Model.Setup do
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
-  @pages [:welcome, :server]
+  @pages [:welcome, :server, :finish]
 
   @creation_fields [:entity_id, :pages]
   @required_fields [:entity_id, :pages]

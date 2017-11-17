@@ -62,6 +62,7 @@ defmodule Helix.Maroto do
       alias Helix.Server.Public.Index, as: ServerIndex
       alias Helix.Server.Public.Server, as: ServerPublic
 
+      alias Helix.Software.Model.File
       alias Helix.Software.Model.Software
       alias Helix.Software.Public.File, as: FilePublic
       alias Helix.Software.Public.Index, as: SoftwareIndex

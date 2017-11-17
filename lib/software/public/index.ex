@@ -68,13 +68,13 @@ defmodule Helix.Software.Public.Index do
     rendered_index_file
   def render_file(file = %File{}) do
     extension = Software.Type.get(file.software_type).extension |> to_string()
+
     render_modules =
       fn modules ->
-        Enum.map(modules, fn {module_name, module_data} ->
-          %{
-            name: to_string(module_name),
-            version: module_data.version
-          }
+        Enum.reduce(modules, %{}, fn {module, data}, acc ->
+          %{}
+          |> Map.put(to_string(module), %{version: data.version})
+          |> Map.merge(acc)
         end)
       end
 
