@@ -26,9 +26,8 @@ defmodule Helix.Server.Component.Flow do
   defp components_functions do
     quote do
 
-      def get_resources(component) do
-        dispatch(component.type, :new, [component])
-      end
+      def get_resources(component),
+        do: dispatch(component.type, :new, [component])
 
       def dispatch(type, fun, args) do
         component_module = get_module_name(type)

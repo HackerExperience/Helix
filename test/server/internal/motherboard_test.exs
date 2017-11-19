@@ -2,9 +2,13 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Network.Model.Network
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
 
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
+
+  @internet_id NetworkHelper.internet_id()
 
   describe "fetch/1" do
     test "fetches and formats the result" do
@@ -23,7 +27,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
   describe "get_resources/1" do
     test "returns all resources" do
       {_, components = %{mobo: mobo}} =
-        ComponentSetup.motherboard(spec_id: :mobo_002)
+        ComponentSetup.motherboard(spec_id: :mobo_999)
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
       res = MotherboardInternal.get_resources(motherboard)
@@ -31,18 +35,52 @@ defmodule Helix.Server.Internal.MotherboardTest do
       assert res.cpu.clock == components.cpu.custom.clock
       assert res.hdd.size == components.hdd.custom.size
       assert res.hdd.iops == components.hdd.custom.iops
+      assert res.net[@internet_id].dlk == components.nic.custom.dlk
+      assert res.net[@internet_id].ulk == components.nic.custom.ulk
 
-      # We'll link an extra cpu to make sure it sums the total resources
+      # We'll link an extra component of each to make sure the function updates
+      # the total resources accordingly
       {cpu, _} = ComponentSetup.component(type: :cpu)
+      {hdd, _} = ComponentSetup.component(type: :hdd)
+      {nic, _} = ComponentSetup.component(type: :nic)
 
       assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, cpu, :cpu_1)
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, hdd, :hdd_1)
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, nic, :nic_1)
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
       new_res = MotherboardInternal.get_resources(motherboard)
 
-      # It returned the total CPU resources
+      # It returned the updated resources
       refute new_res == res
+
       assert new_res.cpu.clock == components.cpu.custom.clock + cpu.custom.clock
+      assert new_res.hdd.size == components.hdd.custom.size + hdd.custom.size
+      assert new_res.hdd.iops == components.hdd.custom.iops + hdd.custom.iops
+      assert new_res.net[@internet_id].dlk ==
+        components.nic.custom.dlk + nic.custom.dlk
+      assert new_res.net[@internet_id].ulk ==
+        components.nic.custom.ulk + nic.custom.ulk
+
+      # Now we'll add yet another NIC, but with a different network
+      net2 = "::f" |> Network.ID.cast!()
+      nic_custom = %{dlk: 1, ulk: 2, network_id: net2}
+      {nic2, _} = ComponentSetup.component(type: :nic, custom: nic_custom)
+      MotherboardInternal.link(motherboard, mobo, nic2, :nic_2)
+
+      # Let's fetch again...
+      motherboard = MotherboardInternal.fetch(mobo.component_id)
+      new_res = MotherboardInternal.get_resources(motherboard)
+
+      # Added the new network to the total mobo resources
+      assert new_res.net[net2].dlk == nic_custom.dlk
+      assert new_res.net[net2].ulk == nic_custom.ulk
+
+      # Previous network resources (internet) remain unchanged
+      assert new_res.net[@internet_id].dlk ==
+        components.nic.custom.dlk + nic.custom.dlk
+      assert new_res.net[@internet_id].ulk ==
+        components.nic.custom.ulk + nic.custom.ulk
     end
   end
 
@@ -53,15 +91,18 @@ defmodule Helix.Server.Internal.MotherboardTest do
       {cpu, _} = ComponentSetup.component(type: :cpu)
       # {ram, _} = ComponentSetup.component(type: :ram)
       {hdd, _} = ComponentSetup.component(type: :hdd)
+      {nic, _} = ComponentSetup.component(type: :nic)
 
       assert mobo.type == :mobo
       assert cpu.type == :cpu
       assert hdd.type == :hdd
+      assert nic.type == :nic
 
       initial_components =
         [
           {cpu, :cpu_0},
-          {hdd, :hdd_0}
+          {hdd, :hdd_0},
+          {nic, :nic_0}
         ]
 
       assert {:ok, entries} =
@@ -76,6 +117,9 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
           :hdd_0 ->
             assert entry.linked_component_id == hdd.component_id
+
+          :nic_0 ->
+            assert entry.linked_component_id == nic.component_id
         end
       end)
     end
@@ -84,11 +128,12 @@ defmodule Helix.Server.Internal.MotherboardTest do
       %{
         mobo: mobo,
         cpu: cpu,
-        hdd: hdd
+        hdd: hdd,
+        nic: nic
       } = ComponentSetup.mobo_components()
 
-      i0 = [{hdd, :cpu_0}, {cpu, :hdd_0}]
-      i1 = [{cpu, :cpu_0}, {hdd, :hdd_9}]
+      i0 = [{hdd, :cpu_0}, {cpu, :hdd_0}, {nic, :nic_0}]
+      i1 = [{cpu, :cpu_0}, {hdd, :hdd_9}, {nic, :nic_0}]
 
       assert {:error, reason} = MotherboardInternal.setup(mobo, i0)
       assert reason == :wrong_slot_type
@@ -112,13 +157,15 @@ defmodule Helix.Server.Internal.MotherboardTest do
       %{
         mobo: mobo,
         cpu: _cpu,
-        hdd: hdd
+        hdd: hdd,
+        nic: nic
       } = ComponentSetup.mobo_components()
 
       initial_components =
         [
           {mobo, :cpu_0},
-          {hdd, :hdd_0}
+          {hdd, :hdd_0},
+          {nic, :nic_0}
         ]
 
       assert {:error, reason} =

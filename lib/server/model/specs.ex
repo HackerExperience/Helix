@@ -62,6 +62,6 @@ defmodule Helix.Server.Model.Component.Spec do
     }
   end
 
-  defdelegate get_custom(spec),
+  defdelegate create_custom(spec, custom),
     to: Specable
 end

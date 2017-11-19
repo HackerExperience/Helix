@@ -14,9 +14,9 @@ defmodule Helix.Server.Internal.Component do
     end
   end
 
-  def create(spec = %Component.Spec{}) do
+  def create(spec = %Component.Spec{}, custom \\ %{}) do
     spec
-    |> Component.create_from_spec()
+    |> Component.create_from_spec(custom)
     |> Repo.insert()
   end
 end

@@ -106,23 +106,29 @@ defmodule Helix.Server.Model.Motherboard do
   end
 
   def get_resources(motherboard = %Motherboard{}) do
-    initial =
-      %{
-        cpu: %{clock: 0},
-        hdd: %{size: 0, iops: 0},
-        # ulk: %{},
-        # dlk: %{}
-      }
+    initial = %{}
+      # %# {
+      #   cpu: %{clock: 0},
+      #   hdd: %{size: 0, iops: 0},
+      #   net: %{}
+      # }
 
-    Enum.reduce(motherboard.slots, initial, fn {_, component}, acc ->
+    Enum.reduce(motherboard.slots, %{}, fn {_, component}, acc ->
       resource =
         component
         |> Component.get_resources()
         |> Map.from_struct()
 
+      {key, merge_fun} =
+        if component.type == :nic do
+          {:net, fn a, b -> Map.merge(a, b, fn _, vA, vB -> vA + vB end) end}
+        else
+          {component.type, fn a, b -> a + b end}
+        end
+
       %{}
-      |> Map.put(component.type, resource)
-      |> MapUtils.naive_deep_merge(acc, &(&1 + &2))
+      |> Map.put(key, resource)
+      |> MapUtils.naive_deep_merge(acc, &merge_fun.(&1, &2))
     end)
   end
 
@@ -162,7 +168,7 @@ defmodule Helix.Server.Model.Motherboard do
 
   def has_required_initial_components?(initial_components) do
     # required = [:cpu, :ram, :hdd, :nic]
-    required = [:cpu, :hdd]
+    required = [:cpu, :hdd, :nic]
     initial_components
     |> Enum.reduce(required, fn {component, _}, acc ->
       acc -- [component.type]

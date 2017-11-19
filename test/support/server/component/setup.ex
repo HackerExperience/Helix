@@ -23,16 +23,24 @@ defmodule Helix.Test.Server.Component.Setup do
   Related: Component.Spec.t, Component.changeset
   """
   def fake_component(opts \\ []) do
-
     spec =
       if opts[:spec_id] do
         Component.Spec.fetch(opts[:spec_id])
       else
-        opts = opts[:type] && [type: opts[:type]] || []
-        ComponentHelper.random_spec(opts)
+        comp_opts = opts[:type] && [type: opts[:type]] || []
+        ComponentHelper.random_spec(comp_opts)
       end
 
-    changeset = Component.create_from_spec(spec)
+    custom = Keyword.get(opts, :custom, %{})
+
+    custom =
+      if spec.component_type == :nic and Enum.empty?(custom) do
+        %{ulk: 100, dlk: 100, network_id: "::"}
+      else
+        custom
+      end
+
+    changeset = Component.create_from_spec(spec, custom)
 
     component = Changeset.apply_changes(changeset)
 
@@ -55,11 +63,13 @@ defmodule Helix.Test.Server.Component.Setup do
     {cpu, _} = component(type: :cpu)
     # {ram, _} = component(type: :ram)
     {hdd, _} = component(type: :hdd)
+    {nic, _} = component(type: :nic)
 
     %{
       mobo: mobo,
       cpu: cpu,
-      hdd: hdd
+      hdd: hdd,
+      nic: nic
     }
   end
 
@@ -73,13 +83,15 @@ defmodule Helix.Test.Server.Component.Setup do
     %{
       mobo: mobo,
       cpu: cpu,
-      hdd: hdd
+      hdd: hdd,
+      nic: nic
     } = related = mobo_components(mobo_opts)
 
     initial_components =
       [
         {cpu, :cpu_0},
-        {hdd, :hdd_0}
+        {hdd, :hdd_0},
+        {nic, :nic_0}
       ]
 
     {:ok, entries} = MotherboardInternal.setup(mobo, initial_components)

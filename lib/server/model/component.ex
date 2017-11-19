@@ -38,12 +38,12 @@ defmodule Helix.Server.Model.Component do
     }
   end
 
-  def create_from_spec(spec = %Component.Spec{}) do
+  def create_from_spec(spec = %Component.Spec{}, custom) do
     params =
       %{
         type: spec.component_type,
         spec_id: spec.spec_id,
-        custom: Component.Spec.get_custom(spec)
+        custom: Component.Spec.create_custom(spec, custom)
       }
 
     %__MODULE__{}

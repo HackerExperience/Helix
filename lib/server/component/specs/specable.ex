@@ -4,7 +4,7 @@ defmodule Helix.Server.Component.Specable do
 
   specs CPU do
 
-    def get_custom(spec),
+    def create_custom(spec, _),
       do: %{clock: spec.clock}
 
     def format_custom(custom),
@@ -27,7 +27,7 @@ defmodule Helix.Server.Component.Specable do
 
   specs HDD do
 
-    def get_custom(spec),
+    def create_custom(spec, _),
       do: %{size: spec.size, iops: spec.iops}
 
     def format_custom(custom),
@@ -49,9 +49,42 @@ defmodule Helix.Server.Component.Specable do
     end
   end
 
+  specs NIC do
+
+    alias Helix.Network.Model.Network
+
+    def create_custom(_, custom) do
+      %{
+        ulk: custom.ulk,
+        dlk: custom.dlk,
+        network_id: custom.network_id
+      }
+    end
+
+    def format_custom(custom) do
+      %{
+        ulk: custom["ulk"],
+        dlk: custom["dlk"],
+        network_id: custom["network_id"] |> Network.ID.cast!()
+      }
+    end
+
+    # TODO is this executed before or after `create_custom`?
+    def validate_spec(data),
+      do: true
+
+    spec :NIC_001 do
+      %{
+        name: "BoringNic",
+        price: 50,
+        slot: :nic
+      }
+    end
+  end
+
   specs MOBO do
 
-    def get_custom(spec),
+    def create_custom(spec, _),
       do: %{slots: spec.slots}
 
     def format_custom(custom) do
@@ -103,6 +136,21 @@ defmodule Helix.Server.Component.Specable do
           hdd: %{0 => %{}},
           nic: %{0 => %{}},
           usb: %{0 => %{}}
+        }
+      }
+    end
+
+    spec :MOBO_999 do
+      %{
+        name: "Mobotastic",
+        price: 999_999_999,
+
+        slots: %{
+          cpu: %{0 => %{}, 1 => %{}, 2 => %{}, 3 => %{}},
+          ram: %{0 => %{}, 1 => %{}, 2 => %{}, 3 => %{}},
+          hdd: %{0 => %{}, 1 => %{}, 2 => %{}, 3 => %{}},
+          nic: %{0 => %{}, 1 => %{}, 2 => %{}, 3 => %{}},
+          usb: %{0 => %{}, 1 => %{}, 2 => %{}, 3 => %{}}
         }
       }
     end

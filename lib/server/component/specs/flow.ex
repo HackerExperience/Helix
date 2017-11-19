@@ -56,9 +56,9 @@ defmodule Helix.Server.Component.Spec.Flow do
   defp specs_functions do
     quote do
 
-      def get_custom(spec) do
+      def create_custom(spec, custom) do
         spec.component_type
-        |> dispatch(:get_custom, [spec.data])
+        |> dispatch(:create_custom, [spec.data, custom])
       end
 
       def format_custom(component) do
@@ -88,6 +88,9 @@ defmodule Helix.Server.Component.Spec.Flow do
 
             "hdd_" <> _ ->
               :hdd
+
+            "nic_" <> _ ->
+              :nic
 
             "mobo_" <> _ ->
               :mobo

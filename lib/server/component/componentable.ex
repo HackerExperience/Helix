@@ -30,6 +30,23 @@ defmodule Helix.Server.Componentable do
     resource :iops
   end
 
+  component NIC do
+
+    # alias Helix.Network.Model.Network
+
+    defstruct [:ulk, :dlk, :network_id]
+
+    def new(nic = %{type: :nic}) do
+      speed_info = %{dlk: nic.custom.dlk, ulk: nic.custom.ulk}
+      network_id = nic.custom.network_id
+
+      %{}
+      |> Map.put(network_id, speed_info)
+      |> Map.put(:__struct__, NIC)
+    end
+
+  end
+
   component MOBO do
 
     defstruct []
