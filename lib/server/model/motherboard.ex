@@ -3,6 +3,7 @@ defmodule Helix.Server.Model.Motherboard do
   use Ecto.Schema
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -52,25 +53,24 @@ defmodule Helix.Server.Model.Motherboard do
     # }
 
   @creation_fields [
-    :motherboard_id,
     :slot_id,
     :linked_component_id,
     :linked_component_type
   ]
 
   @required_fields [
-    :motherboard_id,
     :slot_id,
     :linked_component_id,
     :linked_component_type
   ]
 
   @primary_key false
+  # @primary_key {:motherboard_id, Component.ID, autogenerate: false}
   schema "motherboards" do
     field :motherboard_id, Component.ID,
       primary_key: true
 
-    field :slot_id, :integer
+    field :slot_id, Constant
     field :linked_component_id, Component.ID
     field :linked_component_type, Constant
 
@@ -85,15 +85,31 @@ defmodule Helix.Server.Model.Motherboard do
       define_field: false,
       on_replace: :delete
 
-    has_one :mobo_spec, through: [:mobo_component, :component_spec]
-
     # Just to make Ecto happy.... so we can use a customized model / %__MODULE__
     field :slots, :map,
       virtual: true,
       default: []
   end
 
-  #initial_components :: [{component = %Component{}, slot_id}])
+  #slots: [{slot_data, component_data}]
+  def format([]),
+    do: nil
+  def format(mobo_entries) do
+    slots =
+      Enum.reduce(mobo_entries, %{}, fn entry, acc ->
+        component = entry.linked_component |> Component.format()
+
+        %{}
+        |> Map.put(entry.slot_id, component)
+        |> Map.merge(acc)
+      end)
+
+    %__MODULE__{
+      motherboard_id: List.first(mobo_entries).motherboard_id,
+      slots: slots
+    }
+  end
+
   @doc """
   The `motherboards` table keeps track of which components are linked to which
   motherboards. The definition of a motherboard, with its spec and any `custom`
@@ -108,34 +124,76 @@ defmodule Helix.Server.Model.Motherboard do
   at least one component of each type being passed during the `setup/2` phase.
   """
   def setup(mobo = %Component{type: :mobo}, initial_components) do
-    base_changeset = base_changeset(mobo)
-
     initial_components
     |> Enum.map(fn {component, slot_id} ->
-      include_component(base_changeset, slot_id, component)
+      changeset =
+        %__MODULE__{}
+        |> change()
+        |> include_component(component, slot_id)
+
+      case check_compatibility(mobo, component, slot_id, []) do
+        :ok ->
+          changeset
+          |> apply_changes()
+          |> Map.replace(:motherboard_id, mobo.component_id)
+
+        {:error, reason} ->
+          changeset
+          |> add_error(:linked_component, reason |> Atom.to_string())
+      end
     end)
   end
 
-  defp base_changeset(%Motherboard{motherboard_id: mobo_id}),
-    do: base_changeset(mobo_id)
-  defp base_changeset(%Component{type: :mobo, component_id: mobo_id}),
-    do: base_changeset(mobo_id)
-  defp base_changeset(mobo_id = %Component.ID{}) do
-    %__MODULE__{}
-    |> cast(%{motherboard_id: mobo_id}, @creation_fields)
+  def has_required_initial_components?(initial_components) do
+    # required = [:cpu, :ram, :hdd, :nic]
+    required = [:cpu, :hdd]
+    initial_components
+    |> Enum.reduce(required, fn {component, _}, acc ->
+      acc -- [component.type]
+    end)
+    |> case do
+         [] ->
+           true
+
+         _ ->
+           false
+       end
   end
 
   @doc """
   Linking a motherboard will create a *new* changeset. The changeset returned
   here shall be *inserted*, not updated by the caller.
   """
-  def link(motherboard = %Motherboard{}, slot_id, component = %Component{}) do
-    motherboard
-    |> base_changeset()
-    |> include_component(slot_id, component)
+  def link(
+    motherboard = %Motherboard{},
+    mobo_component = %Component{type: :mobo},
+    link_component = %Component{},
+    slot_id)
+  do
+    changeset =
+      motherboard
+      |> change()
+      |> include_component(link_component, slot_id)
+
+    compatibility =
+      check_compatibility(
+        mobo_component, link_component, slot_id, motherboard.slots
+      )
+
+    # TODO: Maybe abstract, repeated at `setup/2`
+    case compatibility do
+      :ok ->
+        changeset
+        |> apply_changes()
+        |> Map.replace(:motherboard_id, motherboard.motherboard_id)
+
+      {:error, reason} ->
+        changeset
+        |> add_error(:linked_component, reason |> Atom.to_string())
+    end
   end
 
-  defp include_component(changeset, slot_id, component) do
+  defp include_component(changeset, component, slot_id) do
     params =
       %{
         linked_component_id: component.component_id,
@@ -148,8 +206,39 @@ defmodule Helix.Server.Model.Motherboard do
     |> validate_required(@required_fields)
   end
 
-  defmodule Query do
-    # TODO2: macro for query/select
-    # TODO
+  defp check_compatibility(
+    mobo = %Component{},
+    component = %Component{},
+    slot_id,
+    used_slots)
+  do
+    Component.Mobo.check_compatibility(
+      mobo.spec_id, component.spec_id, slot_id, used_slots
+    )
+  end
+
+  def get_error(changeset = %Changeset{}) do
+    # HACK: I don't want `traverse_errors` and this is the best workaround......
+    changeset.errors
+    |> List.first()
+    |> elem(1)
+    |> elem(0)
+    |> String.to_existing_atom()
+  end
+
+  query do
+
+    def by_motherboard(query \\ Motherboard, motherboard_id) do
+      from entries in Motherboard,
+        inner_join: component in assoc(entries, :linked_component),
+        where: entries.motherboard_id == ^to_string(motherboard_id),
+        preload: [:linked_component]
+    end
+
+    def by_component(query \\ Motherboard, motherboard_id, component_id) do
+      query
+      |> where([m], m.motherboard_id == ^motherboard_id)
+      |> where([m], m.linked_component_id == ^component_id)
+    end
   end
 end

@@ -89,6 +89,9 @@ defmodule Helix.Server.Component.Spec.Flow do
             "hdd_" <> _ ->
               :hdd
 
+            "mobo_" <> _ ->
+              :mobo
+
             _ ->
               raise "wat"
           end
@@ -202,6 +205,12 @@ defmodule Helix.Server.Component.Spec.Flow do
         && data
         || raise "Invalid spec #{inspect data} for #{unquote(parent_spec)}"
       end
+    end
+  end
+
+  defmacro slots(slots) do
+    quote do
+      unquote(slots) |> Enum.sort_by(&1 > &2)
     end
   end
 

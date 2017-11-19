@@ -69,6 +69,33 @@ defmodule Helix.Server.Component.Flow do
     end
   end
 
+  defmacro custom(do: block) do
+    quote do
+
+      module_name =
+        __MODULE__
+        |> Module.split()
+        |> Enum.take(-1)
+        |> List.first()
+        |> String.downcase()
+        |> String.to_atom()
+        |> case do
+             :mobo ->
+               Helix.Server.Model.Component.Mobo
+
+             elem ->
+               Utils.concat_atom(
+                 Helix.Server.Model.Component, Utils.upcase_atom(elem)
+               )
+           end
+
+      defmodule module_name do
+
+        unquote(block)
+      end
+    end
+  end
+
   # Default behaviour is to get the given resource field directly. For custom
   # implementation, use `resource/2`
   defmacro resource(name) when is_atom(name) do

@@ -1,6 +1,7 @@
 defmodule Helix.Test.Server.Component.Setup do
 
   alias Ecto.Changeset
+  alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Model.Component
   alias Helix.Server.Repo, as: ServerRepo
 
@@ -42,5 +43,47 @@ defmodule Helix.Test.Server.Component.Setup do
       }
 
     {component, related}
+  end
+
+  @doc """
+  No opts for you
+  """
+  def mobo_components(opts \\ []) do
+    mobo_spec_id = Keyword.get(opts, :mobo_spec_id, :mobo_001)
+
+    {mobo, _} = component(type: :mobo, spec_id: mobo_spec_id)
+    {cpu, _} = component(type: :cpu)
+    # {ram, _} = component(type: :ram)
+    {hdd, _} = component(type: :hdd)
+
+    %{
+      mobo: mobo,
+      cpu: cpu,
+      hdd: hdd
+    }
+  end
+
+  @doc """
+  Opts:
+  spec_id: set mobo spec id
+  """
+  def motherboard(opts \\ []) do
+    mobo_opts = opts[:spec_id] && [mobo_spec_id: opts[:spec_id]] || []
+
+    %{
+      mobo: mobo,
+      cpu: cpu,
+      hdd: hdd
+    } = related = mobo_components(mobo_opts)
+
+    initial_components =
+      [
+        {cpu, :cpu_0},
+        {hdd, :hdd_0}
+      ]
+
+    {:ok, entries} = MotherboardInternal.setup(mobo, initial_components)
+
+    {entries, related}
   end
 end

@@ -10,7 +10,7 @@ defmodule Helix.Server.Internal.ComponentTest do
 
   describe "create/1" do
     test "inserts the component in the database" do
-      {spec, _} = ComponentHelper.random_spec()
+      spec = ComponentHelper.random_spec()
 
       assert {:ok, component} = ComponentInternal.create(spec)
 

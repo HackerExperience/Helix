@@ -12,14 +12,14 @@ defmodule Helix.Server.Internal.Component.SpecTest do
       assert %Component.Spec{} = spec
       assert spec.component_type == :cpu
       assert spec.spec_id == :cpu_001
-      assert spec.spec
+      assert spec.data
 
       # Common spec attributes
-      assert spec.spec.name
-      assert spec.spec.slot
-      assert spec.spec.price
-      assert spec.spec.spec_id
-      assert spec.spec.component_type
+      assert spec.data.name
+      assert spec.data.slot
+      assert spec.data.price
+      assert spec.data.spec_id
+      assert spec.data.component_type
     end
   end
 end

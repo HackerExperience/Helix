@@ -1,25 +1,3 @@
-defmodule HELL.Ecto.Macros do
-
-  defmacro query(do: block) do
-
-    quote do
-
-      defmodule Query do
-        @moduledoc false
-
-        import Ecto.Query
-
-        alias Ecto.Queryable
-        alias unquote(__CALLER__.module)
-
-        unquote(block)
-      end
-
-    end
-  end
-
-end
-
 defmodule Helix.Server.Model.Component do
 
   use Ecto.Schema
@@ -30,7 +8,6 @@ defmodule Helix.Server.Model.Component do
 
   alias Ecto.Changeset
   alias HELL.Constant
-  # alias Helix.Server.Componentable
   alias Helix.Server.Component.Specable
   alias __MODULE__, as: Component
 
@@ -49,17 +26,16 @@ defmodule Helix.Server.Model.Component do
     field :custom, :map
 
     field :spec_id, Constant
-
-    # belongs_to :component_spec, ComponentSpec,
-    #   foreign_key: :spec_id,
-    #   references: :spec_id,
-    #   type: :string
-
-    # has_one :slot, MotherboardSlot,
-    #   foreign_key: :link_component_id,
-    #   references: :component_id
   end
 
+  @doc """
+  Recovers internal Elixir/Erlang/Helix format.
+  """
+  def format(component = %Component{}) do
+    %{component|
+      custom: Specable.format_custom(component)
+    }
+  end
 
   def create_from_spec(spec = %Component.Spec{}) do
     params =
@@ -72,15 +48,6 @@ defmodule Helix.Server.Model.Component do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
-  end
-
-  @doc """
-  Recovers internal Elixir/Erlang/Helix format.
-  """
-  def format(component = %Component{}) do
-    %{component|
-      custom: Specable.format_custom(component)
-    }
   end
 
   defdelegate get_resources(component),

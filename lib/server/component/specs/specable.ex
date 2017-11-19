@@ -48,4 +48,63 @@ defmodule Helix.Server.Component.Specable do
       }
     end
   end
+
+  specs MOBO do
+
+    def get_custom(spec),
+      do: %{slots: spec.slots}
+
+    def format_custom(custom) do
+      slots =
+        custom["slots"]
+        |> Enum.reduce(%{}, fn {slot_id, slot_info}, acc ->
+          slot_id = slot_id |> String.to_existing_atom()
+          atomized_slot_info =
+            %{
+              type: slot_info["type"] |> String.to_existing_atom()
+            }
+
+          %{}
+          |> Map.put(slot_id, atomized_slot_info)
+          |> Map.merge(acc)
+        end)
+
+      %{slots: slots}
+    end
+
+    # TODO
+    def validate_spec(data) do
+      true
+    end
+
+    spec :MOBO_001 do
+      %{
+        name: "Mobo1",
+        price: 100,
+
+        slots: %{
+          cpu: %{0 => %{}},
+          ram: %{0 => %{}},
+          hdd: %{0 => %{}},
+          nic: %{0 => %{}},
+          usb: %{}
+        }
+      }
+    end
+
+    spec :MOBO_002 do
+      %{
+        name: "Mobo1",
+        price: 200,
+
+        slots: %{
+          cpu: %{0 => %{}, 1 => %{}},
+          ram: %{0 => %{}, 1 => %{}},
+          hdd: %{0 => %{}},
+          nic: %{0 => %{}},
+          usb: %{0 => %{}}
+        }
+      }
+    end
+  end
 end

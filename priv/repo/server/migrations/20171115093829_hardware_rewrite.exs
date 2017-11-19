@@ -35,7 +35,7 @@ defmodule Helix.Server.Repo.Migrations.HardwareRewrite do
           on_delete: :delete_all
         ),
         primary_key: true
-      add :slot_id, :integer, primary_key: true
+      add :slot_id, :string, primary_key: true
 
       add :linked_component_id,
         references(:components, column: :component_id, type: :inet)
