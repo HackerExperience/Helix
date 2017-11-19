@@ -20,6 +20,32 @@ defmodule Helix.Server.Internal.MotherboardTest do
     end
   end
 
+  describe "get_resources/1" do
+    test "returns all resources" do
+      {_, components = %{mobo: mobo}} =
+        ComponentSetup.motherboard(spec_id: :mobo_002)
+
+      motherboard = MotherboardInternal.fetch(mobo.component_id)
+      res = MotherboardInternal.get_resources(motherboard)
+
+      assert res.cpu.clock == components.cpu.custom.clock
+      assert res.hdd.size == components.hdd.custom.size
+      assert res.hdd.iops == components.hdd.custom.iops
+
+      # We'll link an extra cpu to make sure it sums the total resources
+      {cpu, _} = ComponentSetup.component(type: :cpu)
+
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, cpu, :cpu_1)
+
+      motherboard = MotherboardInternal.fetch(mobo.component_id)
+      new_res = MotherboardInternal.get_resources(motherboard)
+
+      # It returned the total CPU resources
+      refute new_res == res
+      assert new_res.cpu.clock == components.cpu.custom.clock + cpu.custom.clock
+    end
+  end
+
   describe "setup/2" do
     test "inserts the mobo and all its components" do
       # Let's create all the required components first

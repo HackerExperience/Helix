@@ -8,6 +8,7 @@ defmodule Helix.Server.Model.Component do
 
   alias Ecto.Changeset
   alias HELL.Constant
+  alias Helix.Server.Componentable
   alias Helix.Server.Component.Specable
   alias __MODULE__, as: Component
 

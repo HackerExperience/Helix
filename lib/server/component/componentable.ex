@@ -8,7 +8,7 @@ defmodule Helix.Server.Componentable do
 
     def new(cpu = %{type: :cpu}) do
       %CPU{
-        clock: cpu.clock
+        clock: cpu.custom.clock
       }
     end
 
@@ -21,8 +21,8 @@ defmodule Helix.Server.Componentable do
 
     def new(hdd = %{type: :hdd}) do
       %HDD{
-        size: hdd.size,
-        iops: hdd.iops
+        size: hdd.custom.size,
+        iops: hdd.custom.iops
       }
     end
 

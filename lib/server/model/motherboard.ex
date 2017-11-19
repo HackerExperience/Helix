@@ -7,6 +7,7 @@ defmodule Helix.Server.Model.Motherboard do
 
   alias Ecto.Changeset
   alias HELL.Constant
+  alias HELL.MapUtils
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Component
   alias __MODULE__, as: Motherboard
@@ -26,17 +27,11 @@ defmodule Helix.Server.Model.Motherboard do
   @type mobo ::
     %__MODULE__{
       motherboard_id: id,
-      slots: [{slot_data, component_data}]
+      slots: [{slot_id, Component.t}]
     }
-
-  @typep slot_data :: {slot_id, slot_internal_id}
-  @typep component_data :: {component_id, component_type} | nil
 
   # TODO \/ must be defined on their own models
   @typep slot_id :: term
-  @typep slot_internal_id :: term
-  @typep component_id :: term
-  @typep component_type :: term
 
   @type resources :: term
     # %{
@@ -108,6 +103,27 @@ defmodule Helix.Server.Model.Motherboard do
       motherboard_id: List.first(mobo_entries).motherboard_id,
       slots: slots
     }
+  end
+
+  def get_resources(motherboard = %Motherboard{}) do
+    initial =
+      %{
+        cpu: %{clock: 0},
+        hdd: %{size: 0, iops: 0},
+        # ulk: %{},
+        # dlk: %{}
+      }
+
+    Enum.reduce(motherboard.slots, initial, fn {_, component}, acc ->
+      resource =
+        component
+        |> Component.get_resources()
+        |> Map.from_struct()
+
+      %{}
+      |> Map.put(component.type, resource)
+      |> MapUtils.naive_deep_merge(acc, &(&1 + &2))
+    end)
   end
 
   @doc """

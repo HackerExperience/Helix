@@ -12,6 +12,19 @@ defmodule Helix.Server.Internal.Motherboard do
   end
 
   @doc """
+  Returns the total resources that Motherboard has access to.
+
+  Already includes any penalty due to durability or other factors.
+  """
+  def get_resources(motherboard = %Motherboard{}),
+    do: Motherboard.get_resources(motherboard)
+  def get_resouces(mobo = %Component{type: :mobo}) do
+    mobo.component_id
+    |> fetch()
+    |> get_resources()
+  end
+
+  @doc """
   Creates the initial set of components linked to a motherboard. There must have
   at least 1 of some required components, otherwise the motherboard is deemed
   non-functional before even being set up.
