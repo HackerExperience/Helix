@@ -54,6 +54,14 @@ defmodule Helix.Server.Model.Component do
   defdelegate get_resources(component),
     to: Componentable
 
+  def update_custom(component = %Component{}, changes) do
+    new_custom = Componentable.update_custom(component, changes)
+
+    component
+    |> change()
+    |> put_change(:custom, new_custom)
+  end
+
   query do
 
     def by_id(query \\ Component, component_id),

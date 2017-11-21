@@ -19,5 +19,5 @@ defmodule Helix.Test.Server.Component.Helper do
   end
 
   defp possible_types,
-    do: [:cpu, :hdd, :mobo]
+    do: [:cpu, :hdd, :nic, :mobo]
 end

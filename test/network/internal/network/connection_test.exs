@@ -33,18 +33,7 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
   end
 
   describe "create/3" do
-    test "creates a NC (without nic)" do
-      network = NetworkHelper.internet()
-      ip = Random.ipv4()
-
-      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip)
-
-      assert nc.network_id == network.network_id
-      assert nc.ip == ip
-      refute nc.nic_id
-    end
-
-    test "creates a NC (with nic)" do
+    test "creates a NC" do
       network = NetworkHelper.internet()
       ip = Random.ipv4()
       {nic, _} = ComponentSetup.component(type: :nic)
@@ -62,13 +51,53 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
       network = NetworkHelper.internet()
       ip = Random.ipv4()
       {nic, _} = ComponentSetup.component(type: :nic)
+      {new_nic, _} = ComponentSetup.component(type: :nic)
 
-      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip)
+      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip, nic)
 
-      assert {:ok, new_nc} = NetworkInternal.Connection.update_nic(nc, nic)
+      assert nc.nic_id == nic.component_id
+
+      assert {:ok, new_nc} = NetworkInternal.Connection.update_nic(nc, new_nic)
 
       refute new_nc == nc
-      assert new_nc.nic_id == nic.component_id
+      assert new_nc.nic_id == new_nic.component_id
+      assert new_nc.ip == nc.ip
+    end
+  end
+
+  describe "update_ip/2" do
+    test "modifies ip" do
+      network = NetworkHelper.internet()
+      ip = Random.ipv4()
+      {nic, _} = ComponentSetup.component(type: :nic)
+
+      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip, nic)
+
+      new_ip = Random.ipv4()
+      assert {:ok, new_nc} = NetworkInternal.Connection.update_ip(nc, new_ip)
+
+      refute new_nc.ip == nc.ip
+      assert new_nc.ip == new_ip
+      assert new_nc.nic_id == nc.nic_id
+    end
+  end
+
+  describe "delete/1" do
+    test "obliterates the NC" do
+      network = NetworkHelper.internet()
+      ip = Random.ipv4()
+      {nic, _} = ComponentSetup.component(type: :nic)
+
+      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip, nic)
+
+      # Exists
+      assert NetworkInternal.Connection.fetch(network, ip)
+
+      # Delete
+      NetworkInternal.Connection.delete(nc)
+
+      # No more
+      refute NetworkInternal.Connection.fetch(network, ip)
     end
   end
 end

@@ -12,7 +12,7 @@ defmodule Helix.Network.Model.Network.Connection do
   @type t :: term
 
   @creation_fields [:network_id, :ip, :nic_id]
-  @required_fields [:network_id, :ip]
+  @required_fields [:network_id, :ip, :nic_id]
 
   @primary_key false
   schema "network_connections" do
@@ -21,8 +21,7 @@ defmodule Helix.Network.Model.Network.Connection do
     field :ip, IPv4,
       primary_key: true
 
-    field :nic_id, Component.ID,
-      default: nil
+    field :nic_id, Component.ID
   end
 
   def create_changeset(network = %Network{}, ip, nic),
@@ -46,6 +45,13 @@ defmodule Helix.Network.Model.Network.Connection do
     nc
     |> change
     |> put_change(:nic_id, nic.component_id)
+    |> validate_required(@required_fields)
+  end
+
+  def update_ip(nc = %__MODULE__{}, new_ip) do
+    nc
+    |> change
+    |> put_change(:ip, new_ip)
     |> validate_required(@required_fields)
   end
 

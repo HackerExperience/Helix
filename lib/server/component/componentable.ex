@@ -32,9 +32,12 @@ defmodule Helix.Server.Componentable do
 
   component NIC do
 
-    # alias Helix.Network.Model.Network
-
     defstruct [:ulk, :dlk, :network_id]
+
+    def update_custom(nic = %{type: :nic}, changes) do
+      nic.custom
+      |> Map.merge(changes)
+    end
 
     def new(nic = %{type: :nic}) do
       speed_info = %{dlk: nic.custom.dlk, ulk: nic.custom.ulk}

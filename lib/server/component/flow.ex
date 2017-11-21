@@ -29,6 +29,9 @@ defmodule Helix.Server.Component.Flow do
       def get_resources(component),
         do: dispatch(component.type, :new, [component])
 
+      def update_custom(component, changes),
+        do: dispatch(component.type, :update_custom, [component, changes])
+
       def dispatch(type, fun, args) do
         component_module = get_module_name(type)
 

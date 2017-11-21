@@ -19,4 +19,10 @@ defmodule Helix.Server.Internal.Component do
     |> Component.create_from_spec(custom)
     |> Repo.insert()
   end
+
+  def update_custom(component = %Component{}, changes) do
+    component
+    |> Component.update_custom(changes)
+    |> Repo.update()
+  end
 end

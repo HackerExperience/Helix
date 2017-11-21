@@ -16,15 +16,28 @@ defmodule Helix.Network.Internal.Network.Connection do
     |> Repo.one()
   end
 
-  def create(network = %Network{}, ip, nic \\ nil) do
+  def create(network = %Network{}, ip, nic = %Component{}) do
     network
     |> Network.Connection.create_changeset(ip, nic)
     |> Repo.insert()
   end
 
-  def update_nic(nc = %Network.Connection{}, nic = %Component{}) do
+  def update_nic(nc = %Network.Connection{}, new_nic = %Component{}) do
     nc
-    |> Network.Connection.update_nic(nic)
+    |> Network.Connection.update_nic(new_nic)
     |> Repo.update()
+  end
+
+  def update_ip(nc = %Network.Connection{}, new_ip) do
+    nc
+    |> Network.Connection.update_ip(new_ip)
+    |> Repo.update()
+  end
+
+  def delete(nc = %Network.Connection{}) do
+    nc
+    |> Repo.delete()
+
+    :ok
   end
 end

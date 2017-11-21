@@ -57,7 +57,7 @@ defmodule Helix.Server.Component.Specable do
       %{
         ulk: custom.ulk,
         dlk: custom.dlk,
-        network_id: custom.network_id
+        network_id: custom.network_id |> Network.ID.cast!()
       }
     end
 
