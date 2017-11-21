@@ -47,8 +47,22 @@ defmodule Helix.Server.Internal.Motherboard do
       # Checks whether any of the inserts returned `:error`
       case Enum.find(result, fn {status, _} -> status == :error end) do
         nil ->
-          result
-          |> Enum.map(&(elem(&1, 1)))
+          entries = Enum.map(result, &(elem(&1, 1)))
+
+          # Below we'll add to the recently created entries their corresponding
+          # components, so this is pretty much the same as `Repo.preload` but
+          # without doing another join on the DB (since we already have the)
+          # components. After doing this "preload", we'll `format/1` the entries
+          # and return the expected `Motherboard.mobo`.
+          initial_components
+          |> Enum.map(fn {component, _slot} -> component end)
+          |> Enum.zip(entries)
+          |> Enum.reduce([], fn {component, entry}, acc ->
+            entry = Map.replace(entry, :linked_component, component)
+
+            acc ++ [entry]
+          end)
+          |> Motherboard.format()
 
         {:error, changeset} ->
           changeset

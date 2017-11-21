@@ -12,22 +12,23 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
   describe "fetch/1" do
     test "fetches and formats the result" do
-      {entries, %{mobo: mobo}} = ComponentSetup.motherboard()
+      {gen_motherboard, %{mobo: mobo, hdd: hdd}} = ComponentSetup.motherboard()
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
 
-      assert motherboard.motherboard_id == mobo.component_id
-      assert length(motherboard.slots |> Map.to_list()) == length(entries)
+      assert motherboard == gen_motherboard
 
       # Ran `Component.format`
-      assert motherboard.slots.hdd_0.custom.iops
+      assert motherboard.slots.hdd_0.custom.iops == hdd.custom.iops
     end
   end
 
   describe "get_resources/1" do
     test "returns all resources" do
       {_, components = %{mobo: mobo}} =
-        ComponentSetup.motherboard(spec_id: :mobo_999)
+        ComponentSetup.motherboard(
+          spec_id: :mobo_999, nic_opts: [ulk: 30, dlk: 60]
+        )
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
       res = MotherboardInternal.get_resources(motherboard)
@@ -42,7 +43,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
       # the total resources accordingly
       {cpu, _} = ComponentSetup.component(type: :cpu)
       {hdd, _} = ComponentSetup.component(type: :hdd)
-      {nic, _} = ComponentSetup.component(type: :nic)
+      {nic, _} = ComponentSetup.nic(ulk: 20, dlk: 21, network_id: @internet_id)
 
       assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, cpu, :cpu_1)
       assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, hdd, :hdd_1)
@@ -57,15 +58,13 @@ defmodule Helix.Server.Internal.MotherboardTest do
       assert new_res.cpu.clock == components.cpu.custom.clock + cpu.custom.clock
       assert new_res.hdd.size == components.hdd.custom.size + hdd.custom.size
       assert new_res.hdd.iops == components.hdd.custom.iops + hdd.custom.iops
-      assert new_res.net[@internet_id].dlk ==
-        components.nic.custom.dlk + nic.custom.dlk
-      assert new_res.net[@internet_id].ulk ==
-        components.nic.custom.ulk + nic.custom.ulk
+      assert new_res.net[@internet_id].dlk == 60 + 21
+      assert new_res.net[@internet_id].ulk == 30 + 20
 
       # Now we'll add yet another NIC, but with a different network
       net2 = "::f" |> Network.ID.cast!()
-      nic_custom = %{dlk: 1, ulk: 2, network_id: net2}
-      {nic2, _} = ComponentSetup.component(type: :nic, custom: nic_custom)
+      {nic2, _} = ComponentSetup.nic(dlk: 1, ulk: 2, network_id: net2)
+
       MotherboardInternal.link(motherboard, mobo, nic2, :nic_2)
 
       # Let's fetch again...
@@ -73,14 +72,12 @@ defmodule Helix.Server.Internal.MotherboardTest do
       new_res = MotherboardInternal.get_resources(motherboard)
 
       # Added the new network to the total mobo resources
-      assert new_res.net[net2].dlk == nic_custom.dlk
-      assert new_res.net[net2].ulk == nic_custom.ulk
+      assert new_res.net[net2].dlk == 1
+      assert new_res.net[net2].ulk == 2
 
       # Previous network resources (internet) remain unchanged
-      assert new_res.net[@internet_id].dlk ==
-        components.nic.custom.dlk + nic.custom.dlk
-      assert new_res.net[@internet_id].ulk ==
-        components.nic.custom.ulk + nic.custom.ulk
+      assert new_res.net[@internet_id].dlk == 60 + 21
+      assert new_res.net[@internet_id].ulk == 30 + 20
     end
   end
 
@@ -105,21 +102,21 @@ defmodule Helix.Server.Internal.MotherboardTest do
           {nic, :nic_0}
         ]
 
-      assert {:ok, entries} =
+      assert {:ok, motherboard} =
         MotherboardInternal.setup(mobo, initial_components)
 
-      Enum.each(entries, fn entry ->
-        assert entry.motherboard_id == mobo.component_id
+      assert motherboard.motherboard_id == mobo.component_id
 
-        case entry.slot_id do
+      Enum.each(motherboard.slots, fn {slot_id, component} ->
+        case slot_id do
           :cpu_0 ->
-            assert entry.linked_component_id == cpu.component_id
+            assert component.component_id == cpu.component_id
 
           :hdd_0 ->
-            assert entry.linked_component_id == hdd.component_id
+            assert component.component_id == hdd.component_id
 
           :nic_0 ->
-            assert entry.linked_component_id == nic.component_id
+            assert component.component_id == nic.component_id
         end
       end)
     end

@@ -1,5 +1,12 @@
 defmodule Helix.Test.Macros do
 
+  defmacro assert_between(a, range_min, range_max) do
+    quote bind_quoted: binding() do
+      assert a >= range_min
+      assert a <= range_max
+    end
+  end
+
   defmacro assert_map(a, b, skip: skip) do
     skip = is_list(skip) && skip || [skip]
     quote bind_quoted: binding() do

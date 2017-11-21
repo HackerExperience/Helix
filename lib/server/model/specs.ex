@@ -62,6 +62,12 @@ defmodule Helix.Server.Model.Component.Spec do
     }
   end
 
+  def get_initial(component_type) do
+    component_type
+    |> Specable.get_initial()
+    |> fetch()
+  end
+
   defdelegate create_custom(spec, custom),
     to: Specable
 end

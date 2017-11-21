@@ -43,7 +43,10 @@ defmodule Helix.Server.Internal.ComponentTest do
     test "modifies a NIC's network_id or dlk/ulk" do
       {nic, _} = ComponentSetup.component(type: :nic)
 
+      # Initial custom of a NIC is "empty"
       assert nic.custom.network_id == NetworkHelper.internet_id()
+      assert nic.custom.dlk == 0
+      assert nic.custom.ulk == 0
 
       new_network_id = NetworkHelper.random_id()
 
@@ -59,5 +62,15 @@ defmodule Helix.Server.Internal.ComponentTest do
       assert new_nic.custom.dlk == new_speed.dlk
       assert new_nic.custom.ulk == new_speed.ulk
      end
+  end
+
+  describe "create_initial_components/0" do
+    test "creates all initial components" do
+      assert {:ok, components} = ComponentInternal.create_initial_components()
+
+      Enum.each(components, fn component ->
+        assert ComponentInternal.fetch(component.component_id)
+      end)
+    end
   end
 end

@@ -5,7 +5,7 @@ defmodule Helix.Software.Model.StorageDrive do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Software.Model.Storage
 
   @type t :: %__MODULE__{

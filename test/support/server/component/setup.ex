@@ -1,10 +1,12 @@
 defmodule Helix.Test.Server.Component.Setup do
 
   alias Ecto.Changeset
+  alias Helix.Server.Internal.Component, as: ComponentInternal
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Model.Component
   alias Helix.Server.Repo, as: ServerRepo
 
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Component.Helper, as: ComponentHelper
 
   @doc """
@@ -54,7 +56,7 @@ defmodule Helix.Test.Server.Component.Setup do
   end
 
   @doc """
-  No opts for you
+  - nic_opts: Relay to `nic/1`
   """
   def mobo_components(opts \\ []) do
     mobo_spec_id = Keyword.get(opts, :mobo_spec_id, :mobo_001)
@@ -63,7 +65,7 @@ defmodule Helix.Test.Server.Component.Setup do
     {cpu, _} = component(type: :cpu)
     # {ram, _} = component(type: :ram)
     {hdd, _} = component(type: :hdd)
-    {nic, _} = component(type: :nic)
+    {nic, _} = nic(opts[:nic_opts] || [])
 
     %{
       mobo: mobo,
@@ -75,17 +77,21 @@ defmodule Helix.Test.Server.Component.Setup do
 
   @doc """
   Opts:
-  spec_id: set mobo spec id
+  - spec_id: set mobo spec id
+  - nic_opts: Relay to `nic/1`
   """
   def motherboard(opts \\ []) do
     mobo_opts = opts[:spec_id] && [mobo_spec_id: opts[:spec_id]] || []
+    nic_opts = opts[:nic_opts] || []
+
+    components_opts = mobo_opts ++ [nic_opts: nic_opts]
 
     %{
       mobo: mobo,
       cpu: cpu,
       hdd: hdd,
       nic: nic
-    } = related = mobo_components(mobo_opts)
+    } = related = mobo_components(components_opts)
 
     initial_components =
       [
@@ -97,5 +103,25 @@ defmodule Helix.Test.Server.Component.Setup do
     {:ok, entries} = MotherboardInternal.setup(mobo, initial_components)
 
     {entries, related}
+  end
+
+  @doc """
+  Opts:
+  - network_id: Set network id. Defaults to internet
+  - dlk: Set dlk. Defaults to 0 (!)
+  - ulk: Set ulk. Defaults to 0 (!)
+  """
+  def nic(opts \\ []) do
+    {nic, _} = component(type: :nic)
+
+    network_id = Keyword.get(opts, :network_id, NetworkHelper.internet_id())
+    dlk = Keyword.get(opts, :dlk, 0)
+    ulk = Keyword.get(opts, :ulk, 0)
+
+    custom = %{dlk: dlk, ulk: ulk, network_id: network_id}
+
+    {:ok, nic} = ComponentInternal.update_custom(nic, custom)
+
+    {nic, %{}}
   end
 end

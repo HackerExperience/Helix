@@ -5,7 +5,7 @@ defmodule Helix.Entity.Model.EntityComponent do
   import Ecto.Changeset
 
   alias Ecto.Changeset
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Entity.Model.Entity
 
   @type t :: %__MODULE__{

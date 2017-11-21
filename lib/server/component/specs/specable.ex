@@ -4,6 +4,8 @@ defmodule Helix.Server.Component.Specable do
 
   specs CPU do
 
+    @initial :cpu_001
+
     def create_custom(spec, _),
       do: %{clock: spec.clock}
 
@@ -26,6 +28,8 @@ defmodule Helix.Server.Component.Specable do
   end
 
   specs HDD do
+
+    @initial :hdd_001
 
     def create_custom(spec, _),
       do: %{size: spec.size, iops: spec.iops}
@@ -52,24 +56,28 @@ defmodule Helix.Server.Component.Specable do
   specs NIC do
 
     alias Helix.Network.Model.Network
+    alias Helix.Network.Query.Network, as: NetworkQuery
+
+    @initial :nic_001
 
     def create_custom(_, custom) do
       %{
-        ulk: custom.ulk,
-        dlk: custom.dlk,
-        network_id: custom.network_id |> Network.ID.cast!()
+        ulk: 0,
+        dlk: 0,
+        network_id: NetworkQuery.internet().network_id
       }
     end
 
-    def format_custom(custom) do
+    def format_custom(custom = %{"network_id" => _, "dlk" => _, "ulk" => _}) do
       %{
         ulk: custom["ulk"],
         dlk: custom["dlk"],
         network_id: custom["network_id"] |> Network.ID.cast!()
       }
     end
+    def format_custom(_),
+      do: %{}
 
-    # TODO is this executed before or after `create_custom`?
     def validate_spec(data),
       do: true
 
@@ -84,21 +92,28 @@ defmodule Helix.Server.Component.Specable do
 
   specs MOBO do
 
+    @initial :mobo_001
+
     def create_custom(spec, _),
       do: %{slots: spec.slots}
 
     def format_custom(custom) do
       slots =
         custom["slots"]
-        |> Enum.reduce(%{}, fn {slot_id, slot_info}, acc ->
-          slot_id = slot_id |> String.to_existing_atom()
-          atomized_slot_info =
-            %{
-              type: slot_info["type"] |> String.to_existing_atom()
-            }
+        |> Enum.reduce(%{}, fn {slot_type, slots}, acc ->
+          slot_type = slot_type |> String.to_existing_atom()
+
+          slot_data =
+            Enum.reduce(slots, %{}, fn {slot_id, _slot_info}, acc ->
+              slot_id = slot_id |> String.to_integer()
+
+              %{}
+              |> Map.put(slot_id, %{})
+              |> Map.merge(acc)
+            end)
 
           %{}
-          |> Map.put(slot_id, atomized_slot_info)
+          |> Map.put(slot_type, slot_data)
           |> Map.merge(acc)
         end)
 

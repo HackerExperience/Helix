@@ -107,11 +107,6 @@ defmodule Helix.Server.Model.Motherboard do
 
   def get_resources(motherboard = %Motherboard{}) do
     initial = %{}
-      # %# {
-      #   cpu: %{clock: 0},
-      #   hdd: %{size: 0, iops: 0},
-      #   net: %{}
-      # }
 
     Enum.reduce(motherboard.slots, %{}, fn {_, component}, acc ->
       resource =
@@ -147,6 +142,7 @@ defmodule Helix.Server.Model.Motherboard do
   """
   def setup(mobo = %Component{type: :mobo}, initial_components) do
     initial_components
+    |> Enum.reject(fn {component, _} -> component.type == :mobo end)
     |> Enum.map(fn {component, slot_id} ->
       changeset =
         %__MODULE__{}
@@ -166,11 +162,12 @@ defmodule Helix.Server.Model.Motherboard do
     end)
   end
 
+  def get_initial_components,
+    do: [:cpu, :hdd, :nic]
+
   def has_required_initial_components?(initial_components) do
-    # required = [:cpu, :ram, :hdd, :nic]
-    required = [:cpu, :hdd, :nic]
     initial_components
-    |> Enum.reduce(required, fn {component, _}, acc ->
+    |> Enum.reduce(get_initial_components(), fn {component, _}, acc ->
       acc -- [component.type]
     end)
     |> case do

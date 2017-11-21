@@ -5,21 +5,19 @@ defmodule Helix.Server.Action.Flow.Server do
   alias Helix.Event
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Model.Entity
-  alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
   alias Helix.Server.Action.Server, as: ServerAction
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
 
-  @spec setup_server(Entity.t) ::
-    {:ok, Server.t}
-  def setup_server(entity) do
+  # @spec setup_server(Entity.t) ::
+  #   {:ok, Server.t}
+  def setup(type, entity = %Entity{}, mobo = %Component{type: :mobo}) do
     flowing do
       with \
-        {:ok, server} <- ServerAction.create(:desktop),
+        {:ok, server} <- ServerAction.create(type),
         on_fail(fn -> ServerAction.delete(server) end),
 
-        {:ok, motherboard_id} <- HardwareFlow.setup_bundle(entity),
-
-        {:ok, server} <- ServerAction.attach(server, motherboard_id),
+        {:ok, server} <- ServerAction.attach(server, mobo.component_id),
         on_fail(fn -> ServerAction.detach(server) end),
 
         {:ok, _} <- EntityAction.link_server(entity, server),

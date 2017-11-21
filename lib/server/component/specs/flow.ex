@@ -56,15 +56,24 @@ defmodule Helix.Server.Component.Spec.Flow do
   defp specs_functions do
     quote do
 
-      def create_custom(spec, custom) do
-        spec.component_type
-        |> dispatch(:create_custom, [spec.data, custom])
-      end
+      def create_custom(spec, custom),
+        do: dispatch(spec.component_type, :create_custom, [spec.data, custom])
 
       def format_custom(component) do
-        component.type
-        |> dispatch(:format_custom, [component.custom])
+        formatted? =
+          Enum.reduce(Map.keys(component.custom), true, fn key, acc ->
+            is_atom(key) && acc || false
+          end)
+
+        if formatted? do
+          component.custom
+        else
+          dispatch(component.type, :format_custom, [component.custom])
+        end
       end
+
+      def get_initial(type),
+        do: dispatch(type, :get_initial, [])
 
       def dispatch(type, fun, args) do
         component_module = type |> Utils.upcase_atom()
@@ -176,8 +185,10 @@ defmodule Helix.Server.Component.Spec.Flow do
           # TODO Raises if function is not found. Desired?
           apply(__MODULE__, :"spec_#{spec_id_name}", [])
         end
-      end
 
+        def get_initial,
+          do: @initial
+      end
     end
   end
 
