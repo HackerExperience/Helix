@@ -8,8 +8,7 @@ defmodule Helix.Server.Model.Server do
   alias Ecto.Changeset
   alias HELL.Constant
   alias HELL.Password
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.ServerType
 
   @type t :: %__MODULE__{
@@ -29,7 +28,8 @@ defmodule Helix.Server.Model.Server do
   @type type :: Constant.t
   @type password :: String.t
 
-  @type resources :: Motherboard.resources
+  @type resources :: term
+  # @type resources :: Motherboard.resources
 
   @type creation_params :: %{
     :server_type => Constant.t,
@@ -49,7 +49,8 @@ defmodule Helix.Server.Model.Server do
     field :motherboard_id, Component.ID
     field :server_type, Constant
 
-    field :hostname, :string
+    field :hostname, :string,
+      default: "transltr"
     field :password, :string
 
     timestamps()
@@ -110,8 +111,8 @@ defmodule Helix.Server.Model.Server do
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias Helix.Hardware.Model.Component
-    alias Helix.Hardware.Model.Motherboard
+    alias Helix.Server.Model.Component
+    alias Helix.Server.Model.Motherboard
     alias Helix.Server.Model.Server
 
     @spec by_id(Queryable.t, Server.idtb) ::
@@ -119,7 +120,7 @@ defmodule Helix.Server.Model.Server do
     def by_id(query \\ Server, id),
       do: where(query, [s], s.server_id == ^id)
 
-    @spec by_motherboard(Queryable.t, Motherboard.t | Component.idtb) ::
+    @spec by_motherboard(Queryable.t, Motherboard.mobo | Component.idtb) ::
       Queryable.t
     def by_motherboard(query \\ Server, id)
     def by_motherboard(query, %Motherboard{motherboard_id: id}),

@@ -51,7 +51,7 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         # Fetch mobo again because NIC and possibly other things have changed
         motherboard = MotherboardQuery.fetch(mobo.component_id)
 
-        {:ok, motherboard}
+        {:ok, motherboard, mobo}
       end
     end
   end

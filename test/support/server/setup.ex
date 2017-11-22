@@ -75,7 +75,7 @@ defmodule Helix.Test.Server.Setup do
   defp server_create_flow do
     {account, _} = AccountSetup.account()
     {:ok, %{entity: entity, server: server}} =
-      AccountFlow.setup_account(account)
+      AccountFlow.setup_account(account, nil)
 
     CacheHelper.purge_server(server.server_id)
 

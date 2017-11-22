@@ -11,7 +11,7 @@ defmodule Helix.Server.Action.Flow.Server do
 
   # @spec setup_server(Entity.t) ::
   #   {:ok, Server.t}
-  def setup(type, entity = %Entity{}, mobo = %Component{type: :mobo}) do
+  def setup(type, entity = %Entity{}, mobo = %Component{type: :mobo}, _relay) do
     flowing do
       with \
         {:ok, server} <- ServerAction.create(type),

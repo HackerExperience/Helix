@@ -15,12 +15,14 @@ defmodule Helix.Server.Action.Flow.MotherboardTest do
   alias Helix.Test.Network.Helper, as: NetworkHelper
 
   @internet_id NetworkHelper.internet_id()
+  @relay nil
 
   describe "initial_hardware/1" do
     test "setups initial hardware" do
       {entity, _} = EntitySetup.entity()
 
-      assert {:ok, motherboard} = MotherboardFlow.initial_hardware(entity)
+      assert {:ok, motherboard, _mobo} =
+        MotherboardFlow.initial_hardware(entity, @relay)
 
       # Created the mobo
       assert MotherboardQuery.fetch(motherboard.motherboard_id)
@@ -30,17 +32,9 @@ defmodule Helix.Server.Action.Flow.MotherboardTest do
         assert ComponentQuery.fetch(component.component_id)
       end)
 
-      # Get NIC for later usage. Pardon the gambiarra
-      [nic] =
-        motherboard.slots
-        |> Enum.filter(fn {_, c} -> c.type == :nic end)
-        |> Enum.map(fn {_, c} -> c end)
-
-      # TODO: Create interface for this
-      [hdd] =
-        motherboard.slots
-        |> Enum.filter(fn {_, c} -> c.type == :hdd end)
-        |> Enum.map(fn {_, c} -> c end)
+      # Get NIC and HDD for later usage
+      [nic] = MotherboardQuery.get_nics(motherboard)
+      [hdd] = MotherboardQuery.get_hdds(motherboard)
 
       # Components are linked to the entity
       owned_components = EntityQuery.get_components(entity)
@@ -60,8 +54,8 @@ defmodule Helix.Server.Action.Flow.MotherboardTest do
       res = MotherboardQuery.get_resources(motherboard)
 
       # `assert_between` is used because we do not want to test a hardcoded
-      # version of our initial hardware; instead we just want to make sure it's
-      # within that range.
+      # factor of our initial hardware; instead we just want to make sure it's
+      # within a specific range.
       assert_between res.cpu.clock, 64, 256
       assert_between res.hdd.iops, 500, 1500
       assert_between res.hdd.size, 512, 1024

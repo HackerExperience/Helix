@@ -24,6 +24,25 @@ defmodule Helix.Server.Internal.Motherboard do
     |> get_resources()
   end
 
+  def get_cpus(motherboard = %Motherboard{}),
+    do: get_component(motherboard, :cpu)
+
+  def get_hdds(motherboard = %Motherboard{}),
+    do: get_component(motherboard, :hdd)
+
+  def get_nics(motherboard = %Motherboard{}),
+    do: get_component(motherboard, :nic)
+
+  defp get_component(motherboard = %Motherboard{}, component_type) do
+    Enum.reduce(motherboard.slots, [], fn {_slot_id, component}, acc ->
+      if component.type == component_type do
+        acc ++ [component]
+      else
+        acc
+      end
+    end)
+  end
+
   @doc """
   Creates the initial set of components linked to a motherboard. There must have
   at least 1 of some required components, otherwise the motherboard is deemed
