@@ -1,6 +1,6 @@
 defmodule Helix.Software.Action.StorageDrive do
 
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.Storage
 

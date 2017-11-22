@@ -1,10 +1,9 @@
 defmodule Helix.Server.Query.Server do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Hardware.Model.Motherboard
-  alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
   alias Helix.Server.Internal.Server, as: ServerInternal
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
 
   @spec fetch(Server.id) ::
@@ -26,7 +25,7 @@ defmodule Helix.Server.Query.Server do
     to: ServerInternal
 
   @spec get_ip(Server.idt, Network.idt) ::
-    NetworkConnection.ip
+    Network.ip
     | nil
   def get_ip(server = %Server{}, network),
     do: get_ip(server.server_id, network)

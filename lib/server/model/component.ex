@@ -51,6 +51,9 @@ defmodule Helix.Server.Model.Component do
     |> validate_required(@required_fields)
   end
 
+  defdelegate get_types,
+    to: Componentable
+
   defdelegate get_resources(component),
     to: Componentable
 

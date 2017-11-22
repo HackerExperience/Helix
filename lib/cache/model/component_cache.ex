@@ -6,7 +6,6 @@ defmodule Helix.Cache.Model.ComponentCache do
 
   alias Ecto.Changeset
   alias HELL.PK
-  alias Helix.Hardware.Model.Component
 
   @type t :: %__MODULE__{
     component_id: PK.t,
@@ -60,7 +59,7 @@ defmodule Helix.Cache.Model.ComponentCache do
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias Helix.Hardware.Model.Component
+    alias Helix.Server.Model.Component
     alias Helix.Cache.Model.ComponentCache
 
     @spec by_component(Queryable.t, Component.idtb) ::

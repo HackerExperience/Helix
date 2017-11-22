@@ -45,6 +45,3 @@ Open questions:
 - How to deal with really large sub modules, like process/TOP and Universe/NPC?
   - Sug: Add sub-module name as sufix. Eg: ServerResourcesTOP
   - Sug: Use composed module names. Eg: `alias Helix.Process.TOP`; `TOP.ServerResources`
-
-Sug:
-- Split Action into flow+action. Flow is a special type of action

@@ -4,9 +4,9 @@ defmodule Helix.Server.Action.Server do
   alias HELL.IPv4
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Model.Entity
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Network.Model.Network
   alias Helix.Server.Internal.Server, as: ServerInternal
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 

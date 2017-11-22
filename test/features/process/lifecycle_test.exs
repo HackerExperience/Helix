@@ -7,8 +7,8 @@ defmodule Helix.Test.Features.Process.Lifecycle do
   import Helix.Test.Channel.Macros
   import Helix.Test.Process.Macros
 
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
 
@@ -59,7 +59,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       resources =
         gateway.motherboard_id
         |> MotherboardQuery.fetch()
-        |> MotherboardQuery.resources()
+        |> MotherboardQuery.get_resources()
 
       server_dlk = resources.net[@internet_id].downlink
 

@@ -2,7 +2,7 @@ defmodule Helix.Test.Entity.Factory do
 
   use ExMachina.Ecto, repo: Helix.Entity.Repo
 
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent

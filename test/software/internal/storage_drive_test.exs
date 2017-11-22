@@ -2,7 +2,7 @@ defmodule Helix.Software.Internal.StorageDriveTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
   alias Helix.Test.Cache.Helper, as: CacheHelper

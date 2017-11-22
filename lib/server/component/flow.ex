@@ -43,6 +43,9 @@ defmodule Helix.Server.Component.Flow do
         apply(module, fun, args)
       end
 
+      def get_types,
+        do: @components
+
       defp get_module_name(type) do
         type
         |> Atom.to_string()

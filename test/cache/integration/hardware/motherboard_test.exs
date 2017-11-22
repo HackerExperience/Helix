@@ -2,8 +2,8 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Hardware.Internal.Component, as: ComponentInternal
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
+  alias Helix.Server.Internal.Component, as: ComponentInternal
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
@@ -22,9 +22,6 @@ defmodule Helix.Cache.Integration.Hardware.MotherboardTest do
 
       {:ok, _} = PopulateInternal.populate(:by_server, server_id)
 
-      # FIXME: MotherboardInternal SHOULD NOT have a delete method as a
-      #   motherboard is just a component and thus should use the
-      #   ComponentInternal delete method
       motherboard_id
       |> ComponentInternal.fetch()
       |> ComponentInternal.delete()

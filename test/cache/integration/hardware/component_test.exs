@@ -5,7 +5,7 @@ defmodule Helix.Cache.Integration.Hardware.ComponentTest do
   import Helix.Test.Case.Cache
   import Helix.Test.Case.ID
 
-  alias Helix.Hardware.Internal.Component, as: ComponentInternal
+  alias Helix.Server.Internal.Component, as: ComponentInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal

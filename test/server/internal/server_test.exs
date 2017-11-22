@@ -3,9 +3,9 @@ defmodule Helix.Server.Internal.ServerTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
+  alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
 

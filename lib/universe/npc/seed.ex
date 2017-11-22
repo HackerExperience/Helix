@@ -4,11 +4,11 @@ defmodule Helix.Universe.NPC.Seed do
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Hardware.Action.Flow.Hardware, as: HardwareFlow
-  alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
   alias Helix.Network.Action.DNS, as: DNSAction
   alias Helix.Network.Internal.DNS, as: DNSInternal
+  alias Helix.Network.Internal.Network, as: NetworkInternal
+  alias Helix.Server.Action.Flow.Motherboard, as: MotherboardFlow
+  alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo, as: ServerRepo
@@ -78,8 +78,9 @@ defmodule Helix.Universe.NPC.Seed do
         |> ServerRepo.insert!()
 
       # Create & attach mobo
-      {:ok, motherboard_id} = HardwareFlow.setup_bundle(entity)
-      {:ok, server} = ServerInternal.attach(server, motherboard_id)
+      # TODO: Creating NPCs with initial player hardware
+      {:ok, motherboard, _} = MotherboardFlow.initial_hardware(entity, nil)
+      {:ok, server} = ServerInternal.attach(server, motherboard.motherboard_id)
 
       # Link to Entity
       {:ok, _} = EntityInternal.link_server(entity, server)
@@ -87,13 +88,13 @@ defmodule Helix.Universe.NPC.Seed do
       # Change IP if a static one was specified
       if entry_server.static_ip do
         nc =
-          motherboard_id
-          |> MotherboardInternal.fetch()
-          |> MotherboardInternal.get_networks()
+          motherboard
+          |> MotherboardInternal.get_nics()
+          |> IO.inspect()  # TODO: Fetch network by nic
           |> Enum.find(&(to_string(&1.network_id) == "::"))
 
         unless nc.ip == entry_server.static_ip do
-          NetworkConnectionInternal.update_ip(nc, entry_server.static_ip)
+          NetworkInternal.Connection.update_ip(nc, entry_server.static_ip)
         end
       end
     end

@@ -4,8 +4,7 @@ defmodule Helix.Test.Universe.NPC.Helper do
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityServer
   alias Helix.Entity.Repo, as: EntityRepo
-  alias Helix.Hardware.Model.NetworkConnection
-  alias Helix.Hardware.Repo, as: HardwareRepo
+  alias Helix.Network.Model.Network
   alias Helix.Network.Model.DNS.Anycast
   alias Helix.Network.Repo, as: NetworkRepo
   alias Helix.Server.Model.Server
@@ -47,7 +46,7 @@ defmodule Helix.Test.Universe.NPC.Helper do
     NetworkRepo.delete_all(Anycast)
 
     # Remove NetworkConnection (ips)
-    HardwareRepo.delete_all(NetworkConnection)
+    NetworkRepo.delete_all(Network.Connection)
 
     # Remove potentially cached data
     CacheHelper.empty_cache()

@@ -2,7 +2,7 @@ defmodule Helix.Test.Server.Setup do
 
   alias HELL.Password
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 

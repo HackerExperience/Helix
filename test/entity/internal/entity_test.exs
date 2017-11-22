@@ -3,7 +3,7 @@ defmodule Helix.Entity.Internal.EntityTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity

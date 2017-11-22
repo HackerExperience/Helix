@@ -127,7 +127,7 @@ defmodule Helix.Cache.Model.ServerCache do
 
     alias Ecto.Queryable
     alias Helix.Entity.Model.Entity
-    alias Helix.Hardware.Model.Component
+    alias Helix.Server.Model.Component
     alias Helix.Server.Model.Server
     alias Helix.Cache.Model.ServerCache
 

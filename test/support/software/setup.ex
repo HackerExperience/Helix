@@ -2,7 +2,7 @@ defmodule Helix.Test.Software.Setup do
 
   alias Ecto.Changeset
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal

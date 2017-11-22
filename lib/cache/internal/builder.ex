@@ -20,9 +20,9 @@ defmodule Helix.Cache.Internal.Builder do
   alias Helix.Network.Model.Network
   alias Helix.Hardware.Internal.Component, as: ComponentInternal
   alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Server.Internal.Server, as: ServerInternal
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Model.Storage

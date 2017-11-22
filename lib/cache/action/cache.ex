@@ -37,9 +37,9 @@ defmodule Helix.Cache.Action.Cache do
   import HELL.Macros
 
   alias HELL.IPv4
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.Storage
@@ -311,7 +311,7 @@ defmodule Helix.Cache.Action.Cache do
     HELL.PK.t
   defp motherboard_to_id(%Motherboard{motherboard_id: id}),
     do: component_to_id(id)
-  defp motherboard_to_id(%Component{component_id: id, component_type: :mobo}),
+  defp motherboard_to_id(%Component{component_id: id, type: :mobo}),
     do: to_string(id)
   defp motherboard_to_id(id = %Component.ID{}),
     do: to_string(id)

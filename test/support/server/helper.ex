@@ -28,6 +28,7 @@ defmodule Helix.Test.Server.Helper do
   def get_all_nips(server_id = %Server.ID{}),
     do: CacheQuery.from_server_get_nips!(server_id)
 
+  # TODO
   # HACK
   # This is a giant hack because the current Hardware service lacks the proper
   # API. It will probably be my next PR....

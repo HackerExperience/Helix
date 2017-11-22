@@ -1,7 +1,7 @@
 defmodule Helix.Process.Query.TOP do
 
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Process.Model.Process
 
@@ -15,6 +15,8 @@ defmodule Helix.Process.Query.TOP do
       server.motherboard_id
       |> MotherboardQuery.fetch()
       |> MotherboardQuery.resources()
+
+    # TODO: Modify \/ to comply with new format.
 
     # Convert server resource format into TOP resource format
     {server_dlk, server_ulk} =

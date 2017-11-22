@@ -13,9 +13,9 @@ defmodule Helix.Cache.Query.Cache do
 
   alias HELL.IPv4
   alias Helix.Entity.Model.Entity
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Internal.Cache, as: CacheInternal
@@ -223,11 +223,11 @@ defmodule Helix.Cache.Query.Cache do
   def network_to_id(id) when is_binary(id),
     do: id
 
-  @spec motherboard_to_id(Motherboard.t | Component.idtb) ::
-    HELL.PK.t
+  # @spec motherboard_to_id(Motherboard.mobo | Component.idtb) ::
+  #   HELL.PK.t
   defp motherboard_to_id(%Motherboard{motherboard_id: id}),
     do: component_to_id(id)
-  defp motherboard_to_id(%Component{component_id: id, component_type: :mobo}),
+  defp motherboard_to_id(%Component{component_id: id, type: :mobo}),
     do: to_string(id)
   defp motherboard_to_id(id = %Component.ID{}),
     do: to_string(id)
