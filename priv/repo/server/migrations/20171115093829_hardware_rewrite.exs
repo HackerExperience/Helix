@@ -3,14 +3,14 @@ defmodule Helix.Server.Repo.Migrations.HardwareRewrite do
 
   def change do
     create table(:component_types, primary_key: false) do
-      add :component_type, :string, primary_key: true
+      add :type, :string, primary_key: true
     end
 
     create table(:component_specs, primary_key: false) do
       add :spec_id, :string, primary_key: true
       add :data, :jsonb
       add :component_type,
-        references(:component_types, column: :component_type, type: :string)
+        references(:component_types, column: :type, type: :string)
     end
 
     create table(:components, primary_key: false) do
@@ -19,7 +19,7 @@ defmodule Helix.Server.Repo.Migrations.HardwareRewrite do
       add :custom, :map, null: false
 
       add :type,
-        references(:component_types, column: :component_type, type: :string),
+        references(:component_types, column: :type, type: :string),
         null: false
       add :spec_id,
         references(:component_specs, column: :spec_id, type: :string),
@@ -40,7 +40,7 @@ defmodule Helix.Server.Repo.Migrations.HardwareRewrite do
       add :linked_component_id,
         references(:components, column: :component_id, type: :inet)
       add :linked_component_type,
-        references(:component_types, column: :component_type, type: :string)
+        references(:component_types, column: :type, type: :string)
     end
 
     # One component may be linked only at one motherboard at any given time

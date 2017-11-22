@@ -11,11 +11,9 @@ defmodule Helix.Server.Seed do
   end
 
   defp add_component_types do
-    # TODO ComponentType
-    alias Helix.Hardware.Model.ComponentType
     Repo.transaction fn ->
-      Enum.each(ComponentType.possible_types, fn type ->
-        Repo.insert!(%ComponentType{component_type: type}, on_conflict: :nothing)
+      Enum.each(Component.get_types, fn type ->
+        Repo.insert!(%Component.Type{type: type}, on_conflict: :nothing)
       end)
     end
   end
