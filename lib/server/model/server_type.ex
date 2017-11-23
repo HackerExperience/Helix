@@ -16,6 +16,6 @@ defmodule Helix.Server.Model.ServerType do
 
   @doc false
   def possible_types do
-    ~w/desktop mobile vps/a
+    ~w/desktop mobile npc/a
   end
 end

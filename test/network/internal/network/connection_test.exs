@@ -2,10 +2,13 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Network.Internal.Network, as: NetworkInternal
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
@@ -69,9 +72,15 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
     test "modifies ip" do
       network = NetworkHelper.internet()
       ip = Random.ipv4()
-      {nic, _} = ComponentSetup.component(type: :nic)
 
-      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip, nic)
+      {server, _} = ServerSetup.server()
+
+      [nic] =
+        server.motherboard_id
+        |> MotherboardInternal.fetch()
+        |> MotherboardInternal.get_nics()
+
+      nc = NetworkInternal.Connection.fetch_by_nic(nic)
 
       new_ip = Random.ipv4()
       assert {:ok, new_nc} = NetworkInternal.Connection.update_ip(nc, new_ip)

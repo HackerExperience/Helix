@@ -38,7 +38,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
       # Removes stuff
       refute NPCInternal.fetch(npc.id)
       refute ServerInternal.fetch(server.id)
-      refute NetworkInternal.fetch(@internet_id, server.static_ip)
+      refute NetworkInternal.Connection.fetch(@internet_id, server.static_ip)
       refute BankInternal.fetch(bank.id)
     end
   end

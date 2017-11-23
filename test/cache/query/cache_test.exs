@@ -157,33 +157,22 @@ defmodule Helix.Cache.Query.CacheTest do
       refute StatePurgeQueue.lookup(:server, server_id)
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
-      motherboard_id = server.motherboard_id
-      component_id = Enum.random(server.components)
-      nip = Enum.random(server.networks)
-      storage_id = Enum.random(server.storages)
-
       # Purge
-      CacheAction.purge_component(component_id)
+      CacheAction.purge_server(server_id)
 
-      # Component is marked for deletion...
-      assert StatePurgeQueue.lookup(:component, component_id)
-
-      # But his buddies aren't
-      refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, motherboard_id)
-      refute StatePurgeQueue.lookup(:storage, storage_id)
-      refute StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+      # Server is marked for deletion
+      assert StatePurgeQueue.lookup(:server, server_id)
 
       # Hasn't synced yet, so we can still query it directly...
-      assert {:hit, _} = CacheInternal.direct_query(:component, component_id)
+      assert {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
       # Querying it TheRightWay will return a brand new result
       # (note that it's not this test's purpose to verify the result is, in
       # fact, brand new)
-      assert {:ok, _} = CacheQuery.from_component_get_motherboard(component_id)
+      assert {:ok, _} = CacheQuery.from_server_get_all(server_id)
 
       # Because it is still marked for deletion
-      assert StatePurgeQueue.lookup(:component, component_id)
+      assert StatePurgeQueue.lookup(:server, server_id)
 
       CacheHelper.sync_test()
     end

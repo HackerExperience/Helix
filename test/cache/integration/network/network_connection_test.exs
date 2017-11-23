@@ -1,4 +1,4 @@
-defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
+defmodule Helix.Cache.Integration.Network.NetworkConnectionTest do
 
   use Helix.Test.Case.Integration
 
@@ -39,8 +39,6 @@ defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
       assert StatePurgeQueue.lookup(:network, nip_args1)
       assert StatePurgeQueue.lookup(:network, nip_args2)
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      assert StatePurgeQueue.lookup(:component, Enum.random(server.components))
-      assert StatePurgeQueue.lookup(:component, server.motherboard_id)
 
       # Not on the cache yet
       {:ok, server2} = CacheQuery.from_server_get_all(server_id)
@@ -83,8 +81,6 @@ defmodule Helix.Cache.Integration.Hardware.NetworkConnectionTest do
       assert StatePurgeQueue.lookup(:network, {nip.network_id, new_ip})
       refute StatePurgeQueue.lookup(:server, server_id)
       refute StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
-      refute StatePurgeQueue.lookup(:component, Enum.random(server.components))
-      refute StatePurgeQueue.lookup(:component, server.motherboard_id)
 
       CacheHelper.sync_test()
     end

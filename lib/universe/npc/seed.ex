@@ -90,7 +90,13 @@ defmodule Helix.Universe.NPC.Seed do
         nc =
           motherboard
           |> MotherboardInternal.get_nics()
-          |> IO.inspect()  # TODO: Fetch network by nic
+          |> Enum.reduce([], fn nic, acc ->
+            nc = NetworkInternal.Connection.fetch_by_nic(nic)
+
+            nc
+            && acc ++ [nc]
+            || acc
+          end)
           |> Enum.find(&(to_string(&1.network_id) == "::"))
 
         unless nc.ip == entry_server.static_ip do

@@ -1,5 +1,6 @@
 defmodule Helix.Network.Internal.Network.Connection do
 
+  alias Helix.Cache.Action.Cache, as: CacheAction
   alias Helix.Server.Model.Component
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo
@@ -29,9 +30,20 @@ defmodule Helix.Network.Internal.Network.Connection do
   end
 
   def update_ip(nc = %Network.Connection{}, new_ip) do
-    nc
-    |> Network.Connection.update_ip(new_ip)
-    |> Repo.update()
+    result =
+      nc
+      |> Network.Connection.update_ip(new_ip)
+      |> Repo.update()
+
+    with {:ok, _} <- result do
+      # Purge previous nip
+      CacheAction.purge_network(nc.network_id, nc.ip)
+
+      # Cache new nip
+      CacheAction.update_network(nc.network_id, new_ip)
+    end
+
+    result
   end
 
   def delete(nc = %Network.Connection{}) do

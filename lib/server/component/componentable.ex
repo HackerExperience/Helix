@@ -34,11 +34,6 @@ defmodule Helix.Server.Componentable do
 
     defstruct [:ulk, :dlk, :network_id]
 
-    def update_custom(nic = %{type: :nic}, changes) do
-      nic.custom
-      |> Map.merge(changes)
-    end
-
     def new(nic = %{type: :nic}) do
       speed_info = %{dlk: nic.custom.dlk, ulk: nic.custom.ulk}
       network_id = nic.custom.network_id

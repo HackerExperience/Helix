@@ -102,7 +102,6 @@ process Helix.Software.Process.File.Transfer do
     Emits `FileTransferProcessedEvent.t` when process completes.
     """
     on_completion(process, data) do
-
       {from_id, to_id} = get_servers_context(data, process)
       event = FileTransferProcessedEvent.new(process, data, from_id, to_id)
 

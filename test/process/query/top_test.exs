@@ -2,6 +2,7 @@ defmodule Helix.Process.Query.TOPTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Server.Component.Specable
   alias Helix.Process.Query.TOP, as: TOPQuery
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -15,15 +16,19 @@ defmodule Helix.Process.Query.TOPTest do
 
       resources = TOPQuery.load_top_resources(server.server_id)
 
-      # Note: these assertions will fail once we modify the initial hardware,
-      # but that's on purpose. Once that happens, we'll probably have a proper
-      # API to fetch the total server resources, and we can use it to:
-      #   - Make the assertions below dynamic (not hard-coded)
-      #   - Create new tests with edge-cases on resource utilization
-      assert resources.cpu == 1333
-      assert resources.ram == 1024
-      assert resources.dlk[@internet_id] == 100
-      assert resources.ulk[@internet_id] == 100
+      # Note: dlk/ulk values are hard-coded because we don't have the ISP API.
+      # Update when we do
+      assert resources.cpu == get_initial_resource(:cpu, :clock)
+      assert resources.ram == get_initial_resource(:ram, :size)
+      assert resources.dlk[@internet_id] == 128
+      assert resources.ulk[@internet_id] == 16
+    end
+
+    defp get_initial_resource(component_type, resource) do
+      component_type
+      |> Specable.get_initial()
+      |> Specable.fetch()
+      |> Map.fetch!(resource)
     end
   end
 end

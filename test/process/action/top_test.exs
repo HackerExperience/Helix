@@ -150,8 +150,8 @@ defmodule Helix.Process.Action.TOPTest do
           gateway_id: gateway.server_id,
           target_id: target.server_id,
           type: :file_download,
-          l_limit: %{dlk: %{"::" => 50}},
-          r_limit: %{ulk: %{"::" => 20}},
+          l_limit: %{dlk: %{"::" => 5}},
+          r_limit: %{ulk: %{"::" => 2}},
           static: %{}
         )
 
@@ -163,14 +163,14 @@ defmodule Helix.Process.Action.TOPTest do
       # Remember, it's the same process
       assert gateway_proc.process_id == target_proc.process_id
 
-      # On the gateway, reserved 50 units of DLK
-      assert gateway_proc.l_reserved.dlk[@internet_id] == 50
+      # On the gateway, reserved 5 units of DLK
+      assert gateway_proc.l_reserved.dlk[@internet_id] == 5
       assert gateway_proc.l_reserved.ulk[@internet_id] == 0
       assert gateway_proc.l_reserved.cpu == 0
       assert gateway_proc.l_reserved.ram == 0
 
-      # On the target, reserved 20 units of ULK
-      assert target_proc.r_reserved.ulk[@internet_id] == 20
+      # On the target, reserved 2 units of ULK
+      assert target_proc.r_reserved.ulk[@internet_id] == 2
       assert target_proc.r_reserved.dlk == %{}
       assert target_proc.r_reserved.cpu == 0
       assert target_proc.r_reserved.ram == 0

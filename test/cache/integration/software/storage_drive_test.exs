@@ -4,7 +4,7 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
   import Helix.Test.Case.Cache
 
-  alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
+  alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Software.Internal.Storage, as: StorageInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Cache.Action.Cache, as: CacheAction
@@ -14,7 +14,8 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Hardware.Factory, as: HardwareFactory
+  alias Helix.Test.Server.Component.Setup, as: ComponentSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   setup do
     CacheHelper.cache_context()
@@ -30,16 +31,18 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
       assert {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
       # Integration stuff
-      hdd = HardwareFactory.insert(:hdd)
-      drive_id = hdd.component.component_id
+      {hdd, _} = ComponentSetup.component(type: :hdd)
+      drive_id = hdd.component_id
 
-      slot = motherboard_id
-        |> MotherboardInternal.get_slots()
-        |> Enum.find(fn(slot) ->
-          slot.link_component_id == nil and slot.link_component_type == :hdd
-        end)
+      # We'll link a new component, so we need to make sure our server's mobo
+      # has spare room for it. Let's cheat and put our ChuckNorrisMobo on
+      ServerHelper.update_server_mobo(server_id, :mobo_999)
 
-      assert {:ok, _} = MotherboardInternal.link(slot, hdd.component)
+      motherboard = MotherboardInternal.fetch(motherboard_id)
+
+      %{hdd: [slot|_]} = MotherboardInternal.get_free_slots(motherboard)
+
+      assert {:ok, _} = MotherboardInternal.link(motherboard, hdd, slot)
 
       storage_id = Enum.random(server.storages)
 
@@ -57,7 +60,6 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
       # Added to purge queue
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage_id)
-      assert StatePurgeQueue.lookup(:component, Enum.random(server.components))
 
       StatePurgeQueue.sync()
 
@@ -83,16 +85,16 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
       {:ok, server} = BuilderInternal.by_server(server_id)
 
       # Integration stuff
-      hdd = HardwareFactory.insert(:hdd)
-      drive_id = hdd.component.component_id
+      {hdd, _} = ComponentSetup.component(type: :hdd)
+      drive_id = hdd.component_id
 
-      slot = motherboard_id
-      |> MotherboardInternal.get_slots()
-      |> Enum.find(fn(slot) ->
-        slot.link_component_id == nil and slot.link_component_type == :hdd
-      end)
+      # Use a mobo that supports multiple HDDs
+      ServerHelper.update_server_mobo(server_id, :mobo_999)
 
-      assert {:ok, _} = MotherboardInternal.link(slot, hdd.component)
+      motherboard = MotherboardInternal.fetch(motherboard_id)
+      %{hdd: [slot|_]} = MotherboardInternal.get_free_slots(motherboard)
+
+      assert {:ok, _} = MotherboardInternal.link(motherboard, hdd, slot)
 
       storage_id = Enum.random(server.storages)
 
@@ -129,6 +131,7 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
     test "it updates the cache", context do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
+      motherboard = MotherboardInternal.fetch(motherboard_id)
 
       # Populate on the DB
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
@@ -136,14 +139,13 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
 
       storage_id = List.first(server.storages)
 
-      [hdd] = MotherboardInternal.get_hdds(motherboard_id)
-      drive_id = hdd.hdd_id
+      [hdd] = MotherboardInternal.get_hdds(motherboard)
+      drive_id = hdd.component_id
 
       StorageDriveInternal.unlink_drive(drive_id)
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage_id)
-      assert StatePurgeQueue.lookup(:component, motherboard_id)
 
       StatePurgeQueue.sync()
 
@@ -157,19 +159,19 @@ defmodule Helix.Cache.Integration.Software.StorageDriveTest do
     test "it updates the cache (cold)", context do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
+      motherboard = MotherboardInternal.fetch(motherboard_id)
 
       {:ok, server} = BuilderInternal.by_server(server_id)
 
       storage_id = List.first(server.storages)
 
-      [hdd] = MotherboardInternal.get_hdds(motherboard_id)
-      drive_id = hdd.hdd_id
+      [hdd] = MotherboardInternal.get_hdds(motherboard)
+      drive_id = hdd.component_id
 
       StorageDriveInternal.unlink_drive(drive_id)
 
       assert StatePurgeQueue.lookup(:storage, storage_id)
       refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, motherboard_id)
 
       StatePurgeQueue.sync()
 

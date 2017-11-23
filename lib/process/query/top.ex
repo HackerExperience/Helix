@@ -14,16 +14,14 @@ defmodule Helix.Process.Query.TOP do
     resources =
       server.motherboard_id
       |> MotherboardQuery.fetch()
-      |> MotherboardQuery.resources()
-
-    # TODO: Modify \/ to comply with new format.
+      |> MotherboardQuery.get_resources()
 
     # Convert server resource format into TOP resource format
     {server_dlk, server_ulk} =
       Enum.reduce(
         resources.net,
         {%{}, %{}},
-        fn {network, %{downlink: dlk, uplink: ulk}}, {acc_dlk, acc_ulk} ->
+        fn {network, %{dlk: dlk, ulk: ulk}}, {acc_dlk, acc_ulk} ->
 
           acc_dlk =
             %{}
@@ -39,8 +37,9 @@ defmodule Helix.Process.Query.TOP do
         end)
 
     %{
-      cpu: resources.cpu,
-      ram: resources.ram,
+      cpu: resources.cpu.clock,
+      ram: 500,
+      # ram: resources.ram,
       dlk: server_dlk,
       ulk: server_ulk
     }

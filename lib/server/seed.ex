@@ -19,7 +19,6 @@ defmodule Helix.Server.Seed do
   end
 
   defp add_component_specs do
-
     Specable.generate_specs()
     |> Enum.each(fn {component_type, specs} ->
       Enum.each(specs, fn spec ->

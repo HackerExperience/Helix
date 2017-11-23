@@ -106,45 +106,20 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       nip = Enum.random(server.networks)
       storage_id = Enum.random(server.storages)
-      component_id = Enum.random(server.components)
-      motherboard_id = server.motherboard_id
 
       # Purge nip
       PurgeInternal.purge(:network, {nip.network_id, nip.ip})
-
       assert_miss CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
       # Purging nip shouldn't affect others
-      {:hit, _} = CacheInternal.direct_query(:component, component_id)
-      {:hit, _} = CacheInternal.direct_query(:component, motherboard_id)
       {:hit, _} = CacheInternal.direct_query(:storage, storage_id)
       {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
       # Purging storage
       PurgeInternal.purge(:storage, {storage_id})
-
       assert_miss CacheInternal.direct_query(:storage, storage_id)
 
       # Purging storage shouldn't affect others
-      {:hit, _} = CacheInternal.direct_query(:component, component_id)
-      {:hit, _} = CacheInternal.direct_query(:component, motherboard_id)
-      {:hit, _} = CacheInternal.direct_query(:server, server_id)
-
-      # Purging component
-      PurgeInternal.purge(:component, {component_id})
-
-      assert_miss CacheInternal.direct_query(:component, component_id)
-
-      # Purging a component shouldn't affect others
-      {:hit, _} = CacheInternal.direct_query(:component, motherboard_id)
-      {:hit, _} = CacheInternal.direct_query(:server, server_id)
-
-      # Purge motherboard
-      PurgeInternal.purge(:component, {motherboard_id})
-
-      assert_miss CacheInternal.direct_query(:component, motherboard_id)
-
-      # Server is still there
       {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
       CacheHelper.sync_test()

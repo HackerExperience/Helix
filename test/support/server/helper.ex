@@ -1,9 +1,15 @@
 defmodule Helix.Test.Server.Helper do
 
+  alias Ecto.Changeset
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Server.Internal.Component, as: ComponentInternal
+  alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Server.Repo, as: ServerRepo
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
 
@@ -28,59 +34,77 @@ defmodule Helix.Test.Server.Helper do
   def get_all_nips(server_id = %Server.ID{}),
     do: CacheQuery.from_server_get_nips!(server_id)
 
-  # TODO
-  # HACK
-  # This is a giant hack because the current Hardware service lacks the proper
-  # API. It will probably be my next PR....
+  @doc """
+  Modify a server's component resources
+
+  NOTE: The method we are using here to update a server's specs works for tests,
+  but is not the same one used by the player.
+  The player can not modify a given component directly. Instead, he/she must buy
+  a new one and attach to the motherboard.
+  Within the test context, we can get away with modifying the component directly
+  """
   def update_server_specs(server = %Server{}, new_specs) do
+    motherboard = server.motherboard_id |> MotherboardQuery.fetch()
 
-    alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
-    alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-    alias Helix.Hardware.Repo, as: HardwareRepo
-
-    components =
-      server.motherboard_id
-      |> MotherboardQuery.fetch()
-      |> MotherboardInternal.get_components_ids()
-
-    [comp_cpu] = MotherboardInternal.get_cpus_from_ids(components)
-    [comp_ram] = MotherboardInternal.get_rams_from_ids(components)
-    [comp_nic] = MotherboardInternal.get_nics_from_ids(components)
+    cpu = motherboard |> MotherboardInternal.get_cpus() |> List.first()
+    # ram = motherboard |> MotherboardInternal.get_rams() |> List.first()
+    nic = motherboard |> MotherboardInternal.get_nics() |> List.first()
 
     if new_specs[:cpu] do
-      comp_cpu
-      |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_change(:clock, new_specs[:cpu])
-      |> HardwareRepo.update()
+      ComponentInternal.update_custom(cpu, %{clock: new_specs[:cpu]})
     end
 
-    if new_specs[:ram] do
-      comp_ram
-      |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_change(:ram_size, new_specs[:ram])
-      |> HardwareRepo.update()
-    end
-
-    nc = comp_nic.network_connection
+    # if new_specs[:ram] do
+    #   ComponentInternal.update_custom(ram, %{size: new_specs[:ram]})
+    # end
 
     if not is_nil(new_specs[:dlk]) or not is_nil(new_specs[:ulk]) do
-      cs = Ecto.Changeset.change(nc)
+      dlk = new_specs[:dlk] || nic.custom.dlk
+      ulk = new_specs[:ulk] || nic.custom.ulk
 
-      cs =
-        if new_specs[:dlk] do
-          Ecto.Changeset.put_change(cs, :downlink, new_specs[:dlk])
-        else
-          cs
-        end
+      custom = %{dlk: dlk, ulk: ulk}
 
-      cs =
-        if new_specs[:ulk] do
-          Ecto.Changeset.put_change(cs, :uplink, new_specs[:ulk])
-        else
-          cs
-        end
-
-      HardwareRepo.update(cs)
+      ComponentInternal.update_custom(nic, custom)
     end
+  end
+
+  @doc """
+  Use this function to modify a server's motherboard type.
+
+  It may receive a component spec_id, in which case the underlying mobo spec is
+  changed directly, or a component_id, in which case it is assigned as the new
+  mobo. It may also receive `nil`, signaling we should detach the server mobo.
+
+  NOTE: The method used here is not the same one used by the player. Here we are
+  modifying the existing mobo directly, while the player would have to buy a new
+  one from the store and re-link his existing components.
+  For test purposes this is OK, but caveat emptor
+  """
+  def update_server_mobo(server = %Server{}, nil) do
+    server
+    |> Server.detach_motherboard()
+    |> ServerRepo.update!()
+  end
+
+  def update_server_mobo(server = %Server{}, mobo_id = %Component.ID{}) do
+    server
+    |> Changeset.change()
+    |> Changeset.put_change(:motherboard_id, mobo_id)
+    |> ServerRepo.update!()
+  end
+
+  def update_server_mobo(server = %Server{}, spec_id) when is_atom(spec_id) do
+    mobo = ComponentInternal.fetch(server.motherboard_id)
+
+    mobo
+    |> Changeset.change()
+    |> Changeset.put_change(:spec_id, spec_id)
+    |> ServerRepo.update!()
+  end
+
+  def update_server_mobo(s_id = %Server.ID{}, spec_id) when is_atom(spec_id) do
+    s_id
+    |> ServerQuery.fetch()
+    |> update_server_mobo(spec_id)
   end
 end

@@ -9,10 +9,14 @@ defmodule Helix.Test.Server.Setup do
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   @doc """
   - entity_id: Specify the entity that owns such server. Defaults to generating
   a random entity.
+
+  - motherboard_id: Which motherboard to attach to the server. Initial one is
+  created by default. If `nil` is passed, the created server will have no mobo.
 
   Related data: Entity.t (when `opts[:entity_id]` is undefined)
   """
@@ -25,6 +29,13 @@ defmodule Helix.Test.Server.Setup do
         {server, nil}
       else
         server_create_flow()
+      end
+
+    server =
+      if Keyword.has_key?(opts, :motherboard_id) do
+        ServerHelper.update_server_mobo(server, opts[:motherboard_id])
+      else
+        server
       end
 
     {server, %{entity: entity}}

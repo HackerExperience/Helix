@@ -1,5 +1,6 @@
 defmodule Helix.Server.Internal.Motherboard do
 
+  alias Helix.Server.Internal.Component, as: ComponentInternal
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Repo
@@ -22,6 +23,28 @@ defmodule Helix.Server.Internal.Motherboard do
     mobo.component_id
     |> fetch()
     |> get_resources()
+  end
+
+  @doc """
+  Fetches the motherboard that `component_id` is currently linked to.
+  """
+  def fetch_by_component(component_id) do
+    component_id
+    |> Motherboard.Query.by_component()
+    |> Repo.one()
+  end
+
+  def get_free_slots(motherboard = %Motherboard{}) do
+    motherboard.motherboard_id
+    |> ComponentInternal.fetch()
+    |> get_free_slots(motherboard)
+  end
+
+  def get_free_slots(
+    mobo = %Component{type: :mobo},
+    motherboard = %Motherboard{})
+  do
+    Motherboard.get_free_slots(motherboard, mobo.spec_id)
   end
 
   def get_cpus(motherboard = %Motherboard{}),
@@ -118,14 +141,28 @@ defmodule Helix.Server.Internal.Motherboard do
   end
 
   @doc """
+  `link/3` is a shorthand interface for `link/4` in which we fetch the mobo
+  component internally. We still offer `link/4` publicly in case the caller
+  already has that information readily available.
+  """
+  def link(motherboard = %Motherboard{}, component = %Component{}, slot_id) do
+    if component.type == :mobo,
+      do: raise "You should use `link/4` instead"
+
+    mobo_component = ComponentInternal.fetch(motherboard.motherboard_id)
+
+    link(motherboard, mobo_component, component, slot_id)
+  end
+
+  @doc """
   Unlinks `component` from `motherboard`.
 
   Notice we are not *updating* any entries. All `unlink` operations are removing
   data from the `motherboards` table.
   """
-  def unlink(motherboard = %Motherboard{}, component = %Component{}) do
-    motherboard.motherboard_id
-    |> Motherboard.Query.by_component(component.component_id)
+  def unlink(component = %Component{}) do
+    component.component_id
+    |> Motherboard.Query.by_component()
     |> Repo.delete_all()
 
     :ok

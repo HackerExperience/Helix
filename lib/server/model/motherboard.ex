@@ -9,6 +9,7 @@ defmodule Helix.Server.Model.Motherboard do
   alias HELL.Constant
   alias HELL.MapUtils
   alias Helix.Network.Model.Network
+  alias Helix.Server.Component.Specable
   alias Helix.Server.Model.Component
   alias __MODULE__, as: Motherboard
 
@@ -212,6 +213,44 @@ defmodule Helix.Server.Model.Motherboard do
     end
   end
 
+  def get_free_slots(motherboard = %Motherboard{}, spec_id) do
+    slots =
+      spec_id
+      |> Specable.fetch()
+      |> Map.fetch!(:slots)
+
+    available_map =
+      Enum.reduce(motherboard.slots, slots, fn {slot_id, _component}, acc ->
+        {slot_type, real_id} = Component.Mobo.split_slot_id(slot_id)
+
+        new_sub_type =
+          acc
+          |> Map.fetch!(slot_type)
+          |> Map.delete(real_id)
+
+        acc
+        |> Map.replace(slot_type, new_sub_type)
+      end)
+
+    # Now we'll convert the available map into an API-friendly list
+
+    available_map
+    |> Enum.reduce(%{}, fn {slot_type, available}, acc ->
+      available_slots =
+        Enum.reduce(available, [], fn {real_id, _}, acc ->
+          available_id =
+            to_string(slot_type) <> "_" <> to_string(real_id)
+            |> String.to_atom()
+
+          acc ++ [available_id]
+        end)
+
+      %{}
+      |> Map.put(slot_type, available_slots)
+      |> Map.merge(acc)
+    end)
+  end
+
   defp include_component(changeset, component, slot_id) do
     params =
       %{
@@ -247,17 +286,19 @@ defmodule Helix.Server.Model.Motherboard do
 
   query do
 
-    def by_motherboard(query \\ Motherboard, motherboard_id) do
+    def by_motherboard(query \\ Motherboard, motherboard_id)
+    def by_motherboard(query, mobo = %Component{type: :mobo}),
+      do: by_motherboard(query, mobo.component_id)
+    def by_motherboard(query, motherboard_id) do
       from entries in Motherboard,
         inner_join: component in assoc(entries, :linked_component),
         where: entries.motherboard_id == ^to_string(motherboard_id),
         preload: [:linked_component]
     end
 
-    def by_component(query \\ Motherboard, motherboard_id, component_id) do
-      query
-      |> where([m], m.motherboard_id == ^motherboard_id)
-      |> where([m], m.linked_component_id == ^component_id)
-    end
+    # def by_component(query, component = %Com) do
+    # end
+    def by_component(query \\ Motherboard, component_id),
+      do: where(query, [m], m.linked_component_id == ^component_id)
   end
 end

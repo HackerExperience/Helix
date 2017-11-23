@@ -66,7 +66,7 @@ defmodule Helix.Server.Internal.ServerTest do
     test "updates hostname" do
       {server, _} = ServerSetup.server()
 
-      hostname = "transltr"
+      hostname = "zeus"
       refute server.hostname == hostname
 
       assert {:ok, updated} = ServerInternal.set_hostname(server, hostname)

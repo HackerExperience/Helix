@@ -5,11 +5,14 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
   import Helix.Test.Case.Cache
 
   alias Helix.Entity.Internal.Entity, as: EntityInternal
+  alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
-  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+
+  alias Helix.Test.Cache.Helper, as: CacheHelper
 
   setup do
     CacheHelper.cache_context()
@@ -21,14 +24,19 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
+      entity =
+        server.server_id
+        |> Server.ID.cast!()
+        |> ServerQuery.fetch()
+        |> EntityInternal.fetch_by_server()
+
       # Must unlink server first
       EntityInternal.unlink_server(server_id)
-      server.entity_id
-      |> EntityInternal.fetch()
-      |> EntityInternal.delete()
+
+      # Remove entity
+      EntityInternal.delete(entity)
 
       assert StatePurgeQueue.lookup(:server, server_id)
-      assert StatePurgeQueue.lookup(:component, server.motherboard_id)
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
 
       StatePurgeQueue.sync()
@@ -43,15 +51,20 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
       {:ok, server} = BuilderInternal.by_server(server_id)
 
+      entity =
+        server.server_id
+        |> Server.ID.cast!()
+        |> ServerQuery.fetch()
+        |> EntityInternal.fetch_by_server()
+
       # Must unlink server first
       EntityInternal.unlink_server(server_id)
-      server.entity_id
-      |> EntityInternal.fetch()
-      |> EntityInternal.delete()
+
+      # Remove entity
+      EntityInternal.delete(entity)
 
       # Nothing to delete...
       refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, server.motherboard_id)
       refute StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
 
       StatePurgeQueue.sync()
@@ -63,7 +76,6 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
     test "unlink server from entity", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
@@ -72,8 +84,6 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
       EntityInternal.unlink_server(server_id)
 
       assert StatePurgeQueue.lookup(:server, server_id)
-      assert StatePurgeQueue.lookup(:component, motherboard_id)
-      assert StatePurgeQueue.lookup(:component, Enum.random(server.components))
       assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
       nip_args = {to_string(nip.network_id), nip.ip}
       assert StatePurgeQueue.lookup(:network, nip_args)
@@ -87,13 +97,11 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
 
     test "unlink server from entity (cold)", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       EntityInternal.unlink_server(server_id)
 
       # Nothing to delete...
       refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, motherboard_id)
 
       StatePurgeQueue.sync()
 

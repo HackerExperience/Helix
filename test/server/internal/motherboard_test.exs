@@ -230,7 +230,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
 
-      MotherboardInternal.unlink(motherboard, hdd)
+      MotherboardInternal.unlink(hdd)
 
       new_motherboard = MotherboardInternal.fetch(mobo.component_id)
 
@@ -248,7 +248,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
 
-      MotherboardInternal.unlink(motherboard, component)
+      MotherboardInternal.unlink(component)
 
       new_motherboard = MotherboardInternal.fetch(mobo.component_id)
 

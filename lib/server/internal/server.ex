@@ -65,7 +65,6 @@ defmodule Helix.Server.Internal.Server do
     |> Server.detach_motherboard()
     |> Repo.update!()
 
-    CacheAction.purge_component(server.motherboard_id)
     CacheAction.update_server(server)
 
     :ok

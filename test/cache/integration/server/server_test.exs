@@ -23,45 +23,37 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id
 
-      {:ok, components} =
-        CacheQuery.from_motherboard_get_components(motherboard_id)
       StatePurgeQueue.sync()
 
+      # Make sure it exists on cache, else CacheAction simply ignores the fact
+      # that the server/motherboard changed.
+      PopulateInternal.populate(:by_server, server_id)
+
+      # Not marked for update
       refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, motherboard_id)
 
       assert {:ok, _} = ServerInternal.attach(context.server, motherboard_id)
 
+      # Marked for update
       assert StatePurgeQueue.lookup(:server, server_id)
-      assert StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.each(components, fn(component_id) ->
-        assert StatePurgeQueue.lookup(:component, component_id)
-      end)
 
       StatePurgeQueue.sync()
 
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
       assert_id server.server_id, server_id
-      assert server.entity_id
-      assert server.motherboard_id
-      assert server.components
       assert server.storages
       assert server.networks
-      assert server.resources
 
       refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, motherboard_id)
 
       CacheHelper.sync_test()
     end
 
     test "detach motherboard cleans cache", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
-      components = server.components
 
       {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
@@ -70,54 +62,34 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
       ServerInternal.detach(context.server)
 
       assert StatePurgeQueue.lookup(:server, server_id)
-      assert StatePurgeQueue.lookup(:component, motherboard_id)
-      assert StatePurgeQueue.lookup(:component, Enum.random(components))
 
       StatePurgeQueue.sync()
 
       assert {:hit, server} = CacheInternal.direct_query(:server, server_id)
 
       assert_id server.server_id, server_id
-      assert server.entity_id
-      refute server.motherboard_id
-      refute server.components
-      refute server.storages
-      refute server.networks
-      refute server.resources
-
-      assert_miss CacheInternal.direct_query(:component, motherboard_id)
-
-      # Note that the mobo components still exist, because ideally one should
-      # detach a motherboard only after all components have been removed.
-      # Since we called ServerInternal directly, we've bypassed this rule.
-      Enum.each(components, fn(component_id) ->
-        assert {:hit, _} = CacheInternal.direct_query(:component, component_id)
-      end)
+      assert Enum.empty?(server.storages)
+      assert Enum.empty?(server.networks)
 
       CacheHelper.sync_test()
     end
 
     test "detach motherboard cleans cache (cold)", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       {:ok, server} = BuilderInternal.by_server(server_id)
-      components = server.components
 
       refute StatePurgeQueue.lookup(:server, server_id)
 
       ServerInternal.detach(context.server)
 
-      assert StatePurgeQueue.lookup(:component, motherboard_id)
       refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, Enum.random(components))
 
       CacheHelper.sync_test()
     end
 
     test "deleting server cleans cache", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       {:ok, server} = PopulateInternal.populate(:by_server, server_id)
 
@@ -128,10 +100,6 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
       ServerInternal.delete(context.server)
 
       assert StatePurgeQueue.lookup(:server, server_id)
-      assert StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.each(server.components, fn(component_id) ->
-        assert StatePurgeQueue.lookup(:component, component_id)
-      end)
       Enum.each(server.storages, fn(storage_id) ->
         assert StatePurgeQueue.lookup(:storage, storage_id)
       end)
@@ -148,7 +116,6 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
     test "deleting server cleans cache (cold)", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       {:ok, server} = BuilderInternal.by_server(server_id)
 
@@ -160,11 +127,6 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
       # Nothing to delete...
       refute StatePurgeQueue.lookup(:server, server_id)
-      refute StatePurgeQueue.lookup(:component, motherboard_id)
-      Enum.each(server.components, fn(component_id) ->
-        refute StatePurgeQueue.lookup(:component, component_id)
-      end)
-      refute StatePurgeQueue.lookup(:component, Enum.random(server.components))
       Enum.each(server.storages, fn(storage_id) ->
         refute StatePurgeQueue.lookup(:storage, storage_id)
       end)
