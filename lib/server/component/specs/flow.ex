@@ -96,6 +96,9 @@ defmodule Helix.Server.Component.Spec.Flow do
             "cpu_" <> _ ->
               :cpu
 
+            "ram_" <> _ ->
+              :ram
+
             "hdd_" <> _ ->
               :hdd
 
@@ -104,9 +107,6 @@ defmodule Helix.Server.Component.Spec.Flow do
 
             "mobo_" <> _ ->
               :mobo
-
-            _ ->
-              raise "wat"
           end
 
         dispatch(type, :"spec_#{spec_id}", [])

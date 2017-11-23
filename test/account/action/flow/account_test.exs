@@ -31,7 +31,7 @@ defmodule Helix.Account.Action.Flow.AccountTest do
 
       # Components have been linked to the entity
       components = EntityQuery.get_components(entity)
-      assert length(components) == 4
+      assert length(components) == 5
     end
   end
 end

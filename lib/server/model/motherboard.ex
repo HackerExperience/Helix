@@ -60,7 +60,6 @@ defmodule Helix.Server.Model.Motherboard do
   ]
 
   @primary_key false
-  # @primary_key {:motherboard_id, Component.ID, autogenerate: false}
   schema "motherboards" do
     field :motherboard_id, Component.ID,
       primary_key: true
@@ -161,7 +160,7 @@ defmodule Helix.Server.Model.Motherboard do
   end
 
   def get_initial_components,
-    do: [:cpu, :hdd, :nic]
+    do: [:cpu, :hdd, :nic, :ram]
 
   def has_required_initial_components?(initial_components) do
     initial_components

@@ -43,11 +43,13 @@ defmodule Helix.Server.Internal.MotherboardTest do
       # the total resources accordingly
       {cpu, _} = ComponentSetup.component(type: :cpu)
       {hdd, _} = ComponentSetup.component(type: :hdd)
+      {ram, _} = ComponentSetup.component(type: :ram)
       {nic, _} = ComponentSetup.nic(ulk: 20, dlk: 21, network_id: @internet_id)
 
       assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, cpu, :cpu_1)
       assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, hdd, :hdd_1)
       assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, nic, :nic_1)
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, ram, :ram_1)
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
       new_res = MotherboardInternal.get_resources(motherboard)
@@ -58,6 +60,8 @@ defmodule Helix.Server.Internal.MotherboardTest do
       assert new_res.cpu.clock == components.cpu.custom.clock + cpu.custom.clock
       assert new_res.hdd.size == components.hdd.custom.size + hdd.custom.size
       assert new_res.hdd.iops == components.hdd.custom.iops + hdd.custom.iops
+      assert new_res.ram.clock == components.ram.custom.clock + ram.custom.clock
+      assert new_res.ram.size == components.ram.custom.size + ram.custom.size
       assert new_res.net[@internet_id].dlk == 60 + 21
       assert new_res.net[@internet_id].ulk == 30 + 20
 
@@ -86,7 +90,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
       # Let's create all the required components first
       {mobo, _} = ComponentSetup.component(type: :mobo)
       {cpu, _} = ComponentSetup.component(type: :cpu)
-      # {ram, _} = ComponentSetup.component(type: :ram)
+      {ram, _} = ComponentSetup.component(type: :ram)
       {hdd, _} = ComponentSetup.component(type: :hdd)
       {nic, _} = ComponentSetup.component(type: :nic)
 
@@ -94,12 +98,14 @@ defmodule Helix.Server.Internal.MotherboardTest do
       assert cpu.type == :cpu
       assert hdd.type == :hdd
       assert nic.type == :nic
+      assert ram.type == :ram
 
       initial_components =
         [
           {cpu, :cpu_0},
           {hdd, :hdd_0},
-          {nic, :nic_0}
+          {nic, :nic_0},
+          {ram, :ram_0}
         ]
 
       assert {:ok, motherboard} =
@@ -117,6 +123,9 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
           :nic_0 ->
             assert component.component_id == nic.component_id
+
+          :ram_0 ->
+            assert component.component_id == ram.component_id
         end
       end)
     end
@@ -126,11 +135,12 @@ defmodule Helix.Server.Internal.MotherboardTest do
         mobo: mobo,
         cpu: cpu,
         hdd: hdd,
+        ram: ram,
         nic: nic
       } = ComponentSetup.mobo_components()
 
-      i0 = [{hdd, :cpu_0}, {cpu, :hdd_0}, {nic, :nic_0}]
-      i1 = [{cpu, :cpu_0}, {hdd, :hdd_9}, {nic, :nic_0}]
+      i0 = [{hdd, :cpu_0}, {cpu, :hdd_0}, {nic, :nic_0}, {ram, :ram_0}]
+      i1 = [{cpu, :cpu_0}, {hdd, :hdd_9}, {nic, :nic_0}, {ram, :ram_0}]
 
       assert {:error, reason} = MotherboardInternal.setup(mobo, i0)
       assert reason == :wrong_slot_type
@@ -155,14 +165,16 @@ defmodule Helix.Server.Internal.MotherboardTest do
         mobo: mobo,
         cpu: _cpu,
         hdd: hdd,
-        nic: nic
+        nic: nic,
+        ram: ram
       } = ComponentSetup.mobo_components()
 
       initial_components =
         [
           {mobo, :cpu_0},
           {hdd, :hdd_0},
-          {nic, :nic_0}
+          {nic, :nic_0},
+          {ram, :ram_0}
         ]
 
       assert {:error, reason} =

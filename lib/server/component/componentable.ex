@@ -15,6 +15,21 @@ defmodule Helix.Server.Componentable do
     resource :clock
   end
 
+  component RAM do
+
+    defstruct [:clock, :size]
+
+    def new(ram = %{type: :ram}) do
+      %RAM{
+        clock: ram.custom.clock,
+        size: ram.custom.size
+      }
+    end
+
+    resource :clock
+    resource :size
+  end
+
   component HDD do
 
     defstruct [:size, :iops]
@@ -42,7 +57,6 @@ defmodule Helix.Server.Componentable do
       |> Map.put(network_id, speed_info)
       |> Map.put(:__struct__, NIC)
     end
-
   end
 
   component MOBO do

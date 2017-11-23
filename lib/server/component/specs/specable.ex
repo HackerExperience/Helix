@@ -16,13 +16,37 @@ defmodule Helix.Server.Component.Specable do
       do: validate_has_keys(data, [:name, :price, :slot, :clock])
 
     spec :CPU_001 do
-
       %{
         name: "Threadisaster",
         price: 100,
         slot: :cpu,
 
         clock: 256
+      }
+    end
+  end
+
+  specs RAM do
+
+    @initial :ram_001
+
+    def create_custom(spec),
+      do: %{clock: spec.clock, size: spec.size}
+
+    def format_custom(custom),
+      do: %{clock: custom["clock"], size: custom["size"]}
+
+    def validate_spec(data),
+      do: validate_has_keys(data, [:name, :price, :clock, :size])
+
+    spec :RAM_001 do
+      %{
+        name: "RAM Na Montana",
+        price: 100,
+        slot: :ram,
+
+        clock: 100,
+        size: 256
       }
     end
   end
@@ -41,7 +65,6 @@ defmodule Helix.Server.Component.Specable do
       do: validate_has_keys(data, [:name, :price, :slot, :size])
 
     spec :HDD_001 do
-
       %{
         name: "SemDisk",
         price: 150,

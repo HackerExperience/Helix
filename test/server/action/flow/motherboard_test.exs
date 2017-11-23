@@ -38,7 +38,7 @@ defmodule Helix.Server.Action.Flow.MotherboardTest do
 
       # Components are linked to the entity
       owned_components = EntityQuery.get_components(entity)
-      assert length(owned_components) == 4
+      assert length(owned_components) == 5
 
       # NIC has NC assigned to it
       nc = NetworkQuery.Connection.fetch_by_nic(nic)

@@ -63,13 +63,14 @@ defmodule Helix.Test.Server.Component.Setup do
 
     {mobo, _} = component(type: :mobo, spec_id: mobo_spec_id)
     {cpu, _} = component(type: :cpu)
-    # {ram, _} = component(type: :ram)
+    {ram, _} = component(type: :ram)
     {hdd, _} = component(type: :hdd)
     {nic, _} = nic(opts[:nic_opts] || [])
 
     %{
       mobo: mobo,
       cpu: cpu,
+      ram: ram,
       hdd: hdd,
       nic: nic
     }
@@ -90,6 +91,7 @@ defmodule Helix.Test.Server.Component.Setup do
       mobo: mobo,
       cpu: cpu,
       hdd: hdd,
+      ram: ram,
       nic: nic
     } = related = mobo_components(components_opts)
 
@@ -97,7 +99,8 @@ defmodule Helix.Test.Server.Component.Setup do
       [
         {cpu, :cpu_0},
         {hdd, :hdd_0},
-        {nic, :nic_0}
+        {nic, :nic_0},
+        {ram, :ram_0}
       ]
 
     {:ok, entries} = MotherboardInternal.setup(mobo, initial_components)

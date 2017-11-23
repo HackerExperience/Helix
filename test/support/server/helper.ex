@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Server.Helper do
 
   alias Ecto.Changeset
@@ -43,24 +44,39 @@ defmodule Helix.Test.Server.Helper do
   a new one and attach to the motherboard.
   Within the test context, we can get away with modifying the component directly
   """
-  def update_server_specs(server = %Server{}, new_specs) do
+  def update_server_specs(server = %Server{}, new) do
     motherboard = server.motherboard_id |> MotherboardQuery.fetch()
 
     cpu = motherboard |> MotherboardInternal.get_cpus() |> List.first()
-    # ram = motherboard |> MotherboardInternal.get_rams() |> List.first()
+    ram = motherboard |> MotherboardInternal.get_rams() |> List.first()
     nic = motherboard |> MotherboardInternal.get_nics() |> List.first()
+    hdd = motherboard |> MotherboardInternal.get_hdds() |> List.first()
 
-    if new_specs[:cpu] do
-      ComponentInternal.update_custom(cpu, %{clock: new_specs[:cpu]})
+    if new[:cpu] do
+      ComponentInternal.update_custom(cpu, %{clock: new[:cpu]})
     end
 
-    # if new_specs[:ram] do
-    #   ComponentInternal.update_custom(ram, %{size: new_specs[:ram]})
-    # end
+    ram_custom =
+      %{}
+      |> Map.merge(new[:ram_size] && %{size: new[:ram_size]} || %{})
+      |> Map.merge(new[:ram_clock] && %{clock: new[:ram_clock]} || %{})
 
-    if not is_nil(new_specs[:dlk]) or not is_nil(new_specs[:ulk]) do
-      dlk = new_specs[:dlk] || nic.custom.dlk
-      ulk = new_specs[:ulk] || nic.custom.ulk
+    unless Enum.empty?(ram_custom) do
+      ComponentInternal.update_custom(ram, ram_custom)
+    end
+
+    hdd_custom =
+      %{}
+      |> Map.merge(new[:hdd_size] && %{size: new[:hdd_size]} || %{})
+      |> Map.merge(new[:hdd_iops] && %{iops: new[:hdd_iops]} || %{})
+
+    unless Enum.empty?(hdd_custom) do
+      ComponentInternal.update_custom(hdd, hdd_custom)
+    end
+
+    if not is_nil(new[:dlk]) or not is_nil(new[:ulk]) do
+      dlk = new[:dlk] || nic.custom.dlk
+      ulk = new[:ulk] || nic.custom.ulk
 
       custom = %{dlk: dlk, ulk: ulk}
 

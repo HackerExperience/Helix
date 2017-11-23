@@ -101,7 +101,7 @@ defmodule Helix.Entity.Internal.EntityTest do
 
       components = EntityInternal.get_components(entity)
 
-      assert length(components) == 4
+      assert length(components) == 5
 
       component = Enum.random(components)
 

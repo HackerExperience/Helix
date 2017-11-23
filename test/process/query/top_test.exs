@@ -16,10 +16,12 @@ defmodule Helix.Process.Query.TOPTest do
 
       resources = TOPQuery.load_top_resources(server.server_id)
 
+      # TOP's CPU (processing power) equals CPU.clock + RAM.clock
+      assert resources.cpu ==
+        get_initial_resource(:cpu, :clock) + get_initial_resource(:ram, :clock)
+      assert resources.ram == get_initial_resource(:ram, :size)
       # Note: dlk/ulk values are hard-coded because we don't have the ISP API.
       # Update when we do
-      assert resources.cpu == get_initial_resource(:cpu, :clock)
-      assert resources.ram == get_initial_resource(:ram, :size)
       assert resources.dlk[@internet_id] == 128
       assert resources.ulk[@internet_id] == 16
     end

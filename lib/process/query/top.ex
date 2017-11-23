@@ -9,6 +9,11 @@ defmodule Helix.Process.Query.TOP do
     Process.Resources.t
   @doc """
   Returns the total TOP resources that the server supports.
+
+  Note that the TOP resources are not a 1-to-1 mapping of the Server resources.
+
+  Differences:
+  - Resulting processing power of TOP is CPU.clock + RAM.clock
   """
   def load_top_resources(server = %Server{}) do
     resources =
@@ -37,9 +42,8 @@ defmodule Helix.Process.Query.TOP do
         end)
 
     %{
-      cpu: resources.cpu.clock,
-      ram: 500,
-      # ram: resources.ram,
+      cpu: resources.cpu.clock + resources.ram.clock,
+      ram: resources.ram.size,
       dlk: server_dlk,
       ulk: server_ulk
     }

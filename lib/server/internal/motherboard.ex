@@ -56,6 +56,9 @@ defmodule Helix.Server.Internal.Motherboard do
   def get_nics(motherboard = %Motherboard{}),
     do: get_component(motherboard, :nic)
 
+  def get_rams(motherboard = %Motherboard{}),
+    do: get_component(motherboard, :ram)
+
   defp get_component(motherboard = %Motherboard{}, component_type) do
     Enum.reduce(motherboard.slots, [], fn {_slot_id, component}, acc ->
       if component.type == component_type do

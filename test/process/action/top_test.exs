@@ -122,15 +122,16 @@ defmodule Helix.Process.Action.TOPTest do
       # In order to test this, we'll need to make the process allocation change
       # somehow. Let's cheat and reduce the server's total CPU. This should
       # reduce the process allocation, which uses 100% of the available CPU.
-      ServerHelper.update_server_specs(gateway, %{cpu: 500})
+      ServerHelper.update_server_specs(gateway, %{cpu: 500, ram_clock: 100})
 
       # So, let's recalque again and see if something changed
       assert {:ok, [proc_recalque3], _} = TOPAction.recalque(gateway.server_id)
 
-      # Reserved/allocated CPU went down to 500
+      # Reserved/allocated CPU went down to 600 (remember that TOP uses both
+      # CPU clock and RAM clock as processing power).
       refute proc_recalque3.next_allocation == proc_recalque2.next_allocation
       refute proc_recalque3.l_reserved == proc_recalque2.l_reserved
-      assert_resource proc_recalque3.l_reserved.cpu, 500
+      assert_resource proc_recalque3.l_reserved.cpu, 600
 
       # How about the processed (on DB)?
       raw_proc = ProcessHelper.raw_get(process.process_id)
