@@ -38,10 +38,7 @@ defmodule Helix.Cache.Action.Cache do
 
   alias HELL.IPv4
   alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Component
-  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
-  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery

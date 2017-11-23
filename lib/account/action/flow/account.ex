@@ -23,7 +23,7 @@ defmodule Helix.Account.Action.Flow.Account do
         {:ok, entity} <- EntityAction.create_from_specialization(account),
         on_fail(fn -> EntityAction.delete(entity) end),
 
-        {:ok, motherboard, mobo} <-
+        {:ok, _motherboard, mobo} <-
            MotherboardFlow.initial_hardware(entity, relay),
         {:ok, server} <- ServerFlow.setup(:desktop, entity, mobo, relay)
       do

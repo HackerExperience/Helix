@@ -3,7 +3,6 @@ defmodule Helix.Account.Action.Flow.AccountTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
 

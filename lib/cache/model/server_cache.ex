@@ -7,7 +7,6 @@ defmodule Helix.Cache.Model.ServerCache do
   alias Ecto.Changeset
   alias HELL.IPv4
   alias HELL.PK
-  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
 
   @type cache_nip :: %{

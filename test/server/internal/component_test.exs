@@ -24,18 +24,11 @@ defmodule Helix.Server.Internal.ComponentTest do
     test "inserts the component in the database" do
       spec = ComponentHelper.random_spec()
 
-      custom =
-        if spec.component_type == :nic do
-          %{network_id: "::", dlk: 100, ulk: 100}
-        else
-          %{}
-        end
-
-      assert {:ok, component} = ComponentInternal.create(spec, custom)
+      assert {:ok, component} = ComponentInternal.create(spec)
 
       assert component.spec_id == spec.spec_id
       assert component.type == spec.component_type
-      assert component.custom == Specable.create_custom(spec, custom)
+      assert component.custom == Specable.create_custom(spec)
     end
   end
 

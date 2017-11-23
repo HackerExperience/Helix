@@ -154,8 +154,11 @@ defmodule Helix.Cache.Query.CacheTest do
     test "sync is transparent", context do
       server_id = context.server.server_id
 
+      # Not on the cache
       refute StatePurgeQueue.lookup(:server, server_id)
-      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
+
+      # Let's put it there
+      PopulateInternal.populate(:by_server, server_id)
 
       # Purge
       CacheAction.purge_server(server_id)

@@ -72,7 +72,6 @@ defmodule Helix.Cache.Action.CacheTest do
 
     test "it works when motherboard is nil", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       PopulateInternal.populate(:by_server, server_id)
 

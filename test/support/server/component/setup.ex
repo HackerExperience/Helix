@@ -42,7 +42,7 @@ defmodule Helix.Test.Server.Component.Setup do
         custom
       end
 
-    changeset = Component.create_from_spec(spec, custom)
+    changeset = Component.create_from_spec(spec)
 
     component = Changeset.apply_changes(changeset)
 

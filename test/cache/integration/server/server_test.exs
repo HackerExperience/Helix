@@ -2,7 +2,6 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
 
   use Helix.Test.Case.Integration
 
-  import Helix.Test.Case.Cache
   import Helix.Test.Case.ID
 
   alias Helix.Server.Internal.Server, as: ServerInternal
@@ -53,8 +52,8 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
     test "detach motherboard cleans cache", context do
       server_id = context.server.server_id
 
-      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
-
+      # Ensure it is on the cache
+      PopulateInternal.populate(:by_server, server_id)
       {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
       refute StatePurgeQueue.lookup(:server, server_id)
@@ -77,8 +76,9 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
     test "detach motherboard cleans cache (cold)", context do
       server_id = context.server.server_id
 
-      {:ok, server} = BuilderInternal.by_server(server_id)
+      # {:ok, server} = BuilderInternal.by_server(server_id)
 
+      # Ensure it's NOT on the cache
       refute StatePurgeQueue.lookup(:server, server_id)
 
       ServerInternal.detach(context.server)

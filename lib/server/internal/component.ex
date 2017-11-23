@@ -15,9 +15,9 @@ defmodule Helix.Server.Internal.Component do
     end
   end
 
-  def create(spec = %Component.Spec{}, custom \\ %{}) do
+  def create(spec = %Component.Spec{}) do
     spec
-    |> Component.create_from_spec(custom)
+    |> Component.create_from_spec()
     |> Repo.insert()
   end
 
@@ -34,7 +34,7 @@ defmodule Helix.Server.Internal.Component do
         |> Enum.map(fn component_type ->
             component_type
             |> Component.Spec.get_initial()
-            |> Component.create_from_spec(%{})
+            |> Component.create_from_spec()
             |> Repo.insert()
           end)
 
@@ -43,7 +43,7 @@ defmodule Helix.Server.Internal.Component do
         nil ->
           Enum.map(result, &(elem(&1, 1)))
 
-        {:error, changeset} ->
+        {:error, _} ->
           Repo.rollback(:internal)
       end
     end)

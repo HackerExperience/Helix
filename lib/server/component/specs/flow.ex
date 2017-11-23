@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Server.Component.Spec.Flow do
 
   import HELL.Macros.Utils
@@ -56,8 +57,8 @@ defmodule Helix.Server.Component.Spec.Flow do
   defp specs_functions do
     quote do
 
-      def create_custom(spec, custom),
-        do: dispatch(spec.component_type, :create_custom, [spec.data, custom])
+      def create_custom(spec),
+        do: dispatch(spec.component_type, :create_custom, [spec.data])
 
       def format_custom(component) do
         formatted? =

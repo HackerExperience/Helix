@@ -7,7 +7,6 @@ defmodule Helix.Entity.Internal.EntityTest do
   alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Repo
 
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
@@ -96,7 +95,9 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "unlink_component/2" do
     test "removing entity ownership over components is idempotent" do
-      {server, %{entity: entity}} = ServerSetup.server()
+      # Create a server assigned to `entity`. So we know for sure that that
+      # entity owns at least the initial components
+      {_, %{entity: entity}} = ServerSetup.server()
 
       components = EntityInternal.get_components(entity)
 

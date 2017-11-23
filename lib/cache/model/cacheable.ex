@@ -12,7 +12,6 @@ end
 defimpl Helix.Cache.Model.Cacheable, for: ServerCache do
 
   alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Model.Cacheable.Utils

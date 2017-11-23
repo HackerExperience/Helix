@@ -8,7 +8,6 @@ defmodule Helix.Server.Model.Motherboard do
   alias Ecto.Changeset
   alias HELL.Constant
   alias HELL.MapUtils
-  alias Helix.Network.Model.Network
   alias Helix.Server.Component.Specable
   alias Helix.Server.Model.Component
   alias __MODULE__, as: Motherboard
@@ -107,8 +106,6 @@ defmodule Helix.Server.Model.Motherboard do
   end
 
   def get_resources(motherboard = %Motherboard{}) do
-    initial = %{}
-
     Enum.reduce(motherboard.slots, %{}, fn {_, component}, acc ->
       resource =
         component
@@ -259,7 +256,8 @@ defmodule Helix.Server.Model.Motherboard do
         slot_id: slot_id
       }
 
-    %__MODULE__{}
+    # %__MODULE__{}
+    changeset
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
   end
@@ -290,7 +288,7 @@ defmodule Helix.Server.Model.Motherboard do
     def by_motherboard(query, mobo = %Component{type: :mobo}),
       do: by_motherboard(query, mobo.component_id)
     def by_motherboard(query, motherboard_id) do
-      from entries in Motherboard,
+      from entries in query,
         inner_join: component in assoc(entries, :linked_component),
         where: entries.motherboard_id == ^to_string(motherboard_id),
         preload: [:linked_component]

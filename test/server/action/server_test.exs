@@ -4,7 +4,6 @@ defmodule Helix.Server.Action.ServerTest do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Action.Server, as: ServerAction
-  alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
   alias HELL.TestHelper.Random

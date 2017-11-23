@@ -34,10 +34,8 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         hdd = Enum.find(components, &(&1.type == :hdd)),
 
         # Link all components into the motherboard
-        {:ok, motherboard} <- MotherboardAction.setup(mobo, slotted_components),
-        on_fail(fn ->
-          Enum.each(components, &MotherboardAction.unlink(motherboard, &1))
-        end),
+        {:ok, _} <- MotherboardAction.setup(mobo, slotted_components),
+        on_fail(fn -> Enum.each(components, &MotherboardAction.unlink(&1)) end),
 
         # Link all components to the entity
         :ok <- link_components(components, entity),
@@ -63,7 +61,7 @@ defmodule Helix.Server.Action.Flow.Motherboard do
   end
 
   defp link_components(components, entity) do
-    Enum.reduce_while(components, :ok, fn component, acc ->
+    Enum.reduce_while(components, :ok, fn component, _ ->
       case EntityAction.link_component(entity, component) do
         {:ok, _} ->
           on_fail(fn -> EntityAction.unlink_component(component) end)

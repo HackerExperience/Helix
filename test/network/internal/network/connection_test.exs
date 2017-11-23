@@ -6,7 +6,6 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
   alias Helix.Network.Internal.Network, as: NetworkInternal
 
   alias HELL.TestHelper.Random
-  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -70,9 +69,6 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
 
   describe "update_ip/2" do
     test "modifies ip" do
-      network = NetworkHelper.internet()
-      ip = Random.ipv4()
-
       {server, _} = ServerSetup.server()
 
       [nic] =

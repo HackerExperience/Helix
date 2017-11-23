@@ -6,7 +6,7 @@ defmodule Helix.Server.Component.Specable do
 
     @initial :cpu_001
 
-    def create_custom(spec, _),
+    def create_custom(spec),
       do: %{clock: spec.clock}
 
     def format_custom(custom),
@@ -31,7 +31,7 @@ defmodule Helix.Server.Component.Specable do
 
     @initial :hdd_001
 
-    def create_custom(spec, _),
+    def create_custom(spec),
       do: %{size: spec.size, iops: spec.iops}
 
     def format_custom(custom),
@@ -60,7 +60,7 @@ defmodule Helix.Server.Component.Specable do
 
     @initial :nic_001
 
-    def create_custom(_, custom) do
+    def create_custom(_) do
       %{
         ulk: 0,
         dlk: 0,
@@ -78,7 +78,7 @@ defmodule Helix.Server.Component.Specable do
     def format_custom(_),
       do: %{}
 
-    def validate_spec(data),
+    def validate_spec(_),
       do: true
 
     spec :NIC_001 do
@@ -94,7 +94,7 @@ defmodule Helix.Server.Component.Specable do
 
     @initial :mobo_001
 
-    def create_custom(spec, _),
+    def create_custom(spec),
       do: %{slots: spec.slots}
 
     def format_custom(custom) do
@@ -121,7 +121,7 @@ defmodule Helix.Server.Component.Specable do
     end
 
     # TODO
-    def validate_spec(data) do
+    def validate_spec(_) do
       true
     end
 
