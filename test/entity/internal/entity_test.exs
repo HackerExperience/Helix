@@ -9,20 +9,17 @@ defmodule Helix.Entity.Internal.EntityTest do
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo
 
-  alias Helix.Test.Entity.Factory
-
-  defp generate_params do
-    e = Factory.build(:entity)
-
-    %{
-      entity_id: e.entity_id,
-      entity_type: e.entity_type
-    }
-  end
+  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Entity.Setup, as: EntitySetup
 
   describe "entity creation" do
     test "succeeds with valid params" do
-      params = generate_params()
+      params =
+        %{
+          entity_id: Entity.ID.generate(),
+          entity_type: :account
+        }
+
       {:ok, entity} = EntityInternal.create(params)
 
       assert entity.entity_id == params.entity_id
@@ -36,7 +33,7 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "fetch/1" do
     test "returns entity on success" do
-      entity = Factory.insert(:entity)
+      {entity, _} = EntitySetup.entity()
 
       result = EntityInternal.fetch(entity.entity_id)
 
@@ -51,12 +48,12 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "fetch_by_server/1" do
     test "returns entity if server is owned" do
-      es = Factory.insert(:entity_server)
+      {server, %{entity: entity}} = ServerSetup.server()
 
-      result = EntityInternal.fetch_by_server(es.server_id)
+      result = EntityInternal.fetch_by_server(server.server_id)
 
       assert result
-      assert result.entity_id == es.entity_id
+      assert result.entity_id == entity.entity_id
     end
 
     test "returns nil if server is not owned" do
@@ -66,20 +63,21 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "delete/1" do
     test "removes entry" do
-      entity = Factory.insert(:entity)
+      {entity, _} = EntitySetup.entity()
 
-      assert Repo.get(Entity, entity.entity_id)
+      assert EntityInternal.fetch(entity.entity_id)
 
       EntityInternal.delete(entity)
 
-      refute Repo.get(Entity, entity.entity_id)
+      refute EntityInternal.fetch(entity.entity_id)
+
       CacheHelper.sync_test()
     end
   end
 
   describe "link_component/2" do
     test "succeeds with entity struct" do
-      entity = Factory.insert(:entity)
+      {entity, _} = EntitySetup.entity()
       component_id = Component.ID.generate()
 
       {:ok, link} = EntityInternal.link_component(entity, component_id)
@@ -98,22 +96,21 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "unlink_component/2" do
     test "removing entity ownership over components is idempotent" do
-      ec = Factory.insert(:entity_component)
+      {server, %{entity: entity}} = ServerSetup.server()
 
-      components =
-        ec.entity
-        |> Repo.preload(:components, force: true)
-        |> Map.fetch!(:components)
-      refute Enum.empty?(components)
+      components = EntityInternal.get_components(entity)
 
-      EntityInternal.unlink_component(ec.component_id)
-      EntityInternal.unlink_component(ec.component_id)
+      assert length(components) == 4
 
-      components =
-        ec.entity
-        |> Repo.preload(:components, force: true)
-        |> Map.fetch!(:components)
-      assert Enum.empty?(components)
+      component = Enum.random(components)
+
+      EntityInternal.unlink_component(component.component_id)
+      EntityInternal.unlink_component(component.component_id)
+
+      new_components = EntityInternal.get_components(entity)
+
+      refute components == new_components
+      assert length(components) == length(new_components) + 1
 
       CacheHelper.sync_test()
     end
@@ -121,7 +118,8 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "link_server/2" do
     test "succeeds with entity struct" do
-      entity = Factory.insert(:entity)
+      {entity, _} = EntitySetup.entity()
+
       server_id = Server.ID.generate()
 
       {:ok, link} = EntityInternal.link_server(entity, server_id)
@@ -140,22 +138,12 @@ defmodule Helix.Entity.Internal.EntityTest do
 
   describe "unlink_server/2" do
     test "removing entity ownership over servers is idempotent" do
-      es = Factory.insert(:entity_server)
+      {server, %{entity: entity}} = ServerSetup.server()
 
-      servers =
-        es.entity
-        |> Repo.preload(:servers, force: true)
-        |> Map.fetch!(:servers)
-      refute Enum.empty?(servers)
+      EntityInternal.unlink_server(server.server_id)
+      EntityInternal.unlink_server(server.server_id)
 
-      EntityInternal.unlink_server(es.server_id)
-      EntityInternal.unlink_server(es.server_id)
-
-      servers =
-        es.entity
-        |> Repo.preload(:servers, force: true)
-        |> Map.fetch!(:servers)
-      assert Enum.empty?(servers)
+      assert Enum.empty?(EntityInternal.get_servers(entity))
 
       CacheHelper.sync_test()
     end

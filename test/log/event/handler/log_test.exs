@@ -13,8 +13,8 @@ defmodule Helix.Log.Event.Handler.LogTest do
   alias Helix.Log.Repo
 
   alias Helix.Test.Event.Setup, as: EventSetup
-  alias Helix.Test.Entity.Factory, as: EntityFactory
-  alias Helix.Test.Server.Factory, as: ServerFactory
+  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Log.Factory, as: LogFactory
 
   describe "handle_event/1" do
@@ -50,7 +50,7 @@ defmodule Helix.Log.Event.Handler.LogTest do
   describe "log_forge_conclusion/1 for LogForge.Edit" do
     test "adds revision to target log" do
       target_log = LogFactory.insert(:log)
-      entity = EntityFactory.insert(:entity)
+      {entity, _} = EntitySetup.entity()
       message = "I just got hidden"
 
       event = %LogForgeEditComplete{
@@ -72,8 +72,8 @@ defmodule Helix.Log.Event.Handler.LogTest do
 
   describe "log_forge_conclusion/1 for LogForge.Create" do
     test "creates specified log on target server" do
-      entity = EntityFactory.insert(:entity)
-      server = ServerFactory.insert(:server)
+      {server, %{entity: entity}} = ServerSetup.server()
+
       message = "Mess with the best, die like the rest"
 
       event = %LogForgeCreateComplete{
