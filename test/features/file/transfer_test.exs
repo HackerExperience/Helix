@@ -68,7 +68,7 @@ defmodule Helix.Test.Features.File.TransferTest do
 
       # The new file exists on my server
       new_file =
-        file_downloaded_event.data.file.file_id
+        file_downloaded_event.data.file.id
         |> File.ID.cast!()
         |> FileQuery.fetch()
 
@@ -79,7 +79,7 @@ defmodule Helix.Test.Features.File.TransferTest do
       assert r_file.storage_id == SoftwareHelper.get_storage_id(destination)
 
       # Client received the FileAddedEvent
-      assert file_added_event.data.file.file_id == to_string(new_file.file_id)
+      assert file_added_event.data.file.id == to_string(new_file.file_id)
 
       TOPHelper.top_stop(gateway)
     end

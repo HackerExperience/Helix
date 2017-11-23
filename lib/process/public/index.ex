@@ -5,14 +5,7 @@ defmodule Helix.Process.Public.Index do
   alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Process.Query.Process, as: ProcessQuery
 
-  @type index ::
-    %{
-      local: [local_process],
-      remote: [remote_process]
-    }
-
-  @type local_process :: map
-  @type remote_process :: map
+  @type index :: [map]
 
   @spec index(Server.id, Entity.id) ::
     index
@@ -39,9 +32,6 @@ defmodule Helix.Process.Public.Index do
         ProcessView.render(process.data, process, server_id, entity_id)
       end)
 
-    %{
-      local: rendered_local_processes,
-      remote: rendered_remote_processes
-    }
+    rendered_local_processes ++ rendered_remote_processes
   end
 end

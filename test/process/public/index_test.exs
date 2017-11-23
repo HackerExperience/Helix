@@ -42,12 +42,12 @@ defmodule Helix.Process.Public.IndexTest do
 
       index = ProcessIndex.index(server.server_id, entity.entity_id)
 
-      assert length(index.local) == 2
-      assert length(index.remote) == 1
+      # There are three processes total
+      assert length(index) == 3
 
-      result_process1 = Enum.find(index.local, &(find_by_id(&1, process1)))
-      result_process2 = Enum.find(index.local, &(find_by_id(&1, process2)))
-      result_process3 = Enum.find(index.remote, &(find_by_id(&1, process3)))
+      result_process1 = Enum.find(index, &(find_by_id(&1, process1)))
+      result_process2 = Enum.find(index, &(find_by_id(&1, process2)))
+      result_process3 = Enum.find(index, &(find_by_id(&1, process3)))
 
       # Result comes in binary format
       assert is_binary(result_process1.process_id)

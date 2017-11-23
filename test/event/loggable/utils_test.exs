@@ -50,7 +50,7 @@ defmodule Helix.Loggable.UtilsTest do
   describe "get_ip/2" do
     test "Returns `Unknow` if not found" do
       ip = LoggableUtils.get_ip(Server.ID.generate(), Network.ID.generate())
-      assert ip == "[Unknown]"
+      assert ip == "Unknown"
     end
   end
 end

@@ -16,7 +16,7 @@ defmodule Helix.Event.State.TimerTest do
 
       event = EventSetup.Story.reply_sent(cur_step, "reply_to_e3", "e3")
 
-      # We've just asked to emit `event` within 100 ms
+      # We've just asked to emit `event` within 50 ms
       EventTimer.emit_after(event, 50)
 
       # Meanwhile, let's make sure the current step on the DB hasn't changed.

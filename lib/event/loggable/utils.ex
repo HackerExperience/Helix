@@ -73,7 +73,7 @@ defmodule Helix.Event.Loggable.Utils do
 
   docp """
   Helper to verify whether the ASCII char is a number.
-  48 is 0 and 57 is 9
+  48 is `0` and 57 is `9`
   """
   defp char_is_number?(char),
     do: char >= 48 and char <= 57
@@ -82,5 +82,5 @@ defmodule Helix.Event.Loggable.Utils do
   Formats an IP address to the log display.
   """
   defp format_ip(ip),
-    do: "[" <> ip <> "]"
+    do: ip
 end
