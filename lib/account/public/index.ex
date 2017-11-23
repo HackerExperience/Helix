@@ -2,10 +2,17 @@ defmodule Helix.Account.Public.Index do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Server.Model.Server
 
-  @type index :: %{}
+  @type index ::
+    %{
+      mainframe: Server.id
+    }
 
-  @type rendered_index :: %{}
+  @type rendered_index ::
+    %{
+      mainframe: String.t
+    }
 
   @spec index(Entity.id) ::
     index
