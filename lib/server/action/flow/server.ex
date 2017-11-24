@@ -9,8 +9,8 @@ defmodule Helix.Server.Action.Flow.Server do
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
 
-  # @spec setup_server(Entity.t) ::
-  #   {:ok, Server.t}
+  @spec setup(Server.type, Entity.t, Component.mobo, Event.relay) ::
+    {:ok, Server.t}
   def setup(type, entity = %Entity{}, mobo = %Component{type: :mobo}, _relay) do
     flowing do
       with \

@@ -12,7 +12,33 @@ defmodule Helix.Server.Model.Component do
   alias Helix.Server.Component.Specable
   alias __MODULE__, as: Component
 
-  @type t :: term
+  @type t :: t_of_type(type)
+  @typep t_of_type(custom_type) ::
+    %__MODULE__{
+      component_id: id,
+      type: custom_type,
+      custom: custom,
+      spec_id: Component.Spec.id
+    }
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
+  @type cpu :: t_of_type(:cpu)
+  @type hdd :: t_of_type(:hdd)
+  @type ram :: t_of_type(:ram)
+  @type nic :: t_of_type(:nic)
+  @type mobo :: t_of_type(:mobo)
+
+  @type pluggable :: cpu | hdd | ram | nic
+
+  @type type :: :cpu | :hdd | :ram | :nic | :mobo
+
+  @type custom ::
+    Component.CPU.custom
+    | Component.RAM.custom
+    | Component.HDD.custom
+    | Component.NIC.custom
+    | Component.Mobo.custom
 
   @creation_fields [:type, :spec_id, :custom]
   @required_fields [:type, :spec_id, :custom]
@@ -29,6 +55,8 @@ defmodule Helix.Server.Model.Component do
     field :spec_id, Constant
   end
 
+  @spec format(Component.t) ::
+    Component.t
   @doc """
   Recovers internal Elixir/Erlang/Helix format.
   """
@@ -38,6 +66,8 @@ defmodule Helix.Server.Model.Component do
     }
   end
 
+  @spec create_from_spec(Component.Spec.t) ::
+    changeset
   def create_from_spec(spec = %Component.Spec{}) do
     params =
       %{
@@ -57,6 +87,8 @@ defmodule Helix.Server.Model.Component do
   defdelegate get_resources(component),
     to: Componentable
 
+  @spec update_custom(Component.t, map) ::
+    changeset
   def update_custom(component = %Component{}, changes) do
     new_custom = Componentable.update_custom(component, changes)
 

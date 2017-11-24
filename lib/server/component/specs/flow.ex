@@ -4,6 +4,7 @@ defmodule Helix.Server.Component.Spec.Flow do
   import HELL.Macros.Utils
 
   alias HELL.Utils
+  alias Helix.Server.Model.Component
 
   defmacro __using__(_) do
     quote do
@@ -33,8 +34,8 @@ defmodule Helix.Server.Component.Spec.Flow do
   defp specs_getter(caller) do
     specs = Module.get_attribute(caller.module, :specs)
 
-    # HACK: Not sure how to create the following AST using Elixir's quotes and
-    # unquotes. Basically, what the cryptic lines below generate are:
+    # HACK: Not sure how to create the following AST using Elixir's `quote` and
+    # `unquote`. Basically, what the cryptic lines below generate are:
     #
     # def get_#{spec_name} do
     #   @specs_#{spec_name}
@@ -57,9 +58,13 @@ defmodule Helix.Server.Component.Spec.Flow do
   defp specs_functions do
     quote do
 
+      @spec create_custom(Component.Spec.t) ::
+        Component.custom
       def create_custom(spec),
         do: dispatch(spec.component_type, :create_custom, [spec.data])
 
+      @spec format_custom(Component.t) ::
+        Component.custom
       def format_custom(component) do
         formatted? =
           Enum.reduce(Map.keys(component.custom), true, fn key, acc ->
@@ -73,9 +78,13 @@ defmodule Helix.Server.Component.Spec.Flow do
         end
       end
 
+      @spec get_initial(Component.type) ::
+        Component.Spec.id
       def get_initial(type),
         do: dispatch(type, :get_initial, [])
 
+      @spec dispatch(Component.type, atom, [args :: term]) ::
+        term
       def dispatch(type, fun, args) do
         component_module = type |> Utils.upcase_atom()
 
@@ -87,6 +96,9 @@ defmodule Helix.Server.Component.Spec.Flow do
         apply(module, fun, args)
       end
 
+      @spec fetch(Component.Spec.id) ::
+        Component.Spec.spec
+        | nil
       def fetch(spec_id) do
         spec_id = Utils.downcase_atom(spec_id)
         spec_str = Atom.to_string(spec_id)
@@ -109,9 +121,11 @@ defmodule Helix.Server.Component.Spec.Flow do
               :mobo
           end
 
-        dispatch(type, :"spec_#{spec_id}", [])
+        dispatch(type, :fetch, [spec_id])
       end
 
+      @spec all_specs ::
+        [Component.Spec.spec]
       def all_specs do
         Enum.map(@specs, fn spec ->
           __MODULE__
@@ -120,11 +134,14 @@ defmodule Helix.Server.Component.Spec.Flow do
         end)
       end
 
-      # @spec generate_specs() ::
-        # %{
-        #   cpu: [spec :: term],
-        #   hdd: [spec :: term]
-        # }
+      @spec generate_specs() ::
+        %{
+          cpu: [__MODULE__.CPU.spec],
+          hdd: [__MODULE__.HDD.spec],
+          ram: [__MODULE__.RAM.spec],
+          nic: [__MODULE__.NIC.spec],
+          mobo: [__MODULE__.MOBO.spec]
+        }
       def generate_specs do
 
         Enum.reduce(@specs, %{}, fn spec, acc ->
@@ -180,13 +197,21 @@ defmodule Helix.Server.Component.Spec.Flow do
 
         unquote(block)
 
+        @spec fetch(Component.Spec.id) ::
+          Component.Spec.t
+          | nil
         def fetch(spec_id) do
           spec_id_name = spec_id
 
-          # TODO Raises if function is not found. Desired?
-          apply(__MODULE__, :"spec_#{spec_id_name}", [])
+          fname = :"spec_#{spec_id_name}"
+
+          if :erlang.function_exported(__MODULE__, fname, 0),
+            do: apply(__MODULE__, fname, []),
+            else: nil
         end
 
+        @spec get_initial() ::
+          Component.Spec.id
         def get_initial,
           do: @initial
       end
@@ -210,6 +235,8 @@ defmodule Helix.Server.Component.Spec.Flow do
         unquote(spec_name)
       )
 
+      @spec unquote(:"spec_#{name}")() ::
+        Component.Spec.spec
       def unquote(:"spec_#{name}")() do
         data =
           unquote(block)

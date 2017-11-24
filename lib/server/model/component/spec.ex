@@ -4,28 +4,40 @@ defmodule Helix.Server.Model.Component.Spec do
 
   import Ecto.Changeset
 
+  alias Ecto.Changeset
   alias HELL.Constant
   alias Helix.Server.Component.Specable
+  alias Helix.Server.Model.Component
 
-  @type id :: term
+  @type id ::
+    Specable.CPU.id
+    | Specable.RAM.id
+    | Specable.HDD.id
+    | Specable.NIC.id
+    | Specable.MOBO.id
+
+  @type cpu :: Specable.CPU.id
+  @type ram :: Specable.RAM.id
+  @type hdd :: Specable.HDD.id
+  @type nic :: Specable.NIC.id
+  @type mobo :: Specable.MOBO.id
 
   @type t ::
     %__MODULE__{
       spec_id: id,
-      component_type: component_type,
+      component_type: Component.type,
       data: data
     }
 
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
   @type data :: spec
   @type spec ::
-    %{
-      :spec_id => String.t,
-      :spec_type => String.t,
-      :name => String.t,
-      optional(atom) => any
-    }
-
-  @typep component_type :: Constant.t
+    Specable.CPU.spec
+    | Specable.RAM.spec
+    | Specable.HDD.spec
+    | Specable.NIC.spec
+    | Specable.MOBO.spec
 
   @creation_fields [:spec_id, :component_type, :data]
 
@@ -40,6 +52,8 @@ defmodule Helix.Server.Model.Component.Spec do
     field :data, :map
   end
 
+  @spec create_changeset(id, Component.type, spec) ::
+    changeset
   def create_changeset(spec_id, component_type, spec) do
     params =
       %{
@@ -52,16 +66,23 @@ defmodule Helix.Server.Model.Component.Spec do
     |> cast(params, @creation_fields)
   end
 
+  @spec fetch(id) ::
+    t
+    | nil
   def fetch(spec_id) do
     spec = Specable.fetch(spec_id)
 
-    %__MODULE__{
-      spec_id: spec.spec_id,
-      component_type: spec.component_type,
-      data: spec
-    }
+    if spec do
+      %__MODULE__{
+        spec_id: spec.spec_id,
+        component_type: spec.component_type,
+        data: spec
+      }
+    end
   end
 
+  @spec get_initial(Component.type) ::
+    t
   def get_initial(component_type) do
     component_type
     |> Specable.get_initial()

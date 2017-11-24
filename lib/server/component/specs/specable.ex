@@ -4,6 +4,21 @@ defmodule Helix.Server.Component.Specable do
 
   specs CPU do
 
+    @type spec ::
+      %{
+        spec_id: id,
+        component_type: :cpu,
+        name: String.t,
+        price: pos_integer,
+        slot: slot,
+        clock: pos_integer
+      }
+
+    @type id ::
+      :cpu_001
+
+    @type slot :: :cpu
+
     @initial :cpu_001
 
     def create_custom(spec),
@@ -27,6 +42,22 @@ defmodule Helix.Server.Component.Specable do
   end
 
   specs RAM do
+
+    @type spec ::
+      %{
+        spec_id: id,
+        component_type: :ram,
+        name: String.t,
+        price: pos_integer,
+        slot: slot,
+        clock: pos_integer,
+        size: pos_integer
+      }
+
+    @type id ::
+      :ram_001
+
+    @type slot :: :ram
 
     @initial :ram_001
 
@@ -53,6 +84,22 @@ defmodule Helix.Server.Component.Specable do
 
   specs HDD do
 
+    @type spec ::
+      %{
+        spec_id: id,
+        component_type: :hdd,
+        name: String.t,
+        price: pos_integer,
+        slot: slot,
+        size: pos_integer,
+        iops: pos_integer
+      }
+
+    @type slot :: :sata | :nvme
+
+    @type id ::
+      :hdd_001
+
     @initial :hdd_001
 
     def create_custom(spec),
@@ -62,7 +109,7 @@ defmodule Helix.Server.Component.Specable do
       do: %{size: custom["size"], iops: custom["iops"]}
 
     def validate_spec(data),
-      do: validate_has_keys(data, [:name, :price, :slot, :size])
+      do: validate_has_keys(data, [:name, :price, :slot, :size, :iops])
 
     spec :HDD_001 do
       %{
@@ -80,6 +127,23 @@ defmodule Helix.Server.Component.Specable do
 
     alias Helix.Network.Model.Network
     alias Helix.Network.Query.Network, as: NetworkQuery
+
+    @type spec ::
+      %{
+        spec_id: id,
+        component_type: :nic,
+        name: String.t,
+        price: pos_integer,
+        slot: slot,
+        dlk: pos_integer,
+        ulk: pos_integer,
+        network_id: Network.id
+      }
+
+    @type slot :: :nic
+
+    @type id ::
+      :nic_001
 
     @initial :nic_001
 
@@ -101,8 +165,8 @@ defmodule Helix.Server.Component.Specable do
     def format_custom(_),
       do: %{}
 
-    def validate_spec(_),
-      do: true
+    def validate_spec(data),
+      do: validate_has_keys(data, [:name, :price, :slot])
 
     spec :NIC_001 do
       %{
@@ -114,6 +178,34 @@ defmodule Helix.Server.Component.Specable do
   end
 
   specs MOBO do
+
+    @type spec ::
+      %{
+        spec_id: id,
+        component_type: :mobo,
+        name: String.t,
+        price: pos_integer,
+        slots: slots
+      }
+
+    @type slots ::
+      %{
+        cpu: slot_entries,
+        ram: slot_entries,
+        hdd: slot_entries,
+        nic: slot_entries,
+        usb: slot_entries,
+      }
+
+    @type slot_entries ::
+      %{integer => slot_info}
+
+    @type slot_info :: %{}
+
+    @type id ::
+      :mobo_001
+      | :mobo_002
+      | :mobo_999
 
     @initial :mobo_001
 
@@ -143,9 +235,9 @@ defmodule Helix.Server.Component.Specable do
       %{slots: slots}
     end
 
-    # TODO
-    def validate_spec(_) do
-      true
+    def validate_spec(data) do
+      validate_has_keys(data.slots, [:cpu, :ram, :hdd, :nic, :usb])
+      && validate_has_keys(data, [:price, :name])
     end
 
     spec :MOBO_001 do

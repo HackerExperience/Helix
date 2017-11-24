@@ -9,6 +9,14 @@ defmodule Helix.Network.Model.Connection do
   alias HELL.Constant
   alias Helix.Network.Model.Tunnel
 
+  @type t :: %__MODULE__{
+    connection_id: id,
+    tunnel_id: Tunnel.id,
+    connection_type: type,
+    tunnel: term,
+    meta: meta
+  }
+
   @type meta :: map | nil
   @type close_reasons :: :normal | :force
 
@@ -18,14 +26,6 @@ defmodule Helix.Network.Model.Connection do
     | :cracker_bruteforce
     | :bank_login
     | :wire_transfer
-
-  @type t :: %__MODULE__{
-    connection_id: id,
-    tunnel_id: Tunnel.id,
-    connection_type: type,
-    tunnel: term,
-    meta: meta
-  }
 
   @close_reasons [:normal, :force]
 

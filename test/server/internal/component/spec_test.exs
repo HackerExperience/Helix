@@ -6,7 +6,7 @@ defmodule Helix.Server.Internal.Component.SpecTest do
   alias Helix.Server.Internal.Component, as: ComponentInternal
 
   describe "fetch/1" do
-    test "returns the component" do
+    test "returns the component spec" do
       spec = ComponentInternal.Spec.fetch(:cpu_001)
 
       assert %Component.Spec{} = spec
@@ -21,5 +21,9 @@ defmodule Helix.Server.Internal.Component.SpecTest do
       assert spec.data.spec_id
       assert spec.data.component_type
     end
+  end
+
+  test "returns empty if the spec was not found" do
+    refute ComponentInternal.Spec.fetch(:cpu_666)
   end
 end

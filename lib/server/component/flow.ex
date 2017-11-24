@@ -3,6 +3,7 @@ defmodule Helix.Server.Component.Flow do
   import HELL.Macros.Utils
 
   alias HELL.Utils
+  alias Helix.Server.Model.Component
 
   defmacro __using__(_) do
     quote location: :keep do
@@ -26,28 +27,38 @@ defmodule Helix.Server.Component.Flow do
   defp components_functions do
     quote do
 
+      @spec get_resources(Component.t) ::
+        Component.custom
       def get_resources(component),
         do: dispatch(component.type, :new, [component])
 
+      @spec update_custom(Component.t, changes :: map) ::
+        Component.custom
       def update_custom(component, changes) do
         component.custom
         |> Map.merge(changes)
       end
 
+      @spec dispatch(Component.type, atom, [args :: term]) ::
+        term
       def dispatch(type, fun, args) do
         component_module = get_module_name(type)
 
         module =
-          __MODULE__
+          Helix.Server.Model.Component
           |> Utils.concat_atom(".")
           |> Utils.concat_atom(component_module)
 
         apply(module, fun, args)
       end
 
+      @spec get_types() ::
+        [Component.type]
       def get_types,
         do: @components
 
+      @spec get_module_name(Component.type) ::
+        atom
       defp get_module_name(type) do
         type
         |> Atom.to_string()
@@ -59,6 +70,7 @@ defmodule Helix.Server.Component.Flow do
 
   defmacro component(name, do: block) do
     comp_name = atomize_module_name(name)
+    module_name = get_component_module(comp_name)
 
     quote do
 
@@ -68,7 +80,7 @@ defmodule Helix.Server.Component.Flow do
         unquote(comp_name)
       )
 
-      defmodule unquote(name) do
+      defmodule unquote(module_name) do
 
         unquote(block)
       end
@@ -76,42 +88,15 @@ defmodule Helix.Server.Component.Flow do
     end
   end
 
-  defmacro custom(do: block) do
-    quote do
+  def get_component_module(component) do
+    case component do
+      :mobo ->
+        Helix.Server.Model.Component.Mobo
 
-      module_name =
-        __MODULE__
-        |> Module.split()
-        |> Enum.take(-1)
-        |> List.first()
-        |> String.downcase()
-        |> String.to_atom()
-        |> case do
-             :mobo ->
-               Helix.Server.Model.Component.Mobo
-
-             elem ->
-               Utils.concat_atom(
-                 Helix.Server.Model.Component, Utils.upcase_atom(elem)
-               )
-           end
-
-      defmodule module_name do
-
-        unquote(block)
-      end
-    end
-  end
-
-  # Default behaviour is to get the given resource field directly. For custom
-  # implementation, use `resource/2`
-  defmacro resource(name) when is_atom(name) do
-    quote do
-
-      def unquote(:"get_#{name}")(component) do
-        Map.fetch!(component, unquote(name))
-      end
-
+      elem ->
+        Helix.Server.Model.Component
+        |> Utils.concat_atom(".")
+        |> Utils.concat_atom(Utils.upcase_atom(elem))
     end
   end
 end

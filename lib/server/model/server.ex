@@ -111,7 +111,6 @@ defmodule Helix.Server.Model.Server do
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias Helix.Server.Model.Component
     alias Helix.Server.Model.Motherboard
     alias Helix.Server.Model.Server
 
@@ -120,7 +119,7 @@ defmodule Helix.Server.Model.Server do
     def by_id(query \\ Server, id),
       do: where(query, [s], s.server_id == ^id)
 
-    @spec by_motherboard(Queryable.t, Motherboard.mobo | Component.idtb) ::
+    @spec by_motherboard(Queryable.t, Motherboard.idt) ::
       Queryable.t
     def by_motherboard(query \\ Server, id)
     def by_motherboard(query, %Motherboard{motherboard_id: id}),

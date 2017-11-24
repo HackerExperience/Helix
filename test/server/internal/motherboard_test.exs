@@ -4,6 +4,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
   alias Helix.Network.Model.Network
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
+  alias Helix.Server.Model.Component
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
@@ -20,6 +21,24 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
       # Ran `Component.format`
       assert motherboard.slots.hdd_0.custom.iops == hdd.custom.iops
+    end
+
+    test "returns nil if not found" do
+      refute MotherboardInternal.fetch(Component.ID.generate())
+    end
+  end
+
+  describe "fetch_by_component/1" do
+    test "fetches and formats the result" do
+      {gen_motherboard, %{hdd: hdd}} = ComponentSetup.motherboard()
+
+      motherboard = MotherboardInternal.fetch_by_component(hdd.component_id)
+
+      assert motherboard == gen_motherboard
+    end
+
+    test "returns nil if not found" do
+      refute MotherboardInternal.fetch_by_component(Component.ID.generate())
     end
   end
 

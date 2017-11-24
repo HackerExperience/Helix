@@ -10,7 +10,7 @@ defmodule Helix.Server.Make.Server do
   def desktop(entity = %Entity{}),
     do: server(entity, :desktop)
 
-  @spec desktop(Entity.t) ::
+  @spec npc(Entity.t) ::
     Server.t
   def npc(entity = %Entity{}),
     do: server(entity, :npc)

@@ -4,16 +4,23 @@ defmodule Helix.Server.Action.Flow.Motherboard do
 
   alias HELL.IPv4
   alias HELL.Utils
+  alias Helix.Event
   alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Entity.Model.Entity
   alias Helix.Network.Action.Network, as: NetworkAction
+  alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Software.Action.Storage, as: StorageAction
   alias Helix.Software.Action.StorageDrive, as: StorageDriveAction
+  alias Helix.Software.Model.Storage
   alias Helix.Server.Action.Component, as: ComponentAction
   alias Helix.Server.Action.Motherboard, as: MotherboardAction
   alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
+  @spec initial_hardware(Entity.t, Event.relay) ::
+    {:ok, Motherboard.t, Component.mobo}
   @doc """
   Sets up the initial hardware for `entity`. Called right after an account is
   created.
@@ -54,12 +61,17 @@ defmodule Helix.Server.Action.Flow.Motherboard do
     end
   end
 
+  @spec map_components_slots([Component.t]) ::
+    [Motherboard.slot]
   defp map_components_slots(components) do
     Enum.map(components, fn component ->
       {component, Utils.concat_atom(component.type, :_0)}
     end)
   end
 
+  @spec link_components([Component.t], Entity.t) ::
+    :ok
+    | :error
   defp link_components(components, entity) do
     Enum.reduce_while(components, :ok, fn component, _ ->
       case EntityAction.link_component(entity, component) do
@@ -74,6 +86,9 @@ defmodule Helix.Server.Action.Flow.Motherboard do
   end
 
   # TODO: Use ISP abstraction instead of `Network.Connection`. #341
+  @spec setup_networking(Component.nic) ::
+    {:ok, Network.Connection.t, Component.nic}
+    | {:error, :internal}
   defp setup_networking(nic = %Component{type: :nic}) do
     internet = NetworkQuery.internet()
     ip = IPv4.autogenerate()
@@ -91,6 +106,8 @@ defmodule Helix.Server.Action.Flow.Motherboard do
     end
   end
 
+  @spec setup_storage(Component.hdd) ::
+   {:ok, Storage.t}
   defp setup_storage(hdd = %Component{type: :hdd}) do
     with \
       {:ok, storage} <- StorageAction.create(),
@@ -98,8 +115,8 @@ defmodule Helix.Server.Action.Flow.Motherboard do
       on_fail(fn -> StorageAction.delete(storage) end),
 
       # And then we link it to the HDD
-      :ok <- StorageDriveAction.link_drive(storage, hdd),
-      on_fail(fn -> StorageDriveAction.unlink_drive(hdd) end)
+      :ok <- StorageDriveAction.link_drive(storage, hdd.component_id),
+      on_fail(fn -> StorageDriveAction.unlink_drive(hdd.component_id) end)
     do
       {:ok, storage}
     end

@@ -4,6 +4,9 @@ defmodule Helix.Server.Internal.Component do
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Repo
 
+  @spec fetch(Component.id) ::
+    Component.t
+    | nil
   def fetch(component_id = %Component.ID{}) do
     component =
       component_id
@@ -15,18 +18,27 @@ defmodule Helix.Server.Internal.Component do
     end
   end
 
+  @spec create(Component.Spec.t) ::
+    {:ok, Component.t}
+    | {:error, Component.changeset}
   def create(spec = %Component.Spec{}) do
     spec
     |> Component.create_from_spec()
     |> Repo.insert()
   end
 
+  @spec update_custom(Component.t, changes :: map) ::
+    {:ok, Component.t}
+    | {:error, Component.changeset}
   def update_custom(component = %Component{}, changes) do
     component
     |> Component.update_custom(changes)
     |> Repo.update()
   end
 
+  @spec create_initial_components() ::
+    {:ok, [Component.t]}
+    | {:error, :internal}
   def create_initial_components do
     Repo.transaction(fn ->
       result =
@@ -49,6 +61,8 @@ defmodule Helix.Server.Internal.Component do
     end)
   end
 
+  @spec delete(Component.t) ::
+    :ok
   def delete(component = %Component{}) do
     component
     |> Repo.delete()

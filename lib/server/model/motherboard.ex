@@ -15,37 +15,32 @@ defmodule Helix.Server.Model.Motherboard do
   @type idtb :: Component.idtb | t
   @type idt :: id | t
   @type id :: Component.id
-  @type t :: term
-  #   motherboard_id: id,
-  #   component_spec: term,
-  #   component: term,
-  #   slots: term,
-  #   inserted_at: NaiveDateTime.t,
-  #   updated_at: NaiveDateTime.t
-  # }
-
-  @type mobo ::
+  @type t ::
     %__MODULE__{
       motherboard_id: id,
-      slots: [{slot_id, Component.t}]
+      slots: [slot]
     }
 
-  # TODO \/ must be defined on their own models
-  @typep slot_id :: term
+  @type changeset :: %Changeset{data: %__MODULE__{}}
 
-  @type resources :: term
-    # %{
-    #   cpu: non_neg_integer,
-    #   ram: non_neg_integer,
-    #   hdd: non_neg_integer,
-    #   net: %{
-    #     Network.id =>
-    #     %{
-    #       uplink: non_neg_integer,
-    #       downlink: non_neg_integer
-    #     }
-    #   }
-    # }
+  @type resources ::
+    %{
+      cpu: Component.CPU.custom,
+      hdd: Component.HDD.custom,
+      ram: Component.RAM.custom,
+      net: Component.NIC.custom
+    }
+
+  @type initial_components :: [{Component.pluggable, Component.Mobo.slot_id}]
+  @type required_components :: [Constant.t]
+
+  @type slot :: {Component.Mobo.slot_id, Component.t}
+  @type free_slots :: %{Component.type => [Component.Mobo.slot_id]}
+
+  @type error ::
+    :wrong_slot_type
+    | :bad_slot
+    | :slot_in_use
 
   @creation_fields [
     :slot_id,
@@ -85,7 +80,9 @@ defmodule Helix.Server.Model.Motherboard do
       default: []
   end
 
-  #slots: [{slot_data, component_data}]
+  @spec format([t]) ::
+    t
+    | nil
   def format([]),
     do: nil
   def format(mobo_entries) do
@@ -104,12 +101,11 @@ defmodule Helix.Server.Model.Motherboard do
     }
   end
 
+  @spec get_resources(t) ::
+    resources
   def get_resources(motherboard = %Motherboard{}) do
     Enum.reduce(motherboard.slots, %{}, fn {_, component}, acc ->
-      resource =
-        component
-        |> Component.get_resources()
-        |> Map.from_struct()
+      resource = Component.get_resources(component)
 
       {key, merge_fun} =
         if component.type == :nic do
@@ -124,6 +120,8 @@ defmodule Helix.Server.Model.Motherboard do
     end)
   end
 
+  @spec setup(Component.mobo, initial_components) ::
+    [t | changeset]
   @doc """
   The `motherboards` table keeps track of which components are linked to which
   motherboards. The definition of a motherboard, with its spec and any `custom`
@@ -159,9 +157,13 @@ defmodule Helix.Server.Model.Motherboard do
     end)
   end
 
+  @spec get_initial_components() ::
+    required_components
   def get_initial_components,
     do: [:cpu, :hdd, :nic, :ram]
 
+  @spec has_required_initial_components?(initial_components) ::
+    boolean
   def has_required_initial_components?(initial_components) do
     initial_components
     |> Enum.reduce(get_initial_components(), fn {component, _}, acc ->
@@ -176,6 +178,8 @@ defmodule Helix.Server.Model.Motherboard do
        end
   end
 
+  @spec link(t, Component.mobo, Component.pluggable, Component.Mobo.slot_id) ::
+    term
   @doc """
   Linking a motherboard will create a *new* changeset. The changeset returned
   here shall be *inserted*, not updated by the caller.
@@ -209,6 +213,8 @@ defmodule Helix.Server.Model.Motherboard do
     end
   end
 
+  @spec get_free_slots(t, Component.Spec.mobo) ::
+    free_slots
   def get_free_slots(motherboard = %Motherboard{}, spec_id) do
     slots =
       spec_id
@@ -247,6 +253,8 @@ defmodule Helix.Server.Model.Motherboard do
     end)
   end
 
+  @spec include_component(changeset, Component.t, Component.Mobo.slot_id) ::
+    changeset
   defp include_component(changeset, component, slot_id) do
     params =
       %{
@@ -255,12 +263,18 @@ defmodule Helix.Server.Model.Motherboard do
         slot_id: slot_id
       }
 
-    # %__MODULE__{}
     changeset
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
   end
 
+  @spec check_compatibility(
+    Component.mobo, Component.t, Component.Mobo.slot_id, [slot])
+  ::
+    :ok
+    | {:error, :wrong_slot_type}
+    | {:error, :slot_in_use}
+    | {:error, :bad_slot}
   defp check_compatibility(
     mobo = %Component{},
     component = %Component{},
@@ -272,6 +286,8 @@ defmodule Helix.Server.Model.Motherboard do
     )
   end
 
+  @spec get_error(changeset) ::
+    error
   def get_error(changeset = %Changeset{}) do
     # HACK: I don't want `traverse_errors` and this is the best workaround......
     changeset.errors
@@ -283,6 +299,10 @@ defmodule Helix.Server.Model.Motherboard do
 
   query do
 
+    alias Helix.Server.Model.Component
+
+    @spec by_motherboard(Queryable.t, Motherboard.idt) ::
+      Queryable.t
     def by_motherboard(query \\ Motherboard, motherboard_id)
     def by_motherboard(query, mobo = %Component{type: :mobo}),
       do: by_motherboard(query, mobo.component_id)
@@ -293,9 +313,32 @@ defmodule Helix.Server.Model.Motherboard do
         preload: [:linked_component]
     end
 
-    # def by_component(query, component = %Com) do
-    # end
-    def by_component(query \\ Motherboard, component_id),
+    @spec by_component(Queryable.t, Component.id, [eager: boolean]) ::
+      Queryable.t
+    @doc """
+    SELECT m.*
+    FROM motherboards m
+    INNER JOIN (
+      SELECT motherboard_id
+      FROM motherboards
+      WHERE linked_component_id = $component_id) entry
+    ON entry.motherboard_id = m.motherboard_id
+    """
+    def by_component(query \\ Motherboard, component_id, eager?)
+    def by_component(query, component_id, eager: false),
       do: where(query, [m], m.linked_component_id == ^component_id)
+
+    def by_component(query, component_id, eager: true) do
+      q1 =
+        from entry in query,
+        where: entry.linked_component_id == ^component_id,
+        select: [:motherboard_id]
+
+      from m in Motherboard,
+        inner_join: entry in subquery(q1),
+        on: entry.motherboard_id == m.motherboard_id,
+        select: m,
+        preload: [:linked_component]
+    end
   end
 end

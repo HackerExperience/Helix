@@ -4,11 +4,16 @@ defmodule Helix.Server.Query.Motherboard do
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
 
+  @spec fetch(Motherboard.id) ::
+    Motherboard.t
+    | nil
   def fetch(motherboard_id = %Component.ID{}) do
     motherboard_id
     |> MotherboardInternal.fetch()
   end
 
+  @spec get_resources(Motherboard.t) ::
+    Motherboard.resources
   def get_resources(motherboard = %Motherboard{}) do
     motherboard
     |> MotherboardInternal.get_resources()
