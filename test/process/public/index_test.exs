@@ -51,7 +51,7 @@ defmodule Helix.Process.Public.IndexTest do
 
       # Result comes in binary format
       assert is_binary(result_process1.process_id)
-      assert is_binary(result_process1.access.origin_id)
+      assert is_binary(result_process1.access.origin_ip)
       assert is_binary(result_process1.target_ip)
       assert is_binary(result_process1.state)
       assert is_binary(result_process1.network_id)

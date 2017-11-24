@@ -221,11 +221,9 @@ defmodule Helix.Server.Public.Index do
   - Resync client data with `bootstrap` request
   """
   def gateway(server = %Server{}, entity_id) do
-    name = "Server1"  # TODO
-
     index = %{
       password: server.password,
-      name: name
+      name: server.hostname
     }
 
     Map.merge(server_common(server, entity_id), index)
