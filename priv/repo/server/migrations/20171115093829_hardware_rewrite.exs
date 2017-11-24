@@ -45,5 +45,13 @@ defmodule Helix.Server.Repo.Migrations.HardwareRewrite do
 
     # One component may be linked only at one motherboard at any given time
     create unique_index(:motherboards, [:linked_component_id])
+
+    rename table(:servers), :server_type, to: :type
+    rename table(:server_types), :server_type, to: :type
+
+    alter table(:servers, primary_key: false) do
+      remove :inserted_at
+      remove :updated_at
+    end
   end
 end

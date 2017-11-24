@@ -11,9 +11,9 @@ defmodule Helix.Account.Action.Flow.Account do
   alias Helix.Account.Action.Account, as: AccountAction
   alias Helix.Account.Model.Account
 
-  # @spec setup_account(Account.t) ::
-  #   {:ok, %{entity: Entity.t, server: Server.t}}
-  #   | :error
+  @spec setup_account(Account.t, Event.relay) ::
+    {:ok, %{entity: Entity.t, server: Server.t}}
+    | {:error, :internal}
   @doc """
   Setups the input account
   """
@@ -29,8 +29,7 @@ defmodule Helix.Account.Action.Flow.Account do
       do
         {:ok, %{entity: entity, server: server}}
       else
-        _err ->
-          # TODO: Improve returned error
+        _ ->
           :error
       end
     end

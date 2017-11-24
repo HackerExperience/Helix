@@ -17,7 +17,7 @@ defmodule Helix.Server.Action.Component.NIC do
     {:ok, Component.t}
     | {:error, :internal}
 
-  @spec update(Component.nic, term) ::
+  @spec update(Component.nic, changes_map) ::
     update_result
   def update(
     nic = %Component{},

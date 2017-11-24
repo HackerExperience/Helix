@@ -51,14 +51,12 @@ defmodule Helix.Server.Internal.ServerTest do
 
   describe "creating" do
     test "succeeds with valid server_type" do
-      params = %{server_type: :desktop}
-
-      assert {:ok, _} = ServerInternal.create(params)
+      assert {:ok, _} = ServerInternal.create(:desktop)
     end
 
     test "fails with invalid server_type" do
-      {:error, cs} = ServerInternal.create(%{server_type: :foobar})
-      assert :server_type in Keyword.keys(cs.errors)
+      {:error, cs} = ServerInternal.create(:foobar)
+      assert :type in Keyword.keys(cs.errors)
     end
   end
 

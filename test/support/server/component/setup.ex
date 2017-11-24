@@ -33,15 +33,6 @@ defmodule Helix.Test.Server.Component.Setup do
         ComponentHelper.random_spec(comp_opts)
       end
 
-    custom = Keyword.get(opts, :custom, %{})
-
-    custom =
-      if spec.component_type == :nic and Enum.empty?(custom) do
-        %{ulk: 100, dlk: 100, network_id: "::"}
-      else
-        custom
-      end
-
     changeset = Component.create_from_spec(spec)
 
     component = Changeset.apply_changes(changeset)

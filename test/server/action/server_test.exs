@@ -16,7 +16,7 @@ defmodule Helix.Server.Action.ServerTest do
   describe "create/2" do
     test "succeeds with valid input" do
       assert {:ok, server} = ServerAction.create(:desktop)
-      assert server.server_type == :desktop
+      assert server.type == :desktop
       refute server.motherboard_id
       assert server.password
     end

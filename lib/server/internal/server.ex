@@ -24,10 +24,10 @@ defmodule Helix.Server.Internal.Server do
     |> Repo.one()
   end
 
-  @spec create(Server.creation_params) ::
+  @spec create(Server.type) ::
     repo_return
-  def create(params) do
-    params
+  def create(server_type) do
+    %{type: server_type}
     |> Server.create_changeset()
     |> Repo.insert()
   end

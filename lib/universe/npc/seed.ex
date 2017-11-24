@@ -72,7 +72,7 @@ defmodule Helix.Universe.NPC.Seed do
 
       # Create Server
       server =
-        %{server_type: :desktop}
+        %{type: :npc}
         |> Server.create_changeset()
         |> Ecto.Changeset.cast(%{server_id: entry_server.id}, [:server_id])
         |> ServerRepo.insert!()
