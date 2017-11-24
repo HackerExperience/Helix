@@ -180,7 +180,7 @@ defmodule Helix.Server.Public.IndexTest do
 
       # ServerIndex info
       assert gateway.nips == server_nips
-      assert gateway.name
+      assert gateway.name == server.hostname
       assert gateway.password == server.password
 
       # Info retrieved from sub-Indexes
