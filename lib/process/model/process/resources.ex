@@ -27,6 +27,8 @@ resources Helix.Process.Model.Process.Resources do
       ulk: %{Network.id => type}
     }
 
+  @type resource :: :ram | :cpu | :dlk | :ulk
+
   resource RAM,
     behaviour: Behaviour.Default
 

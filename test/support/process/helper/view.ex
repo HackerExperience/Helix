@@ -2,7 +2,7 @@ defmodule Helix.Test.Process.View.Helper do
 
   def pview_access_full do
     ~w/
-      origin_id
+      origin_ip
       priority
       usage
       connection_id

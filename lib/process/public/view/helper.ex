@@ -138,7 +138,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
       end
 
     %{
-      percentage: 0.5,
+      percentage: process.percentage,
       completion_date: completion_date,
       creation_date: ClientUtils.to_timestamp(process.creation_time)
     }

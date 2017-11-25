@@ -223,7 +223,8 @@ defmodule Helix.Process.Model.ProcessTest do
           r_reserved: %{cpu: 30, ram: 30, ulk: %{}, dlk: %{"::" => 20}},
           r_dynamic: [:ulk],
           network_id: "::",
-          data: FakeFileTransfer.new()
+          data: FakeFileTransfer.new(),
+          processed: %{}
         )
 
       process = Process.format(proc)
