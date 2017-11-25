@@ -7,6 +7,7 @@ defmodule Helix.Process.Public.View.Process do
 
   alias HELL.HETypes
   alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
   alias Helix.Process.Public.View.ProcessViewable
@@ -32,7 +33,7 @@ defmodule Helix.Process.Public.View.Process do
 
   @typep full_access ::
     %{
-      origin_id: String.t,
+      origin_ip: Network.ip,
       priority: 0..5,
       usage: resources,
       connection_id: String.t | nil

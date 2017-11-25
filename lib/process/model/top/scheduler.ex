@@ -261,7 +261,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     # to complete the DLK objective, it will return 30s.
     estimated_seconds =
       work_left
-      |> Process.Resources.max()
+      |> Process.Resources.max_value()
       |> Kernel./(1000)  # From millisecond to second
       |> Float.round(2)
 
