@@ -1,6 +1,7 @@
 defmodule Helix.Network.Internal.Network.Connection do
 
   alias Helix.Cache.Action.Cache, as: CacheAction
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Component
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo
@@ -27,14 +28,29 @@ defmodule Helix.Network.Internal.Network.Connection do
     |> Repo.one()
   end
 
-  @spec create(Network.t, Network.ip, Component.nic) ::
+  @spec create(Network.idt, Network.ip, Entity.idt, Component.idt | nil) ::
     repo_result
   @doc """
   Creates a new NetworkConnection.
   """
-  def create(network = %Network{}, ip, nic = %Component{}) do
-    network
-    |> Network.Connection.create_changeset(ip, nic)
+  def create(network_id, ip, entity_id, nic_id \\ nil)
+  def create(network, ip, entity, nic = %Component{type: :nic}),
+    do: create(network, ip, entity, nic.component_id)
+  def create(network = %Network{}, ip, entity, nic_id),
+    do: create(network.network_id, ip, entity, nic_id)
+  def create(network_id, ip, entity = %Entity{}, nic_id),
+    do: create(network_id, ip, entity.entity_id, nic_id)
+  def create(network_id = %Network.ID{}, ip, entity_id = %Entity.ID{}, nic) do
+    params =
+      %{
+        network_id: network_id,
+        ip: ip,
+        entity_id: entity_id,
+        nic_id: nic
+      }
+
+    params
+    |> Network.Connection.create_changeset()
     |> Repo.insert()
   end
 

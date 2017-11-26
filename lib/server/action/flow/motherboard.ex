@@ -55,7 +55,7 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         :ok <- link_components(components, entity),
 
         # Generate an IP and assign the basic ISP plan to the NIC
-        {:ok, _nc, _nic} <- setup_networking(nic),
+        {:ok, _nc, _nic} <- setup_networking(entity, nic),
 
         # Creates the storage and attaches it to each HDD
         {:ok, _storage} <- setup_storage(hdd)
@@ -93,17 +93,17 @@ defmodule Helix.Server.Action.Flow.Motherboard do
   end
 
   # TODO: Use ISP abstraction instead of `Network.Connection`. #341
-  @spec setup_networking(Component.nic) ::
+  @spec setup_networking(Entity.t, Component.nic) ::
     {:ok, Network.Connection.t, Component.nic}
     | {:error, :internal}
-  defp setup_networking(nic = %Component{type: :nic}) do
+  defp setup_networking(entity, nic = %Component{type: :nic}) do
     internet = NetworkQuery.internet()
     ip = IPv4.autogenerate()
 
     basic_plan = %{dlk: 128, ulk: 16}
 
     with \
-      {:ok, nc} <- NetworkAction.Connection.create(internet, ip, nic),
+      {:ok, nc} <- NetworkAction.Connection.create(internet, ip, entity, nic),
       on_fail(fn -> NetworkAction.Connection.delete(nc) end),
 
       {:ok, new_nic} <-

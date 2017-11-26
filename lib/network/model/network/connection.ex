@@ -5,6 +5,9 @@ defmodule Helix.Network.Model.Network.Connection do
   A NIP (NetworkConnection) is only valid when attached to a NIC that is
   attached to a motherboard. Otherwise, the NetworkConnection still exists but
   is deemed "unassigned".
+
+  NetworkConnection is part of a user's inventory, hence the `entity_id` field,
+  which is used as an identifier (in case there's no NIC assigned to it).
   """
 
   use Ecto.Schema
@@ -14,6 +17,7 @@ defmodule Helix.Network.Model.Network.Connection do
 
   alias Ecto.Changeset
   alias HELL.IPv4
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Component
   alias Helix.Network.Model.Network
 
@@ -21,15 +25,24 @@ defmodule Helix.Network.Model.Network.Connection do
     %__MODULE__{
       network_id: Network.id,
       ip: ip,
-      nic_id: Component.id
+      entity_id: Entity.id,
+      nic_id: Component.id | nil
     }
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type ip :: IPv4.t
 
-  @creation_fields [:network_id, :ip, :nic_id]
-  @required_fields [:network_id, :ip, :nic_id]
+  @type creation_params ::
+    %{
+      network_id: Network.id,
+      ip: ip,
+      entity_id: Entity.id,
+      nic_id: Component.id | nil
+    }
+
+  @creation_fields [:network_id, :ip, :entity_id, :nic_id]
+  @required_fields [:network_id, :ip, :entity_id]
 
   @primary_key false
   schema "network_connections" do
@@ -38,22 +51,14 @@ defmodule Helix.Network.Model.Network.Connection do
     field :ip, IPv4,
       primary_key: true
 
-    field :nic_id, Component.ID
+    field :entity_id, Entity.ID
+    field :nic_id, Component.ID,
+      default: nil
   end
 
-  @spec create_changeset(Network.t, ip, Component.nic) ::
+  @spec create_changeset(creation_params) ::
     changeset
-  def create_changeset(network = %Network{}, ip, nic),
-    do: create_changeset(network.network_id, ip, nic)
-  def create_changeset(network, ip, nic = %Component{}),
-    do: create_changeset(network, ip, nic.component_id)
-  def create_changeset(network_id = %Network.ID{}, ip, nic_id) do
-    params =
-      %{
-        network_id: network_id,
-        ip: ip,
-        nic_id: nic_id
-      }
+  def create_changeset(params) do
 
     %__MODULE__{}
     |> cast(params, @creation_fields)

@@ -1,14 +1,15 @@
 defmodule Helix.Network.Action.Network.Connection do
 
   alias Helix.Server.Model.Component
+  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Network.Internal.Network, as: NetworkInternal
 
-  @spec create(Network.t, Network.ip, Component.nic) ::
+  @spec create(Network.idt, Network.ip, Entity.idt, Component.idt | nil) ::
     {:ok, Network.Connection.t}
     | {:error, :internal}
-  def create(network, ip, nic) do
-    case NetworkInternal.Connection.create(network, ip, nic) do
+  def create(network, ip, entity, nic \\ nil) do
+    case NetworkInternal.Connection.create(network, ip, entity, nic) do
       {:ok, nc} ->
         {:ok, nc}
 

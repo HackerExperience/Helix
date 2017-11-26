@@ -13,10 +13,18 @@ defmodule Helix.Network.Repo.Migrations.AddNetworkConnections do
 
       add :ip, :inet, primary_key: true
 
-      add :nic_id, :inet, null: false
+      add :entity_id, :inet, null: false
+      add :nic_id, :inet
     end
 
+    # Secondary index used to figure out which Entity the NC belongs to
+    create index(:network_connections, [:entity_id])
+
     # Secondary index used to figure out which NIP belongs to which NIC
-    create unique_index(:network_connections, [:nic_id])
+    # It's a partial index because NetworkConnections may have no NIC assigned
+    # to it, meaning the NetworkConnection is idle / not in use.
+    create unique_index(
+      :network_connections, [:nic_id], where: "nic_id IS NOT NULL"
+    )
   end
 end

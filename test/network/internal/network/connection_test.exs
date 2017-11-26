@@ -2,6 +2,7 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Network.Internal.Network, as: NetworkInternal
 
@@ -35,35 +36,58 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
   end
 
   describe "create/3" do
-    test "creates a NC" do
+    test "creates a NC (without nic)" do
       network = NetworkHelper.internet()
       ip = Random.ipv4()
+      entity_id = Entity.ID.generate()
+
+      assert {:ok, nc} =
+        NetworkInternal.Connection.create(network, ip, entity_id)
+
+      # There's no nic!!1
+      refute nc.nic_id
+
+      # But the rest is valid
+      assert nc.network_id == network.network_id
+      assert nc.ip == ip
+      assert nc.entity_id == entity_id
+    end
+
+    test "creates a NC (with nic)" do
+      network = NetworkHelper.internet()
+      ip = Random.ipv4()
+      entity_id = Entity.ID.generate()
       {nic, _} = ComponentSetup.component(type: :nic)
 
-      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip, nic)
+      assert {:ok, nc} =
+        NetworkInternal.Connection.create(network, ip, entity_id, nic)
 
       assert nc.network_id == network.network_id
       assert nc.ip == ip
       assert nc.nic_id == nic.component_id
+      assert nc.entity_id == entity_id
     end
   end
 
   describe "update_nic/2" do
     test "modifies nic" do
-      network = NetworkHelper.internet()
-      ip = Random.ipv4()
-      {nic, _} = ComponentSetup.component(type: :nic)
-      {new_nic, _} = ComponentSetup.component(type: :nic)
-
-      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip, nic)
+      # Create a NC with a NIC assigned to it
+      {nc, %{nic: nic}} = NetworkSetup.Connection.connection(real_nic: true)
 
       assert nc.nic_id == nic.component_id
 
+      {new_nic, _} = ComponentSetup.component(type: :nic)
       assert {:ok, new_nc} = NetworkInternal.Connection.update_nic(nc, new_nic)
 
+      # The new NC is not equal to the previous NC
       refute new_nc == nc
+      # Because the NIC changed
       assert new_nc.nic_id == new_nic.component_id
+
+      # But all else remained the same
       assert new_nc.ip == nc.ip
+      assert new_nc.network_id == nc.network_id
+      assert new_nc.entity_id == nc.entity_id
     end
   end
 
@@ -89,20 +113,16 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
 
   describe "delete/1" do
     test "obliterates the NC" do
-      network = NetworkHelper.internet()
-      ip = Random.ipv4()
-      {nic, _} = ComponentSetup.component(type: :nic)
-
-      assert {:ok, nc} = NetworkInternal.Connection.create(network, ip, nic)
+      {nc, _} = NetworkSetup.Connection.connection(real_nic: true)
 
       # Exists
-      assert NetworkInternal.Connection.fetch(network, ip)
+      assert NetworkInternal.Connection.fetch(nc.network_id, nc.ip)
 
       # Delete
       NetworkInternal.Connection.delete(nc)
 
       # No more
-      refute NetworkInternal.Connection.fetch(network, ip)
+      refute NetworkInternal.Connection.fetch(nc.network_id, nc.ip)
     end
   end
 end

@@ -1,6 +1,7 @@
 defmodule Helix.Test.Network.Setup.Connection do
 
   alias Ecto.Changeset
+  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo, as: NetworkRepo
 
@@ -25,6 +26,7 @@ defmodule Helix.Test.Network.Setup.Connection do
   - ip: Set NC ip. Defaults to randomly generated IP
   - nic_id: Set NC nic. Defaults to nil
   - real_nic: Whether to generate a real nic. Defaults to false
+  - entity_id: Which entity owns that NetworkConnection. Defaults to random one.
   """
   def fake_connection(opts \\ []) do
     network_id = Keyword.get(opts, :network_id, @internet_id)
@@ -43,12 +45,23 @@ defmodule Helix.Test.Network.Setup.Connection do
           {nil, nil}
       end
 
-    changeset = Network.Connection.create_changeset(network_id, ip, nic_id)
+    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+
+    params =
+      %{
+        network_id: network_id,
+        ip: ip,
+        nic_id: nic_id,
+        entity_id: entity_id
+      }
+
+    changeset = Network.Connection.create_changeset(params)
 
     nc = Changeset.apply_changes(changeset)
 
     related =
       %{
+        params: params,
         changeset: changeset,
         network_id: network_id,
         ip: ip,
