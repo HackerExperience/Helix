@@ -1,5 +1,8 @@
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Server.Component.Spec.Flow do
+  @moduledoc """
+  The `Spec.Flow` is the skeleton/implementation of `Specable`.
+  """
 
   import HELL.Macros.Utils
 
@@ -60,11 +63,17 @@ defmodule Helix.Server.Component.Spec.Flow do
 
       @spec create_custom(Component.Spec.t) ::
         Component.custom
+      @doc """
+      Generates the initial `custom` fields of a component
+      """
       def create_custom(spec),
         do: dispatch(spec.component_type, :create_custom, [spec.data])
 
       @spec format_custom(Component.t) ::
         Component.custom
+      @doc """
+      Formats a component's custom data from JSONB to Helix/Elixir format.
+      """
       def format_custom(component) do
         formatted? =
           Enum.reduce(Map.keys(component.custom), true, fn key, acc ->
@@ -80,11 +89,17 @@ defmodule Helix.Server.Component.Spec.Flow do
 
       @spec get_initial(Component.type) ::
         Component.Spec.id
+      @doc """
+      Returns the initial spec (id) for the given `component`.
+      """
       def get_initial(type),
         do: dispatch(type, :get_initial, [])
 
       @spec dispatch(Component.type, atom, [args :: term]) ::
         term
+      @doc """
+      Dispatches the call `fun([args])` to the underlying spec `type`.
+      """
       def dispatch(type, fun, args) do
         component_module = type |> Utils.upcase_atom()
 
@@ -99,10 +114,14 @@ defmodule Helix.Server.Component.Spec.Flow do
       @spec fetch(Component.Spec.id) ::
         Component.Spec.spec
         | nil
+      @doc """
+      Returns the specification for the given `spec_id`
+      """
       def fetch(spec_id) do
         spec_id = Utils.downcase_atom(spec_id)
         spec_str = Atom.to_string(spec_id)
 
+        # Based on the spec_id, figures out the spec (component) type
         type =
           case spec_str do
             "cpu_" <> _ ->
@@ -124,16 +143,6 @@ defmodule Helix.Server.Component.Spec.Flow do
         dispatch(type, :fetch, [spec_id])
       end
 
-      @spec all_specs ::
-        [Component.Spec.spec]
-      def all_specs do
-        Enum.map(@specs, fn spec ->
-          __MODULE__
-          |> apply(:"get_#{spec}", [])
-          |> List.flatten()
-        end)
-      end
-
       @spec generate_specs() ::
         %{
           cpu: [__MODULE__.CPU.spec],
@@ -142,6 +151,9 @@ defmodule Helix.Server.Component.Spec.Flow do
           nic: [__MODULE__.NIC.spec],
           mobo: [__MODULE__.MOBO.spec]
         }
+      @doc """
+      Returns a list of all specs declared at `Specable`. Used on Seed.
+      """
       def generate_specs do
 
         Enum.reduce(@specs, %{}, fn spec, acc ->
@@ -172,6 +184,9 @@ defmodule Helix.Server.Component.Spec.Flow do
     end
   end
 
+  @doc """
+  Top-level definition of a spec type.
+  """
   defmacro specs(name, do: block) do
     # Stores at compile-time the information about which specs are declared
     spec_name = atomize_module_name(name)
@@ -194,12 +209,16 @@ defmodule Helix.Server.Component.Spec.Flow do
       )
 
       defmodule unquote(name) do
+        @moduledoc false
 
         unquote(block)
 
         @spec fetch(Component.Spec.id) ::
           Component.Spec.t
           | nil
+        @doc """
+        Returns the spec data (if found)
+        """
         def fetch(spec_id) do
           spec_id_name = spec_id
 
@@ -212,12 +231,18 @@ defmodule Helix.Server.Component.Spec.Flow do
 
         @spec get_initial() ::
           Component.Spec.id
+        @doc """
+        Returns the initial spec (id).
+        """
         def get_initial,
           do: @initial
       end
     end
   end
 
+  @doc """
+  Actual declaration of a specification (price, name, slot, resources...)
+  """
   defmacro spec(name, do: block) do
     name = Utils.downcase_atom(name)
     spec_name = atomize_module_name(name)
@@ -237,6 +262,9 @@ defmodule Helix.Server.Component.Spec.Flow do
 
       @spec unquote(:"spec_#{name}")() ::
         Component.Spec.spec
+      @doc """
+      Function that returns the spec data.
+      """
       def unquote(:"spec_#{name}")() do
         data =
           unquote(block)
@@ -250,6 +278,9 @@ defmodule Helix.Server.Component.Spec.Flow do
     end
   end
 
+  @doc """
+  Helper for defining the slots of a motherboard.
+  """
   defmacro slots(slots) do
     quote do
       unquote(slots) |> Enum.sort_by(&1 > &2)

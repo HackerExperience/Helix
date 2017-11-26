@@ -8,6 +8,9 @@ defmodule Helix.Server.Internal.Motherboard do
   @spec fetch(Motherboard.id) ::
     Motherboard.t
     | nil
+  @doc """
+  Returns the formatted Motherboard. See docs on `Motherboard.format/1`.
+  """
   def fetch(motherboard_id) do
     motherboard_id
     |> Motherboard.Query.by_motherboard()

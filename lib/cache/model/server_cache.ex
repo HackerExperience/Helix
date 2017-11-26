@@ -40,11 +40,6 @@ defmodule Helix.Cache.Model.ServerCache do
     field :expiration_date, :utc_datetime
   end
 
-  # def new(sid) do
-  #   %{server_id: sid}
-  #   |> create_changeset()
-  #   |> Changeset.apply_changes()
-  # end
   def new(sid, networks \\ [], storages \\ []) do
     %{
       server_id: sid,

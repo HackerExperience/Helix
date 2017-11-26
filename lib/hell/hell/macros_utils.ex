@@ -28,6 +28,9 @@ defmodule HELL.Macros.Utils do
     |> Module.concat()
   end
 
+  @doc """
+  Returns the module name as an atom.
+  """
   def atomize_module_name({_a, _s, [t]}),
     do: atomize_module_name(t)
   def atomize_module_name(module) when is_atom(module) do
@@ -37,6 +40,13 @@ defmodule HELL.Macros.Utils do
     |> String.to_atom()
   end
 
+  @doc """
+  Returns the first module up in the hierarchy.
+
+  Example:
+
+  A.B.C -> returns A.B
+  """
   def get_parent_module(module) do
     module
     |> Module.split()

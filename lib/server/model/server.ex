@@ -38,7 +38,7 @@ defmodule Helix.Server.Model.Server do
     optional(:motherboard_id) => Motherboard.id | nil
   }
 
-  @creation_fields [:type, :motherboard_id]
+  @creation_fields [:type, :motherboard_id, :hostname]
   @required_fields [:type, :password]
 
   schema "servers" do

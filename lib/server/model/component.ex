@@ -40,7 +40,7 @@ defmodule Helix.Server.Model.Component do
 
   @type pluggable :: cpu | hdd | ram | nic
 
-  @type type :: :cpu | :hdd | :ram | :nic | :mobo
+  @type type :: Componentable.type
 
   @type custom ::
     Component.CPU.custom
@@ -116,6 +116,8 @@ defmodule Helix.Server.Model.Component do
 
   query do
 
+    @spec by_id(Queryable.t, Component.id) ::
+      Queryable.t
     def by_id(query \\ Component, component_id),
       do: where(query, [c], c.component_id == ^component_id)
   end

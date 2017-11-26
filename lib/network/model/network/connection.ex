@@ -35,10 +35,10 @@ defmodule Helix.Network.Model.Network.Connection do
 
   @type creation_params ::
     %{
-      network_id: Network.id,
+      network_id: Network.idt,
       ip: ip,
-      entity_id: Entity.id,
-      nic_id: Component.id | nil
+      entity_id: Entity.idt,
+      nic_id: Component.idt | nil
     }
 
   @creation_fields [:network_id, :ip, :entity_id, :nic_id]

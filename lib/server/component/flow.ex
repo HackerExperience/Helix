@@ -22,6 +22,8 @@ defmodule Helix.Server.Component.Flow do
   defmacro __before_compile__(_) do
     quote location: :keep do
 
+      @type type :: :cpu | :hdd | :ram | :nic | :mobo
+
       unquote(components_functions())
 
     end

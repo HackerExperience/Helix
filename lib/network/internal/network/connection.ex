@@ -31,22 +31,16 @@ defmodule Helix.Network.Internal.Network.Connection do
   @spec create(Network.idt, Network.ip, Entity.idt, Component.idt | nil) ::
     repo_result
   @doc """
-  Creates a new NetworkConnection.
+  Creates a new NetworkConnection. Notice it may not have a NIC assigned to it,
+  in which case the NC is said to be "unassigned".
   """
-  def create(network_id, ip, entity_id, nic_id \\ nil)
-  def create(network, ip, entity, nic = %Component{type: :nic}),
-    do: create(network, ip, entity, nic.component_id)
-  def create(network = %Network{}, ip, entity, nic_id),
-    do: create(network.network_id, ip, entity, nic_id)
-  def create(network_id, ip, entity = %Entity{}, nic_id),
-    do: create(network_id, ip, entity.entity_id, nic_id)
-  def create(network_id = %Network.ID{}, ip, entity_id = %Entity.ID{}, nic) do
+  def create(network_id, ip, entity_id, nic_id \\ nil) do
     params =
       %{
         network_id: network_id,
         ip: ip,
         entity_id: entity_id,
-        nic_id: nic
+        nic_id: nic_id
       }
 
     params

@@ -1,5 +1,6 @@
 defmodule Helix.Test.Server.Component.Helper do
 
+  alias Helix.Server.Componentable
   alias Helix.Server.Model.Component
 
   @doc """
@@ -19,5 +20,5 @@ defmodule Helix.Test.Server.Component.Helper do
   end
 
   defp possible_types,
-    do: [:cpu, :hdd, :nic, :mobo]
+    do: Componentable.get_types()
 end

@@ -6,6 +6,7 @@ defmodule Helix.Server.Repo.Migrations.InitialSetup do
       add :server_type, :string, primary_key: true
     end
 
+    # M
     create table(:servers, primary_key: false) do
       add :server_type,
         references(
@@ -13,9 +14,15 @@ defmodule Helix.Server.Repo.Migrations.InitialSetup do
           column: :server_type,
           type: :string)
       add :server_id, :inet, primary_key: true
-      add :motherboard_id, :inet
+
       add :password, :string, null: false
 
+      # hostname (AddHostnameMigration)
+
+      # Now `motherboard_id` is a FK to the mobo component (See HardwareRewrite)
+      add :motherboard_id, :inet
+
+      # timestamps were removed (See HardwareRewriteMigration)
       timestamps()
     end
 

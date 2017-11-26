@@ -30,7 +30,7 @@ defmodule Helix.Account.Action.Flow.Account do
         {:ok, %{entity: entity, server: server}}
       else
         _ ->
-          :error
+          {:error, :internal}
       end
     end
   end

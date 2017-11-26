@@ -8,9 +8,10 @@ defmodule Helix.Server.Repo.Migrations.HardwareRewrite do
 
     create table(:component_specs, primary_key: false) do
       add :spec_id, :string, primary_key: true
-      add :data, :jsonb
+      add :data, :jsonb, null: false
       add :component_type,
-        references(:component_types, column: :type, type: :string)
+        references(:component_types, column: :type, type: :string),
+        null: false
     end
 
     create table(:components, primary_key: false) do

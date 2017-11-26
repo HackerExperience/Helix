@@ -14,7 +14,6 @@ defmodule Helix.Test.Server.Setup do
   @doc """
   - entity_id: Specify the entity that owns such server. Defaults to generating
   a random entity.
-
   - motherboard_id: Which motherboard to attach to the server. Initial one is
   created by default. If `nil` is passed, the created server will have no mobo.
 

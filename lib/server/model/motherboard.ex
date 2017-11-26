@@ -191,17 +191,13 @@ defmodule Helix.Server.Model.Motherboard do
   Checks whether a player's initial motherboard has all the required components.
   """
   def has_required_initial_components?(initial_components) do
-    initial_components
-    |> Enum.reduce(get_initial_components(), fn {component, _}, acc ->
-      acc -- [component.type]
-    end)
-    |> case do
-         [] ->
-           true
+    missing_components =
+      initial_components
+      |> Enum.reduce(get_initial_components(), fn {component, _}, acc ->
+        acc -- [component.type]
+      end)
 
-         _ ->
-           false
-       end
+    missing_components == []
   end
 
   @spec link(t, Component.mobo, Component.pluggable, Component.Mobo.slot_id) ::
@@ -265,7 +261,6 @@ defmodule Helix.Server.Model.Motherboard do
       end)
 
     # Now we'll convert the available map into an API-friendly list
-
     available_map
     |> Enum.reduce(%{}, fn {slot_type, available}, acc ->
       available_slots =

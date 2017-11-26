@@ -225,7 +225,7 @@ defmodule Helix.Server.Component.Specable do
 
     @doc """
     Converts the mobo slots defined on the spec to a format used by Helix,
-    which is :"<component_type>_<real_id>. So slot `0` for `hdd` is `:hdd_0`.
+    which is :<component_type>_<real_id>. So slot `0` for `hdd` is `:hdd_0`.
     """
     def format_custom(custom) do
       slots =
