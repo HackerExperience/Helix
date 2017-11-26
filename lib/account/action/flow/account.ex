@@ -5,30 +5,32 @@ defmodule Helix.Account.Action.Flow.Account do
   alias Helix.Event
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Model.Entity
+  alias Helix.Server.Action.Flow.Motherboard, as: MotherboardFlow
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
   alias Helix.Server.Model.Server
   alias Helix.Account.Action.Account, as: AccountAction
   alias Helix.Account.Model.Account
 
-  @spec setup_account(Account.t) ::
+  @spec setup_account(Account.t, Event.relay) ::
     {:ok, %{entity: Entity.t, server: Server.t}}
-    | :error
+    | {:error, :internal}
   @doc """
-  Setups the input account
+  Setups the input account. Most notably, the initial server.
   """
-  def setup_account(account = %Account{}) do
+  def setup_account(account = %Account{}, relay) do
     flowing do
       with \
         {:ok, entity} <- EntityAction.create_from_specialization(account),
         on_fail(fn -> EntityAction.delete(entity) end),
 
-        {:ok, server} <- ServerFlow.setup_server(entity)
+        {:ok, _motherboard, mobo} <-
+           MotherboardFlow.initial_hardware(entity, relay),
+        {:ok, server} <- ServerFlow.setup(:desktop, entity, mobo, relay)
       do
         {:ok, %{entity: entity, server: server}}
       else
-        _err ->
-          # TODO: Improve returned error
-          :error
+        _ ->
+          {:error, :internal}
       end
     end
   end

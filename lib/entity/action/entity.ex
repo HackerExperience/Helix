@@ -1,7 +1,7 @@
 defmodule Helix.Entity.Action.Entity do
 
   alias Helix.Account.Model.Account
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Entity.Internal.Entity, as: EntityInternal

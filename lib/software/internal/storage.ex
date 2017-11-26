@@ -1,7 +1,7 @@
 defmodule Helix.Software.Internal.Storage do
 
   alias Helix.Cache.Action.Cache, as: CacheAction
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Software.Model.Storage
   alias Helix.Software.Model.StorageDrive
   alias Helix.Software.Repo

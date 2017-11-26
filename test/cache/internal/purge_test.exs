@@ -5,12 +5,16 @@ defmodule Helix.Cache.Internal.PurgeTest do
   import Helix.Test.Case.Cache
   import Helix.Test.Case.ID
 
-  alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
-  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Network.Internal.Network, as: NetworkInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Internal.Purge, as: PurgeInternal
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+
+  @internet_id NetworkHelper.internet_id()
 
   setup do
     CacheHelper.cache_context()
@@ -30,11 +34,11 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       {:hit, server1} = CacheInternal.direct_query(:server, server_id)
 
-      # Modify server
+      # Modify server ip
       nip = Enum.random(server1.networks)
-      nc = NetworkConnectionInternal.fetch_by_nip("::", nip["ip"])
+      nc = NetworkInternal.Connection.fetch(@internet_id, nip["ip"])
       new_ip = HELL.IPv4.autogenerate()
-      {:ok, _} = NetworkConnectionInternal.update_ip(nc, new_ip)
+      {:ok, _} = NetworkInternal.Connection.update_ip(nc, new_ip)
 
       StatePurgeQueue.sync()
 
@@ -102,45 +106,20 @@ defmodule Helix.Cache.Internal.PurgeTest do
 
       nip = Enum.random(server.networks)
       storage_id = Enum.random(server.storages)
-      component_id = Enum.random(server.components)
-      motherboard_id = server.motherboard_id
 
       # Purge nip
       PurgeInternal.purge(:network, {nip.network_id, nip.ip})
-
       assert_miss CacheInternal.direct_query(:network, {nip.network_id, nip.ip})
 
       # Purging nip shouldn't affect others
-      {:hit, _} = CacheInternal.direct_query(:component, component_id)
-      {:hit, _} = CacheInternal.direct_query(:component, motherboard_id)
       {:hit, _} = CacheInternal.direct_query(:storage, storage_id)
       {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
       # Purging storage
       PurgeInternal.purge(:storage, {storage_id})
-
       assert_miss CacheInternal.direct_query(:storage, storage_id)
 
       # Purging storage shouldn't affect others
-      {:hit, _} = CacheInternal.direct_query(:component, component_id)
-      {:hit, _} = CacheInternal.direct_query(:component, motherboard_id)
-      {:hit, _} = CacheInternal.direct_query(:server, server_id)
-
-      # Purging component
-      PurgeInternal.purge(:component, {component_id})
-
-      assert_miss CacheInternal.direct_query(:component, component_id)
-
-      # Purging a component shouldn't affect others
-      {:hit, _} = CacheInternal.direct_query(:component, motherboard_id)
-      {:hit, _} = CacheInternal.direct_query(:server, server_id)
-
-      # Purge motherboard
-      PurgeInternal.purge(:component, {motherboard_id})
-
-      assert_miss CacheInternal.direct_query(:component, motherboard_id)
-
-      # Server is still there
       {:hit, _} = CacheInternal.direct_query(:server, server_id)
 
       CacheHelper.sync_test()

@@ -1,16 +1,13 @@
 defmodule Helix.Account.Event.Handler.Account do
 
-  alias Helix.Account.Event.Account.Created, as: AccountCreatedEvent
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
+  alias Helix.Account.Event.Account.Created, as: AccountCreatedEvent
 
-  require Logger
+  @doc """
+  When an account is created, we must set up its initial server, storyline etc.
 
-  def account_created(event = %AccountCreatedEvent{}) do
-    case AccountFlow.setup_account(event.account) do
-      {:ok, _} ->
-        :ok
-      _ ->
-        Logger.error "Failed to setup account for account id #{inspect event.account_id}"
-    end
-  end
+  TODO: It should be on AccountVerifiedEvent. #335.
+  """
+  def account_created(event = %AccountCreatedEvent{}),
+    do: AccountFlow.setup_account(event.account, event)
 end

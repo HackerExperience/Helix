@@ -7,12 +7,11 @@ defmodule Helix.Cache.Model.NetworkCache do
   alias Ecto.Changeset
   alias HELL.IPv4
   alias HELL.PK
-  alias Helix.Hardware.Model.NetworkConnection
   alias Helix.Network.Model.Network
 
   @type t :: %__MODULE__{
     network_id: PK.t,
-    ip: NetworkConnection.ip,
+    ip: Network.ip,
     server_id: PK.t,
     expiration_date: DateTime.t
   }
@@ -66,11 +65,10 @@ defmodule Helix.Cache.Model.NetworkCache do
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias Helix.Hardware.Model.NetworkConnection
     alias Helix.Network.Model.Network
     alias Helix.Cache.Model.NetworkCache
 
-    @spec by_nip(Queryable.t, Network.idtb, NetworkConnection.ip) ::
+    @spec by_nip(Queryable.t, Network.idtb, Network.ip) ::
       Queryable.t
     def by_nip(query \\ NetworkCache, network, ip),
       do: where(query, [n], n.network_id == ^network and n.ip == ^ip)

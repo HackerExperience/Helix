@@ -16,7 +16,6 @@ defmodule Helix.Cache.Internal.Populate do
 
   alias Helix.Cache.Repo
   alias Helix.Cache.Model.Cacheable
-  alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.StorageCache
@@ -87,37 +86,24 @@ defmodule Helix.Cache.Internal.Populate do
   Its logic is usually quite similar to `cache/1`.
   """
   defp mark_as_purged(params = %ServerCache{}) do
-    if not is_nil(params.motherboard_id) do
-      purge_list = [
-        {:server, {params.server_id}},
-        {:component, {params.motherboard_id}}
-      ]
-      networks_purge = Enum.map(params.networks,
-        &({:network, {&1.network_id, &1.ip}}))
-      components_purge = Enum.map(params.components, &({:component, {&1}}))
-      storages_purge = Enum.map(params.storages, &({:storage, {&1}}))
+    purge_list = [
+      {:server, {params.server_id}}
+    ]
+    networks_purge = Enum.map(params.networks,
+      &({:network, {&1.network_id, &1.ip}}))
+    storages_purge = Enum.map(params.storages, &({:storage, {&1}}))
 
-      purge_list
-      |> Kernel.++(networks_purge)
-      |> Kernel.++(components_purge)
-      |> Kernel.++(storages_purge)
-      |> StatePurgeQueue.queue_multiple(:update)
-    else
-      StatePurgeQueue.queue(:server, params.server_id, :update)
-    end
+    purge_list
+    |> Kernel.++(networks_purge)
+    |> Kernel.++(storages_purge)
+    |> StatePurgeQueue.queue_multiple(:update)
   end
-  defp mark_as_purged(params = %StorageCache{}) do
-    StatePurgeQueue.queue(:storage, params.storage_id, :update)
-  end
-  defp mark_as_purged(params = %ComponentCache{}) do
-    StatePurgeQueue.queue(:component, params.component_id, :update)
-  end
-  defp mark_as_purged(params = %NetworkCache{}) do
-    StatePurgeQueue.queue(:network, {params.network_id, params.ip}, :update)
-  end
-  defp mark_as_purged(params = %WebCache{}) do
-    StatePurgeQueue.queue(:web, {params.network_id, params.ip}, :update)
-  end
+  defp mark_as_purged(params = %StorageCache{}),
+    do: StatePurgeQueue.queue(:storage, params.storage_id, :update)
+  defp mark_as_purged(params = %NetworkCache{}),
+    do: StatePurgeQueue.queue(:network, {params.network_id, params.ip}, :update)
+  defp mark_as_purged(params = %WebCache{}),
+    do: StatePurgeQueue.queue(:web, {params.network_id, params.ip}, :update)
 
   docp """
   Coordinates the process of updating data to the database. It is responsible
@@ -130,38 +116,22 @@ defmodule Helix.Cache.Internal.Populate do
     # Server
     store(params)
 
-    if not is_nil(params.motherboard_id) do
-      # Network
-      Enum.each(params.networks, fn(net) ->
-        cache(NetworkCache.new(net.network_id, net.ip, params.server_id))
-      end)
+    # Network
+    Enum.each(params.networks, fn(net) ->
+      cache(NetworkCache.new(net.network_id, net.ip, params.server_id))
+    end)
 
-      # Storage
-      Enum.each(params.storages, fn(storage_id) ->
-        cache(StorageCache.new(storage_id, params.server_id))
-      end)
-
-      # Components
-      Enum.each(params.components, fn(component_id) ->
-        cache(ComponentCache.new(component_id, params.motherboard_id))
-      end)
-
-      # Motherboard
-      cache(ComponentCache.new(params.motherboard_id, params.motherboard_id))
-    end
+    # Storage
+    Enum.each(params.storages, fn(storage_id) ->
+      cache(StorageCache.new(storage_id, params.server_id))
+    end)
   end
-  defp cache(params = %NetworkCache{}) do
-    store(params)
-  end
-  defp cache(params = %StorageCache{}) do
-    store(params)
-  end
-  defp cache(params = %ComponentCache{}) do
-    store(params)
-  end
-  defp cache(params = %WebCache{}) do
-    store(params)
-  end
+  defp cache(params = %NetworkCache{}),
+    do: store(params)
+  defp cache(params = %StorageCache{}),
+    do: store(params)
+  defp cache(params = %WebCache{}),
+    do: store(params)
 
   docp """
   Saves the cache on the database. If it already exists, it updates its contents
@@ -183,11 +153,6 @@ defmodule Helix.Cache.Internal.Populate do
     params
     |> StorageCache.create_changeset()
     |> Repo.insert(on_conflict: :replace_all, conflict_target: [:storage_id])
-  end
-  defp store(params = %ComponentCache{}) do
-    params
-    |> ComponentCache.create_changeset()
-    |> Repo.insert(on_conflict: :replace_all, conflict_target: [:component_id])
   end
   defp store(params = %WebCache{}) do
     params

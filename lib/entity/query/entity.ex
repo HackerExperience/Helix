@@ -52,6 +52,12 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate get_servers(entity),
     to: EntityInternal
 
+  @doc """
+  Returns all components that given entity owns.
+  """
+  defdelegate get_components(entity),
+    to: EntityInternal
+
   @spec get_entity_id(struct) ::
     Entity.id
   @doc """

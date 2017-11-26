@@ -10,13 +10,13 @@ defmodule Helix.Websocket.Request.Relay do
   @type t :: t_of_type(binary)
 
   @type t_of_type(type) ::
-  %__MODULE__{
-    request_id: type
-  }
+    %__MODULE__{
+      request_id: type
+    }
 
   @spec new(map) ::
-  t
-  | t_of_type(nil)
+    t
+    | t_of_type(nil)
   def new(%{"request_id" => request_id}) when is_binary(request_id) do
     %__MODULE__{
       request_id: request_id

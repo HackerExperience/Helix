@@ -8,17 +8,15 @@ defmodule Helix.Server.Model.Server do
   alias Ecto.Changeset
   alias HELL.Constant
   alias HELL.Password
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
-  alias Helix.Server.Model.ServerType
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
+  alias __MODULE__, as: Server
 
   @type t :: %__MODULE__{
     server_id: id,
-    server_type: Constant.t,
+    type: type,
     motherboard_id: Component.id |  nil,
     password: password,
-    inserted_at: NaiveDateTime.t,
-    updated_at: NaiveDateTime.t,
     hostname: hostname
   }
 
@@ -26,33 +24,33 @@ defmodule Helix.Server.Model.Server do
 
   @type hostname :: String.t
   @type name :: hostname
-  @type type :: Constant.t
+  @type type :: Server.Type.type
   @type password :: String.t
 
   @type resources :: Motherboard.resources
 
   @type creation_params :: %{
-    :server_type => Constant.t,
-    optional(:motherboard_id) => Component.idtb | nil
+    :type => Constant.t,
+    optional(:motherboard_id) => Motherboard.id | nil
   }
 
   @type update_params :: %{
-    optional(:motherboard_id) => Component.idtb | nil
+    optional(:motherboard_id) => Motherboard.id | nil
   }
 
-  @creation_fields ~w/server_type motherboard_id/a
+  @creation_fields [:type, :motherboard_id, :hostname]
+  @required_fields [:type, :password]
 
   schema "servers" do
     field :server_id, ID,
       primary_key: true
 
     field :motherboard_id, Component.ID
-    field :server_type, Constant
+    field :type, Constant
 
-    field :hostname, :string
+    field :hostname, :string,
+      default: "transltr"
     field :password, :string
-
-    timestamps()
   end
 
   @spec create_changeset(creation_params) ::
@@ -60,10 +58,10 @@ defmodule Helix.Server.Model.Server do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(:server_type)
-    |> validate_inclusion(:server_type, ServerType.possible_types())
-    |> unique_constraint(:motherboard_id)
     |> generate_password()
+    |> unique_constraint(:motherboard_id)
+    |> validate_required(@required_fields)
+    |> validate_inclusion(:type, Server.Type.possible_types())
   end
 
   @spec update_changeset(t | Changeset.t, update_params) ::
@@ -73,8 +71,11 @@ defmodule Helix.Server.Model.Server do
     |> cast(params, [])
     |> unique_constraint(:motherboard_id)
     |> attach_motherboard(params)
+    |> validate_required(@required_fields)
   end
 
+  @spec set_hostname(t, hostname) ::
+    changeset
   def set_hostname(server, hostname) do
     server
     |> change()
@@ -107,11 +108,11 @@ defmodule Helix.Server.Model.Server do
     do: put_change(changeset, :password, Password.generate(:server))
 
   defmodule Query do
+
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias Helix.Hardware.Model.Component
-    alias Helix.Hardware.Model.Motherboard
+    alias Helix.Server.Model.Motherboard
     alias Helix.Server.Model.Server
 
     @spec by_id(Queryable.t, Server.idtb) ::
@@ -119,7 +120,7 @@ defmodule Helix.Server.Model.Server do
     def by_id(query \\ Server, id),
       do: where(query, [s], s.server_id == ^id)
 
-    @spec by_motherboard(Queryable.t, Motherboard.t | Component.idtb) ::
+    @spec by_motherboard(Queryable.t, Motherboard.idt) ::
       Queryable.t
     def by_motherboard(query \\ Server, id)
     def by_motherboard(query, %Motherboard{motherboard_id: id}),

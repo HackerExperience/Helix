@@ -16,7 +16,7 @@ defmodule Helix.Network.Query.Network do
   Hard-coded for the Internet because it's very very common.
   """
   def fetch(%Network.ID{id: {0, 0, 0, 0, 0, 0, 0, 0}}),
-    do: @internet
+    do: internet()
   def fetch(id),
     do: Repo.get(Network, id)
 

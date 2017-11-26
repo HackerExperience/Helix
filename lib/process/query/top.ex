@@ -1,7 +1,7 @@
 defmodule Helix.Process.Query.TOP do
 
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Process.Model.Process
 
@@ -9,19 +9,24 @@ defmodule Helix.Process.Query.TOP do
     Process.Resources.t
   @doc """
   Returns the total TOP resources that the server supports.
+
+  Note that the TOP resources are not a 1-to-1 mapping of the Server resources.
+
+  Differences:
+  - Resulting processing power of TOP is CPU.clock + RAM.clock
   """
   def load_top_resources(server = %Server{}) do
     resources =
       server.motherboard_id
       |> MotherboardQuery.fetch()
-      |> MotherboardQuery.resources()
+      |> MotherboardQuery.get_resources()
 
     # Convert server resource format into TOP resource format
     {server_dlk, server_ulk} =
       Enum.reduce(
         resources.net,
         {%{}, %{}},
-        fn {network, %{downlink: dlk, uplink: ulk}}, {acc_dlk, acc_ulk} ->
+        fn {network, %{dlk: dlk, ulk: ulk}}, {acc_dlk, acc_ulk} ->
 
           acc_dlk =
             %{}
@@ -37,8 +42,8 @@ defmodule Helix.Process.Query.TOP do
         end)
 
     %{
-      cpu: resources.cpu,
-      ram: resources.ram,
+      cpu: resources.cpu.clock + resources.ram.clock,
+      ram: resources.ram.size,
       dlk: server_dlk,
       ulk: server_ulk
     }

@@ -7,15 +7,19 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Hardware.Internal.NetworkConnection, as: NetworkConnectionInternal
+  alias Helix.Network.Internal.Network, as: NetworkInternal
   alias Helix.Network.Internal.DNS, as: DNSInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Universe.Bank.Internal.ATM, as: ATMInternal
   alias Helix.Universe.Bank.Internal.Bank, as: BankInternal
-  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
   alias Helix.Universe.NPC.Model.Seed
   alias Helix.Universe.NPC.Seed, as: NPCSeed
+
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
+
+  @internet_id NetworkHelper.internet_id()
 
   describe "seed data" do
     test "it exists by default" do
@@ -34,7 +38,7 @@ defmodule Helix.Universe.NPC.Seed.SeedTest do
       # Removes stuff
       refute NPCInternal.fetch(npc.id)
       refute ServerInternal.fetch(server.id)
-      refute NetworkConnectionInternal.fetch_by_nip("::", server.static_ip)
+      refute NetworkInternal.Connection.fetch(@internet_id, server.static_ip)
       refute BankInternal.fetch(bank.id)
     end
   end

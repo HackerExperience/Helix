@@ -12,4 +12,10 @@ defmodule Helix.Test.Network.Helper do
 
   def net,
     do: Net.new(internet_id(), [])
+
+  @doc """
+  Guaranteed to be random.
+  """
+  def random_id,
+    do: Network.ID.cast!("::1")
 end

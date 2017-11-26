@@ -37,11 +37,8 @@ defmodule Helix.Cache.Action.Cache do
   import HELL.Macros
 
   alias HELL.IPv4
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
-  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.Storage
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
@@ -62,15 +59,11 @@ defmodule Helix.Cache.Action.Cache do
     server = direct_cache_query(:server, server_id)
 
     unless is_nil(server) do
-      unless is_nil(server.motherboard_id) do
-        Enum.each(server.components, &CacheInternal.purge(:component, &1))
-        Enum.each(server.storages, &CacheInternal.purge(:storage, &1))
-        CacheInternal.purge(:component, server.motherboard_id)
-        Enum.each(
-          server.networks,
-          &CacheInternal.purge(:network, {&1["network_id"], &1["ip"]})
-        )
-      end
+      Enum.each(server.storages, &CacheInternal.purge(:storage, &1))
+      Enum.each(
+        server.networks,
+        &CacheInternal.purge(:network, {&1["network_id"], &1["ip"]})
+      )
       CacheInternal.purge(:server, server_id)
     end
   end
@@ -96,34 +89,12 @@ defmodule Helix.Cache.Action.Cache do
     :ok
   defp update_server(server_id, params) do
     unless is_nil(params) do
-      unless is_nil(params.motherboard_id) do
-        Enum.each(params.components, &CacheInternal.update(:component, &1))
-        Enum.each(params.storages, &CacheInternal.update(:storage, &1))
-        CacheInternal.update(:component, params.motherboard_id)
-        Enum.each(
-          params.networks,
-          &CacheInternal.update(:network, {&1["network_id"], &1["ip"]})
-        )
-      end
+      Enum.each(params.storages, &CacheInternal.update(:storage, &1))
+      Enum.each(
+        params.networks,
+        &CacheInternal.update(:network, {&1["network_id"], &1["ip"]})
+      )
       CacheInternal.update(:server, server_id)
-    end
-  end
-
-  @spec update_server_by_motherboard(Motherboard.idtb) ::
-    :ok
-  @doc """
-  Given a motherboard, update its corresponding server.
-
-  If the motherboard is not found, it won't update anything, since the server
-  entry doesn't exists anyway.
-  """
-  def update_server_by_motherboard(motherboard_id) do
-    motherboard_id = motherboard_to_id(motherboard_id)
-    server = direct_cache_query(:motherboard, motherboard_id)
-
-    # If data is not on the cache, there's no need to update it
-    if server do
-      update_server(server.server_id, server)
     end
   end
 
@@ -170,37 +141,6 @@ defmodule Helix.Cache.Action.Cache do
   def purge_storage(storage_id),
     do: CacheInternal.purge(:storage, storage_to_id(storage_id))
 
-  @spec update_component(Motherboard.idtb) ::
-    :ok
-  @doc """
-  Updates a component entry on the cache.
-
-  If the corresponding server is found *on the cache*, it is also updated.
-  """
-  def update_component(%Motherboard{motherboard_id: id}),
-    do: update_component(id)
-  def update_component(component_id) do
-    component_id = component_to_id(component_id)
-    server = direct_cache_query(:component, component_id)
-
-    if server do
-      update_server(server.server_id)
-    end
-    CacheInternal.update(:component, component_id)
-  end
-
-  @spec purge_component(Motherboard.idtb) ::
-    :ok
-  @doc """
-  Purges a component entry from the cache.
-
-  It does not purge/update the server.
-  """
-  def purge_component(%Motherboard{motherboard_id: id}),
-    do: purge_component(id)
-  def purge_component(component_id),
-    do: CacheInternal.purge(:component, component_to_id(component_id))
-
   @spec update_network(Network.idtb, IPv4.t) ::
     :ok
   @doc """
@@ -235,7 +175,7 @@ defmodule Helix.Cache.Action.Cache do
   def purge_web(network, ip),
     do: CacheInternal.purge(:web, {network_to_id(network), ip})
 
-  @spec direct_cache_query(:server | :motherboard | :component | :storage, HELL.PK.t) ::
+  @spec direct_cache_query(:server | :motherboard | :storage, HELL.PK.t) ::
     server_id :: HELL.PK.t
     | nil
   docp """
@@ -257,25 +197,6 @@ defmodule Helix.Cache.Action.Cache do
     case CacheInternal.direct_query(:server, id) do
       {:hit, server} ->
         server
-      _ ->
-        nil
-    end
-  end
-  defp direct_cache_query(:motherboard, id) do
-    case CacheInternal.direct_query(:motherboard, id) do
-      {:hit, server} ->
-        server
-      _ ->
-        nil
-    end
-  end
-  defp direct_cache_query(:component, id) do
-    with \
-      {:hit, mobo} <- CacheInternal.direct_query(:component, id),
-      server = %{} <- ServerQuery.fetch_by_motherboard(mobo.motherboard_id)
-    do
-      server
-    else
       _ ->
         nil
     end
@@ -305,26 +226,6 @@ defmodule Helix.Cache.Action.Cache do
   def network_to_id(id = %Network.ID{}),
     do: to_string(id)
   def network_to_id(id) when is_binary(id),
-    do: id
-
-  @spec motherboard_to_id(Motherboard.idtb) ::
-    HELL.PK.t
-  defp motherboard_to_id(%Motherboard{motherboard_id: id}),
-    do: component_to_id(id)
-  defp motherboard_to_id(%Component{component_id: id, component_type: :mobo}),
-    do: to_string(id)
-  defp motherboard_to_id(id = %Component.ID{}),
-    do: to_string(id)
-  defp motherboard_to_id(id) when is_binary(id),
-    do: id
-
-  @spec component_to_id(Component.idtb) ::
-    HELL.PK.t
-  defp component_to_id(%Component{component_id: id}),
-    do: component_to_id(id)
-  defp component_to_id(id = %Component.ID{}),
-    do: to_string(id)
-  defp component_to_id(id) when is_binary(id),
     do: id
 
   @spec server_to_id(Server.idtb) ::

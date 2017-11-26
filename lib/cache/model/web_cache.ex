@@ -66,11 +66,10 @@ defmodule Helix.Cache.Model.WebCache do
     import Ecto.Query, only: [where: 3]
 
     alias Ecto.Queryable
-    alias Helix.Hardware.Model.NetworkConnection
     alias Helix.Network.Model.Network
     alias Helix.Cache.Model.WebCache
 
-    @spec web_by_nip(Queryable.t, Network.idtb, NetworkConnection.ip) ::
+    @spec web_by_nip(Queryable.t, Network.idtb, Network.ip) ::
       Queryable.t
     def web_by_nip(query \\ WebCache, network, ip),
       do: where(query, [w], w.network_id == ^network and w.ip == ^ip)

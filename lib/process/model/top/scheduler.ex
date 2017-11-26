@@ -121,7 +121,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
           %{acc| completed: acc.completed ++ [process]}
 
         # Process would need to run for almost zero seconds... it's completed.
-        0.0 ->
+        0.00 ->
           %{acc| completed: acc.completed ++ [process]}
 
         # Add the process to the list of running processes, and maybe select it
@@ -263,7 +263,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
       work_left
       |> Process.Resources.max()
       |> Kernel./(1000)  # From millisecond to second
-      |> Float.round(1)
+      |> Float.round(2)
 
     {process, estimated_seconds}
   end

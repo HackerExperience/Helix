@@ -46,21 +46,16 @@ defmodule Helix.Cache.State.PurgeQueueTest do
       assert_miss CacheInternal.direct_query(:server, server_id)
 
       storage_id = Enum.random(server.storages)
-      component_id = Enum.random(server.components)
-      motherboard_id = server.motherboard_id
       nip = Enum.random(server.networks)
 
       assert StatePurgeQueue.lookup(:server, server_id)
       assert StatePurgeQueue.lookup(:storage, storage_id)
-      assert StatePurgeQueue.lookup(:component, component_id)
-      assert StatePurgeQueue.lookup(:component, motherboard_id)
       nip_args = {to_string(nip.network_id), nip.ip}
       assert StatePurgeQueue.lookup(:network, nip_args)
 
       assert_miss CacheInternal.direct_query(:server, server_id)
       assert_miss CacheInternal.direct_query(:network, nip_args)
       assert_miss CacheInternal.direct_query(:storage, storage_id)
-      assert_miss CacheInternal.direct_query(:component, motherboard_id)
 
       StatePurgeQueue.sync()
 
@@ -68,9 +63,6 @@ defmodule Helix.Cache.State.PurgeQueueTest do
 
       # Data came from cache
       assert_hit CacheInternal.direct_query(:server, server_id)
-
-      # No longer on PurgeQueue
-      refute StatePurgeQueue.lookup(:component, motherboard_id)
 
       CacheHelper.sync_test()
     end

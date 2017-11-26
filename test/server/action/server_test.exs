@@ -4,20 +4,21 @@ defmodule Helix.Server.Action.ServerTest do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Action.Server, as: ServerAction
-  alias Helix.Server.Model.Server
-  alias Helix.Server.Repo
+  alias Helix.Server.Query.Server, as: ServerQuery
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
-  alias Helix.Test.Hardware.Factory, as: HardwareFactory
   alias Helix.Test.Network.Helper, as: NetworkHelper
-  alias Helix.Test.Server.Factory
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Server.Component.Setup, as: ComponentSetup
 
   describe "create/2" do
     test "succeeds with valid input" do
-      assert {:ok, %Server{}} = ServerAction.create(:desktop)
+      assert {:ok, server} = ServerAction.create(:desktop)
+      assert server.type == :desktop
+      refute server.motherboard_id
+      assert server.password
     end
 
     test "fails when input is invalid" do
@@ -28,45 +29,32 @@ defmodule Helix.Server.Action.ServerTest do
 
   describe "attach/2" do
     test "succeeds with valid input" do
-      server = Factory.insert(:server)
-      mobo = HardwareFactory.insert(:motherboard)
+      {server, _} = ServerSetup.server(motherboard_id: nil)
+      {mobo, _} = ComponentSetup.component(type: :mobo)
 
-      assert {:ok, %Server{}} = ServerAction.attach(server, mobo.motherboard_id)
+      assert {:ok, server} = ServerAction.attach(server, mobo.component_id)
+      assert server.motherboard_id == mobo.component_id
 
       CacheHelper.sync_test()
     end
 
-    # Review: Deprecate: This test isn't useful.
-    # If I pass any PK, it will attach the motherboard without verification
-    # The verification (and this test) should be at the Public/Henforced level
-    test "fails when input is invalid" do
-      server = Factory.insert(:server)
-
-      assert {:error, cs} = ServerAction.attach(server, "invalid")
-      refute cs.valid?
-    end
-
     test "fails when given motherboard is already attached" do
-      mobo = HardwareFactory.insert(:motherboard)
-      server = Factory.insert(:server)
+      {server1, _} = ServerSetup.server()
+      {server2, _} = ServerSetup.server()
 
-      Factory.insert(:server, motherboard_id: mobo.motherboard_id)
-
-      result = ServerAction.attach(server, mobo.motherboard_id)
-      assert {:error, cs} = result
+      assert {:error, cs} = ServerAction.attach(server1, server2.motherboard_id)
       refute cs.valid?
 
       CacheHelper.sync_test()
     end
 
     test "fails when server already has a motherboard" do
-      mobo1 = HardwareFactory.insert(:motherboard)
-      server = Factory.insert(:server, motherboard_id: mobo1.motherboard_id)
+      {server, _} = ServerSetup.server()
 
-      mobo2 = HardwareFactory.insert(:motherboard)
-      result = ServerAction.attach(server, mobo2.motherboard_id)
+      {mobo, _} = ComponentSetup.component(type: :mobo)
 
-      assert {:error, cs} = result
+      assert {:error, cs} = ServerAction.attach(server, mobo.component_id)
+
       refute cs.valid?
 
       CacheHelper.sync_test()
@@ -75,13 +63,12 @@ defmodule Helix.Server.Action.ServerTest do
 
   describe "detach/1" do
     test "is idempotent" do
-      mobo = HardwareFactory.insert(:motherboard)
-      server = Factory.insert(:server, motherboard_id: mobo.motherboard_id)
+      {server, _} = ServerSetup.server()
 
       ServerAction.detach(server)
       ServerAction.detach(server)
 
-      server = Repo.get(Server, server.server_id)
+      server = ServerQuery.fetch(server.server_id)
       refute server.motherboard_id
 
       CacheHelper.sync_test()
@@ -90,11 +77,13 @@ defmodule Helix.Server.Action.ServerTest do
 
   describe "delete/1" do
     test "removes the record from database" do
-      server = Factory.insert(:server)
+      {server, _} = ServerSetup.server()
 
-      assert Repo.get(Server, server.server_id)
+      assert ServerQuery.fetch(server.server_id)
+
       ServerAction.delete(server)
-      refute Repo.get(Server, server.server_id)
+
+      refute ServerQuery.fetch(server.server_id)
 
       CacheHelper.sync_test()
     end

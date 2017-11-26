@@ -1,7 +1,7 @@
 defmodule Helix.Server.Internal.Server do
 
   alias Helix.Cache.Action.Cache, as: CacheAction
-  alias Helix.Hardware.Model.Motherboard
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Repo
 
@@ -24,10 +24,10 @@ defmodule Helix.Server.Internal.Server do
     |> Repo.one()
   end
 
-  @spec create(Server.creation_params) ::
+  @spec create(Server.type) ::
     repo_return
-  def create(params) do
-    params
+  def create(server_type) do
+    %{type: server_type}
     |> Server.create_changeset()
     |> Repo.insert()
   end
@@ -65,7 +65,6 @@ defmodule Helix.Server.Internal.Server do
     |> Server.detach_motherboard()
     |> Repo.update!()
 
-    CacheAction.purge_component(server.motherboard_id)
     CacheAction.update_server(server)
 
     :ok

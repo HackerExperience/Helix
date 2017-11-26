@@ -58,7 +58,7 @@ defmodule Helix.Story.Mission.Tutorial do
     defp create_char do
       MakeNPC.story_char()
       |> MakeEntity.entity()
-      |> MakeServer.desktop()
+      |> MakeServer.npc()
     end
 
     def setup(step, _) do

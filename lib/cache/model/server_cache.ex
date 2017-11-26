@@ -7,8 +7,6 @@ defmodule Helix.Cache.Model.ServerCache do
   alias Ecto.Changeset
   alias HELL.IPv4
   alias HELL.PK
-  alias Helix.Entity.Model.Entity
-  alias Helix.Hardware.Model.Component
   alias Helix.Server.Model.Server
 
   @type cache_nip :: %{
@@ -18,12 +16,8 @@ defmodule Helix.Cache.Model.ServerCache do
 
   @type t :: %__MODULE__{
     server_id: PK.t,
-    entity_id: PK.t,
-    motherboard_id: PK.t,
     networks: [cache_nip],
     storages: [PK.t],
-    resources: map,
-    components: [PK.t],
     expiration_date: DateTime.t
   }
 
@@ -31,59 +25,35 @@ defmodule Helix.Cache.Model.ServerCache do
 
   @creation_fields ~w/
     server_id
-    entity_id
-    motherboard_id
     networks
     storages
-    resources
-    components/a
+    /a
 
   @primary_key false
   schema "server_cache" do
     field :server_id, PK,
       primary_key: true
 
-    field :entity_id, PK
-    field :motherboard_id, PK
     field :networks, {:array, :map}
     field :storages, {:array, PK}
-    field :resources, :map
-    field :components, {:array, PK}
 
     field :expiration_date, :utc_datetime
   end
 
-  def new(sid, eid) do
+  def new(sid, networks \\ [], storages \\ []) do
     %{
       server_id: sid,
-      entity_id: eid,
-      motherboard_id: nil
-    }
-    |> create_changeset()
-    |> Changeset.apply_changes()
-  end
-  def new({sid, eid, mid, networks, storages, resources, components}) do
-    %{
-      server_id: sid,
-      entity_id: eid,
-      motherboard_id: mid,
       networks: format_network(networks),
-      storages: storages,
-      resources: resources,
-      components: components
+      storages: storages
     }
     |> create_changeset()
     |> Changeset.apply_changes()
   end
 
   defp format_network(networks) do
-    if networks do
-      Enum.map(networks, fn(net) ->
-        %{network_id: to_string(net.network_id), ip: net.ip}
-      end)
-    else
-      nil
-    end
+    Enum.map(networks, fn(net) ->
+      %{network_id: to_string(net.network_id), ip: net.ip}
+    end)
   end
 
   def create_changeset(params = %__MODULE__{}),
@@ -126,8 +96,6 @@ defmodule Helix.Cache.Model.ServerCache do
     import Ecto.Query, only: [where: 3]
 
     alias Ecto.Queryable
-    alias Helix.Entity.Model.Entity
-    alias Helix.Hardware.Model.Component
     alias Helix.Server.Model.Server
     alias Helix.Cache.Model.ServerCache
 
@@ -135,16 +103,6 @@ defmodule Helix.Cache.Model.ServerCache do
       Queryable.t
     def by_server(query \\ ServerCache, server_id),
       do: where(query, [s], s.server_id == ^server_id)
-
-    @spec by_motherboard(Queryable.t, Component.id) ::
-      Queryable.t
-    def by_motherboard(query \\ ServerCache, motherboard_id),
-      do: where(query, [s], s.motherboard_id == ^motherboard_id)
-
-    @spec by_entity(Queryable.t, Entity.id) ::
-      Queryable.t
-    def by_entity(query \\ ServerCache, entity_id),
-      do: where(query, [s], s.entity_id == ^entity_id)
 
     @spec filter_expired(Queryable.t) ::
       Queryable.t

@@ -37,7 +37,7 @@ defmodule Helix.Software.Model.Storage do
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias Helix.Hardware.Model.Component
+    alias Helix.Server.Model.Component
     alias Helix.Software.Model.Storage
     alias Helix.Software.Model.StorageDrive
 

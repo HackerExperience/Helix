@@ -5,7 +5,6 @@ defmodule Helix.Test.Cache.Helper do
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.StorageCache
-  alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Cache.Repo
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
@@ -28,9 +27,7 @@ defmodule Helix.Test.Cache.Helper do
     Enum.each(
       server.networks,
       &CacheAction.purge_network(to_string(&1.network_id), &1.ip))
-    Enum.each(server.components, &CacheAction.purge_component(to_string(&1)))
     Enum.each(server.storages, &CacheAction.purge_storage(to_string(&1)))
-    CacheAction.purge_component(to_string(server.motherboard_id))
 
     StatePurgeQueue.queue(:server, to_string(server.server_id), :purge)
     CacheInternal.purge(:server, {to_string(server.server_id)})
@@ -40,7 +37,6 @@ defmodule Helix.Test.Cache.Helper do
 
   def empty_cache do
     Repo.delete_all(ServerCache)
-    Repo.delete_all(ComponentCache)
     Repo.delete_all(StorageCache)
     Repo.delete_all(NetworkCache)
   end

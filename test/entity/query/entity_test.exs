@@ -7,11 +7,11 @@ defmodule Helix.Entity.Query.EntityTest do
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Entity.Factory
+  alias Helix.Test.Entity.Setup, as: EntitySetup
 
   describe "get_servers/1" do
     test "returns list of server ids owned by entity" do
-      entity = Factory.insert(:entity)
+      {entity, _} = EntitySetup.entity()
 
       server_ids = Enum.map(1..5, fn _ ->
         server_id = Server.ID.generate()

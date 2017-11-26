@@ -1,7 +1,7 @@
 defmodule Helix.Software.Query.Storage do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage

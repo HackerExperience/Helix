@@ -12,9 +12,6 @@ defmodule Helix.Cache.Query.Cache do
   import HELL.Macros
 
   alias HELL.IPv4
-  alias Helix.Entity.Model.Entity
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.Storage
@@ -55,96 +52,6 @@ defmodule Helix.Cache.Query.Cache do
   def from_server_get_storages(server),
     do: CacheInternal.lookup({:server, :storages}, {server_to_id(server)})
 
-  raisable {:from_server_get_resources, 1}
-  @spec from_server_get_resources(Server.idtb) ::
-    {:ok, term}
-    | {:error, {:server, :notfound}}
-    | {:error, :internal}
-  @doc """
-  Given a server, return its hardware resources.
-  """
-  def from_server_get_resources(server),
-    do: CacheInternal.lookup({:server, :resources}, {server_to_id(server)})
-
-  raisable {:from_server_get_components, 1}
-  @spec from_server_get_components(Server.idtb) ::
-    {:ok, [Component.id]}
-    | {:error, {:server, :notfound}}
-    | {:error, :internal}
-  @doc """
-  Given a server, return components linked to its motherboard.
-  Note: it does not include the motherboard.
-  """
-  def from_server_get_components(server),
-    do: CacheInternal.lookup({:server, :components}, {server_to_id(server)})
-
-  raisable {:from_motherboard_get_all, 1}
-  @spec from_motherboard_get_all(Motherboard.t | Component.idtb) ::
-    {:ok, ServerCache.t}
-    | {:error, {:server, :notfound}}
-    | {:error, {:motherboard, :notfound}}
-    | {:error, :internal}
-  @doc """
-  Given a motherboard, return its entire server row.
-  """
-  def from_motherboard_get_all(motherboard),
-    do: CacheInternal.lookup(:motherboard, {motherboard_to_id(motherboard)})
-
-  raisable {:from_motherboard_get_entity, 1}
-  @spec from_motherboard_get_entity(Motherboard.idtb) ::
-    {:ok, Entity.id}
-    | {:error, {:server, :notfound}}
-    | {:error, {:motherboard, :notfound}}
-    | {:error, :internal}
-  @doc """
-  Given a motherboard, return its owner (entity).
-  """
-  def from_motherboard_get_entity(motherboard) do
-    id = motherboard_to_id(motherboard)
-    CacheInternal.lookup({:motherboard, :entity}, {id})
-  end
-
-  raisable {:from_motherboard_get_resources, 1}
-  @spec from_motherboard_get_resources(Motherboard.idtb) ::
-    {:ok, term}
-    | {:error, {:server, :notfound}}
-    | {:error, {:motherboard, :notfound}}
-    | {:error, :internal}
-  @doc """
-  Given a motherboard, return its total resources.
-  """
-  def from_motherboard_get_resources(motherboard) do
-    id = motherboard_to_id(motherboard)
-    CacheInternal.lookup({:motherboard, :resources}, {id})
-  end
-
-  raisable {:from_motherboard_get_components, 1}
-  @spec from_motherboard_get_components(Motherboard.idtb) ::
-    {:ok, [Component.id]}
-    | {:error, {:server, :notfound}}
-    | {:error, {:motherboard, :notfound}}
-    | {:error, :internal}
-  @doc """
-  Given a motherboard, return the components linked to it.
-  """
-  def from_motherboard_get_components(motherboard) do
-    id = motherboard_to_id(motherboard)
-    CacheInternal.lookup({:motherboard, :components}, {id})
-  end
-
-  raisable {:from_entity_get_motherboard, 1}
-  @spec from_entity_get_motherboard(Entity.idtb) ::
-    {:ok, Motherboard.id}
-    | {:error, {:server, :notfound}}
-    | {:error, {:motherboard, :notfound}}
-    | {:error, {:server, :notfound}}
-    | {:error, :internal}
-  @doc """
-  Given an entity, return its motherboard.
-  """
-  def from_entity_get_motherboard(entity),
-    do: CacheInternal.lookup({:entity, :motherboard}, {entity_to_id(entity)})
-
   raisable {:from_storage_get_server, 1}
   @spec from_storage_get_server(Storage.idtb) ::
     {:ok, Server.id}
@@ -183,28 +90,6 @@ defmodule Helix.Cache.Query.Cache do
     CacheInternal.lookup({:web, :content}, {network_id, ip})
   end
 
-  raisable {:from_component_get_motherboard, 1}
-  @spec from_component_get_motherboard(Component.idtb) ::
-    {:ok, Motherboard.id}
-    | {:error, {:component, :notfound}}
-    | {:error, {:component, :unlinked}}
-  @doc """
-  Given a component, return its motherboard. Returns nil if it isn't attached.
-  """
-  def from_component_get_motherboard(component) do
-    id = component_to_id(component)
-    CacheInternal.lookup({:component, :motherboard}, {id})
-  end
-
-  @spec entity_to_id(Entity.idtb) ::
-    HELL.PK.t
-  def entity_to_id(%Entity{entity_id: id}),
-    do: entity_to_id(id)
-  def entity_to_id(id = %Entity.ID{}),
-    do: to_string(id)
-  def entity_to_id(id) when is_binary(id),
-    do: id
-
   @spec storage_to_id(Storage.idtb) ::
     HELL.PK.t
   def storage_to_id(%Storage{storage_id: id}),
@@ -221,26 +106,6 @@ defmodule Helix.Cache.Query.Cache do
   def network_to_id(id = %Network.ID{}),
     do: to_string(id)
   def network_to_id(id) when is_binary(id),
-    do: id
-
-  @spec motherboard_to_id(Motherboard.t | Component.idtb) ::
-    HELL.PK.t
-  defp motherboard_to_id(%Motherboard{motherboard_id: id}),
-    do: component_to_id(id)
-  defp motherboard_to_id(%Component{component_id: id, component_type: :mobo}),
-    do: to_string(id)
-  defp motherboard_to_id(id = %Component.ID{}),
-    do: to_string(id)
-  defp motherboard_to_id(id) when is_binary(id),
-    do: id
-
-  @spec component_to_id(Component.idtb) ::
-    HELL.PK.t
-  defp component_to_id(%Component{component_id: id}),
-    do: component_to_id(id)
-  defp component_to_id(id = %Component.ID{}),
-    do: to_string(id)
-  defp component_to_id(id) when is_binary(id),
     do: id
 
   @spec server_to_id(Server.idtb) ::

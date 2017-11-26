@@ -10,7 +10,6 @@ defmodule Helix.Cache.Internal.Cache do
   import HELL.Macros
 
   alias Helix.Cache.Model.Cacheable
-  alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Model.StorageCache
@@ -25,7 +24,6 @@ defmodule Helix.Cache.Internal.Cache do
 
   @module_table %{
     :server => ServerCache.Query,
-    :component => ComponentCache.Query,
     :network => NetworkCache.Query,
     :storage => StorageCache.Query,
     :web => WebCache.Query
@@ -40,15 +38,8 @@ defmodule Helix.Cache.Internal.Cache do
   @query_table %{
     # Server
     :server => {:server, :by_server, :all},
-    :motherboard => {:server, :by_motherboard, :all},
     {:server, :nips} => {:server, :by_server, :networks},
     {:server, :storages} => {:server, :by_server, :storages},
-    {:server, :resources} => {:server, :by_server, :resources},
-    {:server, :components} => {:server, :by_server, :components},
-    {:motherboard, :entity} => {:server, :by_motherboard, :entity_id},
-    {:motherboard, :resources} => {:server, :by_motherboard, :resources},
-    {:motherboard, :components} => {:server, :by_motherboard, :components},
-    {:entity, :motherboard} => {:server, :by_entity, :motherboard_id},
 
     # Network
     :network => {:network, :by_nip, :all},
@@ -57,10 +48,6 @@ defmodule Helix.Cache.Internal.Cache do
     # Storage
     :storage => {:storage, :by_storage, :all},
     {:storage, :server} => {:storage, :by_storage, :server_id},
-
-    # Component
-    :component => {:component, :by_component, :all},
-    {:component, :motherboard} => {:component, :by_component, :motherboard_id},
 
     # Web
     {:web, :content} => {:web, :web_by_nip, :content}

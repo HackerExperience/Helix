@@ -7,13 +7,13 @@ defmodule Helix.Test.Features.Process.Lifecycle do
   import Helix.Test.Channel.Macros
   import Helix.Test.Process.Macros
 
-  alias Helix.Hardware.Query.Motherboard, as: MotherboardQuery
   alias Helix.Software.Query.Storage, as: StorageQuery
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
@@ -26,6 +26,9 @@ defmodule Helix.Test.Features.Process.Lifecycle do
     test "creation and allocation" do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
+
+      ServerHelper.update_server_specs(gateway, dlk: 100, ulk: 10)
+      ServerHelper.update_server_specs(destination, dlk: 100, ulk: 10)
 
       # Create the File that we'll downloaded
       {file, _} = SoftwareSetup.file(server_id: destination.server_id)
@@ -56,33 +59,32 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       refute Enum.empty?(process.l_reserved)
       refute Enum.empty?(process.r_reserved)
 
-      resources =
-        gateway.motherboard_id
-        |> MotherboardQuery.fetch()
-        |> MotherboardQuery.resources()
-
-      server_dlk = resources.net[@internet_id].downlink
-
       # Process received no allocations of CPU/ULK (some RAM for static usage)
       assert process.l_allocated.cpu == 0.0
       assert process.l_allocated.ulk[@internet_id] == 0.0
       assert process.l_allocated.ram > 0
 
-      # But received 100% of server DLK resources
-      assert_resource process.l_allocated.dlk[@internet_id], server_dlk
+      # But received 100% of server DLK resources (made available by target ULK)
+      # Notice that 100% of gateway DLK is 100, but destination ULK is 10, so
+      # the download speed will be limited to 10.
+      assert_resource process.l_allocated.dlk[@internet_id], 10
     end
 
     # This is pretty much the same test above, but now we'll focus on the other
     # half: completing the process. We want to avoid using `force_completion`
     # from TOPHelper, so the completion is actually spontaneous.
     # In order to do that we create a very small process which needs to transfer
-    # a file of about ~1kb, which takes less than a second.
+    # a file of about ~1kb, which takes less than a second on a 100Mbit link.
     test "spontaneous completion" do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
 
       # Connect to gateway channel too, so we can receive gateway notifications
       ChannelSetup.join_server(socket: socket, own_server: true)
+
+      # Let's cheat and give ourselves (and destination) a decent link
+      ServerHelper.update_server_specs(gateway, dlk: 100)
+      ServerHelper.update_server_specs(destination, ulk: 100)
 
       # Create the File that we'll downloaded
       {file, _} = SoftwareSetup.file(server_id: destination.server_id, size: 10)
@@ -101,10 +103,9 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       assert [] == StorageQuery.files_on_storage(gateway_storage)
 
       # Wait for process completion (Process itself takes about 100ms)
-      # Extra time is desired to let all "spawned" connections close
       # Below timer is required because we want to let the process complete by
       # itself, without using `force_completion`
-      sleep(200)
+      :timer.sleep(100)
 
       wait_events [:top_recalcado, :top_recalcado, :file_downloaded]
 
@@ -117,6 +118,9 @@ defmodule Helix.Test.Features.Process.Lifecycle do
 
       # Different ID
       refute downloaded_file.file_id == file.file_id
+
+      # Sleep for some extra time so all "spawned" connections can be closed
+      sleep(50)
     end
   end
 end

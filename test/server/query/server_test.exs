@@ -8,11 +8,10 @@ defmodule Helix.Server.Query.ServerTest do
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
-  alias Helix.Test.Server.Factory
 
   describe "fetch/1" do
     test "succeeds by id" do
-      server = Factory.insert(:server)
+      {server, _} = ServerSetup.server()
       assert %Server{} = ServerQuery.fetch(server.server_id)
     end
 

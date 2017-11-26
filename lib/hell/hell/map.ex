@@ -30,4 +30,18 @@ defmodule HELL.MapUtils do
   def atomize_keys(not_a_map) do
     not_a_map
   end
+
+  @doc """
+  Performs a "naive" deep merge of a map, i.e. it applies `fun/2` on the first
+  nesting of maps `a` and `b`. Would require some changes for an arbitrarily
+  large deep merge.
+
+  Notice it wipes away any structs! If you need something more robust, check
+  https://github.com/PragTob/deep_merge
+  """
+  def naive_deep_merge(a, b, fun) do
+    Map.merge(a, b, fn _, subA, subB ->
+      Map.merge(subA, subB, fn _, vA, vB -> fun.(vA, vB) end)
+    end)
+  end
 end

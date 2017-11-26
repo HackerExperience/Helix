@@ -22,14 +22,10 @@ defmodule Helix.Cache.Internal.PopulateTest do
   describe "populate/2" do
     test "server side-populates other caches", context do
       server_id = context.server.server_id
-      motherboard_id = context.server.motherboard_id
 
       {:ok, [nip]} = CacheInternal.lookup({:server, :nips}, server_id)
       {:ok, [storage_id]} = CacheInternal.lookup(
         {:server, :storages},
-        server_id)
-      {:ok, components} = CacheInternal.lookup(
-        {:server, :components},
         server_id)
 
       StatePurgeQueue.sync()
@@ -45,19 +41,6 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       refute cstorage == nil
       assert_id cstorage.storage_id, storage_id
-
-      {:hit, ccomponent} = CacheInternal.direct_query(
-        :component,
-        Enum.random(components))
-
-      refute ccomponent == nil
-      assert_id ccomponent.motherboard_id, motherboard_id
-
-      # Regression: motherboard is also added to components
-      {:hit, cmobo} = CacheInternal.direct_query(:component, motherboard_id)
-
-      refute cmobo == nil
-      assert_id cmobo.component_id, motherboard_id
 
       CacheHelper.sync_test()
     end
@@ -92,12 +75,8 @@ defmodule Helix.Cache.Internal.PopulateTest do
 
       # With nil values
       assert_id server.server_id, server_id
-      assert server.entity_id
-      refute server.motherboard_id
-      refute server.components
-      refute server.storages
-      refute server.networks
-      refute server.resources
+      assert Enum.empty?(server.storages)
+      assert Enum.empty?(server.networks)
     end
 
     test "pre-existing cached entries are updated", context do
@@ -110,21 +89,6 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:ok, server2} = PopulateInternal.populate(:by_server, server_id)
 
       refute server1 == server2
-      assert server2.motherboard_id == nil
-
-      CacheHelper.sync_test()
-    end
-
-    test "component population", context do
-      motherboard_id = context.server.motherboard_id
-
-      {:ok, component} = PopulateInternal.populate(
-        :by_component,
-        motherboard_id)
-
-      {:hit, query} = CacheInternal.direct_query(:component, motherboard_id)
-
-      assert_id component.component_id, query.component_id
 
       CacheHelper.sync_test()
     end
@@ -185,9 +149,6 @@ defmodule Helix.Cache.Internal.PopulateTest do
       {:ok, [storage_id]} = CacheInternal.lookup(
         {:server, :storages},
         server_id)
-      {:ok, components} = CacheInternal.lookup(
-        {:server, :components},
-        server_id)
 
       StatePurgeQueue.sync()
 
@@ -196,9 +157,6 @@ defmodule Helix.Cache.Internal.PopulateTest do
         :network,
         {nip.network_id, nip.ip})
       {:hit, cstorage} = CacheInternal.direct_query(:storage, storage_id)
-      {:hit, ccomponent} = CacheInternal.direct_query(
-        :component,
-        Enum.random(components))
 
       # Ensure cache has a minimal sane duration
       # Assertions may be changed if some entry do need to live for less
@@ -208,7 +166,6 @@ defmodule Helix.Cache.Internal.PopulateTest do
       assert DateTime.diff(cserver.expiration_date, now) >= 600
       assert DateTime.diff(cnip.expiration_date, now) >= 600
       assert DateTime.diff(cstorage.expiration_date, now) >= 600
-      assert DateTime.diff(ccomponent.expiration_date, now) >= 600
 
       CacheHelper.sync_test()
     end

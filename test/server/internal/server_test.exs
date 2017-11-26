@@ -3,9 +3,9 @@ defmodule Helix.Server.Internal.ServerTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Hardware.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Hardware.Model.Component
-  alias Helix.Hardware.Model.Motherboard
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
+  alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
 
@@ -51,14 +51,12 @@ defmodule Helix.Server.Internal.ServerTest do
 
   describe "creating" do
     test "succeeds with valid server_type" do
-      params = %{server_type: :desktop}
-
-      assert {:ok, _} = ServerInternal.create(params)
+      assert {:ok, _} = ServerInternal.create(:desktop)
     end
 
     test "fails with invalid server_type" do
-      {:error, cs} = ServerInternal.create(%{server_type: :foobar})
-      assert :server_type in Keyword.keys(cs.errors)
+      {:error, cs} = ServerInternal.create(:foobar)
+      assert :type in Keyword.keys(cs.errors)
     end
   end
 
@@ -66,7 +64,7 @@ defmodule Helix.Server.Internal.ServerTest do
     test "updates hostname" do
       {server, _} = ServerSetup.server()
 
-      hostname = "transltr"
+      hostname = "zeus"
       refute server.hostname == hostname
 
       assert {:ok, updated} = ServerInternal.set_hostname(server, hostname)

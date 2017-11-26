@@ -57,7 +57,7 @@ defmodule Helix.Cache.Internal.CacheTest do
 
     test "fails on invalid data"  do
       id = Server.ID.generate()
-      {:error, _} = CacheInternal.lookup({:server, :resources}, id)
+      {:error, _} = CacheInternal.lookup({:server, :storages}, id)
     end
 
     test "returns valid but empty data", context do
@@ -66,7 +66,7 @@ defmodule Helix.Cache.Internal.CacheTest do
       ServerAction.detach(context.server)
       {:ok, storage} = CacheInternal.lookup({:server, :storages}, server_id)
 
-      assert storage == nil
+      assert Enum.empty?(storage)
 
       CacheHelper.sync_test()
     end

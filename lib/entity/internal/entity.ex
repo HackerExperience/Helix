@@ -1,7 +1,7 @@
 defmodule Helix.Entity.Internal.Entity do
 
   alias Helix.Cache.Action.Cache, as: CacheAction
-  alias Helix.Hardware.Model.Component
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent
@@ -57,6 +57,17 @@ defmodule Helix.Entity.Internal.Entity do
     |> EntityServer.Query.by_entity()
     |> Repo.all()
     |> Enum.map(&(&1.server_id))
+  end
+
+  @spec get_components(Entity.t) ::
+    [Component.t]
+  @doc """
+  Returns a list of components that belong to a given entity.
+  """
+  def get_components(entity) do
+    entity
+    |> EntityComponent.Query.by_entity()
+    |> Repo.all()
   end
 
   @spec create(Entity.creation_params) ::

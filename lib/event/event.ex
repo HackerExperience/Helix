@@ -16,7 +16,7 @@ defmodule Helix.Event do
 
   @type t :: HELF.Event.t
   @type source :: t | RequestRelay.t
-  @type relay :: source
+  @type relay :: source | nil
 
   @doc """
   Top-level macro for an event.

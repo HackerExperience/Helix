@@ -19,7 +19,6 @@ defmodule Helix.Cache.Internal.Purge do
   """
 
   alias Helix.Cache.Model.ServerCache
-  alias Helix.Cache.Model.ComponentCache
   alias Helix.Cache.Model.NetworkCache
   alias Helix.Cache.Model.StorageCache
   alias Helix.Cache.Model.WebCache
@@ -39,8 +38,6 @@ defmodule Helix.Cache.Internal.Purge do
     do: PopulateInternal.populate(:by_server, object)
   def update(:storage, object),
     do: PopulateInternal.populate(:by_storage, object)
-  def update(:component, object),
-    do: PopulateInternal.populate(:by_component, object)
   def update(:network, object),
     do: PopulateInternal.populate(:by_nip, object)
   def update(:web, object),
@@ -60,8 +57,6 @@ defmodule Helix.Cache.Internal.Purge do
   """
   def purge(:server, object),
     do: delete(:server, object)
-  def purge(:component, object),
-    do: delete(:component, object)
   def purge(:storage, object),
     do: delete(:storage, object)
   def purge(:network, object),
@@ -74,11 +69,6 @@ defmodule Helix.Cache.Internal.Purge do
   defp delete(:server, {server_id}) do
     server_id
     |> ServerCache.Query.by_server()
-    |> Repo.delete_all()
-  end
-  defp delete(:component, {component_id}) do
-    component_id
-    |> ComponentCache.Query.by_component()
     |> Repo.delete_all()
   end
   defp delete(:storage, {storage_id}) do

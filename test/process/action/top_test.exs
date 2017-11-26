@@ -122,15 +122,16 @@ defmodule Helix.Process.Action.TOPTest do
       # In order to test this, we'll need to make the process allocation change
       # somehow. Let's cheat and reduce the server's total CPU. This should
       # reduce the process allocation, which uses 100% of the available CPU.
-      ServerHelper.update_server_specs(gateway, %{cpu: 500})
+      ServerHelper.update_server_specs(gateway, %{cpu: 500, ram_clock: 100})
 
       # So, let's recalque again and see if something changed
       assert {:ok, [proc_recalque3], _} = TOPAction.recalque(gateway.server_id)
 
-      # Reserved/allocated CPU went down to 500
+      # Reserved/allocated CPU went down to 600 (remember that TOP uses both
+      # CPU clock and RAM clock as processing power).
       refute proc_recalque3.next_allocation == proc_recalque2.next_allocation
       refute proc_recalque3.l_reserved == proc_recalque2.l_reserved
-      assert_resource proc_recalque3.l_reserved.cpu, 500
+      assert_resource proc_recalque3.l_reserved.cpu, 600
 
       # How about the processed (on DB)?
       raw_proc = ProcessHelper.raw_get(process.process_id)
@@ -150,8 +151,8 @@ defmodule Helix.Process.Action.TOPTest do
           gateway_id: gateway.server_id,
           target_id: target.server_id,
           type: :file_download,
-          l_limit: %{dlk: %{"::" => 50}},
-          r_limit: %{ulk: %{"::" => 20}},
+          l_limit: %{dlk: %{"::" => 5}},
+          r_limit: %{ulk: %{"::" => 2}},
           static: %{}
         )
 
@@ -163,14 +164,14 @@ defmodule Helix.Process.Action.TOPTest do
       # Remember, it's the same process
       assert gateway_proc.process_id == target_proc.process_id
 
-      # On the gateway, reserved 50 units of DLK
-      assert gateway_proc.l_reserved.dlk[@internet_id] == 50
+      # On the gateway, reserved 5 units of DLK
+      assert gateway_proc.l_reserved.dlk[@internet_id] == 5
       assert gateway_proc.l_reserved.ulk[@internet_id] == 0
       assert gateway_proc.l_reserved.cpu == 0
       assert gateway_proc.l_reserved.ram == 0
 
-      # On the target, reserved 20 units of ULK
-      assert target_proc.r_reserved.ulk[@internet_id] == 20
+      # On the target, reserved 2 units of ULK
+      assert target_proc.r_reserved.ulk[@internet_id] == 2
       assert target_proc.r_reserved.dlk == %{}
       assert target_proc.r_reserved.cpu == 0
       assert target_proc.r_reserved.ram == 0

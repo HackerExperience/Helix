@@ -31,9 +31,9 @@ defmodule Helix.Test.Features.Process.Recalque do
       {serverB, _} = ServerSetup.server()
       {serverC, _} = ServerSetup.server()
 
-      resA = %{cpu: 300, ram: 200, dlk: 100, ulk: 10}
-      resB = %{cpu: 250, ram: 150, dlk: 50, ulk: 30}
-      resC = %{cpu: 200, ram: 100, dlk: 30, ulk: 10}
+      resA = %{cpu: 300, ram_clock: 100, ram_size: 200, dlk: 100, ulk: 10}
+      resB = %{cpu: 250, ram_clock: 100, ram_size: 150, dlk: 50, ulk: 30}
+      resC = %{cpu: 200, ram_clock: 100, ram_size: 100, dlk: 30, ulk: 10}
 
       ServerHelper.update_server_specs(serverA, resA)
       ServerHelper.update_server_specs(serverB, resB)
@@ -59,9 +59,6 @@ defmodule Helix.Test.Features.Process.Recalque do
         FilePublic.download(
           serverA, serverB, tunnelAB, storageA, dl_file, @relay
         )
-
-      # Give some time for allocation
-      # :timer.sleep(50)
 
       # Let's fetch the Process, as this is the moment when the actual
       # allocation is loaded.
@@ -99,13 +96,10 @@ defmodule Helix.Test.Features.Process.Recalque do
           cracker, serverA, serverB, {@internet_id, ipB}, [], @relay
         )
 
-      # Give some time for allocation
-      # :timer.sleep(50)
-
       bruteforce = ProcessQuery.fetch(bruteforce_id)
 
-      # All CPU of serverA was assigned to the Bruteforce process
-      assert bruteforce.l_allocated.cpu == resA.cpu
+      # All processing power of serverA was assigned to the Bruteforce process
+      assert_resource bruteforce.l_allocated.cpu, resA.cpu + resA.ram_clock
 
       # Does not use other resources (except RAM due to static allocations)
       assert bruteforce.l_allocated.dlk[@internet_id] == 0
@@ -137,8 +131,6 @@ defmodule Helix.Test.Features.Process.Recalque do
         FilePublic.download(
           serverC, serverB, tunnelCB, storageC, dl_file, @relay
         )
-
-      # :timer.sleep(50)
 
       downloadC = ProcessQuery.fetch(downloadC_id)
       downloadA = ProcessQuery.fetch(downloadA_id)
