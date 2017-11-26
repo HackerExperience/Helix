@@ -1,4 +1,7 @@
 defmodule Helix.Server.Component.Flow do
+  @moduledoc """
+  The `Component.Flow` is the skeleton/implementation of the `Componentable`.
+  """
 
   import HELL.Macros.Utils
 
@@ -29,18 +32,31 @@ defmodule Helix.Server.Component.Flow do
 
       @spec get_resources(Component.t) ::
         Component.custom
+      @doc """
+      Redirects the `get_resources` calls to each underlying component. The
+      result is the component's total resources, which is aggregate/accumulated
+      by the caller in order to get the total resources within a motherboard.
+      """
       def get_resources(component),
         do: dispatch(component.type, :new, [component])
 
       @spec update_custom(Component.t, changes :: map) ::
         Component.custom
-      def update_custom(component, changes) do
-        component.custom
-        |> Map.merge(changes)
-      end
+      @doc """
+      Updates the custom fields of a component.
+
+      This function is naive, in the sense that it simply merges both maps.
+      Nasty things may happen if you pass invalid stuff. Hopefully dialyzer will
+      watch our back.
+      """
+      def update_custom(component, changes),
+        do: Map.merge(component.custom, changes)
 
       @spec dispatch(Component.type, atom, [args :: term]) ::
         term
+      @doc """
+      Dispatches the call `fun([args])` to the underlying component `type`.
+      """
       def dispatch(type, fun, args) do
         component_module = get_module_name(type)
 
@@ -54,6 +70,9 @@ defmodule Helix.Server.Component.Flow do
 
       @spec get_types() ::
         [Component.type]
+      @doc """
+      Returns a list of all component types declared at `Componentable`.
+      """
       def get_types,
         do: @components
 
@@ -68,6 +87,9 @@ defmodule Helix.Server.Component.Flow do
     end
   end
 
+  @doc """
+  Declares a new component. See `Componentable` for usage example.
+  """
   defmacro component(name, do: block) do
     comp_name = atomize_module_name(name)
     module_name = get_component_module(comp_name)
@@ -88,6 +110,10 @@ defmodule Helix.Server.Component.Flow do
     end
   end
 
+  @doc """
+  Helper to return the component module name. It's mostly a frescura to have
+  `MOBO` as a title (`Mobo`) and the other components in caps (`CPU`, `HDD`...)
+  """
   def get_component_module(component) do
     case component do
       :mobo ->

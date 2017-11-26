@@ -14,6 +14,9 @@ defmodule Helix.Server.Query.Motherboard do
 
   @spec get_resources(Motherboard.t) ::
     Motherboard.resources
+  @doc """
+  Returns the total resources within the given `motherboard`.
+  """
   def get_resources(motherboard = %Motherboard{}) do
     motherboard
     |> MotherboardInternal.get_resources()

@@ -19,6 +19,9 @@ defmodule Helix.Server.Action.Component.NIC do
 
   @spec update(Component.nic, changes_map) ::
     update_result
+  @doc """
+  Arbitrarily update the NIC custom data.
+  """
   def update(
     nic = %Component{},
     custom = %{network_id: %Network.ID{}, ulk: _, dlk: _})
@@ -34,11 +37,17 @@ defmodule Helix.Server.Action.Component.NIC do
 
   @spec update_network_id(Component.nic, Network.id) ::
     update_result
+  @doc """
+  Updates the NIC's `network_id`.
+  """
   def update_network_id(nic = %Component{}, network_id = %Network.ID{}),
     do: ComponentInternal.update_custom(nic, %{network_id: network_id})
 
   @spec update_transfer_speed(Component.nic, change_transfer_speed) ::
     update_result
+  @doc """
+  Updates the NIC's transfer speed.
+  """
   def update_transfer_speed(nic = %Component{}, %{dlk: dlk, ulk: ulk}),
     do: ComponentInternal.update_custom(nic, %{dlk: dlk, ulk: ulk})
 end

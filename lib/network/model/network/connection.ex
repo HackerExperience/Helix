@@ -1,15 +1,32 @@
 defmodule Helix.Network.Model.Network.Connection do
+  @moduledoc """
+  `Network.Connection` represents a NIP. This NIP may be attached to a NIC.
+
+  A NIP (NetworkConnection) is only valid when attached to a NIC that is
+  attached to a motherboard. Otherwise, the NetworkConnection still exists but
+  is deemed "unassigned".
+  """
 
   use Ecto.Schema
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
 
+  alias Ecto.Changeset
   alias HELL.IPv4
   alias Helix.Server.Model.Component
   alias Helix.Network.Model.Network
 
-  @type t :: term
+  @type t ::
+    %__MODULE__{
+      network_id: Network.id,
+      ip: ip,
+      nic_id: Component.id
+    }
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
+  @type ip :: IPv4.t
 
   @creation_fields [:network_id, :ip, :nic_id]
   @required_fields [:network_id, :ip, :nic_id]
@@ -24,6 +41,8 @@ defmodule Helix.Network.Model.Network.Connection do
     field :nic_id, Component.ID
   end
 
+  @spec create_changeset(Network.t, ip, Component.nic) ::
+    changeset
   def create_changeset(network = %Network{}, ip, nic),
     do: create_changeset(network.network_id, ip, nic)
   def create_changeset(network, ip, nic = %Component{}),
@@ -41,13 +60,17 @@ defmodule Helix.Network.Model.Network.Connection do
     |> validate_required(@required_fields)
   end
 
-  def update_nic(nc = %__MODULE__{}, nic = %Component{}) do
+  @spec update_nic(t, Component.nic) ::
+    changeset
+  def update_nic(nc = %__MODULE__{}, nic = %Component{type: :nic}) do
     nc
     |> change
     |> put_change(:nic_id, nic.component_id)
     |> validate_required(@required_fields)
   end
 
+  @spec update_ip(t, ip) ::
+    changeset
   def update_ip(nc = %__MODULE__{}, new_ip) do
     nc
     |> change
@@ -57,11 +80,16 @@ defmodule Helix.Network.Model.Network.Connection do
 
   query do
 
+    alias Helix.Server.Model.Component
     alias Helix.Network.Model.Network
 
+    @spec by_nip(Queryable.t, Network.id, Network.Connection.ip) ::
+      Queryable.t
     def by_nip(query \\ Network.Connection, network_id, ip),
       do: where(query, [nc], nc.network_id == ^network_id and nc.ip == ^ip)
 
+    @spec by_nic(Queryable.t, Component.id) ::
+      Queryable.t
     def by_nic(query \\ Network.Connection, nic_id),
       do: where(query, [nc], nc.nic_id == ^nic_id)
   end

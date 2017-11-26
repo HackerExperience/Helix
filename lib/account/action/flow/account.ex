@@ -15,7 +15,7 @@ defmodule Helix.Account.Action.Flow.Account do
     {:ok, %{entity: Entity.t, server: Server.t}}
     | {:error, :internal}
   @doc """
-  Setups the input account
+  Setups the input account. Most notably, the initial server.
   """
   def setup_account(account = %Account{}, relay) do
     flowing do

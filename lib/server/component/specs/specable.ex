@@ -1,4 +1,15 @@
 defmodule Helix.Server.Component.Specable do
+  @moduledoc """
+  `Specable` is the foundation for a component; it defines exactly what
+  resources each component has, as well as the price (baseline).
+
+  `Specable` is based on `spec_ids`. A spec contains all required information
+  for the game to generate the component, figure out its resource and how to
+  work with it.
+
+  Each component may have its own custom fields on the `spec` map. All specs
+  (and therefore all components) of the game are defined here.
+  """
 
   use Helix.Server.Component.Spec.Flow
 
@@ -212,6 +223,10 @@ defmodule Helix.Server.Component.Specable do
     def create_custom(spec),
       do: %{slots: spec.slots}
 
+    @doc """
+    Converts the mobo slots defined on the spec to a format used by Helix,
+    which is :"<component_type>_<real_id>. So slot `0` for `hdd` is `:hdd_0`.
+    """
     def format_custom(custom) do
       slots =
         custom["slots"]

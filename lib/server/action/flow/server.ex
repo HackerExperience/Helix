@@ -11,6 +11,11 @@ defmodule Helix.Server.Action.Flow.Server do
 
   @spec setup(Server.type, Entity.t, Component.mobo, Event.relay) ::
     {:ok, Server.t}
+  @doc """
+  Creates a new server of `type`. The server's motherboard must be passed.
+
+  Currently does not emit anything.
+  """
   def setup(type, entity = %Entity{}, mobo = %Component{type: :mobo}, _relay) do
     flowing do
       with \

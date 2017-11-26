@@ -1,4 +1,15 @@
 defmodule Helix.Server.Model.Motherboard do
+  @moduledoc """
+  This model defines all components that are linked to a motherboard.
+
+  Notice that a motherboard itself is a Component! As such, it is saved and
+  defined at the `Component` model/table. The `Motherboard` model references the
+  motherboard defined at `Component`, and each linked component is also
+  referenced on the `Component` table.
+
+  So, while `Component` holds the hardware component information, `Motherboard`
+  tells us which components are linked to which motherboards.
+  """
 
   use Ecto.Schema
 
@@ -83,6 +94,11 @@ defmodule Helix.Server.Model.Motherboard do
   @spec format([t]) ::
     t
     | nil
+  @doc """
+  `format/1` gets the fetch result (i.e. a list of all components that are
+  linked to the specified motherboard) and aggregates it into a record, mapping
+  each linked component to the underlying motherboard slot_id.
+  """
   def format([]),
     do: nil
   def format(mobo_entries) do
@@ -103,6 +119,10 @@ defmodule Helix.Server.Model.Motherboard do
 
   @spec get_resources(t) ::
     resources
+  @doc """
+  Returns the total resources of the Motherboard. In order to do so, it iterates
+  through every component linked to the motherboard and aggregates the sum.
+  """
   def get_resources(motherboard = %Motherboard{}) do
     Enum.reduce(motherboard.slots, %{}, fn {_, component}, acc ->
       resource = Component.get_resources(component)
@@ -159,11 +179,17 @@ defmodule Helix.Server.Model.Motherboard do
 
   @spec get_initial_components() ::
     required_components
+  @doc """
+  Returns a list of components that an initial player motherboard must have.
+  """
   def get_initial_components,
     do: [:cpu, :hdd, :nic, :ram]
 
   @spec has_required_initial_components?(initial_components) ::
     boolean
+  @doc """
+  Checks whether a player's initial motherboard has all the required components.
+  """
   def has_required_initial_components?(initial_components) do
     initial_components
     |> Enum.reduce(get_initial_components(), fn {component, _}, acc ->
@@ -200,7 +226,6 @@ defmodule Helix.Server.Model.Motherboard do
         mobo_component, link_component, slot_id, motherboard.slots
       )
 
-    # TODO: Maybe abstract, repeated at `setup/2`
     case compatibility do
       :ok ->
         changeset
@@ -215,6 +240,11 @@ defmodule Helix.Server.Model.Motherboard do
 
   @spec get_free_slots(t, Component.Spec.mobo) ::
     free_slots
+  @doc """
+  Returns a list of all slots that the motherboard support and are not in use by
+  any component. It maps each available slot to the underlying slot type, so
+  callers/users of this function have a nicer interface.
+  """
   def get_free_slots(motherboard = %Motherboard{}, spec_id) do
     slots =
       spec_id
@@ -268,6 +298,20 @@ defmodule Helix.Server.Model.Motherboard do
     |> validate_required(@required_fields)
   end
 
+  @spec get_error(changeset) ::
+    error
+  @doc """
+  Returns one of the errors that happened on the Changeset during any operation.
+  """
+  def get_error(changeset = %Changeset{}) do
+    # HACK: I don't want `traverse_errors` and this is the best workaround......
+    changeset.errors
+    |> List.first()
+    |> elem(1)
+    |> elem(0)
+    |> String.to_existing_atom()
+  end
+
   @spec check_compatibility(
     Component.mobo, Component.t, Component.Mobo.slot_id, [slot])
   ::
@@ -284,17 +328,6 @@ defmodule Helix.Server.Model.Motherboard do
     Component.Mobo.check_compatibility(
       mobo.spec_id, component.spec_id, slot_id, used_slots
     )
-  end
-
-  @spec get_error(changeset) ::
-    error
-  def get_error(changeset = %Changeset{}) do
-    # HACK: I don't want `traverse_errors` and this is the best workaround......
-    changeset.errors
-    |> List.first()
-    |> elem(1)
-    |> elem(0)
-    |> String.to_existing_atom()
   end
 
   query do

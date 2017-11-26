@@ -24,6 +24,13 @@ defmodule Helix.Server.Action.Flow.Motherboard do
   @doc """
   Sets up the initial hardware for `entity`. Called right after an account is
   created.
+
+  It:
+  - Creates all initial components (HDD, RAM, NIC, CPU, Mobo)
+  - Links them to the Motherboard
+  - Links them to the Entity
+  - Creates the initial storage to be used by HDD
+  - Creates the initial NetworkConnection to be used by NIC
   """
   def initial_hardware(entity, _relay) do
     flowing do

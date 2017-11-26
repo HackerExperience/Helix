@@ -5,30 +5,55 @@ defmodule Helix.Network.Internal.Network.Connection do
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo
 
+  @typep repo_result ::
+    {:ok, Network.Connection.t}
+    | {:error, Network.Connection.changeset}
+
+  @spec fetch(Network.id, Network.ip) ::
+    Network.Connection.t
+    | nil
   def fetch(network_id, ip) do
     network_id
     |> Network.Connection.Query.by_nip(ip)
     |> Repo.one()
   end
 
-  def fetch_by_nic(nic) do
-    nic
+  @spec fetch_by_nic(Component.id) ::
+    Network.Connection.t
+    | nil
+  def fetch_by_nic(nic_id) do
+    nic_id
     |> Network.Connection.Query.by_nic()
     |> Repo.one()
   end
 
+  @spec create(Network.t, Network.ip, Component.nic) ::
+    repo_result
+  @doc """
+  Creates a new NetworkConnection.
+  """
   def create(network = %Network{}, ip, nic = %Component{}) do
     network
     |> Network.Connection.create_changeset(ip, nic)
     |> Repo.insert()
   end
 
+  @spec update_nic(Network.Connection.t, Component.nic) ::
+    repo_result
+  @doc """
+  Updates the NIC assigned to the NetworkConnection
+  """
   def update_nic(nc = %Network.Connection{}, new_nic = %Component{}) do
     nc
     |> Network.Connection.update_nic(new_nic)
     |> Repo.update()
   end
 
+  @spec update_ip(Network.Connection.t, Network.ip) ::
+    repo_result
+  @doc """
+  Updates the NetworkConnection IP address.
+  """
   def update_ip(nc = %Network.Connection{}, new_ip) do
     result =
       nc
@@ -46,6 +71,8 @@ defmodule Helix.Network.Internal.Network.Connection do
     result
   end
 
+  @spec delete(Network.Connection.t) ::
+    :ok
   def delete(nc = %Network.Connection{}) do
     nc
     |> Repo.delete()

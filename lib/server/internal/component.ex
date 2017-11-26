@@ -21,6 +21,9 @@ defmodule Helix.Server.Internal.Component do
   @spec create(Component.Spec.t) ::
     {:ok, Component.t}
     | {:error, Component.changeset}
+  @doc """
+  Creates a new component from an existing `Component.Spec`
+  """
   def create(spec = %Component.Spec{}) do
     spec
     |> Component.create_from_spec()
@@ -30,6 +33,9 @@ defmodule Helix.Server.Internal.Component do
   @spec update_custom(Component.t, changes :: map) ::
     {:ok, Component.t}
     | {:error, Component.changeset}
+  @doc """
+  Updates the `custom` fields of the component
+  """
   def update_custom(component = %Component{}, changes) do
     component
     |> Component.update_custom(changes)
@@ -39,6 +45,11 @@ defmodule Helix.Server.Internal.Component do
   @spec create_initial_components() ::
     {:ok, [Component.t]}
     | {:error, :internal}
+  @doc """
+  Creates the initial hardware components, as defined by each Specable @initial.
+
+  Used after a player joins the game and the initial server has to be created.
+  """
   def create_initial_components do
     Repo.transaction(fn ->
       result =
@@ -63,6 +74,9 @@ defmodule Helix.Server.Internal.Component do
 
   @spec delete(Component.t) ::
     :ok
+  @doc """
+  Deletes a component.
+  """
   def delete(component = %Component{}) do
     component
     |> Repo.delete()

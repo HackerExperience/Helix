@@ -3,7 +3,9 @@ defmodule Helix.Network.Model.Network do
   use Ecto.Schema
   use HELL.ID, field: :network_id, meta: [0x0000]
 
-  alias HELL.IPv4
+  import HELL.Ecto.Macros
+
+  alias __MODULE__, as: Network
 
   @type t :: %__MODULE__{
     network_id: id,
@@ -11,7 +13,8 @@ defmodule Helix.Network.Model.Network do
   }
 
   @type name :: String.t
-  @type ip :: IPv4.t
+
+  @type ip :: Network.Connection.ip
 
   @type nip :: %{
     network_id: id,
@@ -25,11 +28,7 @@ defmodule Helix.Network.Model.Network do
     field :name, :string
   end
 
-  defmodule Query do
-    import Ecto.Query
-
-    alias Ecto.Queryable
-    alias Helix.Network.Model.Network
+  query do
 
     @spec by_id(Queryable.t, Network.idtb) ::
       Queryable.t

@@ -53,5 +53,11 @@ defmodule Helix.Server.Repo.Migrations.HardwareRewrite do
       remove :inserted_at
       remove :updated_at
     end
+
+    execute """
+    ALTER TABLE servers
+      ADD FOREIGN KEY(motherboard_id)
+      REFERENCES components(component_id);
+    """
   end
 end

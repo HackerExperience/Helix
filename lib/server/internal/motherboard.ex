@@ -45,6 +45,11 @@ defmodule Helix.Server.Internal.Motherboard do
 
   @spec get_free_slots(Motherboard.t) ::
     Motherboard.free_slots
+  @doc """
+  Returns a list of available/free slots on the Motherboard, i.e. slots that may
+  be used to link new components. The result is indexed by component type for
+  ease of use.
+  """
   def get_free_slots(motherboard = %Motherboard{}) do
     motherboard.motherboard_id
     |> ComponentInternal.fetch()
@@ -62,35 +67,35 @@ defmodule Helix.Server.Internal.Motherboard do
 
   @spec get_cpus(Motherboard.t) ::
     [Component.cpu]
+  @doc """
+  Returns all CPUs linked to the motherboard.
+  """
   def get_cpus(motherboard = %Motherboard{}),
     do: get_component(motherboard, :cpu)
 
   @spec get_hdds(Motherboard.t) ::
     [Component.hdd]
+  @doc """
+  Returns all HDDs linked to the motherboard.
+  """
   def get_hdds(motherboard = %Motherboard{}),
     do: get_component(motherboard, :hdd)
 
   @spec get_nics(Motherboard.t) ::
     [Component.nic]
+  @doc """
+  Returns all NICs linked to the motherboard.
+  """
   def get_nics(motherboard = %Motherboard{}),
     do: get_component(motherboard, :nic)
 
   @spec get_rams(Motherboard.t) ::
     [Component.ram]
+  @doc """
+  Returns all RAMs linked to the motherboard.
+  """
   def get_rams(motherboard = %Motherboard{}),
     do: get_component(motherboard, :ram)
-
-  @spec get_component(Motherboard.t, Component.type) ::
-    [Component.pluggable]
-  defp get_component(motherboard = %Motherboard{}, component_type) do
-    Enum.reduce(motherboard.slots, [], fn {_slot_id, component}, acc ->
-      if component.type == component_type do
-        acc ++ [component]
-      else
-        acc
-      end
-    end)
-  end
 
   @spec setup(Component.mobo, Motherboard.initial_components) ::
     {:ok, Motherboard.t}
@@ -98,7 +103,7 @@ defmodule Helix.Server.Internal.Motherboard do
     | {:error, :missing_initial_components}
   @doc """
   Creates the initial set of components linked to a motherboard. There must have
-  at least 1 of some required components, otherwise the motherboard is deemed
+  at least 1 of some required components, otherwise the motherboard would be
   non-functional before even being set up.
   """
   def setup(motherboard = %Component{}, initial_components) do
@@ -209,5 +214,17 @@ defmodule Helix.Server.Internal.Motherboard do
     |> Repo.delete_all()
 
     :ok
+  end
+
+  @spec get_component(Motherboard.t, Component.type) ::
+    [Component.pluggable]
+  defp get_component(motherboard = %Motherboard{}, component_type) do
+    Enum.reduce(motherboard.slots, [], fn {_slot_id, component}, acc ->
+      if component.type == component_type do
+        acc ++ [component]
+      else
+        acc
+      end
+    end)
   end
 end

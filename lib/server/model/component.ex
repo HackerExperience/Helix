@@ -1,4 +1,13 @@
 defmodule Helix.Server.Model.Component do
+  @moduledoc """
+  This is the central data store for a hardware component.
+
+  A component is always generated from an existing `Component.Spec`, defined at
+  `Specable`. What a Component adds to the Component.Spec is custom behaviour:
+
+  A component may have custom values (defined at `custom` field) as well as
+  durability, etc. all tailored to each player.
+  """
 
   use Ecto.Schema
   use HELL.ID, field: :component_id, meta: [0x0012]
@@ -68,6 +77,11 @@ defmodule Helix.Server.Model.Component do
 
   @spec create_from_spec(Component.Spec.t) ::
     changeset
+  @doc """
+  Creates the changeset for a Component. A new component is always created from
+  a `Component.Spec`, i.e. a spec defined at `Specable` that specifies exactly
+  what component we are looking for.
+  """
   def create_from_spec(spec = %Component.Spec{}) do
     params =
       %{
@@ -89,6 +103,9 @@ defmodule Helix.Server.Model.Component do
 
   @spec update_custom(Component.t, map) ::
     changeset
+  @doc """
+  Updates the `custom` field of the component.
+  """
   def update_custom(component = %Component{}, changes) do
     new_custom = Componentable.update_custom(component, changes)
 

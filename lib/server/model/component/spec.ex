@@ -1,4 +1,8 @@
 defmodule Helix.Server.Model.Component.Spec do
+  @moduledoc """
+  Represents a `Component.Spec` on the DB. It is a persistence layer for
+  everything defined at `Specable`.
+  """
 
   use Ecto.Schema
 
@@ -69,6 +73,9 @@ defmodule Helix.Server.Model.Component.Spec do
   @spec fetch(id) ::
     t
     | nil
+  @doc """
+  Fetches the spec data as declared on `Specable`.
+  """
   def fetch(spec_id) do
     spec = Specable.fetch(spec_id)
 
@@ -83,6 +90,10 @@ defmodule Helix.Server.Model.Component.Spec do
 
   @spec get_initial(Component.type) ::
     t
+  @doc """
+  Returns the initial spec for the given `component_type`. It is the most basic
+  spec/component that may be used by a motherboard.
+  """
   def get_initial(component_type) do
     component_type
     |> Specable.get_initial()
