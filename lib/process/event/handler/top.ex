@@ -30,7 +30,8 @@ defmodule Helix.Process.Event.Handler.TOP do
         # Can't wake up
         {:error, {:process, :running}} ->
           # Weird but could happen. Recalculate the TOP just in case
-          call_recalque(process, event)
+          # HACK: The `silent: true` is hack-ish. See #326 for more context.
+          call_recalque(process, event, silent: true)
       end
     end
   end
@@ -60,14 +61,16 @@ defmodule Helix.Process.Event.Handler.TOP do
 
   @spec call_recalque(Process.t, Event.t) ::
     {gateway_recalque :: boolean, target_recalque :: boolean}
-  defp call_recalque(process = %Process{}, source_event) do
+  defp call_recalque(process = %Process{}, source_event, opts \\ []) do
     %{gateway: gateway_recalque, target: target_recalque} =
       TOPAction.recalque(process, source: source_event)
 
     gateway_recalque =
       case gateway_recalque do
         {:ok, _processes, events} ->
-          Event.emit(events, from: source_event)
+          unless opts[:silent] do
+            Event.emit(events, from: source_event)
+          end
           true
 
         _ ->
@@ -77,7 +80,9 @@ defmodule Helix.Process.Event.Handler.TOP do
     target_recalque =
       case target_recalque do
         {:ok, _processes, events} ->
-          Event.emit(events, from: source_event)
+          unless opts[:silent] do
+            Event.emit(events, from: source_event)
+          end
           true
 
         :noop ->
