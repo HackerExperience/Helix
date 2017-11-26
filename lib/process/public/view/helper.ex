@@ -9,6 +9,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Process.Model.Process
@@ -36,8 +37,13 @@ defmodule Helix.Process.Public.View.Process.Helper do
     connection_id = process.connection_id && to_string(process.connection_id)
     usage = build_usage(process)
 
-    partial = %{
-      origin_id: to_string(process.gateway_id),
+    # OPTIMIZE: Possibly cache `origin_ip` and `target_ip` on the Process.t
+    # It's used on several other places and must be queried every time it's
+    # displayed.
+    origin_ip = ServerQuery.get_ip(process.gateway_id, process.network_id)
+
+    full = %{
+      origin_ip: origin_ip,
       priority: process.priority,
       usage: usage,
       connection_id: connection_id,
@@ -45,7 +51,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
 
     common = default_process_common(process, :full)
 
-    Map.merge(common, %{access: partial})
+    Map.merge(common, %{access: full})
   end
 
   @spec get_default_scope(term, Process.t, Server.id, Entity.id) ::
@@ -132,7 +138,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
       end
 
     %{
-      percentage: 0.5,
+      percentage: process.percentage,
       completion_date: completion_date,
       creation_date: ClientUtils.to_timestamp(process.creation_time)
     }

@@ -165,8 +165,14 @@ defmodule Helix.Process.Action.TOP do
 
     # Based on the return of `checkpoint` above, we've accumulated all processes
     # that should be updated. They will be passed to `handle_checkpoint`, which
-    # shall be responsible of properly handling this update in a transaction.
-    hespawn(fn -> handle_checkpoint(processes_to_update) end)
+    # shall be responsible on properly handling this update in a transaction.
+
+    # Not asynchronous because of #343; may be async if #326 allows it, but when
+    # recalculating a process it MUST be synchronous to the process' local and
+    # remote (if any) servers, so the TOPRecalcadoEvent is fully aware of both
+    # allocs. See #326 for context & to understand how async may be used here.
+    # hespawn(fn -> handle_checkpoint(processes_to_update) end)
+    handle_checkpoint(processes_to_update)
 
     # Returns a list of all processes the new server has (excluding completed
     # ones). The processes in this list are updated with the new `allocation`,

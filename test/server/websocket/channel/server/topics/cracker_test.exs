@@ -47,7 +47,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.CrackerTest do
       # All required fields are there
       assert process_created_event.data.type == "cracker_bruteforce"
       assert process_created_event.data.file
-      assert process_created_event.data.access.origin_id
+      assert process_created_event.data.access.origin_ip
       assert process_created_event.data.access.priority
       assert process_created_event.data.access.usage
       assert process_created_event.data.network_id

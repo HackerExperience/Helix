@@ -13,6 +13,7 @@ defmodule Helix.Process.Model.Process do
   use HELL.ID, field: :process_id, meta: [0x0021]
 
   import Ecto.Changeset
+  import HELL.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -209,7 +210,7 @@ defmodule Helix.Process.Model.Process do
 
   @type time_left :: float
 
-  @type resource :: :cpu | :ram | :dlk | :ulk
+  @type resource :: Process.Resources.resource
 
   @type dynamic :: [resource]
 
@@ -329,6 +330,11 @@ defmodule Helix.Process.Model.Process do
     # Estimated time left for completion of the process. Seconds.
     field :time_left, :float,
       virtual: true
+
+    # Estimated progress percentage (resources processed / total objective)
+    field :percentage, :float,
+      virtual: true,
+      default: 0.0
 
     # Estimated completion date for the process.
     field :completion_date, :utc_datetime,
@@ -450,7 +456,9 @@ defmodule Helix.Process.Model.Process do
   @spec estimate_duration(t) ::
     t
   defp estimate_duration(process = %Process{}) do
-    {_, time_left} = TOP.Scheduler.estimate_completion(process)
+    {simulated_process, time_left} = TOP.Scheduler.estimate_completion(process)
+
+    percentage = estimate_percentage(simulated_process)
 
     completion_date =
       if time_left == :infinity do
@@ -472,6 +480,46 @@ defmodule Helix.Process.Model.Process do
     process
     |> Map.replace(:completion_date, completion_date)
     |> Map.replace(:time_left, time_left)
+    |> Map.replace(:percentage, percentage)
+  end
+
+  docp """
+  First line divides the total objective by the amount processed. This is pretty
+  much all we need to estimate the percentage.... HOWEVER, we need to ignore
+  resources that are not used, and the remainder (pun intended) of this function
+  is meant to filter out unwanted data. Plus, in case there are multiple
+  resources allocated, it chooses the one that have the least progress so far.
+  """
+  defp estimate_percentage(process = %Process{}) do
+    elapsed_percentage =
+      Process.Resources.div(process.processed, process.objective)
+
+    # Returns all resources that have some objective. Filters out resources that
+    # are not required in order to complete the process
+    objectives =
+      process.objective
+      |> Process.Resources.map(&(&1 > 0))
+      |> Enum.reject(fn {_res, val} -> val == false || val == %{} end)
+      |> Enum.reduce([], fn {res, _}, acc -> acc ++ [res] end)
+
+    # For each resource that is part of the objective, get the corresponding
+    # div result (first line of this function). If the result is higher than 0,
+    # it means the `processed` is empty and the `objective` got merged during
+    # the division. This is actually a bug, but one we've chosen to live with.
+    objectives
+    |> Enum.reduce([], fn res, acc ->
+      # Ensures we are returning the actual progress; NOT the merged objective
+      filter_merged = fn _, v -> (v == 0.0 || v > 1) && 0.0 || v end
+
+      elapsed =
+        Process.Resources.call(
+          res, elapsed_percentage[res], :reduce, [0, filter_merged]
+        )
+
+      acc ++ [elapsed]
+    end)
+    |> Enum.sort()
+    |> List.first()
   end
 
   @spec format_resources(t) ::

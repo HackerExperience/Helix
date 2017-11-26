@@ -171,6 +171,8 @@ defmodule Helix.Process.Model.TOP.Scheduler do
   `checkpoint/1` we update the Process' `last_checkpoint_time`. Everything that
   happened *before* the `last_checkpoint_time` is already saved on `processed`.
   """
+  def checkpoint(%{next_allocation: nil, local?: _}),
+    do: false
   def checkpoint(%{l_reserved: alloc, next_allocation: alloc, local?: true}),
     do: false
   def checkpoint(%{r_reserved: alloc, next_allocation: alloc, local?: false}),
@@ -261,7 +263,7 @@ defmodule Helix.Process.Model.TOP.Scheduler do
     # to complete the DLK objective, it will return 30s.
     estimated_seconds =
       work_left
-      |> Process.Resources.max()
+      |> Process.Resources.max_value()
       |> Kernel./(1000)  # From millisecond to second
       |> Float.round(2)
 

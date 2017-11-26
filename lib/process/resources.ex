@@ -59,6 +59,14 @@ defmodule Helix.Process.Resources do
       def reduce(resource, initial, function),
         do: dispatch(:reduce, resource, [initial, function])
 
+      @spec call(resource, term, atom, [term]) ::
+        term
+      @doc """
+      Directly calls `function` on `resource`, passing `params` alongside it.
+      """
+      def call(resource, value, function, params),
+        do: call_resource(resource, function, [value] ++ params)
+
       @spec initial ::
         t
       @doc """
@@ -243,12 +251,12 @@ defmodule Helix.Process.Resources do
         end)
       end
 
-      @spec max(t) ::
+      @spec max_value(t) ::
         number
       @doc """
       Figure out which single resource has the greatest value.
       """
-      def max(resources) do
+      def max_value(resources) do
         resources
         |> reduce(0, fn acc, v -> max(acc, v) end)
 
