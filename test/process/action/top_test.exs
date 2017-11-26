@@ -97,8 +97,9 @@ defmodule Helix.Process.Action.TOPTest do
       # Let's recalque the TOP again. Theoretically, nothing should change.
       assert {:ok, [proc_recalque2], _} = TOPAction.recalque(gateway.server_id)
 
-      # Allocation is the same...
-      assert proc_recalque2.next_allocation == proc_recalque.next_allocation
+      # The new process has no `next_allocation`, meaning the allocation is
+      # exactly the same as to what was reserved before.
+      refute proc_recalque2.next_allocation
 
       # Now this is interesting. We'll detail this verification below because
       # it *is* important (and it *does* fixes a bug).

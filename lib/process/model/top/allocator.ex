@@ -299,7 +299,20 @@ defmodule Helix.Process.Model.TOP.Allocator do
     [Process.t]
   defp merge_allocation(allocated_processes) do
     Enum.map(allocated_processes, fn {process, new_alloc} ->
-      %{process| next_allocation: new_alloc}
+      reserved_resources =
+        process.local? && process.l_reserved || process.r_reserved
+
+      # If the new allocation is identical to what has been allocated before,
+      # then there's no need to set `next_allocation`
+      # This solves #343. If you absolutely need that `next_allocation` is set
+      # every time, regardless if it changed, some tweak will have to be made on
+      # `Scheduler.seconds_for_completion`, so it knows exactly what allocation
+      # to use.
+      if reserved_resources == new_alloc do
+        process
+      else
+        %{process| next_allocation: new_alloc}
+      end
     end)
   end
 
