@@ -506,21 +506,20 @@ defmodule Helix.Process.Model.Process do
     # div result (first line of this function). If the result is higher than 0,
     # it means the `processed` is empty and the `objective` got merged during
     # the division. This is actually a bug, but one we've chosen to live with.
-    progress =
-      objectives
-      |> Enum.reduce([], fn res, acc ->
-        # Ensures we are returning the actual progress; NOT the merged objective
-        filter_merged = fn acc, v -> (v == 0.0 || v > 1) && 0.0 || v end
+    objectives
+    |> Enum.reduce([], fn res, acc ->
+      # Ensures we are returning the actual progress; NOT the merged objective
+      filter_merged = fn _, v -> (v == 0.0 || v > 1) && 0.0 || v end
 
-        elapsed =
-          Process.Resources.call(
-            res, elapsed_percentage[res], :reduce, [0, filter_merged]
-          )
+      elapsed =
+        Process.Resources.call(
+          res, elapsed_percentage[res], :reduce, [0, filter_merged]
+        )
 
-        acc ++ [elapsed]
-      end)
-      |> Enum.sort()
-      |> List.first()
+      acc ++ [elapsed]
+    end)
+    |> Enum.sort()
+    |> List.first()
   end
 
   @spec format_resources(t) ::
