@@ -32,3 +32,6 @@ config :distillery, no_warn_missing: [:burette, :elixir_make]
 import_config "#{Mix.env}.exs"
 import_config "*/config.exs"
 import_config "*/#{Mix.env}.exs"
+
+config :timber, Timber.Integrations.EctoLogger,
+  query_time_ms_threshold: 1_000

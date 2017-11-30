@@ -14,8 +14,8 @@ defmodule Helix.Websocket.Request do
 
   import HELL.Macros
 
-  alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Websocket.Request.Relay, as: RequestRelay
+  alias Helix.Websocket.Utils, as: WebsocketUtils
 
   @type t :: t(struct)
 
@@ -47,12 +47,12 @@ defmodule Helix.Websocket.Request do
         @enforce_keys [:unsafe, :relay]
         defstruct [:unsafe, :relay, params: %{}, meta: %{}]
 
-        @spec new(term) ::
+        @spec new(term, term) ::
           t
-        def new(params \\ %{}) do
+        def new(params \\ %{}, socket \\ nil) do
           %__MODULE__{
             unsafe: params,
-            relay: RequestRelay.new(params)
+            relay: RequestRelay.new(params, socket, __MODULE__)
           }
         end
 

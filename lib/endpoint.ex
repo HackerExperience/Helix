@@ -17,7 +17,6 @@ defmodule Helix.Endpoint do
     only: ~w(css fonts images js favicon.ico robots.txt)
 
   plug Plug.RequestId
-  plug Plug.Logger
 
   plug Plug.Parsers,
     length: 2_000_000,
@@ -25,6 +24,11 @@ defmodule Helix.Endpoint do
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
     json_decoder: Poison
+
+  # Add Timber plugs for capturing HTTP context and events
+  plug Timber.Integrations.SessionContextPlug
+  plug Timber.Integrations.HTTPContextPlug
+  plug Timber.Integrations.EventPlug
 
   plug Helix.HTTP.Router
 end

@@ -19,6 +19,8 @@ join Helix.Server.Websocket.Channel.Server.Join do
   denied access to the remote server.
   """
 
+  use Helix.Logger
+
   import HELL.Macros
 
   alias Helix.Websocket.Utils, as: WebsocketUtils
@@ -222,6 +224,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
       |> ServerPublic.render_bootstrap_gateway()
       |> WebsocketUtils.wrap_data()
 
+    log :joined_server, gateway.server_id,
+      relay: request.relay,
+      data: %{type: :local, gateway_id: gateway.server_id}
+
     {:ok, bootstrap, socket}
   end
 
@@ -286,7 +292,15 @@ join Helix.Server.Websocket.Channel.Server.Join do
         |> ServerPublic.render_bootstrap_remote()
         |> WebsocketUtils.wrap_data()
 
-      {:ok, bootstrap, socket}
+      log :joined_server, destination.server_id,
+        relay: request.relay,
+        data: %{
+          type: :remote,
+          gateway_id: gateway.server_id,
+          destination_id: destination.server_id
+        }
+
+     {:ok, bootstrap, socket}
     end
   end
 

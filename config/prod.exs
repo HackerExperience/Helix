@@ -27,3 +27,23 @@ config :helix, Helix.Endpoint,
   check_origin: false
 
 config :helix, :migration_token, "${HELIX_MIGRATION_TOKEN}"
+
+config :logger,
+  backends: [
+    Timber.LoggerBackends.HTTP,
+    {LoggerFileBackend, :warn},
+    {LoggerFileBackend, :error}
+  ],
+  utc_log: true,
+  level: :info
+
+config :logger, :warn,
+  path: "/var/log/helix/warn.log",
+  level: :warn
+
+config :logger, :error,
+  path: "/var/log/helix/error.log",
+  level: :error
+
+config :timber,
+  api_key: {:system, "${TIMBER_LOGS_KEY}"}

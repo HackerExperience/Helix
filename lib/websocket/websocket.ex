@@ -35,6 +35,10 @@ defmodule Helix.Websocket do
   channel "account:*", Helix.Account.Websocket.Channel.Account
   channel "server:*", Helix.Server.Websocket.Channel.Server
 
+  unless Mix.env == :prod do
+    channel "logflix", HELL.Logflix
+  end
+
   def connect(%{"token" => token, "client" => client}, socket) do
     client =
       if Client.valid_client?(client) do

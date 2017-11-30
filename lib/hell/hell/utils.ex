@@ -99,4 +99,24 @@ defmodule HELL.Utils do
     do: nil
   def stringify(value),
     do: to_string(value)
+
+  @doc """
+  `stringify_map/1` will convert all values from an arbitrarily-nested map into a
+  string.
+  """
+  def stringify_map(helix_id = %_{id: _, root: _}),
+    do: to_string(helix_id)
+  def stringify_map(val) when is_number(val),
+    do: val
+  def stringify_map(val) when is_binary(val),
+    do: val
+  def stringify_map(val) when is_atom(val),
+    do: to_string(val)
+  def stringify_map(map) when is_map(map) do
+    Enum.reduce(map, %{}, fn {k, v}, acc ->
+      %{}
+      |> Map.put(k, stringify_map(v))
+      |> Map.merge(acc)
+    end)
+  end
 end

@@ -4,6 +4,7 @@ defmodule Helix.Websocket.Join do
   asking to join a Channel. It is handled by the `Joinable` protocol.
   """
 
+  alias Helix.Websocket.Request.Relay, as: RequestRelay
   alias Helix.Websocket.Utils, as: WebsocketUtils
 
   @type t(struct) :: %{
@@ -12,7 +13,8 @@ defmodule Helix.Websocket.Join do
     params: map,
     meta: map,
     type: nil | :local | :remote,
-    topic: String.t
+    topic: String.t,
+    relay: term
   }
 
   defmacro join(name, do: block) do
@@ -25,16 +27,17 @@ defmodule Helix.Websocket.Join do
 
         @type t :: Helix.Websocket.Join.t(__MODULE__)
 
-        @enforce_keys [:topic, :unsafe, :type]
-        defstruct [:topic, :unsafe, :type, params: %{}, meta: %{}]
+        @enforce_keys [:topic, :unsafe, :type, :relay]
+        defstruct [:topic, :unsafe, :type, :relay, params: %{}, meta: %{}]
 
-        @spec new(term, term, term) ::
+        @spec new(term, term, term, term) ::
           t
-        def new(topic, params \\ %{}, join_type \\ nil) do
+        def new(topic, params, socket, join_type \\ nil) do
           %__MODULE__{
             unsafe: params,
             topic: topic,
-            type: join_type
+            type: join_type,
+            relay: RequestRelay.new(params, socket, __MODULE__)
           }
         end
 

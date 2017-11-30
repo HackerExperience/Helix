@@ -24,7 +24,7 @@ request Helix.Server.Websocket.Requests.Config.Set do
 
         req =
           backend
-          |> apply(:new, [req_params])
+          |> apply(:new, [req_params, socket])
           |> Map.replace(:relay, request.relay)
 
         {key, req}

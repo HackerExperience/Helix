@@ -2,6 +2,8 @@ defmodule Helix.Application do
 
   use Application
 
+  require Logger
+
   import Supervisor.Spec
 
   def start(_type, _args) do
@@ -10,6 +12,7 @@ defmodule Helix.Application do
       supervisor(Helix.Application.DomainsSupervisor, [])
     ]
 
+    validate_timber_key()
     validate_token_key()
 
     opts = [strategy: :one_for_one, name: Helix.Supervisor]
@@ -38,11 +41,33 @@ defmodule Helix.Application do
       """
     end
   end
+
+  defp validate_timber_key do
+    if Mix.env == :prod do
+      {:system, api_key} = Application.get_env(:timber, :api_key)
+
+      ignore? = System.get_env("YOLO_IGNORE_LOGGING") == "true"
+
+      if (api_key == "${TIMBER_LOGS_KEY}" or api_key == "") and not ignore? do
+        raise """
+
+        Missing environment variable `TIMBER_LOGS_KEY`.
+
+        Set the `TIMBER_LOGS_KEY` env var or ignore this verification by setting
+        `YOLO_IGNORE_LOGGING` to `true`.
+
+        """
+      else
+        IO.puts "Skipping logging..."
+      end
+    end
+  end
 end
 
 defmodule Helix.Application.DomainsSupervisor do
 
   use Supervisor
+  use Helix.Logger
 
   def start_link do
     Supervisor.start_link(__MODULE__, [])
@@ -54,16 +79,18 @@ defmodule Helix.Application.DomainsSupervisor do
       supervisor(Helix.Cache.Supervisor, []),
       supervisor(Helix.Client.Supervisor, []),
       supervisor(Helix.Core.Supervisor, []),
-      supervisor(Helix.Event.Supervisor, []),
       supervisor(Helix.Entity.Supervisor, []),
+      supervisor(Helix.Event.Supervisor, []),
       supervisor(Helix.Log.Supervisor, []),
       supervisor(Helix.Network.Supervisor, []),
-      supervisor(Helix.Universe.Supervisor, []),
       supervisor(Helix.Process.Supervisor, []),
       supervisor(Helix.Server.Supervisor, []),
       supervisor(Helix.Software.Supervisor, []),
-      supervisor(Helix.Story.Supervisor, [])
+      supervisor(Helix.Story.Supervisor, []),
+      supervisor(Helix.Universe.Supervisor, [])
     ]
+
+    log :helix_started, :helix
 
     supervise(children, strategy: :one_for_one)
   end
