@@ -15,6 +15,7 @@ defmodule Helix.Server.Seed do
     add_component_types()
     add_component_specs()
     add_server_types()
+    recreate_servers()
   end
 
   docp """
@@ -56,6 +57,24 @@ defmodule Helix.Server.Seed do
     Repo.transaction fn ->
       Enum.each(Server.Type.possible_types(), fn type ->
         Repo.insert!(%Server.Type{type: type}, on_conflict: :nothing)
+      end)
+    end
+  end
+
+  def recreate_servers do
+
+    import Ecto.Query
+
+    alias Helix.Account.Action.Flow.Account, as: AccountFlow
+    alias Helix.Account.Model.Account
+    alias Helix.Account.Repo, as: AccountRepo
+
+    accounts = AccountRepo.all(from a in Account)
+
+    Repo.transaction fn ->
+      accounts
+      |> Enum.each(fn account ->
+        AccountFlow.setup_account(account, nil)
       end)
     end
   end
