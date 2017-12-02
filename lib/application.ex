@@ -43,7 +43,7 @@ defmodule Helix.Application do
   end
 
   defp validate_timber_key do
-    if Mix.env == :prod do
+    if Application.get_env(:helix, :env) == :prod do
       {:system, api_key} = Application.get_env(:timber, :api_key)
 
       ignore? = System.get_env("YOLO_IGNORE_LOGGING") == "true"

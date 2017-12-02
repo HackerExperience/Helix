@@ -108,13 +108,24 @@ defmodule Helix.Logger do
       else
         quote do
           context =
-            unquote(relay)
-            |> Map.from_struct()
+            unquote(relay_block)
+            |> Map.delete(:__struct__)
             |> Utils.stringify_map()
 
           "#{unquote(event_type)} - #{to_string(unquote(identifier))} - "
           <> "#{inspect context}"
           <> "#{inspect unquote(event)}"
+        end
+      end
+
+    log_param =
+      if data == %{} do
+        quote do
+          unquote(msg)
+        end
+      else
+        quote do
+          fn -> {unquote(msg), event: unquote(event)} end
         end
       end
 
@@ -150,9 +161,7 @@ defmodule Helix.Logger do
             %{data: payload, event: "new_log"}
         end
 
-        Logger.unquote(log_type)(
-          fn -> {unquote(msg), event: unquote(event)} end
-        )
+        Logger.unquote(log_type)(unquote(log_param))
       end
 
     end
