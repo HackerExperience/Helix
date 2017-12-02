@@ -44,7 +44,8 @@ defmodule Helix.Server.Websocket.Requests.Config.SetTest do
       request = ConfigSetRequest.new(params)
 
       # There was an error on one of the keys
-      assert {:error, reason} = Requestable.check_params(request, @mock_socket)
+      assert {:error, reason, _} =
+        Requestable.check_params(request, @mock_socket)
 
       # And it returns both the key and the corresponding error
       assert reason.__ready__ == %{hostname: "bad_request"}
@@ -61,7 +62,7 @@ defmodule Helix.Server.Websocket.Requests.Config.SetTest do
           "request_id" => "I'm something else"
         }
 
-      assert {:error, reason} =
+      assert {:error, reason, _} =
         ConfigSetRequest.new(params)
         |> Requestable.check_params(@mock_socket)
         |> elem(1)

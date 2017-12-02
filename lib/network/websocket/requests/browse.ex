@@ -36,9 +36,9 @@ request Helix.Network.Websocket.Requests.Browse do
       update_params(request, validated_params, reply: true)
     else
       :badorigin ->
-        reply_error("bad_origin")
+        reply_error(request, "bad_origin")
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -55,7 +55,7 @@ request Helix.Network.Websocket.Requests.Browse do
         update_meta(request, %{web: web, relay: relay}, reply: true)
 
       {:error, %{message: reason}} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 

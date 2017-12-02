@@ -1,6 +1,7 @@
 defmodule Helix.Websocket do
 
   use Phoenix.Socket
+  use Helix.Logger
 
   alias Phoenix.Socket
   alias Helix.Event.Notificable
@@ -34,6 +35,10 @@ defmodule Helix.Websocket do
 
   channel "account:*", Helix.Account.Websocket.Channel.Account
   channel "server:*", Helix.Server.Websocket.Channel.Server
+
+  unless Mix.env == :prod do
+    channel "logflix", HELL.Logflix
+  end
 
   def connect(%{"token" => token, "client" => client}, socket) do
     client =
@@ -87,9 +92,12 @@ defmodule Helix.Websocket do
     do
       Joinable.join(request, socket, assign)
     else
-      {:error, %{message: msg}} ->
+      {:error, %{message: msg}, request} ->
+        Joinable.log_error(request, socket, msg)
         {:error, %{data: msg}}
+
       _ ->
+        Joinable.log_error(request, socket, "internal")
         {:error, %{data: "internal"}}
     end
   end
@@ -99,6 +107,10 @@ defmodule Helix.Websocket do
   replying the result back to the client.
   """
   def handle_request(request, socket) do
+    log :request, nil,
+      relay: request.relay,
+      type: :debug
+
     with \
       {:ok, request} <- Requestable.check_params(request, socket),
       {:ok, request} <- Requestable.check_permissions(request, socket),
@@ -108,13 +120,18 @@ defmodule Helix.Websocket do
       |> Requestable.reply(socket)
       |> handle_response(request, socket)
     else
-      error = {:error, %{message: _}} ->
-        handle_response(error, request, socket)
+      {:error, %{message: msg}, request} ->
+        handle_response({:error, %{message: msg}}, request, socket)
 
-      {:error, %{__ready__: error_data}} ->
+      {:error, %{__ready__: error_data}, request} ->
         handle_response({:error, error_data}, request, socket)
 
       _ ->
+        log :internal_error, nil,
+          relay: request.relay,
+          data: %{status: :error, response: :internal},
+          type: :warn
+
         WebsocketUtils.reply_internal_error(socket)
     end
   end
@@ -151,6 +168,10 @@ defmodule Helix.Websocket do
     do: WebsocketUtils.no_reply(socket)
   defp handle_response({status, data}, request, socket) do
     payload = generate_payload(data, request)
+
+    log :response, nil,
+      relay: request.relay,
+      data: %{status: status, response: data}
 
     reply_request({status, payload}, socket)
   end

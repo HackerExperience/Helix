@@ -218,7 +218,26 @@ defmodule Helix.Server.Component.Specable do
       | :mobo_002
       | :mobo_999
 
+    @typedoc """
+    """
+    @type slot_id ::
+      :cpu_0 | :cpu_1 | :cpu_2 | :cpu_3 | :cpu_4 | :cpu_5 | :cpu_6 | :cpu_7 |
+      :hdd_0 | :hdd_1 | :hdd_2 | :hdd_3 | :hdd_4 | :hdd_5 | :hdd_6 | :hdd_7 |
+      :ram_0 | :ram_1 | :ram_2 | :ram_3 | :ram_4 | :ram_5 | :ram_6 | :ram_7 |
+      :nic_0 | :nic_1 | :nic_2 | :nic_3 | :usb_0 | :usb_1 | :usb_2 | :usb_3
+
     @initial :mobo_001
+
+    @doc """
+    Below spec list is mostly to register the atoms on the VM, so we can safely
+    use `String.to_existing_atom` when converting an external input.
+    """
+    def all_specs do
+      [:cpu_0, :cpu_1, :cpu_2, :cpu_3, :cpu_4, :cpu_5, :cpu_6, :cpu_7,
+      :hdd_0, :hdd_1, :hdd_2, :hdd_3, :hdd_4, :hdd_5, :hdd_6, :hdd_7,
+      :ram_0, :ram_1, :ram_2, :ram_3, :ram_4, :ram_5, :ram_6, :ram_7,
+      :nic_0, :nic_1, :nic_2, :nic_3, :usb_0, :usb_1, :usb_2, :usb_3]
+    end
 
     def create_custom(spec),
       do: %{slots: spec.slots}

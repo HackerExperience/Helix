@@ -1,10 +1,5 @@
 use Mix.Config
 
-config :logger,
-  level: :info,
-  compile_time_purge_level: :info,
-  metadata: [:request_id]
-
 config :helix, Helix.Endpoint,
   server: true,
   allowed_cors: [
@@ -27,3 +22,25 @@ config :helix, Helix.Endpoint,
   check_origin: false
 
 config :helix, :migration_token, "${HELIX_MIGRATION_TOKEN}"
+
+config :logger,
+  compile_time_purge_level: :info,
+  metadata: [:request_id],
+  backends: [
+    Timber.LoggerBackends.HTTP,
+    {LoggerFileBackend, :warn},
+    {LoggerFileBackend, :error}
+  ],
+  utc_log: true,
+  level: :info
+
+config :logger, :warn,
+  path: "/var/log/helix/warn.log",
+  level: :warn
+
+config :logger, :error,
+  path: "/var/log/helix/error.log",
+  level: :error
+
+config :timber,
+  api_key: {:system, "${TIMBER_API_KEY}"}

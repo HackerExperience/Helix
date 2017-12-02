@@ -15,7 +15,7 @@ defmodule Helix.Websocket.Channel do
 
       defmodule unquote(name) do
 
-        use Phoenix.Channel
+        use Phoenix.Channel, log_join: false, log_handle_in: false
 
         unquote(block)
       end
@@ -33,7 +33,7 @@ defmodule Helix.Websocket.Channel do
     quote do
 
       def handle_in(unquote(name), params, socket) do
-        unquote(request).new(params)
+        unquote(request).new(params, socket)
         |> Websocket.handle_request(socket)
       end
 
@@ -50,7 +50,7 @@ defmodule Helix.Websocket.Channel do
     quote do
 
       def join(topic = unquote(name), params, socket) do
-        unquote(join_handler).new(topic, params)
+        unquote(join_handler).new(topic, params, socket)
         |> Websocket.handle_join(socket, &assign/3)
       end
 

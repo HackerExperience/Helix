@@ -17,7 +17,7 @@ request Helix.Software.Websocket.Requests.PFTP.Server.Enable do
     if socket.assigns.meta.access_type == :local do
       reply_ok(request)
     else
-      reply_error("pftp_must_be_local")
+      reply_error(request, "pftp_must_be_local")
     end
   end
 
@@ -34,7 +34,7 @@ request Helix.Software.Websocket.Requests.PFTP.Server.Enable do
         update_meta(request, meta, reply: true)
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -46,7 +46,7 @@ request Helix.Software.Websocket.Requests.PFTP.Server.Enable do
         reply_ok(request)
 
       {:error, reason} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 

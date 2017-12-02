@@ -20,10 +20,10 @@ request Helix.Client.Web1.Websocket.Requests.Setup do
       update_params(request, %{pages: pages}, reply: true)
     else
       :bad_page ->
-        reply_error("invalid_page")
+        reply_error(request, "invalid_page")
 
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -39,7 +39,7 @@ request Helix.Client.Web1.Websocket.Requests.Setup do
         reply_ok(request)
 
       {:error, reason} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 

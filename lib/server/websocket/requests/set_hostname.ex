@@ -13,7 +13,7 @@ request Helix.Server.Websocket.Requests.SetHostname do
       update_params(request, %{hostname: hostname}, reply: true)
     else
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -29,7 +29,7 @@ request Helix.Server.Websocket.Requests.SetHostname do
         |> update_meta(%{server: relay.server}, reply: true)
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -43,7 +43,7 @@ request Helix.Server.Websocket.Requests.SetHostname do
         reply_ok(request)
 
       {:error, reason} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 

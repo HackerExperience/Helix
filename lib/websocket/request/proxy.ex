@@ -46,14 +46,14 @@ defmodule Helix.Websocket.Request.Proxy do
           if backend do
             sub_request =
               backend
-              |> apply(:new, [request.unsafe])
-              |>  Map.replace(:relay, request.relay)
+              |> apply(:new, [request.unsafe, socket])
+              |> Map.replace(:relay, request.relay)
 
             with {:ok, req} <- Requestable.check_params(sub_request, socket) do
               update_meta(request, %{sub_request: req}, reply: true)
             end
           else
-            reply_error("request_not_implemented_for_client")
+            reply_error(request, "request_not_implemented_for_client")
           end
         end
 

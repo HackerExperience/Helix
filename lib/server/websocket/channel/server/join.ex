@@ -19,6 +19,8 @@ join Helix.Server.Websocket.Channel.Server.Join do
   denied access to the remote server.
   """
 
+  use Helix.Logger
+
   import HELL.Macros
 
   alias Helix.Websocket.Utils, as: WebsocketUtils
@@ -59,10 +61,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_params(request, params, reply: true)
     else
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
 
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -95,10 +97,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_params(request, params, reply: true)
     else
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
 
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -121,7 +123,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_meta(request, meta, reply: true)
     else
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -172,10 +174,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_meta(request, meta, reply: true)
     else
       {false, {:counter, :invalid}, _} ->
-        reply_error("bad_counter")
+        reply_error(request, "bad_counter")
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -221,6 +223,15 @@ join Helix.Server.Websocket.Channel.Server.Join do
       |> ServerPublic.bootstrap_gateway(entity.entity_id)
       |> ServerPublic.render_bootstrap_gateway()
       |> WebsocketUtils.wrap_data()
+
+    log :join, gateway.server_id,
+      relay: request.relay,
+      data: %{
+        channel: :server,
+        type: :local,
+        gateway_id: gateway.server_id,
+        status: :ok
+      }
 
     {:ok, bootstrap, socket}
   end
@@ -286,8 +297,37 @@ join Helix.Server.Websocket.Channel.Server.Join do
         |> ServerPublic.render_bootstrap_remote()
         |> WebsocketUtils.wrap_data()
 
-      {:ok, bootstrap, socket}
+      log :join, destination.server_id,
+        relay: request.relay,
+        data: %{
+          channel: :server,
+          status: :ok,
+          type: :remote,
+          gateway_id: gateway.server_id,
+          destination_id: destination.server_id
+        }
+
+     {:ok, bootstrap, socket}
     end
+  end
+
+  def log_error(request, _socket, reason) do
+    id =
+      if Enum.empty?(request.meta) do
+        nil
+      else
+        if request.type == :local do
+          request.meta.gateway.server_id
+        else
+          request.meta.destination.server_id
+        end
+      end
+
+    log :join, id,
+      relay: request.relay,
+      data: %{
+        channel: :server, status: :error, type: request.type, reason: reason
+      }
   end
 
   docp """

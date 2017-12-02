@@ -304,7 +304,10 @@ defmodule Helix.Test.Channel.Setup do
       |> fake_connection_socket_assigns()
       |> Map.merge(server_assigns)
 
-    %{assigns: assigns}
+    %{
+      assigns: assigns,
+      joined: true
+    }
   end
 
   @doc """
@@ -319,7 +322,10 @@ defmodule Helix.Test.Channel.Setup do
       |> fake_connection_socket_assigns()
       |> Map.merge(acc_assigns)
 
-    %{assigns: assigns}
+    %{
+      assigns: assigns,
+      joined: true
+    }
   end
 
   @doc """

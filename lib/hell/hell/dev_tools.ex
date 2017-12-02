@@ -6,7 +6,8 @@ defmodule HELL.DevTools do
     Lists all atoms defined on the VM at a given time.
 
     Use `search_exact` for exact search, and `search_similar` in order to
-    query subsets of atoms.
+    query subsets of atoms. Parameters for `search_*` must be a binary (string)
+    to make sure the queried atom is not registered during the request.
 
     `IO.inspect` hard-coded in order to ensure the output list is not truncated.
 
@@ -18,14 +19,22 @@ defmodule HELL.DevTools do
       |> IO.inspect(limit: :infinity)
     end
 
-    def search_exact(query) do
+    @doc """
+    Must be a binary otherwise the queried atom is registered before
+    `all_atoms/1` is called, making the search useless.
+    """
+    def search_exact(query) when is_binary(query) do
       all_atoms()
-      |> Enum.find(fn atom -> atom == query end)
+      |> Enum.find(fn atom -> to_string(atom) == query end)
     end
 
-    def search_similar(query) do
+    @doc """
+    Must be a binary otherwise the queried atom is registered before
+    `all_atoms/1` is called, making the search useless.
+    """
+    def search_similar(query) when is_binary(query) do
       all_atoms()
-      |> Enum.filter(fn atom -> to_string(atom) =~ to_string(query) end)
+      |> Enum.filter(fn atom -> to_string(atom) =~ query end)
       |> IO.inspect(limit: :infinity)
     end
 

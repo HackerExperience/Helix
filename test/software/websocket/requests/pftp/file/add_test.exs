@@ -13,7 +13,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.AddTest do
       request = PFTPFileAddRequest.new(%{})
       remote_socket = ChannelSetup.mock_server_socket()
 
-      assert {:error, %{message: reason}} =
+      assert {:error, %{message: reason}, _} =
         Requestable.check_params(request, remote_socket)
 
       assert reason == "pftp_must_be_local"
@@ -25,9 +25,9 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.AddTest do
       request1 = PFTPFileAddRequest.new(%{})
       request2 = PFTPFileAddRequest.new(%{"file_id" => "I'm not an id"})
 
-      assert {:error, %{message: error1}} =
+      assert {:error, %{message: error1}, _} =
         Requestable.check_params(request1, mock_socket)
-      assert {:error, %{message: error2}} =
+      assert {:error, %{message: error2}, _} =
         Requestable.check_params(request2, mock_socket)
 
       assert error1 == "bad_request"
@@ -50,7 +50,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.AddTest do
       {:ok, request} = Requestable.check_params(request, socket)
 
       # Attempts to add a file to my server
-      assert {:error, %{message: reason}} =
+      assert {:error, %{message: reason}, _} =
         Requestable.check_permissions(request, socket)
 
       # But I have no PFTP server running :(
@@ -60,7 +60,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.AddTest do
       {pftp, _} = SoftwareSetup.PFTP.pftp(server_id: server.server_id)
 
       # Try again
-      assert {:error, %{message: reason}} =
+      assert {:error, %{message: reason}, _} =
         Requestable.check_permissions(request, socket)
 
       # Opsie, that file is not mine 😂

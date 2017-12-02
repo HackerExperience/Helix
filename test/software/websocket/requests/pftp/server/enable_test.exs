@@ -14,7 +14,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.Server.EnableTest do
       request = PFTPServerEnableRequest.new(%{})
       remote_socket = ChannelSetup.mock_server_socket()
 
-      assert {:error, %{message: reason}} =
+      assert {:error, %{message: reason}, _} =
         Requestable.check_params(request, remote_socket)
 
       assert reason == "pftp_must_be_local"
@@ -34,7 +34,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.Server.EnableTest do
       # Now we'll enable pftp on that server, so the request should fail
       SoftwareSetup.PFTP.pftp(server_id: socket.assigns.gateway.server_id)
 
-      assert {:error, %{message: reason}} =
+      assert {:error, %{message: reason}, _} =
         Requestable.check_permissions(request, socket)
 
       assert reason == "pftp_already_enabled"

@@ -18,3 +18,7 @@ config :helix, Helix.Endpoint,
 
 config :helf,
   driver: :sync
+
+config :logger,
+  backends: [:console],
+  level: :warn

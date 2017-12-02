@@ -44,7 +44,7 @@ defmodule Helix.Mixfile do
   def application do
     [
       mod: {Helix.Application, []},
-      extra_applications: [:logger, :crypto]
+      extra_applications: [:timber, :logger, :crypto]
     ]
   end
 
@@ -63,6 +63,9 @@ defmodule Helix.Mixfile do
 
       {:comeonin, "~> 4.0.3"},
       {:bcrypt_elixir, "~> 1.0"},
+
+      {:timber, "~> 2.5"},
+      {:logger_file_backend, "~>0.0.10"},
 
       {:burette, git: "https://github.com/HackerExperience/burette"},
 
