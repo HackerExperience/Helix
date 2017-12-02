@@ -84,5 +84,12 @@ defprotocol Helix.Websocket.Joinable do
   """
   def join(request, socket, assign)
 
+  @spec log_error(request, Socket.t, term) ::
+    term
+  @doc """
+  Called by Websocket when there was an error during the join request. It allows
+  each Joinable implementation to provide its own context and id for enhanced
+  logging.
+  """
   def log_error(request, socket, reason)
 end

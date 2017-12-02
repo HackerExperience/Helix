@@ -127,7 +127,6 @@ defmodule Helix.Websocket do
         handle_response({:error, error_data}, request, socket)
 
       _ ->
-
         log :internal_error, nil,
           relay: request.relay,
           data: %{status: :error, response: :internal},

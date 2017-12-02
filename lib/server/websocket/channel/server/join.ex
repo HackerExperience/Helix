@@ -32,25 +32,6 @@ join Helix.Server.Websocket.Channel.Server.Join do
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
 
-  def log_error(request, _socket, reason) do
-    id =
-      if Enum.empty?(request.meta) do
-        nil
-      else
-        if request.type == :local do
-          request.meta.gateway.server_id
-        else
-          request.meta.destination.server_id
-        end
-      end
-
-    log :join, id,
-      relay: request.relay,
-      data: %{
-        channel: :server, status: :error, type: request.type, reason: reason
-      }
-  end
-
   @doc """
   Detects whether the join is local or remote, and delegates to the expected
   method.
@@ -328,6 +309,25 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
      {:ok, bootstrap, socket}
     end
+  end
+
+  def log_error(request, _socket, reason) do
+    id =
+      if Enum.empty?(request.meta) do
+        nil
+      else
+        if request.type == :local do
+          request.meta.gateway.server_id
+        else
+          request.meta.destination.server_id
+        end
+      end
+
+    log :join, id,
+      relay: request.relay,
+      data: %{
+        channel: :server, status: :error, type: request.type, reason: reason
+      }
   end
 
   docp """

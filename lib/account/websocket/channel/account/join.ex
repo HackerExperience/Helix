@@ -18,19 +18,6 @@ join Helix.Account.Websocket.Channel.Account.Join do
   alias Helix.Account.Model.Account
   alias Helix.Account.Public.Account, as: AccountPublic
 
-  def log_error(request, _socket, reason) do
-    id =
-      if Enum.empty?(request.params) do
-        nil
-      else
-        request.params.account_id
-      end
-
-    log :join, id,
-      relay: request.relay,
-      data: %{channel: :account, status: :error, reason: reason}
-  end
-
   def check_params(request, _socket) do
     account_id = get_id_from_topic(request.topic)
 
@@ -84,6 +71,22 @@ join Helix.Account.Websocket.Channel.Account.Join do
     {:ok, bootstrap, socket}
   end
 
-  defp get_id_from_topic(topic),
-    do: List.last(String.split(topic, "account:"))
+  def log_error(request, _socket, reason) do
+    id =
+      if Enum.empty?(request.params) do
+        nil
+      else
+        request.params.account_id
+      end
+
+    log :join, id,
+      relay: request.relay,
+      data: %{channel: :account, status: :error, reason: reason}
+  end
+
+  defp get_id_from_topic(topic) do
+    topic
+    |> String.split("account:")
+    |> List.last()
+  end
 end

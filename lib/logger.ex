@@ -6,9 +6,6 @@ defmodule Helix.Logger do
   On dev environment, it also broadcasts the message to the Logflix channel.
   """
 
-  # @dialyzer {:nowarn_function, 'Elixir.Timber.add_context': 1}
-  @dialyzer [:no_improper_lists, :no_return, :no_contracts, :no_match]
-
   import HELL.Macros
 
   alias HELL.ClientUtils
@@ -16,11 +13,11 @@ defmodule Helix.Logger do
 
   defmacro __using__(_) do
     quote do
-      @dialyzer [:no_improper_lists, :no_return, :no_contracts, :no_match]
+
+      import Helix.Logger
 
       require Logger
 
-      import Helix.Logger
     end
   end
 
@@ -55,7 +52,7 @@ defmodule Helix.Logger do
           # TODO: Using custom context while timber-elixir#247 isn't fixed
           # https://github.com/timberio/timber-elixir/issues/247
           # #348 on Helix
-          [id: account_id, name: "lar", email: "blar"]
+          [id: account_id]
           |> Timber.add_context()
 
           [request_id: request_id, path: topic, method: method]
@@ -72,14 +69,14 @@ defmodule Helix.Logger do
         end
       end
 
-    data = Keyword.get(opts, :data, %{})
-
     params =
       if relay do
         quote(do: unquote(relay).params)
       else
         Keyword.get(opts, :params, "")
       end
+
+    data = Keyword.get(opts, :data, %{})
 
     # Formats the custom `data`, if any, ensuring it is JSON-friendly (on `prod`
     # it is used by the Timber API, and on `dev` it's used on the Logflix API).
@@ -95,7 +92,7 @@ defmodule Helix.Logger do
 
           %Timber.Events.CustomEvent{
             data: formatted_data,
-            type: unquote(event_type) |> String.to_atom(),
+            type: unquote(event_type) |> String.to_atom()
           }
         end
       end
@@ -123,18 +120,6 @@ defmodule Helix.Logger do
 
     # Specify log type/severity (:debug, :info, :warn, :error). Default is :info
     log_type = Keyword.get(opts, :type, :info)
-
-    # Generates the log emission command
-    send_log =
-      quote do
-        if Map.has_key?(unquote(event), :__struct__) do
-          Logger.unquote(log_type)(
-            fn -> {unquote(msg), event: unquote(event)} end
-          )
-        else
-          Logger.unquote(log_type)(unquote(msg))
-        end
-      end
 
     quote location: :keep do
 
@@ -165,7 +150,9 @@ defmodule Helix.Logger do
             %{data: payload, event: "new_log"}
         end
 
-        unquote(send_log)
+        Logger.unquote(log_type)(
+          fn -> {unquote(msg), event: unquote(event)} end
+        )
       end
 
     end
