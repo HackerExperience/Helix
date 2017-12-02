@@ -101,8 +101,8 @@ defmodule HELL.Utils do
     do: to_string(value)
 
   @doc """
-  `stringify_map/1` will convert all values from an arbitrarily-nested map into a
-  string.
+  `stringify_map/1` will convert all values from an arbitrarily-nested map into
+  a string.
   """
   def stringify_map(helix_id = %_{id: _, root: _}),
     do: to_string(helix_id)
@@ -119,4 +119,6 @@ defmodule HELL.Utils do
       |> Map.merge(acc)
     end)
   end
+  def stringify_map(val),
+    do: "#{inspect val}"
 end

@@ -17,39 +17,39 @@ defmodule Helix.Websocket.Flow do
   internally by `Helix.Websocket` so it knows it's supposed to relay that value
   directly to the client too.
   """
-  defmacro reply_error(msg) when is_binary(msg) do
+  defmacro reply_error(request, msg) when is_binary(msg) do
     quote do
-      {:error, %{message: unquote(msg)}}
+      {:error, %{message: unquote(msg)}, unquote(request)}
     end
   end
 
-  defmacro reply_error(reason) when is_atom(reason) or is_tuple(reason) do
+  defmacro reply_error(req, reason) when is_atom(reason) or is_tuple(reason) do
     quote do
-      {:error, %{message: get_error(unquote(reason))}}
+      {:error, %{message: get_error(unquote(reason))}, unquote(req)}
     end
   end
 
-  defmacro reply_error(data, ready: true) do
+  defmacro reply_error(request, data, ready: true) do
     quote do
-      {:error, %{__ready__: unquote(data)}}
+      {:error, %{__ready__: unquote(data)}, unquote(request)}
     end
   end
 
   @doc """
   Shorthand for the `bad_request` error.
   """
-  defmacro bad_request do
+  defmacro bad_request(request) do
     quote do
-      reply_error("bad_request")
+      reply_error(unquote(request), "bad_request")
     end
   end
 
   @doc """
   Shorthand for the `internal` error.
   """
-  defmacro internal_error do
+  defmacro internal_error(request) do
     quote do
-      reply_error("internal")
+      reply_error(unquote(request), "internal")
     end
   end
 

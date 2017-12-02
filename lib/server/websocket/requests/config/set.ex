@@ -67,7 +67,7 @@ request Helix.Server.Websocket.Requests.Config.Set do
           {:ok, req} ->
             {Map.put(req_acc, key, req), error_acc}
 
-          {:error, %{message: reason}} ->
+          {:error, %{message: reason}, _} ->
             {req_acc, Map.put(error_acc, key, reason)}
         end
       end)
@@ -81,6 +81,6 @@ request Helix.Server.Websocket.Requests.Config.Set do
 
   defp reply_responses({:ok, requests}, request),
     do: update_meta(request, %{sub_requests: requests}, reply: true)
-  defp reply_responses({:error, errors}, _),
-    do: reply_error(errors, ready: true)
+  defp reply_responses({:error, errors}, request),
+    do: reply_error(request, errors, ready: true)
 end

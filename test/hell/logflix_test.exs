@@ -31,7 +31,7 @@ defmodule HELL.LogflixTest do
         relay: relay
 
       # Receive the "new_log" message
-      assert_push "new_log", log
+      assert_push "event", log
 
       # Log data is correct
       assert log.data.type == "logger_test"

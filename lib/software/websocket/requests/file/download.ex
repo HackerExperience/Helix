@@ -35,9 +35,9 @@ request Helix.Software.Websocket.Requests.File.Download do
       update_params(request, params, reply: true)
     else
       :bad_access ->
-        reply_error("download_self")
+        reply_error(request, "download_self")
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -76,7 +76,7 @@ request Helix.Software.Websocket.Requests.File.Download do
         update_meta(request, meta, reply: true)
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -96,7 +96,7 @@ request Helix.Software.Websocket.Requests.File.Download do
         reply_ok(request)
 
       {:error, reason} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 

@@ -23,7 +23,8 @@ defmodule Helix.Client.Web1.Websocket.Requests.SetupTest do
 
     test "rejects when param is not passed" do
       request = Web1SetupRequest.new(%{})
-      assert {:error, reason} = Requestable.check_params(request, @mock_socket)
+      assert {:error, reason, _} =
+        Requestable.check_params(request, @mock_socket)
       assert reason.message == "bad_request"
     end
 
@@ -34,7 +35,8 @@ defmodule Helix.Client.Web1.Websocket.Requests.SetupTest do
 
       request = Web1SetupRequest.new(params)
 
-      assert {:error, reason} = Requestable.check_params(request, @mock_socket)
+      assert {:error, reason, _} =
+        Requestable.check_params(request, @mock_socket)
       assert reason.message == "invalid_page"
     end
   end

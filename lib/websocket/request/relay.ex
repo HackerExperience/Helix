@@ -7,7 +7,7 @@ defmodule Helix.Websocket.Request.Relay do
 
   alias Helix.Websocket
 
-  defstruct [:request_id, :account_id, :type, :topic]
+  defstruct [:request_id, :account_id, :type, :topic, :params]
 
   @type t :: t_of_type(binary)
 
@@ -16,7 +16,8 @@ defmodule Helix.Websocket.Request.Relay do
       request_id: type,
       account_id: term,
       topic: String.t,
-      type: :request | :join
+      type: :request | :join,
+      params: String.t
     }
 
   @spec new(map, Websocket.socket | term, term) ::
@@ -30,14 +31,15 @@ defmodule Helix.Websocket.Request.Relay do
       request_id: request_id,
       account_id: account_id,
       type: req_type,
-      topic: topic
+      topic: topic,
+      params: "#{inspect params}"
     }
   end
 
   defp get_request_id(%{"request_id" => request_id}) when is_binary(request_id),
     do: request_id
   defp get_request_id(_),
-    do: nil
+    do: Ecto.UUID.generate()
 
   defp get_request_data(nil, _),
     do: {nil, nil, nil}

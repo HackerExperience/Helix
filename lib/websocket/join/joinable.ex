@@ -83,4 +83,6 @@ defprotocol Helix.Websocket.Joinable do
   - {:error, reply :: map}
   """
   def join(request, socket, assign)
+
+  def log_error(request, socket, reason)
 end

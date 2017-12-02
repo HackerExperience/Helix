@@ -32,6 +32,25 @@ join Helix.Server.Websocket.Channel.Server.Join do
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
 
+  def log_error(request, _socket, reason) do
+    id =
+      if Enum.empty?(request.meta) do
+        nil
+      else
+        if request.type == :local do
+          request.meta.gateway.server_id
+        else
+          request.meta.destination.server_id
+        end
+      end
+
+    log :join, id,
+      relay: request.relay,
+      data: %{
+        channel: :server, status: :error, type: request.type, reason: reason
+      }
+  end
+
   @doc """
   Detects whether the join is local or remote, and delegates to the expected
   method.
@@ -61,10 +80,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_params(request, params, reply: true)
     else
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
 
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -97,10 +116,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_params(request, params, reply: true)
     else
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
 
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -123,7 +142,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_meta(request, meta, reply: true)
     else
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -174,10 +193,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
       update_meta(request, meta, reply: true)
     else
       {false, {:counter, :invalid}, _} ->
-        reply_error("bad_counter")
+        reply_error(request, "bad_counter")
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -224,9 +243,14 @@ join Helix.Server.Websocket.Channel.Server.Join do
       |> ServerPublic.render_bootstrap_gateway()
       |> WebsocketUtils.wrap_data()
 
-    log :joined_server, gateway.server_id,
+    log :join, gateway.server_id,
       relay: request.relay,
-      data: %{type: :local, gateway_id: gateway.server_id}
+      data: %{
+        channel: :server,
+        type: :local,
+        gateway_id: gateway.server_id,
+        status: :ok
+      }
 
     {:ok, bootstrap, socket}
   end
@@ -292,9 +316,11 @@ join Helix.Server.Websocket.Channel.Server.Join do
         |> ServerPublic.render_bootstrap_remote()
         |> WebsocketUtils.wrap_data()
 
-      log :joined_server, destination.server_id,
+      log :join, destination.server_id,
         relay: request.relay,
         data: %{
+          channel: :server,
+          status: :ok,
           type: :remote,
           gateway_id: gateway.server_id,
           destination_id: destination.server_id

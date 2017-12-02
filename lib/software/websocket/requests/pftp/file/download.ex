@@ -35,13 +35,13 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
       update_params(request, params, reply: true)
     else
       :not_local ->
-        reply_error("pftp_must_be_local")
+        reply_error(request, "pftp_must_be_local")
 
       {:error, {:nip, :notfound}} ->
-        reply_error("nip_not_found")
+        reply_error(request, "nip_not_found")
 
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -76,7 +76,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
       update_meta(request, meta, reply: true)
     else
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -92,7 +92,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
         update_meta(request, %{process: process}, reply: true)
 
       {:error, reason} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 

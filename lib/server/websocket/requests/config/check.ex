@@ -22,7 +22,7 @@ request Helix.Server.Websocket.Requests.Config.Check do
       end
     else
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 

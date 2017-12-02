@@ -1,8 +1,12 @@
+# Helix
 /_build
 /cover
 /deps
 /doc
 /docs/all.json
+helix.log
+
+# Erlang
 erl_crash.dump
 *.ez
 

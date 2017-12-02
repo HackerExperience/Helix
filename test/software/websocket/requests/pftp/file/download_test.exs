@@ -45,9 +45,9 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
       r2 = PFTPFileDownloadRequest.new(p2)
       r3 = PFTPFileDownloadRequest.new(p3)
 
-      assert {:error, %{message: e1}} = Requestable.check_params(r1, socket)
-      assert {:error, %{message: e2}} = Requestable.check_params(r2, socket)
-      assert {:error, %{message: e3}} = Requestable.check_params(r3, socket)
+      assert {:error, %{message: e1}, _} = Requestable.check_params(r1, socket)
+      assert {:error, %{message: e2}, _} = Requestable.check_params(r2, socket)
+      assert {:error, %{message: e3}, _} = Requestable.check_params(r3, socket)
 
       # This is how you remind me of what I really am
       assert e1 == "bad_request"
@@ -84,7 +84,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
       # Let's make it work.
 
       # First attempt.
-      assert {:error, %{message: msg}} =
+      assert {:error, %{message: msg}, _} =
         Requestable.check_permissions(request, socket)
 
       # I've added the wrong file id.
@@ -92,7 +92,7 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
 
       # Now let's try again with the correct file id.
       replace_param(request, :file_id, file.file_id)
-      assert {:error, %{message: msg}} =
+      assert {:error, %{message: msg}, _} =
         Requestable.check_permissions(request, socket)
 
       # Raite, the file exists but it's not on the PFTP server.

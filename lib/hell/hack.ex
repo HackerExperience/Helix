@@ -38,7 +38,8 @@ defmodule HELL.Hack.Experience do
       "Elixir.Helix.Websocket.Joinable" => [
         {:check_params, 2},
         {:check_permissions, 2},
-        {:join, 3}
+        {:join, 3},
+        {:log_error, 3}
       ],
       "Elixir.Helix.Process.Model.Processable" => [
         {:kill, 3},

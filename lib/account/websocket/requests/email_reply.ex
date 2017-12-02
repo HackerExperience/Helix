@@ -19,7 +19,7 @@ request Helix.Account.Websocket.Requests.EmailReply do
       update_params(request, params, reply: true)
     else
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -38,7 +38,7 @@ request Helix.Account.Websocket.Requests.EmailReply do
       :ok ->
         reply_ok(request)
       {:error, %{message: msg}} ->
-        reply_error(msg)
+        reply_error(request, msg)
     end
   end
 

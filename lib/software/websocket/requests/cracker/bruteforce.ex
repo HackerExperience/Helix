@@ -28,9 +28,9 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
       update_params(request, params, reply: true)
     else
       :bad_attack_src ->
-        reply_error("bad_attack_src")
+        reply_error(request, "bad_attack_src")
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -54,7 +54,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
         update_meta(request, meta, reply: true)
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -77,7 +77,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
         update_meta(request, %{process: process}, reply: true)
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
 
       error = {:error, %{message: _}} ->
         error

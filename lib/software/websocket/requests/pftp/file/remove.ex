@@ -26,9 +26,9 @@ request Helix.Software.Websocket.Requests.PFTP.File.Remove do
       update_params(request, params, reply: true)
     else
       :not_local ->
-        reply_error("pftp_must_be_local")
+        reply_error(request, "pftp_must_be_local")
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -53,7 +53,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Remove do
         update_meta(request, meta, reply: true)
 
       {false, reason, _} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 
@@ -66,7 +66,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Remove do
         reply_ok(request)
 
       {:error, reason} ->
-        reply_error(reason)
+        reply_error(request, reason)
     end
   end
 

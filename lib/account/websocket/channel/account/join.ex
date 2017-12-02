@@ -11,10 +11,25 @@ join Helix.Account.Websocket.Channel.Account.Join do
   belong to the authenticated user on the socket.
   """
 
+  use Helix.Logger
+
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Client.Public.Client, as: ClientPublic
   alias Helix.Account.Model.Account
   alias Helix.Account.Public.Account, as: AccountPublic
+
+  def log_error(request, _socket, reason) do
+    id =
+      if Enum.empty?(request.params) do
+        nil
+      else
+        request.params.account_id
+      end
+
+    log :join, id,
+      relay: request.relay,
+      data: %{channel: :account, status: :error, reason: reason}
+  end
 
   def check_params(request, _socket) do
     account_id = get_id_from_topic(request.topic)
@@ -27,7 +42,7 @@ join Helix.Account.Websocket.Channel.Account.Join do
       update_params(request, params, reply: true)
     else
       _ ->
-        bad_request()
+        bad_request(request)
     end
   end
 
@@ -41,11 +56,11 @@ join Helix.Account.Websocket.Channel.Account.Join do
     if account_id == request.params.account_id do
       reply_ok(request)
     else
-      reply_error("access_denied")
+      reply_error(request, "access_denied")
     end
   end
 
-  def join(_request, socket, _assign) do
+  def join(request, socket, _assign) do
     entity_id = socket.assigns.entity_id
     client = socket.assigns.client
 
@@ -61,6 +76,10 @@ join Helix.Account.Websocket.Channel.Account.Join do
       account_bootstrap
       |> Map.merge(client_bootstrap)
       |> WebsocketUtils.wrap_data()
+
+    log :join, entity_id,
+      relay: request.relay,
+      data: %{channel: :account, status: :ok}
 
     {:ok, bootstrap, socket}
   end

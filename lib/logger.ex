@@ -6,6 +6,9 @@ defmodule Helix.Logger do
   On dev environment, it also broadcasts the message to the Logflix channel.
   """
 
+  # @dialyzer {:nowarn_function, 'Elixir.Timber.add_context': 1}
+  @dialyzer [:no_improper_lists, :no_return, :no_contracts, :no_match]
+
   import HELL.Macros
 
   alias HELL.ClientUtils
@@ -13,18 +16,11 @@ defmodule Helix.Logger do
 
   defmacro __using__(_) do
     quote do
+      @dialyzer [:no_improper_lists, :no_return, :no_contracts, :no_match]
 
       require Logger
 
       import Helix.Logger
-
-      @doc """
-      Actually emits the log.
-      """
-      def send_log(msg, event = %Timber.Events.CustomEvent{}),
-        do: Logger.info fn -> {msg, event: event} end
-      def send_log(msg, _),
-        do: Logger.info(msg)
     end
   end
 
@@ -33,10 +29,6 @@ defmodule Helix.Logger do
   """
   defmacro log(event_type, identifier, opts \\ quote(do: [])) do
     event_type = to_string(event_type)
-    severity = Keyword.get(opts, :severity, :info)
-
-    if severity not in [:debug, :info, :warn, :error],
-      do: raise "Invalid severity: #{severity}"
 
     relay = Keyword.get(opts, :relay, false)
 
@@ -60,20 +52,14 @@ defmodule Helix.Logger do
                 "POST"
             end
 
-          user = %Timber.Contexts.UserContext{
-            id: account_id
-          }
-          # |> Timber.add_context()
-          # TODO: Test timber!!11
+          # TODO: Using custom context while timber-elixir#247 isn't fixed
+          # https://github.com/timberio/timber-elixir/issues/247
+          # #348 on Helix
+          [id: account_id, name: "lar", email: "blar"]
+          |> Timber.add_context()
 
-          http = %Timber.Contexts.HTTPContext{
-            request_id: request_id,
-            path: topic,
-            method: method
-          }
-          # |> Timber.add_context()
-
-          Timber.add_context(user: user, http: http)
+          [request_id: request_id, path: topic, method: method]
+          |> Timber.add_context()
 
           %{
             account_id: account_id,
@@ -88,6 +74,13 @@ defmodule Helix.Logger do
 
     data = Keyword.get(opts, :data, %{})
 
+    params =
+      if relay do
+        quote(do: unquote(relay).params)
+      else
+        Keyword.get(opts, :params, "")
+      end
+
     # Formats the custom `data`, if any, ensuring it is JSON-friendly (on `prod`
     # it is used by the Timber API, and on `dev` it's used on the Logflix API).
     event =
@@ -98,11 +91,48 @@ defmodule Helix.Logger do
       else
         quote do
           formatted_data = Utils.stringify_map(unquote(data))
+          |> Map.put(:params, unquote(params))
 
           %Timber.Events.CustomEvent{
             data: formatted_data,
-            type: unquote(event_type) |> String.to_atom()
+            type: unquote(event_type) |> String.to_atom(),
           }
+        end
+      end
+
+    # Builds up the message. On `dev` the message itself has all context/event
+    # data, since it will be logged to a file. On production it's all structured
+    # so we don't need a fancy message.
+    msg =
+      if Mix.env == :prod do
+        quote do
+          "#{unquote(event_type)} - #{to_string(unquote(identifier))}"
+        end
+      else
+        quote do
+          context =
+            unquote(relay)
+            |> Map.from_struct()
+            |> Utils.stringify_map()
+
+          "#{unquote(event_type)} - #{to_string(unquote(identifier))} - "
+          <> "#{inspect context}"
+          <> "#{inspect unquote(event)}"
+        end
+      end
+
+    # Specify log type/severity (:debug, :info, :warn, :error). Default is :info
+    log_type = Keyword.get(opts, :type, :info)
+
+    # Generates the log emission command
+    send_log =
+      quote do
+        if Map.has_key?(unquote(event), :__struct__) do
+          Logger.unquote(log_type)(
+            fn -> {unquote(msg), event: unquote(event)} end
+          )
+        else
+          Logger.unquote(log_type)(unquote(msg))
         end
       end
 
@@ -131,10 +161,11 @@ defmodule Helix.Logger do
             |> Map.put(:meta, meta)
             |> Map.put(:timestamp, ClientUtils.to_timestamp(DateTime.utc_now()))
 
-          Helix.Endpoint.broadcast "logflix", "event", %{data: payload, event: "new_log"}
+          Helix.Endpoint.broadcast "logflix", "event",
+            %{data: payload, event: "new_log"}
         end
 
-        send_log("#{unquote(event_type)} - #{id}", unquote(event))
+        unquote(send_log)
       end
 
     end

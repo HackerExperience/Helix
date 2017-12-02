@@ -66,7 +66,7 @@ defmodule Helix.Software.Websocket.Requests.File.DownloadTest do
       }
       request = FileDownloadRequest.new(params)
 
-      assert {:error, data} = Requestable.check_params(request, local_socket)
+      assert {:error, data, _} = Requestable.check_params(request, local_socket)
       assert data.message == "download_self"
     end
   end
@@ -106,7 +106,7 @@ defmodule Helix.Software.Websocket.Requests.File.DownloadTest do
       }
 
       request = RequestHelper.mock_request(FileDownloadRequest, params)
-      assert {:error, data} =
+      assert {:error, data, _} =
         Requestable.check_permissions(request, @mock_socket)
       assert data == %{message: "file_not_found"}
     end

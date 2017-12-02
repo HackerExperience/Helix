@@ -48,12 +48,12 @@ defmodule Helix.Application do
 
       ignore? = System.get_env("YOLO_IGNORE_LOGGING") == "true"
 
-      if (api_key == "${TIMBER_LOGS_KEY}" or api_key == "") and not ignore? do
+      if (api_key == "${TIMBER_API_KEY}" or api_key == "") and not ignore? do
         raise """
 
-        Missing environment variable `TIMBER_LOGS_KEY`.
+        Missing environment variable `TIMBER_API_KEY`.
 
-        Set the `TIMBER_LOGS_KEY` env var or ignore this verification by setting
+        Set the `TIMBER_API_KEY` env var or ignore this verification by setting
         `YOLO_IGNORE_LOGGING` to `true`.
 
         """
