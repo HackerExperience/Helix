@@ -14,7 +14,8 @@ config :helix,
     Helix.Server.Repo,
     Helix.Software.Repo,
     Helix.Story.Repo
-  ]
+  ],
+  env: Mix.env
 
 default_key = "asdfghjklzxcvbnm,./';[]-=1234567890!"
 config :helix, Helix.Endpoint,
