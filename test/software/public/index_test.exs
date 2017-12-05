@@ -16,15 +16,26 @@ defmodule Helix.Software.Public.IndexTest do
       [file1, file2, file3] =
         SoftwareSetup.random_files!([total: 3, file_opts: file_opts])
 
+      # Add `file4` which is on the same path as `file3`
+      file4 = SoftwareSetup.file!(file_opts ++ [path: file3.path])
+
       index = FileIndex.index(server.server_id)
 
-      result_file1 = Enum.find(index[file1.path], &(find_by_id(&1, file1)))
-      result_file2 = Enum.find(index[file2.path], &(find_by_id(&1, file2)))
-      result_file3 = Enum.find(index[file3.path], &(find_by_id(&1, file3)))
+      storage_id = file1.storage_id
+      filesystem = index[storage_id].filesystem
+
+      result_file1 = Enum.find(filesystem[file1.path], &(find_by_id(&1, file1)))
+      result_file2 = Enum.find(filesystem[file2.path], &(find_by_id(&1, file2)))
+      result_file3 = Enum.find(filesystem[file3.path], &(find_by_id(&1, file3)))
+      result_file4 = Enum.find(filesystem[file4.path], &(find_by_id(&1, file4)))
 
       assert result_file1 == file1
       assert result_file2 == file2
       assert result_file3 == file3
+      assert result_file4 == file4
+
+      # Also returned the name of the filesystem
+      assert is_binary(index[storage_id].name)
     end
   end
 
@@ -36,17 +47,25 @@ defmodule Helix.Software.Public.IndexTest do
       [file1, file2, file3] =
         SoftwareSetup.random_files!([total: 3, file_opts: file_opts])
 
+      # Render index
       index = FileIndex.index(server.server_id)
       rendered = FileIndex.render_index(index)
 
-      result_file1 = Enum.find(rendered[file1.path], &(find_by_id(&1, file1)))
+      # Fetch rendered filesystem from the index
+      storage_id = file1.storage_id
+      rendered_fs = rendered[to_string(storage_id)].filesystem
 
-      assert is_binary(result_file1.id)
-      assert is_binary(result_file1.type)
-      assert is_map(result_file1.modules)
+      result_f1 = Enum.find(rendered_fs[file1.path], &(find_by_id(&1, file1)))
 
-      assert Enum.find(rendered[file2.path], &(find_by_id(&1, file2)))
-      assert Enum.find(rendered[file3.path], &(find_by_id(&1, file3)))
+      assert is_binary(result_f1.id)
+      assert is_binary(result_f1.type)
+      assert is_map(result_f1.modules)
+
+      assert Enum.find(rendered_fs[file2.path], &(find_by_id(&1, file2)))
+      assert Enum.find(rendered_fs[file3.path], &(find_by_id(&1, file3)))
+
+      # Also rendered storage name
+      assert is_binary(rendered[to_string(storage_id)].name)
     end
   end
 

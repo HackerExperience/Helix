@@ -14,7 +14,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.BootstrapTest do
       ref = push socket, "bootstrap", %{}
       assert_reply ref, :ok, response, timeout()
 
-      assert response.data.filesystem
+      assert response.data.main_storage
+      assert response.data.storages
       assert response.data.logs
       assert response.data.nips
       assert response.data.processes
@@ -30,7 +31,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.BootstrapTest do
       ref = push socket, "bootstrap", %{}
       assert_reply ref, :ok, response, timeout()
 
-      assert response.data.filesystem
+      assert response.data.main_storage
+      assert response.data.storages
       assert response.data.logs
       assert response.data.nips
       assert response.data.processes

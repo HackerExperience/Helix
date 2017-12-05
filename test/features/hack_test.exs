@@ -113,7 +113,8 @@ defmodule Helix.Test.Features.Hack do
       assert new_socket.assigns.destination.server_id == target.server_id
 
       # Logging in returns local server data, through bootstrap
-      assert bootstrap.filesystem
+      assert bootstrap.main_storage
+      assert bootstrap.storages
       assert bootstrap.logs
       assert bootstrap.processes
 
@@ -149,7 +150,8 @@ defmodule Helix.Test.Features.Hack do
       assert new_socket.assigns.destination.server_id == target.server_id
 
       # Logging in returns the remote server data
-      assert bootstrap.filesystem
+      assert bootstrap.main_storage
+      assert bootstrap.storages
       assert bootstrap.logs
       assert bootstrap.processes
     end
