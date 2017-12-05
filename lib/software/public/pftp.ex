@@ -55,7 +55,7 @@ defmodule Helix.Software.Public.PFTP do
     do: PublicFTPQuery.list_files(server_id)
 
   @spec render_list_files([File.t]) ::
-    [SoftwareIndex.rendered_index_file]
+    [SoftwareIndex.rendered_filesystem_file]
   @doc """
   Renders the list of files in a Public FTP (retrieved from `list_files/1`) into
   a JSON-friendly format.

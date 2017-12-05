@@ -48,7 +48,8 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert new_socket.topic == topic
 
       # It returned the server bootstrap
-      assert bootstrap.data.filesystem
+      assert bootstrap.data.main_storage
+      assert bootstrap.data.storages
       assert bootstrap.data.logs
       assert bootstrap.data.processes
       assert bootstrap.data.password
@@ -176,7 +177,8 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert new_socket.topic == topic
 
       # It returned the server bootstrap
-      assert bootstrap.data.filesystem
+      assert bootstrap.data.main_storage
+      assert bootstrap.data.storages
       assert bootstrap.data.logs
       assert bootstrap.data.processes
 

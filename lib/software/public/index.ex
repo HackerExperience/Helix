@@ -4,12 +4,29 @@ defmodule Helix.Software.Public.Index do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Software
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Query.Storage, as: StorageQuery
 
   @type index ::
-    %{File.path => index_file}
+    %{
+      Storage.id => %{
+        name: Storage.name,
+        filesystem: filesystem
+      }
+    }
 
-  @type index_file ::
+  @type rendered_index ::
+    %{
+      String.t => %{
+        name: String.t,
+        filesystem: rendered_filesystem
+      }
+    }
+
+  @type filesystem ::
+    %{File.path => filesystem_file}
+
+  @type filesystem_file ::
     %{
       file_id: File.id,
       path: File.full_path,
@@ -18,10 +35,10 @@ defmodule Helix.Software.Public.Index do
       modules: map
     }
 
-  @type rendered_index ::
-    %{path :: String.t => rendered_index_file}
+  @type rendered_filesystem ::
+    %{path :: String.t => rendered_filesystem_file}
 
-  @type rendered_index_file ::
+  @type rendered_filesystem_file ::
     %{
       id: String.t,
       path: String.t,
@@ -43,29 +60,47 @@ defmodule Helix.Software.Public.Index do
   @spec index(Server.id) ::
     index
   def index(server_id) do
-    {:ok, storages} = CacheQuery.from_server_get_storages(server_id)
+    {:ok, storage_ids} = CacheQuery.from_server_get_storages(server_id)
 
-    storages
-    |> Enum.map(&StorageQuery.storage_contents/1)
-    |> Enum.reduce(%{}, fn el, acc ->
-      # Merge the maps, so %{"foo" => [1]} and %{"foo" => [2]} becomes
-      # %{"foo" => [1, 2]}
-      Map.merge(acc, el, fn _k, v1, v2 -> v1 ++ v2 end)
+    storage_ids
+    |> Enum.reduce(%{}, fn storage_id, acc ->
+      storage_data =
+        %{
+          name: "/dev/sda",
+          filesystem: StorageQuery.storage_contents(storage_id)
+        }
+
+      Map.put(%{}, storage_id, storage_data)
+      |> Map.merge(acc)
     end)
   end
 
   @spec index(index) ::
     rendered_index
   def render_index(index) do
-    Enum.reduce(index, %{}, fn {folder, files}, acc ->
-      rendered_files = Enum.map(files, &render_file/1)
+    Enum.reduce(index, %{}, fn {storage_id, storage_data}, acc ->
 
-      Map.put(acc, folder, rendered_files)
+      rendered_fs =
+        Enum.reduce(storage_data.filesystem, %{}, fn {folder, files}, acc2 ->
+          rendered_files = Enum.map(files, &render_file/1)
+
+          Map.put(acc2, folder, rendered_files)
+        end)
+
+      rendered_data =
+        %{
+          filesystem: rendered_fs,
+          name: storage_data.name
+        }
+
+      %{}
+      |> Map.put(to_string(storage_id), rendered_data)
+      |> Map.merge(acc)
     end)
   end
 
   @spec render_file(File.t) ::
-    rendered_index_file
+    rendered_filesystem_file
   def render_file(file = %File{}) do
     extension = Software.Type.get(file.software_type).extension |> to_string()
 

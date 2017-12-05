@@ -15,6 +15,8 @@ defmodule Helix.Software.Model.Storage do
     files: term
   }
 
+  @type name :: String.t
+
   schema "storages" do
     field :storage_id, ID,
       primary_key: true

@@ -184,7 +184,8 @@ defmodule Helix.Server.Public.IndexTest do
       assert gateway.password == server.password
 
       # Info retrieved from sub-Indexes
-      assert gateway.filesystem
+      assert gateway.main_storage
+      assert gateway.storages
       assert gateway.logs
       assert gateway.processes
       assert gateway.tunnels
@@ -208,7 +209,8 @@ defmodule Helix.Server.Public.IndexTest do
         assert is_binary(ip)
       end)
 
-      assert rendered.filesystem
+      assert rendered.main_storage
+      assert rendered.storages
       assert rendered.logs
       assert rendered.processes
       assert rendered.tunnels
@@ -231,7 +233,8 @@ defmodule Helix.Server.Public.IndexTest do
       refute Map.has_key?(remote, :name)
 
       # Info retrieved from sub-Indexes
-      assert remote.filesystem
+      assert remote.main_storage
+      assert remote.storages
       assert remote.logs
       assert remote.processes
       assert remote.tunnels
@@ -253,7 +256,8 @@ defmodule Helix.Server.Public.IndexTest do
         assert is_binary(ip)
       end)
 
-      assert rendered.filesystem
+      assert rendered.main_storage
+      assert rendered.storages
       assert rendered.logs
       assert rendered.processes
       assert rendered.tunnels

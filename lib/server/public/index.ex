@@ -11,6 +11,7 @@ defmodule Helix.Server.Public.Index do
   alias Helix.Network.Public.Index, as: NetworkIndex
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Public.Index, as: ProcessIndex
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Public.Index, as: FileIndex
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -69,7 +70,8 @@ defmodule Helix.Server.Public.Index do
       password: Server.password,
       nips: [Network.nip],
       logs: LogIndex.index,
-      filesystem: FileIndex.index,
+      main_storage: Storage.id,
+      storages: FileIndex.index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index,
     }
@@ -80,7 +82,8 @@ defmodule Helix.Server.Public.Index do
       password: String.t,
       nips: [[String.t]],
       logs: LogIndex.rendered_index,
-      filesystem: FileIndex.rendered_index,
+      main_storage: String.t,
+      storages: FileIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index,
     }
@@ -89,7 +92,8 @@ defmodule Helix.Server.Public.Index do
     %{
       nips: [Network.nip],
       logs: LogIndex.index,
-      filesystem: FileIndex.index,
+      main_storage: Storage.id,
+      storages: FileIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index
     }
@@ -98,7 +102,8 @@ defmodule Helix.Server.Public.Index do
     %{
       nips: [[String.t]],
       logs: LogIndex.rendered_index,
-      filesystem: FileIndex.rendered_index,
+      main_storage: String.t,
+      storages: FileIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index
     }
@@ -279,10 +284,16 @@ defmodule Helix.Server.Public.Index do
     tunnel_index = NetworkIndex.index(server.server_id)
     process_index = ProcessIndex.index(server.server_id, entity_id)
 
+    main_storage_id =
+      server.server_id
+      |> CacheQuery.from_server_get_storages!()
+      |> List.first()
+
     %{
       nips: nips,
       logs: log_index,
-      filesystem: filesystem_index,
+      main_storage: main_storage_id,
+      storages: filesystem_index,
       processes: process_index,
       tunnels: tunnel_index
     }
@@ -301,7 +312,8 @@ defmodule Helix.Server.Public.Index do
     %{
       nips: nips,
       logs: LogIndex.render_index(server.logs),
-      filesystem: FileIndex.render_index(server.filesystem),
+      main_storage: server.main_storage |> to_string(),
+      storages: FileIndex.render_index(server.storages),
       processes: server.processes,
       tunnels: NetworkIndex.render_index(server.tunnels)
     }
