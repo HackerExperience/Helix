@@ -134,6 +134,7 @@ defmodule Helix.Event.Dispatcher do
 
   # All
   event ServerEvent.Server.Password.Acquired
+  event ServerEvent.Server.Joined
 
   # Custom handlers
   event ServerEvent.Server.Password.Acquired,

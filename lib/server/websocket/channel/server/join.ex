@@ -23,6 +23,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
   import HELL.Macros
 
+  alias Helix.Event
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
@@ -31,6 +32,8 @@ join Helix.Server.Websocket.Channel.Server.Join do
   alias Helix.Server.Public.Server, as: ServerPublic
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
   alias Helix.Server.Websocket.Channel.Server.Join, as: ServerJoin
+
+  alias Helix.Server.Event.Server.Joined, as: ServerJoinedEvent
 
   @doc """
   Detects whether the join is local or remote, and delegates to the expected
@@ -233,6 +236,8 @@ join Helix.Server.Websocket.Channel.Server.Join do
         status: :ok
       }
 
+    server_joined_event(gateway, entity, :local, request.relay)
+
     {:ok, bootstrap, socket}
   end
 
@@ -268,9 +273,8 @@ join Helix.Server.Websocket.Channel.Server.Join do
       destination_entity = %{} <-
         EntityQuery.fetch_by_server(destination.server_id),
       {:ok, tunnel} <- ServerPublic.connect_to_server(
-        gateway.server_id,
-        destination.server_id,
-        [])
+          gateway.server_id, destination.server_id, []
+        )
     do
       gateway_data = %{
         server_id: gateway.server_id,
@@ -307,6 +311,8 @@ join Helix.Server.Websocket.Channel.Server.Join do
           destination_id: destination.server_id
         }
 
+      server_joined_event(destination, gateway_entity, :remote, request.relay)
+
      {:ok, bootstrap, socket}
     end
   end
@@ -328,6 +334,12 @@ join Helix.Server.Websocket.Channel.Server.Join do
       data: %{
         channel: :server, status: :error, type: request.type, reason: reason
       }
+  end
+
+  defp server_joined_event(server, entity, type, relay) do
+    server
+    |> ServerJoinedEvent.new(entity, type)
+    |> Event.emit(from: relay)
   end
 
   docp """

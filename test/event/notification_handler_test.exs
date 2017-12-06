@@ -30,6 +30,9 @@ defmodule Helix.Event.NotificationHandlerTest do
       {_socket, %{gateway: gateway}} =
         ChannelSetup.join_server(own_server: true)
 
+      # Remove the `LogCreatedEvent` from the queue (so it won't affect tests)
+      assert_broadcast "event", _log_created_event
+
       event =
         EventSetup.Process.created(
           gateway_id: gateway.server_id,
@@ -127,6 +130,9 @@ defmodule Helix.Event.NotificationHandlerTest do
       # Ensure we are listening to events on the Account channel too.
       ChannelSetup.join_account(
         [account_id: account.account_id, socket: socket])
+
+      # Remove the `LogCreatedEvent` from the queue (so it won't affect tests)
+      assert_broadcast "event", _log_created_event
 
       {target, _} = ServerSetup.server()
 
