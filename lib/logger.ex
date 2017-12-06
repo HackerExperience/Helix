@@ -87,8 +87,10 @@ defmodule Helix.Logger do
         end
       else
         quote do
-          formatted_data = Utils.stringify_map(unquote(data))
-          |> Map.put(:params, unquote(params))
+          formatted_data =
+            unquote(data)
+            |> Utils.stringify_map()
+            |> Map.put(:params, unquote(params))
 
           %Timber.Events.CustomEvent{
             data: formatted_data,

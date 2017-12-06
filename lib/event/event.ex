@@ -8,6 +8,8 @@ defmodule Helix.Event do
 
   import HELL.Macros
 
+  use Helix.Logger
+
   alias Helix.Websocket.Request.Relay, as: RequestRelay
   alias Helix.Process.Model.Process
   alias Helix.Event.Dispatcher, as: HelixDispatcher
@@ -88,7 +90,9 @@ defmodule Helix.Event do
   def emit(event, from: source_event) do
     event
     |> inherit(source_event)
-    |> emit()
+    |> HelixDispatcher.emit()
+
+    log_event(event)
   end
 
   @spec emit([t] | t) ::
@@ -100,8 +104,11 @@ defmodule Helix.Event do
     do: :noop
   def emit(events = [_|_]),
     do: Enum.each(events, &emit/1)
-  def emit(event),
-    do: HelixDispatcher.emit(event)
+  def emit(event) do
+    HelixDispatcher.emit(event)
+
+    log_event(event)
+  end
 
   @spec emit_after([t] | t, interval :: float | non_neg_integer) ::
     term
@@ -149,5 +156,18 @@ defmodule Helix.Event do
 
     # Everything has been inherited, we are ready to emit/1 the event.
     event
+  end
+
+  @spec log_event(t) ::
+    term
+  docp """
+  Registers the information that an event has been sent.
+  """
+  defp log_event(event) do
+    log :event, event.__struct__,
+      data: %{
+        event: event.__struct__,
+        request_id: get_request_id(event)
+      }
   end
 end
