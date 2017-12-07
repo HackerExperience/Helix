@@ -1,11 +1,11 @@
 defmodule Helix.Entity.Query.Entity do
 
-  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Account.Model.Account
+  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Server
+  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
-  alias Helix.Universe.NPC.Model.NPC
 
   @spec fetch(Entity.id) ::
     Entity.t
@@ -58,6 +58,13 @@ defmodule Helix.Entity.Query.Entity do
   defdelegate get_components(entity),
     to: EntityInternal
 
+  @doc """
+  Returns all network connections owned by the entity.
+  """
+  defdelegate get_network_connections(entity),
+    to: NetworkQuery.Connection,
+    as: :get_by_entity
+
   @spec get_entity_id(struct) ::
     Entity.id
   @doc """
@@ -67,12 +74,16 @@ defmodule Helix.Entity.Query.Entity do
     case entity do
       %Account{account_id: %Account.ID{id: id}} ->
         %Entity.ID{id: id}
+
       %Account.ID{id: id} ->
         %Entity.ID{id: id}
+
       %NPC{npc_id: %NPC.ID{id: id}} ->
         %Entity.ID{id: id}
+
       %NPC.ID{id: id} ->
         %Entity.ID{id: id}
+
       value ->
         Entity.ID.cast!(value)
     end

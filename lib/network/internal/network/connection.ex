@@ -28,6 +28,14 @@ defmodule Helix.Network.Internal.Network.Connection do
     |> Repo.one()
   end
 
+  @spec get_by_entity(Entity.id) ::
+    [Network.Connection.t]
+  def get_by_entity(entity_id) do
+    entity_id
+    |> Network.Connection.Query.by_entity()
+    |> Repo.all()
+  end
+
   @spec create(Network.idt, Network.ip, Entity.idt, Component.idt | nil) ::
     repo_result
   @doc """

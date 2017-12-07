@@ -108,7 +108,7 @@ defmodule Helix.Server.Public.Index do
       tunnels: NetworkIndex.rendered_index
     }
 
-  @spec index(Entity.id) ::
+  @spec index(Entity.t) ::
     index
   @doc """
   Returns the server index, which encompasses all other indexes residing under
@@ -117,11 +117,8 @@ defmodule Helix.Server.Public.Index do
   Called on Account bootstrap (as opposed to `remote_server_index`, which is
   used after a player logs into a remote server)
   """
-  def index(entity_id) do
-    player_servers =
-      entity_id
-      |> EntityQuery.fetch()
-      |> EntityQuery.get_servers()
+  def index(entity = %Entity{}) do
+    player_servers = EntityQuery.get_servers(entity)
 
     # Get all endpoints (any remote server the player is SSH-ed to)
     endpoints = TunnelQuery.get_remote_endpoints(player_servers)
