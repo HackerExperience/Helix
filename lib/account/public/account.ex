@@ -1,6 +1,7 @@
 defmodule Helix.Account.Public.Account do
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Server.Public.Index, as: ServerIndex
   alias Helix.Story.Public.Index, as: StoryIndex
   alias Helix.Account.Public.Index, as: AccountIndex
@@ -28,9 +29,20 @@ defmodule Helix.Account.Public.Account do
   @spec bootstrap(Entity.id) ::
     bootstrap
   def bootstrap(entity_id) do
+    entity = EntityQuery.fetch(entity_id)
+
+    # OPTIMIZE: On `AccoutIndex`, more specifically on `InventoryIndex`, we
+    # fetch all of player's components, including the motherboards. This query
+    # (which is relatively expensive) is performed again on `ServerIndex`. This
+    # can be optimized by passing the queried motherboards on `AccountIndex` to
+    # `ServerIndex`. This would make the code a bit harder to read though, and
+    # that's the reason the queries are repeated.
+    # If my future self, or anyone else, ever wander through these dark lands
+    # looking for a low hanging fruit to optimize the bootstrap, start here!
+
     %{
-      account: AccountIndex.index(entity_id),
-      servers: ServerIndex.index(entity_id),
+      account: AccountIndex.index(entity),
+      servers: ServerIndex.index(entity),
       storyline: StoryIndex.index(entity_id)
     }
   end

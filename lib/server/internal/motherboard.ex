@@ -68,6 +68,17 @@ defmodule Helix.Server.Internal.Motherboard do
     Motherboard.get_free_slots(motherboard, mobo.spec_id)
   end
 
+  @spec get_components(Motherboard.t) ::
+    [Component.pluggable]
+  @doc """
+  Returns all components linked to the motherboard.
+  """
+  def get_components(motherboard = %Motherboard{}) do
+    Enum.reduce(motherboard.slots, [], fn {_slot_id, component}, acc ->
+      acc ++ [component]
+    end)
+  end
+
   @spec get_cpus(Motherboard.t) ::
     [Component.cpu]
   @doc """

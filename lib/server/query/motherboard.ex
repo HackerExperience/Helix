@@ -22,6 +22,8 @@ defmodule Helix.Server.Query.Motherboard do
     |> MotherboardInternal.get_resources()
   end
 
+  defdelegate get_components(motherboard),
+    to: MotherboardInternal
   defdelegate get_cpus(motherboard),
     to: MotherboardInternal
   defdelegate get_hdds(motherboard),

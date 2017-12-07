@@ -13,7 +13,7 @@ defmodule Helix.Server.Public.IndexTest do
     test "indexes player server correctly" do
       {server, %{entity: entity}} = ServerSetup.server()
 
-      index = ServerIndex.index(entity.entity_id)
+      index = ServerIndex.index(entity)
 
       assert length(index.player) == 1
       assert Enum.empty?(index.remote)
@@ -47,7 +47,7 @@ defmodule Helix.Server.Public.IndexTest do
         bounces: tunnel2_bounce]
       NetworkSetup.connection([tunnel_opts: tunnel2_opts, type: :ssh])
 
-      index = ServerIndex.index(entity.entity_id)
+      index = ServerIndex.index(entity)
 
       result_gateway =
         Enum.find(index.player, &(&1.server_id == player.server_id))
@@ -97,7 +97,7 @@ defmodule Helix.Server.Public.IndexTest do
         [gateway_id: gateway2.server_id, destination_id: target2.server_id]
       NetworkSetup.connection([tunnel_opts: g2t2_opts, type: :ssh])
 
-      index = ServerIndex.index(entity.entity_id)
+      index = ServerIndex.index(entity)
 
       # 2 gateway servers, 2 remote servers
       assert length(index.player) == 2
@@ -135,7 +135,7 @@ defmodule Helix.Server.Public.IndexTest do
          bounces: tunnel_bounce]
       NetworkSetup.connection([tunnel_opts: tunnel_opts, type: :ssh])
 
-      index = ServerIndex.index(entity.entity_id)
+      index = ServerIndex.index(entity)
       rendered = ServerIndex.render_index(index)
 
       rendered_gateway =

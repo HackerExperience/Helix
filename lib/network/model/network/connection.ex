@@ -85,6 +85,7 @@ defmodule Helix.Network.Model.Network.Connection do
 
   query do
 
+    alias Helix.Entity.Model.Entity
     alias Helix.Server.Model.Component
     alias Helix.Network.Model.Network
 
@@ -97,5 +98,10 @@ defmodule Helix.Network.Model.Network.Connection do
       Queryable.t
     def by_nic(query \\ Network.Connection, nic_id),
       do: where(query, [nc], nc.nic_id == ^nic_id)
+
+    @spec by_entity(Queryable.t, Entity.id) ::
+      Queryable.t
+    def by_entity(query \\ Network.Connection, entity_id),
+      do: where(query, [nc], nc.entity_id == ^entity_id)
   end
 end
