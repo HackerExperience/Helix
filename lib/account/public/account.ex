@@ -1,6 +1,7 @@
 defmodule Helix.Account.Public.Account do
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Server.Public.Index, as: ServerIndex
   alias Helix.Story.Public.Index, as: StoryIndex
   alias Helix.Account.Public.Index, as: AccountIndex
@@ -28,9 +29,11 @@ defmodule Helix.Account.Public.Account do
   @spec bootstrap(Entity.id) ::
     bootstrap
   def bootstrap(entity_id) do
+    entity = EntityQuery.fetch(entity_id)
+
     %{
-      account: AccountIndex.index(entity_id),
-      servers: ServerIndex.index(entity_id),
+      account: AccountIndex.index(entity),
+      servers: ServerIndex.index(entity),
       storyline: StoryIndex.index(entity_id)
     }
   end

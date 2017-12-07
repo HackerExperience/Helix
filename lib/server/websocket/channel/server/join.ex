@@ -362,8 +362,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
         # If counter was not specified, set it as `nil`. Later, the request
         # will figure out what is the next counter expected to be.
         else
-          ip = topic
-          {ip, nil}
+          {topic, nil}
         end
 
       data =

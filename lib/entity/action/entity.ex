@@ -6,6 +6,7 @@ defmodule Helix.Entity.Action.Entity do
   alias Helix.Universe.NPC.Model.NPC
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Model.EntityComponent
 
   @spec create_from_specialization(struct) ::
     {:ok, Entity.t}
@@ -46,7 +47,7 @@ defmodule Helix.Entity.Action.Entity do
     to: EntityInternal
 
   @spec link_component(Entity.t, Component.idt) ::
-    :ok
+    {:ok, EntityComponent.t}
     | {:error, Ecto.Changeset.t}
   @doc """
   Links `component` to `entity` effectively making entity the owner of the
