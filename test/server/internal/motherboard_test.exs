@@ -20,7 +20,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
       assert motherboard == gen_motherboard
 
       # Ran `Component.format`
-      assert motherboard.slots.hdd_0.custom.iops == hdd.custom.iops
+      assert motherboard.slots.hdd_1.custom.iops == hdd.custom.iops
     end
 
     test "returns nil if not found" do
@@ -65,10 +65,10 @@ defmodule Helix.Server.Internal.MotherboardTest do
       {ram, _} = ComponentSetup.component(type: :ram)
       {nic, _} = ComponentSetup.nic(ulk: 20, dlk: 21, network_id: @internet_id)
 
-      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, cpu, :cpu_1)
-      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, hdd, :hdd_1)
-      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, nic, :nic_1)
-      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, ram, :ram_1)
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, cpu, :cpu_2)
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, hdd, :hdd_2)
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, nic, :nic_2)
+      assert {:ok, _} = MotherboardInternal.link(motherboard, mobo, ram, :ram_2)
 
       motherboard = MotherboardInternal.fetch(mobo.component_id)
       new_res = MotherboardInternal.get_resources(motherboard)
@@ -88,7 +88,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
       net2 = "::f" |> Network.ID.cast!()
       {nic2, _} = ComponentSetup.nic(dlk: 1, ulk: 2, network_id: net2)
 
-      MotherboardInternal.link(motherboard, mobo, nic2, :nic_2)
+      MotherboardInternal.link(motherboard, mobo, nic2, :nic_3)
 
       # Let's fetch again...
       motherboard = MotherboardInternal.fetch(mobo.component_id)
@@ -121,10 +121,10 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
       initial_components =
         [
-          {cpu, :cpu_0},
-          {hdd, :hdd_0},
-          {nic, :nic_0},
-          {ram, :ram_0}
+          {cpu, :cpu_1},
+          {hdd, :hdd_1},
+          {nic, :nic_1},
+          {ram, :ram_1}
         ]
 
       assert {:ok, motherboard} =
@@ -134,16 +134,16 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
       Enum.each(motherboard.slots, fn {slot_id, component} ->
         case slot_id do
-          :cpu_0 ->
+          :cpu_1 ->
             assert component.component_id == cpu.component_id
 
-          :hdd_0 ->
+          :hdd_1 ->
             assert component.component_id == hdd.component_id
 
-          :nic_0 ->
+          :nic_1 ->
             assert component.component_id == nic.component_id
 
-          :ram_0 ->
+          :ram_1 ->
             assert component.component_id == ram.component_id
         end
       end)
@@ -158,8 +158,8 @@ defmodule Helix.Server.Internal.MotherboardTest do
         nic: nic
       } = ComponentSetup.mobo_components()
 
-      i0 = [{hdd, :cpu_0}, {cpu, :hdd_0}, {nic, :nic_0}, {ram, :ram_0}]
-      i1 = [{cpu, :cpu_0}, {hdd, :hdd_9}, {nic, :nic_0}, {ram, :ram_0}]
+      i0 = [{hdd, :cpu_1}, {cpu, :hdd_1}, {nic, :nic_1}, {ram, :ram_1}]
+      i1 = [{cpu, :cpu_1}, {hdd, :hdd_9}, {nic, :nic_1}, {ram, :ram_1}]
 
       assert {:error, reason} = MotherboardInternal.setup(mobo, i0)
       assert reason == :wrong_slot_type
@@ -172,7 +172,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
       %{mobo: mobo, cpu: cpu} = ComponentSetup.mobo_components()
 
       # Missing hdd, ram, nic...
-      initial_components = [{cpu, :cpu_0}]
+      initial_components = [{cpu, :cpu_1}]
 
       assert {:error, reason} =
         MotherboardInternal.setup(mobo, initial_components)
@@ -190,10 +190,10 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
       initial_components =
         [
-          {mobo, :cpu_0},
-          {hdd, :hdd_0},
-          {nic, :nic_0},
-          {ram, :ram_0}
+          {mobo, :cpu_1},
+          {hdd, :hdd_1},
+          {nic, :nic_1},
+          {ram, :ram_1}
         ]
 
       assert {:error, reason} =
@@ -210,11 +210,11 @@ defmodule Helix.Server.Internal.MotherboardTest do
       motherboard = MotherboardInternal.fetch(mobo.component_id)
 
       assert {:ok, entry} =
-        MotherboardInternal.link(motherboard, mobo, cpu, :cpu_1)
+        MotherboardInternal.link(motherboard, mobo, cpu, :cpu_2)
 
       assert entry.motherboard_id == mobo.component_id
       assert entry.linked_component_id == cpu.component_id
-      assert entry.slot_id == :cpu_1
+      assert entry.slot_id == :cpu_2
 
       new_motherboard = MotherboardInternal.fetch(mobo.component_id)
 
@@ -247,7 +247,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
       motherboard = MotherboardInternal.fetch(mobo.component_id)
 
       assert {:error, reason} =
-        MotherboardInternal.link(motherboard, mobo, cpu, :cpu_0)
+        MotherboardInternal.link(motherboard, mobo, cpu, :cpu_1)
       assert reason == :slot_in_use
     end
   end
@@ -266,7 +266,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
       new_motherboard = MotherboardInternal.fetch(mobo.component_id)
 
       refute motherboard == new_motherboard
-      refute Map.has_key?(new_motherboard.slots, :hdd_0)
+      refute Map.has_key?(new_motherboard.slots, :hdd_1)
 
       # The new motherboard has one less component attached to it
       assert length(new_motherboard.slots |> Map.to_list()) ==

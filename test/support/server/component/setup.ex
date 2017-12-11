@@ -88,10 +88,10 @@ defmodule Helix.Test.Server.Component.Setup do
 
     initial_components =
       [
-        {cpu, :cpu_0},
-        {hdd, :hdd_0},
-        {nic, :nic_0},
-        {ram, :ram_0}
+        {cpu, :cpu_1},
+        {hdd, :hdd_1},
+        {nic, :nic_1},
+        {ram, :ram_1}
       ]
 
     {:ok, entries} = MotherboardInternal.setup(mobo, initial_components)

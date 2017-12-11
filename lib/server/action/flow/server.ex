@@ -5,6 +5,7 @@ defmodule Helix.Server.Action.Flow.Server do
   alias Helix.Event
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Model.Entity
+  alias Helix.Server.Action.Motherboard, as: MotherboardAction
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
@@ -43,4 +44,35 @@ defmodule Helix.Server.Action.Flow.Server do
   """
   def set_hostname(server, hostname, _relay),
     do: ServerAction.set_hostname(server, hostname)
+
+  def update_mobo(
+    server = %Server{},
+    cur_mobo_data,
+    new_mobo_data,
+    entity_ncs,
+    relay)
+  do
+    new_mobo_id = new_mobo_data.mobo.component_id
+
+    flowing do
+      with \
+        {:ok, new_mobo, events} <-
+          MotherboardAction.update(
+            cur_mobo_data, new_mobo_data, entity_ncs
+          ),
+        on_success(fn -> Event.emit(events, from: relay) end),
+
+        {:ok, new_server} <- update_server_mobo(server, new_mobo_id)
+      do
+        {:ok, new_server, new_mobo}
+      end
+    end
+  end
+
+  defp update_server_mobo(%Server{motherboard_id: mobo_id}, mobo_id),
+    do: {:ok, mobo_id}
+  defp update_server_mobo(server, nil),
+    do: ServerAction.detach(server)
+  defp update_server_mobo(server, mobo_id),
+    do: ServerAction.attach(server, mobo_id)
 end

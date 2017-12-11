@@ -12,4 +12,7 @@ defmodule Helix.Server.Action.Motherboard do
 
   defdelegate unlink(component),
     to: MotherboardInternal
+
+  defdelegate update(cur_mobo_data, new_mobo_data, entity_ncs),
+    to: __MODULE__.Update
 end

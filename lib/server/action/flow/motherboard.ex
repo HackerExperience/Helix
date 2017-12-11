@@ -72,7 +72,7 @@ defmodule Helix.Server.Action.Flow.Motherboard do
     [Motherboard.slot]
   defp map_components_slots(components) do
     Enum.map(components, fn component ->
-      {component, Utils.concat_atom(component.type, :_0)}
+      {component, Utils.concat_atom(component.type, :_1)}
     end)
   end
 

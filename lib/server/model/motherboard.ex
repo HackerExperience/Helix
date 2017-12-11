@@ -331,10 +331,12 @@ defmodule Helix.Server.Model.Motherboard do
 
     @spec by_motherboard(Queryable.t, Motherboard.idt) ::
       Queryable.t
-    def by_motherboard(query \\ Motherboard, motherboard_id)
-    def by_motherboard(query, mobo = %Component{type: :mobo}),
-      do: by_motherboard(query, mobo.component_id)
-    def by_motherboard(query, motherboard_id) do
+    def by_motherboard(query \\ Motherboard, motherboard_id, eager?)
+    def by_motherboard(query, mobo = %Component{type: :mobo}, eager?),
+      do: by_motherboard(query, mobo.component_id, eager?)
+    def by_motherboard(query, motherboard_id, eager: false),
+      do: where(query, [m], m.motherboard_id == ^motherboard_id)
+    def by_motherboard(query, motherboard_id, _) do
       from entries in query,
         inner_join: component in assoc(entries, :linked_component),
         where: entries.motherboard_id == ^to_string(motherboard_id),

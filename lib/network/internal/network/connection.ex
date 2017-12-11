@@ -56,12 +56,12 @@ defmodule Helix.Network.Internal.Network.Connection do
     |> Repo.insert()
   end
 
-  @spec update_nic(Network.Connection.t, Component.nic) ::
+  @spec update_nic(Network.Connection.t, Component.nic | nil) ::
     repo_result
   @doc """
   Updates the NIC assigned to the NetworkConnection
   """
-  def update_nic(nc = %Network.Connection{}, new_nic = %Component{}) do
+  def update_nic(nc = %Network.Connection{}, new_nic) do
     nc
     |> Network.Connection.update_nic(new_nic)
     |> Repo.update()
