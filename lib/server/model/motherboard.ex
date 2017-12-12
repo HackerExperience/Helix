@@ -314,7 +314,7 @@ defmodule Helix.Server.Model.Motherboard do
     | {:error, :wrong_slot_type}
     | {:error, :slot_in_use}
     | {:error, :bad_slot}
-  defp check_compatibility(
+  def check_compatibility(
     mobo = %Component{},
     component = %Component{},
     slot_id,

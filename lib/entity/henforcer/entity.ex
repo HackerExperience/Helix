@@ -2,8 +2,12 @@ defmodule Helix.Entity.Henforcer.Entity do
 
   import Helix.Henforcer
 
+  alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
+  alias Helix.Server.Henforcer.Component, as: ComponentHenforcer
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
+  alias Helix.Server.Query.Component, as: ComponentQuery
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
@@ -62,5 +66,60 @@ defmodule Helix.Entity.Henforcer.Entity do
         reply_error({:server, :not_belongs})
     end
     |> wrap_relay(%{entity: entity, server: server})
+  end
+
+  def owns_component?(entity_id = %Entity.ID{}, component, owned) do
+    henforce entity_exists?(entity_id) do
+      owns_component?(relay.entity, component, owned)
+    end
+  end
+
+  def owns_component?(entity, component_id = %Component.ID{}, owned) do
+    henforce(ComponentHenforcer.component_exists?(component_id)) do
+      owns_component?(entity, relay.component, owned)
+    end
+  end
+
+  def owns_component?(entity = %Entity{}, component = %Component{}, nil) do
+    owned_components =
+      entity
+      |> EntityQuery.get_components()
+      |> Enum.map(&(ComponentQuery.fetch(&1.component_id)))
+
+    owns_component?(entity, component, owned_components)
+  end
+
+  def owns_component?(entity = %Entity{}, component = %Component{}, owned) do
+    if component in owned do
+      reply_ok()
+    else
+      reply_error({:component, :not_belongs})
+    end
+    |> wrap_relay(
+      %{entity: entity, component: component, owned_components: owned}
+    )
+  end
+
+  def owns_nip?(entity_id = %Entity.ID{}, network_id, ip, owned) do
+    henforce entity_exists?(entity_id) do
+      owns_nip?(relay.entity, network_id, ip, owned)
+    end
+  end
+
+  def owns_nip?(entity = %Entity{}, network_id, ip, nil) do
+    owned_nips = NetworkQuery.Connection.get_by_entity(entity.entity_id)
+
+    owns_nip?(entity, network_id, ip, owned_nips)
+  end
+
+  def owns_nip?(entity = %Entity{}, network_id, ip, owned) do
+    nc = Enum.find(owned, &(&1.network_id == network_id and &1.ip == ip))
+
+    if nc do
+      reply_ok(%{network_connection: nc})
+    else
+      reply_error({:network_connection, :not_belongs})
+    end
+    |> wrap_relay(%{entity_network_connections: owned})
   end
 end

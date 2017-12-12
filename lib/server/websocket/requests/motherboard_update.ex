@@ -78,7 +78,7 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
           {:ok, ip} = IPv4.cast(nc["ip"])
           {:ok, network_id} = Network.ID.cast(nc["network_id"])
 
-          {nic_id, {ip, network_id}}
+          {nic_id, {network_id, ip}}
         end)
 
       {:ok, ncs}

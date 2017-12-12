@@ -19,6 +19,7 @@ defmodule Helix.Server.Henforcer.Server do
   @doc """
   Ensures the requested server exists on the database.
   """
+  # TODO: REVIEW: Why does it accept `Server.t` as input?
   def server_exists?(server = %Server{}),
     do: server_exists?(server.server_id)
   def server_exists?(server_id = %Server.ID{}) do

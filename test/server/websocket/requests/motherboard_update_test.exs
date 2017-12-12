@@ -40,7 +40,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
       [{nic_id, nip}] = req.params.network_connections
 
       assert nic_id == Component.ID.cast!("::5")
-      assert nip == {"1.2.3.4", Network.ID.cast!("::")}
+      assert nip == {Network.ID.cast!("::"), "1.2.3.4"}
     end
 
     test "handles invalid slot data" do
