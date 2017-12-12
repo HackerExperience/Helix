@@ -34,6 +34,8 @@ channel Helix.Server.Websocket.Channel.Server do
   alias Helix.Server.Websocket.Requests.Bootstrap, as: BootstrapRequest
   alias Helix.Server.Websocket.Requests.Config.Check, as: ConfigCheckRequest
   alias Helix.Server.Websocket.Requests.Config.Set, as: ConfigSetRequest
+  alias Helix.Server.Websocket.Requests.MotherboardUpdate,
+    as: MotherboardUpdateRequest
   alias Helix.Server.Websocket.Requests.SetHostname, as: SetHostnameRequest
 
   @doc """
@@ -123,6 +125,22 @@ channel Helix.Server.Websocket.Channel.Server do
   May return the corresponding permission error defined for each key.
   """
   topic "config.check", ConfigCheckRequest
+
+  @doc """
+  {} => mobo.detach
+
+  \/ update
+  {
+    "motherboard_id" : "motherboard_id"
+    , "slots" : 
+      { "slot_id_a" : "component_id" , "slot_id_b" : null}
+    , "network_connections" :
+      { "component_id" :
+        { "ip" : "ip" , "network_id" : "network_id"}
+      }
+  }
+  """
+  topic "motherboard.update", MotherboardUpdateRequest
 
   @doc """
   Updates the server hostname.
