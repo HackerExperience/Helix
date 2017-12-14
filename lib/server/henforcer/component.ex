@@ -4,9 +4,12 @@ defmodule Helix.Server.Henforcer.Component do
 
   alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
   alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Motherboard
+  alias Helix.Server.Model.Server
   alias Helix.Server.Query.Component, as: ComponentQuery
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
   @internet_id NetworkQuery.internet().network_id
 
@@ -90,7 +93,7 @@ defmodule Helix.Server.Henforcer.Component do
       |> elem(0)
     end
 
-    reduce_network_connections = fn entity, components ->
+    reduce_network_connections = fn entity ->
       init = {{true, %{}}, nil}
 
       network_connections
@@ -146,7 +149,7 @@ defmodule Helix.Server.Henforcer.Component do
       {true, _} <- has_initial_components?(components),
 
       # Iterate over NetworkConnections and make the required henforcements
-      {true, r2} <- reduce_network_connections.(entity, components),
+      {true, r2} <- reduce_network_connections.(entity),
 
       # The mobo must have at least one public NC assigned to it
       {true, _} <- has_public_nip?(r2.network_connections)
@@ -155,6 +158,22 @@ defmodule Helix.Server.Henforcer.Component do
     else
       error ->
         error
+    end
+  end
+
+  def can_detach_mobo?(server_id = %Server.ID{}) do
+    henforce ServerHenforcer.server_exists?(server_id) do
+      can_detach_mobo?(relay.server)
+    end
+  end
+
+  # TODO: Mainframe verification, cost analysis (for cooldown) etc.
+  def can_detach_mobo?(server = %Server{}) do
+    with \
+      {true, _} <- component_exists?(server.motherboard_id)
+    do
+      motherboard = MotherboardQuery.fetch(server.motherboard_id)
+      reply_ok(%{motherboard: motherboard})
     end
   end
 end

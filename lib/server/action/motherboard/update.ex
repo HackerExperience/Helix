@@ -6,11 +6,32 @@ defmodule Helix.Server.Action.Motherboard.Update do
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Action.Component, as: ComponentAction
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Query.Component, as: ComponentQuery
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Repo, as: ServerRepo
 
   @internet_id NetworkQuery.internet().network_id
+
+  def detach(motherboard = %Motherboard{}) do
+    MotherboardInternal.unlink_all(motherboard)
+
+    hespawn fn ->
+      motherboard
+      |> MotherboardQuery.get_nics()
+      |> Enum.each(fn nic ->
+        nc = NetworkQuery.Connection.fetch_by_nic(nic.component_id)
+
+        if nc do
+          perform_network_op({:nilify_nic, nc})
+        end
+      end)
+    end
+
+    :ok
+  end
 
   def update(nil, mobo_data, entity_ncs) do
     {:ok, new_mobo} =

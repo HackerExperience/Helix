@@ -10,6 +10,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Component
+  alias Helix.Server.Query.Component, as: ComponentQuery
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Requests.MotherboardUpdate,
@@ -56,6 +57,15 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
 
       assert nic_id == Component.ID.cast!("::5")
       assert nip == {Network.ID.cast!("::"), "1.2.3.4"}
+    end
+
+    test "infers players want to detach mobo when params are empty" do
+      params = %{"cmd" => "detach"}
+
+      req = MotherboardUpdateRequest.new(params)
+      assert {:ok, req} = Requestable.check_params(req, @mock_socket)
+
+      assert req.params.cmd == :detach
     end
 
     test "handles invalid slot data" do
@@ -167,7 +177,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
   end
 
   describe "MotherboardUpdateRequest.check_permissions" do
-    test "accepts when data is valid" do
+    test "accepts when data is valid (update)" do
       {server, %{entity: entity}} = ServerSetup.server()
 
       {cpu, _} = ComponentSetup.component(type: :cpu)
@@ -218,7 +228,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
       assert request.meta.entity_network_connections
     end
 
-    test "rejects when something is wrong" do
+    test "rejects when something is wrong (update)" do
       {server, %{entity: entity}} = ServerSetup.server()
 
       {cpu, _} = ComponentSetup.component(type: :cpu)
@@ -266,6 +276,25 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
         Requestable.check_permissions(request, socket)
 
       assert reason == "network_connection_not_belongs"
+    end
+
+    test "accepts when data is valid (detach)" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      params = %{"cmd" => "detach"}
+
+      socket =
+        ChannelSetup.mock_server_socket(
+          gateway_id: server.server_id,
+          gateway_entity_id: entity.entity_id,
+          access_type: :local
+        )
+
+      request = MotherboardUpdateRequest.new(params)
+      assert {:ok, request} = Requestable.check_params(request, socket)
+      assert {:ok, request} = Requestable.check_permissions(request, socket)
+
+      assert request.meta.server == server
     end
   end
 
@@ -371,6 +400,57 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
       assert mobo_nc2.ip == nc_custom.ip
 
       assert motherboard.slots.nic_2.custom.network_id == nc_custom.network_id
+    end
+
+    test "detaches the motherboard" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      # Get current NC (used for later verification)
+      %{ip: ip, network_id: network_id} = ServerHelper.get_nip(server)
+      cur_nc = NetworkQuery.Connection.fetch(network_id, ip)
+
+      # It is attached to a NIC
+      nic_id = cur_nc.nic_id
+      assert nic_id
+
+      params = %{"cmd" => "detach"}
+
+      socket =
+        ChannelSetup.mock_server_socket(
+          gateway_id: server.server_id,
+          gateway_entity_id: entity.entity_id,
+          access_type: :local
+        )
+
+      request = MotherboardUpdateRequest.new(params)
+      assert {:ok, request} = Requestable.check_params(request, socket)
+      assert {:ok, request} = Requestable.check_permissions(request, socket)
+      assert {:ok, _request} = Requestable.handle_request(request, socket)
+
+      # Detaching is asynchronous, so we don't care about the returned value of
+      # `handle_request/2`. Now we must make sure that the mobo was detached.
+
+      new_server = ServerQuery.fetch(server.server_id)
+
+      # Motherboard is gone!
+      refute new_server.motherboard_id
+
+      # And so are all the components linked to it
+      refute MotherboardQuery.fetch(server.motherboard_id)
+
+      # Underlying components still exist (but they are not linked to any mobo)
+      assert ComponentQuery.fetch(nic_id)
+
+      # Old NIC points to no NC (i.e. no NCs are assigned to the NIC)
+      refute NetworkQuery.Connection.fetch_by_nic(nic_id)
+
+      # Old NIP still exists - but it's unused
+      new_nc = NetworkQuery.Connection.fetch(network_id, ip)
+
+      assert new_nc.network_id == network_id
+      assert new_nc.ip == ip
+      assert new_nc.entity_id == entity.entity_id
+      refute new_nc.nic_id
     end
   end
 end

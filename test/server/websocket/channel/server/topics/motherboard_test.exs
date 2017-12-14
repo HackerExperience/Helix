@@ -5,29 +5,21 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.MotherboardTest do
   import Phoenix.ChannelTest
   import Helix.Test.Macros
 
-  alias Helix.Websocket.Requestable
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Network.Action.Network, as: NetworkAction
-  alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
-  alias Helix.Server.Model.Component
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
 
   alias HELL.TestHelper.Random
-  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
-  alias Helix.Test.Software.Setup, as: SoftwareSetup
-  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
 
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
 
   @internet_id NetworkHelper.internet_id()
-  @internet_str to_string(@internet_id)
 
   describe "motherboard.update" do
     test "updates the components" do
@@ -121,6 +113,38 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.MotherboardTest do
       assert mobo_nc2.ip == nc_custom.ip
 
       assert motherboard.slots.nic_2.custom.network_id == nc_custom.network_id
+    end
+
+    test "detaches the mobo (and unlinks the underlying components)" do
+      {socket, %{gateway: server}} = ChannelSetup.join_server(own_server: true)
+
+      # Get current NC (used for later verification)
+      %{ip: ip, network_id: network_id} = ServerHelper.get_nip(server)
+      cur_nc = NetworkQuery.Connection.fetch(network_id, ip)
+
+      # It is attached to a NIC
+      nic_id = cur_nc.nic_id
+      assert nic_id
+
+      params = %{"cmd" => "detach"}
+
+      ref = push socket, "motherboard.update", params
+
+      # It worked!
+      assert_reply ref, :ok, response, timeout(:slow)
+
+      # Empty response. It's async!
+      assert Enum.empty?(response.data)
+
+      # TODO: Test received the events
+
+      new_server = ServerQuery.fetch(server.server_id)
+
+      # Motherboard is gone!
+      refute new_server.motherboard_id
+
+      # And so are all the components linked to it
+      refute MotherboardQuery.fetch(server.motherboard_id)
     end
   end
 end

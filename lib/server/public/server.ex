@@ -58,6 +58,10 @@ defmodule Helix.Server.Public.Server do
     ServerFlow.update_mobo(server, motherboard, mobo_data, entity_ncs, relay)
   end
 
+  def detach_mobo(server, motherboard, relay) do
+    ServerFlow.detach_mobo(server, motherboard, relay)
+  end
+
   defdelegate set_hostname(server, hostname, relay),
     to: ServerFlow
 

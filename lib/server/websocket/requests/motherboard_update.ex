@@ -13,7 +13,7 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
   alias Helix.Server.Public.Server, as: ServerPublic
 
   def check_params(request, socket) do
-    if Enum.empty?(request.unsafe) do
+    if request.unsafe["cmd"] == "detach" do
       check_detach(request, socket)
     else
       check_update(request, socket)
@@ -64,6 +64,25 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
     end
   end
 
+  def check_permissions(request = %{params: %{cmd: :detach}}, socket) do
+    gateway_id = socket.assigns.gateway.server_id
+
+    with \
+      {true, relay} <- ComponentHenforcer.can_detach_mobo?(gateway_id)
+    do
+      meta = %{
+        server: relay.server,
+        motherboard: relay.motherboard
+      }
+
+      update_meta(request, meta, reply: true)
+    else
+      {false, reason, _} ->
+        reply_error(request, reason)
+    end
+
+  end
+
   def check_permissions(request = %{params: %{cmd: :update}}, socket) do
     gateway_id = socket.assigns.gateway.server_id
     entity_id = socket.assigns.gateway.entity_id
@@ -92,7 +111,19 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
     end
   end
 
-  def handle_request(request = %{params: %{cmd: :update}}, socket) do
+  def handle_request(request = %{params: %{cmd: :detach}}, _socket) do
+    server = request.meta.server
+    motherboard = request.meta.motherboard
+    relay = request.relay
+
+    hespawn fn ->
+      ServerPublic.detach_mobo(server, motherboard, relay)
+    end
+
+    reply_ok(request)
+  end
+
+  def handle_request(request = %{params: %{cmd: :update}}, _socket) do
     server = request.meta.server
     mobo = request.meta.mobo
     components = request.meta.components

@@ -8,6 +8,7 @@ defmodule Helix.Server.Action.Flow.Server do
   alias Helix.Server.Action.Motherboard, as: MotherboardAction
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
 
   @spec setup(Server.type, Entity.t, Component.mobo, Event.relay) ::
@@ -63,6 +64,17 @@ defmodule Helix.Server.Action.Flow.Server do
         {:ok, new_server} <- update_server_mobo(server, new_mobo_id)
       do
         {:ok, new_server, new_motherboard}
+      end
+    end
+  end
+
+  def detach_mobo(server = %Server{}, motherboard = %Motherboard{}, _relay) do
+    flowing do
+      with \
+        :ok <- MotherboardAction.detach(motherboard),
+        {:ok, new_server} <- ServerAction.detach(server)
+      do
+        {:ok, new_server}
       end
     end
   end

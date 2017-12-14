@@ -120,6 +120,6 @@ defmodule Helix.Entity.Henforcer.Entity do
     else
       reply_error({:network_connection, :not_belongs})
     end
-    |> wrap_relay(%{entity_network_connections: owned})
+    |> wrap_relay(%{entity_network_connections: owned, entity: entity})
   end
 end

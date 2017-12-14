@@ -15,4 +15,7 @@ defmodule Helix.Server.Action.Motherboard do
 
   defdelegate update(cur_mobo_data, new_mobo_data, entity_ncs),
     to: __MODULE__.Update
+
+  defdelegate detach(motherboard),
+    to: __MODULE__.Update
 end
