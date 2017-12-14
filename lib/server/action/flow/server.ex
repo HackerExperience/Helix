@@ -47,7 +47,7 @@ defmodule Helix.Server.Action.Flow.Server do
 
   def update_mobo(
     server = %Server{},
-    cur_mobo_data,
+    motherboard,
     new_mobo_data,
     entity_ncs,
     relay)
@@ -56,21 +56,19 @@ defmodule Helix.Server.Action.Flow.Server do
 
     flowing do
       with \
-        {:ok, new_mobo, events} <-
-          MotherboardAction.update(
-            cur_mobo_data, new_mobo_data, entity_ncs
-          ),
+        {:ok, new_motherboard, events} <-
+          MotherboardAction.update(motherboard, new_mobo_data, entity_ncs),
         on_success(fn -> Event.emit(events, from: relay) end),
 
         {:ok, new_server} <- update_server_mobo(server, new_mobo_id)
       do
-        {:ok, new_server, new_mobo}
+        {:ok, new_server, new_motherboard}
       end
     end
   end
 
-  defp update_server_mobo(%Server{motherboard_id: mobo_id}, mobo_id),
-    do: {:ok, mobo_id}
+  defp update_server_mobo(server = %Server{motherboard_id: mobo_id}, mobo_id),
+    do: {:ok, server}
   defp update_server_mobo(server, nil),
     do: ServerAction.detach(server)
   defp update_server_mobo(server, mobo_id),

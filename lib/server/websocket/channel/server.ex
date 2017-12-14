@@ -127,18 +127,23 @@ channel Helix.Server.Websocket.Channel.Server do
   topic "config.check", ConfigCheckRequest
 
   @doc """
-  {} => mobo.detach
+  Errors:
 
-  \/ update
-  {
-    "motherboard_id" : "motherboard_id"
-    , "slots" : 
-      { "slot_id_a" : "component_id" , "slot_id_b" : null}
-    , "network_connections" :
-      { "component_id" :
-        { "ip" : "ip" , "network_id" : "network_id"}
-      }
-  }
+  Henforcer:
+  - component_not_found: One of the specified components were not found
+  - motherboard_wrong_slot_type: Buraco errado
+  - motherboard_bad_slot: Specified invalid slot ID
+  - component_not_belongs: One of the components do not belong to the player
+  - motherboard_missing_initial_components: So large it's self explanatory
+  - network_connection_not_belongs: One of the NCs do not belong to the player
+  - motherboard_missing_public_nip: Mobos must have at least one public NIP
+  - component_not_motherboard: Wrong tool for the job
+
+  Input validation:
+  - bad_slot_data: slot data (input) is invalid
+  - bad_network_connections: network connections data (input) is invalid
+  - bad_src: this request may only be run on `local` channels
+  + base errors
   """
   topic "motherboard.update", MotherboardUpdateRequest
 

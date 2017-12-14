@@ -59,14 +59,17 @@ defmodule Helix.Server.Action.Motherboardtest do
       # NetworkConnection assigned to it, and `old_nc` will be replaced.
       new_network_connections =
         %{
-          old_nic.component_id => {new_nc.network_id, new_nc.ip}
+          nic_id: old_nic.component_id,
+          network_id: new_nc.network_id,
+          ip: new_nc.ip,
+          network_connection: new_nc
         }
 
       mobo_data =
         %{
           mobo: mobo,
           components: new_components,
-          network_connections: new_network_connections
+          network_connections: [new_network_connections]
         }
 
       entity_ncs = NetworkQuery.Connection.get_by_entity(entity.entity_id)
@@ -141,14 +144,17 @@ defmodule Helix.Server.Action.Motherboardtest do
 
       new_network_connections =
         %{
-          nic.component_id => {nc.network_id, nc.ip}
+          nic_id: nic.component_id,
+          network_id: nc.network_id,
+          ip: nc.ip,
+          network_connection: nc
         }
 
       mobo_data =
         %{
           mobo: mobo,
           components: new_components,
-          network_connections: new_network_connections
+          network_connections: [new_network_connections]
         }
 
       entity_ncs = NetworkQuery.Connection.get_by_entity(entity.entity_id)
@@ -202,14 +208,17 @@ defmodule Helix.Server.Action.Motherboardtest do
       # We are setting to the old nic (on a new mobo) the old NC
       new_network_connections =
         %{
-          old_nic.component_id => {nc.network_id, nc.ip}
+          nic_id: old_nic.component_id,
+          network_id: nc.network_id,
+          ip: nc.ip,
+          network_connection: nc
         }
 
       mobo_data =
         %{
           mobo: new_mobo,
           components: new_components,
-          network_connections: new_network_connections
+          network_connections: [new_network_connections]
         }
 
       entity_ncs = NetworkQuery.Connection.get_by_entity(entity.entity_id)

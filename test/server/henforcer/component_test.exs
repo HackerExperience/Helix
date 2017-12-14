@@ -65,10 +65,16 @@ defmodule Helix.Server.Henforcer.ComponentTest do
       end)
 
       assert relay.entity == entity
+      assert relay.mobo.component_id == server.motherboard_id
       assert length(relay.owned_components) >= 4
 
       # All network_connections passed as a param were added to this relay
-      assert [new_nc] == relay.network_connections
+      assert [mobo_nc] = relay.network_connections
+
+      assert mobo_nc.nic_id == nic.component_id
+      assert mobo_nc.network_id == new_nc.network_id
+      assert mobo_nc.ip == new_nc.ip
+      assert mobo_nc.network_connection == new_nc
 
       # And `entity_network_connections` has all NCs for that entity
       assert length(relay.entity_network_connections) == 2
@@ -76,6 +82,7 @@ defmodule Helix.Server.Henforcer.ComponentTest do
       assert_relay relay,
         [
           :entity,
+          :mobo,
           :components,
           :owned_components,
           :network_connections,

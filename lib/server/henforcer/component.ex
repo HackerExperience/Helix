@@ -94,7 +94,7 @@ defmodule Helix.Server.Henforcer.Component do
       init = {{true, %{}}, nil}
 
       network_connections
-      |> Enum.reduce_while(init, fn {_nic_id, nip}, {{true, acc}, cache} ->
+      |> Enum.reduce_while(init, fn {nic_id, nip}, {{true, acc}, cache} ->
         {network_id, ip} = nip
 
         with \
@@ -102,9 +102,17 @@ defmodule Helix.Server.Henforcer.Component do
         do
           acc_nc = Map.get(acc, :network_connections, [])
 
+          new_entry =
+            %{
+              nic_id: nic_id,
+              network_id: network_id,
+              ip: ip,
+              network_connection: r1.network_connection
+            }
+
           new_acc =
             acc
-            |> put_in([:network_connections], acc_nc ++ [r1.network_connection])
+            |> put_in([:network_connections], acc_nc ++ [new_entry])
             |> put_in(
               [:entity_network_connections], r1.entity_network_connections
             )
@@ -120,7 +128,7 @@ defmodule Helix.Server.Henforcer.Component do
 
     with \
       {true, r0} <- component_exists?(mobo_id),
-      mobo = r0.component,
+      {r0, mobo} = get_and_replace(r0, :component, :mobo),
 
       # Make sure user is plugging components into a motherboard
       {true, _} <- is_motherboard?(mobo),
@@ -143,7 +151,7 @@ defmodule Helix.Server.Henforcer.Component do
       # The mobo must have at least one public NC assigned to it
       {true, _} <- has_public_nip?(r2.network_connections)
     do
-      reply_ok(relay([r1, r2]))
+      reply_ok(relay([r0, r1, r2]))
     else
       error ->
         error

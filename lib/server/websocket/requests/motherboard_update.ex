@@ -2,9 +2,13 @@ import Helix.Websocket.Request
 
 request Helix.Server.Websocket.Requests.MotherboardUpdate do
 
+  import HELL.Macros
+
   alias HELL.IPv4
   alias HELL.Utils
   alias Helix.Network.Model.Network
+  alias Helix.Server.Henforcer.Component, as: ComponentHenforcer
+  alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Component
   alias Helix.Server.Public.Server, as: ServerPublic
 
@@ -60,10 +64,50 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
     end
   end
 
-  def check_permissions(request, socket) do
+  def check_permissions(request = %{params: %{cmd: :update}}, socket) do
+    gateway_id = socket.assigns.gateway.server_id
+    entity_id = socket.assigns.gateway.entity_id
+    mobo_id = request.params.mobo_id
+    slots = request.params.slots
+    ncs = request.params.network_connections
+
+    with \
+      {true, r0} <- ServerHenforcer.server_exists?(gateway_id),
+      {true, r1} <-
+        ComponentHenforcer.can_update_mobo?(entity_id, mobo_id, slots, ncs)
+    do
+      meta = %{
+        server: r0.server,
+        mobo: r1.mobo,
+        components: r1.components,
+        owned_components: r1.owned_components,
+        network_connections: r1.network_connections,
+        entity_network_connections: r1.entity_network_connections
+      }
+
+      update_meta(request, meta, reply: true)
+    else
+      {false, reason, _} ->
+        reply_error(request, reason)
+    end
   end
 
-  def handle_request(request, socket) do
+  def handle_request(request = %{params: %{cmd: :update}}, socket) do
+    server = request.meta.server
+    mobo = request.meta.mobo
+    components = request.meta.components
+    ncs = request.meta.network_connections
+    entity_ncs = request.meta.entity_network_connections
+    relay = request.relay
+
+    # Updates mobo asynchronously
+    hespawn fn ->
+      ServerPublic.update_mobo(
+        server, {mobo, components, ncs}, entity_ncs, relay
+      )
+    end
+
+    reply_ok(request)
   end
 
   render_empty()
@@ -88,7 +132,6 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
     end
   end
 
-  # TODO: Move to a SpecableHelper or something like that
   defp cast_slots(nil),
     do: :bad_slots
   defp cast_slots(slots) do
@@ -143,5 +186,4 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
         :error
     end
   end
-
 end

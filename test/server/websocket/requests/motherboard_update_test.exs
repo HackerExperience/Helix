@@ -2,13 +2,28 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
+
   alias Helix.Websocket.Requestable
+  alias Helix.Entity.Action.Entity, as: EntityAction
+  alias Helix.Network.Action.Network, as: NetworkAction
   alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Component
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Requests.MotherboardUpdate,
     as: MotherboardUpdateRequest
 
+  alias HELL.TestHelper.Random
   alias Helix.Test.Channel.Setup, as: ChannelSetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Server.Component.Setup, as: ComponentSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Server.Setup, as: ServerSetup
+
+  @internet_id NetworkHelper.internet_id()
 
   @mock_socket ChannelSetup.mock_server_socket(access_type: :local)
 
@@ -148,6 +163,214 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
       assert reason2 == reason1
       assert reason3 == reason2
       assert reason4 == reason3
+    end
+  end
+
+  describe "MotherboardUpdateRequest.check_permissions" do
+    test "accepts when data is valid" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      {cpu, _} = ComponentSetup.component(type: :cpu)
+      {ram, _} = ComponentSetup.component(type: :ram)
+      {nic, _} = ComponentSetup.component(type: :nic)
+      {hdd, _} = ComponentSetup.component(type: :hdd)
+
+      EntityAction.link_component(entity, cpu)
+      EntityAction.link_component(entity, ram)
+      EntityAction.link_component(entity, nic)
+      EntityAction.link_component(entity, hdd)
+
+      # Create a new NC
+      {:ok, new_nc} =
+        NetworkAction.Connection.create(@internet_id, Random.ipv4(), entity)
+
+      params =
+        %{
+          "motherboard_id" => to_string(server.motherboard_id),
+          "slots" => %{
+            "cpu_1" => to_string(cpu.component_id),
+            "ram_1" => to_string(ram.component_id),
+            "hdd_1" => to_string(hdd.component_id),
+            "nic_1" => to_string(nic.component_id)
+          },
+          "network_connections" => %{
+            to_string(nic.component_id) => %{
+              "ip" => new_nc.ip,
+              "network_id" => to_string(new_nc.network_id)
+            }
+          }
+        }
+
+      socket =
+        ChannelSetup.mock_server_socket(
+          gateway_id: server.server_id,
+          gateway_entity_id: entity.entity_id,
+          access_type: :local
+        )
+
+      request = MotherboardUpdateRequest.new(params)
+      assert {:ok, request} = Requestable.check_params(request, socket)
+      assert {:ok, request} = Requestable.check_permissions(request, socket)
+
+      assert request.meta.components
+      assert request.meta.owned_components
+      assert request.meta.network_connections
+      assert request.meta.entity_network_connections
+    end
+
+    test "rejects when something is wrong" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      {cpu, _} = ComponentSetup.component(type: :cpu)
+      {ram, _} = ComponentSetup.component(type: :ram)
+      {nic, _} = ComponentSetup.component(type: :nic)
+      {hdd, _} = ComponentSetup.component(type: :hdd)
+
+      EntityAction.link_component(entity, cpu)
+      EntityAction.link_component(entity, ram)
+      EntityAction.link_component(entity, nic)
+      EntityAction.link_component(entity, hdd)
+
+      # Create a new NC
+      {:ok, new_nc} =
+        NetworkAction.Connection.create(@internet_id, Random.ipv4(), entity)
+
+      # Note: for a full test of the validation see `ComponentHenforcerTest`
+      params =
+        %{
+          "motherboard_id" => to_string(server.motherboard_id),
+          "slots" => %{
+            "cpu_1" => to_string(cpu.component_id),
+            "ram_1" => to_string(ram.component_id),
+            "hdd_1" => to_string(hdd.component_id),
+            "nic_1" => to_string(nic.component_id)
+          },
+          "network_connections" => %{
+            to_string(nic.component_id) => %{
+              "ip" => Random.ipv4(),  # This IP does not belong to me!!11!
+              "network_id" => to_string(new_nc.network_id)
+            }
+          }
+        }
+
+      socket =
+        ChannelSetup.mock_server_socket(
+          gateway_id: server.server_id,
+          gateway_entity_id: entity.entity_id,
+          access_type: :local
+        )
+
+      request = MotherboardUpdateRequest.new(params)
+      assert {:ok, request} = Requestable.check_params(request, socket)
+      assert {:error, %{message: reason}, _} =
+        Requestable.check_permissions(request, socket)
+
+      assert reason == "network_connection_not_belongs"
+    end
+  end
+
+  describe "MotherboardUpdateRequest.handle_request" do
+    test "updates the motherboard" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      # Let's modify the server mobo to support multiple NICs
+      ServerHelper.update_server_mobo(server, :mobo_999)
+
+      {cpu, _} = ComponentSetup.component(type: :cpu)
+      {ram, _} = ComponentSetup.component(type: :ram)
+      {hdd, _} = ComponentSetup.component(type: :hdd)
+      {nic1, _} = ComponentSetup.component(type: :nic)
+      {nic2, _} = ComponentSetup.component(type: :nic)
+
+      EntityAction.link_component(entity, cpu)
+      EntityAction.link_component(entity, ram)
+      EntityAction.link_component(entity, hdd)
+      EntityAction.link_component(entity, nic1)
+      EntityAction.link_component(entity, nic2)
+
+      # We'll assign two NCs to this mobo, one public (required) and another
+      # custom network
+      {network, _} = NetworkSetup.network()
+
+      # Create a new NC
+      {:ok, nc_internet} =
+        NetworkAction.Connection.create(@internet_id, Random.ipv4(), entity)
+
+      {:ok, nc_custom} =
+        NetworkAction.Connection.create(network, Random.ipv4(), entity)
+
+      params =
+        %{
+          "motherboard_id" => to_string(server.motherboard_id),
+          "slots" => %{
+            "cpu_1" => to_string(cpu.component_id),
+            "ram_1" => to_string(ram.component_id),
+            "hdd_1" => to_string(hdd.component_id),
+            "nic_1" => to_string(nic1.component_id),
+            "nic_2" => to_string(nic2.component_id)
+          },
+          "network_connections" => %{
+            to_string(nic1.component_id) => %{
+              "ip" => nc_internet.ip,
+              "network_id" => to_string(nc_internet.network_id)
+            },
+            to_string(nic2.component_id) => %{
+              "ip" => nc_custom.ip,
+              "network_id" => to_string(nc_custom.network_id)
+            }
+          }
+        }
+
+      socket =
+        ChannelSetup.mock_server_socket(
+          gateway_id: server.server_id,
+          gateway_entity_id: entity.entity_id,
+          access_type: :local
+        )
+
+      request = MotherboardUpdateRequest.new(params)
+      assert {:ok, request} = Requestable.check_params(request, socket)
+      assert {:ok, request} = Requestable.check_permissions(request, socket)
+      assert {:ok, _request} = Requestable.handle_request(request, socket)
+
+      # Since updating the motherboard is asynchronous, we won't receive any
+      # information on the `request` returned at `handle_request/2`, and as such
+      # we'll proceed to render the empty request.
+      # However, the server mobo must have changed:
+
+      # The new server is identical to the previous one, since we did not change
+      # the motherboard itself
+      new_server = ServerQuery.fetch(server.server_id)
+      assert new_server == server
+
+      # The components linked to the mobo have changed too!
+      motherboard = MotherboardQuery.fetch(new_server.motherboard_id)
+
+      # See? Components are the ones we've just created
+      assert motherboard.slots.cpu_1 == cpu
+      assert motherboard.slots.ram_1 == ram
+      assert motherboard.slots.hdd_1 == hdd
+      assert motherboard.slots.nic_1 == nic1
+
+      # nic2 is also identical, but the component `custom` changed to point to
+      # the underlying network_id. Hence, we'll ignore it for this assertion
+      assert_map motherboard.slots.nic_2, nic2, skip: :custom
+
+      # And the NetworkConnection must have also changed (nic1)
+      mobo_nc1 = NetworkQuery.Connection.fetch_by_nic(nic1.component_id)
+
+      assert mobo_nc1.network_id == nc_internet.network_id
+      assert mobo_nc1.ip == nc_internet.ip
+
+      assert motherboard.slots.nic_1.custom.network_id == nc_internet.network_id
+
+      # NC for nic2 was updated too
+      mobo_nc2 = NetworkQuery.Connection.fetch_by_nic(nic2.component_id)
+
+      assert mobo_nc2.network_id == nc_custom.network_id
+      assert mobo_nc2.ip == nc_custom.ip
+
+      assert motherboard.slots.nic_2.custom.network_id == nc_custom.network_id
     end
   end
 end

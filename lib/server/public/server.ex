@@ -9,6 +9,7 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Server.Model.Server
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
   alias Helix.Server.Public.Index, as: ServerIndex
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
   @spec connect_to_server(Server.id, Server.id, [Server.id]) ::
     {:ok, Tunnel.t}
@@ -37,6 +38,24 @@ defmodule Helix.Server.Public.Server do
 
       {:ok, tunnel}
     end
+  end
+
+  def update_mobo(server, {mobo, components, ncs}, entity_ncs, relay) do
+    motherboard =
+      if server.motherboard_id do
+        MotherboardQuery.fetch(server.motherboard_id)
+      else
+        nil
+      end
+
+    mobo_data =
+      %{
+        mobo: mobo,
+        components: components,
+        network_connections: ncs
+      }
+
+    ServerFlow.update_mobo(server, motherboard, mobo_data, entity_ncs, relay)
   end
 
   defdelegate set_hostname(server, hostname, relay),
