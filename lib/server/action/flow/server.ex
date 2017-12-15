@@ -81,8 +81,6 @@ defmodule Helix.Server.Action.Flow.Server do
 
   defp update_server_mobo(server = %Server{motherboard_id: mobo_id}, mobo_id),
     do: {:ok, server}
-  defp update_server_mobo(server, nil),
-    do: ServerAction.detach(server)
   defp update_server_mobo(server, mobo_id),
     do: ServerAction.attach(server, mobo_id)
 end

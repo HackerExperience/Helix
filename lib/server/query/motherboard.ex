@@ -32,4 +32,9 @@ defmodule Helix.Server.Query.Motherboard do
     to: MotherboardInternal
   defdelegate get_rams(motherboard),
     to: MotherboardInternal
+
+  defdelegate get_free_slots(motherboard),
+    to: MotherboardInternal
+  defdelegate get_free_slots(mobo, motherboard),
+    to: MotherboardInternal
 end

@@ -14,6 +14,7 @@ defmodule Helix.Server.Public.Index do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Public.Index, as: FileIndex
   alias Helix.Server.Model.Server
+  alias Helix.Server.Public.Index.Hardware, as: HardwareIndex
   alias Helix.Server.Query.Server, as: ServerQuery
 
   @type index ::
@@ -72,6 +73,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.index,
       main_storage: Storage.id,
       storages: FileIndex.index,
+      hardware: HardwareIndex.index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index,
     }
@@ -84,6 +86,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.rendered_index,
       main_storage: String.t,
       storages: FileIndex.rendered_index,
+      hardware: HardwareIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index,
     }
@@ -93,7 +96,8 @@ defmodule Helix.Server.Public.Index do
       nips: [Network.nip],
       logs: LogIndex.index,
       main_storage: Storage.id,
-      storages: FileIndex.rendered_index,
+      storages: FileIndex.index,
+      hardware: HardwareIndex.index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index
     }
@@ -104,6 +108,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.rendered_index,
       main_storage: String.t,
       storages: FileIndex.rendered_index,
+      hardware: HardwareIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index
     }
@@ -280,6 +285,7 @@ defmodule Helix.Server.Public.Index do
     filesystem_index = FileIndex.index(server.server_id)
     tunnel_index = NetworkIndex.index(server.server_id)
     process_index = ProcessIndex.index(server.server_id, entity_id)
+    hardware_index = HardwareIndex.index(server)
 
     main_storage_id =
       server.server_id
@@ -291,6 +297,7 @@ defmodule Helix.Server.Public.Index do
       logs: log_index,
       main_storage: main_storage_id,
       storages: filesystem_index,
+      hardware: hardware_index,
       processes: process_index,
       tunnels: tunnel_index
     }
@@ -311,6 +318,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.render_index(server.logs),
       main_storage: server.main_storage |> to_string(),
       storages: FileIndex.render_index(server.storages),
+      hardware: HardwareIndex.render_index(server.hardware),
       processes: server.processes,
       tunnels: NetworkIndex.render_index(server.tunnels)
     }

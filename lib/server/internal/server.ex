@@ -59,15 +59,18 @@ defmodule Helix.Server.Internal.Server do
   end
 
   @spec detach(Server.t) ::
-    :ok
+    repo_return
   def detach(server = %Server{}) do
-    server
-    |> Server.detach_motherboard()
-    |> Repo.update!()
+    result =
+      server
+      |> Server.detach_motherboard()
+      |> Repo.update()
 
-    CacheAction.update_server(server)
+    with {:ok, _} <- result do
+      CacheAction.update_server(server)
+    end
 
-    :ok
+    result
   end
 
   @spec delete(Server.t) ::

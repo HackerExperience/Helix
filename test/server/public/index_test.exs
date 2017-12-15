@@ -186,6 +186,7 @@ defmodule Helix.Server.Public.IndexTest do
       # Info retrieved from sub-Indexes
       assert gateway.main_storage
       assert gateway.storages
+      assert gateway.hardware
       assert gateway.logs
       assert gateway.processes
       assert gateway.tunnels
@@ -211,6 +212,7 @@ defmodule Helix.Server.Public.IndexTest do
 
       assert rendered.main_storage
       assert rendered.storages
+      assert rendered.hardware
       assert rendered.logs
       assert rendered.processes
       assert rendered.tunnels
@@ -235,6 +237,7 @@ defmodule Helix.Server.Public.IndexTest do
       # Info retrieved from sub-Indexes
       assert remote.main_storage
       assert remote.storages
+      assert remote.hardware
       assert remote.logs
       assert remote.processes
       assert remote.tunnels
@@ -258,6 +261,7 @@ defmodule Helix.Server.Public.IndexTest do
 
       assert rendered.main_storage
       assert rendered.storages
+      assert rendered.hardware
       assert rendered.logs
       assert rendered.processes
       assert rendered.tunnels

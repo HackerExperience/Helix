@@ -329,7 +329,7 @@ defmodule Helix.Server.Model.Motherboard do
 
     alias Helix.Server.Model.Component
 
-    @spec by_motherboard(Queryable.t, Motherboard.idt) ::
+    @spec by_motherboard(Queryable.t, Motherboard.idt, [eager: boolean]) ::
       Queryable.t
     def by_motherboard(query \\ Motherboard, motherboard_id, eager?)
     def by_motherboard(query, mobo = %Component{type: :mobo}, eager?),

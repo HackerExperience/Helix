@@ -65,7 +65,7 @@ defmodule Helix.Network.Model.Network.Connection do
     |> validate_required(@required_fields)
   end
 
-  @spec update_nic(t, Component.nic) ::
+  @spec update_nic(t, Component.nic | nil) ::
     changeset
   def update_nic(nc = %__MODULE__{}, nic = %Component{type: :nic}) do
     nc
