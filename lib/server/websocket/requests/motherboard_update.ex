@@ -22,7 +22,7 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
 
   def check_detach(request, socket) do
     with \
-      true <- socket.assigns.meta.access_type == :local || :bad_src
+      true <- socket.assigns.meta.access == :local || :bad_src
     do
       update_params(request, %{cmd: :detach}, reply: true)
     else
@@ -36,7 +36,7 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
 
   def check_update(request, socket) do
     with \
-      true <- socket.assigns.meta.access_type == :local || :bad_src,
+      true <- socket.assigns.meta.access == :local || :bad_src,
       {:ok, mobo_id} <- Component.ID.cast(request.unsafe["motherboard_id"]),
       {:ok, slots} <- cast_slots(request.unsafe["slots"]),
       {:ok, ncs} <- cast_ncs(request.unsafe["network_connections"])

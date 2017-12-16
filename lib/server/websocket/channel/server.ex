@@ -326,7 +326,7 @@ channel Helix.Server.Websocket.Channel.Server do
   ServerWebsocketChannelState.
   """
   def terminate(_reason, socket) do
-    if socket.assigns.meta.access_type == :remote do
+    if socket.assigns.meta.access == :remote do
       entity_id = socket.assigns.gateway.entity_id
       server_id = socket.assigns.destination.server_id
       counter = socket.assigns.meta.counter

@@ -252,7 +252,7 @@ defmodule Helix.Test.Channel.Setup do
   - destination_ip
   - destination_entity_id
   - network_id
-  - access_type: Inferred if not set
+  - access: Inferred if not set
   - own_server: Force socket to represent own server channel. Defaults to false.
   - counter: Defaults to 0.
   - connect_opts: Opts that will be relayed to the `mock_connection_socket`
@@ -273,10 +273,10 @@ defmodule Helix.Test.Channel.Setup do
         {server_id, server_ip, entity_id}
       end
 
-    access_type =
+    access =
       cond do
-        opts[:access_type] ->
-          opts[:access_type]
+        opts[:access] ->
+          opts[:access]
 
         gateway_id == destination_id ->
           :local
@@ -288,7 +288,7 @@ defmodule Helix.Test.Channel.Setup do
     network_id = Keyword.get(opts, :network_id, Network.ID.generate())
     counter = Keyword.get(opts, :counter, 0)
     meta = %{
-      access_type: access_type,
+      access: access,
       network_id: network_id,
       counter: counter
     }

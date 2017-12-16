@@ -16,7 +16,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Remove do
   """
   def check_params(request, socket) do
     with \
-      true <- socket.assigns.meta.access_type == :local || :not_local,
+      true <- socket.assigns.meta.access == :local || :not_local,
       {:ok, file_id} <- File.ID.cast(request.unsafe["file_id"])
     do
       params = %{

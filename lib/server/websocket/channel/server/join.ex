@@ -40,14 +40,14 @@ join Helix.Server.Websocket.Channel.Server.Join do
   method.
   """
   def check_params(request = %ServerJoin{type: nil}, socket) do
-    access_type =
+    access =
       if request.unsafe["gateway_ip"] do
         :remote
       else
         :local
       end
 
-    %{request| type: access_type}
+    %{request| type: access}
     |> check_params(socket)
   end
 
@@ -186,13 +186,13 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
   defp build_meta(%ServerJoin{type: :local}) do
     %{
-      access_type: :local
+      access: :local
     }
   end
 
   defp build_meta(request = %ServerJoin{type: :remote}) do
     %{
-      access_type: :remote,
+      access: :remote,
       counter: request.meta.counter,
       network_id: request.params.network_id
     }
@@ -216,7 +216,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
     socket =
       socket
-      |> assign.(:access_type, :local)
+      |> assign.(:access, :local)
       |> assign.(:gateway, gateway_data)
       |> assign.(:destination, gateway_data)
       |> assign.(:meta, build_meta(request))

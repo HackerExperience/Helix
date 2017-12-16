@@ -19,7 +19,7 @@ defmodule Helix.Process.Public.View.Process do
     :full
     | :partial
 
-  @typep process(access_type) ::
+  @typep process(access) ::
     %{
       process_id: String.t,
       target_ip: String.t,
@@ -28,7 +28,7 @@ defmodule Helix.Process.Public.View.Process do
       file: file,
       state: String.t,
       type: String.t,
-      access: access_type
+      access: access
     }
 
   @typep full_access ::

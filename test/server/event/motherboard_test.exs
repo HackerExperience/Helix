@@ -7,8 +7,8 @@ defmodule Helix.Server.Event.MotherboardTest do
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Event.Setup, as: EventSetup
 
-  @socket_local ChannelSetup.mock_server_socket(access_type: :local)
-  @socket_remote ChannelSetup.mock_server_socket(access_type: :remote)
+  @socket_local ChannelSetup.mock_server_socket(access: :local)
+  @socket_remote ChannelSetup.mock_server_socket(access: :remote)
 
   describe "MotherboardUpdatedEvent.generate_payload/2" do
     test "generates full hardware index on gateway (local)" do

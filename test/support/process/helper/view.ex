@@ -30,8 +30,8 @@ defmodule Helix.Test.Process.View.Helper do
 
   If `data` is expected to be empty, simply omit its parameter.
   """
-  def assert_keys(rendered, access_type),
-    do: assert_keys(rendered, access_type, &empty_data_function/1)
+  def assert_keys(rendered, access),
+    do: assert_keys(rendered, access, &empty_data_function/1)
   def assert_keys(rendered, :full, data_function),
     do: check_view(rendered, :full, &pview_access_full/0, data_function)
   def assert_keys(rendered, :partial, data_function),

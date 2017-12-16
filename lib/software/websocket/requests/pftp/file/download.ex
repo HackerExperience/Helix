@@ -18,7 +18,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
       end
 
     with \
-      true <- socket.assigns.meta.access_type == :local || :not_local,
+      true <- socket.assigns.meta.access == :local || :not_local,
       {:ok, file_id} <- File.ID.cast(request.unsafe["file_id"]),
       {:ok, network_id, ip} <-
         validate_nip(request.unsafe["network_id"], request.unsafe["ip"]),

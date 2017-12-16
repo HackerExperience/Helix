@@ -25,7 +25,7 @@ request Helix.Server.Websocket.Requests.Bootstrap do
     server = ServerQuery.fetch(server_id)
 
     bootstrap =
-      if socket.assigns.meta.access_type == :local do
+      if socket.assigns.meta.access == :local do
         ServerPublic.bootstrap_gateway(server, entity_id)
       else
         ServerPublic.bootstrap_remote(server, entity_id)
@@ -36,7 +36,7 @@ request Helix.Server.Websocket.Requests.Bootstrap do
 
   render(request, socket) do
     data =
-      if socket.assigns.meta.access_type == :local do
+      if socket.assigns.meta.access == :local do
         ServerPublic.render_bootstrap_gateway(request.meta.bootstrap)
       else
         ServerPublic.render_bootstrap_remote(request.meta.bootstrap)

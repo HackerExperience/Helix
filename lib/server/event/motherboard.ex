@@ -27,13 +27,13 @@ defmodule Helix.Server.Event.Motherboard do
 
       @event :motherboard_updated
 
-      def generate_payload(event, %{assigns: %{meta: %{access_type: :local}}}) do
+      def generate_payload(event, %{assigns: %{meta: %{access: :local}}}) do
         data = HardwareIndex.render_index(event.index_cache)
 
         {:ok, data}
       end
 
-      def generate_payload(event, %{assigns: %{meta: %{access_type: :remote}}}) do
+      def generate_payload(event, %{assigns: %{meta: %{access: :remote}}}) do
         data =
           event.index_cache
           |> HardwareIndex.render_index()
@@ -75,7 +75,7 @@ defmodule Helix.Server.Event.Motherboard do
 
       @event :motherboard_update_failed
 
-      def generate_payload(event, %{assigns: %{meta: %{access_type: :local}}}) do
+      def generate_payload(event, %{assigns: %{meta: %{access: :local}}}) do
         data = %{reason: event.reason}
 
         {:ok, data}

@@ -26,7 +26,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
 
   @internet_id NetworkHelper.internet_id()
 
-  @mock_socket ChannelSetup.mock_server_socket(access_type: :local)
+  @mock_socket ChannelSetup.mock_server_socket(access: :local)
 
   describe "MotherboardUpdateRequest.check_params" do
     test "casts the params to internal Helix format" do
@@ -215,7 +215,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
         ChannelSetup.mock_server_socket(
           gateway_id: server.server_id,
           gateway_entity_id: entity.entity_id,
-          access_type: :local
+          access: :local
         )
 
       request = MotherboardUpdateRequest.new(params)
@@ -267,7 +267,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
         ChannelSetup.mock_server_socket(
           gateway_id: server.server_id,
           gateway_entity_id: entity.entity_id,
-          access_type: :local
+          access: :local
         )
 
       request = MotherboardUpdateRequest.new(params)
@@ -287,7 +287,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
         ChannelSetup.mock_server_socket(
           gateway_id: server.server_id,
           gateway_entity_id: entity.entity_id,
-          access_type: :local
+          access: :local
         )
 
       request = MotherboardUpdateRequest.new(params)
@@ -354,7 +354,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
         ChannelSetup.mock_server_socket(
           gateway_id: server.server_id,
           gateway_entity_id: entity.entity_id,
-          access_type: :local
+          access: :local
         )
 
       request = MotherboardUpdateRequest.new(params)
@@ -419,7 +419,7 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
         ChannelSetup.mock_server_socket(
           gateway_id: server.server_id,
           gateway_entity_id: entity.entity_id,
-          access_type: :local
+          access: :local
         )
 
       request = MotherboardUpdateRequest.new(params)

@@ -13,9 +13,9 @@ defmodule Helix.Server.Public.Index.Hardware do
       motherboard: MotherboardIndex.rendered_index | nil
     }
 
-  @typep access_type :: :local | :remote
+  @typep access :: :local | :remote
 
-  @spec index(Server.t, access_type) ::
+  @spec index(Server.t, access) ::
     index
   def index(server = %Server{}, :local) do
     %{
