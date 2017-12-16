@@ -42,8 +42,9 @@ defmodule Helix.Server.Action.ServerTest do
       {server1, _} = ServerSetup.server()
       {server2, _} = ServerSetup.server()
 
-      assert {:error, cs} = ServerAction.attach(server1, server2.motherboard_id)
-      refute cs.valid?
+      assert {:error, reason} =
+        ServerAction.attach(server1, server2.motherboard_id)
+      assert reason == :internal
 
       CacheHelper.sync_test()
     end
@@ -53,9 +54,8 @@ defmodule Helix.Server.Action.ServerTest do
 
       {mobo, _} = ComponentSetup.component(type: :mobo)
 
-      assert {:error, cs} = ServerAction.attach(server, mobo.component_id)
-
-      refute cs.valid?
+      assert {:error, reason} = ServerAction.attach(server, mobo.component_id)
+      assert reason == :internal
 
       CacheHelper.sync_test()
     end

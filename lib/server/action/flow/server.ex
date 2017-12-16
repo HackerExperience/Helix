@@ -11,6 +11,10 @@ defmodule Helix.Server.Action.Flow.Server do
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
 
+  alias Helix.Server.Event.Motherboard.Updated, as: MotherboardUpdatedEvent
+  alias Helix.Server.Event.Motherboard.UpdateFailed,
+    as: MotherboardUpdateFailedEvent
+
   @spec setup(Server.type, Entity.t, Component.mobo, Event.relay) ::
     {:ok, Server.t}
   @doc """
@@ -63,18 +67,28 @@ defmodule Helix.Server.Action.Flow.Server do
 
         {:ok, new_server} <- update_server_mobo(server, new_mobo_id)
       do
+        emit_motherboard_updated(new_server, relay)
+
         {:ok, new_server, new_motherboard}
+      else
+        _ ->
+          emit_motherboard_update_failed(server, :internal, relay)
       end
     end
   end
 
-  def detach_mobo(server = %Server{}, motherboard = %Motherboard{}, _relay) do
+  def detach_mobo(server = %Server{}, motherboard = %Motherboard{}, relay) do
     flowing do
       with \
         :ok <- MotherboardAction.detach(motherboard),
         {:ok, new_server} <- ServerAction.detach(server)
       do
+        emit_motherboard_updated(new_server, relay)
+
         {:ok, new_server}
+      else
+        _ ->
+          emit_motherboard_update_failed(server, :internal, relay)
       end
     end
   end
@@ -83,4 +97,16 @@ defmodule Helix.Server.Action.Flow.Server do
     do: {:ok, server}
   defp update_server_mobo(server, mobo_id),
     do: ServerAction.attach(server, mobo_id)
+
+  defp emit_motherboard_updated(server, relay) do
+    server
+    |> MotherboardUpdatedEvent.new()
+    |> Event.emit(from: relay)
+  end
+
+  defp emit_motherboard_update_failed(server, reason, relay) do
+    server
+    |> MotherboardUpdateFailedEvent.new(reason)
+    |> Event.emit(from: relay)
+  end
 end

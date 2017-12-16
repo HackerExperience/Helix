@@ -6,7 +6,6 @@ defmodule Helix.Server.Action.Motherboard.Update do
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Action.Component, as: ComponentAction
-  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Query.Component, as: ComponentQuery
@@ -63,13 +62,6 @@ defmodule Helix.Server.Action.Motherboard.Update do
   end
 
   defp update_network_connections(mobo_data, entity_ncs) do
-    # Secondary index used to figure out whether a specific NIP was specified on
-    # `mobo_data.network_connections`.
-    # assigned_nips =
-    #   Enum.reduce(mobo_data.network_connections, [], fn {_, nip}, acc ->
-    #     acc ++ [nip]
-    #   end)
-
     ncs = mobo_data.network_connections
 
     entity_ncs

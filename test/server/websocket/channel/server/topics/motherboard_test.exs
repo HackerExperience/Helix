@@ -4,6 +4,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.MotherboardTest do
 
   import Phoenix.ChannelTest
   import Helix.Test.Macros
+  import Helix.Test.Channel.Macros
 
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Network.Action.Network, as: NetworkAction
@@ -83,7 +84,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.MotherboardTest do
       # Empty response. It's async!
       assert Enum.empty?(response.data)
 
-      # TODO: Test received the events
+      # Client received the MotherboardUpdatedEvent
+      wait_events [:motherboard_updated]
 
       # But the underlying server components were modified!!!
       motherboard = MotherboardQuery.fetch(server.motherboard_id)
@@ -136,7 +138,8 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.MotherboardTest do
       # Empty response. It's async!
       assert Enum.empty?(response.data)
 
-      # TODO: Test received the events
+      # Client received the MotherboardUpdatedEvent
+      wait_events [:motherboard_updated]
 
       new_server = ServerQuery.fetch(server.server_id)
 

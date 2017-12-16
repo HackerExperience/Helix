@@ -123,7 +123,6 @@ defmodule Helix.Henforcer do
   @spec is_b?(x) ::
     {true, is_b_relay}
     | is_b_error
-    | can_d_error
   def is_b?(x)
 
   def is_c?(y)
@@ -310,6 +309,7 @@ defmodule Helix.Henforcer do
       case unquote(henforcer) do
         {true, sub_relay} ->
           {true, relay(unquote(relay), sub_relay)}
+
         {false, reason, sub_relay} ->
           {false, reason, relay(unquote(relay), sub_relay)}
       end
