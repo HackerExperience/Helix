@@ -5,6 +5,7 @@ defmodule Helix.Server.Action.Flow.Server do
   alias Helix.Event
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
   alias Helix.Server.Action.Motherboard, as: MotherboardAction
   alias Helix.Server.Action.Server, as: ServerAction
   alias Helix.Server.Model.Component
@@ -14,6 +15,9 @@ defmodule Helix.Server.Action.Flow.Server do
   alias Helix.Server.Event.Motherboard.Updated, as: MotherboardUpdatedEvent
   alias Helix.Server.Event.Motherboard.UpdateFailed,
     as: MotherboardUpdateFailedEvent
+
+  @type update_mobo_result :: {:ok, Server.t, Motherboard.t}
+  @type detach_mobo_result :: {:ok, Server.t}
 
   @spec setup(Server.type, Entity.t, Component.mobo, Event.relay) ::
     {:ok, Server.t}
@@ -50,6 +54,14 @@ defmodule Helix.Server.Action.Flow.Server do
   def set_hostname(server, hostname, _relay),
     do: ServerAction.set_hostname(server, hostname)
 
+  @spec update_mobo(
+    Server.t,
+    Motherboard.t,
+    MotherboardAction.motherboard_data,
+    entity_ncs :: [Network.Connection.t],
+    relay :: Event.relay
+  ) ::
+    update_mobo_result
   def update_mobo(
     server = %Server{},
     motherboard,
@@ -77,6 +89,8 @@ defmodule Helix.Server.Action.Flow.Server do
     end
   end
 
+  @spec detach_mobo(Server.t, Motherboard.t, Event.relay) ::
+    detach_mobo_result
   def detach_mobo(server = %Server{}, motherboard = %Motherboard{}, relay) do
     flowing do
       with \
@@ -93,17 +107,23 @@ defmodule Helix.Server.Action.Flow.Server do
     end
   end
 
+  @spec update_server_mobo(Server.t, Component.id) ::
+    {:ok, Server.t}
   defp update_server_mobo(server = %Server{motherboard_id: mobo_id}, mobo_id),
     do: {:ok, server}
   defp update_server_mobo(server, mobo_id),
     do: ServerAction.attach(server, mobo_id)
 
+  @spec emit_motherboard_updated(Server.t, Event.relay) ::
+    term
   defp emit_motherboard_updated(server, relay) do
     server
     |> MotherboardUpdatedEvent.new()
     |> Event.emit(from: relay)
   end
 
+  @spec emit_motherboard_update_failed(Server.t, term, Event.relay) ::
+    term
   defp emit_motherboard_update_failed(server, reason, relay) do
     server
     |> MotherboardUpdateFailedEvent.new(reason)

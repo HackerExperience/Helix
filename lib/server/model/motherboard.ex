@@ -45,7 +45,8 @@ defmodule Helix.Server.Model.Motherboard do
   @type initial_components :: [{Component.pluggable, Component.Mobo.slot_id}]
   @type required_components :: [Constant.t]
 
-  @type slot :: {Component.Mobo.slot_id, Component.t}
+  @type slot_id :: Component.Mobo.slot_id
+  @type slot :: {slot_id, Component.t}
   @type free_slots :: %{Component.type => [Component.Mobo.slot_id]}
 
   @type error ::

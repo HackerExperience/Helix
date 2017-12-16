@@ -2,7 +2,9 @@ defmodule Helix.Server.Henforcer.Component do
 
   import Helix.Henforcer
 
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
+  alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Component
@@ -13,6 +15,14 @@ defmodule Helix.Server.Henforcer.Component do
 
   @internet_id NetworkQuery.internet().network_id
 
+  @type component_exists_relay :: %{component: Component.t}
+  @type component_exists_relay_partial :: %{}
+  @type component_exists_error ::
+    {false, {:component, :not_found}, component_exists_relay_partial}
+
+  @spec component_exists?(Component.id) ::
+    {true, component_exists_relay}
+    | component_exists_error
   def component_exists?(component_id = %Component.ID{}) do
     with component = %Component{} <- ComponentQuery.fetch(component_id) do
       reply_ok(%{component: component})
@@ -22,6 +32,15 @@ defmodule Helix.Server.Henforcer.Component do
     end
   end
 
+  @type is_motherboard_relay :: %{component: Component.t}
+  @type is_motherboard_relay_partial :: %{}
+  @type is_motherboard_error ::
+    {false, {:component, :not_motherboard}, is_motherboard_relay_partial}
+    | component_exists_error
+
+  @spec is_motherboard?(Component.t) ::
+    {true, is_motherboard_relay}
+    | is_motherboard_error
   def is_motherboard?(component = %Component{type: :mobo}),
     do: reply_ok(%{component: component})
   def is_motherboard?(%Component{}),
@@ -32,6 +51,13 @@ defmodule Helix.Server.Henforcer.Component do
     end
   end
 
+  @type can_link_relay :: %{}
+  @type can_link_error ::
+    {false, {:motherboard, :wrong_slot_type | :slot_in_use | :bad_slot}, %{}}
+
+  @spec can_link?(Component.mobo, Component.t, Motherboard.slot_id) ::
+    {true, can_link_relay}
+    | can_link_error
   def can_link?(
     mobo = %Component{type: :mobo},
     component = %Component{},
@@ -45,6 +71,13 @@ defmodule Helix.Server.Henforcer.Component do
     end
   end
 
+  @type has_initial_components_relay :: %{}
+  @type has_initial_components_error ::
+    {false, {:motherboard, :missing_initial_components}, %{}}
+
+  @spec has_initial_components?([term]) ::
+    {true, has_initial_components_relay}
+    | has_initial_components_error
   def has_initial_components?(components) do
     if Motherboard.has_required_initial_components?(components) do
       reply_ok()
@@ -53,6 +86,13 @@ defmodule Helix.Server.Henforcer.Component do
     end
   end
 
+  @type has_public_nip_relay :: %{}
+  @type has_public_nip_error ::
+    {false, {:motherboard, :missing_public_nip}, %{}}
+
+  @spec has_public_nip?([Network.Connection.t]) ::
+    {true, has_public_nip_relay}
+    | has_public_nip_error
   def has_public_nip?(network_connections) do
     if Enum.find(network_connections, &(&1.network_id == @internet_id)) do
       reply_ok()
@@ -61,6 +101,37 @@ defmodule Helix.Server.Henforcer.Component do
     end
   end
 
+  # TODO Merge
+  @typep mobo_nc ::
+    %{
+      nic_id: Component.id,
+      network_id: Network.id,
+      ip: Network.ip,
+      network_connection: Network.Connection.t
+    }
+
+  @type can_update_mobo_relay ::
+    %{
+      entity: Entity.t,
+      mobo: Component.mobo,
+      components: [term],
+      owned_components: [Component.t],
+      network_connections: [mobo_nc],
+      entity_network_connections: [Network.Connection.t]
+    }
+
+  @type can_update_mobo_error ::
+    component_exists_error
+    | is_motherboard_error
+    | can_link_error
+    | has_initial_components_error
+    | has_public_nip_error
+    | EntityHenforcer.owns_component_error
+    | EntityHenforcer.owns_nip_error
+
+  @spec can_update_mobo?(Entity.id, Component.id, [term], [term]) ::
+    {true, can_update_mobo_relay}
+    | can_update_mobo_error
   def can_update_mobo?(entity_id, mobo_id, components, network_connections) do
     reduce_components = fn mobo ->
       init = {{true, %{}}, nil}
@@ -161,13 +232,19 @@ defmodule Helix.Server.Henforcer.Component do
     end
   end
 
+  @type can_detach_mobo_relay :: %{server: Server.t, motherboard: Motherboard.t}
+  @type can_detach_mobo_error :: component_exists_error
+
+  @spec can_detach_mobo?(Server.idt) ::
+    {true, can_detach_mobo_relay}
+    | can_detach_mobo_error
   def can_detach_mobo?(server_id = %Server.ID{}) do
     henforce ServerHenforcer.server_exists?(server_id) do
       can_detach_mobo?(relay.server)
     end
   end
 
-  # TODO: Mainframe verification, cost analysis (for cooldown) etc.
+  # TODO: Mainframe verification, cost analysis (for cooldown) etc. #358
   def can_detach_mobo?(server = %Server{}) do
     with \
       {true, _} <- component_exists?(server.motherboard_id)
@@ -175,5 +252,6 @@ defmodule Helix.Server.Henforcer.Component do
       motherboard = MotherboardQuery.fetch(server.motherboard_id)
       reply_ok(%{motherboard: motherboard})
     end
+    |> wrap_relay(%{server: server})
   end
 end

@@ -2,6 +2,7 @@ defmodule Helix.Entity.Henforcer.Entity do
 
   import Helix.Henforcer
 
+  alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
@@ -68,6 +69,17 @@ defmodule Helix.Entity.Henforcer.Entity do
     |> wrap_relay(%{entity: entity, server: server})
   end
 
+  @type owns_component_relay ::
+    %{entity: Entity.t, component: Component.t, owned_components: [Component.t]}
+  @type owns_component_relay_partial :: owns_component_relay
+  @type owns_component_error ::
+    {false, {:component, :not_belongs}, owns_component_relay_partial}
+    | ComponentHenforcer.component_exists_error
+    | entity_exists_error
+
+  @spec owns_component?(Entity.idt, Component.idt, [Component.t] | nil) ::
+    {true, owns_component_relay}
+    | owns_component_error
   def owns_component?(entity_id = %Entity.ID{}, component, owned) do
     henforce entity_exists?(entity_id) do
       owns_component?(relay.entity, component, owned)
@@ -100,6 +112,26 @@ defmodule Helix.Entity.Henforcer.Entity do
     )
   end
 
+  @type owns_nip_relay ::
+    %{
+      network_connection: Network.Connection.t,
+      entity: Entity.t,
+      entity_network_connections: [Network.Connection.t]
+    }
+  @type owns_nip_relay_partial ::
+    %{
+      entity: Entity.t,
+      entity_network_connections: [Network.Connection.t]
+    }
+  @type owns_nip_error ::
+    {false, {:network_connection, :not_belongs}, owns_nip_relay_partial}
+    | entity_exists_error
+
+  @typep owned_ncs :: [Network.Connection.t] | nil
+
+  @spec owns_nip?(Entity.idt, Network.id, Network.ip, owned_ncs) ::
+    {true, owns_nip_relay}
+    | owns_nip_error
   def owns_nip?(entity_id = %Entity.ID{}, network_id, ip, owned) do
     henforce entity_exists?(entity_id) do
       owns_nip?(relay.entity, network_id, ip, owned)

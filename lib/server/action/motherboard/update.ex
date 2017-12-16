@@ -6,6 +6,7 @@ defmodule Helix.Server.Action.Motherboard.Update do
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Action.Component, as: ComponentAction
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Query.Component, as: ComponentQuery
@@ -14,6 +15,24 @@ defmodule Helix.Server.Action.Motherboard.Update do
 
   @internet_id NetworkQuery.internet().network_id
 
+  @type motherboard_data ::
+    %{
+      mobo: Component.mobo,
+      components: [update_component],
+      network_connections: [update_nc]
+    }
+
+  @type update_component :: {Component.pluggable, Motherboard.slot_id}
+  @type update_nc ::
+    %{
+      nic_id: Component.id,
+      network_id: Network.id,
+      ip: Network.ip,
+      network_connection: Network.Connection.t
+    }
+
+  @spec detach(Motherboard.t) ::
+    :ok
   def detach(motherboard = %Motherboard{}) do
     MotherboardInternal.unlink_all(motherboard)
 
@@ -32,6 +51,8 @@ defmodule Helix.Server.Action.Motherboard.Update do
     :ok
   end
 
+  @spec update(Motherboard.t | nil, motherboard_data, [Network.Connection.t]) ::
+    {:ok, Motherboard.t, [term]}
   def update(nil, mobo_data, entity_ncs) do
     {:ok, new_mobo} =
       MotherboardInternal.setup(mobo_data.mobo, mobo_data.components)
@@ -61,6 +82,8 @@ defmodule Helix.Server.Action.Motherboard.Update do
     {:ok, new_mobo, []}
   end
 
+  @spec update_network_connections(motherboard_data, [Network.Connection.t]) ::
+    term
   defp update_network_connections(mobo_data, entity_ncs) do
     ncs = mobo_data.network_connections
 
@@ -100,12 +123,22 @@ defmodule Helix.Server.Action.Motherboard.Update do
     |> Enum.each(&perform_network_op/1)
   end
 
+  @spec has_nic?([update_nc], Component.id) ::
+    boolean
   defp has_nic?(ncs, nic_id),
     do: Enum.find(ncs, &(&1.nic_id == nic_id))
 
+  @spec has_nip?([update_nc], Network.id, Network.ip) ::
+    boolean
   defp has_nip?(ncs, network_id, ip),
     do: Enum.find(ncs, &(&1.network_id == network_id and &1.ip == ip))
 
+  @typep network_op_input ::
+    {:nilify_nic, Network.Connection.t}
+    | {:set_nic, Network.Connection.t, Component.id}
+
+  @spec perform_network_op(network_op_input) ::
+    term
   defp perform_network_op({:nilify_nic, nc = %Network.Connection{}}),
     do: {:ok, _} = NetworkAction.Connection.update_nic(nc, nil)
   defp perform_network_op({:set_nic, nc = %Network.Connection{}, nic_id}) do

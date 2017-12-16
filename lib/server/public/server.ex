@@ -6,8 +6,11 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
+  alias Helix.Server.Action.Motherboard, as: MotherboardAction
   alias Helix.Server.Public.Index, as: ServerIndex
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
@@ -40,6 +43,17 @@ defmodule Helix.Server.Public.Server do
     end
   end
 
+  @spec update_mobo(
+    Server.t,
+    {
+      Component.mobo,
+      [MotherboardAction.update_component],
+      [MotherboardAction.update_nc]
+    },
+    [Network.Connection.t],
+    Event.relay)
+  ::
+    ServerFlow.update_mobo_result
   def update_mobo(server, {mobo, components, ncs}, entity_ncs, relay) do
     motherboard =
       if server.motherboard_id do
@@ -58,9 +72,10 @@ defmodule Helix.Server.Public.Server do
     ServerFlow.update_mobo(server, motherboard, mobo_data, entity_ncs, relay)
   end
 
-  def detach_mobo(server, motherboard, relay) do
-    ServerFlow.detach_mobo(server, motherboard, relay)
-  end
+  @spec detach_mobo(Server.t, Motherboard.t, Event.relay) ::
+    ServerFlow.detach_mobo_result
+  def detach_mobo(server, motherboard, relay),
+    do: ServerFlow.detach_mobo(server, motherboard, relay)
 
   defdelegate set_hostname(server, hostname, relay),
     to: ServerFlow

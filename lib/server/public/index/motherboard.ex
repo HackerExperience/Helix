@@ -1,18 +1,46 @@
 defmodule Helix.Server.Public.Index.Motherboard do
 
+  alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
-  @type index :: term
-  @type rendered_index :: term
+  @type index ::
+    %{
+      motherboard_id: Motherboard.id | nil,
+      network_connections: [Network.Connection.t]
+    }
 
+  @type rendered_index ::
+    %{
+      motherboard_id: String.t,
+      slots: rendered_slots,
+      network_connections: rendered_network_connections
+    }
+
+  @typep rendered_slots ::
+    %{
+      slot_id :: String.t => %{
+        type: String.t,
+        component_id: String.t
+      }
+    }
+
+  @typep rendered_network_connections ::
+    %{
+      nic_id :: String.t => %{
+        network_id: String.t,
+        ip: String.t
+      }
+    }
+
+  @spec index(Server.t) ::
+    index
   def index(%Server{motherboard_id: nil}) do
     %{
       motherboard_id: nil,
-      slots: %{},
-      network_connections: %{}
+      network_connections: []
     }
   end
 
@@ -39,8 +67,15 @@ defmodule Helix.Server.Public.Index.Motherboard do
     }
   end
 
-  def render_index(index = %{motherboard_id: nil}),
-    do: index
+  @spec render_index(Server.t) ::
+    rendered_index
+  def render_index(%{motherboard_id: nil}) do
+    %{
+      motherboard_id: nil,
+      slots: %{},
+      network_connections: %{}
+    }
+  end
 
   def render_index(index) do
     %{
@@ -50,6 +85,8 @@ defmodule Helix.Server.Public.Index.Motherboard do
     }
   end
 
+  @spec render_slots(Motherboard.t) ::
+    rendered_slots
   defp render_slots(motherboard = %Motherboard{}) do
     used_slots =
       motherboard.slots
@@ -60,7 +97,7 @@ defmodule Helix.Server.Public.Index.Motherboard do
             component_id: to_string(component.component_id)
           }
 
-        {slot_id, comp_data}
+        {to_string(slot_id), comp_data}
       end)
       |> Enum.into(%{})
 
@@ -71,7 +108,7 @@ defmodule Helix.Server.Public.Index.Motherboard do
         free_slots
         |> Enum.map(fn slot_id ->
 
-          {slot_id, %{type: to_string(comp_type), component_id: nil}}
+          {to_string(slot_id), %{type: to_string(comp_type), component_id: nil}}
         end)
         |> Enum.into(%{})
         |> Map.merge(acc)
@@ -80,6 +117,8 @@ defmodule Helix.Server.Public.Index.Motherboard do
     Map.merge(used_slots, free_slots)
   end
 
+  @spec render_network_connections([Network.Connection.t]) ::
+    rendered_network_connections
   defp render_network_connections(network_connections) do
     network_connections
     |> Enum.reduce(%{}, fn nc, acc ->

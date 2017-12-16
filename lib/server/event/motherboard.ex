@@ -9,6 +9,13 @@ defmodule Helix.Server.Event.Motherboard do
 
     event_struct [:server, :index_cache]
 
+    @type t :: %__MODULE__{
+      server: Server.t,
+      index_cache: HardwareIndex.index
+    }
+
+    @spec new(Server.t) ::
+      t
     def new(server = %Server{}) do
       %__MODULE__{
         server: server,

@@ -2,6 +2,10 @@ defmodule Helix.Server.Action.Motherboard do
 
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
 
+  @type motherboard_data :: __MODULE__.Update.motherboard_data
+  @type update_component :: __MODULE__.Update.update_component
+  @type update_nc :: __MODULE__.Update.update_nc
+
   defdelegate setup(mobo, initial_components),
     to: MotherboardInternal
 
