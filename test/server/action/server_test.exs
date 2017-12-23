@@ -38,23 +38,23 @@ defmodule Helix.Server.Action.ServerTest do
       CacheHelper.sync_test()
     end
 
+    test "succeeds when server already has a motherboard" do
+      {server, _} = ServerSetup.server()
+
+      {mobo, _} = ComponentSetup.component(type: :mobo)
+
+      assert {:ok, new_server} = ServerAction.attach(server, mobo.component_id)
+      assert new_server.motherboard_id == mobo.component_id
+
+      CacheHelper.sync_test()
+    end
+
     test "fails when given motherboard is already attached" do
       {server1, _} = ServerSetup.server()
       {server2, _} = ServerSetup.server()
 
       assert {:error, reason} =
         ServerAction.attach(server1, server2.motherboard_id)
-      assert reason == :internal
-
-      CacheHelper.sync_test()
-    end
-
-    test "fails when server already has a motherboard" do
-      {server, _} = ServerSetup.server()
-
-      {mobo, _} = ComponentSetup.component(type: :mobo)
-
-      assert {:error, reason} = ServerAction.attach(server, mobo.component_id)
       assert reason == :internal
 
       CacheHelper.sync_test()

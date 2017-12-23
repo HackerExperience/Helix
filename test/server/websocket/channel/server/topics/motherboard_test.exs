@@ -23,7 +23,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.MotherboardTest do
   @internet_id NetworkHelper.internet_id()
 
   describe "motherboard.update" do
-    test "updates the components" do
+    test "updates the components (same motherboard)" do
       {socket, %{gateway: server, gateway_entity: entity}} =
         ChannelSetup.join_server(own_server: true)
 
@@ -115,6 +115,65 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.MotherboardTest do
       assert mobo_nc2.ip == nc_custom.ip
 
       assert motherboard.slots.nic_2.custom.network_id == nc_custom.network_id
+    end
+
+    test "updates the mobo (1-step switch to a new mobo)" do
+      {socket, %{gateway: server, gateway_entity: entity}} =
+        ChannelSetup.join_server(own_server: true)
+
+      # This will be our new mobo
+      {new_mobo, _} = ComponentSetup.component(type: :mobo)
+      EntityAction.link_component(entity, new_mobo)
+
+      # Get current motherboard components
+      motherboard = MotherboardQuery.fetch(server.motherboard_id)
+      [old_cpu] = MotherboardQuery.get_cpus(motherboard)
+      [old_ram] = MotherboardQuery.get_rams(motherboard)
+      [old_hdd] = MotherboardQuery.get_hdds(motherboard)
+      [old_nic] = MotherboardQuery.get_nics(motherboard)
+
+      # Get current NetworkConnection assigned to `old_nic`
+      old_nc = NetworkQuery.Connection.fetch_by_nic(old_nic)
+
+      params =
+        %{
+          "motherboard_id" => to_string(new_mobo.component_id),
+          "slots" => %{
+            "cpu_1" => to_string(old_cpu.component_id),
+            "ram_1" => to_string(old_ram.component_id),
+            "hdd_1" => to_string(old_hdd.component_id),
+            "nic_1" => to_string(old_nic.component_id),
+          },
+          "network_connections" => %{
+            to_string(old_nic.component_id) => %{
+              "ip" => old_nc.ip,
+              "network_id" => to_string(old_nc.network_id)
+            },
+          }
+        }
+
+      # Request the update
+      ref = push socket, "motherboard.update", params
+      assert_reply ref, :ok, _, timeout(:slow)
+
+      # Wait for completion
+      wait_events [:motherboard_updated]
+
+      # Let's make sure the new motherboard is the one we've just requested
+      motherboard = MotherboardQuery.fetch(new_mobo.component_id)
+
+      # Components are the same as before
+      assert motherboard.slots.cpu_1 == old_cpu
+      assert motherboard.slots.ram_1 == old_ram
+      assert motherboard.slots.hdd_1 == old_hdd
+      assert motherboard.slots.nic_1 == old_nic
+
+      # Previous server mobo_id no longer exists
+      refute MotherboardQuery.fetch(server.motherboard_id)
+
+      # And the NetworkConnection is also the same
+      mobo_nc = NetworkQuery.Connection.fetch_by_nic(old_nic.component_id)
+      assert mobo_nc == old_nc
     end
 
     test "detaches the mobo (and unlinks the underlying components)" do

@@ -40,15 +40,21 @@ defmodule Helix.Server.Internal.Server do
   def set_hostname(server, hostname) do
     server
     |> Server.set_hostname(hostname)
-    |> update()
+    |> Repo.update()
   end
 
   @spec attach(Server.t, Motherboard.id) ::
     repo_return
+  @doc """
+  Updates the `server` motherboard to be `mobo_id`.
+
+  It doesn't matter if the server already has a motherboard attached to it; this
+  operation will overwrite any existing motherboard.
+  """
   def attach(server, mobo_id) do
     result =
       server
-      |> Server.update_changeset(%{motherboard_id: mobo_id})
+      |> Server.attach_motherboard(mobo_id)
       |> Repo.update()
 
     with {:ok, _} <- result do
@@ -60,6 +66,11 @@ defmodule Helix.Server.Internal.Server do
 
   @spec detach(Server.t) ::
     repo_return
+  @doc """
+  Detaches the currently attached motherboard from `server`
+
+  It doesn't matter if the server has no motherboard attached to it.
+  """
   def detach(server = %Server{}) do
     result =
       server
@@ -82,9 +93,4 @@ defmodule Helix.Server.Internal.Server do
 
     :ok
   end
-
-  @spec update(Server.changeset) ::
-    repo_return
-  defp update(changeset),
-    do: Repo.update(changeset)
 end

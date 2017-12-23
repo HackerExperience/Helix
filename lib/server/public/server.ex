@@ -7,7 +7,6 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Component
-  alias Helix.Server.Model.Motherboard
   alias Helix.Server.Model.Server
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
   alias Helix.Server.Action.Motherboard, as: MotherboardAction
