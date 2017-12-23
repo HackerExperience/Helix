@@ -80,6 +80,11 @@ defmodule Helix.Entity.Henforcer.Entity do
   @spec owns_component?(Entity.idt, Component.idt, [Component.t] | nil) ::
     {true, owns_component_relay}
     | owns_component_error
+  @doc """
+  Henforces the Entity is the owner of the given component. The third parameter,
+  `owned`, allows users of this function to pass a previously fetched list of
+  components owned by the entity (cache).
+  """
   def owns_component?(entity_id = %Entity.ID{}, component, owned) do
     henforce entity_exists?(entity_id) do
       owns_component?(relay.entity, component, owned)
@@ -132,6 +137,11 @@ defmodule Helix.Entity.Henforcer.Entity do
   @spec owns_nip?(Entity.idt, Network.id, Network.ip, owned_ncs) ::
     {true, owns_nip_relay}
     | owns_nip_error
+  @doc """
+  Henforces the Entity is the owner of the given NIP (NetworkConnection). The
+  third parameter, `owned`, allows users of this function to pass a previously
+  fetched list of NCs owned by the entity (cache).
+  """
   def owns_nip?(entity_id = %Entity.ID{}, network_id, ip, owned) do
     henforce entity_exists?(entity_id) do
       owns_nip?(relay.entity, network_id, ip, owned)

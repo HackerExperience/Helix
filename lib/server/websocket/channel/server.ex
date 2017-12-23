@@ -127,6 +127,36 @@ channel Helix.Server.Websocket.Channel.Server do
   topic "config.check", ConfigCheckRequest
 
   @doc """
+  Updates the player's motherboard. May be used to attach, detach or update the
+  mobo components.
+
+  Params (detach):
+  - *cmd: "detach"
+
+  Params (update):
+  - *motherboard_id: ID of the motherboard selected by the player.
+  - *slots: Map with the mobo `slot_id` as key and the component selected for
+    such slot. Empty slots may be ignored or set as `nil`.
+  - *network_connections: Map with the `nic_id` as key and the nip selected for
+    such nic. Non-assigned NICs may be ignored.
+
+  Example:
+    %{
+      "motherboard_id" => "::1",
+      "slots" => %{
+        "cpu_1" => "::f",
+        "ram_1" => nil,
+      },
+      "network_connections" => %{
+        "::5" => %{
+          "network_id" => "::",
+          "ip" => "1.2.3.4"
+        }
+      }
+    }
+
+  All components (including the mobo) and the NIPs must belong to the player.
+
   Errors:
 
   Henforcer:

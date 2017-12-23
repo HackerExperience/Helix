@@ -3,6 +3,15 @@ defmodule Helix.Server.Event.Motherboard do
   import Helix.Event
 
   event Updated do
+    @moduledoc """
+    `MotherboardUpdatedEvent` is fired when the server motherboard has changed
+    as a result of a player's action. Changes include removal of the mobo
+    (detach) as well as (un)linking components.
+
+    This data is Notificable, i.e. sent to the Client. The client receives the
+    new motherboard data through HardwareIndex (same data sent during the
+    bootstrap step).
+    """
 
     alias Helix.Server.Model.Server
     alias Helix.Server.Public.Index.Hardware, as: HardwareIndex
@@ -34,6 +43,11 @@ defmodule Helix.Server.Event.Motherboard do
 
       @event :motherboard_updated
 
+      @doc """
+      The player (server channel with `local` access) receives the full hardware
+      index, while any remote connection receives only remote data (like total
+      hardware resources).
+      """
       def generate_payload(event, %{assigns: %{meta: %{access: :local}}}) do
         data = HardwareIndex.render_index(event.index_cache)
 
@@ -55,6 +69,11 @@ defmodule Helix.Server.Event.Motherboard do
   end
 
   event UpdateFailed do
+    @moduledoc """
+    `MotherboardUpdateFailedEvent` is fired when the user attempted to update 
+    her motherboard but it failed with `reason`. Client is notified (mostly
+    because this is an asynchronous step).
+    """
 
     alias Helix.Server.Model.Server
 
@@ -82,6 +101,9 @@ defmodule Helix.Server.Event.Motherboard do
 
       @event :motherboard_update_failed
 
+      @doc """
+      Only the player is notified (server channel with `local` access)
+      """
       def generate_payload(event, %{assigns: %{meta: %{access: :local}}}) do
         data = %{reason: event.reason}
 

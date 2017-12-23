@@ -59,9 +59,18 @@ defmodule Helix.Server.Action.Flow.Server do
     Motherboard.t,
     MotherboardAction.motherboard_data,
     entity_ncs :: [Network.Connection.t],
-    relay :: Event.relay
-  ) ::
+    relay :: Event.relay)
+  ::
     update_mobo_result
+  @doc """
+  Updates the server motherboard.
+
+  `new_mobo_data` holds all information about how the new motherboard should
+  look like.
+
+  Emits `MotherboardUpdatedEvent` in case of success, and
+  `MotherboardUpdateFailedEvent` otherwise.
+  """
   def update_mobo(
     server = %Server{},
     motherboard,
@@ -91,6 +100,12 @@ defmodule Helix.Server.Action.Flow.Server do
 
   @spec detach_mobo(Server.t, Motherboard.t, Event.relay) ::
     detach_mobo_result
+  @doc """
+  Detaches the server motherboard.
+
+  Emits `MotherboardUpdatedEvent` in case of success, and
+  `MotherboardUpdateFailedEvent` otherwise.
+  """
   def detach_mobo(server = %Server{}, motherboard = %Motherboard{}, relay) do
     flowing do
       with \

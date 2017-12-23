@@ -54,6 +54,18 @@ defmodule Helix.Server.Public.Server do
     Event.relay)
   ::
     ServerFlow.update_mobo_result
+  @doc """
+  Updates the server motherboard.
+
+  - `mobo` points to the (potentially) new motherboard component.
+  - `components` is a list of the (potentially) new components linked to the
+    motherboard.
+  - `ncs` is a list of the (potentially) new NCs assigned to its NICs.
+
+  Notice `components` and `ncs` are no ordinary lists. The former also includes
+  the `slot_id` that component is supposed to be linked to, and the latter
+  includes the `nic_id` that should be assigned the network connection (NC).
+  """
   def update_mobo(server, {mobo, components, ncs}, entity_ncs, relay) do
     motherboard =
       if server.motherboard_id do
@@ -72,11 +84,15 @@ defmodule Helix.Server.Public.Server do
     ServerFlow.update_mobo(server, motherboard, mobo_data, entity_ncs, relay)
   end
 
-  @spec detach_mobo(Server.t, Motherboard.t, Event.relay) ::
-    ServerFlow.detach_mobo_result
-  def detach_mobo(server, motherboard, relay),
-    do: ServerFlow.detach_mobo(server, motherboard, relay)
+  @doc """
+  Detaches the server motherboard.
+  """
+  defdelegate detach_mobo(server, motherboard, relay),
+    to: ServerFlow
 
+  @doc """
+  Sets the server hostname.
+  """
   defdelegate set_hostname(server, hostname, relay),
     to: ServerFlow
 

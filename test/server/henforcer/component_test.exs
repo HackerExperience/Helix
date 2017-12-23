@@ -8,16 +8,18 @@ defmodule Helix.Server.Henforcer.ComponentTest do
   alias Helix.Network.Action.Network, as: NetworkAction
   alias Helix.Server.Henforcer.Component, as: ComponentHenforcer
   alias Helix.Server.Model.Component
+  alias Helix.Server.Query.Server, as: ServerQuery
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   @internet_id NetworkHelper.internet_id()
 
-  describe "can_update_mobo?/n" do
+  describe "can_update_mobo?/4" do
     test "accepts when everything is OK" do
       {server, %{entity: entity}} = ServerSetup.server()
 
@@ -308,6 +310,38 @@ defmodule Helix.Server.Henforcer.ComponentTest do
         )
 
       assert reason == {:motherboard, :missing_public_nip}
+    end
+  end
+
+  describe "can_detach_mobo?/2" do
+    test "accepts when everything is a-ok" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      assert {true, relay} =
+        ComponentHenforcer.can_detach_mobo?(entity.entity_id, server.server_id)
+
+      assert relay.server == server
+      assert relay.entity == entity
+      assert relay.mobo.component_id == server.motherboard_id
+      assert relay.motherboard.motherboard_id == server.motherboard_id
+
+      assert_relay relay,
+        [:server, :entity, :mobo, :motherboard, :owned_components]
+    end
+
+    test "rejects when server has no mobo" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      # Remove mobo
+      ServerHelper.update_server_mobo(server, nil)
+
+      # Look mah, no mobo!
+      server = ServerQuery.fetch(server.server_id)
+      refute server.motherboard_id
+
+      assert {false, reason, _} =
+        ComponentHenforcer.can_detach_mobo?(entity.entity_id, server.server_id)
+      assert reason == {:motherboard, :not_attached}
     end
   end
 end

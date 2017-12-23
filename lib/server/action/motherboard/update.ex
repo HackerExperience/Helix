@@ -33,9 +33,13 @@ defmodule Helix.Server.Action.Motherboard.Update do
 
   @spec detach(Motherboard.t) ::
     :ok
+  @doc """
+  Detaches the `motherboard`.
+  """
   def detach(motherboard = %Motherboard{}) do
     MotherboardInternal.unlink_all(motherboard)
 
+    # Network configuration is asynchronous
     hespawn fn ->
       motherboard
       |> MotherboardQuery.get_nics()
@@ -53,10 +57,20 @@ defmodule Helix.Server.Action.Motherboard.Update do
 
   @spec update(Motherboard.t | nil, motherboard_data, [Network.Connection.t]) ::
     {:ok, Motherboard.t, [term]}
+  @doc """
+  Updates the motherboard.
+
+  First parameter is the current motherboard. If `nil`, a motherboard is being
+  attached to a server that was currently without motherboard.
+
+  Updating a motherboard is - as of now - quite naive: we simply unlink all
+  existing components and then link what was specified by the user.
+  """
   def update(nil, mobo_data, entity_ncs) do
     {:ok, new_mobo} =
       MotherboardInternal.setup(mobo_data.mobo, mobo_data.components)
 
+    # Network configuration is asynchronous
     hespawn fn ->
       update_network_connections(mobo_data, entity_ncs)
     end
@@ -75,6 +89,7 @@ defmodule Helix.Server.Action.Motherboard.Update do
         MotherboardInternal.setup(mobo_data.mobo, mobo_data.components)
       end
 
+    # Network configuration is asynchronous
     hespawn fn ->
       update_network_connections(mobo_data, entity_ncs)
     end
@@ -84,6 +99,14 @@ defmodule Helix.Server.Action.Motherboard.Update do
 
   @spec update_network_connections(motherboard_data, [Network.Connection.t]) ::
     term
+  docp """
+  Iterates through the player's network connections (NCs), as well as all NCs
+  assigned to the new motherboard configuration.
+
+  This iteration detects which (if any) NC should be updated, either because it
+  was previously attached to the motherboard and was removed, or because it was
+  not previously attached to any mobo but now it is.
+  """
   defp update_network_connections(mobo_data, entity_ncs) do
     ncs = mobo_data.network_connections
 

@@ -65,14 +65,15 @@ request Helix.Server.Websocket.Requests.MotherboardUpdate do
   end
 
   def check_permissions(request = %{params: %{cmd: :detach}}, socket) do
+    entity_id = socket.assigns.gateway.entity_id
     gateway_id = socket.assigns.gateway.server_id
 
     with \
-      {true, relay} <- ComponentHenforcer.can_detach_mobo?(gateway_id)
+      {true, r0} <- ComponentHenforcer.can_detach_mobo?(entity_id, gateway_id)
     do
       meta = %{
-        server: relay.server,
-        motherboard: relay.motherboard
+        server: r0.server,
+        motherboard: r0.motherboard
       }
 
       update_meta(request, meta, reply: true)

@@ -28,7 +28,6 @@ defmodule Helix.Server.Public.Index.MotherboardTest do
 
       refute index.motherboard_id
       assert Enum.empty?(index.network_connections)
-      assert Enum.empty?(index.slots)
     end
 
     test "indexes motherboard" do
@@ -99,23 +98,23 @@ defmodule Helix.Server.Public.Index.MotherboardTest do
       # Slot data is valid
       slots = rendered.slots
 
-      assert rendered.slots.cpu_1.component_id == to_string(cpu.component_id)
-      assert rendered.slots.cpu_1.type == "cpu"
-      assert rendered.slots.hdd_1.component_id == to_string(hdd.component_id)
-      assert rendered.slots.hdd_1.type == "hdd"
-      assert rendered.slots.ram_1.component_id == to_string(ram.component_id)
-      assert rendered.slots.ram_1.type == "ram"
-      assert rendered.slots.nic_1.component_id == to_string(nic.component_id)
-      assert rendered.slots.nic_1.type == "nic"
+      assert rendered.slots["cpu_1"].component_id == to_string(cpu.component_id)
+      assert rendered.slots["cpu_1"].type == "cpu"
+      assert rendered.slots["hdd_1"].component_id == to_string(hdd.component_id)
+      assert rendered.slots["hdd_1"].type == "hdd"
+      assert rendered.slots["ram_1"].component_id == to_string(ram.component_id)
+      assert rendered.slots["ram_1"].type == "ram"
+      assert rendered.slots["nic_1"].component_id == to_string(nic.component_id)
+      assert rendered.slots["nic_1"].type == "nic"
 
       # Returned all slots (available and free slots)
       assert map_size(slots) > 10
 
       # Available slots have an empty `component_id`
-      refute rendered.slots.cpu_2.component_id
-      refute rendered.slots.ram_2.component_id
-      refute rendered.slots.hdd_2.component_id
-      refute rendered.slots.nic_2.component_id
+      refute rendered.slots["cpu_2"].component_id
+      refute rendered.slots["ram_2"].component_id
+      refute rendered.slots["hdd_2"].component_id
+      refute rendered.slots["nic_2"].component_id
     end
   end
 end

@@ -42,12 +42,12 @@ defmodule Helix.Server.Model.Motherboard do
       net: Component.NIC.custom
     }
 
-  @type initial_components :: [{Component.pluggable, Component.Mobo.slot_id}]
+  @type initial_components :: [{Component.pluggable, slot_id}]
   @type required_components :: [Constant.t]
 
   @type slot_id :: Component.Mobo.slot_id
   @type slot :: {slot_id, Component.t}
-  @type free_slots :: %{Component.type => [Component.Mobo.slot_id]}
+  @type free_slots :: %{Component.type => [slot_id]}
 
   @type error ::
     :wrong_slot_type
