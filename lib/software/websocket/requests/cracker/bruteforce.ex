@@ -17,7 +17,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
         Network.ID.cast(request.unsafe["network_id"]),
       true <- IPv4.valid?(request.unsafe["ip"]),
       {:ok, bounces} = cast_bounces(request.unsafe["bounces"]),
-      true <- socket.assigns.meta.access_type == :local || :bad_attack_src
+      true <- socket.assigns.meta.access == :local || :bad_attack_src
     do
       params = %{
         bounces: bounces,

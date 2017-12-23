@@ -99,7 +99,8 @@ defmodule Helix.Process.Resources do
       they are identical to the resource's initial value.
       """
       def reject_empty(resources) do
-        Enum.reject(resources, fn {res, val} ->
+        resources
+        |> Enum.reject(fn {res, val} ->
           val == call_resource(res, :initial, [])
         end)
         |> Map.new()

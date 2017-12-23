@@ -14,7 +14,7 @@ request Helix.Software.Websocket.Requests.PFTP.Server.Enable do
   local socket.
   """
   def check_params(request, socket) do
-    if socket.assigns.meta.access_type == :local do
+    if socket.assigns.meta.access == :local do
       reply_ok(request)
     else
       reply_error(request, "pftp_must_be_local")

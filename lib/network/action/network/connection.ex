@@ -39,7 +39,7 @@ defmodule Helix.Network.Action.Network.Connection do
     end
   end
 
-  @spec update_nic(Network.Connection.t, Component.nic) ::
+  @spec update_nic(Network.Connection.t, Component.nic | nil) ::
     {:ok, Network.Connection.t}
     | {:error, :internal}
   @doc """

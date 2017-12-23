@@ -7,6 +7,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Account.Query.Account, as: AccountQuery
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Entity.Model.Entity
+  alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -130,10 +131,12 @@ defmodule Helix.Test.Channel.Setup do
   Related:
     Account.t, \
     gateway :: Server.t, \
-    destination :: Server.t | nil, \
-    destination_files :: [SoftwareSetup.file] | nil, \
+    gateway_entity :: Entity.t \
     gateway_files :: [SoftwareSetup.file] | nil, \
     gateway_ip :: Network.ip, \
+    destination :: Server.t | nil, \
+    destination_entity :: Entity.t | nil \
+    destination_files :: [SoftwareSetup.file] | nil, \
     destination_ip :: Network.ip | nil
   """
   def join_server(opts \\ []) do
@@ -169,6 +172,7 @@ defmodule Helix.Test.Channel.Setup do
     gateway_related = %{
       account: account,
       gateway: gateway,
+      gateway_entity: EntityQuery.fetch(socket.assigns.gateway.entity_id),
       gateway_ip: join.gateway_ip,
       gateway_files: gateway_files,
     }
@@ -180,8 +184,12 @@ defmodule Helix.Test.Channel.Setup do
         destination_files =
           generate_files(opts[:destination_files], destination.server_id)
 
+        destination_entity =
+          EntityQuery.fetch(socket.assigns.destination.entity_id)
+
         %{
           destination: destination,
+          destination_entity: destination_entity,
           destination_ip: join.destination_ip,
           destination_files: destination_files
         }
@@ -244,7 +252,7 @@ defmodule Helix.Test.Channel.Setup do
   - destination_ip
   - destination_entity_id
   - network_id
-  - access_type: Inferred if not set
+  - access: Inferred if not set
   - own_server: Force socket to represent own server channel. Defaults to false.
   - counter: Defaults to 0.
   - connect_opts: Opts that will be relayed to the `mock_connection_socket`
@@ -265,10 +273,10 @@ defmodule Helix.Test.Channel.Setup do
         {server_id, server_ip, entity_id}
       end
 
-    access_type =
+    access =
       cond do
-        opts[:access_type] ->
-          opts[:access_type]
+        opts[:access] ->
+          opts[:access]
 
         gateway_id == destination_id ->
           :local
@@ -280,7 +288,7 @@ defmodule Helix.Test.Channel.Setup do
     network_id = Keyword.get(opts, :network_id, Network.ID.generate())
     counter = Keyword.get(opts, :counter, 0)
     meta = %{
-      access_type: access_type,
+      access: access,
       network_id: network_id,
       counter: counter
     }

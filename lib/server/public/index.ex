@@ -14,6 +14,7 @@ defmodule Helix.Server.Public.Index do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Public.Index, as: FileIndex
   alias Helix.Server.Model.Server
+  alias Helix.Server.Public.Index.Hardware, as: HardwareIndex
   alias Helix.Server.Query.Server, as: ServerQuery
 
   @type index ::
@@ -72,6 +73,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.index,
       main_storage: Storage.id,
       storages: FileIndex.index,
+      hardware: HardwareIndex.index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index,
     }
@@ -84,6 +86,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.rendered_index,
       main_storage: String.t,
       storages: FileIndex.rendered_index,
+      hardware: HardwareIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index,
     }
@@ -93,7 +96,8 @@ defmodule Helix.Server.Public.Index do
       nips: [Network.nip],
       logs: LogIndex.index,
       main_storage: Storage.id,
-      storages: FileIndex.rendered_index,
+      storages: FileIndex.index,
+      hardware: HardwareIndex.index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index
     }
@@ -104,6 +108,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.rendered_index,
       main_storage: String.t,
       storages: FileIndex.rendered_index,
+      hardware: HardwareIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index
     }
@@ -225,7 +230,8 @@ defmodule Helix.Server.Public.Index do
   def gateway(server = %Server{}, entity_id) do
     index = %{
       password: server.password,
-      name: server.hostname
+      name: server.hostname,
+      hardware: HardwareIndex.index(server, :local)
     }
 
     Map.merge(server_common(server, entity_id), index)
@@ -237,10 +243,11 @@ defmodule Helix.Server.Public.Index do
   Renderer for `gateway/2`
   """
   def render_gateway(server) do
-    partial = %{
-      password: server.password,
-      name: server.name
-    }
+    partial =
+      %{
+        password: server.password,
+        name: server.name
+      }
 
     Map.merge(partial, render_server_common(server))
   end
@@ -256,7 +263,12 @@ defmodule Helix.Server.Public.Index do
   - Resync client data with `bootstrap` request
   """
   def remote(server = %Server{}, entity_id) do
-    server_common(server, entity_id)
+    index =
+      %{
+        hardware: HardwareIndex.index(server, :remote)
+      }
+
+    Map.merge(server_common(server, entity_id), index)
   end
 
   @spec render_remote(remote) ::
@@ -311,6 +323,7 @@ defmodule Helix.Server.Public.Index do
       logs: LogIndex.render_index(server.logs),
       main_storage: server.main_storage |> to_string(),
       storages: FileIndex.render_index(server.storages),
+      hardware: HardwareIndex.render_index(server.hardware),
       processes: server.processes,
       tunnels: NetworkIndex.render_index(server.tunnels)
     }

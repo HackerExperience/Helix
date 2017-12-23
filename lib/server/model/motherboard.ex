@@ -42,11 +42,12 @@ defmodule Helix.Server.Model.Motherboard do
       net: Component.NIC.custom
     }
 
-  @type initial_components :: [{Component.pluggable, Component.Mobo.slot_id}]
+  @type initial_components :: [{Component.pluggable, slot_id}]
   @type required_components :: [Constant.t]
 
-  @type slot :: {Component.Mobo.slot_id, Component.t}
-  @type free_slots :: %{Component.type => [Component.Mobo.slot_id]}
+  @type slot_id :: Component.Mobo.slot_id
+  @type slot :: {slot_id, Component.t}
+  @type free_slots :: %{Component.type => [slot_id]}
 
   @type error ::
     :wrong_slot_type
@@ -314,7 +315,7 @@ defmodule Helix.Server.Model.Motherboard do
     | {:error, :wrong_slot_type}
     | {:error, :slot_in_use}
     | {:error, :bad_slot}
-  defp check_compatibility(
+  def check_compatibility(
     mobo = %Component{},
     component = %Component{},
     slot_id,
@@ -329,12 +330,14 @@ defmodule Helix.Server.Model.Motherboard do
 
     alias Helix.Server.Model.Component
 
-    @spec by_motherboard(Queryable.t, Motherboard.idt) ::
+    @spec by_motherboard(Queryable.t, Motherboard.idt, [eager: boolean]) ::
       Queryable.t
-    def by_motherboard(query \\ Motherboard, motherboard_id)
-    def by_motherboard(query, mobo = %Component{type: :mobo}),
-      do: by_motherboard(query, mobo.component_id)
-    def by_motherboard(query, motherboard_id) do
+    def by_motherboard(query \\ Motherboard, motherboard_id, eager?)
+    def by_motherboard(query, mobo = %Component{type: :mobo}, eager?),
+      do: by_motherboard(query, mobo.component_id, eager?)
+    def by_motherboard(query, motherboard_id, eager: false),
+      do: where(query, [m], m.motherboard_id == ^motherboard_id)
+    def by_motherboard(query, motherboard_id, _) do
       from entries in query,
         inner_join: component in assoc(entries, :linked_component),
         where: entries.motherboard_id == ^to_string(motherboard_id),

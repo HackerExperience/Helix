@@ -13,7 +13,7 @@ defmodule Helix.Server.Internal.Motherboard do
   """
   def fetch(motherboard_id) do
     motherboard_id
-    |> Motherboard.Query.by_motherboard()
+    |> Motherboard.Query.by_motherboard(eager: true)
     |> Repo.all()
     |> Motherboard.format()
   end
@@ -217,7 +217,7 @@ defmodule Helix.Server.Internal.Motherboard do
   @spec unlink(Component.pluggable) ::
     :ok
   @doc """
-  Unlinks `component` from `motherboard`.
+  Unlinks `component` from the motherboard.
 
   Notice we are not *updating* any entries. All `unlink` operations are removing
   data from the `motherboards` table.
@@ -225,6 +225,19 @@ defmodule Helix.Server.Internal.Motherboard do
   def unlink(component = %Component{}) do
     component.component_id
     |> Motherboard.Query.by_component(eager: false)
+    |> Repo.delete_all()
+
+    :ok
+  end
+
+  @spec unlink_all(Motherboard.t) ::
+    :ok
+  @doc """
+  Unlinks all components from `motherboard`.
+  """
+  def unlink_all(motherboard = %Motherboard{}) do
+    motherboard.motherboard_id
+    |> Motherboard.Query.by_motherboard(eager: false)
     |> Repo.delete_all()
 
     :ok

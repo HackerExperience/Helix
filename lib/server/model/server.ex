@@ -4,6 +4,7 @@ defmodule Helix.Server.Model.Server do
   use HELL.ID, field: :server_id, meta: [0x0010]
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -54,7 +55,7 @@ defmodule Helix.Server.Model.Server do
   end
 
   @spec create_changeset(creation_params) ::
-    Changeset.t
+    changeset
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -62,16 +63,6 @@ defmodule Helix.Server.Model.Server do
     |> unique_constraint(:motherboard_id)
     |> validate_required(@required_fields)
     |> validate_inclusion(:type, Server.Type.possible_types())
-  end
-
-  @spec update_changeset(t | Changeset.t, update_params) ::
-    Changeset.t
-  def update_changeset(struct, params) do
-    struct
-    |> cast(params, [])
-    |> unique_constraint(:motherboard_id)
-    |> attach_motherboard(params)
-    |> validate_required(@required_fields)
   end
 
   @spec set_hostname(t, hostname) ::
@@ -82,38 +73,40 @@ defmodule Helix.Server.Model.Server do
     |> put_change(:hostname, hostname)
   end
 
-  @spec detach_motherboard(t | Changeset.t) ::
-    Changeset.t
-  def detach_motherboard(struct),
-    do: update_changeset(struct, %{motherboard_id: nil})
-
-  @spec attach_motherboard(t | Changeset.t, map) ::
-    Changeset.t
-  defp attach_motherboard(changeset, params) do
-    previous = get_field(changeset, :motherboard_id)
-    changeset = cast(changeset, params, [:motherboard_id])
-    next = get_change(changeset, :motherboard_id)
-
-    # Already has motherboard and is trying to override it
-    if previous && next do
-      add_error(changeset, :motherboard_id, "is already set")
-    else
-      changeset
-    end
+  @spec update_motherboard(t, Motherboard.id | nil) ::
+    changeset
+  defp update_motherboard(server, mobo_id) do
+    server
+    |> change()
+    |> unique_constraint(:motherboard_id)
+    |> put_change(:motherboard_id, mobo_id)
+    |> validate_required(@required_fields)
   end
 
-  @spec generate_password(Changeset.t) ::
-    Changeset.t
+  @spec attach_motherboard(t, Motherboard.id) ::
+    changeset
+  @doc """
+  Assigns `new_mobo_id` to the Server model
+  """
+  def attach_motherboard(server, new_mobo_id),
+    do: update_motherboard(server, new_mobo_id)
+
+  @spec detach_motherboard(t) ::
+    changeset
+  @doc """
+  Removes the `motherboard_id` field from the Server model.
+  """
+  def detach_motherboard(server),
+    do: update_motherboard(server, nil)
+
+  @spec generate_password(changeset) ::
+    changeset
   defp generate_password(changeset),
     do: put_change(changeset, :password, Password.generate(:server))
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
-
-    alias Ecto.Queryable
     alias Helix.Server.Model.Motherboard
-    alias Helix.Server.Model.Server
 
     @spec by_id(Queryable.t, Server.idtb) ::
       Queryable.t

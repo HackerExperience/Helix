@@ -33,7 +33,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert new_socket.assigns.gateway.entity_id == entity_id
 
       # metadata is valid
-      assert new_socket.assigns.meta.access_type == :local
+      assert new_socket.assigns.meta.access == :local
 
       # Does not have assigns exclusive to remote joins
       refute Map.has_key?(new_socket.assigns.gateway, :ip)
@@ -168,7 +168,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert new_socket.assigns.destination.entity_id == destination_entity_id
 
       # Metadata is correct
-      assert new_socket.assigns.meta.access_type == :remote
+      assert new_socket.assigns.meta.access == :remote
       assert new_socket.assigns.meta.network_id == @internet_id
 
       # Other stuff

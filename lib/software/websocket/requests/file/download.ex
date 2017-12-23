@@ -23,7 +23,7 @@ request Helix.Software.Websocket.Requests.File.Download do
       end
 
     with \
-      true <- socket.assigns.meta.access_type == :remote || :bad_access,
+      true <- socket.assigns.meta.access == :remote || :bad_access,
       {:ok, file_id} <- File.ID.cast(request.unsafe["file_id"]),
       {:ok, storage_id} <- Storage.ID.cast(unsafe_storage_id)
     do

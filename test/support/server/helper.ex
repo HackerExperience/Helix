@@ -28,7 +28,7 @@ defmodule Helix.Test.Server.Helper do
   def get_nip(server = %Server{}),
     do: get_nip(server.server_id)
   def get_nip(server_id = %Server.ID{}),
-      do: get_all_nips(server_id) |> List.first()
+    do: get_all_nips(server_id) |> List.first()
 
   def get_all_nips(server = %Server{}),
     do: get_all_nips(server.server_id)

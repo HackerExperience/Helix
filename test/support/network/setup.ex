@@ -1,7 +1,9 @@
 defmodule Helix.Test.Network.Setup do
 
+  alias Ecto.Changeset
   alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Network.Repo, as: NetworkRepo
@@ -124,5 +126,33 @@ defmodule Helix.Test.Network.Setup do
       }
 
     {connection, %{tunnel: tunnel}}
+  end
+
+  @doc """
+  See doc on `fake_network/1`
+  """
+  def network(opts \\ []) do
+    {_, related = %{changeset: changeset}} = fake_network(opts)
+    {:ok, inserted} = NetworkRepo.insert(changeset)
+    {inserted, related}
+  end
+
+  @doc """
+  - network_id: specify network id. Defaults to random one
+  - name: Specify network name. Defaults to 
+  """
+  def fake_network(opts \\ []) do
+    network_id = Keyword.get(opts, :network_id, Network.ID.generate())
+    name = Keyword.get(opts, :name, "LAN")
+
+    network =
+      %Network{
+        network_id: network_id,
+        name: name
+      }
+
+    related = %{changeset: Changeset.change(network)}
+
+    {network, related}
   end
 end

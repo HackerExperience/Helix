@@ -74,6 +74,15 @@ defmodule Helix.Network.Model.Network.Connection do
     |> validate_required(@required_fields)
   end
 
+  @spec update_nic(t, nil) ::
+    changeset
+  def update_nic(nc = %__MODULE__{}, nil) do
+    nc
+    |> change
+    |> put_change(:nic_id, nil)
+    |> validate_required(@required_fields)
+  end
+
   @spec update_ip(t, ip) ::
     changeset
   def update_ip(nc = %__MODULE__{}, new_ip) do

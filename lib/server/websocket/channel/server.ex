@@ -34,6 +34,8 @@ channel Helix.Server.Websocket.Channel.Server do
   alias Helix.Server.Websocket.Requests.Bootstrap, as: BootstrapRequest
   alias Helix.Server.Websocket.Requests.Config.Check, as: ConfigCheckRequest
   alias Helix.Server.Websocket.Requests.Config.Set, as: ConfigSetRequest
+  alias Helix.Server.Websocket.Requests.MotherboardUpdate,
+    as: MotherboardUpdateRequest
   alias Helix.Server.Websocket.Requests.SetHostname, as: SetHostnameRequest
 
   @doc """
@@ -123,6 +125,57 @@ channel Helix.Server.Websocket.Channel.Server do
   May return the corresponding permission error defined for each key.
   """
   topic "config.check", ConfigCheckRequest
+
+  @doc """
+  Updates the player's motherboard. May be used to attach, detach or update the
+  mobo components.
+
+  Params (detach):
+  - *cmd: "detach"
+
+  Params (update):
+  - *motherboard_id: ID of the motherboard selected by the player.
+  - *slots: Map with the mobo `slot_id` as key and the component selected for
+    such slot. Empty slots may be ignored or set as `nil`.
+  - *network_connections: Map with the `nic_id` as key and the nip selected for
+    such nic. Non-assigned NICs may be ignored.
+
+  Example:
+    %{
+      "motherboard_id" => "::1",
+      "slots" => %{
+        "cpu_1" => "::f",
+        "ram_1" => nil,
+      },
+      "network_connections" => %{
+        "::5" => %{
+          "network_id" => "::",
+          "ip" => "1.2.3.4"
+        }
+      }
+    }
+
+  All components (including the mobo) and the NIPs must belong to the player.
+
+  Errors:
+
+  Henforcer:
+  - component_not_found: One of the specified components were not found
+  - motherboard_wrong_slot_type: Buraco errado
+  - motherboard_bad_slot: Specified invalid slot ID
+  - component_not_belongs: One of the components do not belong to the player
+  - motherboard_missing_initial_components: So large it's self explanatory
+  - network_connection_not_belongs: One of the NCs do not belong to the player
+  - motherboard_missing_public_nip: Mobos must have at least one public NIP
+  - component_not_motherboard: Wrong tool for the job
+
+  Input validation:
+  - bad_slot_data: slot data (input) is invalid
+  - bad_network_connections: network connections data (input) is invalid
+  - bad_src: this request may only be run on `local` channels
+  + base errors
+  """
+  topic "motherboard.update", MotherboardUpdateRequest
 
   @doc """
   Updates the server hostname.
@@ -303,7 +356,7 @@ channel Helix.Server.Websocket.Channel.Server do
   ServerWebsocketChannelState.
   """
   def terminate(_reason, socket) do
-    if socket.assigns.meta.access_type == :remote do
+    if socket.assigns.meta.access == :remote do
       entity_id = socket.assigns.gateway.entity_id
       server_id = socket.assigns.destination.server_id
       counter = socket.assigns.meta.counter

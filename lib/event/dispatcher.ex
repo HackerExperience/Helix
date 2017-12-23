@@ -133,6 +133,8 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
+  event ServerEvent.Motherboard.Updated
+  event ServerEvent.Motherboard.UpdateFailed
   event ServerEvent.Server.Password.Acquired
   event ServerEvent.Server.Joined
 

@@ -13,14 +13,12 @@ defmodule Helix.Server.Henforcer.Server do
   @type server_exists_error ::
     {false, {:server, :not_found}, server_exists_relay_partial}
 
-  @spec server_exists?(Server.idt) ::
+  @spec server_exists?(Server.id) ::
     {true, server_exists_relay}
     | server_exists_error
   @doc """
   Ensures the requested server exists on the database.
   """
-  def server_exists?(server = %Server{}),
-    do: server_exists?(server.server_id)
   def server_exists?(server_id = %Server.ID{}) do
     with server = %Server{} <- ServerQuery.fetch(server_id) do
       reply_ok(%{server: server})

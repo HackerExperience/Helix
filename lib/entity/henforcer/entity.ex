@@ -2,8 +2,13 @@ defmodule Helix.Entity.Henforcer.Entity do
 
   import Helix.Henforcer
 
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
+  alias Helix.Server.Henforcer.Component, as: ComponentHenforcer
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
+  alias Helix.Server.Query.Component, as: ComponentQuery
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
@@ -62,5 +67,101 @@ defmodule Helix.Entity.Henforcer.Entity do
         reply_error({:server, :not_belongs})
     end
     |> wrap_relay(%{entity: entity, server: server})
+  end
+
+  @type owns_component_relay ::
+    %{entity: Entity.t, component: Component.t, owned_components: [Component.t]}
+  @type owns_component_relay_partial :: owns_component_relay
+  @type owns_component_error ::
+    {false, {:component, :not_belongs}, owns_component_relay_partial}
+    | ComponentHenforcer.component_exists_error
+    | entity_exists_error
+
+  @spec owns_component?(Entity.idt, Component.idt, [Component.t] | nil) ::
+    {true, owns_component_relay}
+    | owns_component_error
+  @doc """
+  Henforces the Entity is the owner of the given component. The third parameter,
+  `owned`, allows users of this function to pass a previously fetched list of
+  components owned by the entity (cache).
+  """
+  def owns_component?(entity_id = %Entity.ID{}, component, owned) do
+    henforce entity_exists?(entity_id) do
+      owns_component?(relay.entity, component, owned)
+    end
+  end
+
+  def owns_component?(entity, component_id = %Component.ID{}, owned) do
+    henforce(ComponentHenforcer.component_exists?(component_id)) do
+      owns_component?(entity, relay.component, owned)
+    end
+  end
+
+  def owns_component?(entity = %Entity{}, component = %Component{}, nil) do
+    owned_components =
+      entity
+      |> EntityQuery.get_components()
+      |> Enum.map(&(ComponentQuery.fetch(&1.component_id)))
+
+    owns_component?(entity, component, owned_components)
+  end
+
+  def owns_component?(entity = %Entity{}, component = %Component{}, owned) do
+    if component in owned do
+      reply_ok()
+    else
+      reply_error({:component, :not_belongs})
+    end
+    |> wrap_relay(
+      %{entity: entity, component: component, owned_components: owned}
+    )
+  end
+
+  @type owns_nip_relay ::
+    %{
+      network_connection: Network.Connection.t,
+      entity: Entity.t,
+      entity_network_connections: [Network.Connection.t]
+    }
+  @type owns_nip_relay_partial ::
+    %{
+      entity: Entity.t,
+      entity_network_connections: [Network.Connection.t]
+    }
+  @type owns_nip_error ::
+    {false, {:network_connection, :not_belongs}, owns_nip_relay_partial}
+    | entity_exists_error
+
+  @typep owned_ncs :: [Network.Connection.t] | nil
+
+  @spec owns_nip?(Entity.idt, Network.id, Network.ip, owned_ncs) ::
+    {true, owns_nip_relay}
+    | owns_nip_error
+  @doc """
+  Henforces the Entity is the owner of the given NIP (NetworkConnection). The
+  third parameter, `owned`, allows users of this function to pass a previously
+  fetched list of NCs owned by the entity (cache).
+  """
+  def owns_nip?(entity_id = %Entity.ID{}, network_id, ip, owned) do
+    henforce entity_exists?(entity_id) do
+      owns_nip?(relay.entity, network_id, ip, owned)
+    end
+  end
+
+  def owns_nip?(entity = %Entity{}, network_id, ip, nil) do
+    owned_nips = NetworkQuery.Connection.get_by_entity(entity.entity_id)
+
+    owns_nip?(entity, network_id, ip, owned_nips)
+  end
+
+  def owns_nip?(entity = %Entity{}, network_id, ip, owned) do
+    nc = Enum.find(owned, &(&1.network_id == network_id and &1.ip == ip))
+
+    if nc do
+      reply_ok(%{network_connection: nc})
+    else
+      reply_error({:network_connection, :not_belongs})
+    end
+    |> wrap_relay(%{entity_network_connections: owned, entity: entity})
   end
 end

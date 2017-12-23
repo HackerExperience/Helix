@@ -41,7 +41,7 @@ defmodule Helix.Server.Action.Server do
 
   @spec attach(Server.t, Motherboard.id) ::
     {:ok, Server.t}
-    | {:error, Ecto.Changeset.t}
+    | {:error, :internal}
   @doc """
   Attaches a motherboard to the server
 
@@ -49,18 +49,31 @@ defmodule Helix.Server.Action.Server do
   are already attached
   """
   def attach(server, motherboard_id) do
-    ServerInternal.attach(server, motherboard_id)
+    case ServerInternal.attach(server, motherboard_id) do
+      {:ok, server} ->
+        {:ok, server}
+
+      {:error, _} ->
+        {:error, :internal}
+    end
   end
 
   @spec detach(Server.t) ::
-    :ok
+    {:ok, Server.t}
+    | {:error, :internal}
   @doc """
   Detaches the motherboard linked to server
 
   This function is idempotent
   """
   def detach(server) do
-    ServerInternal.detach(server)
+    case ServerInternal.detach(server) do
+      {:ok, server} ->
+        {:ok, server}
+
+      {:error, _} ->
+        {:error, :internal}
+    end
   end
 
   @spec delete(Server.t) ::
