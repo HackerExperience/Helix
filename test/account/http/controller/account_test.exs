@@ -6,15 +6,15 @@ defmodule Helix.Account.HTTP.Controller.AccountTest do
   alias HELL.TestHelper.Random
   alias Helix.Account.Action.Session, as: SessionAction
 
-  alias Helix.Test.Account.Factory
+  alias Helix.Test.Account.Setup, as: AccountSetup
 
   describe "register" do
     @tag :pending
     test "creates account when input is valid", context do
-      password = Burette.Internet.password()
+      password = Random.password()
       params = %{
         "username" => Random.username(),
-        "email" => Burette.Internet.email(),
+        "email" => Random.email(),
         "password" => password
       }
 
@@ -30,7 +30,7 @@ defmodule Helix.Account.HTTP.Controller.AccountTest do
   describe "login" do
     test "returns bearer token on success", context do
       password = "omg i am so criative with passwords"
-      account = Factory.insert(:account, password: password)
+      account = AccountSetup.account!(password: password)
 
       params = %{"username" => account.username, "password" => password}
 

@@ -6,7 +6,7 @@ defmodule Helix.Test.Event.Setup.Account do
   alias Helix.Test.Account.Setup, as: AccountSetup
 
   def created do
-    {account, _} = AccountSetup.account()
+    {account, _} = AccountSetup.account(with_server: true)
 
     AccountCreatedEvent.new(account)
   end
