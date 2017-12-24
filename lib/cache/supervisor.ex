@@ -13,7 +13,7 @@ defmodule Helix.Cache.Supervisor do
   @doc false
   def init(_) do
     children = [
-      worker(Repo, []),
+      supervisor(Repo, []),
       supervisor(SupervisorState, [])
     ]
 

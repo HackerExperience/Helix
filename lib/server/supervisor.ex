@@ -11,7 +11,7 @@ defmodule Helix.Server.Supervisor do
 
   def init(_) do
     children = [
-      worker(Repo, []),
+      supervisor(Repo, []),
       supervisor(SupervisorState, [])
     ]
 

@@ -12,7 +12,7 @@ defmodule Helix.Core.Supervisor do
   @doc false
   def init(_) do
     children = [
-      worker(Repo, [])
+      supervisor(Repo, [])
     ]
 
     supervise(children, strategy: :one_for_one)
