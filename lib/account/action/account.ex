@@ -6,6 +6,7 @@ defmodule Helix.Account.Action.Account do
   alias Helix.Account.Model.AccountSession
 
   alias Helix.Account.Event.Account.Created, as: AccountCreatedEvent
+  alias Helix.Account.Event.Account.Verified, as: AccountVerifiedEvent
 
   @spec create(Account.email, Account.username, Account.password) ::
     {:ok, Account.t}
@@ -30,9 +31,12 @@ defmodule Helix.Account.Action.Account do
 
     case AccountInternal.create(params) do
       {:ok, account} ->
-        event = AccountCreatedEvent.new(account)
+        # TODO: Verification system isn't implemented, so we automatically mark
+        # the account as created and verified.
+        e1 = AccountCreatedEvent.new(account)
+        e2 = AccountVerifiedEvent.new(account)
 
-        {:ok, account, [event]}
+        {:ok, account, [e1, e2]}
       error ->
         error
     end

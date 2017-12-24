@@ -22,7 +22,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
 
   describe "tutorial" do
     test "flow" do
-      {server_socket, %{gateway: _server, account: account}} =
+      {server_socket, %{account: account}} =
         ChannelSetup.join_server(own_server: true)
 
       entity = EntityHelper.fetch_entity_from_account(account)

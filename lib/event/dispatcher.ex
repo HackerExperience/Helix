@@ -72,9 +72,10 @@ defmodule Helix.Event.Dispatcher do
 
   # All
   event AccountEvent.Account.Created
+  event AccountEvent.Account.Verified
 
   # Custom handlers
-  event AccountEvent.Account.Created,
+  event AccountEvent.Account.Verified,
     AccountHandler.Account,
     :account_created
 

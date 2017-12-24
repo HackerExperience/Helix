@@ -14,7 +14,7 @@ defmodule Helix.Account.Action.AccountTest do
       username = "good_username1"
       password = "Would you very kindly let me in, please, good sir"
 
-      assert {:ok, account, [event]} =
+      assert {:ok, account, [event, _]} =
         AccountAction.create(email, username, password)
 
       assert %Account{} = account
