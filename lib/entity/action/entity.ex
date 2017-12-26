@@ -7,10 +7,13 @@ defmodule Helix.Entity.Action.Entity do
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Model.EntityComponent
+  alias Helix.Entity.Query.Entity, as: EntityQuery
+
+  alias Helix.Entity.Event.Entity.Created, as: EntityCreatedEvent
 
   @spec create_from_specialization(struct) ::
-    {:ok, Entity.t}
-    | {:error, Ecto.Changeset.t}
+    {:ok, Entity.t, [EntityCreatedEvent.t]}
+    | {:error, :internal}
   @doc """
   Creates an `Entity` from an input entity-compatible record
 
@@ -19,25 +22,28 @@ defmodule Helix.Entity.Action.Entity do
       iex> create_from_specialization(%Account{})
       {:ok, %Entity{}}
   """
-  def create_from_specialization(%Account{account_id: account_id}) do
-    params = %{
-      # FIXME
-      entity_id: to_string(account_id),
-      entity_type: :account
-    }
+  def create_from_specialization(account = %Account{}),
+    do: create(account, :account)
+  def create_from_specialization(npc = %NPC{}),
+    do: create(npc, :npc)
 
-    EntityInternal.create(params)
+  defp create(source, type) do
+    params =
+      %{
+        entity_id: EntityQuery.get_entity_id(source),
+        entity_type: type
+      }
+
+    case EntityInternal.create(params) do
+      {:ok, entity} ->
+        event = EntityCreatedEvent.new(entity, source)
+        {:ok, entity, [event]}
+
+      {:error, _} ->
+        {:error, :internal}
+    end
   end
-  def create_from_specialization(%NPC{npc_id: npc_id}) do
-    params = %{
-      entity_id: to_string(npc_id),
-      entity_type: :npc
-    }
 
-    EntityInternal.create(params)
-  end
-
-  # TODO: Accept entity-equivalent structs
   @spec delete(Entity.t) ::
     :ok
   @doc """

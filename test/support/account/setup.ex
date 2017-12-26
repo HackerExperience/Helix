@@ -7,7 +7,6 @@ defmodule Helix.Test.Account.Setup do
   alias Helix.Account.Query.Account, as: AccountQuery
 
   alias HELL.TestHelper.Random
-  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   @doc """
@@ -49,7 +48,7 @@ defmodule Helix.Test.Account.Setup do
   def fake_account(opts \\ []) do
     username = Keyword.get(opts, :username, Random.username())
     email = Keyword.get(opts, :email, Random.email())
-    password = Keyword.get(opts, :password, Random.string(length: 10))
+    password = Keyword.get(opts, :password, Random.password())
 
     params =
       %{

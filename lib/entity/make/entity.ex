@@ -7,7 +7,7 @@ defmodule Helix.Entity.Make.Entity do
   @spec entity(NPC.t) ::
     Entity.t
   def entity(npc = %NPC{}) do
-    {:ok, entity} = EntityAction.create_from_specialization(npc)
+    {:ok, entity, _} = EntityAction.create_from_specialization(npc)
     entity
   end
 end

@@ -72,6 +72,22 @@ defmodule Helix.Story.Model.Step do
     |> apply(:new, [entity_id, meta])
   end
 
+  @spec first(Entity.id) ::
+    t(struct)
+  @doc """
+  Creates the first step (used after player account is created and verified)
+  """
+  def first(entity_id),
+    do: fetch(first_step_name(), entity_id, %{})
+
+  @spec first_step_name() ::
+    atom
+  @doc """
+  Returns the name of the first mission
+  """
+  def first_step_name,
+    do: :tutorial@setup_pc
+
   @spec get_name(step_module :: Constant.t) ::
     step_name
   @doc """

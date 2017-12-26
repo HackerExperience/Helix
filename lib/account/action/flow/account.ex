@@ -17,11 +17,12 @@ defmodule Helix.Account.Action.Flow.Account do
   @doc """
   Setups the input account. Most notably, the initial server.
   """
-  def setup_account(account = %Account{}, relay) do
+  def setup_account(acc = %Account{}, relay) do
     flowing do
       with \
-        {:ok, entity} <- EntityAction.create_from_specialization(account),
+        {:ok, entity, events} <- EntityAction.create_from_specialization(acc),
         on_fail(fn -> EntityAction.delete(entity) end),
+        on_success(fn -> Event.emit(events) end),
 
         {:ok, _motherboard, mobo} <-
            MotherboardFlow.initial_hardware(entity, relay),

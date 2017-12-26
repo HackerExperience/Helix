@@ -11,6 +11,7 @@ defmodule Helix.Test.Story.Setup do
   alias Helix.Story.Repo, as: StoryRepo
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.StepHelper, as: StoryStepHelper
 
   @doc """
@@ -46,6 +47,11 @@ defmodule Helix.Test.Story.Setup do
   See doc on `fake_story_step/1`
   """
   def story_step(opts \\ []) do
+
+    if opts[:entity_id] do
+      StoryHelper.remove_existing_step(opts[:entity_id])
+    end
+
     {_, related = %{step: step}} = fake_story_step(opts)
 
     # Save the step on DB and run its `setup`

@@ -7,6 +7,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
   import Helix.Test.Channel.Macros
   import Helix.Test.Story.Macros
 
+  alias Helix.Story.Model.Step
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
@@ -14,7 +15,6 @@ defmodule Helix.Test.Features.Storyline.Flow do
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
-  alias Helix.Test.Story.Setup, as: StorySetup
 
   @internet_id NetworkHelper.internet_id()
 
@@ -33,16 +33,10 @@ defmodule Helix.Test.Features.Storyline.Flow do
           account_id: account.account_id, socket: server_socket
         )
 
-      # Register player at the first step
-      # TODO: This should be done as a response of AccountCreatedEvent
-      StorySetup.story_step(
-        entity_id: entity_id, name: :tutorial@SetupPc, meta: %{}
-      )
-
       # Player is on mission
       assert %{object: %{name: step_name}} =
         StoryQuery.fetch_current_step(entity_id)
-      assert step_name == :tutorial@setup_pc
+      assert step_name == Step.first_step_name()
 
       # We'll now complete the first mission by replying to the email
       params = %{"reply_id" => "back_thanks"}

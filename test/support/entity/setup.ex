@@ -18,7 +18,7 @@ defmodule Helix.Test.Entity.Setup do
   def entity(opts \\ [])
 
   def entity(from_account: account) do
-    {:ok, entity} = EntityAction.create_from_specialization(account)
+    {:ok, entity, _} = EntityAction.create_from_specialization(account)
 
     {entity, %{}}
   end
@@ -27,7 +27,7 @@ defmodule Helix.Test.Entity.Setup do
     if opts[:type] do
       raise "todo"
     else
-      {:ok, entity} =
+      {:ok, entity, _} =
         AccountSetup.account!()
         |> EntityAction.create_from_specialization()
 

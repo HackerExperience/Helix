@@ -62,8 +62,8 @@ defmodule Helix.Story.Internal.Step do
 
   For all other cases, the previous step is removed and the next step is created
   """
-  def proceed(next_step),
-    do: create(next_step)
+  def proceed(first_step),
+    do: create(first_step)
   def proceed(prev_step, next_step) do
     Repo.transaction(fn ->
       with \

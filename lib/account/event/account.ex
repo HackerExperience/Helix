@@ -47,7 +47,7 @@ defmodule Helix.Account.Event.Account do
       t
     def new(account = %Account{}) do
       %__MODULE__{
-        account: account
+        account: account,
       }
     end
   end

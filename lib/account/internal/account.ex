@@ -47,7 +47,7 @@ defmodule Helix.Account.Internal.Account do
   def create(params) do
     params
     |> Account.create_changeset()
-    |> Repo.insert
+    |> Repo.insert()
   end
 
   @spec update(Account.t, Account.update_params) ::
