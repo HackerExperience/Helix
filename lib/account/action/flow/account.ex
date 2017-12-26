@@ -22,7 +22,9 @@ defmodule Helix.Account.Action.Flow.Account do
       with \
         {:ok, entity, events} <- EntityAction.create_from_specialization(acc),
         on_fail(fn -> EntityAction.delete(entity) end),
-        on_success(fn -> Event.emit(events) end),
+        # HACK: Workaround for HELF #29
+        # on_success(fn -> Event.emit(events, from: relay) end),
+        Event.emit(events, from: relay),
 
         {:ok, _motherboard, mobo} <-
            MotherboardFlow.initial_hardware(entity, relay),
