@@ -1,4 +1,4 @@
-defmodule Helix.Story.Model.StoryEmailTest do
+defmodule Helix.Story.Model.Story.EmailTest do
 
   use ExUnit.Case, async: true
 
@@ -6,7 +6,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
   import HELL.Macros
 
   alias Helix.Entity.Model.Entity
-  alias Helix.Story.Model.StoryEmail
+  alias Helix.Story.Model.Story
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Story.Setup, as: StorySetup
@@ -18,7 +18,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
         contact_id: Random.atom()
       }
 
-      changeset = StoryEmail.create_changeset(params)
+      changeset = Story.Email.create_changeset(params)
       assert changeset.valid?
 
       story_email = apply_changes(changeset)
@@ -37,9 +37,9 @@ defmodule Helix.Story.Model.StoryEmailTest do
       params2 = Map.delete(params, :contact_id)
       params3 = %{params| contact_id: "invalid_contact"}
 
-      cs1 = StoryEmail.create_changeset(params1)
-      cs2 = StoryEmail.create_changeset(params2)
-      cs3 = StoryEmail.create_changeset(params3)
+      cs1 = Story.Email.create_changeset(params1)
+      cs2 = Story.Email.create_changeset(params2)
+      cs3 = Story.Email.create_changeset(params3)
 
       refute cs1.valid?
       refute cs2.valid?
@@ -53,7 +53,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
       meta = %{}
       sender = Enum.random([:player, :contact])
 
-      email = StoryEmail.create_email(email_id, meta, sender)
+      email = Story.Email.create_email(email_id, meta, sender)
 
       assert email.id == email_id
       assert email.meta == meta
@@ -63,7 +63,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
 
     test "raises if invalid sender is given" do
       assert_raise RuntimeError, fn ->
-        StoryEmail.create_email("id", %{}, Random.atom())
+        Story.Email.create_email("id", %{}, Random.atom())
       end
     end
   end
@@ -74,7 +74,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
 
       new_emails = mess_up_email_format(entry.emails)
 
-      formatted = StoryEmail.format(%{entry| emails: new_emails})
+      formatted = Story.Email.format(%{entry| emails: new_emails})
 
       Enum.each(formatted.emails, fn email ->
         assert email.id
@@ -93,7 +93,7 @@ defmodule Helix.Story.Model.StoryEmailTest do
         |> Enum.shuffle()
         |> mess_up_email_format()
 
-      formatted = StoryEmail.format(%{entry| emails: shuffled_emails})
+      formatted = Story.Email.format(%{entry| emails: shuffled_emails})
 
       sorted_emails = Enum.sort(entry.emails, &(&2.timestamp >= &1.timestamp))
 

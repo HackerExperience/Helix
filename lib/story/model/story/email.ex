@@ -1,6 +1,6 @@
-defmodule Helix.Story.Model.StoryEmail do
+defmodule Helix.Story.Model.Story.Email do
   @moduledoc """
-  StoryEmail is a persistent storage on the Database holding information about
+  Story.Email is a persistent storage on the Database holding information about
   all Storyline Emails exchanged by the Player and the story Contacts.
 
   It assumes that one contact may exchange multiple messages, hence a list of
@@ -17,6 +17,7 @@ defmodule Helix.Story.Model.StoryEmail do
   use Ecto.Schema
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -120,18 +121,15 @@ defmodule Helix.Story.Model.StoryEmail do
     |> validate_required(@creation_fields)
   end
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
-
-    alias Ecto.Queryable
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
-    alias Helix.Story.Model.StoryEmail
+    alias Helix.Story.Model.Story
 
     @spec by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def by_entity(query \\ StoryEmail, entity_id),
+    def by_entity(query \\ Story.Email, entity_id),
       do: where(query, [s], s.entity_id == ^entity_id)
 
     @spec by_contact(Queryable.t, Step.contact) ::
@@ -139,7 +137,7 @@ defmodule Helix.Story.Model.StoryEmail do
     def by_contact(query, contact_id),
       do: where(query, [s], s.contact_id == ^contact_id)
 
-    @spec append_email(Queryable.t, StoryEmail.email) ::
+    @spec append_email(Queryable.t, Story.Email.email) ::
       Queryable.t
     def append_email(query, email),
       do: update(query, [s], [push: [emails: ^email]])

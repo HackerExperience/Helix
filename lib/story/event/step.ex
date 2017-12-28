@@ -4,7 +4,7 @@ defmodule Helix.Story.Event.Step do
 
   event Proceeded do
     @moduledoc """
-    StoryStepProceeded is fired when the Player's current step is changed,
+    Story.StepProceeded is fired when the Player's current step is changed,
     moving from a previous step to the next one.
     """
 

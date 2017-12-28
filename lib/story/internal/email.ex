@@ -4,15 +4,15 @@ defmodule Helix.Story.Internal.Email do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.StoryEmail
+  alias Helix.Story.Model.Story
   alias Helix.Story.Repo
 
   @type entry_email_repo_return ::
-    {:ok, StoryEmail.t}
-    | {:error, StoryEmail.changeset}
+    {:ok, Story.Email.t}
+    | {:error, Story.Email.changeset}
 
   @spec fetch(Entity.id, Step.contact) ::
-    StoryEmail.t
+    Story.Email.t
     | nil
   @doc """
   Fetches the (entity, contact) entry, formatting it as required
@@ -20,8 +20,8 @@ defmodule Helix.Story.Internal.Email do
   def fetch(entity_id, contact_id) do
     entry =
       entity_id
-      |> StoryEmail.Query.by_entity()
-      |> StoryEmail.Query.by_contact(contact_id)
+      |> Story.Email.Query.by_entity()
+      |> Story.Email.Query.by_contact(contact_id)
       |> Repo.one()
 
     if entry do
@@ -30,19 +30,19 @@ defmodule Helix.Story.Internal.Email do
   end
 
   @spec get_emails(Entity.id) ::
-    [StoryEmail.t]
+    [Story.Email.t]
   @doc """
   Returns all emails from all contacts that Entity has ever interacted with.
   """
   def get_emails(entity_id) do
     entity_id
-    |> StoryEmail.Query.by_entity()
+    |> Story.Email.Query.by_entity()
     |> Repo.all()
     |> Enum.map(&format/1)
   end
 
   @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
-    {:ok, StoryEmail.t, StoryEmail.email}
+    {:ok, Story.Email.t, Story.Email.email}
     | :internal_error
   @doc """
   Sends an email from the contact to the player.
@@ -51,7 +51,7 @@ defmodule Helix.Story.Internal.Email do
     do: generic_send(step, email_id, :contact, meta)
 
   @spec send_reply(Step.t(struct), Step.reply_id) ::
-    {:ok, StoryEmail.t, StoryEmail.email}
+    {:ok, Story.Email.t, Story.Email.email}
     | :internal_error
   @doc """
   Sends a reply from the player to the contact.
@@ -59,8 +59,8 @@ defmodule Helix.Story.Internal.Email do
   def send_reply(step, reply_id),
     do: generic_send(step, reply_id, :player)
 
-  @spec generic_send(term, id :: String.t, StoryEmail.sender, meta :: map) ::
-    {:ok, StoryEmail.t, StoryEmail.email}
+  @spec generic_send(term, id :: String.t, Story.Email.sender, meta :: map) ::
+    {:ok, Story.Email.t, Story.Email.email}
     | :internal_error
   defp generic_send(step, id, sender, meta \\ %{}) do
     email = create_email(id, sender, meta)
@@ -84,7 +84,7 @@ defmodule Helix.Story.Internal.Email do
   """
   defp ensure_exists(entity_id, contact_id) do
     case fetch(entity_id, contact_id) do
-      %StoryEmail{} ->
+      %Story.Email{} ->
         :ok
       _ ->
         {:ok, _} = add_contact(entity_id, contact_id)
@@ -101,11 +101,11 @@ defmodule Helix.Story.Internal.Email do
       entity_id: entity_id,
       contact_id: contact_id
     }
-    |> StoryEmail.create_changeset()
+    |> Story.Email.create_changeset()
     |> Repo.insert()
   end
 
-  @spec append_email(Entity.id, Step.contact, StoryEmail.email) ::
+  @spec append_email(Entity.id, Step.contact, Story.Email.email) ::
     {integer, nil | [term]}
     | no_return
   docp """
@@ -113,23 +113,23 @@ defmodule Helix.Story.Internal.Email do
   """
   defp append_email(entity_id, contact_id, email) do
     entity_id
-    |> StoryEmail.Query.by_entity()
-    |> StoryEmail.Query.by_contact(contact_id)
-    |> StoryEmail.Query.append_email(email)
+    |> Story.Email.Query.by_entity()
+    |> Story.Email.Query.by_contact(contact_id)
+    |> Story.Email.Query.append_email(email)
     |> Repo.update_all([], returning: true)
   end
 
-  @spec format(StoryEmail.t) ::
-    StoryEmail.t
+  @spec format(Story.Email.t) ::
+    Story.Email.t
   docp """
   Formats the entry, converting the email metadata back to Elixir maps, and
   sorting all emails from oldest to newest
   """
   defp format(entry),
-    do: StoryEmail.format(entry)
+    do: Story.Email.format(entry)
 
-  @spec create_email(Step.email_id, StoryEmail.sender, Step.meta) ::
-    StoryEmail.email
+  @spec create_email(Step.email_id, Story.Email.sender, Step.meta) ::
+    Story.Email.email
   defp create_email(id, sender, meta),
-    do: StoryEmail.create_email(id, meta, sender)
+    do: Story.Email.create_email(id, meta, sender)
 end

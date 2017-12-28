@@ -4,17 +4,16 @@ defmodule Helix.Story.Query.Story do
   alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.StoryEmail
-  alias Helix.Story.Model.StoryStep
+  alias Helix.Story.Model.Story
 
   @spec fetch_current_step(Entity.id) ::
     %{
       object: Step.t(struct),
-      entry: StoryStep.t
+      entry: Story.Step.t
     }
     | nil
   @doc """
-  Returns the current step of the player, both the StoryStep entry and the Step
+  Returns the current step of the player, both the Story.Step entry and the Step
   struct, which we are calling `object`.
 
   The returned metadata is using Helix internal data structures.
@@ -23,7 +22,7 @@ defmodule Helix.Story.Query.Story do
     to: StepInternal
 
   @spec get_emails(Entity.id) ::
-    [StoryEmail.t]
+    [Story.Email.t]
   @doc """
   Returns all emails from all contacts that Entity has ever interacted with.
   """

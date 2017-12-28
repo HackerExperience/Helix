@@ -1,6 +1,6 @@
-defmodule Helix.Story.Model.StoryStep do
+defmodule Helix.Story.Model.Story.Step do
   @moduledoc """
-  StoryStep is a persistent representation of the Player's current step.
+  Story.Step is a persistent representation of the Player's current step.
 
   It's only a helper to be used alongside Step, but a necessary one in order to
   save state, like all emails that have been sent, or the allowed replies a
@@ -15,6 +15,7 @@ defmodule Helix.Story.Model.StoryStep do
   use Ecto.Schema
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -180,18 +181,15 @@ defmodule Helix.Story.Model.StoryStep do
     |> put_change(:emails_sent, previously_sent ++ [email_id])
   end
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
-
-    alias Ecto.Queryable
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
-    alias Helix.Story.Model.StoryStep
+    alias Helix.Story.Model.Story
 
     @spec by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def by_entity(query \\ StoryStep, entity_id),
+    def by_entity(query \\ Story.Step, entity_id),
       do: where(query, [s], s.entity_id == ^entity_id)
 
     @spec by_step(Queryable.t, Step.step_name) ::

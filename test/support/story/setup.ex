@@ -6,8 +6,7 @@ defmodule Helix.Test.Story.Setup do
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
-  alias Helix.Story.Model.StoryEmail
-  alias Helix.Story.Model.StoryStep
+  alias Helix.Story.Model.Story
   alias Helix.Story.Repo, as: StoryRepo
 
   alias HELL.TestHelper.Random
@@ -89,7 +88,7 @@ defmodule Helix.Test.Story.Setup do
     allowed_replies = Keyword.get(opts, :allowed_replies, [])
 
     story_step =
-      %StoryStep{
+      %Story.Step{
         entity_id: entity_id,
         step_name: name,
         meta: meta,
@@ -160,7 +159,7 @@ defmodule Helix.Test.Story.Setup do
     emails = Keyword.get(opts, :emails, fake_emails(total: email_total))
 
     entry =
-      %StoryEmail{
+      %Story.Email{
         entity_id: entity_id,
         contact_id: contact_id,
         emails: emails
@@ -241,7 +240,7 @@ defmodule Helix.Test.Story.Setup do
 
   - entity_id: Specify entity id
 
-  Related: Entity.id, [Step.contact], [StoryEmail.email]
+  Related: Entity.id, [Step.contact], [Story.Email.email]
   """
   def lots_of_emails_and_contacts(opts \\ []) do
     entity = Keyword.get(opts, :entity_id, Entity.ID.generate())

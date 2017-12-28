@@ -1,7 +1,7 @@
 defmodule Helix.Test.Story.Helper do
 
   alias Helix.Story.Internal.Step, as: StepInternal
-  alias Helix.Story.Model.StoryStep
+  alias Helix.Story.Model.Story
   alias Helix.Story.Repo, as: StoryRepo
 
   def remove_existing_step(entity_id) do
@@ -12,13 +12,13 @@ defmodule Helix.Test.Story.Helper do
 
   def get_steps_from_entity(entity_id) do
     entity_id
-    |> StoryStep.Query.by_entity()
+    |> Story.Step.Query.by_entity()
     |> StoryRepo.all()
   end
 
   def get_allowed_reply(entry) do
     entry
-    |> StoryStep.get_allowed_replies()
+    |> Story.Step.get_allowed_replies()
     |> Enum.random()
   end
 end

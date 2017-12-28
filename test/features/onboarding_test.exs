@@ -16,9 +16,9 @@ defmodule Helix.Test.Features.Onboarding do
       username = Random.username()
       password = Random.password()
 
+      # Create the account
       # TODO: Use Phoenix endpoint for full integration test. Can't do it now
       # since public registrations are closed
-      # Create the account
       assert {:ok, account} = AccountFlow.create(email, username, password)
 
       # Corresponding entity was created
