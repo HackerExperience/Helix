@@ -80,6 +80,7 @@ defmodule Helix.Universe.NPC.Seed do
       # Create & attach mobo
       # TODO: Creating NPCs with initial player hardware
       {:ok, motherboard, _} = MotherboardFlow.initial_hardware(entity, nil)
+      {:ok, _, _} = MotherboardFlow.isp_connect(entity, motherboard)
       {:ok, server} = ServerInternal.attach(server, motherboard.motherboard_id)
 
       # Link to Entity

@@ -26,9 +26,15 @@ defmodule Helix.Account.Action.Flow.Account do
         # on_success(fn -> Event.emit(events, from: relay) end),
         Event.emit(events, from: relay),
 
-        {:ok, _motherboard, mobo} <-
+        # Create the motherboard and its initial components
+        {:ok, motherboard, mobo} <-
            MotherboardFlow.initial_hardware(entity, relay),
-        {:ok, server} <- ServerFlow.setup(:desktop, entity, mobo, relay)
+
+        # Create the server and attach the motherboard to it
+        {:ok, server} <- ServerFlow.setup(:desktop, entity, mobo, relay),
+
+        # Create a public NetworkConnection and assign it to the mobo (NIC)
+        {:ok, _, _} <- MotherboardFlow.isp_connect(entity, motherboard)
       do
         {:ok, %{entity: entity, server: server}}
       else
