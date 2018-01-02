@@ -2,44 +2,47 @@ defmodule Helix.Cache.Action.Cache do
   @moduledoc """
   Welcome to the Cache invalidation API. Here's a few things you should know:
 
-  - I, the Cache, am responsible for transparent synchronization and invalidation
-  of cached data.
-  - YOU, the programmer, is responsible for telling me about changes on the data.
+  - I, the Cache, am responsible for transparent synchronization and
+  invalidation of cached data.
+  - YOU, the developer, is responsible for telling me about changes on the data.
   - Caching is hard. Don't blame me.
   - Never use Internal modules directly.
 
-  You can request me to either **update** or **purge** (delete) data, but I'll get
-  quite mad if you ask me to do an action I'm not supposed to. Basically:
+  You can request me to either **update** or **purge** (delete) data, but I'll
+  get quite mad if you ask me to do something I'm not supposed to. Basically:
 
   - Purge data when its underlying object has been effectively deleted.
   - For all other cases, you probably want to update the data.
 
   Here's why:
 
-  When you tell me an object has been updated, I'll grab everything we know about
+  When you tell me an object has been updated, I'll grab everything I know about
   it and create related entries. For instance, if you tell me an IP address has
-  changed, I'll take care of ensuring that any related entries have been updated.
+  changed, I'll make sure that any related entries have been updated as well.
 
-  But suppose you just deleted a component (maybe the player sold it). If you tell
-  me that that component has been updated, I won't be able to fetch any information
-  from it (because it no longer exists). Furthermore, updates will always lead to
-  new data being added to cache, and I definitely shouldn't add something that just
-  got deleted.
+  But suppose you just deleted a component (maybe the player sold it). If you
+  tell me that that component has been updated, I won't be able to fetch any
+  information from it (because it no longer exists). Furthermore, updates will
+  always lead to new data being added to cache, and I definitely shouldn't add
+  something that just got deleted.
 
   In this case, you should notify me that:
   - the component has been deleted, so I can purge it from my database.
-  - relevant entries, for instance the server, were updated. (don't worry,
-  usually one purge affects only one object).
+  - relevant entries, e.g. the server, were updated. (don't worry, usually one
+  purge affects only one object).
 
   Follow these rules and no one will get hurt.
   """
 
   import HELL.Macros
 
-  alias HELL.IPv4
   alias Helix.Network.Model.Network
+  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Model.Storage
+  alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Query.Cache, as: CacheQuery
 
@@ -96,6 +99,8 @@ defmodule Helix.Cache.Action.Cache do
       )
       CacheInternal.update(:server, server_id)
     end
+
+    :ok
   end
 
   @spec update_server_by_storage(Storage.idtb) ::
@@ -115,6 +120,51 @@ defmodule Helix.Cache.Action.Cache do
     if server_id do
       update_server(server_id)
     end
+
+    :ok
+  end
+
+  @spec update_server_by_nip(Network.idtb, Network.ip) ::
+    :ok
+  @doc """
+  Given a NIP, update its corresponding server.
+
+  If no server using that NIP is found, it won't update anything. Notice that a
+  NIP may exist but it's unassigned - no servers will be updated in this case.
+  """
+  def update_server_by_nip(network_id, ip) do
+    network_id = network_to_id(network_id)
+    server_id = direct_cache_query(:network, network_id, ip)
+
+    if server_id do
+      update_server(server_id)
+    end
+
+    :ok
+  end
+
+  @spec update_server_by_component(Component.id) ::
+    :ok
+  @doc """
+  Given a component, locate it's server and update it.
+
+  Notice a component may exist but it isn't linked to a motherboard, or the
+  motherboard it's linked to isn't attached to a server (this one is unlikely).
+  For these cases, as well as the case in which the component does not exist,
+  nothing will be updated. Likewise, if a component exists and a server is
+  located, but the server isn't cached, nothing will be updated.
+  """
+  def update_server_by_component(component_id) do
+    with \
+      motherboard = %{} <- MotherboardQuery.fetch_by_component(component_id),
+      server = %{} <- ServerQuery.fetch_by_motherboard(motherboard),
+      server_cache = %{} <-
+         direct_cache_query(:server, server_to_id(server.server_id))
+    do
+      update_server(server_cache.server_id, server_cache)
+    end
+
+    :ok
   end
 
   @spec update_storage(Storage.idtb) ::
@@ -141,7 +191,7 @@ defmodule Helix.Cache.Action.Cache do
   def purge_storage(storage_id),
     do: CacheInternal.purge(:storage, storage_to_id(storage_id))
 
-  @spec update_network(Network.idtb, IPv4.t) ::
+  @spec update_network(Network.idtb, Network.ip) ::
     :ok
   @doc """
   Updates the nip entry on the cache.
@@ -155,7 +205,7 @@ defmodule Helix.Cache.Action.Cache do
     CacheInternal.update(:network, {network_id, ip})
   end
 
-  @spec purge_network(Network.idtb, IPv4.t) ::
+  @spec purge_network(Network.idtb, Network.ip) ::
     :ok
   @doc """
   Purges the nip entry from the cache.
@@ -165,19 +215,21 @@ defmodule Helix.Cache.Action.Cache do
   def purge_network(network_id, ip),
     do: CacheInternal.purge(:network, {network_to_id(network_id), ip})
 
-  @spec update_web(Network.idtb, IPv4.t) ::
+  @spec update_web(Network.idtb, Network.ip) ::
     :ok
   def update_web(network, ip),
     do: CacheInternal.update(:web, {network_to_id(network), ip})
 
-  @spec purge_web(Network.idtb, IPv4.t) ::
+  @spec purge_web(Network.idtb, Network.ip) ::
     :ok
   def purge_web(network, ip),
     do: CacheInternal.purge(:web, {network_to_id(network), ip})
 
   @spec direct_cache_query(:server | :motherboard | :storage, HELL.PK.t) ::
     server_id :: HELL.PK.t
+    | server_cache :: ServerCache.t
     | nil
+    | term  # YOLO
   docp """
   This is a helper function with the goal of aiding this module to fetch cached
   data that is related to whatever is being purged/updated.
@@ -209,6 +261,14 @@ defmodule Helix.Cache.Action.Cache do
         nil
     end
   end
+  defp direct_cache_query(:network, network_id, ip) do
+    case CacheInternal.direct_query(:network, {network_id, ip}) do
+      {:hit, network} ->
+        network.server_id
+      _ ->
+        nil
+    end
+  end
 
   @spec storage_to_id(Storage.idtb) ::
     HELL.PK.t
@@ -226,6 +286,15 @@ defmodule Helix.Cache.Action.Cache do
   def network_to_id(id = %Network.ID{}),
     do: to_string(id)
   def network_to_id(id) when is_binary(id),
+    do: id
+
+  @spec component_to_id(Component.idtb) ::
+    HELL.PK.t
+  def component_to_id(%Component{component_id: id}),
+    do: component_to_id(id)
+  def component_to_id(id = %Component.ID{}),
+    do: to_string(id)
+  def component_to_id(id) when is_binary(id),
     do: id
 
   @spec server_to_id(Server.idtb) ::

@@ -13,14 +13,12 @@ defmodule Helix.Story.Event.Handler.Story do
   import HELL.Macros
 
   alias Helix.Event
-  alias Helix.Account.Model.Account
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
-  alias Helix.Entity.Event.Entity.Created, as: EntityCreatedEvent
 
   @doc """
   Main step handler. Its first role is to figure out the entity that event

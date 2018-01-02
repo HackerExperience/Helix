@@ -25,7 +25,7 @@ defmodule Helix.Server.Public.Index do
 
   @typep player_server_index ::
     %{
-      server_id: Server.id,
+      server: Server.t,
       nips: [Network.nip],
       endpoints: [Network.nip]
     }
@@ -47,6 +47,7 @@ defmodule Helix.Server.Public.Index do
   @typep rendered_player_server_index ::
     %{
       server_id: String.t,
+      type: String.t,
       nips: [rendered_nip],
       endpoints: [rendered_nip]
     }

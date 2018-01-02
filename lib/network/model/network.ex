@@ -18,13 +18,20 @@ defmodule Helix.Network.Model.Network do
 
   @type name :: String.t
   @type type :: :internet | :story | :mission | :lan
-
   @type ip :: Network.Connection.ip
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type nip :: %{
     network_id: id,
     ip: ip
   }
+
+  @type creation_params ::
+    %{
+      name: name,
+      type: type
+    }
 
   @creation_fields [:name, :type]
   @required_fields [:name, :type]
@@ -39,6 +46,8 @@ defmodule Helix.Network.Model.Network do
     field :type, Constant
   end
 
+  @spec create(creation_params) ::
+    changeset
   def create(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -46,6 +55,8 @@ defmodule Helix.Network.Model.Network do
     |> validate_required(@required_fields)
   end
 
+  @spec possible_types() ::
+    [type]
   defp possible_types,
     do: @network_types
 

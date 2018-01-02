@@ -12,6 +12,9 @@ defmodule Helix.Server.Query.Motherboard do
     |> MotherboardInternal.fetch()
   end
 
+  defdelegate fetch_by_component(component_id),
+    to: MotherboardInternal
+
   @spec get_resources(Motherboard.t) ::
     Motherboard.resources
   @doc """

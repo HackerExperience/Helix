@@ -66,6 +66,7 @@ defmodule Helix.Cache.Internal.Builder do
   def by_nip(network_id, ip) do
     with \
       nc = %{} <- NetworkInternal.Connection.fetch(network_id, ip) || :nxnip,
+      true <- not is_nil(nc.nic_id) || :nxnip,
       motherboard = %{} <- MotherboardInternal.fetch_by_component(nc.nic_id),
       server = %{} <-
         ServerInternal.fetch_by_motherboard(motherboard) || :nxserver

@@ -42,9 +42,8 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         # Insert the default slot_id for each component
         slotted_components = map_components_slots(components),
 
-        # Get the mobo, nic and hdd, which need some extra operations
+        # Get the mobo and hdd, which need some extra operations
         mobo = Enum.find(components, &(&1.type == :mobo)),
-        nic = Enum.find(components, &(&1.type == :nic)),
         hdd = Enum.find(components, &(&1.type == :hdd)),
 
         # Link all components into the motherboard
@@ -102,7 +101,6 @@ defmodule Helix.Server.Action.Flow.Motherboard do
   end
 
   def setup_network(
-    entity = %Entity{},
     nic = %Component{type: :nic},
     nc = %Network.Connection{nic_id: nil},
     speed = %{dlk: _, ulk: _})

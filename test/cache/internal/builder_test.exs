@@ -4,14 +4,19 @@ defmodule Helix.Cache.Internal.BuilderTest do
 
   import Helix.Test.Case.ID
 
-  alias HELL.TestHelper.Random
+  alias Helix.Network.Action.Network, as: NetworkAction
+  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
   alias Helix.Software.Model.Storage
   alias Helix.Universe.NPC.Model.Seed
-  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
+
+  alias HELL.TestHelper.Random
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Server.Setup, as: ServerSetup
 
   setup do
     CacheHelper.cache_context()
@@ -118,6 +123,23 @@ defmodule Helix.Cache.Internal.BuilderTest do
       assert network.network_id == nip.network_id
       assert network.ip == nip.ip
       assert_id network.server_id, server_id
+    end
+
+    test "NIP exists but isn't assigned to any NIC" do
+      {server, _} = ServerSetup.server()
+
+      assert %{
+        ip: ip,
+        network_id: network_id
+      } = ServerHelper.get_nip(server)
+
+      # Nilify the NIC (i.e. unassign the NC from the NIC)
+      network_id
+      |> NetworkQuery.Connection.fetch(ip)
+      |> NetworkAction.Connection.update_nic(nil)
+
+      assert {:error, reason} = BuilderInternal.by_nip(network_id, ip)
+      assert reason == {:nip, :notfound}
     end
 
     test "non-existing nip" do

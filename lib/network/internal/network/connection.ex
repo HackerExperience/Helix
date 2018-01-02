@@ -62,9 +62,21 @@ defmodule Helix.Network.Internal.Network.Connection do
   Updates the NIC assigned to the NetworkConnection
   """
   def update_nic(nc = %Network.Connection{}, new_nic) do
-    nc
-    |> Network.Connection.update_nic(new_nic)
-    |> Repo.update()
+    result =
+      nc
+      |> Network.Connection.update_nic(new_nic)
+      |> Repo.update()
+
+    with {:ok, _} <- result do
+      if new_nic do
+        CacheAction.update_server_by_component(new_nic.component_id)
+      else
+        CacheAction.update_server_by_nip(nc.network_id, nc.ip)
+        CacheAction.purge_network(nc.network_id, nc.ip)
+      end
+    end
+
+    result
   end
 
   @spec update_ip(Network.Connection.t, Network.ip) ::
