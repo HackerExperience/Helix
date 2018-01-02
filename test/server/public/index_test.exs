@@ -15,15 +15,19 @@ defmodule Helix.Server.Public.IndexTest do
 
       index = ServerIndex.index(entity)
 
-      assert length(index.player) == 1
+      # Player has two initial servers (Campaign and Freeplay)
+      assert length(index.player) == 2
       assert Enum.empty?(index.remote)
 
-      server1 = List.first(index.player)
+      desktop = Enum.find(index.player, &(&1.server == server))
+      desktop_story =
+        Enum.find(index.player, &(&1.server.type == :desktop_story))
 
-      assert server1.server_id == server.server_id
-      refute Enum.empty?(server1.nips)
-      assert Enum.empty?(server1.endpoints)
-      refute Map.has_key?(server1, :bounces)
+      assert desktop
+      assert desktop_story
+      refute Enum.empty?(desktop.nips)
+      assert Enum.empty?(desktop.endpoints)
+      refute Map.has_key?(desktop, :bounces)
     end
 
     test "indexes remote connections (endpoints)" do
@@ -49,8 +53,7 @@ defmodule Helix.Server.Public.IndexTest do
 
       index = ServerIndex.index(entity)
 
-      result_gateway =
-        Enum.find(index.player, &(&1.server_id == player.server_id))
+      result_gateway = Enum.find(index.player, &(&1.server == player))
 
       assert find_endpoint(result_gateway.endpoints, target1_nip)
       assert find_endpoint(result_gateway.endpoints, target2_nip)
@@ -99,14 +102,12 @@ defmodule Helix.Server.Public.IndexTest do
 
       index = ServerIndex.index(entity)
 
-      # 2 gateway servers, 2 remote servers
-      assert length(index.player) == 2
+      # 3 player servers (2 gateways + 1 storyline), 2 remote servers
+      assert length(index.player) == 3
       assert length(index.remote) == 2
 
-      result_gateway1 =
-        Enum.find(index.player, &(&1.server_id == gateway1.server_id))
-      result_gateway2 =
-        Enum.find(index.player, &(&1.server_id == gateway2.server_id))
+      result_gateway1 = Enum.find(index.player, &(&1.server == gateway1))
+      result_gateway2 = Enum.find(index.player, &(&1.server == gateway2))
 
       gateway1_endpoints =
         Enum.sort(

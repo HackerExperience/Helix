@@ -53,22 +53,6 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
-  def prepare_story(event = %EntityCreatedEvent{source: %Account{}}) do
-    first_step = Step.first(event.entity.entity_id)
-
-    flowing do
-      with \
-        {:ok, _} = StoryAction.proceed_step(first_step),
-        {:ok, _, events} <- Steppable.setup(first_step, nil),
-        on_success(fn -> Event.emit(events, from: event) end)
-      do
-        :ok
-      end
-    end
-  end
-  def prepare_story(%EntityCreatedEvent{source: _}),
-    do: :noop
-
   docp """
   The StepFlow guides the step, allowing it to react to the received event.
 

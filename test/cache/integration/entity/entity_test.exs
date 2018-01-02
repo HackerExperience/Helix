@@ -30,8 +30,10 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
         |> ServerQuery.fetch()
         |> EntityInternal.fetch_by_server()
 
-      # Must unlink server first
-      EntityInternal.unlink_server(server_id)
+      # First we have to unlink all servers belonging to the entity
+      entity
+      |> EntityInternal.get_servers()
+      |> Enum.each(&EntityInternal.unlink_server/1)
 
       # Remove entity
       EntityInternal.delete(entity)
@@ -57,8 +59,10 @@ defmodule Helix.Cache.Integration.Entity.EntityTest do
         |> ServerQuery.fetch()
         |> EntityInternal.fetch_by_server()
 
-      # Must unlink server first
-      EntityInternal.unlink_server(server_id)
+      # First we have to unlink all servers belonging to the entity
+      entity
+      |> EntityInternal.get_servers()
+      |> Enum.each(&EntityInternal.unlink_server/1)
 
       # Remove entity
       EntityInternal.delete(entity)

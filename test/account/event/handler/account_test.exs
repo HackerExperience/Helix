@@ -28,7 +28,7 @@ defmodule Helix.Account.Event.Handler.AccountTest do
       assert %Entity{} = entity
 
       # Server too!
-      [server_id] = EntityQuery.get_servers(entity)
+      [_story_server, server_id] = EntityQuery.get_servers(entity)
       server = ServerQuery.fetch(server_id)
 
       assert %Server{} = server

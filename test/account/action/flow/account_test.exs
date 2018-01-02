@@ -29,13 +29,13 @@ defmodule Helix.Account.Action.Flow.AccountTest do
       assert account_id == entity_id
 
       # Server is valid and registered to the entity
-      assert [server_id] = EntityQuery.get_servers(entity)
+      assert [_story_server, server_id] = EntityQuery.get_servers(entity)
       assert server_id == server.server_id
       assert server.motherboard_id
 
       # Components have been linked to the entity
       components = EntityQuery.get_components(entity)
-      assert length(components) == 5
+      assert length(components) == 10
 
       motherboard = MotherboardQuery.fetch(server.motherboard_id)
 

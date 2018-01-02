@@ -24,7 +24,7 @@ defmodule Helix.Server.Seed do
   """
   defp add_component_types do
     Repo.transaction fn ->
-      Enum.each(Component.get_types, fn type ->
+      Enum.each(Component.get_types(), fn type ->
         Repo.insert!(%Component.Type{type: type}, on_conflict: :nothing)
       end)
     end

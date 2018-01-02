@@ -79,7 +79,8 @@ defmodule Helix.Server.Henforcer.ComponentTest do
       assert mobo_nc.network_connection == new_nc
 
       # And `entity_network_connections` has all NCs for that entity
-      assert length(relay.entity_network_connections) == 2
+      # (2 recently created + 1 from storyline server)
+      assert length(relay.entity_network_connections) == 3
 
       assert_relay relay,
         [

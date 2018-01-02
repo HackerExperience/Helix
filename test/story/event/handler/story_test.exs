@@ -11,26 +11,6 @@ defmodule Helix.Story.Event.Handler.StoryTest do
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Story.Setup, as: StorySetup
 
-  describe "handling of EntityCreatedEvent" do
-    test "storyline is set up properly" do
-      event = %{entity: entity} = EventSetup.Entity.created(source: :account)
-
-      # Entity not part of any story_step
-      refute StoryQuery.fetch_current_step(entity.entity_id)
-
-      # Emit `EntityCreatedEvent`, which should lead to the setup of the
-      # storyline for this entity
-      EventHelper.emit(event)
-
-      # Entity is part of a step now
-      assert %{entry: _story_step, object: step} =
-        StoryQuery.fetch_current_step(entity.entity_id)
-
-      # Which happens to be the first one
-      assert step.name == Step.first_step_name()
-    end
-  end
-
   describe "handling of ReplySent events" do
     test "event is pattern matched correctly" do
       {_, %{step: step}} =

@@ -92,7 +92,9 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         {:ok, nc} <- NetworkAction.Connection.create(network, ip, entity, nic),
         on_fail(fn -> NetworkAction.Connection.delete(nc) end),
 
-        {:ok, new_nic} <- ComponentAction.NIC.update_transfer_speed(nic, speed)
+        {:ok, new_nic} <- ComponentAction.NIC.update_transfer_speed(nic, speed),
+        {:ok, new_nic} <-
+          ComponentAction.NIC.update_network(new_nic, network.network_id)
       do
         {:ok, nc, new_nic}
       end
@@ -110,7 +112,9 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         {:ok, nc} = NetworkAction.Connection.update_nic(nc, nic),
         on_fail(fn -> NetworkAction.Connection.update_nic(nc, nil) end),
 
-        {:ok, new_nic} <- ComponentAction.NIC.update_transfer_speed(nic, speed)
+        {:ok, new_nic} <- ComponentAction.NIC.update_transfer_speed(nic, speed),
+        {:ok, new_nic} <-
+          ComponentAction.NIC.update_network(new_nic, nc.network_id)
       do
         {:ok, nc, new_nic}
       end

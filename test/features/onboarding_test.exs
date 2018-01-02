@@ -29,15 +29,19 @@ defmodule Helix.Test.Features.Onboarding do
 
       assert entity.entity_type == :account
 
-      # Player's initial server was created
-      assert [server_id] = EntityQuery.get_servers(entity)
+      # Player's initial server were created
+      assert [story_server_id, server_id] = EntityQuery.get_servers(entity)
+
       server = ServerQuery.fetch(server_id)
+      story_server = ServerQuery.fetch(story_server_id)
 
-      # Server has a valid motherboard attached to it
+      # Both servers have a valid motherboard attached to it
       assert server.motherboard_id
+      assert story_server.motherboard_id
 
-      # Initial server is always a desktop
+      # One of the servers is for the story...
       assert server.type == :desktop
+      assert story_server.type == :desktop_story
 
       # Tutorial mission was created
       assert %{object: step} = StoryQuery.fetch_current_step(entity)

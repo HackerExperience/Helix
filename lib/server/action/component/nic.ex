@@ -35,12 +35,16 @@ defmodule Helix.Server.Action.Component.NIC do
     end
   end
 
-  @spec update_network_id(Component.nic, Network.id) ::
+  @spec update_network(Component.nic, Network.id) ::
     update_result
   @doc """
   Updates the NIC's `network_id`.
+
+  Nothing is done if the requested change is already the one stored on DB.
   """
-  def update_network_id(nic = %Component{}, network_id = %Network.ID{}),
+  def update_network(nic = %Component{custom: %{network_id: net}}, net),
+    do: {:ok, nic}
+  def update_network(nic = %Component{}, network_id = %Network.ID{}),
     do: ComponentInternal.update_custom(nic, %{network_id: network_id})
 
   @spec update_transfer_speed(Component.nic, change_transfer_speed) ::
