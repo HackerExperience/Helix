@@ -39,6 +39,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
       _ ->
         reply_error({:pftp, :not_found})
     end
+    |> wrap_relay(%{server: server})
   end
 
   @type file_exists_relay ::
@@ -95,7 +96,9 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
     henforce_not(file_exists?(server, file), {:file, :exists})
   end
 
-  @type pftp_enabled_relay :: %{pftp: PublicFTP.t, server: Server.t}
+  @type pftp_enabled_relay ::
+    %{pftp: PublicFTP.t, server: Server.t}
+    | %{}
   @type pftp_enabled_relay_partial :: pftp_enabled_relay
   @type pftp_enabled_error ::
     {false, {:pftp, :disabled}, pftp_enabled_relay_partial}
@@ -124,7 +127,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
 
   @type pftp_disabled_relay ::
     %{pftp: PublicFTP.t, server: Server.t}
-  @type pftp_disabled_relay_partial :: %{server: Server.t, pftp: PublicFTP.t}
+    | %{}
+  @type pftp_disabled_relay_partial :: pftp_disabled_relay
   @type pftp_disabled_error ::
     {false, {:pftp, :enabled}, pftp_disabled_relay_partial}
     | pftp_exists_error
@@ -139,6 +143,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
   It may be disabled if:
   - There's an entry on the database, but the `is_active` field is `false`
   - There's no entry on the database.
+
+  NOTE: Returned relay varies according to input type.
   """
   def pftp_disabled?(server_id = %Server.ID{}) do
     henforce ServerHenforcer.server_exists?(server_id) do

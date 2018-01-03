@@ -4,6 +4,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
   import Helix.Test.Henforcer.Macros
 
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Henforcer.File.PublicFTP, as: PFTPHenforcer
   alias Helix.Software.Model.File
 
@@ -17,6 +18,18 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
       {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
 
       assert {true, relay} = PFTPHenforcer.pftp_exists?(pftp.server_id)
+      assert relay.pftp == pftp
+      assert relay.server.server_id == pftp.server_id
+
+      assert_relay relay, [:pftp, :server]
+    end
+
+    @tag :regression
+    test "correct partial relay when passing Server.t" do
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
+
+      server = ServerQuery.fetch(pftp.server_id)
+      assert {true, relay} = PFTPHenforcer.pftp_exists?(server)
       assert relay.pftp == pftp
       assert relay.server.server_id == pftp.server_id
 
