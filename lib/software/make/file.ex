@@ -20,12 +20,19 @@ defmodule Helix.Software.Make.File do
   Generates a cracker.
   """
   @spec cracker(file_parent, cracker_modules, data) ::
-    File.t_of_type(:cracker)
+    {:ok, File.t_of_type(:cracker), %{}}
   def cracker(parent, modules, data \\ %{}),
     do: file(parent, :cracker, modules, data)
 
+  @spec cracker!(file_parent, cracker_modules, data) ::
+    File.t_of_type(:cracker)
+  def cracker!(parent, modules, data \\ %{}) do
+    {:ok, file, _} = cracker(parent, modules, data)
+    file
+  end
+
   @spec file(file_parent, Software.type, modules, data) ::
-    File.t
+    {:ok, File.t, %{}}
   defp file(server = %Server{}, type, modules, data) do
     server
     |> CacheQuery.from_server_get_storages!()
@@ -48,7 +55,8 @@ defmodule Helix.Software.Make.File do
       }
 
     {:ok, file} = FileAction.create(params, modules)
-    file
+
+    {:ok, file, %{}}
   end
 
   @spec format_modules(Software.type, modules) ::

@@ -6,16 +6,18 @@ defmodule Helix.Software.Make.PFTP do
   alias Helix.Software.Model.PublicFTP
 
   @spec server(Server.t) ::
-    PublicFTP.t
+    {:ok, PublicFTP.t, %{}}
   def server(server = %Server{}) do
     {:ok, pftp} = PublicFTPFlow.enable_server(server)
-    pftp
+
+    {:ok, pftp, %{}}
   end
 
   @spec add_file(File.t, PublicFTP.t) ::
-    PublicFTP.File.t
+    {:ok, PublicFTP.File.t, %{}}
   def add_file(file = %File{}, pftp = %PublicFTP{}) do
     {:ok, pftp_file} = PublicFTPFlow.add_file(pftp, file)
-    pftp_file
+
+    {:ok, pftp_file, %{}}
   end
 end

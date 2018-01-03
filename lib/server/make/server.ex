@@ -1,29 +1,48 @@
 defmodule Helix.Server.Make.Server do
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Network
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
   alias Helix.Server.Action.Flow.Motherboard, as: MotherboardFlow
   alias Helix.Server.Model.Server
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
-  @spec desktop(Entity.t) ::
-    Server.t
-  def desktop(entity = %Entity{}),
-    do: server(entity, :desktop)
+  @type net_data ::
+    %{
+      network: Network.t,
+      ip: Network.ip,
+      speed: %{dlk: pos_integer, ulk: pos_integer}
+    }
 
-  @spec npc(Entity.t) ::
-    Server.t
-  def npc(entity = %Entity{}),
-    do: server(entity, :npc)
+  @spec desktop(Entity.t, net_data) ::
+    {:ok, Server.t, %{}}
+  def desktop(entity = %Entity{}, net_data),
+    do: server(entity, :desktop, net_data)
 
-  @spec server(Entity.t, Server.type) ::
-    Server.t
-  defp server(entity = %Entity{}, type) do
+  @spec npc(Entity.t, net_data) ::
+    {:ok, Server.t, %{}}
+  def npc(entity = %Entity{}, net_data),
+    do: server(entity, :npc, net_data)
+
+  @spec server(Entity.t, Server.type, net_data) ::
+    {:ok, Server.t, %{}}
+  defp server(entity = %Entity{}, type, net_data) do
     relay = nil
 
     # Setup mobo. TODO: Custom hardware for NPC
-    {:ok, _, mobo} = MotherboardFlow.initial_hardware(entity, relay)
+    {:ok, motherboard, mobo} = MotherboardFlow.initial_hardware(entity, relay)
 
     {:ok, server} = ServerFlow.setup(type, entity, mobo, relay)
-    server
+
+    if net_data do
+      [nic] = MotherboardQuery.get_nics(motherboard)
+
+      {:ok, _, _} =
+        MotherboardFlow.setup_network(
+          entity, nic, net_data.network, net_data.ip, net_data.speed
+        )
+    end
+
+    {:ok, server, %{}}
   end
 end
