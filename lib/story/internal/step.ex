@@ -1,6 +1,7 @@
 defmodule Helix.Story.Internal.Step do
 
   alias Helix.Entity.Model.Entity
+  alias Helix.Story.Internal.Manager, as: ManagerInternal
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Story
   alias Helix.Story.Repo
@@ -38,8 +39,12 @@ defmodule Helix.Story.Internal.Step do
       |> Repo.one()
 
     if story_step do
+      manager = ManagerInternal.fetch(entity_id)
+
       step =
-        Step.fetch(story_step.step_name, story_step.entity_id, story_step.meta)
+        Step.fetch(
+          story_step.step_name, story_step.entity_id, story_step.meta, manager
+        )
 
       formatted_meta = Step.format_meta(step)
 

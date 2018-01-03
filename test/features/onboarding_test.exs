@@ -29,7 +29,7 @@ defmodule Helix.Test.Features.Onboarding do
 
       assert entity.entity_type == :account
 
-      # Player's initial server were created
+      # Player's initial servers were created
       assert [story_server_id, server_id] = EntityQuery.get_servers(entity)
 
       server = ServerQuery.fetch(server_id)
@@ -44,7 +44,7 @@ defmodule Helix.Test.Features.Onboarding do
       assert story_server.type == :desktop_story
 
       # Tutorial mission was created
-      assert %{object: step} = StoryQuery.fetch_current_step(entity)
+      assert %{object: step} = StoryQuery.fetch_current_step(entity.entity_id)
       assert step.name == Step.first_step_name()
     end
   end

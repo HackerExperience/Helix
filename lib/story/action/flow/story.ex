@@ -3,12 +3,16 @@ defmodule Helix.Story.Action.Flow.Story do
   import HELF.Flow
 
   alias Helix.Event
+  alias Helix.Entity.Model.Entity
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
+  alias Helix.Story.Model.Story
 
-  def start_story(entity, relay) do
-    first_step = Step.first(entity.entity_id)
+  @spec start_story(Entity.t, Story.Manager.t, Event.relay) ::
+    {:ok, Story.Step.t}
+  def start_story(entity, manager, relay) do
+    first_step = Step.first(entity.entity_id, manager)
 
     flowing do
       with \

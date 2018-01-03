@@ -11,13 +11,12 @@ defmodule Helix.Story.Event.Handler.Manager do
 
   alias Helix.Entity.Event.Entity.Created, as: EntityCreatedEvent
 
-  def setup_story(
-    event = %EntityCreatedEvent{entity: entity, source: %Account{}})
-  do
+  def setup_story(event = %EntityCreatedEvent{source: %Account{}}) do
+    entity = event.entity
     plan = %{dlk: 128, ulk: 16}  # TODO 341
     flowing do
       with \
-        {:ok, _network, nc} <- ManagerFlow.setup_story_network(entity),
+        {:ok, network, nc} <- ManagerFlow.setup_story_network(entity),
         # /\ Creates a custom Network and NC for that entity
 
         # Setup components, motherboard and server for the Campaign mode
@@ -29,8 +28,12 @@ defmodule Helix.Story.Event.Handler.Manager do
         [nic] = MotherboardQuery.get_nics(motherboard),
         {:ok, _, _} <- MotherboardFlow.setup_network(nic, nc, plan),
 
+         # Persist storyline information on Story.Manager
+        {:ok, manager} <- ManagerFlow.setup_manager(entity, server, network),
+
         # Start the story (creates the first step)
-        {:ok, _} <- StoryFlow.start_story(entity, event)
+        {:ok, _} <- StoryFlow.start_story(entity, manager, event)
+
       do
         {:ok, server, motherboard}
       end

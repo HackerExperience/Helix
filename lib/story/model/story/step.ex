@@ -49,6 +49,7 @@ defmodule Helix.Story.Model.Story.Step do
       primary_key: true
     field :step_name, Constant,
       primary_key: true
+
     field :meta, :map
     field :emails_sent, {:array, :string},
       default: []

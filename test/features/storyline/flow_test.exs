@@ -12,18 +12,15 @@ defmodule Helix.Test.Features.Storyline.Flow do
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Entity.Helper, as: EntityHelper
-  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
-
-  @internet_id NetworkHelper.internet_id()
 
   @moduletag :feature
 
   describe "tutorial" do
     test "flow" do
-      {server_socket, %{account: account}} =
-        ChannelSetup.join_server(own_server: true)
+      {server_socket, %{account: account, manager: manager}} =
+        ChannelSetup.join_storyline_server()
 
       entity = EntityHelper.fetch_entity_from_account(account)
       entity_id = entity.entity_id
@@ -38,7 +35,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
         StoryQuery.fetch_current_step(entity_id)
       assert step_name == Step.first_step_name()
 
-      # We'll now complete the first mission by replying to the email
+      # We'll now complete the first step by replying to the email
       params = %{"reply_id" => "back_thanks"}
       ref = push account_socket, "email.reply", params
       assert_reply ref, :ok, _, timeout(:slow)
@@ -58,8 +55,8 @@ defmodule Helix.Test.Features.Storyline.Flow do
       params =
         %{
           "file_id" => to_string(cracker_id),
-          "ip" => ServerHelper.get_ip(target_id),
-          "network_id" => to_string(@internet_id)
+          "ip" => ServerHelper.get_ip(target_id, manager.network_id),
+          "network_id" => to_string(manager.network_id)
         }
 
       # Start the download (using the PublicFTP)

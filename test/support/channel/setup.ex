@@ -12,6 +12,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
+  alias Helix.Story.Query.Manager, as: ManagerQuery
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Account.Setup, as: AccountSetup
@@ -241,6 +242,36 @@ defmodule Helix.Test.Channel.Setup do
     else
       nil
     end
+  end
+
+  def join_storyline_server(opts \\ []) do
+    {socket, %{account: account}} = create_socket(opts[:socket_opts] || [])
+
+    manager = ManagerQuery.fetch(socket.assigns.entity_id)
+    gateway = ServerQuery.fetch(manager.server_id)
+
+    # Force `network_id` to be the Story network
+    opts = Keyword.put(opts, :network_id, manager.network_id)
+
+    join = get_join_data(opts, gateway)
+
+    {:ok, _, socket} =
+      subscribe_and_join(socket, ServerChannel, join.topic, join.params)
+
+    files = generate_files(opts[:gateway_files], gateway.server_id)
+
+    related = %{
+      account: account,
+      gateway: gateway,
+      gateway_entity: EntityQuery.fetch(socket.assigns.entity_id),
+      gateway_ip: join.gateway_ip,
+      gateway_files: files,
+      manager: manager
+    }
+
+    CacheHelper.sync_test()
+
+    {socket, related}
   end
 
   @doc """

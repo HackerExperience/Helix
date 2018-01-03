@@ -13,13 +13,15 @@ defmodule Helix.Story.Model.Step do
   alias Helix.Event
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Steppable
+  alias Helix.Story.Model.Story
 
   @type t(step_type) :: %{
     __struct__: step_type,
     event: Event.t | nil,
     name: step_name,
     meta: meta,
-    entity_id: Entity.id
+    entity_id: Entity.id,
+    manager: Story.Manager.t
   }
 
   @type email_id :: String.t
@@ -54,31 +56,31 @@ defmodule Helix.Story.Model.Step do
   @doc """
   Returns a new step struct with the given event assigned to it.
   """
-  def new(%{entity_id: entity_id, name: step_name, meta: meta}, event) do
-    step_name
+  def new(step, event) do
+    step.name
     |> get_module()
-    |> apply(:new, [entity_id, meta, event])
+    |> apply(:new, [step.entity_id, step.meta, step.manager, event])
   end
 
-  @spec fetch(step_name, Entity.id, meta) ::
+  @spec fetch(step_name, Entity.id, meta, Story.Manager.t) ::
     t(struct)
   @doc """
   Given a step raw name (string), return its struct, assigning the correct
   entity and meta to it.
   """
-  def fetch(step_name, entity_id, meta) do
+  def fetch(step_name, entity_id, meta, manager) do
     step_name
     |> get_module()
-    |> apply(:new, [entity_id, meta])
+    |> apply(:new, [entity_id, meta, manager])
   end
 
-  @spec first(Entity.id) ::
+  @spec first(Entity.id, Story.Manager.t) ::
     t(struct)
   @doc """
   Creates the first step (used after player account is created and verified)
   """
-  def first(entity_id),
-    do: fetch(first_step_name(), entity_id, %{})
+  def first(entity_id, manager),
+    do: fetch(first_step_name(), entity_id, %{}, manager)
 
   @spec first_step_name() ::
     atom
@@ -174,6 +176,7 @@ defmodule Helix.Story.Model.Step do
 
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
+    alias Helix.Story.Model.Story
 
     type =
       quote do
@@ -182,30 +185,32 @@ defmodule Helix.Story.Model.Step do
 
     struct =
       quote do
-        @enforce_keys [:name, :event, :entity_id]
-        defstruct [:name, :event, :entity_id, meta: %{}]
+        @enforce_keys [:name, :event, :entity_id, :manager]
+        defstruct [:name, :event, :entity_id, :manager, meta: %{}]
       end
 
     new =
       quote do
 
-        @spec new(Entity.id, Step.meta) :: t
-        def new(entity_id, meta) do
+        @spec new(Entity.id, Step.meta, Story.Manager.t) :: t
+        def new(entity_id, meta, manager) do
           %__MODULE__{
             name: Step.get_name(__MODULE__),
             entity_id: entity_id,
             event: nil,
-            meta: meta
+            meta: meta,
+            manager: manager
           }
         end
 
-        @spec new(Entity.id, Step.meta, Helix.Event.t) :: t
-        def new(entity_id, meta, event) do
+        @spec new(Entity.id, Step.meta, Story.Manager.t, Helix.Event.t) :: t
+        def new(entity_id, meta, manager, event) do
           %__MODULE__{
             name: Step.get_name(__MODULE__),
             event: event,
             entity_id: entity_id,
-            meta: meta
+            meta: meta,
+            manager: manager
           }
         end
       end

@@ -5,11 +5,13 @@ defmodule Helix.Software.Public.PFTPTest do
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Public.PFTP, as: PFTPPublic
 
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
+  @internet_id NetworkHelper.internet_id()
   @relay nil
 
   describe "download/4" do
@@ -22,7 +24,9 @@ defmodule Helix.Software.Public.PFTPTest do
       storage = SoftwareHelper.get_storage(pftp.server_id)
 
       assert {:ok, process} =
-        PFTPPublic.download(gateway, destination, storage, file, @relay)
+        PFTPPublic.download(
+          gateway, destination, storage, file, @internet_id, @relay
+        )
 
       assert process.gateway_id == gateway.server_id
       assert process.target_id == pftp.server_id
