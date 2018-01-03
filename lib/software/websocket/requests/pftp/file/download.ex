@@ -50,6 +50,7 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
     target_id = request.params.target_id
     storage_id = request.params.storage_id
     file_id = request.params.file_id
+    network_id = request.params.network_id
 
     can_transfer? =
       FileHenforcer.Transfer.can_transfer?(
@@ -63,14 +64,18 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
       destination = r1.destination,
       gateway = r1.gateway,
 
-      # Make sure the file exists on a PublicFTP server.
-      {true, _} <- FileHenforcer.PublicFTP.file_exists?(destination, file)
+      # Make sure the file exists on a PublicFTP server
+      {true, _} <- FileHenforcer.PublicFTP.file_exists?(destination, file),
+
+      # PFTP downloads must happen either on the Internet or on Story network
+      {true, _} <- FileHenforcer.PublicFTP.valid_network?(network_id)
     do
       meta = %{
         gateway: gateway,
         destination: destination,
         file: file,
         storage: r1.storage,
+        network_id: network_id
       }
 
       update_meta(request, meta, reply: true)
@@ -86,8 +91,14 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
     file = request.meta.file
     storage = request.meta.storage
     relay = request.relay
+    network_id = request.meta.network_id
 
-    case PFTPPublic.download(gateway, destination, storage, file, relay) do
+    download =
+      PFTPPublic.download(
+        gateway, destination, storage, file, network_id, relay
+      )
+
+    case download do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 

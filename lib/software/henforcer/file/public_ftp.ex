@@ -7,6 +7,8 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Server.Model.Server
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Software.Model.PublicFTP
@@ -18,11 +20,11 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
   @type pftp_exists_relay :: %{pftp: PublicFTP.t, server: Server.t}
   @type pftp_exists_relay_partial :: %{server: Server.t}
   @type pftp_exists_error ::
-    {true, {:pftp, :not_found}, pftp_exists_relay_partial}
+    {false, {:pftp, :not_found}, pftp_exists_relay_partial}
     | ServerHenforcer.server_exists_error
 
   @spec pftp_exists?(Server.idt) ::
-    {false, pftp_exists_relay}
+    {true, pftp_exists_relay}
     | pftp_exists_error
   def pftp_exists?(server_id = %Server.ID{}) do
     henforce(ServerHenforcer.server_exists?(server_id)) do
@@ -278,4 +280,31 @@ defmodule Helix.Software.Henforcer.File.PublicFTP do
       reply_ok(relay(r1, r2))
     end
   end
+
+  @type valid_network_relay :: NetworkHenforcer.network_exists_relay
+  @type valid_network_relay_partial :: %{}
+  @type valid_network_error ::
+    {false, {:network, :invalid}, valid_network_relay_partial}
+    | NetworkHenforcer.network_exists_error
+
+  @doc """
+  PFTP downloads must only happen on the Internet (public network) or within a
+  storyline network. LANs or Mission networks shall not pass.
+  """
+  def valid_network?(network_id = %Network.ID{}) do
+    henforce NetworkHenforcer.network_exists?(network_id) do
+      valid_network?(relay.network)
+    end
+  end
+
+  def valid_network?(network = %Network{type: :internet}) do
+    reply_ok()
+    |> wrap_relay(%{network: network})
+  end
+  def valid_network?(network = %Network{type: :story}) do
+    reply_ok()
+    |> wrap_relay(%{network: network})
+  end
+  def valid_network?(%Network{type: _}),
+    do: reply_error({:network, :invalid})
 end

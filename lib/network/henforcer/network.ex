@@ -6,6 +6,7 @@ defmodule Helix.Network.Henforcer.Network do
   alias Helix.Server.Model.Server
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Network, as: NetworkQuery
 
   @type nip_exists_relay :: %{server: Server.t}
   @type nip_exists_relay_partial :: %{}
@@ -29,6 +30,23 @@ defmodule Helix.Network.Henforcer.Network do
 
       {:error, _} ->
         reply_error({:nip, :not_found})
+    end
+  end
+
+  @type network_exists_relay :: %{network: Network.t}
+  @type network_exists_relay_partial :: %{}
+  @type network_exists_error ::
+    {false, {:network, :not_found}, network_exists_relay_partial}
+
+  @spec network_exists?(Network.id) ::
+    {true, network_exists_relay}
+    | network_exists_error
+  def network_exists?(network_id = %Network.ID{}) do
+    with network = %{} <- NetworkQuery.fetch(network_id) do
+      reply_ok(%{network: network})
+    else
+      _ ->
+        reply_error({:network, :not_found})
     end
   end
 
