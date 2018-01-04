@@ -48,7 +48,11 @@ defmodule Helix.Story.Mission.Tutorial do
       send: "give_more_info"
 
     def setup(step, _) do
-      {:ok, server, %{entity: _e}} = StoryMake.char(step.manager.network_id)
+      {:ok, server, %{entity: entity}} = StoryMake.char(step.manager.network_id)
+
+      alias Helix.Story.Action.Context, as: ContextAction
+      ContextAction.save(step.entity_id, @contact, :server_id, server.server_id)
+      ContextAction.save(step.entity_id, @contact, :entity_id, entity.entity_id)
 
       # ContextAction.save(@contact, :server_id, server)
       # ContextAction.save(@contact, :entity_id, entity)

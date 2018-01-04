@@ -18,12 +18,19 @@ defmodule Helix.Story.Model.Story.Context do
 
   @type value :: term
   @type context :: map
+  @type entry :: context
   @type path :: [key]
   @type key :: atom
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{entity_id: Entity.id}
+
+  @typep context_id ::
+    %{
+      __id__: String.t,
+      __root__: String.t
+    }
 
   @creation_fields [:entity_id]
   @required_fields [:entity_id]
@@ -37,12 +44,16 @@ defmodule Helix.Story.Model.Story.Context do
       default: %{}
   end
 
+  @spec create(creation_params) ::
+    changeset
   def create(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
   end
 
+  @spec merge_context(context, entry) ::
+    context
   @doc """
   Merges the current existing context with the new entry requested by the user.
 
@@ -51,6 +62,8 @@ defmodule Helix.Story.Model.Story.Context do
   def merge_context(context, entry),
     do: MapUtils.naive_deep_merge(context, entry, fn _a, b -> b end)
 
+  @spec update(t, entry) ::
+    changeset
   def update(story_context = %Story.Context{}, entry) do
     new_context = merge_context(story_context.context, entry)
 
@@ -59,10 +72,40 @@ defmodule Helix.Story.Model.Story.Context do
     |> put_change(:context, new_context)
   end
 
+  @spec format(t) ::
+    t
   def format(story_context = %Story.Context{}) do
-    formatted_context = MapUtils.atomize_keys(story_context.context)
+    formatted_context =
+      story_context.context
+      |> MapUtils.atomize_keys()
+      |> format_ids()
 
     %{story_context| context: formatted_context}
+  end
+
+  @spec format_ids(term) ::
+    context
+  defp format_ids(%{__id__: id, __root__: root}) do
+    root
+    |> Kernel.<>(".ID")
+    |> String.to_atom()
+    |> apply(:cast!, [id])
+  end
+  defp format_ids(context = %{}) do
+    context
+    |> Enum.map(fn {k, v} -> {k, format_ids(v)} end)
+    |> Enum.into(%{})
+  end
+  defp format_ids(not_id),
+    do: not_id
+
+  @spec store_id(struct) ::
+    context_id
+  def store_id(id = %_{id: _, root: module}) do
+    %{
+      __id__: to_string(id),
+      __root__: to_string(module)
+    }
   end
 
   query do

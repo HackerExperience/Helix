@@ -2,7 +2,10 @@ defmodule Helix.Story.Action.ContextTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Server.Model.Server
   alias Helix.Story.Action.Context, as: ContextAction
+  alias Helix.Story.Model.Story
+  alias Helix.Story.Query.Context, as: ContextQuery
 
   alias Helix.Test.Story.Setup, as: StorySetup
 
@@ -25,6 +28,20 @@ defmodule Helix.Story.Action.ContextTest do
         ContextAction.save(entity_id, :foo, [:bar, :baz, :inga], 42)
 
       assert story_context.context == %{foo: %{bar: %{baz: %{inga: 42}}}}
+    end
+
+    test "handles Helix ID transparently" do
+      {%{entity_id: entity_id}, _} = StorySetup.Context.context()
+
+      server_id = Server.ID.generate()
+      assert {:ok, story_context} =
+        ContextAction.save(entity_id, :foo, [:id], server_id)
+
+      assert story_context.context.foo.id == Story.Context.store_id(server_id)
+
+      # Let's query it to make sure it returns the same result
+      db_context = ContextQuery.fetch(entity_id)
+      assert db_context.context.foo.id == server_id
     end
 
     test "refuses to save an entry that already exists" do

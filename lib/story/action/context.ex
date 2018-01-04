@@ -34,6 +34,8 @@ defmodule Helix.Story.Action.Context do
   """
   def save(entity = %Entity{}, field, subfield, value),
     do: save(entity.entity_id, field, subfield, value)
+  def save(entity_id, field, subfield, id = %_{id: _}),
+    do: save(entity_id, field, subfield, Story.Context.store_id(id))
   def save(entity_id, field, subfield, value) when not is_list(subfield),
     do: save(entity_id, field, [subfield], value)
   def save(entity_id, field, subfields, value) do
@@ -46,7 +48,6 @@ defmodule Helix.Story.Action.Context do
   @spec update(Entity.idt, key, key | [key], Story.Context.value) ::
     {:ok, Story.Context.t}
     | {:error, :path_exists}
-
   @doc """
   Updates an existing entry on the entity's context. Path may be nested.
 
