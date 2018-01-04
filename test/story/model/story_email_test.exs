@@ -95,7 +95,10 @@ defmodule Helix.Story.Model.Story.EmailTest do
 
       formatted = Story.Email.format(%{entry| emails: shuffled_emails})
 
-      sorted_emails = Enum.sort(entry.emails, &(&2.timestamp >= &1.timestamp))
+      sorted_emails =
+        Enum.sort(
+          entry.emails, &(DateTime.compare(&2.timestamp, &1.timestamp) == :gt)
+        )
 
       assert formatted.emails == sorted_emails
     end
