@@ -46,23 +46,26 @@ defmodule Helix.Test.Features.Process.Progress do
 
       # We've just started the downloaded, so it ran ~0%
       download0 = ProcessQuery.fetch(download_id)
-      assert_in_delta download0.percentage, 0, 0.08
-      assert_in_delta download0.time_left, 1.0, 0.08
+      assert_in_delta download0.percentage, 0, 0.1
+      assert_in_delta download0.time_left, 1.0, 0.1
 
       # Sleep 100ms, which is about 10%
       :timer.sleep(100)
 
       # Yep, we are somewhere near 10%
       download1 = ProcessQuery.fetch(download_id)
-      assert_in_delta download1.percentage, 0.1, 0.08
-      assert_in_delta download1.time_left, 0.9, 0.08
+      assert_in_delta download1.percentage, 0.1, 0.1
+      assert_in_delta download1.time_left, 0.9, 0.1
+
+      # NOTE: these insanely high delta is due to extremely slow build systems
+      # (Travis I'm looking at you).
 
       # Sleep another 100ms (+10%)
       :timer.sleep(100)
 
       # Percentage is at 20%
       download2 = ProcessQuery.fetch(download_id)
-      assert_in_delta download2.percentage, 0.2, 0.08
+      assert_in_delta download2.percentage, 0.2, 0.1
 
       # Now we'll tragically make increase the download time.
       # The time_left will increase, but the percentage shouldn't change
@@ -73,11 +76,11 @@ defmodule Helix.Test.Features.Process.Progress do
 
       download3 = ProcessQuery.fetch(download_id)
 
-      # Time left increase 100 fold
-      assert_in_delta download3.time_left, download2.time_left * 100, 1
+      # Time left increase 100 fold (DLK went from 100 to 1)
+      assert_in_delta download3.time_left, download2.time_left * 100, 2
 
       # Percentage barely changed
-      assert_in_delta download3.percentage, download2.percentage, 0.01
+      assert_in_delta download3.percentage, download2.percentage, 0.02
     end
   end
 end
