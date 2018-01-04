@@ -41,6 +41,9 @@ defmodule Helix.Network.Henforcer.Network do
   @spec network_exists?(Network.id) ::
     {true, network_exists_relay}
     | network_exists_error
+  @doc """
+  Henforce the given `network_id` exists.
+  """
   def network_exists?(network_id = %Network.ID{}) do
     with network = %{} <- NetworkQuery.fetch(network_id) do
       reply_ok(%{network: network})

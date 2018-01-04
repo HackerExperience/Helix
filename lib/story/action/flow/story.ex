@@ -11,6 +11,13 @@ defmodule Helix.Story.Action.Flow.Story do
 
   @spec start_story(Entity.t, Story.Manager.t, Event.relay) ::
     {:ok, Story.Step.t}
+  @doc """
+  Effectively "starts" the storyline for the given `entity`, "proceeding" it to
+  the first step.
+
+  It requires Story.Manager, as it will be used to determine the entity's story
+  network/server, which may be used by the first step.
+  """
   def start_story(entity, manager, relay) do
     first_step = Step.first(entity.entity_id, manager)
 

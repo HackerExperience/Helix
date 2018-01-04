@@ -79,6 +79,13 @@ defmodule Helix.Server.Action.Flow.Motherboard do
     setup_network(entity, nic, internet, ip, basic_plan)
   end
 
+  @spec setup_network(Entity.t, Component.nic, Network.t, Network.ip, term) ::
+    {:ok, Network.Connection.t, Component.nic}
+  @doc """
+  `setup_network/5` creates a Network.Connection and assigns it to the NIC.
+
+  If you already have a Network.Connection, take a look at `setup_network/3`.
+  """
   def setup_network(
     entity = %Entity{},
     nic = %Component{type: :nic},
@@ -100,6 +107,13 @@ defmodule Helix.Server.Action.Flow.Motherboard do
     end
   end
 
+  @spec setup_network(Component.nic, Network.Connection.t, term) ::
+    {:ok, Network.Connection.t, Component.nic}
+  @doc """
+  `setup_network/3` assigns the given Network.Connection to the NIC.
+
+  If you don't have a Network.Connection, take a look at `setup_network/5`.
+  """
   def setup_network(
     nic = %Component{type: :nic},
     nc = %Network.Connection{nic_id: nil},
