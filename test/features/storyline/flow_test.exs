@@ -40,7 +40,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
       ref = push account_socket, "email.reply", params
       assert_reply ref, :ok, _, timeout(:slow)
 
-      # Now we've proceeded to the next step
+      # Now we've proceeded to the next step.
       [story_step_proceeded] = wait_events [:story_step_proceeded]
 
       assert_transition story_step_proceeded, "setup_pc", "download_cracker"
