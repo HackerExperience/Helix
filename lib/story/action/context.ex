@@ -36,6 +36,8 @@ defmodule Helix.Story.Action.Context do
     do: save(entity.entity_id, field, subfield, value)
   def save(entity_id, field, subfield, value) when not is_list(subfield),
     do: save(entity_id, field, [subfield], value)
+  def save(entity_id, field, subfields, id = %_{id: _}),
+    do: save(entity_id, field, subfields, Story.Context.store_id(id))
   def save(entity_id, field, subfields, value) do
     path = [field] ++ subfields
     entry = mapify_entry(path, value)
@@ -46,7 +48,6 @@ defmodule Helix.Story.Action.Context do
   @spec update(Entity.idt, key, key | [key], Story.Context.value) ::
     {:ok, Story.Context.t}
     | {:error, :path_exists}
-
   @doc """
   Updates an existing entry on the entity's context. Path may be nested.
 
@@ -61,6 +62,8 @@ defmodule Helix.Story.Action.Context do
     do: update(entity.entity_id, field, subfield, value)
   def update(entity_id, field, subfield, value) when not is_list(subfield),
     do: update(entity_id, field, [subfield], value)
+  def update(entity_id, field, subfields, id = %_{id: _}),
+    do: update(entity_id, field, subfields, Story.Context.store_id(id))
   def update(entity_id, field, subfields, value) do
     path = [field] ++ subfields
     entry = mapify_entry(path, value)
@@ -68,11 +71,14 @@ defmodule Helix.Story.Action.Context do
     ContextInternal.update(entity_id, entry, path)
   end
 
+  @doc """
+  Deletes the Story.Context entry
+  """
   defdelegate delete(context),
     to: ContextInternal
 
-  @spec mapify_entry([atom], term) ::
-    map
+  @spec mapify_entry(Story.Context.path, Story.Context.value) ::
+    Story.Context.context
   docp """
   Maps the given keys (list of atoms) to a nested map with value `value`.
 

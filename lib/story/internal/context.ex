@@ -68,7 +68,7 @@ defmodule Helix.Story.Internal.Context do
 
         {:ok, new_story_context} = update_entry(cur_story_context, entry)
       do
-        new_story_context
+        Story.Context.format(new_story_context)
       else
         _ ->
           Repo.rollback(:path_exists)
@@ -96,7 +96,7 @@ defmodule Helix.Story.Internal.Context do
 
         {:ok, new_story_context} = update_entry(cur_story_context, entry)
       do
-        new_story_context
+        Story.Context.format(new_story_context)
       else
         _ ->
           Repo.rollback(:path_not_found)
@@ -113,6 +113,9 @@ defmodule Helix.Story.Internal.Context do
     :ok
   end
 
+  @spec update_entry(Story.Context.t, Story.Context.context) ::
+    {:ok, Story.Context.t}
+    | {:error, Story.Context.changeset}
   defp update_entry(context, entry) do
     context
     |> Story.Context.update(entry)
