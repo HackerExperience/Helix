@@ -4,6 +4,7 @@ defmodule Helix.Story.Action.Flow.Story do
 
   alias Helix.Event
   alias Helix.Entity.Model.Entity
+  alias Helix.Story.Action.Flow.Context, as: ContextFlow
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
@@ -15,6 +16,9 @@ defmodule Helix.Story.Action.Flow.Story do
   Effectively "starts" the storyline for the given `entity`, "proceeding" it to
   the first step.
 
+  Before doing so, however, it creates the Story.Context for that entity, which
+  will be used for medium- and long-term storage of storyline data.
+
   It requires Story.Manager, as it will be used to determine the entity's story
   network/server, which may be used by the first step.
   """
@@ -23,7 +27,8 @@ defmodule Helix.Story.Action.Flow.Story do
 
     flowing do
       with \
-        {:ok, story_step} = StoryAction.proceed_step(first_step),
+        {:ok, _} <- ContextFlow.setup(entity),
+        {:ok, story_step} <- StoryAction.proceed_step(first_step),
         {:ok, _, events} <- Steppable.setup(first_step, nil),
         on_success(fn -> Event.emit(events, from: relay) end)
       do

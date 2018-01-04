@@ -4,6 +4,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
   use HELL.ID, field: :transfer_id, meta: [0x0040]
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
@@ -83,18 +84,17 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
   defp add_time_information(changeset),
     do: put_change(changeset, :started_time, DateTime.utc_now())
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query, only: [where: 3, lock: 2]
-
-    alias Helix.Account.Model.Account
     alias Helix.Universe.Bank.Model.BankTransfer
 
-    @spec by_id(Ecto.Queryable.t, BankTransfer.id) ::
-      Ecto.Queryable.t
+    @spec by_id(Queryable.t, BankTransfer.id) ::
+      Queryable.t
     def by_id(query \\ BankTransfer, transfer),
       do: where(query, [t], t.transfer_id == ^transfer)
 
+    @spec lock_for_update(Queryable.t) ::
+      Queryable.t
     def lock_for_update(query),
       do: lock(query, "FOR UPDATE")
   end
