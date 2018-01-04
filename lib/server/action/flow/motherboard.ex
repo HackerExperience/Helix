@@ -22,7 +22,7 @@ defmodule Helix.Server.Action.Flow.Motherboard do
   @spec initial_hardware(Entity.t, Event.relay) ::
     {:ok, Motherboard.t, Component.mobo}
   @doc """
-  Sets up the initial hardware for `entity`. Called right after an account is
+  Sets up the initial hardware for `entity`. Called right after an entity is
   created.
 
   It:
@@ -42,9 +42,8 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         # Insert the default slot_id for each component
         slotted_components = map_components_slots(components),
 
-        # Get the mobo, nic and hdd, which need some extra operations
+        # Get the mobo and hdd, which need some extra operations
         mobo = Enum.find(components, &(&1.type == :mobo)),
-        nic = Enum.find(components, &(&1.type == :nic)),
         hdd = Enum.find(components, &(&1.type == :hdd)),
 
         # Link all components into the motherboard
@@ -54,9 +53,6 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         # Link all components to the entity
         :ok <- link_components(components, entity),
 
-        # Generate an IP and assign the basic ISP plan to the NIC
-        {:ok, _nc, _nic} <- setup_networking(entity, nic),
-
         # Creates the storage and attaches it to each HDD
         {:ok, _storage} <- setup_storage(hdd)
       do
@@ -64,6 +60,75 @@ defmodule Helix.Server.Action.Flow.Motherboard do
         motherboard = MotherboardQuery.fetch(mobo.component_id)
 
         {:ok, motherboard, mobo}
+      end
+    end
+  end
+
+  # TODO: Use ISP abstraction instead of `Network.Connection`. #341
+  def isp_connect(entity, motherboard = %Motherboard{}) do
+    [nic] = MotherboardQuery.get_nics(motherboard)
+
+    isp_connect(entity, nic)
+  end
+
+  def isp_connect(entity, nic = %Component{type: :nic}) do
+    internet = NetworkQuery.internet()
+    ip = IPv4.autogenerate()
+    basic_plan = %{dlk: 128, ulk: 16}
+
+    setup_network(entity, nic, internet, ip, basic_plan)
+  end
+
+  @spec setup_network(Entity.t, Component.nic, Network.t, Network.ip, term) ::
+    {:ok, Network.Connection.t, Component.nic}
+  @doc """
+  `setup_network/5` creates a Network.Connection and assigns it to the NIC.
+
+  If you already have a Network.Connection, take a look at `setup_network/3`.
+  """
+  def setup_network(
+    entity = %Entity{},
+    nic = %Component{type: :nic},
+    network = %Network{},
+    ip,
+    speed = %{dlk: _, ulk: _})
+  do
+    flowing do
+      with \
+        {:ok, nc} <- NetworkAction.Connection.create(network, ip, entity, nic),
+        on_fail(fn -> NetworkAction.Connection.delete(nc) end),
+
+        {:ok, new_nic} <- ComponentAction.NIC.update_transfer_speed(nic, speed),
+        {:ok, new_nic} <-
+          ComponentAction.NIC.update_network(new_nic, network.network_id)
+      do
+        {:ok, nc, new_nic}
+      end
+    end
+  end
+
+  @spec setup_network(Component.nic, Network.Connection.t, term) ::
+    {:ok, Network.Connection.t, Component.nic}
+  @doc """
+  `setup_network/3` assigns the given Network.Connection to the NIC.
+
+  If you don't have a Network.Connection, take a look at `setup_network/5`.
+  """
+  def setup_network(
+    nic = %Component{type: :nic},
+    nc = %Network.Connection{nic_id: nil},
+    speed = %{dlk: _, ulk: _})
+  do
+    flowing do
+      with \
+        {:ok, nc} = NetworkAction.Connection.update_nic(nc, nic),
+        on_fail(fn -> NetworkAction.Connection.update_nic(nc, nil) end),
+
+        {:ok, new_nic} <- ComponentAction.NIC.update_transfer_speed(nic, speed),
+        {:ok, new_nic} <-
+          ComponentAction.NIC.update_network(new_nic, nc.network_id)
+      do
+        {:ok, nc, new_nic}
       end
     end
   end
@@ -90,27 +155,6 @@ defmodule Helix.Server.Action.Flow.Motherboard do
           {:halt, :error}
       end
     end)
-  end
-
-  # TODO: Use ISP abstraction instead of `Network.Connection`. #341
-  @spec setup_networking(Entity.t, Component.nic) ::
-    {:ok, Network.Connection.t, Component.nic}
-    | {:error, :internal}
-  defp setup_networking(entity, nic = %Component{type: :nic}) do
-    internet = NetworkQuery.internet()
-    ip = IPv4.autogenerate()
-
-    basic_plan = %{dlk: 128, ulk: 16}
-
-    with \
-      {:ok, nc} <- NetworkAction.Connection.create(internet, ip, entity, nic),
-      on_fail(fn -> NetworkAction.Connection.delete(nc) end),
-
-      {:ok, new_nic} <-
-        ComponentAction.NIC.update_transfer_speed(nic, basic_plan)
-    do
-      {:ok, nc, new_nic}
-    end
   end
 
   @spec setup_storage(Component.hdd) ::

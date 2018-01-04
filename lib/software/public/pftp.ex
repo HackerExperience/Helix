@@ -5,7 +5,7 @@ defmodule Helix.Software.Public.PFTP do
 
   alias Helix.Event
   alias Helix.Network.Model.Net
-  alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Network.Model.Network
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
@@ -15,8 +15,6 @@ defmodule Helix.Software.Public.PFTP do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Query.PublicFTP, as: PublicFTPQuery
   alias Helix.Software.Public.Index, as: SoftwareIndex
-
-  @internet_id NetworkQuery.internet().network_id
 
   @spec enable_server(Server.t) ::
     {:ok, PublicFTP.t}
@@ -63,7 +61,9 @@ defmodule Helix.Software.Public.PFTP do
   def render_list_files(files),
     do: Enum.map(files, &SoftwareIndex.render_file/1)
 
-  @spec download(Server.t, Server.t, Storage.t, File.t, Event.relay) ::
+  @spec download(
+    Server.t, Server.t, Storage.t, File.t, Network.id, Event.relay)
+  ::
     {:ok, Process.t}
     | FileTransferFlow.transfer_error
   @doc """
@@ -74,11 +74,9 @@ defmodule Helix.Software.Public.PFTP do
     destination = %Server{},
     storage = %Storage{},
     file = %File{},
+    network_id = %Network.ID{},
     relay)
   do
-    # PFTP downloads are "public", so must always happen over the internet.
-    network_id = @internet_id
-
     net = Net.new(network_id, [])
 
     transfer =

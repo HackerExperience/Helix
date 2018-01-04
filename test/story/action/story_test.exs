@@ -5,7 +5,7 @@ defmodule Helix.Story.Action.StoryTest do
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.StoryStep
+  alias Helix.Story.Model.Story
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Test.Story.Helper, as: StoryHelper
@@ -60,7 +60,7 @@ defmodule Helix.Story.Action.StoryTest do
       # assert %StoryReplySentEvent{} = event
       assert event.entity_id == entity_id
       assert event.reply.id == reply_id
-      assert event.reply_to == StoryStep.get_current_email(entry)
+      assert event.reply_to == Story.Step.get_current_email(entry)
       assert event.step == step
     end
 
@@ -71,11 +71,11 @@ defmodule Helix.Story.Action.StoryTest do
       %{object: step, entry: entry} = StoryQuery.fetch_current_step(entity_id)
       reply_id = StoryHelper.get_allowed_reply(entry)
 
-      allowed_before = StoryStep.get_allowed_replies(entry)
+      allowed_before = Story.Step.get_allowed_replies(entry)
       assert {:ok, _event} = StoryAction.send_reply(step, entry, reply_id)
 
       %{entry: entry_after} = StoryQuery.fetch_current_step(entity_id)
-      allowed_after = StoryStep.get_allowed_replies(entry_after)
+      allowed_after = Story.Step.get_allowed_replies(entry_after)
 
       assert length(allowed_after) == length(allowed_before) - 1
       refute Enum.member?(allowed_after, reply_id)

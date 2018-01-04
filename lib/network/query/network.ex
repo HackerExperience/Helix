@@ -1,10 +1,11 @@
 defmodule Helix.Network.Query.Network do
 
+  alias Helix.Network.Internal.Network, as: NetworkInternal
   alias Helix.Network.Model.Network
-  alias Helix.Network.Repo
 
   @internet %Network{
-    name: "internet",
+    name: "Internet",
+    type: :internet,
     network_id: Network.ID.cast!("::")
   }
 
@@ -17,8 +18,8 @@ defmodule Helix.Network.Query.Network do
   """
   def fetch(%Network.ID{id: {0, 0, 0, 0, 0, 0, 0, 0}}),
     do: internet()
-  def fetch(id),
-    do: Repo.get(Network, id)
+  def fetch(network_id),
+    do: NetworkInternal.fetch(network_id)
 
   @spec internet() ::
     Network.t

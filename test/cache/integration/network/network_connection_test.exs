@@ -6,6 +6,7 @@ defmodule Helix.Cache.Integration.Network.NetworkConnectionTest do
   import Helix.Test.Case.ID
 
   alias Helix.Network.Internal.Network, as: NetworkInternal
+  alias Helix.Server.Query.Component, as: ComponentQuery
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
@@ -80,6 +81,113 @@ defmodule Helix.Cache.Integration.Network.NetworkConnectionTest do
       assert StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
       assert StatePurgeQueue.lookup(:network, {nip.network_id, new_ip})
       refute StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
+
+      CacheHelper.sync_test()
+    end
+
+    test "changing NIC", context do
+      server_id = context.server.server_id
+
+      {:ok, server} = PopulateInternal.populate(:by_server, server_id)
+
+      refute Enum.empty?(server.networks)
+      nip = List.first(server.networks)
+      nc = NetworkInternal.Connection.fetch(nip.network_id, nip.ip)
+      nic = ComponentQuery.fetch(nc.nic_id)
+
+      assert_hit CacheInternal.direct_query(:server, server_id)
+
+      # Nothing scheduled to purge
+      refute StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+
+      {:ok, nc} = NetworkInternal.Connection.update_nic(nc, nil)
+
+      assert StatePurgeQueue.lookup(:server, server_id)
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
+      assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
+
+      StatePurgeQueue.sync()
+
+      # Cache was updated; it no longer has that NC
+      {:ok, new_server} = CacheQuery.from_server_get_all(server_id)
+      assert Enum.empty?(new_server.networks)
+
+      # Cant query the server by its NIP (since it's no longer assigned to it)
+      assert {:error, reason} =
+        CacheQuery.from_nip_get_server(nip.network_id, nip.ip)
+      assert reason == {:nip, :notfound}
+
+      # Clean
+      refute StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+
+      # Now we'll reassign this NC to the NIC
+      {:ok, nc} = NetworkInternal.Connection.update_nic(nc, nic)
+      assert NetworkInternal.Connection.fetch_by_nic(nc.nic_id)
+
+      # Flagged as purged
+      assert StatePurgeQueue.lookup(:server, server_id)
+      assert StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
+      # Network wasn't flagged because the NIP wasn't on cache
+      refute StatePurgeQueue.lookup(:network, nip_args)
+
+      StatePurgeQueue.sync()
+
+      {:ok, new_server2} = CacheQuery.from_server_get_all(server_id)
+      new_nip = List.first(new_server2.networks)
+      assert nip == new_nip
+
+      CacheHelper.sync_test()
+    end
+
+    test "changing NIC (cold)", context do
+      server_id = context.server.server_id
+
+      {:ok, server} = BuilderInternal.by_server(server_id)
+
+      nip = Enum.random(server.networks)
+      nc = NetworkInternal.Connection.fetch(nip.network_id, nip.ip)
+      nic = ComponentQuery.fetch(nc.nic_id)
+
+      assert_miss CacheInternal.direct_query(:server, server_id)
+
+      refute StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:network, {nip.network_id, nip.ip})
+
+      # Nilify
+      {:ok, nc} = NetworkInternal.Connection.update_nic(nc, nil)
+
+      refute StatePurgeQueue.lookup(:server, server_id)
+      nip_args = {to_string(nip.network_id), nip.ip}
+      assert StatePurgeQueue.lookup(:network, nip_args)
+      refute StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
+
+      StatePurgeQueue.sync()
+
+      # Cache was updated; it no longer has that NC
+      {:ok, new_server} = CacheQuery.from_server_get_all(server_id)
+      assert Enum.empty?(new_server.networks)
+
+      # Cant query the server by its NIP (since it's no longer assigned to it)
+      assert {:error, reason} =
+        CacheQuery.from_nip_get_server(nip.network_id, nip.ip)
+      assert reason == {:nip, :notfound}
+
+      StatePurgeQueue.sync()
+
+      # Make sure we are at a cold state
+      CacheHelper.empty_cache()
+      assert_miss CacheInternal.direct_query(:server, server_id)
+
+      # Now we'll reassing the NC to the NIC
+      {:ok, _nc} = NetworkInternal.Connection.update_nic(nc, nic)
+
+      # Nothing was changed, since nothing exists on cache
+      refute StatePurgeQueue.lookup(:server, server_id)
+      refute StatePurgeQueue.lookup(:network, nip_args)
       refute StatePurgeQueue.lookup(:storage, Enum.random(server.storages))
 
       CacheHelper.sync_test()

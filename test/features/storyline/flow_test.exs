@@ -7,23 +7,20 @@ defmodule Helix.Test.Features.Storyline.Flow do
   import Helix.Test.Channel.Macros
   import Helix.Test.Story.Macros
 
+  alias Helix.Story.Model.Step
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Entity.Helper, as: EntityHelper
-  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
-  alias Helix.Test.Story.Setup, as: StorySetup
-
-  @internet_id NetworkHelper.internet_id()
 
   @moduletag :feature
 
   describe "tutorial" do
     test "flow" do
-      {server_socket, %{gateway: _server, account: account}} =
-        ChannelSetup.join_server(own_server: true)
+      {server_socket, %{account: account, manager: manager}} =
+        ChannelSetup.join_storyline_server()
 
       entity = EntityHelper.fetch_entity_from_account(account)
       entity_id = entity.entity_id
@@ -33,18 +30,12 @@ defmodule Helix.Test.Features.Storyline.Flow do
           account_id: account.account_id, socket: server_socket
         )
 
-      # Register player at the first step
-      # TODO: This should be done as a response of AccountCreatedEvent
-      StorySetup.story_step(
-        entity_id: entity_id, name: :tutorial@SetupPc, meta: %{}
-      )
-
       # Player is on mission
       assert %{object: %{name: step_name}} =
         StoryQuery.fetch_current_step(entity_id)
-      assert step_name == :tutorial@setup_pc
+      assert step_name == Step.first_step_name()
 
-      # We'll now complete the first mission by replying to the email
+      # We'll now complete the first step by replying to the email
       params = %{"reply_id" => "back_thanks"}
       ref = push account_socket, "email.reply", params
       assert_reply ref, :ok, _, timeout(:slow)
@@ -64,8 +55,8 @@ defmodule Helix.Test.Features.Storyline.Flow do
       params =
         %{
           "file_id" => to_string(cracker_id),
-          "ip" => ServerHelper.get_ip(target_id),
-          "network_id" => to_string(@internet_id)
+          "ip" => ServerHelper.get_ip(target_id, manager.network_id),
+          "network_id" => to_string(manager.network_id)
         }
 
       # Start the download (using the PublicFTP)

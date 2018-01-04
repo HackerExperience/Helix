@@ -27,20 +27,14 @@ defmodule Helix.Story.Mission.Tutorial do
 
   step DownloadCrackerPublicFtp do
 
-    alias Helix.Network.Query.Network, as: NetworkQuery
     alias Helix.Software.Model.File
     alias Helix.Server.Model.Server
     alias Helix.Server.Query.Server, as: ServerQuery
 
     alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
 
-    alias Helix.Universe.NPC.Make.NPC, as: MakeNPC
-    alias Helix.Entity.Make.Entity, as: MakeEntity
-    alias Helix.Server.Make.Server, as: MakeServer
     alias Helix.Software.Make.File, as: MakeFile
     alias Helix.Software.Make.PFTP, as: MakePFTP
-
-    @internet_id NetworkQuery.internet().network_id
 
     email "download_cracker_public_ftp",
       reply: ["more_info"],
@@ -53,25 +47,20 @@ defmodule Helix.Story.Mission.Tutorial do
     on_reply "more_info",
       send: "give_more_info"
 
-    # TODO: Wait for more steps and then abstract me.
-    # Make sure my state (this char's server) is persisted.
-    defp create_char do
-      MakeNPC.story_char()
-      |> MakeEntity.entity()
-      |> MakeServer.npc()
-    end
-
     def setup(step, _) do
-      server = create_char()
+      {:ok, server, %{entity: _e}} = StoryMake.char(step.manager.network_id)
+
+      # ContextAction.save(@contact, :server_id, server)
+      # ContextAction.save(@contact, :entity_id, entity)
 
       # Create the Cracker the player is supposed to download
-      cracker = MakeFile.cracker(server, %{bruteforce: 10, overflow: 10})
+      cracker = MakeFile.cracker!(server, %{bruteforce: 10, overflow: 10})
 
       # Enable a PFTP server and put the cracker in it
-      pftp = MakePFTP.server(server)
+      {:ok, pftp, _} = MakePFTP.server(server)
       MakePFTP.add_file(cracker, pftp)
 
-      ip = ServerQuery.get_ip(server, @internet_id)
+      ip = ServerQuery.get_ip(server, step.manager.network_id)
 
       meta =
         %{

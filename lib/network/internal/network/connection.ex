@@ -62,9 +62,31 @@ defmodule Helix.Network.Internal.Network.Connection do
   Updates the NIC assigned to the NetworkConnection
   """
   def update_nic(nc = %Network.Connection{}, new_nic) do
-    nc
-    |> Network.Connection.update_nic(new_nic)
-    |> Repo.update()
+    result =
+      nc
+      |> Network.Connection.update_nic(new_nic)
+      |> Repo.update()
+
+    with {:ok, _} <- result do
+      # If `new_nic` is set, we are going from `nil` to `Component.id`, i.e. we
+      # are assigning the Network.Connection to the NIC. As such, the NC does
+      # not exist on the cache currently, and `update_server_by_nip` would never
+      # succeed (as that NIP is not assigned to the server -- on the cache)
+      # That's why we need to force a server update using another method, in
+      # this case the NIC.
+      if new_nic do
+        CacheAction.update_server_by_component(new_nic.component_id)
+
+      # On the other hand, if `new_nic` is empty, we are removing a previously
+      # existing Network.Connection. So we CAN update the server by the NIP.
+      # We must also purge the Network.Connection, as it's no longer in use.
+      else
+        CacheAction.update_server_by_nip(nc.network_id, nc.ip)
+        CacheAction.purge_network(nc.network_id, nc.ip)
+      end
+    end
+
+    result
   end
 
   @spec update_ip(Network.Connection.t, Network.ip) ::

@@ -31,6 +31,7 @@ defmodule Helix.Story.Model.Step.Macros do
           @moduledoc false
 
           alias Helix.Event
+          alias Helix.Story.Make.Story, as: StoryMake
 
           @emails Module.get_attribute(__MODULE__, :emails) || %{}
           @contact get_contact(unquote(contact), __MODULE__)

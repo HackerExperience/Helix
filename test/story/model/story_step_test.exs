@@ -1,11 +1,11 @@
-defmodule Helix.Story.Model.StoryStepTest do
+defmodule Helix.Story.Model.Story.StepTest do
 
   use ExUnit.Case, async: true
 
   import Ecto.Changeset
 
   alias Helix.Entity.Model.Entity
-  alias Helix.Story.Model.StoryStep
+  alias Helix.Story.Model.Story
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Story.Setup, as: StorySetup
@@ -18,7 +18,7 @@ defmodule Helix.Story.Model.StoryStepTest do
         meta: %{}
       }
 
-      changeset = StoryStep.create_changeset(params)
+      changeset = Story.Step.create_changeset(params)
       assert changeset.valid?
 
       story_step = apply_changes(changeset)
@@ -42,11 +42,11 @@ defmodule Helix.Story.Model.StoryStepTest do
       params4 = %{params| step_name: "invalid_step"}
       params5 = %{params| meta: "invalid_meta"}
 
-      cs1 = StoryStep.create_changeset(params1)
-      cs2 = StoryStep.create_changeset(params2)
-      cs3 = StoryStep.create_changeset(params3)
-      cs4 = StoryStep.create_changeset(params4)
-      cs5 = StoryStep.create_changeset(params5)
+      cs1 = Story.Step.create_changeset(params1)
+      cs2 = Story.Step.create_changeset(params2)
+      cs3 = Story.Step.create_changeset(params3)
+      cs4 = Story.Step.create_changeset(params4)
+      cs5 = Story.Step.create_changeset(params5)
 
       refute cs1.valid?
       refute cs2.valid?
@@ -57,11 +57,11 @@ defmodule Helix.Story.Model.StoryStepTest do
   end
 
   describe "replace_meta/2" do
-    test "StoryStep meta is replaced" do
+    test "Story.Step meta is replaced" do
       {story_step, _} = StorySetup.fake_story_step()
 
       new_meta = %{palmeiras: :nao, tem: :mundial}
-      new_story = StoryStep.replace_meta(story_step, new_meta)
+      new_story = Story.Step.replace_meta(story_step, new_meta)
 
       assert new_story.valid?
       assert get_change(new_story, :meta) == new_meta
@@ -74,9 +74,9 @@ defmodule Helix.Story.Model.StoryStepTest do
       {entry2, _} = StorySetup.fake_story_step(allowed_replies: ["r1", "r2"])
       {entry3, _} = StorySetup.fake_story_step(allowed_replies: ["r3"])
 
-      new_entry1 = StoryStep.unlock_reply(entry1, "r3")
-      new_entry2 = StoryStep.unlock_reply(entry2, "r3")
-      new_entry3 = StoryStep.unlock_reply(entry3, "r3")
+      new_entry1 = Story.Step.unlock_reply(entry1, "r3")
+      new_entry2 = Story.Step.unlock_reply(entry2, "r3")
+      new_entry3 = Story.Step.unlock_reply(entry3, "r3")
 
       # Resulting changeset is valid
       assert new_entry1.valid?
@@ -100,9 +100,9 @@ defmodule Helix.Story.Model.StoryStepTest do
       {entry2, _} = StorySetup.fake_story_step(emails_sent: ["e1", "e2"])
       {entry3, _} = StorySetup.fake_story_step(emails_sent: ["e3", "e3"])
 
-      new_entry1 = StoryStep.append_email(entry1, "e3", ["r1"])
-      new_entry2 = StoryStep.append_email(entry2, "e3", ["r2"])
-      new_entry3 = StoryStep.append_email(entry3, "e3", ["r3"])
+      new_entry1 = Story.Step.append_email(entry1, "e3", ["r1"])
+      new_entry2 = Story.Step.append_email(entry2, "e3", ["r2"])
+      new_entry3 = Story.Step.append_email(entry3, "e3", ["r3"])
 
       # Resulting changeset is valid
       assert new_entry1.valid?

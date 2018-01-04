@@ -25,7 +25,7 @@ defmodule Helix.Server.Public.Index do
 
   @typep player_server_index ::
     %{
-      server_id: Server.id,
+      server: Server.t,
       nips: [Network.nip],
       endpoints: [Network.nip]
     }
@@ -47,6 +47,7 @@ defmodule Helix.Server.Public.Index do
   @typep rendered_player_server_index ::
     %{
       server_id: String.t,
+      type: String.t,
       nips: [rendered_nip],
       endpoints: [rendered_nip]
     }
@@ -119,8 +120,8 @@ defmodule Helix.Server.Public.Index do
   Returns the server index, which encompasses all other indexes residing under
   the context of server, like Logs, Filesystem, Processes, Tunnels etc.
 
-  Called on Account bootstrap (as opposed to `remote_server_index`, which is
-  used after a player logs into a remote server)
+  Called on Account bootstrap (as opposed to `gateway/2` and `remote/2`, which
+  are used after the player joins a server channel)
   """
   def index(entity = %Entity{}) do
     player_servers = EntityQuery.get_servers(entity)
@@ -173,10 +174,11 @@ defmodule Helix.Server.Public.Index do
   @spec player_server_index(Server.id, [Network.nip]) ::
     player_server_index
   defp player_server_index(server_id = %Server.ID{}, endpoint_nips) do
+    server = ServerQuery.fetch(server_id)
     {:ok, nips} = CacheQuery.from_server_get_nips(server_id)
 
     %{
-      server_id: server_id,
+      server: server,
       nips: nips,
       endpoints: endpoint_nips
     }
@@ -184,9 +186,10 @@ defmodule Helix.Server.Public.Index do
 
   @spec render_player_server_index(player_server_index) ::
     rendered_player_server_index
-  defp render_player_server_index(entry = %{server_id: _}) do
+  defp render_player_server_index(entry = %{server: server}) do
     %{
-      server_id: to_string(entry.server_id),
+      server_id: to_string(server.server_id),
+      type: to_string(server.type),
       nips: Enum.map(entry.nips, &render_nip/1),
       endpoints: Enum.map(entry.endpoints, &render_nip/1)
     }

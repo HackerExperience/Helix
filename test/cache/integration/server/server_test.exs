@@ -17,7 +17,6 @@ defmodule Helix.Cache.Integration.Server.ServerTest do
   end
 
   describe "server integration" do
-
     test "attach motherboard updates cache", context do
       server_id = context.server.server_id
       motherboard_id = context.server.motherboard_id

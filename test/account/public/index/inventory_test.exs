@@ -16,10 +16,10 @@ defmodule Helix.Account.Public.Index.InventoryTest do
 
       index = InventoryIndex.index(entity)
 
-      # There are 5 components (initial hardware)
-      assert length(index.components) == 5
+      # There are 10 components (5 freeplay initial hardware + 5 campaign)
+      assert length(index.components) == 10
 
-      [nc] = index.network_connections
+      [_nc_story, nc] = index.network_connections
 
       # The NIC used for the NetworkConnection is among the player's components
       assert Enum.find(index.components, &(&1.component_id == nc.nic_id))

@@ -4,10 +4,12 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
   import Helix.Test.Henforcer.Macros
 
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Henforcer.File.PublicFTP, as: PFTPHenforcer
   alias Helix.Software.Model.File
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
@@ -16,6 +18,18 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
       {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
 
       assert {true, relay} = PFTPHenforcer.pftp_exists?(pftp.server_id)
+      assert relay.pftp == pftp
+      assert relay.server.server_id == pftp.server_id
+
+      assert_relay relay, [:pftp, :server]
+    end
+
+    @tag :regression
+    test "correct partial relay when passing Server.t" do
+      {pftp, _} = SoftwareSetup.PFTP.pftp(real_server: true)
+
+      server = ServerQuery.fetch(pftp.server_id)
+      assert {true, relay} = PFTPHenforcer.pftp_exists?(server)
       assert relay.pftp == pftp
       assert relay.server.server_id == pftp.server_id
 
@@ -300,6 +314,37 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
       assert relay.server == server
 
       assert_relay relay, [:server, :entity, :pftp]
+    end
+  end
+
+  describe "valid_network?/1" do
+    test "accepts when network is the Internet" do
+      {internet, _} = NetworkSetup.network(type: :internet)
+
+      assert {true, relay} = PFTPHenforcer.valid_network?(internet.network_id)
+
+      assert relay.network == internet
+      assert_relay relay, [:network]
+    end
+
+    test "accepts when network belongs to the storyline" do
+      {story_network, _} = NetworkSetup.network(type: :story)
+
+      assert {true, relay} = PFTPHenforcer.valid_network?(story_network)
+
+      assert relay.network == story_network
+      assert_relay relay, [:network]
+    end
+
+    test "rejects for LAN and Mission networks" do
+      {lan, _} = NetworkSetup.network(type: :lan)
+      {mission, _} = NetworkSetup.network(type: :mission)
+
+      assert {false, reason1, _} = PFTPHenforcer.valid_network?(lan)
+      assert {false, reason2, _} = PFTPHenforcer.valid_network?(mission)
+
+      assert reason1 == {:network, :invalid}
+      assert reason1 == reason2
     end
   end
 end

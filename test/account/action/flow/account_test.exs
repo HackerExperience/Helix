@@ -2,12 +2,16 @@ defmodule Helix.Account.Action.Flow.AccountTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
 
+  alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Account.Setup, as: AccountSetup
 
+  @internet_id NetworkHelper.internet_id()
   @relay nil
 
   describe "setup_account/1" do
@@ -25,13 +29,23 @@ defmodule Helix.Account.Action.Flow.AccountTest do
       assert account_id == entity_id
 
       # Server is valid and registered to the entity
-      assert [server_id] = EntityQuery.get_servers(entity)
+      assert [_story_server, server_id] = EntityQuery.get_servers(entity)
       assert server_id == server.server_id
       assert server.motherboard_id
 
       # Components have been linked to the entity
       components = EntityQuery.get_components(entity)
-      assert length(components) == 5
+      assert length(components) == 10
+
+      motherboard = MotherboardQuery.fetch(server.motherboard_id)
+
+      # Server network (ISP connection) is working
+      [nic] = MotherboardQuery.get_nics(motherboard)
+      nc = NetworkQuery.Connection.fetch_by_nic(nic)
+
+      assert nc.network_id == @internet_id
+      assert nc.ip
+      assert nc.nic_id == nic.component_id
     end
   end
 end

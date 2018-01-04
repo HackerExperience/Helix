@@ -90,7 +90,7 @@ defmodule Helix.Event do
   def emit(event, from: source_event) do
     event
     |> inherit(source_event)
-    |> HelixDispatcher.emit()
+    |> emit()
 
     log_event(event)
   end

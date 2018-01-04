@@ -4,10 +4,10 @@ defmodule Helix.Story.Event.Handler.StoryTest do
 
   import ExUnit.CaptureLog
 
-  alias Helix.Event
   alias Helix.Story.Model.Step
   alias Helix.Story.Query.Story, as: StoryQuery
 
+  alias Helix.Test.Event.Helper, as: EventHelper
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Story.Setup, as: StorySetup
 
@@ -19,7 +19,7 @@ defmodule Helix.Story.Event.Handler.StoryTest do
       event = EventSetup.Story.reply_sent(step, "reply_to_e1", "e1")
 
       assert capture_log(fn ->
-        Event.emit(event)
+        EventHelper.emit(event)
       end) =~ "replied_to_e1"
     end
 
@@ -30,7 +30,7 @@ defmodule Helix.Story.Event.Handler.StoryTest do
       event = EventSetup.Story.reply_sent(step, "invalid_reply", "e1")
 
       # Nothing happens...
-      Event.emit(event)
+      EventHelper.emit(event)
     end
   end
 
@@ -41,7 +41,7 @@ defmodule Helix.Story.Event.Handler.StoryTest do
 
       event = EventSetup.Story.reply_sent(step, "reply_to_e3", "e3")
 
-      Event.emit(event)
+      EventHelper.emit(event)
 
       %{object: new_step} = StoryQuery.fetch_current_step(entity_id)
 

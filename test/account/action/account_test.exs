@@ -6,7 +6,7 @@ defmodule Helix.Account.Action.AccountTest do
   alias Helix.Account.Action.Account, as: AccountAction
   alias Helix.Account.Model.Account
 
-  alias Helix.Test.Account.Factory
+  alias Helix.Test.Account.Setup, as: AccountSetup
 
   describe "create/3" do
     test "succeeds with valid input" do
@@ -14,7 +14,7 @@ defmodule Helix.Account.Action.AccountTest do
       username = "good_username1"
       password = "Would you very kindly let me in, please, good sir"
 
-      assert {:ok, account, [event]} =
+      assert {:ok, account, [event, _]} =
         AccountAction.create(email, username, password)
 
       assert %Account{} = account
@@ -35,7 +35,7 @@ defmodule Helix.Account.Action.AccountTest do
   describe "login/2" do
     test "succeeds when username and password are correct" do
       password = "foobar 123 password LetMeIn"
-      account = Factory.insert(:account, password: password)
+      {account, _} = AccountSetup.account(password: password)
 
       {:ok, acc, _token} = AccountAction.login(account.username, password)
 
@@ -43,14 +43,14 @@ defmodule Helix.Account.Action.AccountTest do
     end
 
     test "fails when provided with incorrect password" do
-      account = Factory.insert(:account)
+      {account, _} = AccountSetup.account()
 
       assert {:error, _} = AccountAction.login(account.username, "incorrect pass")
     end
 
     test "cannot use email as login credential" do
       password = "foobar 123 password LetMeIn"
-      account = Factory.insert(:account, password: password)
+      {account, _} = AccountSetup.account(password: password)
 
       assert {:error, _} = AccountAction.login(account.email, password)
     end

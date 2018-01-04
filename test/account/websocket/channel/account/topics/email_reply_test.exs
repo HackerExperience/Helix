@@ -55,7 +55,10 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
     end
 
     test "fails if player is not currently in a mission" do
-      {socket, _} = ChannelSetup.join_account()
+      {socket, %{entity_id: entity_id}} = ChannelSetup.join_account()
+
+      # Remove any existing step
+      StoryHelper.remove_existing_step(entity_id)
 
       ref = push socket, "email.reply", %{"reply_id" => "lolzor"}
 
@@ -63,5 +66,4 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       assert response.data.message == "not_in_step"
     end
   end
-
 end

@@ -61,7 +61,6 @@ defmodule Helix.Network.Action.Network.Connection do
   @doc """
   Obliterates a NetworkConnection. Use with caution.
   """
-  def delete(nc = %Network.Connection{}) do
-    NetworkInternal.Connection.delete(nc)
-  end
+  defdelegate delete(nc),
+    to: NetworkInternal.Connection
 end

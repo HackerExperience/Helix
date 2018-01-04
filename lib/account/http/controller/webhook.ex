@@ -2,12 +2,14 @@ defmodule Helix.Account.HTTP.Controller.Webhook do
 
   use Phoenix.Controller
 
+  import Plug.Conn
+
   alias Helix.Event
   alias Helix.Account.Model.Account
-  alias Helix.Account.Event.Account.Created, as: AccountCreatedEvent
   alias Helix.Account.Repo
 
-  import Plug.Conn
+  alias Helix.Account.Event.Account.Created, as: AccountCreatedEvent
+  alias Helix.Account.Event.Account.Verified, as: AccountVerifiedEvent
 
   plug :authenticate
 
@@ -63,9 +65,10 @@ defmodule Helix.Account.HTTP.Controller.Webhook do
             confirmed: true
           }
           account = Repo.insert!(account)
-          event = AccountCreatedEvent.new(account)
+          e1 = AccountCreatedEvent.new(account)
+          e2 = AccountVerifiedEvent.new(account)
 
-          {account, [event]}
+          {account, [e1, e2]}
         account ->
           # Account exists, so creation is ignored
           {account, []}

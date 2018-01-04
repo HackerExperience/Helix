@@ -3,7 +3,7 @@ defmodule Helix.Story.Action.Story do
   alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.StoryStep
+  alias Helix.Story.Model.Story
   alias Helix.Story.Repo
 
   alias Helix.Story.Event.Email.Sent, as: EmailSentEvent
@@ -11,10 +11,10 @@ defmodule Helix.Story.Action.Story do
   alias Helix.Story.Event.Step.Proceeded, as: StepProceededEvent
 
   @spec proceed_step(first_step :: Step.t(struct)) ::
-    {:ok, StoryStep.t}
+    {:ok, Story.Step.t}
     | {:error, :internal}
   @spec proceed_step(prev_step :: Step.t(struct), next_step :: Step.t(struct)) ::
-    {:ok, StoryStep.t}
+    {:ok, Story.Step.t}
     | {:error, :internal}
   @doc """
   Proceeds to the next step.
@@ -32,7 +32,7 @@ defmodule Helix.Story.Action.Story do
     StepInternal.entry_step_repo_return
     | no_return
   @doc """
-  Updates the StoryStep metadata.
+  Updates the Story.Step metadata.
   """
   def update_step_meta(step),
     do: StepInternal.update_meta(step)
@@ -70,10 +70,10 @@ defmodule Helix.Story.Action.Story do
   @doc """
   Sends an email from the contact to the player.
 
-  When the email is sent (saved on StoryEmail), it is also saved on StoryStep,
+  When the email is sent (saved on Story.Email), it is also saved on Story.Step,
   maintaining the Step state.
 
-  During the StoryStep save, it overwrites the `allowed_replies` from the
+  During the Story.Step save, it overwrites the `allowed_replies` from the
   previous email (if any) to the default allowed replies of the email_id.
   """
   def send_email(step, email_id, meta) do
@@ -90,7 +90,7 @@ defmodule Helix.Story.Action.Story do
     end)
   end
 
-  @spec send_reply(Step.t(struct), StoryStep.t, Step.reply_id) ::
+  @spec send_reply(Step.t(struct), Story.Step.t, Step.reply_id) ::
     {:ok, [ReplySentEvent.t]}
     | {:error, {:reply, :not_found}}
     | {:error, :internal}
@@ -108,12 +108,12 @@ defmodule Helix.Story.Action.Story do
     Repo.transaction(fn ->
       with \
         true <-
-          StoryStep.can_send_reply?(story_step, reply_id)
+          Story.Step.can_send_reply?(story_step, reply_id)
           || {:reply, :not_found},
         {:ok, _, email} <- EmailInternal.send_reply(step, reply_id),
         {:ok, _} <- StepInternal.lock_reply(step, reply_id)
       do
-        reply_to = StoryStep.get_current_email(story_step)
+        reply_to = Story.Step.get_current_email(story_step)
         [ReplySentEvent.new(step, email, reply_to)]
       else
         # When elixir-lang issue #6426 gets fixed, rewrite to use :badreply

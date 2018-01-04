@@ -101,7 +101,8 @@ defmodule Helix.Entity.Internal.EntityTest do
 
       components = EntityInternal.get_components(entity)
 
-      assert length(components) == 5
+      # 5 initial components for Freeplay server + 5 for Campaign server
+      assert length(components) == 10
 
       component = Enum.random(components)
 
@@ -141,10 +142,14 @@ defmodule Helix.Entity.Internal.EntityTest do
     test "removing entity ownership over servers is idempotent" do
       {server, %{entity: entity}} = ServerSetup.server()
 
+      # Two initial servers (1 Freeplay + 1 Campaign)
+      assert 2 == length(EntityInternal.get_servers(entity))
+
       EntityInternal.unlink_server(server.server_id)
       EntityInternal.unlink_server(server.server_id)
 
-      assert Enum.empty?(EntityInternal.get_servers(entity))
+      # 1 remaining server
+      assert 1 == length(EntityInternal.get_servers(entity))
 
       CacheHelper.sync_test()
     end

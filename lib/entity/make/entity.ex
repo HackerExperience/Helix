@@ -5,9 +5,10 @@ defmodule Helix.Entity.Make.Entity do
   alias Helix.Entity.Model.Entity
 
   @spec entity(NPC.t) ::
-    Entity.t
+    {:ok, Entity.t, %{}}
   def entity(npc = %NPC{}) do
-    {:ok, entity} = EntityAction.create_from_specialization(npc)
-    entity
+    {:ok, entity, _} = EntityAction.create_from_specialization(npc)
+
+    {:ok, entity, %{}}
   end
 end

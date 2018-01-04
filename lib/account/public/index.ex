@@ -23,6 +23,7 @@ defmodule Helix.Account.Public.Index do
     mainframe =
       entity
       |> EntityQuery.get_servers()
+      |> Enum.reverse()
       |> List.first()
 
     %{

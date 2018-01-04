@@ -139,16 +139,19 @@ defmodule Helix.Test.Network.Setup do
 
   @doc """
   - network_id: specify network id. Defaults to random one
-  - name: Specify network name. Defaults to 
+  - name: Specify network name. Defaults to "LAN"
+  - type: Set network type. Defaults to `lan`.
   """
   def fake_network(opts \\ []) do
     network_id = Keyword.get(opts, :network_id, Network.ID.generate())
     name = Keyword.get(opts, :name, "LAN")
+    type = Keyword.get(opts, :type, :lan)
 
     network =
       %Network{
         network_id: network_id,
-        name: name
+        name: name,
+        type: type
       }
 
     related = %{changeset: Changeset.change(network)}

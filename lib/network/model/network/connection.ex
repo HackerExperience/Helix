@@ -59,7 +59,6 @@ defmodule Helix.Network.Model.Network.Connection do
   @spec create_changeset(creation_params) ::
     changeset
   def create_changeset(params) do
-
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)

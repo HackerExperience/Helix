@@ -172,6 +172,7 @@ defmodule HELL.TestHelper.Random do
     email_part = email_part0 <> email_part1
 
     email_part <> "@" <> hostname
+    |> String.downcase()
   end
 
   @doc """
@@ -189,6 +190,12 @@ defmodule HELL.TestHelper.Random do
   """
   def username,
     do: String.slice(Burette.Internet.username(), 0..14)
+
+  @doc """
+  Generates a random password.
+  """
+  def password,
+    do: string(min: 10, max: 20)
 
   @doc """
   Generates a random setting_id

@@ -3,7 +3,7 @@ defmodule Helix.Story.Internal.StepTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Entity.Model.Entity
-  alias Helix.Story.Model.StoryStep
+  alias Helix.Story.Model.Story
   alias Helix.Story.Internal.Step, as: StepInternal
 
   alias Helix.Test.Story.Helper, as: StoryHelper
@@ -160,13 +160,13 @@ defmodule Helix.Story.Internal.StepTest do
       {entry, %{step: step, entity_id: entity_id}} =
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
-      allowed_before = StoryStep.get_allowed_replies(entry)
+      allowed_before = Story.Step.get_allowed_replies(entry)
       reply_id = Enum.random(allowed_before)
 
       assert {:ok, _} = StepInternal.lock_reply(step, reply_id)
       %{entry: new_entry} = StepInternal.fetch_current_step(entity_id)
 
-      allowed_after = StoryStep.get_allowed_replies(new_entry)
+      allowed_after = Story.Step.get_allowed_replies(new_entry)
 
       refute allowed_before == allowed_after
       assert length(allowed_after) == length(allowed_before) - 1
@@ -177,13 +177,13 @@ defmodule Helix.Story.Internal.StepTest do
       {entry, %{step: step, entity_id: entity_id}} =
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
-      allowed_before = StoryStep.get_allowed_replies(entry)
+      allowed_before = Story.Step.get_allowed_replies(entry)
       reply_id = "i_do_not_exist"
 
       assert {:ok, _} = StepInternal.lock_reply(step, reply_id)
       %{entry: new_entry} = StepInternal.fetch_current_step(entity_id)
 
-      allowed_after = StoryStep.get_allowed_replies(new_entry)
+      allowed_after = Story.Step.get_allowed_replies(new_entry)
 
       assert allowed_after == allowed_before
     end

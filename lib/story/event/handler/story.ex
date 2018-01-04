@@ -122,7 +122,8 @@ defmodule Helix.Story.Event.Handler.Story do
   Emits: StepProceededEvent.t
   """
   defp update_next(prev_step, next_step_name) do
-    next_step = Step.fetch(next_step_name, prev_step.entity_id, %{})
+    next_step =
+      Step.fetch(next_step_name, prev_step.entity_id, %{}, prev_step.manager)
 
     with \
       {:ok, _} <- StoryAction.proceed_step(prev_step, next_step),

@@ -37,6 +37,7 @@ defmodule Helix.Server.Query.Server do
         nips
         |> Enum.find(&(&1.network_id) == network_id)
         |> Map.get(:ip)
+
       _ ->
         nil
     end

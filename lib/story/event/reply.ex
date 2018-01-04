@@ -10,19 +10,19 @@ defmodule Helix.Story.Event.Reply do
 
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
-    alias Helix.Story.Model.StoryEmail
+    alias Helix.Story.Model.Story
 
     @type t ::
       %__MODULE__{
         entity_id: Entity.id,
         step: Step.t(struct),
         reply_to: Step.email_id,
-        reply: StoryEmail.email,
+        reply: Story.Email.email,
       }
 
     event_struct [:entity_id, :step, :reply_to, :reply]
 
-    @spec new(Step.t(struct), reply :: StoryEmail.email, Step.email_id) ::
+    @spec new(Step.t(struct), reply :: Story.Email.email, Step.email_id) ::
       t
     def new(step = %_{name: _, entity_id: _}, reply = %{id: _}, reply_to) do
       %__MODULE__{

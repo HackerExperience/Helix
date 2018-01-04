@@ -143,7 +143,7 @@ defprotocol Helix.Story.Model.Steppable do
     | :fail
   @typep generic_step :: Step.t(struct)
 
-  @spec setup(current_step :: generic_step, previous_step :: generic_step) ::
+  @spec setup(cur_step :: generic_step, prev_step :: generic_step | nil) ::
     {:ok | :error, generic_step, [Event.t]}
   @doc """
   Function called when the previous step was completed. It has the purpose of

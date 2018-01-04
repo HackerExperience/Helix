@@ -7,6 +7,10 @@ defmodule Helix.Account.HTTP.Controller.Account do
   alias Helix.Account.Action.Account, as: AccountAction
 
   def register(conn, _) do
+    # When enabling registration:
+    #  - Remove `pending` tag from this method's test
+    #  - Refer to the Onboarding test, so we can test from an external request
+    #    rather than directly using `AccountFlow`
     conn
     |> put_status(:forbidden)
     |> json(%{message: "Registration is temporarily disabled"})

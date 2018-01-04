@@ -2,7 +2,7 @@ defmodule Helix.Story.Public.Index do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.StoryEmail
+  alias Helix.Story.Model.Story
   alias Helix.Story.Query.Story, as: StoryQuery
 
   @type index ::
@@ -31,7 +31,7 @@ defmodule Helix.Story.Public.Index do
     %{
       id: Step.email_id,
       meta: Step.email_meta,
-      sender: StoryEmail.sender,
+      sender: Story.Email.sender,
       timestamp: DateTime.t
     }
 
@@ -78,7 +78,7 @@ defmodule Helix.Story.Public.Index do
     }
   end
 
-  @spec messages([StoryEmail.email]) ::
+  @spec messages([Story.Email.email]) ::
     [rendered_message]
   def messages(messages),
     do: Enum.map(messages, &message/1)
@@ -88,7 +88,7 @@ defmodule Helix.Story.Public.Index do
   def render_messages(messages),
     do: Enum.map(messages, &render_message/1)
 
-  @spec message(StoryEmail.email) ::
+  @spec message(Story.Email.email) ::
     message
   def message(data) do
     %{

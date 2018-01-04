@@ -15,11 +15,19 @@ defmodule Helix.Test.Entity.Setup do
   Opts:
   - type: account | npc (TODO). Defaults to generating an account entity.
   """
-  def entity(opts \\ []) do
+  def entity(opts \\ [])
+
+  def entity(from_account: account) do
+    {:ok, entity, _} = EntityAction.create_from_specialization(account)
+
+    {entity, %{}}
+  end
+
+  def entity(opts) do
     if opts[:type] do
       raise "todo"
     else
-      {:ok, entity} =
+      {:ok, entity, _} =
         AccountSetup.account!()
         |> EntityAction.create_from_specialization()
 

@@ -1,13 +1,11 @@
 defmodule Helix.Account.Event.Handler.Account do
 
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
-  alias Helix.Account.Event.Account.Created, as: AccountCreatedEvent
+  alias Helix.Account.Event.Account.Verified, as: AccountVerifiedEvent
 
   @doc """
-  When an account is created, we must set up its initial server, storyline etc.
-
-  TODO: It should be on AccountVerifiedEvent. #335.
+  When an account is verified, we must set up its initial server, storyline etc.
   """
-  def account_created(event = %AccountCreatedEvent{}),
+  def account_created(event = %AccountVerifiedEvent{}),
     do: AccountFlow.setup_account(event.account, event)
 end

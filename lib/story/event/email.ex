@@ -4,24 +4,24 @@ defmodule Helix.Story.Event.Email do
 
   event Sent do
     @moduledoc """
-    StoryEmailSentEvent is fired when a Contact (Storyline character) sends an
+    Story.EmailSentEvent is fired when a Contact (Storyline character) sends an
     email to the Player.
     """
 
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
-    alias Helix.Story.Model.StoryEmail
+    alias Helix.Story.Model.Story
 
     @type t ::
       %__MODULE__{
         entity_id: Entity.id,
         step: Step.t(struct),
-        email: StoryEmail.email
+        email: Story.Email.email
       }
 
     event_struct [:entity_id, :step, :email]
 
-    @spec new(Step.t(term), StoryEmail.email) ::
+    @spec new(Step.t(term), Story.Email.email) ::
       t
     def new(step = %_{name: _, meta: _, entity_id: _}, email = %{id: _}) do
       %__MODULE__{
@@ -34,7 +34,7 @@ defmodule Helix.Story.Event.Email do
     notify do
       @moduledoc """
       Logic of the notification that will be sent to the client once the event
-      `StoryEmailSent` is fired.
+      `Story.EmailSent` is fired.
       """
 
       alias HELL.ClientUtils

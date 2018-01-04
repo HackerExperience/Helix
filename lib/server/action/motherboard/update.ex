@@ -173,7 +173,7 @@ defmodule Helix.Server.Action.Motherboard.Update do
     # Note that by default the NIC is assumed to belong to the internet, that's
     # why we'll only update it in case it's on a different network.
     unless nc.network_id == @internet_id do
-      ComponentAction.NIC.update_network_id(nic, nc.network_id)
+      ComponentAction.NIC.update_network(nic, nc.network_id)
     end
   end
 end

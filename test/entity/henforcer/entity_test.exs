@@ -97,7 +97,8 @@ defmodule Helix.Entity.Henforcer.EntityTest do
       assert relay.entity == entity
       assert relay.network_connection.network_id == network_id
       assert relay.network_connection.ip == ip
-      assert length(relay.entity_network_connections) == 1
+      # 2 NCs, one recently created + 1 from Campaign server
+      assert length(relay.entity_network_connections) == 2
 
       assert_relay relay,
         [:entity, :network_connection, :entity_network_connections]

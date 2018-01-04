@@ -11,10 +11,12 @@ defmodule Helix.Server.Model.Server.Type do
 
   @type type ::
     :desktop
+    | :desktop_story
     | :mobile
     | :npc
+    | :npc_story
 
-  @server_types [:desktop, :mobile, :npc]
+  @server_types [:desktop, :mobile, :npc, :desktop_story, :npc_story]
 
   @primary_key false
   schema "server_types" do
