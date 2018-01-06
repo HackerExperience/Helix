@@ -26,14 +26,7 @@ defmodule Helix.Software.Public.Index do
   @type filesystem ::
     %{File.path => filesystem_file}
 
-  @type filesystem_file ::
-    %{
-      file_id: File.id,
-      path: File.full_path,
-      size: File.size,
-      software_type: File.type,
-      modules: map
-    }
+  @type filesystem_file :: File.t
 
   @type rendered_filesystem ::
     %{path :: String.t => rendered_filesystem_file}
@@ -46,7 +39,8 @@ defmodule Helix.Software.Public.Index do
       type: String.t,
       modules: modules,
       name: String.t,
-      extension: String.t
+      extension: String.t,
+      meta: map
     }
 
   @typep modules ::
@@ -120,7 +114,8 @@ defmodule Helix.Software.Public.Index do
       type: to_string(file.software_type),
       modules: render_modules.(file.modules),
       name: to_string(file.name),
-      extension: extension
+      extension: extension,
+      meta: file.meta
     }
   end
 end

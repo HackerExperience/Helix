@@ -23,11 +23,11 @@ defmodule Helix.Software.Model.File do
       file_size: size,
       software_type: custom_type,
       storage_id: Storage.id,
-      storage: term,
       inserted_at: NaiveDateTime.t,
       updated_at: NaiveDateTime.t,
       modules: modules | File.Module.schema,
-      crypto_version: crypto_version
+      crypto_version: crypto_version,
+      meta: meta
     }
 
   @type extension :: Software.extension
@@ -38,6 +38,7 @@ defmodule Helix.Software.Model.File do
   @type type :: Software.type
   @type crypto_version :: nil | pos_integer
   @type modules :: File.Module.t
+  @type meta :: map
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -75,6 +76,10 @@ defmodule Helix.Software.Model.File do
     field :crypto_version, :integer
 
     field :full_path, :string
+
+    field :meta, :map,
+      virtual: true,
+      default: %{}
 
     belongs_to :type, Software.Type,
       foreign_key: :software_type,
@@ -139,8 +144,8 @@ defmodule Helix.Software.Model.File do
     |> validate_number(:crypto_version, greater_than: 0)
   end
 
-  @spec update_changeset(t | Changeset.t, update_params) ::
-    Changeset.t
+  @spec update_changeset(t | changeset, update_params) ::
+    changeset
   def update_changeset(struct, params) do
     struct
     |> cast(params, @update_fields)
@@ -148,6 +153,8 @@ defmodule Helix.Software.Model.File do
     |> validate_number(:crypto_version, greater_than: 0)
   end
 
+  @spec validate_changeset(changeset, map) ::
+    changeset
   defp validate_changeset(struct, params) do
     struct
     |> cast(params, @castable_fields)
@@ -276,9 +283,12 @@ defmodule Helix.Software.Model.File do
       |> join_modules()
       |> by_module(module)
       |> order_by_version()
-      |> select([fm], fm.file_id)
-      |> limit(1)
     end
+
+    @spec only(Queryable.t, pos_integer) ::
+      Queryable.t
+    def only(query, total),
+      do: limit(query, ^total)
 
     @spec by_module(Queryable.t, File.Module.name) ::
       Queryable.t
