@@ -70,6 +70,7 @@ defmodule Helix.Test.Software.Setup do
   - path: Set file path
   - modules: Set file module. If set, `type` must also be set.
   - server_id: Server that file belongs to. Will use the first storage it finds.
+    May be nil, in which case the created storage has no valid hardware/server.
   - storage_id: Specify storage ID to use. If set, ignores server params, and no
     server is generated. Enhance as you see fit.
   - fake_server: Whether to use a fake server. Gives the option to create a
@@ -83,9 +84,8 @@ defmodule Helix.Test.Software.Setup do
     Storage.id, Server.id
   """
   def fake_file(opts \\ []) do
-    if not is_nil(opts[:modules]) and is_nil(opts[:type]) do
-      raise "You can't specify a module and ask for a random file type."
-    end
+    if not is_nil(opts[:modules]) and is_nil(opts[:type]),
+      do: raise "You can't specify a module and ask for a random file type."
 
     size = Access.get(opts, :size, Enum.random(1..1_048_576))
     name = Access.get(opts, :name, SoftwareHelper.random_file_name())

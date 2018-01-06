@@ -11,7 +11,7 @@ defmodule Helix.Entity.Model.DatabaseServer do
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
 
-  @type changeset :: %Ecto.Changeset{data: %__MODULE__{}}
+  @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type t :: %__MODULE__{
     entity_id: Entity.id,

@@ -20,6 +20,7 @@ defmodule Helix.Software.Model.Software do
     | :decryptor
     | :anymap
     | :crypto_key
+    | :virus_spyware
 
   @type module_name ::
     cracker_module
@@ -53,6 +54,7 @@ defmodule Helix.Software.Model.Software do
     | :dec
     | :map
     | :key
+    | :spy
 
   software \
     type: :cracker,
@@ -106,4 +108,8 @@ defmodule Helix.Software.Model.Software do
   software \
     type: :crypto_key,
     extension: :key
+
+  software \
+    type: :virus_spyware,
+    extension: :spy
 end
