@@ -10,16 +10,7 @@ defmodule Helix.Software.Repo.Migrations.AddVirus do
         primary_key: true
 
       add :entity_id, :inet, null: false
-      add :storage_id,
-        references(
-          :storages, column: :storage_id, type: :inet, on_delete: :delete_all
-        ),
-        null: false
     end
-
-    # Identify all viruses installed on a given storage (used by AV)
-    create index(:viruses, [:storage_id])
-
     # Identify all viruses installed by a given entity (used by Database)
     create index(:viruses, [:entity_id])
 

@@ -8,14 +8,12 @@ defmodule Helix.Software.Model.Virus do
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.Storage
   alias __MODULE__, as: Virus
 
   @type t ::
     %__MODULE__{
       file_id: File.id,
       entity_id: Entity.id,
-      storage_id: Storage.id,
       is_active?: boolean
     }
 
@@ -25,12 +23,11 @@ defmodule Helix.Software.Model.Virus do
   @type creation_params ::
     %{
       file_id: File.id,
-      entity_id: Entity.id,
-      storage_id: Storage.id
+      entity_id: Entity.id
     }
 
-  @creation_fields [:file_id, :entity_id, :storage_id]
-  @required_fields [:file_id, :entity_id, :storage_id]
+  @creation_fields [:file_id, :entity_id]
+  @required_fields [:file_id, :entity_id]
 
   @primary_key false
   schema "viruses" do
@@ -38,7 +35,6 @@ defmodule Helix.Software.Model.Virus do
       primary_key: true
 
     field :entity_id, Entity.ID
-    field :storage_id, Storage.ID
 
     field :is_active?, :boolean,
       virtual: true,

@@ -2,6 +2,7 @@ defmodule Helix.Software.Internal.Virus do
 
   alias Helix.Entity.Model.Entity
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Storage
   alias Helix.Software.Model.Virus
   alias Helix.Software.Repo
 
@@ -40,7 +41,7 @@ defmodule Helix.Software.Internal.Virus do
     Repo.transaction fn ->
       with \
         {:ok, virus} <- insert_virus(file, entity_id),
-        {:ok, _} <- try_activate_virus(virus)
+        {:ok, _} <- try_activate_virus(virus, file.storage_id)
       do
         # We have to query the virus we just inserted because... from Ecto doc:
         # "Because we used on_conflict: :nothing, instead of getting an error,
@@ -57,11 +58,11 @@ defmodule Helix.Software.Internal.Virus do
     end
   end
 
-  @spec activate_virus(Virus.t) ::
+  @spec activate_virus(Virus.t, Storage.id) ::
     {:ok, Virus.t}
     | {:error, Virus.changeset}
-  def activate_virus(virus = %Virus{}) do
-    result = force_activate_virus(virus)
+  def activate_virus(virus = %Virus{}, storage_id = %Storage.ID{}) do
+    result = force_activate_virus(virus, storage_id)
 
     # See `install/2` comments on why we have to fetch again.
     with {:ok, _} <- result do
@@ -75,28 +76,27 @@ defmodule Helix.Software.Internal.Virus do
   defp insert_virus(file, entity_id) do
     %{
       file_id: file.file_id,
-      entity_id: entity_id,
-      storage_id: file.storage_id
+      entity_id: entity_id
     }
     |> Virus.create_changeset()
     |> Repo.insert()
   end
 
-  @spec try_activate_virus(Virus.t) ::
+  @spec try_activate_virus(Virus.t, Storage.id) ::
     {:ok, Virus.t}
     | {:error, Virus.changeset}
-  defp try_activate_virus(virus = %Virus{}) do
+  defp try_activate_virus(virus = %Virus{}, storage_id = %Storage.ID{}) do
     virus
-    |> Virus.Active.create_from_virus()
+    |> Virus.Active.create(storage_id)
     |> Repo.insert(on_conflict: :nothing)
   end
 
-  @spec force_activate_virus(Virus.t) ::
+  @spec force_activate_virus(Virus.t, Storage.id) ::
     {:ok, Virus.t}
     | {:error, Virus.changeset}
-  defp force_activate_virus(virus = %Virus{}) do
+  defp force_activate_virus(virus = %Virus{}, storage_id = %Storage.ID{}) do
     virus
-    |> Virus.Active.create_from_virus()
+    |> Virus.Active.create(storage_id)
     |> Repo.insert(
       on_conflict: :replace_all, conflict_target: [:entity_id, :storage_id]
     )

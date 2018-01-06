@@ -2,6 +2,7 @@ defmodule Helix.Software.Internal.PublicFTP do
 
   alias Hector
   alias Helix.Server.Model.Server
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.PublicFTP
   alias Helix.Software.Repo
@@ -34,7 +35,7 @@ defmodule Helix.Software.Internal.PublicFTP do
     server_id
     |> PublicFTP.Query.list_files()
     |> Repo.all()
-    |> Enum.map(&File.format/1)
+    |> Enum.map(&FileInternal.format/1)
   end
 
   @spec setup_server(Server.id) ::

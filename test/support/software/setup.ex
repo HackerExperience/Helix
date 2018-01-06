@@ -55,6 +55,9 @@ defmodule Helix.Test.Software.Setup do
     # cases it wouldn't be obvious why they are required to sync
     CacheHelper.sync_test()
 
+    # Fetch the file from DB so it goes through the File.format/1 step
+    file = FileInternal.fetch(file.file_id)
+
     {file, related}
   end
 

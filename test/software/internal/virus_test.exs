@@ -16,7 +16,7 @@ defmodule Helix.Software.Internal.VirusTest do
 
       assert virus.entity_id == entity_id
       assert virus.file_id == file.file_id
-      assert virus.storage_id == file.storage_id
+      # assert virus.storage_id == file.storage_id
       assert virus.is_active?
 
       db_entry = VirusInternal.fetch(file.file_id)
@@ -54,7 +54,7 @@ defmodule Helix.Software.Internal.VirusTest do
     end
   end
 
-  describe "activate_virus/1" do
+  describe "activate_virus/2" do
     test "overwrites current active virus" do
       {%{entity_id: entity_id}, %{file: file1}} = SoftwareSetup.Virus.virus()
       {_, %{file: file2}} =
@@ -72,7 +72,8 @@ defmodule Helix.Software.Internal.VirusTest do
       refute virus2.is_active?
 
       # Let's activate `virus2`
-      assert {:ok, new_virus2} = VirusInternal.activate_virus(virus2)
+      assert {:ok, new_virus2} =
+        VirusInternal.activate_virus(virus2, file2.storage_id)
       assert new_virus2.is_active?
 
       # `virus2` is now active and `virus1` isn't

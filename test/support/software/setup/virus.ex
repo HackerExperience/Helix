@@ -14,12 +14,12 @@ defmodule Helix.Test.Software.Setup.Virus do
   See doc on `fake_virus/1`.
   """
   def virus(opts \\ []) do
-    {fake_virus, related} = fake_virus(opts)
+    {fake_virus, related = %{file: file}} = fake_virus(opts)
 
     virus = SoftwareRepo.insert!(fake_virus)
 
     if virus.is_active? do
-      {:ok, _} = VirusInternal.activate_virus(virus)
+      {:ok, _} = VirusInternal.activate_virus(virus, file.storage_id)
     end
 
     {virus, related}
@@ -29,11 +29,10 @@ defmodule Helix.Test.Software.Setup.Virus do
   Opts:
   - file_id: Set file id.
   - entity_id: Set entity id.
-  - storage_id: Set storage id.
+  - storage_id: Set storage id (used only if Virus is active).
   - is_active?: Whether to mark virus as active. Defaults to true.
   - real_file?: Whether to generate the underlying virus file. Defaults to true
-  - type: Virus type. Defaults to `:virus_spyware`. Only used when `real_file?`
-    is set
+  - type: Virus type. Defaults to `spyware`. Only used when `real_file?` is set
 
   Related: File.t (when `real_life?` is set)
   """
@@ -46,9 +45,9 @@ defmodule Helix.Test.Software.Setup.Virus do
     storage_id = Keyword.get(opts, :storage_id, Storage.ID.generate())
     is_active? = Keyword.get(opts, :is_active?, true)
 
-    {file_id, storage_id, file} =
+    {file_id, file} =
       if opts[:real_file?] == false do
-        {file_id, storage_id, nil}
+        {file_id, nil}
       else
         type = Keyword.get(opts, :type, :virus_spyware)
         file = SoftwareSetup.file!(type: type)
@@ -56,14 +55,13 @@ defmodule Helix.Test.Software.Setup.Virus do
         # Replace file `storage_id` in case one was specified
         file = %{file| storage_id: opts[:storage_id] || file.storage_id}
 
-        {file.file_id, file.storage_id, file}
+        {file.file_id, file}
       end
 
     virus =
       %Virus{
         entity_id: entity_id,
         file_id: file_id,
-        storage_id: storage_id,
         is_active?: is_active?
       }
 

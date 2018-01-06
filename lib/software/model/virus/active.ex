@@ -37,14 +37,14 @@ defmodule Helix.Software.Model.Virus.Active do
       define_field: false
   end
 
-  @spec create_from_virus(Virus.t) ::
+  @spec create(Virus.t, Storage.id) ::
     changeset
-  def create_from_virus(virus = %Virus{}) do
+  def create(virus = %Virus{}, storage_id = %Storage.ID{}) do
     params =
       %{
         virus_id: virus.file_id,
         entity_id: virus.entity_id,
-        storage_id: virus.storage_id
+        storage_id: storage_id
       }
 
     %__MODULE__{}

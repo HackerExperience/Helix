@@ -16,8 +16,7 @@ defmodule Helix.Software.Internal.File do
 
     if file do
       file
-      |> FileInternal.Meta.gather_metadata()
-      |> File.format()
+      |> format()
     end
   end
 
@@ -35,8 +34,8 @@ defmodule Helix.Software.Internal.File do
       [file] ->
         file
         |> Repo.preload(:modules)
-        |> FileInternal.Meta.gather_metadata()
-        |> File.format()
+        |> format()
+
       [] ->
         nil
     end
@@ -51,8 +50,19 @@ defmodule Helix.Software.Internal.File do
     storage
     |> File.Query.by_storage()
     |> Repo.all()
-    |> Enum.map(&FileInternal.Meta.gather_metadata/1)
-    |> Enum.map(&File.format/1)
+    |> Enum.map(&format/1)
+  end
+
+  @spec format(File.t) ::
+    File.t
+  @doc """
+  Formats the file, making sure its metadata is retrieved and its modules are
+  converted to a more friendly format (defined by File.Module).
+  """
+  def format(file = %File{}) do
+    file
+    |> FileInternal.Meta.gather_metadata()
+    |> File.format()
   end
 
   @spec create(File.creation_params, File.modules) ::
@@ -71,12 +81,7 @@ defmodule Helix.Software.Internal.File do
       |> Repo.insert()
 
     with {:ok, file} <- result do
-      file =
-        file
-        |> FileInternal.Meta.gather_metadata()
-        |> File.format()
-
-      {:ok, file}
+      {:ok, format(file)}
     end
   end
 
