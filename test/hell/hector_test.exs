@@ -5,6 +5,7 @@ defmodule HectorTest do
   alias Hector
   alias Helix.Network.Repo, as: NetworkRepo
   alias Helix.Server.Model.Server
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Repo, as: SoftwareRepo
@@ -127,7 +128,7 @@ defmodule HectorTest do
 
           repo
           |> apply(:preload, [file, :modules])
-          |> File.format()
+          |> FileInternal.format()
         end)
       end
 

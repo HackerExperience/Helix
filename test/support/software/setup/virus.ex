@@ -4,7 +4,6 @@ defmodule Helix.Test.Software.Setup.Virus do
   alias Helix.Entity.Model.Entity
   alias Helix.Software.Internal.Virus, as: VirusInternal
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.Storage
   alias Helix.Software.Model.Virus
   alias Helix.Software.Repo, as: SoftwareRepo
 

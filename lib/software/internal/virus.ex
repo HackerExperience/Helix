@@ -21,11 +21,13 @@ defmodule Helix.Software.Internal.Virus do
     end
   end
 
-  @spec is_active?(File.id) ::
+  @spec is_active?(File.idt) ::
     boolean
   @doc """
   Checks whether the given virus is active
   """
+  def is_active?(file = %File{}),
+    do: is_active?(file.file_id)
   def is_active?(virus_id) do
     active =
       virus_id

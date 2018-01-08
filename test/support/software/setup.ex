@@ -229,6 +229,9 @@ defmodule Helix.Test.Software.Setup do
     file(opts ++ [type: :cracker, modules: modules])
   end
 
+  def cracker!(opts \\ []),
+    do: cracker(opts) |> elem(0)
+
   @doc """
   Opts are passed to `file/1`
   """
@@ -245,4 +248,7 @@ defmodule Helix.Test.Software.Setup do
   def non_executable_file do
     file(type: :crypto_key)
   end
+
+  def id,
+    do: File.ID.generate()
 end

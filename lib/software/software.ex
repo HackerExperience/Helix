@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 # credo:disable-for-this-file Credo.Check.Refactor.LongQuoteBlocks
 defmodule Helix.Software do
   @moduledoc """
@@ -82,6 +83,8 @@ defmodule Helix.Software do
 
         @all_software all_software
 
+        @viruses [:virus_spyware]
+
         @primary_key false
         schema "software_types" do
           field :type, Constant,
@@ -134,6 +137,14 @@ defmodule Helix.Software do
           |> Enum.map(&(&1.extension))
           |> Enum.uniq()
         end
+
+        @spec is_virus?(Software.type) ::
+          boolean
+        @doc """
+        Checks whether the given Software.type is a virus
+        """
+        def is_virus?(software_type),
+          do: software_type in @viruses
       end
 
       defmodule Module do
