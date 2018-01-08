@@ -43,6 +43,11 @@ defmodule Helix.Software.Model.Virus do
     has_one :active, Virus.Active,
       foreign_key: :virus_id,
       references: :file_id
+
+    belongs_to :file, File,
+      references: :file_id,
+      foreign_key: :file_id,
+      define_field: false
   end
 
   @spec create_changeset(creation_params) ::
@@ -57,9 +62,11 @@ defmodule Helix.Software.Model.Virus do
     t
   def format(virus = %Virus{}) do
     is_active? =
-      virus.active
-      && true
-      || false
+      if not is_nil(virus.active) and Ecto.assoc_loaded?(virus.active) do
+        true
+      else
+        false
+      end
 
     %{virus|
       is_active?: is_active?,
@@ -70,12 +77,38 @@ defmodule Helix.Software.Model.Virus do
 
   query do
 
+    alias Helix.Entity.Model.Entity
     alias Helix.Software.Model.File
+    alias Helix.Software.Model.Storage
 
     @spec by_file(Queryable.t, File.id) ::
       Queryable.t
     def by_file(query \\ Virus, file_id),
       do: where(query, [v], v.file_id == ^file_id)
+
+    @spec by_entity(Queryable.t, Entity.idt) ::
+      Queryable.t
+    def by_entity(query \\ Virus, entity_id),
+      do: where(query, [v], v.entity_id == ^entity_id)
+
+    @spec by_storage(Queryable.t, Storage.idt) ::
+      Queryable.t
+    def by_storage(query \\ Virus, storage_id) do
+      from virus in query,
+        inner_join: file in assoc(virus, :file),
+        where: file.storage_id == ^storage_id,
+        select: virus
+    end
+
+    @spec by_storage_and_entity(Queryable.t, Storage.idt, Entity.idt) ::
+      Queryable.t
+    def by_storage_and_entity(query \\ Virus, storage_id, entity_id) do
+      from virus in query,
+        inner_join: file in assoc(virus, :file),
+        where: file.storage_id == ^storage_id,
+        where: virus.entity_id == ^entity_id,
+        select: virus
+    end
 
     @spec join_active(Queryable.t) ::
       Queryable.t

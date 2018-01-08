@@ -42,7 +42,6 @@ defmodule Helix.Test.Software.Setup.Virus do
 
     file_id = Keyword.get(opts, :file_id, File.ID.generate())
     entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
-    storage_id = Keyword.get(opts, :storage_id, Storage.ID.generate())
     is_active? = Keyword.get(opts, :is_active?, true)
 
     {file_id, file} =

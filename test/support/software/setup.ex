@@ -230,6 +230,16 @@ defmodule Helix.Test.Software.Setup do
   end
 
   @doc """
+  Opts are passed to `file/1`
+  """
+  def virus(opts \\ []) do
+    file(opts ++ [type: :virus_spyware])
+  end
+
+  def virus!(opts \\ []),
+    do: virus(opts) |> elem(0)
+
+  @doc """
   Generates a non-executable file
   """
   def non_executable_file do

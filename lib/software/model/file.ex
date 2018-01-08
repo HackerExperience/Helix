@@ -10,6 +10,7 @@ defmodule Helix.Software.Model.File do
   alias HELL.Constant
   alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
+  alias Helix.Software.Model.Virus
   alias __MODULE__, as: File
 
   @type t :: t_of_type(Software.type)
@@ -94,6 +95,10 @@ defmodule Helix.Software.Model.File do
       foreign_key: :file_id,
       references: :file_id,
       on_replace: :delete
+
+    has_many :virus, Virus,
+      foreign_key: :file_id,
+      references: :file_id
 
     timestamps()
   end

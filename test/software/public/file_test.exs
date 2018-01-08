@@ -6,12 +6,14 @@ defmodule Helix.Software.Public.FileTest do
   alias Helix.Software.Public.File, as: FilePublic
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
+  @internet_id NetworkHelper.internet_id()
   @relay nil
 
   describe "bruteforce/6" do
@@ -71,6 +73,27 @@ defmodule Helix.Software.Public.FileTest do
       assert process.type == :file_download
       assert process.data.connection_type == :ftp
       assert process.data.type == :download
+
+      TOPHelper.top_stop(gateway)
+    end
+  end
+
+  describe "install/5" do
+    test "starts install process (backend: virus)" do
+      {gateway, %{entity: entity}} = ServerSetup.server()
+      {target, _} = ServerSetup.server()
+      virus = SoftwareSetup.file!(type: :virus_spyware)
+
+      assert {:ok, process} =
+        FilePublic.install(virus, gateway, target, :virus, @internet_id, @relay)
+
+      assert process.file_id == virus.file_id
+      assert process.gateway_id == gateway.server_id
+      assert process.target_id == target.server_id
+      assert process.network_id == @internet_id
+      refute process.connection_id
+
+      assert process.data.backend == :virus
 
       TOPHelper.top_stop(gateway)
     end
