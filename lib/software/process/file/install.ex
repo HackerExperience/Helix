@@ -1,6 +1,12 @@
 import Helix.Process
 
 process Helix.Software.Process.File.Install do
+  @moduledoc """
+  `InstallFileProcess` is a generic process for installing files. The
+  installation is specialized by the requested backend (e.g. installing viruses
+  uses the `virus` backend). The backend defines what's supposed to happen once
+  the process finishes, as well as how much resources it should take, etc.
+  """
 
   alias Helix.Software.Model.File
   alias __MODULE__, as: FileInstallProcess

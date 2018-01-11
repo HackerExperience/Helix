@@ -42,6 +42,9 @@ defmodule Helix.Software.Action.Flow.File do
   multiple different modules, and each module has its own execution logic, the
   caller must also specify the desired module to be executed.
 
+  A generically executable file may be passed, in which case it automatically
+  hands it to the generic FileInstallProcess.
+
   If `file` is not an executable software, returns `{:error, :not_executable}`.
 
   If the process can not be started on the server, returns the corresponding

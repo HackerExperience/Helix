@@ -3,6 +3,14 @@ defmodule Helix.Software.Event.File.Install do
   import Helix.Event
 
   event Processed do
+    @moduledoc """
+    `FileInstallProcessedEvent` is fired when the FileInstallProcess has
+    finished installing a file.
+
+    It contains the `backend`, as defined at FileInstallProcess, so subscribers
+    can figure out what type of file was installed (virus, firewall etc) and
+    react accordingly.
+    """
 
     alias Helix.Entity.Model.Entity
     alias Helix.Process.Model.Process
@@ -16,7 +24,7 @@ defmodule Helix.Software.Event.File.Install do
       %__MODULE__{
         file: File.t,
         entity_id: Entity.id,
-        backend: term  # TODO
+        backend: FileInstallProcess.backend
       }
 
     @spec new(Process.t, FileInstallProcess.t) ::

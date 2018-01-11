@@ -1,4 +1,9 @@
 defmodule Helix.Software.Internal.File.Meta do
+  @moduledoc """
+  FileInternal.Meta handles metadata that may be unique to each file.
+
+  It is automatically called every time a File is fetched on `FileInternal`.
+  """
 
   import HELL.Macros
 
@@ -16,8 +21,8 @@ defmodule Helix.Software.Internal.File.Meta do
   def gather_metadata(file),
     do: file
 
-    @spec virus_metadata(File.t) ::
-      File.t
+  @spec virus_metadata(File.t) ::
+    File.t
   defp virus_metadata(file) do
     meta =
       %{installed?: VirusInternal.is_active?(file.file_id)}
@@ -29,8 +34,8 @@ defmodule Helix.Software.Internal.File.Meta do
   @spec append_meta(File.meta, File.t) ::
     File.meta
   docp """
-  Appends the newly created meta with the file's current meta, with the new meta
-  taking precedence over the current one in case of conflicts
+  Appends the newly created meta with the file's current meta. The new meta has
+  precedence over the current one in case of conflicts.
   """
   defp append_meta(new_meta, %File{meta: cur_meta}),
     do: Map.merge(new_meta, cur_meta, fn _, a, _b -> a end)

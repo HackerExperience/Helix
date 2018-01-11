@@ -16,6 +16,9 @@ defmodule Helix.Software.Henforcer.File do
   @spec file_exists?(File.id) ::
     {true, file_exists_relay}
     | file_exists_error
+  @doc """
+  Henforces the given file exists on the database.
+  """
   def file_exists?(file_id = %File.ID{}) do
     with file = %{} <- FileQuery.fetch(file_id) do
       reply_ok(relay(%{file: file}))
@@ -82,6 +85,9 @@ defmodule Helix.Software.Henforcer.File do
   @spec is_virus?(File.idt) ::
     {true, is_virus_relay}
     | is_virus_error
+  @doc """
+  Henforces the given file is a virus.
+  """
   def is_virus?(file_id = %File.ID{}) do
     henforce file_exists?(file_id) do
       is_virus?(relay.file)

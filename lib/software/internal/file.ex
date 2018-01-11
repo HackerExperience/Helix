@@ -15,8 +15,7 @@ defmodule Helix.Software.Internal.File do
       |> Repo.one()
 
     if file do
-      file
-      |> format()
+      format(file)
     end
   end
 

@@ -87,6 +87,19 @@ defmodule Helix.Software.Public.File do
     )
   end
 
+  @spec install(
+    File.t,
+    Server.t,
+    Server.t,
+    FileInstallProcess.backend,
+    Network.id,
+    Event.relay)
+  ::
+    {:ok, Process.t}
+    | FileFlow.file_install_execution_error
+  @doc """
+  Installs a generic file using FileInstallProcess with the given `backend`.
+  """
   def install(file = %File{}, gateway, target, backend, network_id, relay) do
     process_type = FileInstallProcess.get_process_type(backend)
 

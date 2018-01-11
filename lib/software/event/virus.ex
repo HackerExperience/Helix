@@ -55,7 +55,8 @@ defmodule Helix.Software.Event.Virus do
       def whom_to_notify(event),
         do: %{account: event.entity_id}
     end
-    # TODO: log
+
+    # TODO: Log that player has installed virus. #369
   end
 
   event InstallFailed do
@@ -97,7 +98,7 @@ defmodule Helix.Software.Event.Virus do
 
       def generate_payload(event, _socket) do
         data = %{
-          reason: event.reason
+          reason: to_string(event.reason)
         }
 
         {:ok, data}
