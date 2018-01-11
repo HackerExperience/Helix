@@ -3,6 +3,7 @@ defmodule Helix.Software.Internal.File do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Repo
+  alias __MODULE__, as: FileInternal
 
   @spec fetch(File.id) ::
     File.t
@@ -14,22 +15,26 @@ defmodule Helix.Software.Internal.File do
       |> Repo.one()
 
     if file do
-      File.format(file)
+      format(file)
     end
   end
 
-  @spec fetch_best(term, term) ::
+  @spec fetch_best(Storage.t, File.Module.name) ::
     best :: File.t
     | nil
   def fetch_best(storage, module) do
     best =
       storage
       |> File.Query.by_version(module)
+      |> File.Query.only(1)
       |> Repo.all()
 
     case best do
-      [file_id] ->
-        fetch(file_id)
+      [file] ->
+        file
+        |> Repo.preload(:modules)
+        |> format()
+
       [] ->
         nil
     end
@@ -44,7 +49,19 @@ defmodule Helix.Software.Internal.File do
     storage
     |> File.Query.by_storage()
     |> Repo.all()
-    |> Enum.map(&File.format/1)
+    |> Enum.map(&format/1)
+  end
+
+  @spec format(File.t) ::
+    File.t
+  @doc """
+  Formats the file, making sure its metadata is retrieved and its modules are
+  converted to a more friendly format (defined by File.Module).
+  """
+  def format(file = %File{}) do
+    file
+    |> FileInternal.Meta.gather_metadata()
+    |> File.format()
   end
 
   @spec create(File.creation_params, File.modules) ::
@@ -56,14 +73,14 @@ defmodule Helix.Software.Internal.File do
   Modules, if any, are inserted alongside the file, in a transaction.
   """
   def create(file_params, modules) do
-    # TODO: Check storage requirements
+    # TODO: Check storage requirements #279
     result =
       file_params
       |> File.create_changeset(modules)
       |> Repo.insert()
 
     with {:ok, file} <- result do
-      {:ok, File.format(file)}
+      {:ok, format(file)}
     end
   end
 

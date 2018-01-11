@@ -16,6 +16,8 @@ defmodule Helix.Account.Action.Flow.Account do
     | {:error, :internal}
   @doc """
   Setups the input account. Most notably, the initial server.
+
+  Emits EntityCreatedEvent
   """
   def setup_account(acc = %Account{}, relay) do
     flowing do

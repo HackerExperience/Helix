@@ -65,6 +65,7 @@ defmodule Helix.Process.Model.Process do
     | :file_download
     | :cracker_bruteforce
     | :cracker_overflow
+    | :install_virus
 
   @typedoc """
   List of signals a process may receive during its lifetime.
@@ -255,7 +256,7 @@ defmodule Helix.Process.Model.Process do
     # Which network (if any) is this process bound to
     field :network_id, Network.ID
 
-    # Which connection (if any) is the transport method for this process
+    # Which connection (if any) is used as transport method for this process
     field :connection_id, Connection.ID
 
     ### Helix.Process required data

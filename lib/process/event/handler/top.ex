@@ -16,6 +16,8 @@ defmodule Helix.Process.Event.Handler.TOP do
   @doc """
   `wake_me_up` is a handler for the `TOPBringMeToLifeEvent`, which is fired at
   the moment a process is expected to be completed.
+
+  May emit ProcessCompletedEvent
   """
   def wake_me_up(event = %TOPBringMeToLifeEvent{}) do
     process = ProcessQuery.fetch(event.process_id)
@@ -39,6 +41,8 @@ defmodule Helix.Process.Event.Handler.TOP do
   @doc """
   `recalque_handler` is a generic handler for events that should cause a TOP
   recalculation.
+
+  Emits ProcessCreatedEvent or ProcessCreateFailedEvent
   """
   def recalque_handler(event = %ProcessCreatedEvent{confirmed: false}) do
     case call_recalque(event.process, event) do

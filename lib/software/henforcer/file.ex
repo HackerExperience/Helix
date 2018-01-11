@@ -4,6 +4,7 @@ defmodule Helix.Software.Henforcer.File do
 
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
+  alias Helix.Software.Model.Software
   alias Helix.Software.Henforcer.Storage, as: StorageHenforcer
   alias Helix.Software.Query.File, as: FileQuery
 
@@ -15,6 +16,9 @@ defmodule Helix.Software.Henforcer.File do
   @spec file_exists?(File.id) ::
     {true, file_exists_relay}
     | file_exists_error
+  @doc """
+  Henforces the given file exists on the database.
+  """
   def file_exists?(file_id = %File.ID{}) do
     with file = %{} <- FileQuery.fetch(file_id) do
       reply_ok(relay(%{file: file}))
@@ -70,5 +74,32 @@ defmodule Helix.Software.Henforcer.File do
         reply_error({:module, :not_found})
     end
     |> wrap_relay(%{server: server})
+  end
+
+  @type is_virus_relay :: %{file: File.t}
+  @type is_virus_relay_partial :: is_virus_relay
+  @type is_virus_error ::
+    {false, {:file, :not_virus}, is_virus_relay_partial}
+    | file_exists_error
+
+  @spec is_virus?(File.idt) ::
+    {true, is_virus_relay}
+    | is_virus_error
+  @doc """
+  Henforces the given file is a virus.
+  """
+  def is_virus?(file_id = %File.ID{}) do
+    henforce file_exists?(file_id) do
+      is_virus?(relay.file)
+    end
+  end
+
+  def is_virus?(file = %File{software_type: type}) do
+    if Software.Type.is_virus?(type) do
+      reply_ok()
+    else
+      reply_error({:file, :not_virus})
+    end
+    |> wrap_relay(%{file: file})
   end
 end

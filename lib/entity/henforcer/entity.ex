@@ -2,8 +2,11 @@ defmodule Helix.Entity.Henforcer.Entity do
 
   import Helix.Henforcer
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Software.Henforcer.Storage, as: StorageHenforcer
+  alias Helix.Software.Model.Storage
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Server.Henforcer.Component, as: ComponentHenforcer
@@ -163,5 +166,37 @@ defmodule Helix.Entity.Henforcer.Entity do
       reply_error({:network_connection, :not_belongs})
     end
     |> wrap_relay(%{entity_network_connections: owned, entity: entity})
+  end
+
+  @type owns_storage_relay :: %{entity: Entity.t, storage: Storage.t}
+  @type owns_storage_relay_partial :: map
+  @type owns_storage_error ::
+    {false, {:storage, :not_belongs}, owns_storage_relay_partial}
+    | entity_exists_error
+    | StorageHenforcer.storage_exists_error
+
+  @spec owns_storage?(Entity.idt, Storage.idt) ::
+    {true, owns_storage_relay}
+    | owns_storage_error
+  @doc """
+  Henforces the Entity is the owner of the given Storage.
+  """
+  def owns_storage?(entity_id = %Entity.ID{}, storage) do
+    henforce entity_exists?(entity_id) do
+      owns_storage?(relay.entity, storage)
+    end
+  end
+
+  def owns_storage?(entity, storage_id = %Storage.ID{}) do
+    henforce StorageHenforcer.storage_exists?(storage_id) do
+      owns_storage?(entity, relay.storage)
+    end
+  end
+
+  def owns_storage?(entity = %Entity{}, storage = %Storage{}) do
+    {:ok, server_id} = CacheQuery.from_storage_get_server(storage)
+
+    henforce_else(owns_server?(entity, server_id), {:storage, :not_belongs})
+    |> wrap_relay(%{entity: entity, storage: storage})
   end
 end

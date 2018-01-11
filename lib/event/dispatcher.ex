@@ -168,6 +168,7 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.File.Added
   event SoftwareEvent.File.Downloaded
   event SoftwareEvent.File.DownloadFailed
+  event SoftwareEvent.File.Install.Processed
   event SoftwareEvent.File.Uploaded
   event SoftwareEvent.File.UploadFailed
   event SoftwareEvent.File.Transfer.Processed
@@ -175,6 +176,8 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Firewall.Stopped
   event SoftwareEvent.LogForge.LogCreate.Processed
   event SoftwareEvent.LogForge.LogEdit.Processed
+  event SoftwareEvent.Virus.Installed
+  event SoftwareEvent.Virus.InstallFailed
 
   # Custom handlers
   event SoftwareEvent.Cracker.Bruteforce.Processed,
@@ -188,6 +191,10 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.File.Downloaded,
     SoftwareHandler.Filesystem,
     :filesystem_handler
+
+  event SoftwareEvent.File.Install.Processed,
+    SoftwareHandler.Virus,
+    :virus_installed
 
   event SoftwareEvent.File.Uploaded,
     SoftwareHandler.Filesystem,

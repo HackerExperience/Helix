@@ -1,8 +1,8 @@
 {
   "handlers": {
     "Account.Account": {
-      "receives": ["Account.Create"],
-      "emits": []
+      "receives": ["Account.Verified"],
+      "emits": ["Entity.Created"]
     },
     "Bank.Account": {
       "receives": ["Bank.Account.Password.Reveal.Processed"],
@@ -35,8 +35,8 @@
     },
     "Software.Cracker": {
         "receives": [
-            "Cracker.Bruteforce.Conclusion",
-            "Cracker.Overflow.Conclusion"
+            "Cracker.Bruteforce.Processed",
+            "Cracker.Overflow.Processed"
         ],
         "emits": [
             "Server.Password.Acquired",
@@ -51,36 +51,66 @@
         ],
         "emits": ["Filesystem.Changed"]
     },
+    "Software.Virus": {
+      "receives": [
+        "File.Install.Processed"
+      ],
+      "emits": [
+        "Virus.Installed",
+        "Virus.InstallFailed"
+      ]
+    },
     "Log.Log": {
-        "receives": [
-            "File.Downloaded",
-            "File.Uploaded",
-            "Log.Forge.Edited",
-            "Log.Forge.Created",
-            "Bank.Transfer.Completed",
-            "Connection.Started"
-        ],
-        "emits": [
-            "Log.Created",
-            "Log.Modified",
-            "Log.Deleted"
-        ]
+      "receives": [
+        "File.Downloaded",
+        "File.Uploaded",
+        "Log.Forge.Edited",
+        "Log.Forge.Created",
+        "Bank.Transfer.Completed",
+        "Connection.Started"
+      ],
+      "emits": [
+        "Log.Created",
+        "Log.Modified",
+        "Log.Deleted"
+      ]
+    },
+    "Process.Process":{
+      "receives": [
+        "Process.Signaled"
+      ],
+      "emits": [
+        "Custom"
+      ]
     },
     "Process.TOP": {
-        "receives": ["Connection.Closed"],
-        "emits": []
+      "receives": [
+        "Connection.Closed",
+        "Process.Created",
+        "TOP.BringMeToLife"
+      ],
+      "emits": [
+        "TOP.Recalcado",
+        "Process.Completed",
+        "Process.Created",
+        "Process.CreateFailed"
+      ]
     },
     "Network.Connection": {
-        "receives": [
-            "Bank.Transfer.Completed"
-        ],
-        "emits": [
-            "Connection.Closed"
-        ]
+      "receives": [
+        "Bank.Transfer.Completed"
+      ],
+      "emits": [
+        "Connection.Closed"
+      ]
     },
     "Tunnel.Connection": {
-        "receives": ["Connection.Closed"],
-        "emits": []
+      "receives": ["Connection.Closed"],
+      "emits": []
+    },
+    "Story.Manager": {
+      "receives": ["Entity.Created"],
+      "emits": ["Steppable (custom)"]
     },
     "Story.Story": {
       "receives": ["All"],
@@ -96,35 +126,40 @@
     }
   },
   "flows": {
+    "Account.Account": ["Entity.Created"],
     "Bank.Account": [
       "Bank.Account.Login",
       "Connection.Started"
     ],
     "Bank.Transfer": [
-        "Connection.Started",
-        "Process.Created"
+      "Connection.Started",
+      "Process.Created"
     ],
     "Software.File.Transfer": [
-        "Connection.Started",
-        "Process.Created"
+      "Connection.Started",
+      "Process.Created"
     ],
     "Software.Software.Cracker": [
-        "Connection.Started",
-        "Process.Created"
+      "Connection.Started",
+      "Process.Created"
     ],
     "Software.Software.Firewall": [
-        "Process.Created",
-        "Firewall.Started"
+      "Process.Created",
+      "Firewall.Started"
     ],
     "Software.Software.LogForger": [
-        "Process.Created"
+      "Process.Created"
+    ],
+    "Story.Manager": [
+      "Story.Proceeded"
     ]
   },
   "process_conclusion": [
-    "File.Transfer.Processed",
     "Bank.Account.Password.Reveal.Processed",
-    "Cracker.Bruteforce.Conclusion",
-    "Cracker.Overflow.Conclusion"
+    "Cracker.Bruteforce.Processed",
+    "Cracker.Overflow.Processed",
+    "File.Install.Processed",
+    "File.Transfer.Processed"
   ],
   "notificable": [
     "Log.Created",
@@ -132,10 +167,13 @@
     "Log.Deleted",
     "Server.Password.Acquired",
     "Process.Created",
-    "Process.Conclusion",
+    "Process.Completed",
+    "Process.Killed",
     "File.Uploaded",
     "StoryEmailSentEvent",
-    "StoryReplySentEvent"
+    "StoryReplySentEvent",
+    "Virus.Installed",
+    "Virus.InstallFailed"
   ],
   "missions": {
     "Tutorial": {

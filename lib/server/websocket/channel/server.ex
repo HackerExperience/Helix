@@ -19,6 +19,8 @@ channel Helix.Server.Websocket.Channel.Server do
     as: CrackerBruteforceRequest
   alias Helix.Software.Websocket.Requests.File.Download,
     as: FileDownloadRequest
+  alias Helix.Software.Websocket.Requests.File.Install,
+    as: FileInstallRequest
   alias Helix.Software.Websocket.Requests.PFTP.File.Add,
     as: PFTPFileAddRequest
   alias Helix.Software.Websocket.Requests.PFTP.File.Download,
@@ -157,6 +159,8 @@ channel Helix.Server.Websocket.Channel.Server do
 
   All components (including the mobo) and the NIPs must belong to the player.
 
+  Returns: :ok
+
   Errors:
 
   Henforcer:
@@ -211,6 +215,34 @@ channel Helix.Server.Websocket.Channel.Server do
   + base errors
   """
   topic "file.download", FileDownloadRequest
+
+  @doc """
+  Installs a file.
+
+  This endpoint allows some files to be installed in a generic fashion. Only
+  some files can be installed using this endpoint, they are:
+  - Viruses (:virus_*)
+
+  Params:
+  - *file_id: Which file to install.
+
+  Returns: :ok
+
+  Errors:
+
+  Henforcer (all):
+  - "file_not_installabe": Given file is not installable.
+
+  Henforcer (virus):
+  - "entity_has_virus_on_storage": Entity already has one virus # TODO ERRADO
+  - "virus_active": Trying to install a virus that is already installed
+  - "virus_self_install": Trying to install a virus on a server owned by the
+    same player who is installing the virus
+
+  Input validation:
+  + base_errors
+  """
+  topic "file.install", FileInstallRequest
 
   @doc """
   Activates/enables the PublicFTP server of the player. Creates a new PublicFTP
