@@ -166,6 +166,7 @@ defmodule Helix.Server.Henforcer.Component do
       components
       |> Enum.reduce_while(init, fn {slot_id, comp_id}, {{true, acc}, cache} ->
         with \
+          true <- not is_nil(comp_id) || :empty_component,
           {true, r1} <- component_exists?(comp_id),
           component = r1.component,
 
@@ -184,6 +185,11 @@ defmodule Helix.Server.Henforcer.Component do
 
           {:cont, {{true, new_acc}, r2.owned_components}}
         else
+          # Component may be empty, which is a valid input that does not need to
+          # go through the standard verifications above
+          :empty_component ->
+            {:cont, {{true, acc}, cache}}
+
           error ->
             {:halt, {error, cache}}
         end
@@ -253,9 +259,6 @@ defmodule Helix.Server.Henforcer.Component do
       {true, _} <- has_public_nip?(r2.network_connections)
     do
       reply_ok(relay([r0, r1, r2]))
-    else
-      error ->
-        error
     end
   end
 
