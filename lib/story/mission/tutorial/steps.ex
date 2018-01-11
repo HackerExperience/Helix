@@ -27,9 +27,10 @@ defmodule Helix.Story.Mission.Tutorial do
 
   step DownloadCrackerPublicFtp do
 
-    alias Helix.Software.Model.File
     alias Helix.Server.Model.Server
     alias Helix.Server.Query.Server, as: ServerQuery
+    alias Helix.Software.Model.File
+    alias Helix.Story.Action.Context, as: ContextAction
 
     alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
 
@@ -48,10 +49,10 @@ defmodule Helix.Story.Mission.Tutorial do
       send: "give_more_info"
 
     def setup(step, _) do
-      {:ok, server, %{entity: _e}} = StoryMake.char(step.manager.network_id)
+      {:ok, server, %{entity: entity}} = StoryMake.char(step.manager.network_id)
 
-      # ContextAction.save(@contact, :server_id, server)
-      # ContextAction.save(@contact, :entity_id, entity)
+      ContextAction.save(step.entity_id, @contact, :server_id, server.server_id)
+      ContextAction.save(step.entity_id, @contact, :entity_id, entity.entity_id)
 
       # Create the Cracker the player is supposed to download
       cracker = MakeFile.cracker!(server, %{bruteforce: 10, overflow: 10})

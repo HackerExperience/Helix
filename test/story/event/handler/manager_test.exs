@@ -7,6 +7,7 @@ defmodule Helix.Story.Event.Handler.ManagerTest do
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Story.Model.Step
+  alias Helix.Story.Query.Context, as: ContextQuery
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Test.Event.Helper, as: EventHelper
@@ -47,6 +48,9 @@ defmodule Helix.Story.Event.Handler.ManagerTest do
 
       # Which happens to be the first one
       assert step.name == Step.first_step_name()
+
+      # And the Story.Context entry has been created for that Entity
+      assert ContextQuery.fetch(entity.entity_id)
     end
   end
 end

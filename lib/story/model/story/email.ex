@@ -96,7 +96,7 @@ defmodule Helix.Story.Model.Story.Email do
     formatted_emails =
       entry.emails
       |> Enum.map(&format_email/1)
-      |> Enum.sort(&(&2.timestamp >= &1.timestamp))
+      |> Enum.sort(&(DateTime.compare(&2.timestamp, &1.timestamp) == :gt))
 
     %{entry| emails: formatted_emails}
   end

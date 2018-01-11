@@ -33,7 +33,6 @@ defmodule Helix.Story.Event.Handler.Manager do
 
         # Start the story (creates the first step)
         {:ok, _} <- StoryFlow.start_story(entity, manager, event)
-
       do
         {:ok, server, motherboard}
       end
