@@ -5,6 +5,8 @@ defmodule Helix.Account.Event.Handler.Account do
 
   @doc """
   When an account is verified, we must set up its initial server, storyline etc.
+
+  Emits EntityCreatedEvent
   """
   def account_created(event = %AccountVerifiedEvent{}),
     do: AccountFlow.setup_account(event.account, event)
