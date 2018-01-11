@@ -6,23 +6,30 @@ defmodule Helix.Software.Action.Flow.File do
   alias Helix.Software.Model.File
 
   alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
+  alias Helix.Software.Process.File.Install, as: FileInstallProcess
 
   @type params ::
     BruteforceProcess.creation_params
-
-  @type executable_errors ::
-    bruteforce_execution_error
+    | FileInstallProcess.creation_params
 
   @type meta ::
     BruteforceProcess.Executable.meta
+    | FileInstallProcess.Executable.meta
+
+  @type executable_errors ::
+    bruteforce_execution_error
+    | file_install_execution_error
 
   # Accumulation of all possible executable errors. The types below are useful
   # for caller methods, who are interested in knowing the possible return types
   # without having to alias the corresponding Process (which is an
   # implementation detail).
   @type bruteforce_execution_error :: BruteforceProcess.executable_error
+  @type file_install_execution_error :: FileInstallProcess.executable_error
 
-  @type executable :: {File.t, File.Module.name}
+  @type executable ::
+    {File.t, File.Module.name}
+    | :generic_install
 
   @typep relay :: Event.relay
 
@@ -41,12 +48,7 @@ defmodule Helix.Software.Action.Flow.File do
   error.
   """
   def execute_file(
-    executable = {%File{}, _},
-    gateway = %Server{},
-    target = %Server{},
-    params,
-    meta,
-    relay)
+    executable, gateway = %Server{}, target = %Server{}, params, meta, relay)
   do
     case executable do
       {%File{software_type: :cracker}, :bruteforce} ->
@@ -59,6 +61,9 @@ defmodule Helix.Software.Action.Flow.File do
 
       {%File{}, _} ->
         {:error, :not_executable}
+
+      :generic_install ->
+        FileInstallProcess.execute(gateway, target, params, meta, relay)
     end
   end
 end

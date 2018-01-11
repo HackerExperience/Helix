@@ -176,6 +176,8 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Firewall.Stopped
   event SoftwareEvent.LogForge.LogCreate.Processed
   event SoftwareEvent.LogForge.LogEdit.Processed
+  event SoftwareEvent.Virus.Installed
+  event SoftwareEvent.Virus.InstallFailed
 
   # Custom handlers
   event SoftwareEvent.Cracker.Bruteforce.Processed,

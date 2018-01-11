@@ -31,7 +31,7 @@ defmodule Helix.Server.Query.Server do
     do: get_ip(server.server_id, network)
   def get_ip(server_id, network = %Network{}),
     do: get_ip(server_id, network.network_id)
-  def get_ip(server_id, network_id) do
+  def get_ip(server_id = %Server.ID{}, network_id = %Network.ID{}) do
     case CacheQuery.from_server_get_nips(server_id) do
       {:ok, nips} ->
         nips

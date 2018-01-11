@@ -64,9 +64,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
     # Verifies whether that file is already being transferred to/by the gateway
     transfer_process =
       ProcessQuery.get_custom(
-        process_type,
-        gateway.server_id,
-        %{file_id: file.file_id}
+        process_type, gateway.server_id, %{file_id: file.file_id}
       )
 
     case transfer_process do

@@ -61,7 +61,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
       virus = SoftwareSetup.virus!(storage_id: storage)
 
       # Virus has already been installed by someone else
-      assert {:ok, _} = VirusAction.install(virus, EntitySetup.id())
+      assert {:ok, _, _} = VirusAction.install(virus, EntitySetup.id())
 
       assert {false, reason, _} = VirusHenforcer.can_install?(virus, entity)
       assert reason == {:virus, :active}
@@ -76,7 +76,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
       virus2 = SoftwareSetup.virus!(storage_id: storage)
 
       # Virus1 has been installed
-      assert {:ok, _} = VirusAction.install(virus1, entity.entity_id)
+      assert {:ok, _, _} = VirusAction.install(virus1, entity.entity_id)
 
       assert {false, reason, _} = VirusHenforcer.can_install?(virus2, entity)
       assert reason == {:entity, :has_virus_on_storage}

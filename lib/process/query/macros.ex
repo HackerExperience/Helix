@@ -2,10 +2,10 @@ defmodule Helix.Process.Query.Process.Macros do
 
   alias Helix.Process.Model.Process
 
-  defmacro get_custom(type, meta, do: block) do
+  defmacro get_custom(meta, do: block) do
     quote do
 
-      def get_custom(type = unquote(type), server_id, unquote(meta)) do
+      def get_custom(type, server_id, unquote(meta)) do
         server_id
         |> get_running_processes_of_type_on_server(type)
         |> Enum.filter(unquote(block))

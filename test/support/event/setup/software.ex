@@ -2,7 +2,6 @@ defmodule Helix.Test.Event.Setup.Software do
 
   import HELL.Macros
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
@@ -11,6 +10,8 @@ defmodule Helix.Test.Event.Setup.Software do
 
   alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
   alias Helix.Software.Event.File.DownloadFailed, as: FileDownloadFailedEvent
+  alias Helix.Software.Event.File.Install.Processed,
+    as: FileInstallProcessedEvent
   alias Helix.Software.Event.File.Uploaded, as: FileUploadedEvent
   alias Helix.Software.Event.File.UploadFailed, as: FileUploadFailedEvent
   alias Helix.Software.Event.Cracker.Bruteforce.Processed,
@@ -19,9 +20,10 @@ defmodule Helix.Test.Event.Setup.Software do
     as: OverflowProcessedEvent
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
-  alias Helix.Test.Software.Setup.Flow, as: SoftwareFlowSetup
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   @internet NetworkHelper.internet_id()
 
@@ -49,7 +51,7 @@ defmodule Helix.Test.Event.Setup.Software do
     do: BruteforceProcessedEvent.new(process, process.data)
   def bruteforce_conclusion do
     %BruteforceProcessedEvent{
-      source_entity_id: Entity.ID.generate(),
+      source_entity_id: EntitySetup.id(),
       network_id: @internet,
       target_id: Server.ID.generate(),
       target_server_ip: Random.ipv4()
@@ -93,6 +95,20 @@ defmodule Helix.Test.Event.Setup.Software do
     event
   end
 
+  @doc """
+  Generates a FileInstallProcessed event with fake data.
+  """
+  def file_install_processed(:virus) do
+    virus = SoftwareSetup.virus!()
+    entity_id = EntitySetup.id()
+
+    %FileInstallProcessedEvent{
+      file: virus,
+      entity_id: entity_id,
+      backend: :virus
+    }
+  end
+
   @spec setup_env(:download | :upload, :completed | :failed) ::
     {event :: term, related :: term}
   docp """
@@ -103,8 +119,8 @@ defmodule Helix.Test.Event.Setup.Software do
     # We'll generate the event data based on a real process.
     # That's not necessary, we could generate everything directly here, but by
     # using the process implementation, we are centralizing the implementation
-    # in a singe place, so future changes must be made only on SoftwareFlowSetup
-    {process, _} = SoftwareFlowSetup.file_transfer(type)
+    # in a singe place so future changes must be made only on SoftwareSetup.Flow
+    {process, _} = SoftwareSetup.Flow.file_transfer(type)
 
     {_, [event]} = TOPHelper.soft_complete(process)
 
@@ -119,7 +135,7 @@ defmodule Helix.Test.Event.Setup.Software do
   end
 
   defp setup_env(type, {:failed, reason}) do
-    {process, _} = SoftwareFlowSetup.file_transfer(type)
+    {process, _} = SoftwareSetup.Flow.file_transfer(type)
     {_, event} = TOPHelper.soft_complete(process)
     TOPHelper.top_stop(process.gateway_id)
 

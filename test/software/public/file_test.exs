@@ -80,7 +80,7 @@ defmodule Helix.Software.Public.FileTest do
 
   describe "install/5" do
     test "starts install process (backend: virus)" do
-      {gateway, %{entity: entity}} = ServerSetup.server()
+      {gateway, _} = ServerSetup.server()
       {target, _} = ServerSetup.server()
       virus = SoftwareSetup.file!(type: :virus_spyware)
 

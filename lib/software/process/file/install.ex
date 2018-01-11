@@ -2,7 +2,6 @@ import Helix.Process
 
 process Helix.Software.Process.File.Install do
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Software.Model.File
   alias __MODULE__, as: FileInstallProcess
 
@@ -11,7 +10,8 @@ process Helix.Software.Process.File.Install do
 
   process_struct [:backend]
 
-  @type backend :: [:virus]
+  @type process_type :: :install_virus
+  @type backend :: :virus
 
   @type t ::
     %__MODULE__{
@@ -36,14 +36,33 @@ process Helix.Software.Process.File.Install do
       backend: backend
     }
 
+  @spec new(creation_params) ::
+    t
   def new(%{backend: backend}) do
     %__MODULE__{
       backend: backend
     }
   end
 
+  @spec resources(resources_params) ::
+    resources
   def resources(params = %{file: %File{}, backend: _}),
     do: get_resources(params)
+
+  @spec get_backend(File.t) ::
+    backend
+  @doc """
+  Based on the file to be installed, identify its backend.
+
+  Currently only returns `:virus` as it's the only backend...
+  """
+  def get_backend(%File{}),
+    do: :virus
+
+  @spec get_process_type(backend) ::
+    process_type
+  def get_process_type(:virus),
+    do: :install_virus
 
   processable do
 
@@ -77,7 +96,7 @@ process Helix.Software.Process.File.Install do
 
     # TODO: Use time as a resource instead. #364
     cpu(_) do
-      30
+      300
     end
 
     dynamic do
@@ -89,7 +108,13 @@ process Helix.Software.Process.File.Install do
 
     @type params :: FileInstallProcess.creation_params
 
-    @type meta :: term
+    @type meta ::
+      %{
+        file: File.t,
+        type: process_type
+      }
+
+    @typep process_type :: FileInstallProcess.process_type
 
     resources(_gateway, _target, %{backend: backend}, %{file: file}) do
       %{

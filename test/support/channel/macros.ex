@@ -37,6 +37,23 @@ defmodule Helix.Test.Channel.Macros do
   end
 
   @doc """
+  Use `did_not_emit` to ensure a specific event was not pushed to the client.
+  """
+  defmacro did_not_emit(events, timeout \\ quote(do: 50)) do
+    events = Enum.map(events, &to_string/1)
+
+    quote do
+      all_events = unquote(wait_all(timeout))
+
+      Enum.each(unquote(events), fn event ->
+        if Enum.find(all_events, &(&1.event == event)) do
+          flunk("I received the event \"#{event}\", but you did not want to!")
+        end
+      end)
+    end
+  end
+
+  @doc """
   Debugger/helper that lists all events in the mailbox.
   """
   defmacro list_events do

@@ -5,11 +5,14 @@ defmodule Helix.Software.Public.File do
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
+  alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Action.Flow.File, as: FileFlow
   alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
+
+  alias Helix.Software.Process.File.Install, as: FileInstallProcess
 
   @type download_errors ::
     {:error, {:file, :not_found}}
@@ -82,5 +85,34 @@ defmodule Helix.Software.Public.File do
     FileFlow.execute_file(
       {cracker, :bruteforce}, gateway, target, params, meta, relay
     )
+  end
+
+  def install(file = %File{}, gateway, target, backend, network_id, relay) do
+    process_type = FileInstallProcess.get_process_type(backend)
+
+    params = %{backend: backend}
+    meta =
+      %{
+        file: file,
+        type: process_type,
+        network_id: network_id
+      }
+
+    install_process =
+      ProcessQuery.get_custom(
+        process_type, gateway.server_id, %{file_id: file.file_id}
+      )
+
+    # Verifies whether the given file is already being installed, in which case
+    # we immediately return the existing process
+    case install_process do
+      [process] ->
+        {:ok, process}
+
+      nil ->
+        FileFlow.execute_file(
+          :generic_install, gateway, target, params, meta, relay
+        )
+    end
   end
 end

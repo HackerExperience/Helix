@@ -24,7 +24,7 @@ defmodule Helix.Software.Event.File.Install do
     def new(process = %Process{}, %FileInstallProcess{backend: backend}) do
       %__MODULE__{
         file: FileQuery.fetch(process.file_id),
-        entity_id: process.entity_id,
+        entity_id: process.source_entity_id,
         backend: backend
       }
     end

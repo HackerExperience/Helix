@@ -30,11 +30,15 @@ defmodule Helix.Process do
         defdelegate execute(gateway, target, params, meta, relay),
           to: __MODULE__.Executable
 
-        @doc """
-        Returns the process type.
-        """
-        def get_process_type,
-          do: @process_type
+        if @process_type do
+
+          @doc """
+          Returns the process type.
+          """
+          def get_process_type,
+            do: @process_type
+
+        end
       end
 
     end

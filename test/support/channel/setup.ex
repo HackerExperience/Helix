@@ -89,9 +89,8 @@ defmodule Helix.Test.Channel.Setup do
     acc_without_socket = not is_nil(opts[:account_id]) and is_nil(opts[:socket])
     socket_without_acc = is_nil(opts[:account_id]) and not is_nil(opts[:socket])
 
-    if acc_without_socket or socket_without_acc do
-      raise "You must specify both :account_id and :socket"
-    end
+    if acc_without_socket or socket_without_acc,
+      do: raise "You must specify both :account_id and :socket"
 
     {socket, account_id, socket_related} =
       if opts[:socket] do
