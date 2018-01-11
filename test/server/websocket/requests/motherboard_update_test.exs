@@ -228,7 +228,61 @@ defmodule Helix.Server.Websocket.Requests.MotherboardUpdateTest do
       assert request.meta.entity_network_connections
     end
 
-    test "rejects when something is wrong (update)" do
+    @tag :regression
+    test "rejects when it's missing the minimum components" do
+      {server, %{entity: entity}} = ServerSetup.server()
+
+      {cpu, _} = ComponentSetup.component(type: :cpu)
+      {ram, _} = ComponentSetup.component(type: :ram)
+      {nic, _} = ComponentSetup.component(type: :nic)
+      {hdd, _} = ComponentSetup.component(type: :hdd)
+
+      EntityAction.link_component(entity, cpu)
+      EntityAction.link_component(entity, ram)
+      EntityAction.link_component(entity, nic)
+      EntityAction.link_component(entity, hdd)
+
+      # Create a new NC
+      {:ok, new_nc} =
+        NetworkAction.Connection.create(@internet_id, Random.ipv4(), entity)
+
+      random_component = Enum.random(["cpu_1", "ram_1", "nic_1", "hdd_1"])
+
+      params =
+        %{
+          "motherboard_id" => to_string(server.motherboard_id),
+          "slots" => %{
+            "cpu_1" => to_string(cpu.component_id),
+            "ram_1" => to_string(ram.component_id),
+            "hdd_1" => to_string(hdd.component_id),
+            "nic_1" => to_string(nic.component_id)
+          },
+          "network_connections" => %{
+            to_string(nic.component_id) => %{
+              "ip" => Random.ipv4(),  # This IP does not belong to me!!11!
+              "network_id" => to_string(new_nc.network_id)
+            }
+          }
+        }
+        # This will ensure one of the slots will be missing its component
+        |> put_in(["slots", random_component], nil)
+
+      socket =
+        ChannelSetup.mock_server_socket(
+          gateway_id: server.server_id,
+          gateway_entity_id: entity.entity_id,
+          access: :local
+        )
+
+      request = MotherboardUpdateRequest.new(params)
+      assert {:ok, request} = Requestable.check_params(request, socket)
+      assert {:error, %{message: reason}, _} =
+        Requestable.check_permissions(request, socket)
+
+      assert reason == "motherboard_missing_initial_components"
+    end
+
+    test "rejects when something nip is invalid" do
       {server, %{entity: entity}} = ServerSetup.server()
 
       {cpu, _} = ComponentSetup.component(type: :cpu)
