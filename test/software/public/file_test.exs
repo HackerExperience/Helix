@@ -46,7 +46,9 @@ defmodule Helix.Software.Public.FileTest do
       assert process.source_entity_id == source_entity.entity_id
       assert process.data.target_server_ip == target_nip.ip
 
-      # :timer.sleep(100)
+      refute process.target_file_id
+      refute process.target_connection_id
+
       TOPHelper.top_stop(source_server.server_id)
       CacheHelper.sync_test()
     end
@@ -69,10 +71,13 @@ defmodule Helix.Software.Public.FileTest do
       assert {:ok, process} =
         FilePublic.download(gateway, destination, tunnel, storage, file, @relay)
 
-      assert process.file_id == file.file_id
+      assert process.target_file_id == file.file_id
       assert process.type == :file_download
       assert process.data.connection_type == :ftp
       assert process.data.type == :download
+
+      refute process.file_id
+      refute process.target_connection_id
 
       TOPHelper.top_stop(gateway)
     end
@@ -87,11 +92,14 @@ defmodule Helix.Software.Public.FileTest do
       assert {:ok, process} =
         FilePublic.install(virus, gateway, target, :virus, @internet_id, @relay)
 
-      assert process.file_id == virus.file_id
+      assert process.target_file_id == virus.file_id
       assert process.gateway_id == gateway.server_id
       assert process.target_id == target.server_id
       assert process.network_id == @internet_id
       refute process.connection_id
+
+      refute process.file_id
+      refute process.target_connection_id
 
       assert process.data.backend == :virus
 

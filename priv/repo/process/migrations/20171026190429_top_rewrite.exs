@@ -13,11 +13,12 @@ defmodule Helix.Process.Repo.Migrations.TOPRewrite do
       add :gateway_id, :inet, null: false
       add :target_id, :inet, null: false
       add :source_entity_id, :inet, null: false
-
-      # Custom keys
-      add :file_id, :inet
       add :network_id, :inet
       add :connection_id, :inet
+
+      # Custom keys
+      add :file_id, :inet  # Renamed to `target_file_id`
+      # add :target_connection_id, :inet
 
       # Helix.Process stuff
       add :data, :jsonb, null: false
@@ -52,10 +53,12 @@ defmodule Helix.Process.Repo.Migrations.TOPRewrite do
 
     # Used on e.g. FileDelete operations, where the underlying process should be
     # killed if the file was modified.
-    create index(:processes, [:file_id])
+    create index(:processes, [:file_id])  # Changed to partial
 
     # Used on e.g. ConnectionClosed operations, where the underlying process
     # should be killed if the connection was terminated
-    create index(:processes, [:connection_id])
+    create index(:processes, [:connection_id])  # Changed to partial
+
+    # create index(:processes, [:target_connection_id]) (partial)
   end
 end

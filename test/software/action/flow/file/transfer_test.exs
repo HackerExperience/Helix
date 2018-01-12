@@ -30,11 +30,13 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Generated process has the expected data
       assert process.type == :file_download
-      assert process.file_id == file.file_id
+      assert process.target_file_id == file.file_id
       assert process.data.type == :download
       assert process.data.connection_type == :ftp
       assert process.data.destination_storage_id ==
         destination_storage.storage_id
+      refute process.file_id
+      refute process.target_connection_id
 
       # Generated connection is valid
       connection = TunnelQuery.fetch_connection(process.connection_id)
@@ -67,11 +69,13 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Generated process has the expected data
       assert process.type == :file_upload
-      assert process.file_id == file.file_id
+      assert process.target_file_id == file.file_id
       assert process.data.type == :upload
       assert process.data.connection_type == :ftp
       assert process.data.destination_storage_id ==
         destination_storage.storage_id
+      refute process.file_id
+      refute process.target_connection_id
 
       # Generated connection is valid
       connection = TunnelQuery.fetch_connection(process.connection_id)
@@ -104,11 +108,14 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Generated process has the expected data
       assert process.type == :file_download
-      assert process.file_id == file.file_id
+      assert process.target_file_id == file.file_id
       assert process.data.type == :download
       assert process.data.connection_type == :public_ftp
       assert process.data.destination_storage_id ==
         destination_storage.storage_id
+
+      refute process.file_id
+      refute process.target_connection_id
 
       # Generated connection is valid; tunnel was created
       connection = TunnelQuery.fetch_connection(process.connection_id)

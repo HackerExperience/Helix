@@ -55,6 +55,10 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       assert process.network_id == target_nip.network_id
       assert process.data.target_server_ip == target_nip.ip
 
+      # Bruteforce process has no target file or target connection
+      refute process.target_file_id
+      refute process.target_connection_id
+
       # CrackerBruteforce connection is correct
       connection = TunnelQuery.fetch_connection(process.connection_id)
 

@@ -93,10 +93,20 @@ defprotocol Helix.Process.Model.Processable do
   @spec connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}
   @doc """
-  Called when the process receives a SIGCONND. Also receives the connection that
-  was recently closed.
+  Called when the process receives a SIGCONND, meaning the connection that
+  originated that process has been closed. Also receives the connection that was
+  recently closed.
   """
   def connection_closed(data, process, connection)
+
+  @spec target_connection_closed(t, Process.t, Connection.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIGTGTCONND, meaning the connection that
+  process is targeting has been closed. Also receives the connection that was
+  recently closed.
+  """
+  def target_connection_closed(data, process, connection)
 
   @spec after_read_hook(term) ::
     t

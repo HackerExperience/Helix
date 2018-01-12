@@ -30,9 +30,13 @@ defmodule Helix.Software.Public.PFTPTest do
 
       assert process.gateway_id == gateway.server_id
       assert process.target_id == pftp.server_id
-      assert process.file_id == file.file_id
+      assert process.target_file_id == file.file_id
       assert process.type == :file_download
+      assert process.connection_id
       assert process.data.connection_type == :public_ftp
+
+      refute process.file_id
+      refute process.target_connection_id
 
       TOPHelper.top_stop(gateway)
     end

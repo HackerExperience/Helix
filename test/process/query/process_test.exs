@@ -71,7 +71,7 @@ defmodule Helix.Process.Query.ProcessTest do
         ProcessQuery.get_custom(
           download1.type,
           gateway_id,
-          %{file_id: download1.file_id}
+          %{target_file_id: download1.target_file_id}
         )
 
       assert process.process_id == download1.process_id
@@ -81,14 +81,18 @@ defmodule Helix.Process.Query.ProcessTest do
         ProcessQuery.get_custom(
           download1.type,
           gateway_id,
-          %{file_id: File.ID.generate()}
+          %{target_file_id: File.ID.generate()}
         )
 
       TOPHelper.top_stop()
     end
 
     test "returns empty list if no process is found" do
-      refute ProcessQuery.get_custom(:file_download, Server.ID.generate(), %{})
+      refute ProcessQuery.get_custom(
+        :file_download,
+        Server.ID.generate(),
+        %{file_id: File.ID.generate()}
+      )
     end
   end
 end

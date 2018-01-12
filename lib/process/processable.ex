@@ -37,6 +37,10 @@ defmodule Helix.Process.Processable do
           {{:SIGKILL, :connection_closed}, []}
         end
 
+        on_target_connection_closed(_process, _data, _connection) do
+          {{:SIGKILL, :target_connection_closed}, []}
+        end
+
         @doc false
         def after_read_hook(data),
           do: data
@@ -106,7 +110,33 @@ defmodule Helix.Process.Processable do
   defmacro on_connection_closed(process, data, connection, do: block) do
     quote do
 
-      def connection_closed(unquote(data), p = unquote(process), unquote(connection)) do
+      def connection_closed(
+        unquote(data),
+        p = unquote(process),
+        unquote(connection))
+      do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  @doc """
+  Called when the process receives a SIGTGTCONND.
+
+  Defines what should happen when the process' target connection is closed.
+
+  Default behaviour is to send a SIGKILL to itself.
+  """
+  defmacro on_target_connection_closed(process, data, connection, do: block) do
+    quote do
+
+      def target_connection_closed(
+        unquote(data),
+        p = unquote(process),
+        unquote(connection))
+      do
         unquote(block)
         |> add_fingerprint(p)
       end

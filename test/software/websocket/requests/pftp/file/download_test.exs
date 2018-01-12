@@ -148,9 +148,13 @@ defmodule Helix.Software.Websocket.Requests.PFTP.File.DownloadTest do
       assert request.meta.process
 
       process = request.meta.process
-      assert process.file_id == file.file_id
+      assert process.target_file_id == file.file_id
       assert process.gateway_id == gateway.server_id
       assert process.target_id == destination.server_id
+      assert process.connection_id
+
+      refute process.file_id
+      refute process.target_connection_id
 
       TOPHelper.top_stop(gateway)
     end

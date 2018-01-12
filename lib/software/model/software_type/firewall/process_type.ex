@@ -34,6 +34,10 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
       {:delete, []}
     end
 
+    def target_connection_closed(_, _, _) do
+      {:delete, []}
+    end
+
     def after_read_hook(data),
       do: data
   end

@@ -26,8 +26,10 @@ defmodule Helix.Test.Process.Setup do
   - target_id:
   - entity_id: source entity id.
   - file_id:
+  - target_file_id:
   - network_id:
   - connection_id:
+  - target_connection_id:
   - single_server:
   - type: Set process type. If not specified, a random one is generated.
   - data: Data for that specific process type. Ignored if `type` is not set.
@@ -48,7 +50,9 @@ defmodule Helix.Test.Process.Setup do
       end
 
     file_id = Keyword.get(opts, :file_id, nil)
+    target_file_id = Keyword.get(opts, :target_file_id, nil)
     connection_id = Keyword.get(opts, :connection_id, nil)
+    target_connection_id = Keyword.get(opts, :target_connection_id, nil)
     network_id = Keyword.get(opts, :network_id, @internet)
 
     meta = %{
@@ -57,7 +61,9 @@ defmodule Helix.Test.Process.Setup do
       target_entity_id: target_entity_id,
       target_id: target_id,
       file_id: file_id,
+      target_file_id: target_file_id,
       connection_id: connection_id,
+      target_connection_id: target_connection_id,
       network_id: network_id
     }
 
@@ -82,8 +88,10 @@ defmodule Helix.Test.Process.Setup do
       source_entity_id: meta.source_entity_id,
       target_id: meta.target_id,
       file_id: meta.file_id,
+      target_file_id: meta.target_file_id,
       network_id: meta.network_id,
       connection_id: meta.connection_id,
+      target_connection_id: meta.target_connection_id,
       static: static,
       l_limit: l_limit,
       r_limit: r_limit,

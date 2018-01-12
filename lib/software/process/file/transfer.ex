@@ -215,7 +215,7 @@ process Helix.Software.Process.File.Transfer do
       }
     end
 
-    file(_gateway, _target, _params, %{file: file}) do
+    target_file(_gateway, _target, _params, %{file: file}) do
       file.file_id
     end
 

@@ -1,19 +1,19 @@
 defmodule Helix.Test.Process.View.Helper do
 
   def pview_access_full do
-    ~w/
-      origin_ip
-      priority
-      usage
-      connection_id
-    /a
+    [
+      :origin_ip,
+      :priority,
+      :usage,
+      :connection_id,
+      :target_connection_id,
+      :file
+    ]
     |> Enum.sort()
   end
 
   def pview_access_partial do
-    ~w/
-      connection_id
-    /a
+    [:connection_id, :target_connection_id]
     |> Enum.sort()
   end
 

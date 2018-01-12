@@ -26,7 +26,8 @@ defmodule Helix.Process.Public.View.Process.Helper do
   """
   def default_process_render(process, :partial) do
     partial = %{
-      connection_id: nil
+      connection_id: nil,
+      target_connection_id: nil
     }
 
     common = default_process_common(process, :partial)
@@ -35,7 +36,11 @@ defmodule Helix.Process.Public.View.Process.Helper do
   end
   def default_process_render(process, :full) do
     connection_id = process.connection_id && to_string(process.connection_id)
+    target_connection_id =
+      process.target_connection_id && to_string(process.target_connection_id)
+
     usage = build_usage(process)
+    file = build_file(process.file_id, :full)
 
     # OPTIMIZE: Possibly cache `origin_ip` and `target_ip` on the Process.t
     # It's used on several other places and must be queried every time it's
@@ -47,6 +52,8 @@ defmodule Helix.Process.Public.View.Process.Helper do
       priority: process.priority,
       usage: usage,
       connection_id: connection_id,
+      target_connection_id: target_connection_id,
+      file: file
     }
 
     common = default_process_common(process, :full)
@@ -72,13 +79,13 @@ defmodule Helix.Process.Public.View.Process.Helper do
   defp default_process_common(process, type) do
     network_id = process.network_id && to_string(process.network_id)
 
-    file = build_file(process.file_id, type)
+    target_file = build_file(process.target_file_id, type)
     progress = build_progress(process)
     target_ip = get_target_ip(process)
 
     %{
       process_id: to_string(process.process_id),
-      file: file,
+      target_file: target_file,
       progress: progress,
       state: to_string(process.state),
       network_id: network_id,
@@ -93,13 +100,8 @@ defmodule Helix.Process.Public.View.Process.Helper do
   Given the process file ID, builds up the `file` object that will be sent to
   the client.
   """
-  defp build_file(nil, _) do
-    %{
-      id: nil,
-      name: "Unknown file",
-      version: nil
-    }
-  end
+  defp build_file(nil, _),
+    do: %{}
   defp build_file(file_id, :full) do
     file_id
     |> build_file_common()

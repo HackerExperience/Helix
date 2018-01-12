@@ -156,6 +156,10 @@ defmodule Helix.Software.Model.SoftwareType.LogForge do
       {:delete, []}
     end
 
+    def target_connection_closed(_, _, _) do
+      {:delete, []}
+    end
+
     def state_change(_, process, _, _),
       do: {process, []}
 

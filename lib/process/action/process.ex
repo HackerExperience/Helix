@@ -107,6 +107,9 @@ defmodule Helix.Process.Action.Process do
   defp signal_handler(:SIGCONND, process, %{connection: connection}),
     do: Processable.connection_closed(process.data, process, connection)
 
+  defp signal_handler(:SIGTGTCONND, process, %{connection: connection}),
+    do: Processable.target_connection_closed(process.data, process, connection)
+
   # defp signal_handler(:SIGFILED, process, %{file: file}),
   #   do: Processable.file_deleted(process.data, process, file)
 

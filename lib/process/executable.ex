@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Process.Executable do
   @moduledoc """
   Process.Executable is a simple and declarative approach describing what should
@@ -92,15 +93,25 @@ defmodule Helix.Process.Executable do
       defp get_network_id(_),
         do: %{network_id: nil}
 
-      @spec create_process_params(partial :: map, term) ::
+      @spec merge_params(
+        map,
+        Connection.t | nil | %{connection_id: nil},
+        Connection.t | nil | %{connection_id: nil})
+      ::
         Process.creation_params
-      docp """
-      Merges the partial process params with other data (connection_id).
-      """
-      defp create_process_params(partial, %{connection_id: connection_id}),
-        do: Map.put(partial, :connection_id, connection_id)
-      defp create_process_params(partial, nil),
-        do: Map.put(partial, :connection_id, nil)
+      defp merge_params(params, nil, target_connection),
+        do: merge_params(params, %{connection_id: nil}, target_connection)
+      defp merge_params(params, connection, nil),
+        do: merge_params(params, connection, %{connection_id: nil})
+      defp merge_params(
+        params,
+        %{connection_id: src_connection_id},
+        %{connection_id: tgt_connection_id})
+      do
+        params
+        |> Map.merge(%{connection_id: src_connection_id})
+        |> Map.merge(%{target_connection_id: tgt_connection_id})
+      end
     end
   end
 
@@ -134,25 +145,47 @@ defmodule Helix.Process.Executable do
         |> Event.emit(from: relay)
       end
 
-      @spec setup_connection(Server.t, Server.t, term, meta, {:create, term}) ::
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        {:create, Connection.type},
+        origin :: Connection.t | nil)
+      ::
         {:ok, Connection.t, [event :: term]}
-      docp """
-      Interprets the result of `get_connection/4` and, if required, creates a
-      new connection.
-      """
-      defp setup_connection(gateway, target, _, meta, {:create, conn_type}) do
+      defp setup_connection(gateway, target, _, meta, {:create, type}, _) do
         create_connection(
           meta.network_id,
           gateway.server_id,
           target.server_id,
           meta.bounce,
-          conn_type
+          type
         )
       end
 
-      @spec setup_connection(term, term, term, term, nil | :ok | :noop) ::
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        :same_origin,
+        Connection.t)
+      ::
+        {:ok, Connection.t, []}
+      defp setup_connection(_, _, _, _, :same_origin, origin = %Connection{}),
+        do: {:ok, origin, []}
+
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        nil | :ok | :noop,
+        Connection.t | nil)
+      ::
         {:ok, nil, []}
-      defp setup_connection(_, _, _, _, _),
+      defp setup_connection(_, _, _, _, _, _),
         do: {:ok, nil, []}
 
       @spec create_connection(Network.id, Server.id, Server.id, term, term) ::
@@ -210,11 +243,17 @@ defmodule Helix.Process.Executable do
         # Defaults: in case these functions were not defined, we assume the
         # process is not interested on this (optional) data.
 
+        defp get_connection(_, _, _, _),
+          do: nil
+
         defp get_file(_, _, _, _),
           do: %{file_id: nil}
 
-        defp get_connection(_, _, _, _),
+        defp get_target_connection(_, _, _, _),
           do: nil
+
+        defp get_target_file(_, _, _, _),
+          do: %{target_file_id: nil}
       end
     end
   end
@@ -237,6 +276,7 @@ defmodule Helix.Process.Executable do
         process_data = get_process_data(unquote(params))
         resources = get_resources(unquote_splicing(args))
         file = get_file(unquote_splicing(args))
+        target_file = get_target_file(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
         process_type = get_process_type(unquote(meta))
         network_id = get_network_id(unquote(meta))
@@ -246,22 +286,38 @@ defmodule Helix.Process.Executable do
           |> Map.merge(process_data)
           |> Map.merge(resources)
           |> Map.merge(file)
+          |> Map.merge(target_file)
           |> Map.merge(ownership)
           |> Map.merge(process_type)
           |> Map.merge(network_id)
 
         connection_info = get_connection(unquote_splicing(args))
+        target_connection_info = get_target_connection(unquote_splicing(args))
 
         flowing do
           with \
             {:ok, connection, events} <-
-              setup_connection(unquote_splicing(args), connection_info),
+              setup_connection(unquote_splicing(args), connection_info, nil),
 
+            # Compensated transactions for the potentially new connection
             on_success(fn -> Event.emit(events, from: relay) end),
             on_fail(fn -> close_connection_on_fail(connection, relay) end),
 
-            params = create_process_params(partial, connection),
+            {:ok, target_connection, events} <-
+              setup_connection(
+                unquote_splicing(args), target_connection_info, connection
+              ),
 
+            # Compensated transactions for the potentially new connection
+            on_success(fn -> Event.emit(events, from: relay) end),
+            on_fail(
+              fn -> close_connection_on_fail(target_connection, relay) end
+            ),
+
+            # Merge connection and target_connection data to the process params
+            params = merge_params(partial, connection, target_connection),
+
+            # Finally create the process
             {:ok, process, events} <- ProcessAction.create(params),
 
             on_success(fn -> Event.emit(events, from: relay) end)
@@ -281,10 +337,9 @@ defmodule Helix.Process.Executable do
   end
 
   @doc """
-  Returns the raw result of the Executable's `connection` section. It will
-  be later interpreted by `setup_connection`, which will make sense whether
-  a new connection should be created, and what the process' `connection_id`
-  should be set to.
+  Returns the raw result of the Executable's `connection` section. It will be
+  later interpreted by `setup_connection`, which will make sense whether a new
+  connection should be created, and what the `connection_id` should be set to.
   """
   defmacro connection(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
@@ -296,6 +351,32 @@ defmodule Helix.Process.Executable do
         | nil
       @doc false
       defp get_connection(unquote_splicing(args)) do
+        unquote(block)
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the raw result of the Executable's `target_connection` section. It
+  will be later interpreted by `setup_connection`, which will make sense whether
+  a new connection should be created, and what the `target_connection_id` should
+  be set to.
+
+  If `:same_origin` is returned, the process will target the same connection
+  that originated it.
+  """
+  defmacro target_connection(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_target_connection(term, term, term, term) ::
+        {:create, Connection.type}
+        | :same_origin
+        | nil
+      @doc false
+      defp get_target_connection(unquote_splicing(args)) do
         unquote(block)
       end
 
@@ -343,6 +424,27 @@ defmodule Helix.Process.Executable do
         file_id = unquote(block)
 
         %{file_id: file_id}
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the process' `target_file_id`, as defined on the `target_file` section
+  of the Process.Executable.
+  """
+  defmacro target_file(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_target_file(term, term, term, term) ::
+        %{target_file_id: File.t | nil}
+      @doc false
+      defp get_target_file(unquote_splicing(args)) do
+        file_id = unquote(block)
+
+        %{target_file_id: file_id}
       end
 
     end

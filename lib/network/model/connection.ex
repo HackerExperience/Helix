@@ -23,6 +23,7 @@ defmodule Helix.Network.Model.Connection do
   @type type ::
     :ssh
     | :ftp
+    | :public_ftp
     | :cracker_bruteforce
     | :bank_login
     | :wire_transfer

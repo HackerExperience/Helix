@@ -113,7 +113,7 @@ defmodule Helix.Software.Public.File do
 
     install_process =
       ProcessQuery.get_custom(
-        process_type, gateway.server_id, %{file_id: file.file_id}
+        process_type, gateway.server_id, %{target_file_id: file.file_id}
       )
 
     # Verifies whether the given file is already being installed, in which case

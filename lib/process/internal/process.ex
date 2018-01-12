@@ -47,11 +47,20 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.format/1)
   end
 
-  @spec get_processes_on_connection(Connection.id) ::
+  @spec get_processes_originated_on_connection(Connection.id) ::
     [Process.t]
-  def get_processes_on_connection(connection_id) do
+  def get_processes_originated_on_connection(connection_id) do
     connection_id
     |> Process.Query.by_connection()
+    |> Repo.all()
+    |> Enum.map(&Process.format/1)
+  end
+
+  @spec get_processes_targeting_connection(Connection.id) ::
+    [Process.t]
+  def get_processes_targeting_connection(connection_id) do
+    connection_id
+    |> Process.Query.by_target_connection()
     |> Repo.all()
     |> Enum.map(&Process.format/1)
   end
