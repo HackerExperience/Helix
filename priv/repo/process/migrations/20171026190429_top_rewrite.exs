@@ -14,11 +14,13 @@ defmodule Helix.Process.Repo.Migrations.TOPRewrite do
       add :target_id, :inet, null: false
       add :source_entity_id, :inet, null: false
       add :network_id, :inet
-      add :connection_id, :inet
 
       # Custom keys
-      add :file_id, :inet  # Renamed to `target_file_id`
-      # add :target_connection_id, :inet
+      add :connection_id, :inet  # Renamed to `src_connection_id`
+      # add :tgt_connection_id, :inet
+
+      add :file_id, :inet  # Renamed to `src_file_id`
+      # add :tgt_connection_id, :inet
 
       # Helix.Process stuff
       add :data, :jsonb, null: false
@@ -59,6 +61,7 @@ defmodule Helix.Process.Repo.Migrations.TOPRewrite do
     # should be killed if the connection was terminated
     create index(:processes, [:connection_id])  # Changed to partial
 
-    # create index(:processes, [:target_connection_id]) (partial)
+    # create index(:processes, [:tgt_file_id]) (partial)
+    # create index(:processes, [:tgt_connection_id]) (partial)
   end
 end

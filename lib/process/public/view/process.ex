@@ -36,14 +36,14 @@ defmodule Helix.Process.Public.View.Process do
       origin_ip: Network.ip,
       priority: 0..5,
       usage: resources,
-      connection_id: String.t | nil,
-      target_connection_id: String.t | nil,
-      file: file
+      src_connection_id: String.t | nil,
+      tgt_connection_id: String.t | nil,
+      source_file: file
     }
 
   @typep partial_access ::
     %{
-      connection_id: String.t | nil,
+      source_connection_id: String.t | nil,
       target_connection_id: String.t | nil
     }
 

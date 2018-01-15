@@ -54,10 +54,13 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.CrackerTest do
       assert process_created_event.data.state
       assert process_created_event.data.progress
       assert process_created_event.data.target_ip
+      assert process_created_event.data.access.source_file
 
       process_id = Process.ID.cast!(process_created_event.data.process_id)
       connection_id =
-        Connection.ID.cast!(process_created_event.data.access.connection_id)
+        Connection.ID.cast!(
+          process_created_event.data.access.source_connection_id
+        )
 
       # It definitely worked. Yay!
       assert ProcessQuery.fetch(process_id)

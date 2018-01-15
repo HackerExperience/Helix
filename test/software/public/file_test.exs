@@ -38,16 +38,16 @@ defmodule Helix.Software.Public.FileTest do
           @relay
         )
 
-      assert process.connection_id
+      assert process.src_connection_id
       assert process.gateway_id == source_server.server_id
       assert process.target_id == target_server.server_id
       assert process.network_id == target_nip.network_id
-      assert process.file_id == cracker.file_id
+      assert process.src_file_id == cracker.file_id
       assert process.source_entity_id == source_entity.entity_id
       assert process.data.target_server_ip == target_nip.ip
 
-      refute process.target_file_id
-      refute process.target_connection_id
+      refute process.tgt_file_id
+      refute process.tgt_connection_id
 
       TOPHelper.top_stop(source_server.server_id)
       CacheHelper.sync_test()
@@ -71,13 +71,13 @@ defmodule Helix.Software.Public.FileTest do
       assert {:ok, process} =
         FilePublic.download(gateway, destination, tunnel, storage, file, @relay)
 
-      assert process.target_file_id == file.file_id
+      assert process.tgt_file_id == file.file_id
       assert process.type == :file_download
       assert process.data.connection_type == :ftp
       assert process.data.type == :download
 
-      refute process.file_id
-      refute process.target_connection_id
+      refute process.src_file_id
+      refute process.tgt_connection_id
 
       TOPHelper.top_stop(gateway)
     end
@@ -92,14 +92,14 @@ defmodule Helix.Software.Public.FileTest do
       assert {:ok, process} =
         FilePublic.install(virus, gateway, target, :virus, @internet_id, @relay)
 
-      assert process.target_file_id == virus.file_id
+      assert process.tgt_file_id == virus.file_id
       assert process.gateway_id == gateway.server_id
       assert process.target_id == target.server_id
       assert process.network_id == @internet_id
-      refute process.connection_id
+      refute process.src_connection_id
 
-      refute process.file_id
-      refute process.target_connection_id
+      refute process.src_file_id
+      refute process.tgt_connection_id
 
       assert process.data.backend == :virus
 

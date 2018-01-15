@@ -22,7 +22,7 @@ defmodule Helix.Process.Event.Handler.TOPTest do
     {_, %{params: params}} =
       ProcessSetup.fake_process(
         gateway_id: server.server_id,
-        connection_id: connection.connection_id,
+        src_connection_id: connection.connection_id,
       )
 
     params =
@@ -54,7 +54,7 @@ defmodule Helix.Process.Event.Handler.TOPTest do
     {_, %{params: params}} =
       ProcessSetup.fake_process(
         gateway_id: server.server_id,
-        target_connection_id: connection.connection_id,
+        tgt_connection_id: connection.connection_id,
       )
 
     params =

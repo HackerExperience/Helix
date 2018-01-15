@@ -111,11 +111,11 @@ defmodule Helix.Process.Event.Handler.TOP do
   def object_handler(event = %ConnectionClosedEvent{}) do
     signal_param = %{connection: event.connection}
 
-    # Send SIGCONND for processes that originated on such connection
+    # Send SIGSRCCONND for processes that originated on such connection
     event.connection.connection_id
     |> ProcessQuery.get_processes_originated_on_connection()
     |> filter_self_message(event)
-    |> Enum.each(&ProcessFlow.signal(&1, :SIGCONND, signal_param))
+    |> Enum.each(&ProcessFlow.signal(&1, :SIGSRCCONND, signal_param))
 
     # Send SIGTGTCONND for processes that are targeting such connection
     event.connection.connection_id

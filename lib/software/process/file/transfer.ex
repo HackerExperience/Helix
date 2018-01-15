@@ -219,7 +219,7 @@ process Helix.Software.Process.File.Transfer do
       file.file_id
     end
 
-    connection(_gateway, _target, params, _) do
+    source_connection(_gateway, _target, params, _) do
       {:create, params.connection_type}
     end
   end

@@ -51,7 +51,7 @@ defmodule Helix.Process.Internal.Process do
     [Process.t]
   def get_processes_originated_on_connection(connection_id) do
     connection_id
-    |> Process.Query.by_connection()
+    |> Process.Query.by_source_connection()
     |> Repo.all()
     |> Enum.map(&Process.format/1)
   end

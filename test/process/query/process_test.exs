@@ -71,7 +71,7 @@ defmodule Helix.Process.Query.ProcessTest do
         ProcessQuery.get_custom(
           download1.type,
           gateway_id,
-          %{target_file_id: download1.target_file_id}
+          %{tgt_file_id: download1.tgt_file_id}
         )
 
       assert process.process_id == download1.process_id
@@ -81,7 +81,7 @@ defmodule Helix.Process.Query.ProcessTest do
         ProcessQuery.get_custom(
           download1.type,
           gateway_id,
-          %{target_file_id: File.ID.generate()}
+          %{tgt_file_id: File.ID.generate()}
         )
 
       TOPHelper.top_stop()
@@ -91,7 +91,7 @@ defmodule Helix.Process.Query.ProcessTest do
       refute ProcessQuery.get_custom(
         :file_download,
         Server.ID.generate(),
-        %{file_id: File.ID.generate()}
+        %{src_file_id: File.ID.generate()}
       )
     end
   end

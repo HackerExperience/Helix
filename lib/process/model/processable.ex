@@ -90,14 +90,14 @@ defprotocol Helix.Process.Model.Processable do
   """
   def kill(data, process, reason)
 
-  @spec connection_closed(t, Process.t, Connection.t) ::
+  @spec source_connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}
   @doc """
-  Called when the process receives a SIGCONND, meaning the connection that
+  Called when the process receives a SIGSRCCONND, meaning the connection that
   originated that process has been closed. Also receives the connection that was
   recently closed.
   """
-  def connection_closed(data, process, connection)
+  def source_connection_closed(data, process, connection)
 
   @spec target_connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}

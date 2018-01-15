@@ -46,8 +46,8 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
         )
 
       # Process data is correct
-      assert process.connection_id
-      assert process.file_id == file.file_id
+      assert process.src_connection_id
+      assert process.src_file_id == file.file_id
       assert process.type == :cracker_bruteforce
       assert process.gateway_id == source_server.server_id
       assert process.source_entity_id == source_entity.entity_id
@@ -56,11 +56,11 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       assert process.data.target_server_ip == target_nip.ip
 
       # Bruteforce process has no target file or target connection
-      refute process.target_file_id
-      refute process.target_connection_id
+      refute process.tgt_file_id
+      refute process.tgt_connection_id
 
       # CrackerBruteforce connection is correct
-      connection = TunnelQuery.fetch_connection(process.connection_id)
+      connection = TunnelQuery.fetch_connection(process.src_connection_id)
 
       assert connection.connection_type == :cracker_bruteforce
 

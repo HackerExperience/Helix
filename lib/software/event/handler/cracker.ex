@@ -104,7 +104,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
   """
   defp overflow_of_wire_transfer(process, event) do
     transfer_id = process.data.transfer_id
-    connection_id = process.connection_id
+    connection_id = process.src_connection_id
 
     flowing do
       with \

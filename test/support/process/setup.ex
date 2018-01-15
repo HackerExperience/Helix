@@ -25,11 +25,11 @@ defmodule Helix.Test.Process.Setup do
   - gateway_id:
   - target_id:
   - entity_id: source entity id.
-  - file_id:
-  - target_file_id:
+  - src_file_id:
+  - tgt_file_id:
   - network_id:
-  - connection_id:
-  - target_connection_id:
+  - src_connection_id:
+  - tgt_connection_id:
   - single_server:
   - type: Set process type. If not specified, a random one is generated.
   - data: Data for that specific process type. Ignored if `type` is not set.
@@ -37,6 +37,17 @@ defmodule Helix.Test.Process.Setup do
   Related: source_entity_id :: Entity.id, target_entity_id :: Entity.id
   """
   def fake_process(opts \\ []) do
+    tmp_check = fn key ->
+      if opts[key] do
+        raise "#{inspect key} no longer used"
+      end
+    end
+
+    tmp_check.(:file_id)
+    tmp_check.(:target_file_id)
+    tmp_check.(:connection_id)
+    tmp_check.(:target_connection_id)
+
     gateway_id = Keyword.get(opts, :gateway_id, ServerSetup.id())
     source_entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
     {target_id, target_entity_id} =
@@ -49,10 +60,10 @@ defmodule Helix.Test.Process.Setup do
           {ServerSetup.id(), EntitySetup.id()}
       end
 
-    file_id = Keyword.get(opts, :file_id, nil)
-    target_file_id = Keyword.get(opts, :target_file_id, nil)
-    connection_id = Keyword.get(opts, :connection_id, nil)
-    target_connection_id = Keyword.get(opts, :target_connection_id, nil)
+    src_file_id = Keyword.get(opts, :src_file_id, nil)
+    tgt_file_id = Keyword.get(opts, :tgt_file_id, nil)
+    src_connection_id = Keyword.get(opts, :src_connection_id, nil)
+    tgt_connection_id = Keyword.get(opts, :tgt_connection_id, nil)
     network_id = Keyword.get(opts, :network_id, @internet)
 
     meta = %{
@@ -60,10 +71,10 @@ defmodule Helix.Test.Process.Setup do
       gateway_id: gateway_id,
       target_entity_id: target_entity_id,
       target_id: target_id,
-      file_id: file_id,
-      target_file_id: target_file_id,
-      connection_id: connection_id,
-      target_connection_id: target_connection_id,
+      src_file_id: src_file_id,
+      tgt_file_id: tgt_file_id,
+      src_connection_id: src_connection_id,
+      tgt_connection_id: tgt_connection_id,
       network_id: network_id
     }
 
@@ -87,11 +98,11 @@ defmodule Helix.Test.Process.Setup do
       gateway_id: meta.gateway_id,
       source_entity_id: meta.source_entity_id,
       target_id: meta.target_id,
-      file_id: meta.file_id,
-      target_file_id: meta.target_file_id,
+      src_file_id: meta.src_file_id,
+      tgt_file_id: meta.tgt_file_id,
       network_id: meta.network_id,
-      connection_id: meta.connection_id,
-      target_connection_id: meta.target_connection_id,
+      src_connection_id: meta.src_connection_id,
+      tgt_connection_id: meta.tgt_connection_id,
       static: static,
       l_limit: l_limit,
       r_limit: r_limit,

@@ -3,37 +3,41 @@ defmodule Helix.Process.Repo.Migrations.AddSourceConnection do
 
   def change do
     alter table(:processes, primary_key: false) do
-      add :target_connection_id, :inet
-      add :target_file_id, :inet
+      add :tgt_connection_id, :inet
+      add :tgt_file_id, :inet
     end
+
+    # Rename process origins to `src_*`
+    rename table(:processes), :file_id, to: :src_file_id
+    rename table(:processes), :connection_id, to: :src_connection_id
 
     # Index used to query processes based on the connection they are targeting
     create index(
       :processes,
-      [:target_connection_id],
-      where: "target_connection_id IS NOT NULL"
+      [:tgt_connection_id],
+      where: "tgt_connection_id IS NOT NULL"
     )
 
     # Index used to query processes based on the file they are targeting
     create index(
       :processes,
-      [:target_file_id],
-      where: "target_file_id IS NOT NULL"
+      [:tgt_file_id],
+      where: "tgt_file_id IS NOT NULL"
     )
 
     # Recreate processes indexes using partial ones
     drop index(:processes, [:file_id])
     create index(
       :processes,
-      [:file_id],
-      where: "file_id IS NOT NULL"
+      [:src_file_id],
+      where: "src_file_id IS NOT NULL"
     )
 
     drop index(:processes, [:connection_id])
     create index(
       :processes,
-      [:connection_id],
-      where: "connection_id IS NOT NULL"
+      [:src_connection_id],
+      where: "src_connection_id IS NOT NULL"
     )
   end
 end

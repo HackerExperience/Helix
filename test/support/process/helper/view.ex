@@ -5,15 +5,15 @@ defmodule Helix.Test.Process.View.Helper do
       :origin_ip,
       :priority,
       :usage,
-      :connection_id,
+      :source_connection_id,
       :target_connection_id,
-      :file
+      :source_file
     ]
     |> Enum.sort()
   end
 
   def pview_access_partial do
-    [:connection_id, :target_connection_id]
+    [:source_connection_id, :target_connection_id]
     |> Enum.sort()
   end
 

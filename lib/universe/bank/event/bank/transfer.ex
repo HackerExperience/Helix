@@ -26,7 +26,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Transfer do
     def new(process = %Process{}, data = %BankTransferProcess{}) do
       %__MODULE__{
         transfer_id: data.transfer_id,
-        connection_id: process.connection_id
+        connection_id: process.src_connection_id
       }
     end
   end
@@ -56,7 +56,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Transfer do
     def new(process = %Process{}, data = %BankTransferProcess{}) do
       %__MODULE__{
         transfer_id: data.transfer_id,
-        connection_id: process.connection_id
+        connection_id: process.src_connection_id
       }
     end
   end

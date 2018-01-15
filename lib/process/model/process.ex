@@ -34,11 +34,11 @@ defmodule Helix.Process.Model.Process do
       gateway_id: Server.id,
       source_entity_id: Entity.id,
       target_id: Server.id,
-      connection_id: Connection.id | nil,
-      file_id: File.id | nil,
+      src_connection_id: Connection.id | nil,
+      src_file_id: File.id | nil,
       network_id: Network.id | nil,
-      target_file_id: File.id | nil,
-      target_connection_id: Connection.id | nil,
+      tgt_file_id: File.id | nil,
+      tgt_connection_id: Connection.id | nil,
       data: term,
       type: type,
       priority: term,
@@ -74,7 +74,7 @@ defmodule Helix.Process.Model.Process do
 
   # Process lifecycle signals
 
-  The processes below are related to the lifecycle of a process.
+  The signals below are related to the lifecycle of a process.
 
   ## SIGTERM
 
@@ -120,30 +120,31 @@ defmodule Helix.Process.Model.Process do
   Note that these signals are NOT sent to the process that originated them. See
   `TOPHandler.filter_self_message/2` for context.
 
-  ## SIGCONND
+  ## SIGSRCCONND
 
   Signal sent when the connection that originated the Process was closed.
 
-  Default action is to send itself a SIGKILL with `:connection_closed` reason.
+  Default action is to send itself a SIGKILL with `:src_connection_closed`
+  reason.
 
   ## SIGTGTCONND
 
   Signal sent when the connection that the process is targeting was closed.
 
-  Default action is to send itself a SIGKILL with `:target_connection_closed`
+  Default action is to send itself a SIGKILL with `:tgt_connection_closed`
   reason.
 
-  ## SIGFILED
+  ## SIGSRCFILED
 
   Signal sent when the file that originated the process was deleted.
 
-  Default action is to send itself a SIGKILL with `:file_deleted` reason.
+  Default action is to send itself a SIGKILL with `:src_file_deleted` reason.
 
   ## SIGTGTFILED
 
-  Signal sent when the `file_id` that the process is targeting was deleted.
+  Signal sent when the File that the process is targeting was deleted.
 
-  Default action is to send itself a SIGKILL with `:target_file_deleted` reason.
+  Default action is to send itself a SIGKILL with `:tgt_file_deleted` reason.
   """
   @type signal ::
     :SIGTERM
@@ -151,8 +152,8 @@ defmodule Helix.Process.Model.Process do
     | :SIGSTOP
     | :SIGCONT
     | :SIGPRIO
-    | :SIGCONND
-    | :SIGFILED
+    | :SIGSRCCONND
+    | :SIGSRCFILED
     | :SIGTGTCONND
     | :SIGTGTFILED
 
@@ -171,24 +172,24 @@ defmodule Helix.Process.Model.Process do
   @type kill_reason ::
     :completed
     | :killed
-    | :connection_closed
-    | :target_connection_closed
-    | :file_deleted
-    | :target_file_deleted
+    | :src_connection_closed
+    | :tgt_connection_closed
+    | :src_file_deleted
+    | :tgt_file_deleted
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{
     :gateway_id => Server.id,
     :source_entity_id => Entity.id,
-    :connection_id => Connection.id | nil,
-    :file_id => File.id | nil,
+    :src_connection_id => Connection.id | nil,
+    :src_file_id => File.id | nil,
     :target_id => Server.id,
     :data => Processable.t,
     :type => type,
     :network_id => Network.id | nil,
-    :target_file_id => File.id | nil,
-    :target_connection_id => Connection.id | nil,
+    :tgt_file_id => File.id | nil,
+    :tgt_connection_id => Connection.id | nil,
     :objective => map,
     :l_dynamic => dynamic,
     :r_dynamic => dynamic,
@@ -198,12 +199,12 @@ defmodule Helix.Process.Model.Process do
   @creation_fields [
     :gateway_id,
     :source_entity_id,
-    :connection_id,
-    :file_id,
+    :src_connection_id,
+    :src_file_id,
     :target_id,
     :network_id,
-    :target_file_id,
-    :target_connection_id,
+    :tgt_file_id,
+    :tgt_connection_id,
     :data,
     :type,
     :objective,
@@ -272,11 +273,11 @@ defmodule Helix.Process.Model.Process do
     field :target_id, Server.ID
 
     # Which connection (if any) originated this process
-    field :connection_id, Connection.ID,
+    field :src_connection_id, Connection.ID,
       default: nil
 
     # Which file (if any) originated this process
-    field :file_id, File.ID,
+    field :src_file_id, File.ID,
       default: nil
 
     # Which network (if any) is this process bound to
@@ -286,11 +287,11 @@ defmodule Helix.Process.Model.Process do
     ### Custom keys
 
     # Which file (if any) is the target of this process
-    field :target_file_id, File.ID,
+    field :tgt_file_id, File.ID,
       default: nil
 
     # Which connection (if any) is the target of this process
-    field :target_connection_id, Connection.ID,
+    field :tgt_connection_id, Connection.ID,
       default: nil
 
     ### Helix.Process required data
@@ -669,25 +670,25 @@ defmodule Helix.Process.Model.Process do
     def by_target(query \\ Process, id),
       do: where(query, [p], p.target_id == ^id)
 
-    @spec by_file(Queryable.t, File.idtb) ::
+    @spec by_source_file(Queryable.t, File.idtb) ::
       Queryable.t
-    def by_file(query \\ Process, id),
-      do: where(query, [p], p.file_id == ^id)
+    def by_source_file(query \\ Process, id),
+      do: where(query, [p], p.src_file_id == ^id)
 
     @spec by_network(Queryable.t, Network.idtb) ::
       Queryable.t
     def by_network(query \\ Process, id),
       do: where(query, [p], p.network_id == ^id)
 
-    @spec by_connection(Queryable.t, Connection.id) ::
+    @spec by_source_connection(Queryable.t, Connection.id) ::
       Queryable.t
-    def by_connection(query \\ Process, id),
-      do: where(query, [p], p.connection_id == ^id)
+    def by_source_connection(query \\ Process, id),
+      do: where(query, [p], p.src_connection_id == ^id)
 
     @spec by_target_connection(Queryable.t, Connection.id) ::
       Queryable.t
     def by_target_connection(query \\ Process, id),
-      do: where(query, [p], p.target_connection_id == ^id)
+      do: where(query, [p], p.tgt_connection_id == ^id)
 
     @spec by_type(Queryable.t, Process.type) ::
       Queryable.t

@@ -7,6 +7,7 @@ process Helix.Software.Process.Cracker.Overflow do
   alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
 
+  # REVIEW: This is weird
   process_struct [:target_process_id, :target_connection_id]
 
   @type t ::
@@ -136,11 +137,11 @@ process Helix.Software.Process.Cracker.Overflow do
       %{cracker: cracker}
     end
 
-    file(_gateway, _target, _params, %{cracker: cracker}) do
+    source_file(_gateway, _target, _params, %{cracker: cracker}) do
       cracker.file_id
     end
 
-    connection(_, _, _, _) do
+    source_connection(_, _, _, _) do
       # TODO
       nil
     end

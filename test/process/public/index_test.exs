@@ -58,15 +58,15 @@ defmodule Helix.Process.Public.IndexTest do
       assert is_binary(result_process1.type)
 
       # Nil values are nil (not "")
-      refute result_process1.access.connection_id
+      refute result_process1.access.source_connection_id
 
       # Process2 has file data, connection_id
       assert is_binary(result_process2.target_file.id)
       assert is_binary(result_process2.target_file.name)
-      assert is_binary(result_process2.access.connection_id)
+      assert is_binary(result_process2.access.source_connection_id)
 
       # Process2 does not have origin file
-      assert Enum.empty?(result_process2.access.file)
+      assert Enum.empty?(result_process2.access.source_file)
 
       # Process3 is listed as well
       assert result_process3

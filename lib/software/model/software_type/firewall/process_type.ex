@@ -30,7 +30,7 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
       {:delete, [event]}
     end
 
-    def connection_closed(_, _, _) do
+    def source_connection_closed(_, _, _) do
       {:delete, []}
     end
 

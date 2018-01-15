@@ -128,7 +128,7 @@ defmodule Helix.Test.Event.Setup.Software do
     TOPHelper.top_stop(process.gateway_id)
 
     new_file =
-      copy_file(process.target_file_id, process.data.destination_storage_id)
+      copy_file(process.tgt_file_id, process.data.destination_storage_id)
 
     event = generate_event(event, type, {:completed, new_file})
     {event, %{}}

@@ -26,7 +26,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
   """
   def default_process_render(process, :partial) do
     partial = %{
-      connection_id: nil,
+      source_connection_id: nil,
       target_connection_id: nil
     }
 
@@ -35,12 +35,13 @@ defmodule Helix.Process.Public.View.Process.Helper do
     Map.merge(common, %{access: partial})
   end
   def default_process_render(process, :full) do
-    connection_id = process.connection_id && to_string(process.connection_id)
+    source_connection_id =
+      process.src_connection_id && to_string(process.src_connection_id)
     target_connection_id =
-      process.target_connection_id && to_string(process.target_connection_id)
+      process.tgt_connection_id && to_string(process.tgt_connection_id)
 
     usage = build_usage(process)
-    file = build_file(process.file_id, :full)
+    source_file = build_file(process.src_file_id, :full)
 
     # OPTIMIZE: Possibly cache `origin_ip` and `target_ip` on the Process.t
     # It's used on several other places and must be queried every time it's
@@ -51,9 +52,9 @@ defmodule Helix.Process.Public.View.Process.Helper do
       origin_ip: origin_ip,
       priority: process.priority,
       usage: usage,
-      connection_id: connection_id,
+      source_connection_id: source_connection_id,
       target_connection_id: target_connection_id,
-      file: file
+      source_file: source_file
     }
 
     common = default_process_common(process, :full)
@@ -79,7 +80,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
   defp default_process_common(process, type) do
     network_id = process.network_id && to_string(process.network_id)
 
-    target_file = build_file(process.target_file_id, type)
+    target_file = build_file(process.tgt_file_id, type)
     progress = build_progress(process)
     target_ip = get_target_ip(process)
 

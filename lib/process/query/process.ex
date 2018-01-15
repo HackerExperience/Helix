@@ -96,8 +96,8 @@ defmodule Helix.Process.Query.Process do
   end
   ```
   """
-  get_custom %{file_id: file_id = %File.ID{}},
-    do: &(&1.file_id == file_id)
-  get_custom %{target_file_id: file_id = %File.ID{}},
-    do: &(&1.target_file_id == file_id)
+  get_custom %{src_file_id: file_id = %File.ID{}},
+    do: &(&1.src_file_id == file_id)
+  get_custom %{tgt_file_id: file_id = %File.ID{}},
+    do: &(&1.tgt_file_id == file_id)
 end

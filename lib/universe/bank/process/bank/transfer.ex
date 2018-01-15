@@ -108,7 +108,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       %{transfer: transfer}
     end
 
-    connection(_gateway, _atm, _, _) do
+    source_connection(_gateway, _atm, _, _) do
       {:create, :wire_transfer}
     end
   end
