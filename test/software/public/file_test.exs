@@ -6,14 +6,12 @@ defmodule Helix.Software.Public.FileTest do
   alias Helix.Software.Public.File, as: FilePublic
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
-  @internet_id NetworkHelper.internet_id()
   @relay nil
 
   describe "bruteforce/6" do
@@ -89,14 +87,19 @@ defmodule Helix.Software.Public.FileTest do
       {target, _} = ServerSetup.server()
       virus = SoftwareSetup.file!(type: :virus_spyware)
 
+      {tunnel, _} = NetworkSetup.tunnel()
+      {ssh, _} = NetworkSetup.connection(type: :ssh)
+
       assert {:ok, process} =
-        FilePublic.install(virus, gateway, target, :virus, @internet_id, @relay)
+        FilePublic.install(
+          virus, gateway, target, :virus, {tunnel, ssh}, @relay
+        )
 
       assert process.tgt_file_id == virus.file_id
       assert process.gateway_id == gateway.server_id
       assert process.target_id == target.server_id
-      assert process.network_id == @internet_id
-      refute process.src_connection_id
+      assert process.network_id == tunnel.network_id
+      assert process.src_connection_id == ssh.connection_id
 
       refute process.src_file_id
       refute process.tgt_connection_id
