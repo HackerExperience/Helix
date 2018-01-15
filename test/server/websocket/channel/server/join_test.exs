@@ -39,6 +39,8 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       refute Map.has_key?(new_socket.assigns.gateway, :ip)
       refute Map.has_key?(new_socket.assigns.meta, :counter)
       refute Map.has_key?(new_socket.assigns.meta, :network_id)
+      refute Map.has_key?(new_socket.assigns, :tunnel)
+      refute Map.has_key?(new_socket.assigns, :ssh)
 
       # `destination` data is identical to `gateway` data
       assert new_socket.assigns.destination == new_socket.assigns.gateway
@@ -169,10 +171,13 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
 
       # Metadata is correct
       assert new_socket.assigns.meta.access == :remote
+
+      # Network info is valid
       assert new_socket.assigns.meta.network_id == @internet_id
+      assert new_socket.assigns.tunnel.tunnel_id
+      assert new_socket.assigns.ssh.connection_id
 
       # Other stuff
-      assert new_socket.assigns.tunnel.tunnel_id
       assert new_socket.joined
       assert new_socket.topic == topic
 

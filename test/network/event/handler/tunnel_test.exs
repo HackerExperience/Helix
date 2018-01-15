@@ -23,7 +23,7 @@ defmodule Helix.Network.Event.Handler.TunnelTest do
         destination,
         bounces)
 
-      {:ok, connection, _} = TunnelInternal.start_connection(tunnel, :ssh)
+      {:ok, connection} = TunnelInternal.start_connection(tunnel, :ssh)
 
       events = TunnelInternal.close_connection(connection)
 
@@ -44,7 +44,7 @@ defmodule Helix.Network.Event.Handler.TunnelTest do
         bounces)
 
       TunnelInternal.start_connection(tunnel, :ssh)
-      {:ok, connection, _} = TunnelInternal.start_connection(tunnel, :ssh)
+      {:ok, connection} = TunnelInternal.start_connection(tunnel, :ssh)
 
       events = TunnelInternal.close_connection(connection)
 

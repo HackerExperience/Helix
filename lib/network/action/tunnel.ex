@@ -26,7 +26,7 @@ defmodule Helix.Network.Action.Tunnel do
     Connection.type,
     Connection.meta)
   ::
-    {:ok, Connection.t, [ConnectionStartedEvent.t]}
+    {:ok, Tunnel.t, Connection.t, [ConnectionStartedEvent.t]}
     | create_tunnel_errors
   @doc """
   Starts a connection between `gateway` and `destination` through `network`.
@@ -36,18 +36,22 @@ defmodule Helix.Network.Action.Tunnel do
   If there is already a tunnel with this configuration, it'll be reused,
   otherwise a new Tunnel will be created
   """
-  def connect(
-    network, gateway, destination, bounces, connection_type, meta \\ nil)
-  do
+  def connect(network, gateway, destination, bounces, type, meta \\ nil) do
     tunnel = TunnelInternal.get_tunnel(network, gateway, destination, bounces)
-    context = if tunnel do
-      {:ok, tunnel}
-    else
-      create_tunnel(network, gateway, destination, bounces)
-    end
+    context =
+      if tunnel do
+        {:ok, tunnel}
+      else
+        create_tunnel(network, gateway, destination, bounces)
+      end
 
-    with {:ok, tunnel} <- context do
-      TunnelInternal.start_connection(tunnel, connection_type, meta)
+    with \
+      {:ok, tunnel} <- context,
+      {:ok, connection} <- TunnelInternal.start_connection(tunnel, type, meta)
+    do
+      event = ConnectionStartedEvent.new(connection)
+
+      {:ok, tunnel, connection, [event]}
     end
   end
 

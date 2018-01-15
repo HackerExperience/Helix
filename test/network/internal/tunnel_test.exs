@@ -155,8 +155,8 @@ defmodule Helix.Network.Internal.TunnelTest do
     test "starts a new connection every call" do
       tunnel = Factory.insert(:tunnel, network: @internet)
 
-      {:ok, connection1, _} = TunnelInternal.start_connection(tunnel, :ssh)
-      {:ok, connection2, _} = TunnelInternal.start_connection(tunnel, :ssh)
+      {:ok, connection1} = TunnelInternal.start_connection(tunnel, :ssh)
+      {:ok, connection2} = TunnelInternal.start_connection(tunnel, :ssh)
 
       connections = TunnelInternal.get_connections(tunnel)
 
@@ -171,7 +171,7 @@ defmodule Helix.Network.Internal.TunnelTest do
     test "deletes the connection" do
       tunnel = Factory.insert(:tunnel, network: @internet)
 
-      {:ok, connection, _events} = TunnelInternal.start_connection(tunnel, :ssh)
+      {:ok, connection} = TunnelInternal.start_connection(tunnel, :ssh)
 
       TunnelInternal.close_connection(connection)
 

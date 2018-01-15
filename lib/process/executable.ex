@@ -20,6 +20,7 @@ defmodule Helix.Process.Executable do
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Process.Action.Process, as: ProcessAction
@@ -109,8 +110,8 @@ defmodule Helix.Process.Executable do
         %{connection_id: tgt_connection_id})
       do
         params
-        |> Map.merge(%{src_connection_id: src_connection_id})
-        |> Map.merge(%{tgt_connection_id: tgt_connection_id})
+        |> Map.put(:src_connection_id, src_connection_id)
+        |> Map.put(:tgt_connection_id, tgt_connection_id)
       end
     end
   end
@@ -154,15 +155,45 @@ defmodule Helix.Process.Executable do
         origin :: Connection.t | nil)
       ::
         {:ok, Connection.t, [event :: term]}
+      docp """
+      `setup_connection/5` handles whatever the user defined at
+      `source_connection` and `target_connection` at the Process' Executable
+      declaration.
+
+      It may be one of:
+
+      - {:create, type}: A new connection of type `type` will be created.
+      - %Connection{} | %Connection.ID{}: This connection will be used (i.e.
+        since the connection was given, we assume it already exists)
+      - :same_origin: We'll reuse the connection given at the `origin` param
+      - nil | :ok | :noop: No connection was specified
+      """
       defp setup_connection(gateway, target, _, meta, {:create, type}, _) do
-        create_connection(
-          meta.network_id,
-          gateway.server_id,
-          target.server_id,
-          meta.bounce,
-          type
-        )
+        {:ok, _tunnel, connection, events} =
+          create_connection(
+            meta.network_id,
+            gateway.server_id,
+            target.server_id,
+            meta.bounce,
+            type
+          )
+
+        {:ok, connection, events}
       end
+
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        Connection.idt,
+        origin :: Connection.t | nil)
+      ::
+        {:ok, Connection.t, []}
+      defp setup_connection(_, _, _, _, connection = %Connection{}, _),
+        do: {:ok, connection, []}
+      defp setup_connection(_, _, _, _, connection_id = %Connection.ID{}, _),
+        do: {:ok, TunnelQuery.fetch_connection(connection_id), []}
 
       @spec setup_connection(
         Server.t,
@@ -185,11 +216,15 @@ defmodule Helix.Process.Executable do
         Connection.t | nil)
       ::
         {:ok, nil, []}
-      defp setup_connection(_, _, _, _, _, _),
+      defp setup_connection(_, _, _, _, nil, _),
+        do: {:ok, nil, []}
+      defp setup_connection(_, _, _, _, :ok, _),
+        do: {:ok, nil, []}
+      defp setup_connection(_, _, _, _, :noop, _),
         do: {:ok, nil, []}
 
       @spec create_connection(Network.id, Server.id, Server.id, term, term) ::
-        {:ok, Connection.t, [event :: term]}
+        {:ok, tunnel :: term, Connection.t, [event :: term]}
       docp """
       Creates a new connection.
       """

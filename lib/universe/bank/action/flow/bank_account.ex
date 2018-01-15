@@ -73,7 +73,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         {:ok, _, events} <- BankAction.login_password(acc, password, entity),
         on_success(fn -> Event.emit(events) end),
 
-        {:ok, connection, events} <- start_connection.(),
+        {:ok, _, connection, events} <- start_connection.(),
         on_success(fn -> Event.emit(events) end)
       do
         {:ok, connection}
@@ -109,7 +109,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         {:ok, _, events} <- BankAction.login_token(acc, token, entity),
           on_success(fn -> Event.emit(events) end),
 
-        {:ok, connection, events} <- start_connection.(),
+        {:ok, _, connection, events} <- start_connection.(),
           on_success(fn -> Event.emit(events) end)
       do
         {:ok, connection}

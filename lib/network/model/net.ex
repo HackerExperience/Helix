@@ -1,3 +1,4 @@
+# REVIEW: Net == Tunnel (after #256)
 defmodule Helix.Network.Model.Net do
   @moduledoc """
   `Net` is an internal struct able to fully represent the connection/tunnel

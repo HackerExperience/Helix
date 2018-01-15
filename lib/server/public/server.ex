@@ -5,7 +5,6 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Query.Network, as: NetworkQuery
-  alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
@@ -24,21 +23,18 @@ defmodule Helix.Server.Public.Server do
       NetworkQuery.internet())
 
   @spec connect_to_server(Server.id, Server.id, [Server.id], Network.t) ::
-    {:ok, Tunnel.t}
+    {:ok, Tunnel.t, Connection.ssh}
     | error :: term
   def connect_to_server(gateway_id, destination_id, bounce_list, network) do
     with \
-      {:ok, connection, events} <- TunnelAction.connect(
-        network,
-        gateway_id,
-        destination_id,
-        bounce_list,
-        :ssh),
-      tunnel = %{} <- TunnelQuery.fetch_from_connection(connection)
+      {:ok, tunnel, connection, events} <-
+        TunnelAction.connect(
+          network, gateway_id, destination_id, bounce_list, :ssh
+        )
     do
       Event.emit(events)
 
-      {:ok, tunnel}
+      {:ok, tunnel, connection}
     end
   end
 
