@@ -54,8 +54,8 @@ defmodule Helix.Test.Process.Data.Setup do
         meta
       end
 
-    connection_id = meta.connection_id || Connection.ID.generate()
-    file_id = meta.file_id || File.ID.generate()
+    src_connection_id = meta.src_connection_id || Connection.ID.generate()
+    tgt_file_id = meta.tgt_file_id || File.ID.generate()
 
     connection_type = Keyword.get(data_opts, :type, :download)
     storage_id = Keyword.get(data_opts, :storage_id, Storage.ID.generate())
@@ -66,7 +66,11 @@ defmodule Helix.Test.Process.Data.Setup do
       connection_type: connection_type
     }
 
-    meta = %{meta| file_id: file_id, connection_id: connection_id}
+    meta =
+      %{meta|
+        tgt_file_id: tgt_file_id,
+        src_connection_id: src_connection_id
+      }
 
     objective =
       TOPHelper.Resources.objective(dlk: 500, network_id: meta.network_id)
@@ -87,9 +91,15 @@ defmodule Helix.Test.Process.Data.Setup do
   - storage_id: Set storage_id.
   """
   def custom(:file_upload, data_opts, meta) do
-    target_id = meta.gateway_id == meta.target_id || Server.ID.generate()
-    connection_id = meta.connection_id || Connection.ID.generate()
-    file_id = meta.file_id || File.ID.generate()
+    target_id =
+      if meta.gateway_id == meta.target_id do
+        Server.ID.generate()
+      else
+        meta.target_id
+      end
+
+    src_connection_id = meta.src_connection_id || Connection.ID.generate()
+    tgt_file_id = meta.tgt_file_id || File.ID.generate()
 
     storage_id = Keyword.get(data_opts, :storage_id, Storage.ID.generate())
 
@@ -101,8 +111,8 @@ defmodule Helix.Test.Process.Data.Setup do
 
     meta =
       %{meta|
-        file_id: file_id,
-        connection_id: connection_id,
+        tgt_file_id: tgt_file_id,
+        src_connection_id: src_connection_id,
         target_id: target_id
        }
 
@@ -138,7 +148,11 @@ defmodule Helix.Test.Process.Data.Setup do
           Random.ipv4()
       end
 
+    src_file_id = meta.src_file_id || File.ID.generate()
+
     data = CrackerBruteforce.new(%{target_server_ip: target_server_ip})
+
+    meta = %{meta| src_file_id: src_file_id}
 
     resources =
       %{
@@ -166,6 +180,7 @@ defmodule Helix.Test.Process.Data.Setup do
     operation = Keyword.get(data_opts, :operation, :edit)
     message = LogHelper.random_message()
     version = 100
+    src_file_id = meta.src_file_id || File.ID.generate()
 
     data =
       %LogForge{
@@ -191,14 +206,17 @@ defmodule Helix.Test.Process.Data.Setup do
         objective: TOPHelper.Resources.objective(cpu: 500)
       }
 
+    meta = %{meta| src_file_id: src_file_id}
+
     {:log_forger, data, meta, resources}
   end
 
   defp custom_implementations do
-    ~w/
-      bruteforce
-      forge
-      file_download
-    /a
+    [
+      :bruteforce,
+      :forge,
+      :file_download,
+      :file_upload
+    ]
   end
 end

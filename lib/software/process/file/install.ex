@@ -129,7 +129,11 @@ process Helix.Software.Process.File.Install do
       }
     end
 
-    file(_gateway, _target, _params, %{file: file}) do
+    source_connection(_gateway, _target, _params, %{ssh: ssh}) do
+      ssh.connection_id
+    end
+
+    target_file(_gateway, _target, _params, %{file: file}) do
       file.file_id
     end
   end

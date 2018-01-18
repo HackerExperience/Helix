@@ -7,8 +7,8 @@ defmodule Helix.Network.Internal.Tunnel do
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
 
+  # TODO: Refactor TunnelInternal
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
-  alias Helix.Network.Event.Connection.Started, as: ConnectionStartedEvent
 
   @spec fetch(Tunnel.id) ::
     Tunnel.t
@@ -129,18 +129,16 @@ defmodule Helix.Network.Internal.Tunnel do
   end
 
   @spec start_connection(Tunnel.t, Connection.type, Connection.meta) ::
-    {:ok, Connection.t, [ConnectionStartedEvent.t]}
+    {:ok, Connection.t}
     | {:error, Ecto.Changeset.t}
   def start_connection(tunnel, connection_type, meta \\ nil) do
-    cs = Connection.create(tunnel, connection_type, meta)
+    result =
+      tunnel
+      |> Connection.create(connection_type, meta)
+      |> Repo.insert()
 
-    with {:ok, connection} <- Repo.insert(cs) do
-      event =
-        connection
-        |> Repo.preload(:tunnel)
-        |> ConnectionStartedEvent.new()
-
-      {:ok, connection, [event]}
+    with {:ok, connection} <- result do
+      {:ok, Repo.preload(connection, :tunnel)}
     end
   end
 

@@ -4,6 +4,7 @@ defmodule Helix.Process.Query.Process do
 
   alias Helix.Network.Model.Connection
   alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
   alias Helix.Process.Model.Process
   alias Helix.Process.Internal.Process, as: ProcessInternal
 
@@ -53,21 +54,26 @@ defmodule Helix.Process.Query.Process do
   defdelegate get_processes_on_server(gateway_id),
     to: ProcessInternal
 
-  @spec get_processes_on_connection(Connection.idt) ::
+  @spec get_processes_originated_on_connection(Connection.idt) ::
     [Process.t]
   @doc """
-  Fetches processes using `connection`
+  Fetches processes that originated from `connection`
 
   ### Examples
 
-      iex> get_processes_on_connection("f::f")
+      iex> get_processes_originated_on_connection("f::f")
       [%Process{}]
   """
-  defdelegate get_processes_on_connection(connection),
+  defdelegate get_processes_originated_on_connection(connection),
     to: ProcessInternal
 
-  get_custom %{file_id: file_id},
-    do: &(&1.file_id == file_id)
+  @spec get_processes_targeting_connection(Connection.idt) ::
+    [Process.t]
+  @doc """
+  Returns a list of processes that are targeting `connection`.
+  """
+  defdelegate get_processes_targeting_connection(connection),
+    to: ProcessInternal
 
   @spec get_custom(Process.type, Server.idt, meta :: map) ::
     [Process.t]
@@ -82,13 +88,18 @@ defmodule Helix.Process.Query.Process do
   The generated code is something like:
 
   ```
-    def get_custom(type = :process_type, server_id, %{file_id: file_id}) do
-      server_id
-      |> get_running_processes_of_type_on_server(type)
-      |> Enum.fiter(&(&1.file_id == file_id))
-      |> nilify_if_empty()
-    end
+  def get_custom(type = :process_type, server_id, %{file_id: file_id}) do
+    server_id
+    |> get_running_processes_of_type_on_server(type)
+    |> Enum.fiter(&(&1.file_id == file_id))
+    |> nilify_if_empty()
+  end
   ```
   """
-  get_custom()
+  get_custom %{src_file_id: file_id = %File.ID{}},
+    do: &(&1.src_file_id == file_id)
+  get_custom %{tgt_file_id: file_id = %File.ID{}},
+    do: &(&1.tgt_file_id == file_id)
+  get_custom %{tgt_process_id: process_id = %Process.ID{}},
+    do: &(&1.tgt_process_id == process_id)
 end

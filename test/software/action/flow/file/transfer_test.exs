@@ -30,14 +30,16 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Generated process has the expected data
       assert process.type == :file_download
-      assert process.file_id == file.file_id
+      assert process.tgt_file_id == file.file_id
       assert process.data.type == :download
       assert process.data.connection_type == :ftp
       assert process.data.destination_storage_id ==
         destination_storage.storage_id
+      refute process.src_file_id
+      refute process.tgt_connection_id
 
       # Generated connection is valid
-      connection = TunnelQuery.fetch_connection(process.connection_id)
+      connection = TunnelQuery.fetch_connection(process.src_connection_id)
       assert connection.connection_type == :ftp
 
       # Transferring again returns the same process (does not create a new one)
@@ -67,14 +69,16 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Generated process has the expected data
       assert process.type == :file_upload
-      assert process.file_id == file.file_id
+      assert process.tgt_file_id == file.file_id
       assert process.data.type == :upload
       assert process.data.connection_type == :ftp
       assert process.data.destination_storage_id ==
         destination_storage.storage_id
+      refute process.src_file_id
+      refute process.tgt_connection_id
 
       # Generated connection is valid
-      connection = TunnelQuery.fetch_connection(process.connection_id)
+      connection = TunnelQuery.fetch_connection(process.src_connection_id)
       assert connection.connection_type == :ftp
 
       # Transferring again returns the same process (does not create a new one)
@@ -104,14 +108,17 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       # Generated process has the expected data
       assert process.type == :file_download
-      assert process.file_id == file.file_id
+      assert process.tgt_file_id == file.file_id
       assert process.data.type == :download
       assert process.data.connection_type == :public_ftp
       assert process.data.destination_storage_id ==
         destination_storage.storage_id
 
+      refute process.src_file_id
+      refute process.tgt_connection_id
+
       # Generated connection is valid; tunnel was created
-      connection = TunnelQuery.fetch_connection(process.connection_id)
+      connection = TunnelQuery.fetch_connection(process.src_connection_id)
       assert connection.connection_type == :public_ftp
 
       # Transferring again returns the same process (does not create a new one)

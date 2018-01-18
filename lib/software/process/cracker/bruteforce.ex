@@ -161,11 +161,11 @@ process Helix.Software.Process.Cracker.Bruteforce do
       }
     end
 
-    file(_gateway, _target, _params, %{cracker: cracker}) do
+    source_file(_gateway, _target, _params, %{cracker: cracker}) do
       cracker.file_id
     end
 
-    connection(_gateway, _target, _params, _meta) do
+    source_connection(_gateway, _target, _params, _meta) do
       {:create, :cracker_bruteforce}
     end
   end

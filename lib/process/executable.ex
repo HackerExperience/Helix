@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Process.Executable do
   @moduledoc """
   Process.Executable is a simple and declarative approach describing what should
@@ -19,6 +20,7 @@ defmodule Helix.Process.Executable do
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
+  alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
   alias Helix.Process.Action.Process, as: ProcessAction
@@ -92,15 +94,25 @@ defmodule Helix.Process.Executable do
       defp get_network_id(_),
         do: %{network_id: nil}
 
-      @spec create_process_params(partial :: map, term) ::
+      @spec merge_params(
+        map,
+        Connection.t | nil | %{connection_id: nil},
+        Connection.t | nil | %{connection_id: nil})
+      ::
         Process.creation_params
-      docp """
-      Merges the partial process params with other data (connection_id).
-      """
-      defp create_process_params(partial, %{connection_id: connection_id}),
-        do: Map.put(partial, :connection_id, connection_id)
-      defp create_process_params(partial, nil),
-        do: Map.put(partial, :connection_id, nil)
+      defp merge_params(params, nil, target_connection),
+        do: merge_params(params, %{connection_id: nil}, target_connection)
+      defp merge_params(params, connection, nil),
+        do: merge_params(params, connection, %{connection_id: nil})
+      defp merge_params(
+        params,
+        %{connection_id: src_connection_id},
+        %{connection_id: tgt_connection_id})
+      do
+        params
+        |> Map.put(:src_connection_id, src_connection_id)
+        |> Map.put(:tgt_connection_id, tgt_connection_id)
+      end
     end
   end
 
@@ -134,29 +146,85 @@ defmodule Helix.Process.Executable do
         |> Event.emit(from: relay)
       end
 
-      @spec setup_connection(Server.t, Server.t, term, meta, {:create, term}) ::
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        {:create, Connection.type},
+        origin :: Connection.t | nil)
+      ::
         {:ok, Connection.t, [event :: term]}
       docp """
-      Interprets the result of `get_connection/4` and, if required, creates a
-      new connection.
+      `setup_connection/5` handles whatever the user defined at
+      `source_connection` and `target_connection` at the Process' Executable
+      declaration.
+
+      It may be one of:
+
+      - {:create, type}: A new connection of type `type` will be created.
+      - %Connection{} | %Connection.ID{}: This connection will be used (i.e.
+        since the connection was given, we assume it already exists)
+      - :same_origin: We'll reuse the connection given at the `origin` param
+      - nil | :ok | :noop: No connection was specified
       """
-      defp setup_connection(gateway, target, _, meta, {:create, conn_type}) do
-        create_connection(
-          meta.network_id,
-          gateway.server_id,
-          target.server_id,
-          meta.bounce,
-          conn_type
-        )
+      defp setup_connection(gateway, target, _, meta, {:create, type}, _) do
+        {:ok, _tunnel, connection, events} =
+          create_connection(
+            meta.network_id,
+            gateway.server_id,
+            target.server_id,
+            meta.bounce,
+            type
+          )
+
+        {:ok, connection, events}
       end
 
-      @spec setup_connection(term, term, term, term, nil | :ok | :noop) ::
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        Connection.idt,
+        origin :: Connection.t | nil)
+      ::
+        {:ok, Connection.t, []}
+      defp setup_connection(_, _, _, _, connection = %Connection{}, _),
+        do: {:ok, connection, []}
+      defp setup_connection(_, _, _, _, connection_id = %Connection.ID{}, _),
+        do: {:ok, TunnelQuery.fetch_connection(connection_id), []}
+
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        :same_origin,
+        Connection.t)
+      ::
+        {:ok, Connection.t, []}
+      defp setup_connection(_, _, _, _, :same_origin, origin = %Connection{}),
+        do: {:ok, origin, []}
+
+      @spec setup_connection(
+        Server.t,
+        Server.t,
+        term,
+        meta,
+        nil | :ok | :noop,
+        Connection.t | nil)
+      ::
         {:ok, nil, []}
-      defp setup_connection(_, _, _, _, _),
+      defp setup_connection(_, _, _, _, nil, _),
+        do: {:ok, nil, []}
+      defp setup_connection(_, _, _, _, :ok, _),
+        do: {:ok, nil, []}
+      defp setup_connection(_, _, _, _, :noop, _),
         do: {:ok, nil, []}
 
       @spec create_connection(Network.id, Server.id, Server.id, term, term) ::
-        {:ok, Connection.t, [event :: term]}
+        {:ok, tunnel :: term, Connection.t, [event :: term]}
       docp """
       Creates a new connection.
       """
@@ -210,11 +278,20 @@ defmodule Helix.Process.Executable do
         # Defaults: in case these functions were not defined, we assume the
         # process is not interested on this (optional) data.
 
-        defp get_file(_, _, _, _),
-          do: %{file_id: nil}
-
-        defp get_connection(_, _, _, _),
+        defp get_source_connection(_, _, _, _),
           do: nil
+
+        defp get_source_file(_, _, _, _),
+          do: %{src_file_id: nil}
+
+        defp get_target_connection(_, _, _, _),
+          do: nil
+
+        defp get_target_file(_, _, _, _),
+          do: %{tgt_file_id: nil}
+
+        defp get_target_process(_, _, _, _),
+          do: %{tgt_process_id: nil}
       end
     end
   end
@@ -236,7 +313,9 @@ defmodule Helix.Process.Executable do
       def execute(unquote_splicing(args), relay) do
         process_data = get_process_data(unquote(params))
         resources = get_resources(unquote_splicing(args))
-        file = get_file(unquote_splicing(args))
+        source_file = get_source_file(unquote_splicing(args))
+        target_file = get_target_file(unquote_splicing(args))
+        target_process = get_target_process(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
         process_type = get_process_type(unquote(meta))
         network_id = get_network_id(unquote(meta))
@@ -245,26 +324,53 @@ defmodule Helix.Process.Executable do
           %{}
           |> Map.merge(process_data)
           |> Map.merge(resources)
-          |> Map.merge(file)
+          |> Map.merge(source_file)
+          |> Map.merge(target_file)
+          |> Map.merge(target_process)
           |> Map.merge(ownership)
           |> Map.merge(process_type)
           |> Map.merge(network_id)
 
-        connection_info = get_connection(unquote_splicing(args))
+        source_connection_info = get_source_connection(unquote_splicing(args))
+        target_connection_info = get_target_connection(unquote_splicing(args))
 
         flowing do
           with \
-            {:ok, connection, events} <-
-              setup_connection(unquote_splicing(args), connection_info),
+            {:ok, src_connection, events} <-
+              setup_connection(
+                unquote_splicing(args), source_connection_info, nil
+              ),
+            # /\ Creates (if declared) the source connection
 
+            # Compensated transactions for the potentially new source connection
             on_success(fn -> Event.emit(events, from: relay) end),
-            on_fail(fn -> close_connection_on_fail(connection, relay) end),
+            on_fail(fn -> close_connection_on_fail(src_connection, relay) end),
 
-            params = create_process_params(partial, connection),
+            # Creates (if declared) the target connection
+            {:ok, tgt_connection, events} <-
+              setup_connection(
+                unquote_splicing(args), target_connection_info, src_connection
+              ),
 
+            # Compensated transactions for the potentially new target connection
+            on_success(fn -> Event.emit(events, from: relay) end),
+            on_fail(fn -> close_connection_on_fail(tgt_connection, relay) end),
+
+            # Merge connection and target_connection data to the process params
+            params = merge_params(partial, src_connection, tgt_connection),
+
+            # *Finally* create the process
             {:ok, process, events} <- ProcessAction.create(params),
 
+            # Notify the process has been created (ProcessCreatedEvent)
             on_success(fn -> Event.emit(events, from: relay) end)
+
+            # Note that at this stage, we are not absolutely sure the process
+            # will be confirmed/saved, as the `ProcessAction.create/1` step is
+            # optimistic. If the server does not have enough resources to run
+            # that process, or some wild event occurs, the process may not be
+            # correctly allocated and, as a result, deleted.
+            # Check `ProcessCreatedEvent` documentation for more details
           do
             {:ok, process}
           else
@@ -281,22 +387,111 @@ defmodule Helix.Process.Executable do
   end
 
   @doc """
-  Returns the raw result of the Executable's `connection` section. It will
-  be later interpreted by `setup_connection`, which will make sense whether
-  a new connection should be created, and what the process' `connection_id`
-  should be set to.
+  Returns the raw result of the Executable's `source_connection` section. It
+  will be later interpreted by `setup_connection`, which will make sense whether
+  a new connection should be created, and what the `src_connection_id` should be
+  set to.
   """
-  defmacro connection(gateway, target, params, meta, do: block) do
+  defmacro source_connection(gateway, target, params, meta, do: block) do
     args = [gateway, target, params, meta]
 
     quote do
 
-      @spec get_connection(term, term, term, term) ::
+      @spec get_source_connection(term, term, term, term) ::
         {:create, Connection.type}
         | nil
       @doc false
-      defp get_connection(unquote_splicing(args)) do
+      defp get_source_connection(unquote_splicing(args)) do
         unquote(block)
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the raw result of the Executable's `target_connection` section. It
+  will be later interpreted by `setup_connection`, which will make sense whether
+  a new connection should be created, and what the `tgt_connection_id` should be
+  set to.
+
+  If `:same_origin` is returned, the process will target the same connection
+  that originated it.
+  """
+  defmacro target_connection(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_target_connection(term, term, term, term) ::
+        {:create, Connection.type}
+        | :same_origin
+        | nil
+      @doc false
+      defp get_target_connection(unquote_splicing(args)) do
+        unquote(block)
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the process' `src_file_id`, as defined on the `source_file` section of
+  the Process.Executable.
+  """
+  defmacro source_file(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_source_file(term, term, term, term) ::
+        %{src_file_id: File.id | nil}
+      @doc false
+      defp get_source_file(unquote_splicing(args)) do
+        file_id = unquote(block)
+
+        %{src_file_id: file_id}
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the process' `tgt_file_id`, as defined on the `target_file` section of
+  the Process.Executable.
+  """
+  defmacro target_file(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_target_file(term, term, term, term) ::
+        %{tgt_file_id: File.id | nil}
+      @doc false
+      defp get_target_file(unquote_splicing(args)) do
+        file_id = unquote(block)
+
+        %{tgt_file_id: file_id}
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the process' `tgt_process_id`, as defined on the `target_process`
+  section of the Process.Executable.
+  """
+  defmacro target_process(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_target_process(term, term, term, term) ::
+        %{tgt_process_id: Process.t | nil}
+      @doc false
+      defp get_target_process(unquote_splicing(args)) do
+        process_id = unquote(block)
+
+        %{tgt_process_id: process_id}
       end
 
     end
@@ -322,27 +517,6 @@ defmodule Helix.Process.Executable do
         params = unquote(block)
 
         call_process(:resources, params)
-      end
-
-    end
-  end
-
-  @doc """
-  Returns the process' `file_id`, as defined on the `file` section of the
-  Process.Executable.
-  """
-  defmacro file(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
-
-    quote do
-
-      @spec get_file(term, term, term, term) ::
-        %{file_id: File.t | nil}
-      @doc false
-      defp get_file(unquote_splicing(args)) do
-        file_id = unquote(block)
-
-        %{file_id: file_id}
       end
 
     end

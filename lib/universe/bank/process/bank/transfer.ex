@@ -79,7 +79,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
 
     get_factors(%{transfer: _}) do end
 
-    # TODO: Use Time, not CPU
+    # TODO: Use Time, not CPU #364
     cpu(%{transfer: transfer}) do
       transfer.amount
     end
@@ -88,8 +88,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       []
     end
 
-    # Review: Not exactly what I want. Where do I put limitations?
-    # TODO: Add ResourceTime; specify to the size of the transfer.
+    # TODO: Add ResourceTime; specify to the size of the transfer. #364
     static do
       %{
         paused: %{ram: 50},
@@ -109,7 +108,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       %{transfer: transfer}
     end
 
-    connection(_gateway, _atm, _, _) do
+    source_connection(_gateway, _atm, _, _) do
       {:create, :wire_transfer}
     end
   end

@@ -104,7 +104,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
   """
   defp overflow_of_wire_transfer(process, event) do
     transfer_id = process.data.transfer_id
-    connection_id = process.connection_id
+    connection_id = process.src_connection_id
 
     flowing do
       with \
@@ -149,6 +149,6 @@ defmodule Helix.Software.Event.Handler.Cracker do
 
   # TODO: Waiting merge of PR 249 in order to implement OverflowFlow
   def bank_transfer_aborted(event = %BankTransferAbortedEvent{}) do
-    ProcessQuery.get_processes_on_connection(event.connection_id)
+    ProcessQuery.get_processes_originated_on_connection(event.connection_id)
   end
 end

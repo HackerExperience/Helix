@@ -115,10 +115,13 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.PFTPTest do
       assert_push "event", _top_recalcado_event, timeout()
       assert_push "event", process_created_event, timeout()
 
-      assert process_created_event.data.file.id == to_string(file.file_id)
+      assert process_created_event.data.target_file.id ==
+        to_string(file.file_id)
       assert process_created_event.data.type == "file_download"
       assert process_created_event.data.data.connection_type == "public_ftp"
       assert process_created_event.data.network_id == to_string(@internet_id)
+
+      assert Enum.empty?(process_created_event.data.access.source_file)
 
       TOPHelper.top_stop(server)
     end

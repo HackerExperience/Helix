@@ -111,10 +111,17 @@ defmodule Helix.Process.Event.Handler.TOP do
   def object_handler(event = %ConnectionClosedEvent{}) do
     signal_param = %{connection: event.connection}
 
+    # Send SIGSRCCONND for processes that originated on such connection
     event.connection.connection_id
-    |> ProcessQuery.get_processes_on_connection()
+    |> ProcessQuery.get_processes_originated_on_connection()
     |> filter_self_message(event)
-    |> Enum.each(&ProcessFlow.signal(&1, :SIGCONND, signal_param))
+    |> Enum.each(&ProcessFlow.signal(&1, :SIGSRCCONND, signal_param))
+
+    # Send SIGTGTCONND for processes that are targeting such connection
+    event.connection.connection_id
+    |> ProcessQuery.get_processes_targeting_connection()
+    |> filter_self_message(event)
+    |> Enum.each(&ProcessFlow.signal(&1, :SIGTGTCONND, signal_param))
   end
 
   docp """
@@ -132,13 +139,13 @@ defmodule Helix.Process.Event.Handler.TOP do
 
   Imagine, however, that `ProcessSignaledEvent` takes really long to arrive. It
   could happen that `FileDeletedEvent` arrives first. Now, it's the TOPHandler's
-  role to listen to `FileDeletedEvent`s and emit a SIGFILED on all processes
+  role to listen to `FileDeletedEvent`s and emit a SIGTGTFILED on all processes
   that target that file, including our recently completed process.
 
   This would not create an infinite loop, but it would affect the expected
   behavior of TOP, FileDelete completion, or both. It is quite rare to happen
   on production, but it will deterministically happen on tests, since all
-  `spawned` processes are actually synchronous.
+  `spawned` processes are actually synchronous under the test environment.
 
   To avoid this scenario, we make sure that the process won't be notified of
   events that the process itself generated.

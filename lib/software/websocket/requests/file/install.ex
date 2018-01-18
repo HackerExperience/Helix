@@ -65,11 +65,12 @@ request Helix.Software.Websocket.Requests.File.Install do
     gateway = request.meta.gateway
     target = request.meta.target
     backend = request.meta.backend
-    network_id = socket.assigns.tunnel.network_id
+    tunnel = socket.assigns.tunnel
+    ssh = socket.assigns.ssh
     relay = request.relay
 
     hespawn fn ->
-      FilePublic.install(file, gateway, target, backend, network_id, relay)
+      FilePublic.install(file, gateway, target, backend, {tunnel, ssh}, relay)
     end
 
     reply_ok(request)

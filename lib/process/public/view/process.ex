@@ -25,7 +25,7 @@ defmodule Helix.Process.Public.View.Process do
       target_ip: String.t,
       network_id: String.t,
       progress: progress | nil,
-      file: file,
+      target_file: file,
       state: String.t,
       type: String.t,
       access: access
@@ -36,12 +36,15 @@ defmodule Helix.Process.Public.View.Process do
       origin_ip: Network.ip,
       priority: 0..5,
       usage: resources,
-      connection_id: String.t | nil
+      src_connection_id: String.t | nil,
+      tgt_connection_id: String.t | nil,
+      source_file: file
     }
 
   @typep partial_access ::
     %{
-      connection_id: String.t | nil
+      source_connection_id: String.t | nil,
+      target_connection_id: String.t | nil
     }
 
   @type file ::
@@ -50,6 +53,7 @@ defmodule Helix.Process.Public.View.Process do
       name: String.t,
       version: float | nil
     }
+    | %{}
 
   @type progress ::
     %{

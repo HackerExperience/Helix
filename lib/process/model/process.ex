@@ -34,9 +34,12 @@ defmodule Helix.Process.Model.Process do
       gateway_id: Server.id,
       source_entity_id: Entity.id,
       target_id: Server.id,
-      file_id: File.id | nil,
-      connection_id: Connection.id | nil,
+      src_connection_id: Connection.id | nil,
+      src_file_id: File.id | nil,
       network_id: Network.id | nil,
+      tgt_file_id: File.id | nil,
+      tgt_connection_id: Connection.id | nil,
+      tgt_process_id: Process.id | nil,
       data: term,
       type: type,
       priority: term,
@@ -72,7 +75,7 @@ defmodule Helix.Process.Model.Process do
 
   # Process lifecycle signals
 
-  The processes below are related to the lifecycle of a process.
+  The signals below are related to the lifecycle of a process.
 
   ## SIGTERM
 
@@ -118,17 +121,31 @@ defmodule Helix.Process.Model.Process do
   Note that these signals are NOT sent to the process that originated them. See
   `TOPHandler.filter_self_message/2` for context.
 
-  ## SIGCONND
+  ## SIGSRCCONND
 
-  Signal sent when the Process underlying `connection_id` was closed.
+  Signal sent when the connection that originated the Process was closed.
 
-  Default action is to send itself a SIGKILL with `:connection_closed` reason.
+  Default action is to send itself a SIGKILL with `:src_connection_closed`
+  reason.
 
-  ## SIGFILED
+  ## SIGTGTCONND
 
-  Signal sent when the Process underlying `file_id` was deleted.
+  Signal sent when the connection that the process is targeting was closed.
 
-  Default action is to send itself a SIGKILL with `:file_deleted` reason.
+  Default action is to send itself a SIGKILL with `:tgt_connection_closed`
+  reason.
+
+  ## SIGSRCFILED
+
+  Signal sent when the file that originated the process was deleted.
+
+  Default action is to send itself a SIGKILL with `:src_file_deleted` reason.
+
+  ## SIGTGTFILED
+
+  Signal sent when the File that the process is targeting was deleted.
+
+  Default action is to send itself a SIGKILL with `:tgt_file_deleted` reason.
   """
   @type signal ::
     :SIGTERM
@@ -136,8 +153,10 @@ defmodule Helix.Process.Model.Process do
     | :SIGSTOP
     | :SIGCONT
     | :SIGPRIO
-    | :SIGCONND
-    | :SIGFILED
+    | :SIGSRCCONND
+    | :SIGSRCFILED
+    | :SIGTGTCONND
+    | :SIGTGTFILED
 
   @typedoc """
   Valid params for each type of signal.
@@ -154,20 +173,25 @@ defmodule Helix.Process.Model.Process do
   @type kill_reason ::
     :completed
     | :killed
-    | :connection_closed
-    | :file_deleted
+    | :src_connection_closed
+    | :tgt_connection_closed
+    | :src_file_deleted
+    | :tgt_file_deleted
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{
     :gateway_id => Server.id,
     :source_entity_id => Entity.id,
+    :src_connection_id => Connection.id | nil,
+    :src_file_id => File.id | nil,
     :target_id => Server.id,
     :data => Processable.t,
     :type => type,
     :network_id => Network.id | nil,
-    :file_id => File.id | nil,
-    :connection_id => Connection.id | nil,
+    :tgt_file_id => File.id | nil,
+    :tgt_connection_id => Connection.id | nil,
+    :tgt_process_id => Process.id | nil,
     :objective => map,
     :l_dynamic => dynamic,
     :r_dynamic => dynamic,
@@ -177,10 +201,13 @@ defmodule Helix.Process.Model.Process do
   @creation_fields [
     :gateway_id,
     :source_entity_id,
+    :src_connection_id,
+    :src_file_id,
     :target_id,
-    :file_id,
     :network_id,
-    :connection_id,
+    :tgt_file_id,
+    :tgt_connection_id,
+    :tgt_process_id,
     :data,
     :type,
     :objective,
@@ -248,16 +275,31 @@ defmodule Helix.Process.Model.Process do
     # The server where the target object of this process action is
     field :target_id, Server.ID
 
-    ### Custom keys
+    # Which connection (if any) originated this process
+    field :src_connection_id, Connection.ID,
+      default: nil
 
-    # Which file (if any) is the relevant target of this process
-    field :file_id, File.ID
+    # Which file (if any) originated this process
+    field :src_file_id, File.ID,
+      default: nil
 
     # Which network (if any) is this process bound to
-    field :network_id, Network.ID
+    field :network_id, Network.ID,
+      default: nil
 
-    # Which connection (if any) is used as transport method for this process
-    field :connection_id, Connection.ID
+    ### Custom keys
+
+    # Which file (if any) is the target of this process
+    field :tgt_file_id, File.ID,
+      default: nil
+
+    # Which connection (if any) is the target of this process
+    field :tgt_connection_id, Connection.ID,
+      default: nil
+
+    # Which process (if any) is the target of this process
+    field :tgt_process_id, Process.ID,
+      default: nil
 
     ### Helix.Process required data
 
@@ -635,20 +677,35 @@ defmodule Helix.Process.Model.Process do
     def by_target(query \\ Process, id),
       do: where(query, [p], p.target_id == ^id)
 
-    @spec by_file(Queryable.t, File.idtb) ::
+    @spec by_source_file(Queryable.t, File.idtb) ::
       Queryable.t
-    def by_file(query \\ Process, id),
-      do: where(query, [p], p.file_id == ^id)
+    def by_source_file(query \\ Process, id),
+      do: where(query, [p], p.src_file_id == ^id)
+
+    @spec by_target_file(Queryable.t, File.idtb) ::
+      Queryable.t
+    def by_target_file(query \\ Process, id),
+      do: where(query, [p], p.tgt_file_id == ^id)
 
     @spec by_network(Queryable.t, Network.idtb) ::
       Queryable.t
     def by_network(query \\ Process, id),
       do: where(query, [p], p.network_id == ^id)
 
-    @spec by_connection(Queryable.t, Connection.id) ::
+    @spec by_source_connection(Queryable.t, Connection.id) ::
       Queryable.t
-    def by_connection(query \\ Process, id),
-      do: where(query, [p], p.connection_id == ^id)
+    def by_source_connection(query \\ Process, id),
+      do: where(query, [p], p.src_connection_id == ^id)
+
+    @spec by_target_connection(Queryable.t, Connection.id) ::
+      Queryable.t
+    def by_target_connection(query \\ Process, id),
+      do: where(query, [p], p.tgt_connection_id == ^id)
+
+    @spec by_target_process(Queryable.t, Process.id) ::
+      Queryable.t
+    def by_target_process(query \\ Process, id),
+      do: where(query, [p], p.tgt_process_id == ^id)
 
     @spec by_type(Queryable.t, Process.type) ::
       Queryable.t

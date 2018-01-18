@@ -60,7 +60,7 @@ defmodule Helix.Test.Features.Hack do
 
       process_id = Process.ID.cast!(process_created.data.process_id)
       connection_id =
-        Connection.ID.cast!(process_created.data.access.connection_id)
+        Connection.ID.cast!(process_created.data.access.source_connection_id)
 
       # The BruteforceProcess is running as expected
       process = ProcessQuery.fetch(process_id)

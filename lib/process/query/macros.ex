@@ -15,15 +15,6 @@ defmodule Helix.Process.Query.Process.Macros do
     end
   end
 
-  defmacro get_custom do
-    quote do
-
-      def get_custom(_, _, _),
-        do: nil
-
-    end
-  end
-
   @spec nilify_if_empty([Process.t]) ::
     [Process.t]
     | nil

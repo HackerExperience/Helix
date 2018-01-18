@@ -13,7 +13,7 @@ defmodule Helix.Process.Event.Handler.TOPTest do
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
-  test "process is killed when its connection is closed" do
+  test "process is killed when its originating connection is closed" do
     {connection, _} = NetworkSetup.fake_connection()
     {server, _} = ServerSetup.server()
 
@@ -22,7 +22,39 @@ defmodule Helix.Process.Event.Handler.TOPTest do
     {_, %{params: params}} =
       ProcessSetup.fake_process(
         gateway_id: server.server_id,
-        connection_id: connection.connection_id,
+        src_connection_id: connection.connection_id,
+      )
+
+    params =
+      params
+      |> Map.replace(:data, FakeDefaultProcess.new())
+      |> Map.replace(:type, :fake_default_process)
+
+    {:ok, process} = ProcessInternal.create(params)
+
+    # Fake ConnectionClosedEvent
+    event = EventSetup.Network.connection_closed(connection)
+
+    # Process exists
+    assert ProcessQuery.fetch(process.process_id)
+
+    # Simulate emission of ConnectionClosedEvent
+    Event.emit(event)
+
+    # Process no longer exists
+    refute ProcessQuery.fetch(process.process_id)
+
+    TOPHelper.top_stop()
+  end
+
+  test "process is killed when its targeting connection is closed" do
+    {connection, _} = NetworkSetup.fake_connection()
+    {server, _} = ServerSetup.server()
+
+    {_, %{params: params}} =
+      ProcessSetup.fake_process(
+        gateway_id: server.server_id,
+        tgt_connection_id: connection.connection_id,
       )
 
     params =

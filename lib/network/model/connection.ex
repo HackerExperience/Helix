@@ -9,13 +9,23 @@ defmodule Helix.Network.Model.Connection do
   alias HELL.Constant
   alias Helix.Network.Model.Tunnel
 
-  @type t :: %__MODULE__{
-    connection_id: id,
-    tunnel_id: Tunnel.id,
-    connection_type: type,
-    tunnel: term,
-    meta: meta
-  }
+  @typep t_of_type(type) ::
+    %__MODULE__{
+      connection_id: id,
+      tunnel_id: Tunnel.id,
+      connection_type: type,
+      tunnel: term,
+      meta: meta
+    }
+
+  @type t :: t_of_type(type)
+
+  @type ssh :: t_of_type(:ssh)
+  @type ftp :: t_of_type(:ftp)
+  @type public_ftp :: t_of_type(:public_ftp)
+  @type bank_login :: t_of_type(:bank_login)
+  @type wire_transfer :: t_of_type(:wire_transfer)
+  @type cracker_bruteforce :: t_of_type(:cracker_bruteforce)
 
   @type meta :: map | nil
   @type close_reasons :: :normal | :force
@@ -23,9 +33,10 @@ defmodule Helix.Network.Model.Connection do
   @type type ::
     :ssh
     | :ftp
-    | :cracker_bruteforce
+    | :public_ftp
     | :bank_login
     | :wire_transfer
+    | :cracker_bruteforce
 
   @close_reasons [:normal, :force]
 

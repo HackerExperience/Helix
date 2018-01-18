@@ -1,6 +1,7 @@
 defmodule Helix.Software.Public.File do
 
   alias Helix.Event
+  alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Net
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
@@ -92,7 +93,7 @@ defmodule Helix.Software.Public.File do
     Server.t,
     Server.t,
     FileInstallProcess.backend,
-    Network.id,
+    {Tunnel.t, Connection.ssh},
     Event.relay)
   ::
     {:ok, Process.t}
@@ -100,7 +101,7 @@ defmodule Helix.Software.Public.File do
   @doc """
   Installs a generic file using FileInstallProcess with the given `backend`.
   """
-  def install(file = %File{}, gateway, target, backend, network_id, relay) do
+  def install(file = %File{}, gateway, target, backend, {tunnel, ssh}, relay) do
     process_type = FileInstallProcess.get_process_type(backend)
 
     params = %{backend: backend}
@@ -108,12 +109,13 @@ defmodule Helix.Software.Public.File do
       %{
         file: file,
         type: process_type,
-        network_id: network_id
+        network_id: tunnel.network_id,
+        ssh: ssh
       }
 
     install_process =
       ProcessQuery.get_custom(
-        process_type, gateway.server_id, %{file_id: file.file_id}
+        process_type, gateway.server_id, %{tgt_file_id: file.file_id}
       )
 
     # Verifies whether the given file is already being installed, in which case

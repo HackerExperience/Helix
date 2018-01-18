@@ -104,10 +104,13 @@ defmodule Helix.Process.Action.Process do
   # defp signal_handler(:SIGPRIO, process, %{priority: priority}),
   #   do: Processable.priority(process.data, process, priority)
 
-  defp signal_handler(:SIGCONND, process, %{connection: connection}),
-    do: Processable.connection_closed(process.data, process, connection)
+  defp signal_handler(:SIGSRCCONND, process, %{connection: connection}),
+    do: Processable.source_connection_closed(process.data, process, connection)
 
-  # defp signal_handler(:SIGFILED, process, %{file: file}),
+  defp signal_handler(:SIGTGTCONND, process, %{connection: connection}),
+    do: Processable.target_connection_closed(process.data, process, connection)
+
+  # defp signal_handler(:SIGSRCFILED, process, %{file: file}),
   #   do: Processable.file_deleted(process.data, process, file)
 
   @spec get_process_ips(Process.creation_params) ::

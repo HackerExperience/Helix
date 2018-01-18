@@ -19,9 +19,11 @@ defmodule Helix.Process.Internal.ProcessTest do
       assert process.gateway_id == params.gateway_id
       assert process.source_entity_id == params.source_entity_id
       assert process.target_id == params.target_id
-      assert process.file_id == params.file_id
       assert process.network_id == params.network_id
-      assert process.connection_id == params.connection_id
+      assert process.src_connection_id == params.src_connection_id
+      assert process.src_file_id == params.src_file_id
+      assert process.tgt_connection_id == params.tgt_connection_id
+      assert process.tgt_file_id == params.tgt_file_id
       assert process.data == params.data
       assert process.type == params.type
       assert process.objective == params.objective
@@ -45,9 +47,11 @@ defmodule Helix.Process.Internal.ProcessTest do
       assert entry.gateway_id == process.gateway_id
       assert entry.target_id == process.target_id
       assert entry.source_entity_id == process.source_entity_id
-      assert entry.file_id == process.file_id
       assert entry.network_id == process.network_id
-      assert entry.connection_id == process.connection_id
+      assert entry.src_file_id == process.src_file_id
+      assert entry.src_connection_id == process.src_connection_id
+      assert entry.tgt_file_id == process.tgt_file_id
+      assert entry.tgt_connection_id == process.tgt_connection_id
 
       # Atoms, or a list of them, are converted automatically back to atoms
       assert entry.l_dynamic == process.l_dynamic

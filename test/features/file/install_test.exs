@@ -56,7 +56,7 @@ defmodule Helix.Test.Features.File.InstallTest do
       refute ProcessQuery.fetch(process.process_id)
 
       # Virus has been installed
-      virus = VirusQuery.fetch(process.file_id)
+      virus = VirusQuery.fetch(process.tgt_file_id)
 
       assert %Virus{} = virus
       assert virus.file_id == file.file_id
