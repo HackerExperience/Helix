@@ -19,12 +19,12 @@ defmodule Helix.Maroto.ClientTools do
   end
 
   @doc """
-  Intercepts `endpoint` so, the first time a request goes through, it's answer
+  Intercepts `endpoint` so, the first time a request goes through, its answer
   will be `{status, payload}`, where `status` is either `:ok` or `:error`, and
   payload is a map. After the first intercept, upcoming calls to the same
   endpoint will behave as usual.
 
-  NOTE: The actual payload sent will be wrapped into the format required by
+  NOTE: The actual payload sent will be wrapped into the format required by the
   Client, so it would probably reply something like:
 
     %{data: `payload`, meta: %{request_id: nil}}
@@ -44,7 +44,7 @@ defmodule Helix.Maroto.ClientTools do
   `:ok` or `:error`, and payload is a map. It will keep intercepting until
   `stop_intercept` is called.
 
-  NOTE: The actual payload sent will be wrapped into the format required by
+  NOTE: The actual payload sent will be wrapped into the format required by the
   Client, so it would probably reply something like:
 
   %{data: `payload`, meta: %{request_id: nil}}
@@ -171,12 +171,21 @@ defmodule Helix.Maroto.ClientTools do
 
   defp broadcast_all("account", payload) do
     AccountHelper.get_all()
-    |> Enum.map(&(broadcast(build_topic(&1), payload)))
+    |> Enum.each(&(broadcast(build_topic(&1), payload)))
   end
 
   defp broadcast_all("server", payload) do
-    ServerHelper.get_all()
-    |> Enum.map(&(broadcast(build_topic(&1), payload)))
+    all_servers = ServerHelper.get_all()
+
+    # Broadcast to "server:<ID>"
+    Enum.each(all_servers, &(broadcast(build_topic(&1), payload)))
+
+    # Broadcast to "server:<network_id>@<ip>"
+    all_servers
+    |> Enum.map(&(ServerHelper.get_all_nips(&1)))
+    |> Enum.each(fn nips ->
+      Enum.each(nips, &(broadcast(build_topic(&1), payload)))
+    end)
   end
 
   # Builders
@@ -187,6 +196,8 @@ defmodule Helix.Maroto.ClientTools do
     do: "account:" <> to_string(account.account_id)
   defp build_topic(entity = %Entity{}),
     do: "account:" <> to_string(entity.entity_id)
+  defp build_topic(%{ip: ip, network_id: network_id}),
+    do: "server:" <> to_string(network_id) <> "@" <> ip
 
   defp build_event(event = %_{__meta__: _}, opts) do
     {:ok, payload} = Notificable.generate_payload(event, %{})
