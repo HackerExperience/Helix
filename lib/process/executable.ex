@@ -289,6 +289,9 @@ defmodule Helix.Process.Executable do
 
         defp get_target_file(_, _, _, _),
           do: %{tgt_file_id: nil}
+
+        defp get_target_process(_, _, _, _),
+          do: %{tgt_process_id: nil}
       end
     end
   end
@@ -312,6 +315,7 @@ defmodule Helix.Process.Executable do
         resources = get_resources(unquote_splicing(args))
         source_file = get_source_file(unquote_splicing(args))
         target_file = get_target_file(unquote_splicing(args))
+        target_process = get_target_process(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
         process_type = get_process_type(unquote(meta))
         network_id = get_network_id(unquote(meta))
@@ -322,6 +326,7 @@ defmodule Helix.Process.Executable do
           |> Map.merge(resources)
           |> Map.merge(source_file)
           |> Map.merge(target_file)
+          |> Map.merge(target_process)
           |> Map.merge(ownership)
           |> Map.merge(process_type)
           |> Map.merge(network_id)
@@ -439,7 +444,7 @@ defmodule Helix.Process.Executable do
     quote do
 
       @spec get_source_file(term, term, term, term) ::
-        %{src_file_id: File.t | nil}
+        %{src_file_id: File.id | nil}
       @doc false
       defp get_source_file(unquote_splicing(args)) do
         file_id = unquote(block)
@@ -460,12 +465,33 @@ defmodule Helix.Process.Executable do
     quote do
 
       @spec get_target_file(term, term, term, term) ::
-        %{tgt_file_id: File.t | nil}
+        %{tgt_file_id: File.id | nil}
       @doc false
       defp get_target_file(unquote_splicing(args)) do
         file_id = unquote(block)
 
         %{tgt_file_id: file_id}
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the process' `tgt_process_id`, as defined on the `target_process`
+  section of the Process.Executable.
+  """
+  defmacro target_process(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_target_process(term, term, term, term) ::
+        %{tgt_process_id: Process.t | nil}
+      @doc false
+      defp get_target_process(unquote_splicing(args)) do
+        process_id = unquote(block)
+
+        %{tgt_process_id: process_id}
       end
 
     end

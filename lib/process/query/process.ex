@@ -100,4 +100,6 @@ defmodule Helix.Process.Query.Process do
     do: &(&1.src_file_id == file_id)
   get_custom %{tgt_file_id: file_id = %File.ID{}},
     do: &(&1.tgt_file_id == file_id)
+  get_custom %{tgt_process_id: process_id = %Process.ID{}},
+    do: &(&1.tgt_process_id == process_id)
 end

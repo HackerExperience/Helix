@@ -113,8 +113,6 @@ defmodule Helix.Software.Public.File do
         ssh: ssh
       }
 
-    # REVIEW: Does this handle/differentiate installs by different users?
-    # (it should)
     install_process =
       ProcessQuery.get_custom(
         process_type, gateway.server_id, %{tgt_file_id: file.file_id}

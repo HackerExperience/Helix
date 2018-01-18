@@ -9,7 +9,6 @@ defmodule Helix.Network.Internal.Tunnel do
 
   # TODO: Refactor TunnelInternal
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
-  alias Helix.Network.Event.Connection.Started, as: ConnectionStartedEvent
 
   @spec fetch(Tunnel.id) ::
     Tunnel.t
