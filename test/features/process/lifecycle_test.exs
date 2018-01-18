@@ -23,6 +23,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
 
   describe "process" do
 
+    skip_on_travis_slowpoke()
     test "creation and allocation" do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
@@ -75,6 +76,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
     # from TOPHelper, so the completion is actually spontaneous.
     # In order to do that we create a very small process which needs to transfer
     # a file of about ~1kb, which takes less than a second on a 100Mbit link.
+    skip_on_travis_slowpoke()
     test "spontaneous completion" do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
