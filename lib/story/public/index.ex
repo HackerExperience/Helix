@@ -1,5 +1,7 @@
 defmodule Helix.Story.Public.Index do
 
+  alias HELL.ClientUtils
+  alias HELL.HETypes
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Story
@@ -18,13 +20,15 @@ defmodule Helix.Story.Public.Index do
   @typep email_entry ::
     %{
       contact_id: Step.contact,
-      messages: [message]
+      messages: [message],
+      replies: []
     }
 
   @typep rendered_email_entry ::
     %{
       contact_id: String.t,
-      messages: [rendered_message]
+      messages: [rendered_message],
+      replies: []
     }
 
   @typep message ::
@@ -40,7 +44,7 @@ defmodule Helix.Story.Public.Index do
       id: String.t,
       meta: map,
       sender: String.t,
-      timestamp: String.t
+      timestamp: HETypes.client_timestamp
     }
 
   @spec index(Entity.id) ::
@@ -69,7 +73,8 @@ defmodule Helix.Story.Public.Index do
       Enum.map(index.email, fn entry ->
         %{
           contact_id: to_string(entry.contact_id),
-          messages: render_messages(entry.messages)
+          messages: render_messages(entry.messages),
+          replies: []
         }
       end)
 
@@ -106,7 +111,7 @@ defmodule Helix.Story.Public.Index do
       id: message.id,
       meta: message.meta,
       sender: to_string(message.sender),
-      timestamp: to_string(message.timestamp)
+      timestamp: ClientUtils.to_timestamp(message.timestamp)
     }
   end
 end

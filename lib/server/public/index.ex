@@ -68,8 +68,9 @@ defmodule Helix.Server.Public.Index do
 
   @type gateway ::
     %{
-      name: String.t,
+      name: Server.name,
       password: Server.password,
+      type: Server.type,
       nips: [Network.nip],
       logs: LogIndex.index,
       main_storage: Storage.id,
@@ -83,6 +84,7 @@ defmodule Helix.Server.Public.Index do
     %{
       name: String.t,
       password: String.t,
+      server_type: String.t,
       nips: [[String.t]],
       logs: LogIndex.rendered_index,
       main_storage: String.t,
@@ -234,7 +236,8 @@ defmodule Helix.Server.Public.Index do
     index = %{
       password: server.password,
       name: server.hostname,
-      hardware: HardwareIndex.index(server, :local)
+      hardware: HardwareIndex.index(server, :local),
+      type: server.type
     }
 
     Map.merge(server_common(server, entity_id), index)
@@ -249,7 +252,8 @@ defmodule Helix.Server.Public.Index do
     partial =
       %{
         password: server.password,
-        name: server.name
+        name: server.name,
+        server_type: to_string(server.type)
       }
 
     Map.merge(partial, render_server_common(server))

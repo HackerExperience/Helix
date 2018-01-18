@@ -2,6 +2,7 @@ defmodule Helix.Story.Public.IndexTest do
 
   use Helix.Test.Case.Integration
 
+  alias HELL.ClientUtils
   alias Helix.Story.Public.Index, as: StoryIndex
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
@@ -34,12 +35,6 @@ defmodule Helix.Story.Public.IndexTest do
         end)
       end)
     end
-
-    defp find_contact(index_emails, contact_id),
-      do: Enum.find(index_emails, &(&1.contact_id == contact_id))
-
-    defp find_message(contact_messages, email_id),
-      do: Enum.find(contact_messages, &(&1.id == email_id))
   end
 
   describe "render_index/1" do
@@ -66,10 +61,16 @@ defmodule Helix.Story.Public.IndexTest do
           # Message was found
           assert message
           assert message.id == email.id
-          assert message.timestamp == to_string(email.timestamp)
+          assert message.timestamp == ClientUtils.to_timestamp(email.timestamp)
           assert message.meta == email.meta
         end)
       end)
     end
   end
+
+  defp find_contact(index_emails, contact_id),
+    do: Enum.find(index_emails, &(&1.contact_id == contact_id))
+
+  defp find_message(contact_messages, email_id),
+    do: Enum.find(contact_messages, &(&1.id == email_id))
 end
