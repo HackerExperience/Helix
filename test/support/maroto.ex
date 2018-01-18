@@ -11,8 +11,11 @@ defmodule Helix.Maroto do
       unquote(marote_helix())
       unquote(marote_aliases())
       unquote(marote_helpers())
+      unquote(marote_tools())
 
       use Helix.Maroto.Functions
+
+      :noix
 
     end
   end
@@ -129,37 +132,14 @@ defmodule Helix.Maroto do
 
     end
   end
-end
 
-defmodule Helix.Maroto.Functions do
-
-  alias Helix.Account.Action.Flow.Account, as: AccountFlow
-
-  alias HELL.TestHelper.Random
-
-  defmacro __using__(_) do
+  defp marote_tools do
     quote do
 
-      import Helix.Maroto.Functions
+      alias Helix.Test.Channel.Interceptor
+
+      Interceptor.start_link()
+
     end
-  end
-
-  @doc """
-  Opts:
-
-  - email: email
-  - user: Username.
-  - pass: Password.
-  """
-  def create_account(opts \\ []) do
-    email = Keyword.get(opts, :email, Random.email())
-    user = Keyword.get(opts, :user, Random.username())
-    pass = Keyword.get(opts, :pass, Random.string(min: 8, max: 10))
-
-    related = %{email: email, user: user, pass: pass}
-
-    {:ok, account} = AccountFlow.create(email, user, pass)
-
-    {account, related}
   end
 end

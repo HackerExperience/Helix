@@ -1,6 +1,8 @@
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Server.Helper do
 
+  import Ecto.Query, only: [from: 1]
+
   alias Ecto.Changeset
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
@@ -14,9 +16,9 @@ defmodule Helix.Test.Server.Helper do
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
 
-  @internet NetworkHelper.internet_id()
+  @internet_id NetworkHelper.internet_id()
 
-  def get_ip(server, network_id \\ @internet)
+  def get_ip(server, network_id \\ @internet_id)
   def get_ip(server = %Server{}, network_id),
     do: get_ip(server.server_id, network_id)
   def get_ip(server_id = %Server.ID{}, network_id),
@@ -123,4 +125,10 @@ defmodule Helix.Test.Server.Helper do
     |> ServerQuery.fetch()
     |> update_server_mobo(spec_id)
   end
+
+  @doc """
+  Fetches all servers
+  """
+  def get_all,
+    do: ServerRepo.all(from s in Server)
 end

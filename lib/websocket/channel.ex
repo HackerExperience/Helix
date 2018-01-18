@@ -28,15 +28,40 @@ defmodule Helix.Websocket.Channel do
   specify both the topic name (which will be used to listen to incoming
   messages) and the corresponding request handler. The request handler must
   implement the Requestable protocol. See `Helix.Websocket.Request`.
+
+  On `:dev` and `:test` environments we include the Interceptor, which may be
+  used for testing purposes. This code does not exist on the :prod environment.
   """
   defmacro topic(name, request) do
-    quote do
+    if Mix.env == :prod do
+      quote do
 
-      def handle_in(unquote(name), params, socket) do
-        unquote(request).new(params, socket)
-        |> Websocket.handle_request(socket)
+        def handle_in(unquote(name), params, socket) do
+          unquote(request).new(params, socket)
+          |> Websocket.handle_request(socket)
+        end
+
       end
+    else
+      quote do
 
+        def handle_in(unquote(name), params, socket) do
+          interceptor = :channel_interceptor
+
+          with \
+            true <- not is_nil(GenServer.whereis(interceptor)),
+            {status, response} <-
+              GenServer.call(interceptor, {:intercept, unquote(name)})
+          do
+            {:reply, {status, %{data: response}}, socket}
+          else
+            _ ->
+              unquote(request).new(params, socket)
+              |> Websocket.handle_request(socket)
+          end
+        end
+
+      end
     end
   end
 
