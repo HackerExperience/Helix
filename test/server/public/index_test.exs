@@ -183,6 +183,7 @@ defmodule Helix.Server.Public.IndexTest do
       assert gateway.nips == server_nips
       assert gateway.name == server.hostname
       assert gateway.password == server.password
+      assert gateway.type == server.type
 
       # Info retrieved from sub-Indexes
       assert gateway.main_storage
@@ -205,6 +206,7 @@ defmodule Helix.Server.Public.IndexTest do
 
       assert is_binary(rendered.name)
       assert is_binary(rendered.password)
+      assert is_binary(rendered.server_type)
 
       Enum.each(rendered.nips, fn [network_id, ip] ->
         assert is_binary(network_id)
