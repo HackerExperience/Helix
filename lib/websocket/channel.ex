@@ -50,10 +50,10 @@ defmodule Helix.Websocket.Channel do
 
           with \
             true <- not is_nil(GenServer.whereis(interceptor)),
-            response = {_, _} <-
+            {status, response} <-
               GenServer.call(interceptor, {:intercept, unquote(name)})
           do
-            {:reply, response, socket}
+            {:reply, {status, %{data: response}}, socket}
           else
             _ ->
               unquote(request).new(params, socket)

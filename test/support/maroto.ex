@@ -11,6 +11,7 @@ defmodule Helix.Maroto do
       unquote(marote_helix())
       unquote(marote_aliases())
       unquote(marote_helpers())
+      unquote(marote_tools())
 
       use Helix.Maroto.Functions
 
@@ -128,6 +129,16 @@ defmodule Helix.Maroto do
       alias Helix.Test.Story.Helper, as: StoryHelper
       alias Helix.Test.Universe.Bank.Helper, as: BankHelper
       alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
+
+    end
+  end
+
+  defp marote_tools do
+    quote do
+
+      alias Helix.Test.Channel.Interceptor
+
+      Interceptor.start_link()
 
     end
   end
