@@ -34,6 +34,17 @@ defmodule Helix.Test.Macros do
     end
   end
 
+  @doc """
+  Some tests simply cannot be run on travis because it's so freaking slow
+  """
+  defmacro skip_on_travis_slowpoke do
+    if System.get_env("HELIX_TEST_ENV") == "travis" do
+      quote do
+        @tag :skip
+      end
+    end
+  end
+
   defp get_env_multiplier("travis"),
     do: 4
   defp get_env_multiplier("jenkins"),
