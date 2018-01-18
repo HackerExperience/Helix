@@ -3,24 +3,13 @@ import Helix.Process
 process Helix.Software.Process.Cracker.Overflow do
   @moduledoc false
 
-  alias Helix.Network.Model.Connection
-  alias Helix.Process.Model.Process
   alias Helix.Software.Model.File
 
-  # REVIEW: This is weird
-  process_struct [:target_process_id, :target_connection_id]
+  process_struct []
 
-  @type t ::
-    %__MODULE__{
-      target_process_id: Process.id | nil,
-      target_connection_id: Connection.id | nil
-    }
+  @type t :: %__MODULE__{}
 
-  @type creation_params ::
-    %{
-      target_process_id: Process.id | nil,
-      target_connection_id: Connection.id | nil
-    }
+  @type creation_params :: %{}
 
   @type objective :: %{cpu: resource_usage}
 
@@ -41,17 +30,8 @@ process Helix.Software.Process.Cracker.Overflow do
 
   @spec new(creation_params) ::
     t
-  def new(%{target_process_id: target_process_id}),
-      do: new(target_process_id, nil)
-  def new(%{target_connection_id: target_connection_id}),
-    do: new(nil, target_connection_id)
-
-  defp new(process_id, connection_id) do
-    %__MODULE__{
-      target_process_id: process_id,
-      target_connection_id: connection_id
-    }
-  end
+  def new(_),
+    do: %__MODULE__{}
 
   @spec resources(resources_params) ::
     resources
@@ -60,8 +40,6 @@ process Helix.Software.Process.Cracker.Overflow do
 
   processable do
 
-    alias Helix.Network.Model.Connection
-    alias Helix.Process.Model.Process
     alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
 
     alias Helix.Software.Event.Cracker.Overflow.Processed,
@@ -71,18 +49,6 @@ process Helix.Software.Process.Cracker.Overflow do
       event = OverflowProcessedEvent.new(process, data)
 
       {:delete, [event]}
-    end
-
-    def after_read_hook(data = %{target_connection_id: nil}),
-      do: after_read_hook(Process.ID.cast!(data.target_process_id), nil)
-    def after_read_hook(data = %{target_process_id: nil}),
-      do: after_read_hook(nil, Connection.ID.cast!(data.target_connection_id))
-
-    defp after_read_hook(target_process_id, target_connection_id) do
-      %OverflowProcess{
-        target_process_id: target_process_id,
-        target_connection_id: target_connection_id
-      }
     end
   end
 
@@ -141,9 +107,16 @@ process Helix.Software.Process.Cracker.Overflow do
       cracker.file_id
     end
 
-    source_connection(_, _, _, _) do
-      # TODO
-      nil
+    source_connection(_, _, _, %{ssh: ssh}) do
+      ssh.connection_id
+    end
+
+    target_connection(_, _, _, %{connection: connection}) do
+      connection.connection_id
+    end
+
+    target_process(_, _, _, %{process: process}) do
+      process.process_id
     end
   end
 

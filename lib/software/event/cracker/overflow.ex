@@ -23,11 +23,11 @@ defmodule Helix.Software.Event.Cracker.Overflow do
 
     @spec new(Process.t, OverflowProcess.t) ::
       t
-    def new(process = %Process{}, data = %OverflowProcess{}) do
+    def new(process = %Process{}, _data = %OverflowProcess{}) do
       %__MODULE__{
         gateway_id: process.gateway_id,
-        target_process_id: data.target_process_id,
-        target_connection_id: data.target_connection_id
+        target_process_id: process.tgt_process_id,
+        target_connection_id: process.tgt_connection_id
       }
     end
   end

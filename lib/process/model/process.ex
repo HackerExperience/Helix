@@ -39,6 +39,7 @@ defmodule Helix.Process.Model.Process do
       network_id: Network.id | nil,
       tgt_file_id: File.id | nil,
       tgt_connection_id: Connection.id | nil,
+      tgt_process_id: Process.id | nil,
       data: term,
       type: type,
       priority: term,
@@ -190,6 +191,7 @@ defmodule Helix.Process.Model.Process do
     :network_id => Network.id | nil,
     :tgt_file_id => File.id | nil,
     :tgt_connection_id => Connection.id | nil,
+    :tgt_process_id => Process.id | nil,
     :objective => map,
     :l_dynamic => dynamic,
     :r_dynamic => dynamic,
@@ -205,6 +207,7 @@ defmodule Helix.Process.Model.Process do
     :network_id,
     :tgt_file_id,
     :tgt_connection_id,
+    :tgt_process_id,
     :data,
     :type,
     :objective,
@@ -292,6 +295,10 @@ defmodule Helix.Process.Model.Process do
 
     # Which connection (if any) is the target of this process
     field :tgt_connection_id, Connection.ID,
+      default: nil
+
+    # Which process (if any) is the target of this process
+    field :tgt_process_id, Process.ID,
       default: nil
 
     ### Helix.Process required data
@@ -675,6 +682,11 @@ defmodule Helix.Process.Model.Process do
     def by_source_file(query \\ Process, id),
       do: where(query, [p], p.src_file_id == ^id)
 
+    @spec by_target_file(Queryable.t, File.idtb) ::
+      Queryable.t
+    def by_target_file(query \\ Process, id),
+      do: where(query, [p], p.tgt_file_id == ^id)
+
     @spec by_network(Queryable.t, Network.idtb) ::
       Queryable.t
     def by_network(query \\ Process, id),
@@ -689,6 +701,11 @@ defmodule Helix.Process.Model.Process do
       Queryable.t
     def by_target_connection(query \\ Process, id),
       do: where(query, [p], p.tgt_connection_id == ^id)
+
+    @spec by_target_process(Queryable.t, Process.id) ::
+      Queryable.t
+    def by_target_process(query \\ Process, id),
+      do: where(query, [p], p.tgt_process_id == ^id)
 
     @spec by_type(Queryable.t, Process.type) ::
       Queryable.t
