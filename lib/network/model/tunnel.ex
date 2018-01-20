@@ -7,7 +7,6 @@ defmodule Helix.Network.Model.Tunnel do
 
   alias Helix.Server.Model.Server
   alias Helix.Network.Model.Connection
-  alias Helix.Network.Model.Link
   alias Helix.Network.Model.Network
 
   @type t :: %__MODULE__{
@@ -17,7 +16,6 @@ defmodule Helix.Network.Model.Tunnel do
     destination_id: Server.id,
     hash: String.t,
     network: term,
-    links: term,
     connections: term
   }
 
@@ -42,11 +40,6 @@ defmodule Helix.Network.Model.Tunnel do
       references: :network_id,
       define_field: false
 
-    has_many :links, Link,
-      foreign_key: :tunnel_id,
-      references: :tunnel_id,
-      on_delete: :delete_all
-
     has_many :connections, Connection,
       foreign_key: :tunnel_id,
       references: :tunnel_id,
@@ -63,38 +56,38 @@ defmodule Helix.Network.Model.Tunnel do
     %__MODULE__{}
     |> cast(params, [:gateway_id, :destination_id, :network_id])
     |> validate_required([:gateway_id, :destination_id, :network_id])
-    |> bounce([gateway| bounces] ++ [destination])
-    |> hash(bounces)
+    # |> bounce([gateway| bounces] ++ [destination])
+    # |> hash(bounces)
   end
 
-  # TODO: Use something like murmur
-  def hash_bounces(bounces) do
-    bounces
-    |> Enum.map(&to_string/1)
-    |> Enum.join("_")
-  end
+  # # TODO: Use something like murmur
+  # def hash_bounces(bounces) do
+  #   bounces
+  #   |> Enum.map(&to_string/1)
+  #   |> Enum.join("_")
+  # end
 
-  # TODO: Refactor this ? YES PLEASE #256
-  defp bounce(changeset, [gateway| bounces]) do
-    set = MapSet.new([gateway])
-    result = Enum.reduce_while(bounces, {[], gateway, set, 0}, fn
-      to, {acc, from, set, i} ->
-        if MapSet.member?(set, to) do
-          {:halt, {:error, :repeated}}
-        else
-          link = Link.create(from, to, i)
+  # # TODO: Refactor this ? YES PLEASE #256
+  # defp bounce(changeset, [gateway| bounces]) do
+  #   set = MapSet.new([gateway])
+  #   result = Enum.reduce_while(bounces, {[], gateway, set, 0}, fn
+  #     to, {acc, from, set, i} ->
+  #       if MapSet.member?(set, to) do
+  #         {:halt, {:error, :repeated}}
+  #       else
+  #         link = Link.create(from, to, i)
 
-          {:cont, {[link| acc], to, MapSet.put(set, to), i + 1}}
-        end
-    end)
+  #         {:cont, {[link| acc], to, MapSet.put(set, to), i + 1}}
+  #       end
+  #   end)
 
-    case result do
-      {:error, :repeated} ->
-        add_error(changeset, :links, "repeated node")
-      {acc, _, _, _} ->
-        put_assoc(changeset, :links, acc)
-    end
-  end
+  #   case result do
+  #     {:error, :repeated} ->
+  #       add_error(changeset, :links, "repeated node")
+  #     {acc, _, _, _} ->
+  #       put_assoc(changeset, :links, acc)
+  #   end
+  # end
 
   defp hash(changeset, bounces),
     do: put_change(changeset, :hash, hash_bounces(bounces))

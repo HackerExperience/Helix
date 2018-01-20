@@ -4,6 +4,8 @@ defmodule Helix.Test.Network.Helper do
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
 
+  alias HELL.TestHelper.Random
+
   def internet,
     do: NetworkQuery.internet()
 
@@ -14,8 +16,16 @@ defmodule Helix.Test.Network.Helper do
     do: Net.new(internet_id(), [])
 
   @doc """
-  Guaranteed to be random.
+  Generates a Network.id
   """
   def random_id,
-    do: Network.ID.cast!("::1")
+    do: Network.ID.generate()
+  def id,
+    do: random_id()
+
+  @doc """
+  Generates a random IP
+  """
+  def ip,
+    do: Random.ipv4()
 end
