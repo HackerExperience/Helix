@@ -2,75 +2,212 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
+
   alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
-  alias Helix.Network.Model.Connection
-  alias Helix.Network.Query.Network, as: NetworkQuery
-  alias Helix.Network.Repo
 
-  alias Helix.Test.Network.Factory
+  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
-  @internet NetworkQuery.internet()
+  @internet NetworkHelper.internet()
   @internet_id @internet.network_id
 
-  describe "connected?/3" do
-    test "returns false if there is no tunnel open linking two nodes" do
-      gateway = Server.ID.generate()
-      endpoint = Server.ID.generate()
-      refute TunnelInternal.connected?(gateway, endpoint)
+  describe "fetch/1" do
+    test "returns the tunnel, formatted (with bounce)" do
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
+      {t, _} = NetworkSetup.tunnel(bounce_id: bounce.bounce_id)
+
+      tunnel = TunnelInternal.fetch(t)
+
+      assert tunnel == t
+      assert tunnel.bounce == %{bounce| sorted: nil}
+      assert tunnel.hops == bounce.links
     end
 
-    test "returns true if there is any tunnel open linking two nodes" do
-      tunnel = Factory.insert(:tunnel, network: @internet)
-      gateway = tunnel.gateway_id
-      destination = tunnel.destination_id
+    test "returns the tunnel, formatted (no bounce)" do
+      {t, _} = NetworkSetup.tunnel()
 
-      assert TunnelInternal.connected?(gateway, destination)
+      tunnel = TunnelInternal.fetch(t)
+
+      assert_map tunnel, t, skip: :bounce
+      refute tunnel.bounce
     end
 
-    @tag :pending
-    test "can be filtered by network" do
-      tunnel = Factory.insert(:tunnel, network: :todo)
-      network = tunnel.network
-      gateway = tunnel.gateway_id
-      destination = tunnel.destination_id
+    test "returns empty when no tunnel is found" do
+      refute TunnelInternal.fetch(NetworkSetup.tunnel_id())
+    end
+  end
 
-      refute TunnelInternal.connected?(gateway, destination, @internet)
-      assert TunnelInternal.connected?(gateway, destination, network)
+  describe "get_hops/1" do
+    test "returns all hops between tunnel with bounce" do
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
+      {tunnel, _} = NetworkSetup.tunnel(bounce_id: bounce.bounce_id)
+
+      # Created tunnel includes the bounce data (testing NetworkSetup)
+      assert tunnel.bounce_id == bounce.bounce_id
+      assert tunnel.bounce == %{bounce| sorted: nil}
+      assert tunnel.hops == bounce.links
+
+      assert bounce.links == TunnelInternal.get_hops(tunnel)
+    end
+
+    test "returns empty list on tunnel without bounce" do
+      {tunnel, _} = NetworkSetup.tunnel()
+      refute tunnel.bounce_id
+
+      assert Enum.empty?(TunnelInternal.get_hops(tunnel))
+    end
+  end
+
+  describe "get_tunnel/4" do
+    test "returns the tunnel (with bounce)" do
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
+      {tunnel, _} = NetworkSetup.tunnel(bounce_id: bounce.bounce_id)
+
+      assert tunnel ==
+        TunnelInternal.get_tunnel(
+          tunnel.gateway_id,
+          tunnel.destination_id,
+          tunnel.network_id,
+          tunnel.bounce_id
+        )
+    end
+  end
+
+  describe "create/4" do
+    test "creates tunnel and underlying links" do
+      gateway_id = ServerSetup.id()
+      target_id = ServerSetup.id()
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
+
+      assert {:ok, tunnel} =
+        TunnelInternal.create(@internet, gateway_id, target_id, bounce)
+
+      assert tunnel.gateway_id == gateway_id
+      assert tunnel.destination_id == target_id
+      assert tunnel.network_id == @internet_id
+      assert tunnel.hops == bounce.links
+
+      assert [l1, l2, l3] = TunnelInternal.get_links(tunnel)
+
+      [{hop1_id, _, _}, {hop2_id, _, _}] = bounce.links
+
+      # Links are a link-ed list :)
+      assert l1.source_id == gateway_id
+      assert l1.target_id == hop1_id
+      assert l2.source_id == l1.target_id
+      assert l2.target_id == hop2_id
+      assert l3.source_id == l2.target_id
+      assert l3.target_id == target_id
+
+      # Sequence is fine too
+      assert l1.sequence == 0
+      assert l2.sequence == 1
+      assert l3.sequence == 2
+    end
+
+    test "creates tunnel without a bounce" do
+      gateway_id = ServerSetup.id()
+      target_id = ServerSetup.id()
+
+      assert {:ok, tunnel} =
+        TunnelInternal.create(@internet, gateway_id, target_id, nil)
+
+      assert tunnel.gateway_id == gateway_id
+      assert tunnel.destination_id == target_id
+      assert tunnel.network_id == @internet_id
+      assert Enum.empty?(tunnel.hops)
+      refute tunnel.bounce
+      refute tunnel.bounce_id
+
+      assert [l1] = TunnelInternal.get_links(tunnel)
+
+      assert l1.tunnel_id == tunnel.tunnel_id
+      assert l1.source_id == gateway_id
+      assert l1.target_id == target_id
+      assert l1.sequence == 0
+    end
+  end
+
+  describe "tunnels_between/3" do
+    test "returns all tunnels between two servers" do
+      {tunnel1, _} = NetworkSetup.tunnel()
+      {tunnel2, _} =
+        NetworkSetup.tunnel(
+          gateway_id: tunnel1.gateway_id, destination_id: tunnel1.destination_id
+        )
+
+      # Makes sure NetworkSetup worked as expected
+      assert tunnel1.gateway_id == tunnel2.gateway_id
+      assert tunnel1.destination_id == tunnel2.destination_id
+
+      # Tunnels 3 and 4 only meet the condition partially
+      {_tunnel3, _} = NetworkSetup.tunnel(gateway_id: tunnel1.gateway_id)
+      {_tunnel4, _} = NetworkSetup.tunnel(destination_id: tunnel1.destination_id)
+
+      assert [t1, t2] =
+        TunnelInternal.tunnels_between(tunnel1.gateway_id, tunnel1.destination_id)
+
+      assert Enum.find([t1, t2], &(&1.tunnel_id == tunnel1.tunnel_id))
+      assert Enum.find([t1, t2], &(&1.tunnel_id == tunnel2.tunnel_id))
+    end
+
+    test "returns empty (nil) when there's no tunnel between the servers" do
+      assert Enum.empty?(
+        TunnelInternal.tunnels_between(ServerSetup.id(), ServerSetup.id())
+      )
+    end
+
+    test "may be filtered by network" do
+      {network, _} = NetworkSetup.network()
+      {bounce, _} = NetworkSetup.Bounce.bounce()
+
+      {tunnel1, _} = NetworkSetup.tunnel(bounce_id: bounce.bounce_id)
+      {tunnel2, _} =
+        NetworkSetup.tunnel(
+          gateway_id: tunnel1.gateway_id,
+          destination_id: tunnel1.destination_id,
+          network_id: network.network_id
+        )
+
+      assert [t2] =
+        TunnelInternal.tunnels_between(
+          tunnel1.gateway_id, tunnel1.destination_id, network.network_id
+        )
+
+      assert t2 == tunnel2
     end
   end
 
   describe "connections_through_node/1" do
     test "returns all connections that pass through node" do
-      server = Server.ID.generate()
+      server_id = Server.ID.generate()
+      opts = [fake_servers: true]
 
-      tunnel1 = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: server)
+      {tunnel1, _} = NetworkSetup.tunnel([gateway_id: server_id] ++ opts)
 
       TunnelInternal.start_connection(tunnel1, :ssh)
 
-      tunnel2 = Factory.insert(:tunnel,
-        network: @internet,
-        destination_id: server)
+      {tunnel2, _} = NetworkSetup.tunnel([destination_id: server_id] ++ opts)
 
       TunnelInternal.start_connection(tunnel2, :ssh)
-      TunnelInternal.start_connection(tunnel2, :ssh)
+      TunnelInternal.start_connection(tunnel2, :ftp)
 
-      tunnel3 = Factory.insert(:tunnel,
-        network: @internet,
-        bounces: [
-          Server.ID.generate(),
-          server,
-          Server.ID.generate(),
-          Server.ID.generate()])
+      {bounce, _} =
+        NetworkSetup.Bounce.bounce(
+          servers: [
+            ServerSetup.id(), server_id, ServerSetup.id(), ServerSetup.id()
+          ]
+        )
+      {tunnel3, _} = NetworkSetup.tunnel([bounce_id: bounce.bounce_id] ++ opts)
 
       TunnelInternal.start_connection(tunnel3, :ssh)
-      TunnelInternal.start_connection(tunnel3, :ssh)
-      TunnelInternal.start_connection(tunnel3, :ssh)
+      TunnelInternal.start_connection(tunnel3, :ftp)
+      TunnelInternal.start_connection(tunnel3, :public_ftp)
 
-      connections = TunnelInternal.connections_through_node(server)
+      connections = TunnelInternal.connections_through_node(server_id)
 
       assert 6 == Enum.count(connections)
     end
@@ -78,104 +215,135 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "inbound_connections/1" do
     test "list the conections that are incident on node" do
-      server = Server.ID.generate()
+      server_id = Server.ID.generate()
 
-      tunnel1 = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: server,
-        bounces: [Server.ID.generate(), Server.ID.generate()])
+      {dummy_bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
 
-      # This is not incident since the connection emanates from the server
+      {tunnel1, _} =
+        NetworkSetup.tunnel(
+          gateway_id: server_id,
+          bounce_id: dummy_bounce.bounce_id,
+          fake_servers: true
+        )
+
+      # This is not inbound since the connection *starts* from `server_id`
       TunnelInternal.start_connection(tunnel1, :ssh)
 
-      tunnel2 = Factory.insert(:tunnel,
-        network: @internet,
-        destination_id: server,
-        bounces: [Server.ID.generate(), Server.ID.generate()])
-      # Those are incident because they emanate from a gateway node onto the
-      # bounce nodes and finally on the server
-      TunnelInternal.start_connection(tunnel2, :ssh)
-      TunnelInternal.start_connection(tunnel2, :ssh)
+      assert Enum.empty?(TunnelInternal.inbound_connections(server_id))
 
-      tunnel3 = Factory.insert(:tunnel,
-        network: @internet,
-        bounces: [Server.ID.generate(), server, Server.ID.generate()])
+      {tunnel2, _} =
+        NetworkSetup.tunnel(
+          destination_id: server_id,
+          bounce_id: dummy_bounce.bounce_id,
+          fake_servers: true
+        )
 
-      # Those are also incident as they emanate from the gateway, onto the
-      # bounces, onto the specified target and onto the destination
-      TunnelInternal.start_connection(tunnel3, :ssh)
-      TunnelInternal.start_connection(tunnel3, :ssh)
-      TunnelInternal.start_connection(tunnel3, :ssh)
+      # Those are inbound because they start from a random server into the
+      # bounce nodes and finally on the `server_id`
+      {:ok, t2c1} = TunnelInternal.start_connection(tunnel2, :ssh)
+      {:ok, t2c2} = TunnelInternal.start_connection(tunnel2, :ftp)
 
-      connections = TunnelInternal.inbound_connections(server)
+      assert Enum.sort([t2c1, t2c2]) ==
+        Enum.sort(TunnelInternal.inbound_connections(server_id))
 
-      assert 5 == Enum.count(connections)
+      {bounce_with_server, _} =
+        NetworkSetup.Bounce.bounce(
+          servers: [ServerSetup.id(), server_id, ServerSetup.id()]
+        )
+
+      {tunnel3, _} =
+        NetworkSetup.tunnel(
+          bounce_id: bounce_with_server.bounce_id, fake_servers: true
+        )
+
+      # Those are also inbound as they originate from a random server, onto the
+      # bounces (which includes `server_id`) and then to some destination
+      {:ok, t3c1} = TunnelInternal.start_connection(tunnel3, :ssh)
+      {:ok, t3c2} = TunnelInternal.start_connection(tunnel3, :ftp)
+      {:ok, t3c3} = TunnelInternal.start_connection(tunnel3, :ssh)
+
+      assert Enum.sort([t2c1, t2c2, t3c1, t3c2, t3c3]) ==
+        Enum.sort(TunnelInternal.inbound_connections(server_id))
     end
   end
 
   describe "outbound_connections/1" do
     test "list the conections that emanate from node" do
-      server = Server.ID.generate()
+      server_id = Server.ID.generate()
 
-      tunnel1 = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: server,
-        bounces: [Server.ID.generate(), Server.ID.generate()])
+      {dummy_bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
 
-      # This emanates from the server since it goes from the server to the
+      {tunnel1, _} =
+        NetworkSetup.tunnel(
+          gateway_id: server_id,
+          bounce_id: dummy_bounce.bounce_id,
+          fake_servers: true
+        )
+
+      # This emanates from `server_id` since it goes from the `server_id` to the
       # bounces and finally to the destination
-      TunnelInternal.start_connection(tunnel1, :ssh)
+      {:ok, t1c1} = TunnelInternal.start_connection(tunnel1, :ssh)
 
-      tunnel2 = Factory.insert(:tunnel,
-        network: @internet,
-        destination_id: server,
-        bounces: [Server.ID.generate(), Server.ID.generate()])
+      assert [t1c1] == TunnelInternal.outbound_connections(server_id)
+
+      {tunnel2, _} =
+        NetworkSetup.tunnel(
+          destination_id: server_id,
+          bounce_id: dummy_bounce.bounce_id,
+          fake_servers: true
+        )
 
       # Those don't emanate from the server as the connection is incident on it
       TunnelInternal.start_connection(tunnel2, :ssh)
-      TunnelInternal.start_connection(tunnel2, :ssh)
+      TunnelInternal.start_connection(tunnel2, :wire_transfer)
 
-      tunnel3 = Factory.insert(:tunnel,
-        network: @internet,
-        bounces: [Server.ID.generate(), server, Server.ID.generate()])
+      assert [t1c1] == TunnelInternal.outbound_connections(server_id)
 
-      # Those do emanate from server onto another bounce and finally on the
+      {bounce_with_server, _} =
+        NetworkSetup.Bounce.bounce(
+          servers: [ServerSetup.id(), server_id, ServerSetup.id()]
+        )
+
+      {tunnel3, _} =
+        NetworkSetup.tunnel(
+          bounce_id: bounce_with_server.bounce_id, fake_servers: true
+        )
+
+      # Those do emanate from `server_id` onto another bounce and finally on the
       # destination
-      TunnelInternal.start_connection(tunnel3, :ssh)
-      TunnelInternal.start_connection(tunnel3, :ssh)
-      TunnelInternal.start_connection(tunnel3, :ssh)
+      {:ok, t3c1} = TunnelInternal.start_connection(tunnel3, :ssh)
+      {:ok, t3c2} = TunnelInternal.start_connection(tunnel3, :ftp)
+      {:ok, t3c3} = TunnelInternal.start_connection(tunnel3, :ssh)
 
-      connections = TunnelInternal.outbound_connections(server)
-
-      assert 4 == Enum.count(connections)
+      assert Enum.sort([t1c1, t3c1, t3c2, t3c3]) ==
+        Enum.sort(TunnelInternal.outbound_connections(server_id))
     end
   end
 
   describe "start_connection/2" do
     test "starts a new connection every call" do
-      tunnel = Factory.insert(:tunnel, network: @internet)
+      {tunnel, _} = NetworkSetup.tunnel(fake_servers: true)
 
-      {:ok, connection1} = TunnelInternal.start_connection(tunnel, :ssh)
-      {:ok, connection2} = TunnelInternal.start_connection(tunnel, :ssh)
+      assert {:ok, c1} = TunnelInternal.start_connection(tunnel, :ssh)
+      assert {:ok, c2} = TunnelInternal.start_connection(tunnel, :ftp)
+
+      assert c1.connection_type == :ssh
+      assert c2.connection_type == :ftp
 
       connections = TunnelInternal.get_connections(tunnel)
-
-      refute connection1 == connection2
-      assert %Connection{} = connection1
-      assert %Connection{} = connection2
       assert 2 == Enum.count(connections)
     end
   end
 
   describe "close_connection/2" do
     test "deletes the connection" do
-      tunnel = Factory.insert(:tunnel, network: @internet)
+      {tunnel, _} = NetworkSetup.tunnel(fake_servers: true)
 
       {:ok, connection} = TunnelInternal.start_connection(tunnel, :ssh)
 
       TunnelInternal.close_connection(connection)
 
-      refute Repo.get(Connection, connection.connection_id)
+      refute TunnelInternal.fetch_connection(connection.connection_id)
     end
   end
 
@@ -184,60 +352,68 @@ defmodule Helix.Network.Internal.TunnelTest do
       gateway_id = Server.ID.generate()
       destination_id = Server.ID.generate()
 
-      tunnel = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: gateway_id,
-        destination_id: destination_id,
-        bounces: [])
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway_id,
+          destination_id: destination_id,
+          fake_servers: true
+        )
 
       assert [l1|l2] = TunnelInternal.get_links(tunnel)
 
       assert l1.source_id == gateway_id
-      assert l1.destination_id == destination_id
+      assert l1.target_id == destination_id
       assert Enum.empty?(l2)
     end
 
     test "with n=1 bounce" do
       gateway_id = Server.ID.generate()
       destination_id = Server.ID.generate()
-      bounce1 = Server.ID.generate()
 
-      tunnel = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: gateway_id,
-        destination_id: destination_id,
-        bounces: [bounce1])
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 1)
+      [{hop1_id, _, _}] = bounce.links
 
-      assert [l1|[l2|l3]] = TunnelInternal.get_links(tunnel)
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway_id,
+          destination_id: destination_id,
+          bounce_id: bounce.bounce_id,
+          fake_servers: true
+        )
+
+      assert [l1, l2] = TunnelInternal.get_links(tunnel)
 
       assert l1.source_id == gateway_id
-      assert l1.destination_id == bounce1
-      assert l2.source_id == bounce1
-      assert l2.destination_id == destination_id
-      assert Enum.empty?(l3)
+      assert l1.target_id == hop1_id
+      assert l2.source_id == hop1_id
+      assert l2.target_id == destination_id
     end
 
     test "with n>1 bounce" do
       gateway_id = Server.ID.generate()
-      destination_id = Server.ID.generate()
-      bounce1 = Server.ID.generate()
-      bounce2 = Server.ID.generate()
+      target_id = Server.ID.generate()
 
-      tunnel = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: gateway_id,
-        destination_id: destination_id,
-        bounces: [bounce1, bounce2])
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 3)
+      [{hop1_id, _, _}, {hop2_id, _, _}, {hop3_id, _, _}] = bounce.links
 
-      assert [l1|[l2|[l3|l4]]] = TunnelInternal.get_links(tunnel)
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway_id,
+          destination_id: target_id,
+          bounce_id: bounce.bounce_id,
+          fake_servers: true
+        )
+
+      assert [l1, l2, l3, l4] = TunnelInternal.get_links(tunnel)
 
       assert l1.source_id == gateway_id
-      assert l1.destination_id == bounce1
-      assert l2.source_id == bounce1
-      assert l2.destination_id == bounce2
-      assert l3.source_id == bounce2
-      assert l3.destination_id == destination_id
-      assert Enum.empty?(l4)
+      assert l1.target_id == hop1_id
+      assert l2.source_id == hop1_id
+      assert l2.target_id == hop2_id
+      assert l3.source_id == hop2_id
+      assert l3.target_id == hop3_id
+      assert l4.source_id == hop3_id
+      assert l4.target_id == target_id
     end
   end
 
@@ -252,12 +428,20 @@ defmodule Helix.Network.Internal.TunnelTest do
       c1t1 = NetworkSetup.connection!([tunnel_id: tunnel1.tunnel_id])
       c2t1 = NetworkSetup.connection!([tunnel_id: tunnel1.tunnel_id])
 
+      # Both c1t1 and c2t1 are indeed originating from `gateway_id`
+      assert Enum.sort([c1t1, c2t1]) ==
+        Enum.sort(TunnelInternal.connections_originating_from(gateway_id))
+
       # Tunnel2 has connections going *to* `gateway`
       tunnel2_opts = [fake_servers: true, destination_id: gateway_id]
       {tunnel2, _} = NetworkSetup.tunnel(tunnel2_opts)
 
       _c1t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
       _c2t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
+
+      # As expected, nothing changed
+      assert Enum.sort([c1t1, c2t1]) ==
+        Enum.sort(TunnelInternal.connections_originating_from(gateway_id))
 
       # Tunnel2 has connections going *through* `gateway` (part of bounce)
       tunnel3_opts = [fake_servers: true, bounces: [gateway_id]]
@@ -266,11 +450,9 @@ defmodule Helix.Network.Internal.TunnelTest do
       _c1t3 = NetworkSetup.connection!([tunnel_id: tunnel3.tunnel_id])
       _c2t3 = NetworkSetup.connection!([tunnel_id: tunnel3.tunnel_id])
 
-      # Get connections originating from `gateway`
-      connections = TunnelInternal.connections_originating_from(gateway_id)
-
-      assert length(connections) == 2
-      assert Enum.sort(connections) == Enum.sort([c2t1, c1t1])
+      # Still only the first two connections
+      assert Enum.sort([c1t1, c2t1]) ==
+        Enum.sort(TunnelInternal.connections_originating_from(gateway_id))
     end
   end
 
@@ -319,11 +501,15 @@ defmodule Helix.Network.Internal.TunnelTest do
       bounce1 = Server.ID.generate()
       bounce2 = Server.ID.generate()
 
-      g2_bounces = [bounce1, bounce2]
+      {g2_bounce, _} = NetworkSetup.Bounce.bounce(servers: [bounce1, bounce2])
 
       gateway1_opts = [fake_servers: true, gateway_id: gateway1]
       gateway2_opts =
-        [fake_servers: true, gateway_id: gateway2, bounces: g2_bounces]
+        [
+          fake_servers: true,
+          gateway_id: gateway2,
+          bounce_id: g2_bounce.bounce_id
+        ]
 
       {tun_g1t1, _} =
         NetworkSetup.tunnel(gateway1_opts ++ [destination_id: target1])
@@ -349,23 +535,8 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       result = TunnelInternal.get_remote_endpoints([gateway1, gateway2])
 
-      gateway1_result = Enum.sort(result[gateway1])
-      gateway1_expected = Enum.sort([
-        %{destination_id: target2, bounces: [], network_id: @internet_id},
-        %{destination_id: target1, bounces: [], network_id: @internet_id}
-      ])
-
-      gateway2_result = Enum.sort(result[gateway2])
-      gateway2_expected = Enum.sort([
-        %{
-          destination_id: target3,
-          bounces: Enum.reverse(g2_bounces),
-          network_id: @internet_id
-        }
-      ])
-
-      assert gateway1_result == gateway1_expected
-      assert gateway2_result == gateway2_expected
+      assert Enum.sort(result[gateway1]) == Enum.sort([tun_g1t1, tun_g1t2])
+      assert_map List.first(result[gateway2]), tun_g2t3, skip: [:bounce, :hops]
     end
   end
 end

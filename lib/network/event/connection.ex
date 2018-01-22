@@ -8,6 +8,7 @@ defmodule Helix.Network.Event.Connection do
     alias Helix.Entity.Query.Entity, as: EntityQuery
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Tunnel
+    alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
     @type t :: %__MODULE__{
       connection: Connection.t,
@@ -22,7 +23,7 @@ defmodule Helix.Network.Event.Connection do
     def new(connection = %Connection{}) do
       %__MODULE__{
         connection: connection,
-        tunnel: connection.tunnel,
+        tunnel: TunnelQuery.get_tunnel(connection),
         type: connection.connection_type
       }
     end
@@ -54,6 +55,7 @@ defmodule Helix.Network.Event.Connection do
 
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Tunnel
+    alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
     @type t :: %__MODULE__{
       connection: Connection.t,
@@ -69,7 +71,7 @@ defmodule Helix.Network.Event.Connection do
     def new(connection = %Connection{}, reason \\ :normal) do
       %__MODULE__{
         connection: connection,
-        tunnel: connection.tunnel,
+        tunnel: TunnelQuery.get_tunnel(connection),
         reason: reason,
         type: connection.connection_type
       }

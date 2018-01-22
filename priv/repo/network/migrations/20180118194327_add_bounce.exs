@@ -2,8 +2,6 @@ defmodule Helix.Network.Repo.Migrations.AddBounce do
   use Ecto.Migration
 
   def change do
-    drop table(:links)
-
     create table(:bounces, primary_key: false) do
       add :bounce_id, :inet, primary_key: true
       add :entity_id, :inet, null: false
@@ -36,5 +34,21 @@ defmodule Helix.Network.Repo.Migrations.AddBounce do
 
       add :sorted_nips, {:array, :map}, null: false
     end
+
+    drop index(:tunnels, [:gateway_id])
+    drop index(:tunnels, [:network_id, :gateway_id, :destination_id, :hash])
+
+    alter table(:tunnels, primary_key: false) do
+      add :bounce_id, references(:bounces, column: :bounce_id, type: :inet)
+      remove :hash
+    end
+    create index(:tunnels, [:bounce_id], where: "bounce_id IS NOT NULL")
+
+    create unique_index(
+      :tunnels, [:gateway_id, :destination_id, :network_id, :bounce_id]
+    )
+
+    rename table(:links, primary_key: false), :destination_id, to: :target_id
+    create index(:links, [:source_id, :target_id])
   end
 end

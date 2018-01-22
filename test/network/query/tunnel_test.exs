@@ -2,58 +2,27 @@ defmodule Helix.Network.Query.TunnelTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Model.Server
-  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
-  alias Helix.Test.Network.Factory
-
-  @internet NetworkQuery.internet()
+  alias Helix.Test.Network.Setup, as: NetworkSetup
 
   describe "get_hops/1" do
-    test "with a direct connection" do
-      gateway_id = Server.ID.generate()
-      destination_id = Server.ID.generate()
+    test "without bounce" do
+      {tunnel, _} = NetworkSetup.tunnel(fake_servers: true)
 
-      tunnel = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: gateway_id,
-        destination_id: destination_id,
-        bounces: [])
-
-      assert [gateway_id, destination_id] == TunnelQuery.get_hops(tunnel)
-    end
-
-    test "with n=1 bounce" do
-      gateway_id = Server.ID.generate()
-      destination_id = Server.ID.generate()
-      bounce1 = Server.ID.generate()
-
-      tunnel = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: gateway_id,
-        destination_id: destination_id,
-        bounces: [bounce1])
-
-      assert [gateway_id, bounce1, destination_id] ==
+      assert [tunnel.gateway_id, tunnel.destination_id] ==
         TunnelQuery.get_hops(tunnel)
     end
 
-    test "with n>1 bounce" do
-      gateway_id = Server.ID.generate()
-      destination_id = Server.ID.generate()
-      bounce1 = Server.ID.generate()
-      bounce2 = Server.ID.generate()
+    test "with bounce" do
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
+      [{hop1_id, _, _}, {hop2_id, _, _}] = bounce.links
 
-      tunnel = Factory.insert(:tunnel,
-        network: @internet,
-        gateway_id: gateway_id,
-        destination_id: destination_id,
-        bounces: [bounce1, bounce2])
+      {tunnel, _} =
+        NetworkSetup.tunnel(bounce_id: bounce.bounce_id, fake_servers: true)
 
-      assert [gateway_id, bounce1, bounce2, destination_id] ==
+      assert [tunnel.gateway_id, hop1_id, hop2_id, tunnel.destination_id] ==
         TunnelQuery.get_hops(tunnel)
     end
   end
-
 end

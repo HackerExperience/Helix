@@ -20,6 +20,8 @@ defmodule Helix.Network.Model.Connection do
 
   @type t :: t_of_type(type)
 
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
   @type ssh :: t_of_type(:ssh)
   @type ftp :: t_of_type(:ftp)
   @type public_ftp :: t_of_type(:public_ftp)
@@ -97,7 +99,7 @@ defmodule Helix.Network.Model.Connection do
       |> join(:inner, [c, ..., t], l in Link, t.tunnel_id == l.tunnel_id)
       |> where(
         [c, ..., l],
-        l.source_id == ^id or l.destination_id == ^id)
+        l.source_id == ^id or l.target_id == ^id)
       |> distinct(true)
     end
 
@@ -107,7 +109,7 @@ defmodule Helix.Network.Model.Connection do
       query
       |> join(:inner, [c], t in Tunnel, c.tunnel_id == t.tunnel_id)
       |> join(:inner, [c, ..., t], l in Link, t.tunnel_id == l.tunnel_id)
-      |> where([c, ..., l], l.destination_id == ^id)
+      |> where([c, ..., l], l.target_id == ^id)
     end
 
     @spec outbound_from(Queryable.t, Server.idtb) ::

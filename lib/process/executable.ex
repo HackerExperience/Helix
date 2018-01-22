@@ -174,7 +174,7 @@ defmodule Helix.Process.Executable do
             meta.network_id,
             gateway.server_id,
             target.server_id,
-            meta.bounce,
+            meta.bounce_id,
             type
           )
 

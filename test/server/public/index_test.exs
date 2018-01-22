@@ -40,15 +40,16 @@ defmodule Helix.Server.Public.IndexTest do
       target2_nip = ServerHelper.get_nip(target2)
 
       tunnel1_opts =
-        [gateway_id: player.server_id,
-         destination_id: target1.server_id]
+        [gateway_id: player.server_id, destination_id: target1.server_id]
       NetworkSetup.connection([tunnel_opts: tunnel1_opts, type: :ssh])
 
-      tunnel2_bounce = [target1.server_id, ServerSetup.id()]
+      {tunnel2_bounce, _} = NetworkSetup.Bounce.bounce()
       tunnel2_opts =
-        [gateway_id: player.server_id,
-         destination_id: target2.server_id,
-        bounces: tunnel2_bounce]
+        [
+          gateway_id: player.server_id,
+          destination_id: target2.server_id,
+          bounce_id: tunnel2_bounce.bounce_id
+        ]
       NetworkSetup.connection([tunnel_opts: tunnel2_opts, type: :ssh])
 
       index = ServerIndex.index(entity)
@@ -61,8 +62,8 @@ defmodule Helix.Server.Public.IndexTest do
       endpoint_target1 = find_endpoint(index.remote, target1_nip)
       endpoint_target2 = find_endpoint(index.remote, target2_nip)
 
-      assert endpoint_target1.bounce == []
-      # assert endpoint_target2.bounce == Enum.reverse(tunnel2_bounce) TODO 256
+      refute endpoint_target1.bounce_id == []
+      assert endpoint_target2.bounce_id == tunnel2_bounce.bounce_id
 
       assert endpoint_target1.password == target1.password
       assert endpoint_target2.password == target2.password

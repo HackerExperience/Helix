@@ -31,7 +31,7 @@ defmodule Helix.Network.Model.Net do
   def new(tunnel = %Tunnel{}) do
     %__MODULE__{
       network_id: tunnel.network_id,
-      bounce_id: []  # TODO 256
+      bounce_id: nil  # TODO 256
     }
   end
 end
