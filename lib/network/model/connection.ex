@@ -123,11 +123,11 @@ defmodule Helix.Network.Model.Connection do
 
     @spec from_gateway_to_endpoint(Queryable.t, Server.idtb, Server.idtb) ::
       Queryable.t
-    def from_gateway_to_endpoint(query \\ Connection, gateway, destination) do
+    def from_gateway_to_endpoint(query \\ Connection, gateway, target) do
       query
       |> join(:inner, [c], t in Tunnel, c.tunnel_id == t.tunnel_id)
       |> where([c, ..., t], t.gateway_id == ^gateway)
-      |> where([c, ..., t], t.destination_id == ^destination)
+      |> where([c, ..., t], t.target_id == ^target)
     end
   end
 end

@@ -56,7 +56,7 @@ defmodule HectorTest do
       |> Enum.sort()
       |> Enum.zip(expected1)
       |> Enum.each(fn {result, expected} ->
-        assert str.(result.destination_id) == str.(expected.destination_id)
+        assert str.(result.target_id) == str.(expected.target_id)
         assert str.(result.gateway_id) == str.(expected.gateway_id)
         assert result.bounces == expected.bounce_id
       end)
@@ -65,7 +65,7 @@ defmodule HectorTest do
       |> Enum.sort()
       |> Enum.zip(expected2)
       |> Enum.each(fn {result, expected} ->
-        assert str.(result.destination_id) == str.(expected.destination_id)
+        assert str.(result.target_id) == str.(expected.target_id)
         assert str.(result.gateway_id) == str.(expected.gateway_id)
 
         result.bounces
@@ -105,7 +105,7 @@ defmodule HectorTest do
       assert {:ok, [entry, _]} = Hector.get(NetworkRepo, q1, load: Tunnel)
 
       # It loaded the fields it could find...
-      assert %Server.ID{} = entry.destination_id
+      assert %Server.ID{} = entry.target_id
       assert %Server.ID{} = entry.gateway_id
 
       # And ignored what was not returned
@@ -141,7 +141,7 @@ defmodule HectorTest do
 
     defp context_for_tunnel_query do
       sql = """
-      SELECT DISTINCT t.gateway_id, t.destination_id, (
+      SELECT DISTINCT t.gateway_id, t.target_id, (
         SELECT ARRAY_REMOVE(ARRAY_AGG(source_id), t.gateway_id)
         FROM links
         WHERE tunnel_id = t.tunnel_id) as bounces
@@ -168,13 +168,13 @@ defmodule HectorTest do
         [fake_servers: true, gateway_id: gateway2, bounces: g2_bounces]
 
       {tun_g1t1, _} =
-        NetworkSetup.tunnel(gateway1_opts ++ [destination_id: target1])
+        NetworkSetup.tunnel(gateway1_opts ++ [target_id: target1])
       {tun_g1t2, _} =
-        NetworkSetup.tunnel(gateway1_opts ++ [destination_id: target2])
+        NetworkSetup.tunnel(gateway1_opts ++ [target_id: target2])
       {tun_g2t1, _} =
-        NetworkSetup.tunnel(gateway2_opts ++ [destination_id: target1])
+        NetworkSetup.tunnel(gateway2_opts ++ [target_id: target1])
       {tun_g2t3, _} =
-        NetworkSetup.tunnel(gateway2_opts ++ [destination_id: target3])
+        NetworkSetup.tunnel(gateway2_opts ++ [target_id: target3])
 
       # g1<>t1 has SSH connection
       NetworkSetup.connection([tunnel_id: tun_g1t1.tunnel_id, type: :ssh])
@@ -190,13 +190,13 @@ defmodule HectorTest do
       NetworkSetup.connection([tunnel_id: tun_g2t3.tunnel_id, type: :ssh])
 
       expected1 = Enum.sort([
-        %{destination_id: target2, gateway_id: gateway1, bounce_id: []},
-        %{destination_id: target1, gateway_id: gateway1, bounce_id: []}
+        %{target_id: target2, gateway_id: gateway1, bounce_id: []},
+        %{target_id: target1, gateway_id: gateway1, bounce_id: []}
       ])
 
       g2_bounces = Enum.reverse(g2_bounces)
       expected2 = Enum.sort([
-        %{destination_id: target3, gateway_id: gateway2, bounce_id: g2_bounces}
+        %{target_id: target3, gateway_id: gateway2, bounce_id: g2_bounces}
       ])
 
       {sql, {gateway1, expected1}, {gateway2, expected2}}
@@ -243,7 +243,7 @@ defmodule HectorTest do
       r5 = "SELECT * FROM files WHERE nome = 'af' AND carro = 'fwef'"
 
       sql6 = "
-      SELECT DISTINCT t.gateway_id, t.destination_id, (
+      SELECT DISTINCT t.gateway_id, t.target_id, (
       SELECT ARRAY_REMOVE(ARRAY_AGG(source_id), t.gateway_id)
       FROM links
       WHERE tunnel_id = t.tunnel_id) as bounces
@@ -254,7 +254,7 @@ defmodule HectorTest do
       "
       p6 = ["::f"]
       r6 = "
-      SELECT DISTINCT t.gateway_id, t.destination_id, (
+      SELECT DISTINCT t.gateway_id, t.target_id, (
       SELECT ARRAY_REMOVE(ARRAY_AGG(source_id), t.gateway_id)
       FROM links
       WHERE tunnel_id = t.tunnel_id) as bounces

@@ -13,10 +13,10 @@ defmodule Helix.Network.Action.Tunnel do
 
   @type create_tunnel_errors ::
     {:error, {:gateway_id, :notfound}}
-    | {:error, {:destination_id, :notfound}}
+    | {:error, {:target_id, :notfound}}
     | {:error, {:links, :notfound}}
     | {:error, {:gateway_id, :disconnected}}
-    | {:error, {:destination_id, :disconnected}}
+    | {:error, {:target_id, :disconnected}}
     | {:error, {:links_id, :disconnected}}
 
   @spec connect(
@@ -30,26 +30,24 @@ defmodule Helix.Network.Action.Tunnel do
     {:ok, Tunnel.t, Connection.t, [ConnectionStartedEvent.t]}
     | create_tunnel_errors
   @doc """
-  Starts a connection between `gateway` and `destination` through `network`.
+  Starts a connection between `gateway` and `target` through `network`.
 
   The connection type is `connection_type`, and it shall pass by `bounce_id`.
 
   If there is already a tunnel with this configuration, it'll be reused,
   otherwise a new Tunnel will be created
   """
-  def connect(
-    network, gateway_id, destination_id, bounce_id, type, meta \\ nil)
-  do
+  def connect(network, gateway_id, target_id, bounce_id, type, meta \\ nil) do
     tunnel =
       TunnelInternal.get_tunnel(
-        gateway_id, destination_id, network.network_id, bounce_id
+        gateway_id, target_id, network.network_id, bounce_id
       )
 
     context =
       if tunnel do
         {:ok, tunnel}
       else
-        create_tunnel(network, gateway_id, destination_id, bounce_id)
+        create_tunnel(network, gateway_id, target_id, bounce_id)
       end
 
     with \
@@ -62,8 +60,8 @@ defmodule Helix.Network.Action.Tunnel do
 
   @spec create_tunnel(Network.t, Server.id, Server.id, Bounce.id) ::
     {:ok, Tunnel.t}
-  defp create_tunnel(network, gateway, destination, bounce_id) do
-    TunnelInternal.create(network, gateway, destination, bounce_id)
+  defp create_tunnel(network, gateway, target, bounce_id) do
+    TunnelInternal.create(network, gateway, target, bounce_id)
   end
 
   @spec delete(Tunnel.idt) ::
@@ -97,7 +95,7 @@ defmodule Helix.Network.Action.Tunnel do
   @doc """
   Closes all connections where:
   - gateway is `from`
-  - destination is `to`
+  - target is `to`
   - type is `type`
   - Optional: filter meta values according to `meta_filter`
 

@@ -45,27 +45,27 @@ defmodule Helix.Test.Network.Setup do
   - network_id: set a specific network_id. Defaults to the internet.
   - bounce_id: set Bounce ID. Defaults to nil (no bounce).
   - gateway_id: set the tunnel gateway. Server.id
-  - destination_id: set the tunnel destination. Server.id
+  - target_id: set the tunnel target. Server.id
   - fake_servers: If true, will not create the corresponding servers. Useful
       when they are not actually needed. Defaults to false.
 
-  Related: gateway :: Server.(id|t), destination :: Server.(id|t)
+  Related: gateway :: Server.(id|t), target :: Server.(id|t)
     (When `fake_servers` is true, it will only return the server ids.)
   """
   def fake_tunnel(opts \\ []) do
-    {gateway_id, destination_id, related} =
+    {gateway_id, target_id, related} =
       if opts[:fake_servers] do
         gateway_id = Keyword.get(opts, :gateway_id, Server.ID.generate())
-        destination_id = Keyword.get(opts, :destination_id, Server.ID.generate())
-        related = %{gateway: gateway_id, destination: destination_id}
+        target_id = Keyword.get(opts, :target_id, Server.ID.generate())
+        related = %{gateway: gateway_id, target: target_id}
 
-        {gateway_id, destination_id, related}
+        {gateway_id, target_id, related}
       else
         gateway = ServerSetup.create_or_fetch(opts[:gateway_id])
-        destination = ServerSetup.create_or_fetch(opts[:destination_id])
-        related = %{gateway: gateway, destination: destination}
+        target = ServerSetup.create_or_fetch(opts[:target_id])
+        related = %{gateway: gateway, target: target}
 
-        {gateway.server_id, destination.server_id, related}
+        {gateway.server_id, target.server_id, related}
       end
 
     bounce_id = Keyword.get(opts, :bounce_id, nil)
@@ -83,7 +83,7 @@ defmodule Helix.Test.Network.Setup do
       %{
         network_id: network_id,
         gateway_id: gateway_id,
-        destination_id: destination_id
+        target_id: target_id
       }
 
     changeset = Tunnel.create(tunnel_params, bounce)

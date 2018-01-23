@@ -23,7 +23,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       {tunnel, _} =
         NetworkSetup.tunnel(
-          gateway_id: gateway.server_id, destination_id: destination.server_id
+          gateway_id: gateway.server_id, target_id: destination.server_id
         )
 
       {:ok, process} =
@@ -65,7 +65,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       {tunnel, _} =
         NetworkSetup.tunnel(
-          gateway_id: gateway.server_id, destination_id: destination.server_id
+          gateway_id: gateway.server_id, target_id: destination.server_id
         )
 
       {:ok, process} =
@@ -107,7 +107,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       {tunnel, _} =
         NetworkSetup.tunnel(
-          gateway_id: gateway.server_id, destination_id: destination.server_id
+          gateway_id: gateway.server_id, target_id: destination.server_id
         )
 
       {:ok, process} =

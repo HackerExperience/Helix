@@ -55,16 +55,16 @@ defmodule Helix.Network.Henforcer.Network do
 
   @spec valid_origin?(
     origin :: Server.idtb,
-    gateway :: Server.id,
-    destination :: Server.id)
+    gateway_id :: Server.id,
+    target_id :: Server.id)
   ::
     boolean
   @doc """
   If the user requests to use a custom `origin` header for DNS resolution, make
-  sure it is either the `gateway_id` or the `destination_id`
+  sure it is either the `gateway_id` or the `target_id`
   """
-  def valid_origin?(origin, gateway_id, destination_id),
-    do: origin == gateway_id or origin == destination_id
+  def valid_origin?(origin, gateway_id, target_id),
+    do: origin == gateway_id or origin == target_id
 
   def can_bounce?(_origin_id, _network_id, _bounces) do
     #TODO 256

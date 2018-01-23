@@ -13,25 +13,22 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Server.Public.Index, as: ServerIndex
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
+  @internet NetworkQuery.internet()
+
+  # TODO: This function should receive the `network_id` as a parameter.
   @spec connect_to_server(Server.id, Server.id, Tunnel.bounce) ::
     {:ok, Tunnel.t, Connection.ssh}
     | error :: term
-  def connect_to_server(gateway_id, destination_id, bounce_id),
-    do: connect_to_server(
-      gateway_id,
-      destination_id,
-      bounce_id,
-      NetworkQuery.internet())
+  def connect_to_server(gateway_id, target_id, bounce_id),
+    do: connect_to_server(gateway_id, target_id, bounce_id, @internet)
 
   @spec connect_to_server(Server.id, Server.id, Tunnel.bounce, Network.t) ::
     {:ok, Tunnel.t, Connection.ssh}
     | error :: term
-  def connect_to_server(gateway_id, destination_id, bounce_id, network) do
+  def connect_to_server(gateway_id, target_id, bounce_id, network) do
     with \
       {:ok, tunnel, connection, events} <-
-        TunnelAction.connect(
-          network, gateway_id, destination_id, bounce_id, :ssh
-        )
+        TunnelAction.connect(network, gateway_id, target_id, bounce_id, :ssh)
     do
       Event.emit(events)
 

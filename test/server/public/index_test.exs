@@ -40,14 +40,14 @@ defmodule Helix.Server.Public.IndexTest do
       target2_nip = ServerHelper.get_nip(target2)
 
       tunnel1_opts =
-        [gateway_id: player.server_id, destination_id: target1.server_id]
+        [gateway_id: player.server_id, target_id: target1.server_id]
       NetworkSetup.connection([tunnel_opts: tunnel1_opts, type: :ssh])
 
       {tunnel2_bounce, _} = NetworkSetup.Bounce.bounce()
       tunnel2_opts =
         [
           gateway_id: player.server_id,
-          destination_id: target2.server_id,
+          target_id: target2.server_id,
           bounce_id: tunnel2_bounce.bounce_id
         ]
       NetworkSetup.connection([tunnel_opts: tunnel2_opts, type: :ssh])
@@ -85,20 +85,20 @@ defmodule Helix.Server.Public.IndexTest do
 
       # Gateway1 is connected to Target1 and Target2
       g1t1_opts =
-        [gateway_id: gateway1.server_id, destination_id: target1.server_id]
+        [gateway_id: gateway1.server_id, target_id: target1.server_id]
       NetworkSetup.connection([tunnel_opts: g1t1_opts, type: :ssh])
 
       g1t2_opts =
-        [gateway_id: gateway1.server_id, destination_id: target2.server_id]
+        [gateway_id: gateway1.server_id, target_id: target2.server_id]
       NetworkSetup.connection([tunnel_opts: g1t2_opts, type: :ssh])
 
       # Gateway2 is connected to Target1 and Target2
       g2t1_opts =
-        [gateway_id: gateway2.server_id, destination_id: target1.server_id]
+        [gateway_id: gateway2.server_id, target_id: target1.server_id]
       NetworkSetup.connection([tunnel_opts: g2t1_opts, type: :ssh])
 
       g2t2_opts =
-        [gateway_id: gateway2.server_id, destination_id: target2.server_id]
+        [gateway_id: gateway2.server_id, target_id: target2.server_id]
       NetworkSetup.connection([tunnel_opts: g2t2_opts, type: :ssh])
 
       index = ServerIndex.index(entity)
@@ -133,7 +133,7 @@ defmodule Helix.Server.Public.IndexTest do
       tunnel_bounce = [ServerSetup.id()]
       tunnel_opts =
         [gateway_id: player.server_id,
-         destination_id: target.server_id,
+         target_id: target.server_id,
          bounces: tunnel_bounce]
       NetworkSetup.connection([tunnel_opts: tunnel_opts, type: :ssh])
 

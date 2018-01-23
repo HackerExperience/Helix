@@ -10,7 +10,7 @@ defmodule Helix.Network.Query.TunnelTest do
     test "without bounce" do
       {tunnel, _} = NetworkSetup.tunnel(fake_servers: true)
 
-      assert [tunnel.gateway_id, tunnel.destination_id] ==
+      assert [tunnel.gateway_id, tunnel.target_id] ==
         TunnelQuery.get_hops(tunnel)
     end
 
@@ -21,7 +21,7 @@ defmodule Helix.Network.Query.TunnelTest do
       {tunnel, _} =
         NetworkSetup.tunnel(bounce_id: bounce.bounce_id, fake_servers: true)
 
-      assert [tunnel.gateway_id, hop1_id, hop2_id, tunnel.destination_id] ==
+      assert [tunnel.gateway_id, hop1_id, hop2_id, tunnel.target_id] ==
         TunnelQuery.get_hops(tunnel)
     end
   end

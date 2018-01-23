@@ -41,7 +41,7 @@ defmodule Helix.Network.Internal.Tunnel do
     query =
       gateway_id
       |> Tunnel.Query.by_gateway()
-      |> Tunnel.Query.by_destination(endpoint_id)
+      |> Tunnel.Query.by_target(endpoint_id)
       |> Tunnel.Query.by_network(network_id)
 
     # Filter by bounce (if specified)
@@ -132,9 +132,9 @@ defmodule Helix.Network.Internal.Tunnel do
     | {:error, Tunnel.changeset}
   defp create_tunnel(network, gateway_id, endpoint_id, bounce) do
     params = %{
-      network_id: network,
+      network_id: network.network_id,
       gateway_id: gateway_id,
-      destination_id: endpoint_id
+      target_id: endpoint_id
     }
 
     params
@@ -176,7 +176,7 @@ defmodule Helix.Network.Internal.Tunnel do
     query =
       Tunnel
       |> Tunnel.Query.by_gateway(gateway_id)
-      |> Tunnel.Query.by_destination(endpoint_id)
+      |> Tunnel.Query.by_target(endpoint_id)
 
     # Filter by `network_id` (if specified)
     query =
@@ -243,11 +243,11 @@ defmodule Helix.Network.Internal.Tunnel do
   @spec connections_destined_to(Server.idt) ::
     [Connection.t]
   @doc """
-  Returns all connections that have `target_id` as its final destination.
+  Returns all connections that have `target_id` as its final target.
   """
   def connections_destined_to(target_id) do
     target_id
-    |> Tunnel.Query.by_destination()
+    |> Tunnel.Query.by_target()
     |> Tunnel.Query.select_connection()
     |> Repo.all()
   end

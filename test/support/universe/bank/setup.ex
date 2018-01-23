@@ -223,7 +223,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
 
     {tunnel, _} =
       NetworkSetup.tunnel(
-        gateway_id: gateway.server_id, destination_id: acc1.atm_id
+        gateway_id: gateway.server_id, target_id: acc1.atm_id
       )
 
     {:ok, process} =

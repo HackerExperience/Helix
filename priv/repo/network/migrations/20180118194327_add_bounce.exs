@@ -36,16 +36,21 @@ defmodule Helix.Network.Repo.Migrations.AddBounce do
     end
 
     drop index(:tunnels, [:gateway_id])
+    drop index(:tunnels, [:destination_id])
     drop index(:tunnels, [:network_id, :gateway_id, :destination_id, :hash])
 
     alter table(:tunnels, primary_key: false) do
       add :bounce_id, references(:bounces, column: :bounce_id, type: :inet)
       remove :hash
     end
+
+    rename table(:tunnels, primary_key: false), :destination_id, to: :target_id
+
+    create index(:tunnels, [:target_id])
     create index(:tunnels, [:bounce_id], where: "bounce_id IS NOT NULL")
 
     create unique_index(
-      :tunnels, [:gateway_id, :destination_id, :network_id, :bounce_id]
+      :tunnels, [:gateway_id, :target_id, :network_id, :bounce_id]
     )
 
     rename table(:links, primary_key: false), :destination_id, to: :target_id

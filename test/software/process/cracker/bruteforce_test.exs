@@ -68,7 +68,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
 
       assert tunnel.gateway_id == source_server.server_id
-      assert tunnel.destination_id == target_server.server_id
+      assert tunnel.target_id == target_server.server_id
       assert tunnel.network_id == target_nip.network_id
 
       TOPHelper.top_stop(source_server)

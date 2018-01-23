@@ -201,8 +201,8 @@ defmodule Helix.Server.Public.Index do
   @spec remote_server_index(Tunnel.t) ::
     remote_server_index
   defp remote_server_index(tunnel = %Tunnel{}) do
-    ip = ServerQuery.get_ip(tunnel.destination_id, tunnel.network_id)
-    password = ServerQuery.fetch(tunnel.destination_id).password
+    ip = ServerQuery.get_ip(tunnel.target_id, tunnel.network_id)
+    password = ServerQuery.fetch(tunnel.target_id).password
 
     %{
       network_id: tunnel.network_id,

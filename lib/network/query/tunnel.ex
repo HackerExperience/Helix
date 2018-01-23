@@ -109,7 +109,7 @@ defmodule Helix.Network.Query.Tunnel do
       |> TunnelInternal.get_hops()
       |> Enum.map(fn {server_id, _, _} -> server_id end)
 
-    [tunnel.gateway_id | bounce_hops] ++ [tunnel.destination_id]
+    [tunnel.gateway_id | bounce_hops] ++ [tunnel.target_id]
     |> List.flatten()
   end
 

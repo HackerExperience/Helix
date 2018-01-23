@@ -50,7 +50,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
       # Wire transfer bounce is correct
       tunnel = TunnelQuery.fetch(connection.tunnel_id)
       assert tunnel.gateway_id == gateway.server_id
-      assert tunnel.destination_id == acc2.atm_id
+      assert tunnel.target_id == acc2.atm_id
 
       # TODO: #379
       # hops = TunnelQuery.get_hops(tunnel)
@@ -99,7 +99,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransferTest do
 
     # Bounce is correct
     assert tunnel.gateway_id == gateway.server_id
-    assert tunnel.destination_id == acc2.atm_id
+    assert tunnel.target_id == acc2.atm_id
 
     hops = TunnelQuery.get_hops(tunnel)
     assert hops == [gateway.server_id, acc2.atm_id]

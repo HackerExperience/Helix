@@ -43,11 +43,11 @@ defmodule Helix.Network.Model.Link do
 
     links =
       if Enum.empty?(hops) do
-        [{tunnel.gateway_id, tunnel.destination_id}]
+        [{tunnel.gateway_id, tunnel.target_id}]
       else
         [tunnel.gateway_id | hops]
         |> Enum.zip(hops)
-        |> Kernel.++([{List.last(hops), tunnel.destination_id}])
+        |> Kernel.++([{List.last(hops), tunnel.target_id}])
       end
 
     links

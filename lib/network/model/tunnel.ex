@@ -19,9 +19,9 @@ defmodule Helix.Network.Model.Tunnel do
       tunnel_id: id,
       network_id: Network.id,
       gateway_id: Server.id,
-      destination_id: Server.id,
+      target_id: Server.id,
       bounce_id: Bounce.id | nil,
-      bounce: Bounce.t | nil,
+      bounce: Bounce.t | nil | struct,
       hops: [Bounce.link],
       network: term,
       connections: term
@@ -37,10 +37,17 @@ defmodule Helix.Network.Model.Tunnel do
   @type gateway_endpoints ::
     %{gateway :: Server.id => t}
 
+  @type creation_params ::
+    %{
+      network_id: Network.id,
+      gateway_id: Server.id,
+      target_id: Server.id
+    }
+
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
-  @creation_fields [:network_id, :gateway_id, :destination_id]
-  @required_fields [:network_id, :gateway_id, :destination_id]
+  @creation_fields [:network_id, :gateway_id, :target_id]
+  @required_fields [:network_id, :gateway_id, :target_id]
 
   schema "tunnels" do
     field :tunnel_id, ID,
@@ -48,7 +55,7 @@ defmodule Helix.Network.Model.Tunnel do
 
     field :network_id, Network.ID
     field :gateway_id, Server.ID
-    field :destination_id, Server.ID
+    field :target_id, Server.ID
     field :bounce_id, Bounce.ID,
       default: nil
 
@@ -74,6 +81,8 @@ defmodule Helix.Network.Model.Tunnel do
       references: :bounce_id
   end
 
+  @spec create(creation_params, bounce) ::
+    changeset
   def create(params, bounce \\ nil) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -81,6 +90,8 @@ defmodule Helix.Network.Model.Tunnel do
     |> validate_tunnel()
   end
 
+  @spec put_bounce_data(changeset, bounce) ::
+    changeset
   docp """
   Add bounce information to the model. If the received bounce is `nil`, we
   explicitly set `hops` to an empty list. Otherwise, we set all bounce-related  
@@ -95,12 +106,17 @@ defmodule Helix.Network.Model.Tunnel do
     |> put_assoc(:bounce, bounce)
   end
 
+  @spec format(t) ::
+    t
   def format(tunnel = %Tunnel{}) do
     tunnel
     |> Map.replace(:hops, get_hops(tunnel))
     |> Map.replace(:bounce, format_bounce(tunnel))
   end
 
+  @spec format_bounce(t) ::
+    Bounce.t
+    | nil
   docp """
   Formats all bounce-related data.
 
@@ -115,6 +131,9 @@ defmodule Helix.Network.Model.Tunnel do
   defp format_bounce(tunnel = %Tunnel{}),
     do: %{tunnel.bounce | sorted: nil}
 
+  @spec get_hops(t) ::
+    [Bounce.link]
+    | nil
   @doc """
   NOTE: If the association is not loaded, `get_hops/1` will return the initial
   format, which is pretty much invalid. It's up to the caller to make sure the
@@ -127,6 +146,8 @@ defmodule Helix.Network.Model.Tunnel do
   def get_hops(%Tunnel{bounce: %Ecto.Association.NotLoaded{}}),
     do: nil
 
+  @spec validate_tunnel(changeset) ::
+    changeset
   defp validate_tunnel(changeset) do
     changeset
     |> validate_required(@required_fields)
@@ -134,17 +155,21 @@ defmodule Helix.Network.Model.Tunnel do
     |> ensure_acyclic_graph()
   end
 
+  @spec ensure_valid_target(changeset) ::
+    changeset
   defp ensure_valid_target(changeset) do
     gateway_id = get_field(changeset, :gateway_id)
-    destination_id = get_field(changeset, :destination_id)
+    target_id = get_field(changeset, :target_id)
 
-    if gateway_id == destination_id do
-      add_error(changeset, :destination_id, "same_target")
+    if gateway_id == target_id do
+      add_error(changeset, :target_id, "same_target")
     else
       changeset
     end
   end
 
+  @spec ensure_acyclic_graph(changeset) ::
+    changeset
   docp """
   We assume the Bounce assoc is valid (it's the Bounce responsibility to ensure
   its consistency), but we may still have cyclic references if either the target
@@ -153,15 +178,15 @@ defmodule Helix.Network.Model.Tunnel do
   defp ensure_acyclic_graph(changeset) do
     hops = get_field(changeset, :hops)
     gateway_id = get_field(changeset, :gateway_id)
-    destination_id = get_field(changeset, :destination_id)
+    target_id = get_field(changeset, :target_id)
 
     Enum.reduce_while(hops, changeset, fn {hop_id, _, _}, acc ->
       cond do
         hop_id == gateway_id ->
           {:halt, add_error(changeset, :hops, "cyclic_gateway")}
 
-        hop_id == destination_id ->
-          {:halt, add_error(changeset, :hops, "cyclic_destination")}
+        hop_id == target_id ->
+          {:halt, add_error(changeset, :hops, "cyclic_target")}
 
         true ->
           {:cont, acc}
@@ -190,10 +215,10 @@ defmodule Helix.Network.Model.Tunnel do
     def by_gateway(query \\ Tunnel, id),
       do: where(query, [t], t.gateway_id == ^id)
 
-    @spec by_destination(Queryable.t, Server.idtb) ::
+    @spec by_target(Queryable.t, Server.idtb) ::
       Queryable.t
-    def by_destination(query \\ Tunnel, id),
-      do: where(query, [t], t.destination_id == ^id)
+    def by_target(query \\ Tunnel, id),
+      do: where(query, [t], t.target_id == ^id)
 
     @spec by_bounce(Queryable.t, Bounce.id) ::
       Queryable.t
@@ -205,14 +230,12 @@ defmodule Helix.Network.Model.Tunnel do
     def select_total_tunnels(query),
       do: select(query, [t], count(t.tunnel_id))
 
+    @spec select_connection(Queryable.t) ::
+      Queryable.t
     def select_connection(query) do
       from tunnel in query,
         left_join: connections in assoc(tunnel, :connections),
         select: connections
-      # query
-      # |> join(:inner, [t], c in assoc(t, :connections))
-      # # |> preload([..., c], [connections: c])
-      # |> select([c], c)
     end
 
     @spec get_remote_endpoints([Server.idtb]) ::

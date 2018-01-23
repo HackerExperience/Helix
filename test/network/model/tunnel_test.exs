@@ -13,11 +13,11 @@ defmodule Helix.Network.Model.TunnelTest do
 
   @internet_id NetworkHelper.internet_id()
 
-  defp create_params(network_id, gateway_id, destination_id, bounce_id \\ nil) do
+  defp create_params(network_id, gateway_id, target_id, bounce_id \\ nil) do
     %{
       network_id: network_id,
       gateway_id: gateway_id,
-      destination_id: destination_id,
+      target_id: target_id,
       bounce_id: bounce_id
     }
   end
@@ -25,11 +25,11 @@ defmodule Helix.Network.Model.TunnelTest do
   describe "create/4" do
     test "without bounce" do
       gateway_id = ServerSetup.id()
-      destination_id = ServerSetup.id()
+      target_id = ServerSetup.id()
 
       changeset =
         @internet_id
-        |> create_params(gateway_id, destination_id)
+        |> create_params(gateway_id, target_id)
         |> Tunnel.create()
 
       assert changeset.valid?
@@ -44,12 +44,12 @@ defmodule Helix.Network.Model.TunnelTest do
 
     test "with bounce" do
       gateway_id = ServerSetup.id()
-      destination_id = ServerSetup.id()
+      target_id = ServerSetup.id()
       {bounce, _} = NetworkSetup.Bounce.bounce()
 
       changeset =
         @internet_id
-        |> create_params(gateway_id, destination_id)
+        |> create_params(gateway_id, target_id)
         |> Tunnel.create(bounce)
 
       assert changeset.valid?
@@ -83,15 +83,15 @@ defmodule Helix.Network.Model.TunnelTest do
 
     test "fails if gateway and destination are the same" do
       gateway_id = ServerSetup.id()
-      destination_id = gateway_id
+      target_id = gateway_id
 
       changeset =
         @internet_id
-        |> create_params(gateway_id, destination_id)
+        |> create_params(gateway_id, target_id)
         |> Tunnel.create()
 
       refute changeset.valid?
-      assert :destination_id in Keyword.keys(changeset.errors)
+      assert :target_id in Keyword.keys(changeset.errors)
     end
 
     test "fails if gateway or destination are on bounce list" do

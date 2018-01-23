@@ -69,7 +69,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       assert tunnel ==
         TunnelInternal.get_tunnel(
           tunnel.gateway_id,
-          tunnel.destination_id,
+          tunnel.target_id,
           tunnel.network_id,
           tunnel.bounce_id
         )
@@ -86,7 +86,7 @@ defmodule Helix.Network.Internal.TunnelTest do
         TunnelInternal.create(@internet, gateway_id, target_id, bounce)
 
       assert tunnel.gateway_id == gateway_id
-      assert tunnel.destination_id == target_id
+      assert tunnel.target_id == target_id
       assert tunnel.network_id == @internet_id
       assert tunnel.hops == bounce.links
 
@@ -116,7 +116,7 @@ defmodule Helix.Network.Internal.TunnelTest do
         TunnelInternal.create(@internet, gateway_id, target_id, nil)
 
       assert tunnel.gateway_id == gateway_id
-      assert tunnel.destination_id == target_id
+      assert tunnel.target_id == target_id
       assert tunnel.network_id == @internet_id
       assert Enum.empty?(tunnel.hops)
       refute tunnel.bounce
@@ -136,19 +136,19 @@ defmodule Helix.Network.Internal.TunnelTest do
       {tunnel1, _} = NetworkSetup.tunnel()
       {tunnel2, _} =
         NetworkSetup.tunnel(
-          gateway_id: tunnel1.gateway_id, destination_id: tunnel1.destination_id
+          gateway_id: tunnel1.gateway_id, target_id: tunnel1.target_id
         )
 
       # Makes sure NetworkSetup worked as expected
       assert tunnel1.gateway_id == tunnel2.gateway_id
-      assert tunnel1.destination_id == tunnel2.destination_id
+      assert tunnel1.target_id == tunnel2.target_id
 
       # Tunnels 3 and 4 only meet the condition partially
       {_tunnel3, _} = NetworkSetup.tunnel(gateway_id: tunnel1.gateway_id)
-      {_tunnel4, _} = NetworkSetup.tunnel(destination_id: tunnel1.destination_id)
+      {_tunnel4, _} = NetworkSetup.tunnel(target_id: tunnel1.target_id)
 
       assert [t1, t2] =
-        TunnelInternal.tunnels_between(tunnel1.gateway_id, tunnel1.destination_id)
+        TunnelInternal.tunnels_between(tunnel1.gateway_id, tunnel1.target_id)
 
       assert Enum.find([t1, t2], &(&1.tunnel_id == tunnel1.tunnel_id))
       assert Enum.find([t1, t2], &(&1.tunnel_id == tunnel2.tunnel_id))
@@ -168,13 +168,13 @@ defmodule Helix.Network.Internal.TunnelTest do
       {tunnel2, _} =
         NetworkSetup.tunnel(
           gateway_id: tunnel1.gateway_id,
-          destination_id: tunnel1.destination_id,
+          target_id: tunnel1.target_id,
           network_id: network.network_id
         )
 
       assert [t2] =
         TunnelInternal.tunnels_between(
-          tunnel1.gateway_id, tunnel1.destination_id, network.network_id
+          tunnel1.gateway_id, tunnel1.target_id, network.network_id
         )
 
       assert t2 == tunnel2
@@ -190,7 +190,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       TunnelInternal.start_connection(tunnel1, :ssh)
 
-      {tunnel2, _} = NetworkSetup.tunnel([destination_id: server_id] ++ opts)
+      {tunnel2, _} = NetworkSetup.tunnel([target_id: server_id] ++ opts)
 
       TunnelInternal.start_connection(tunnel2, :ssh)
       TunnelInternal.start_connection(tunnel2, :ftp)
@@ -233,7 +233,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       {tunnel2, _} =
         NetworkSetup.tunnel(
-          destination_id: server_id,
+          target_id: server_id,
           bounce_id: dummy_bounce.bounce_id,
           fake_servers: true
         )
@@ -288,7 +288,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       {tunnel2, _} =
         NetworkSetup.tunnel(
-          destination_id: server_id,
+          target_id: server_id,
           bounce_id: dummy_bounce.bounce_id,
           fake_servers: true
         )
@@ -350,25 +350,25 @@ defmodule Helix.Network.Internal.TunnelTest do
   describe "get_links/1" do
     test "with a direct connection" do
       gateway_id = Server.ID.generate()
-      destination_id = Server.ID.generate()
+      target_id = Server.ID.generate()
 
       {tunnel, _} =
         NetworkSetup.tunnel(
           gateway_id: gateway_id,
-          destination_id: destination_id,
+          target_id: target_id,
           fake_servers: true
         )
 
       assert [l1|l2] = TunnelInternal.get_links(tunnel)
 
       assert l1.source_id == gateway_id
-      assert l1.target_id == destination_id
+      assert l1.target_id == target_id
       assert Enum.empty?(l2)
     end
 
     test "with n=1 bounce" do
       gateway_id = Server.ID.generate()
-      destination_id = Server.ID.generate()
+      target_id = Server.ID.generate()
 
       {bounce, _} = NetworkSetup.Bounce.bounce(total: 1)
       [{hop1_id, _, _}] = bounce.links
@@ -376,7 +376,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       {tunnel, _} =
         NetworkSetup.tunnel(
           gateway_id: gateway_id,
-          destination_id: destination_id,
+          target_id: target_id,
           bounce_id: bounce.bounce_id,
           fake_servers: true
         )
@@ -386,7 +386,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       assert l1.source_id == gateway_id
       assert l1.target_id == hop1_id
       assert l2.source_id == hop1_id
-      assert l2.target_id == destination_id
+      assert l2.target_id == target_id
     end
 
     test "with n>1 bounce" do
@@ -399,7 +399,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       {tunnel, _} =
         NetworkSetup.tunnel(
           gateway_id: gateway_id,
-          destination_id: target_id,
+          target_id: target_id,
           bounce_id: bounce.bounce_id,
           fake_servers: true
         )
@@ -433,7 +433,7 @@ defmodule Helix.Network.Internal.TunnelTest do
         Enum.sort(TunnelInternal.connections_originating_from(gateway_id))
 
       # Tunnel2 has connections going *to* `gateway`
-      tunnel2_opts = [fake_servers: true, destination_id: gateway_id]
+      tunnel2_opts = [fake_servers: true, target_id: gateway_id]
       {tunnel2, _} = NetworkSetup.tunnel(tunnel2_opts)
 
       _c1t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
@@ -468,7 +468,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       _c2t1 = NetworkSetup.connection!([tunnel_id: tunnel1.tunnel_id])
 
       # Tunnel2 has connections going *to* `server`
-      tunnel2_opts = [fake_servers: true, destination_id: server_id]
+      tunnel2_opts = [fake_servers: true, target_id: server_id]
       {tunnel2, _} = NetworkSetup.tunnel(tunnel2_opts)
 
       c1t2 = NetworkSetup.connection!([tunnel_id: tunnel2.tunnel_id])
@@ -511,14 +511,10 @@ defmodule Helix.Network.Internal.TunnelTest do
           bounce_id: g2_bounce.bounce_id
         ]
 
-      {tun_g1t1, _} =
-        NetworkSetup.tunnel(gateway1_opts ++ [destination_id: target1])
-      {tun_g1t2, _} =
-        NetworkSetup.tunnel(gateway1_opts ++ [destination_id: target2])
-      {tun_g2t1, _} =
-        NetworkSetup.tunnel(gateway2_opts ++ [destination_id: target1])
-      {tun_g2t3, _} =
-        NetworkSetup.tunnel(gateway2_opts ++ [destination_id: target3])
+      {tun_g1t1, _} = NetworkSetup.tunnel(gateway1_opts ++ [target_id: target1])
+      {tun_g1t2, _} = NetworkSetup.tunnel(gateway1_opts ++ [target_id: target2])
+      {tun_g2t1, _} = NetworkSetup.tunnel(gateway2_opts ++ [target_id: target1])
+      {tun_g2t3, _} = NetworkSetup.tunnel(gateway2_opts ++ [target_id: target3])
 
       # g1<>t1 has SSH connection
       NetworkSetup.connection([tunnel_id: tun_g1t1.tunnel_id, type: :ssh])

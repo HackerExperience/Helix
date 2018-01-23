@@ -38,7 +38,7 @@ defmodule Helix.Test.Features.Process.Progress do
 
       {tunnel, _} =
         NetworkSetup.tunnel(
-          gateway_id: server.server_id, destination_id: target.server_id
+          gateway_id: server.server_id, target_id: target.server_id
         )
 
       # File has size 100, and will be downloaded at rate 100/s. So it takes 1s
