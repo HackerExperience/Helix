@@ -2,6 +2,7 @@ defmodule Helix.Software.Public.PFTPTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Network.Model.Tunnel
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Public.PFTP, as: PFTPPublic
 
@@ -23,9 +24,11 @@ defmodule Helix.Software.Public.PFTPTest do
       destination = ServerQuery.fetch(pftp.server_id)
       storage = SoftwareHelper.get_storage(pftp.server_id)
 
+      fake_tunnel = %Tunnel{bounce_id: nil, network_id: @internet_id}
+
       assert {:ok, process} =
         PFTPPublic.download(
-          gateway, destination, storage, file, @internet_id, @relay
+          gateway, destination, storage, file, fake_tunnel, @relay
         )
 
       assert process.gateway_id == gateway.server_id

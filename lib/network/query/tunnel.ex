@@ -2,15 +2,16 @@ defmodule Helix.Network.Query.Tunnel do
 
   alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Link
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
 
-  @spec get_tunnel(Network.t, Server.id, Server.id, Bounce.id) ::
+  @spec get_tunnel(Server.id, Server.id, Network.id, Bounce.id) ::
     Tunnel.t
     | nil
-  defdelegate get_tunnel(network, gateway_id, endpoint_id, bounce_id),
+  defdelegate get_tunnel(gateway_id, endpoint_id, network_id, bounce_id),
     to: TunnelInternal
 
   @spec fetch(Tunnel.id) ::

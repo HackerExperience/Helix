@@ -274,7 +274,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
         EntityQuery.fetch_by_server(destination.server_id),
       {:ok, tunnel, ssh} <-
           ServerPublic.connect_to_server(
-            gateway.server_id, destination.server_id, []
+            gateway.server_id, destination.server_id, nil
           )
     do
       gateway_data = %{

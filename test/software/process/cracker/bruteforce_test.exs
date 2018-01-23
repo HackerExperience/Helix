@@ -35,7 +35,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       meta = %{
         network_id: target_nip.network_id,
-        bounce: [],
+        bounce_id: nil,
         cracker: file
       }
 

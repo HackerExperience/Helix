@@ -93,7 +93,7 @@ defmodule Helix.Test.Features.Process.Recalque do
       # Start the Bruteforce attack
       assert {:ok, %{process_id: bruteforce_id}} =
         FilePublic.bruteforce(
-          cracker, serverA, serverB, {@internet_id, ipB}, [], @relay
+          cracker, serverA, serverB, {@internet_id, ipB}, nil, @relay
         )
 
       bruteforce = ProcessQuery.fetch(bruteforce_id)

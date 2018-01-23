@@ -16,8 +16,7 @@ defmodule Helix.Software.Event.CrackerTest do
 
   describe "overflow_conclusion/1" do
     test "life cycle for overflow attack against wire transfer connection" do
-      {process, %{acc1: acc1, player: player}} =
-        BankSetup.wire_transfer_flow()
+      {process, %{acc1: acc1, player: player}} = BankSetup.wire_transfer_flow()
       transfer_id = process.data.transfer_id
 
       # Simulate completion of overflow process
@@ -47,16 +46,14 @@ defmodule Helix.Software.Event.CrackerTest do
     end
 
     test "life cycle for overflow attack against bank login connection" do
-      {connection, %{acc: acc}} =
-        BankSetup.login_flow()
+      {connection, %{acc: acc}} = BankSetup.login_flow()
       {attacker_player, %{server: attacker_server}} =
         AccountSetup.account([with_server: true])
 
       # Simulate completion of overflow process
       event =
         EventSetup.Software.overflow_conclusion(
-          connection,
-          attacker_server.server_id
+          connection, attacker_server.server_id
         )
 
       # Returns a token

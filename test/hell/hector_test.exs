@@ -58,7 +58,7 @@ defmodule HectorTest do
       |> Enum.each(fn {result, expected} ->
         assert str.(result.destination_id) == str.(expected.destination_id)
         assert str.(result.gateway_id) == str.(expected.gateway_id)
-        assert result.bounces == expected.bounces
+        assert result.bounces == expected.bounce_id
       end)
 
       result2
@@ -70,7 +70,7 @@ defmodule HectorTest do
 
         result.bounces
         |> Enum.sort()
-        |> Enum.zip(Enum.sort(expected.bounces))
+        |> Enum.zip(Enum.sort(expected.bounce_id))
         |> Enum.each(fn {r_bounce, e_bounce} ->
           assert str.(r_bounce) == str.(e_bounce)
         end)
@@ -111,7 +111,7 @@ defmodule HectorTest do
       # And ignored what was not returned
       refute entry.tunnel_id
       refute entry.network_id
-      refute entry.hash
+      refute entry.bounce_id
     end
 
     test "with custom loader (1)" do
@@ -190,13 +190,13 @@ defmodule HectorTest do
       NetworkSetup.connection([tunnel_id: tun_g2t3.tunnel_id, type: :ssh])
 
       expected1 = Enum.sort([
-        %{destination_id: target2, gateway_id: gateway1, bounces: []},
-        %{destination_id: target1, gateway_id: gateway1, bounces: []}
+        %{destination_id: target2, gateway_id: gateway1, bounce_id: []},
+        %{destination_id: target1, gateway_id: gateway1, bounce_id: []}
       ])
 
       g2_bounces = Enum.reverse(g2_bounces)
       expected2 = Enum.sort([
-        %{destination_id: target3, gateway_id: gateway2, bounces: g2_bounces}
+        %{destination_id: target3, gateway_id: gateway2, bounce_id: g2_bounces}
       ])
 
       {sql, {gateway1, expected1}, {gateway2, expected2}}

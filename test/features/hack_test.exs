@@ -43,7 +43,7 @@ defmodule Helix.Test.Features.Hack do
       params = %{
         network_id: to_string(target_nip.network_id),
         ip: target_nip.ip,
-        bounces: []
+        bounce_id: nil
       }
 
       # Start the Bruteforce attack

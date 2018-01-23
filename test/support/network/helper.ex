@@ -1,7 +1,6 @@
 defmodule Helix.Test.Network.Helper do
 
   alias Helix.Network.Model.Link
-  alias Helix.Network.Model.Net
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Query.Network, as: NetworkQuery
@@ -14,9 +13,6 @@ defmodule Helix.Test.Network.Helper do
 
   def internet_id,
     do: Network.ID.cast!("::")
-
-  def net,
-    do: Net.new(internet_id(), [])
 
   @doc """
   Generates a Network.id

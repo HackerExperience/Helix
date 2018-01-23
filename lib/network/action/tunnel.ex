@@ -37,13 +37,19 @@ defmodule Helix.Network.Action.Tunnel do
   If there is already a tunnel with this configuration, it'll be reused,
   otherwise a new Tunnel will be created
   """
-  def connect(network, gateway, destination, bounce_id, type, meta \\ nil) do
-    tunnel = TunnelInternal.get_tunnel(network, gateway, destination, bounce_id)
+  def connect(
+    network, gateway_id, destination_id, bounce_id, type, meta \\ nil)
+  do
+    tunnel =
+      TunnelInternal.get_tunnel(
+        gateway_id, destination_id, network.network_id, bounce_id
+      )
+
     context =
       if tunnel do
         {:ok, tunnel}
       else
-        create_tunnel(network, gateway, destination, bounce_id)
+        create_tunnel(network, gateway_id, destination_id, bounce_id)
       end
 
     with \
@@ -81,7 +87,7 @@ defmodule Helix.Network.Action.Tunnel do
   @spec close_connection(Connection.t, Connection.close_reasons) ::
     [ConnectionClosedEvent.t]
   def close_connection(connection, reason \\ :normal) do
-    with :ok <- TunnelInternal.close_connection(connection, reason) do
+    with :ok <- TunnelInternal.close_connection(connection) do
       [ConnectionClosedEvent.new(connection, reason)]
     end
   end

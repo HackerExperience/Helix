@@ -67,11 +67,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Login with the right password
       assert {:ok, connection} =
         BankAccountFlow.login_password(
-          acc.atm_id,
-          acc.account_number,
-          server.server_id,
-          [],
-          acc.password
+          acc.atm_id, acc.account_number, server.server_id, nil, acc.password
         )
 
       # Ensure connection was created correctly
@@ -102,11 +98,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Login with the right password
       assert {:ok, connection} =
         BankAccountFlow.login_password(
-          acc.atm_id,
-          acc.account_number,
-          server.server_id,
-          [],
-          acc.password
+          acc.atm_id, acc.account_number, server.server_id, nil, acc.password
         )
 
       # Ensure connection was created correctly
@@ -135,7 +127,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
           acc.atm_id,
           acc.account_number,
           server.server_id,
-          [],
+          nil,
           "invalid_password"
       )
 
@@ -156,11 +148,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Login with the right credentials
       assert {:ok, connection} =
         BankAccountFlow.login_token(
-          acc.atm_id,
-          acc.account_number,
-          server.server_id,
-          [],
-          token.token_id
+          acc.atm_id, acc.account_number, server.server_id, nil, token.token_id
         )
 
       # Ensure connection was created correctly
@@ -193,11 +181,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       # Login with the right token
       assert {:ok, connection} =
         BankAccountFlow.login_token(
-          acc.atm_id,
-          acc.account_number,
-          server.server_id,
-          [],
-          token.token_id
+          acc.atm_id, acc.account_number, server.server_id, nil, token.token_id
         )
 
       # Ensure connection was created correctly
@@ -224,7 +208,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
         acc.atm_id,
         acc.account_number,
         server.server_id,
-        [],
+        nil,
         expired_token.token_id
       )
 
@@ -242,11 +226,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
 
       # Login with expired token
       BankAccountFlow.login_token(
-        acc.atm_id,
-        acc.account_number,
-        server.server_id,
-        [],
-        token.token_id
+        acc.atm_id, acc.account_number, server.server_id, nil, token.token_id
       )
 
       # No connections were created

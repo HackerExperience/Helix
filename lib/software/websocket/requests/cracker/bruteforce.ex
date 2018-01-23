@@ -4,7 +4,6 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
 
   alias HELL.IPv4
   alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Server
   alias Helix.Software.Henforcer.Software.Cracker, as: CrackerHenforcer
   alias Helix.Software.Public.File, as: FilePublic
 
@@ -16,11 +15,11 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
       {:ok, network_id} <-
         Network.ID.cast(request.unsafe["network_id"]),
       true <- IPv4.valid?(request.unsafe["ip"]),
-      {:ok, bounces} = cast_bounces(request.unsafe["bounces"]),
+      {:ok, bounce_id} <- validate_bounce(request.unsafe["bounce_id"]),
       true <- socket.assigns.meta.access == :local || :bad_attack_src
     do
       params = %{
-        bounces: bounces,
+        bounce_id: bounce_id,
         network_id: network_id,
         ip: request.unsafe["ip"]
       }
@@ -61,7 +60,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
   def handle_request(request, _socket) do
     network_id = request.params.network_id
     ip = request.params.ip
-    bounces = request.params.bounces
+    bounce_id = request.params.bounce_id
     cracker = request.meta.cracker
     gateway = request.meta.gateway
     target = request.meta.target
@@ -69,7 +68,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
 
     bruteforce =
       FilePublic.bruteforce(
-        cracker, gateway, target, {network_id, ip}, bounces, relay
+        cracker, gateway, target, {network_id, ip}, bounce_id, relay
       )
 
     case bruteforce do
@@ -87,9 +86,4 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
   end
 
   render_empty()
-
-  defp cast_bounces(bounces) when is_list(bounces),
-    do: {:ok, Enum.map(bounces, &(Server.ID.cast!(&1)))}
-  defp cast_bounces(_),
-    do: :error
 end

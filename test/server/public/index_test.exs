@@ -62,7 +62,7 @@ defmodule Helix.Server.Public.IndexTest do
       endpoint_target1 = find_endpoint(index.remote, target1_nip)
       endpoint_target2 = find_endpoint(index.remote, target2_nip)
 
-      refute endpoint_target1.bounce_id == []
+      refute endpoint_target1.bounce_id
       assert endpoint_target2.bounce_id == tunnel2_bounce.bounce_id
 
       assert endpoint_target1.password == target1.password

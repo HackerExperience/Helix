@@ -9,7 +9,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
 
   alias Helix.Test.Account.Setup, as: AccountSetup
-  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
@@ -22,10 +22,16 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.TransferTest do
       {acc2, _} = BankSetup.account()
       {player, %{server: gateway}} = AccountSetup.account([with_server: true])
 
-      net = NetworkHelper.net()
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway.server_id,
+          destination_id: acc1.atm_id
+        )
 
       {:ok, process} =
-        BankTransferFlow.start(acc1, acc2, amount, player, gateway, net, @relay)
+        BankTransferFlow.start(
+          acc1, acc2, amount, player, gateway, tunnel, @relay
+        )
       transfer_id = process.data.transfer_id
 
       assert ProcessQuery.fetch(process)

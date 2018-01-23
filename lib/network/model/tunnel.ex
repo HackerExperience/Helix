@@ -110,7 +110,7 @@ defmodule Helix.Network.Model.Tunnel do
   """
   defp format_bounce(%Tunnel{bounce_id: nil}),
     do: nil
-  defp format_bounce(tunnel = %Tunnel{bounce: %Ecto.Association.NotLoaded{}}),
+  defp format_bounce(%Tunnel{bounce: %Ecto.Association.NotLoaded{}}),
     do: nil
   defp format_bounce(tunnel = %Tunnel{}),
     do: %{tunnel.bounce | sorted: nil}

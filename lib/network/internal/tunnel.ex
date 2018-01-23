@@ -47,10 +47,11 @@ defmodule Helix.Network.Internal.Tunnel do
     # Filter by bounce (if specified)
     query = bounce && Tunnel.Query.by_bounce(query, bounce) || query
 
-    query
-    |> Repo.one()
-    |> load_bounce()
-    |> Tunnel.format()
+    with tunnel = %Tunnel{} <- Repo.one(query) do
+      tunnel
+      |> load_bounce()
+      |> Tunnel.format()
+    end
   end
 
   @spec get_links(Tunnel.idt) ::
@@ -78,7 +79,7 @@ defmodule Helix.Network.Internal.Tunnel do
   NOTE: hops are intermediary nodes. It does not include the Tunnel's
   `gateway_id` and `target_id`.
   """
-  def get_hops(tunnel = %Tunnel{bounce_id: nil}),
+  def get_hops(%Tunnel{bounce_id: nil}),
     do: []
   def get_hops(tunnel = %Tunnel{bounce: %Bounce{}}),
     do: Tunnel.get_hops(tunnel)
@@ -266,9 +267,8 @@ defmodule Helix.Network.Internal.Tunnel do
     end
   end
 
-  @spec close_connection(Connection.t, Connection.close_reasons) ::
-    {:ok, Connection.t}
-    | {:error, Connection.changeset}
+  @spec close_connection(Connection.t) ::
+    :ok
   @doc """
   Closes `connection`
 
@@ -281,7 +281,7 @@ defmodule Helix.Network.Internal.Tunnel do
 
   The current reasons are valid: #{inspect Connection.close_reasons()}
   """
-  def close_connection(connection = %Connection{}, reason \\ :normal) do
+  def close_connection(connection = %Connection{}) do
     Repo.delete!(connection)
 
     :ok

@@ -39,7 +39,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
     meta = %{
       network_id: NetworkQuery.internet().network_id,
-      bounce: []
+      bounce_id: nil
     }
 
     BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta, relay)
@@ -88,7 +88,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   Emits: BankAccountLoginEvent, ConnectionStartedEvent
   """
-  def login_token(atm_id, account_number, gateway_id, bounces, token) do
+  def login_token(atm_id, account_number, gateway_id, bounce_id, token) do
     acc = BankQuery.fetch_account(atm_id, account_number)
     entity = EntityQuery.fetch_by_server(gateway_id)
 
@@ -97,7 +97,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         NetworkQuery.internet(),
         gateway_id,
         atm_id,
-        bounces,
+        bounce_id,
         :bank_login,
         login_connection_meta(acc)
       )
@@ -107,10 +107,10 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
       with \
         true <- not is_nil(acc),
         {:ok, _, events} <- BankAction.login_token(acc, token, entity),
-          on_success(fn -> Event.emit(events) end),
+        on_success(fn -> Event.emit(events) end),
 
         {:ok, _, connection, events} <- start_connection.(),
-          on_success(fn -> Event.emit(events) end)
+        on_success(fn -> Event.emit(events) end)
       do
         {:ok, connection}
       end

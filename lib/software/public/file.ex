@@ -2,7 +2,6 @@ defmodule Helix.Software.Public.File do
 
   alias Helix.Event
   alias Helix.Network.Model.Connection
-  alias Helix.Network.Model.Net
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
@@ -37,10 +36,8 @@ defmodule Helix.Software.Public.File do
     file = %File{},
     relay)
   do
-    net = Net.new(tunnel)
-
     transfer =
-      FileTransferFlow.download(gateway, target, file, storage, net, relay)
+      FileTransferFlow.download(gateway, target, file, storage, tunnel, relay)
 
     case transfer do
       {:ok, process} ->
@@ -78,7 +75,7 @@ defmodule Helix.Software.Public.File do
     }
 
     meta = %{
-      bounce: bounce_id,
+      bounce_id: bounce_id,
       network_id: network_id,
       cracker: cracker
     }

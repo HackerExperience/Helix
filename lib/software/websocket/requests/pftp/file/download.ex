@@ -3,6 +3,7 @@ import Helix.Websocket.Request
 request Helix.Software.Websocket.Requests.PFTP.File.Download do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Network.Model.Tunnel
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Henforcer.File, as: FileHenforcer
@@ -91,11 +92,19 @@ request Helix.Software.Websocket.Requests.PFTP.File.Download do
     file = request.meta.file
     storage = request.meta.storage
     relay = request.relay
-    network_id = request.meta.network_id
+
+    # PFTP download is always on the `local` server, so there's no bounce - and
+    # no actual tunnel. This is a "fake tunnel" that should let us workaround
+    # this edge case
+    fake_tunnel =
+      %Tunnel{
+        network_id: request.meta.network_id,
+        bounce_id: nil
+      }
 
     download =
       PFTPPublic.download(
-        gateway, destination, storage, file, network_id, relay
+        gateway, destination, storage, file, fake_tunnel, relay
       )
 
     case download do

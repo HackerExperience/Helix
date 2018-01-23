@@ -3,9 +3,11 @@ defmodule Helix.Software.Public.PFTP do
   Public layer of the PublicFTP feature -- shortened to PFTP to avoid confusion.
   """
 
+  import HELL.Macros
+
   alias Helix.Event
-  alias Helix.Network.Model.Net
   alias Helix.Network.Model.Network
+  alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
@@ -15,6 +17,14 @@ defmodule Helix.Software.Public.PFTP do
   alias Helix.Software.Model.Storage
   alias Helix.Software.Query.PublicFTP, as: PublicFTPQuery
   alias Helix.Software.Public.Index, as: SoftwareIndex
+
+  docp """
+  PFTP download is always on the `local` server, so there's no bounce - and no
+  actual tunnel. This is a "fake tunnel" that should let us workaround this edge
+  case.
+  """
+  @typep fake_tunnel ::
+    %Tunnel{network_id: Network.id, bounce_id: Tunnel.bounce}
 
   @spec enable_server(Server.t) ::
     {:ok, PublicFTP.t}
@@ -62,7 +72,7 @@ defmodule Helix.Software.Public.PFTP do
     do: Enum.map(files, &SoftwareIndex.render_file/1)
 
   @spec download(
-    Server.t, Server.t, Storage.t, File.t, Network.id, Event.relay)
+    Server.t, Server.t, Storage.t, File.t, fake_tunnel, Event.relay)
   ::
     {:ok, Process.t}
     | FileTransferFlow.transfer_error
@@ -74,14 +84,12 @@ defmodule Helix.Software.Public.PFTP do
     destination = %Server{},
     storage = %Storage{},
     file = %File{},
-    network_id = %Network.ID{},
+    tunnel = %Tunnel{},
     relay)
   do
-    net = Net.new(network_id, [])
-
     transfer =
       FileTransferFlow.pftp_download(
-        gateway, destination, file, storage, net, relay
+        gateway, destination, file, storage, tunnel, relay
       )
 
     case transfer do

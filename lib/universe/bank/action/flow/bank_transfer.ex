@@ -3,7 +3,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
 
   alias Helix.Event
   alias Helix.Account.Model.Account
-  alias Helix.Network.Model.Net
+  alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
@@ -18,7 +18,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
     amount :: BankTransfer.amount,
     started_by :: Account.t,
     gateway :: Server.t,
-    Net.t,
+    Tunnel.t,
     Event.relay)
   ::
     {:ok, Process.t}
@@ -32,23 +32,26 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
   `BankAction.start_transfer()`, it also is responsible for creating the
   transfer process to be managed by TOP.
   """
-  def start(from_account, to_account, amount, started_by, gateway, net, relay) do
+  def start(
+    from_account, to_account, amount, started_by, gateway, tunnel, relay)
+  do
     start_transfer = fn ->
       BankAction.start_transfer(
         from_account, to_account, amount, started_by.account_id
       )
     end
 
-    bounces =
-      if from_account.atm_id == to_account.atm_id do
-        []
-      else
-        server_atm_from =
-          from_account.atm_id
-          |> ServerQuery.fetch()
+    # TODO #379
+    # bounces =
+    #   if from_account.atm_id == to_account.atm_id do
+    #     []
+    #   else
+    #     server_atm_from =
+    #       from_account.atm_id
+    #       |> ServerQuery.fetch()
 
-        [server_atm_from.server_id]
-      end
+    #     [server_atm_from.server_id]
+    #   end
 
     with \
       target_atm = %Server{} <- ServerQuery.fetch(to_account.atm_id),
@@ -59,8 +62,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
       }
 
       meta = %{
-        network_id: net.network_id,
-        bounce: bounces
+        network_id: tunnel.network_id,
+        bounce_id: tunnel.bounce_id
       }
 
       BankTransferProcess.execute(gateway, target_atm, params, meta, relay)

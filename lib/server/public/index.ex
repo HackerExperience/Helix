@@ -58,7 +58,7 @@ defmodule Helix.Server.Public.Index do
       network_id: String.t,
       ip: String.t,
       password: String.t,
-      bounce_id: String.t
+      bounce_id: String.t | nil
     }
 
   @typep rendered_nip ::
@@ -219,7 +219,7 @@ defmodule Helix.Server.Public.Index do
       network_id: to_string(entry.network_id),
       ip: entry.ip,
       password: entry.password,
-      bounce: to_string(entry.bounce_id)
+      bounce_id: entry.bounce_id && to_string(entry.bounce_id) || nil
     }
   end
 
