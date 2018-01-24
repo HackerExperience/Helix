@@ -4,6 +4,7 @@ defmodule HELL.HETypes do
   """
 
   @type client_timestamp :: float
+  @type client_nip :: %{network_id: String.t, ip: String.t}
 
   @type uuid :: String.t
 

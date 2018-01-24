@@ -107,8 +107,12 @@ defmodule HELL.IPv4 do
     end
   end
 
-  def cast(_) do
-    :error
+  def cast(_),
+    do: :error
+
+  def cast!(value) do
+    {:ok, ipv4} = value
+    ipv4
   end
 
   def load(inet = %Postgrex.INET{}),
