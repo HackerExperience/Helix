@@ -31,6 +31,7 @@ defmodule Helix.Server.Public.Server do
         TunnelAction.connect(network, gateway_id, target_id, bounce_id, :ssh)
     do
       Event.emit(events)
+      # TODO: This should be at flow
 
       {:ok, tunnel, connection}
     end

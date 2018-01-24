@@ -5,7 +5,7 @@ defmodule Helix.Network.Repo.Migrations.AddBounce do
     create table(:bounces, primary_key: false) do
       add :bounce_id, :inet, primary_key: true
       add :entity_id, :inet, null: false
-      add :name, :string, size: 128
+      add :name, :string, size: 128, null: false
     end
     create index(:bounces, [:entity_id])
 

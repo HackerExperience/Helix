@@ -3,6 +3,7 @@ defmodule Helix.Core.Validator do
   @type input_type ::
     :password
     | :hostname
+    | :bounce_name
 
   @regex_hostname ~r/^[a-zA-Z0-9-_.@#]{1,20}$/
 
@@ -19,12 +20,14 @@ defmodule Helix.Core.Validator do
   """
   def validate_input(input, type, opts \\ [])
 
-  def validate_input(input, :password, _) do
-    {:ok, input}  # Validation itself is TODO :-)
-  end
+  def validate_input(input, :password, _),
+    do: validate_password(input)
 
   def validate_input(input, :hostname, _),
     do: validate_hostname(input)
+
+  def validate_input(input, :bounce_name, _),
+    do: validate_bounce_name(input)
 
   defp validate_hostname(v) when not is_binary(v),
     do: :error
@@ -35,4 +38,10 @@ defmodule Helix.Core.Validator do
       :error
     end
   end
+
+  def validate_password(input),
+    do: validate_hostname(input)  # TODO
+
+  defp validate_bounce_name(v),
+    do: validate_hostname(v)  # TODO
 end

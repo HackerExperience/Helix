@@ -1,6 +1,7 @@
 defmodule Helix.Entity.Query.Entity do
 
   alias Helix.Account.Model.Account
+  alias Helix.Network.Query.Bounce, as: BounceQuery
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Server
   alias Helix.Universe.NPC.Model.NPC
@@ -57,6 +58,13 @@ defmodule Helix.Entity.Query.Entity do
   """
   defdelegate get_components(entity),
     to: EntityInternal
+
+  @doc """
+  Returns all bounces owned by the entity.
+  """
+  defdelegate get_bounces(entity),
+    to: BounceQuery,
+    as: :get_by_entity
 
   @doc """
   Returns all network connections owned by the entity.

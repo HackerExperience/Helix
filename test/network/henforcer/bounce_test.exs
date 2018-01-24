@@ -13,66 +13,66 @@ defmodule Helix.Network.Henforcer.BounceTest do
 
   describe "can_create_bounce?" do
     test "verifies everything" do
-      # NOTE: Currently only verifies `entries`
+      # NOTE: Currently only verifies `links`
       {server1, %{entity: entity}} = ServerSetup.server()
       {server2, _} = ServerSetup.server()
 
       nip1 = ServerHelper.get_nip(server1)
       nip2 = ServerHelper.get_nip(server2)
 
-      entries =
+      links =
         [
-          create_entry(nip1.network_id, nip1.ip, server1.password),
-          create_entry(nip2.network_id, nip2.ip, server2.password),
+          create_link(nip1.network_id, nip1.ip, server1.password),
+          create_link(nip2.network_id, nip2.ip, server2.password),
         ]
 
       assert {true, relay} =
-        BounceHenforcer.can_create_bounce?(entity.entity_id, "noname", entries)
+        BounceHenforcer.can_create_bounce?(entity.entity_id, "noname", links)
       assert relay.servers == [server1, server2]
       assert_relay relay, [:servers]
     end
   end
 
-  describe "has_access_entries?" do
-    test "verifies entries access" do
+  describe "has_access_links?" do
+    test "verifies links access" do
       {server1, _} = ServerSetup.server()
       {server2, _} = ServerSetup.server()
 
       nip1 = ServerHelper.get_nip(server1)
       nip2 = ServerHelper.get_nip(server2)
 
-      entries =
+      links =
         [
-          create_entry(nip1.network_id, nip1.ip, server1.password),
-          create_entry(nip2.network_id, nip2.ip, server2.password),
+          create_link(nip1.network_id, nip1.ip, server1.password),
+          create_link(nip2.network_id, nip2.ip, server2.password),
         ]
 
-      assert {true, relay} = BounceHenforcer.has_access_entries?(entries)
+      assert {true, relay} = BounceHenforcer.has_access_links?(links)
       assert relay.servers == [server1, server2]
       assert_relay relay, [:servers]
 
-      # Let's try again, now with bad password on one of the entries
-      entries =
+      # Let's try again, now with bad password on one of the links
+      links =
         [
-          create_entry(nip1.network_id, nip1.ip, server1.password),
-          create_entry(nip2.network_id, nip2.ip, Random.password()),
+          create_link(nip1.network_id, nip1.ip, server1.password),
+          create_link(nip2.network_id, nip2.ip, Random.password()),
         ]
 
-      assert {false, reason, _} = BounceHenforcer.has_access_entries?(entries)
+      assert {false, reason, _} = BounceHenforcer.has_access_links?(links)
       assert reason == {:bounce, :no_access}
 
       # Now with a bad nip
-      entries =
+      links =
         [
-          create_entry(nip1.network_id, NetworkHelper.ip(), server1.password),
-          create_entry(nip2.network_id, nip2.ip, server2.password),
+          create_link(nip1.network_id, NetworkHelper.ip(), server1.password),
+          create_link(nip2.network_id, nip2.ip, server2.password),
         ]
 
-      assert {false, reason, _} = BounceHenforcer.has_access_entries?(entries)
+      assert {false, reason, _} = BounceHenforcer.has_access_links?(links)
       assert reason == {:nip, :not_found}
     end
 
-    defp create_entry(network_id, ip, password),
+    defp create_link(network_id, ip, password),
       do: %{network_id: network_id, ip: ip, password: password}
   end
 

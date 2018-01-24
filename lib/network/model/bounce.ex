@@ -101,10 +101,17 @@ defmodule Helix.Network.Model.Bounce do
 
   query do
 
+    alias Helix.Entity.Model.Entity
+
     @spec by_bounce(Queryable.t, Bounce.id) ::
       Queryable.t
     def by_bounce(query \\ Bounce, bounce_id),
       do: where(query, [b], b.bounce_id == ^bounce_id)
+
+    @spec by_entity(Queryable.t, Entity.id) ::
+      Queryable.t
+    def by_entity(query \\ Bounce, entity_id),
+      do: where(query, [b], b.entity_id == ^entity_id)
 
     @spec join_sorted(Queryable.t) ::
       Queryable.t

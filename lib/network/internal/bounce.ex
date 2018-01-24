@@ -6,6 +6,8 @@ defmodule Helix.Network.Internal.Bounce do
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo
 
+  @type create_errors :: :internal
+
   @spec fetch(Bounce.id) ::
     Bounce.t
     | nil
@@ -37,9 +39,19 @@ defmodule Helix.Network.Internal.Bounce do
     |> Repo.all()
   end
 
+  @spec get_by_entity(Entity.id) ::
+    [Bounce.t]
+  def get_by_entity(entity_id = %Entity.ID{}) do
+    entity_id
+    |> Bounce.Query.by_entity()
+    |> Bounce.Query.join_sorted()
+    |> Repo.all()
+    |> Enum.map(&Bounce.format/1)
+  end
+
   @spec create(Entity.id, Bounce.name, [Bounce.link]) ::
     {:ok, Bounce.t}
-    | {:error, :internal}
+    | {:error, create_errors}
   def create(entity_id, name, links) do
     Repo.transaction fn ->
       result =

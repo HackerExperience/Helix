@@ -9,41 +9,41 @@ defmodule Helix.Network.Henforcer.Bounce do
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
 
-  @typep entry ::
+  @typep link ::
     %{network_id: Network.id, ip: Network.ip, password: Server.password}
 
-  @type can_create_bounce_relay :: has_access_entries_relay
-  @type can_create_bounce_error :: has_access_entries_error
+  @type can_create_bounce_relay :: has_access_links_relay
+  @type can_create_bounce_error :: has_access_links_error
 
-  @spec can_create_bounce?(Entity.id, Bounce.name, [entry]) ::
+  @spec can_create_bounce?(Entity.id, Bounce.name, [link]) ::
     {true, can_create_bounce_relay}
     | can_create_bounce_error
   @doc """
   Verifies whether `entity_id` may create a new bounce of name `name` with the
-  given `entries`.
+  given `links`.
   """
-  def can_create_bounce?(_entity_id, _name, entries) do
-    henforce has_access_entries?(entries) do
+  def can_create_bounce?(_entity_id, _name, links) do
+    henforce has_access_links?(links) do
       reply_ok(relay)
     end
   end
 
-  @type has_access_entries_relay :: %{servers: [Server.t]}
-  @type has_access_entries_relay_partial :: %{}
-  @type has_access_entries_error ::
-    {false, {:bounce, :no_access}, has_access_entries_relay_partial}
+  @type has_access_links_relay :: %{servers: [Server.t]}
+  @type has_access_links_relay_partial :: %{}
+  @type has_access_links_error ::
+    {false, {:bounce, :no_access}, has_access_links_relay_partial}
 
-  @spec has_access_entries?([entry]) ::
-    {true, has_access_entries_relay}
-    | has_access_entries_error
+  @spec has_access_links?([link]) ::
+    {true, has_access_links_relay}
+    | has_access_links_error
   @doc """
-  Verifies whether there's access to all servers listed on `entries`
+  Verifies whether there's access to all servers listed on `links`
   """
-  def has_access_entries?(entries) do
-    entries
-    |> Enum.reduce(%{servers: []}, fn entry, acc ->
+  def has_access_links?(links) do
+    links
+    |> Enum.reduce(%{servers: []}, fn link, acc ->
       if is_map(acc) do
-        case has_access?(entry.network_id, entry.ip, entry.password) do
+        case has_access?(link.network_id, link.ip, link.password) do
           {true, relay} ->
             %{servers: acc.servers ++ [relay.server]}
 

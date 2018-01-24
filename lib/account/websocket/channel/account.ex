@@ -10,6 +10,7 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Account.Websocket.Requests.EmailReply, as: EmailReplyRequest
   alias Helix.Account.Websocket.Requests.Logout, as: LogoutRequest
   alias Helix.Client.Websocket.Requests.Setup, as: ClientSetupProxyRequest
+  alias Helix.Network.Websocket.Requests.Bounce.Create, as: BounceCreateRequest
 
   @doc """
   Joins the Account channel.
@@ -81,6 +82,41 @@ channel Helix.Account.Websocket.Channel.Account do
   - internal
   """
   topic "account.logout", LogoutRequest
+
+  @doc """
+  Creates a new bounce.
+
+  Params:
+    *name: Bounce name.
+    *links: Links that will exist on the bounce. The received order will be the
+    bounce order. Must contain `network_id`, `ip` and `password`.
+
+  Example:
+    %{
+      "name" => "bounce_name",
+      "links" => [
+        %{"network_id" => "::", "ip" => "1.2.3.4", "password" => "hunter2"},
+        %{"network_id" => "::", "ip" => "4.3.2.1", "password" => "*******"}
+      ]
+    }
+
+  Returns: :ok
+
+  Events:
+  - bounce_created: Emitted when bounce creation is successful
+  - bounce_create_failed: Emitted when bounce creation fail for any reason
+
+  Errors:
+
+  Henforcer:
+  - nip_not_found: One of the entries of `links` was not found
+  - bounce_no_access: One of the entries of `links` failed to authenticate
+
+  Input validation:
+  - bad_entry: One of the entries of `links` has an invalid format.
+  + base errors
+  """
+  topic "bounce.create", BounceCreateRequest
 
   @doc """
   Intercepts and handles outgoing events.
