@@ -26,4 +26,24 @@ defmodule Helix.Network.Action.Flow.Bounce do
         {:error, reason}
     end
   end
+
+  @spec update(Bounce.t, Bounce.name | nil, [Bounce.link] | nil, Event.relay) ::
+    {:ok, Bounce.t}
+    | {:error, BounceAction.update_errors}
+  @doc """
+  Updates an existing bounce with the new `name` and the new `links`.
+  """
+  def update(bounce = %Bounce{}, name, links, relay) do
+    case BounceAction.update(bounce, name, links) do
+      {:ok, bounce, events} ->
+        Event.emit(events, from: relay)
+
+        {:ok, bounce}
+
+      {:error, reason, events} ->
+        Event.emit(events, from: relay)
+
+        {:error, reason}
+    end
+  end
 end

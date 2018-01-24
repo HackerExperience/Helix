@@ -3,14 +3,16 @@ defmodule Helix.Entity.Henforcer.Entity do
   import Helix.Henforcer
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
+  alias Helix.Network.Henforcer.Bounce, as: BounceHenforcer
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Software.Henforcer.Storage, as: StorageHenforcer
   alias Helix.Software.Model.Storage
-  alias Helix.Server.Model.Component
-  alias Helix.Server.Model.Server
   alias Helix.Server.Henforcer.Component, as: ComponentHenforcer
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
+  alias Helix.Server.Model.Component
+  alias Helix.Server.Model.Server
   alias Helix.Server.Query.Component, as: ComponentQuery
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
@@ -198,5 +200,39 @@ defmodule Helix.Entity.Henforcer.Entity do
 
     henforce_else(owns_server?(entity, server_id), {:storage, :not_belongs})
     |> wrap_relay(%{entity: entity, storage: storage})
+  end
+
+  @type owns_bounce_relay :: %{entity: Entity.t, bounce: Bounce.t}
+  @type owns_bounce_relay_partial :: map
+  @type owns_bounce_error ::
+    {false, {:bounce, :not_belongs}, owns_bounce_relay_partial}
+    | entity_exists_error
+    | BounceHenforcer.bounce_exists_error
+
+  @spec owns_bounce?(Entity.idt, Bounce.idt) ::
+    {true, owns_bounce_relay}
+    | owns_bounce_error
+  @doc """
+  Henforces the Entity is the owner of the given Bounce.
+  """
+  def owns_bounce?(entity_id = %Entity.ID{}, bounce) do
+    henforce entity_exists?(entity_id) do
+      owns_bounce?(relay.entity, bounce)
+    end
+  end
+
+  def owns_bounce?(entity, bounce_id = %Bounce.ID{}) do
+    henforce BounceHenforcer.bounce_exists?(bounce_id) do
+      owns_bounce?(entity, relay.bounce)
+    end
+  end
+
+  def owns_bounce?(entity = %Entity{}, bounce = %Bounce{}) do
+    if bounce.entity_id == entity.entity_id do
+      reply_ok()
+    else
+      reply_error({:bounce, :not_belongs})
+    end
+    |> wrap_relay(%{entity: entity, bounce: bounce})
   end
 end

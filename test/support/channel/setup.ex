@@ -338,7 +338,7 @@ defmodule Helix.Test.Channel.Setup do
     }
 
     assigns =
-      opts[:connect_opts] || []
+      (opts[:connect_opts] || [])
       |> fake_connection_socket_assigns()
       |> Map.merge(server_assigns)
 
@@ -356,7 +356,7 @@ defmodule Helix.Test.Channel.Setup do
     acc_assigns = %{}
 
     assigns =
-      opts[:connect_opts] || []
+      (opts[:connect_opts] || [])
       |> fake_connection_socket_assigns()
       |> Map.merge(acc_assigns)
 

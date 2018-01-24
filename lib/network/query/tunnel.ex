@@ -8,12 +8,6 @@ defmodule Helix.Network.Query.Tunnel do
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
 
-  @spec get_tunnel(Server.id, Server.id, Network.id, Bounce.id) ::
-    Tunnel.t
-    | nil
-  defdelegate get_tunnel(gateway_id, endpoint_id, network_id, bounce_id),
-    to: TunnelInternal
-
   @spec fetch(Tunnel.id) ::
     Tunnel.t
     | nil
@@ -24,6 +18,17 @@ defmodule Helix.Network.Query.Tunnel do
     Tunnel.t
   def fetch_from_connection(%Connection{tunnel_id: id}),
     do: fetch(id)
+
+  @spec get_tunnel(Server.id, Server.id, Network.id, Bounce.id) ::
+    Tunnel.t
+    | nil
+  defdelegate get_tunnel(gateway_id, endpoint_id, network_id, bounce_id),
+    to: TunnelInternal
+
+  @spec get_tunnels_on_bounce(Bounce.id) ::
+    [Tunnel.t]
+  defdelegate get_tunnels_on_bounce(bounce_id),
+    to: TunnelInternal
 
   @spec tunnels_between(Server.id, Server.id, Network.id | nil) ::
     [Tunnel.t]

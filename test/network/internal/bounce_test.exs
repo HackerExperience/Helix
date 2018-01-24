@@ -133,10 +133,11 @@ defmodule Helix.Network.Internal.BounceTest do
     end
   end
 
-  describe "update/2" do
+  describe "update/3" do
     test "performs a noop when no change was made" do
       {bounce, _} = NetworkSetup.Bounce.bounce()
-      assert {:ok, bounce} == BounceInternal.update(bounce, bounce.links)
+      assert {:ok, bounce} ==
+        BounceInternal.update(bounce, name: bounce.name, links: bounce.links)
     end
 
     test "append one link" do
@@ -153,7 +154,7 @@ defmodule Helix.Network.Internal.BounceTest do
       # New links = previous links + `link` at the last position
       new_links = bounce.links ++ [link]
 
-      assert {:ok, new_bounce} = BounceInternal.update(bounce, new_links)
+      assert {:ok, new_bounce} = BounceInternal.update(bounce, links: new_links)
 
       # New bounce has 3 entries!
       assert new_bounce.bounce_id == bounce.bounce_id
@@ -166,19 +167,7 @@ defmodule Helix.Network.Internal.BounceTest do
       # New links = previous links - last one
       new_links = Enum.drop(bounce.links, -1)
 
-      assert {:ok, new_bounce} = BounceInternal.update(bounce, new_links)
-      assert new_bounce.bounce_id == bounce.bounce_id
-      assert new_bounce.links == new_links
-    end
-
-    test "swap position" do
-      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
-
-      # Reverse (swapped)
-      new_links = Enum.reverse(bounce.links)
-      refute new_links == bounce.links
-
-      assert {:ok, new_bounce} = BounceInternal.update(bounce, new_links)
+      assert {:ok, new_bounce} = BounceInternal.update(bounce, links: new_links)
       assert new_bounce.bounce_id == bounce.bounce_id
       assert new_bounce.links == new_links
     end
@@ -203,13 +192,40 @@ defmodule Helix.Network.Internal.BounceTest do
       {bounce1, _} = NetworkSetup.Bounce.bounce(links: [a, b, c])
       assert bounce1.links == [a, b, c]
 
-      assert {:ok, bounce2} = BounceInternal.update(bounce1, [c, a, d, e])
+      assert {:ok, bounce2} =
+        BounceInternal.update(bounce1, links: [c, a, d, e])
       assert bounce2.links == [c, a, d, e]
       assert bounce2 == BounceInternal.fetch(bounce1.bounce_id)
 
-      assert {:ok, bounce3} = BounceInternal.update(bounce2, [f])
+      assert {:ok, bounce3} = BounceInternal.update(bounce2, links: [f])
       assert bounce3.links == [f]
       assert bounce3 == BounceInternal.fetch(bounce1.bounce_id)
+    end
+
+    test "rename" do
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
+
+      new_name = NetworkHelper.Bounce.name()
+
+      assert {:ok, new_bounce} = BounceInternal.update(bounce, name: new_name)
+
+      assert new_bounce.name == new_name
+    end
+
+    test "rename and change links at the same time" do
+      {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
+
+      # Reverse (swap positions)
+      new_links = Enum.reverse(bounce.links)
+      refute new_links == bounce.links
+
+      new_name = NetworkHelper.Bounce.name()
+
+      assert {:ok, new_bounce} =
+        BounceInternal.update(bounce, name: new_name, links: new_links)
+      assert new_bounce.bounce_id == bounce.bounce_id
+      assert new_bounce.links == new_links
+      assert new_bounce.name == new_name
     end
   end
 end

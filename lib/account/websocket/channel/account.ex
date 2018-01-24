@@ -11,6 +11,7 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Account.Websocket.Requests.Logout, as: LogoutRequest
   alias Helix.Client.Websocket.Requests.Setup, as: ClientSetupProxyRequest
   alias Helix.Network.Websocket.Requests.Bounce.Create, as: BounceCreateRequest
+  alias Helix.Network.Websocket.Requests.Bounce.Update, as: BounceUpdateRequest
 
   @doc """
   Joins the Account channel.
@@ -104,7 +105,7 @@ channel Helix.Account.Websocket.Channel.Account do
 
   Events:
   - bounce_created: Emitted when bounce creation is successful
-  - bounce_create_failed: Emitted when bounce creation fail for any reason
+  - bounce_create_failed: Emitted when bounce creation failed for any reason.
 
   Errors:
 
@@ -113,10 +114,50 @@ channel Helix.Account.Websocket.Channel.Account do
   - bounce_no_access: One of the entries of `links` failed to authenticate
 
   Input validation:
-  - bad_entry: One of the entries of `links` has an invalid format.
+  - bad_link: One of the entries of `links` has an invalid format.
   + base errors
   """
   topic "bounce.create", BounceCreateRequest
+
+  @doc """
+  Updates an existing bounce.
+
+  Params:
+    *bounce_id: Which bounce to update. Duh.
+    name: Set a new name for the bounce.
+    links: Set a new group of links that will be used for future bounces. Same
+    type as the one at "bounce.create".
+
+  NOTE: `name` and `links` are optional, but AT LEAST ONE of them must be set!
+
+  Example:
+    %{
+      "bounce_id" => "::1",
+      "name" => "new_name",
+      "links" => [
+        %{"network_id" => "::", "ip" => "8.8.8.8", "password" => "googol"}
+      ]
+    }
+
+  Returns: :ok
+
+  Events:
+  - bounce_updated: Emitted when bounce update was successful.
+  - bounce_update_failed: Emitted when bounce update failed for any reason.
+
+  Errors:
+
+  Henforcer:
+  - bounce_not_belongs: Attempting to update a bounce that is not owned by you
+  - nip_not_found: One of the entries of `links` was not found
+  - bounce_no_access: One of the entries of `links` failed to authenticate
+  - bounce_in_use: Bounce is currently in use. All tunnels using the bounce must
+    be closed in order for it to be able to update its links.
+
+  Input validation:
+  - bad_link
+  """
+  topic "bounce.update", BounceUpdateRequest
 
   @doc """
   Intercepts and handles outgoing events.

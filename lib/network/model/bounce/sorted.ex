@@ -3,6 +3,7 @@ defmodule Helix.Network.Model.Bounce.Sorted do
   use Ecto.Schema
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.MapUtils
@@ -70,9 +71,19 @@ defmodule Helix.Network.Model.Bounce.Sorted do
 
   @spec generate_nips_map([Bounce.link]) ::
     [entry]
-  defp generate_nips_map(links) do
+  def generate_nips_map(links) do
     Enum.map(links, fn {server_id, network_id, ip} ->
       %{s_id: server_id, n_id: network_id, ip: ip}
     end)
+  end
+
+  query do
+
+    alias Helix.Network.Model.Bounce
+
+    @spec by_bounce(Queryable.t, Bounce.id) ::
+      Queryable.t
+    def by_bounce(query \\ Bounce.Sorted, bounce_id),
+      do: where(query, [bs], bs.bounce_id == ^bounce_id)
   end
 end

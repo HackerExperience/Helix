@@ -7,6 +7,7 @@ defmodule Helix.Network.Internal.Bounce do
   alias Helix.Network.Repo
 
   @type create_errors :: :internal
+  @type update_errors :: :internal
 
   @spec fetch(Bounce.id) ::
     Bounce.t
@@ -73,32 +74,84 @@ defmodule Helix.Network.Internal.Bounce do
     end
   end
 
-  @spec update(Bounce.t, [Bounce.link]) ::
+  @spec update(Bounce.t, [links: [Bounce.link], name: Bounce.name]) ::
     {:ok, Bounce.t}
-    | {:error, :internal}
-  def update(bounce = %Bounce{links: links}, links),
+    | {:error, update_errors}
+  def update(bounce = %Bounce{}, name: name, links: links),
+    do: do_update(bounce, links, name)
+  def update(bounce = %Bounce{}, name: name),
+    do: do_update(bounce, bounce.links, name)
+  def update(bounce = %Bounce{}, links: links),
+    do: do_update(bounce, links, bounce.name)
+
+  @spec do_update(Bounce.t, [Bounce.link], Bounce.name) ::
+    {:ok, Bounce.t}
+    | {:error, update_errors}
+  defp do_update(bounce = %Bounce{links: links, name: name}, links, name),
     do: {:ok, bounce}
-  def update(bounce = %Bounce{}, links) do
-    added_links = links -- bounce.links
-    removed_links = bounce.links -- links
-
+  defp do_update(bounce = %Bounce{}, new_links, new_name) do
     Repo.transaction fn ->
-      # Add new links
-      add_operations = Enum.map(added_links, &(add_entry(bounce, &1)))
 
-      # Remove old links
-      Enum.each(removed_links, &(remove_entry(bounce, &1)))
+      update_link_attempt =
+        if bounce.links == new_links do
+          {:ok, bounce.sorted}
+        else
+          added_links = new_links -- bounce.links
+          removed_links = bounce.links -- new_links
+
+          # Remove old links
+          Enum.each(removed_links, &(remove_entry(bounce, &1)))
+
+          # Returns true if all insert operations returned {:ok, _}
+          # Add new links
+          insert_valid? =
+            added_links
+            |> Enum.map(&(add_entry(bounce, &1)))
+            |> Enum.all?(fn {status, _} -> status == :ok end)
+
+          with \
+            true <- insert_valid?,
+            {1, [sorted]} <- update_sorted(bounce, new_links)
+          do
+            {:ok, sorted}
+          else
+            _ ->
+              {:error, bounce.sorted}
+          end
+        end
+
+      update_name_attempt =
+        if bounce.name == new_name do
+          {:ok, bounce}
+        else
+          with {:ok, bounce} <- rename(bounce, new_name) do
+            {:ok, bounce}
+          end
+        end
 
       with \
-        true <- Enum.all?(add_operations, fn {status, _} -> status == :ok end),
-        {:ok, _} <- update_sorted(bounce, links)
+        {:ok, new_sorted} <- update_link_attempt,
+        {:ok, new_bounce} <- update_name_attempt
       do
-        fetch(bounce.bounce_id)
+        new_bounce
+        |> Map.replace(:sorted, new_sorted)
+        |> Bounce.format()
       else
         _ ->
           Repo.rollback(:internal)
       end
     end
+  end
+
+  @spec rename(Bounce.t, Bounce.name) ::
+    {:ok, Bounce.t}
+    | {:error, Bounce.changeset}
+  def rename(bounce = %Bounce{name: name}, name),
+    do: {:ok, bounce}
+  def rename(bounce = %Bounce{}, name) do
+    bounce
+    |> Bounce.rename(name)
+    |> Repo.update()
   end
 
   @spec add_entry(Bounce.t, Bounce.link) ::
@@ -121,11 +174,13 @@ defmodule Helix.Network.Internal.Bounce do
   end
 
   @spec update_sorted(Bounce.t, [Bounce.link]) ::
-    {:ok, Bounce.Sorted.t}
-    | {:error, Bounce.Sorted.changeset}
+    {non_neg_integer, [Bounce.Sorted.t]}
+    | no_return
   defp update_sorted(bounce = %Bounce{}, links) do
-    bounce.sorted
-    |> Bounce.Sorted.update_links(links)
-    |> Repo.update()
+    sorted_nips = Bounce.Sorted.generate_nips_map(links)
+
+    bounce.bounce_id
+    |> Bounce.Sorted.Query.by_bounce()
+    |> Repo.update_all([set: [sorted_nips: sorted_nips]], [returning: true])
   end
 end

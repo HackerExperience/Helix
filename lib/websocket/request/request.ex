@@ -61,6 +61,7 @@ defmodule Helix.Websocket.Request do
 
           unquote(block)
 
+          @spec get_error(term) :: String.t
           docp """
           Fallbacks to WebsocketUtils' general purpose error code translator.
           """

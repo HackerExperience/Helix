@@ -2,15 +2,38 @@ defmodule Helix.Network.Henforcer.Bounce do
 
   import Helix.Henforcer
 
+  alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
   alias Helix.Server.Model.Server
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Bounce, as: BounceQuery
+  alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Network.Websocket.Requests.Bounce.Utils, as: BounceRequestUtils
 
-  @typep link ::
-    %{network_id: Network.id, ip: Network.ip, password: Server.password}
+  @typep link :: BounceRequestUtils.link
+
+  @type bounce_exists_relay :: %{bounce: Bounce.t}
+  @type bounce_exists_relay_partial :: %{}
+  @type bounce_exists_error ::
+    {false, {:bounce, :not_found}, bounce_exists_relay_partial}
+
+  @spec bounce_exists?(Bounce.id) ::
+    {true, bounce_exists_relay}
+    | bounce_exists_error
+  @doc """
+  Henforces that the given bounce exists.
+  """
+  def bounce_exists?(bounce_id = %Bounce.ID{}) do
+    with bounce = %Bounce{} <- BounceQuery.fetch(bounce_id) do
+      reply_ok(%{bounce: bounce})
+    else
+      _ ->
+        reply_error({:bounce, :not_found})
+    end
+  end
 
   @type can_create_bounce_relay :: has_access_links_relay
   @type can_create_bounce_error :: has_access_links_error
@@ -25,6 +48,43 @@ defmodule Helix.Network.Henforcer.Bounce do
   def can_create_bounce?(_entity_id, _name, links) do
     henforce has_access_links?(links) do
       reply_ok(relay)
+    end
+  end
+
+  @type can_update_bounce_relay ::
+    %{servers: [Server.t], entity: Entity.t, bounce: Bounce.t}
+  @type can_update_bounce_relay_partial :: map
+  @type can_update_bounce_error ::
+    EntityHenforcer.owns_bounce_error
+    | bounce_not_in_use_error
+    | has_access_links_error
+
+  @doc """
+  Henforces that `entity_is` is allowed to update `bounce_id` with the
+  `new_name` and the `new_links`.
+  """
+  def can_update_bounce?(entity_id, bounce_id, _new_name, new_links) do
+    base_henforcer = fn ->
+      with {true, r1} <- EntityHenforcer.owns_bounce?(entity_id, bounce_id) do
+        reply_ok(r1)
+      end
+    end
+
+    link_change_henforcer = fn bounce ->
+      with \
+        {true, r1} <- bounce_not_in_use?(bounce),
+        {true, r2} <- has_access_links?(new_links)
+      do
+        reply_ok(relay(r1, r2))
+      end
+    end
+
+    with \
+      {true, r1} <- base_henforcer.(),
+      bounce = r1.bounce,
+      {true, r2} <- link_change_henforcer.(bounce)
+    do
+      reply_ok(relay(r1, r2))
     end
   end
 
@@ -89,4 +149,48 @@ defmodule Helix.Network.Henforcer.Bounce do
       reply_ok(%{server: server})
     end
   end
+
+  @type bounce_in_use_relay :: %{bounce: Bounce.t}
+  @type bounce_in_use_relay_partial :: bounce_in_use_relay
+  @type bounce_in_use_error ::
+    {false, {:bounce, :not_in_use}, bounce_in_use_relay_partial}
+    | bounce_exists_error
+
+  @spec bounce_in_use?(Bounce.idt) ::
+    {true, bounce_in_use_relay}
+    | bounce_in_use_error
+  @doc """
+  Henforces that the given bounce is being used.
+  """
+  def bounce_in_use?(bounce_id = %Bounce.ID{}) do
+    henforce bounce_exists?(bounce_id) do
+      bounce_in_use?(relay.bounce)
+    end
+  end
+
+  def bounce_in_use?(bounce = %Bounce{}) do
+    case TunnelQuery.get_tunnels_on_bounce(bounce.bounce_id) do
+      [_] ->
+        reply_ok()
+
+      [] ->
+        reply_error({:bounce, :not_in_use})
+    end
+    |> wrap_relay(%{bounce: bounce})
+  end
+
+  @type bounce_not_in_use_relay :: bounce_in_use_relay_partial
+  @type bounce_not_in_use_relay_partial :: bounce_in_use_relay
+  @type bounce_not_in_use_error ::
+    {false, {:bounce, :in_use}, bounce_not_in_use_relay_partial}
+    | bounce_exists_error
+
+  @spec bounce_not_in_use?(Bounce.idt) ::
+    {true, bounce_not_in_use_relay}
+    | bounce_not_in_use_error
+  @doc """
+  Henforces that the given bounce is NOT being used.
+  """
+  def bounce_not_in_use?(bounce),
+    do: henforce_not(bounce_in_use?(bounce), {:bounce, :in_use})
 end

@@ -54,6 +54,15 @@ defmodule Helix.Network.Internal.Tunnel do
     end
   end
 
+  @spec get_tunnels_on_bounce(Bounce.id) ::
+    [Tunnel.t]
+  def get_tunnels_on_bounce(bounce_id) do
+    bounce_id
+    |> Tunnel.Query.by_bounce()
+    |> Repo.all()
+    |> Enum.map(&Tunnel.format/1)
+  end
+
   @spec get_links(Tunnel.idt) ::
     [Link.t]
   @doc """

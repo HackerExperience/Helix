@@ -71,7 +71,15 @@ defmodule Helix.Network.Model.Bounce do
     [bounce] ++ entries
   end
 
-  @spec add_entry(Bounce.idt, link) ::
+  @spec rename(t, name) ::
+    changeset
+  def rename(bounce = %Bounce{}, new_name) do
+    bounce
+    |> change()
+    |> put_change(:name, new_name)
+  end
+
+  @spec add_entry(idt, link) ::
     Bounce.Entry.changeset
   def add_entry(bounce = %Bounce{}, link),
     do: add_entry(bounce.bounce_id, link)
@@ -79,12 +87,17 @@ defmodule Helix.Network.Model.Bounce do
     do: Bounce.Entry.create(bounce_id, link)
 
   @spec format(t) ::
-    t | term
+    t
+  def format(bounce = %Bounce{sorted: nil}),
+    do: bounce
   def format(bounce = %Bounce{}) do
     links = Bounce.Sorted.get_links(bounce.sorted)
 
     bounce
     |> Map.put(:links, links)
+
+    # `sorted` is an implementation detail
+    |> Map.replace(:sorted, nil)
 
     # See `File.format/1` for context
     |> Ecto.put_meta(state: :loaded)

@@ -1,10 +1,10 @@
 defmodule Helix.Test.Network.Setup.Bounce do
 
   alias Ecto.Changeset
+  alias Helix.Network.Internal.Bounce, as: BounceInternal
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Repo, as: NetworkRepo
 
-  alias HELL.TestHelper.Random
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
 
@@ -12,16 +12,14 @@ defmodule Helix.Test.Network.Setup.Bounce do
   See docs on `fake_bounce/1`
   """
   def bounce(opts \\ []) do
-    {
-      bounce,
-      related = %{changeset: changeset, entries: entries, sorted: sorted}
-    } =
+    {bounce, related = %{changeset: changeset, entries: entries}} =
       fake_bounce(opts)
 
     NetworkRepo.insert!(changeset)
     Enum.each(entries, &NetworkRepo.insert!/1)
 
-    {bounce, related}
+    # Fetching again to ensure it's correctly formatted
+    {BounceInternal.fetch(bounce.bounce_id), related}
   end
 
   def bounce!(opts \\ []) do
