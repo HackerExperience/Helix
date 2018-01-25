@@ -208,4 +208,92 @@ defmodule Helix.Network.Event.Bounce do
         do: %{account: event.entity_id}
     end
   end
+
+  event Removed do
+    @moduledoc """
+    `BounceRemovedEvent` is fired right after the player has removed an existing
+    bounce.
+    """
+
+    alias Helix.Entity.Model.Entity
+    alias Helix.Network.Model.Bounce
+
+    event_struct [:bounce_id, :entity_id]
+
+    @type t ::
+      %__MODULE__{
+        bounce_id: Bounce.id,
+        entity_id: Entity.id
+      }
+
+    @spec new(Bounce.t) ::
+      t
+    def new(bounce = %Bounce{}) do
+      %__MODULE__{
+        bounce_id: bounce.bounce_id,
+        entity_id: bounce.entity_id
+      }
+    end
+
+    notify do
+      @moduledoc """
+      Notifies the client that the bounce was removed.
+      """
+
+      @event :bounce_removed
+
+      def generate_payload(event, _socket) do
+        data = %{bounce_id: to_string(event.bounce_id)}
+
+        {:ok, data}
+      end
+
+      def whom_to_notify(event),
+        do: %{account: event.entity_id}
+    end
+  end
+
+  event RemoveFailed do
+    @moduledoc """
+    `BounceRemoveFailedEvent` is fired when the player attempted to remove an
+    existing bounce but it failed for some `reason`.
+    """
+
+    alias Helix.Entity.Model.Entity
+
+    event_struct [:entity_id, :reason]
+
+    @type t ::
+      %__MODULE__{
+        entity_id: Entity.id,
+        reason: term
+      }
+
+    @spec new(Entity.id, term) ::
+      t
+    def new(entity_id = %Entity.ID{}, reason) do
+      %__MODULE__{
+        entity_id: entity_id,
+        reason: reason
+      }
+    end
+
+    notify do
+      @moduledoc """
+      Notifies the client that the bounce removal attempt has failed, so the
+      client who made the request can notify the failure to the player.
+      """
+
+      @event :bounce_remove_failed
+
+      def generate_payload(event, _socket) do
+        data = %{reason: to_string(event.reason)}
+
+        {:ok, data}
+      end
+
+      def whom_to_notify(event),
+        do: %{account: event.entity_id}
+    end
+  end
 end
