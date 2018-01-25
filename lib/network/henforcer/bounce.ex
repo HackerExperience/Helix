@@ -88,6 +88,28 @@ defmodule Helix.Network.Henforcer.Bounce do
     end
   end
 
+  @type can_remove_bounce_relay :: %{entity: Entity.t, bounce: Bounce.t}
+  @type can_remove_bounce_relay_partial :: %{}
+  @type can_remove_bounce_error ::
+    EntityHenforcer.owns_bounce_error
+    | bounce_not_in_use_error
+
+  @spec can_remove_bounce?(Entity.id, Bounce.id) ::
+    {true, can_remove_bounce_relay}
+    | can_remove_bounce_error
+  @doc """
+  Henforces that `entity_id` is allowed to remove `bounce_id`.
+  """
+  def can_remove_bounce?(entity_id, bounce_id) do
+    with \
+      {true, r1} <- EntityHenforcer.owns_bounce?(entity_id, bounce_id),
+      bounce = r1.bounce,
+      {true, r2} <- bounce_not_in_use?(bounce)
+    do
+      reply_ok(relay(r1, r2))
+    end
+  end
+
   @type has_access_links_relay :: %{servers: [Server.t]}
   @type has_access_links_relay_partial :: %{}
   @type has_access_links_error ::

@@ -194,8 +194,7 @@ defmodule Helix.Network.Websocket.Requests.Bounce.UpdateTest do
           connect_opts: [entity_id: entity.entity_id]
         )
 
-      {bounce, _} =
-        NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
 
       {server, _} = ServerSetup.server()
       ip = ServerHelper.get_ip(server)
@@ -254,8 +253,7 @@ defmodule Helix.Network.Websocket.Requests.Bounce.UpdateTest do
           connect_opts: [entity_id: entity.entity_id]
         )
 
-      {bounce, _} =
-        NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
 
       # Start using the bounce
       NetworkSetup.tunnel(bounce_id: bounce.bounce_id)
@@ -290,8 +288,7 @@ defmodule Helix.Network.Websocket.Requests.Bounce.UpdateTest do
           connect_opts: [entity_id: entity.entity_id]
         )
 
-      {bounce, _} =
-        NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
 
       {server1, _} = ServerSetup.server()
       {server2, _} = ServerSetup.server()
@@ -331,8 +328,7 @@ defmodule Helix.Network.Websocket.Requests.Bounce.UpdateTest do
           connect_opts: [entity_id: entity.entity_id]
         )
 
-      {bounce, _} =
-        NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
 
       {server, _} = ServerSetup.server()
 
@@ -365,8 +361,7 @@ defmodule Helix.Network.Websocket.Requests.Bounce.UpdateTest do
           connect_opts: [entity_id: entity.entity_id]
         )
 
-      {bounce, _} =
-        NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
 
       {server, _} = ServerSetup.server()
       ip = ServerHelper.get_ip(server)

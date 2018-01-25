@@ -46,4 +46,24 @@ defmodule Helix.Network.Action.Flow.Bounce do
         {:error, reason}
     end
   end
+
+  @spec remove(Bounce.t, Event.relay) ::
+    :ok
+    | {:error, BounceAction.remove_errors}
+  @doc """
+  Removes the bounce.
+  """
+  def remove(bounce = %Bounce{}, relay) do
+    case BounceAction.remove(bounce) do
+      {:ok, events} ->
+        Event.emit(events, from: relay)
+
+        :ok
+
+      {:error, reason, events} ->
+        Event.emit(events, from: relay)
+
+        {:error, reason}
+    end
+  end
 end

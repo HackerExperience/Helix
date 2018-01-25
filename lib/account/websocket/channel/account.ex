@@ -12,6 +12,7 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Client.Websocket.Requests.Setup, as: ClientSetupProxyRequest
   alias Helix.Network.Websocket.Requests.Bounce.Create, as: BounceCreateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Update, as: BounceUpdateRequest
+  alias Helix.Network.Websocket.Requests.Bounce.Remove, as: BounceRemoveRequest
 
   @doc """
   Joins the Account channel.
@@ -23,7 +24,7 @@ channel Helix.Account.Websocket.Channel.Account do
   Errors:
   - access_denied: Trying to connect to an account that isn't the one
     authenticated on the socket.
-  + base_errors
+  + base errors
   """
   join _, AccountJoin
 
@@ -51,7 +52,7 @@ channel Helix.Account.Websocket.Channel.Account do
   Errors:
   - "request_not_implemented_for_client" - The registered client does not
     implements that request.
-  + base_errors
+  + base errors
   """
   topic "client.setup", ClientSetupProxyRequest
 
@@ -158,6 +159,31 @@ channel Helix.Account.Websocket.Channel.Account do
   - bad_link
   """
   topic "bounce.update", BounceUpdateRequest
+
+  @doc """
+  Removes an existing bounce.
+
+  Params:
+    *bounce_id: Which bounce to remove
+
+  Returns: :ok
+
+  Events:
+  - bounce_removed: Emitted when bounce remove was successful.
+  - bounce_remove_failed: Emitted when bounce remove failed for any reason.
+
+  Errors:
+
+  Henforcer:
+  - bounce_not_belongs: Attempting to update a bounce that is not owned by you
+  - bounce_in_use: Bounce is currently in use. All tunnels using the bounce must
+    be closed in order for it to be able to update its links.
+
+  Input:
+  + base errors
+
+  """
+  topic "bounce.remove", BounceRemoveRequest
 
   @doc """
   Intercepts and handles outgoing events.

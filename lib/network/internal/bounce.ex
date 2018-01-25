@@ -84,6 +84,18 @@ defmodule Helix.Network.Internal.Bounce do
   def update(bounce = %Bounce{}, links: links),
     do: do_update(bounce, links, bounce.name)
 
+  @spec remove(Bounce.t) ::
+    {:ok, Bounce.t}
+    | {:error, Bounce.changeset}
+  @doc """
+  Removes the bounce.
+
+  All underlying components (Bounce.Sorted, Bounce.Entry) will be delete as well
+  (through CASCADE).
+  """
+  def remove(bounce = %Bounce{}),
+    do: Repo.delete(bounce)
+
   @spec do_update(Bounce.t, [Bounce.link], Bounce.name) ::
     {:ok, Bounce.t}
     | {:error, update_errors}

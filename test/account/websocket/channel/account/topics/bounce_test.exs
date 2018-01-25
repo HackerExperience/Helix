@@ -7,6 +7,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.BounceTest do
   import Helix.Test.Channel.Macros
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Query.Bounce, as: BounceQuery
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Channel.Setup, as: ChannelSetup
@@ -15,7 +16,8 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.BounceTest do
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
-  @internet_id_str to_string(NetworkHelper.internet_id())
+  @internet_id NetworkHelper.internet_id()
+  @internet_id_str to_string(@internet_id)
 
   describe "bounce.create" do
     test "creates the bounce when expected data is given" do
@@ -28,7 +30,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.BounceTest do
       ip2 = ServerHelper.get_ip(server2)
 
       params = %{
-        "name" => "lula_preso_amanha",
+        "name" => "lula_preso_Amanda",
         "links" => [
           %{
             "network_id" => @internet_id_str,
@@ -88,8 +90,6 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.BounceTest do
       assert_reply ref, :error, response, timeout(:fast)
 
       assert response.data.message == "bounce_no_access"
-
-      did_not_emit [:bounce_created]
     end
   end
 
@@ -138,6 +138,14 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.BounceTest do
       assert nip2.ip == ip2
 
       assert bounce_updated_event.meta.request_id == params["request_id"]
+
+      # Updated the bounce
+      new_bounce = BounceQuery.fetch(bounce.bounce_id)
+      assert new_bounce.name == params["name"]
+      assert [
+        {server1.server_id, @internet_id, ip1},
+        {server2.server_id, @internet_id, ip2}
+      ] == new_bounce.links
     end
 
     test "fails when player is not the owner of the bounce" do
@@ -165,8 +173,43 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.BounceTest do
       assert_reply ref, :error, response, timeout(:fast)
 
       assert response.data.message == "bounce_not_belongs"
-
       assert response.meta.request_id == params["request_id"]
+    end
+  end
+
+  describe "bounce.remove" do
+    test "removes the bounce when everything is OK" do
+      {socket, %{entity_id: entity_id}} = ChannelSetup.join_account()
+
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity_id)
+
+      params = %{
+        "bounce_id" => to_string(bounce.bounce_id),
+        "request_id" => "fingerprint"
+      }
+
+      ref = push socket, "bounce.remove", params
+      assert_reply ref, :ok, %{}, timeout(:fast)
+
+      [bounce_removed_event] = wait_events [:bounce_removed]
+
+      assert bounce_removed_event.data.bounce_id == to_string(bounce.bounce_id)
+      assert bounce_removed_event.meta.request_id == params["request_id"]
+
+      # Removed the bounce
+      refute BounceQuery.fetch(bounce.bounce_id)
+    end
+
+    test "rejects when player is not the owner of the bounce" do
+      {socket, _} = ChannelSetup.join_account()
+      {bounce, _} = NetworkSetup.Bounce.bounce()
+
+      params = %{"bounce_id" => to_string(bounce.bounce_id)}
+
+      ref = push socket, "bounce.remove", params
+      assert_reply ref, :error, response, timeout(:fast)
+
+      assert response.data.message == "bounce_not_belongs"
     end
   end
 end

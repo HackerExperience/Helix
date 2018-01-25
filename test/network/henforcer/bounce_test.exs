@@ -132,6 +132,41 @@ defmodule Helix.Network.Henforcer.BounceTest do
     end
   end
 
+  describe "can_remove_bounce?" do
+    test "accepts when everything is OK" do
+      {entity, _} = EntitySetup.entity()
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+
+      assert {true, relay} =
+        BounceHenforcer.can_remove_bounce?(entity.entity_id, bounce.bounce_id)
+
+      assert relay.bounce == bounce
+      assert relay.entity == entity
+
+      assert_relay relay, [:bounce, :entity]
+    end
+
+    test "rejects when entity is not the owner of the bounce" do
+      {entity, _} = EntitySetup.entity()
+      {bounce, _} = NetworkSetup.Bounce.bounce()
+
+      assert {false, reason, _} =
+        BounceHenforcer.can_remove_bounce?(entity.entity_id, bounce.bounce_id)
+      assert reason == {:bounce, :not_belongs}
+    end
+
+    test "rejects when bounce is in use" do
+      {entity, _} = EntitySetup.entity()
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+
+      NetworkSetup.tunnel(bounce_id: bounce.bounce_id)
+
+      assert {false, reason, _} =
+        BounceHenforcer.can_remove_bounce?(entity.entity_id, bounce.bounce_id)
+      assert reason == {:bounce, :in_use}
+    end
+  end
+
   describe "has_access_links?" do
     test "verifies links access" do
       {server1, _} = ServerSetup.server()

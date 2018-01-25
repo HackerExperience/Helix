@@ -43,4 +43,15 @@ defmodule Helix.Network.Action.Flow.BounceTest do
       assert new_bounce == BounceQuery.fetch(bounce.bounce_id)
     end
   end
+
+  describe "remove/2" do
+    test "removes an existing bounce" do
+      {bounce, _} = NetworkSetup.Bounce.bounce()
+
+      assert :ok == BounceFlow.remove(bounce, @relay)
+
+      # No longer exists
+      refute BounceQuery.fetch(bounce.bounce_id)
+    end
+  end
 end

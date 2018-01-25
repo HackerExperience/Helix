@@ -6,11 +6,14 @@ defmodule Helix.Network.Action.Bounce do
 
   alias Helix.Network.Event.Bounce.Created, as: BounceCreatedEvent
   alias Helix.Network.Event.Bounce.CreateFailed, as: BounceCreateFailedEvent
+  alias Helix.Network.Event.Bounce.Removed, as: BounceRemovedEvent
+  alias Helix.Network.Event.Bounce.RemoveFailed, as: BounceRemoveFailedEvent
   alias Helix.Network.Event.Bounce.Updated, as: BounceUpdatedEvent
   alias Helix.Network.Event.Bounce.UpdateFailed, as: BounceUpdateFailedEvent
 
   @type create_errors :: BounceInternal.create_errors
   @type update_errors :: BounceInternal.update_errors
+  @type remove_errors :: :internal
 
   @spec create(Entity.id, Bounce.name, [Bounce.link]) ::
     {:ok, Bounce.t, [BounceCreatedEvent.t]}
@@ -21,10 +24,14 @@ defmodule Helix.Network.Action.Bounce do
   def create(entity_id, name, links) do
     case BounceInternal.create(entity_id, name, links) do
       {:ok, bounce} ->
-        {:ok, bounce, [BounceCreatedEvent.new(bounce)]}
+        event = BounceCreatedEvent.new(bounce)
+
+        {:ok, bounce, [event]}
 
       {:error, reason} ->
-        {:error, reason, [BounceCreateFailedEvent.new(entity_id, reason)]}
+        event = BounceCreateFailedEvent.new(entity_id, reason)
+
+        {:error, reason, [event]}
     end
   end
 
@@ -48,11 +55,32 @@ defmodule Helix.Network.Action.Bounce do
     case BounceInternal.update(bounce, name: new_name, links: new_links) do
       {:ok, bounce} ->
         event = BounceUpdatedEvent.new(bounce)
+
         {:ok, bounce, [event]}
 
       {:error, reason} ->
         event = BounceUpdateFailedEvent.new(bounce.entity_id, reason)
+
         {:error, reason, [event]}
+    end
+  end
+
+  @spec remove(Bounce.t) ::
+    {:ok, [BounceRemovedEvent.t]}
+    | {:error, remove_errors, [BounceRemoveFailedEvent.t]}
+  @doc """
+  Removes the bounce.
+  """
+  def remove(bounce = %Bounce{}) do
+    case BounceInternal.remove(bounce) do
+      {:ok, _} ->
+        event = BounceRemovedEvent.new(bounce)
+
+        {:ok, [event]}
+
+      {:error, _} ->
+        event = BounceRemoveFailedEvent.new(bounce.entity_id, :internal)
+        {:error, :internal, [event]}
     end
   end
 end
