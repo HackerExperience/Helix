@@ -68,7 +68,7 @@ defmodule Helix.Software.Action.Flow.FileTest do
 
       meta = %{
         network_id: target_nip.network_id,
-        bounce_id: nil,
+        bounce: nil,
         cracker: file
       }
 

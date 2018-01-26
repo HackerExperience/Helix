@@ -17,8 +17,10 @@ defmodule Helix.Process.Executable do
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Action.Tunnel, as: TunnelAction
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
+  alias Helix.Network.Query.Bounce, as: BounceQuery
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Server
@@ -174,7 +176,7 @@ defmodule Helix.Process.Executable do
             meta.network_id,
             gateway.server_id,
             target.server_id,
-            meta.bounce_id,
+            meta.bounce,
             type
           )
 
@@ -223,24 +225,26 @@ defmodule Helix.Process.Executable do
       defp setup_connection(_, _, _, _, :noop, _),
         do: {:ok, nil, []}
 
-      @spec create_connection(Network.id, Server.id, Server.id, term, term) ::
+      defp create_connection(
+        network_id, gateway_id, target_id, bounce_id = %Bounce.ID{}, type)
+      do
+        bounce = BounceQuery.fetch(bounce_id)
+
+        create_connection(network_id, gateway_id, target_id, bounce_id, type)
+      end
+
+      @spec create_connection(
+        Network.id, Server.id, Server.id, Bounce.idt | nil, Connection.type)
+      ::
         {:ok, tunnel :: term, Connection.t, [event :: term]}
       docp """
       Creates a new connection.
       """
       defp create_connection(
-        network_id = %Network.ID{},
-        gateway_id,
-        target_id,
-        bounce,
-        type)
+        network_id = %Network.ID{}, gateway_id, target_id, bounce, type)
       do
         TunnelAction.connect(
-          NetworkQuery.fetch(network_id),
-          gateway_id,
-          target_id,
-          bounce,
-          type
+          NetworkQuery.fetch(network_id), gateway_id, target_id, bounce, type
         )
       end
     end

@@ -28,11 +28,13 @@ defmodule Helix.Network.Model.Tunnel do
     }
 
   @typedoc """
-  `Tunnel.bounce` represents a valid bounce within the Tunnel model, which may
-  not exist, hence the `nil` option. Useful to simplify spec of methods who use
-  `Tunnel` directly and are not really concerned about how `Bounce` works.
+  `Tunnel.bounce[_idt]` represents a valid bounce within the Tunnel model, which
+  may not exist, hence the `nil` option. Useful to simplify spec of methods who
+  use `Tunnel` directly and are not really concerned about how `Bounce` works.
   """
-  @type bounce :: Bounce.id | nil
+  @type bounce :: Bounce.t | nil
+  @type bounce_id :: Bounce.id | nil
+  @type bounce_idt :: Bounce.idt | nil
 
   @type gateway_endpoints ::
     %{gateway :: Server.id => t}

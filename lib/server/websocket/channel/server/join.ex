@@ -26,6 +26,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
   alias Helix.Event
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Henforcer.Bounce, as: BounceHenforcer
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Model.Server
@@ -87,13 +88,17 @@ join Helix.Server.Websocket.Channel.Server.Join do
       {:ok, _, gateway_ip} <- validate_nip(network_id, gateway_ip),
 
       # Validate password
-      {:ok, password} <- validate_input(request.unsafe["password"], :password)
+      {:ok, password} <- validate_input(request.unsafe["password"], :password),
+
+      # Validate bounce
+      {:ok, bounce_id} <- validate_bounce(request.unsafe["bounce_id"])
     do
       params = %{
         network_id: network_id,
         gateway_ip: gateway_ip,
         destination_ip: destination_ip,
         password: password,
+        bounce_id: bounce_id,
         unsafe_counter: data.counter
       }
 
@@ -142,6 +147,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
     network_id = request.params.network_id
     gateway_ip = request.params.gateway_ip
     destination_ip = request.params.destination_ip
+    bounce_id = request.params.bounce_id
     entity_id = socket.assigns.entity_id
     unsafe_counter = request.params.unsafe_counter
 
@@ -165,13 +171,16 @@ join Helix.Server.Websocket.Channel.Server.Join do
       {true, r3} <- remote_join_allowed?.(gateway, destination),
       entity = r3.entity,
       {true, r4} <- valid_counter?.(destination),
-      counter = r4.counter
+      counter = r4.counter,
+      {true, r5} <- BounceHenforcer.can_use_bounce?(entity, bounce_id),
+      bounce = r5.bounce
     do
       meta = %{
         gateway: gateway,
         destination: destination,
         entity: entity,
-        counter: counter
+        counter: counter,
+        bounce: bounce
       }
 
       update_meta(request, meta, reply: true)
@@ -255,6 +264,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
     network_id = request.params.network_id
     gateway_ip = request.params.gateway_ip
     destination_ip = request.params.destination_ip
+    bounce = request.meta.bounce
     counter = request.meta.counter
 
     gateway = request.meta.gateway
@@ -274,7 +284,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
         EntityQuery.fetch_by_server(destination.server_id),
       {:ok, tunnel, ssh} <-
           ServerPublic.connect_to_server(
-            gateway.server_id, destination.server_id, nil
+            gateway.server_id, destination.server_id, bounce
           )
     do
       gateway_data = %{

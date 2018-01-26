@@ -19,16 +19,16 @@ defmodule Helix.Server.Public.Server do
   @spec connect_to_server(Server.id, Server.id, Tunnel.bounce) ::
     {:ok, Tunnel.t, Connection.ssh}
     | error :: term
-  def connect_to_server(gateway_id, target_id, bounce_id),
-    do: connect_to_server(gateway_id, target_id, bounce_id, @internet)
+  def connect_to_server(gateway_id, target_id, bounce),
+    do: connect_to_server(gateway_id, target_id, bounce, @internet)
 
   @spec connect_to_server(Server.id, Server.id, Tunnel.bounce, Network.t) ::
     {:ok, Tunnel.t, Connection.ssh}
     | error :: term
-  def connect_to_server(gateway_id, target_id, bounce_id, network) do
+  def connect_to_server(gateway_id, target_id, bounce, network) do
     with \
       {:ok, tunnel, connection, events} <-
-        TunnelAction.connect(network, gateway_id, target_id, bounce_id, :ssh)
+        TunnelAction.connect(network, gateway_id, target_id, bounce, :ssh)
     do
       Event.emit(events)
       # TODO: This should be at flow

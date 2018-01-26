@@ -16,6 +16,7 @@ defmodule Helix.Test.Features.Hack do
 
   alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
@@ -40,10 +41,12 @@ defmodule Helix.Test.Features.Hack do
 
       SoftwareSetup.file([type: :cracker, server_id: gateway.server_id])
 
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: player_entity_id)
+
       params = %{
         network_id: to_string(target_nip.network_id),
         ip: target_nip.ip,
-        bounce_id: nil
+        bounce_id: to_string(bounce.bounce_id)
       }
 
       # Start the Bruteforce attack
@@ -64,8 +67,21 @@ defmodule Helix.Test.Features.Hack do
 
       # The BruteforceProcess is running as expected
       process = ProcessQuery.fetch(process_id)
-      assert process
-      assert TunnelQuery.fetch_connection(connection_id)
+
+      assert process.gateway_id == gateway.server_id
+      assert process.target_id == target.server_id
+      assert process.type == :cracker_bruteforce
+      assert process.data.target_server_ip == target_nip.ip
+
+      tunnel =
+        connection_id
+        |> TunnelQuery.fetch_connection()
+        |> TunnelQuery.fetch_from_connection()
+
+      # Attack is using the requested bounce
+      assert tunnel.gateway_id == gateway.server_id
+      assert tunnel.target_id == target.server_id
+      assert tunnel.bounce_id == bounce.bounce_id
 
       # Let's cheat and finish the process right now
       TOPHelper.force_completion(process)
@@ -85,9 +101,8 @@ defmodule Helix.Test.Features.Hack do
 
       db_server =
         DatabaseQuery.fetch_server(
-          player_entity_id,
-          target_nip.network_id,
-          target_nip.ip)
+          player_entity_id, target_nip.network_id, target_nip.ip
+        )
 
       # The hacked server has been added to my Database
       assert db_server

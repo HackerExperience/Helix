@@ -36,7 +36,7 @@ defmodule Helix.Test.Software.Setup.Flow do
 
     meta = %{
       network_id: NetworkHelper.internet_id(),
-      bounce_id: nil,
+      bounce: nil,
       file: file,
       type: process_type
     }
@@ -72,7 +72,7 @@ defmodule Helix.Test.Software.Setup.Flow do
 
     meta = %{
       network_id: target_nip.network_id,
-      bounce_id: nil,
+      bounce: nil,
       cracker: file
     }
 

@@ -9,6 +9,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
   alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Server.State.Helper, as: ServerStateHelper
@@ -109,6 +110,28 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert reason.data == "password_invalid"
     end
 
+    test "can not connect to a remote server with an invalid bounce" do
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
+      {destination, _} = ServerSetup.server()
+
+      gateway_ip = ServerHelper.get_ip(gateway)
+      destination_ip = ServerHelper.get_ip(destination)
+
+      # Bounce below does not belong to the player
+      {bounce, _} = NetworkSetup.Bounce.bounce()
+
+      topic = ChannelHelper.server_topic_name(@internet_id, destination_ip)
+
+      params = %{
+        "gateway_ip" => gateway_ip,
+        "password" => destination.password,
+        "bounce_id" => to_string(bounce.bounce_id)
+      }
+
+      assert {:error, reason} = join(socket, topic, params)
+      assert reason.data == "bounce_not_belongs"
+    end
+
     test "can not connect to a remote server with a non-existing IP" do
       {socket, %{server: gateway}} = ChannelSetup.create_socket()
 
@@ -175,6 +198,7 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       # Network info is valid
       assert new_socket.assigns.meta.network_id == @internet_id
       assert new_socket.assigns.tunnel.tunnel_id
+      refute new_socket.assigns.tunnel.bounce_id
       assert new_socket.assigns.ssh.connection_id
 
       # Other stuff
@@ -192,6 +216,35 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       refute Map.has_key?(bootstrap.data, :name)
 
       CacheHelper.sync_test()
+    end
+
+    test "can start connection with remote server (using bounce)" do
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
+      {destination, _} = ServerSetup.server()
+
+      gateway_entity_id = socket.assigns.entity_id
+
+      gateway_ip = ServerHelper.get_ip(gateway)
+      destination_ip = ServerHelper.get_ip(destination)
+
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: gateway_entity_id)
+
+      topic = ChannelHelper.server_topic_name(@internet_id, destination_ip, 0)
+
+      params = %{
+        "gateway_ip" => gateway_ip,
+        "password" => destination.password,
+        "bounce_id" => to_string(bounce.bounce_id)
+      }
+
+      assert {:ok, _bootstrap, new_socket} = join(socket, topic, params)
+
+      # Socket origin and target are correct
+      assert new_socket.assigns.gateway.server_id == gateway.server_id
+      assert new_socket.assigns.destination.server_id == destination.server_id
+
+      # Tunnel used by the socket contains the bounce
+      assert new_socket.assigns.tunnel.bounce_id == bounce.bounce_id
     end
   end
 

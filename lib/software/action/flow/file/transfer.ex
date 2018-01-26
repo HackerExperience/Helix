@@ -99,7 +99,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
     meta = %{
       network_id: tunnel.network_id,
-      bounce_id: tunnel.bounce_id,
+      bounce: tunnel.bounce_id,
       file: file,
       type: process_type
     }

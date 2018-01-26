@@ -110,6 +110,25 @@ defmodule Helix.Network.Henforcer.Bounce do
     end
   end
 
+  @type can_use_bounce_relay :: EntityHenforcer.owns_bounce_relay | %{}
+  @type can_use_bounce_relay_partial :: map
+  @type can_use_bounce_error :: EntityHenforcer.owns_bounce_error
+
+  @spec can_use_bounce?(Entity.idt, Bounce.id | nil) ::
+    {true, can_use_bounce_relay}
+    | can_use_bounce_error
+  @doc """
+  Henforces that `entity` is allowed to use `bounce_id`.
+
+  All one entity has to do in order to use the bounce is to be its owner. If no
+  bounce is specified, the entity can always use it. (The bounce identified as
+  `nil` has this special meaning).
+  """
+  def can_use_bounce?(_entity_id, nil),
+    do: {true, %{bounce: nil}}
+  def can_use_bounce?(entity, bounce_id),
+    do: EntityHenforcer.owns_bounce?(entity, bounce_id)
+
   @type has_access_links_relay :: %{servers: [Server.t]}
   @type has_access_links_relay_partial :: %{}
   @type has_access_links_error ::

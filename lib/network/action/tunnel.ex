@@ -2,7 +2,6 @@ defmodule Helix.Network.Action.Tunnel do
 
   alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
-  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
@@ -23,7 +22,7 @@ defmodule Helix.Network.Action.Tunnel do
     Network.t,
     Server.id,
     Server.id,
-    Bounce.id,
+    Tunnel.bounce,
     Connection.type,
     Connection.meta)
   ::
@@ -37,17 +36,17 @@ defmodule Helix.Network.Action.Tunnel do
   If there is already a tunnel with this configuration, it'll be reused,
   otherwise a new Tunnel will be created
   """
-  def connect(network, gateway_id, target_id, bounce_id, type, meta \\ nil) do
+  def connect(network, gateway_id, target_id, bounce, type, meta \\ nil) do
     tunnel =
       TunnelInternal.get_tunnel(
-        gateway_id, target_id, network.network_id, bounce_id
+        gateway_id, target_id, network.network_id, bounce
       )
 
     context =
       if tunnel do
         {:ok, tunnel}
       else
-        create_tunnel(network, gateway_id, target_id, bounce_id)
+        create_tunnel(network, gateway_id, target_id, bounce)
       end
 
     with \
@@ -58,11 +57,10 @@ defmodule Helix.Network.Action.Tunnel do
     end
   end
 
-  @spec create_tunnel(Network.t, Server.id, Server.id, Bounce.id) ::
+  @spec create_tunnel(Network.t, Server.id, Server.id, Tunnel.bounce) ::
     {:ok, Tunnel.t}
-  defp create_tunnel(network, gateway, target, bounce_id) do
-    TunnelInternal.create(network, gateway, target, bounce_id)
-  end
+  defp create_tunnel(network, gateway, target, bounce),
+    do: TunnelInternal.create(network, gateway, target, bounce)
 
   @spec delete(Tunnel.idt) ::
     :ok

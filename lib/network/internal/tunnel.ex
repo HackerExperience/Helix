@@ -31,12 +31,14 @@ defmodule Helix.Network.Internal.Tunnel do
   def fetch_connection(id),
     do: Repo.get(Connection, id)
 
-  @spec get_tunnel(Server.id, Server.id, Network.id, Tunnel.bounce) ::
+  @spec get_tunnel(Server.id, Server.id, Network.id, Tunnel.bounce_idt) ::
     Tunnel.t
     | nil
   @doc """
   Returns the tunnel identified by the given params
   """
+  def get_tunnel(gateway_id, endpoint_id, network_id, bounce = %Bounce{}),
+    do: get_tunnel(gateway_id, endpoint_id, network_id, bounce.bounce_id)
   def get_tunnel(gateway_id, endpoint_id, network_id, bounce) do
     query =
       gateway_id

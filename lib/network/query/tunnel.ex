@@ -19,10 +19,10 @@ defmodule Helix.Network.Query.Tunnel do
   def fetch_from_connection(%Connection{tunnel_id: id}),
     do: fetch(id)
 
-  @spec get_tunnel(Server.id, Server.id, Network.id, Bounce.id) ::
+  @spec get_tunnel(Server.id, Server.id, Network.id, Tunnel.bounce_idt) ::
     Tunnel.t
     | nil
-  defdelegate get_tunnel(gateway_id, endpoint_id, network_id, bounce_id),
+  defdelegate get_tunnel(gateway_id, endpoint_id, network_id, bounce),
     to: TunnelInternal
 
   @spec get_tunnels_on_bounce(Bounce.id) ::

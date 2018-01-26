@@ -60,14 +60,14 @@ defmodule Helix.Software.Public.File do
     | FileFlow.bruteforce_execution_error
   @doc """
   Starts a bruteforce attack against `(network_id, target_ip)`, originating from
-  `gateway_id` and having `bounces` as intermediaries.
+  `gateway_id` and having `bounce` as intermediaries.
   """
   def bruteforce(
     cracker = %File{software_type: :cracker},
     gateway = %Server{},
     target = %Server{},
     {network_id = %Network.ID{}, target_ip},
-    bounce_id,
+    bounce,
     relay)
   do
     params = %{
@@ -75,7 +75,7 @@ defmodule Helix.Software.Public.File do
     }
 
     meta = %{
-      bounce_id: bounce_id,
+      bounce: bounce,
       network_id: network_id,
       cracker: cracker
     }

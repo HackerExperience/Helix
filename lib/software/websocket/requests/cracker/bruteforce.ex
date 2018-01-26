@@ -3,6 +3,7 @@ import Helix.Websocket.Request
 request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
 
   alias HELL.IPv4
+  alias Helix.Network.Henforcer.Bounce, as: BounceHenforcer
   alias Helix.Network.Model.Network
   alias Helix.Software.Henforcer.Software.Cracker, as: CrackerHenforcer
   alias Helix.Software.Public.File, as: FilePublic
@@ -37,21 +38,24 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
     network_id = request.params.network_id
     source_id = socket.assigns.gateway.server_id
     entity_id = socket.assigns.entity_id
+    bounce_id = request.params.bounce_id
     ip = request.params.ip
 
-    can_bruteforce =
-      CrackerHenforcer.can_bruteforce?(entity_id, source_id, network_id, ip)
+    with \
+      {true, r1} <- BounceHenforcer.can_use_bounce?(entity_id, bounce_id),
+      {true, r2} <-
+        CrackerHenforcer.can_bruteforce?(entity_id, source_id, network_id, ip)
+    do
+      meta = %{
+        bounce: r1.bounce,
+        gateway: r2.gateway,
+        target: r2.target,
+        cracker: r2.cracker
+      }
 
-    case can_bruteforce do
-      {true, relay} ->
-        meta = %{
-          gateway: relay.gateway,
-          target: relay.target,
-          cracker: relay.cracker
-        }
+      update_meta(request, meta, reply: true)
 
-        update_meta(request, meta, reply: true)
-
+    else
       {false, reason, _} ->
         reply_error(request, reason)
     end
@@ -60,7 +64,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
   def handle_request(request, _socket) do
     network_id = request.params.network_id
     ip = request.params.ip
-    bounce_id = request.params.bounce_id
+    bounce = request.meta.bounce
     cracker = request.meta.cracker
     gateway = request.meta.gateway
     target = request.meta.target
@@ -68,7 +72,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
 
     bruteforce =
       FilePublic.bruteforce(
-        cracker, gateway, target, {network_id, ip}, bounce_id, relay
+        cracker, gateway, target, {network_id, ip}, bounce, relay
       )
 
     case bruteforce do
