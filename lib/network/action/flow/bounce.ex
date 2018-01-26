@@ -32,6 +32,8 @@ defmodule Helix.Network.Action.Flow.Bounce do
     | {:error, BounceAction.update_errors}
   @doc """
   Updates an existing bounce with the new `name` and the new `links`.
+
+  Emits: `BounceUpdatedEvent`, `BounceUpdateFailedEvent`
   """
   def update(bounce = %Bounce{}, name, links, relay) do
     case BounceAction.update(bounce, name, links) do
@@ -52,6 +54,8 @@ defmodule Helix.Network.Action.Flow.Bounce do
     | {:error, BounceAction.remove_errors}
   @doc """
   Removes the bounce.
+
+  Emits: `BounceRemovedEvent`, `BounceRemoveFailedEvent`
   """
   def remove(bounce = %Bounce{}, relay) do
     case BounceAction.remove(bounce) do

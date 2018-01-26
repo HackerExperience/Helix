@@ -35,24 +35,12 @@ defmodule Helix.Network.Event.Bounce do
       may be updated.
       """
 
-      alias HELL.ClientUtils
+      alias Helix.Client.Renderer, as: ClientRenderer
 
       @event :bounce_created
 
       def generate_payload(event, _socket) do
-        links =
-          event.bounce.links
-          |> Enum.map(fn {_, network_id, ip} ->
-            {network_id, ip}
-          end)
-          |> Enum.map(&ClientUtils.to_nip/1)
-
-        data =
-          %{
-            bounce_id: to_string(event.bounce.bounce_id),
-            name: event.bounce.name,
-            links: links
-          }
+        data = ClientRenderer.render_bounce(event.bounce)
 
         {:ok, data}
       end
@@ -138,24 +126,12 @@ defmodule Helix.Network.Event.Bounce do
       Notifies the client that the bounce was updated.
       """
 
-      alias HELL.ClientUtils
+      alias Helix.Client.Renderer, as: ClientRenderer
 
       @event :bounce_updated
 
       def generate_payload(event, _socket) do
-        links =
-          event.bounce.links
-          |> Enum.map(fn {_, network_id, ip} ->
-            {network_id, ip}
-          end)
-          |> Enum.map(&ClientUtils.to_nip/1)
-
-        data =
-          %{
-            bounce_id: to_string(event.bounce.bounce_id),
-            name: event.bounce.name,
-            links: links
-          }
+        data = ClientRenderer.render_bounce(event.bounce)
 
         {:ok, data}
       end
