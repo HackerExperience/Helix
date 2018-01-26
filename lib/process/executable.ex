@@ -16,12 +16,10 @@ defmodule Helix.Process.Executable do
   alias Helix.Event
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Action.Tunnel, as: TunnelAction
+  alias Helix.Network.Action.Flow.Tunnel, as: TunnelFlow
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
-  alias Helix.Network.Query.Bounce, as: BounceQuery
-  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
@@ -134,29 +132,16 @@ defmodule Helix.Process.Executable do
       defp call_process(function, params),
         do: apply(unquote(process), function, [params])
 
-      @spec close_connection_on_fail(nil, Event.relay) :: :noop
-      @spec close_connection_on_fail(Connection.t, Event.relay) :: term
-      docp """
-      Helper called when `flow` of `execute/4` fails, and a connection may have
-      to be closed as a result.
-      """
-      defp close_connection_on_fail(nil, _),
-        do: :noop
-      defp close_connection_on_fail(connection, relay) do
-        connection
-        |> TunnelAction.close_connection()
-        |> Event.emit(from: relay)
-      end
-
       @spec setup_connection(
         Server.t,
         Server.t,
         term,
         meta,
         {:create, Connection.type},
-        origin :: Connection.t | nil)
+        origin :: Connection.t | nil,
+        Event.relay)
       ::
-        {:ok, Connection.t, [event :: term]}
+        {:ok, Connection.t}
       docp """
       `setup_connection/5` handles whatever the user defined at
       `source_connection` and `target_connection` at the Process' Executable
@@ -170,17 +155,18 @@ defmodule Helix.Process.Executable do
       - :same_origin: We'll reuse the connection given at the `origin` param
       - nil | :ok | :noop: No connection was specified
       """
-      defp setup_connection(gateway, target, _, meta, {:create, type}, _) do
-        {:ok, _tunnel, connection, events} =
+      defp setup_connection(gateway, target, _, meta, {:create, type}, _, relay) do
+        {:ok, _tunnel, connection} =
           create_connection(
             meta.network_id,
             gateway.server_id,
             target.server_id,
             meta.bounce,
-            type
+            type,
+            relay
           )
 
-        {:ok, connection, events}
+        {:ok, connection}
       end
 
       @spec setup_connection(
@@ -189,13 +175,14 @@ defmodule Helix.Process.Executable do
         term,
         meta,
         Connection.idt,
-        origin :: Connection.t | nil)
+        origin :: Connection.t | nil,
+        Event.relay)
       ::
-        {:ok, Connection.t, []}
-      defp setup_connection(_, _, _, _, connection = %Connection{}, _),
-        do: {:ok, connection, []}
-      defp setup_connection(_, _, _, _, connection_id = %Connection.ID{}, _),
-        do: {:ok, TunnelQuery.fetch_connection(connection_id), []}
+        {:ok, Connection.t}
+      defp setup_connection(_, _, _, _, connection = %Connection{}, _, _),
+        do: {:ok, connection}
+      defp setup_connection(_, _, _, _, connection_id = %Connection.ID{}, _, _),
+        do: {:ok, TunnelQuery.fetch_connection(connection_id)}
 
       @spec setup_connection(
         Server.t,
@@ -203,11 +190,12 @@ defmodule Helix.Process.Executable do
         term,
         meta,
         :same_origin,
-        Connection.t)
+        Connection.t,
+        Event.relay)
       ::
-        {:ok, Connection.t, []}
-      defp setup_connection(_, _, _, _, :same_origin, origin = %Connection{}),
-        do: {:ok, origin, []}
+        {:ok, Connection.t}
+      defp setup_connection(_, _, _, _, :same_origin, origin = %Connection{}, _),
+        do: {:ok, origin}
 
       @spec setup_connection(
         Server.t,
@@ -215,36 +203,40 @@ defmodule Helix.Process.Executable do
         term,
         meta,
         nil | :ok | :noop,
-        Connection.t | nil)
+        Connection.t | nil,
+        Event.relay
+      )
       ::
-        {:ok, nil, []}
-      defp setup_connection(_, _, _, _, nil, _),
-        do: {:ok, nil, []}
-      defp setup_connection(_, _, _, _, :ok, _),
-        do: {:ok, nil, []}
-      defp setup_connection(_, _, _, _, :noop, _),
-        do: {:ok, nil, []}
-
-      defp create_connection(
-        network_id, gateway_id, target_id, bounce_id = %Bounce.ID{}, type)
-      do
-        bounce = BounceQuery.fetch(bounce_id)
-
-        create_connection(network_id, gateway_id, target_id, bounce_id, type)
-      end
+        {:ok, nil}
+      defp setup_connection(_, _, _, _, nil, _, _),
+        do: {:ok, nil}
+      defp setup_connection(_, _, _, _, :ok, _, _),
+        do: {:ok, nil}
+      defp setup_connection(_, _, _, _, :noop, _, _),
+        do: {:ok, nil}
 
       @spec create_connection(
-        Network.id, Server.id, Server.id, Bounce.idt | nil, Connection.type)
+        Network.id,
+        Server.id,
+        Server.id,
+        Bounce.idt | nil,
+        Connection.type,
+        Event.relay)
       ::
-        {:ok, tunnel :: term, Connection.t, [event :: term]}
+        {:ok, tunnel :: term, Connection.t}
       docp """
       Creates a new connection.
       """
       defp create_connection(
-        network_id = %Network.ID{}, gateway_id, target_id, bounce, type)
+        network_id = %Network.ID{}, gateway_id, target_id, bounce, type, relay)
       do
-        TunnelAction.connect(
-          NetworkQuery.fetch(network_id), gateway_id, target_id, bounce, type
+        TunnelFlow.connect(
+          network_id,
+          gateway_id,
+          target_id,
+          bounce,
+          {type, %{}},
+          relay
         )
       end
     end
@@ -340,25 +332,20 @@ defmodule Helix.Process.Executable do
 
         flowing do
           with \
-            {:ok, src_connection, events} <-
+            {:ok, src_connection} <-
               setup_connection(
-                unquote_splicing(args), source_connection_info, nil
+                unquote_splicing(args), source_connection_info, nil, relay
               ),
             # /\ Creates (if declared) the source connection
 
-            # Compensated transactions for the potentially new source connection
-            on_success(fn -> Event.emit(events, from: relay) end),
-            on_fail(fn -> close_connection_on_fail(src_connection, relay) end),
-
             # Creates (if declared) the target connection
-            {:ok, tgt_connection, events} <-
+            {:ok, tgt_connection} <-
               setup_connection(
-                unquote_splicing(args), target_connection_info, src_connection
+                unquote_splicing(args),
+                target_connection_info,
+                src_connection,
+                relay
               ),
-
-            # Compensated transactions for the potentially new target connection
-            on_success(fn -> Event.emit(events, from: relay) end),
-            on_fail(fn -> close_connection_on_fail(tgt_connection, relay) end),
 
             # Merge connection and target_connection data to the process params
             params = merge_params(partial, src_connection, tgt_connection),

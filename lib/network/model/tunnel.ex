@@ -222,9 +222,18 @@ defmodule Helix.Network.Model.Tunnel do
     def by_target(query \\ Tunnel, id),
       do: where(query, [t], t.target_id == ^id)
 
-    @spec by_bounce(Queryable.t, Bounce.id) ::
+    @spec by_bounce(Queryable.t, Bounce.idt | nil, [nullable: boolean]) ::
       Queryable.t
-    def by_bounce(query \\ Tunnel, bounce_id),
+    @doc """
+    Query a bounce by its id.
+
+    The `nillable` flag is used so we can be VERY explicit when looking for
+    empty values (tunnels without bounce).
+    """
+    def by_bounce(query \\ Tunnel, bounce_id, nillable_opts)
+    def by_bounce(query, nil, nullable: true),
+      do: where(query, [t], is_nil(t.bounce_id))
+    def by_bounce(query, bounce_id, _) when not is_nil(bounce_id),
       do: where(query, [t], t.bounce_id == ^bounce_id)
 
     @spec select_total_tunnels(Queryable.t) ::

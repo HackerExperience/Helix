@@ -30,8 +30,7 @@ defmodule Helix.Network.Model.Connection do
   @type cracker_bruteforce :: t_of_type(:cracker_bruteforce)
 
   @type meta :: map | nil
-  @type close_reasons :: :normal | :force
-
+  @type info :: {type, meta}
   @type type ::
     :ssh
     | :ftp
@@ -39,6 +38,8 @@ defmodule Helix.Network.Model.Connection do
     | :bank_login
     | :wire_transfer
     | :cracker_bruteforce
+
+  @type close_reasons :: :normal | :force
 
   @close_reasons [:normal, :force]
 

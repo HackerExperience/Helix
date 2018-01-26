@@ -24,8 +24,7 @@ defmodule Helix.Network.Henforcer.Network do
     case CacheQuery.from_nip_get_server(network_id, ip) do
       {:ok, server_id} ->
         henforce_else(
-          ServerHenforcer.server_exists?(server_id),
-          {:nip, :not_found}
+          ServerHenforcer.server_exists?(server_id), {:nip, :not_found}
         )
 
       {:error, _} ->
@@ -65,8 +64,4 @@ defmodule Helix.Network.Henforcer.Network do
   """
   def valid_origin?(origin, gateway_id, target_id),
     do: origin == gateway_id or origin == target_id
-
-  def can_bounce?(_origin_id, _network_id, _bounces) do
-    #TODO 256
-  end
 end

@@ -1,11 +1,10 @@
 defmodule Helix.Server.Public.Server do
 
   alias Helix.Event
-  alias Helix.Network.Action.Tunnel, as: TunnelAction
+  alias Helix.Network.Action.Flow.Tunnel, as: TunnelFlow
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
-  alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Server.Action.Flow.Server, as: ServerFlow
@@ -13,28 +12,19 @@ defmodule Helix.Server.Public.Server do
   alias Helix.Server.Public.Index, as: ServerIndex
   alias Helix.Server.Query.Motherboard, as: MotherboardQuery
 
-  @internet NetworkQuery.internet()
-
-  # TODO: This function should receive the `network_id` as a parameter.
-  @spec connect_to_server(Server.id, Server.id, Tunnel.bounce) ::
+  @spec connect_to_server(
+    Network.id, Server.id, Server.id, Tunnel.bounce, Event.relay)
+  ::
     {:ok, Tunnel.t, Connection.ssh}
-    | error :: term
-  def connect_to_server(gateway_id, target_id, bounce),
-    do: connect_to_server(gateway_id, target_id, bounce, @internet)
-
-  @spec connect_to_server(Server.id, Server.id, Tunnel.bounce, Network.t) ::
-    {:ok, Tunnel.t, Connection.ssh}
-    | error :: term
-  def connect_to_server(gateway_id, target_id, bounce, network) do
-    with \
-      {:ok, tunnel, connection, events} <-
-        TunnelAction.connect(network, gateway_id, target_id, bounce, :ssh)
-    do
-      Event.emit(events)
-      # TODO: This should be at flow
-
-      {:ok, tunnel, connection}
-    end
+    | TunnelFlow.connect_errors
+  @doc """
+  Creates an initial connection to the server, used upon ServerJoin (hence the
+  connection of type `:ssh`).
+  """
+  def connect_to_server(network_id, gateway_id, target_id, bounce, relay) do
+    TunnelFlow.connect_once(
+      network_id, gateway_id, target_id, bounce, {:ssh, %{}}, relay
+    )
   end
 
   @spec update_mobo(

@@ -18,49 +18,10 @@ defmodule Helix.Network.Action.Tunnel do
     | {:error, {:target_id, :disconnected}}
     | {:error, {:links_id, :disconnected}}
 
-  @spec connect(
-    Network.t,
-    Server.id,
-    Server.id,
-    Tunnel.bounce,
-    Connection.type,
-    Connection.meta)
-  ::
-    {:ok, Tunnel.t, Connection.t, [ConnectionStartedEvent.t]}
-    | create_tunnel_errors
-  @doc """
-  Starts a connection between `gateway` and `target` through `network`.
-
-  The connection type is `connection_type`, and it shall pass by `bounce_id`.
-
-  If there is already a tunnel with this configuration, it'll be reused,
-  otherwise a new Tunnel will be created
-  """
-  def connect(network, gateway_id, target_id, bounce, type, meta \\ nil) do
-    tunnel =
-      TunnelInternal.get_tunnel(
-        gateway_id, target_id, network.network_id, bounce
-      )
-
-    context =
-      if tunnel do
-        {:ok, tunnel}
-      else
-        create_tunnel(network, gateway_id, target_id, bounce)
-      end
-
-    with \
-      {:ok, tunnel} <- context,
-      {:ok, connection, events} <- start_connection(tunnel, type, meta)
-    do
-      {:ok, tunnel, connection, events}
-    end
-  end
-
   @spec create_tunnel(Network.t, Server.id, Server.id, Tunnel.bounce) ::
     {:ok, Tunnel.t}
-  defp create_tunnel(network, gateway, target, bounce),
-    do: TunnelInternal.create(network, gateway, target, bounce)
+  def create_tunnel(network, gateway_id, target_id, bounce),
+    do: TunnelInternal.create(network, gateway_id, target_id, bounce)
 
   @spec delete(Tunnel.idt) ::
     :ok
@@ -114,14 +75,11 @@ defmodule Helix.Network.Action.Tunnel do
       end
     end
 
-    events =
-      from
-      |> TunnelQuery.connections_on_tunnels_between(to)
-      |> Enum.filter(&(&1.connection_type == type))
-      |> apply_filter.()
-      |> Enum.map(&close_connection/1)
-      |> Enum.concat()
-
-    events
+    from
+    |> TunnelQuery.connections_on_tunnels_between(to)
+    |> Enum.filter(&(&1.connection_type == type))
+    |> apply_filter.()
+    |> Enum.map(&close_connection/1)
+    |> Enum.concat()
   end
 end

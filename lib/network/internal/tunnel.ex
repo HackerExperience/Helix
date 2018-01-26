@@ -31,25 +31,22 @@ defmodule Helix.Network.Internal.Tunnel do
   def fetch_connection(id),
     do: Repo.get(Connection, id)
 
-  @spec get_tunnel(Server.id, Server.id, Network.id, Tunnel.bounce_idt) ::
+  @spec get_tunnel(Server.id, Server.id, Network.idt, Tunnel.bounce_idt) ::
     Tunnel.t
     | nil
   @doc """
   Returns the tunnel identified by the given params
   """
-  def get_tunnel(gateway_id, endpoint_id, network_id, bounce = %Bounce{}),
-    do: get_tunnel(gateway_id, endpoint_id, network_id, bounce.bounce_id)
-  def get_tunnel(gateway_id, endpoint_id, network_id, bounce) do
-    query =
+  def get_tunnel(gateway_id, endpoint_id, network, bounce) do
+    result =
       gateway_id
       |> Tunnel.Query.by_gateway()
       |> Tunnel.Query.by_target(endpoint_id)
-      |> Tunnel.Query.by_network(network_id)
+      |> Tunnel.Query.by_network(network)
+      |> Tunnel.Query.by_bounce(bounce, nullable: true)
+      |> Repo.one()
 
-    # Filter by bounce (if specified)
-    query = bounce && Tunnel.Query.by_bounce(query, bounce) || query
-
-    with tunnel = %Tunnel{} <- Repo.one(query) do
+    with tunnel = %Tunnel{} <- result do
       tunnel
       |> load_bounce()
       |> Tunnel.format()
@@ -60,7 +57,7 @@ defmodule Helix.Network.Internal.Tunnel do
     [Tunnel.t]
   def get_tunnels_on_bounce(bounce_id) do
     bounce_id
-    |> Tunnel.Query.by_bounce()
+    |> Tunnel.Query.by_bounce(nullable: false)
     |> Repo.all()
     |> Enum.map(&Tunnel.format/1)
   end
@@ -274,7 +271,6 @@ defmodule Helix.Network.Internal.Tunnel do
 
     with {:ok, connection} <- result do
       {:ok, connection}
-      # {:ok, Repo.preload(connection, :tunnel)}
     end
   end
 
