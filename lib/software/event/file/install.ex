@@ -35,6 +35,12 @@ defmodule Helix.Software.Event.File.Install do
         entity_id: process.source_entity_id,
         backend: backend
       }
+      # Persist bounce data used by Loggable for proper logging
+      |> put_bounce(process.bounce_id)
+
+      # `FileInstallProcessedEvent` may be relayed to different backends, each
+      # with their own internals. It may be overkill but here, have this process
+      |> put_process(process)
     end
   end
 end

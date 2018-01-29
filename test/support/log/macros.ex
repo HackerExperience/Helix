@@ -5,6 +5,7 @@ defmodule Helix.Test.Log.Macros do
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Network.Model.Bounce
+  alias Helix.Network.Query.Bounce, as: BounceQuery
   alias Helix.Server.Model.Server
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -23,19 +24,28 @@ defmodule Helix.Test.Log.Macros do
   - rejects: List of words/terms that must not be present on the log message
   """
   defmacro assert_log(log, s_id, e_id, fragment, opts \\ quote(do: [])) do
+    if Keyword.has_key?(opts, :contain),
+      do: raise "It's `contains`, not `contain`"
+    if Keyword.has_key?(opts, :reject),
+      do: raise "It's `rejects`, not `reject`"
+
     contains = Keyword.get(opts, :contains, []) |> Utils.ensure_list()
-    reject = Keyword.get(opts, :reject, []) |> Utils.ensure_list()
+    rejects = Keyword.get(opts, :rejects, []) |> Utils.ensure_list()
 
     quote do
+
+      # Cut some slack for the callers and handle nested lists
+      contains = unquote(contains) |> List.flatten()
+      rejects = unquote(rejects) |> List.flatten()
 
       assert unquote(log).server_id == unquote(s_id)
       assert unquote(log).entity_id == unquote(e_id)
       assert unquote(log).message =~ unquote(fragment)
 
-      Enum.each(unquote(contains), fn term ->
+      Enum.each(contains, fn term ->
         assert unquote(log).message =~ term
       end)
-      Enum.each(unquote(reject), fn term ->
+      Enum.each(rejects, fn term ->
         refute unquote(log).message =~ term
       end)
 
@@ -95,14 +105,12 @@ defmodule Helix.Test.Log.Macros do
         {_, _, ip_prev} = bounce_map[idx - 1]
         {_, _, ip_next} = bounce_map[idx + 1]
 
-        msg = "Connection bounced from #{ip_prev} to #{ip_next}"
-
         assert [log_bounce | _] = LogQuery.get_logs_on_server(server_id)
         assert_log \
           log_bounce, server_id, entity_id,
           "Connection bounced",
           contains: ["from #{ip_prev} to #{ip_next}"],
-          rejects: [first_ip, last_ip, extra_rejects] |> List.flatten()
+          rejects: [first_ip, last_ip, extra_rejects]
 
         idx + 1
       end)
@@ -110,6 +118,14 @@ defmodule Helix.Test.Log.Macros do
   end
 
   def verify_bounce_params(bounce, gat, endp, ent, opts, net_id \\ @internet_id)
+
+  def verify_bounce_params(
+    bounce_id = %Bounce.ID{}, gateway, endpoint, entity, opts, network_id)
+  do
+    verify_bounce_params(
+      BounceQuery.fetch(bounce_id), gateway, endpoint, entity, opts, network_id
+    )
+  end
 
   def verify_bounce_params(
     bounce, gateway = %Server{}, endpoint_id, entity_id, opts, network_id)

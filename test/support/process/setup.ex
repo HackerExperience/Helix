@@ -17,7 +17,7 @@ defmodule Helix.Test.Process.Setup do
   end
 
   @doc """
-  Note: for a fully integrated process, it's a better idea to use the higher
+  NOTE: for a fully integrated process, it's a better idea to use the higher
   level flow setup. For instance, for a BankTransfer process, use
   `BankSetup.transfer_flow`.
 

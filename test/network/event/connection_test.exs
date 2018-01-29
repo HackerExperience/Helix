@@ -29,14 +29,14 @@ defmodule Helix.Network.Event.ConnectionTest do
         log_source, event.tunnel.gateway_id, entity_id,
         "localhost logged into",
         contains: target_ip,
-        reject: gateway_ip
+        rejects: gateway_ip
 
       [log_target] = LogQuery.get_logs_on_server(event.tunnel.target_id)
       assert_log \
         log_target, event.tunnel.target_id, entity_id,
         "logged in as",
         contains: gateway_ip,
-        reject: target_ip
+        rejects: target_ip
     end
 
     test "new log is created when ssh connection is started (with bounce)" do
@@ -59,7 +59,7 @@ defmodule Helix.Network.Event.ConnectionTest do
       assert_log \
         log_source, event.tunnel.gateway_id, entity_id,
         "localhost logged into",
-        reject: target_ip
+        rejects: target_ip
 
       assert_bounce \
         bounce, event.tunnel.gateway_id, event.tunnel.target_id, entity_id
@@ -69,7 +69,7 @@ defmodule Helix.Network.Event.ConnectionTest do
       assert_log \
         log_target, event.tunnel.target_id, entity_id,
         "logged in as",
-        reject: gateway_ip
+        rejects: gateway_ip
     end
   end
 end

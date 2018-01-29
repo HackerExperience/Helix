@@ -24,19 +24,15 @@ defmodule Helix.Software.Event.File.DownloadedTest do
       # Log saved on transfer source
       [log_gateway] = LogQuery.get_logs_on_server(event.to_server_id)
       assert_log \
-        log_gateway,
-        event.to_server_id,
-        event.entity_id,
+        log_gateway, event.to_server_id, event.entity_id,
         "localhost downloaded",
         contains: destination_ip,
-        reject: [gateway_ip, "Public FTP"]
+        rejects: [gateway_ip, "Public FTP"]
 
       # Log saved on transfer target
       [log_destination] = LogQuery.get_logs_on_server(event.from_server_id)
       assert_log \
-        log_destination,
-        event.from_server_id,
-        event.entity_id,
+        log_destination, event.from_server_id, event.entity_id,
         "from localhost",
         contains: gateway_ip,
         rejects: [destination_ip, "Public FTP"]
@@ -55,9 +51,7 @@ defmodule Helix.Software.Event.File.DownloadedTest do
       # Log saved on transfer source (gateway)
       [log_gateway] = LogQuery.get_logs_on_server(event.to_server_id)
       assert_log \
-        log_gateway,
-        event.to_server_id,
-        event.entity_id,
+        log_gateway, event.to_server_id, event.entity_id,
         "localhost downloaded",
         contains: [destination_ip, "Public FTP"],
         reject: gateway_ip
@@ -65,9 +59,7 @@ defmodule Helix.Software.Event.File.DownloadedTest do
       # Log saved on transfer target
       [log_destination] = LogQuery.get_logs_on_server(event.from_server_id)
       assert_log \
-        log_destination,
-        event.from_server_id,
-        event.entity_id,
+        log_destination, event.from_server_id, event.entity_id,
         "from localhost Public FTP",
         contains: [censor_ip(gateway_ip)],
         rejects: [destination_ip, gateway_ip]

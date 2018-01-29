@@ -107,6 +107,7 @@ defmodule Helix.Software.Public.File do
         file: file,
         type: process_type,
         network_id: tunnel.network_id,
+        bounce: tunnel.bounce_id,
         ssh: ssh
       }
 

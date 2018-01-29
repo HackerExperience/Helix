@@ -109,6 +109,19 @@ defmodule Helix.Test.Event.Setup.Software do
     }
   end
 
+  @doc """
+  Generates a FileInstallProcessed event with real data.
+  """
+  def file_install_processed(:virus, real: true) do
+    {process, related} = SoftwareSetup.Flow.install_virus(with_bounce: true)
+
+    {_, [event]} = TOPHelper.soft_complete(process)
+
+    TOPHelper.top_stop(process.gateway_id)
+
+    {event, related}
+  end
+
   @spec setup_env(:download | :upload, :completed | :failed) ::
     {event :: term, related :: term}
   docp """

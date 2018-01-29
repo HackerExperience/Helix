@@ -19,4 +19,10 @@ defmodule Helix.Event.Utils do
       )
     end
   end
+
+  defmacro put_process(event, process) do
+    quote do
+      Event.set_process(unquote(event), unquote(process))
+    end
+  end
 end

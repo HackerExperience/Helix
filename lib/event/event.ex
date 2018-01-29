@@ -30,6 +30,7 @@ defmodule Helix.Event do
 
       defmodule unquote(name) do
 
+        import Helix.Event
         import Helix.Event.Utils
         import Helix.Event.Listenable.Flow
         import Helix.Event.Loggable.Flow
@@ -157,6 +158,9 @@ defmodule Helix.Event do
 
     # Relay the bounce information
     event = relay(event, :bounce, source)
+
+    # Relay the process information
+    event = relay(event, :process, source)
 
     # Everything has been inherited, we are ready to emit/1 the event.
     event
