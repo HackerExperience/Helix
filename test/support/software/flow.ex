@@ -2,8 +2,10 @@ defmodule Helix.Test.Software.Setup.Flow do
 
   alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
+  alias Helix.Software.Process.File.Install, as: FileInstallProcess
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
@@ -36,7 +38,7 @@ defmodule Helix.Test.Software.Setup.Flow do
 
     meta = %{
       network_id: NetworkHelper.internet_id(),
-      bounce: [],
+      bounce: nil,
       file: file,
       type: process_type
     }
@@ -72,7 +74,7 @@ defmodule Helix.Test.Software.Setup.Flow do
 
     meta = %{
       network_id: target_nip.network_id,
-      bounce: [],
+      bounce: nil,
       cracker: file
     }
 
@@ -86,6 +88,66 @@ defmodule Helix.Test.Software.Setup.Flow do
       target_ip: target_nip.ip,
       network_id: target_nip.network_id
     }
+
+    {process, related}
+  end
+
+  @doc """
+  Starts a virus install process.
+
+  Opts:
+  - with_bounce: Whether to generate the process with bounce. Defaults to false.
+  - bounce_total: Total bounce links. Defaults to 3. Only used if `with_bounce`.
+  """
+  def install_virus(opts \\ []) do
+    {source_server, %{entity: source_entity}} = ServerSetup.server()
+    {target_server, _} = ServerSetup.server()
+
+    bounce_id =
+      if Keyword.get(opts, :with_bounce) do
+        total = Keyword.get(opts, :bounce_total, 3)
+        {bounce, _} = NetworkSetup.Bounce.bounce(total: total)
+
+        bounce.bounce_id
+      else
+        nil
+      end
+
+    {tunnel, _} =
+      NetworkSetup.tunnel(
+        gateway_id: source_server.server_id,
+        target_id: target_server.server_id,
+        bounce_id: bounce_id
+      )
+
+    ssh = NetworkSetup.connection!(type: :ssh, tunnel_id: tunnel.tunnel_id)
+
+    {virus, _} = SoftwareSetup.virus(server_id: target_server.server_id)
+
+    params = %{backend: :virus}
+
+    meta = %{
+      file: virus,
+      type: :install_virus,
+      network_id: tunnel.network_id,
+      bounce: tunnel.bounce_id,
+      ssh: ssh
+    }
+
+    {:ok, process} =
+      FileInstallProcess.execute(
+        source_server, target_server, params, meta, nil
+      )
+
+    related =
+      %{
+        tunnel: tunnel,
+        ssh: ssh,
+        source_server: source_server,
+        source_entity: source_entity,
+        target_server: target_server,
+        virus: virus
+      }
 
     {process, related}
   end

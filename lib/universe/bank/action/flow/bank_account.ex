@@ -4,16 +4,17 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Action.Tunnel, as: TunnelAction
+  alias Helix.Network.Action.Flow.Tunnel, as: TunnelFlow
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Model.BankAccount
-  alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
-    as: BankAccountRevealPasswordProcess
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
+
+  alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
+    as: BankAccountRevealPasswordProcess
 
   @typep relay :: Event.relay
 
@@ -39,7 +40,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
     meta = %{
       network_id: NetworkQuery.internet().network_id,
-      bounce: []
+      bounce: nil
     }
 
     BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta, relay)
@@ -50,20 +51,20 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   current account password, the login is successful, in which case a BankLogin
   connection is created.
 
-  Emits: BankAccountLoginEvent, ConnectionStartedEvent
+  Emits: BankAccountLoginEvent, (ConnectionStartedEvent)
   """
-  def login_password(atm_id, account_number, gateway_id, bounces, password) do
+  def login_password(atm_id, account_number, gateway_id, bounce_id, password) do
     acc = BankQuery.fetch_account(atm_id, account_number)
     entity = EntityQuery.fetch_by_server(gateway_id)
 
     start_connection = fn ->
-      TunnelAction.connect(
+      TunnelFlow.connect(
         NetworkQuery.internet(),
         gateway_id,
         atm_id,
-        bounces,
-        :bank_login,
-        login_connection_meta(acc)
+        bounce_id,
+        {:bank_login, login_connection_meta(acc)},
+        nil
       )
     end
 
@@ -73,8 +74,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         {:ok, _, events} <- BankAction.login_password(acc, password, entity),
         on_success(fn -> Event.emit(events) end),
 
-        {:ok, _, connection, events} <- start_connection.(),
-        on_success(fn -> Event.emit(events) end)
+        {:ok, _, connection} <- start_connection.()
       do
         {:ok, connection}
       end
@@ -86,20 +86,20 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   expired) and belongs to the given account, the login is successful, in which
   case a BankLogin connection is created.
 
-  Emits: BankAccountLoginEvent, ConnectionStartedEvent
+  Emits: BankAccountLoginEvent, (ConnectionStartedEvent)
   """
-  def login_token(atm_id, account_number, gateway_id, bounces, token) do
+  def login_token(atm_id, account_number, gateway_id, bounce_id, token) do
     acc = BankQuery.fetch_account(atm_id, account_number)
     entity = EntityQuery.fetch_by_server(gateway_id)
 
     start_connection = fn ->
-      TunnelAction.connect(
+      TunnelFlow.connect(
         NetworkQuery.internet(),
         gateway_id,
         atm_id,
-        bounces,
-        :bank_login,
-        login_connection_meta(acc)
+        bounce_id,
+        {:bank_login, login_connection_meta(acc)},
+        nil
       )
     end
 
@@ -107,10 +107,9 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
       with \
         true <- not is_nil(acc),
         {:ok, _, events} <- BankAction.login_token(acc, token, entity),
-          on_success(fn -> Event.emit(events) end),
+        on_success(fn -> Event.emit(events) end),
 
-        {:ok, _, connection, events} <- start_connection.(),
-          on_success(fn -> Event.emit(events) end)
+        {:ok, _, connection} <- start_connection.()
       do
         {:ok, connection}
       end

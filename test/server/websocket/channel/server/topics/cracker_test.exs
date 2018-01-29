@@ -32,7 +32,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.CrackerTest do
       params = %{
         network_id: to_string(target_nip.network_id),
         ip: target_nip.ip,
-        bounces: []
+        bounce_id: nil
       }
 
       # Submit request
@@ -81,7 +81,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.CrackerTest do
       params = %{
         network_id: to_string(target_nip.network_id),
         ip: target_nip.ip,
-        bounces: []
+        bounce_id: nil
       }
 
       # Submit request

@@ -68,4 +68,6 @@ defmodule Helix.Websocket.Utils do
     do: "internal"
   def get_error({a, b}),
     do: Utils.concat(a, "_", b)
+  def get_error(wtf) when is_atom(wtf),
+    do: to_string(wtf)
 end

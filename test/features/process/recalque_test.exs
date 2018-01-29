@@ -44,12 +44,12 @@ defmodule Helix.Test.Features.Process.Recalque do
 
       {tunnelAB, _} =
         NetworkSetup.tunnel(
-          gateway_id: serverA.server_id, destination_id: serverB.server_id
+          gateway_id: serverA.server_id, target_id: serverB.server_id
         )
 
       {tunnelCB, _} =
         NetworkSetup.tunnel(
-          gateway_id: serverC.server_id, destination_id: serverB.server_id
+          gateway_id: serverC.server_id, target_id: serverB.server_id
         )
 
       {dl_file, _} = SoftwareSetup.file(server_id: serverB.server_id)
@@ -93,7 +93,7 @@ defmodule Helix.Test.Features.Process.Recalque do
       # Start the Bruteforce attack
       assert {:ok, %{process_id: bruteforce_id}} =
         FilePublic.bruteforce(
-          cracker, serverA, serverB, {@internet_id, ipB}, [], @relay
+          cracker, serverA, serverB, {@internet_id, ipB}, nil, @relay
         )
 
       bruteforce = ProcessQuery.fetch(bruteforce_id)

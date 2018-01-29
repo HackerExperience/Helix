@@ -5,7 +5,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Software.Action.Flow.File.Transfer, as: FileTransferFlow
 
-  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
@@ -21,11 +21,14 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       destination_storage = SoftwareHelper.get_storage(gateway.server_id)
 
-      net = NetworkHelper.net()
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway.server_id, target_id: destination.server_id
+        )
 
       {:ok, process} =
         FileTransferFlow.download(
-          gateway, destination, file, destination_storage, net, @relay
+          gateway, destination, file, destination_storage, tunnel, @relay
         )
 
       # Generated process has the expected data
@@ -45,7 +48,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
         FileTransferFlow.download(
-          gateway, destination, file, destination_storage, net, @relay
+          gateway, destination, file, destination_storage, tunnel, @relay
         )
 
       assert process2.process_id == process.process_id
@@ -60,11 +63,14 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       destination_storage = SoftwareHelper.get_storage(destination)
 
-      net = NetworkHelper.net()
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway.server_id, target_id: destination.server_id
+        )
 
       {:ok, process} =
         FileTransferFlow.upload(
-          gateway, destination, file, destination_storage, net, @relay
+          gateway, destination, file, destination_storage, tunnel, @relay
         )
 
       # Generated process has the expected data
@@ -84,7 +90,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
         FileTransferFlow.upload(
-          gateway, destination, file, destination_storage, net, @relay
+          gateway, destination, file, destination_storage, tunnel, @relay
         )
 
       assert process2.process_id == process.process_id
@@ -99,11 +105,14 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
 
       destination_storage = SoftwareHelper.get_storage(gateway)
 
-      net = NetworkHelper.net()
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway.server_id, target_id: destination.server_id
+        )
 
       {:ok, process} =
         FileTransferFlow.pftp_download(
-          gateway, destination, file, destination_storage, net, @relay
+          gateway, destination, file, destination_storage, tunnel, @relay
         )
 
       # Generated process has the expected data
@@ -124,7 +133,7 @@ defmodule Helix.Software.Action.Flow.File.TransferTest do
       # Transferring again returns the same process (does not create a new one)
       {:ok, process2} =
         FileTransferFlow.pftp_download(
-          gateway, destination, file, destination_storage, net, @relay
+          gateway, destination, file, destination_storage, tunnel, @relay
         )
 
       assert process2.process_id == process.process_id

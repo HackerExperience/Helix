@@ -20,6 +20,8 @@ defmodule Helix.Network.Model.Connection do
 
   @type t :: t_of_type(type)
 
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
   @type ssh :: t_of_type(:ssh)
   @type ftp :: t_of_type(:ftp)
   @type public_ftp :: t_of_type(:public_ftp)
@@ -28,8 +30,7 @@ defmodule Helix.Network.Model.Connection do
   @type cracker_bruteforce :: t_of_type(:cracker_bruteforce)
 
   @type meta :: map | nil
-  @type close_reasons :: :normal | :force
-
+  @type info :: {type, meta}
   @type type ::
     :ssh
     | :ftp
@@ -37,6 +38,8 @@ defmodule Helix.Network.Model.Connection do
     | :bank_login
     | :wire_transfer
     | :cracker_bruteforce
+
+  @type close_reasons :: :normal | :force
 
   @close_reasons [:normal, :force]
 
@@ -97,7 +100,7 @@ defmodule Helix.Network.Model.Connection do
       |> join(:inner, [c, ..., t], l in Link, t.tunnel_id == l.tunnel_id)
       |> where(
         [c, ..., l],
-        l.source_id == ^id or l.destination_id == ^id)
+        l.source_id == ^id or l.target_id == ^id)
       |> distinct(true)
     end
 
@@ -107,7 +110,7 @@ defmodule Helix.Network.Model.Connection do
       query
       |> join(:inner, [c], t in Tunnel, c.tunnel_id == t.tunnel_id)
       |> join(:inner, [c, ..., t], l in Link, t.tunnel_id == l.tunnel_id)
-      |> where([c, ..., l], l.destination_id == ^id)
+      |> where([c, ..., l], l.target_id == ^id)
     end
 
     @spec outbound_from(Queryable.t, Server.idtb) ::
@@ -121,11 +124,11 @@ defmodule Helix.Network.Model.Connection do
 
     @spec from_gateway_to_endpoint(Queryable.t, Server.idtb, Server.idtb) ::
       Queryable.t
-    def from_gateway_to_endpoint(query \\ Connection, gateway, destination) do
+    def from_gateway_to_endpoint(query \\ Connection, gateway, target) do
       query
       |> join(:inner, [c], t in Tunnel, c.tunnel_id == t.tunnel_id)
       |> where([c, ..., t], t.gateway_id == ^gateway)
-      |> where([c, ..., t], t.destination_id == ^destination)
+      |> where([c, ..., t], t.target_id == ^target)
     end
   end
 end

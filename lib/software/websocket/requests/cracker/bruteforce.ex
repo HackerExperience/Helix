@@ -3,8 +3,8 @@ import Helix.Websocket.Request
 request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
 
   alias HELL.IPv4
+  alias Helix.Network.Henforcer.Bounce, as: BounceHenforcer
   alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Server
   alias Helix.Software.Henforcer.Software.Cracker, as: CrackerHenforcer
   alias Helix.Software.Public.File, as: FilePublic
 
@@ -16,11 +16,11 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
       {:ok, network_id} <-
         Network.ID.cast(request.unsafe["network_id"]),
       true <- IPv4.valid?(request.unsafe["ip"]),
-      {:ok, bounces} = cast_bounces(request.unsafe["bounces"]),
+      {:ok, bounce_id} <- validate_bounce(request.unsafe["bounce_id"]),
       true <- socket.assigns.meta.access == :local || :bad_attack_src
     do
       params = %{
-        bounces: bounces,
+        bounce_id: bounce_id,
         network_id: network_id,
         ip: request.unsafe["ip"]
       }
@@ -38,21 +38,24 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
     network_id = request.params.network_id
     source_id = socket.assigns.gateway.server_id
     entity_id = socket.assigns.entity_id
+    bounce_id = request.params.bounce_id
     ip = request.params.ip
 
-    can_bruteforce =
-      CrackerHenforcer.can_bruteforce?(entity_id, source_id, network_id, ip)
+    with \
+      {true, r1} <- BounceHenforcer.can_use_bounce?(entity_id, bounce_id),
+      {true, r2} <-
+        CrackerHenforcer.can_bruteforce?(entity_id, source_id, network_id, ip)
+    do
+      meta = %{
+        bounce: r1.bounce,
+        gateway: r2.gateway,
+        target: r2.target,
+        cracker: r2.cracker
+      }
 
-    case can_bruteforce do
-      {true, relay} ->
-        meta = %{
-          gateway: relay.gateway,
-          target: relay.target,
-          cracker: relay.cracker
-        }
+      update_meta(request, meta, reply: true)
 
-        update_meta(request, meta, reply: true)
-
+    else
       {false, reason, _} ->
         reply_error(request, reason)
     end
@@ -61,7 +64,7 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
   def handle_request(request, _socket) do
     network_id = request.params.network_id
     ip = request.params.ip
-    bounces = request.params.bounces
+    bounce = request.meta.bounce
     cracker = request.meta.cracker
     gateway = request.meta.gateway
     target = request.meta.target
@@ -69,27 +72,20 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
 
     bruteforce =
       FilePublic.bruteforce(
-        cracker, gateway, target, {network_id, ip}, bounces, relay
+        cracker, gateway, target, {network_id, ip}, bounce, relay
       )
 
     case bruteforce do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 
-      {false, reason, _} ->
+      {:error, reason} ->
         reply_error(request, reason)
 
-      error = {:error, %{message: _}} ->
-        error
       _ ->
         {:error, %{message: "internal"}}
     end
   end
 
   render_empty()
-
-  defp cast_bounces(bounces) when is_list(bounces),
-    do: {:ok, Enum.map(bounces, &(Server.ID.cast!(&1)))}
-  defp cast_bounces(_),
-    do: :error
 end

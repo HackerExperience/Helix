@@ -9,7 +9,7 @@ defmodule Helix.Software.Event.Handler.VirusTest do
 
   describe "handling of FileInstallProcessedEvent" do
     test "installs the virus" do
-      event = EventSetup.Software.file_install_processed(:virus)
+      {event, _} = EventSetup.Software.file_install_processed(:virus)
 
       # Nothing installed
       assert Enum.empty?(VirusQuery.list_by_entity(event.entity_id))

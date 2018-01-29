@@ -97,6 +97,12 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
+  event NetworkEvent.Bounce.Created
+  event NetworkEvent.Bounce.CreateFailed
+  event NetworkEvent.Bounce.Removed
+  event NetworkEvent.Bounce.RemoveFailed
+  event NetworkEvent.Bounce.Updated
+  event NetworkEvent.Bounce.UpdateFailed
   event NetworkEvent.Connection.Closed
   event NetworkEvent.Connection.Started
 

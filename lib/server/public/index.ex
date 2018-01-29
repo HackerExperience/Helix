@@ -6,6 +6,7 @@ defmodule Helix.Server.Public.Index do
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Log.Public.Index, as: LogIndex
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Public.Index, as: NetworkIndex
@@ -35,7 +36,7 @@ defmodule Helix.Server.Public.Index do
       network_id: Network.id,
       ip: Network.ip,
       password: Server.password,
-      bounce: term
+      bounce_id: Bounce.id
     }
 
   @type rendered_index ::
@@ -57,7 +58,7 @@ defmodule Helix.Server.Public.Index do
       network_id: String.t,
       ip: String.t,
       password: String.t,
-      bounce: term
+      bounce_id: String.t | nil
     }
 
   @typep rendered_nip ::
@@ -197,17 +198,17 @@ defmodule Helix.Server.Public.Index do
     }
   end
 
-  @spec remote_server_index(Tunnel.remote_endpoint) ::
+  @spec remote_server_index(Tunnel.t) ::
     remote_server_index
-  defp remote_server_index(remote = %{destination_id: _, network_id: _}) do
-    ip = ServerQuery.get_ip(remote.destination_id, remote.network_id)
-    password = ServerQuery.fetch(remote.destination_id).password
+  defp remote_server_index(tunnel = %Tunnel{}) do
+    ip = ServerQuery.get_ip(tunnel.target_id, tunnel.network_id)
+    password = ServerQuery.fetch(tunnel.target_id).password
 
     %{
-      network_id: remote.network_id,
+      network_id: tunnel.network_id,
       ip: ip,
       password: password,
-      bounce: []  # TODO 256
+      bounce_id: tunnel.bounce_id
     }
   end
 
@@ -218,7 +219,7 @@ defmodule Helix.Server.Public.Index do
       network_id: to_string(entry.network_id),
       ip: entry.ip,
       password: entry.password,
-      bounce: []
+      bounce_id: entry.bounce_id && to_string(entry.bounce_id) || nil
     }
   end
 

@@ -61,6 +61,7 @@ defmodule Helix.Software.Event.File.Transfer do
         connection_type: data.connection_type,
         type: data.type
       }
+      |> put_bounce(process.bounce_id)
     end
   end
 

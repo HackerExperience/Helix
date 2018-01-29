@@ -26,6 +26,7 @@ join Helix.Server.Websocket.Channel.Server.Join do
   alias Helix.Event
   alias Helix.Websocket.Utils, as: WebsocketUtils
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Network.Henforcer.Bounce, as: BounceHenforcer
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
   alias Helix.Server.Henforcer.Channel, as: ChannelHenforcer
   alias Helix.Server.Model.Server
@@ -87,13 +88,17 @@ join Helix.Server.Websocket.Channel.Server.Join do
       {:ok, _, gateway_ip} <- validate_nip(network_id, gateway_ip),
 
       # Validate password
-      {:ok, password} <- validate_input(request.unsafe["password"], :password)
+      {:ok, password} <- validate_input(request.unsafe["password"], :password),
+
+      # Validate bounce
+      {:ok, bounce_id} <- validate_bounce(request.unsafe["bounce_id"])
     do
       params = %{
         network_id: network_id,
         gateway_ip: gateway_ip,
         destination_ip: destination_ip,
         password: password,
+        bounce_id: bounce_id,
         unsafe_counter: data.counter
       }
 
@@ -136,12 +141,14 @@ join Helix.Server.Websocket.Channel.Server.Join do
   1 - Gateway must belong to the player who is using the socket.
   2 - Password must be correct.
   3 - The given NIP must match one of the server's NIP.
+  4 - The bounce (if any) must be usable by the player
   """
   def check_permissions(request = %ServerJoin{type: :remote}, socket) do
     password = request.params.password
     network_id = request.params.network_id
     gateway_ip = request.params.gateway_ip
     destination_ip = request.params.destination_ip
+    bounce_id = request.params.bounce_id
     entity_id = socket.assigns.entity_id
     unsafe_counter = request.params.unsafe_counter
 
@@ -162,16 +169,21 @@ join Helix.Server.Websocket.Channel.Server.Join do
       gateway = r1.server,
       {true, r2} <- NetworkHenforcer.nip_exists?(network_id, destination_ip),
       destination = r2.server,
+      destination_entity = EntityQuery.fetch_by_server(destination.server_id),
       {true, r3} <- remote_join_allowed?.(gateway, destination),
-      entity = r3.entity,
+      gateway_entity = r3.entity,
       {true, r4} <- valid_counter?.(destination),
-      counter = r4.counter
+      counter = r4.counter,
+      {true, r5} <- BounceHenforcer.can_use_bounce?(gateway_entity, bounce_id),
+      bounce = r5.bounce
     do
       meta = %{
         gateway: gateway,
         destination: destination,
-        entity: entity,
-        counter: counter
+        gateway_entity: gateway_entity,
+        destination_entity: destination_entity,
+        counter: counter,
+        bounce: bounce
       }
 
       update_meta(request, meta, reply: true)
@@ -182,20 +194,6 @@ join Helix.Server.Websocket.Channel.Server.Join do
       {false, reason, _} ->
         reply_error(request, reason)
     end
-  end
-
-  defp build_meta(%ServerJoin{type: :local}) do
-    %{
-      access: :local
-    }
-  end
-
-  defp build_meta(request = %ServerJoin{type: :remote}) do
-    %{
-      access: :remote,
-      counter: request.meta.counter,
-      network_id: request.params.network_id
-    }
   end
 
   @doc """
@@ -248,18 +246,21 @@ join Helix.Server.Websocket.Channel.Server.Join do
   Right before joining the remote server, an `ssh` connection is created
   between gateway and destination.
 
-  Once joined, we must update the ServerWebsocketChannelState database, which
+  Once joined, we must update the `ServerWebsocketChannelState` database, which
   is responsible for mapping NIPs to server IDs.
   """
   def join(request = %ServerJoin{type: :remote}, socket, assign) do
     network_id = request.params.network_id
     gateway_ip = request.params.gateway_ip
     destination_ip = request.params.destination_ip
+    bounce = request.meta.bounce
     counter = request.meta.counter
+    relay = request.relay
 
     gateway = request.meta.gateway
     destination = request.meta.destination
-    gateway_entity = request.meta.entity
+    gateway_entity = request.meta.gateway_entity
+    destination_entity = request.meta.destination_entity
 
     # Updates websocket state
     ServerWebsocketChannelState.join(
@@ -270,11 +271,9 @@ join Helix.Server.Websocket.Channel.Server.Join do
     )
 
     with \
-      destination_entity = %{} <-
-        EntityQuery.fetch_by_server(destination.server_id),
       {:ok, tunnel, ssh} <-
           ServerPublic.connect_to_server(
-            gateway.server_id, destination.server_id, []
+            network_id, gateway.server_id, destination.server_id, bounce, relay
           )
     do
       gateway_data = %{
@@ -315,10 +314,16 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
       server_joined_event(destination, gateway_entity, :remote, request.relay)
 
-     {:ok, bootstrap, socket}
+      {:ok, bootstrap, socket}
+    else
+      {:error, reason} ->
+        {:error, %{message: reason}}
     end
   end
 
+  @doc """
+  Custom log behaviour in case an error happens during join
+  """
   def log_error(request, _socket, reason) do
     id =
       if Enum.empty?(request.meta) do
@@ -379,5 +384,15 @@ join Helix.Server.Websocket.Channel.Server.Join do
       _ ->
         :error
     end
+  end
+
+  defp build_meta(%ServerJoin{type: :local}),
+    do: %{access: :local}
+  defp build_meta(request = %ServerJoin{type: :remote}) do
+    %{
+      access: :remote,
+      counter: request.meta.counter,
+      network_id: request.params.network_id
+    }
   end
 end

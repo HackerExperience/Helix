@@ -11,7 +11,7 @@ defmodule Helix.Network.Action.TunnelTest do
 
   describe "close_connections_where/4 without filter" do
     test "with 1 match, no filter" do
-      {tunnel, %{gateway: gateway_id, destination: destination_id}} =
+      {tunnel, %{gateway: gateway_id, target: target_id}} =
         NetworkSetup.tunnel([fake_servers: true])
 
       # Creates two connections, but only one will match since we'll search for
@@ -23,7 +23,7 @@ defmodule Helix.Network.Action.TunnelTest do
 
       connections =
         gateway_id
-        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> TunnelQuery.connections_on_tunnels_between(target_id)
         |> Enum.sort()
 
       # Make sure the connections are there
@@ -31,18 +31,18 @@ defmodule Helix.Network.Action.TunnelTest do
 
       # Conditionally close connections of type :ssh
       assert [event] =
-        TunnelAction.close_connections_where(gateway_id, destination_id, :ssh)
+        TunnelAction.close_connections_where(gateway_id, target_id, :ssh)
 
       # The SSH connection was removed, the FTP one wasn't
       assert [ftp] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+        TunnelQuery.connections_on_tunnels_between(gateway_id, target_id)
 
       # Returned the correct event
       assert event == EventSetup.Network.connection_closed(ssh)
     end
 
     test "with multiple matches, no filter" do
-      {tunnel, %{gateway: gateway_id, destination: destination_id}} =
+      {tunnel, %{gateway: gateway_id, target: target_id}} =
         NetworkSetup.tunnel([fake_servers: true])
 
       tunnel_id = tunnel.tunnel_id
@@ -65,7 +65,7 @@ defmodule Helix.Network.Action.TunnelTest do
 
       connections =
         gateway_id
-        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> TunnelQuery.connections_on_tunnels_between(target_id)
         |> Enum.sort()
 
       # Make sure the connections are there
@@ -74,11 +74,11 @@ defmodule Helix.Network.Action.TunnelTest do
 
       # Conditionally close connections of type :ssh
       assert events =
-        TunnelAction.close_connections_where(gateway_id, destination_id, :ssh)
+        TunnelAction.close_connections_where(gateway_id, target_id, :ssh)
 
       connections =
         gateway_id
-        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> TunnelQuery.connections_on_tunnels_between(target_id)
         |> Enum.sort()
 
       # Only the SSH connections were removed
@@ -92,7 +92,7 @@ defmodule Helix.Network.Action.TunnelTest do
     end
 
     test "with 1 match; with filter" do
-      {tunnel, %{gateway: gateway_id, destination: destination_id}} =
+      {tunnel, %{gateway: gateway_id, target: target_id}} =
         NetworkSetup.tunnel([fake_servers: true])
       tunnel_id = tunnel.tunnel_id
 
@@ -115,7 +115,7 @@ defmodule Helix.Network.Action.TunnelTest do
 
       connections =
         gateway_id
-        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> TunnelQuery.connections_on_tunnels_between(target_id)
         |> Enum.sort()
 
       # Make sure the connections are there
@@ -132,13 +132,13 @@ defmodule Helix.Network.Action.TunnelTest do
       assert [event] =
         TunnelAction.close_connections_where(
           gateway_id,
-          destination_id,
+          target_id,
           :ssh,
           filter)
 
       connections =
         gateway_id
-        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> TunnelQuery.connections_on_tunnels_between(target_id)
         |> Enum.sort()
 
       # The SSH connection was removed, the FTP one wasn't
@@ -148,7 +148,7 @@ defmodule Helix.Network.Action.TunnelTest do
     end
 
     test "with multiple matches; with filter" do
-      {tunnel, %{gateway: gateway_id, destination: destination_id}} =
+      {tunnel, %{gateway: gateway_id, target: target_id}} =
         NetworkSetup.tunnel([fake_servers: true])
       tunnel_id = tunnel.tunnel_id
 
@@ -174,7 +174,7 @@ defmodule Helix.Network.Action.TunnelTest do
 
       connections =
         gateway_id
-        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> TunnelQuery.connections_on_tunnels_between(target_id)
         |> Enum.sort()
 
       # Make sure the connections are there
@@ -192,13 +192,13 @@ defmodule Helix.Network.Action.TunnelTest do
       assert events =
         TunnelAction.close_connections_where(
           gateway_id,
-          destination_id,
+          target_id,
           :ssh,
           filter)
 
       connections =
         gateway_id
-        |> TunnelQuery.connections_on_tunnels_between(destination_id)
+        |> TunnelQuery.connections_on_tunnels_between(target_id)
         |> Enum.sort()
 
       # The SSH connection was removed, the FTP one wasn't
@@ -211,7 +211,7 @@ defmodule Helix.Network.Action.TunnelTest do
     end
 
     test "with no matches but existing connections" do
-      {tunnel, %{gateway: gateway_id, destination: destination_id}} =
+      {tunnel, %{gateway: gateway_id, target: target_id}} =
         NetworkSetup.tunnel([fake_servers: true])
 
       {ssh1, _} =
@@ -219,33 +219,33 @@ defmodule Helix.Network.Action.TunnelTest do
 
       # Removing :ftp connections, but there are none!
       assert [] ==
-        TunnelAction.close_connections_where(gateway_id, destination_id, :ftp)
+        TunnelAction.close_connections_where(gateway_id, target_id, :ftp)
 
       # As expected, the SSH connection is still there
       assert [ssh1] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+        TunnelQuery.connections_on_tunnels_between(gateway_id, target_id)
     end
 
     test "without any connections on the tunnel" do
-      {_tunnel, %{gateway: gateway_id, destination: destination_id}} =
+      {_tunnel, %{gateway: gateway_id, target: target_id}} =
         NetworkSetup.tunnel([fake_servers: true])
 
-      TunnelAction.close_connections_where(gateway_id, destination_id, :ftp)
+      TunnelAction.close_connections_where(gateway_id, target_id, :ftp)
 
       assert [] ==
-        TunnelQuery.connections_on_tunnels_between(gateway_id, destination_id)
+        TunnelQuery.connections_on_tunnels_between(gateway_id, target_id)
     end
 
     test "without a tunnel" do
       {gateway, _} = ServerSetup.fake_server()
-      {destination, _} = ServerSetup.fake_server()
+      {target, _} = ServerSetup.fake_server()
 
       gateway_id = gateway.server_id
-      destination_id = destination.server_id
+      target_id = target.server_id
 
       # Ensures nothing blew up
       assert [] ==
-        TunnelAction.close_connections_where(gateway_id, destination_id, :ftp)
+        TunnelAction.close_connections_where(gateway_id, target_id, :ftp)
     end
   end
 end

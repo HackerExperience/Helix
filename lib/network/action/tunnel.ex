@@ -12,54 +12,17 @@ defmodule Helix.Network.Action.Tunnel do
 
   @type create_tunnel_errors ::
     {:error, {:gateway_id, :notfound}}
-    | {:error, {:destination_id, :notfound}}
+    | {:error, {:target_id, :notfound}}
     | {:error, {:links, :notfound}}
     | {:error, {:gateway_id, :disconnected}}
-    | {:error, {:destination_id, :disconnected}}
+    | {:error, {:target_id, :disconnected}}
     | {:error, {:links_id, :disconnected}}
 
-  @spec connect(
-    Network.t,
-    Server.id,
-    Server.id,
-    [Server.id],
-    Connection.type,
-    Connection.meta)
-  ::
-    {:ok, Tunnel.t, Connection.t, [ConnectionStartedEvent.t]}
-    | create_tunnel_errors
-  @doc """
-  Starts a connection between `gateway` and `destination` through `network`.
-
-  The connection type is `connection_type`, and it shall pass by `bounces`.
-
-  If there is already a tunnel with this configuration, it'll be reused,
-  otherwise a new Tunnel will be created
-  """
-  def connect(network, gateway, destination, bounces, type, meta \\ nil) do
-    tunnel = TunnelInternal.get_tunnel(network, gateway, destination, bounces)
-    context =
-      if tunnel do
-        {:ok, tunnel}
-      else
-        create_tunnel(network, gateway, destination, bounces)
-      end
-
-    with \
-      {:ok, tunnel} <- context,
-      {:ok, connection} <- TunnelInternal.start_connection(tunnel, type, meta)
-    do
-      event = ConnectionStartedEvent.new(connection)
-
-      {:ok, tunnel, connection, [event]}
-    end
-  end
-
-  @spec create_tunnel(Network.t, Server.id, Server.id, [Server.id]) ::
+  @spec create_tunnel(Network.t, Server.id, Server.id, Tunnel.bounce) ::
     {:ok, Tunnel.t}
-  defp create_tunnel(network, gateway, destination, bounces) do
-    TunnelInternal.create(network, gateway, destination, bounces)
-  end
+    | {:error, Tunnel.creation_error}
+  def create_tunnel(network, gateway_id, target_id, bounce),
+    do: TunnelInternal.create(network, gateway_id, target_id, bounce)
 
   @spec delete(Tunnel.idt) ::
     :ok
@@ -69,20 +32,30 @@ defmodule Helix.Network.Action.Tunnel do
   @spec start_connection(Tunnel.t, Connection.type, Connection.meta) ::
     {:ok, Connection.t, [ConnectionStartedEvent.t]}
     | {:error, Ecto.Changeset.t}
-  defdelegate start_connection(tunnel, connection_type, meta \\ nil),
-    to: TunnelInternal
+  def start_connection(tunnel, type, meta \\ nil) do
+    case TunnelInternal.start_connection(tunnel, type, meta) do
+      {:ok, connection} ->
+        {:ok, connection, [ConnectionStartedEvent.new(connection)]}
+
+      {:error, _} ->
+        {:error, :internal}
+    end
+  end
 
   @spec close_connection(Connection.t, Connection.close_reasons) ::
     [ConnectionClosedEvent.t]
-  defdelegate close_connection(connection, reason \\ :normal),
-    to: TunnelInternal
+  def close_connection(connection, reason \\ :normal) do
+    with :ok <- TunnelInternal.close_connection(connection) do
+      [ConnectionClosedEvent.new(connection, reason)]
+    end
+  end
 
   @spec close_connections_where(Server.idt, Server.idt, Connection.type, term) ::
     [ConnectionClosedEvent.t]
   @doc """
   Closes all connections where:
   - gateway is `from`
-  - destination is `to`
+  - target is `to`
   - type is `type`
   - Optional: filter meta values according to `meta_filter`
 
@@ -103,14 +76,11 @@ defmodule Helix.Network.Action.Tunnel do
       end
     end
 
-    events =
-      from
-      |> TunnelQuery.connections_on_tunnels_between(to)
-      |> Enum.filter(&(&1.connection_type == type))
-      |> apply_filter.()
-      |> Enum.map(&close_connection/1)
-      |> Enum.concat()
-
-    events
+    from
+    |> TunnelQuery.connections_on_tunnels_between(to)
+    |> Enum.filter(&(&1.connection_type == type))
+    |> apply_filter.()
+    |> Enum.map(&close_connection/1)
+    |> Enum.concat()
   end
 end

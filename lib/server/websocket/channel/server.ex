@@ -68,13 +68,20 @@ channel Helix.Server.Websocket.Channel.Server do
   Otherwise, simply ignore `counter` and everything will be fine.
 
   Params:
-  - gateway_ip: Notifies which gateway ip this connection is originating from.
-    If no `gateway_ip` is passed, a local gateway connection is assumed.
-  - password: Target server password. Required if the connection is remote.
+  - *gateway_ip: Notifies which gateway ip this connection is originating from.
+  - *password: Target server password. Required if the connection is remote.
+  - bounce_id: Which bounce to use on remote connections.
 
   Returns: ServerBootstrap
 
   Errors:
+
+  Henforcer:
+  - "password_invalid": Password is invalid.
+  - "bounce_not_belongs": Requested bounce does not belong to the player.
+  - "bounce_not_found": Requested bounce could not be found
+
+  Input:
   - "nip_not_found": The `destination_ip` with `network_id` was not found.
   - "bad_counter": The given counter is not valid.
   + base errors
@@ -346,7 +353,7 @@ channel Helix.Server.Websocket.Channel.Server do
   Params:
   *network_id: Network ID in which the target server resides.
   *ip: Target server IP address
-  *bounces: List of hops between the origin and the target.
+  *bounce_id: Bounce to be used during the attack.
 
   Note that all bruteforce attacks must originate from a server owned by the
   entity starting the attack.

@@ -272,7 +272,7 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
       {tunnel, _} =
         NetworkSetup.tunnel(
-          [gateway_id: gateway.server_id, destination_id: acc.atm_id])
+          [gateway_id: gateway.server_id, target_id: acc.atm_id])
 
       tunnel_id = tunnel.tunnel_id
 
@@ -314,16 +314,16 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       # Just take my word for it and skip to the "CONTINUE HERE" below.
       {tunnel_p1a1, _} =
         NetworkSetup.tunnel(
-          [gateway_id: player1.server_id, destination_id: acc1.atm_id])
+          [gateway_id: player1.server_id, target_id: acc1.atm_id])
       {tunnel_p1a2, _} =
         NetworkSetup.tunnel(
-          [gateway_id: player1.server_id, destination_id: acc2.atm_id])
+          [gateway_id: player1.server_id, target_id: acc2.atm_id])
       {tunnel_p2a1, _} =
         NetworkSetup.tunnel(
-          [gateway_id: player2.server_id, destination_id: acc1.atm_id])
+          [gateway_id: player2.server_id, target_id: acc1.atm_id])
       {tunnel_p2a3, _} =
         NetworkSetup.tunnel(
-          [gateway_id: player2.server_id, destination_id: acc3.atm_id])
+          [gateway_id: player2.server_id, target_id: acc3.atm_id])
 
       tid_p1a1 = tunnel_p1a1.tunnel_id
       tid_p1a2 = tunnel_p1a2.tunnel_id

@@ -3,6 +3,7 @@ defmodule Helix.Test.Channel.Setup do
   import Phoenix.ChannelTest
 
   alias Helix.Websocket
+  alias HELL.Utils
   alias Helix.Account.Model.Account
   alias Helix.Account.Query.Account, as: AccountQuery
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
@@ -56,6 +57,10 @@ defmodule Helix.Test.Channel.Setup do
       end
 
     client = Keyword.get(opts, :client, :web2) |> to_string()
+    entity =
+      account.account_id
+      |> EntityQuery.get_entity_id()
+      |> EntityQuery.fetch()
 
     {token, _} = AccountSetup.token([account: account])
 
@@ -71,6 +76,7 @@ defmodule Helix.Test.Channel.Setup do
       related
       |> Map.merge(%{account: account})
       |> Map.merge(%{token: token})
+      |> Map.merge(%{entity: entity})
 
     {socket, related}
   end
@@ -117,11 +123,11 @@ defmodule Helix.Test.Channel.Setup do
   @doc """
   - socket: Whether to reuse an existing socket.
   - own_server: Whether joining player's own server. No destination is created.
+  - gateway_id: Specify gateway server.
   - destination_id: Specify destination server.
   - network_id: Specify network id. Not used if `own_server`
   - counter: Specify counter (used by ServerWebsocketChannelState). Default is 0
-  - bounces: List of bounces between each server. Not used if `own_server`.
-    Expected type: [Server.id]
+  - bounce_id: Which bounce to use. Ignored if `own_server`.
   - gateway_files: Whether to generate random files on gateway. Defaults to
     false.
   - destination_files: Whether to generate random files on destination. Defaults
@@ -141,12 +147,20 @@ defmodule Helix.Test.Channel.Setup do
   """
   def join_server(opts \\ []) do
     {socket, %{account: account, server: gateway}} =
-      if opts[:socket] do
-        gateway = opts[:socket].assigns.gateway.server_id |> ServerQuery.fetch()
+      cond do
+        not is_nil(opts[:socket]) and not is_nil(opts[:gateway_id]) ->
+          server = ServerQuery.fetch(opts[:gateway_id])
+          {opts[:socket], %{account: nil, server: server}}
 
-        {opts[:socket], %{account: nil, server: gateway}}
-      else
-        create_socket(opts[:socket_opts] || [])
+        opts[:socket] ->
+          gateway =
+            opts[:socket].assigns.gateway.server_id
+            |> ServerQuery.fetch()
+
+          {opts[:socket], %{account: nil, server: gateway}}
+
+        true ->
+          create_socket(opts[:socket_opts] || [])
       end
 
     local? = Keyword.get(opts, :own_server, false)
@@ -204,6 +218,7 @@ defmodule Helix.Test.Channel.Setup do
 
   defp get_join_data(opts, gateway = %Server{}, destination = %Server{}) do
     network_id = Keyword.get(opts, :network_id, @internet_id)
+    bounce_id = Keyword.get(opts, :bounce_id, nil) |> Utils.stringify()
 
     gateway_ip = ServerQuery.get_ip(gateway.server_id, network_id)
     destination_ip = ServerQuery.get_ip(destination.server_id, network_id)
@@ -213,7 +228,12 @@ defmodule Helix.Test.Channel.Setup do
       |> Keyword.get(:counter, 0)
       |> to_string()
 
-    params = %{"gateway_ip" => gateway_ip, "password" => destination.password}
+    params =
+      %{
+        "gateway_ip" => gateway_ip,
+        "password" => destination.password,
+        "bounce_id" => bounce_id
+       }
 
     topic = ChannelHelper.server_topic_name(network_id, destination_ip, counter)
 
@@ -338,7 +358,7 @@ defmodule Helix.Test.Channel.Setup do
     }
 
     assigns =
-      opts[:connect_opts] || []
+      (opts[:connect_opts] || [])
       |> fake_connection_socket_assigns()
       |> Map.merge(server_assigns)
 
@@ -356,7 +376,7 @@ defmodule Helix.Test.Channel.Setup do
     acc_assigns = %{}
 
     assigns =
-      opts[:connect_opts] || []
+      (opts[:connect_opts] || [])
       |> fake_connection_socket_assigns()
       |> Map.merge(acc_assigns)
 

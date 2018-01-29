@@ -10,6 +10,8 @@ defmodule HELL.PK.Header do
       [0x0000, 0x0001, 0x0000],
     network_connection:
       [0x0000, 0x0001, 0x0001],
+    network_bounce:
+      [0x0000, 0x0001, 0x0002],
     account_account:
       [0x0001, 0x0000, 0x0000],
     universe_npc:

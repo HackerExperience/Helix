@@ -8,6 +8,7 @@ defmodule Helix.Network.Event.Connection do
     alias Helix.Entity.Query.Entity, as: EntityQuery
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Tunnel
+    alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
     @type t :: %__MODULE__{
       connection: Connection.t,
@@ -20,31 +21,33 @@ defmodule Helix.Network.Event.Connection do
     @spec new(Connection.t) ::
       t
     def new(connection = %Connection{}) do
+      tunnel = TunnelQuery.get_tunnel(connection)
+
       %__MODULE__{
         connection: connection,
-        tunnel: connection.tunnel,
+        tunnel: tunnel,
         type: connection.connection_type
       }
+      |> put_bounce(tunnel.bounce_id)
     end
 
     loggable do
 
       log(event = %__MODULE__{type: :ssh}) do
-        gateway_id = event.tunnel.gateway_id
-        destination_id = event.tunnel.destination_id
+        entity = EntityQuery.fetch_by_server(event.tunnel.gateway_id)
 
-        entity = EntityQuery.fetch_by_server(gateway_id)
+        msg_gateway = "localhost logged into $first_ip"
+        msg_endpoint = "$last_ip logged in as root"
 
-        ip_source = get_ip(gateway_id, event.tunnel.network_id)
-        ip_target = get_ip(destination_id, event.tunnel.network_id)
-
-        msg_source = "localhost logged into #{ip_target}"
-        msg_target = "#{ip_source} logged in as root"
-
-        log_source = build_entry(gateway_id, entity.entity_id, msg_source)
-        log_target = build_entry(destination_id, entity.entity_id, msg_target)
-
-        [log_source, log_target]
+        log_map %{
+          event: event,
+          entity_id: entity.entity_id,
+          gateway_id: event.tunnel.gateway_id,
+          endpoint_id: event.tunnel.target_id,
+          network_id: event.tunnel.network_id,
+          msg_gateway: msg_gateway,
+          msg_endpoint: msg_endpoint
+        }
       end
     end
   end
@@ -54,6 +57,7 @@ defmodule Helix.Network.Event.Connection do
 
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Tunnel
+    alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
     @type t :: %__MODULE__{
       connection: Connection.t,
@@ -69,7 +73,7 @@ defmodule Helix.Network.Event.Connection do
     def new(connection = %Connection{}, reason \\ :normal) do
       %__MODULE__{
         connection: connection,
-        tunnel: connection.tunnel,
+        tunnel: TunnelQuery.get_tunnel(connection),
         reason: reason,
         type: connection.connection_type
       }

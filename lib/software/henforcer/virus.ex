@@ -82,9 +82,8 @@ defmodule Helix.Software.Henforcer.Virus do
   @doc """
   Henforces the given virus is NOT active (installed).
   """
-  def not_is_active?(file) do
-    henforce_not(is_active?(file), {:virus, :active})
-  end
+  def not_is_active?(file),
+    do: henforce_not(is_active?(file), {:virus, :active})
 
   @type entity_has_virus_on_storage_relay ::
     %{entity: Entity.t, storage: Storage.t}

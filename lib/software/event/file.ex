@@ -74,7 +74,7 @@ defmodule Helix.Software.Event.File do
       to_storage_id: Storage.id,
       network_id: Network.id,
       connection_type: :ftp | :public_ftp,
-      source_file_id: File.id,
+      source_file_id: File.id
     }
 
     event_struct [
@@ -102,7 +102,7 @@ defmodule Helix.Software.Event.File do
         network_id: transfer.network_id,
         connection_type: transfer.connection_type,
         file: file,
-        source_file_id: transfer.file_id
+        source_file_id: transfer.file_id,
       }
     end
 
@@ -144,36 +144,43 @@ defmodule Helix.Software.Event.File do
       saved fully on the downloader's server.
       """
       log(event = %{connection_type: :public_ftp}) do
-        ip_from = get_ip(event.from_server_id, event.network_id)
-        ip_to = get_ip(event.to_server_id, event.network_id) |> censor_ip()
+        file = get_file_name(event.file)
 
-        file_name = get_file_name(event.file)
+        msg_gateway =
+            "localhost downloaded file #{file} from Public FTP server $first_ip"
+        msg_endpoint =
+          "$last_ip downloaded file #{file} from localhost Public FTP"
 
-        msg_to = "localhost downloaded file #{file_name} from Public FTP server #{ip_from}"
-        msg_from = "#{ip_to} downloaded file #{file_name} from localhost Public FTP"
-
-        log_from = build_entry(event.from_server_id, event.entity_id, msg_from)
-        log_to = build_entry(event.to_server_id, event.entity_id, msg_to)
-
-        [log_from, log_to]
+        log_map %{
+          event: event,
+          entity_id: event.entity_id,
+          gateway_id: event.to_server_id,
+          endpoint_id: event.from_server_id,
+          network_id: event.network_id,
+          msg_gateway: msg_gateway,
+          msg_endpoint: msg_endpoint,
+          opts: %{skip_bounce: true, censor_last: true}
+        }
       end
 
       @doc """
       Generates a log  entry when a File has been downloaded from a server.
       """
       log(event = %{connection_type: :ftp}) do
-        ip_from = get_ip(event.from_server_id, event.network_id)
-        ip_to = get_ip(event.to_server_id, event.network_id)
-
         file_name = get_file_name(event.file)
 
-        msg_to = "localhost downloaded file #{file_name} from #{ip_from}"
-        msg_from = "#{ip_to} downloaded file #{file_name} from localhost"
+        msg_gateway = "localhost downloaded file #{file_name} from $first_ip"
+        msg_endpoint = "$last_ip downloaded file #{file_name} from localhost"
 
-        log_from = build_entry(event.from_server_id, event.entity_id, msg_from)
-        log_to = build_entry(event.to_server_id, event.entity_id, msg_to)
-
-        [log_from, log_to]
+        log_map %{
+          event: event,
+          entity_id: event.entity_id,
+          gateway_id: event.to_server_id,
+          endpoint_id: event.from_server_id,
+          network_id: event.network_id,
+          msg_gateway: msg_gateway,
+          msg_endpoint: msg_endpoint
+        }
       end
     end
 

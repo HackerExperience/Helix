@@ -135,6 +135,14 @@
       "Connection.Started",
       "Process.Created"
     ],
+    "Network.Bounce": [
+      "Network.Bounce.Created",
+      "Network.Bounce.CreateFailed",
+      "Network.Bounce.Removed",
+      "Network.Bounce.RemoveFailed",
+      "Network.Bounce.Updated",
+      "Network.Bounce.UpdateFailed"
+    ],
     "Software.File.Transfer": [
       "Connection.Started",
       "Process.Created"
@@ -165,6 +173,12 @@
     "Log.Created",
     "Log.Modified",
     "Log.Deleted",
+    "Network.Bounce.Created",
+    "Network.Bounce.CreateFailed",
+    "Network.Bounce.Removed",
+    "Network.Bounce.RemoveFailed",
+    "Network.Bounce.Updated",
+    "Network.Bounce.UpdateFailed",
     "Server.Password.Acquired",
     "Process.Created",
     "Process.Completed",

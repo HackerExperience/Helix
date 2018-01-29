@@ -3,7 +3,8 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   import HELL.Macros
 
   alias Helix.Event
-  alias Helix.Network.Model.Net
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Model.Server
@@ -25,31 +26,35 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
   @typep relay :: Event.relay
 
-  @spec download(Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+  @typep fake_tunnel ::
+    %Tunnel{network_id: Network.id, bounce_id: Tunnel.bounce}
+
+  @spec download(Server.t, Server.t, File.t, Storage.t, Tunnel.t, relay) ::
     transfer_result
   @doc """
   Starts a FileDownload process.
   """
-  def download(gateway, endpoint, file, storage, net, relay),
-    do: transfer(:download, gateway, endpoint, file, storage, net, relay)
+  def download(gateway, endpoint, file, storage, tunnel, relay),
+    do: transfer(:download, gateway, endpoint, file, storage, tunnel, relay)
 
-  @spec upload(Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+  @spec upload(Server.t, Server.t, File.t, Storage.t, Tunnel.t, relay) ::
     transfer_result
   @doc """
   Starts a FileUpload process.
   """
-  def upload(gateway, endpoint, file, storage, net, relay),
-    do: transfer(:upload, gateway, endpoint, file, storage, net, relay)
+  def upload(gateway, endpoint, file, storage, tunnel, relay),
+    do: transfer(:upload, gateway, endpoint, file, storage, tunnel, relay)
 
-  @spec pftp_download(Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+  @spec pftp_download(Server.t, Server.t, File.t, Storage.t, fake_tunnel, relay) ::
     transfer_result
   @doc """
   Starts a PFTPDownload process.
   """
-  def pftp_download(gateway, endpoint, file, storage, net, relay),
-    do: transfer(:pftp_download, gateway, endpoint, file, storage, net, relay)
+  def pftp_download(gateway, endpoint, file, storage, tunnel, relay) do
+    transfer(:pftp_download, gateway, endpoint, file, storage, tunnel, relay)
+  end
 
-  @spec transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+  @spec transfer(type, Server.t, Server.t, File.t, Storage.t, Tunnel.t | fake_tunnel, relay) ::
     transfer_result
   docp """
   Starts a FileTransfer process, which can be one of [pftp_]download or upload.
@@ -58,7 +63,7 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
   existing process is returned and no new transfer is created. This ensures the
   same file cannot be transferred multiple times to/from the same server.
   """
-  defp transfer(type, gateway, endpoint, file, storage, net, relay) do
+  defp transfer(type, gateway, endpoint, file, storage, tunnel, relay) do
     {_, process_type, _} = get_type_info(type)
 
     # Verifies whether that file is already being transferred to/by the gateway
@@ -74,16 +79,16 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
 
       # There's no transfer yet. We'll have to create a new one.
       nil ->
-        do_transfer(type, gateway, endpoint, file, storage, net, relay)
+        do_transfer(type, gateway, endpoint, file, storage, tunnel, relay)
     end
   end
 
-  @spec do_transfer(type, Server.t, Server.t, File.t, Storage.t, Net.t, relay) ::
+  @spec do_transfer(type, Server.t, Server.t, File.t, Storage.t, Tunnel.t, relay) ::
     transfer_result
   docp """
   Starts a FileTransfer process, which can be one of download or upload.
   """
-  defp do_transfer(type, gateway, endpoint, file, storage, net, relay) do
+  defp do_transfer(type, gateway, endpoint, file, storage, tunnel, relay) do
     {connection_type, process_type, transfer_type} = get_type_info(type)
 
     params = %{
@@ -93,8 +98,8 @@ defmodule Helix.Software.Action.Flow.File.Transfer do
     }
 
     meta = %{
-      network_id: net.network_id,
-      bounce: net.bounce_id,
+      network_id: tunnel.network_id,
+      bounce: tunnel.bounce_id,
       file: file,
       type: process_type
     }

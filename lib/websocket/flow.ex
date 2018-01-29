@@ -105,6 +105,18 @@ defmodule Helix.Websocket.Flow do
     end
   end
 
+  @doc """
+  Shorthand for `validate_bounce` from `RequestUtils`.
+  """
+  defmacro validate_bounce(bounce_id) do
+    quote do
+      FlowUtils.validate_bounce(unquote(bounce_id))
+    end
+  end
+
+  @doc """
+  Shorthand for `validate_input` from `RequestUtils`.
+  """
   defmacro validate_input(input, element, opts \\ quote(do: [])) do
     quote do
       FlowUtils.validate_input(unquote(input), unquote(element), unquote(opts))
@@ -119,6 +131,7 @@ defmodule Helix.Websocket.Flow.Utils do
 
   alias HELL.IPv4
   alias Helix.Core.Validator
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
 
   @spec validate_nip(unsafe :: String.t | Network.id, unsafe_ip :: String.t) ::
@@ -128,7 +141,7 @@ defmodule Helix.Websocket.Flow.Utils do
   Ensures the given nip, which is unsafe (user input), is valid and within the
   expected format.
 
-  This function does not check whether the nip exists!
+  NOTE: This function does not check whether the nip exists.
   """
   def validate_nip(unsafe_network_id, unsafe_ip) do
     with \
@@ -145,10 +158,35 @@ defmodule Helix.Websocket.Flow.Utils do
   @spec validate_input(unsafe_input :: String.t, Validator.input_type, term) ::
     {:ok, validated_input :: String.t}
     | :bad_request
+  @doc """
+  Delegates the input validation to `Validator`.
+  """
   def validate_input(input, type, opts) do
     case Validator.validate_input(input, type, opts) do
       {:ok, valid_input} ->
         {:ok, valid_input}
+
+      :error ->
+        :bad_request
+    end
+  end
+
+  @spec validate_bounce(unsafe_bounce :: String.t | nil) ::
+    {:ok, nil}
+    | {:ok, Bounce.id}
+    | :bad_request
+  @doc """
+  Ensures the given bounce is valid. It may either be nil (i.e. no bounce) or 
+  a valid Bounce.ID.
+
+  NOTE: This function does not check whether the bounce exists.
+  """
+  def validate_bounce(nil),
+    do: {:ok, nil}
+  def validate_bounce(bounce_id) do
+    case Bounce.ID.cast(bounce_id) do
+      {:ok, bounce_id} ->
+        {:ok, bounce_id}
 
       :error ->
         :bad_request

@@ -8,6 +8,7 @@ defmodule Helix.Entity.Henforcer.EntityTest do
   alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -113,6 +114,30 @@ defmodule Helix.Entity.Henforcer.EntityTest do
         )
 
       assert reason == {:network_connection, :not_belongs}
+    end
+  end
+
+  describe "owns_bounce?/2" do
+    test "accepts when entity is the owner of the bounce" do
+      {entity, _} = EntitySetup.entity()
+      {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+
+      assert {true, relay} =
+        EntityHenforcer.owns_bounce?(entity.entity_id, bounce.bounce_id)
+
+      assert relay.bounce == bounce
+      assert relay.entity == entity
+      assert_relay relay, [:bounce, :entity]
+    end
+
+    test "rejects when entity does not own the bounce" do
+      {entity, _} = EntitySetup.entity()
+      {bounce, _} = NetworkSetup.Bounce.bounce()
+
+      assert {false, reason, _} =
+        EntityHenforcer.owns_bounce?(entity.entity_id, bounce.bounce_id)
+
+      assert reason == {:bounce, :not_belongs}
     end
   end
 end

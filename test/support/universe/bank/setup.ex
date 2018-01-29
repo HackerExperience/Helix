@@ -13,7 +13,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Account.Setup, as: AccountSetup
-  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
@@ -212,7 +212,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
     acc1 :: BankAccount.t, \
     acc2 :: BankAccount.t, \
     Account.t, \
-    Net.t, \
+    Tunnel.t, \
     Server.t
   """
   def wire_transfer_flow do
@@ -221,16 +221,19 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {acc2, _} = account([atm_seq: 2])
     {player, %{server: gateway}} = AccountSetup.account([with_server: true])
 
-    net = NetworkHelper.net()
+    {tunnel, _} =
+      NetworkSetup.tunnel(
+        gateway_id: gateway.server_id, target_id: acc1.atm_id
+      )
 
     {:ok, process} =
-      BankTransferFlow.start(acc1, acc2, amount, player, gateway, net, nil)
+      BankTransferFlow.start(acc1, acc2, amount, player, gateway, tunnel, nil)
 
     related = %{
       acc1: acc1,
       acc2: acc2,
       player: player,
-      net: net,
+      tunnel: tunnel,
       gateway: gateway
     }
 
@@ -250,7 +253,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
         acc.atm_id,
         acc.account_number,
         server.server_id,
-        [],
+        nil,
         acc.password
       )
 

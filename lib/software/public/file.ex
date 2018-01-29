@@ -2,7 +2,6 @@ defmodule Helix.Software.Public.File do
 
   alias Helix.Event
   alias Helix.Network.Model.Connection
-  alias Helix.Network.Model.Net
   alias Helix.Network.Model.Network
   alias Helix.Network.Model.Tunnel
   alias Helix.Process.Model.Process
@@ -37,10 +36,8 @@ defmodule Helix.Software.Public.File do
     file = %File{},
     relay)
   do
-    net = Net.new(tunnel)
-
     transfer =
-      FileTransferFlow.download(gateway, target, file, storage, net, relay)
+      FileTransferFlow.download(gateway, target, file, storage, tunnel, relay)
 
     case transfer do
       {:ok, process} ->
@@ -63,14 +60,14 @@ defmodule Helix.Software.Public.File do
     | FileFlow.bruteforce_execution_error
   @doc """
   Starts a bruteforce attack against `(network_id, target_ip)`, originating from
-  `gateway_id` and having `bounces` as intermediaries.
+  `gateway_id` and having `bounce` as intermediaries.
   """
   def bruteforce(
     cracker = %File{software_type: :cracker},
     gateway = %Server{},
     target = %Server{},
     {network_id = %Network.ID{}, target_ip},
-    bounce_id,
+    bounce,
     relay)
   do
     params = %{
@@ -78,7 +75,7 @@ defmodule Helix.Software.Public.File do
     }
 
     meta = %{
-      bounce: bounce_id,
+      bounce: bounce,
       network_id: network_id,
       cracker: cracker
     }
@@ -110,6 +107,7 @@ defmodule Helix.Software.Public.File do
         file: file,
         type: process_type,
         network_id: tunnel.network_id,
+        bounce: tunnel.bounce_id,
         ssh: ssh
       }
 

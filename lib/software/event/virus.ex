@@ -56,7 +56,28 @@ defmodule Helix.Software.Event.Virus do
         do: %{account: event.entity_id}
     end
 
-    # TODO: Log that player has installed virus. #369
+    loggable do
+
+      log(event) do
+        process = get_process(event)
+
+        file_name = get_file_name(event.file)
+
+        msg_gateway = "localhost installed virus #{file_name} at $first_ip"
+        msg_endpoint = "$last_ip installed virus #{file_name} at localhost"
+
+        log_map %{
+          event: event,
+          entity_id: event.entity_id,
+          gateway_id: process.gateway_id,
+          endpoint_id: process.target_id,
+          network_id: process.network_id,
+          msg_gateway: msg_gateway,
+          msg_endpoint: msg_endpoint
+        }
+      end
+
+    end
   end
 
   event InstallFailed do

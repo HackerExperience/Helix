@@ -32,7 +32,7 @@ defmodule Helix.Software.Public.FileTest do
           source_server,
           target_server,
           {target_nip.network_id, target_nip.ip},
-          [],
+          nil,
           @relay
         )
 

@@ -25,6 +25,7 @@ defmodule Helix.Test.Process.Data.Setup do
   alias Helix.Software.Process.Cracker.Bruteforce, as: CrackerBruteforce
   alias Helix.Software.Model.SoftwareType.LogForge
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
+  alias Helix.Software.Process.File.Install, as: FileInstallProcess
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Log.Helper, as: LogHelper
@@ -166,6 +167,31 @@ defmodule Helix.Test.Process.Data.Setup do
   end
 
   @doc """
+  Probably does not work
+  """
+  def custom(:install_virus, _data_opts, meta) do
+    src_connection_id = meta.src_connection_id || Connection.ID.generate()
+    tgt_file_id = meta.tgt_file_id || File.ID.generate()
+
+    data = FileInstallProcess.new(%{backend: :virus})
+
+    meta =
+      meta
+      |> put_in([:tgt_file_id], tgt_file_id)
+      |> put_in([:src_connection_id], src_connection_id)
+
+    resources =
+      %{
+        l_dynamic: [:cpu],
+        r_dynamic: [],
+        static: TOPHelper.Resources.random_static(),
+        objective: TOPHelper.Resources.objective(cpu: 5000)
+      }
+
+    {:install_virus, data, meta, resources}
+  end
+
+  @doc """
   Opts for forge:
   - operation: :edit | :create. Defaults to :edit.
   - target_log_id: Which log to edit. Won't generate a real one.
@@ -216,7 +242,8 @@ defmodule Helix.Test.Process.Data.Setup do
       :bruteforce,
       :forge,
       :file_download,
-      :file_upload
+      :file_upload,
+      :install_virus
     ]
   end
 end

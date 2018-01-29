@@ -42,13 +42,18 @@ defmodule Helix.Server.Event.Server do
       log(event = %__MODULE__{join_type: :local}) do
         msg = "Localhost logged in"
 
-        [build_entry(event.server_id, event.entity_id, msg)]
+        log_map %{
+          event: event,
+          server_id: event.server_id,
+          entity_id: event.entity_id,
+          msg_server: msg
+        }
       end
 
       # Does nothing on `remote` join, since that log is managed by the tunnel
-      #being created during the join operation.
+      # being created during the join operation.
       log(%_{join_type: :remote}) do
-        []
+        empty_log()
       end
     end
   end
