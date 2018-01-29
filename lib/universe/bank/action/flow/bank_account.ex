@@ -40,7 +40,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
     meta = %{
       network_id: NetworkQuery.internet().network_id,
-      bounce_id: nil
+      bounce: nil
     }
 
     BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta, relay)

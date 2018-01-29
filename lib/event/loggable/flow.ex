@@ -26,6 +26,8 @@ defmodule Helix.Event.Loggable.Flow do
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Network.Model.Bounce
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Model.Tunnel
   alias Helix.Network.Query.Bounce, as: BounceQuery
   alias Helix.Server.Model.Server
 
@@ -59,6 +61,9 @@ defmodule Helix.Event.Loggable.Flow do
     end
   end
 
+  @doc """
+  Returns the `log_map`, data structure used by `handle_generated/1`.
+  """
   defmacro log_map(map) do
     quote do
       map = unquote(map)
@@ -72,6 +77,9 @@ defmodule Helix.Event.Loggable.Flow do
     end
   end
 
+  @doc """
+  Returns the `log_map` equivalent of an empty log (i.e. noop)
+  """
   defmacro empty_log do
     quote do
       %{}
@@ -81,6 +89,10 @@ defmodule Helix.Event.Loggable.Flow do
   @doc """
   Inserts the Loggable's `generate` functions. Multiple `log` macros may be
   defined, in which case the event will be pattern-matched against them.
+
+  The top-level `log` macro only needs to receive a declaration of how the log
+  is supposed to behave (through a valid `log_map`). After this, we delegate the
+  actual log entry generation logic to the `handle_generated` algorithms below.
   """
   defmacro log(query, do: block) do
     query = replace_module(query, __CALLER__.module)
@@ -90,7 +102,6 @@ defmodule Helix.Event.Loggable.Flow do
         def generate(unquote(query)) do
           unquote(block)
           |> handle_generated()
-
         end
 
     end
@@ -317,6 +328,14 @@ defmodule Helix.Event.Loggable.Flow do
     |> List.flatten()
   end
 
+  @spec get_first_ip(Tunnel.bounce, Network.ip) ::
+    Network.ip
+  @doc """
+  Returns the "first ip". The "first ip" is the IP address that should be
+  displayed on the first log entry of the log chain. When there's no bounce, the
+  first IP is the victim's (target) IP. If there's a bounce, the first IP is the
+  bounce's first hop IP.
+  """
   def get_first_ip(nil, ip),
     do: format_ip(ip)
   def get_first_ip(bounce = %Bounce{}, _) do
@@ -325,6 +344,14 @@ defmodule Helix.Event.Loggable.Flow do
     format_ip(first_hop_ip)
   end
 
+  @spec get_last_ip(Tunnel.bounce, Network.ip) ::
+    Network.ip
+  @doc """
+  Returns the "last ip". The "last ip" is the IP address that should be
+  displayed on the last log entry of the log chain. When there's no bounce, the
+  last IP is the attacker's (gateway) IP. If there's a bounce, the last IP is
+  the bounce's last hop IP.
+  """
   def get_last_ip(nil, ip),
     do: format_ip(ip)
   def get_last_ip(bounce = %Bounce{}, _) do
@@ -332,11 +359,21 @@ defmodule Helix.Event.Loggable.Flow do
     format_ip(last_hop_ip)
   end
 
+  @spec customize_first_ip(Network.ip, map) ::
+    Network.ip
+  docp """
+  Customizes the first IP according to the log_map opts.
+  """
   defp customize_first_ip(ip, %{censor_first: true}),
     do: censor_ip(ip)
   defp customize_first_ip(ip, _),
     do: ip
 
+  @spec customize_last_ip(Network.ip, map) ::
+    Network.ip
+  docp """
+  Customizes the last IP according to the log_map opts.
+  """
   defp customize_last_ip(ip, %{censor_last: true}),
     do: censor_ip(ip)
   defp customize_last_ip(ip, _),

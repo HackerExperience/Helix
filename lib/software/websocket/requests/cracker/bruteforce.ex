@@ -79,12 +79,9 @@ request Helix.Software.Websocket.Requests.Cracker.Bruteforce do
       {:ok, process} ->
         update_meta(request, %{process: process}, reply: true)
 
-      # REVIEW: Bad format
-      {false, reason, _} ->
+      {:error, reason} ->
         reply_error(request, reason)
 
-      error = {:error, %{message: _}} ->
-        error
       _ ->
         {:error, %{message: "internal"}}
     end
