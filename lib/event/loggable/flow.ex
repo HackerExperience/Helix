@@ -24,8 +24,10 @@ defmodule Helix.Event.Loggable.Flow do
   alias Helix.Event
   alias Helix.Event.Loggable.Utils, as: LoggableUtils
   alias Helix.Entity.Model.Entity
-  alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
+  alias Helix.Network.Model.Bounce
+  alias Helix.Network.Query.Bounce, as: BounceQuery
+  alias Helix.Server.Model.Server
 
   @type log_entry ::
     {Server.id, Entity.id, log_msg}
@@ -129,6 +131,24 @@ defmodule Helix.Event.Loggable.Flow do
   defdelegate censor_ip(ip),
     to: LoggableUtils
 
+  defdelegate format_ip(ip),
+    to: LoggableUtils
+
+  def get_ip_first(nil, ip),
+    do: format_ip(ip)
+  def get_ip_first(bounce = %Bounce{}, _) do
+    [{_, _first_hop_network, first_hop_ip} | _] = bounce.links
+
+    format_ip(first_hop_ip)
+  end
+
+  def get_ip_last(nil, ip),
+    do: format_ip(ip)
+  def get_ip_last(bounce = %Bounce{}, _) do
+    [{_, _last_hop_network, last_hop_ip} | _] = Enum.reverse(bounce.links)
+    format_ip(last_hop_ip)
+  end
+
   @spec build_entry(Server.id, Entity.id, log_msg) ::
     log_entry
   @doc """
@@ -136,6 +156,56 @@ defmodule Helix.Event.Loggable.Flow do
   """
   def build_entry(server_id, entity_id, msg),
     do: {server_id, entity_id, msg}
+
+  @doc """
+  Generates the `log_entry` list for all nodes between the gateway and the
+  endpoint, i.e. all hops on the bounce.
+
+  Messages follow the format "Connection bounced from hop (n-1) to (n+1)"
+  """
+  def build_bounce_entries(nil, _, _, _),
+    do: []
+  def build_bounce_entries(bounce_id = %Bounce.ID{}, gateway, endpoint, entity) do
+    bounce_id
+    |> BounceQuery.fetch()
+    |> build_bounce_entries(gateway, endpoint, entity)
+  end
+  def build_bounce_entries(
+    bounce = %Bounce{}, gateway = {_, _, _}, endpoint = {_, _, _}, entity_id)
+  do
+    full_path = [gateway | bounce.links] ++ [endpoint]
+    length_hop = length(full_path)
+
+    # Create a map of the bounce route, so we can access each entry based on
+    # their (sequential) index
+    bounce_map =
+      full_path
+      |> Enum.reduce({0, %{}}, fn link, {idx, acc} ->
+        {idx + 1, Map.put(acc, idx, link)}
+      end)
+      |> elem(1)
+
+    full_path
+    |> Enum.reduce({0, []}, fn {server_id, _, _}, {idx, acc} ->
+
+      # Skip first and last hops, as they are both the `gateway` and `endpoint`,
+      # and as such have a custom log message.
+      if idx == 0 or idx == length_hop - 1 do
+        {idx + 1, acc}
+
+      # Otherwise, if it's an intermediary server, we generate the bounce msg
+      else
+        {_, _, ip_prev} = bounce_map[idx - 1]
+        {_, _, ip_next} = bounce_map[idx + 1]
+
+        msg = "Connection bounced from #{ip_prev} to #{ip_next}"
+        entry = build_entry(server_id, entity_id, msg)
+
+        {idx + 1, acc ++ [entry]}
+      end
+    end)
+    |> elem(1)
+  end
 
   @spec save([log_entry] | log_entry) ::
     [Event.t]
