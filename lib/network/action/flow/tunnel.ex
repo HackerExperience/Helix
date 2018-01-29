@@ -13,8 +13,6 @@ defmodule Helix.Network.Action.Flow.Tunnel do
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
 
-  @type connect_errors :: term
-
   @spec connect(Tunnel.t, Connection.info, Event.relay) ::
     {:ok, Tunnel.t, Connection.t}
   @doc """
@@ -45,6 +43,7 @@ defmodule Helix.Network.Action.Flow.Tunnel do
     Event.relay)
   ::
     {:ok, Tunnel.t, Connection.t}
+    | {:error, Tunnel.creation_error}
   @doc """
   Creates the connection of `type` on the tunnel between `gateway_id` and
   `target_id`, located at `network`, going through `bounce`. If this tunnel does
@@ -56,10 +55,13 @@ defmodule Helix.Network.Action.Flow.Tunnel do
     network = get_network(network)
 
     # Fetch tunnel (or create if it doesn't exist)
-    tunnel = create_or_get_tunnel(network, gateway_id, target_id, bounce)
-
-    # Delegate creation to `connect/3`
-    connect(tunnel, info, relay)
+    with \
+      {:ok, tunnel} <-
+        create_or_get_tunnel(network, gateway_id, target_id, bounce)
+    do
+      # Delegate creation to `connect/3`
+      connect(tunnel, info, relay)
+    end
   end
 
   @spec connect_once(
@@ -71,6 +73,7 @@ defmodule Helix.Network.Action.Flow.Tunnel do
     Event.relay)
   ::
     {:ok, Tunnel.t, Connection.t}
+    | {:error, Tunnel.creation_error}
   @doc """
   Creates the connection - and the underlying tunnel if required - only if the
   requested connection of type `type` does not already exists.
@@ -80,36 +83,41 @@ defmodule Helix.Network.Action.Flow.Tunnel do
   def connect_once(network, gateway_id, target_id, bounce, info, relay) do
     network = get_network(network)
 
-    tunnel = create_or_get_tunnel(network, gateway_id, target_id, bounce)
-
     # Check if there already is a connection with the given information
-    with connection = %{} <- find_connection(tunnel, info) do
+    with \
+      {:ok, tunnel} <-
+        create_or_get_tunnel(network, gateway_id, target_id, bounce),
+      connection = %{} <- find_connection(tunnel, info) || {:no_conn, tunnel}
+    do
       # Tunnel has connection with `{type, meta}`, so return it right away
       {:ok, tunnel, connection}
     else
       # Tunnel exists but there's no connection
-      nil ->
+      {:no_conn, tunnel} ->
         connect(tunnel, info, relay)
+
+      error ->
+        error
     end
   end
 
   @spec create_or_get_tunnel(
     Network.idt, Server.id, Server.id, Tunnel.bounce_idt)
   ::
-    Tunnel.t
+    {:ok, Tunnel.t}
+    | {:error, Tunnel.creation_error}
   defp create_or_get_tunnel(net, gateway, target, bounce_id = %Bounce.ID{}) do
     bounce = BounceQuery.fetch(bounce_id)
 
     create_or_get_tunnel(net, gateway, target, bounce)
   end
   defp create_or_get_tunnel(network, gateway_id, target_id, bounce) do
-    with \
-      nil <- TunnelQuery.get_tunnel(gateway_id, target_id, network, bounce)
-    do
-      {:ok, tunnel} =
-        TunnelAction.create_tunnel(network, gateway_id, target_id, bounce)
+    case TunnelQuery.get_tunnel(gateway_id, target_id, network, bounce) do
+      tunnel = %Tunnel{} ->
+        {:ok, tunnel}
 
-      tunnel
+      nil ->
+        TunnelAction.create_tunnel(network, gateway_id, target_id, bounce)
     end
   end
 

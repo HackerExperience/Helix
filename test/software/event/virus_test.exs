@@ -13,7 +13,7 @@ defmodule Helix.Software.Event.Virus.InstalledTest do
   describe "event reactions" do
     test "logs are created" do
       {event, %{virus: virus}} =
-        EventSetup.Software.file_install_processed(:virus, real: true)
+        EventSetup.Software.file_install_processed(:virus)
 
       EventHelper.emit(event)
 

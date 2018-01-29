@@ -314,7 +314,10 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
       server_joined_event(destination, gateway_entity, :remote, request.relay)
 
-     {:ok, bootstrap, socket}
+      {:ok, bootstrap, socket}
+    else
+      {:error, reason} ->
+        {:error, %{message: reason}}
     end
   end
 

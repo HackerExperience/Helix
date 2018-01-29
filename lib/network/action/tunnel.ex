@@ -20,6 +20,7 @@ defmodule Helix.Network.Action.Tunnel do
 
   @spec create_tunnel(Network.t, Server.id, Server.id, Tunnel.bounce) ::
     {:ok, Tunnel.t}
+    | {:error, Tunnel.creation_error}
   def create_tunnel(network, gateway_id, target_id, bounce),
     do: TunnelInternal.create(network, gateway_id, target_id, bounce)
 

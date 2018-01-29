@@ -16,7 +16,7 @@ defmodule Helix.Server.Public.Server do
     Network.id, Server.id, Server.id, Tunnel.bounce, Event.relay)
   ::
     {:ok, Tunnel.t, Connection.ssh}
-    | TunnelFlow.connect_errors
+    | {:error, Tunnel.creation_error}
   @doc """
   Creates an initial connection to the server, used upon ServerJoin (hence the
   connection of type `:ssh`).

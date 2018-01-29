@@ -132,6 +132,36 @@ defmodule Helix.Server.Websocket.Channel.Server.JoinTest do
       assert reason.data == "bounce_not_belongs"
     end
 
+    test "can not connect to a remote server with a cyclic bounce" do
+      # Scenario: A bounce is guaranteed to always be acyclic, but a funny user
+      # may always try to use one of the bounce nodes as target. Here we ensure
+      # this is not possible
+      {socket, %{server: gateway}} = ChannelSetup.create_socket()
+      {destination, _} = ServerSetup.server()
+
+      gateway_entity_id = socket.assigns.entity_id
+
+      gateway_ip = ServerHelper.get_ip(gateway)
+      destination_ip = ServerHelper.get_ip(destination)
+
+      links = NetworkHelper.Bounce.links(total: 2)
+      links = [{destination.server_id, @internet_id, destination_ip} | links]
+
+      {bounce, _} =
+        NetworkSetup.Bounce.bounce(entity_id: gateway_entity_id, links: links)
+
+      topic = ChannelHelper.server_topic_name(@internet_id, destination_ip, 0)
+
+      params = %{
+        "gateway_ip" => gateway_ip,
+        "password" => destination.password,
+        "bounce_id" => to_string(bounce.bounce_id)
+      }
+
+      assert {:error, %{message: reason}} = join(socket, topic, params)
+      assert reason == :cyclic_tunnel
+    end
+
     test "can not connect to a remote server with a non-existing IP" do
       {socket, %{server: gateway}} = ChannelSetup.create_socket()
 

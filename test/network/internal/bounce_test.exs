@@ -147,6 +147,22 @@ defmodule Helix.Network.Internal.BounceTest do
       assert entry2.network_id == link2_network_id
       assert entry2.ip == link2_ip
     end
+
+    test "refuses to create cyclic bounces" do
+      entity_id = EntitySetup.id()
+      name = NetworkHelper.Bounce.name()
+
+      link1_server_id = ServerSetup.id()
+      link1_network_id = @internet_id
+      link1_ip = NetworkHelper.ip()
+      link1 = {link1_server_id, link1_network_id, link1_ip}
+
+      links = [link1, link1]
+
+      assert_raise Ecto.ConstraintError, fn ->
+        BounceInternal.create(entity_id, name, links)
+      end
+    end
   end
 
   describe "update/3" do

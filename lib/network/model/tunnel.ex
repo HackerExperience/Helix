@@ -46,6 +46,10 @@ defmodule Helix.Network.Model.Tunnel do
       target_id: Server.id
     }
 
+  @type creation_error ::
+    :cyclic_tunnel
+    | :internal
+
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @creation_fields [:network_id, :gateway_id, :target_id]
@@ -147,6 +151,22 @@ defmodule Helix.Network.Model.Tunnel do
     do: bounce.links
   def get_hops(%Tunnel{bounce: %Ecto.Association.NotLoaded{}}),
     do: nil
+
+  @spec get_error(changeset) ::
+    creation_error
+  def get_error(changeset = %Changeset{}) do
+    error_str =
+      changeset.errors
+      |> List.first()
+      |> elem(1)
+      |> elem(0)
+
+    if String.contains?(error_str, "cyclic_") do
+      :cyclic_tunnel
+    else
+      :internal
+    end
+  end
 
   @spec validate_tunnel(changeset) ::
     changeset

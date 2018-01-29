@@ -54,7 +54,7 @@ defmodule Helix.Software.Event.File.DownloadedTest do
         log_gateway, event.to_server_id, event.entity_id,
         "localhost downloaded",
         contains: [destination_ip, "Public FTP"],
-        reject: gateway_ip
+        rejects: gateway_ip
 
       # Log saved on transfer target
       [log_destination] = LogQuery.get_logs_on_server(event.from_server_id)

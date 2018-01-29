@@ -9,6 +9,9 @@ defmodule Helix.Network.Internal.Tunnel do
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Repo
 
+  # ??? elixir-lang/#6577 is back?
+  @dialyzer {:nowarn_function, create: 4}
+
   @spec fetch(Tunnel.id) ::
     Tunnel.t
     | nil
@@ -116,7 +119,7 @@ defmodule Helix.Network.Internal.Tunnel do
 
   @spec create(Network.t, Server.id, Server.id, Tunnel.bounce) ::
     {:ok, Tunnel.t}
-    | {:error, :internal}
+    | {:error, Tunnel.creation_error}
   @doc """
   Creates a new tunnel
   """
@@ -129,6 +132,11 @@ defmodule Helix.Network.Internal.Tunnel do
       do
         tunnel
       else
+        {:error, changeset} ->
+          changeset
+          |> Tunnel.get_error()
+          |> Repo.rollback()
+
         _ ->
           Repo.rollback(:internal)
       end
