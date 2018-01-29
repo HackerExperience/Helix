@@ -55,8 +55,8 @@ defmodule Helix.Mixfile do
       {:phoenix, "~> 1.3.0"},
       {:corsica, "~> 1.1.0"},
 
-      {:ecto, "~> 2.2.7"},
-      {:postgrex, "~> 0.13.3"},
+      {:ecto, "~> 2.2.8"},
+      {:postgrex, "~> 0.13.4"},
 
       {:helf, "~> 0.0.2"},
       {:poison, "~> 3.1"},
@@ -76,7 +76,7 @@ defmodule Helix.Mixfile do
       {:inch_ex, "~> 0.5.6", only: [:dev, :test]},
 
       {:credo, "~> 0.8.10", only: [:dev, :test]},
-      {:excoveralls, "~> 0.8.0", only: [:dev, :test]}
+      {:excoveralls, "~> 0.8.1", only: [:dev, :test]}
     ]
   end
 
