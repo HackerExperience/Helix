@@ -8,13 +8,15 @@ defmodule Helix.Event.Meta do
   alias HELL.HETypes
   alias HELL.Utils
   alias Helix.Event
+  alias Helix.Network.Model.Bounce
   alias Helix.Process.Model.Process
 
   @type t :: %{
     event_id: HETypes.uuid | nil,
     process_id: Process.id | nil,
     stack: [Event.t] | nil,
-    request_id: binary | nil
+    request_id: binary | nil,
+    bounce_id: Bounce.t | nil
   }
 
   @type rendered :: %{
@@ -43,7 +45,12 @@ defmodule Helix.Event.Meta do
 
     # The `request_id` field associates which request was responsible for this
     # event. Subsequent events will carry on (relay) this request_id as well.
-    :request_id
+    :request_id,
+
+    # The `bounce` field is used to relay bounce information on the event, being
+    # notably important for the Loggable protocol, which will rely on the data
+    # (or lack thereof) to properly log intermediary hops
+    :bounce
   ]
 
   @doc """

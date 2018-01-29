@@ -7,6 +7,9 @@ defmodule Helix.Network.Query.Bounce do
   defdelegate fetch(bounce_id),
     to: BounceInternal
 
+  defdelegate fetch_from_connection(connection),
+    to: BounceInternal
+
   @spec get_by_entity(Entity.idt) ::
     [Bounce.t]
   def get_by_entity(entity = %Entity{}),

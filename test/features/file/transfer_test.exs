@@ -5,13 +5,16 @@ defmodule Helix.Test.Features.File.TransferTest do
   import Phoenix.ChannelTest
   import Helix.Test.Macros
   import Helix.Test.Channel.Macros
+  import Helix.Test.Log.Macros
 
+  alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Channel.Setup, as: ChannelSetup
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
@@ -20,8 +23,18 @@ defmodule Helix.Test.Features.File.TransferTest do
 
   describe "file.download" do
     test "download lifecycle" do
+      {socket, %{entity: entity, server: gateway}} =
+        ChannelSetup.create_socket()
+
+      {bounce, _} =
+        NetworkSetup.Bounce.bounce(total: 3, entity_id: entity.entity_id)
+
       {socket, %{gateway: gateway, destination: destination}} =
-        ChannelSetup.join_server()
+        ChannelSetup.join_server(
+          bounce_id: bounce.bounce_id,
+          gateway_id: gateway.server_id,
+          socket: socket
+        )
 
       # Connect to gateway channel too, so we can receive gateway notifications
       ChannelSetup.join_server(socket: socket, own_server: true)
@@ -80,6 +93,28 @@ defmodule Helix.Test.Features.File.TransferTest do
 
       # Client received the FileAddedEvent
       assert file_added_event.data.file.id == to_string(new_file.file_id)
+
+      # Now let's check the log generation
+
+      # Log on gateway (`gateway` downloaded from `<someone>`)
+      assert [log_gateway | _] = LogQuery.get_logs_on_server(gateway.server_id)
+      assert_log \
+        log_gateway, gateway.server_id, entity.entity_id,
+        "localhost downloaded",
+        contains: [dl_file.name]
+
+      # Verify logging worked correctly within the bounce nodes
+      assert_bounce \
+        bounce, gateway, destination, entity,
+        rejects: [dl_file.name, "download"]
+
+      # Log on destination (`<someone>` downloaded file at `destination`)
+      assert [log_destination | _] =
+        LogQuery.get_logs_on_server(destination.server_id)
+      assert_log \
+        log_destination, destination.server_id, entity.entity_id,
+        "from localhost",
+        contains: [dl_file.name]
 
       TOPHelper.top_stop(gateway)
     end

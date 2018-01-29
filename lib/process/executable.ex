@@ -273,6 +273,12 @@ defmodule Helix.Process.Executable do
 
         # Defaults: in case these functions were not defined, we assume the
         # process is not interested on this (optional) data.
+        defp get_bounce_id(_, _, _, %{bounce: bounce = %Bounce{}}),
+          do: %{bounce_id: bounce.bounce_id}
+        defp get_bounce_id(_, _, _, %{bounce: bounce_id = %Bounce.ID{}}),
+          do: %{bounce_id: bounce_id}
+        defp get_bounce_id(_, _, _, _),
+          do: %{bounce_id: nil}
 
         defp get_source_connection(_, _, _, _),
           do: nil
@@ -312,6 +318,7 @@ defmodule Helix.Process.Executable do
         source_file = get_source_file(unquote_splicing(args))
         target_file = get_target_file(unquote_splicing(args))
         target_process = get_target_process(unquote_splicing(args))
+        bounce_id = get_bounce_id(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
         process_type = get_process_type(unquote(meta))
         network_id = get_network_id(unquote(meta))
@@ -323,6 +330,7 @@ defmodule Helix.Process.Executable do
           |> Map.merge(source_file)
           |> Map.merge(target_file)
           |> Map.merge(target_process)
+          |> Map.merge(bounce_id)
           |> Map.merge(ownership)
           |> Map.merge(process_type)
           |> Map.merge(network_id)

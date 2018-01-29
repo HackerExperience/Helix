@@ -115,6 +115,7 @@ defmodule Helix.Network.Model.Bounce do
   query do
 
     alias Helix.Entity.Model.Entity
+    alias Helix.Network.Model.Connection
 
     @spec by_bounce(Queryable.t, Bounce.id) ::
       Queryable.t
@@ -132,6 +133,17 @@ defmodule Helix.Network.Model.Bounce do
       query
       |> join(:left, [b], bs in assoc(b, :sorted))
       |> preload_sorted()
+    end
+
+    @spec by_connection(Queryable.t, Connection.idt) ::
+      Queryable.t
+    def by_connection(query \\ Connection, connection_id) do
+      from connection in query,
+        inner_join: tunnel in assoc(connection, :tunnel),
+        inner_join: bounce in assoc(tunnel, :bounce),
+        inner_join: sorted in assoc(bounce, :sorted),
+        where: connection.connection_id == ^connection_id,
+        select: [bounce, sorted]
     end
 
     @spec preload_sorted(Queryable.t) ::

@@ -3,6 +3,7 @@ defmodule Helix.Network.Internal.Bounce do
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
   alias Helix.Network.Model.Bounce
+  alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo
 
@@ -21,6 +22,25 @@ defmodule Helix.Network.Internal.Bounce do
 
     with bounce = %Bounce{} <- result do
       Bounce.format(bounce)
+    end
+  end
+
+  @spec fetch_from_connection(Connection.idt) ::
+    Bounce.t
+    | nil
+  @doc """
+  Given a connection, figure out which bounce it uses.
+  """
+  def fetch_from_connection(connection) do
+    result =
+      connection
+      |> Bounce.Query.by_connection()
+      |> Repo.one()
+
+    with [bounce, sorted] = [%Bounce{}, %Bounce.Sorted{}] <- result do
+      bounce
+      |> Map.replace(:sorted, sorted)
+      |> Bounce.format()
     end
   end
 

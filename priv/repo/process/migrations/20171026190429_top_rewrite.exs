@@ -21,6 +21,7 @@ defmodule Helix.Process.Repo.Migrations.TOPRewrite do
 
       add :file_id, :inet  # Renamed to `src_file_id`
       # add :tgt_connection_id, :inet
+      # add :bounce_id, :inet (no index)
 
       # Helix.Process stuff
       add :data, :jsonb, null: false

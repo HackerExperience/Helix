@@ -20,6 +20,7 @@ defmodule Helix.Process.Model.Process do
   alias HELL.MapUtils
   alias HELL.NaiveStruct
   alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
@@ -37,6 +38,7 @@ defmodule Helix.Process.Model.Process do
       src_connection_id: Connection.id | nil,
       src_file_id: File.id | nil,
       network_id: Network.id | nil,
+      bounce_id: Bounce.id | nil,
       tgt_file_id: File.id | nil,
       tgt_connection_id: Connection.id | nil,
       tgt_process_id: Process.id | nil,
@@ -189,6 +191,7 @@ defmodule Helix.Process.Model.Process do
     :data => Processable.t,
     :type => type,
     :network_id => Network.id | nil,
+    :bounce_id => Bounce.id | nil,
     :tgt_file_id => File.id | nil,
     :tgt_connection_id => Connection.id | nil,
     :tgt_process_id => Process.id | nil,
@@ -205,6 +208,7 @@ defmodule Helix.Process.Model.Process do
     :src_file_id,
     :target_id,
     :network_id,
+    :bounce_id,
     :tgt_file_id,
     :tgt_connection_id,
     :tgt_process_id,
@@ -285,6 +289,10 @@ defmodule Helix.Process.Model.Process do
 
     # Which network (if any) is this process bound to
     field :network_id, Network.ID,
+      default: nil
+
+    # Which bounce (if any) is this process bound to
+    field :bounce_id, Bounce.ID,
       default: nil
 
     ### Custom keys

@@ -59,7 +59,7 @@ defmodule Helix.Test.Log.Macros do
     list (if applicable). Useful for rejecting extra stuff, like the log action
     (e.g. "download", "upload") or custom data (like the file name, version etc)
   """
-  defmacro assert_bounce(bounce, gateway, endpoint, entity, opts) do
+  defmacro assert_bounce(bounce, gateway, endpoint, entity, opts \\ quote(do: [])) do
     quote location: :keep do
       {
         links,
@@ -109,24 +109,50 @@ defmodule Helix.Test.Log.Macros do
     end
   end
 
+  def verify_bounce_params(bounce, gat, endp, ent, opts, net_id \\ @internet_id)
+
+  def verify_bounce_params(
+    bounce, gateway = %Server{}, endpoint_id, entity_id, opts, network_id)
+  do
+    verify_bounce_params(
+      bounce, gateway.server_id, endpoint_id, entity_id, opts, network_id
+    )
+  end
+
+  def verify_bounce_params(
+    bounce, gateway, endpoint = %Server{}, entity, opts, network_id)
+  do
+    verify_bounce_params(
+      bounce, gateway, endpoint.server_id, entity, opts, network_id
+    )
+  end
+
+  def verify_bounce_params(
+    bounce, gateway_id, endpoint_id, entity = %Entity{}, opts, network_id)
+  do
+    verify_bounce_params(
+      bounce, gateway_id, endpoint_id, entity.entity_id, opts, network_id
+    )
+  end
+
   def verify_bounce_params(
     bounce = %Bounce{},
-    gateway = %Server{},
-    endpoint = %Server{},
-    entity = %Entity{},
+    gateway_id = %Server.ID{},
+    endpoint_id = %Server.ID{},
+    entity_id = %Entity.ID{},
     opts,
-    network_id \\ @internet_id)
+    network_id)
   do
-    gateway_ip = ServerHelper.get_ip(gateway, network_id)
-    endpoint_ip = ServerHelper.get_ip(endpoint, network_id)
+    gateway_ip = ServerHelper.get_ip(gateway_id, network_id)
+    endpoint_ip = ServerHelper.get_ip(endpoint_id, network_id)
 
     extra_rejects = Keyword.get(opts, :rejects, [])
 
     {
       bounce.links,
-      {gateway.server_id, network_id, gateway_ip},
-      {endpoint.server_id, network_id, endpoint_ip},
-      entity.entity_id,
+      {gateway_id, network_id, gateway_ip},
+      {endpoint_id, network_id, endpoint_ip},
+      entity_id,
       {extra_rejects, opts}
     }
   end

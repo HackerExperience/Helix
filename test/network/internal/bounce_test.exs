@@ -92,6 +92,22 @@ defmodule Helix.Network.Internal.BounceTest do
     end
   end
 
+  describe "fetch_from_connection/1" do
+    test "finds the bounce linked to the connection" do
+      {bounce, _} = NetworkSetup.Bounce.bounce()
+      {tunnel, _} = NetworkSetup.tunnel(bounce_id: bounce.bounce_id)
+      {connection, _} = NetworkSetup.connection(tunnel_id: tunnel.tunnel_id)
+
+      # Returned the bounce
+      assert bounce ==
+        BounceInternal.fetch_from_connection(connection.connection_id)
+    end
+
+    test "returns empty when connection has no bounce" do
+      refute BounceInternal.fetch_from_connection(NetworkHelper.connection_id())
+    end
+  end
+
   describe "create/3" do
     test "creates the Bounce and related structures" do
       entity_id = EntitySetup.id()

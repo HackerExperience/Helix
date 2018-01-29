@@ -21,31 +21,33 @@ defmodule Helix.Network.Event.Connection do
     @spec new(Connection.t) ::
       t
     def new(connection = %Connection{}) do
+      tunnel = TunnelQuery.get_tunnel(connection)
+
       %__MODULE__{
         connection: connection,
-        tunnel: TunnelQuery.get_tunnel(connection),
+        tunnel: tunnel,
         type: connection.connection_type
       }
+      |> put_bounce(tunnel.bounce_id)
     end
 
     loggable do
 
       log(event = %__MODULE__{type: :ssh}) do
-        gateway_id = event.tunnel.gateway_id
-        target_id = event.tunnel.target_id
+        entity = EntityQuery.fetch_by_server(event.tunnel.gateway_id)
 
-        entity = EntityQuery.fetch_by_server(gateway_id)
+        msg_gateway = "localhost logged into $first_ip"
+        msg_endpoint = "$last_ip logged in as root"
 
-        ip_source = get_ip(gateway_id, event.tunnel.network_id)
-        ip_target = get_ip(target_id, event.tunnel.network_id)
-
-        msg_source = "localhost logged into #{ip_target}"
-        msg_target = "#{ip_source} logged in as root"
-
-        log_source = build_entry(gateway_id, entity.entity_id, msg_source)
-        log_target = build_entry(target_id, entity.entity_id, msg_target)
-
-        [log_source, log_target]
+        log_map %{
+          event: event,
+          entity_id: entity.entity_id,
+          gateway_id: event.tunnel.gateway_id,
+          endpoint_id: event.tunnel.target_id,
+          network_id: event.tunnel.network_id,
+          msg_gateway: msg_gateway,
+          msg_endpoint: msg_endpoint
+        }
       end
     end
   end

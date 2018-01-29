@@ -59,6 +59,25 @@ defmodule Helix.Event.Loggable.Flow do
     end
   end
 
+  defmacro log_map(map) do
+    quote do
+      map = unquote(map)
+
+      # Put default values (if not specified)
+      map
+      |> Map.put_new(:network_id, nil)
+      |> Map.put_new(:endpoint_id, nil)
+      |> Map.put_new(:msg_endpoint, nil)
+      |> Map.put_new(:opts, %{})
+    end
+  end
+
+  defmacro empty_log do
+    quote do
+      %{}
+    end
+  end
+
   @doc """
   Inserts the Loggable's `generate` functions. Multiple `log` macros may be
   defined, in which case the event will be pattern-matched against them.
@@ -70,10 +89,95 @@ defmodule Helix.Event.Loggable.Flow do
 
         def generate(unquote(query)) do
           unquote(block)
+          |> handle_generated()
+
         end
 
     end
   end
+
+  @doc """
+  Matches against the most common `log_map` format, i.e. a log that will be
+  created on both `gateway` and `endpoint`, as well as all servers between them,
+  as defined on the bounce (inherited from `event`).
+  """
+  def handle_generated(
+    %{
+      event: event,
+      entity_id: entity_id,
+      gateway_id: gateway_id,
+      endpoint_id: endpoint_id,
+      network_id: network_id,
+      msg_gateway: msg_gateway,
+      msg_endpoint: msg_endpoint,
+      opts: opts
+    })
+  do
+    skip_bounce? = Map.get(opts, :skip_bounce, false)
+
+    bounce = Event.get_bounce(event)
+
+    gateway_ip = get_ip(gateway_id, network_id)
+    endpoint_ip = get_ip(endpoint_id, network_id)
+
+    first_ip =
+      if skip_bounce? do
+        endpoint_ip
+      else
+        get_first_ip(bounce, endpoint_ip)
+      end
+      |> customize_first_ip(opts)
+
+    last_ip =
+      if skip_bounce? do
+        gateway_ip
+      else
+        get_last_ip(bounce, gateway_ip)
+      end
+      |> customize_last_ip(opts)
+
+    msg_gateway = String.replace(msg_gateway, "$first_ip", first_ip)
+    msg_endpoint = String.replace(msg_endpoint, "$last_ip", last_ip)
+
+    log_gateway = build_entry(gateway_id, entity_id, msg_gateway)
+    log_endpoint = build_entry(endpoint_id, entity_id, msg_endpoint)
+
+    bounce_logs =
+      if skip_bounce? do
+        []
+      else
+        build_bounce_entries(
+          bounce,
+          {gateway_id, network_id, gateway_ip},
+          {endpoint_id, network_id, endpoint_ip},
+          entity_id
+        )
+      end
+
+    [log_gateway, log_endpoint, bounce_logs] |> List.flatten()
+  end
+
+  @doc """
+  Event requested to create a single log on the server, meaning this log has no
+  influence whatsoever from a remote endpoint, a bounce, a network etc. It's an
+  "offline" log.
+  """
+  def handle_generated(
+    %{
+      event: _,
+      server_id: server_id,
+      entity_id: entity_id,
+      msg_server: msg_server
+    })
+  do
+    [build_entry(server_id, entity_id, msg_server)]
+  end
+
+  @doc """
+  Fallback (empty log)
+  """
+  def handle_generated(empty_map) when map_size(empty_map) == 0,
+    do: []
 
   docp """
   This is probably my greatest gambiarra ("creative implementation") so far.
@@ -133,21 +237,6 @@ defmodule Helix.Event.Loggable.Flow do
 
   defdelegate format_ip(ip),
     to: LoggableUtils
-
-  def get_ip_first(nil, ip),
-    do: format_ip(ip)
-  def get_ip_first(bounce = %Bounce{}, _) do
-    [{_, _first_hop_network, first_hop_ip} | _] = bounce.links
-
-    format_ip(first_hop_ip)
-  end
-
-  def get_ip_last(nil, ip),
-    do: format_ip(ip)
-  def get_ip_last(bounce = %Bounce{}, _) do
-    [{_, _last_hop_network, last_hop_ip} | _] = Enum.reverse(bounce.links)
-    format_ip(last_hop_ip)
-  end
 
   @spec build_entry(Server.id, Entity.id, log_msg) ::
     log_entry
@@ -227,4 +316,29 @@ defmodule Helix.Event.Loggable.Flow do
     end)
     |> List.flatten()
   end
+
+  def get_first_ip(nil, ip),
+    do: format_ip(ip)
+  def get_first_ip(bounce = %Bounce{}, _) do
+    [{_, _first_hop_network, first_hop_ip} | _] = bounce.links
+
+    format_ip(first_hop_ip)
+  end
+
+  def get_last_ip(nil, ip),
+    do: format_ip(ip)
+  def get_last_ip(bounce = %Bounce{}, _) do
+    [{_, _last_hop_network, last_hop_ip} | _] = Enum.reverse(bounce.links)
+    format_ip(last_hop_ip)
+  end
+
+  defp customize_first_ip(ip, %{censor_first: true}),
+    do: censor_ip(ip)
+  defp customize_first_ip(ip, _),
+    do: ip
+
+  defp customize_last_ip(ip, %{censor_last: true}),
+    do: censor_ip(ip)
+  defp customize_last_ip(ip, _),
+    do: ip
 end
