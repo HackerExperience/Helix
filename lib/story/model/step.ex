@@ -44,8 +44,9 @@ defmodule Helix.Story.Model.Step do
   @type email_meta :: map
 
   @type meta :: map
+  @type name :: step_name
   @type step_name :: Constant.t
-  @type contact :: Constant.t | term
+  @type contact :: Constant.t
   @type contact_id :: contact
 
   @type callback_action ::

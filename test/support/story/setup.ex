@@ -51,11 +51,6 @@ defmodule Helix.Test.Story.Setup do
   """
   def story_step(opts \\ []) do
 
-    # TODOREF nope
-    # if opts[:entity_id] do
-    #   StoryHelper.remove_existing_step(opts[:entity_id])
-    # end
-
     {_, related = %{step: step}} = fake_story_step(opts)
 
     # Save the step on DB and run its `setup`
@@ -65,7 +60,6 @@ defmodule Helix.Test.Story.Setup do
     manager = get_or_create_manager(step.entity_id)
 
     # Update step with the newly created manager
-    # step = put_in(step, [:manager], manager)
     step = %{step| manager: manager}
 
     related =
