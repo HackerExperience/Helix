@@ -1,6 +1,9 @@
 defmodule Helix.Story.Model.Story.Step do
   @moduledoc """
-  Story.Step is a persistent representation of the Player's current step.
+  Story.Step is a persistent representation of the steps a Player must go
+  through in order to complete the storyline.
+
+  A player may have multiple steps at a given time, but only one per contact.
 
   It's only a helper to be used alongside Step, but a necessary one in order to
   save state, like all emails that have been sent, or the allowed replies a
@@ -24,6 +27,7 @@ defmodule Helix.Story.Model.Story.Step do
 
   @type t :: %__MODULE__{
     entity_id: Entity.id,
+    contact_id: Step.contact_id | nil,
     step_name: Step.step_name,
     meta: Step.meta,
     emails_sent: [Step.email_id],
@@ -31,26 +35,34 @@ defmodule Helix.Story.Model.Story.Step do
   }
 
   @type creation_params :: %{
-    :entity_id => Entity.idtb,
-    :step_name => Step.step_name,
-    :meta => Step.meta,
-    optional(:allowed_replies) => [Step.reply_id],
-    optional(:emails_sent) => [Step.email_id]
+    entity_id: Entity.idtb,
+    contact_id: Step.contact_id | nil,
+    step_name: Step.step_name,
+    meta: Step.meta
   }
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
-  @creation_fields ~w/entity_id step_name meta emails_sent allowed_replies/a
-  @required_fields ~w/entity_id step_name meta/a
+  @creation_fields [
+    :entity_id,
+    :contact_id,
+    :step_name,
+    :meta,
+    :emails_sent,
+    :allowed_replies
+  ]
+  @required_fields [:entity_id, :contact_id, :step_name, :meta]
 
   @primary_key false
   schema "story_steps" do
     field :entity_id, Entity.ID,
       primary_key: true
-    field :step_name, Constant,
+    field :contact_id, Constant,
       primary_key: true
 
+    field :step_name, Constant
     field :meta, :map
+
     field :emails_sent, {:array, :string},
       default: []
     field :allowed_replies, {:array, :string},
@@ -193,9 +205,9 @@ defmodule Helix.Story.Model.Story.Step do
     def by_entity(query \\ Story.Step, entity_id),
       do: where(query, [s], s.entity_id == ^entity_id)
 
-    @spec by_step(Queryable.t, Step.step_name) ::
+    @spec by_contact(Queryable.t, Step.contact) ::
       Queryable.t
-    def by_step(query, step_name),
-      do: where(query, [s], s.step_name == ^step_name)
+    def by_contact(query, contact_id),
+      do: where(query, [s], s.contact_id == ^contact_id)
   end
 end

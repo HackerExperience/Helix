@@ -12,8 +12,10 @@ request Helix.Account.Websocket.Requests.EmailReply do
     with \
       true <- is_binary(request.unsafe["reply_id"])
     do
+      # TODO
       params = %{
-        reply_id: request.unsafe["reply_id"]
+        reply_id: request.unsafe["reply_id"],
+        contact_id: request.unsafe["contact_id"] |> String.to_existing_atom()
       }
 
       update_params(request, params, reply: true)
@@ -33,14 +35,19 @@ request Helix.Account.Websocket.Requests.EmailReply do
   def handle_request(request, socket) do
     entity_id = socket.assigns.entity_id
     reply_id = request.params.reply_id
+    contact_id = request.params.contact_id
 
-    case StoryPublic.send_reply(entity_id, reply_id) do
+    case StoryPublic.send_reply(entity_id, contact_id, reply_id) do
       :ok ->
         reply_ok(request)
-      {:error, %{message: msg}} ->
-        reply_error(request, msg)
+
+      {:error, reason} ->
+        reply_error(request, reason)
     end
   end
+
+  defp get_error(:bad_step),
+    do: "not_in_step"
 
   render_empty()
 end

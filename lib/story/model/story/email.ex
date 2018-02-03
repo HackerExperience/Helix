@@ -60,6 +60,7 @@ defmodule Helix.Story.Model.Story.Email do
       primary_key: true
     field :contact_id, Constant,
       primary_key: true
+
     field :emails, {:array, :map},
       default: []
   end

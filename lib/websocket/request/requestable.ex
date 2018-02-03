@@ -41,8 +41,8 @@ defprotocol Helix.Websocket.Requestable do
   alias Helix.Websocket
   alias Helix.Websocket.Request
 
-  @spec check_params(Request.t(term), Websocket.t) ::
-    {:ok, Request.t(term)}
+  @spec check_params(Request.t, Websocket.t) ::
+    {:ok, Request.t}
     | {:error, term}
   @doc """
   Method meant to validate the given params in a request. The original params
@@ -58,8 +58,8 @@ defprotocol Helix.Websocket.Requestable do
   """
   def check_params(request, socket)
 
-  @spec check_permissions(Request.t(term), Websocket.t) ::
-    {:ok, Request.t(term)}
+  @spec check_permissions(Request.t, Websocket.t) ::
+    {:ok, Request.t}
     | {:error, term}
   @doc """
   Method focused on validating and verifying the user has the permissions to
@@ -76,8 +76,8 @@ defprotocol Helix.Websocket.Requestable do
   """
   def check_permissions(request, socket)
 
-  @spec handle_request(Request.t(term), Websocket.t) ::
-    {:ok, Request.t(term)}
+  @spec handle_request(Request.t, Websocket.t) ::
+    {:ok, Request.t}
     | {:error, term}
   @doc """
   Method responsible for actual processing of the event, routing it to the
@@ -94,7 +94,7 @@ defprotocol Helix.Websocket.Requestable do
   """
   def handle_request(request, socket)
 
-  @spec reply(Request.t(term), Websocket.t) ::
+  @spec reply(Request.t, Websocket.t) ::
     {:ok, reply :: map}
     | {:error, reply :: map}
     | {:stop, reason :: term}

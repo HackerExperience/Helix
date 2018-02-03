@@ -3,10 +3,12 @@ defmodule Helix.Story.Action.StoryTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Story.Action.Story, as: StoryAction
-  alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Story
   alias Helix.Story.Query.Story, as: StoryQuery
+
+  alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
+  alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
 
   alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
@@ -28,7 +30,7 @@ defmodule Helix.Story.Action.StoryTest do
       assert event.email.id == email_id
 
       # Ensure it got saved on the story step entry
-      %{entry: story_step} = StoryQuery.fetch_current_step(entity_id)
+      %{entry: story_step} = StoryQuery.fetch_step(entity_id, contact_id)
       assert Enum.member?(story_step.emails_sent, email_id)
 
       # And it's also on the story_email entry
@@ -52,12 +54,12 @@ defmodule Helix.Story.Action.StoryTest do
       {_, %{entity_id: entity_id}} =
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
-      %{object: step, entry: entry} = StoryQuery.fetch_current_step(entity_id)
+      [%{object: step, entry: entry}] = StoryQuery.get_steps(entity_id)
       reply_id = StoryHelper.get_allowed_reply(entry)
 
       assert {:ok, [event]} = StoryAction.send_reply(step, entry, reply_id)
 
-      # assert %StoryReplySentEvent{} = event
+      assert %StoryReplySentEvent{} = event
       assert event.entity_id == entity_id
       assert event.reply.id == reply_id
       assert event.reply_to == Story.Step.get_current_email(entry)
@@ -68,13 +70,13 @@ defmodule Helix.Story.Action.StoryTest do
       {_, %{entity_id: entity_id}} =
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
-      %{object: step, entry: entry} = StoryQuery.fetch_current_step(entity_id)
+      [%{object: step, entry: entry}] = StoryQuery.get_steps(entity_id)
       reply_id = StoryHelper.get_allowed_reply(entry)
 
       allowed_before = Story.Step.get_allowed_replies(entry)
       assert {:ok, _event} = StoryAction.send_reply(step, entry, reply_id)
 
-      %{entry: entry_after} = StoryQuery.fetch_current_step(entity_id)
+      [%{entry: entry_after}] = StoryQuery.get_steps(entity_id)
       allowed_after = Story.Step.get_allowed_replies(entry_after)
 
       assert length(allowed_after) == length(allowed_before) - 1
@@ -86,7 +88,7 @@ defmodule Helix.Story.Action.StoryTest do
       {_, %{entity_id: entity_id}} =
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
-      %{object: step, entry: entry} = StoryQuery.fetch_current_step(entity_id)
+      [%{object: step, entry: entry}] = StoryQuery.get_steps(entity_id)
       reply_id = "this_reply_does_not_exist"
 
       assert {:error, reason} = StoryAction.send_reply(step, entry, reply_id)

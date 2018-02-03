@@ -15,14 +15,16 @@ defmodule Helix.Story.Model.Step do
   alias Helix.Story.Model.Steppable
   alias Helix.Story.Model.Story
 
-  @type t(step_type) :: %{
-    __struct__: step_type,
-    event: Event.t | nil,
-    name: step_name,
-    meta: meta,
-    entity_id: Entity.id,
-    manager: Story.Manager.t
-  }
+  @type t ::
+    %{
+      __struct__: atom,
+      event: Event.t | nil,
+      name: step_name,
+      meta: meta,
+      entity_id: Entity.id,
+      manager: Story.Manager.t,
+      contact: contact | nil
+    }
 
   @type email_id :: String.t
   @type reply_id :: String.t
@@ -43,7 +45,8 @@ defmodule Helix.Story.Model.Step do
 
   @type meta :: map
   @type step_name :: Constant.t
-  @type contact :: Constant.t
+  @type contact :: Constant.t | term
+  @type contact_id :: contact
 
   @type callback_action ::
     :complete
@@ -51,8 +54,8 @@ defmodule Helix.Story.Model.Step do
     | :regenerate
     | :noop
 
-  @spec new(t(struct), Event.t) ::
-    t(struct)
+  @spec new(t, Event.t) ::
+    t
   @doc """
   Returns a new step struct with the given event assigned to it.
   """
@@ -63,7 +66,7 @@ defmodule Helix.Story.Model.Step do
   end
 
   @spec fetch(step_name, Entity.id, meta, Story.Manager.t) ::
-    t(struct)
+    t
   @doc """
   Given a step raw name (string), return its struct, assigning the correct
   entity and meta to it.
@@ -75,7 +78,7 @@ defmodule Helix.Story.Model.Step do
   end
 
   @spec first(Entity.id, Story.Manager.t) ::
-    t(struct)
+    t
   @doc """
   Creates the first step (used after player account is created and verified)
   """
@@ -107,7 +110,7 @@ defmodule Helix.Story.Model.Step do
     |> String.to_atom()
   end
 
-  @spec get_contact(t(struct)) ::
+  @spec get_contact(t) ::
     contact
   @doc """
   Returns the Step contact id.
@@ -115,7 +118,7 @@ defmodule Helix.Story.Model.Step do
   def get_contact(step),
     do: Steppable.get_contact(step)
 
-  @spec get_replies(t(struct), email_id) ::
+  @spec get_replies(t, email_id) ::
     [reply_id]
   @doc """
   Returns the unlocked replies of the given email.
@@ -123,7 +126,7 @@ defmodule Helix.Story.Model.Step do
   def get_replies(step, email),
     do: Steppable.get_replies(step, email)
 
-  @spec get_next_step(t(struct)) ::
+  @spec get_next_step(t) ::
     step_name
   @doc """
   Returns the next step name.
@@ -131,7 +134,7 @@ defmodule Helix.Story.Model.Step do
   def get_next_step(step),
     do: Steppable.next_step(step)
 
-  @spec format_meta(t(struct)) ::
+  @spec format_meta(t) ::
     meta
   @doc """
   Formats the step metadata to Helix internal data structures.
@@ -180,13 +183,13 @@ defmodule Helix.Story.Model.Step do
 
     type =
       quote do
-        @type t :: Step.t(__MODULE__)
+        @type t :: Step.t
       end
 
     struct =
       quote do
-        @enforce_keys [:name, :event, :entity_id, :manager]
-        defstruct [:name, :event, :entity_id, :manager, meta: %{}]
+        @enforce_keys [:name, :contact, :event, :entity_id, :manager]
+        defstruct [:name, :contact, :event, :entity_id, :manager, meta: %{}]
       end
 
     new =
@@ -194,24 +197,32 @@ defmodule Helix.Story.Model.Step do
 
         @spec new(Entity.id, Step.meta, Story.Manager.t) :: t
         def new(entity_id, meta, manager) do
-          %__MODULE__{
-            name: Step.get_name(__MODULE__),
-            entity_id: entity_id,
-            event: nil,
-            meta: meta,
-            manager: manager
-          }
+          step =
+            %__MODULE__{
+              name: Step.get_name(__MODULE__),
+              entity_id: entity_id,
+              event: nil,
+              meta: meta,
+              manager: manager,
+              contact: :placeholder
+            }
+
+          %{step| contact: Step.get_contact(step)}
         end
 
         @spec new(Entity.id, Step.meta, Story.Manager.t, Helix.Event.t) :: t
         def new(entity_id, meta, manager, event) do
-          %__MODULE__{
-            name: Step.get_name(__MODULE__),
-            event: event,
-            entity_id: entity_id,
-            meta: meta,
-            manager: manager
-          }
+          step =
+            %__MODULE__{
+              name: Step.get_name(__MODULE__),
+              event: event,
+              entity_id: entity_id,
+              meta: meta,
+              manager: manager,
+              contact: :placeholder
+            }
+
+          %{step| contact: Step.get_contact(step)}
         end
       end
 

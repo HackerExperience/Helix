@@ -31,12 +31,15 @@ defmodule Helix.Test.Features.Storyline.Flow do
         )
 
       # Player is on mission
-      assert %{object: %{name: step_name}} =
-        StoryQuery.fetch_current_step(entity_id)
-      assert step_name == Step.first_step_name()
+      assert [%{object: cur_step}] = StoryQuery.get_steps(entity_id)
+      assert cur_step.name == Step.first_step_name()
 
       # We'll now complete the first step by replying to the email
-      params = %{"reply_id" => "back_thanks"}
+      params =
+        %{
+          "reply_id" => "back_thanks",
+          "contact_id" => to_string(cur_step.contact)
+        }
       ref = push account_socket, "email.reply", params
       assert_reply ref, :ok, _, timeout(:slow)
 
@@ -46,7 +49,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
       assert_transition story_step_proceeded, "setup_pc", "download_cracker"
 
       # Fetch setup data
-      %{object: cur_step} = StoryQuery.fetch_current_step(entity_id)
+      %{object: cur_step} = StoryQuery.fetch_step(entity_id, cur_step.contact)
 
       cracker_id = cur_step.meta.cracker_id
       target_id = cur_step.meta.server_id

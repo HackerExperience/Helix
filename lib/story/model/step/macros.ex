@@ -71,15 +71,16 @@ defmodule Helix.Story.Model.Step.Macros do
             end
           end
 
-          @spec handle_callback(Step.callback_action, Entity.id) ::
+          @spec handle_callback(Step.callback_action, Entity.id, Step.contact) ::
             {:ok, [Event.t]}
-          defp handle_callback(action, entity_id) when not is_tuple(action),
-            do: handle_callback({action, []}, entity_id)
+          defp handle_callback(action, entity_id, contact) when not is_tuple(action),
+            do: handle_callback({action, []}, entity_id, contact)
 
-          @spec handle_callback({Step.callback_action, [Event.t]}, Entity.id) ::
+          @spec handle_callback({Step.callback_action, [Event.t]}, Entity.id, Step.contact) ::
             {:ok, [Event.t]}
-          defp handle_callback({action, events}, entity_id) do
-            request_action = StepActionRequestedEvent.new(action, entity_id)
+          defp handle_callback({action, events}, entity_id, contact_id) do
+            request_action =
+              StepActionRequestedEvent.new(action, entity_id, contact_id)
 
             {:ok, events ++ [request_action]}
           end
@@ -117,11 +118,12 @@ defmodule Helix.Story.Model.Step.Macros do
 
       def unquote(name)(var!(event) = unquote(event), m = unquote(meta)) do
         step_entity_id = m["step_entity_id"] |> Entity.ID.cast!()
+        step_contact_id = m["step_contact_id"] |> String.to_existing_atom()
 
         var!(event)  # Mark as used
 
         unquote(block)
-        |> handle_callback(step_entity_id)
+        |> handle_callback(step_entity_id, step_contact_id)
       end
 
     end
@@ -153,7 +155,10 @@ defmodule Helix.Story.Model.Step.Macros do
       listen unquote(element_id), unquote(events), unquote(callback),
         owner_id: var!(step).entity_id,
         subscriber: @step_name,
-        meta: %{step_entity_id: var!(step).entity_id}
+        meta: %{
+          step_entity_id: var!(step).entity_id,
+          step_contact_id: var!(step).contact
+        }
 
     end
   end

@@ -17,10 +17,8 @@ defmodule Helix.Websocket.Request do
   alias Helix.Websocket.Request.Relay, as: RequestRelay
   alias Helix.Websocket.Utils, as: WebsocketUtils
 
-  @type t :: t(struct)
-
-  @type t(struct) :: %{
-    __struct__: struct,
+  @type t :: %{
+    __struct__: atom,
     unsafe: map,
     params: params,
     meta: meta,
@@ -42,7 +40,7 @@ defmodule Helix.Websocket.Request do
 
         import Helix.Websocket.Flow
 
-        @type t :: Helix.Websocket.Request.t(__MODULE__)
+        @type t :: Helix.Websocket.Request.t
 
         @enforce_keys [:unsafe, :relay]
         defstruct [:unsafe, :relay, params: %{}, meta: %{}]

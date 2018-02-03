@@ -43,8 +43,8 @@ defmodule Helix.Story.Event.Handler.ManagerTest do
       assert nic.custom.network_id == story_nc.network_id
 
       # Now we'll make sure that the newly created Entity has joined a step
-      assert %{entry: _story_step, object: step} =
-        StoryQuery.fetch_current_step(entity.entity_id)
+      assert [%{entry: _story_step, object: step}] =
+        StoryQuery.get_steps(entity.entity_id)
 
       # Which happens to be the first one
       assert step.name == Step.first_step_name()
