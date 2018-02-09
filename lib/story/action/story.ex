@@ -10,10 +10,10 @@ defmodule Helix.Story.Action.Story do
   alias Helix.Story.Event.Reply.Sent, as: ReplySentEvent
   alias Helix.Story.Event.Step.Proceeded, as: StepProceededEvent
 
-  @spec proceed_step(first_step :: Step.t(struct)) ::
+  @spec proceed_step(first_step :: Step.t) ::
     {:ok, Story.Step.t}
     | {:error, :internal}
-  @spec proceed_step(prev_step :: Step.t(struct), next_step :: Step.t(struct)) ::
+  @spec proceed_step(prev_step :: Step.t, next_step :: Step.t) ::
     {:ok, Story.Step.t}
     | {:error, :internal}
   @doc """
@@ -28,7 +28,7 @@ defmodule Helix.Story.Action.Story do
   def proceed_step(prev_step, next_step),
     do: StepInternal.proceed(prev_step, next_step)
 
-  @spec update_step_meta(Step.t(struct)) ::
+  @spec update_step_meta(Step.t) ::
     StepInternal.entry_step_repo_return
     | no_return
   @doc """
@@ -37,7 +37,7 @@ defmodule Helix.Story.Action.Story do
   def update_step_meta(step),
     do: StepInternal.update_meta(step)
 
-  @spec unlock_reply(Step.t(struct), Step.reply_id) ::
+  @spec unlock_reply(Step.t, Step.reply_id) ::
     StepInternal.entry_step_repo_return
     | no_return
   @doc """
@@ -46,7 +46,7 @@ defmodule Helix.Story.Action.Story do
   def unlock_reply(step, reply_id),
     do: StepInternal.unlock_reply(step, reply_id)
 
-  @spec lock_reply(Step.t(struct), Step.reply_id) ::
+  @spec lock_reply(Step.t, Step.reply_id) ::
     StepInternal.entry_step_repo_return
     | no_return
   @doc """
@@ -55,7 +55,7 @@ defmodule Helix.Story.Action.Story do
   def lock_reply(step, reply_id),
     do: StepInternal.lock_reply(step, reply_id)
 
-  @spec notify_step(Step.t(struct), Step.t(struct)) ::
+  @spec notify_step(Step.t, Step.t) ::
     [StepProceededEvent.t]
   @doc """
   Generates the StepProceededEvent, used to notify the client about the progress
@@ -64,7 +64,7 @@ defmodule Helix.Story.Action.Story do
   def notify_step(prev_step, next_step),
     do: [StepProceededEvent.new(prev_step, next_step)]
 
-  @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
+  @spec send_email(Step.t, Step.email_id, Step.email_meta) ::
     {:ok, [EmailSentEvent.t]}
     | {:error, :internal}
   @doc """
@@ -90,7 +90,7 @@ defmodule Helix.Story.Action.Story do
     end)
   end
 
-  @spec send_reply(Step.t(struct), Story.Step.t, Step.reply_id) ::
+  @spec send_reply(Step.t, Story.Step.t, Step.reply_id) ::
     {:ok, [ReplySentEvent.t]}
     | {:error, {:reply, :not_found}}
     | {:error, :internal}

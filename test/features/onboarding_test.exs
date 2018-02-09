@@ -44,7 +44,7 @@ defmodule Helix.Test.Features.Onboarding do
       assert story_server.type == :desktop_story
 
       # Tutorial mission was created
-      assert %{object: step} = StoryQuery.fetch_current_step(entity.entity_id)
+      assert [%{object: step}] = StoryQuery.get_steps(entity.entity_id)
       assert step.name == Step.first_step_name()
     end
   end

@@ -141,7 +141,7 @@ defprotocol Helix.Story.Model.Steppable do
     :noop
     | :complete
     | :fail
-  @typep generic_step :: Step.t(struct)
+  @typep generic_step :: Step.t
 
   @spec setup(cur_step :: generic_step, prev_step :: generic_step | nil) ::
     {:ok | :error, generic_step, [Event.t]}
@@ -215,7 +215,7 @@ defprotocol Helix.Story.Model.Steppable do
   """
   def next_step(step)
 
-  @spec get_contact(generic_step) ::
+  @spec get_contact(Step.t) ::
     Step.contact
   @doc """
   Returns the contact name (contact_id).

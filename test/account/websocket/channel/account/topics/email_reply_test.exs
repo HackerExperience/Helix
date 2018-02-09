@@ -16,16 +16,21 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
     test "replies an email when correct data is given" do
       {socket, %{entity_id: entity_id}} = ChannelSetup.join_account()
 
-      StorySetup.story_step(
-        entity_id: entity_id,
-        name: :fake_steps@test_msg,
-        meta: %{}
-      )
+      {_, %{step: step}} =
+        StorySetup.story_step(
+          entity_id: entity_id,
+          name: :fake_steps@test_msg,
+          meta: %{}
+        )
 
-      %{entry: entry} = StoryQuery.fetch_current_step(entity_id)
+      %{entry: entry} = StoryQuery.fetch_step(entity_id, step.contact)
       reply_id = StoryHelper.get_allowed_reply(entry)
 
-      params = %{"reply_id" => reply_id}
+      params =
+        %{
+          "reply_id" => reply_id,
+          "contact_id" => step.contact |> to_string()
+        }
 
       ref = push socket, "email.reply", params
 
@@ -37,16 +42,47 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       end)
     end
 
+    test "fails if contact is invalid" do
+      {socket, %{entity_id: entity_id}} = ChannelSetup.join_account()
+
+      {_, %{step: step}} =
+        StorySetup.story_step(
+          entity_id: entity_id,
+          name: :fake_steps@test_msg,
+          meta: %{}
+        )
+
+      %{entry: entry} = StoryQuery.fetch_step(entity_id, step.contact)
+      reply_id = StoryHelper.get_allowed_reply(entry)
+
+      # Correct reply, but to wrong contact
+      params =
+        %{
+          "reply_id" => reply_id,
+          "contact_id" => StoryHelper.contact_id() |> to_string()
+        }
+
+      ref = push socket, "email.reply", params
+
+      assert_reply ref, :error, response, timeout(:fast)
+      assert response.data.message == "reply_not_found"
+    end
+
     test "fails if reply is invalid" do
       {socket, %{entity_id: entity_id}} = ChannelSetup.join_account()
 
-      StorySetup.story_step(
-        entity_id: entity_id,
-        name: :fake_steps@test_msg,
-        meta: %{}
-      )
+      {_, %{step: step}} =
+        StorySetup.story_step(
+          entity_id: entity_id,
+          name: :fake_steps@test_msg,
+          meta: %{}
+        )
 
-      params = %{"reply_id" => "invalid_reply"}
+      params =
+        %{
+          "reply_id" => "invalid_reply",
+          "contact_id" => step.contact |> to_string()
+        }
 
       ref = push socket, "email.reply", params
 
@@ -60,7 +96,13 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       # Remove any existing step
       StoryHelper.remove_existing_step(entity_id)
 
-      ref = push socket, "email.reply", %{"reply_id" => "lolzor"}
+      params =
+        %{
+          "reply_id" => "lolzor",
+          "contact_id" => StoryHelper.contact_id() |> to_string()
+        }
+
+      ref = push socket, "email.reply", params
 
       assert_reply ref, :error, response, timeout(:fast)
       assert response.data.message == "not_in_step"

@@ -5,9 +5,9 @@ defmodule Helix.Test.Story.Helper do
   alias Helix.Story.Repo, as: StoryRepo
 
   def remove_existing_step(entity_id) do
-    with %{entry: story_step} <- StepInternal.fetch_current_step(entity_id) do
-      StoryRepo.delete(story_step)
-    end
+    entity_id
+    |> StepInternal.get_steps()
+    |> Enum.each(&(StoryRepo.delete(&1.entry)))
   end
 
   def get_steps_from_entity(entity_id) do
@@ -20,5 +20,21 @@ defmodule Helix.Test.Story.Helper do
     entry
     |> Story.Step.get_allowed_replies()
     |> Enum.random()
+  end
+
+  @doc """
+  Generates random contact id
+  """
+  def contact_id do
+    # Guaranteed to be random
+    :friend
+  end
+
+  @doc """
+  Generates random reply id
+  """
+  def reply_id do
+    # Guaranteed to be random
+    "reply_id"
   end
 end

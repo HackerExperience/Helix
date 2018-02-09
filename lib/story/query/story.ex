@@ -6,11 +6,8 @@ defmodule Helix.Story.Query.Story do
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Story
 
-  @spec fetch_current_step(Entity.id) ::
-    %{
-      object: Step.t(struct),
-      entry: Story.Step.t
-    }
+  @spec fetch_step(Entity.id, Step.contact) ::
+    StepInternal.step_info
     | nil
   @doc """
   Returns the current step of the player, both the Story.Step entry and the Step
@@ -18,7 +15,17 @@ defmodule Helix.Story.Query.Story do
 
   The returned metadata is using Helix internal data structures.
   """
-  defdelegate fetch_current_step(entity_id),
+  defdelegate fetch_step(entity_id, contact_id),
+    to: StepInternal
+
+  @spec get_steps(Entity.id) ::
+    [StepInternal.step_info]
+  @doc """
+  Returns all steps that `entity_id` is currently at.
+
+  Result is formatted as `step_info`.
+  """
+  defdelegate get_steps(entity_id),
     to: StepInternal
 
   @spec get_emails(Entity.id) ::

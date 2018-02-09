@@ -4,6 +4,7 @@ defmodule Helix.Core.Validator do
     :password
     | :hostname
     | :bounce_name
+    | :reply_id
 
   @regex_hostname ~r/^[a-zA-Z0-9-_.@#]{1,20}$/
 
@@ -29,6 +30,9 @@ defmodule Helix.Core.Validator do
   def validate_input(input, :bounce_name, _),
     do: validate_bounce_name(input)
 
+  def validate_input(input, :reply_id, _),
+    do: validate_reply_id(input)
+
   defp validate_hostname(v) when not is_binary(v),
     do: :error
   defp validate_hostname(v) do
@@ -39,9 +43,12 @@ defmodule Helix.Core.Validator do
     end
   end
 
-  def validate_password(input),
+  defp validate_password(input),
     do: validate_hostname(input)  # TODO
 
   defp validate_bounce_name(v),
+    do: validate_hostname(v)  # TODO
+
+  defp validate_reply_id(v),
     do: validate_hostname(v)  # TODO
 end

@@ -14,13 +14,13 @@ defmodule Helix.Story.Event.Step do
     @type t ::
       %__MODULE__{
         entity_id: Entity.id,
-        previous_step: Step.t(struct),
-        next_step: Step.t(struct)
+        previous_step: Step.t,
+        next_step: Step.t
       }
 
     event_struct [:entity_id, :previous_step, :next_step]
 
-    @spec new(Step.t(struct), Step.t(struct)) ::
+    @spec new(Step.t, Step.t) ::
       t
     def new(prev_step = %_{entity_id: _}, next_step = %_{entity_id: _}) do
       %__MODULE__{
@@ -65,20 +65,22 @@ defmodule Helix.Story.Event.Step do
     alias Helix.Entity.Model.Entity
     alias Helix.Story.Model.Step
 
-    event_struct [:action, :entity_id]
+    event_struct [:action, :entity_id, :contact_id]
 
     @type t ::
       %__MODULE__{
         action: Step.callback_action,
-        entity_id: Entity.id
+        entity_id: Entity.id,
+        contact_id: Step.contact_id
       }
 
-    @spec new(Step.callback_action, Entity.id) ::
+    @spec new(Step.callback_action, Entity.id, Step.contact_id) ::
       t
-    def new(action, entity_id) do
+    def new(action, entity_id, contact_id) do
       %__MODULE__{
         action: action,
-        entity_id: entity_id
+        entity_id: entity_id,
+        contact_id: contact_id
       }
     end
   end

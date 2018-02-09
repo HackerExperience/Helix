@@ -49,7 +49,7 @@ defmodule Helix.Story.Internal.EmailTest do
 
   describe "send_email/3" do
     test "email is persisted correctly on database" do
-      {step, %{entity_id: entity_id}} = StorySetup.step()
+      {_, %{step: step, entity_id: entity_id}} = StorySetup.story_step()
 
       email_id = "email_id"
 
@@ -76,7 +76,7 @@ defmodule Helix.Story.Internal.EmailTest do
 
   describe "send_reply/2" do
     test "reply is persisted correctly on database" do
-      {step, %{entity_id: entity_id}} = StorySetup.step()
+      {_, %{step: step, entity_id: entity_id}} = StorySetup.story_step()
 
       reply_id = "reply_id"
 

@@ -9,29 +9,31 @@ defmodule Helix.Story.Public.Index do
 
   @type index ::
     %{
-      email: [email_entry]
+      Step.contact => step_entry
     }
 
   @type rendered_index ::
     %{
-      email: [rendered_email_entry]
+      String.t => rendered_step_entry
     }
 
-  @typep email_entry ::
+  @typep step_entry ::
     %{
-      contact_id: Step.contact,
-      messages: [message],
-      replies: []
+      emails: [email],
+      replies: [Step.reply_id],
+      name: Step.name,
+      meta: Step.meta
     }
 
-  @typep rendered_email_entry ::
+  @typep rendered_step_entry ::
     %{
-      contact_id: String.t,
-      messages: [rendered_message],
-      replies: []
+      emails: [rendered_email],
+      replies: [String.t],
+      name: String.t,
+      meta: map
     }
 
-  @typep message ::
+  @typep email ::
     %{
       id: Step.email_id,
       meta: Step.email_meta,
@@ -39,7 +41,7 @@ defmodule Helix.Story.Public.Index do
       timestamp: DateTime.t
     }
 
-  @typep rendered_message ::
+  @typep rendered_email ::
     %{
       id: String.t,
       meta: map,
@@ -50,52 +52,66 @@ defmodule Helix.Story.Public.Index do
   @spec index(Entity.id) ::
     index
   def index(entity_id) do
-    email =
-      entity_id
-      |> StoryQuery.get_emails()
-      |> Enum.map(fn story_email ->
-          %{
-            contact_id: story_email.contact_id,
-            messages: messages(story_email.emails),
-            replies: []  # TODO
-          }
-        end)
+    steps = StoryQuery.get_steps(entity_id)
+    emails = StoryQuery.get_emails(entity_id)
 
-    %{
-      email: email
-    }
+    steps
+    |> Enum.reduce(%{}, fn %{entry: story_step}, acc ->
+      idx =
+        %{
+          emails: index_emails(emails, story_step),
+          replies: story_step.allowed_replies,
+          name: story_step.step_name,
+          meta: story_step.meta
+        }
+
+      acc
+      |> Map.put(story_step.contact_id, idx)
+    end)
   end
 
   @spec index(index) ::
     rendered_index
   def render_index(index) do
-    rendered_email =
-      Enum.map(index.email, fn entry ->
+    index
+    |> Enum.reduce(%{}, fn {contact_id, entry}, acc ->
+      data =
         %{
-          contact_id: to_string(entry.contact_id),
-          messages: render_messages(entry.messages),
-          replies: []
+          emails: render_emails(entry.emails),
+          replies: entry.replies,
+          name: to_string(entry.name),
+          meta: entry.meta
         }
-      end)
 
-    %{
-      email: rendered_email
-    }
+      acc
+      |> Map.put(contact_id, data)
+    end)
   end
 
-  @spec messages([Story.Email.email]) ::
-    [rendered_message]
-  def messages(messages),
-    do: Enum.map(messages, &message/1)
+  @spec index_emails([Story.Email.t], Story.Step.t) ::
+    [email]
+  defp index_emails(emails, story_step) do
+    emails
+    |> Enum.filter(&(&1.contact_id == story_step.contact_id))
+    |> Enum.map(fn story_email ->
+      emails(story_email.emails)
+    end)
+    |> List.flatten()
+  end
 
-  @spec render_messages([message]) ::
-    [rendered_message]
-  def render_messages(messages),
-    do: Enum.map(messages, &render_message/1)
+  @spec emails([Story.Email.email]) ::
+    [email]
+  defp emails(emails),
+    do: Enum.map(emails, &email/1)
 
-  @spec message(Story.Email.email) ::
-    message
-  def message(data) do
+  @spec render_emails([email]) ::
+    [rendered_email]
+  defp render_emails(emails),
+    do: Enum.map(emails, &render_email/1)
+
+  @spec email(Story.Email.email) ::
+    email
+  defp email(data) do
     %{
       id: data.id,
       meta: data.meta,
@@ -104,14 +120,14 @@ defmodule Helix.Story.Public.Index do
     }
   end
 
-  @spec render_message(message) ::
-    rendered_message
-  def render_message(message) do
+  @spec render_email(email) ::
+    rendered_email
+  defp render_email(email) do
     %{
-      id: message.id,
-      meta: message.meta,
-      sender: to_string(message.sender),
-      timestamp: ClientUtils.to_timestamp(message.timestamp)
+      id: email.id,
+      meta: email.meta,
+      sender: to_string(email.sender),
+      timestamp: ClientUtils.to_timestamp(email.timestamp)
     }
   end
 end

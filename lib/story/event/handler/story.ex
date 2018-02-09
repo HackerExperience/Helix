@@ -22,9 +22,9 @@ defmodule Helix.Story.Event.Handler.Story do
 
   @doc """
   Main step handler. Its first role is to figure out the entity that event
-  belongs to, and then fetching that entity's current step.
+  belongs to, and then fetching any steps that entity is assigned to.
 
-  If an step is found, we instantiate its object (Steppable data/struct), and
+  For each step found, we instantiate its object (Steppable data/struct), and
   guide it through the StepFlow. See doc on `step_flow/1`
 
   Emits:
@@ -35,16 +35,21 @@ defmodule Helix.Story.Event.Handler.Story do
   def event_handler(event) do
     with \
       entity_id = %{} <- Step.get_entity(event),
-      step = %{} <- StoryQuery.fetch_current_step(entity_id)
+      steps = [_] <- StoryQuery.get_steps(entity_id)
     do
-      step.object
-      |> Step.new(event)
-      |> step_flow()
+      Enum.each(steps, fn %{object: step} ->
+        step
+        |> Step.new(event)
+        |> step_flow
+      end)
     end
   end
 
   def action_handler(event = %StepActionRequestedEvent{}) do
-    with %{object: step} <- StoryQuery.fetch_current_step(event.entity_id) do
+    with \
+      %{object: step} <-
+        StoryQuery.fetch_step(event.entity_id, event.contact_id)
+    do
       step = Step.new(step, event)
 
       handle_action(event.action, step)
@@ -74,7 +79,7 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
-  @spec handle_action(Steppable.actions, Step.t(struct)) ::
+  @spec handle_action(Steppable.actions, Step.t) ::
     term
   docp """
   When a step requests to be completed, we'll call `Steppable.complete/1`,
@@ -111,7 +116,7 @@ defmodule Helix.Story.Event.Handler.Story do
   defp handle_action(:noop, _),
     do: :noop
 
-  @spec update_next(Step.t(struct), Step.step_name) ::
+  @spec update_next(Step.t, Step.step_name) ::
     term
   docp """
   Updates the database, so that the player gets moved to the next step.

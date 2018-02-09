@@ -6,6 +6,7 @@ defmodule Helix.Story.Action.Flow.Story do
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Action.Flow.Context, as: ContextFlow
   alias Helix.Story.Action.Story, as: StoryAction
+  alias Helix.Story.Query.Story, as: StoryQuery
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
   alias Helix.Story.Model.Story
@@ -33,6 +34,35 @@ defmodule Helix.Story.Action.Flow.Story do
         on_success(fn -> Event.emit(events, from: relay) end)
       do
         {:ok, story_step}
+      end
+    end
+  end
+
+  @spec send_reply(Entity.id, Step.contact, Step.reply_id) ::
+    :ok
+    | {:error, :bad_step}
+    | {:error, {:reply, :not_found}}
+    | {:error, :internal}
+  @doc """
+  Sends `reply_id` from `entity_id` to the `contact_id`.
+
+  Emits: StoryReplySentEvent.t
+  """
+  def send_reply(entity_id, contact_id, reply_id) do
+    flowing do
+      with \
+        step = %{} <- StoryQuery.fetch_step(entity_id, contact_id) || :badstep,
+        {:ok, events} <-
+          StoryAction.send_reply(step.object, step.entry, reply_id),
+        on_success(fn -> Event.emit(events) end)
+      do
+        :ok
+      else
+        :badstep ->
+          {:error, :bad_step}
+
+        error ->
+          error
       end
     end
   end

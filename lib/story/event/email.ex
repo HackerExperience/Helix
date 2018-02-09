@@ -15,13 +15,13 @@ defmodule Helix.Story.Event.Email do
     @type t ::
       %__MODULE__{
         entity_id: Entity.id,
-        step: Step.t(struct),
+        step: Step.t,
         email: Story.Email.email
       }
 
     event_struct [:entity_id, :step, :email]
 
-    @spec new(Step.t(term), Story.Email.email) ::
+    @spec new(Step.t, Story.Email.email) ::
       t
     def new(step = %_{name: _, meta: _, entity_id: _}, email = %{id: _}) do
       %__MODULE__{

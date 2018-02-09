@@ -13,6 +13,7 @@ defmodule Helix.EventTest do
     test "event is emitted after the specified time" do
       {_, %{entity_id: entity_id, step: cur_step}} =
         StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
+      contact_id = cur_step.contact
 
       event = EventSetup.Story.reply_sent(cur_step, "reply_to_e3", "e3")
 
@@ -20,13 +21,13 @@ defmodule Helix.EventTest do
       Event.emit_after([event], 50)
 
       # Meanwhile, let's make sure the current step on the DB hasn't changed.
-      assert %{object: step} = StoryQuery.fetch_current_step(entity_id)
+      assert %{object: step} = StoryQuery.fetch_step(entity_id, contact_id)
       assert step == cur_step
 
       # Wait for it... needs some extra time because async
       :timer.sleep(80)
 
-      assert %{object: new_step} = StoryQuery.fetch_current_step(entity_id)
+      assert %{object: new_step} = StoryQuery.fetch_step(entity_id, contact_id)
 
       # DB state has changed
       refute new_step == cur_step

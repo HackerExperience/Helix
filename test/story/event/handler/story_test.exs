@@ -43,7 +43,7 @@ defmodule Helix.Story.Event.Handler.StoryTest do
 
       EventHelper.emit(event)
 
-      %{object: new_step} = StoryQuery.fetch_current_step(entity_id)
+      %{object: new_step} = StoryQuery.fetch_step(entity_id, step.contact)
 
       refute new_step == step
       assert new_step.name == Step.get_next_step(step)

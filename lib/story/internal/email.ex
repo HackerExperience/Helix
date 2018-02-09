@@ -41,7 +41,7 @@ defmodule Helix.Story.Internal.Email do
     |> Enum.map(&format/1)
   end
 
-  @spec send_email(Step.t(struct), Step.email_id, Step.email_meta) ::
+  @spec send_email(Step.t, Step.email_id, Step.email_meta) ::
     {:ok, Story.Email.t, Story.Email.email}
     | :internal_error
   @doc """
@@ -50,7 +50,7 @@ defmodule Helix.Story.Internal.Email do
   def send_email(step, email_id, meta),
     do: generic_send(step, email_id, :contact, meta)
 
-  @spec send_reply(Step.t(struct), Step.reply_id) ::
+  @spec send_reply(Step.t, Step.reply_id) ::
     {:ok, Story.Email.t, Story.Email.email}
     | :internal_error
   @doc """

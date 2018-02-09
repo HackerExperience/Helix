@@ -8,12 +8,14 @@ defmodule Helix.Story.Model.Story.StepTest do
   alias Helix.Story.Model.Story
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "create_changeset/1" do
     test "changeset is created as expected with valid input" do
       params = %{
         entity_id: Entity.ID.generate(),
+        contact_id: StoryHelper.contact_id(),
         step_name: Random.atom(),
         meta: %{}
       }

@@ -149,3 +149,33 @@ defmodule Helix.Story.Mission.FakeSteps do
     next_step Helix.Story.Mission.FakeSteps.TestSimple
   end
 end
+
+defmodule Helix.Story.Mission.FakeContactOne do
+
+  import Helix.Story.Model.Step.Macros
+
+  contact :contact_one
+
+  step TestSimple do
+    def setup(step, _),
+      do: {:ok, step, []}
+    def complete(step),
+      do: {:ok, step, []}
+    next_step __MODULE__
+  end
+end
+
+defmodule Helix.Story.Mission.FakeContactTwo do
+
+  import Helix.Story.Model.Step.Macros
+
+  contact :contact_two
+
+  step TestSimple do
+    def setup(step, _),
+      do: {:ok, step, []}
+      def complete(step),
+        do: {:ok, step, []}
+      next_step __MODULE__
+  end
+end
