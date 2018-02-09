@@ -43,5 +43,4 @@ defmodule Helix.Test.Story.Setup.Manager do
 
     {manager, related}
   end
-
 end

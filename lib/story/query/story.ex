@@ -20,6 +20,11 @@ defmodule Helix.Story.Query.Story do
 
   @spec get_steps(Entity.id) ::
     [StepInternal.step_info]
+  @doc """
+  Returns all steps that `entity_id` is currently at.
+
+  Result is formatted as `step_info`.
+  """
   defdelegate get_steps(entity_id),
     to: StepInternal
 
