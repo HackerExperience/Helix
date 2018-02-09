@@ -1,6 +1,6 @@
 import Helix.Websocket.Request
 
-request Helix.Account.Websocket.Requests.EmailReply do
+request Helix.Story.Websocket.Requests.Email.Reply do
   @moduledoc """
   Implementation of the `EmailReply` request, which allows the player to send
   an (storyline) email reply to the Contact (story character)
@@ -10,16 +10,19 @@ request Helix.Account.Websocket.Requests.EmailReply do
 
   def check_params(request, _socket) do
     with \
-      true <- is_binary(request.unsafe["reply_id"])
+      true <- is_binary(request.unsafe["reply_id"]),
+      {:ok, contact_id} <- cast_contact(request.unsafe["contact_id"])
     do
-      # TODO
       params = %{
         reply_id: request.unsafe["reply_id"],
-        contact_id: request.unsafe["contact_id"] |> String.to_existing_atom()
+        contact_id: contact_id
       }
 
       update_params(request, params, reply: true)
     else
+      {:error, reason = :bad_contact} ->
+        reply_error(request, reason)
+
       _ ->
         bad_request(request)
     end
@@ -46,8 +49,17 @@ request Helix.Account.Websocket.Requests.EmailReply do
     end
   end
 
+  render_empty()
+
+  defp cast_contact(contact_id) do
+    try do
+      {:ok, String.to_existing_atom(contact_id)}
+    rescue
+      _ ->
+        {:error, :bad_contact}
+    end
+  end
+
   defp get_error(:bad_step),
     do: "not_in_step"
-
-  render_empty()
 end

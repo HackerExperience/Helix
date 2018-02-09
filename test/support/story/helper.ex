@@ -29,4 +29,12 @@ defmodule Helix.Test.Story.Helper do
     # Guaranteed to be random
     :friend
   end
+
+  @doc """
+  Generates random reply id
+  """
+  def reply_id do
+    # Guaranteed to be random
+    "reply_id"
+  end
 end

@@ -7,12 +7,12 @@ channel Helix.Account.Websocket.Channel.Account do
 
   alias Helix.Account.Websocket.Channel.Account.Join, as: AccountJoin
   alias Helix.Account.Websocket.Requests.Bootstrap, as: BootstrapRequest
-  alias Helix.Account.Websocket.Requests.EmailReply, as: EmailReplyRequest
   alias Helix.Account.Websocket.Requests.Logout, as: LogoutRequest
   alias Helix.Client.Websocket.Requests.Setup, as: ClientSetupProxyRequest
   alias Helix.Network.Websocket.Requests.Bounce.Create, as: BounceCreateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Update, as: BounceUpdateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Remove, as: BounceRemoveRequest
+  alias Helix.Story.Websocket.Requests.Email.Reply, as: EmailReplyRequest
 
   @doc """
   Joins the Account channel.
