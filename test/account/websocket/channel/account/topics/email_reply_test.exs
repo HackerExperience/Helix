@@ -29,7 +29,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       params =
         %{
           "reply_id" => reply_id,
-          "contact_id" => step.contact
+          "contact_id" => step.contact |> to_string()
         }
 
       ref = push socket, "email.reply", params
@@ -59,7 +59,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       params =
         %{
           "reply_id" => reply_id,
-          "contact_id" => StoryHelper.contact_id()
+          "contact_id" => StoryHelper.contact_id() |> to_string()
         }
 
       ref = push socket, "email.reply", params
@@ -81,7 +81,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       params =
         %{
           "reply_id" => "invalid_reply",
-          "contact_id" => step.contact
+          "contact_id" => step.contact |> to_string()
         }
 
       ref = push socket, "email.reply", params
@@ -99,7 +99,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       params =
         %{
           "reply_id" => "lolzor",
-          "contact_id" => StoryHelper.contact_id()
+          "contact_id" => StoryHelper.contact_id() |> to_string()
         }
 
       ref = push socket, "email.reply", params

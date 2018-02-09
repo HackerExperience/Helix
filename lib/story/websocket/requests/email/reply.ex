@@ -6,15 +6,17 @@ request Helix.Story.Websocket.Requests.Email.Reply do
   an (storyline) email reply to the Contact (story character)
   """
 
+  import HELL.Macros
+
   alias Helix.Story.Public.Story, as: StoryPublic
 
   def check_params(request, _socket) do
     with \
-      true <- is_binary(request.unsafe["reply_id"]),
+      {:ok, reply_id} <- validate_input(request.unsafe["reply_id"], :reply_id),
       {:ok, contact_id} <- cast_contact(request.unsafe["contact_id"])
     do
       params = %{
-        reply_id: request.unsafe["reply_id"],
+        reply_id: reply_id,
         contact_id: contact_id
       }
 
@@ -51,6 +53,11 @@ request Helix.Story.Websocket.Requests.Email.Reply do
 
   render_empty()
 
+  docp """
+  Makes sure that whatever contact the player is trying to use, exists on the
+  system. It doesn't actually verify whether the contact is valid (one could use
+  "error" or any atom as a contact), but that will be validated later.
+  """
   defp cast_contact(contact_id) do
     try do
       {:ok, String.to_existing_atom(contact_id)}
