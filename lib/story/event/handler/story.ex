@@ -30,7 +30,7 @@ defmodule Helix.Story.Event.Handler.Story do
   Emits:
   - Events returned by `Steppable` methods
   - StepProceededEvent.t when action is :complete
-  - StepFailedEvent.t, StepRestartedEvent.t when action is :fail
+  - StepFailedEvent.t, StepRestartedEvent.t when action is :restart
   """
   def event_handler(event) do
     with \
@@ -71,7 +71,10 @@ defmodule Helix.Story.Event.Handler.Story do
       with \
         {action, step, events} <-
           Steppable.handle_event(step, step.event, step.meta),
-        on_success(fn -> Event.emit(events, from: step.event) end),
+
+        # HACK: Workaround for HELF #29
+        # on_success(fn -> Event.emit(events, from: step.event) end),
+        Event.emit(events, from: step.event),
         handle_action(action, step)
       do
         :ok
@@ -79,7 +82,7 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
-  @spec handle_action(Steppable.actions, Step.t) ::
+  @spec handle_action(Step.callback_action, Step.t) ::
     term
   docp """
   When a step requests to be completed, we'll call `Steppable.complete/1`,
@@ -100,8 +103,8 @@ defmodule Helix.Story.Event.Handler.Story do
   If the request is to fail/abort an step, we'll call `Steppable.fail/1`,
   and then handle the failure with `fail_step/1`
   """
-  defp handle_action(:fail, step) do
-    with {:ok, step, events} <- Steppable.fail(step) do
+  defp handle_action({:restart, reason, checkpoint}, step) do
+    with {:ok, step, events} <- Steppable.restart(step, reason, checkpoint) do
       Event.emit(events, from: step.event)
 
       hespawn fn ->
@@ -121,8 +124,8 @@ defmodule Helix.Story.Event.Handler.Story do
   docp """
   Updates the database, so that the player gets moved to the next step.
 
-  This is where we call next step's `Steppable.setup`, as well as the
-  `StepProceededEvent` is sent to the client
+  This is where we call next step's `Steppable.start`, as well as make sure the
+  `StepProceededEvent` is sent to the client.
 
   Emits: StepProceededEvent.t
   """
@@ -135,7 +138,7 @@ defmodule Helix.Story.Event.Handler.Story do
       # /\ Proceeds player to the next step
 
       # Generate next step data/meta
-      {:ok, next_step, events} <- Steppable.setup(next_step, prev_step),
+      {:ok, next_step, events} <- Steppable.start(next_step, prev_step),
       Event.emit(events, from: prev_step.event),
 
       # Update step meta

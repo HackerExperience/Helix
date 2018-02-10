@@ -65,9 +65,24 @@ defprotocol Helix.Story.Model.Steppable do
   email. If `:complete` is given, Helix will call the `complete/1` function. The
   `do` block means an arbitrary command will be executed.
 
-  ## Setting up a new step with `setup/2`
+  ## Idempotent context creation with `setup/2`
 
-  The `setup/2` function is called when the previous step was completed, and
+  `setup/2` is responsible for generating the entire step environment in an
+  idempotent fashion. This is important because, in the case of a step restart,
+  fresh data *may* need to be regenerated.
+
+  The list of events should include all events originated by the `setup/2`
+  method. So, for instance, if during the `setup/2` function we generate a file
+  and a log, both corresponding events should be passed upstream, so they can be
+  emitted by the StoryHandler.
+
+  (Note that whenever someone requests a step restart, they are responsible for
+  cleaning up any stale/corrupt/invalid data. `setup/2` only creates data. See
+  the "Restarting a step" section for more information).
+
+  ## Setting up a new step with `start/2`
+
+  The `start/2` function is called when the previous step was completed, and
   this step will be marked as the player's current step. It receives both the
   current and the previous step struct (in most cases you can ignore the
   previous step).
@@ -76,14 +91,9 @@ defprotocol Helix.Story.Model.Steppable do
   one of `:ok` | `:error` (where `:error` means something really bad happened
   internally).
 
-  It's on the `setup/2` function that a step should generate and prepare its
-  environment, as well as send its first email to the user (applicable in most
-  cases).
-
-  Note that the list of events should include all events originated by the setup
-  method. So, for instance, if during the `setup/2` function we generate a file
-  and a log, both corresponding events should be passed upstream, so they can be
-  emitted by the StoryHandler.
+  `start/2` will use the `setup/2` method to generate and prepare the step data
+  and environment. Once this is done, it will also send the email to the user
+  (applicable in most cases).
 
   ## Reacting to arbitrary events with `handle_event`
 
@@ -97,14 +107,16 @@ defprotocol Helix.Story.Model.Steppable do
   :noop message, meaning that that event should be ignored.
 
   Pay attention to the return types of `handle_event`! The return signature is
-  `{action, new_step [events]}`, where action  may be one of:
+  `{action, new_step, [events]}`, where action  may be one of:
 
   - :noop - Do nothing after `handle_event` is called.
   - :complete - Mark the step as completed by calling `complete/1`
-  - :fail - Mark the step as failed by calling `fail/1`
+  - {:restart, reason, checkpoint} - Mark the step as restarted by calling
+    `restart/3`. `reason` is used to notify the player why the step got
+    restarted, and `checkpoint` points to the last email that we'll rollback to.
 
   The `new_step` will be passed to the next functions if applicable (complete
-  or fail). Any events on the list of events will always be emitted, even if
+  or restart). Any events on the list of events will always be emitted, even if
   `:noop` is the returned action.
 
   ## Completing a step with `complete`
@@ -125,6 +137,10 @@ defprotocol Helix.Story.Model.Steppable do
   In order to do so, simply use the `next_step` macro, passing the module name
   as argument, like `next_step Helix.Story.Mission.MissionName.StepName`
 
+  ## Restarting a step with `restart/3`
+
+  TODO DOCME
+
   ## Example
 
   A working example can be seen at `lib/story/mission/tutorial/steps.ex`
@@ -133,18 +149,8 @@ defprotocol Helix.Story.Model.Steppable do
   alias Helix.Event
   alias Helix.Story.Model.Step
 
-  @typedoc """
-  The `actions` type lists all possible actions returned by `handle_event/3`,
-  which will be interpreted by the StepFlow implemented at StoryEventHandler.
-  """
-  @type actions ::
-    :noop
-    | :complete
-    | :fail
-  @typep generic_step :: Step.t
-
-  @spec setup(cur_step :: generic_step, prev_step :: generic_step | nil) ::
-    {:ok | :error, generic_step, [Event.t]}
+  @spec start(cur_step :: Step.t, prev_step :: Step.t | nil) ::
+    {:ok | :error, Step.t, [Event.t]}
   @doc """
   Function called when the previous step was completed. It has the purpose of
   setting up the new step, preparing its environment and generating any objects
@@ -158,10 +164,13 @@ defprotocol Helix.Story.Model.Steppable do
   environment generation. It should be logged and debug thoroughly, since no
   errors should happen during this step.
   """
+  def start(step, previous_step)
+
+  # TODO DOCME
   def setup(step, previous_step)
 
-  @spec handle_event(generic_step, Event.t, Step.meta) ::
-    {actions, generic_step, [Event.t]}
+  @spec handle_event(Step.t, Event.t, Step.meta) ::
+    {Step.callback_action, Step.t, [Event.t]}
   @doc """
   Generic filtering of events. Any event will be pattern-matched against the
   implementations of `handle_event` of the given Step.
@@ -170,38 +179,38 @@ defprotocol Helix.Story.Model.Steppable do
 
   If the returned action is `:noop`, the StepHandler will stop the flow. If
   `:complete` is returned, then `complete/1` will be called. On the other hand,
-  if `:fail` is returned, `fail/1` will be called.
+  if `{:restart, reason, checkpoint}` is returned, `restart/3` will be called.
 
-  Note that if a step is fallible, it must implement `fail/1`
+  Note that if a step is "restartable", it must explicitly implement `restart/3`
   """
   def handle_event(step, event, meta)
 
-  @spec complete(generic_step) ::
-    {:ok | :error, generic_step, [Event.t]}
+  @spec complete(Step.t) ::
+    {:ok | :error, Step.t, [Event.t]}
   @doc """
   Method called when the Step has been marked for completion. This can only
   happen when a specific event was matched and the returned action was
   `:complete`.
 
-  Similar to `setup`, `:error` should only be returned in ugly cases, in which
+  Similar to `start/2`, `:error` should only be returned in ugly cases, in which
   the error reason should be thoroughly logged and debugged.
   """
   def complete(step)
 
-  @spec fail(generic_step) ::
-    {:ok | :error, generic_step, [Event.t]}
+  @spec restart(Step.t, reason :: atom, checkpoint :: Step.email_id) ::
+    {:ok | :error, Step.t, [Event.t]}
   @doc """
-  Method used when the step fails. Note that most steps are not fallible, and
-  as such implementing this function is not necessary.
+  Method used when the step is restarted. Note that most steps are not
+  restartable, and as such implementing this function is not always necessary.
 
-  However, if you want this step to be fallible, it must implement `fail/1`.
+  However, if you want it to be restartable, it must be explicitly implemented.
 
-  `fail/1` is only called when a specific `handle_event` returned `:fail` as
-  action.
+  `restart/3` is only called when a specific `handle_event` returned
+  `{:restart, reason, checkpoint}` as the requested action.
   """
-  def fail(step)
+  def restart(step, reason, checkpoint)
 
-  @spec next_step(generic_step) ::
+  @spec next_step(Step.t) ::
     Step.step_name
   @doc """
   Points to the next step.
@@ -224,7 +233,7 @@ defprotocol Helix.Story.Model.Steppable do
   """
   def get_contact(step)
 
-  @spec format_meta(generic_step) ::
+  @spec format_meta(Step.t) ::
     Step.meta
   @doc """
   Converts back the step's metadata to Helix internal data structure. Since the
@@ -235,7 +244,7 @@ defprotocol Helix.Story.Model.Steppable do
   """
   def format_meta(step)
 
-  @spec get_replies(generic_step, Step.email_id) ::
+  @spec get_replies(Step.t, Step.email_id) ::
     [Step.reply_id]
   @doc """
   Returns all possible unlocked replies of an email.

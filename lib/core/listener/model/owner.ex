@@ -45,6 +45,7 @@ defmodule Helix.Core.Listener.Model.Owner do
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
+    |> unique_constraint(:owner_id_object_id_event_subscriber)
   end
 
   defmodule Query do

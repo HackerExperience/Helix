@@ -5,7 +5,7 @@ defmodule Helix.Software.Query.PublicFTP do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.PublicFTP
 
-  @spec fetch_file(File.t) ::
+  @spec fetch_file(File.idt) ::
     PublicFTP.File.t
     | nil
   @doc """
@@ -15,9 +15,11 @@ defmodule Helix.Software.Query.PublicFTP do
   - The PublicFTP server is active.
   """
   def fetch_file(file = %File{}),
-    do: PublicFTPInternal.fetch_file(file.file_id)
+    do: fetch_file(file.file_id)
+  def fetch_file(file_id = %File.ID{}),
+    do: PublicFTPInternal.fetch_file(file_id)
 
-  @spec fetch_server(Server.t) ::
+  @spec fetch_server(Server.idt) ::
     PublicFTP.t
     | nil
   @doc """
@@ -26,7 +28,9 @@ defmodule Helix.Software.Query.PublicFTP do
   Disabled/inactive servers are returned as well.
   """
   def fetch_server(server = %Server{}),
-    do: PublicFTPInternal.fetch(server.server_id)
+    do: fetch_server(server.server_id)
+  def fetch_server(server_id = %Server.ID{}),
+    do: PublicFTPInternal.fetch(server_id)
 
   @spec list_files(Server.idt) ::
     [File.t]

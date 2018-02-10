@@ -4,7 +4,7 @@ defmodule Helix.Test.Story.Helper do
   alias Helix.Story.Model.Story
   alias Helix.Story.Repo, as: StoryRepo
 
-  def remove_existing_step(entity_id) do
+  def remove_existing_steps(entity_id) do
     entity_id
     |> StepInternal.get_steps()
     |> Enum.each(&(StoryRepo.delete(&1.entry)))

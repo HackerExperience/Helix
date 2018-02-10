@@ -35,7 +35,21 @@ defmodule Helix.Test.Story.Setup do
       end
 
     entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
-    manager = Keyword.get(opts, :manager, get_or_create_manager(entity_id))
+
+    manager =
+      if opts[:ready] do
+        StorySetup.Manager.manager!(real_network: true, entity_id: entity_id)
+      else
+        Keyword.get(opts, :manager, get_or_create_manager(entity_id))
+      end
+
+    # If the user requested a "ready" step, we'll make sure to create a valid
+    # context for the entity. "ready" steps also have the manager ensured,
+    # as well as valid underlying data (except for the entity_id, which is
+    # generated randomly, but may be overridden)
+    if opts[:ready] do
+      StorySetup.Context.context(entity_id: entity_id)
+    end
 
     step = Step.fetch(name, entity_id, meta, manager)
 
@@ -53,14 +67,13 @@ defmodule Helix.Test.Story.Setup do
 
     {_, related = %{step: step}} = fake_story_step(opts)
 
-    # Save the step on DB and run its `setup`
-    {:ok, _} = StoryAction.proceed_step(step)
-    {:ok, _, _} = Steppable.setup(step, %{})
-
-    manager = get_or_create_manager(step.entity_id)
-
     # Update step with the newly created manager
+    manager = get_or_create_manager(step.entity_id)
     step = %{step| manager: manager}
+
+    # Save the step on DB and `start/2` it
+    {:ok, _} = StoryAction.proceed_step(step)
+    {:ok, _, _} = Steppable.start(step, %{})
 
     related =
       related

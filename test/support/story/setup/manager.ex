@@ -6,6 +6,7 @@ defmodule Helix.Test.Story.Setup.Manager do
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   @doc """
@@ -17,15 +18,33 @@ defmodule Helix.Test.Story.Setup.Manager do
     {inserted, related}
   end
 
+  def manager!(opts \\ []) do
+    {manager, _} = manager(opts)
+    manager
+  end
+
   @doc """
   - entity_id: Set entity whose Manager belongs to. Defaults to fake entity
   - server_id: Set server ID. Defaults to fake server
   - network_id: Set network ID. Defaults to fake network.
+  - real_network: Whether to use a real network. Defaults to false.
   """
   def fake_manager(opts \\ []) do
     entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
     server_id = Keyword.get(opts, :server_id, ServerSetup.id())
-    network_id = Keyword.get(opts, :network_id, NetworkHelper.id())
+
+    network_id =
+      cond do
+        opts[:real_network] ->
+          {network, _} = NetworkSetup.network(type: :story)
+          network.network_id
+
+        opts[:network_id] ->
+          opts[:network_id]
+
+        true ->
+          NetworkHelper.id()
+      end
 
     manager =
       %Story.Manager{

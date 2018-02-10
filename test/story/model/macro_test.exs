@@ -4,6 +4,7 @@ defmodule Helix.Story.Model.MacroTest do
 
   import ExUnit.CaptureLog
 
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Model.Steppable
 
@@ -49,6 +50,47 @@ defmodule Helix.Story.Model.MacroTest do
 
       assert {:noop, _, []} =
         Steppable.handle_event(step, invalid_reply_event, %{})
+    end
+  end
+
+  describe "setup_once" do
+    test "handles hit and misses" do
+      # NOTE: The step used here is simply for dummy data; that's why this test
+      # will probably be repeated on the same step's tests
+
+      {step, _} = StorySetup.step(
+        name: :tutorial@download_cracker,
+        meta: %{},
+        ready: true
+      )
+
+      # Generate for the first time (100% misses)
+      assert {meta, _, _events} = Steppable.setup(step, %{})
+
+      assert meta.cracker_id
+      assert meta.server_id
+      assert meta.ip
+
+      # Try again, now redoing everything (for idempotency, should be 100% hits)
+      step = %{step| meta: meta}
+      assert {meta2, _, _events} = Steppable.setup(step, %{})
+      assert meta2 == meta
+
+      # Now we'll nuke the `cracker_id`.
+      meta.cracker_id
+      |> FileInternal.fetch()
+      |> FileInternal.delete()
+
+      # As a result, a new `cracker_id` should be generated, but everything else
+      # should be the same
+      assert {meta3, _, _events} = Steppable.setup(step, %{})
+
+      # New cracker was generated
+      refute meta3.cracker_id == meta.cracker_id
+
+      # But the other stuff is the same
+      assert meta3.server_id == meta.server_id
+      assert meta3.ip == meta.ip
     end
   end
 end

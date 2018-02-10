@@ -196,7 +196,7 @@
           "filters": ["Account.Created"],
           "emits": []
         },
-        "DownloadCrackerPublicFTP": {
+        "DownloadCracker": {
           "filters": ["File.Downloaded"],
           "emits": []
         }

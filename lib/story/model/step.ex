@@ -49,11 +49,19 @@ defmodule Helix.Story.Model.Step do
   @type contact :: Constant.t
   @type contact_id :: contact
 
+  @typedoc """
+  The `callback_action` type lists all possible actions that may be applied to
+  a step. Notably, one of them must be returned by `Steppable.handle_event/3`,
+  but it's also used in other contexts, including on `StepActionRequestedEvent`.
+
+  The action will be interpreted and applied at the StoryEventHandler.
+
+  Note that `:restart` also includes metadata (`reason` and `checkpoint`).
+  """
   @type callback_action ::
     :complete
-    | :fail
-    | :regenerate
     | :noop
+    | {:restart, reason :: atom, checkpoint :: email_id}
 
   @spec new(t, Event.t) ::
     t

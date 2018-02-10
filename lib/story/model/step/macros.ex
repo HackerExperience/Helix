@@ -30,6 +30,8 @@ defmodule Helix.Story.Model.Step.Macros do
         defimpl Helix.Story.Model.Steppable do
           @moduledoc false
 
+          import HELL.Macros
+
           alias Helix.Event
           alias Helix.Story.Make.Story, as: StoryMake
 
@@ -40,11 +42,11 @@ defmodule Helix.Story.Model.Step.Macros do
 
           unquote(block)
 
-          # Most steps do not have a "fail" option. Those who do must manually
-          # implement this protocol function.
+          # Most steps do not have a "restart" option. Those who do must
+          # manually implement this protocol function.
           @doc false
-          def fail(_step),
-            do: raise "Undefined fail handler at #{inspect unquote(__MODULE__)}"
+          def restart(_step, _, _),
+            do: raise "Undefined restart handler at #{inspect unquote(__MODULE__)}"
 
           # Catch-all for unhandled events, otherwise any unexpected event would
           # thrown an exception here.
@@ -60,23 +62,19 @@ defmodule Helix.Story.Model.Step.Macros do
           def get_contact(_),
             do: @contact
 
-          # Unlocked replies only
+          @spec get_replies(Step.t, Step.email_id) ::
+            [Step.reply_id]
           @doc false
+          # Unlocked replies only
           def get_replies(_step, email_id) do
-            case Map.get(@emails, email_id) do
-              email = %{} ->
-                email.replies
-              nil ->
-                []
+            with email = %{} <- Map.get(@emails, email_id, []) do
+              email.replies
             end
           end
 
-          @spec handle_callback(Step.callback_action, Entity.id, Step.contact) ::
-            {:ok, [Event.t]}
-          defp handle_callback(action, entity_id, contact) when not is_tuple(action),
-            do: handle_callback({action, []}, entity_id, contact)
-
-          @spec handle_callback({Step.callback_action, [Event.t]}, Entity.id, Step.contact) ::
+          @spec handle_callback(
+            {Step.callback_action, [Event.t]}, Entity.id, Step.contact)
+          ::
             {:ok, [Event.t]}
           defp handle_callback({action, events}, entity_id, contact_id) do
             request_action =
@@ -87,17 +85,7 @@ defmodule Helix.Story.Model.Step.Macros do
 
           @doc false
           callback :callback_complete do
-            :complete
-          end
-
-          @doc false
-          callback :callback_fail do
-            :fail
-          end
-
-          @doc false
-          callback :callback_regenerate do
-            :regenerate
+            {:complete, []}
           end
         end
       end
@@ -116,9 +104,9 @@ defmodule Helix.Story.Model.Step.Macros do
   do
     quote do
 
-      def unquote(name)(var!(event) = unquote(event), m = unquote(meta)) do
-        step_entity_id = m["step_entity_id"] |> Entity.ID.cast!()
-        step_contact_id = m["step_contact_id"] |> String.to_existing_atom()
+      def unquote(name)(var!(event) = unquote(event), meta = unquote(meta)) do
+        step_entity_id = meta["step_entity_id"] |> Entity.ID.cast!()
+        step_contact_id = meta["step_contact_id"] |> String.to_existing_atom()
 
         var!(event)  # Mark as used
 
@@ -129,6 +117,9 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
+  @doc """
+  Executes a predefined callback (currently only `:complete` is supported).
+  """
   defmacro story_listen(element_id, events, do: action) do
 
     quote do
@@ -145,6 +136,7 @@ defmodule Helix.Story.Model.Step.Macros do
   It's a wrapper for `Core.Listener`.
   """
   defmacro story_listen(element_id, events, callback) do
+    # Import `Helix.Core.Listener` only once within the Step context (ENV)
     macro = has_macro?(__CALLER__, Helix.Core.Listener)
     import_block = macro && [] ||  quote(do: import Helix.Core.Listener)
 
@@ -163,12 +155,18 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
+  @doc """
+  Formats the step metadata, automatically handling empty maps or atomizing
+  existing map keys.
+  """
   defmacro format_meta(do: block) do
     quote do
 
+      @doc false
       def format_meta(%{meta: empty_map}) when empty_map ==  %{},
         do: %{}
 
+      @doc false
       def format_meta(%{meta: meta}) do
         var!(meta) = HELL.MapUtils.atomize_keys(meta)
         unquote(block)
@@ -177,6 +175,11 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
+  @doc """
+  Public interface that should be used by the step to point to the next one.
+
+  Steps are linked lists. Mind == blown.
+  """
   defmacro next_step(next_step_module) do
     quote do
       # unless Code.ensure_compiled?(unquote(next_step_module)) do
@@ -190,7 +193,7 @@ defmodule Helix.Story.Model.Step.Macros do
       # I don't want neither 3 or 4. Waiting for a cool hack on 1 or 2.
 
       @doc """
-      Returns the next step module name.
+      Returns the next step module name (#{inspect unquote(next_step_module)}).
       """
       def next_step(_),
         do: Helix.Story.Model.Step.get_name(unquote(next_step_module))
@@ -254,9 +257,9 @@ defmodule Helix.Story.Model.Step.Macros do
                 {:complete, step, []}
               end
 
-            [fail: true] ->
+            [restart: true, reason: reason, checkpoint: checkpoint] ->
               quote do
-                {:fail, step, []}
+                {{:restart, unquote(reason), unquote(checkpoint)}, step, []}
               end
           end
         )
@@ -265,6 +268,9 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
+  @doc """
+  Interface used to declare what should happen when `reply_id` is received.
+  """
   defmacro on_reply(reply_id, opts) do
     # Emails that can receive this reply
     emails = get_emails(__CALLER__)
@@ -288,12 +294,45 @@ defmodule Helix.Story.Model.Step.Macros do
   end
 
   @doc """
-  Below macro is required so the elixir compiler does not complain about the
+  This macro is required so the elixir compiler does not complain about the
   module attribute not being used.
   """
   defmacro contact(contact_name) do
     quote do
       @contact unquote(contact_name)
+    end
+  end
+
+  @doc """
+  Helper (syntactic sugar) for steps that do not generate any data.
+  """
+  defmacro empty_setup do
+    quote do
+
+      @doc false
+      def setup(_, _) do
+        nil
+      end
+
+    end
+  end
+
+  alias Helix.Story.Model.Step.Macros.Setup, as: StepSetup
+
+  defmacro setup_once(object, identifier, do: block),
+    do: do_setup_once(object, identifier, [], block)
+  defmacro setup_once(object, identifier, opts, do: block),
+    do: do_setup_once(object, identifier, opts, block)
+
+  defp do_setup_once(object, id, opts, block) do
+    fun_name = Utils.concat_atom(:find_, object)
+
+    quote do
+      result = apply(StepSetup, unquote(fun_name), [unquote(id), unquote(opts)])
+
+      with nil <- result do
+        unquote(block)
+      end
     end
   end
 
