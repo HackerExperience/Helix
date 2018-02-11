@@ -14,7 +14,7 @@ defmodule Helix.Software.Repo.Migrations.FixCascadeRelationshipOnPFTPFile do
       ADD CONSTRAINT pftp_files_file_id_fkey
       FOREIGN KEY (file_id)
       REFERENCES files(file_id)
-      ON DELETE CASCADE;
+      ON DELETE CASCADE
     """
   end
 end

@@ -1,58 +1,71 @@
 defmodule Helix.Story.Model.Step.Macros.Setup do
 
-  alias HELL.Utils
-  alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Server.Model.Server
-  alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Software.Model.File
-  alias Helix.Software.Model.PublicFTP
-  alias Helix.Software.Query.File, as: FileQuery
-  alias Helix.Software.Query.PublicFTP, as: PublicFTPQuery
-  alias Helix.Story.Model.Step
-  alias Helix.Story.Query.Context, as: ContextQuery
+  @doc """
+  The `find` macro will generate the standard `find_{item}` method. It's mostly
+  a syntactic sugar that:
 
-  @spec find_char({Entity.id, Step.contact_id}, []) ::
-    {:ok, Server.t, %{entity: Entity.t}, []}
-    | nil
-  def find_char({entity_id = %Entity.ID{}, contact_id}, _opts) do
-    with \
-      context = %{} <- ContextQuery.get(entity_id, contact_id),
-      server = %{} <- ServerQuery.fetch(context.server_id),
-      entity = %{} <- EntityQuery.fetch(context.entity_id)
-    do
-      {:ok, server, %{entity: entity}, []}
+  - Automatically returns `nil` if the `identifier` is `nil`
+  - Automatically handles identifiers that may be `id` or `t`, fetching the
+    requested field (defined on `get`)
+  - Automatically converts the result to `nil` from equivalent results (e.g.
+    `false` is considered to be `nil` here). This is useful because the macro
+    that uses `StoryQuery.Setup` only accepts `nil` as a valid negative result.
+
+  Other than that, feel free to bypass the macro and write the function directly
+
+  It only has to:
+
+  - have `find_{item}` name
+  - accept `identifier` and `opts`
+  - return `nil` in case of failure
+  - return the expected format ({:ok, $object, $related, $events}) if found
+  """
+  defmacro find(item, identifier, get: field),
+    do: do_find(item, identifier, quote(do: []), field: field)
+  defmacro find(item, identifier, do: block),
+    do: do_find(item, identifier, quote(do: []), block: block)
+  defmacro find(item, identifier, opts, get: field),
+    do: do_find(item, identifier, opts, field: field)
+  defmacro find(item, identifier, opts, do: block),
+    do: do_find(item, identifier, opts, block: block)
+
+  defp do_find(item, identifier, opts, field: field) do
+    quote do
+
+      def unquote(:"find_#{item}")(id = unquote(identifier), opts = unquote(opts)) do
+        value = Map.fetch!(id, unquote(field))
+
+        apply(__MODULE__, unquote(:"find_#{item}"), [value, opts])
+      end
+
     end
   end
 
-  def find_file(nil, _),
-    do: nil
-  def find_file(file_id = %File.ID{}, _opts) do
-    with file = %{} <- FileQuery.fetch(file_id) do
-      {:ok, file, %{}, []}
-    end
-  end
+  defp do_find(item, identifier, opts, block: block) do
+    quote generated: true do
 
-  def find_pftp_server(nil, _opts),
-    do: nil
-  def find_pftp_server(server = %Server{}, opts),
-    do: find_pftp_server(server.server_id, opts)
-  def find_pftp_server(server_id = %Server.ID{}, _opts) do
-    with \
-      pftp = %{} <- PublicFTPQuery.fetch_server(server_id),
-      true <- PublicFTP.is_active?(pftp) || nil
-    do
-      {:ok, pftp, %{}, []}
-    end
-  end
+      @spec unquote(:"find_#{item}")(nil, list) :: nil
 
-  def find_pftp_file(nil, _opts),
-    do: nil
-  def find_pftp_file(file = %File{}, opts),
-    do: find_pftp_file(file.file_id, opts)
-  def find_pftp_file(file_id = %File.ID{}, _opts) do
-    with pftp_file = %{} <- PublicFTPQuery.fetch_file(file_id) do
-      {:ok, pftp_file, %{}, []}
+      def unquote(:"find_#{item}")(nil, _),
+        do: nil
+      def unquote(:"find_#{item}")(unquote(identifier), unquote(opts)) do
+        result = unquote(block)
+
+        case result do
+          {:ok, _, _, _} ->
+            result
+
+          nil ->
+            nil
+
+          false ->
+            nil
+
+          [] ->
+            nil
+        end
+      end
+
     end
   end
 end

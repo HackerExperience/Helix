@@ -14,6 +14,7 @@ defmodule Helix.Story.Model.Step.Macros do
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Step
   alias Helix.Story.Action.Story, as: StoryAction
+  alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
   alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
@@ -38,7 +39,6 @@ defmodule Helix.Story.Model.Step.Macros do
           @emails Module.get_attribute(__MODULE__, :emails) || %{}
           @contact get_contact(unquote(contact), __MODULE__)
           @step_name Helix.Story.Model.Step.get_name(unquote(name))
-          @set false
 
           unquote(block)
 
@@ -310,14 +310,12 @@ defmodule Helix.Story.Model.Step.Macros do
     quote do
 
       @doc false
-      def setup(_, _) do
+      def setup(_) do
         nil
       end
 
     end
   end
-
-  alias Helix.Story.Model.Step.Macros.Setup, as: StepSetup
 
   defmacro setup_once(object, identifier, do: block),
     do: do_setup_once(object, identifier, [], block)
@@ -328,7 +326,8 @@ defmodule Helix.Story.Model.Step.Macros do
     fun_name = Utils.concat_atom(:find_, object)
 
     quote do
-      result = apply(StepSetup, unquote(fun_name), [unquote(id), unquote(opts)])
+      result =
+        apply(StoryQuery.Setup, unquote(fun_name), [unquote(id), unquote(opts)])
 
       with nil <- result do
         unquote(block)

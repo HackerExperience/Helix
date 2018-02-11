@@ -65,24 +65,24 @@ defprotocol Helix.Story.Model.Steppable do
   email. If `:complete` is given, Helix will call the `complete/1` function. The
   `do` block means an arbitrary command will be executed.
 
-  ## Idempotent context creation with `setup/2`
+  ## Idempotent context creation with `setup/1`
 
-  `setup/2` is responsible for generating the entire step environment in an
+  `setup/1` is responsible for generating the entire step environment in an
   idempotent fashion. This is important because, in the case of a step restart,
   fresh data *may* need to be regenerated.
 
-  The list of events should include all events originated by the `setup/2`
-  method. So, for instance, if during the `setup/2` function we generate a file
+  The list of events should include all events originated by the `setup/1`
+  method. So, for instance, if during the `setup/1` function we generate a file
   and a log, both corresponding events should be passed upstream, so they can be
   emitted by the StoryHandler.
 
   (Note that whenever someone requests a step restart, they are responsible for
-  cleaning up any stale/corrupt/invalid data. `setup/2` only creates data. See
+  cleaning up any stale/corrupt/invalid data. `setup/1` only creates data. See
   the "Restarting a step" section for more information).
 
-  ## Setting up a new step with `start/2`
+  ## Setting up a new step with `start/1`
 
-  The `start/2` function is called when the previous step was completed, and
+  The `start/1` function is called when the previous step was completed, and
   this step will be marked as the player's current step. It receives both the
   current and the previous step struct (in most cases you can ignore the
   previous step).
@@ -91,7 +91,7 @@ defprotocol Helix.Story.Model.Steppable do
   one of `:ok` | `:error` (where `:error` means something really bad happened
   internally).
 
-  `start/2` will use the `setup/2` method to generate and prepare the step data
+  `start/1` will use the `setup/1` method to generate and prepare the step data
   and environment. Once this is done, it will also send the email to the user
   (applicable in most cases).
 
@@ -139,7 +139,15 @@ defprotocol Helix.Story.Model.Steppable do
 
   ## Restarting a step with `restart/3`
 
-  TODO DOCME
+  A step is restarted through `restart/3`, which basically will regenerate the
+  step context (through `setup/1`) and return the updated step. Finally,
+  `StoryHandler` will rollback to the given checkpoint ("last good email") and
+  will notify the client through the `StepRestartedEvent`.
+
+  Note that once `restart/3` is called, any incorrect/invalid data should have
+  been purged from the database. That's because `setup/1` will only recreate
+  data, not fix it. So it's very important that whenever a `:restart` action is
+  used on a callback, the invalid data (if any) is removed.
 
   ## Example
 
@@ -149,7 +157,7 @@ defprotocol Helix.Story.Model.Steppable do
   alias Helix.Event
   alias Helix.Story.Model.Step
 
-  @spec start(cur_step :: Step.t, prev_step :: Step.t | nil) ::
+  @spec start(Step.t) ::
     {:ok | :error, Step.t, [Event.t]}
   @doc """
   Function called when the previous step was completed. It has the purpose of
@@ -164,10 +172,25 @@ defprotocol Helix.Story.Model.Steppable do
   environment generation. It should be logged and debug thoroughly, since no
   errors should happen during this step.
   """
-  def start(step, previous_step)
+  def start(step)
 
-  # TODO DOCME
-  def setup(step, previous_step)
+  @spec setup(Step.t) ::
+    {Step.meta, related :: map, [Event.t]}
+    | nil
+  @doc """
+  Generates the required data for the step.
+
+  It is idempotent, meaning it may be ran multiple times without prejudice for
+  valid, already-existing data. The reason for idempotency is because `setup/1`
+  is called both on `start/1` and `restart/3`.
+
+  `setup/1` has a tooling of its own, the `setup_once` macro, which under the
+  hood relies on `StoryQuery.Setup`. Take a look at them.
+
+  May return `nil` when it's not supposed to be called (i.e. steps generates no
+  data).
+  """
+  def setup(step)
 
   @spec handle_event(Step.t, Event.t, Step.meta) ::
     {Step.callback_action, Step.t, [Event.t]}
@@ -192,13 +215,13 @@ defprotocol Helix.Story.Model.Steppable do
   happen when a specific event was matched and the returned action was
   `:complete`.
 
-  Similar to `start/2`, `:error` should only be returned in ugly cases, in which
+  Similar to `start/1`, `:error` should only be returned in ugly cases, in which
   the error reason should be thoroughly logged and debugged.
   """
   def complete(step)
 
   @spec restart(Step.t, reason :: atom, checkpoint :: Step.email_id) ::
-    {:ok | :error, Step.t, [Event.t]}
+    {:ok | :error, Step.t, Step.email_meta, [Event.t]}
   @doc """
   Method used when the step is restarted. Note that most steps are not
   restartable, and as such implementing this function is not always necessary.

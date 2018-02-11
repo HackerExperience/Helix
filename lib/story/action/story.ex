@@ -9,6 +9,7 @@ defmodule Helix.Story.Action.Story do
   alias Helix.Story.Event.Email.Sent, as: EmailSentEvent
   alias Helix.Story.Event.Reply.Sent, as: ReplySentEvent
   alias Helix.Story.Event.Step.Proceeded, as: StepProceededEvent
+  alias Helix.Story.Event.Step.Restarted, as: StepRestartedEvent
 
   @spec proceed_step(first_step :: Step.t) ::
     {:ok, Story.Step.t}
@@ -63,6 +64,15 @@ defmodule Helix.Story.Action.Story do
   """
   def notify_step(prev_step, next_step),
     do: [StepProceededEvent.new(prev_step, next_step)]
+
+  @spec notify_restart(Step.t, atom, Step.email_id, Step.email_meta) ::
+    [StepRestartedEvent.t]
+  @doc """
+  Generates the StepRestartedEvent, used to notify the client that the step has
+  been restarted
+  """
+  def notify_restart(step, reason, checkpoint, meta),
+    do: [StepRestartedEvent.new(step, reason, checkpoint, meta)]
 
   @spec send_email(Step.t, Step.email_id, Step.email_meta) ::
     {:ok, [EmailSentEvent.t]}
@@ -121,5 +131,39 @@ defmodule Helix.Story.Action.Story do
           Repo.rollback(error)
       end
     end)
+  end
+
+  @spec rollback_emails(Step.t, Step.email_id, Step.email_meta) ::
+    {:ok, Story.Step.t, Story.Email.t}
+    | {:error, :internal}
+  @doc """
+  Rollbacks the messages on `step` to the specified `checkpoint`.
+
+  Note that within the Story domain, messages are saved on two places:
+  - within Story.Step, used for internal step stuff (handling replies, etc)
+  - within Story.Email, used for listing messages per contact (with metadata)
+
+  As such, we need to update (rollback) to the checkpoint on both places.
+
+  The `allowed_replies` list, specified at `Story.Step.t`, will also be updated
+  with the default (unlocked) replies listed on `checkpoint` declaration.
+  """
+  def rollback_emails(step, checkpoint, meta) do
+    result =
+      Repo.transaction fn ->
+        with \
+          {:ok, story_step} <- StepInternal.rollback_email(step, checkpoint),
+          {:ok, email} <- EmailInternal.rollback_email(step, checkpoint, meta)
+        do
+          {story_step, email}
+        else
+          _ ->
+            Repo.rollback(:internal)
+        end
+      end
+
+    with {:ok, {story_step, story_email}} <- result do
+      {:ok, story_step, story_email}
+    end
   end
 end

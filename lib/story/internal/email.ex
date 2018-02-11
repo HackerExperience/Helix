@@ -11,12 +11,17 @@ defmodule Helix.Story.Internal.Email do
     {:ok, Story.Email.t}
     | {:error, Story.Email.changeset}
 
-  @spec fetch(Entity.id, Step.contact) ::
+  @typep fetch_result ::
     Story.Email.t
     | nil
+
+  @spec fetch(Step.t) :: fetch_result
+  @spec fetch(Entity.id, Step.contact) :: fetch_result
   @doc """
   Fetches the (entity, contact) entry, formatting it as required
   """
+  def fetch(%_{entity_id: entity_id, contact: contact_id}),
+    do: fetch(entity_id, contact_id)
   def fetch(entity_id, contact_id) do
     entry =
       entity_id
@@ -58,6 +63,13 @@ defmodule Helix.Story.Internal.Email do
   """
   def send_reply(step, reply_id),
     do: generic_send(step, reply_id, :player)
+
+  def rollback_email(step, email_id, meta) do
+    step
+    |> fetch()
+    |> Story.Email.rollback_email(email_id, meta)
+    |> update()
+  end
 
   @spec generic_send(term, id :: String.t, Story.Email.sender, meta :: map) ::
     {:ok, Story.Email.t, Story.Email.email}
@@ -118,6 +130,11 @@ defmodule Helix.Story.Internal.Email do
     |> Story.Email.Query.append_email(email)
     |> Repo.update_all([], returning: true)
   end
+
+  @spec update(Story.Email.changeset) ::
+    entry_email_repo_return
+  defp update(changeset),
+    do: Repo.update(changeset)
 
   @spec format(Story.Email.t) ::
     Story.Email.t

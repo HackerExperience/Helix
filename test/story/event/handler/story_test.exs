@@ -4,11 +4,13 @@ defmodule Helix.Story.Event.Handler.StoryTest do
 
   import ExUnit.CaptureLog
 
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Story.Model.Step
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Test.Event.Helper, as: EventHelper
   alias Helix.Test.Event.Setup, as: EventSetup
+  alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "handling of ReplySent events" do
@@ -47,6 +49,65 @@ defmodule Helix.Story.Event.Handler.StoryTest do
 
       refute new_step == step
       assert new_step.name == Step.get_next_step(step)
+    end
+  end
+
+  describe "handling of restart events" do
+    test "restarts to the specified checkpoint" do
+      {story_step, %{step: step}} = StorySetup.story_step(
+        name: :tutorial@download_cracker, meta: %{}, ready: true
+      )
+
+      # Just to make sure the generated step went through `Steppable.start/1`
+      assert story_step.meta.server_id
+      assert story_step.meta.ip
+      assert story_step.meta.cracker_id
+
+      # Advance a few messages so we can check that it rolled back to checkpoint
+      StoryHelper.reply(story_step)
+
+      # There are 3 registered emails (2 from contact and 1 reply)
+      story_email = StoryQuery.fetch_email(step.entity_id, step.contact)
+      assert length(story_email.emails) == 3
+
+      %{entry: story_step} = StoryQuery.fetch_step(step.entity_id, step.contact)
+
+      # Remove the file
+      story_step.meta.cracker_id
+      |> FileInternal.fetch()
+      |> FileInternal.delete()
+
+      # Fake a FileDeletedEvent
+      story_step.meta.cracker_id
+      |> EventSetup.Software.file_deleted(story_step.meta.server_id)
+      |> EventHelper.emit()
+
+      %{entry: new_entry, object: new_step} =
+        StoryQuery.fetch_step(step.entity_id, step.contact)
+
+      # Story meta has been updated!
+      refute new_entry.meta.cracker_id == story_step.meta.cracker_id
+
+      # Other stuff hasn't changed
+      assert new_entry.meta.server_id == story_step.meta.server_id
+      assert new_entry.meta.ip == story_step.meta.ip
+
+      # Object (Step.t) meta is also correct
+      assert new_entry.meta == new_step.meta
+      assert story_step.meta == step.meta
+      refute new_entry.meta == story_step.meta
+
+      # The `allowed_replies` is different because the messages were rolled back
+      refute new_entry.allowed_replies == story_step.allowed_replies
+
+      story_email = StoryQuery.fetch_email(step.entity_id, step.contact)
+
+      # There's only one email: the one we've rolled back to.
+      assert [email] = story_email.emails
+      assert email.id == "download_cracker1"
+
+      # Email meta got updated too
+      assert email.meta["ip"] == new_entry.meta.ip
     end
   end
 end

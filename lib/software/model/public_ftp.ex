@@ -84,7 +84,7 @@ defmodule Helix.Software.Model.PublicFTP do
   @doc """
   Verifies whether the given server is active (enabled) or not.
   """
-  def is_active?(pftp = %__MODULE__{is_active: is_active?}),
+  def is_active?(%__MODULE__{is_active: is_active?}),
     do: is_active?
 
   @spec create_changeset(creation_params) ::

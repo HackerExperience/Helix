@@ -52,6 +52,70 @@ defmodule Helix.Story.Event.Step do
     end
   end
 
+  event Restarted do
+    @moduledoc """
+    Story.StepRestarted is fired when the step progress has been restarted due
+    to some `reason`.
+    """
+
+    alias Helix.Entity.Model.Entity
+    alias Helix.Story.Model.Step
+
+    @type t ::
+      %__MODULE__{
+        entity_id: Entity.id,
+        step: Step.t,
+        reason: atom,
+        checkpoint: Step.email_id,
+        meta: Step.email_meta,
+      }
+
+    event_struct [:entity_id, :step, :reason, :checkpoint, :meta]
+
+    @spec new(Step.t, atom, Step.email_id, Step.email_meta) ::
+      t
+    def new(step = %_{entity_id: _}, reason, checkpoint, meta) do
+      %__MODULE__{
+        entity_id: step.entity_id,
+        step: step,
+        reason: reason,
+        checkpoint: checkpoint,
+        meta: meta
+      }
+    end
+
+    notify do
+      @moduledoc false
+
+      alias HELL.Utils
+
+      @event :story_step_restarted
+
+      def generate_payload(event, _socket) do
+        allowed_replies =
+          event.step
+          |> Step.get_replies(event.checkpoint)
+          |> Enum.map(&to_string/1)
+
+        data = %{
+          step: to_string(event.step.name),
+          reason: to_string(event.reason),
+          checkpoint: event.checkpoint,
+          meta: Utils.stringify_map(event.meta),
+          allowed_replies: allowed_replies
+        }
+
+        {:ok, data}
+      end
+
+      @doc """
+      Notifies only the player
+      """
+      def whom_to_notify(event),
+        do: %{account: event.entity_id}
+    end
+  end
+
   event ActionRequested do
     @moduledoc """
     `StepActionRequestedEvent` is fired when a callback, declared at the Step

@@ -1,4 +1,4 @@
-defmodule Helix.Test.Features.Storyline.Flow do
+defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
 
   use Helix.Test.Case.Integration
 

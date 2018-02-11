@@ -172,6 +172,7 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Cracker.Bruteforce.Processed
   event SoftwareEvent.Cracker.Overflow.Processed
   event SoftwareEvent.File.Added
+  event SoftwareEvent.File.Deleted
   event SoftwareEvent.File.Downloaded
   event SoftwareEvent.File.DownloadFailed
   event SoftwareEvent.File.Install.Processed
@@ -235,6 +236,7 @@ defmodule Helix.Event.Dispatcher do
   event StoryEvent.Reply.Sent
   event StoryEvent.Step.ActionRequested
   event StoryEvent.Step.Proceeded
+  event StoryEvent.Step.Restarted
 
   # Custom handlers
   event StoryEvent.Reply.Sent,

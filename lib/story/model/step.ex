@@ -54,7 +54,7 @@ defmodule Helix.Story.Model.Step do
   a step. Notably, one of them must be returned by `Steppable.handle_event/3`,
   but it's also used in other contexts, including on `StepActionRequestedEvent`.
 
-  The action will be interpreted and applied at the StoryEventHandler.
+  The action will be interpreted and applied at the StoryHandler.
 
   Note that `:restart` also includes metadata (`reason` and `checkpoint`).
   """

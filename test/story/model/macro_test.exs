@@ -65,7 +65,7 @@ defmodule Helix.Story.Model.MacroTest do
       )
 
       # Generate for the first time (100% misses)
-      assert {meta, _, _events} = Steppable.setup(step, %{})
+      assert {meta, _, _events} = Steppable.setup(step)
 
       assert meta.cracker_id
       assert meta.server_id
@@ -73,7 +73,7 @@ defmodule Helix.Story.Model.MacroTest do
 
       # Try again, now redoing everything (for idempotency, should be 100% hits)
       step = %{step| meta: meta}
-      assert {meta2, _, _events} = Steppable.setup(step, %{})
+      assert {meta2, _, _events} = Steppable.setup(step)
       assert meta2 == meta
 
       # Now we'll nuke the `cracker_id`.
@@ -83,7 +83,7 @@ defmodule Helix.Story.Model.MacroTest do
 
       # As a result, a new `cracker_id` should be generated, but everything else
       # should be the same
-      assert {meta3, _, _events} = Steppable.setup(step, %{})
+      assert {meta3, _, _events} = Steppable.setup(step)
 
       # New cracker was generated
       refute meta3.cracker_id == meta.cracker_id

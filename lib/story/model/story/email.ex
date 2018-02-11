@@ -87,6 +87,35 @@ defmodule Helix.Story.Model.Story.Email do
     }
   end
 
+  def rollback_email(entry, email_id, meta) do
+    email = create_email(email_id, meta, :contact)
+
+    entry
+    |> change()
+    |> do_rollback_email(email)
+    |> generic_validations()
+  end
+
+  defp do_rollback_email(changeset, email) do
+    new_emails =
+      changeset
+      |> get_field(:emails)
+      |> Enum.reverse()
+
+      # Remove all emails sent after `email_id`
+      |> Enum.drop_while(&(&1.id != email.id))
+
+      # Also remove `email_id`...
+      |> List.delete_at(0)
+
+      # Which will be replaced by the new `email`
+      |> List.insert_at(0, email)
+      |> Enum.reverse()
+
+    changeset
+    |> put_change(:emails, new_emails)
+  end
+
   @spec format(t) ::
     t
   @doc """

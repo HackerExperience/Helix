@@ -28,6 +28,16 @@ defmodule Helix.Story.Query.Story do
   defdelegate get_steps(entity_id),
     to: StepInternal
 
+  @spec fetch_email(Entity.id, Step.contact) ::
+    Story.Email.t
+    | nil
+  @doc """
+  Fetches all emails from a given contact.
+  """
+  defdelegate fetch_email(entity_id, contact_id),
+    to: EmailInternal,
+    as: :fetch
+
   @spec get_emails(Entity.id) ::
     [Story.Email.t]
   @doc """

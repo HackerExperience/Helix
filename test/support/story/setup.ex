@@ -1,17 +1,16 @@
 defmodule Helix.Test.Story.Setup do
 
   alias Helix.Entity.Model.Entity
-  alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
-  alias Helix.Story.Model.Steppable
   alias Helix.Story.Model.Story
   alias Helix.Story.Query.Manager, as: ManagerQuery
   alias Helix.Story.Query.Story, as: StoryQuery
   alias Helix.Story.Repo, as: StoryRepo
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.StepHelper, as: StoryStepHelper
   alias __MODULE__, as: StorySetup
 
@@ -20,6 +19,8 @@ defmodule Helix.Test.Story.Setup do
   - name - Must be used with `meta`. Defaults to random step from FakeStep
   - meta - Must be used with `name`. Defaults to random step from FakeStep
   - manager - Set Step manager. Defaults to generating a random Story.Manager
+  - ready - Whether to generate a fully ready step (valid Context and Manager).
+    Defaults to false.
 
   Related: Entity.id
   """
@@ -64,7 +65,6 @@ defmodule Helix.Test.Story.Setup do
   See doc on `fake_story_step/1`
   """
   def story_step(opts \\ []) do
-
     {_, related = %{step: step}} = fake_story_step(opts)
 
     # Update step with the newly created manager
@@ -72,8 +72,7 @@ defmodule Helix.Test.Story.Setup do
     step = %{step| manager: manager}
 
     # Save the step on DB and `start/2` it
-    {:ok, _} = StoryAction.proceed_step(step)
-    {:ok, _, _} = Steppable.start(step, %{})
+    {:ok, step} = StoryHelper.start_step(step)
 
     related =
       related
@@ -107,6 +106,8 @@ defmodule Helix.Test.Story.Setup do
   - emails_sent - Defaults to none
   - allowed_replies - Defaults to none
   - manager - Set step manager. Defaults to nil
+  - ready - Whether to generate a ready story_step (valid Context and Manager).
+    Defaults to false.
 
   Related: Entity.id, (Step.t if given step name is valid)
   """
@@ -123,9 +124,23 @@ defmodule Helix.Test.Story.Setup do
 
     entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
 
+    manager =
+      if opts[:ready] do
+        StorySetup.Manager.manager!(real_network: true, entity_id: entity_id)
+      else
+        Keyword.get(opts, :manager, nil)
+      end
+
+    # If the user requested a "ready" step, we'll make sure to create a valid
+    # context for the entity. "ready" steps also have the manager ensured,
+    # as well as valid underlying data (except for the entity_id, which is
+    # generated randomly, but may be overridden)
+    if opts[:ready] do
+      StorySetup.Context.context(entity_id: entity_id)
+    end
+
     emails_sent = Keyword.get(opts, :emails_sent, [])
     allowed_replies = Keyword.get(opts, :allowed_replies, [])
-    manager = Keyword.get(opts, :manager, nil)
 
     step =
       if opts[:contact_id] do

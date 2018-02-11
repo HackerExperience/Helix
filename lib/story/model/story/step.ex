@@ -85,7 +85,7 @@ defmodule Helix.Story.Model.Story.Step do
   """
   def replace_meta(entry, meta) when is_map(meta) do
     entry
-    |> Changeset.change()
+    |> change()
     |> put_change(:meta, meta)
   end
 
@@ -98,7 +98,7 @@ defmodule Helix.Story.Model.Story.Step do
   """
   def unlock_reply(entry, reply_id) do
     entry
-    |> Changeset.change()
+    |> change()
     |> do_unlock(reply_id)
   end
 
@@ -114,7 +114,7 @@ defmodule Helix.Story.Model.Story.Step do
   """
   def lock_reply(entry, reply_id) do
     entry
-    |> Changeset.change()
+    |> change()
     |> do_lock(reply_id)
   end
 
@@ -126,8 +126,21 @@ defmodule Helix.Story.Model.Story.Step do
   """
   def append_email(entry, email_id, allowed_replies) do
     entry
-    |> Changeset.change()
+    |> change()
     |> do_append(email_id)
+    |> put_change(:allowed_replies, allowed_replies)
+  end
+
+  @spec rollback_email(t, Step.email_id, [Step.email_id]) ::
+    changeset
+  @doc """
+  Rollbacks the entry to the given `email_id`. All emails sent after `email_id`
+  will be removed. The replies list will also be updated.
+  """
+  def rollback_email(entry, email_id, allowed_replies) do
+    entry
+    |> change()
+    |> do_rollback(email_id)
     |> put_change(:allowed_replies, allowed_replies)
   end
 
@@ -164,7 +177,7 @@ defmodule Helix.Story.Model.Story.Step do
   @spec do_unlock(changeset, Step.reply_id) ::
     changeset
   defp do_unlock(changeset, reply_id) do
-    previously_unlocked = get_field(changeset, :allowed_replies, [])
+    previously_unlocked = get_field(changeset, :allowed_replies)
 
     new_replies =
       previously_unlocked
@@ -178,7 +191,7 @@ defmodule Helix.Story.Model.Story.Step do
   @spec do_lock(changeset, Step.reply_id) ::
     changeset
   defp do_lock(changeset, reply_id) do
-    previously_unlocked = get_field(changeset, :allowed_replies, [])
+    previously_unlocked = get_field(changeset, :allowed_replies)
     new_replies = List.delete(previously_unlocked, reply_id)
 
     changeset
@@ -188,10 +201,25 @@ defmodule Helix.Story.Model.Story.Step do
   @spec do_append(changeset, Step.email_id) ::
     changeset
   defp do_append(changeset, email_id) do
-    previously_sent = get_field(changeset, :emails_sent, [])
+    previously_sent = get_field(changeset, :emails_sent)
 
     changeset
     |> put_change(:emails_sent, previously_sent ++ [email_id])
+  end
+
+  @spec do_rollback(changeset, Step.email_id) ::
+    changeset
+  defp do_rollback(changeset, email_id) do
+    emails_sent = get_field(changeset, :emails_sent)
+
+    new_sent =
+      emails_sent
+      |> Enum.reverse()
+      |> Enum.drop_while(&(&1 != email_id))
+      |> Enum.reverse()
+
+    changeset
+    |> put_change(:emails_sent, new_sent)
   end
 
   query do

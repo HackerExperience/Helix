@@ -6,7 +6,7 @@ defmodule Helix.Story.Event.Handler.Story do
   Once an event is received, we figure out the entity responsible for that event
   and verify whether the StepFlow should be followed. The StepFlow guides the
   Step through the Steppable protocol, allow it to react to the event, either
-  by ignoring it, completing the step or failing it.
+  by ignoring it, completing the step or restarting it.
   """
 
   import HELF.Flow
@@ -30,7 +30,7 @@ defmodule Helix.Story.Event.Handler.Story do
   Emits:
   - Events returned by `Steppable` methods
   - StepProceededEvent.t when action is :complete
-  - StepFailedEvent.t, StepRestartedEvent.t when action is :restart
+  - StepRestartedEvent.t when action is :restart
   """
   def event_handler(event) do
     with \
@@ -45,6 +45,10 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
+  @doc """
+  Handler for `StepActionRequestedEvent`, directly relaying the requested action
+  to the corresponding handler at `handle_action/2`.
+  """
   def action_handler(event = %StepActionRequestedEvent{}) do
     with \
       %{object: step} <-
@@ -63,7 +67,7 @@ defmodule Helix.Story.Event.Handler.Story do
   its documentation for more information.
 
   Once the event is handled by the step, the returned action is handled by
-  StepFlow. It may be one of `:complete | :fail | :noop`. See doc on
+  StepFlow. It may be one of `:complete | {:restart, _, _} | :noop`. See doc on
   `handle_action/2`.
   """
   defp step_flow(step) do
@@ -100,16 +104,17 @@ defmodule Helix.Story.Event.Handler.Story do
   end
 
   docp """
-  If the request is to fail/abort an step, we'll call `Steppable.fail/1`,
-  and then handle the failure with `fail_step/1`
+  If the request is to restart a step, we'll call `Steppable.restart/3`, and
+  then handle the restart with `restart_step/1`.
   """
   defp handle_action({:restart, reason, checkpoint}, step) do
-    with {:ok, step, events} <- Steppable.restart(step, reason, checkpoint) do
-      Event.emit(events, from: step.event)
+    with \
+      {:ok, step, meta, events} <- Steppable.restart(step, reason, checkpoint),
+      Event.emit(events, from: step.event),
 
-      hespawn fn ->
-        fail_step(step)
-      end
+      :ok <- restart_step(step, reason, checkpoint, meta)
+    do
+      :ok
     end
   end
 
@@ -138,7 +143,7 @@ defmodule Helix.Story.Event.Handler.Story do
       # /\ Proceeds player to the next step
 
       # Generate next step data/meta
-      {:ok, next_step, events} <- Steppable.start(next_step, prev_step),
+      {:ok, next_step, events} <- Steppable.start(next_step),
       Event.emit(events, from: prev_step.event),
 
       # Update step meta
@@ -153,31 +158,28 @@ defmodule Helix.Story.Event.Handler.Story do
   end
 
   docp """
-  See comments & implement me.
+  Updates the database, so the step restart is persisted.
 
-  Emits: StepFailedEvent.t, StepRestartedEvent.t
+  It will:
+  - update the DB with the new step metadata
+  - rollback the emails to the specified checkpoint
+  - notify the client that the step has been restarted
+
+  Emits: StepRestartedEvent.t
   """
-  defp fail_step(_step) do
-    # Default fail_step implementation is TODO.
-    # Possible implementation:
-    #   1 - Remove all emails/replies sent through that step
-    #   2 - Undo/delete all objects generated on `Steppable.setup`*
-    #   3 - Call `Steppable.setup`, effectively restarting the step.
-    #
-    # Possible problems:
-    #   1 - Email/reply ids are not unique across steps, so step 1 should take
-    #     this into consideration.
-    #   /\ - add counter of emails sent during the current step
-    #
-    #   2 - UX: If mission is reset right after it's failed, the client may
-    #     receive the `stepproceeded**` event almost at the same time as
-    #     `stepfailed` event, so user experience should be considered
-    #   /\ - see note; use `StepRestartedEvent`
-    #
-    # Notes:
-    # * - This should be done at `Steppable.fail`
-    # ** - In fact, mission "resetup" should be a different event, maybe
-    #   `StepRestarted`. Otherwise, the client would get `StepProceeded` after
-    #   the step has failed, which doesn't quite make sense.
+  defp restart_step(step, reason, checkpoint, meta) do
+    with \
+      {:ok, _} <- StoryAction.update_step_meta(step),
+      # /\ Make sure the step metadata is updated on the DB
+
+      # Rollback to the specified checkpoint
+      {:ok, _, _} <- StoryAction.rollback_emails(step, checkpoint, meta),
+
+      # Notify about step restart
+      event = StoryAction.notify_restart(step, reason, checkpoint, meta),
+      Event.emit(event, from: step.event)
+    do
+      :ok
+    end
   end
 end

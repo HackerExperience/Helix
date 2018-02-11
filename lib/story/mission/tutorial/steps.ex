@@ -20,7 +20,7 @@ defmodule Helix.Story.Mission.Tutorial do
 
     empty_setup()
 
-    def start(step, _) do
+    def start(step) do
       e1 = send_email step, "welcome"
 
       {:ok, step, e1}
@@ -41,6 +41,7 @@ defmodule Helix.Story.Mission.Tutorial do
     alias Helix.Story.Action.Context, as: ContextAction
 
     alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
+    alias Helix.Software.Event.File.Deleted, as: FileDeletedEvent
 
     alias Helix.Software.Make.File, as: MakeFile
     alias Helix.Software.Make.PFTP, as: MakePFTP
@@ -56,11 +57,11 @@ defmodule Helix.Story.Mission.Tutorial do
     on_reply "more_info",
       send: "give_more_info"
 
-    def setup(step, _) do
+    def setup(step) do
       # Create the underlying character (@contact) and its server
-      {:ok, server, %{entity: entity}, e1} =
+      {:ok, server, _, e1} =
         setup_once :char, {step.entity_id, @contact} do
-          result = {:ok, server, %{entity: entity}, events} =
+          result = {:ok, server, %{entity: entity}, _} =
             StoryMake.char(step.manager.network_id)
 
           ContextAction.save(
@@ -99,11 +100,13 @@ defmodule Helix.Story.Mission.Tutorial do
           cracker_id: cracker.file_id
         }
 
-      # Callbacks
+      # Listeners
       hespawn fn ->
 
         # React to the moment the cracker is downloaded
         story_listen cracker.file_id, FileDownloadedEvent, do: :complete
+
+        story_listen cracker.file_id, FileDeletedEvent, :on_file_deleted
       end
 
       events = e1 ++ e2 ++ e3 ++ e4
@@ -111,12 +114,18 @@ defmodule Helix.Story.Mission.Tutorial do
       {meta, %{}, events}
     end
 
-    def start(step, prev_step) do
-      {meta, _, e1} = setup(step, prev_step)
+    # Callbacks
+
+    callback :on_file_deleted, _event do
+      {{:restart, :file_deleted, "download_cracker1"}, []}
+    end
+
+    def start(step) do
+      {meta, _, e1} = setup(step)
 
       e2 = send_email step, "download_cracker1", %{ip: meta.ip}
 
-      step = %{step|meta: meta}
+      step = %{step| meta: meta}
 
       {:ok, step, e1 ++ e2}
     end
@@ -131,6 +140,12 @@ defmodule Helix.Story.Mission.Tutorial do
 
     def complete(step) do
       {:ok, step, []}
+    end
+
+    def restart(step, _reason, _checkpoint) do
+      {meta, _, e1} = setup(step)
+
+      {:ok, %{step| meta: meta}, %{ip: meta.ip}, e1}
     end
 
     next_step Helix.Story.Mission.Tutorial.SetupPc

@@ -74,8 +74,7 @@ defmodule Helix.Story.Internal.Step do
     end)
   end
 
-  @spec proceed(first_step :: Step.t) ::
-    entry_step_repo_return
+  @spec proceed(first_step :: Step.t) :: entry_step_repo_return
   @spec proceed(prev_step :: Step.t, next_step :: Step.t) ::
     {:ok, Story.Step.t}
     | {:error, :internal}
@@ -159,6 +158,39 @@ defmodule Helix.Story.Internal.Step do
     |> update()
   end
 
+  @spec rollback_email(Step.t, Step.email_id) ::
+    entry_step_repo_return
+  @doc """
+  Rollbacks the Story.Step emails to the specified checkpoint.
+  """
+  def rollback_email(step, checkpoint) do
+    replies = Step.get_replies(step, checkpoint)
+
+    step
+    |> fetch!()
+    |> Story.Step.rollback_email(checkpoint, replies)
+    |> update()
+  end
+
+  @spec gather_data(Story.Step.t, Story.Manager.t) ::
+    step_info
+  docp """
+  Helper that retrieves the `Step.t` based on the `story_step`
+  """
+  defp gather_data(story_step = %Story.Step{}, manager = %Story.Manager{}) do
+    step =
+      Step.fetch(
+        story_step.step_name, story_step.entity_id, story_step.meta, manager
+      )
+
+    formatted_meta = Step.format_meta(step)
+
+    %{
+      object: %{step| meta: formatted_meta},
+      entry: %{story_step| meta: formatted_meta}
+    }
+  end
+
   @spec create(Step.t) ::
     entry_step_repo_return
   defp create(step) do
@@ -185,24 +217,5 @@ defmodule Helix.Story.Internal.Step do
     |> Repo.delete()
 
     :ok
-  end
-
-  @spec gather_data(Story.Step.t, Story.Manager.t) ::
-    step_info
-  docp """
-  Helper that retrieves the `Step.t` based on the `story_step`
-  """
-  defp gather_data(story_step = %Story.Step{}, manager = %Story.Manager{}) do
-    step =
-      Step.fetch(
-        story_step.step_name, story_step.entity_id, story_step.meta, manager
-      )
-
-    formatted_meta = Step.format_meta(step)
-
-    %{
-      object: %{step| meta: formatted_meta},
-      entry: %{story_step| meta: formatted_meta}
-    }
   end
 end

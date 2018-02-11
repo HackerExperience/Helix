@@ -50,6 +50,56 @@ defmodule Helix.Software.Event.File do
     end
   end
 
+  event Deleted do
+    @moduledoc """
+    FileDeletedEvent is fired when a file has been deleted on the filesystem.
+    Most of the times is called as a result of FileDeleteProcessedEvent
+    """
+
+    alias Helix.Server.Model.Server
+    alias Helix.Software.Model.File
+
+    @type t ::
+      %__MODULE__{
+        file_id: File.id,
+        server_id: Server.id
+      }
+
+    event_struct [:file_id, :server_id]
+
+    @spec new(File.id, Server.id) ::
+      t
+    def new(file_id = %File.ID{}, server_id = %Server.ID{}) do
+      %__MODULE__{
+        file_id: file_id,
+        server_id: server_id
+      }
+    end
+
+    notify do
+      @moduledoc """
+      Pushes the notification to the Client, so it can remove the deleted file.
+      """
+
+      @event :file_deleted
+
+      def generate_payload(event, _socket) do
+        data = %{
+          file_id: to_string(event.file_id)
+        }
+
+        {:ok, data}
+      end
+
+      def whom_to_notify(event),
+        do: %{server: [event.server_id]}
+    end
+
+    listenable(event) do
+      [event.file_id]
+    end
+  end
+
   event Downloaded do
     @moduledoc """
     FileDownloadedEvent is fired when a FileTransfer process of type `download`
