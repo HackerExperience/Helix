@@ -7,6 +7,8 @@ defmodule Helix.Software.Make.File do
   alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
 
+  alias Helix.Software.Event.File.Added, as: FileAddedEvent
+
   @type modules :: cracker_modules
 
   @type cracker_modules :: %{bruteforce: version, overflow: version}
@@ -16,31 +18,34 @@ defmodule Helix.Software.Make.File do
   @typep file_parent :: Server.t | Storage.id
   @typep version :: File.Module.version
 
+  @typep file_return(type) ::
+    {:ok, File.t_of_type(type), %{}, [FileAddedEvent.t]}
+
   @doc """
   Generates a cracker.
   """
   @spec cracker(file_parent, cracker_modules, data) ::
-    {:ok, File.t_of_type(:cracker), %{}}
+    file_return(:cracker)
   def cracker(parent, modules, data \\ %{}),
     do: file(parent, :cracker, modules, data)
 
   @spec cracker!(file_parent, cracker_modules, data) ::
     File.t_of_type(:cracker)
   def cracker!(parent, modules, data \\ %{}) do
-    {:ok, file, _} = cracker(parent, modules, data)
+    {:ok, file, _, _} = cracker(parent, modules, data)
     file
   end
 
   @spec file(file_parent, Software.type, modules, data) ::
-    {:ok, File.t, %{}}
+    file_return(Software.type)
   defp file(server = %Server{}, type, modules, data) do
     server
     |> CacheQuery.from_server_get_storages!()
     |> List.first()
-    |> file(type, modules, data)
+    |> file(type, modules, data, server.server_id)
   end
 
-  defp file(storage_id = %Storage.ID{}, type, modules, data) do
+  defp file(storage_id = %Storage.ID{}, type, modules, data, server_id) do
     path = Map.get(data, :path, File.Default.path())
 
     modules = format_modules(type, modules)
@@ -56,7 +61,9 @@ defmodule Helix.Software.Make.File do
 
     {:ok, file} = FileAction.create(params, modules)
 
-    {:ok, file, %{}}
+    event = FileAddedEvent.new(file, server_id)
+
+    {:ok, file, %{}, [event]}
   end
 
   @spec format_modules(Software.type, modules) ::

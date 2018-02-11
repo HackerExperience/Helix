@@ -53,10 +53,11 @@ defmodule HELL.Hack.Experience do
         {:render, 3}
       ],
       "Elixir.Helix.Story.Model.Steppable" => [
-        {:setup, 2},
+        {:start, 1},
+        {:setup, 1},
         {:handle_event, 3},
         {:complete, 1},
-        {:fail, 1},
+        {:restart, 3},
         {:next_step, 1},
         {:get_contact, 1},
         {:format_meta, 1},

@@ -7,7 +7,9 @@ defmodule Helix.Test.Event.Setup.Software do
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.Storage, as: StorageInternal
+  alias Helix.Software.Model.File
 
+  alias Helix.Software.Event.File.Deleted, as: FileDeletedEvent
   alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
   alias Helix.Software.Event.File.DownloadFailed, as: FileDownloadFailedEvent
   alias Helix.Software.Event.File.Install.Processed,
@@ -57,6 +59,12 @@ defmodule Helix.Test.Event.Setup.Software do
       target_server_ip: Random.ipv4()
     }
   end
+
+  @doc """
+  Generates a FileDeletedEvent
+  """
+  def file_deleted(file_id = %File.ID{}, server_id = %Server.ID{}),
+    do: FileDeletedEvent.new(file_id, server_id)
 
   @doc """
   Generates a FileDownloaded event with real data.

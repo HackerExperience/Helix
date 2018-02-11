@@ -44,7 +44,9 @@ defmodule Helix.Story.Mission.FakeSteps do
 
     alias Helix.Entity.Model.Entity
 
-    def setup(step, _),
+    empty_setup()
+
+    def start(step),
       do: {:ok, step, []}
 
     def complete(step),
@@ -68,15 +70,23 @@ defmodule Helix.Story.Mission.FakeSteps do
   end
 
   step TestSimple do
-    def setup(step, _),
+
+    empty_setup()
+
+    def start(step),
       do: {:ok, step, []}
+
     def complete(step),
       do: {:ok, step, []}
+
     next_step __MODULE__
   end
 
   step TestOne do
-    def setup(step, _),
+
+    empty_setup()
+
+    def start(step),
       do: {:ok, step, []}
 
     def complete(step),
@@ -89,7 +99,10 @@ defmodule Helix.Story.Mission.FakeSteps do
   end
 
   step TestTwo do
-    def setup(step, _),
+
+    empty_setup()
+
+    def start(step),
       do: {:ok, step, []}
 
     def complete(step),
@@ -102,7 +115,10 @@ defmodule Helix.Story.Mission.FakeSteps do
   end
 
   step TestCounter do
-    def setup(step, _),
+
+    empty_setup()
+
+    def start(step),
       do: {:ok, step, []}
 
     def complete(step),
@@ -138,7 +154,9 @@ defmodule Helix.Story.Mission.FakeSteps do
     on_reply "reply_to_e3",
       :complete
 
-    def setup(step, _) do
+    empty_setup()
+
+    def start(step) do
       send_email step, "e1"
       {:ok, step, []}
     end
@@ -147,6 +165,39 @@ defmodule Helix.Story.Mission.FakeSteps do
       do: {:ok, step, []}
 
     next_step Helix.Story.Mission.FakeSteps.TestSimple
+  end
+
+  step TestMsgFlow do
+
+    email "e1",
+      reply: ["reply_to_e1"]
+
+    on_reply "reply_to_e1",
+      send: "e2"
+
+    email "e2",
+      reply: ["reply_to_e2"]
+
+    on_reply "reply_to_e2",
+      send: "e3"
+
+    email "e3",
+      reply: ["reply_to_e3"]
+
+    on_reply "reply_to_e3",
+      :complete
+
+    empty_setup()
+
+    def start(step) do
+      send_email step, "e1"
+      {:ok, step, []}
+    end
+
+    def complete(step),
+      do: {:ok, step, []}
+
+    next_step __MODULE__
   end
 end
 
@@ -157,10 +208,15 @@ defmodule Helix.Story.Mission.FakeContactOne do
   contact :contact_one
 
   step TestSimple do
-    def setup(step, _),
+
+    empty_setup()
+
+    def start(step),
       do: {:ok, step, []}
+
     def complete(step),
       do: {:ok, step, []}
+
     next_step __MODULE__
   end
 end
@@ -172,10 +228,15 @@ defmodule Helix.Story.Mission.FakeContactTwo do
   contact :contact_two
 
   step TestSimple do
-    def setup(step, _),
+
+    empty_setup()
+
+    def start(step),
       do: {:ok, step, []}
-      def complete(step),
-        do: {:ok, step, []}
-      next_step __MODULE__
+
+    def complete(step),
+      do: {:ok, step, []}
+
+    next_step __MODULE__
   end
 end

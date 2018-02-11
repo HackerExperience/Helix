@@ -79,6 +79,14 @@ defmodule Helix.Software.Model.PublicFTP do
   def disable_server(changeset = %Changeset{}),
     do: put_change(changeset, :is_active, false)
 
+  @spec is_active?(t) ::
+    boolean
+  @doc """
+  Verifies whether the given server is active (enabled) or not.
+  """
+  def is_active?(%__MODULE__{is_active: is_active?}),
+    do: is_active?
+
   @spec create_changeset(creation_params) ::
     changeset
   defp create_changeset(params) do

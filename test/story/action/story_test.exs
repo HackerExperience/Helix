@@ -3,6 +3,7 @@ defmodule Helix.Story.Action.StoryTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Story.Action.Story, as: StoryAction
+  alias Helix.Story.Action.Flow.Story, as: StoryFlow
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Story
   alias Helix.Story.Query.Story, as: StoryQuery
@@ -81,7 +82,6 @@ defmodule Helix.Story.Action.StoryTest do
 
       assert length(allowed_after) == length(allowed_before) - 1
       refute Enum.member?(allowed_after, reply_id)
-
     end
 
     test "invalid reply is not sent" do
@@ -93,6 +93,86 @@ defmodule Helix.Story.Action.StoryTest do
 
       assert {:error, reason} = StoryAction.send_reply(step, entry, reply_id)
       assert reason == {:reply, :not_found}
+    end
+  end
+
+  describe "rollback_emails/3" do
+    test "returns to specified checkpoint (first element)" do
+      {_, %{entity_id: entity_id}} =
+        StorySetup.story_step(name: :fake_steps@test_msg_flow, meta: %{})
+
+      [%{object: step}] = StoryQuery.get_steps(entity_id)
+
+      StoryFlow.send_reply(entity_id, step.contact, "reply_to_e1")
+      StoryFlow.send_reply(entity_id, step.contact, "reply_to_e2")
+
+      # Story.Step has all three emails
+      [%{entry: story_step}] = StoryQuery.get_steps(entity_id)
+      assert story_step.emails_sent == ["e1", "e2", "e3"]
+
+      # And there are 5 registered emails (3 from the contact + 2 replies)
+      [emails] = StoryQuery.get_emails(entity_id)
+      assert emails.contact_id == step.contact
+      assert length(emails.emails) == 5
+
+      # Let's rollback to `e1`
+      new_meta = %{"foo" => "bar"}
+      assert {:ok, story_step, story_email} =
+        StoryAction.rollback_emails(step, "e1", new_meta)
+
+      # Story.Step only has `e1`. `e2` and `e3` argon
+      assert story_step.emails_sent == ["e1"]
+
+      # There must be only one email (`e1`). Anything after that was removed
+      assert length(story_email.emails) == 1
+
+      # And the email that is left had its metadata updated.
+      [message] = story_email.emails
+
+      assert message.id == "e1"
+      assert message.meta == new_meta
+      assert message.sender == :contact
+    end
+
+    # Same test as above ("first element"), but now we'll use as checkpoint
+    # a message in the middle of the stack. Seems a small change but it covers
+    # many extra edge cases
+    test "returns to specified checkpoint (middle element)" do
+      {_, %{entity_id: entity_id}} =
+        StorySetup.story_step(name: :fake_steps@test_msg_flow, meta: %{})
+
+      [%{object: step}] = StoryQuery.get_steps(entity_id)
+
+      StoryFlow.send_reply(entity_id, step.contact, "reply_to_e1")
+      StoryFlow.send_reply(entity_id, step.contact, "reply_to_e2")
+
+      # Story.Step has all three emails
+      [%{entry: story_step}] = StoryQuery.get_steps(entity_id)
+      assert story_step.emails_sent == ["e1", "e2", "e3"]
+
+      # And there are 5 registered emails (3 from the contact + 2 replies)
+      [emails] = StoryQuery.get_emails(entity_id)
+      assert emails.contact_id == step.contact
+      assert length(emails.emails) == 5
+
+      # Let's rollback to `e2` (which is in the middle of the stack!)
+      new_meta = %{"foo" => "bar"}
+      assert {:ok, story_step, story_email} =
+        StoryAction.rollback_emails(step, "e2", new_meta)
+
+      # Story.Step has `e1` and `e2`. `e3` isgon
+      assert story_step.emails_sent == ["e1", "e2"]
+
+      # There are 3 emails on the story. `e1`, `reply_to_e1` and `e2`
+      assert length(story_email.emails) == 3
+
+      # And the email that is left had its metadata updated.
+      [m1, m2, m3] = story_email.emails
+
+      assert m1.id == "e1"
+      assert m2.id == "reply_to_e1"
+      assert m3.id == "e2"
+      assert m3.meta == new_meta
     end
   end
 end

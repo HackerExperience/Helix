@@ -94,7 +94,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.EmailReplyTest do
       {socket, %{entity_id: entity_id}} = ChannelSetup.join_account()
 
       # Remove any existing step
-      StoryHelper.remove_existing_step(entity_id)
+      StoryHelper.remove_existing_steps(entity_id)
 
       params =
         %{

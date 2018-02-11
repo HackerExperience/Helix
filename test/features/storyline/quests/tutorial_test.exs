@@ -1,4 +1,4 @@
-defmodule Helix.Test.Features.Storyline.Flow do
+defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
 
   use Helix.Test.Case.Integration
 
@@ -14,6 +14,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
   alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Story.Vars, as: StoryVars
 
   @moduletag :feature
 
@@ -30,15 +31,33 @@ defmodule Helix.Test.Features.Storyline.Flow do
           account_id: account.account_id, socket: server_socket
         )
 
+      # Inherit storyline variables
+      s = StoryVars.vars()
+
       # Player is on mission
       assert [%{object: cur_step}] = StoryQuery.get_steps(entity_id)
       assert cur_step.name == Step.first_step_name()
 
-      # We'll now complete the first step by replying to the email
+      # We'll now progress on the first step by replying to the email
       params =
         %{
-          "reply_id" => "back_thanks",
-          "contact_id" => to_string(cur_step.contact)
+          "reply_id" => s.step.setup_pc.msg2,
+          "contact_id" => s.contact.friend
+        }
+      ref = push account_socket, "email.reply", params
+      assert_reply ref, :ok, _, timeout()
+
+      # Contact just replied with the next message
+      [story_email_sent] = wait_events [:story_email_sent]
+
+      assert_email \
+        story_email_sent, s.step.setup_pc.msg3, s.step.setup_pc.msg4, cur_step
+
+      # Now we'll reply back and finally proceed to the next step
+      params =
+        %{
+          "reply_id" => s.step.setup_pc.msg4,
+          "contact_id" => s.contact.friend
         }
       ref = push account_socket, "email.reply", params
       assert_reply ref, :ok, _, timeout(:slow)
@@ -46,7 +65,8 @@ defmodule Helix.Test.Features.Storyline.Flow do
       # Now we've proceeded to the next step.
       [story_step_proceeded] = wait_events [:story_step_proceeded]
 
-      assert_transition story_step_proceeded, "setup_pc", "download_cracker"
+      assert_transition \
+        story_step_proceeded, s.step.setup_pc.name, s.step.setup_pc.next
 
       # Fetch setup data
       %{object: cur_step} = StoryQuery.fetch_step(entity_id, cur_step.contact)
@@ -75,7 +95,7 @@ defmodule Helix.Test.Features.Storyline.Flow do
       [story_step_proceeded] = wait_events [:story_step_proceeded]
 
       assert_transition \
-        story_step_proceeded, "download_cracker", "download_cracker"
+        story_step_proceeded, "download_cracker", s.step.setup_pc.name
     end
   end
 end

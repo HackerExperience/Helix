@@ -22,6 +22,7 @@ defmodule Helix.Software.Event.Handler.Filesystem do
   # Existing entries being updated
 
   # Existing entries being removed
+  # TODO FileDeletedEvent #384
 
   # Generic notifiers
 

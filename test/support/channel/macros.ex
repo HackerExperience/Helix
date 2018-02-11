@@ -56,9 +56,9 @@ defmodule Helix.Test.Channel.Macros do
   @doc """
   Debugger/helper that lists all events in the mailbox.
   """
-  defmacro list_events do
+  defmacro list_events(timeout \\ quote(do: 50)) do
     quote do
-      unquote(wait_all())
+      unquote(wait_all(timeout))
     end
   end
 end

@@ -23,8 +23,7 @@ defmodule Helix.Story.Repo.Migrations.StoryContact do
       add :emails, {:array, :jsonb}, null: false, default: []
     end
 
-    # Apparently Ecto does not work well with composite FKs
-    # https://elixirforum.com/t/does-ecto-supports-composite-foreign-keys/2466
+    # FK below was removed. See `RemoveStoryEmailsFK` for context
     execute """
     ALTER TABLE story_emails
       ADD CONSTRAINT story_emails_fkey

@@ -13,7 +13,7 @@ defmodule Helix.Story.Make.Story do
   @typep char_related :: %{entity: Entity.t}
 
   @spec char(Network.id) ::
-    {:ok, Server.t, char_related}
+    {:ok, Server.t, char_related, []}
   def char(network_id = %Network.ID{}) do
     network = NetworkQuery.fetch(network_id)
     net_data =
@@ -28,7 +28,7 @@ defmodule Helix.Story.Make.Story do
       {:ok, entity, _} <- MakeEntity.entity(npc),
       {:ok, server, _} <- MakeServer.npc(entity, net_data)
     do
-      {:ok, server, %{entity: entity}}
+      {:ok, server, %{entity: entity}, []}
     end
   end
 end
