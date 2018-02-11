@@ -36,7 +36,7 @@ defmodule Helix.Story.Model.Story.Email do
     timestamp: DateTime.t,
     id: Step.email_id,
     sender: sender,
-    meta: Step.meta
+    meta: Step.email_meta
   }
 
   @type creation_params :: %{
@@ -46,7 +46,7 @@ defmodule Helix.Story.Model.Story.Email do
 
   @type email_creation_params :: %{
     id: Step.email_id,
-    meta: Step.meta,
+    meta: Step.email_meta,
     sender: sender
   }
 
@@ -87,6 +87,11 @@ defmodule Helix.Story.Model.Story.Email do
     }
   end
 
+  @spec rollback_email(t, Step.email_id, Step.email_meta) ::
+    changeset
+  @doc """
+  Rollbacks the history of emails to the specified checkpoint (`email_id`)
+  """
   def rollback_email(entry, email_id, meta) do
     email = create_email(email_id, meta, :contact)
 
@@ -94,26 +99,6 @@ defmodule Helix.Story.Model.Story.Email do
     |> change()
     |> do_rollback_email(email)
     |> generic_validations()
-  end
-
-  defp do_rollback_email(changeset, email) do
-    new_emails =
-      changeset
-      |> get_field(:emails)
-      |> Enum.reverse()
-
-      # Remove all emails sent after `email_id`
-      |> Enum.drop_while(&(&1.id != email.id))
-
-      # Also remove `email_id`...
-      |> List.delete_at(0)
-
-      # Which will be replaced by the new `email`
-      |> List.insert_at(0, email)
-      |> Enum.reverse()
-
-    changeset
-    |> put_change(:emails, new_emails)
   end
 
   @spec format(t) ::
@@ -142,6 +127,28 @@ defmodule Helix.Story.Model.Story.Email do
       sender: String.to_existing_atom(email["sender"]),
       timestamp: timestamp
     }
+  end
+
+  @spec do_rollback_email(changeset, email) ::
+    changeset
+  defp do_rollback_email(changeset, email) do
+    new_emails =
+      changeset
+      |> get_field(:emails)
+      |> Enum.reverse()
+
+      # Remove all emails sent after `email_id`
+      |> Enum.drop_while(&(&1.id != email.id))
+
+      # Also remove `email_id`...
+      |> List.delete_at(0)
+
+      # Which will be replaced by the new `email`
+      |> List.insert_at(0, email)
+      |> Enum.reverse()
+
+    changeset
+    |> put_change(:emails, new_emails)
   end
 
   @spec generic_validations(changeset) ::

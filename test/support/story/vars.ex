@@ -1,6 +1,7 @@
 defmodule Helix.Test.Story.Vars do
   @moduledoc """
-  This helper will inject (in a non-higienic way!)
+  This helper holds storyline-wide IDs and pointers. Helpful to avoiding
+  hard-coding stuff on the tests!
   """
 
   @vars %{

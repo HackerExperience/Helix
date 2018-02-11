@@ -29,22 +29,6 @@ defmodule Helix.Test.Story.Helper do
   end
 
   @doc """
-  Generates random contact id
-  """
-  def contact_id do
-    # Guaranteed to be random
-    :friend
-  end
-
-  @doc """
-  Generates random reply id
-  """
-  def reply_id do
-    # Guaranteed to be random
-    "reply_id"
-  end
-
-  @doc """
   Automagically replies to a step.
 
   It randomly selects the `reply_id` from the `allowed_replies` on the given
@@ -91,5 +75,21 @@ defmodule Helix.Test.Story.Helper do
     do
       {:ok, next_step}
     end
+  end
+
+  @doc """
+  Generates random contact id
+  """
+  def contact_id do
+    # Guaranteed to be random
+    :friend
+  end
+
+  @doc """
+  Generates random reply id
+  """
+  def reply_id do
+    # Guaranteed to be random
+    "reply_id"
   end
 end

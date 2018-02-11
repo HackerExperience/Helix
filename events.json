@@ -116,7 +116,7 @@
       "receives": ["All"],
       "emits": [
         "Story.Step.Proceeded",
-        "Story.Step.Failed",
+        "Story.Step.Restarted",
         "Steppable (custom)"
       ]
     },
@@ -157,9 +157,6 @@
     ],
     "Software.Software.LogForger": [
       "Process.Created"
-    ],
-    "Story.Manager": [
-      "Story.Proceeded"
     ]
   },
   "process_conclusion": [
@@ -183,9 +180,13 @@
     "Process.Created",
     "Process.Completed",
     "Process.Killed",
+    "File.Added",
+    "File.Deleted",
     "File.Uploaded",
     "StoryEmailSentEvent",
     "StoryReplySentEvent",
+    "Story.Step.Restarted",
+    "Story.Step.Proceeded",
     "Virus.Installed",
     "Virus.InstallFailed"
   ],
@@ -197,8 +198,13 @@
           "emits": []
         },
         "DownloadCracker": {
-          "filters": ["File.Downloaded"],
-          "emits": []
+          "filters": [
+            "File.Downloaded",
+            "File.Deleted"
+          ],
+          "emits": [
+            "File.Added"
+          ]
         }
       }
     }

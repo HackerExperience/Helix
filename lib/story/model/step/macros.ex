@@ -317,6 +317,11 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
+  @doc """
+  `setup_once` is a helper to ease achieving idempotency on `Steppable.setup/1`.
+
+  It's a thin wrapper around `StoryQuery.Setup`, which does the heavy work.
+  """
   defmacro setup_once(object, identifier, do: block),
     do: do_setup_once(object, identifier, [], block)
   defmacro setup_once(object, identifier, opts, do: block),

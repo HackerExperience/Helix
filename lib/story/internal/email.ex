@@ -64,6 +64,11 @@ defmodule Helix.Story.Internal.Email do
   def send_reply(step, reply_id),
     do: generic_send(step, reply_id, :player)
 
+  @spec rollback_email(Step.t, Step.email_id, Step.email_meta) ::
+    entry_email_repo_return
+  @doc """
+  Rollbacks the email history to the given checkpoint (`email_id`).
+  """
   def rollback_email(step, email_id, meta) do
     step
     |> fetch()
