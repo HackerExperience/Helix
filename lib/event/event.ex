@@ -116,6 +116,23 @@ defmodule Helix.Event do
     term
   @doc """
   Emits the given event(s) after `interval` milliseconds have passed.
+
+  It also inherits data from the source event passed on the `from` parameter.
+  """
+  def emit_after([], _, from: _),
+    do: :noop
+  def emit_after(events = [_|_], interval, from: source_event),
+    do: Enum.each(events, &(emit_after(&1, interval, from: source_event)))
+  def emit_after(event, interval, from: source_event) do
+    event
+    |> inherit(source_event)
+    |> emit_after(interval)
+  end
+
+  @spec emit_after([t] | t, interval :: float | non_neg_integer) ::
+    term
+  @doc """
+  Emits the given event(s) after `interval` milliseconds have passed.
   """
   def emit_after([], _),
     do: :noop

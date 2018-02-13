@@ -20,17 +20,43 @@ defmodule Helix.Event.Listenable.Flow do
   `ListenerHandler`.
   """
 
-  defmacro listenable(event, do: block) do
+  @doc """
+  The `listeneable` macro must be used alongside at least one `listen/2`.
+
+  ## Example
+
+  listenable do
+    listen(event = %_{valid?: true}) do
+      [event.entity_id, event.file_id]
+    end
+  end
+  """
+  defmacro listenable(do: block) do
     quote do
 
       defimpl Helix.Event.Listenable do
         @moduledoc false
 
-        @doc false
-        def get_objects(unquote(event)) do
-          unquote(block)
-        end
+        unquote(block)
       end
+
+    end
+  end
+
+  @doc """
+  Expands the expected methods of the `Listenable` protocol.
+  """
+  defmacro listen(event, do: block) do
+    quote do
+
+      @doc false
+      def get_objects(unquote(event)) do
+        unquote(block)
+      end
+
+      # Fallback
+      def get_objects(_),
+        do: []
 
     end
   end

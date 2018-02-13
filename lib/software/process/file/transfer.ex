@@ -215,6 +215,7 @@ process Helix.Software.Process.File.Transfer do
       }
     end
 
+    # REVIEW: `upload` should use a `source_file`, no?
     target_file(_gateway, _target, _params, %{file: file}) do
       file.file_id
     end

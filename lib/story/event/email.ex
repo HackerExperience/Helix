@@ -4,7 +4,7 @@ defmodule Helix.Story.Event.Email do
 
   event Sent do
     @moduledoc """
-    Story.EmailSentEvent is fired when a Contact (Storyline character) sends an
+    `StoryEmailSentEvent` is fired when a Contact (Storyline character) sends an
     email to the Player.
     """
 
@@ -34,7 +34,7 @@ defmodule Helix.Story.Event.Email do
     notify do
       @moduledoc """
       Logic of the notification that will be sent to the client once the event
-      `Story.EmailSent` is fired.
+      `StoryEmailSentEvent` is fired.
       """
 
       alias HELL.ClientUtils
@@ -45,7 +45,7 @@ defmodule Helix.Story.Event.Email do
         contact_id = Step.get_contact(event.step) |> to_string()
         replies =
           event.step
-          |> Step.get_replies(event.email.id)
+          |> Step.get_replies_of(event.email.id)
           |> Enum.map(&to_string/1)
 
         data = %{

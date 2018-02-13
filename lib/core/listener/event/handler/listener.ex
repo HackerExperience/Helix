@@ -17,6 +17,11 @@ defmodule Helix.Core.Listener.Event.Handler.Listener do
   services subscribed to that specific event under that specific object ID.
   """
   def listener_handler(event) do
+    # OPTMIZE: There's room for optimization on this function. Some events may
+    # return several objects on `Listenable.get_objects/0`, and currently we
+    # perform a separate query for each one. Instead, fetching all matching
+    # objects with `IN`, and filtering by `event.__struct__` within the
+    # application would yield a faster operation.
     if Listenable.impl_for(event) do
       event
       |> Listenable.get_objects()
@@ -24,7 +29,7 @@ defmodule Helix.Core.Listener.Event.Handler.Listener do
     end
   end
 
-  @spec find_listeners(term | Listener.object_id, Event.t) ::
+  @spec find_listeners(Listener.object_id, Event.t) ::
     term
   defp find_listeners(object_id, event) do
     object_id

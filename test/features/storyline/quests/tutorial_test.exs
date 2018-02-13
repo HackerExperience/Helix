@@ -11,6 +11,7 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
+  alias Helix.Test.Event.Helper, as: EventHelper
   alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
@@ -41,7 +42,7 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
       # We'll now progress on the first step by replying to the email
       params =
         %{
-          "reply_id" => s.step.setup_pc.msg2,
+          "reply_id" => s.tutorial.setup.msg2,
           "contact_id" => s.contact.friend
         }
       ref = push account_socket, "email.reply", params
@@ -50,13 +51,12 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
       # Contact just replied with the next message
       [story_email_sent] = wait_events [:story_email_sent]
 
-      assert_email \
-        story_email_sent, s.step.setup_pc.msg3, s.step.setup_pc.msg4, cur_step
+      assert_email story_email_sent, :msg3, :msg4, s.tutorial.setup
 
       # Now we'll reply back and finally proceed to the next step
       params =
         %{
-          "reply_id" => s.step.setup_pc.msg4,
+          "reply_id" => s.tutorial.setup.msg4,
           "contact_id" => s.contact.friend
         }
       ref = push account_socket, "email.reply", params
@@ -65,11 +65,17 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
       # Now we've proceeded to the next step.
       [story_step_proceeded] = wait_events [:story_step_proceeded]
 
-      assert_transition \
-        story_step_proceeded, s.step.setup_pc.name, s.step.setup_pc.next
+      assert_transition story_step_proceeded, s.tutorial.setup
 
       # Fetch setup data
       %{object: cur_step} = StoryQuery.fetch_step(entity_id, cur_step.contact)
+
+      EventHelper.flush_timer()
+
+      # Soon we receive the first message (setup message) of the step
+      [story_email_sent] = wait_events [:story_email_sent]
+
+      assert_email story_email_sent, :msg1, [], s.tutorial.dl_crc
 
       cracker_id = cur_step.meta.cracker_id
       target_id = cur_step.meta.server_id
@@ -86,16 +92,39 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
       ref = push server_socket, "pftp.file.download", params
       assert_reply ref, :ok, _, timeout(:slow)
 
-      [process_created] = wait_events [:process_created], timeout()
+      # Right after the download has started, we receive an email
+      [story_email_sent, process_created] =
+        wait_events [:story_email_sent, :process_created], timeout()
+
+      assert_email story_email_sent, :msg2, [], s.tutorial.dl_crc
+
+      # Flush pending messages
+      EventHelper.flush_timer()
+
+      # There's an automatic reply right after that
+      [story_reply_sent] = wait_events [:story_reply_sent]
+
+      assert_reply story_reply_sent, :msg3, :msg2, [], s.tutorial.dl_crc
 
       # Finish the download
       TOPHelper.force_completion(process_created.data.process_id)
 
-      # We've proceeded to the next step!
-      [story_step_proceeded] = wait_events [:story_step_proceeded]
+      # A reply is automatically submitted once the download is finished
+      [story_reply_sent] = wait_events [:story_reply_sent]
 
-      assert_transition \
-        story_step_proceeded, "download_cracker", s.step.setup_pc.name
+      assert_reply story_reply_sent, :msg4, :msg3, [:msg5], s.tutorial.dl_crc
+
+      # Flush pending messages
+      EventHelper.flush_timer()
+
+      # And soon after that we'll receive yet another email and proceed to the
+      # next step
+      [story_email_sent, story_step_proceeded] =
+        wait_events [:story_email_sent, :story_step_proceeded]
+
+      assert_email story_email_sent, :msg5, [], s.tutorial.dl_crc
+
+      assert_transition story_step_proceeded, s.tutorial.dl_crc
     end
   end
 end

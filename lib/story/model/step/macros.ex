@@ -16,6 +16,8 @@ defmodule Helix.Story.Model.Step.Macros do
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Query.Story, as: StoryQuery
 
+  alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
+  alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
   alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
 
@@ -37,6 +39,7 @@ defmodule Helix.Story.Model.Step.Macros do
           alias Helix.Story.Make.Story, as: StoryMake
 
           @emails Module.get_attribute(__MODULE__, :emails) || %{}
+          @replies Module.get_attribute(__MODULE__, :replies) || %{}
           @contact get_contact(unquote(contact), __MODULE__)
           @step_name Helix.Story.Model.Step.get_name(unquote(name))
 
@@ -62,16 +65,48 @@ defmodule Helix.Story.Model.Step.Macros do
           def get_contact(_),
             do: @contact
 
-          @spec get_replies(Step.t, Step.email_id) ::
-            [Step.reply_id]
           @doc false
-          # Unlocked replies only
-          def get_replies(_step, email_id) do
-            with email = %{} <- Map.get(@emails, email_id, []) do
-              email.replies
+          def get_emails(_),
+            do: @emails
+
+          @spec get_replies_of(Step.t, Step.email_id | Step.reply_id) ::
+            [Step.reply_id]
+          @doc """
+          Returns valid replies for the given message (which may be either an
+          `email_id` or a `reply_id`).
+
+          Note that it checks for statically valid replies, so it DOES NOT CHECK
+          LOCKED REPLIES.
+          """
+          def get_replies_of(_step, message_id) do
+            cond do
+              email = Map.get(@emails, message_id, false) ->
+                email.replies
+
+              replies = Map.get(@replies, message_id, false) ->
+                replies.replies
+
+              true ->
+                []
             end
           end
 
+          docp """
+          It may be the case that `handle_callback` receives a result that has
+          already been handled by itself. This happens when `relay_callback` is
+          used. In this case, we simply return the input, since it's ready.
+          """
+          @spec handle_callback({:ok, [Event.t]}, term, term) ::
+            {:ok, [Event.t]}
+          defp handle_callback({:ok, events}, _, _),
+            do: {:ok, events}
+
+          docp """
+          `handle_callback/3` will receive the result of a callback, which must
+          return a `Step.callback_action`, and encapsulate it into a correct
+          `StepActionRequestedEvent`, so it can be dispatched and ~eventually~
+          handled by StoryHandler.
+          """
           @spec handle_callback(
             {Step.callback_action, [Event.t]}, Entity.id, Step.contact)
           ::
@@ -83,9 +118,40 @@ defmodule Helix.Story.Model.Step.Macros do
             {:ok, events ++ [request_action]}
           end
 
-          @doc false
-          callback :callback_complete do
+          @doc """
+          Predefined callback when user asks to `:complete` a step.
+          """
+          callback :cb_complete do
             {:complete, []}
+          end
+
+          @doc """
+          Predefined callback when user asks to `:send_email`. `meta` must
+          contain required data, in this case at least `email_id`.
+          """
+          callback :cb_send_email, _event, meta = %{"email_id" => email_id} do
+            email_meta = Map.get(meta, "email_meta", %{})
+
+            {{:send_email, email_id, email_meta, []}, []}
+          end
+
+          @doc """
+          Predefined callback when user asks to `:send_reply`. `meta` must
+          contain required data, in this case at least `reply_id`.
+          """
+          callback :cb_send_reply, _event, %{"reply_id" => reply_id} do
+            {{:send_reply, reply_id, []}, []}
+          end
+
+          @doc """
+          Predefined callback that is used by `on_process_started` listener.
+          """
+          callback :cb_process_started, event, meta do
+            if to_string(event.process.type) == meta["type"] do
+              relay_callback meta["relay_cb"], event, meta
+            else
+              {:noop, []}
+            end
           end
         end
       end
@@ -118,16 +184,18 @@ defmodule Helix.Story.Model.Step.Macros do
   end
 
   @doc """
-  Executes a predefined callback (currently only `:complete` is supported).
+  `relay_callback` is a helper used when one callback is supposed to call
+  another one, acting like a proxy.
+
+  It may be rendered useless if we ever add some way to filter results of
+  `Listener`. See the `cb_process_started` to understand why.
   """
-  defmacro story_listen(element_id, events, do: action) do
-
+  defmacro relay_callback(callback, event, meta) do
     quote do
-      callback_name = Utils.concat_atom(:callback_, unquote(action))
+      cb_fun = String.to_existing_atom(unquote(callback))
 
-      story_listen(unquote(element_id), unquote(events), callback_name)
+      apply(__MODULE__, cb_fun, [unquote(event), unquote(meta)])
     end
-
   end
 
   @doc """
@@ -135,7 +203,7 @@ defmodule Helix.Story.Model.Step.Macros do
 
   It's a wrapper for `Core.Listener`.
   """
-  defmacro story_listen(element_id, events, callback) do
+  defmacro story_listen(element_id, events, meta \\ quote(do: %{}), callback) do
     # Import `Helix.Core.Listener` only once within the Step context (ENV)
     macro = has_macro?(__CALLER__, Helix.Core.Listener)
     import_block = macro && [] ||  quote(do: import Helix.Core.Listener)
@@ -144,14 +212,41 @@ defmodule Helix.Story.Model.Step.Macros do
 
       unquote(import_block)
 
-      listen unquote(element_id), unquote(events), unquote(callback),
-        owner_id: var!(step).entity_id,
-        subscriber: @step_name,
-        meta: %{
+      {callback_name, extra_meta} = get_callback_data(unquote(callback))
+
+      listen_meta =
+        %{
           step_entity_id: var!(step).entity_id,
           step_contact_id: var!(step).contact
         }
+        |> Map.merge(unquote(meta))
+        |> Map.merge(extra_meta)
 
+      listen unquote(element_id), unquote(events), callback_name,
+        owner_id: var!(step).entity_id,
+        subscriber: @step_name,
+        meta: listen_meta
+
+    end
+  end
+
+  @doc """
+  Listener that triggers once the process of type `type` acts over `element_id`.
+  """
+  defmacro on_process_started(type, element_id, callback) do
+    quote do
+
+      {callback_name, extra_meta} = get_callback_data(unquote(callback))
+
+      meta =
+        %{
+          type: unquote(type),
+          relay_cb: callback_name
+        }
+        |> Map.merge(extra_meta)
+
+      story_listen unquote(element_id), ProcessCreatedEvent,
+        meta, :cb_process_started
     end
   end
 
@@ -200,6 +295,9 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
+  @doc """
+  Defines a new email for the step.
+  """
   defmacro email(email_id, opts \\ []) do
     prev_emails = get_emails(__CALLER__) || %{}
     email = add_email(email_id, opts)
@@ -209,6 +307,21 @@ defmodule Helix.Story.Model.Step.Macros do
     set_emails(__CALLER__, emails)
   end
 
+  @doc """
+  Defines a new reply for the step.
+  """
+  defmacro reply(reply_id, opts \\ []) do
+    prev_replies = get_replies(__CALLER__) || %{}
+    reply = add_reply(reply_id, opts)
+
+    replies = Map.merge(prev_replies, reply)
+
+    set_replies(__CALLER__, replies)
+  end
+
+  @doc """
+  Helper used to send an email from the step.
+  """
   defmacro send_email(step, email_id, email_meta \\ quote(do: %{})) do
     emails = get_emails(__CALLER__) || %{}
 
@@ -230,6 +343,10 @@ defmodule Helix.Story.Model.Step.Macros do
 
   @doc """
   Filters any events (handled by StoryHandler), performing the requested action.
+
+  It supports all `Step.callback_actions`, as well as custom behaviour (through
+  the `do: block` option). The result will be handled by StoryHandler's
+  `handle_action/2`, so it must return a valid `Step.callback_action`.
   """
   defmacro filter(step, event, meta, opts) do
     quote do
@@ -241,15 +358,36 @@ defmodule Helix.Story.Model.Step.Macros do
             [do: block] ->
               block
 
+            [reply: reply_id] ->
+              quote do
+                {{:send_reply, unquote(reply_id), []}, step, []}
+              end
+
+            [reply: reply_id, send_opts: send_opts] ->
+              quote do
+                {{:send_reply, unquote(reply_id), unquote(send_opts)}, step, []}
+              end
+
             [send: email_id] ->
               quote do
-                event =
-                  send_email \
-                    step,
-                    unquote(email_id),
-                    Keyword.get(unquote(opts), :meta, %{})
+                meta = Keyword.get(unquote(opts), :meta, %{})
 
-                {:noop, step, event}
+                {{:send_email, unquote(email_id), meta, []}, step, []}
+              end
+
+            [send: email_id, send_opts: send_opts] ->
+              quote do
+                meta = Keyword.get(unquote(opts), :meta, %{})
+                {
+                  {:send_email, unquote(email_id), meta, unquote(send_opts)},
+                  step,
+                  []
+                }
+              end
+
+            [do: :complete, send_opts: send_opts] ->
+              quote do
+                {{:complete, unquote(send_opts)}, step, []}
               end
 
             :complete ->
@@ -274,22 +412,65 @@ defmodule Helix.Story.Model.Step.Macros do
   defmacro on_reply(reply_id, opts) do
     # Emails that can receive this reply
     emails = get_emails(__CALLER__)
-    valid_emails = get_emails_with_reply(emails, reply_id)
+    emails_with_reply = get_emails_with_reply(emails, reply_id)
 
-    for email <- valid_emails do
-      quote do
+    email_block =
+      for email <- emails_with_reply do
+        quote do
 
-        filter(
-          step,
-          %StoryReplySentEvent{
-            reply: %{id: unquote(reply_id)},
-            reply_to: unquote(email)
-          },
-          _,
-          unquote(opts)
-        )
+          filter(
+            step,
+            %StoryReplySentEvent{
+              reply: %{id: unquote(reply_id)},
+              reply_to: unquote(email)
+            },
+            _,
+            unquote(opts)
+          )
 
+        end
       end
+
+    # Replies that can receive this reply
+    replies = get_replies(__CALLER__)
+    replies_with_reply = get_replies_with_reply(replies, reply_id)
+
+    reply_block =
+      for reply <- replies_with_reply do
+        quote do
+
+          filter(
+            step,
+            %StoryReplySentEvent{
+              reply: %{id: unquote(reply_id)},
+              reply_to: unquote(reply)
+            },
+            _,
+            unquote(opts)
+          )
+
+        end
+      end
+
+    [email_block] ++ [reply_block]
+  end
+
+  @doc """
+  Interface used to declare what should happen when `email_id` is sent.
+  """
+  defmacro on_email(email_id, opts) do
+    # Emails that can receive this reply
+    quote do
+
+      filter(
+        step,
+        %StoryEmailSentEvent{
+          email: %{id: unquote(email_id)}
+        },
+        _,
+        unquote(opts)
+      )
+
     end
   end
 
@@ -367,6 +548,23 @@ defmodule Helix.Story.Model.Step.Macros do
     get_contact(mission_contact, step_module)
   end
 
+  @spec get_callback_data(term) ::
+    {callback_name :: atom, extra_meta :: map}
+  @doc """
+  Helper that analyzes the `story_listen` opts and returns the corresponding
+  callback name, as well as extra metadata that we should feed to the callback.
+  """
+  def get_callback_data(email: {email_id, email_meta}),
+    do: {:cb_send_email, %{email_id: email_id, email_meta: email_meta}}
+  def get_callback_data(email: email_id) when is_binary(email_id),
+    do: {:cb_send_email, %{email_id: email_id}}
+  def get_callback_data(reply: reply_id) when is_binary(reply_id),
+    do: {:cb_send_reply, %{reply_id: reply_id}}
+  def get_callback_data(:complete),
+    do: {:cb_complete, %{}}
+  def get_callback_data(callback) when is_atom(callback),
+    do: {callback, %{}}
+
   @spec add_email(Step.email_id, term) ::
     Step.emails
   docp """
@@ -376,12 +574,21 @@ defmodule Helix.Story.Model.Step.Macros do
   defp add_email(email_id, opts) do
     metadata = %{
       id: email_id,
-      replies: Utils.ensure_list(opts[:reply]),
+      replies: Utils.ensure_list(opts[:replies]),
       locked: Utils.ensure_list(opts[:locked])
     }
 
     Map.put(%{}, email_id, metadata)
   end
+
+  @spec get_emails(Macro.Env.t) ::
+    Step.emails
+    | nil
+  docp """
+  Helper to read the module attribute `emails`
+  """
+  defp get_emails(%Macro.Env{module: module}),
+    do: Module.get_attribute(module, :emails)
 
   @spec get_emails_with_reply(Step.emails, Step.reply_id) ::
     [Step.email_id]
@@ -413,15 +620,6 @@ defmodule Helix.Story.Model.Step.Macros do
   defp email_exists?(emails, email_id),
     do: Map.get(emails, email_id, false) && true
 
-  @spec get_emails(Macro.Env.t) ::
-    Step.emails
-    | nil
-  docp """
-  Helper to read the module attribute `emails`
-  """
-  defp get_emails(%Macro.Env{module: module}),
-    do: Module.get_attribute(module, :emails)
-
   @spec set_emails(Macro.Env.t, Step.emails) ::
     :ok
   docp """
@@ -429,6 +627,61 @@ defmodule Helix.Story.Model.Step.Macros do
   """
   defp set_emails(%Macro.Env{module: module}, emails),
     do: Module.put_attribute(module, :emails, emails)
+
+  @spec add_reply(Step.reply_id, term) ::
+    Step.replies
+  docp """
+  Given an reply id and its options, convert it to the internal format defined
+  by `Step.replies`, which is a map using `reply_id` as lookup key.
+  """
+  defp add_reply(reply_id, opts) do
+    metadata = %{
+      id: reply_id,
+      replies: Utils.ensure_list(opts[:replies]),
+      locked: Utils.ensure_list(opts[:locked])
+    }
+
+    Map.put(%{}, reply_id, metadata)
+  end
+
+  @spec get_replies(Macro.Env.t) ::
+    Step.replies
+    | nil
+  docp """
+  Helper to read the module attribute `replies`
+  """
+  defp get_replies(%Macro.Env{module: module}),
+    do: Module.get_attribute(module, :replies)
+
+  @spec get_replies_with_reply(Step.replies | nil, Step.reply_id) ::
+    [Step.reply_id]
+  docp """
+  Helper used to identify all replies that can receive the given `reply_id`.
+
+  Similar to `get_emails_with_reply`, it's used by the `on_reply` macro.
+  """
+  defp get_replies_with_reply(nil, _),
+    do: []
+  defp get_replies_with_reply(replies, reply_id) do
+    Enum.reduce(replies, [], fn {id, reply}, acc ->
+      cond do
+        Enum.member?(reply.replies, reply_id) ->
+          acc ++ [id]
+        Enum.member?(reply.locked, reply_id) ->
+          acc ++ [id]
+        true ->
+          acc
+      end
+    end)
+  end
+
+  @spec set_replies(Macro.Env.t, Step.replies) ::
+    :ok
+  docp """
+  Helper to set the module attribute `replies`
+  """
+  defp set_replies(%Macro.Env{module: module}, replies),
+    do: Module.put_attribute(module, :replies, replies)
 
   @spec has_macro?(Macro.Env.t, module) ::
     boolean

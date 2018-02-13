@@ -16,6 +16,7 @@ defmodule Helix.Story.Event.Handler.Story do
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
+  alias Helix.Story.Model.Story
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
@@ -25,7 +26,7 @@ defmodule Helix.Story.Event.Handler.Story do
   belongs to, and then fetching any steps that entity is assigned to.
 
   For each step found, we instantiate its object (Steppable data/struct), and
-  guide it through the StepFlow. See doc on `step_flow/1`
+  guide it through the StepFlow. See doc on `step_flow/2`
 
   Emits:
   - Events returned by `Steppable` methods
@@ -37,10 +38,10 @@ defmodule Helix.Story.Event.Handler.Story do
       entity_id = %{} <- Step.get_entity(event),
       steps = [_] <- StoryQuery.get_steps(entity_id)
     do
-      Enum.each(steps, fn %{object: step} ->
+      Enum.each(steps, fn %{object: step, entry: story_step} ->
         step
         |> Step.new(event)
-        |> step_flow
+        |> step_flow(story_step)
       end)
     end
   end
@@ -51,12 +52,12 @@ defmodule Helix.Story.Event.Handler.Story do
   """
   def action_handler(event = %StepActionRequestedEvent{}) do
     with \
-      %{object: step} <-
+      %{object: step, entry: story_step} <-
         StoryQuery.fetch_step(event.entity_id, event.contact_id)
     do
       step = Step.new(step, event)
 
-      handle_action(event.action, step)
+      handle_action(event.action, step, story_step)
     end
   end
 
@@ -70,7 +71,7 @@ defmodule Helix.Story.Event.Handler.Story do
   StepFlow. It may be one of `:complete | {:restart, _, _} | :noop`. See doc on
   `handle_action/2`.
   """
-  defp step_flow(step) do
+  defp step_flow(step, story_step) do
     flowing do
       with \
         {action, step, events} <-
@@ -79,22 +80,24 @@ defmodule Helix.Story.Event.Handler.Story do
         # HACK: Workaround for HELF #29
         # on_success(fn -> Event.emit(events, from: step.event) end),
         Event.emit(events, from: step.event),
-        handle_action(action, step)
+        handle_action(action, step, story_step)
       do
         :ok
       end
     end
   end
 
-  @spec handle_action(Step.callback_action, Step.t) ::
+  @spec handle_action(Step.callback_action, Step.t, Story.Step.t) ::
     term
   docp """
   When a step requests to be completed, we'll call `Steppable.complete/1`,
   get the next step's name and then update on the database using `update_next/2`
   """
-  defp handle_action(:complete, step) do
+  defp handle_action(:complete, step, story_step),
+    do: handle_action({:complete, []}, step, story_step)
+  defp handle_action({:complete, opts}, step, _story_step) do
     with {:ok, step, events} <- Steppable.complete(step) do
-      Event.emit(events, from: step.event)
+      emit(events, opts, from: step.event)
 
       next_step = Step.get_next_step(step)
       hespawn fn ->
@@ -107,10 +110,10 @@ defmodule Helix.Story.Event.Handler.Story do
   If the request is to restart a step, we'll call `Steppable.restart/3`, and
   then handle the restart with `restart_step/1`.
   """
-  defp handle_action({:restart, reason, checkpoint}, step) do
+  defp handle_action({:restart, reason, checkpoint}, step, _story_step) do
     with \
       {:ok, step, meta, events} <- Steppable.restart(step, reason, checkpoint),
-      Event.emit(events, from: step.event),
+      emit(events, from: step.event),
 
       :ok <- restart_step(step, reason, checkpoint, meta)
     do
@@ -118,10 +121,26 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
+  defp handle_action({:send_email, email_id, meta, opts}, step, _story_step) do
+    with {:ok, events} <- StoryAction.send_email(step, email_id, meta) do
+      emit(events, opts, from: step.event)
+
+      :ok
+    end
+  end
+
+  defp handle_action({:send_reply, reply_id, opts}, step, story_step) do
+    with {:ok, events} <- StoryAction.send_reply(step, story_step, reply_id) do
+      emit(events, opts, from: step.event)
+
+      :ok
+    end
+  end
+
   docp """
   Received action `:noop`, so we do nothing
   """
-  defp handle_action(:noop, _),
+  defp handle_action(:noop, _, _),
     do: :noop
 
   @spec update_next(Step.t, Step.step_name) ::
@@ -139,12 +158,15 @@ defmodule Helix.Story.Event.Handler.Story do
       Step.fetch(next_step_name, prev_step.entity_id, %{}, prev_step.manager)
 
     with \
+      true <- next_step_name != prev_step.name,
+      # /\ If `next_step` == `prev_step`, we've reached the end of the story
+
+      # Proceeds player to the next step
       {:ok, _} <- StoryAction.proceed_step(prev_step, next_step),
-      # /\ Proceeds player to the next step
 
       # Generate next step data/meta
-      {:ok, next_step, events} <- Steppable.start(next_step),
-      Event.emit(events, from: prev_step.event),
+      {:ok, next_step, events, opts} <- Steppable.start(next_step),
+      emit(events, opts, from: prev_step.event),
 
       # Update step meta
       {:ok, _} <- StoryAction.update_step_meta(next_step),
@@ -182,4 +204,11 @@ defmodule Helix.Story.Event.Handler.Story do
       :ok
     end
   end
+
+  defp emit(event, from: source_event),
+    do: emit(event, [], from: source_event)
+  defp emit(event, [], from: source_event),
+    do: Event.emit(event, from: source_event)
+  defp emit(event, [sleep: interval], from: source_event),
+    do: Event.emit_after(event, interval * 1000, from: source_event)
 end

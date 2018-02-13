@@ -150,7 +150,7 @@ defmodule Helix.Story.Internal.Step do
   are unlocked by default)
   """
   def save_email(step, email_id) do
-    replies = Step.get_replies(step, email_id)
+    replies = Step.get_replies_of(step, email_id)
 
     step
     |> fetch!()
@@ -164,7 +164,7 @@ defmodule Helix.Story.Internal.Step do
   Rollbacks the Story.Step emails to the specified checkpoint.
   """
   def rollback_email(step, checkpoint) do
-    replies = Step.get_replies(step, checkpoint)
+    replies = Step.get_replies_of(step, checkpoint)
 
     step
     |> fetch!()

@@ -104,6 +104,7 @@ defmodule Helix.Core.Listener.Model.Listener do
       meta: meta
     }
   end
+  # TODO: Atomize keys
 
   defmodule Query do
 

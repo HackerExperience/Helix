@@ -5,7 +5,6 @@ defmodule Helix.Story.Model.MacroTest do
   import ExUnit.CaptureLog
 
   alias Helix.Software.Internal.File, as: FileInternal
-  alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Model.Steppable
 
   alias Helix.Test.Event.Setup, as: EventSetup
@@ -26,11 +25,12 @@ defmodule Helix.Story.Model.MacroTest do
       # reply_to_e2 tests the `send` block
       r2_event = EventSetup.Story.reply_sent(step, "reply_to_e2", "e2")
 
-      {action, _, [event]} = Steppable.handle_event(step, r2_event, %{})
+      {{action, email_id, meta, _}, _, []} =
+        Steppable.handle_event(step, r2_event, %{})
 
-      assert action == :noop
-      assert %StoryEmailSentEvent{} = event
-      assert event.email.id == "e3"
+      assert action == :send_email
+      assert email_id == "e3"
+      assert meta == %{}
 
       # reply_to_e3 tests the `complete` block
       r3_event = EventSetup.Story.reply_sent(step, "reply_to_e3", "e3")

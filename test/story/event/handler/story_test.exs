@@ -64,13 +64,15 @@ defmodule Helix.Story.Event.Handler.StoryTest do
       assert story_step.meta.cracker_id
 
       # Advance a few messages so we can check that it rolled back to checkpoint
-      StoryHelper.reply(story_step)
+      %{entry: story_step} = StoryHelper.send_fake_email(step, "wat")
 
-      # There are 3 registered emails (2 from contact and 1 reply)
+      # And for the sake of testability, let's pretend that we are allowed to
+      # reply back with `foobar`
+      story_step = %{story_step| allowed_replies: ["foobar"]}
+
+      # There are 2 registered messages (first one from step setup + "wat")
       story_email = StoryQuery.fetch_email(step.entity_id, step.contact)
-      assert length(story_email.emails) == 3
-
-      %{entry: story_step} = StoryQuery.fetch_step(step.entity_id, step.contact)
+      assert length(story_email.emails) == 2
 
       # Remove the file
       story_step.meta.cracker_id

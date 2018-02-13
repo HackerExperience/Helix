@@ -3,6 +3,7 @@ defmodule Helix.Test.Story.Helper do
   alias Helix.Event
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Action.Flow.Story, as: StoryFlow
+  alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
   alias Helix.Story.Model.Steppable
@@ -45,6 +46,21 @@ defmodule Helix.Test.Story.Helper do
   end
 
   @doc """
+  Adds the requested `email_id` to the Story.Step (and Story.Email).
+
+  It bypasses any checks whether the `email_id` exists and is valid within the
+  step, so useful for tests but keep that in mind.
+
+  I'm so nice that I even return the new `Story.Step` and `Step.t` for you.
+  """
+  def send_fake_email(step, email_id, meta \\ %{}) do
+    {:ok, _, _} = EmailInternal.send_email(step, email_id, meta)
+    {:ok, _} = StepInternal.save_email(step, email_id)
+
+    StoryQuery.fetch_step(step.entity_id, step.contact)
+  end
+
+  @doc """
   Automagically proceeds to the next step. It detects the next step after `step`
   and will proceed to that. IT WILL NOT PROCEED TO `step`, BUT TO THE NEXT ONE!
   """
@@ -67,7 +83,7 @@ defmodule Helix.Test.Story.Helper do
     with \
       {:ok, _} <- StoryAction.proceed_step(step),
 
-      {:ok, next_step, events} <- Steppable.start(step),
+      {:ok, next_step, events, _} <- Steppable.start(step),
       Event.emit(events),
 
       # Update step meta
@@ -83,6 +99,14 @@ defmodule Helix.Test.Story.Helper do
   def contact_id do
     # Guaranteed to be random
     :friend
+  end
+
+  @doc """
+  Generates a random email id
+  """
+  def email_id do
+    # Guaranteed to be random
+    "email_id"
   end
 
   @doc """
