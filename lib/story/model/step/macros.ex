@@ -129,8 +129,8 @@ defmodule Helix.Story.Model.Step.Macros do
           Predefined callback when user asks to `:send_email`. `meta` must
           contain required data, in this case at least `email_id`.
           """
-          callback :cb_send_email, _event, meta = %{"email_id" => email_id} do
-            email_meta = Map.get(meta, "email_meta", %{})
+          callback :cb_send_email, _event, meta = %{email_id: email_id} do
+            email_meta = Map.get(meta, :email_meta, %{})
 
             {{:send_email, email_id, email_meta, []}, []}
           end
@@ -139,7 +139,7 @@ defmodule Helix.Story.Model.Step.Macros do
           Predefined callback when user asks to `:send_reply`. `meta` must
           contain required data, in this case at least `reply_id`.
           """
-          callback :cb_send_reply, _event, %{"reply_id" => reply_id} do
+          callback :cb_send_reply, _event, %{reply_id: reply_id} do
             {{:send_reply, reply_id, []}, []}
           end
 
@@ -147,8 +147,8 @@ defmodule Helix.Story.Model.Step.Macros do
           Predefined callback that is used by `on_process_started` listener.
           """
           callback :cb_process_started, event, meta do
-            if to_string(event.process.type) == meta["type"] do
-              relay_callback meta["relay_cb"], event, meta
+            if to_string(event.process.type) == meta.type do
+              relay_callback meta.relay_cb, event, meta
             else
               {:noop, []}
             end
@@ -171,8 +171,8 @@ defmodule Helix.Story.Model.Step.Macros do
     quote do
 
       def unquote(name)(var!(event) = unquote(event), meta = unquote(meta)) do
-        step_entity_id = meta["step_entity_id"] |> Entity.ID.cast!()
-        step_contact_id = meta["step_contact_id"] |> String.to_existing_atom()
+        step_entity_id = meta.step_entity_id |> Entity.ID.cast!()
+        step_contact_id = meta.step_contact_id |> String.to_existing_atom()
 
         var!(event)  # Mark as used
 

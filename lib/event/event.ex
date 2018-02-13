@@ -112,7 +112,7 @@ defmodule Helix.Event do
     log_event(event)
   end
 
-  @spec emit_after([t] | t, interval :: float | non_neg_integer) ::
+  @spec emit_after([t] | t, interval :: float | non_neg_integer, from: t) ::
     term
   @doc """
   Emits the given event(s) after `interval` milliseconds have passed.

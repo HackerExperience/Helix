@@ -76,7 +76,7 @@ defmodule Helix.Core.Listener.Event.Handler.ListenerTest do
       assert_receive :hello_joe
       assert_receive {:hello_meta, meta}
 
-      assert meta["entity_id"] == to_string(file_downloaded.entity_id)
+      assert meta.entity_id == to_string(file_downloaded.entity_id)
     end
   end
 end
