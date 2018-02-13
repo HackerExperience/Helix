@@ -121,6 +121,11 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
+  docp """
+  The requested action may be to send an email, which is handled here.
+
+  This action does not use or depends on `Steppable`.
+  """
   defp handle_action({:send_email, email_id, meta, opts}, step, _story_step) do
     with {:ok, events} <- StoryAction.send_email(step, email_id, meta) do
       emit(events, opts, from: step.event)
@@ -129,6 +134,11 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
+  docp """
+  The requested action may be to send a reply, which is handled here.
+
+  This action does not use or depends on `Steppable`.
+  """
   defp handle_action({:send_reply, reply_id, opts}, step, story_step) do
     with {:ok, events} <- StoryAction.send_reply(step, story_step, reply_id) do
       emit(events, opts, from: step.event)
@@ -205,6 +215,10 @@ defmodule Helix.Story.Event.Handler.Story do
     end
   end
 
+  docp """
+  Helper that interprets the emission parameters defined at `send_opts` (if any)
+  and makes sure they are followed.
+  """
   defp emit(event, from: source_event),
     do: emit(event, [], from: source_event)
   defp emit(event, [], from: source_event),

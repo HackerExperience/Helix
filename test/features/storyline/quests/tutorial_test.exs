@@ -20,6 +20,8 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
   @moduletag :feature
 
   describe "tutorial" do
+
+    skip_on_travis_slowpoke()
     test "flow" do
       {server_socket, %{account: account, manager: manager}} =
         ChannelSetup.join_storyline_server()

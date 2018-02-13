@@ -355,6 +355,16 @@ defmodule Helix.Story.Model.Step.Macros do
       def handle_event(step = unquote(step), unquote(event), unquote(meta)) do
         unquote(
           case opts do
+            [do: :complete, send_opts: send_opts] ->
+              quote do
+                {{:complete, unquote(send_opts)}, step, []}
+              end
+
+            [do: :complete] ->
+              quote do
+                {:complete, step, []}
+              end
+
             [do: block] ->
               block
 
@@ -383,16 +393,6 @@ defmodule Helix.Story.Model.Step.Macros do
                   step,
                   []
                 }
-              end
-
-            [do: :complete, send_opts: send_opts] ->
-              quote do
-                {{:complete, unquote(send_opts)}, step, []}
-              end
-
-            :complete ->
-              quote do
-                {:complete, step, []}
               end
 
             [restart: true, reason: reason, checkpoint: checkpoint] ->

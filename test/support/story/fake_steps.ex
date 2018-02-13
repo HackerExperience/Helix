@@ -152,7 +152,7 @@ defmodule Helix.Story.Mission.FakeSteps do
       send: "e3"
 
     on_reply "reply_to_e3",
-      :complete
+      do: :complete
 
     empty_setup()
 
@@ -185,7 +185,7 @@ defmodule Helix.Story.Mission.FakeSteps do
       replies: ["reply_to_e3"]
 
     on_reply "reply_to_e3",
-      :complete
+      do: :complete
 
     empty_setup()
 
