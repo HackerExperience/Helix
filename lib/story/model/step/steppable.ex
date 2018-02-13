@@ -158,7 +158,7 @@ defprotocol Helix.Story.Model.Steppable do
   alias Helix.Story.Model.Step
 
   @spec start(Step.t) ::
-    {:ok | :error, Step.t, [Event.t]}
+    {:ok | :error, Step.t, [Event.t], Step.send_opts}
   @doc """
   Function called when the previous step was completed. It has the purpose of
   setting up the new step, preparing its environment and generating any objects
@@ -267,12 +267,21 @@ defprotocol Helix.Story.Model.Steppable do
   """
   def format_meta(step)
 
-  @spec get_replies(Step.t, Step.email_id) ::
+  @spec get_emails(Step.t) ::
+    Step.emails
+  @doc """
+  Returns all registered emails for that step.
+
+  Must not be implemented nor called directly. Use `Step.get_emails/1`.
+  """
+  def get_emails(step)
+
+  @spec get_replies_of(Step.t, Step.email_id) ::
     [Step.reply_id]
   @doc """
   Returns all possible unlocked replies of an email.
 
-  Must not be implemented nor called directly. Instead, use `Step.get_replies/1`
+  Must not be implemented nor called directly. Use `Step.get_replies_of/2`.
   """
-  def get_replies(step, email_id)
+  def get_replies_of(step, email_id)
 end

@@ -6,6 +6,7 @@ defmodule Helix.Core.Listener.Model.Listener do
 
   alias Ecto.Changeset
   alias HELL.HETypes
+  alias HELL.MapUtils
 
   @type t :: %__MODULE__{
     listener_id: id,
@@ -62,6 +63,10 @@ defmodule Helix.Core.Listener.Model.Listener do
   @typedoc """
   `meta` is an additional parameter, defined at "listen-time", which will be
   relayed to the callback once the Listener is triggered.
+
+  For ease of use, we make sure the *keys* are atomized, so:
+  1) It's the callback's responsibility to handle alien values.
+  2) The callback must not use arbitrary meta keys for security reasons.
   """
   @type meta :: map
 
@@ -97,11 +102,16 @@ defmodule Helix.Core.Listener.Model.Listener do
 
   @spec format([term]) ::
     info
+  @doc """
+  Formats the `Listener.t` into the public `Listener.info` type.
+
+  Notice that the `Listener.meta` has its *keys* atomized.
+  """
   def format([[module, method], meta]) do
     %{
       module: module,
       method: method,
-      meta: meta
+      meta: MapUtils.atomize_keys(meta)
     }
   end
 

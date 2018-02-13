@@ -95,8 +95,10 @@ defmodule Helix.Software.Event.File do
         do: %{server: [event.server_id]}
     end
 
-    listenable(event) do
-      [event.file_id]
+    listenable do
+      listen(event) do
+        [event.file_id]
+      end
     end
   end
 
@@ -234,8 +236,10 @@ defmodule Helix.Software.Event.File do
       end
     end
 
-    listenable(event) do
-      [event.source_file_id]
+    listenable do
+      listen(event) do
+        [event.source_file_id]
+      end
     end
   end
 

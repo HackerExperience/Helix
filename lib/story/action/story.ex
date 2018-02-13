@@ -76,6 +76,7 @@ defmodule Helix.Story.Action.Story do
 
   @spec send_email(Step.t, Step.email_id, Step.email_meta) ::
     {:ok, [EmailSentEvent.t]}
+    | {:error, {:email, :not_found}}
     | {:error, :internal}
   @doc """
   Sends an email from the contact to the player.
@@ -83,19 +84,23 @@ defmodule Helix.Story.Action.Story do
   When the email is sent (saved on Story.Email), it is also saved on Story.Step,
   maintaining the Step state.
 
+  May fail with `{:email, :not_found}` if for some reason it's attempting to
+  send an email that does not exist. This is most likely a programmer's error.
+
   During the Story.Step save, it overwrites the `allowed_replies` from the
   previous email (if any) to the default allowed replies of the email_id.
   """
   def send_email(step, email_id, meta) do
     Repo.transaction(fn ->
       with \
+        true <- Step.email_exists?(step, email_id) || {:email, :not_found},
         {:ok, _, email} <- EmailInternal.send_email(step, email_id, meta),
         {:ok, _} <- StepInternal.save_email(step, email_id)
       do
         [EmailSentEvent.new(step, email)]
       else
-        _ ->
-          Repo.rollback(:internal)
+        error ->
+          Repo.rollback(error)
       end
     end)
   end
@@ -121,7 +126,8 @@ defmodule Helix.Story.Action.Story do
           Story.Step.can_send_reply?(story_step, reply_id)
           || {:reply, :not_found},
         {:ok, _, email} <- EmailInternal.send_reply(step, reply_id),
-        {:ok, _} <- StepInternal.lock_reply(step, reply_id)
+        {:ok, _} <- StepInternal.lock_reply(step, reply_id),
+        {:ok, _} <- StepInternal.save_email(step, reply_id)
       do
         reply_to = Story.Step.get_current_email(story_step)
         [ReplySentEvent.new(step, email, reply_to)]

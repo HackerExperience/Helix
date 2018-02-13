@@ -7,23 +7,23 @@ defmodule Helix.Story.Mission.Tutorial do
   step SetupPc do
 
     email "welcome",
-      reply: "back_thanks"
+      replies: "back_thanks"
 
     on_reply "back_thanks",
       send: "watchiadoing"
 
     email "watchiadoing",
-      reply: "hell_yeah"
+      replies: "hell_yeah"
 
     on_reply "hell_yeah",
-      :complete
+      do: :complete
 
     empty_setup()
 
     def start(step) do
       e1 = send_email step, "welcome"
 
-      {:ok, step, e1}
+      {:ok, step, e1, []}
     end
 
     def complete(step) do
@@ -46,16 +46,30 @@ defmodule Helix.Story.Mission.Tutorial do
     alias Helix.Software.Make.File, as: MakeFile
     alias Helix.Software.Make.PFTP, as: MakePFTP
 
-    email "download_cracker1",
-      reply: ["more_info"],
-      locked: ["sure"]
+    email "download_cracker1"
 
-    email "give_more_info",
-      reply: ["sure"],
-      locked: ["more_info"]
+    email "about_that",
+      replies: ["yeah_right"]
 
-    on_reply "more_info",
-      send: "give_more_info"
+    on_email "about_that",
+      reply: "yeah_right",
+      send_opts: [sleep: 2]
+
+    reply "yeah_right",
+      replies: "downloaded"
+
+    reply "downloaded",
+      replies: ["nothing_now"]
+
+    on_reply "downloaded",
+      send: "nothing_now",
+      send_opts: [sleep: 5]
+
+    email "nothing_now"
+
+    on_email "nothing_now",
+      do: :complete,
+      send_opts: [sleep: 3]
 
     def setup(step) do
       # Create the underlying character (@contact) and its server
@@ -80,22 +94,21 @@ defmodule Helix.Story.Mission.Tutorial do
           MakeFile.cracker(server, %{bruteforce: 10, overflow: 10})
         end
 
-      # Enable the PFTP server and put the cracker in it
+      # Enable the PFTP server
       {:ok, pftp, _, e3} =
         setup_once :pftp_server, server do
           MakePFTP.server(server)
         end
 
+      # Make the Cracker available for download on the PFTP server
       {:ok, _, _, e4} =
         setup_once :pftp_file, cracker do
           MakePFTP.add_file(cracker, pftp)
         end
 
-      ip = ServerQuery.get_ip(server, step.manager.network_id)
-
       meta =
         %{
-          ip: ip,
+          ip: ServerQuery.get_ip(server, step.manager.network_id),
           server_id: server.server_id,
           cracker_id: cracker.file_id
         }
@@ -103,15 +116,17 @@ defmodule Helix.Story.Mission.Tutorial do
       # Listeners
       hespawn fn ->
 
-        # React to the moment the cracker is downloaded
-        story_listen cracker.file_id, FileDownloadedEvent, do: :complete
+        # Send `about_that` when download starts
+        on_process_started :file_download, cracker.file_id, email: "about_that"
+
+        # Reply `downloaded` when the cracker has been downloaded
+        story_listen cracker.file_id, FileDownloadedEvent, reply: "downloaded"
 
         story_listen cracker.file_id, FileDeletedEvent, :on_file_deleted
+
       end
 
-      events = e1 ++ e2 ++ e3 ++ e4
-
-      {meta, %{}, events}
+      {meta, %{}, e1 ++ e2 ++ e3 ++ e4}
     end
 
     # Callbacks
@@ -127,7 +142,7 @@ defmodule Helix.Story.Mission.Tutorial do
 
       step = %{step| meta: meta}
 
-      {:ok, step, e1 ++ e2}
+      {:ok, step, e1 ++ e2, sleep: 4}
     end
 
     format_meta do
@@ -148,6 +163,26 @@ defmodule Helix.Story.Mission.Tutorial do
       {:ok, %{step| meta: meta}, %{ip: meta.ip}, e1}
     end
 
-    next_step Helix.Story.Mission.Tutorial.SetupPc
+    next_step Helix.Story.Mission.Tutorial.NastyVirus
+  end
+
+  step NastyVirus do
+
+    email "nasty_virus1"
+
+    empty_setup()
+
+    def start(step) do
+      e1 = send_email step, "nasty_virus1", %{}
+
+      {:ok, step, e1, sleep: 4}
+    end
+
+    def complete(step) do
+      {:ok, step, []}
+    end
+
+    next_step __MODULE__
+
   end
 end

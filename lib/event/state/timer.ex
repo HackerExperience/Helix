@@ -25,20 +25,38 @@ defmodule Helix.Event.State.Timer do
   def emit_after(event, interval),
     do: GenServer.call(@registry_name, {:emit_after, event, interval})
 
+  @doc """
+  `flush` is a request to execute all events awaiting for its timer. Useful for
+  testing and system restarts.
+  """
+  def flush,
+    do: GenServer.call(@registry_name, :flush)
+
   # Callbacks
 
   def init(_),
     do: {:ok, []}
 
-  def handle_call({:emit_after, event, interval}, _from, state) do
-    Process.send_after(@registry_name, {:emit, event}, interval)
+  def handle_call(:flush, _from, state) do
+    Enum.each(state, fn {ref, event} ->
+      spawn fn ->
+        Event.emit(event)
+        Process.cancel_timer(ref)
+      end
+    end)
 
-    {:reply, :ok, state}
+    {:reply, :ok, []}
+  end
+
+  def handle_call({:emit_after, event, interval}, _from, state) do
+    ref = Process.send_after(@registry_name, {:emit, event}, interval)
+
+    {:reply, :ok, [{ref, event} | state]}
   end
 
   def handle_info({:emit, event}, state) do
     Event.emit(event)
 
-    {:noreply, state}
+    {:noreply, Enum.reject(state, fn {_, e} -> e == event end)}
   end
 end

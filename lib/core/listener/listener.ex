@@ -2,6 +2,17 @@ defmodule Helix.Core.Listener do
   @moduledoc """
   Main interface to be used by any service that would like to listen/unlisten to
   events happening a specific `object_id`.
+
+  I'm a Listener
+
+    And then I saw her face
+    Now I'm a listener
+    Not a trace
+    Of doubt in my mind
+    I'm in love
+    I'm a listener
+    I couldn't leave her
+    If I tried
   """
 
   import HELL.Macros

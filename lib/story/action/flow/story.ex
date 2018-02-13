@@ -30,7 +30,7 @@ defmodule Helix.Story.Action.Flow.Story do
       with \
         {:ok, _} <- ContextFlow.setup(entity),
         {:ok, story_step} <- StoryAction.proceed_step(first_step),
-        {:ok, _, events} <- Steppable.start(first_step),
+        {:ok, _, events, _} <- Steppable.start(first_step),
         on_success(fn -> Event.emit(events, from: relay) end)
       do
         {:ok, story_step}

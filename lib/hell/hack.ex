@@ -60,8 +60,9 @@ defmodule HELL.Hack.Experience do
         {:restart, 3},
         {:next_step, 1},
         {:get_contact, 1},
+        {:get_emails, 1},
+        {:get_replies_of, 2},
         {:format_meta, 1},
-        {:get_replies, 2}
       ],
       "Elixir.Helix.Event.Listenable" => [
         {:get_objects, 1}

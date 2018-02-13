@@ -48,7 +48,7 @@ defmodule Helix.Story.Internal.Email do
 
   @spec send_email(Step.t, Step.email_id, Step.email_meta) ::
     {:ok, Story.Email.t, Story.Email.email}
-    | :internal_error
+    | {:error, :internal}
   @doc """
   Sends an email from the contact to the player.
   """
@@ -57,7 +57,7 @@ defmodule Helix.Story.Internal.Email do
 
   @spec send_reply(Step.t, Step.reply_id) ::
     {:ok, Story.Email.t, Story.Email.email}
-    | :internal_error
+    | {:error, :internal}
   @doc """
   Sends a reply from the player to the contact.
   """
@@ -78,7 +78,7 @@ defmodule Helix.Story.Internal.Email do
 
   @spec generic_send(term, id :: String.t, Story.Email.sender, meta :: map) ::
     {:ok, Story.Email.t, Story.Email.email}
-    | :internal_error
+    | {:error, :internal}
   defp generic_send(step, id, sender, meta \\ %{}) do
     email = create_email(id, sender, meta)
     contact_id = Step.get_contact(step)
@@ -89,7 +89,7 @@ defmodule Helix.Story.Internal.Email do
         entry = format(story_email)
         {:ok, entry, List.last(entry.emails)}
       _ ->
-        :internal_error
+        {:error, :internal}
     end
   end
 

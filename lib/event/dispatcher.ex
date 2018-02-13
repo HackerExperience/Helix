@@ -239,6 +239,10 @@ defmodule Helix.Event.Dispatcher do
   event StoryEvent.Step.Restarted
 
   # Custom handlers
+  event StoryEvent.Email.Sent,
+    StoryHandler.Story,
+    :event_handler
+
   event StoryEvent.Reply.Sent,
     StoryHandler.Story,
     :event_handler

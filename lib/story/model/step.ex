@@ -29,17 +29,15 @@ defmodule Helix.Story.Model.Step do
   @type email_id :: String.t
   @type reply_id :: String.t
 
-  @type email ::
+  @type message ::
     %{
       id: email_id,
       replies: [reply_id],
       locked: [reply_id]
     }
 
-  @type emails ::
-    %{
-      email_id => email
-    }
+  @type emails :: %{email_id => message}
+  @type replies :: %{reply_id => message}
 
   @type email_meta :: map
 
@@ -60,8 +58,13 @@ defmodule Helix.Story.Model.Step do
   """
   @type callback_action ::
     :complete
-    | :noop
+    | {:complete, send_opts}
     | {:restart, reason :: atom, checkpoint :: email_id}
+    | {:send_email, email_id, email_meta, send_opts}
+    | {:send_reply, reply_id, send_opts}
+    | :noop
+
+  @type send_opts :: list
 
   @spec new(t, Event.t) ::
     t
@@ -127,13 +130,32 @@ defmodule Helix.Story.Model.Step do
   def get_contact(step),
     do: Steppable.get_contact(step)
 
-  @spec get_replies(t, email_id) ::
+  @spec get_emails(t) ::
+    emails
+  @doc """
+  Returns a list of all available emails
+  """
+  def get_emails(step),
+    do: Steppable.get_emails(step)
+
+  @spec email_exists?(t, email_id) ::
+    boolean
+  @doc """
+  Checks whether the given `email_id` exists
+  """
+  def email_exists?(step, email_id) do
+    step
+    |> get_emails()
+    |> Enum.any?(fn {id, _} -> id == email_id end)
+  end
+
+  @spec get_replies_of(t, email_id) ::
     [reply_id]
   @doc """
   Returns the unlocked replies of the given email.
   """
-  def get_replies(step, email),
-    do: Steppable.get_replies(step, email)
+  def get_replies_of(step, email),
+    do: Steppable.get_replies_of(step, email)
 
   @spec get_next_step(t) ::
     step_name
@@ -180,7 +202,7 @@ defmodule Helix.Story.Model.Step do
   def get_entity(%_{entity_id: entity_id}),
     do: entity_id
   def get_entity(%_{source_entity_id: entity_id}),
-      do: entity_id
+    do: entity_id
   def get_entity(_),
     do: false
 

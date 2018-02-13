@@ -16,10 +16,13 @@ defmodule Helix.Story.Action.StoryTest do
 
   describe "send_email/3" do
     test "email is sent and saved on story step/email" do
-      {_, %{entity_id: entity_id, step: step}} = StorySetup.story_step()
+      {_, %{entity_id: entity_id, step: step}} =
+        StorySetup.story_step(name: :fake_steps@test_msg, meta: %{})
 
       contact_id = Step.get_contact(step)
-      email_id = "email_id"
+
+      # `e1` is a valid email id within `fake_steps@test_msg`
+      email_id = "e1"
 
       # Send email for the first time (contact must be created first)
       assert {:ok, [event]} = StoryAction.send_email(step, email_id, %{})
@@ -48,6 +51,15 @@ defmodule Helix.Story.Action.StoryTest do
 
       assert email
     end
+
+    test "refuses to send an email that is not registered" do
+      {_, %{step: step}} = StorySetup.fake_story_step()
+
+      assert {:error, reason} =
+        StoryAction.send_email(step, StoryHelper.email_id(), %{})
+
+      assert reason == {:email, :not_found}
+    end
   end
 
   describe "send_reply/3" do
@@ -65,6 +77,14 @@ defmodule Helix.Story.Action.StoryTest do
       assert event.reply.id == reply_id
       assert event.reply_to == Story.Step.get_current_email(entry)
       assert event.step == step
+
+      [%{entry: new_entry}] = StoryQuery.get_steps(entity_id)
+
+      # The `reply_id` was added to the step's `emails_sent` list
+      assert Enum.member?(new_entry.emails_sent, reply_id)
+
+      # And it was removed from the `allowed_replies` list
+      refute Enum.member?(new_entry.allowed_replies, reply_id)
     end
 
     test "reply is removed from allowed_replies after message is sent" do
@@ -106,11 +126,12 @@ defmodule Helix.Story.Action.StoryTest do
       StoryFlow.send_reply(entity_id, step.contact, "reply_to_e1")
       StoryFlow.send_reply(entity_id, step.contact, "reply_to_e2")
 
-      # Story.Step has all three emails
+      # Story.Step has all five messages (3 emails + 2 replies)
       [%{entry: story_step}] = StoryQuery.get_steps(entity_id)
-      assert story_step.emails_sent == ["e1", "e2", "e3"]
+      assert story_step.emails_sent ==
+        ["e1", "reply_to_e1", "e2", "reply_to_e2", "e3"]
 
-      # And there are 5 registered emails (3 from the contact + 2 replies)
+      # And there are 5 registered messages (3 emails + 2 replies)
       [emails] = StoryQuery.get_emails(entity_id)
       assert emails.contact_id == step.contact
       assert length(emails.emails) == 5
@@ -146,22 +167,23 @@ defmodule Helix.Story.Action.StoryTest do
       StoryFlow.send_reply(entity_id, step.contact, "reply_to_e1")
       StoryFlow.send_reply(entity_id, step.contact, "reply_to_e2")
 
-      # Story.Step has all three emails
+      # Story.Step has all five messages (3 emails + 2 replies)
       [%{entry: story_step}] = StoryQuery.get_steps(entity_id)
-      assert story_step.emails_sent == ["e1", "e2", "e3"]
+      assert story_step.emails_sent ==
+        ["e1", "reply_to_e1", "e2", "reply_to_e2", "e3"]
 
-      # And there are 5 registered emails (3 from the contact + 2 replies)
+      # And there are 5 registered messages (3 emails + 2 replies)
       [emails] = StoryQuery.get_emails(entity_id)
       assert emails.contact_id == step.contact
       assert length(emails.emails) == 5
 
-      # Let's rollback to `e2` (which is in the middle of the stack!)
+      # Let's rollback to `e2` (which is in the middle of the "stack"!)
       new_meta = %{"foo" => "bar"}
       assert {:ok, story_step, story_email} =
         StoryAction.rollback_emails(step, "e2", new_meta)
 
-      # Story.Step has `e1` and `e2`. `e3` isgon
-      assert story_step.emails_sent == ["e1", "e2"]
+      # Story.Step has `e1` and `e2`. `reply_to_e2` and `e3` argon
+      assert story_step.emails_sent == ["e1", "reply_to_e1", "e2"]
 
       # There are 3 emails on the story. `e1`, `reply_to_e1` and `e2`
       assert length(story_email.emails) == 3

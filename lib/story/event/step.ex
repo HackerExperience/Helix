@@ -94,7 +94,7 @@ defmodule Helix.Story.Event.Step do
       def generate_payload(event, _socket) do
         allowed_replies =
           event.step
-          |> Step.get_replies(event.checkpoint)
+          |> Step.get_replies_of(event.checkpoint)
           |> Enum.map(&to_string/1)
 
         data = %{

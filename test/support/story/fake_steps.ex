@@ -47,7 +47,7 @@ defmodule Helix.Story.Mission.FakeSteps do
     empty_setup()
 
     def start(step),
-      do: {:ok, step, []}
+      do: {:ok, step, [], []}
 
     def complete(step),
       do: {:ok, step, []}
@@ -74,7 +74,7 @@ defmodule Helix.Story.Mission.FakeSteps do
     empty_setup()
 
     def start(step),
-      do: {:ok, step, []}
+      do: {:ok, step, [], []}
 
     def complete(step),
       do: {:ok, step, []}
@@ -87,7 +87,7 @@ defmodule Helix.Story.Mission.FakeSteps do
     empty_setup()
 
     def start(step),
-      do: {:ok, step, []}
+      do: {:ok, step, [], []}
 
     def complete(step),
       do: {:ok, step, []}
@@ -103,7 +103,7 @@ defmodule Helix.Story.Mission.FakeSteps do
     empty_setup()
 
     def start(step),
-      do: {:ok, step, []}
+      do: {:ok, step, [], []}
 
     def complete(step),
       do: {:ok, step, []}
@@ -119,7 +119,7 @@ defmodule Helix.Story.Mission.FakeSteps do
     empty_setup()
 
     def start(step),
-      do: {:ok, step, []}
+      do: {:ok, step, [], []}
 
     def complete(step),
       do: {:ok, step, []}
@@ -135,14 +135,14 @@ defmodule Helix.Story.Mission.FakeSteps do
     require Logger
 
     email "e1",
-      reply: ["reply_to_e1"],
+      replies: ["reply_to_e1"],
       locked: ["locked_reply_to_e1"]
 
     email "e2",
-      reply: ["reply_to_e2"]
+      replies: ["reply_to_e2"]
 
     email "e3",
-      reply: ["reply_to_e3"]
+      replies: ["reply_to_e3"]
 
     on_reply "reply_to_e1" do
       Logger.warn "replied_to_e1"
@@ -152,13 +152,13 @@ defmodule Helix.Story.Mission.FakeSteps do
       send: "e3"
 
     on_reply "reply_to_e3",
-      :complete
+      do: :complete
 
     empty_setup()
 
     def start(step) do
       send_email step, "e1"
-      {:ok, step, []}
+      {:ok, step, [], []}
     end
 
     def complete(step),
@@ -170,28 +170,28 @@ defmodule Helix.Story.Mission.FakeSteps do
   step TestMsgFlow do
 
     email "e1",
-      reply: ["reply_to_e1"]
+      replies: ["reply_to_e1"]
 
     on_reply "reply_to_e1",
       send: "e2"
 
     email "e2",
-      reply: ["reply_to_e2"]
+      replies: ["reply_to_e2"]
 
     on_reply "reply_to_e2",
       send: "e3"
 
     email "e3",
-      reply: ["reply_to_e3"]
+      replies: ["reply_to_e3"]
 
     on_reply "reply_to_e3",
-      :complete
+      do: :complete
 
     empty_setup()
 
     def start(step) do
       send_email step, "e1"
-      {:ok, step, []}
+      {:ok, step, [], []}
     end
 
     def complete(step),
@@ -212,7 +212,7 @@ defmodule Helix.Story.Mission.FakeContactOne do
     empty_setup()
 
     def start(step),
-      do: {:ok, step, []}
+      do: {:ok, step, [], []}
 
     def complete(step),
       do: {:ok, step, []}
@@ -232,7 +232,7 @@ defmodule Helix.Story.Mission.FakeContactTwo do
     empty_setup()
 
     def start(step),
-      do: {:ok, step, []}
+      do: {:ok, step, [], []}
 
     def complete(step),
       do: {:ok, step, []}
