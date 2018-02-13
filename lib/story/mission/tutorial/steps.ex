@@ -16,7 +16,7 @@ defmodule Helix.Story.Mission.Tutorial do
       replies: "hell_yeah"
 
     on_reply "hell_yeah",
-      :complete
+      do: :complete
 
     empty_setup()
 

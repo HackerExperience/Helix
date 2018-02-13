@@ -113,7 +113,11 @@
       "emits": ["Steppable (custom)"]
     },
     "Story.Story": {
-      "receives": ["All"],
+      "receives": [
+        "Story.Step.Email.Sent",
+        "Story.Step.Reply.Sent",
+        "Story.Step.ActionRequested"
+      ],
       "emits": [
         "Story.Step.Proceeded",
         "Story.Step.Restarted",
