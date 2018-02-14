@@ -62,6 +62,7 @@ defmodule Helix.Test.Software.Setup.Virus do
         file_id: file_id,
         is_active?: is_active?
       }
+      |> Map.replace(:active, nil)
 
     related =
       %{

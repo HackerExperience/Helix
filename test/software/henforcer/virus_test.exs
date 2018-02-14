@@ -2,6 +2,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
   import Helix.Test.Henforcer.Macros
 
   alias Helix.Software.Action.Virus, as: VirusAction
@@ -9,6 +10,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
@@ -80,6 +82,167 @@ defmodule Helix.Software.Henforcer.VirusTest do
 
       assert {false, reason, _} = VirusHenforcer.can_install?(virus2, entity)
       assert reason == {:entity, :has_virus_on_storage}
+    end
+  end
+
+  describe "can_collect_all?/3" do
+    test "handles multiple viruses and accepts when everything is OK" do
+      {entity, _} = EntitySetup.entity()
+
+      {virus1, %{file: file1}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: entity.entity_id,
+          is_active?: true,
+          real_file?: true
+        )
+
+      {virus2, %{file: file2}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: entity.entity_id,
+          is_active?: true,
+          real_file?: true
+        )
+
+      {virus3, %{file: file3}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: entity.entity_id,
+          is_active?: true,
+          real_file?: true
+        )
+
+      viruses = [file1.file_id, file2.file_id, file3.file_id]
+
+      bank_account = BankSetup.fake_account()
+
+      assert {true, relay} =
+        VirusHenforcer.can_collect_all?(entity, viruses, {bank_account, nil})
+
+      Enum.each(relay.viruses, fn %{file: file, virus: v} ->
+        assert Enum.find([file1, file2, file3], &(&1.file_id == file.file_id))
+        assert Enum.find([virus1, virus2, virus3], &(&1.file_id == v.file_id))
+      end)
+
+      assert_relay relay, [:viruses]
+    end
+
+    test "rejects when something is wrong" do
+      {entity, _} = EntitySetup.entity()
+
+      {virus1, %{file: file1}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: EntitySetup.id(),
+          is_active?: true,
+          real_file?: true
+        )
+
+      {_virus2, %{file: file2}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: entity.entity_id,
+          is_active?: true,
+          real_file?: true
+        )
+
+      # `virus1` was installed by someone else
+      refute virus1.entity_id == entity.entity_id
+
+      viruses = [file1.file_id, file2.file_id]
+
+      assert {false, reason, _} =
+        VirusHenforcer.can_collect_all?(entity, viruses, {nil, nil})
+
+      assert reason == {:virus, :not_belongs}
+    end
+  end
+
+  describe "can_collect?/3" do
+    test "accepts when everything is OK" do
+      {entity, _} = EntitySetup.entity()
+
+      {virus, %{file: file}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: entity.entity_id,
+          is_active?: true,
+          real_file?: true
+        )
+
+      bank_account = BankSetup.fake_account()
+
+      assert {true, relay} =
+        VirusHenforcer.can_collect?(entity, file.file_id, {bank_account, nil})
+
+      assert relay.virus == virus
+      assert relay.entity == entity
+      assert_map relay.file, file, skip: :meta
+
+      assert_relay relay, [:virus, :file, :entity]
+    end
+
+    test "rejects when entity did not install the virus" do
+      {entity, _} = EntitySetup.entity()
+
+      {virus, %{file: file}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: EntitySetup.id(),  # Random entity
+          is_active?: true,
+          real_file?: true
+        )
+
+      # See? Someone else installed that virus
+      refute virus.entity_id == entity.entity_id
+
+      bank_account = BankSetup.fake_account()
+
+      assert {false, reason, _} =
+        VirusHenforcer.can_collect?(entity, file.file_id, {bank_account, nil})
+      assert reason == {:virus, :not_belongs}
+    end
+
+    test "rejects when virus is not active" do
+      {entity, _} = EntitySetup.entity()
+
+      {virus, %{file: file}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: entity.entity_id,
+          is_active?: false,
+          real_file?: true
+        )
+
+      # Not active
+      refute virus.is_active?
+
+      bank_account = BankSetup.fake_account()
+
+      assert {false, reason, _} =
+        VirusHenforcer.can_collect?(entity, file.file_id, {bank_account, nil})
+      assert reason == {:virus, :not_active}
+    end
+
+    test "rejects when virus does not exist" do
+      {entity, _} = EntitySetup.entity()
+
+      assert {false, reason, _} =
+        VirusHenforcer.can_collect?(entity, SoftwareSetup.id(), {nil, nil})
+      assert reason == {:virus, :not_found}
+    end
+
+    test "rejects when payment is invalid (for bank-based viruses)" do
+      {entity, _} = EntitySetup.entity()
+
+      {_, %{file: spyware}} =
+        SoftwareSetup.Virus.virus(
+          entity_id: entity.entity_id,
+          is_active?: true,
+          real_file?: true,
+          type: :virus_spyware
+        )
+
+      assert {false, reason, _} =
+        VirusHenforcer.can_collect?(entity, spyware.file_id, {nil, %{}})
+
+      assert reason == {:payment, :invalid}
+
+      # TODO: Waiting Bitcoin implementation for full test (#244)
+      # Also add an extra test on `can_collect_all?/3`
     end
   end
 end
