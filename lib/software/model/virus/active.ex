@@ -1,4 +1,15 @@
 defmodule Helix.Software.Model.Virus.Active do
+  @moduledoc """
+  Entries on the `Virus.Active` tell us that the given virus is currently active
+  and may be used for whatever purpose it serves.
+
+  `:entity_id` and `:storage_id` fields are repeated here, even though we could
+  get this information from `Virus` and `File` respectively, because:
+
+  1. It enables an easier querying interface
+  2. It enables data integrity features, like creating a unique constraint on
+    `{entity_id, storage_id}`.
+  """
 
   use Ecto.Schema
 

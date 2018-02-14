@@ -1,4 +1,8 @@
 defmodule Helix.Software.Model.Virus do
+  @moduledoc """
+  The `Virus` model maps all virus installations, telling us which entity
+  installed the virus.
+  """
 
   use Ecto.Schema
 
@@ -61,12 +65,7 @@ defmodule Helix.Software.Model.Virus do
   @spec format(t) ::
     t
   def format(virus = %Virus{}) do
-    is_active? =
-      if not is_nil(virus.active) and Ecto.assoc_loaded?(virus.active) do
-        true
-      else
-        false
-      end
+    is_active? = not is_nil(virus.active) and Ecto.assoc_loaded?(virus.active)
 
     %{virus|
       is_active?: is_active?,

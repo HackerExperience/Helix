@@ -25,6 +25,7 @@ defmodule Helix.Process.Model.Process do
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
+  alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Process.Model.Processable
   alias Helix.Process.Model.TOP
   alias __MODULE__, as: Process
@@ -35,15 +36,19 @@ defmodule Helix.Process.Model.Process do
       gateway_id: Server.id,
       source_entity_id: Entity.id,
       target_id: Server.id,
-      src_connection_id: Connection.id | nil,
-      src_file_id: File.id | nil,
-      network_id: Network.id | nil,
-      bounce_id: Bounce.id | nil,
-      tgt_file_id: File.id | nil,
-      tgt_connection_id: Connection.id | nil,
-      tgt_process_id: Process.id | nil,
       data: term,
       type: type,
+      network_id: Network.id | nil,
+      bounce_id: Bounce.id | nil,
+      src_connection_id: Connection.id | nil,
+      src_file_id: File.id | nil,
+      src_atm_id: Server.id | nil,
+      src_acc_number: BankAccount.account | nil,
+      tgt_file_id: File.id | nil,
+      tgt_connection_id: Connection.id | nil,
+      tgt_atm_id: Server.id | nil,
+      tgt_acc_number: BankAccount.account | nil,
+      tgt_process_id: Process.id | nil,
       priority: term,
       l_allocated: Process.Resources.t | nil,
       r_allocated: Process.Resources.t | nil,
@@ -148,6 +153,18 @@ defmodule Helix.Process.Model.Process do
   Signal sent when the File that the process is targeting was deleted.
 
   Default action is to send itself a SIGKILL with `:tgt_file_deleted` reason.
+
+  ## SIGSRCBANKACCD
+
+  Signal sent when the bank account the process uses as source was closed.
+
+  Default action is to send itself a SIGKILL with `:src_bank_acc_closed` reason.
+
+  ## SIGTGTBANKACCD
+
+  Signal sent when the bank account the process is targeting was closed.
+
+  Default action is to send itself a SIGKILL with `:tgt_bank_acc_closed` reason.
   """
   @type signal ::
     :SIGTERM
@@ -156,9 +173,11 @@ defmodule Helix.Process.Model.Process do
     | :SIGCONT
     | :SIGPRIO
     | :SIGSRCCONND
-    | :SIGSRCFILED
     | :SIGTGTCONND
+    | :SIGSRCFILED
     | :SIGTGTFILED
+    | :SIGSRCBANKACCD
+    | :SIGTGTBANKACCD
 
   @typedoc """
   Valid params for each type of signal.
@@ -179,21 +198,27 @@ defmodule Helix.Process.Model.Process do
     | :tgt_connection_closed
     | :src_file_deleted
     | :tgt_file_deleted
+    | :src_bank_acc_closed
+    | :tgt_bank_acc_closed
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
   @type creation_params :: %{
     :gateway_id => Server.id,
     :source_entity_id => Entity.id,
-    :src_connection_id => Connection.id | nil,
-    :src_file_id => File.id | nil,
     :target_id => Server.id,
     :data => Processable.t,
     :type => type,
     :network_id => Network.id | nil,
     :bounce_id => Bounce.id | nil,
+    :src_connection_id => Connection.id | nil,
+    :src_file_id => File.id | nil,
+    :src_atm_id => Server.id | nil,
+    :src_acc_number => BankAccount.account | nil,
     :tgt_file_id => File.id | nil,
     :tgt_connection_id => Connection.id | nil,
+    :tgt_atm_id => Server.id | nil,
+    :tgt_acc_number => BankAccount.account | nil,
     :tgt_process_id => Process.id | nil,
     :objective => map,
     :l_dynamic => dynamic,
@@ -204,16 +229,20 @@ defmodule Helix.Process.Model.Process do
   @creation_fields [
     :gateway_id,
     :source_entity_id,
-    :src_connection_id,
-    :src_file_id,
     :target_id,
-    :network_id,
-    :bounce_id,
-    :tgt_file_id,
-    :tgt_connection_id,
-    :tgt_process_id,
     :data,
     :type,
+    :network_id,
+    :bounce_id,
+    :src_connection_id,
+    :src_file_id,
+    :src_atm_id,
+    :src_acc_number,
+    :tgt_file_id,
+    :tgt_connection_id,
+    :tgt_atm_id,
+    :tgt_acc_number,
+    :tgt_process_id,
     :objective,
     :static,
     :l_dynamic,
@@ -279,14 +308,6 @@ defmodule Helix.Process.Model.Process do
     # The server where the target object of this process action is
     field :target_id, Server.ID
 
-    # Which connection (if any) originated this process
-    field :src_connection_id, Connection.ID,
-      default: nil
-
-    # Which file (if any) originated this process
-    field :src_file_id, File.ID,
-      default: nil
-
     # Which network (if any) is this process bound to
     field :network_id, Network.ID,
       default: nil
@@ -297,12 +318,36 @@ defmodule Helix.Process.Model.Process do
 
     ### Custom keys
 
+    # Which connection (if any) originated this process
+    field :src_connection_id, Connection.ID,
+      default: nil
+
+    # Which file (if any) originated this process
+    field :src_file_id, File.ID,
+      default: nil
+
+    # Which ATM id (if any) originated this process
+    field :src_atm_id, Server.ID,
+      default: nil
+
+    # Which bank account (if any) originated this process
+    field :src_acc_number, :integer,
+      default: nil
+
     # Which file (if any) is the target of this process
     field :tgt_file_id, File.ID,
       default: nil
 
     # Which connection (if any) is the target of this process
     field :tgt_connection_id, Connection.ID,
+      default: nil
+
+    # Which ATM id (if any) is the target of this process
+    field :tgt_atm_id, Server.ID,
+      default: nil
+
+    # Which bank account (if any) is the target of this process
+    field :tgt_acc_number, :integer,
       default: nil
 
     # Which process (if any) is the target of this process

@@ -23,6 +23,7 @@ defmodule Helix.Process.Executable do
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
+  alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Process.Action.Process, as: ProcessAction
   alias Helix.Process.Model.Process
 
@@ -283,14 +284,20 @@ defmodule Helix.Process.Executable do
         defp get_source_connection(_, _, _, _),
           do: nil
 
-        defp get_source_file(_, _, _, _),
-          do: %{src_file_id: nil}
-
         defp get_target_connection(_, _, _, _),
           do: nil
 
+        defp get_source_file(_, _, _, _),
+          do: %{src_file_id: nil}
+
         defp get_target_file(_, _, _, _),
           do: %{tgt_file_id: nil}
+
+        defp get_source_bank_account(_, _, _, _),
+          do: %{src_atm_id: nil, src_acc_number: nil}
+
+        defp get_target_bank_account(_, _, _, _),
+          do: %{tgt_atm_id: nil, tgt_acc_number: nil}
 
         defp get_target_process(_, _, _, _),
           do: %{tgt_process_id: nil}
@@ -317,6 +324,8 @@ defmodule Helix.Process.Executable do
         resources = get_resources(unquote_splicing(args))
         source_file = get_source_file(unquote_splicing(args))
         target_file = get_target_file(unquote_splicing(args))
+        source_bank_account = get_source_bank_account(unquote_splicing(args))
+        target_bank_account = get_target_bank_account(unquote_splicing(args))
         target_process = get_target_process(unquote_splicing(args))
         bounce_id = get_bounce_id(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
@@ -324,11 +333,12 @@ defmodule Helix.Process.Executable do
         network_id = get_network_id(unquote(meta))
 
         partial =
-          %{}
-          |> Map.merge(process_data)
+          process_data
           |> Map.merge(resources)
           |> Map.merge(source_file)
           |> Map.merge(target_file)
+          |> Map.merge(source_bank_account)
+          |> Map.merge(target_bank_account)
           |> Map.merge(target_process)
           |> Map.merge(bounce_id)
           |> Map.merge(ownership)
@@ -470,6 +480,60 @@ defmodule Helix.Process.Executable do
         file_id = unquote(block)
 
         %{tgt_file_id: file_id}
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the process' `src_atm_id` and `src_acc_number`, as defined on the
+  `source_bank_account` section of the Process.Executable
+  """
+  defmacro source_bank_account(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_source_bank_account(term, term, term, term) ::
+        %{
+          src_atm_id: Server.t | nil,
+          src_acc_number: BankAccount.account | nil
+        }
+      @doc false
+      defp get_source_bank_account(unquote_splicing(args)) do
+        {atm_id, account_number} = unquote(block)
+
+        %{
+          src_atm_id: atm_id,
+          src_acc_number: account_number
+        }
+      end
+
+    end
+  end
+
+  @doc """
+  Returns the process' `tgt_atm_id` and `tgt_acc_number`, as defined on the
+  `target_bank_account` section of the Process.Executable
+  """
+  defmacro target_bank_account(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      @spec get_target_bank_account(term, term, term, term) ::
+      %{
+        tgt_atm_id: Server.t | nil,
+        tgt_acc_number: BankAccount.account | nil
+      }
+      @doc false
+      defp get_target_bank_account(unquote_splicing(args)) do
+        {atm_id, account_number} = unquote(block)
+
+        %{
+          tgt_atm_id: atm_id,
+          tgt_acc_number: account_number
+        }
       end
 
     end
