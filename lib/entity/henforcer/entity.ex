@@ -17,6 +17,7 @@ defmodule Helix.Entity.Henforcer.Entity do
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Component, as: ComponentQuery
+  alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
@@ -277,5 +278,34 @@ defmodule Helix.Entity.Henforcer.Entity do
       reply_error({:virus, :not_belongs})
     end
     |> wrap_relay(%{entity: entity, virus: virus})
+  end
+
+  @type owns_bank_account_relay ::
+    %{entity: Entity.t, bank_account: BankAccount.t}
+  @type owns_bank_account_relay_partial :: map
+  @type owns_bank_account_error ::
+    {false, {:bank_account, :not_belongs}, owns_bank_account_relay_partial}
+    | entity_exists_error
+
+  @spec owns_bank_account?(Entity.idt, BankAccount.t) ::
+    {true, owns_bank_account_relay}
+    | owns_bank_account_error
+  @doc """
+  Henforces the Entity is the owner of the given bank account.
+  """
+  def owns_bank_account?(entity_id = %Entity.ID{}, bank_account) do
+    henforce entity_exists?(entity_id) do
+      owns_bank_account?(relay.entity, bank_account)
+    end
+  end
+
+  def owns_bank_account?(entity = %Entity{}, bank_account = %BankAccount{}) do
+    # TODO #260
+    if to_string(entity.entity_id) == to_string(bank_account.owner_id) do
+      reply_ok()
+    else
+      reply_error({:bank_account, :not_belongs})
+    end
+    |> wrap_relay(%{entity: entity, bank_account: bank_account})
   end
 end
