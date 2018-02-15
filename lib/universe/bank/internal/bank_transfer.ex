@@ -65,11 +65,9 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     | {:error, :internal}
   def complete(transfer) do
     deposit_money = fn(transfer) ->
-      account_to = BankAccountInternal.fetch_for_update(
-        transfer.atm_to,
-        transfer.account_to)
-
-      BankAccountInternal.deposit(account_to, transfer.amount)
+      transfer.atm_to
+      |> BankAccountInternal.fetch_for_update(transfer.account_to)
+      |> BankAccountInternal.deposit(transfer.amount)
     end
 
     trans =
@@ -106,12 +104,10 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
     | {:error, {:transfer, :notfound}}
     | {:error, :internal}
   def abort(transfer) do
-      refund_money = fn(transfer) ->
-        account_from = BankAccountInternal.fetch_for_update(
-          transfer.atm_from,
-          transfer.account_from)
-
-        BankAccountInternal.deposit(account_from, transfer.amount)
+    refund_money = fn transfer ->
+      transfer.atm_from
+      |> BankAccountInternal.fetch_for_update(transfer.account_from)
+      |> BankAccountInternal.deposit(transfer.amount)
     end
 
     trans =

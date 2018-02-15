@@ -183,6 +183,7 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Firewall.Stopped
   event SoftwareEvent.LogForge.LogCreate.Processed
   event SoftwareEvent.LogForge.LogEdit.Processed
+  event SoftwareEvent.Virus.Collect.Processed
   event SoftwareEvent.Virus.Installed
   event SoftwareEvent.Virus.InstallFailed
 
@@ -226,6 +227,10 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.LogForge.LogEdit.Processed,
     LogHandler.Log,
     :log_forge_conclusion
+
+  event SoftwareEvent.Virus.Collect.Processed,
+    SoftwareHandler.Virus,
+    :handle_collect
 
   ##############################################################################
   # Story events

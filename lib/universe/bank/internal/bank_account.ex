@@ -23,9 +23,8 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
   a transaction.
   """
   def fetch_for_update(atm, account_number) do
-    unless Repo.in_transaction?() do
-      raise "Transaction required in order to acquiring lock"
-    end
+    unless Repo.in_transaction?(),
+      do: raise "Transaction required in order to acquiring lock"
 
     atm
     |> BankAccount.Query.by_atm_account(account_number)

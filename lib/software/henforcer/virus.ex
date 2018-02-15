@@ -4,15 +4,12 @@ defmodule Helix.Software.Henforcer.Virus do
 
   alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
   alias Helix.Entity.Model.Entity
-  alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Software.Henforcer.File, as: FileHenforcer
   alias Helix.Software.Henforcer.Storage, as: StorageHenforcer
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
   alias Helix.Software.Model.Virus
   alias Helix.Software.Query.Virus, as: VirusQuery
-
-  @type payment_info :: {BankAccount.t | nil, term | nil}
 
   @type virus_exists_relay :: %{virus: Virus.t}
   @type virus_exists_relay_partial :: %{}
@@ -72,7 +69,7 @@ defmodule Helix.Software.Henforcer.Virus do
   @type can_collect_all_relay_partial :: map
   @type can_collect_all_error :: can_collect_error
 
-  @spec can_collect_all?(Entity.t, [File.id], payment_info) ::
+  @spec can_collect_all?(Entity.t, [File.id], Virus.payment_info) ::
     {true, can_collect_all_relay}
     | can_collect_all_error
   @doc """
@@ -105,7 +102,7 @@ defmodule Helix.Software.Henforcer.Virus do
     | is_active_error
     | valid_payment_error
 
-  @spec can_collect?(Entity.t, File.id, payment_info) ::
+  @spec can_collect?(Entity.t, File.id, Virus.payment_info) ::
     {true, can_collect_relay}
     | can_collect_error
   @doc """
@@ -133,7 +130,7 @@ defmodule Helix.Software.Henforcer.Virus do
   @type valid_payment_error ::
     {false, {:payment, :invalid}, valid_payment_relay_partial}
 
-  @spec valid_payment?(File.t, payment_info) ::
+  @spec valid_payment?(File.t, Virus.payment_info) ::
     {true, valid_payment_relay}
     | valid_payment_error
   @doc """

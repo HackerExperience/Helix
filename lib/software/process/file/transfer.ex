@@ -35,6 +35,7 @@ process Helix.Software.Process.File.Transfer do
     %{dlk: resource_usage}
     | %{ulk: resource_usage}
 
+  @type process_type :: :file_download | :file_upload
   @type transfer_type :: :download | :upload
   @type connection_type :: :ftp | :public_ftp
 
@@ -197,15 +198,20 @@ process Helix.Software.Process.File.Transfer do
     Defines how FileTransferProcess should be executed.
     """
 
+    alias Helix.Network.Model.Bounce
+    alias Helix.Network.Model.Network
     alias Helix.Software.Model.File
     alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
 
     @type params :: FileTransferProcess.creation_params
 
-    @type meta :: %{
-      :file => File.t,
-      optional(atom) => term
-    }
+    @type meta ::
+      %{
+        file: File.t,
+        type: FileTransferProcess.process_type,
+        network_id: Network.id,
+        bounce: Bounce.idt | nil
+      }
 
     resources(_, _, params, meta) do
       %{

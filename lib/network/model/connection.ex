@@ -27,6 +27,7 @@ defmodule Helix.Network.Model.Connection do
   @type public_ftp :: t_of_type(:public_ftp)
   @type bank_login :: t_of_type(:bank_login)
   @type wire_transfer :: t_of_type(:wire_transfer)
+  @type virus_collect :: t_of_type(:virus_collect)
   @type cracker_bruteforce :: t_of_type(:cracker_bruteforce)
 
   @type meta :: map | nil
@@ -37,6 +38,7 @@ defmodule Helix.Network.Model.Connection do
     | :public_ftp
     | :bank_login
     | :wire_transfer
+    | :virus_collect
     | :cracker_bruteforce
 
   @type close_reasons :: :normal | :force

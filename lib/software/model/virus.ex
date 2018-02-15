@@ -11,6 +11,7 @@ defmodule Helix.Software.Model.Virus do
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
+  alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Software.Model.File
   alias __MODULE__, as: Virus
 
@@ -20,6 +21,13 @@ defmodule Helix.Software.Model.Virus do
       entity_id: Entity.id,
       is_active?: boolean
     }
+
+  @typep wallet :: term
+
+  @type payment_info ::
+    {BankAccount.t, wallet}
+    | {nil, wallet}
+    | {BankAccount.t, nil}
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
   @type id :: File.id

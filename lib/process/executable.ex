@@ -274,6 +274,10 @@ defmodule Helix.Process.Executable do
 
         # Defaults: in case these functions were not defined, we assume the
         # process is not interested on this (optional) data.
+
+        @spec get_bounce_id(Server.t, Server.t, params, meta) ::
+          %{bounce_id: Bounce.id | nil}
+        @doc false
         defp get_bounce_id(_, _, _, %{bounce: bounce = %Bounce{}}),
           do: %{bounce_id: bounce.bounce_id}
         defp get_bounce_id(_, _, _, %{bounce: bounce_id = %Bounce.ID{}}),
@@ -281,24 +285,54 @@ defmodule Helix.Process.Executable do
         defp get_bounce_id(_, _, _, _),
           do: %{bounce_id: nil}
 
+        @spec get_source_connection(Server.t, Server.t, params, meta) ::
+          {:create, Connection.type}
+          | nil
+        @doc false
         defp get_source_connection(_, _, _, _),
           do: nil
 
+        @spec get_target_connection(Server.t, Server.t, params, meta) ::
+          {:create, Connection.type}
+          | :same_origin
+          | nil
+        @doc false
         defp get_target_connection(_, _, _, _),
           do: nil
 
+        @spec get_source_file(Server.t, Server.t, params, meta) ::
+          %{src_file_id: File.id | nil}
+        @doc false
         defp get_source_file(_, _, _, _),
           do: %{src_file_id: nil}
 
+        @spec get_target_file(Server.t, Server.t, params, meta) ::
+          %{tgt_file_id: File.id | nil}
+        @doc false
         defp get_target_file(_, _, _, _),
           do: %{tgt_file_id: nil}
 
+        @spec get_source_bank_account(Server.t, Server.t, params, meta) ::
+          %{
+            src_atm_id: Server.t | nil,
+            src_acc_number: BankAccount.account | nil
+          }
+        @doc false
         defp get_source_bank_account(_, _, _, _),
           do: %{src_atm_id: nil, src_acc_number: nil}
 
+        @spec get_target_bank_account(Server.t, Server.t, params, meta) ::
+          %{
+            tgt_atm_id: Server.t | nil,
+            tgt_acc_number: BankAccount.account | nil
+          }
+        @doc false
         defp get_target_bank_account(_, _, _, _),
           do: %{tgt_atm_id: nil, tgt_acc_number: nil}
 
+        @spec get_target_process(Server.t, Server.t, params, meta) ::
+          %{tgt_process_id: Process.t | nil}
+        @doc false
         defp get_target_process(_, _, _, _),
           do: %{tgt_process_id: nil}
       end
@@ -406,10 +440,6 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_source_connection(term, term, term, term) ::
-        {:create, Connection.type}
-        | nil
-      @doc false
       defp get_source_connection(unquote_splicing(args)) do
         unquote(block)
       end
@@ -431,11 +461,6 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_target_connection(term, term, term, term) ::
-        {:create, Connection.type}
-        | :same_origin
-        | nil
-      @doc false
       defp get_target_connection(unquote_splicing(args)) do
         unquote(block)
       end
@@ -452,9 +477,6 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_source_file(term, term, term, term) ::
-        %{src_file_id: File.id | nil}
-      @doc false
       defp get_source_file(unquote_splicing(args)) do
         file_id = unquote(block)
 
@@ -473,9 +495,6 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_target_file(term, term, term, term) ::
-        %{tgt_file_id: File.id | nil}
-      @doc false
       defp get_target_file(unquote_splicing(args)) do
         file_id = unquote(block)
 
@@ -494,14 +513,10 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_source_bank_account(term, term, term, term) ::
-        %{
-          src_atm_id: Server.t | nil,
-          src_acc_number: BankAccount.account | nil
-        }
-      @doc false
       defp get_source_bank_account(unquote_splicing(args)) do
-        {atm_id, account_number} = unquote(block)
+        {atm_id, account_number} =
+          unquote(block)
+          |> get_bank_data()
 
         %{
           src_atm_id: atm_id,
@@ -521,14 +536,10 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_target_bank_account(term, term, term, term) ::
-      %{
-        tgt_atm_id: Server.t | nil,
-        tgt_acc_number: BankAccount.account | nil
-      }
-      @doc false
       defp get_target_bank_account(unquote_splicing(args)) do
-        {atm_id, account_number} = unquote(block)
+        {atm_id, account_number} =
+          unquote(block)
+          |> get_bank_data()
 
         %{
           tgt_atm_id: atm_id,
@@ -539,6 +550,16 @@ defmodule Helix.Process.Executable do
     end
   end
 
+  @spec get_bank_data(BankAccount.t) :: {Server.id, BankAccount.account}
+  @spec get_bank_data(tuple) :: tuple
+  @spec get_bank_data(nil) :: {nil, nil}
+  def get_bank_data(%BankAccount{atm_id: atm_id, account_number: number}),
+    do: {atm_id, number}
+  def get_bank_data(result = {_, _}),
+    do: result
+  def get_bank_data(nil),
+    do: {nil, nil}
+
   @doc """
   Returns the process' `tgt_process_id`, as defined on the `target_process`
   section of the Process.Executable.
@@ -548,9 +569,6 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_target_process(term, term, term, term) ::
-        %{tgt_process_id: Process.t | nil}
-      @doc false
       defp get_target_process(unquote_splicing(args)) do
         process_id = unquote(block)
 
@@ -573,7 +591,7 @@ defmodule Helix.Process.Executable do
 
     quote do
 
-      @spec get_resources(term, term, term, term) ::
+      @spec get_resources(Server.t, Server.t, params, meta) ::
         unquote(process).resources
       @doc false
       defp get_resources(unquote_splicing(args)) do
