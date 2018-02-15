@@ -52,6 +52,7 @@ defmodule Helix.Software.Action.Flow.VirusTest do
         )
 
       # Collect of file1:
+      assert process1.type == :virus_collect
       assert process1.gateway_id == gateway.server_id
       assert process1.target_id == target1.server_id
       assert process1.source_entity_id == entity.entity_id
@@ -63,6 +64,7 @@ defmodule Helix.Software.Action.Flow.VirusTest do
       refute process1.data.wallet
 
       # Collect of file2:
+      assert process2.type == :virus_collect
       assert process2.gateway_id == gateway.server_id
       assert process2.target_id == target2.server_id
       assert process2.source_entity_id == entity.entity_id

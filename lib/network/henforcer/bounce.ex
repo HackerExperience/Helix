@@ -110,6 +110,7 @@ defmodule Helix.Network.Henforcer.Bounce do
     end
   end
 
+  # REVIEW: Why the empty map?
   @type can_use_bounce_relay :: EntityHenforcer.owns_bounce_relay | %{}
   @type can_use_bounce_relay_partial :: map
   @type can_use_bounce_error :: EntityHenforcer.owns_bounce_error

@@ -2,7 +2,6 @@ defmodule Helix.Software.Henforcer.VirusTest do
 
   use Helix.Test.Case.Integration
 
-  import Helix.Test.Macros
   import Helix.Test.Henforcer.Macros
 
   alias Helix.Software.Action.Virus, as: VirusAction
@@ -172,7 +171,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
 
       assert relay.virus == virus
       assert relay.entity == entity
-      assert_map relay.file, file, skip: :meta
+      assert relay.file == file
 
       assert_relay relay, [:virus, :file, :entity]
     end

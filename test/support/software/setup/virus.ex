@@ -2,6 +2,7 @@ defmodule Helix.Test.Software.Setup.Virus do
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.Virus, as: VirusInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Virus
@@ -17,9 +18,17 @@ defmodule Helix.Test.Software.Setup.Virus do
 
     virus = SoftwareRepo.insert!(fake_virus)
 
-    if virus.is_active? do
-      {:ok, _} = VirusInternal.activate_virus(virus, file.storage_id)
-    end
+    file =
+      if virus.is_active? do
+        {:ok, _} = VirusInternal.activate_virus(virus, file.storage_id)
+
+        # Fetch again to update the File's metadata (since it got installed)
+        FileInternal.fetch(file.file_id)
+      else
+        file
+      end
+
+    related = Map.replace(related, :file, file)
 
     {virus, related}
   end
