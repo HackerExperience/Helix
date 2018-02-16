@@ -13,17 +13,17 @@ defmodule Helix.Software.Event.Virus.Collect do
     alias Helix.Universe.Bank.Model.BankAccount
     alias Helix.Universe.Bank.Query.Bank, as: BankQuery
     alias Helix.Software.Model.File
+    alias Helix.Software.Model.Virus
     alias Helix.Software.Query.File, as: FileQuery
 
     alias Helix.Software.Process.Virus.Collect, as: VirusCollectProcess
 
-    event_struct [:file, :bank_account, :wallet]
+    event_struct [:file, :payment_info]
 
     @type t ::
       %__MODULE__{
         file: File.t,
-        bank_account: BankAccount.t | nil,
-        wallet: term | nil
+        payment_info: Virus.payment_info
       }
 
     @spec new(Process.t, VirusCollectProcess.t) ::
@@ -43,8 +43,7 @@ defmodule Helix.Software.Event.Virus.Collect do
     defp do_new(process, bank_account, wallet) do
       %__MODULE__{
         file: FileQuery.fetch(process.src_file_id),
-        bank_account: bank_account,
-        wallet: wallet
+        payment_info: {bank_account, wallet}
       }
     end
   end

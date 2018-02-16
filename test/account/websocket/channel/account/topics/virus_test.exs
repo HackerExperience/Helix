@@ -20,23 +20,19 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.VirusTest do
       {socket, %{entity_id: entity_id}} = ChannelSetup.join_account()
       {gateway, _} = ServerSetup.server(entity_id: entity_id)
 
-      # Subscribe to the `server` channel, as `ProcessCreateEvents` go there
+      # Subscribe to the `server` channel, as `ProcessCreatedEvent`s go there
       ChannelSetup.join_server(
         own_server: true, gateway_id: gateway.server_id, socket: socket
       )
 
       {_virus1, %{file: file1}} =
         SoftwareSetup.Virus.virus(
-          entity_id: entity_id,
-          is_active?: true,
-          real_file?: true
+          entity_id: entity_id, is_active?: true, real_file?: true
         )
 
       {_virus2, %{file: file2}} =
         SoftwareSetup.Virus.virus(
-          entity_id: entity_id,
-          is_active?: true,
-          real_file?: true
+          entity_id: entity_id, is_active?: true, real_file?: true
         )
 
       bounce = NetworkSetup.Bounce.bounce!(entity_id: entity_id)
@@ -63,11 +59,12 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.VirusTest do
       assert process_created1.data.type == "virus_collect"
       assert process_created2.data.type == "virus_collect"
 
-      assert [proc1, proc2] = ProcessQuery.get_processes_on_server(gateway)
-
       # Processes are valid!
-      assert proc1.src_file_id == file1.file_id
-      assert proc2.src_file_id == file2.file_id
+      processes = ProcessQuery.get_processes_on_server(gateway)
+      process1 = Enum.find(processes, &(&1.src_file_id == file1.file_id))
+      process2 = Enum.find(processes, &(&1.src_file_id == file2.file_id))
+      assert process1.src_file_id == file1.file_id
+      assert process2.src_file_id == file2.file_id
 
       TOPHelper.top_stop()
     end

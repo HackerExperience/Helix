@@ -303,9 +303,10 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
       assert {:ok, _} = Requestable.handle_request(request, socket)
 
       # So let's make sure the processes were created
+      processes = ProcessQuery.get_processes_on_server(gateway)
 
-      assert [process1, process2] =
-        ProcessQuery.get_processes_on_server(gateway)
+      process1 = Enum.find(processes, &(&1.src_file_id == file1.file_id))
+      process2 = Enum.find(processes, &(&1.src_file_id == file2.file_id))
 
       assert process1.gateway_id == gateway.server_id
       assert process1.source_entity_id == entity.entity_id

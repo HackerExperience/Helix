@@ -116,6 +116,8 @@ defmodule Helix.Test.Features.File.TransferTest do
         "from localhost",
         contains: [dl_file.name]
 
+      # TODO: #388 Underlying connection(s) were removed
+
       TOPHelper.top_stop(gateway)
     end
   end

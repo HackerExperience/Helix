@@ -184,6 +184,7 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.LogForge.LogCreate.Processed
   event SoftwareEvent.LogForge.LogEdit.Processed
   event SoftwareEvent.Virus.Collect.Processed
+  event SoftwareEvent.Virus.Collected
   event SoftwareEvent.Virus.Installed
   event SoftwareEvent.Virus.InstallFailed
 
@@ -231,6 +232,10 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Virus.Collect.Processed,
     SoftwareHandler.Virus,
     :handle_collect
+
+  event SoftwareEvent.Virus.Collected,
+    BankHandler.Bank.Account,
+    :virus_collected
 
   ##############################################################################
   # Story events

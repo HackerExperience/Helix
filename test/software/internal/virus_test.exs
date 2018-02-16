@@ -189,4 +189,19 @@ defmodule Helix.Software.Internal.VirusTest do
       assert VirusInternal.is_active?(virus2.file_id)
     end
   end
+
+  describe "set_running_time/2" do
+    test "modifies the running time of a virus" do
+      {virus, %{file: _}} = SoftwareSetup.Virus.virus()
+
+      assert {:ok, virus2} = VirusInternal.set_running_time(virus, 60)
+      assert virus2.running_time == 60
+
+      assert {:ok, virus3} = VirusInternal.set_running_time(virus, -100)
+      assert virus3.running_time == -100
+
+      assert {:ok, virus4} = VirusInternal.set_running_time(virus, 0)
+      assert virus4.running_time == 0
+    end
+  end
 end

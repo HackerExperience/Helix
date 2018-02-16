@@ -46,10 +46,13 @@ defmodule Helix.Software.Action.Flow.VirusTest do
 
       {bounce, _} = NetworkSetup.Bounce.bounce()
 
-      assert [process1, process2] =
+      processes =
         VirusFlow.start_collect(
           gateway, viruses, bounce.bounce_id, {bank_acc, wallet}, @relay
         )
+
+      process1 = Enum.find(processes, &(&1.src_file_id == file1.file_id))
+      process2 = Enum.find(processes, &(&1.src_file_id == file2.file_id))
 
       # Collect of file1:
       assert process1.type == :virus_collect

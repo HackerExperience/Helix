@@ -2,6 +2,68 @@ defmodule Helix.Software.Event.Virus do
 
   import Helix.Event
 
+  event Collected do
+    @moduledoc """
+    `VirusCollectedEvent` is fired right after the earnings of the virus have
+    been collected and transferred to the player's bank account/bitcoin wallet.
+    """
+
+    alias Helix.Universe.Bank.Model.BankAccount
+    alias Helix.Software.Model.Virus
+
+    event_struct [:virus, :earnings, :bank_account, :wallet]
+
+    @type t ::
+      %__MODULE__{
+        virus: Virus.t,
+        earnings: Virus.earnings,
+        bank_account: BankAccount.t | nil,
+        wallet: term | nil
+      }
+
+    @spec new(Virus.t, Virus.earnings, Virus.payment_info) ::
+      t
+    def new(virus = %Virus{}, earnings, {bank_acc, wallet}) do
+      %__MODULE__{
+        virus: virus,
+        earnings: earnings,
+        bank_account: bank_acc,
+        wallet: wallet
+      }
+    end
+
+    notify do
+      @moduledoc """
+      Notifying that a virus has been collected enables the client to reset the
+      running time of the virus.
+      """
+
+      @event :virus_collected
+
+      @doc false
+      def generate_payload(event = %{}, _socket) do
+        data =
+          event
+          |> payment_data()
+          |> Map.merge(%{file_id: to_string(event.virus.file_id)})
+
+        {:ok, data}
+      end
+
+      defp payment_data(event = %{bank_account: %BankAccount{}}) do
+        %{
+          atm_id: to_string(event.bank_account.atm_id),
+          account_number: event.bank_account.account_number,
+          money: event.earnings
+        }
+      end
+
+      @doc false
+      def whom_to_notify(event),
+        do: %{account: event.virus.entity_id}
+    end
+  end
+
   event Installed do
     @moduledoc """
     `VirusInstalledEvent` is fired when a virus has been installed by someone.

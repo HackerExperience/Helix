@@ -30,6 +30,16 @@ defmodule Helix.Test.Software.Setup.Virus do
         {virus, file}
       end
 
+    virus =
+      if opts[:running_time] do
+        {:ok, new_virus} =
+          VirusInternal.set_running_time(virus, opts[:running_time])
+
+        new_virus
+      else
+        virus
+      end
+
     related = Map.replace(related, :file, file)
 
     {virus, related}
@@ -43,6 +53,7 @@ defmodule Helix.Test.Software.Setup.Virus do
   - is_active?: Whether to mark virus as active. Defaults to true.
   - real_file?: Whether to generate the underlying virus file. Defaults to true
   - type: Virus type. Defaults to `spyware`. Only used when `real_file?` is set
+  - running_time: Set for how long the virus have been running. Defaults to 0s.
 
   Related: File.t (when `real_life?` is set)
   """
@@ -82,5 +93,10 @@ defmodule Helix.Test.Software.Setup.Virus do
       }
 
     {virus, related}
+  end
+
+  def fake_virus!(opts \\ []) do
+    {virus, _} = fake_virus(opts)
+    virus
   end
 end

@@ -30,6 +30,8 @@ defmodule Helix.Software.Model.Virus do
     | {nil, wallet}
     | {BankAccount.t, nil}
 
+  @type earnings :: BankAccount.amount | float
+
   @type changeset :: %Changeset{data: %__MODULE__{}}
   @type id :: File.id
 
@@ -97,6 +99,13 @@ defmodule Helix.Software.Model.Virus do
 
       # `active` assoc is, from the VirusInternal above, implementation detail.
       active: nil}
+  end
+
+  def calculate_earnings(
+    _file = %File{}, _virus = %Virus{is_active?: true}, _saved_earnings)
+    do
+    # Obviously TODO
+    5000
   end
 
   query do

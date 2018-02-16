@@ -5,9 +5,19 @@ defmodule Helix.Test.Software.Helper do
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Software
   alias Helix.Software.Model.Storage
+  alias Helix.Software.Model.Virus
   alias Helix.Software.Query.Storage, as: StorageQuery
+  alias Helix.Software.Repo, as: SoftwareRepo
 
   alias HELL.TestHelper.Random
+
+  @doc """
+  Returns raw DB entry for testing/debugging.
+  """
+  def raw_get(virus = %Virus{}),
+    do: SoftwareRepo.get(Virus, virus.file_id)
+  def raw_get(virus = %Virus{}, :active),
+    do: SoftwareRepo.get(Virus.Active, virus.file_id)
 
   @doc """
   Returns the first `Storage.t` of the given server
@@ -75,9 +85,8 @@ defmodule Helix.Test.Software.Helper do
   def random_file_size,
     do: Enum.random(1..200)
 
-  def random_file_name do
-    Burette.Color.name()
-  end
+  def random_file_name,
+    do: Burette.Color.name()
 
   def random_file_path do
     1..5

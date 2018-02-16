@@ -14,6 +14,7 @@ defmodule Helix.Process.Model.Process do
 
   import Ecto.Changeset
   import HELL.Macros
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -696,16 +697,12 @@ defmodule Helix.Process.Model.Process do
     |> put_change(:creation_time, DateTime.utc_now())
   end
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
-
-    alias Ecto.Queryable
     alias Helix.Software.Model.File
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
-    alias Helix.Process.Model.Process
 
     @spec by_id(Queryable.t, Process.idtb) ::
       Queryable.t
