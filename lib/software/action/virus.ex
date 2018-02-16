@@ -31,10 +31,9 @@ defmodule Helix.Software.Action.Virus do
   to the address in `payment_info`.
   """
   def collect(file, payment_info) do
-    virus = VirusQuery.fetch(file.file_id)
-
     with \
-      earnings = Virus.calculate_earnings(file, virus, []),
+      virus = %{} <- VirusQuery.fetch(file.file_id),
+      earnings = Virus.calculate_earnings(file.software_type, virus, []),
       true <- is_integer(earnings),
       {:ok, _} <- VirusInternal.set_running_time(virus, 0)
     do

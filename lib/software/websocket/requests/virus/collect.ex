@@ -17,6 +17,7 @@ request Helix.Software.Websocket.Requests.Virus.Collect do
   alias Helix.Software.Public.Virus, as: VirusPublic
 
   def check_params(request, socket) do
+    # Account information must have either both `{atm_id, acc}` or neither
     check_account_info =
       fn atm_id, acc ->
         (is_nil(atm_id) and is_nil(acc)) or
@@ -39,7 +40,7 @@ request Helix.Software.Websocket.Requests.Virus.Collect do
       true <- valid_payment_info?({atm_id, account_number}, wallet),
       true <- valid_bank_info?(atm_id, account_number),
 
-      # Viruses must not be an empty list
+      # `viruses` must not be an empty list
       false <- Enum.empty?(viruses)
     do
       params =
@@ -135,6 +136,8 @@ request Helix.Software.Websocket.Requests.Virus.Collect do
 
   render_empty()
 
+  @spec valid_bank_info?(Server.id | nil, BankAccount.account | nil) ::
+    boolean
   defp valid_bank_info?(nil, nil),
     do: true
   defp valid_bank_info?(atm, acc) when not is_nil(atm) and not is_nil(acc),
@@ -142,6 +145,9 @@ request Helix.Software.Websocket.Requests.Virus.Collect do
   defp valid_bank_info?(_, _),
     do: false
 
+  @spec valid_payment_info?({nil, nil}, nil) :: false
+  @spec valid_payment_info?({Server.id, BankAccount.account}, nil) :: true
+  @spec valid_payment_info?(nil, wallet :: term) :: true
   defp valid_payment_info?({nil, nil}, nil),
     do: false
   defp valid_payment_info?(_, _),

@@ -22,7 +22,6 @@ defmodule Helix.Universe.Bank.Henforcer.BankTest do
     end
 
     test "rejects when account does not exist" do
-
       assert {false, reason, _} =
         BankHenforcer.account_exists?(
           BankHelper.atm_id(), BankHelper.account_number()

@@ -22,6 +22,8 @@ defmodule Helix.Software.Model.Software do
     | :crypto_key
     | :virus_spyware
 
+  @type virus :: :virus_spyware
+
   @type module_name ::
     cracker_module
     | firewall_module

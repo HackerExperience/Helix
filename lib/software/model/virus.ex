@@ -12,6 +12,7 @@ defmodule Helix.Software.Model.Virus do
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Software.Model.Software
   alias Helix.Software.Model.File
   alias __MODULE__, as: Virus
 
@@ -101,10 +102,16 @@ defmodule Helix.Software.Model.Virus do
       active: nil}
   end
 
+  @spec calculate_earnings(Software.virus, t, list) ::
+    earnings
+  @doc """
+  Calculates the earnings of the given viruses based on its type, previous
+  earnings etc. All of the game balance math is delegated to `Helix.Balance`.
+  """
   def calculate_earnings(
-    _file = %File{}, _virus = %Virus{is_active?: true}, _saved_earnings)
-    do
-    # Obviously TODO
+    _virus_type, _virus = %Virus{is_active?: true}, _saved_earnings)
+  do
+    # Obviously TODO #389
     5000
   end
 

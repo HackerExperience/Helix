@@ -122,10 +122,12 @@ process Helix.Software.Process.Virus.Collect do
       {:create, :virus_collect}
     end
 
+    # There's no bank account when collecting the earnings of a `miner` virus
     target_bank_account(_, _, _, %{virus: %{software_type: :virus_miner}}) do
       nil
     end
 
+    # For any other virus, there must always have a bank account
     target_bank_account(_, _, %{bank_account: bank_acc}, _) do
       bank_acc
     end

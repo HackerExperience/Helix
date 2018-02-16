@@ -131,8 +131,6 @@ defmodule Helix.Software.Internal.Virus do
   def activate_virus(virus = %Virus{}, storage_id = %Storage.ID{}) do
     result = force_activate_virus(virus, storage_id)
 
-    # Review: really? because comment says only `:nothing`
-    # See `install/2` comments on why we have to fetch again.
     with {:ok, _} <- result do
       {:ok, fetch(virus.file_id)}
     end

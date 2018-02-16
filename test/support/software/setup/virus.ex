@@ -30,6 +30,7 @@ defmodule Helix.Test.Software.Setup.Virus do
         {virus, file}
       end
 
+    # Possibly fetch again in case the user requested a custom `running_time`
     virus =
       if opts[:running_time] do
         {:ok, new_virus} =
