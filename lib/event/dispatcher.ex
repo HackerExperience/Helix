@@ -262,6 +262,7 @@ defmodule Helix.Event.Dispatcher do
 
   # All
   event BankEvent.Bank.Account.Login
+  event BankEvent.Bank.Account.Updated
   event BankEvent.Bank.Account.Password.Revealed
   event BankEvent.Bank.Account.Token.Acquired
   event BankEvent.Bank.Transfer.Processed

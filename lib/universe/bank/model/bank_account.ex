@@ -20,9 +20,12 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     bank_id: NPC.id,
     atm_id: ATM.id,
     password: String.t,
-    balance: non_neg_integer,
+    balance: balance,
     owner_id: Account.id
   }
+
+  @type balance :: non_neg_integer
+  @type amount :: pos_integer
 
   @type creation_params :: %{
     bank_id: NPC.idtb,

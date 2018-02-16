@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Universe.Bank.Setup do
 
   alias Helix.Account.Model.Account
@@ -39,7 +40,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
     care that the resulting atm is constant. For instance, atm on atm_seq=1 is
     different from atm on atm_seq=2
   - owner_id: Player who owns that account. It's OK to pass an Entity.ID
-  - balance: Starting balance of that account. Defaults to 0
+  - balance: Starting balance of that account. Defaults to 0. Accepts `:random`
   - number: Bank account number.
   """
   def fake_account(opts \\ []) do
@@ -67,7 +68,17 @@ defmodule Helix.Test.Universe.Bank.Setup do
       end
 
     number = Keyword.get(opts, :number, BankHelper.account_number())
-    balance = Keyword.get(opts, :balance, 0)
+    balance =
+      cond do
+        opts[:balance] == :random ->
+          BankHelper.amount()
+
+        opts[:balance] ->
+          opts[:balance]
+
+        true ->
+          0
+      end
 
     acc =
       %BankAccount{
@@ -81,6 +92,12 @@ defmodule Helix.Test.Universe.Bank.Setup do
       }
 
     {acc, %{}}
+  end
+
+  @doc false
+  def fake_account!(opts \\ []) do
+    {account, _} = fake_account(opts)
+    account
   end
 
   @doc """
