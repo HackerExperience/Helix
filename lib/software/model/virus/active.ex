@@ -26,7 +26,8 @@ defmodule Helix.Software.Model.Virus.Active do
     %__MODULE__{
       virus_id: Virus.id,
       entity_id: Entity.id,
-      storage_id: Storage.id
+      storage_id: Storage.id,
+      activation_time: DateTime.t
     }
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
@@ -41,6 +42,8 @@ defmodule Helix.Software.Model.Virus.Active do
 
     field :entity_id, Entity.ID
     field :storage_id, Storage.ID
+
+    field :activation_time, :utc_datetime
 
     belongs_to :virus, Virus,
       references: :file_id,
@@ -60,7 +63,15 @@ defmodule Helix.Software.Model.Virus.Active do
 
     %__MODULE__{}
     |> cast(params, @creation_fields)
+    |> put_defaults()
     |> validate_required(@required_fields)
+  end
+
+  @spec put_defaults(changeset) ::
+    changeset
+  defp put_defaults(changeset) do
+    changeset
+    |> put_change(:activation_time, DateTime.utc_now())
   end
 
   query do

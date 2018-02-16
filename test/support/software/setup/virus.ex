@@ -18,14 +18,16 @@ defmodule Helix.Test.Software.Setup.Virus do
 
     virus = SoftwareRepo.insert!(fake_virus)
 
-    file =
+    {virus, file} =
       if virus.is_active? do
-        {:ok, _} = VirusInternal.activate_virus(virus, file.storage_id)
+        {:ok, new_virus} = VirusInternal.activate_virus(virus, file.storage_id)
 
         # Fetch again to update the File's metadata (since it got installed)
-        FileInternal.fetch(file.file_id)
+        new_file = FileInternal.fetch(file.file_id)
+
+        {new_virus, new_file}
       else
-        file
+        {virus, file}
       end
 
     related = Map.replace(related, :file, file)

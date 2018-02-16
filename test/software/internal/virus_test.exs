@@ -32,12 +32,16 @@ defmodule Helix.Software.Internal.VirusTest do
 
       # v1 was installed; v2 wasn't (2nd virus by same entity on same storage)
       assert v1.is_active?
+      assert v1.running_time
+
       refute v2.is_active?
+      refute v2.running_time
 
       # Storage of `file3` has one virus
       assert [v3] = VirusInternal.list_by_storage(file3.storage_id)
       assert v3.file_id == file3.file_id
       assert v3.is_active?
+      assert v3.running_time
     end
   end
 
@@ -61,6 +65,7 @@ defmodule Helix.Software.Internal.VirusTest do
       assert Enum.find(viruses, &(&1.file_id == file1.file_id))
       assert Enum.find(viruses, &(&1.file_id == file2.file_id))
       assert Enum.all?(viruses, &(&1.is_active?))
+      assert Enum.all?(viruses, &(&1.running_time))
     end
   end
 
@@ -82,7 +87,7 @@ defmodule Helix.Software.Internal.VirusTest do
       {:ok, _} = VirusInternal.install(file3, entity_id2)
       {:ok, _} = VirusInternal.install(file4, entity_id1)
 
-      assert viruses =
+      viruses =
         VirusInternal.list_by_storage_and_entity(file1.storage_id, entity_id1)
 
       # `file1` and `file2` were installed by the given entity on that storage
@@ -91,12 +96,17 @@ defmodule Helix.Software.Internal.VirusTest do
 
       # v1 is active; v2 isn't (same storage, same entity)
       assert v1.is_active?
+      assert v1.running_time
+
       refute v2.is_active?
+      refute v2.running_time
 
       # On the same storage but by entity2, only one virus was found
       assert [v3] =
         VirusInternal.list_by_storage_and_entity(file3.storage_id, entity_id2)
       assert v3.file_id == file3.file_id
+      assert v3.is_active?
+      assert v3.running_time
     end
   end
 
@@ -109,8 +119,8 @@ defmodule Helix.Software.Internal.VirusTest do
 
       assert virus.entity_id == entity_id
       assert virus.file_id == file.file_id
-      # assert virus.storage_id == file.storage_id
       assert virus.is_active?
+      assert is_integer(virus.running_time)
 
       db_entry = VirusInternal.fetch(file.file_id)
       assert db_entry == virus
@@ -124,6 +134,7 @@ defmodule Helix.Software.Internal.VirusTest do
 
       # virus1 returned from `install/2` has been formatted and marks as active
       assert virus1.is_active?
+      assert is_integer(virus1.running_time)
 
       # We have a Virus which is active
       virus1 = VirusInternal.fetch(file1.file_id)
@@ -135,8 +146,8 @@ defmodule Helix.Software.Internal.VirusTest do
       assert {:ok, virus2} = VirusInternal.install(file2, entity_id)
 
       # virus2 is inactive
-      assert virus1.is_active?
       refute virus2.is_active?
+      refute virus2.running_time
 
       virus2 = VirusInternal.fetch(file2.file_id)
 
@@ -159,14 +170,19 @@ defmodule Helix.Software.Internal.VirusTest do
 
       # `virus1` is active, as it was the first to be added
       assert virus1.is_active?
+      assert virus1.running_time
 
       # But subsequent `virus2` wasn't activated
       refute virus2.is_active?
+      refute virus2.running_time
 
       # Let's activate `virus2`
       assert {:ok, new_virus2} =
         VirusInternal.activate_virus(virus2, file2.storage_id)
+
+      # Now it's running!
       assert new_virus2.is_active?
+      assert new_virus2.running_time
 
       # `virus2` is now active and `virus1` isn't
       refute VirusInternal.is_active?(virus1.file_id)

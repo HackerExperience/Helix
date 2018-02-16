@@ -19,7 +19,8 @@ defmodule Helix.Software.Model.Virus do
     %__MODULE__{
       file_id: File.id,
       entity_id: Entity.id,
-      is_active?: boolean
+      is_active?: boolean,
+      running_time: seconds :: integer
     }
 
   @typep wallet :: term
@@ -52,6 +53,11 @@ defmodule Helix.Software.Model.Virus do
       virtual: true,
       default: false
 
+    # Time (in seconds) the virus has been running. Only set when active.
+    field :running_time, :integer,
+      virtual: true,
+      default: nil
+
     has_one :active, Virus.Active,
       foreign_key: :virus_id,
       references: :file_id
@@ -72,11 +78,22 @@ defmodule Helix.Software.Model.Virus do
 
   @spec format(t) ::
     t
+  @doc """
+  Formats the fetched virus, including information about its `active` status.
+  """
   def format(virus = %Virus{}) do
-    is_active? = not is_nil(virus.active) and Ecto.assoc_loaded?(virus.active)
+    {is_active?, running_time} =
+      if not is_nil(virus.active) and Ecto.assoc_loaded?(virus.active) do
+        time = DateTime.diff(DateTime.utc_now(), virus.active.activation_time)
+
+        {true, time}
+      else
+        {false, nil}
+      end
 
     %{virus|
       is_active?: is_active?,
+      running_time: running_time,
 
       # `active` assoc is, from the VirusInternal above, implementation detail.
       active: nil}
