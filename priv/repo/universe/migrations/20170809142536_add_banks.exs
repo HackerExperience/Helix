@@ -8,10 +8,7 @@ defmodule Helix.Universe.Repo.Migrations.AddBanks do
     # need the unique constraint in order to reference it elsewhere as a FK
     create table(:banks, primary_key: false) do
       add :bank_id,
-        references(
-          :npcs,
-          column: :npc_id,
-          type: :inet),
+        references(:npcs, column: :npc_id, type: :inet),
         primary_key: true
       add :name, :string, null: false
     end
@@ -19,10 +16,7 @@ defmodule Helix.Universe.Repo.Migrations.AddBanks do
     create table(:atms, primary_key: false) do
       add :atm_id, :inet, primary_key: true
       add :bank_id,
-        references(
-          :banks,
-          column: :bank_id,
-          type: :inet),
+        references(:banks, column: :bank_id, type: :inet),
         null: false
       add :region, :string, null: false
     end
@@ -30,17 +24,11 @@ defmodule Helix.Universe.Repo.Migrations.AddBanks do
 
     create table(:bank_accounts, primary_key: false) do
       add :atm_id,
-        references(
-          :atms,
-          column: :atm_id,
-          type: :inet),
+        references(:atms, column: :atm_id, type: :inet),
         primary_key: true
       add :account_number, :integer, primary_key: true
       add :bank_id,
-        references(
-          :banks,
-          column: :bank_id,
-          type: :inet),
+        references(:banks, column: :bank_id, type: :inet),
         null: false
       add :owner_id, :inet, null: false
       add :password, :string, null: false

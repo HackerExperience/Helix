@@ -183,6 +183,8 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Firewall.Stopped
   event SoftwareEvent.LogForge.LogCreate.Processed
   event SoftwareEvent.LogForge.LogEdit.Processed
+  event SoftwareEvent.Virus.Collect.Processed
+  event SoftwareEvent.Virus.Collected
   event SoftwareEvent.Virus.Installed
   event SoftwareEvent.Virus.InstallFailed
 
@@ -227,6 +229,14 @@ defmodule Helix.Event.Dispatcher do
     LogHandler.Log,
     :log_forge_conclusion
 
+  event SoftwareEvent.Virus.Collect.Processed,
+    SoftwareHandler.Virus,
+    :handle_collect
+
+  event SoftwareEvent.Virus.Collected,
+    BankHandler.Bank.Account,
+    :virus_collected
+
   ##############################################################################
   # Story events
   ##############################################################################
@@ -257,6 +267,7 @@ defmodule Helix.Event.Dispatcher do
 
   # All
   event BankEvent.Bank.Account.Login
+  event BankEvent.Bank.Account.Updated
   event BankEvent.Bank.Account.Password.Revealed
   event BankEvent.Bank.Account.Token.Acquired
   event BankEvent.Bank.Transfer.Processed

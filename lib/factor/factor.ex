@@ -15,7 +15,7 @@ defmodule Helix.Factor do
   - Figuring out how long a process should take.
   - Calculating difficulties, rewards, penalties based on, well, game facts.
 
-  One could split the implementation of a game design and balance in two parts:
+  One could split the implementation of game design and balance in two parts:
 
   1. Gathering of all required variables to calculate the outcome.
   2. Calculate the outcome.

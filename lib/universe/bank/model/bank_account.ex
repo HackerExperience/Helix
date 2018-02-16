@@ -20,9 +20,12 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     bank_id: NPC.id,
     atm_id: ATM.id,
     password: String.t,
-    balance: non_neg_integer,
+    balance: balance,
     owner_id: Account.id
   }
+
+  @type balance :: non_neg_integer
+  @type amount :: pos_integer
 
   @type creation_params :: %{
     bank_id: NPC.idtb,
@@ -89,6 +92,19 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     |> put_change(:password, generate_account_password())
   end
 
+  @spec cast(term) ::
+    {:ok, account}
+    | :error
+  @doc """
+  Ensures that the given account number is valid.
+
+  Similar to HELL's PK.cast()
+  """
+  def cast(acc) when is_integer(acc) and acc >= 100_000 and acc <= 999_999,
+    do: {:ok, acc}
+  def cast(_),
+    do: :error
+
   @spec generic_validations(Changeset.t) ::
     Changeset.t
   defp generic_validations(changeset) do
@@ -98,7 +114,7 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
 
   @spec put_defaults(Changeset.t) ::
     Changeset.t
-  def put_defaults(changeset) do
+  defp put_defaults(changeset) do
     defaults = %{
       balance: 0,
       account_number: generate_account_id(),

@@ -1,4 +1,15 @@
 defmodule Helix.Software.Model.Virus.Active do
+  @moduledoc """
+  Entries on the `Virus.Active` tell us that the given virus is currently active
+  and may be used for whatever purpose it serves.
+
+  `:entity_id` and `:storage_id` fields are repeated here, even though we could
+  get this information from `Virus` and `File` respectively, because:
+
+  1. It enables an easier querying interface
+  2. It enables data integrity features, like creating a unique constraint on
+    `{entity_id, storage_id}`.
+  """
 
   use Ecto.Schema
 
@@ -15,7 +26,8 @@ defmodule Helix.Software.Model.Virus.Active do
     %__MODULE__{
       virus_id: Virus.id,
       entity_id: Entity.id,
-      storage_id: Storage.id
+      storage_id: Storage.id,
+      activation_time: DateTime.t
     }
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
@@ -30,6 +42,8 @@ defmodule Helix.Software.Model.Virus.Active do
 
     field :entity_id, Entity.ID
     field :storage_id, Storage.ID
+
+    field :activation_time, :utc_datetime
 
     belongs_to :virus, Virus,
       references: :file_id,
@@ -49,7 +63,15 @@ defmodule Helix.Software.Model.Virus.Active do
 
     %__MODULE__{}
     |> cast(params, @creation_fields)
+    |> put_defaults()
     |> validate_required(@required_fields)
+  end
+
+  @spec put_defaults(changeset) ::
+    changeset
+  defp put_defaults(changeset) do
+    changeset
+    |> put_change(:activation_time, DateTime.utc_now())
   end
 
   query do

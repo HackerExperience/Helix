@@ -1,5 +1,6 @@
 defmodule Helix.Software.Internal.Virus do
 
+  alias HELL.Utils
   alias Helix.Entity.Model.Entity
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
@@ -130,9 +131,32 @@ defmodule Helix.Software.Internal.Virus do
   def activate_virus(virus = %Virus{}, storage_id = %Storage.ID{}) do
     result = force_activate_virus(virus, storage_id)
 
-    # See `install/2` comments on why we have to fetch again.
     with {:ok, _} <- result do
       {:ok, fetch(virus.file_id)}
+    end
+  end
+
+  @spec set_running_time(Virus.t, seconds :: integer) ::
+    {:ok, Virus.t}
+    | {:error, :internal}
+  @doc """
+  Modifies the virus running time. If `seconds` is 0, it will reset to the
+  current time. This is the most common scenario, and it's the one used when the
+  virus is collected.
+
+  A positive `seconds` will push the `running_time` towards the future, and a
+  negative one will push the `running_time` to the past. The latter is useful
+  for compensating a failed virus collect (albeit uncommon).
+  """
+  def set_running_time(virus = %Virus{}, seconds) do
+    new_time = Utils.date_before(seconds)
+
+    case update_activation_time(virus, new_time) do
+      {1, _} ->
+        {:ok, fetch(virus.file_id)}
+
+      _ ->
+        {:error, :internal}
     end
   end
 
@@ -166,5 +190,14 @@ defmodule Helix.Software.Internal.Virus do
     |> Repo.insert(
       on_conflict: :replace_all, conflict_target: [:entity_id, :storage_id]
     )
+  end
+
+  @spec update_activation_time(Virus.t, new_time :: DateTime.t) ::
+    {integer, nil}
+    | :no_return
+  defp update_activation_time(virus = %Virus{}, new_time) do
+    virus.file_id
+    |> Virus.Active.Query.by_virus()
+    |> Repo.update_all(set: [activation_time: new_time])
   end
 end

@@ -249,6 +249,9 @@ defmodule Helix.Test.Software.Setup do
     file(type: :crypto_key)
   end
 
+  @doc """
+  Generates a `File.ID`
+  """
   def id,
     do: File.ID.generate()
 end

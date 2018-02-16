@@ -1,4 +1,8 @@
 defmodule Helix.Software.Model.Virus do
+  @moduledoc """
+  The `Virus` model maps all virus installations, telling us which entity
+  installed the virus.
+  """
 
   use Ecto.Schema
 
@@ -7,6 +11,8 @@ defmodule Helix.Software.Model.Virus do
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
+  alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Software.Model.Software
   alias Helix.Software.Model.File
   alias __MODULE__, as: Virus
 
@@ -14,8 +20,18 @@ defmodule Helix.Software.Model.Virus do
     %__MODULE__{
       file_id: File.id,
       entity_id: Entity.id,
-      is_active?: boolean
+      is_active?: boolean,
+      running_time: seconds :: integer
     }
+
+  @typep wallet :: term
+
+  @type payment_info ::
+    {BankAccount.t, wallet}
+    | {nil, wallet}
+    | {BankAccount.t, nil}
+
+  @type earnings :: BankAccount.amount | float
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
   @type id :: File.id
@@ -40,6 +56,11 @@ defmodule Helix.Software.Model.Virus do
       virtual: true,
       default: false
 
+    # Time (in seconds) the virus has been running. Only set when active.
+    field :running_time, :integer,
+      virtual: true,
+      default: nil
+
     has_one :active, Virus.Active,
       foreign_key: :virus_id,
       references: :file_id
@@ -60,19 +81,38 @@ defmodule Helix.Software.Model.Virus do
 
   @spec format(t) ::
     t
+  @doc """
+  Formats the fetched virus, including information about its `active` status.
+  """
   def format(virus = %Virus{}) do
-    is_active? =
+    {is_active?, running_time} =
       if not is_nil(virus.active) and Ecto.assoc_loaded?(virus.active) do
-        true
+        time = DateTime.diff(DateTime.utc_now(), virus.active.activation_time)
+
+        {true, time}
       else
-        false
+        {false, nil}
       end
 
     %{virus|
       is_active?: is_active?,
+      running_time: running_time,
 
       # `active` assoc is, from the VirusInternal above, implementation detail.
       active: nil}
+  end
+
+  @spec calculate_earnings(Software.virus, t, list) ::
+    earnings
+  @doc """
+  Calculates the earnings of the given viruses based on its type, previous
+  earnings etc. All of the game balance math is delegated to `Helix.Balance`.
+  """
+  def calculate_earnings(
+    _virus_type, _virus = %Virus{is_active?: true}, _saved_earnings)
+  do
+    # Obviously TODO #389
+    5000
   end
 
   query do

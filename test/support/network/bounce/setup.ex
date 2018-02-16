@@ -77,7 +77,8 @@ defmodule Helix.Test.Network.Setup.Bounce do
         name: name,
         entity_id: entity_id,
         sorted: sorted
-      } |> Changeset.change()
+      }
+      |> Changeset.change()
 
     bounce =
       changeset

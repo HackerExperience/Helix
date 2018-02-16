@@ -122,6 +122,26 @@ defmodule Helix.Websocket.Flow do
       FlowUtils.validate_input(unquote(input), unquote(element), unquote(opts))
     end
   end
+
+  @doc """
+  Helper to cast optional parameters, i.e. parameters that may not exist.
+  """
+  defmacro cast_optional(req, key, cast, default \\ quote(do: {:ok, nil})) do
+    quote do
+      FlowUtils.cast_optional(
+        unquote(req).unsafe, unquote(key), unquote(cast), unquote(default)
+      )
+    end
+  end
+
+  @doc """
+  Helper to cast a list of parameters.
+  """
+  defmacro cast_list_of_ids(elements, cast_function) do
+    quote do
+      FlowUtils.cast_list_of_ids(unquote(elements), unquote(cast_function))
+    end
+  end
 end
 
 defmodule Helix.Websocket.Flow.Utils do
@@ -191,5 +211,47 @@ defmodule Helix.Websocket.Flow.Utils do
       :error ->
         :bad_request
     end
+  end
+
+  @spec cast_optional(map, binary | atom, function, default :: term) ::
+    {:ok, casted :: term}
+    | default :: term
+  @doc """
+  Helper that casts optional parameters, falling back to `default` when they
+  have not been specified.
+  """
+  def cast_optional(unsafe, key, cast_function, default) when is_atom(key),
+    do: cast_optional(unsafe, to_string(key), cast_function, default)
+  def cast_optional(unsafe, key, cast_function, default) do
+    if Map.has_key?(unsafe, key) do
+      cast_function.(unsafe[key])
+    else
+      default
+    end
+  end
+
+  @spec cast_list_of_ids([unsafe_ids :: term] | nil, function) ::
+    {:ok, [casted_ids :: term]}
+    | {:bad_id, unsafe_id :: term}
+    | :bad_request
+  @doc """
+  Helper to automatically cast a list of IDs - it applies `cast_fun` to all
+  members of `elements`, accumulating the result.
+
+  May return `:bad_request` when input is not a list, or `{:bad_id, unsafe_id}`
+  when one of the IDs failed to cast.
+  """
+  def cast_list_of_ids(elements, _fun) when not is_list(elements),
+    do: :bad_request
+  def cast_list_of_ids(elements, cast_fun) when is_function(cast_fun) do
+    Enum.reduce_while(elements, {:ok, []}, fn unsafe_id, {_, acc} ->
+      case cast_fun.(unsafe_id) do
+        {:ok, element_id} ->
+          {:cont, {:ok, acc ++ [element_id]}}
+
+        :error ->
+          {:halt, {:bad_id, unsafe_id}}
+      end
+    end)
   end
 end

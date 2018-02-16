@@ -17,8 +17,9 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
-  alias Helix.Universe.Bank.Event.Bank.Account.Login,
-    as: BankAccountLoginEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Login, as: BankAccountLoginEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Updated,
+    as: BankAccountUpdatedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Password.Revealed,
     as: BankAccountPasswordRevealedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Token.Acquired,
@@ -116,6 +117,28 @@ defmodule Helix.Universe.Bank.Action.Bank do
   defdelegate close_account(account),
     to: BankAccountInternal,
     as: :close
+
+  @spec direct_deposit(BankAccount.t, BankAccount.amount) ::
+    {:ok, BankAccount.t, [BankAccountUpdatedEvent.t]}
+    | {:error, :internal}
+  @doc """
+  Performs a direct deposit of $`amount` into `account`.
+
+  NOTE: This is a direct deposit, and is meant for internal mechanics only, like
+  when the player collects money off of viruses, or when rewards of a mission
+  should be sent to the player. Not to confuse with direct financial mechanics,
+  like transferring moneys between player accounts, in which case the underlying
+  `BankTransferProcess` should be used instead.
+  """
+  def direct_deposit(account, amount) do
+    case BankAccountInternal.deposit(account, amount) do
+      {:ok, account} ->
+        {:ok, account, [BankAccountUpdatedEvent.new(account, :balance)]}
+
+      error ->
+        error
+    end
+  end
 
   @spec generate_token(BankAccount.t, Connection.idt, Entity.idt) ::
     {:ok, BankToken.t, [BankAccountTokenAcquiredEvent.t]}

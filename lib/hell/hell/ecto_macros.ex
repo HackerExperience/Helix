@@ -19,4 +19,24 @@ defmodule HELL.Ecto.Macros do
 
     end
   end
+
+  @doc """
+  Syntactic-sugar for the less-common Order module
+  """
+  defmacro order(do: block) do
+    quote do
+
+      defmodule Order do
+        @moduledoc false
+
+        import Ecto.Query
+
+        alias Ecto.Queryable
+        alias unquote(__CALLER__.module)
+
+        unquote(block)
+      end
+
+    end
+  end
 end

@@ -34,6 +34,12 @@ defmodule Helix.Test.Network.Helper do
     do: Connection.ID.generate()
 
   @doc """
+  Generates a random bounce ID
+  """
+  def bounce_id,
+    do: Bounce.ID.generate()
+
+  @doc """
   Generates a random IP
   """
   def ip,

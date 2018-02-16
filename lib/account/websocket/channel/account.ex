@@ -12,6 +12,7 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Network.Websocket.Requests.Bounce.Create, as: BounceCreateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Update, as: BounceUpdateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Remove, as: BounceRemoveRequest
+  alias Helix.Software.Websocket.Requests.Virus.Collect, as: VirusCollectRequest
   alias Helix.Story.Websocket.Requests.Email.Reply, as: EmailReplyRequest
 
   @doc """
@@ -186,6 +187,51 @@ channel Helix.Account.Websocket.Channel.Account do
 
   """
   topic "bounce.remove", BounceRemoveRequest
+
+  @doc """
+  Collects money off of active viruses.
+
+  Params:
+    *gateway_id: Which gateway server is being used as origin.
+    *viruses: List of viruses (`File.id`) that we should collect
+    bounce_id: Which bounce should be used. If omitted, we assume none.
+    atm_id: Which ATM the account_number belongs to. See [1] and [2].
+    account_number: Which account should we send the money to. See [1] and [2].
+    wallet: Which bitcoin address should we send the money to. See [1].
+
+  [1] - Bank account or bitcoin wallet information may be optional if none of
+    the viruses being collected will use them. For example, if the player is
+    collecting money from 3 `spyware` viruses, no wallet is required. Similarly,
+    if all viruses being collected are `miner`, no bank account is required. If
+    there are both bitcoin-rewarding and cash-rewarding viruses, both payment
+    information are required. This will be henforced!
+
+  [2] - I don't always need bank account information (see [1]), but when I do, I
+    require both `atm_id` and `account_number`. This will be henforced as well.
+
+  Returns: :ok
+
+  Events:
+  - process_created: Emitted *for each virus* when VirusCollectProcess is
+    created.
+  - process_create_failed: Emitted when one or more of the underlying collect
+    processes were not started due to lack of hardware resources.
+
+  Errors:
+
+  Henforcer:
+  - payment_invalid: Required payment information is missing.
+  - virus_not_active: One of the viruses at `viruses` isn't active
+  - virus_not_found: One of the viruses at `viruses` wasn't found
+  - bank_account_not_belongs: Given `{atm_id, account_number}` does not belong
+  - bounce_not_belongs: Given `bounce_id` does not belong to the player
+  - server_not_belongs: Given `gateway_id` does not belong to the player
+
+  Input:
+  - bad_virus: One of the entries at `viruses` is invalid.
+  + base errors
+  """
+  topic "virus.collect", VirusCollectRequest
 
   @doc """
   Intercepts and handles outgoing events.

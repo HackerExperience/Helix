@@ -2,6 +2,7 @@ defmodule Helix.Test.Software.Setup.Virus do
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
+  alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.Virus, as: VirusInternal
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Virus
@@ -17,9 +18,30 @@ defmodule Helix.Test.Software.Setup.Virus do
 
     virus = SoftwareRepo.insert!(fake_virus)
 
-    if virus.is_active? do
-      {:ok, _} = VirusInternal.activate_virus(virus, file.storage_id)
-    end
+    {virus, file} =
+      if virus.is_active? do
+        {:ok, new_virus} = VirusInternal.activate_virus(virus, file.storage_id)
+
+        # Fetch again to update the File's metadata (since it got installed)
+        new_file = FileInternal.fetch(file.file_id)
+
+        {new_virus, new_file}
+      else
+        {virus, file}
+      end
+
+    # Possibly fetch again in case the user requested a custom `running_time`
+    virus =
+      if opts[:running_time] do
+        {:ok, new_virus} =
+          VirusInternal.set_running_time(virus, opts[:running_time])
+
+        new_virus
+      else
+        virus
+      end
+
+    related = Map.replace(related, :file, file)
 
     {virus, related}
   end
@@ -32,6 +54,7 @@ defmodule Helix.Test.Software.Setup.Virus do
   - is_active?: Whether to mark virus as active. Defaults to true.
   - real_file?: Whether to generate the underlying virus file. Defaults to true
   - type: Virus type. Defaults to `spyware`. Only used when `real_file?` is set
+  - running_time: Set for how long the virus have been running. Defaults to 0s.
 
   Related: File.t (when `real_life?` is set)
   """
@@ -62,6 +85,7 @@ defmodule Helix.Test.Software.Setup.Virus do
         file_id: file_id,
         is_active?: is_active?
       }
+      |> Map.replace(:active, nil)
 
     related =
       %{
@@ -70,5 +94,10 @@ defmodule Helix.Test.Software.Setup.Virus do
       }
 
     {virus, related}
+  end
+
+  def fake_virus!(opts \\ []) do
+    {virus, _} = fake_virus(opts)
+    virus
   end
 end

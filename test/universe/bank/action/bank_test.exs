@@ -11,15 +11,15 @@ defmodule Helix.Universe.Bank.Action.BankTest do
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
-
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
-  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.Bank.Helper, as: BankHelper
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
   describe "start_transfer/4" do
     test "with valid data" do
@@ -380,6 +380,25 @@ defmodule Helix.Universe.Bank.Action.BankTest do
 
       # Ensure logout event is the one expected
       assert event == EventSetup.Network.connection_closed(conn_p1a1)
+    end
+  end
+
+  describe "direct_deposit/2" do
+    test "updates the account balance" do
+      acc = BankSetup.account!(balance: :random)
+      amount = BankHelper.amount()
+
+      assert {:ok, new_acc, [event]} = BankAction.direct_deposit(acc, amount)
+
+      # Updated the balance
+      assert new_acc.balance == acc.balance + amount
+
+      # Event is correct
+      assert event.account == new_acc
+      assert event.reason == :balance
+
+      # And just for the sake of it, change has been persisted on the DB
+      assert new_acc == BankQuery.fetch_account(acc.atm_id, acc.account_number)
     end
   end
 

@@ -12,6 +12,7 @@ defmodule Helix.Entity.Henforcer.EntityTest do
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
 
   @internet_id NetworkHelper.internet_id()
@@ -138,6 +139,31 @@ defmodule Helix.Entity.Henforcer.EntityTest do
         EntityHenforcer.owns_bounce?(entity.entity_id, bounce.bounce_id)
 
       assert reason == {:bounce, :not_belongs}
+    end
+  end
+
+  describe "owns_bank_account?/2" do
+    test "accepts when entity is the owner of the bank account" do
+      {entity, _} = EntitySetup.entity()
+      bank_acc = BankSetup.account!(owner_id: entity.entity_id)
+
+      assert {true, relay} =
+        EntityHenforcer.owns_bank_account?(entity.entity_id, bank_acc)
+
+      assert relay.entity == entity
+      assert relay.bank_account === bank_acc
+
+      assert_relay relay, [:entity, :bank_account]
+    end
+
+    test "rejects when entity does not own the bank account" do
+      {entity, _} = EntitySetup.entity()
+      bank_acc = BankSetup.account!()
+
+      assert {false, reason, _} =
+        EntityHenforcer.owns_bank_account?(entity.entity_id, bank_acc)
+
+      assert reason == {:bank_account, :not_belongs}
     end
   end
 end

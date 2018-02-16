@@ -1,5 +1,7 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Universe.Bank.Setup do
 
+  alias Helix.Account.Model.Account
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Connection
@@ -11,11 +13,11 @@ defmodule Helix.Test.Universe.Bank.Setup do
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Repo, as: UniverseRepo
 
-  alias HELL.TestHelper.Random
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
+  alias Helix.Test.Universe.Bank.Helper, as: BankHelper
 
   @doc """
   See doc on `fake_account/1`
@@ -38,7 +40,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
     care that the resulting atm is constant. For instance, atm on atm_seq=1 is
     different from atm on atm_seq=2
   - owner_id: Player who owns that account. It's OK to pass an Entity.ID
-  - balance: Starting balance of that account. Defaults to 0
+  - balance: Starting balance of that account. Defaults to 0. Accepts `:random`
   - number: Bank account number.
   """
   def fake_account(opts \\ []) do
@@ -65,11 +67,18 @@ defmodule Helix.Test.Universe.Bank.Setup do
           Account.ID.generate()
       end
 
-    number = Access.get(
-      opts,
-      :number,
-      Random.number(min: 100_000, max: 999_999))
-    balance = Access.get(opts, :balance, 0)
+    number = Keyword.get(opts, :number, BankHelper.account_number())
+    balance =
+      cond do
+        opts[:balance] == :random ->
+          BankHelper.amount()
+
+        opts[:balance] ->
+          opts[:balance]
+
+        true ->
+          0
+      end
 
     acc =
       %BankAccount{
@@ -85,17 +94,22 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {acc, %{}}
   end
 
+  @doc false
+  def fake_account!(opts \\ []) do
+    {account, _} = fake_account(opts)
+    account
+  end
+
   @doc """
   See doc on `fake_transfer/1`
   """
   def transfer(opts \\ []) do
     {transfer, related = %{acc1: acc1, acc2: acc2}} = fake_transfer(opts)
+
     {:ok, inserted} =
       BankTransferInternal.start(
-        acc1,
-        acc2,
-        transfer.amount,
-        transfer.started_by)
+        acc1, acc2, transfer.amount, transfer.started_by
+      )
 
     {inserted, related}
   end
@@ -114,9 +128,9 @@ defmodule Helix.Test.Universe.Bank.Setup do
   ignored, respectively.
   """
   def fake_transfer(opts \\ []) do
-    amount = Access.get(opts, :amount, Random.number(min: 1, max: 5000))
-    balance1 = Access.get(opts, :balance1, amount)
-    balance2 = Access.get(opts, :balance2, 0)
+    amount = Keyword.get(opts, :amount, BankHelper.amount())
+    balance1 = Keyword.get(opts, :balance1, amount)
+    balance2 = Keyword.get(opts, :balance2, 0)
 
     acc1 =
       if opts[:acc1] do
@@ -132,9 +146,9 @@ defmodule Helix.Test.Universe.Bank.Setup do
         account!([balance: balance2])
       end
 
-    started_by = Random.pk()
+    started_by = Account.ID.generate()
 
-    transfer_id = Access.get(opts, :transfer_id, BankTransfer.ID.generate())
+    transfer_id = Keyword.get(opts, :transfer_id, BankTransfer.ID.generate())
 
     transfer =
       %BankTransfer{
@@ -169,7 +183,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
   Related data: BankAccount.t
   """
   def fake_token(opts \\ []) do
-    connection_id = Access.get(opts, :connection_id, Connection.ID.generate())
+    connection_id = Keyword.get(opts, :connection_id, Connection.ID.generate())
     acc =
       if opts[:acc] do
         opts[:acc]
@@ -250,11 +264,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
     # Login with the right password
     {:ok, connection} =
       BankAccountFlow.login_password(
-        acc.atm_id,
-        acc.account_number,
-        server.server_id,
-        nil,
-        acc.password
+        acc.atm_id, acc.account_number, server.server_id, nil, acc.password
       )
 
     {connection, %{acc: acc, server: server, entity: entity}}
