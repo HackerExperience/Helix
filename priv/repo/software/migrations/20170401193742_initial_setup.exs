@@ -9,10 +9,8 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
     create table(:storage_drives, primary_key: false) do
       add :storage_id,
         references(
-          :storages,
-          column: :storage_id,
-          type: :inet,
-          on_delete: :delete_all),
+          :storages, column: :storage_id, type: :inet, on_delete: :delete_all
+        ),
         primary_key: true
       add :drive_id, :inet, primary_key: true
     end
@@ -49,10 +47,8 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
     create table(:file_modules, primary_key: false) do
       add :file_id,
         references(
-          :files,
-          column: :file_id,
-          type: :inet,
-          on_delete: :delete_all),
+          :files, column: :file_id, type: :inet, on_delete: :delete_all
+        ),
         primary_key: true
       add :software_module,
         references(:software_modules, column: :software_module, type: :string),
@@ -63,32 +59,28 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
     create constraint(
       :file_modules,
       :module_version_must_be_positive,
-      check: "module_version > 0")
+      check: "module_version > 0"
+    )
 
     # File specializations
     create table(:text_files, primary_key: false) do
       add :file_id,
         references(
-          :files,
-          column: :file_id,
-          type: :inet,
-          on_delete: :delete_all),
+          :files, column: :file_id, type: :inet, on_delete: :delete_all
+        ),
         primary_key: true
       add :contents, :text
     end
 
     create constraint(
-      :text_files,
-      :contents_size,
-      check: "char_length(contents) <= 8192")
+      :text_files, :contents_size, check: "char_length(contents) <= 8192"
+    )
 
     create table(:crypto_keys, primary_key: false) do
       add :file_id,
         references(
-          :files,
-          column: :file_id,
-          type: :inet,
-          on_delete: :delete_all),
+          :files, column: :file_id, type: :inet, on_delete: :delete_all
+        ),
         primary_key: true
 
       # REVIEW: Maybe leave the `on_delete` as nothing and centralize file
@@ -96,10 +88,8 @@ defmodule Helix.Software.Repo.Migrations.InitialSetup do
       #   is nilified and events are emited if any
       add :target_file_id,
         references(
-          :files,
-          column: :file_id,
-          type: :inet,
-          on_delete: :nilify_all)
+          :files, column: :file_id, type: :inet, on_delete: :nilify_all
+        )
 
       add :target_server_id, :inet, null: false
     end

@@ -4,11 +4,11 @@ defmodule Helix.Software.Model.File.Module do
   contains a version, which is a representation of how powerful that module is.
 
   For example, take the Cracker. It may have Overflow and Bruteforce modules.
-  `Cracker` is a SoftwareType, and `Overflow` and `Bruteforce` are
-  SoftwareModules.
+  `Cracker` is a Software.Type, and `Overflow` and `Bruteforce` are
+  `Software.Module`s.
 
   An instance of a Cracker is said to be a File, and the representation of each
-  File's modules are called FileModules.
+  File's modules are called `File.Module`s.
   """
 
   use Ecto.Schema
@@ -113,13 +113,17 @@ defmodule Helix.Software.Model.File.Module do
         version: File.Module.version
       }
 
-    @enforce_keys [:version]
-    defstruct [:version]
+    @enforce_keys [:name, :version]
+    defstruct [:name, :version]
 
-    @spec new(File.Module.schema | %{version: File.Module.version}) ::
+    @spec new(
+      File.Module.schema
+      | %{name: File.Module.name, version: File.Module.version})
+    ::
       t
-    def new(%{version: version}) do
+    def new(%{name: name, version: version}) do
       %__MODULE__{
+        name: name,
         version: version
       }
     end

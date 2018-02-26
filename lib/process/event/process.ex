@@ -174,9 +174,9 @@ defmodule Helix.Process.Event.Process do
     If the process does not implement the corresponding handler, then the
     signal's default action will be performed.
 
-    This is the probably the single most important event of the TOP - and the
-    game - since all changes in a process, including its completion, are handled
-    by signals being delivered to it.
+    This is probably the single most important event of the TOP - and the game -
+    since all changes in a process, including its completion, are handled by
+    signals being delivered to it.
 
     Granted, `ProcessSignaledEvent` is emitted *after* the signal was delivered
     and handled by the corresponding Processable implementation, but the actual

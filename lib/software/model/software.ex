@@ -2,11 +2,12 @@ defmodule Helix.Software.Model.Software do
 
   use Helix.Software
 
-  @type t :: %{
-    type: type,
-    extension: extension,
-    modules: [module_name]
-  }
+  @type t ::
+    %{
+      type: type,
+      extension: extension,
+      modules: [module_name]
+    }
 
   @type type ::
     :cracker
@@ -33,6 +34,7 @@ defmodule Helix.Software.Model.Software do
     | encryptor_module
     | decryptor_module
     | anymap_module
+    | spyware_module
 
   @type cracker_module :: :bruteforce | :overflow
   @type firewall_module :: :fwl_active | :fwl_passive
@@ -43,6 +45,7 @@ defmodule Helix.Software.Model.Software do
   @type encryptor_module :: :enc_file | :enc_log | :enc_conn | :enc_process
   @type decryptor_module :: :dec_file | :dec_log | :dec_conn | :dec_process
   @type anymap_module :: :map_geo | :map_net
+  @type spyware_module :: :vir_spyware
 
   @type extension ::
     :crc
@@ -113,5 +116,6 @@ defmodule Helix.Software.Model.Software do
 
   software \
     type: :virus_spyware,
-    extension: :spy
+    extension: :spy,
+    modules: [:vir_spyware]
 end
