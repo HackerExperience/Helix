@@ -37,9 +37,17 @@ defmodule HELL.Macros do
   @doc """
   On dev and prod environments, `hespawn` is the exact same thing as `spawn`.
   On test environments, `hespawn` will call the given function synchronously.
+
+  The flag `HELIX_FORCE_SYNC` may be used to force the synchronous behaviour,
+  especially useful for specific `:dev` tests.
   """
   defmacro hespawn(fun) do
-    if Mix.env == :test do
+    force_sync? = System.get_env("HELIX_FORCE_SYNC") || false
+
+    if Mix.env == :prod and force_sync?,
+      do: raise "Can't set `HELIX_FORCE_SYNC` on prod"
+
+    if Mix.env == :test or force_sync? do
       quote do
         apply(unquote(fun), [])
       end
