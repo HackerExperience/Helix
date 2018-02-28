@@ -58,7 +58,7 @@ defmodule Helix.Mixfile do
       {:ecto, "~> 2.2.8"},
       {:postgrex, "~> 0.13.4"},
 
-      {:helf, "~> 0.0.2"},
+      {:helf, "~> 0.0.3"},
       {:poison, "~> 3.1"},
 
       {:comeonin, "~> 4.0.3"},

@@ -16,8 +16,8 @@ ed -s $HELIX_ROOT/mix.exs <<< $',s/(:test)/(_)/g\nw'
 # Create temporary IEx file with instructions
 echo "IO.puts \"\n\nType 'use Helix.Maroto' for maximum marotagem!!11!\n\n\"" > $IEX_FILE
 
-# Run Helix interactively
-iex -S mix
+# Force synchronous behaviour on HELF and run Helix interactively
+HELF_FORCE_SYNC=1 iex -S mix
 
 # Clean up any changes
 git checkout $MIX_FILE
