@@ -146,7 +146,7 @@ defmodule Helix.Test.Story.Setup do
       if opts[:contact_id] do
         name
         |> Step.fetch(entity_id, meta, manager)
-        |> Map.replace(:contact, opts[:contact_id])
+        |> Map.replace!(:contact, opts[:contact_id])
       else
         Step.fetch(name, entity_id, meta, manager)
       end

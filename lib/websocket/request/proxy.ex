@@ -47,7 +47,7 @@ defmodule Helix.Websocket.Request.Proxy do
             sub_request =
               backend
               |> apply(:new, [request.unsafe, socket])
-              |> Map.replace(:relay, request.relay)
+              |> Map.replace!(:relay, request.relay)
 
             with {:ok, req} <- Requestable.check_params(sub_request, socket) do
               update_meta(request, %{sub_request: req}, reply: true)

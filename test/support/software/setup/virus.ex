@@ -41,7 +41,7 @@ defmodule Helix.Test.Software.Setup.Virus do
         virus
       end
 
-    related = Map.replace(related, :file, file)
+    related = Map.replace!(related, :file, file)
 
     {virus, related}
   end
@@ -85,7 +85,7 @@ defmodule Helix.Test.Software.Setup.Virus do
         file_id: file_id,
         is_active?: is_active?
       }
-      |> Map.replace(:active, nil)
+      |> Map.replace!(:active, nil)
 
     related =
       %{

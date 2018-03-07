@@ -58,7 +58,7 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       proc1 =
         proc1
         |> Map.from_struct()
-        |> Map.replace(:l_dynamic, [:cpu])
+        |> Map.replace!(:l_dynamic, [:cpu])
         |> Map.put(:id, 1)
         |> put_in([:static, :running, :ram], 0)
         |> put_in([:static, :running, :ulk], 0)
@@ -68,7 +68,7 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       proc2 =
         proc2
         |> Map.from_struct()
-        |> Map.replace(:l_dynamic, [:ram])
+        |> Map.replace!(:l_dynamic, [:ram])
         |> Map.put(:id, 2)
         |> put_in([:static, :running, :cpu], 0)
         |> put_in([:static, :running, :ulk], 0)
@@ -78,7 +78,7 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       proc3 =
         proc3
         |> Map.from_struct()
-        |> Map.replace(:l_dynamic, [:ulk])
+        |> Map.replace!(:l_dynamic, [:ulk])
         |> Map.put(:id, 3)
         |> put_in([:static, :running, :cpu], 0)
         |> put_in([:static, :running, :ram], 0)
@@ -88,7 +88,7 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
       proc4 =
         proc4
         |> Map.from_struct()
-        |> Map.replace(:l_dynamic, [:dlk])
+        |> Map.replace!(:l_dynamic, [:dlk])
         |> Map.put(:id, 4)
         |> put_in([:static, :running, :cpu], 0)
         |> put_in([:static, :running, :ram], 0)
@@ -222,8 +222,8 @@ defmodule Helix.Process.Model.Top.AllocatorTest do
         total_resources
         |> put_in([:dlk, :net], 0)
         |> put_in([:ulk, :net], 0)
-        |> Map.replace(:cpu, proc.objective.cpu)
-        |> Map.replace(:ram, proc.objective.ram)
+        |> Map.replace!(:cpu, proc.objective.cpu)
+        |> Map.replace!(:ram, proc.objective.ram)
 
       assert {:error, reason, _} =
         TOPAllocator.allocate(:gateway, total_resources, [proc])

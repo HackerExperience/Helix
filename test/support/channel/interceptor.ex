@@ -29,6 +29,9 @@ defmodule Helix.Test.Channel.Interceptor do
 
   # Callbacks
 
+  def init(_),
+    do: {:ok, []}
+
   def handle_call({:add_intercept, endpoint, entry}, _, state),
     do: {:reply, :ok, put_in(state, [endpoint], entry)}
 

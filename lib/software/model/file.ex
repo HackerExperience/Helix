@@ -131,7 +131,7 @@ defmodule Helix.Software.Model.File do
       end)
 
     file
-    |> Map.replace(:modules, formatted_modules)
+    |> Map.replace!(:modules, formatted_modules)
 
     # For some reason, Ecto assigns the `:built` state sometimes, which leads to
     # some weird behaviour on some Repo inserts. As suggested here[1], we'll use

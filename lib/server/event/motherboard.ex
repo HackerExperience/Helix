@@ -58,7 +58,7 @@ defmodule Helix.Server.Event.Motherboard do
         data =
           event.index_cache
           |> HardwareIndex.render_index()
-          |> Map.replace(:motherboard, nil)
+          |> Map.replace!(:motherboard, nil)
 
         {:ok, data}
       end

@@ -116,8 +116,8 @@ defmodule Helix.Network.Model.Tunnel do
     t
   def format(tunnel = %Tunnel{}) do
     tunnel
-    |> Map.replace(:hops, get_hops(tunnel))
-    |> Map.replace(:bounce, format_bounce(tunnel))
+    |> Map.replace!(:hops, get_hops(tunnel))
+    |> Map.replace!(:bounce, format_bounce(tunnel))
   end
 
   @spec format_bounce(t) ::

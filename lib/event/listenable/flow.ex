@@ -47,6 +47,17 @@ defmodule Helix.Event.Listenable.Flow do
   Expands the expected methods of the `Listenable` protocol.
   """
   defmacro listen(event, do: block) do
+
+    fallback_block =
+      if elem(event, 0) == := do
+        quote do
+          def get_objects(_),
+            do: []
+        end
+      else
+        []
+      end
+
     quote do
 
       @doc false
@@ -54,9 +65,7 @@ defmodule Helix.Event.Listenable.Flow do
         unquote(block)
       end
 
-      # Fallback
-      def get_objects(_),
-        do: []
+      unquote(fallback_block)
 
     end
   end

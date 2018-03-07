@@ -22,7 +22,7 @@ defmodule Helix.Story.Model.Step.Macros do
   alias Helix.Story.Event.Step.ActionRequested, as: StepActionRequestedEvent
 
   defmacro step(name, contact \\ nil, do: block) do
-    quote location: :keep do
+    quote location: :keep, generated: true do
       defmodule unquote(name) do
         @moduledoc false
 

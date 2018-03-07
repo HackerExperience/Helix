@@ -249,7 +249,7 @@ defmodule Helix.Process.Executable do
   defmacro executable(do: block) do
     process = __CALLER__.module
 
-    quote location: :keep do
+    quote location: :keep, generated: true do
 
       defmodule Executable do
 

@@ -39,7 +39,7 @@ defmodule Helix.Network.Internal.Bounce do
 
     with [bounce, sorted] = [%Bounce{}, %Bounce.Sorted{}] <- result do
       bounce
-      |> Map.replace(:sorted, sorted)
+      |> Map.replace!(:sorted, sorted)
       |> Bounce.format()
     end
   end
@@ -166,7 +166,7 @@ defmodule Helix.Network.Internal.Bounce do
         {:ok, new_bounce} <- update_name_attempt
       do
         new_bounce
-        |> Map.replace(:sorted, new_sorted)
+        |> Map.replace!(:sorted, new_sorted)
         |> Bounce.format()
       else
         _ ->

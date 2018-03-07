@@ -21,7 +21,7 @@ defmodule Helix.Process.Processable do
   Macro for implementation of the Processable protocol.
   """
   defmacro processable(do: block) do
-    quote location: :keep do
+    quote location: :keep, generated: true do
 
       defimpl Helix.Process.Model.Processable do
 
@@ -90,7 +90,7 @@ defmodule Helix.Process.Processable do
   Default behaviour is to delete the process.
   """
   defmacro on_kill(process, data, reason \\ quote(do: _), do: block) do
-    quote do
+    quote generated: true do
 
       def kill(unquote(data), p = unquote(process), unquote(reason)) do
         unquote(block)
@@ -108,7 +108,7 @@ defmodule Helix.Process.Processable do
   Default behaviour is to send a SIGKILL to itself.
   """
   defmacro on_source_connection_closed(process, data, connection, do: block) do
-    quote do
+    quote generated: true do
 
       def source_connection_closed(
         unquote(data),
@@ -130,7 +130,7 @@ defmodule Helix.Process.Processable do
   Default behaviour is to send a SIGKILL to itself.
   """
   defmacro on_target_connection_closed(process, data, connection, do: block) do
-    quote do
+    quote generated: true do
 
       def target_connection_closed(
         unquote(data),
