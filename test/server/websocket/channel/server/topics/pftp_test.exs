@@ -121,7 +121,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.PFTPTest do
       assert process_created_event.data.data.connection_type == "public_ftp"
       assert process_created_event.data.network_id == to_string(@internet_id)
 
-      assert Enum.empty?(process_created_event.data.access.source_file)
+      refute process_created_event.data.access.source_file
 
       TOPHelper.top_stop(server)
     end

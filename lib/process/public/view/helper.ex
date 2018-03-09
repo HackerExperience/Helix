@@ -102,7 +102,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
   the client.
   """
   defp build_file(nil, _),
-    do: %{}
+    do: nil
   defp build_file(file_id, :full) do
     file_id
     |> build_file_common()
