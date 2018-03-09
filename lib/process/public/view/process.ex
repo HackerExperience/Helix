@@ -36,8 +36,8 @@ defmodule Helix.Process.Public.View.Process do
       origin_ip: Network.ip,
       priority: 0..5,
       usage: resources,
-      src_connection_id: String.t | nil,
-      tgt_connection_id: String.t | nil,
+      source_connection_id: String.t | nil,
+      target_connection_id: String.t | nil,
       source_file: file
     }
 
@@ -53,7 +53,7 @@ defmodule Helix.Process.Public.View.Process do
       name: String.t,
       version: float | nil
     }
-    | %{}
+    | nil
 
   @type progress ::
     %{

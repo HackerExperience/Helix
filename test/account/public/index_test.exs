@@ -2,10 +2,13 @@ defmodule Helix.Account.Public.IndexTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Case.ID
+
   alias Helix.Account.Public.Index, as: AccountIndex
 
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
   describe "index/1" do
     test "returns the expected data" do
@@ -13,11 +16,15 @@ defmodule Helix.Account.Public.IndexTest do
 
       {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
 
+      bank_account = BankSetup.account!(owner_id: entity.entity_id, balance: 24)
+
       index = AccountIndex.index(entity)
 
       assert index.mainframe == server.server_id
       assert index.inventory
       assert index.bounces == [bounce]
+      assert index.bank_accounts == [bank_account]
+      assert index.database
     end
   end
 
@@ -26,6 +33,8 @@ defmodule Helix.Account.Public.IndexTest do
       {server, %{entity: entity}} = ServerSetup.server()
 
       {bounce, _} = NetworkSetup.Bounce.bounce(entity_id: entity.entity_id)
+
+      bank_account = BankSetup.account!(owner_id: entity.entity_id, balance: 24)
 
       rendered =
         entity
@@ -43,6 +52,16 @@ defmodule Helix.Account.Public.IndexTest do
         assert is_binary(link.network_id)
         assert is_binary(link.ip)
       end)
+
+      # BankAccount is valid
+      assert [rendered_bank_account] = rendered.bank_accounts
+      assert rendered_bank_account.account_number == bank_account.account_number
+      assert_id rendered_bank_account.atm_id, bank_account.atm_id
+      assert rendered_bank_account.password == bank_account.password
+      assert rendered_bank_account.balance == bank_account.balance
+
+      # Database was rendered (full test at DatabaseIndex)
+      assert rendered.database
     end
   end
 end
