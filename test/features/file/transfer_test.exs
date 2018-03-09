@@ -121,4 +121,106 @@ defmodule Helix.Test.Features.File.TransferTest do
       TOPHelper.top_stop(gateway)
     end
   end
+
+  describe "file.upload" do
+    test "upload lifecycle" do
+      {socket, %{entity: entity, server: gateway}} =
+        ChannelSetup.create_socket()
+
+      {bounce, _} =
+        NetworkSetup.Bounce.bounce(total: 3, entity_id: entity.entity_id)
+
+      {socket, %{gateway: gateway, destination: destination}} =
+        ChannelSetup.join_server(
+          bounce_id: bounce.bounce_id,
+          gateway_id: gateway.server_id,
+          socket: socket
+        )
+
+      # Connect to gateway channel too, so we can receive gateway notifications
+      ChannelSetup.join_server(socket: socket, own_server: true)
+
+      destination_storage = SoftwareHelper.get_storage(destination)
+      {up_file, _} = SoftwareSetup.file(server_id: gateway.server_id)
+
+      request_id = Random.string(max: 256)
+
+      params =
+        %{
+          "file_id" => up_file.file_id |> to_string(),
+          "request_id" => request_id
+        }
+
+      ref = push socket, "file.upload", params
+      assert_reply ref, :ok, response, timeout(:slow)
+
+      # Upload is acknowledge (`:ok`). Contains the `request_id`.
+      assert response.meta.request_id == request_id
+      assert response.data == %{}
+
+      # After a while, client receives the new process through top recalque
+      [l_top_recalcado_event, l_process_created_event] =
+        wait_events [:top_recalcado, :process_created]
+
+      # Each one have the client-defined request_id
+      assert l_top_recalcado_event.meta.request_id == request_id
+      assert l_process_created_event.meta.request_id == request_id
+
+      # Force completion of the process
+      # Due to forced completion, we won't have the `request_id` information
+      # on the upcoming events available on our tests. But they should exist on
+      # real life.
+      process = ProcessQuery.fetch(l_process_created_event.data.process_id)
+      TOPHelper.force_completion(process)
+
+      # Note we are subscribed to events on both the `gateway` and `destination`
+      [file_uploaded_event, file_added_event] =
+        wait_events [:file_uploaded, :file_added]
+
+      # Process no longer exists
+      refute ProcessQuery.fetch(process.process_id)
+
+      # The new file exists on my server
+      new_file =
+        file_uploaded_event.data.file.id
+        |> File.ID.cast!()
+        |> FileQuery.fetch()
+
+      assert new_file.storage_id == destination_storage.storage_id
+
+      # The old file still exists on the local server, as expected
+      l_file = FileQuery.fetch(up_file.file_id)
+      assert l_file.storage_id == SoftwareHelper.get_storage_id(gateway)
+
+      # Client received the FileAddedEvent
+      assert file_added_event.data.file.id == to_string(new_file.file_id)
+
+      # Now let's check the log generation
+      LogQuery.get_logs_on_server(gateway.server_id)
+
+      # Log on gateway (`gateway` uploaded to `<someone>`)
+      assert [log_gateway | _] = LogQuery.get_logs_on_server(gateway.server_id)
+      assert_log \
+        log_gateway, gateway.server_id, entity.entity_id,
+        "localhost uploaded",
+        contains: [up_file.name]
+
+      # Verify logging worked correctly within the bounce nodes
+      assert_bounce \
+        bounce, gateway, destination, entity,
+        rejects: [up_file.name, "upload"]
+
+      # Log on destination (`<someone>` uploaded file at `destination`)
+      assert [log_destination | _] =
+        LogQuery.get_logs_on_server(destination.server_id)
+      assert_log \
+        log_destination, destination.server_id, entity.entity_id,
+        "to localhost",
+        contains: [up_file.name]
+
+      # TODO: #388 Underlying connection(s) were removed
+
+      TOPHelper.top_stop(gateway)
+    end
+  end
 end

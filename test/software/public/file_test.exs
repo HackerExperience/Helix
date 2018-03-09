@@ -81,6 +81,35 @@ defmodule Helix.Software.Public.FileTest do
     end
   end
 
+  describe "upload/5" do
+    test "starts upload process" do
+      {gateway, _} = ServerSetup.server()
+      {destination, _} = ServerSetup.server()
+      {file, _} = SoftwareSetup.file(server_id: gateway.server_id)
+
+      {tunnel, _} =
+        NetworkSetup.tunnel(
+          gateway_id: gateway.server_id,
+          destination_id: destination.server_id
+        )
+
+      storage = SoftwareHelper.get_storage(gateway)
+
+      assert {:ok, process} =
+        FilePublic.upload(gateway, destination, tunnel, storage, file, @relay)
+
+      assert process.tgt_file_id == file.file_id
+      assert process.type == :file_upload
+      assert process.data.connection_type == :ftp
+      assert process.data.type == :upload
+
+      refute process.src_file_id
+      refute process.tgt_connection_id
+
+      TOPHelper.top_stop(gateway)
+    end
+  end
+
   describe "install/5" do
     test "starts install process (backend: virus)" do
       {gateway, _} = ServerSetup.server()

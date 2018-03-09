@@ -19,6 +19,8 @@ channel Helix.Server.Websocket.Channel.Server do
     as: CrackerBruteforceRequest
   alias Helix.Software.Websocket.Requests.File.Download,
     as: FileDownloadRequest
+  alias Helix.Software.Websocket.Requests.File.Upload,
+    as: FileUploadRequest
   alias Helix.Software.Websocket.Requests.File.Install,
     as: FileInstallRequest
   alias Helix.Software.Websocket.Requests.PFTP.File.Add,
@@ -216,12 +218,33 @@ channel Helix.Server.Websocket.Channel.Server do
   - "file_not_found": Requested file to be downloaded was not found
   - "storage_full": Not enough space on device to download the file
   - "storage_not_found": Requested storage is invalid / could not be found. This
-    This error is most likely NOT the user's fault, maybe some bad handling on
-    the client side.
+    error is most likely NOT the user's fault, maybe some bad handling on the
+    client side.
   - "download_self": Trying to download a file from yourself
   + base errors
   """
   topic "file.download", FileDownloadRequest
+
+  @doc """
+  Starts the upload of a file.
+
+  Params:
+  - *file_id: Which file to upload.
+  - storage_id: Specify which storage the file should be uploaded to. Defaults
+    to the remote server's main storage.
+
+  Returns: :ok
+
+  Errors:
+  - "file_not_found": Requested file to be uploaded was not found
+  - "storage_full": Not enough space on device to upload the file
+  - "storage_not_found": Requested storage is invalid / could not be found. This
+    error is most likely NOT the user's fault, maybe some bad handling on the
+    client side.
+  - "upload_self": Trying to upload a file to yourself
+  + base errors
+  """
+  topic "file.upload", FileUploadRequest
 
   @doc """
   Installs a file.
