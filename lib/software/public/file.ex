@@ -48,6 +48,33 @@ defmodule Helix.Software.Public.File do
     end
   end
 
+  @spec upload(Server.t, Server.t, Tunnel.t, Storage.t, File.t, relay) ::
+    {:ok, Process.t}
+    | FileTransferFlow.transfer_error
+  @doc """
+  Starts FileTransferProcess, responsible for uploading `file_id` into the given
+  storage.
+  """
+  def upload(
+    gateway = %Server{},
+    target = %Server{},
+    tunnel = %Tunnel{},
+    storage = %Storage{},
+    file = %File{},
+    relay)
+  do
+    transfer =
+      FileTransferFlow.upload(gateway, target, file, storage, tunnel, relay)
+
+    case transfer do
+      {:ok, process} ->
+        {:ok, process}
+
+      {:error, _} ->
+        {:error, :internal}
+    end
+  end
+
   @spec bruteforce(
     File.t_of_type(:cracker),
     gateway :: Server.t,

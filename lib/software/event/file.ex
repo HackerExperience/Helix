@@ -216,7 +216,7 @@ defmodule Helix.Software.Event.File do
       end
 
       @doc """
-      Generates a log  entry when a File has been downloaded from a server.
+      Generates a log entry when a File has been downloaded from a server.
       """
       log(event = %{connection_type: :ftp}) do
         file_name = get_file_name(event.file)
@@ -316,7 +316,8 @@ defmodule Helix.Software.Event.File do
       from_server_id: Server.id,
       file: File.t,
       to_storage_id: Storage.id,
-      network_id: Network.id
+      network_id: Network.id,
+      connection_type: :ftp | :public_ftp
     }
 
     event_struct [
@@ -325,7 +326,8 @@ defmodule Helix.Software.Event.File do
       :from_server_id,
       :file,
       :to_storage_id,
-      :network_id
+      :network_id,
+      :connection_type
     ]
 
     @spec new(FileTransferProcessedEvent.t, File.t) ::
@@ -340,8 +342,55 @@ defmodule Helix.Software.Event.File do
         from_server_id: transfer.from_server_id,
         to_storage_id: transfer.to_storage_id,
         network_id: transfer.network_id,
-        file: file
+        file: file,
+        connection_type: transfer.connection_type,
       }
+    end
+
+    notify do
+      @moduledoc """
+      Notifies the Client that a file has been uploaded.
+      """
+
+      alias Helix.Software.Public.Index, as: SoftwareIndex
+
+      @event :file_uploaded
+
+      def generate_payload(event, _socket) do
+        data = %{
+          file: SoftwareIndex.render_file(event.file)
+        }
+
+        {:ok, data}
+      end
+
+      @doc """
+      We only notify the "uploader" server.
+      """
+      def whom_to_notify(event),
+        do: %{server: event.from_server_id}
+    end
+
+    loggable do
+      @doc """
+      Generates a log entry when a File has been uploaded to a server.
+      """
+      log(event) do
+        file_name = get_file_name(event.file)
+
+        msg_gateway = "localhost uploaded file #{file_name} to $first_ip"
+        msg_endpoint = "$last_ip uploaded file #{file_name} to localhost"
+
+        log_map %{
+          event: event,
+          entity_id: event.entity_id,
+          gateway_id: event.from_server_id,
+          endpoint_id: event.to_server_id,
+          network_id: event.network_id,
+          msg_gateway: msg_gateway,
+          msg_endpoint: msg_endpoint
+        }
+      end
     end
   end
 

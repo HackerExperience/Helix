@@ -1,6 +1,6 @@
 import Helix.Websocket.Request
 
-request Helix.Software.Websocket.Requests.File.Download do
+request Helix.Software.Websocket.Requests.File.Upload do
 
   import HELL.Macros
 
@@ -19,7 +19,7 @@ request Helix.Software.Websocket.Requests.File.Download do
       if Map.has_key?(request.unsafe, "storage_id") do
         request.unsafe["storage_id"]
       else
-        StorageQuery.get_main_storage(socket.assigns.gateway.server_id)
+        StorageQuery.get_main_storage(socket.assigns.destination.server_id)
       end
 
     with \
@@ -35,17 +35,17 @@ request Helix.Software.Websocket.Requests.File.Download do
       update_params(request, params, reply: true)
     else
       :bad_access ->
-        reply_error(request, "download_self")
+        reply_error(request, "upload_self")
       _ ->
         bad_request(request)
     end
   end
 
   @doc """
-  Verifies the permission for the download. Most of the permission logic
+  Verifies the permission for the upload. Most of the permission logic
   has been delegated to `FileTransferHenforcer.can_transfer?`, check it out.
 
-  This is where we verify the file being downloaded exists, belongs to the
+  This is where we verify the file being uploaded exists, belongs to the
   correct server, the storage belongs to the server, the user has access to
   the storage, etc.
   """
@@ -57,7 +57,7 @@ request Helix.Software.Websocket.Requests.File.Download do
 
     can_transfer? =
       FileTransferHenforcer.can_transfer?(
-        :download,
+        :upload,
         gateway_id,
         destination_id,
         storage_id,
@@ -88,10 +88,10 @@ request Helix.Software.Websocket.Requests.File.Download do
     destination = request.meta.destination
     relay = request.relay
 
-    download =
-      FilePublic.download(gateway, destination, tunnel, storage, file, relay)
+    upload =
+      FilePublic.upload(gateway, destination, tunnel, storage, file, relay)
 
-    case download do
+    case upload do
       {:ok, _process} ->
         reply_ok(request)
 
@@ -105,7 +105,7 @@ request Helix.Software.Websocket.Requests.File.Download do
   @spec get_error(reason :: {term, term} | term) ::
     String.t
   docp """
-  Custom error handler for FileDownloadRequest. Unmatched terms will get handled
+  Custom error handler for FileUploadRequest. Unmatched terms will get handled
   by general-purpose error translator at `WebsocketUtils.get_error/1`.
   """
   defp get_error({:file, :not_belongs}),
