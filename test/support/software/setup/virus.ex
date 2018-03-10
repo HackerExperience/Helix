@@ -8,6 +8,8 @@ defmodule Helix.Test.Software.Setup.Virus do
   alias Helix.Software.Model.Virus
   alias Helix.Software.Repo, as: SoftwareRepo
 
+  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   @doc """
@@ -55,8 +57,12 @@ defmodule Helix.Test.Software.Setup.Virus do
   - real_file?: Whether to generate the underlying virus file. Defaults to true
   - type: Virus type. Defaults to `spyware`. Only used when `real_file?` is set
   - running_time: Set for how long the virus have been running. Defaults to 0s.
+  - real_server?: whether to generate the underlying server. Defaults to false.
+    When used, overrides `storage_id`.
 
-  Related: File.t (when `real_life?` is set)
+  Related:
+    - File.t (when `real_life?` is set),
+    - Server.t (when `real_server?` is set)
   """
   def fake_virus(opts \\ []) do
     if opts[:real_file?] == true and not is_nil(opts[:file_id]),
@@ -66,15 +72,34 @@ defmodule Helix.Test.Software.Setup.Virus do
     entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
     is_active? = Keyword.get(opts, :is_active?, true)
 
+    server =
+      if opts[:real_server?] do
+        ServerSetup.server!()
+      else
+        nil
+      end
+
     {file_id, file} =
       if opts[:real_file?] == false do
         {file_id, nil}
       else
         type = Keyword.get(opts, :type, :virus_spyware)
-        file = SoftwareSetup.file!(type: type)
 
-        # Replace file `storage_id` in case one was specified
-        file = %{file| storage_id: opts[:storage_id] || file.storage_id}
+        file =
+          if server do
+            server_storage_id = SoftwareHelper.get_storage_id(server)
+
+            # Underlying server won't be generated because of `storage_id` opt
+            SoftwareSetup.file!(type: type, storage_id: server_storage_id)
+          else
+            file = SoftwareSetup.file!(type: type)
+
+            if opts[:storage_id] do
+              %{file | storage_id: opts[:storage_id]}
+            else
+              file
+            end
+          end
 
         {file.file_id, file}
       end
@@ -90,7 +115,8 @@ defmodule Helix.Test.Software.Setup.Virus do
     related =
       %{
         file: file,
-        changeset: Changeset.change(virus)
+        changeset: Changeset.change(virus),
+        server: server
       }
 
     {virus, related}

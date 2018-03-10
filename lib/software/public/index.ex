@@ -38,6 +38,7 @@ defmodule Helix.Software.Public.Index do
       size: File.size,
       type: String.t,
       modules: modules,
+      version: float,
       name: String.t,
       extension: String.t,
       meta: map
@@ -107,12 +108,16 @@ defmodule Helix.Software.Public.Index do
         end)
       end
 
+    # TODO
+    version = 1.0
+
     %{
       id: to_string(file.file_id),
       path: file.path,
       size: file.file_size,
       type: to_string(file.software_type),
       modules: render_modules.(file.modules),
+      version: version,
       name: to_string(file.name),
       extension: extension,
       meta: file.meta

@@ -2,6 +2,7 @@ defmodule Helix.Test.Entity.Database.Setup do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo, as: EntityRepo
@@ -17,10 +18,14 @@ defmodule Helix.Test.Entity.Database.Setup do
   See `fake_entry_server/1` doc
   """
   def entry_server(opts \\ []) do
-    {entry, related} = fake_entry_server(opts)
-    {:ok, inserted} = EntityRepo.insert(entry)
+    {fake_entry, related} = fake_entry_server(opts)
+    {:ok, _} = EntityRepo.insert(fake_entry)
 
-    entry = Map.replace!(inserted, :viruses, [])
+    # Fetch again from DB to populate `viruses` assoc
+    entry =
+      DatabaseInternal.fetch_server(
+        fake_entry.entity_id, fake_entry.network_id, fake_entry.server_ip
+      )
 
     {entry, related}
   end
@@ -29,6 +34,7 @@ defmodule Helix.Test.Entity.Database.Setup do
   - entity_id: generated entry belongs to that entity
   - server_id: server that will be added to the entry
   - password: password stored on database entry. Defaults to nil.
+  - viruses: List of File.id that should be linked as Database.Virus
 
   Related data: Server.t, Entity.t
   """
@@ -49,7 +55,21 @@ defmodule Helix.Test.Entity.Database.Setup do
         {server, nip}
       end
 
-    password = Access.get(opts, :password, nil)
+    password = Keyword.get(opts, :password, nil)
+    viruses =
+      if opts[:viruses] do
+        opts[:viruses]
+        |> Enum.map(fn file_id ->
+          fake_entry_virus(
+            entity_id: entity.entity_id,
+            server_id: server.server_id,
+            file_id: file_id
+          )
+        |> elem(0)
+        end)
+      else
+        []
+      end
 
     entry =
       %Database.Server{
@@ -61,6 +81,7 @@ defmodule Helix.Test.Entity.Database.Setup do
         password: password,
         alias: nil,
         notes: nil,
+        viruses: viruses,
         last_update: DateTime.utc_now()
       }
 
@@ -94,7 +115,7 @@ defmodule Helix.Test.Entity.Database.Setup do
         {entity, entity.entity_id}
       end
 
-    acc = Access.get(opts, :acc, BankSetup.account!())
+    acc = Keyword.get(opts, :acc, BankSetup.account!())
 
     atm_ip = ServerQuery.get_ip(acc.atm_id, NetworkHelper.internet_id())
 

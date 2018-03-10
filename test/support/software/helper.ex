@@ -76,6 +76,17 @@ defmodule Helix.Test.Software.Helper do
     end)
   end
 
+  @doc """
+  Returns the software extension
+  """
+  def get_extension(file = %File{}),
+    do: get_extension(file.software_type)
+  def get_extension(type) when is_atom(type) do
+    type
+    |> Software.Type.get()
+    |> Map.fetch!(:extension)
+  end
+
   defp generate_file_module(module, version) do
     data = File.Module.Data.new(%{name: module, version: version})
 
