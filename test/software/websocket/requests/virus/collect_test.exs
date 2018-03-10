@@ -121,6 +121,9 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
           connect_opts: [entity_id: entity.entity_id]
         )
 
+      bounce = NetworkSetup.Bounce.bounce!(entity_id: entity.entity_id)
+      bank_account = BankSetup.account!(owner_id: entity.entity_id)
+
       {virus1, %{file: file1}} =
         SoftwareSetup.Virus.virus(
           entity_id: entity.entity_id,
@@ -134,9 +137,6 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
           is_active?: true,
           real_file?: true
         )
-
-      bounce = NetworkSetup.Bounce.bounce!(entity_id: entity.entity_id)
-      bank_account = BankSetup.account!(owner_id: entity.entity_id)
 
       params =
         %{
