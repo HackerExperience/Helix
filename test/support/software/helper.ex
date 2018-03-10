@@ -77,7 +77,7 @@ defmodule Helix.Test.Software.Helper do
   end
 
   defp generate_file_module(module, version) do
-    data = File.Module.Data.new(%{version: version})
+    data = File.Module.Data.new(%{name: module, version: version})
 
     Map.put(%{}, module, data)
   end

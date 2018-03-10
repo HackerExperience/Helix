@@ -73,7 +73,7 @@ defmodule Helix.Software.Make.File do
 
     Enum.reduce(modules, %{}, fn (module, acc) ->
       version = Map.fetch!(version_map, module)
-      data = File.Module.Data.new(%{version: version})
+      data = File.Module.Data.new(%{name: module, version: version})
 
       %{}
       |> Map.put(module, data)

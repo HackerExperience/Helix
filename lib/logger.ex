@@ -3,7 +3,7 @@ defmodule Helix.Logger do
   `Helix.Logger` is an abstraction over Elixir `Logger`. It considers the
   environment Helix is running on, and send the logs to the desired collector.
 
-  On dev environment, it also broadcasts the message to the Logflix channel.
+  On dev environment it also broadcasts the message to the Logflix channel.
   """
 
   import HELL.Macros
@@ -79,7 +79,7 @@ defmodule Helix.Logger do
     data = Keyword.get(opts, :data, %{})
 
     # Formats the custom `data`, if any, ensuring it is JSON-friendly (on `prod`
-    # it is used by the Timber API, and on `dev` it's used on the Logflix API).
+    # it is used by the Timber API, and on `dev` it's used by the Logflix API).
     event =
       if data == %{} do
         quote do
