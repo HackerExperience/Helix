@@ -2,15 +2,14 @@ defmodule Helix.Entity.Public.Index.Database do
 
   alias HELL.ClientUtils
   alias HELL.HETypes
-  alias Helix.Entity.Model.DatabaseBankAccount
-  alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
   @type index ::
     %{
-      bank_accounts: [DatabaseBankAccount.t],
-      servers: [DatabaseServer.t]
+      bank_accounts: [Database.BankAccount.t],
+      servers: [Database.Server.t]
     }
 
   @type rendered_index ::
@@ -57,9 +56,9 @@ defmodule Helix.Entity.Public.Index.Database do
     }
   end
 
-  @spec render_bank_account(DatabaseBankAccount.t) ::
+  @spec render_bank_account(Database.BankAccount.t) ::
     rendered_bank_account
-  defp render_bank_account(entry = %DatabaseBankAccount{}) do
+  defp render_bank_account(entry = %Database.BankAccount{}) do
     last_login_date =
       if is_map(entry.last_login_date) do
         ClientUtils.to_timestamp(entry.last_login_date)
@@ -80,9 +79,9 @@ defmodule Helix.Entity.Public.Index.Database do
     }
   end
 
-  @spec render_server(DatabaseServer.t) ::
+  @spec render_server(Database.Server.t) ::
     rendered_server
-  defp render_server(entry = %DatabaseServer{}) do
+  defp render_server(entry = %Database.Server{}) do
     %{
       network_id: to_string(entry.network_id),
       ip: to_string(entry.server_ip),

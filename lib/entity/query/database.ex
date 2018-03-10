@@ -12,11 +12,10 @@ defmodule Helix.Entity.Query.Database do
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.DatabaseBankAccount
-  alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Model.Database
 
   @spec fetch_server(Entity.idt, Network.idt, IPv4.t) ::
-    DatabaseServer.t
+    Database.Server.t
     | nil
   @doc """
   Returns the entry corresponding to the given server (nip).
@@ -25,7 +24,7 @@ defmodule Helix.Entity.Query.Database do
     to: DatabaseInternal
 
   @spec fetch_bank_account(Entity.idt, BankAccount.t) ::
-    DatabaseBankAccount.t
+    Database.BankAccount.t
     | nil
   @doc """
   Returns the entry corresponding to the given bank account. May be outdated.

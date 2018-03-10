@@ -2,8 +2,7 @@ defmodule Helix.Test.Entity.Database.Setup do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Entity.Model.DatabaseBankAccount
-  alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo, as: EntityRepo
 
@@ -49,7 +48,7 @@ defmodule Helix.Test.Entity.Database.Setup do
     password = Access.get(opts, :password, nil)
 
     entry =
-      %DatabaseServer{
+      %Database.Server{
         entity_id: entity.entity_id,
         network_id: nip.network_id,
         server_ip: nip.ip,
@@ -96,7 +95,7 @@ defmodule Helix.Test.Entity.Database.Setup do
     atm_ip = ServerQuery.get_ip(acc.atm_id, NetworkHelper.internet_id())
 
     entry =
-      %DatabaseBankAccount{
+      %Database.BankAccount{
         entity_id: entity_id,
         atm_id: acc.atm_id,
         account_number: acc.account_number,

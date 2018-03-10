@@ -6,41 +6,40 @@ defmodule Helix.Entity.Internal.Database do
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.DatabaseBankAccount
-  alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Model.Database
   alias Helix.Entity.Repo
 
   @type entry_server_repo_return ::
-    {:ok, DatabaseServer.t}
-    | {:error, DatabaseServer.changeset}
+    {:ok, Database.Server.t}
+    | {:error, Database.Server.changeset}
 
   @type entry_bank_account_repo_return ::
-    {:ok, DatabaseBankAccount.t}
-    | {:error, DatabaseBankAccount.changeset}
+    {:ok, Database.BankAccount.t}
+    | {:error, Database.BankAccount.changeset}
 
   @type full_database ::
     %{
-      servers: [DatabaseServer.t],
-      bank_accounts: [DatabaseBankAccount.t]
+      servers: [Database.Server.t],
+      bank_accounts: [Database.BankAccount.t]
     }
 
   @spec fetch_server(Entity.idt, Network.idt, IPv4.t) ::
-    DatabaseServer.t
+    Database.Server.t
     | nil
   def fetch_server(entity, network, server_ip) do
     entity
-    |> DatabaseServer.Query.by_entity()
-    |> DatabaseServer.Query.by_nip(network, server_ip)
+    |> Database.Server.Query.by_entity()
+    |> Database.Server.Query.by_nip(network, server_ip)
     |> Repo.one()
   end
 
   @spec fetch_bank_account(Entity.t, BankAccount.t) ::
-    DatabaseBankAccount.t
+    Database.BankAccount.t
     | nil
   def fetch_bank_account(entity, acc) do
     entity
-    |> DatabaseBankAccount.Query.by_entity()
-    |> DatabaseBankAccount.Query.by_bank_account(acc.atm_id, acc.account_number)
+    |> Database.BankAccount.Query.by_entity()
+    |> Database.BankAccount.Query.by_account(acc.atm_id, acc.account_number)
     |> Repo.one()
   end
 
@@ -54,25 +53,25 @@ defmodule Helix.Entity.Internal.Database do
   end
 
   @spec get_server_entries(Entity.t) ::
-    [DatabaseServer.t]
+    [Database.Server.t]
   defp get_server_entries(entity) do
     entity
-    |> DatabaseServer.Query.by_entity()
-    |> DatabaseServer.Query.order_by_last_update()
+    |> Database.Server.Query.by_entity()
+    |> Database.Server.Query.order_by_last_update()
     |> Repo.all()
   end
 
   @spec get_bank_account_entries(Entity.t) ::
-    [DatabaseBankAccount.t]
+    [Database.BankAccount.t]
   defp get_bank_account_entries(entity) do
     entity
-    |> DatabaseBankAccount.Query.by_entity()
-    |> DatabaseBankAccount.Query.order_by_last_update()
+    |> Database.BankAccount.Query.by_entity()
+    |> Database.BankAccount.Query.order_by_last_update()
     |> Repo.all()
   end
 
   @spec add_server(
-    Entity.idt, Network.idt, IPv4.t, Server.idt, DatabaseServer.server_type)
+    Entity.idt, Network.idt, IPv4.t, Server.idt, Database.Server.server_type)
   ::
     entry_server_repo_return
   def add_server(entity, network, ip, server, server_type) do
@@ -85,7 +84,7 @@ defmodule Helix.Entity.Internal.Database do
     }
 
     params
-    |> DatabaseServer.create_changeset()
+    |> Database.Server.create_changeset()
     |> Repo.insert()
   end
 
@@ -100,35 +99,35 @@ defmodule Helix.Entity.Internal.Database do
     }
 
     params
-    |> DatabaseBankAccount.create_changeset()
+    |> Database.BankAccount.create_changeset()
     |> Repo.insert()
   end
 
-  @spec update_server_password(DatabaseServer.t, Server.password) ::
+  @spec update_server_password(Database.Server.t, Server.password) ::
     entry_server_repo_return
   def update_server_password(entry, password),
     do: update_server(entry, %{password: password})
 
-  @spec update_server(DatabaseServer.t, DatabaseServer.update_params) ::
+  @spec update_server(Database.Server.t, Database.Server.update_params) ::
     entry_server_repo_return
   defp update_server(entry, params) do
     entry
-    |> DatabaseServer.update_changeset(params)
+    |> Database.Server.update_changeset(params)
     |> Repo.update()
   end
 
-  @spec update_bank_password(DatabaseBankAccount.t, String.t) ::
+  @spec update_bank_password(Database.BankAccount.t, String.t) ::
     entry_bank_account_repo_return
   def update_bank_password(entry, password),
     do: update_bank_account(entry, %{password: password})
 
-  @spec update_bank_token(DatabaseBankAccount.t, BankToken.id) ::
+  @spec update_bank_token(Database.BankAccount.t, BankToken.id) ::
     entry_bank_account_repo_return
   def update_bank_token(entry, token),
     do: update_bank_account(entry, %{token: token})
 
   @spec update_bank_login(
-    DatabaseBankAccount.t, BankAccount.t, BankToken.id | nil)
+    Database.BankAccount.t, BankAccount.t, BankToken.id | nil)
   ::
     entry_bank_account_repo_return
   def update_bank_login(entry, account, token_id) do
@@ -150,26 +149,26 @@ defmodule Helix.Entity.Internal.Database do
   end
 
   @spec update_bank_account(
-    DatabaseBankAccount.t, DatabaseBankAccount.update_params)
+    Database.BankAccount.t, Database.BankAccount.update_params)
   ::
     entry_bank_account_repo_return
   defp update_bank_account(entry, params) do
     entry
-    |> DatabaseBankAccount.update_changeset(params)
+    |> Database.BankAccount.update_changeset(params)
     |> Repo.update()
   end
 
-  @spec delete_server(DatabaseServer.t) ::
+  @spec delete_server(Database.Server.t) ::
     :ok
-  def delete_server(entry = %DatabaseServer{}) do
+  def delete_server(entry = %Database.Server{}) do
     Repo.delete(entry)
 
     :ok
   end
 
-  @spec delete_bank_account(DatabaseBankAccount.t) ::
+  @spec delete_bank_account(Database.BankAccount.t) ::
     :ok
-  def delete_bank_account(entry = %DatabaseBankAccount{}) do
+  def delete_bank_account(entry = %Database.BankAccount{}) do
     Repo.delete(entry)
 
     :ok
