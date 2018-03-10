@@ -40,7 +40,7 @@ defmodule Helix.Event.Loggable.Flow do
   Top-level macro for events wanting to implement the Loggable protocol.
   """
   defmacro loggable(do: block) do
-    quote do
+    quote generated: true do
 
       defimpl Helix.Event.Loggable do
         @moduledoc false

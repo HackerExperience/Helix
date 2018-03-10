@@ -22,13 +22,13 @@ defmodule Helix.Process.Event.Handler.TOPTest do
     {_, %{params: params}} =
       ProcessSetup.fake_process(
         gateway_id: server.server_id,
-        src_connection_id: connection.connection_id,
+        src_connection_id: connection.connection_id
       )
 
     params =
       params
-      |> Map.replace(:data, FakeDefaultProcess.new())
-      |> Map.replace(:type, :fake_default_process)
+      |> Map.replace!(:data, FakeDefaultProcess.new())
+      |> Map.replace!(:type, :fake_default_process)
 
     {:ok, process} = ProcessInternal.create(params)
 
@@ -54,13 +54,13 @@ defmodule Helix.Process.Event.Handler.TOPTest do
     {_, %{params: params}} =
       ProcessSetup.fake_process(
         gateway_id: server.server_id,
-        tgt_connection_id: connection.connection_id,
+        tgt_connection_id: connection.connection_id
       )
 
     params =
       params
-      |> Map.replace(:data, FakeDefaultProcess.new())
-      |> Map.replace(:type, :fake_default_process)
+      |> Map.replace!(:data, FakeDefaultProcess.new())
+      |> Map.replace!(:type, :fake_default_process)
 
     {:ok, process} = ProcessInternal.create(params)
 

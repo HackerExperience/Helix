@@ -71,7 +71,7 @@ defmodule Helix.Process.Model.ProcessTest do
           l_limit: %{ram: 30},
           r_limit: %{dlk: %{net: 20}},
           l_reserved: %{cpu: 0, ram: 40, ulk: %{net: 30}, dlk: %{}},
-          r_reserved: %{cpu: 10, ram: 20, ulk: %{net: 15}, dlk: %{net: 20}},
+          r_reserved: %{cpu: 10, ram: 20, ulk: %{net: 15}, dlk: %{net: 20}}
         )
 
       process = Process.infer_usage(proc)

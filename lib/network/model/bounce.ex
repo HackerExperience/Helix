@@ -97,7 +97,7 @@ defmodule Helix.Network.Model.Bounce do
     |> Map.put(:links, links)
 
     # `sorted` is an implementation detail
-    |> Map.replace(:sorted, nil)
+    |> Map.replace!(:sorted, nil)
 
     # See `File.format/1` for context
     |> Ecto.put_meta(state: :loaded)

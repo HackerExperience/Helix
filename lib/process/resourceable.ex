@@ -153,7 +153,7 @@ defmodule Helix.Process.Resourceable do
 
     # Fallbacks in case the user did not specify static and dynamic allocations
     fallback_allocations =
-      quote do
+      quote generated: true do
         @doc false
         def static(_, _),
           do: %{}

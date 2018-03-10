@@ -152,7 +152,7 @@ defmodule Helix.Server.Internal.Motherboard do
           |> Enum.map(fn {component, _slot} -> component end)
           |> Enum.zip(entries)
           |> Enum.reduce([], fn {component, entry}, acc ->
-            entry = Map.replace(entry, :linked_component, component)
+            entry = Map.replace!(entry, :linked_component, component)
 
             acc ++ [entry]
           end)
