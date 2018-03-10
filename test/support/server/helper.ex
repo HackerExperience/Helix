@@ -131,4 +131,10 @@ defmodule Helix.Test.Server.Helper do
   """
   def get_all,
     do: ServerRepo.all(from s in Server)
+
+  @doc """
+  Generates a random Server ID
+  """
+  def id,
+    do: Server.ID.generate()
 end

@@ -1,6 +1,5 @@
 defmodule Helix.Entity.Internal.Database do
 
-  alias HELL.IPv4
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
@@ -24,13 +23,14 @@ defmodule Helix.Entity.Internal.Database do
       bank_accounts: [Database.BankAccount.t]
     }
 
-  @spec fetch_server(Entity.idt, Network.idt, IPv4.t) ::
+  @spec fetch_server(Entity.idt, Network.idt, Network.ip) ::
     Database.Server.t
     | nil
   def fetch_server(entity, network, server_ip) do
     entity
     |> Database.Server.Query.by_entity()
     |> Database.Server.Query.by_nip(network, server_ip)
+    |> Database.Server.Query.join_database_viruses()
     |> Repo.one()
   end
 
@@ -68,6 +68,7 @@ defmodule Helix.Entity.Internal.Database do
     entity
     |> Database.Server.Query.by_entity()
     |> Database.Server.Query.order_by_last_update()
+    |> Database.Server.Query.join_database_viruses()
     |> Repo.all()
   end
 
@@ -81,7 +82,11 @@ defmodule Helix.Entity.Internal.Database do
   end
 
   @spec add_server(
-    Entity.idt, Network.idt, IPv4.t, Server.idt, Database.Server.server_type)
+    Entity.idt,
+    Network.idt,
+    Network.ip,
+    Server.idt,
+    Database.Server.server_type)
   ::
     entry_server_repo_return
   def add_server(entity, network, ip, server, server_type) do
@@ -98,7 +103,7 @@ defmodule Helix.Entity.Internal.Database do
     |> Repo.insert()
   end
 
-  @spec add_bank_account(Entity.t, BankAccount.t, IPv4.t) ::
+  @spec add_bank_account(Entity.t, BankAccount.t, Network.ip) ::
     entry_bank_account_repo_return
   def add_bank_account(entity, bank_account, atm_ip) do
     params = %{

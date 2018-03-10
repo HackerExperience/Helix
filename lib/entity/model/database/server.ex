@@ -10,6 +10,7 @@ defmodule Helix.Entity.Model.Database.Server do
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
+  alias Helix.Entity.Model.Database
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -17,11 +18,12 @@ defmodule Helix.Entity.Model.Database.Server do
     entity_id: Entity.id,
     network_id: Network.id,
     server_id: Server.id,
-    server_ip: IPv4.t,
+    server_ip: Network.ip,
     server_type: server_type,
     password: Server.password | nil,
     alias: String.t | nil,
     notes: String.t | nil,
+    viruses: [Database.Virus.t],
     last_update: DateTime.t
   }
 
@@ -29,7 +31,7 @@ defmodule Helix.Entity.Model.Database.Server do
     entity_id: Entity.id,
     network_id: Network.id,
     server_id: Server.id,
-    server_ip: IPv4.t,
+    server_ip: Network.ip,
     server_type: server_type
   }
 
@@ -84,6 +86,10 @@ defmodule Helix.Entity.Model.Database.Server do
     field :notes, :string
 
     field :last_update, :utc_datetime
+
+    has_many :viruses, Database.Virus,
+      foreign_key: :server_id,
+      references: :server_id
   end
 
   @spec create_changeset(creation_params) ::
@@ -113,7 +119,6 @@ defmodule Helix.Entity.Model.Database.Server do
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias HELL.IPv4
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
     alias Helix.Entity.Model.Database
@@ -124,7 +129,7 @@ defmodule Helix.Entity.Model.Database.Server do
     def by_entity(query \\ Database.Server, id),
       do: where(query, [d], d.entity_id == ^id)
 
-    @spec by_nip(Queryable.t, Network.idtb, IPv4.t) ::
+    @spec by_nip(Queryable.t, Network.idtb, Network.ip) ::
       Queryable.t
     def by_nip(query \\ Database.Server, network, ip),
       do: where(query, [d], d.network_id == ^network and d.server_ip == ^ip)
@@ -133,6 +138,12 @@ defmodule Helix.Entity.Model.Database.Server do
       Queryable.t
     def by_server(query \\ Database.Server, id),
       do: where(query, [d], d.server_id == ^id)
+
+    def join_database_viruses(query) do
+      query
+      |> join(:left, [ds], dv in assoc(ds, :viruses))
+      |> preload([..., ds], [viruses: ds])
+    end
 
     @spec order_by_last_update(Queryable.t) ::
       Queryable.t

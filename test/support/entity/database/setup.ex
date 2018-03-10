@@ -7,7 +7,9 @@ defmodule Helix.Test.Entity.Database.Setup do
   alias Helix.Entity.Repo, as: EntityRepo
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
 
@@ -18,7 +20,9 @@ defmodule Helix.Test.Entity.Database.Setup do
     {entry, related} = fake_entry_server(opts)
     {:ok, inserted} = EntityRepo.insert(entry)
 
-    {inserted, related}
+    entry = Map.replace!(inserted, :viruses, [])
+
+    {entry, related}
   end
 
   @doc """
@@ -107,5 +111,62 @@ defmodule Helix.Test.Entity.Database.Setup do
       }
 
     {entry, %{acc: acc, entity: entity}}
+  end
+
+  @doc """
+  See doc on `fake_entry_virus/1`
+  """
+  def entry_virus(opts \\ []) do
+    {entry, related} = fake_entry_virus(opts)
+    inserted = EntityRepo.insert!(entry)
+    {inserted, related}
+  end
+
+  @doc """
+  Opts:
+  - entity_id: Set `entity_id`.
+  - server_id: Set `server_id`.
+  - file_id: Set `file_id`. Defaults to random file id.
+  - from_entry: Gather `entity_id` and `server_id` from the given
+    `Database.Server`. Overrides `entity_id` and `server_id` opts
+  """
+  def fake_entry_virus(opts \\ []) do
+    if is_nil(opts[:entity_id]) and is_nil(opts[:from_entry]),
+      do: raise "I need either `entity_id` or `from_entry` opt"
+
+    entity_id =
+      cond do
+        opts[:from_entry] ->
+          opts[:from_entry].entity_id
+
+        opts[:entity_id] ->
+          opts[:entity_id]
+
+        true ->
+          Entity.ID.generate()
+      end
+
+    server_id =
+      cond do
+      opts[:from_entry] ->
+        opts[:from_entry].server_id
+
+      opts[:server_id] ->
+        opts[:server_id]
+
+      true ->
+        ServerHelper.id()
+    end
+
+    file_id = Keyword.get(opts, :file_id, SoftwareHelper.id())
+
+    entry =
+      %Database.Virus{
+        entity_id: entity_id,
+        server_id: server_id,
+        file_id: file_id
+      }
+
+    {entry, %{}}
   end
 end

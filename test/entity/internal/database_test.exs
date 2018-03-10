@@ -19,11 +19,30 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     test "returns the entry when input exists" do
       {entry, _} = DatabaseSetup.entry_server()
 
-      assert DatabaseInternal.fetch_server(
-        entry.entity_id,
-        entry.network_id,
-        entry.server_ip
-      )
+      assert entry ==
+        DatabaseInternal.fetch_server(
+          entry.entity_id, entry.network_id, entry.server_ip
+        )
+    end
+
+    test "returns the entry when input exists (with linked viruses)" do
+      {entry, _} = DatabaseSetup.entry_server()
+
+      # Link a couple viruses to `entry`
+      {v1, _} = DatabaseSetup.entry_virus(from_entry: entry)
+      {v2, _} = DatabaseSetup.entry_virus(from_entry: entry)
+
+      db_entry =
+        DatabaseInternal.fetch_server(
+          entry.entity_id, entry.network_id, entry.server_ip
+        )
+
+      # Returned the usual Database.Server entry
+      assert db_entry.entity_id == entry.entity_id
+      assert db_entry.server_id == entry.server_id
+
+      # With the linked viruses
+      assert Enum.sort(db_entry.viruses) == Enum.sort([v1, v2])
     end
 
     test "returns empty when input isn't found" do
