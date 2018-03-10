@@ -17,10 +17,11 @@
     },
     "Entity.Database": {
         "receives": [
-            "Server.Password.Acquired",
             "Bank.Account.Password.Revealed",
             "Bank.Token.Acquired",
-            "Bank.Account.Login"
+            "Bank.Account.Login",
+            "Server.Password.Acquired",
+            "Virus.Installed"
         ],
         "emits": []
     },

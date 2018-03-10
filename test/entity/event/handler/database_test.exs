@@ -2,9 +2,11 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
 
   use Helix.Test.Case.Integration
 
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Event.Handler.Database, as: DatabaseHandler
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
+  alias Helix.Test.Event.Helper, as: EventHelper
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
 
@@ -143,6 +145,22 @@ defmodule Helix.Entity.Event.Handler.DatabaseTest do
       diff =
         DateTime.diff(on_db.last_update, fake_entry.last_update, :microsecond)
       assert diff > 0
+    end
+  end
+
+  describe "on_virus_installed/1" do
+    test "the virus entry is created" do
+      {event, %{virus: virus}} =
+        EventSetup.Software.file_install_processed(:virus)
+
+      EventHelper.emit(event)
+
+      entry_virus = DatabaseQuery.fetch_virus(virus.file_id)
+
+      assert entry_virus.entity_id == event.entity_id
+      assert entry_virus.file_id == virus.file_id
+      assert entry_virus.server_id ==
+        CacheQuery.from_storage_get_server!(virus.storage_id)
     end
   end
 end

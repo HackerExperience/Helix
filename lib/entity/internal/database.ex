@@ -3,6 +3,7 @@ defmodule Helix.Entity.Internal.Database do
   alias HELL.IPv4
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
+  alias Helix.Software.Model.File
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Entity.Model.Entity
@@ -40,6 +41,15 @@ defmodule Helix.Entity.Internal.Database do
     entity
     |> Database.BankAccount.Query.by_entity()
     |> Database.BankAccount.Query.by_account(acc.atm_id, acc.account_number)
+    |> Repo.one()
+  end
+
+  @spec fetch_virus(File.id) ::
+    Database.Virus.t
+    | nil
+  def fetch_virus(file_id) do
+    file_id
+    |> Database.Virus.Query.by_file()
     |> Repo.one()
   end
 
@@ -100,6 +110,21 @@ defmodule Helix.Entity.Internal.Database do
 
     params
     |> Database.BankAccount.create_changeset()
+    |> Repo.insert()
+  end
+
+  @spec add_virus(Entity.id, Server.id, File.id) ::
+    {:ok, Database.Virus.t}
+    | {:error, Database.Virus.changeset}
+  def add_virus(entity_id, server_id, file_id) do
+    params = %{
+      entity_id: entity_id,
+      server_id: server_id,
+      file_id: file_id
+    }
+
+    params
+    |> Database.Virus.create_changeset()
     |> Repo.insert()
   end
 

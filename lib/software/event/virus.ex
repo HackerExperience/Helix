@@ -67,7 +67,7 @@ defmodule Helix.Software.Event.Virus do
   event Installed do
     @moduledoc """
     `VirusInstalledEvent` is fired when a virus has been installed by someone.
-    It one of the two possible results of FileInstallProcessedEvent (when the
+    It's one of the two possible results of FileInstallProcessedEvent (when the
     file is a virus), with the other being `VirusInstallFailedEvent`.
     """
 

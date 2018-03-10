@@ -9,6 +9,7 @@ defmodule Helix.Entity.Query.Database do
 
   alias HELL.IPv4
   alias Helix.Network.Model.Network
+  alias Helix.Software.Model.File
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Entity
@@ -30,6 +31,15 @@ defmodule Helix.Entity.Query.Database do
   Returns the entry corresponding to the given bank account. May be outdated.
   """
   defdelegate fetch_bank_account(entity, account),
+    to: DatabaseInternal
+
+  @spec fetch_virus(File.id) ::
+    Database.Virus.t
+    | nil
+  @doc """
+  Returns the entry corresponding to the given virus.
+  """
+  defdelegate fetch_virus(file_id),
     to: DatabaseInternal
 
   @spec get_database(Entity.t) ::

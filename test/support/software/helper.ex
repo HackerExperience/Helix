@@ -101,6 +101,12 @@ defmodule Helix.Test.Software.Helper do
     do: Random.number(min: 10, max: 50)
 
   @doc """
+  Generates a `File.ID`
+  """
+  def id,
+    do: File.ID.generate()
+
+  @doc """
   FileModel performs some operation on the file path, like ensuring leading
   slashes and removing trailing slashes. We try to mock this internal formatting
   so our tests can verify the resulting path.

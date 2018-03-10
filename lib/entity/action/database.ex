@@ -11,6 +11,7 @@ defmodule Helix.Entity.Action.Database do
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Software.Model.File
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
@@ -28,9 +29,8 @@ defmodule Helix.Entity.Action.Database do
   with extra information like password or notes. Modifying these extra data
   should be done by with `update_*` functions.
   """
-  def add_server(entity, network, ip, server) do
-    DatabaseInternal.add_server(entity, network, ip, server, :npc)
-  end
+  def add_server(entity, network, ip, server),
+    do: DatabaseInternal.add_server(entity, network, ip, server, :npc)
 
   @spec add_bank_account(Entity.idt, BankAccount.t) ::
     {:ok, Database.BankAccount.t}
@@ -46,6 +46,18 @@ defmodule Helix.Entity.Action.Database do
     atm_ip = ServerQuery.get_ip(bank_account.atm_id, NetworkQuery.internet())
     DatabaseInternal.add_bank_account(entity, bank_account, atm_ip)
   end
+
+  @spec add_virus(Entity.id, Server.id, File.id) ::
+    {:ok, Database.Virus.t}
+    | {:error, Database.Virus.changeset}
+  @doc """
+  Adds a new virus entry to the database.
+
+  All viruses on the database must be linked to a `Database.Server`. This FK
+  will be enforced.
+  """
+  def add_virus(entity_id, server_id, file_id),
+    do: DatabaseInternal.add_virus(entity_id, server_id, file_id)
 
   @spec update_server_password(
     Entity.idt,

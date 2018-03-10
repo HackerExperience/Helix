@@ -237,6 +237,10 @@ defmodule Helix.Event.Dispatcher do
     BankHandler.Bank.Account,
     :virus_collected
 
+  event SoftwareEvent.Virus.Installed,
+    EntityHandler.Database,
+    :on_virus_installed
+
   ##############################################################################
   # Story events
   ##############################################################################
