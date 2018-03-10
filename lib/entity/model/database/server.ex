@@ -139,6 +139,8 @@ defmodule Helix.Entity.Model.Database.Server do
     def by_server(query \\ Database.Server, id),
       do: where(query, [d], d.server_id == ^id)
 
+    @spec join_database_viruses(Queryable.t) ::
+      Queryable.t
     def join_database_viruses(query) do
       query
       |> join(:left, [ds], dv in assoc(ds, :viruses))

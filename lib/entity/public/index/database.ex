@@ -2,6 +2,7 @@ defmodule Helix.Entity.Public.Index.Database do
 
   alias HELL.ClientUtils
   alias HELL.HETypes
+  alias Helix.Software.Model.Virus
   alias Helix.Software.Public.Index, as: SoftwareIndex
   alias Helix.Software.Query.File, as: FileQuery
   alias Helix.Software.Query.Virus, as: VirusQuery
@@ -53,6 +54,7 @@ defmodule Helix.Entity.Public.Index.Database do
       name: String.t,
       version: float,
       type: String.t,
+      extension: String.t,
       running_time: seconds :: integer | nil,
       is_active: boolean
     }
@@ -105,7 +107,7 @@ defmodule Helix.Entity.Public.Index.Database do
     }
   end
 
-  @spec render_server(Database.Server.t, [term]) ::
+  @spec render_server(Database.Server.t, [Virus.t]) ::
     rendered_server
   defp render_server(entry = %Database.Server{}, entity_viruses) do
     rendered_viruses =
@@ -125,6 +127,8 @@ defmodule Helix.Entity.Public.Index.Database do
     }
   end
 
+  @spec render_virus(Database.Virus.t, [Virus.t]) ::
+    rendered_virus
   defp render_virus(entry = %Database.Virus{}, entity_viruses) do
     virus = Enum.find(entity_viruses, &(&1.file_id == entry.file_id))
 
