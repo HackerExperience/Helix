@@ -10,6 +10,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
   alias HELL.TestHelper.Random
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
@@ -18,11 +19,30 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     test "returns the entry when input exists" do
       {entry, _} = DatabaseSetup.entry_server()
 
-      assert DatabaseInternal.fetch_server(
-        entry.entity_id,
-        entry.network_id,
-        entry.server_ip
-      )
+      assert entry ==
+        DatabaseInternal.fetch_server(
+          entry.entity_id, entry.network_id, entry.server_ip
+        )
+    end
+
+    test "returns the entry when input exists (with linked viruses)" do
+      {entry, _} = DatabaseSetup.entry_server()
+
+      # Link a couple viruses to `entry`
+      {v1, _} = DatabaseSetup.entry_virus(from_entry: entry)
+      {v2, _} = DatabaseSetup.entry_virus(from_entry: entry)
+
+      db_entry =
+        DatabaseInternal.fetch_server(
+          entry.entity_id, entry.network_id, entry.server_ip
+        )
+
+      # Returned the usual Database.Server entry
+      assert db_entry.entity_id == entry.entity_id
+      assert db_entry.server_id == entry.server_id
+
+      # With the linked viruses
+      assert Enum.sort(db_entry.viruses) == Enum.sort([v1, v2])
     end
 
     test "returns empty when input isn't found" do
@@ -151,6 +171,22 @@ defmodule Helix.Entity.Internal.DatabaseTest do
       refute entry.last_login_date
       refute entry.known_balance
       refute entry.notes
+    end
+  end
+
+  describe "add_virus/3" do
+    test "given a valid input, entry is created" do
+      {entry_server, _} = DatabaseSetup.entry_server()
+      virus_id = SoftwareHelper.id()
+
+      assert {:ok, entry_virus} =
+        DatabaseInternal.add_virus(
+          entry_server.entity_id, entry_server.server_id, virus_id
+        )
+
+      assert entry_virus.entity_id == entry_server.entity_id
+      assert entry_virus.server_id == entry_server.server_id
+      assert entry_virus.file_id == virus_id
     end
   end
 

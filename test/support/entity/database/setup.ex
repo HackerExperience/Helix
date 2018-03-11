@@ -2,13 +2,15 @@ defmodule Helix.Test.Entity.Database.Setup do
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Query.Server, as: ServerQuery
-  alias Helix.Entity.Model.DatabaseBankAccount
-  alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Internal.Database, as: DatabaseInternal
+  alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo, as: EntityRepo
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
 
@@ -16,16 +18,23 @@ defmodule Helix.Test.Entity.Database.Setup do
   See `fake_entry_server/1` doc
   """
   def entry_server(opts \\ []) do
-    {entry, related} = fake_entry_server(opts)
-    {:ok, inserted} = EntityRepo.insert(entry)
+    {fake_entry, related} = fake_entry_server(opts)
+    {:ok, _} = EntityRepo.insert(fake_entry)
 
-    {inserted, related}
+    # Fetch again from DB to populate `viruses` assoc
+    entry =
+      DatabaseInternal.fetch_server(
+        fake_entry.entity_id, fake_entry.network_id, fake_entry.server_ip
+      )
+
+    {entry, related}
   end
 
   @doc """
   - entity_id: generated entry belongs to that entity
   - server_id: server that will be added to the entry
   - password: password stored on database entry. Defaults to nil.
+  - viruses: List of File.id that should be linked as Database.Virus
 
   Related data: Server.t, Entity.t
   """
@@ -46,10 +55,24 @@ defmodule Helix.Test.Entity.Database.Setup do
         {server, nip}
       end
 
-    password = Access.get(opts, :password, nil)
+    password = Keyword.get(opts, :password, nil)
+    viruses =
+      if opts[:viruses] do
+        opts[:viruses]
+        |> Enum.map(fn file_id ->
+          fake_entry_virus(
+            entity_id: entity.entity_id,
+            server_id: server.server_id,
+            file_id: file_id
+          )
+        |> elem(0)
+        end)
+      else
+        []
+      end
 
     entry =
-      %DatabaseServer{
+      %Database.Server{
         entity_id: entity.entity_id,
         network_id: nip.network_id,
         server_ip: nip.ip,
@@ -58,6 +81,7 @@ defmodule Helix.Test.Entity.Database.Setup do
         password: password,
         alias: nil,
         notes: nil,
+        viruses: viruses,
         last_update: DateTime.utc_now()
       }
 
@@ -91,12 +115,12 @@ defmodule Helix.Test.Entity.Database.Setup do
         {entity, entity.entity_id}
       end
 
-    acc = Access.get(opts, :acc, BankSetup.account!())
+    acc = Keyword.get(opts, :acc, BankSetup.account!())
 
     atm_ip = ServerQuery.get_ip(acc.atm_id, NetworkHelper.internet_id())
 
     entry =
-      %DatabaseBankAccount{
+      %Database.BankAccount{
         entity_id: entity_id,
         atm_id: acc.atm_id,
         account_number: acc.account_number,
@@ -108,5 +132,62 @@ defmodule Helix.Test.Entity.Database.Setup do
       }
 
     {entry, %{acc: acc, entity: entity}}
+  end
+
+  @doc """
+  See doc on `fake_entry_virus/1`
+  """
+  def entry_virus(opts \\ []) do
+    {entry, related} = fake_entry_virus(opts)
+    inserted = EntityRepo.insert!(entry)
+    {inserted, related}
+  end
+
+  @doc """
+  Opts:
+  - entity_id: Set `entity_id`.
+  - server_id: Set `server_id`.
+  - file_id: Set `file_id`. Defaults to random file id.
+  - from_entry: Gather `entity_id` and `server_id` from the given
+    `Database.Server`. Overrides `entity_id` and `server_id` opts
+  """
+  def fake_entry_virus(opts \\ []) do
+    if is_nil(opts[:entity_id]) and is_nil(opts[:from_entry]),
+      do: raise "I need either `entity_id` or `from_entry` opt"
+
+    entity_id =
+      cond do
+        opts[:from_entry] ->
+          opts[:from_entry].entity_id
+
+        opts[:entity_id] ->
+          opts[:entity_id]
+
+        true ->
+          Entity.ID.generate()
+      end
+
+    server_id =
+      cond do
+      opts[:from_entry] ->
+        opts[:from_entry].server_id
+
+      opts[:server_id] ->
+        opts[:server_id]
+
+      true ->
+        ServerHelper.id()
+    end
+
+    file_id = Keyword.get(opts, :file_id, SoftwareHelper.id())
+
+    entry =
+      %Database.Virus{
+        entity_id: entity_id,
+        server_id: server_id,
+        file_id: file_id
+      }
+
+    {entry, %{}}
   end
 end

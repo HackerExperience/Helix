@@ -9,14 +9,14 @@ defmodule Helix.Entity.Query.Database do
 
   alias HELL.IPv4
   alias Helix.Network.Model.Network
+  alias Helix.Software.Model.File
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Entity
-  alias Helix.Entity.Model.DatabaseBankAccount
-  alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Model.Database
 
   @spec fetch_server(Entity.idt, Network.idt, IPv4.t) ::
-    DatabaseServer.t
+    Database.Server.t
     | nil
   @doc """
   Returns the entry corresponding to the given server (nip).
@@ -25,12 +25,21 @@ defmodule Helix.Entity.Query.Database do
     to: DatabaseInternal
 
   @spec fetch_bank_account(Entity.idt, BankAccount.t) ::
-    DatabaseBankAccount.t
+    Database.BankAccount.t
     | nil
   @doc """
   Returns the entry corresponding to the given bank account. May be outdated.
   """
   defdelegate fetch_bank_account(entity, account),
+    to: DatabaseInternal
+
+  @spec fetch_virus(File.id) ::
+    Database.Virus.t
+    | nil
+  @doc """
+  Returns the entry corresponding to the given virus.
+  """
+  defdelegate fetch_virus(file_id),
     to: DatabaseInternal
 
   @spec get_database(Entity.t) ::

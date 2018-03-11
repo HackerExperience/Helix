@@ -1,4 +1,4 @@
-defmodule Helix.Entity.Model.DatabaseServer do
+defmodule Helix.Entity.Model.Database.Server do
 
   use Ecto.Schema
 
@@ -10,6 +10,7 @@ defmodule Helix.Entity.Model.DatabaseServer do
   alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
+  alias Helix.Entity.Model.Database
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -17,11 +18,12 @@ defmodule Helix.Entity.Model.DatabaseServer do
     entity_id: Entity.id,
     network_id: Network.id,
     server_id: Server.id,
-    server_ip: IPv4.t,
+    server_ip: Network.ip,
     server_type: server_type,
     password: Server.password | nil,
     alias: String.t | nil,
     notes: String.t | nil,
+    viruses: [Database.Virus.t],
     last_update: DateTime.t
   }
 
@@ -29,7 +31,7 @@ defmodule Helix.Entity.Model.DatabaseServer do
     entity_id: Entity.id,
     network_id: Network.id,
     server_id: Server.id,
-    server_ip: IPv4.t,
+    server_ip: Network.ip,
     server_type: server_type
   }
 
@@ -43,13 +45,25 @@ defmodule Helix.Entity.Model.DatabaseServer do
   @type server_type ::
     Constant.t  # :npc | :vpc
 
-  @creation_fields ~w/entity_id network_id server_ip server_id server_type/a
-  @update_fields ~w/password alias notes last_update/a
+  @creation_fields [
+    :entity_id,
+    :network_id,
+    :server_ip,
+    :server_id,
+    :server_type
+  ]
+  @update_fields [:password, :alias, :notes, :last_update]
 
-  @required_creation ~w/entity_id network_id server_ip server_id server_type/a
+  @required_fields [
+    :entity_id,
+    :network_id,
+    :server_ip,
+    :server_id,
+    :server_type
+  ]
 
   # Maybe we could provide types for specific NPCs. eg: bank
-  @possible_server_types ~w/npc vpc/a
+  @possible_server_types [:npc, :vpc]
 
   @alias_max_length 64
   @notes_max_length 1024
@@ -72,6 +86,10 @@ defmodule Helix.Entity.Model.DatabaseServer do
     field :notes, :string
 
     field :last_update, :utc_datetime
+
+    has_many :viruses, Database.Virus,
+      foreign_key: :server_id,
+      references: :server_id
   end
 
   @spec create_changeset(creation_params) ::
@@ -79,7 +97,7 @@ defmodule Helix.Entity.Model.DatabaseServer do
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
-    |> validate_required(@required_creation)
+    |> validate_required(@required_fields)
     |> validate_inclusion(:server_type, @possible_server_types)
     |> update_last_update()
   end
@@ -101,26 +119,33 @@ defmodule Helix.Entity.Model.DatabaseServer do
     import Ecto.Query
 
     alias Ecto.Queryable
-    alias HELL.IPv4
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
-    alias Helix.Entity.Model.DatabaseServer
+    alias Helix.Entity.Model.Database
     alias Helix.Entity.Model.Entity
 
     @spec by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def by_entity(query \\ DatabaseServer, id),
+    def by_entity(query \\ Database.Server, id),
       do: where(query, [d], d.entity_id == ^id)
 
-    @spec by_nip(Queryable.t, Network.idtb, IPv4.t) ::
+    @spec by_nip(Queryable.t, Network.idtb, Network.ip) ::
       Queryable.t
-    def by_nip(query \\ DatabaseServer, network, ip),
+    def by_nip(query \\ Database.Server, network, ip),
       do: where(query, [d], d.network_id == ^network and d.server_ip == ^ip)
 
     @spec by_server(Queryable.t, Server.idtb) ::
       Queryable.t
-    def by_server(query \\ DatabaseServer, id),
+    def by_server(query \\ Database.Server, id),
       do: where(query, [d], d.server_id == ^id)
+
+    @spec join_database_viruses(Queryable.t) ::
+      Queryable.t
+    def join_database_viruses(query) do
+      query
+      |> join(:left, [ds], dv in assoc(ds, :viruses))
+      |> preload([..., ds], [viruses: ds])
+    end
 
     @spec order_by_last_update(Queryable.t) ::
       Queryable.t

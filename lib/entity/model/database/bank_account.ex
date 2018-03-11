@@ -1,4 +1,4 @@
-defmodule Helix.Entity.Model.DatabaseBankAccount do
+defmodule Helix.Entity.Model.Database.BankAccount do
 
   use Ecto.Schema
 
@@ -42,10 +42,9 @@ defmodule Helix.Entity.Model.DatabaseBankAccount do
     optional(:token) => String.t
   }
 
-  @creation_fields ~w/entity_id atm_id atm_ip account_number/a
-  @update_fields ~w/notes password token known_balance last_login_date/a
-
-  @required_creation ~w/entity_id atm_id atm_ip account_number/a
+  @creation_fields [:entity_id, :atm_id, :atm_ip, :account_number]
+  @update_fields [:notes, :password, :token, :known_balance, :last_login_date]
+  @required_creation [:entity_id, :atm_id, :atm_ip, :account_number]
 
   @notes_max_length 1024
 
@@ -102,17 +101,17 @@ defmodule Helix.Entity.Model.DatabaseBankAccount do
     alias HELL.IPv4
     alias Helix.Universe.Bank.Model.ATM
     alias Helix.Universe.Bank.Model.BankAccount
-    alias Helix.Entity.Model.DatabaseBankAccount
+    alias Helix.Entity.Model.Database
     alias Helix.Entity.Model.Entity
 
     @spec by_entity(Queryable.t, Entity.idtb) ::
       Queryable.t
-    def by_entity(query \\ DatabaseBankAccount, id),
+    def by_entity(query \\ Database.BankAccount, id),
       do: where(query, [d], d.entity_id == ^id)
 
-    @spec by_bank_account(Queryable.t, ATM.idtb, BankAccount.account) ::
+    @spec by_account(Queryable.t, ATM.idtb, BankAccount.account) ::
       Queryable.t
-    def by_bank_account(query \\ DatabaseBankAccount, atm, account),
+    def by_account(query \\ Database.BankAccount, atm, account),
       do: where(query, [d], d.atm_id == ^atm and d.account_number == ^account)
 
     @spec order_by_last_update(Queryable.t) ::

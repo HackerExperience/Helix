@@ -11,17 +11,17 @@ defmodule Helix.Entity.Action.Database do
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
+  alias Helix.Software.Model.File
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
-  alias Helix.Entity.Model.DatabaseBankAccount
-  alias Helix.Entity.Model.DatabaseServer
+  alias Helix.Entity.Model.Database
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Database, as: DatabaseQuery
 
   @spec add_server(Entity.idt, Network.idt, IPv4.t, Server.idt) ::
-    {:ok, DatabaseServer.t}
-    | {:error, DatabaseServer.changeset}
+    {:ok, Database.Server.t}
+    | {:error, Database.Server.changeset}
   @doc """
   Adds a new server entry to the database.
 
@@ -29,13 +29,12 @@ defmodule Helix.Entity.Action.Database do
   with extra information like password or notes. Modifying these extra data
   should be done by with `update_*` functions.
   """
-  def add_server(entity, network, ip, server) do
-    DatabaseInternal.add_server(entity, network, ip, server, :npc)
-  end
+  def add_server(entity, network, ip, server),
+    do: DatabaseInternal.add_server(entity, network, ip, server, :npc)
 
   @spec add_bank_account(Entity.idt, BankAccount.t) ::
-    {:ok, DatabaseBankAccount.t}
-    | {:error, DatabaseBankAccount.changeset}
+    {:ok, Database.BankAccount.t}
+    | {:error, Database.BankAccount.changeset}
   @doc """
   Adds a new bank account entry to the database.
 
@@ -48,6 +47,18 @@ defmodule Helix.Entity.Action.Database do
     DatabaseInternal.add_bank_account(entity, bank_account, atm_ip)
   end
 
+  @spec add_virus(Entity.id, Server.id, File.id) ::
+    {:ok, Database.Virus.t}
+    | {:error, Database.Virus.changeset}
+  @doc """
+  Adds a new virus entry to the database.
+
+  All viruses on the database must be linked to a `Database.Server`. This FK
+  will be enforced.
+  """
+  def add_virus(entity_id, server_id, file_id),
+    do: DatabaseInternal.add_virus(entity_id, server_id, file_id)
+
   @spec update_server_password(
     Entity.idt,
     Network.idt,
@@ -55,8 +66,8 @@ defmodule Helix.Entity.Action.Database do
     Server.id,
     Server.password)
   ::
-    {:ok, DatabaseServer.t}
-    | {:error, DatabaseServer.changeset}
+    {:ok, Database.Server.t}
+    | {:error, Database.Server.changeset}
     | {:error, {:server, :belongs_to_entity}}
   @doc """
   Updates the password of the server entry. It is usually called when:
@@ -76,8 +87,8 @@ defmodule Helix.Entity.Action.Database do
   end
 
   @spec update_bank_password(Entity.idt, BankAccount.t, String.t) ::
-    {:ok, DatabaseBankAccount.t}
-    | {:error, DatabaseBankAccount.changeset}
+    {:ok, Database.BankAccount.t}
+    | {:error, Database.BankAccount.changeset}
     | {:error, {:bank_account, :belongs_to_entity}}
   @doc """
   Updates the password of the bank account entry.
@@ -95,8 +106,8 @@ defmodule Helix.Entity.Action.Database do
   end
 
   @spec update_bank_token(Entity.idt, BankAccount.t, BankToken.id) ::
-    {:ok, DatabaseBankAccount.t}
-    | {:error, DatabaseBankAccount.changeset}
+    {:ok, Database.BankAccount.t}
+    | {:error, Database.BankAccount.changeset}
     | {:error, {:bank_account, :belongs_to_entity}}
   @doc """
   Updates the token of the bank account entry.
@@ -114,8 +125,8 @@ defmodule Helix.Entity.Action.Database do
   end
 
   @spec update_bank_login(Entity.idt, BankAccount.t, BankToken.id | nil) ::
-    {:ok, DatabaseBankAccount.t}
-    | {:error, DatabaseBankAccount.changeset}
+    {:ok, Database.BankAccount.t}
+    | {:error, Database.BankAccount.changeset}
     | {:error, {:bank_account, :belongs_to_entity}}
   @doc """
   Updates the bank account entry after a login. This step is the one that adds
@@ -186,7 +197,7 @@ defmodule Helix.Entity.Action.Database do
   end
 
   @spec fetch_or_create_bank_entry(Entity.t, BankAccount.t) ::
-    DatabaseBankAccount.t
+    Database.BankAccount.t
   defp fetch_or_create_bank_entry(entity, account) do
     case DatabaseQuery.fetch_bank_account(entity, account) do
       entry = %{} ->
@@ -198,7 +209,7 @@ defmodule Helix.Entity.Action.Database do
   end
 
   @spec fetch_or_create_server(Entity.t, Network.idt, IPv4.t, Server.id) ::
-    DatabaseServer.t
+    Database.Server.t
   defp fetch_or_create_server(entity, network_id, ip, server_id) do
     case DatabaseQuery.fetch_server(entity, network_id, ip) do
       entry = %{} ->

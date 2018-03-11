@@ -20,6 +20,7 @@ defmodule Helix.Entity.Repo.Migrations.InitialEntityDomain do
         references(:entities, column: :entity_id, type: :inet),
         primary_key: true
     end
+    # create unique_index(:entity_servers, [:server_id]) at `AddDatabaseVirus`
 
     create table(:entity_components, primary_key: false) do
       add :entity_id,

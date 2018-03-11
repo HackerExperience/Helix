@@ -37,8 +37,9 @@ defmodule Helix.Software.Event.Handler.VirusTest do
       EventHelper.emit(event)
 
       # Virus running time has been updated
+      # (returning 1 is OK because slower systems (travis))
       virus = VirusQuery.fetch(file.file_id)
-      assert virus.running_time == 0
+      assert_in_delta virus.running_time, 0, 1
       assert virus.is_active?
     end
   end

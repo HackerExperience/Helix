@@ -21,7 +21,7 @@ defmodule Helix.Software.Model.Virus do
       file_id: File.id,
       entity_id: Entity.id,
       is_active?: boolean,
-      running_time: seconds :: integer
+      running_time: seconds :: integer | nil
     }
 
   @typep wallet :: term

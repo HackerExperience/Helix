@@ -1,5 +1,6 @@
 defmodule Helix.Entity.Event.Handler.Database do
 
+  alias Helix.Event
   alias Helix.Entity.Action.Database, as: DatabaseAction
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
@@ -11,6 +12,8 @@ defmodule Helix.Entity.Event.Handler.Database do
     as: BankAccountLoginEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Token.Acquired,
     as: BankAccountTokenAcquiredEvent
+  alias Helix.Software.Event.Virus.Installed,
+    as: VirusInstalledEvent
 
   @doc """
   Handler called when a BruteforceProcess has finished and the target server
@@ -71,5 +74,18 @@ defmodule Helix.Entity.Event.Handler.Database do
       event.account,
       event.token_id
     )
+  end
+
+  @doc """
+  Handler called after a virus is installed. Its main goal is to add the virus
+  to the Hacked Database (`Database.Virus`).
+  """
+  def on_virus_installed(event = %VirusInstalledEvent{}) do
+    server_id =
+      event
+      |> Event.get_process()
+      |> Map.fetch!(:target_id)
+
+    DatabaseAction.add_virus(event.entity_id, server_id, event.file.file_id)
   end
 end
