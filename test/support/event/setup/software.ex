@@ -71,7 +71,7 @@ defmodule Helix.Test.Event.Setup.Software do
   """
   def file_downloaded(connection_type: type) do
     file_downloaded()
-    |> Map.replace(:connection_type, type)
+    |> Map.replace!(:connection_type, type)
   end
 
   def file_downloaded do

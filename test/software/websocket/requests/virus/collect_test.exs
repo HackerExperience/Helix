@@ -83,10 +83,10 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
       p3 = Map.drop(base_params, ["atm_id"])
 
       # Invalid entry at `viruses`
-      p4 = Map.replace(base_params, "viruses", ["lol", to_string(file2_id)])
+      p4 = Map.replace!(base_params, "viruses", ["lol", to_string(file2_id)])
 
       # Viruses must not be empty
-      p5 = Map.replace(base_params, "viruses", [])
+      p5 = Map.replace!(base_params, "viruses", [])
 
       req0 = VirusCollectRequest.new(p0)
       req1 = VirusCollectRequest.new(p1)
@@ -212,35 +212,37 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
         }
 
       ### Test 0: `gateway_id` is not owned by the entity
-      p0 = Map.replace(base_params, :gateway_id, server.server_id)
+      p0 = Map.replace!(base_params, :gateway_id, server.server_id)
       req0 = RequestHelper.mock_request(VirusCollectRequest, p0)
 
       assert {:error, reason, _} = Requestable.check_permissions(req0, socket)
       assert reason == %{message: "server_not_belongs"}
 
       ### Test 1: BankAccount is not owned by the entity
-      p1 = Map.replace(base_params, :account_number, bad_account.account_number)
+      p1 =
+        Map.replace!(base_params, :account_number, bad_account.account_number)
       req1 = RequestHelper.mock_request(VirusCollectRequest, p1)
 
       assert {:error, reason, _} = Requestable.check_permissions(req1, socket)
       assert reason == %{message: "bank_account_not_belongs"}
 
       ### Test 2: Bounce may not be used
-      p2 = Map.replace(base_params, :bounce_id, bad_bounce.bounce_id)
+      p2 = Map.replace!(base_params, :bounce_id, bad_bounce.bounce_id)
       req2 = RequestHelper.mock_request(VirusCollectRequest, p2)
 
       assert {:error, reason, _} = Requestable.check_permissions(req2, socket)
       assert reason == %{message: "bounce_not_belongs"}
 
       ### Test 3: A cracker is not a virus!
-      p3 = Map.replace(base_params, :viruses, [file1.file_id, cracker.file_id])
+      p3 = Map.replace!(base_params, :viruses, [file1.file_id, cracker.file_id])
       req3 = RequestHelper.mock_request(VirusCollectRequest, p3)
 
       assert {:error, reason, _} = Requestable.check_permissions(req3, socket)
       assert reason == %{message: "virus_not_found"}
 
       ### Test 4: Collecting from a virus that is not active
-      p4 = Map.replace(base_params, :viruses, [file1.file_id, inactive.file_id])
+      p4 =
+        Map.replace!(base_params, :viruses, [file1.file_id, inactive.file_id])
       req4 = RequestHelper.mock_request(VirusCollectRequest, p4)
 
       assert {:error, reason, _} = Requestable.check_permissions(req4, socket)

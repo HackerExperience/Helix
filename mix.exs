@@ -72,6 +72,7 @@ defmodule Helix.Mixfile do
       {:ex_machina, "~> 2.1", only: :test},
       {:earmark, "~> 1.2.4", only: :dev},
       {:ex_doc, "~> 0.18.1", only: :dev},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
 
       {:inch_ex, "~> 0.5.6", only: [:dev, :test]},
 

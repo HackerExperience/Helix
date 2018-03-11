@@ -470,8 +470,8 @@ defmodule Helix.Process.Model.Process do
     formatted_data = Processable.after_read_hook(process.data)
 
     process
-    |> Map.replace(:state, get_state(process))
-    |> Map.replace(:data, formatted_data)
+    |> Map.replace!(:state, get_state(process))
+    |> Map.replace!(:data, formatted_data)
     |> format_resources()
     |> infer_usage()
     |> estimate_duration()
@@ -575,9 +575,9 @@ defmodule Helix.Process.Model.Process do
       end
 
     process
-    |> Map.replace(:completion_date, completion_date)
-    |> Map.replace(:time_left, time_left)
-    |> Map.replace(:percentage, percentage)
+    |> Map.replace!(:completion_date, completion_date)
+    |> Map.replace!(:time_left, time_left)
+    |> Map.replace!(:percentage, percentage)
   end
 
   docp """

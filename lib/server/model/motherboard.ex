@@ -169,7 +169,7 @@ defmodule Helix.Server.Model.Motherboard do
         :ok ->
           changeset
           |> apply_changes()
-          |> Map.replace(:motherboard_id, mobo.component_id)
+          |> Map.replace!(:motherboard_id, mobo.component_id)
 
         {:error, reason} ->
           changeset
@@ -227,7 +227,7 @@ defmodule Helix.Server.Model.Motherboard do
       :ok ->
         changeset
         |> apply_changes()
-        |> Map.replace(:motherboard_id, motherboard.motherboard_id)
+        |> Map.replace!(:motherboard_id, motherboard.motherboard_id)
 
       {:error, reason} ->
         changeset
@@ -258,7 +258,7 @@ defmodule Helix.Server.Model.Motherboard do
           |> Map.delete(real_id)
 
         acc
-        |> Map.replace(slot_type, new_sub_type)
+        |> Map.replace!(slot_type, new_sub_type)
       end)
 
     # Now we'll convert the available map into an API-friendly list

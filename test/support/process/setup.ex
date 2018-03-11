@@ -115,7 +115,7 @@ defmodule Helix.Test.Process.Setup do
       params
       |> Process.create_changeset()
       |> Ecto.Changeset.apply_changes()
-      |> Map.replace(:process_id, Process.ID.generate())
+      |> Map.replace!(:process_id, Process.ID.generate())
 
     related = %{
       source_entity_id: source_entity_id,

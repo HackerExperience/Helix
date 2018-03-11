@@ -15,7 +15,7 @@ request Helix.Server.Websocket.Requests.Config.Check do
       sub_request =
         backend
         |> apply(:new, [request.unsafe["value"], socket])
-        |> Map.replace(:relay, request.relay)
+        |> Map.replace!(:relay, request.relay)
 
       with {:ok, sub_req} <- Requestable.check_params(sub_request, socket) do
         update_meta(request, %{sub_request: sub_req}, reply: true)
