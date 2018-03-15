@@ -168,18 +168,94 @@ defmodule Helix.Story.Mission.Tutorial do
 
   step NastyVirus do
 
+    alias Helix.Server.Model.Server
+    alias Helix.Server.Query.Server, as: ServerQuery
+    alias Helix.Software.Model.File
+    alias Helix.Story.Action.Context, as: ContextAction
+
+    alias Helix.Software.Make.File, as: MakeFile
+
     email "nasty_virus1"
 
-    empty_setup()
+    on_email "nasty_virus1",
+      send: "nasty_virus2",
+      send_opts: [sleep: 3]
+
+    email "nasty_virus2",
+      replies: ["punks1"]
+
+    email "punks2"
+
+    on_reply "punks1",
+      send: "punks2",
+      send_opts: [sleep: 3]
+
+    email "punks3"
+
+    filter_email "punks2" do
+      {{:send_email, "punks3", %{ip: step.meta.ip}, [sleep: 2]}, step, []}
+    end
+
+    def setup(step) do
+      # Create the underlying character (:rcn) and its server
+      {:ok, server, _, e1} =
+        setup_once :char, {step.entity_id, :rcn} do
+          result = {:ok, server, %{entity: entity}, _} =
+            StoryMake.char(step.manager.network_id)
+
+          ContextAction.save(
+            step.entity_id, :rcn, :server_id, server.server_id
+          )
+          ContextAction.save(
+            step.entity_id, :rcn, :entity_id, entity.entity_id
+          )
+
+          result
+        end
+
+      # Create the Spyware the player is supposed to download
+      {:ok, spyware, _, e2} =
+        setup_once :file, step.meta[:spyware_id] do
+          result = {:ok, spyware, _, _} =
+            MakeFile.spyware(server, %{vir_spyware: 30})
+
+          ContextAction.save(
+            step.entity_id, :rcn, :spyware_id, spyware.file_id
+          )
+
+          result
+        end
+
+      meta =
+        %{
+          ip: ServerQuery.get_ip(server, step.manager.network_id),
+          server_id: server.server_id,
+          spyware_id: spyware.file_id
+        }
+
+      {meta, %{}, e1 ++ e2}
+    end
 
     def start(step) do
-      e1 = send_email step, "nasty_virus1", %{}
+      {meta, _, e1} = setup(step)
 
-      {:ok, step, e1, sleep: 4}
+      e2 = send_email step, "nasty_virus1", %{}
+
+      step = %{step| meta: meta}
+
+      {:ok, step, e1 ++ e2, sleep: 4}
     end
 
     def complete(step) do
       {:ok, step, []}
+    end
+
+    format_meta do
+      %{
+        ip: meta.ip,
+        server_id: meta.server_id |> Server.ID.cast!(),
+        spyware_id: meta.spyware_id |> File.ID.cast!()
+      }
     end
 
     next_step __MODULE__

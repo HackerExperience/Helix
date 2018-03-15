@@ -36,6 +36,9 @@ defmodule Helix.Software.Make.File do
     file
   end
 
+  def spyware(parent, modules, data \\ %{}),
+    do: file(parent, :virus_spyware, modules, data)
+
   @spec file(file_parent, Software.type, modules, data) ::
     file_return(Software.type)
   defp file(server = %Server{}, type, modules, data) do
