@@ -388,7 +388,7 @@ defmodule Helix.Story.Model.Step.Macros do
     quote do
 
       @doc false
-      def handle_event(step = unquote(step), unquote(event), unquote(meta)) do
+      def handle_event(step = unquote(step), unquote(event), m = unquote(meta)) do
         unquote(
           case opts do
             [do: :complete, send_opts: send_opts] ->
@@ -489,6 +489,37 @@ defmodule Helix.Story.Model.Step.Macros do
       end
 
     [email_block] ++ [reply_block]
+  end
+
+  @doc """
+  `filter_email` is workaround to a limitation on `filter` macro that is lacking
+  some flexibility. Works for now, but probably should be reworked later, in
+  order to make `filter` a more flexible method.
+  """
+  defmacro filter_email(email_id, do: block) do
+    quote do
+
+      @doc false
+      def handle_event(
+          step,
+          %StoryEmailSentEvent{
+            email: %{id: unquote(email_id)}
+          },
+          meta
+        )
+      do
+        var!(step) = step
+        var!(meta) = meta
+
+        # Mark unhygienic variables as used
+        var!(step)
+        var!(meta)
+
+        unquote(block)
+
+      end
+
+    end
   end
 
   @doc """

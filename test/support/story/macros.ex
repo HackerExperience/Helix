@@ -33,10 +33,14 @@ defmodule Helix.Test.Story.Macros do
       assert unquote(event).event == "story_email_sent"
       assert event_data.email_id == expected_email
 
-      Enum.each(replies, fn reply ->
-        reply = Map.fetch!(unquote(step_var), reply)
-        assert Enum.member?(event_data.replies, reply)
-      end)
+      if Enum.empty?(replies) do
+        assert Enum.empty?(event_data.replies)
+      else
+        Enum.each(replies, fn reply ->
+          reply = Map.fetch!(unquote(step_var), reply)
+          assert Enum.member?(event_data.replies, reply)
+        end)
+      end
 
       assert event_data.contact_id == to_string(unquote(step_var).contact)
       assert event_data.step =~ to_string(unquote(step_var).name)

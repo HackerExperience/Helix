@@ -27,6 +27,16 @@ defmodule Helix.Test.Story.Vars do
         msg3: "yeah_right",
         msg4: "downloaded",
         msg5: "nothing_now"
+      },
+      nasty: %{
+        contact: "friend",
+        name: "nasty_virus",
+        next: "IDONTKNOW",
+        msg1: "nasty_virus1",
+        msg2: "nasty_virus2",
+        msg3: "punks1",
+        msg4: "punks2",
+        msg5: "punks3"
       }
     }
   }

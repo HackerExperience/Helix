@@ -98,7 +98,7 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
       [story_email_sent, process_created] =
         wait_events [:story_email_sent, :process_created], timeout()
 
-      assert_email story_email_sent, :msg2, [], s.tutorial.dl_crc
+      assert_email story_email_sent, :msg2, [:msg3], s.tutorial.dl_crc
 
       # Flush pending messages
       EventHelper.flush_timer()
@@ -127,6 +127,52 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
       assert_email story_email_sent, :msg5, [], s.tutorial.dl_crc
 
       assert_transition story_step_proceeded, s.tutorial.dl_crc
+
+      # Fetch setup data
+      %{object: cur_step} = StoryQuery.fetch_step(entity_id, cur_step.contact)
+
+      # Generated metadata from the Tutorial.NastyVirus setup
+      assert cur_step.meta.ip
+      assert cur_step.meta.server_id
+      assert cur_step.meta.spyware_id
+
+      EventHelper.flush_timer()
+
+      [story_email_sent] = wait_events [:story_email_sent]
+
+      assert_email story_email_sent, :msg1, [], s.tutorial.nasty
+
+      EventHelper.flush_timer()
+
+      [story_email_sent] = wait_events [:story_email_sent]
+
+      assert_email story_email_sent, :msg2, [:msg3], s.tutorial.nasty
+
+      # Let's reply to :msg2 using :msg3
+      params =
+        %{
+          "reply_id" => s.tutorial.nasty.msg3,
+          "contact_id" => s.contact.friend
+        }
+      ref = push account_socket, "email.reply", params
+      assert_reply ref, :ok, _, timeout()
+
+      [story_reply_sent] = wait_events [:story_reply_sent]
+
+      assert_reply story_reply_sent, :msg3, :msg2, [], s.tutorial.nasty
+
+      EventHelper.flush_timer()
+
+      [story_email_sent] = wait_events [:story_email_sent]
+
+      assert_email story_email_sent, :msg4, [], s.tutorial.nasty
+
+      EventHelper.flush_timer()
+
+      [story_email_sent] = wait_events [:story_email_sent]
+
+      assert_email story_email_sent, :msg5, [], s.tutorial.nasty
+      assert story_email_sent.data.meta["ip"] == cur_step.meta.ip
     end
   end
 end
