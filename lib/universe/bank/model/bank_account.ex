@@ -19,13 +19,14 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     account_number: account,
     bank_id: NPC.id,
     atm_id: ATM.id,
-    password: String.t,
+    password: password,
     balance: balance,
     owner_id: Account.id
   }
 
   @type balance :: non_neg_integer
   @type amount :: pos_integer
+  @type password :: String.t
 
   @type creation_params :: %{
     bank_id: NPC.idtb,
@@ -136,7 +137,7 @@ defmodule Helix.Universe.Bank.Model.BankAccount do
     do: Enum.random(@account_range)
 
   @spec generate_account_password ::
-    String.t
+    BankAccount.password
   defp generate_account_password,
     do: Password.generate(:bank_account)
 

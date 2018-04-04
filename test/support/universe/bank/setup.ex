@@ -80,13 +80,15 @@ defmodule Helix.Test.Universe.Bank.Setup do
           0
       end
 
+    password = Keyword.get(opts, :password, BankHelper.password())
+
     acc =
       %BankAccount{
         account_number: number,
         balance: balance,
         bank_id: bank.id,
         atm_id: atm_id,
-        password: "secret",
+        password: password,
         owner_id: owner_id,
         creation_date: DateTime.utc_now()
       }

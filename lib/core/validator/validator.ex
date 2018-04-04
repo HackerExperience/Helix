@@ -15,7 +15,7 @@ defmodule Helix.Core.Validator do
   This is a generic function meant to validate external input that does not
   conform to a specific shape or format (like internal IDs or IP addresses).
 
-  The `element` argument identifies what the input is supposed to represent, and
+  The `type` argument identifies what the input is supposed to represent, and
   we leverage this information to customize the validation for different kinds
   of input.
   """

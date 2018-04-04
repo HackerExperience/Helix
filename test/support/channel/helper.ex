@@ -11,4 +11,7 @@ defmodule Helix.Test.Channel.Helper do
 
     "server:" <> network_id <> "@" <> ip <> "#" <> counter
   end
+
+  def bank_topic_name(atm_id = %Server.ID{}, account_number),
+    do: "bank:" <> to_string(account_number) <> "@" <> to_string(atm_id)
 end
