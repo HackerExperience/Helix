@@ -117,7 +117,7 @@ defmodule Helix.Story.Mission.Tutorial do
       hespawn fn ->
 
         # Send `about_that` when download starts
-        on_process_started :file_download, cracker.file_id, email: "about_that"
+        on_download_started cracker.file_id, email: "about_that", sleep: 2
 
         # Reply `downloaded` when the cracker has been downloaded
         story_listen cracker.file_id, FileDownloadedEvent, reply: "downloaded"
@@ -173,6 +173,10 @@ defmodule Helix.Story.Mission.Tutorial do
     alias Helix.Software.Model.File
     alias Helix.Story.Action.Context, as: ContextAction
 
+    alias Helix.Client.Web1.Event.Action.Performed, as: Web1ActionPerformedEvent
+    alias Helix.Server.Event.Server.Password.Acquired,
+      as: ServerPasswordAcquiredEvent
+
     alias Helix.Software.Make.File, as: MakeFile
 
     email "nasty_virus1"
@@ -182,7 +186,7 @@ defmodule Helix.Story.Mission.Tutorial do
       send_opts: [sleep: 3]
 
     email "nasty_virus2",
-      replies: ["punks1"]
+      replies: "punks1"
 
     email "punks2"
 
@@ -195,6 +199,60 @@ defmodule Helix.Story.Mission.Tutorial do
     filter_email "punks2" do
       {{:send_email, "punks3", %{ip: step.meta.ip}, [sleep: 2]}, step, []}
     end
+
+    email "dlayd_much1",
+      replies: "dlayd_much2"
+
+    email "dlayd_much3"
+
+    on_reply "dlayd_much2",
+      send: "dlayd_much3",
+      send_opts: [sleep: 2]
+
+    email "dlayd_much4",
+      replies: "noice"
+
+    on_email "dlayd_much4",
+      reply: "noice",
+      send_opts: [sleep: 2]
+
+    email "nasty_virus3",
+      replies: ["virus_spotted1"]
+
+    reply "virus_spotted1"
+
+    on_reply "virus_spotted1",
+      send: "virus_spotted2",
+      send_opts: [sleep: 2]
+
+    email "virus_spotted2",
+      replies: ["pointless_convo1"]
+
+    reply "pointless_convo1"
+
+    on_reply "pointless_convo1",
+      send: "pointless_convo2",
+      send_opts: [sleep: 3]
+
+    email "pointless_convo2",
+      replies: ["pointless_convo3"]
+
+    on_email "pointless_convo2",
+      reply: "pointless_convo3",
+      send_opts: [sleep: 3]
+
+    reply "pointless_convo3"
+
+    on_reply "pointless_convo3",
+      send: "pointless_convo4",
+      send_opts: [sleep: 4]
+
+    email "pointless_convo4",
+      replies: ["pointless_convo5"]
+
+    on_email "pointless_convo4",
+      reply: "pointless_convo5",
+      send_opts: [sleep: 2]
 
     def setup(step) do
       # Create the underlying character (:rcn) and its server
@@ -233,8 +291,45 @@ defmodule Helix.Story.Mission.Tutorial do
           spyware_id: spyware.file_id
         }
 
+      # Listeners
+      hespawn fn ->
+
+        # Send `dlayd_much1` when bruteforce starts
+        on_bruteforce_started server.server_id, email: "dlayd_much1", sleep: 2
+
+        # Send `nasty_virus3` when bruteforce finishes
+        story_listen server.server_id, ServerPasswordAcquiredEvent,
+          email: "nasty_virus3", sleep: 2
+
+        # Send `pointless_convo1` when download starts
+        on_download_started spyware.file_id, reply: "pointless_convo1", sleep: 2
+
+      end
+
       {meta, %{}, e1 ++ e2}
     end
+
+    # Filters
+
+    # Send `dlayd_much4` email when player opens TaskManager app
+    filter(
+      _step,
+      %Web1ActionPerformedEvent{
+        action: :tutorial_accessed_task_manager
+      },
+      _meta,
+      send: "dlayd_much4", send_opts: [sleep: 1]
+    )
+
+    # Send `virus_spotted1` reply when player spots the virus
+    filter(
+      _step,
+      %Web1ActionPerformedEvent{
+        action: :tutorial_spotted_nasty_virus
+      },
+      _meta,
+      reply: "virus_spotted1", send_opts: [sleep: 1]
+    )
 
     def start(step) do
       {meta, _, e1} = setup(step)

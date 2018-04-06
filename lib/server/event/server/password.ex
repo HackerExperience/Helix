@@ -4,8 +4,9 @@ defmodule Helix.Server.Event.Server.Password do
 
   event Acquired do
     @moduledoc """
-    The ServerPasswordAcquiredEvent is fired after a Bruteforce attack has been
-    completed, and the attacker discovered the target's server root password.
+    The `ServerPasswordAcquiredEvent` is fired after a Bruteforce attack has
+    been completed, and the attacker discovered the target's server root
+    password.
     """
 
     alias Helix.Entity.Model.Entity
@@ -60,6 +61,12 @@ defmodule Helix.Server.Event.Server.Password do
       """
       def whom_to_notify(event),
         do: %{account: event.entity_id}
+    end
+
+    listenable do
+      listen(event) do
+        [event.server_id]
+      end
     end
   end
 end

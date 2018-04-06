@@ -88,6 +88,11 @@ defmodule Helix.Event.Dispatcher do
   # All
   event Web1Event.Action.Performed
 
+  # Custom handlers
+  event Web1Event.Action.Performed,
+    StoryHandler.Story,
+    :event_handler
+
   ##############################################################################
   # Entity events
   ##############################################################################

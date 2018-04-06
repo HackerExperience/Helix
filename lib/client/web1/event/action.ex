@@ -31,11 +31,5 @@ defmodule Helix.Client.Web1.Event.Action do
         action: action
       }
     end
-
-    listenable do
-      listen(event) do
-        [event.entity_id]
-      end
-    end
   end
 end
