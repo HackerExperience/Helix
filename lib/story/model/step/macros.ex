@@ -16,7 +16,6 @@ defmodule Helix.Story.Model.Step.Macros do
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Query.Story, as: StoryQuery
 
-  alias Helix.Client.Web1.Event.Action.Performed, as: Web1ActionPerformedEvent
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
@@ -166,18 +165,6 @@ defmodule Helix.Story.Model.Step.Macros do
                 {:noop, []}
             end
           end
-
-          @doc """
-          Callback used to filter the client action, making sure the action
-          broadcasted is the desired one. If so, relays to the proper callback.
-          """
-          callback :cb_client_action, event, meta do
-            if to_string(event.action) == meta.action do
-              relay_callback meta.relay_cb, event, meta
-            else
-              {:noop, []}
-            end
-          end
         end
       end
     end
@@ -302,8 +289,8 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
-  defp get_event_from_action(:client_action),
-    do: Web1ActionPerformedEvent
+  defp get_event_from_action(:process_started),
+    do: ProcessCreatedEvent
 
   @doc """
   Listener that triggers once the process of type `type` acts over `element_id`.
@@ -337,29 +324,6 @@ defmodule Helix.Story.Model.Step.Macros do
     quote do
       on_process_started unquote(type), {unquote(field), unquote(element_id)},
         unquote(callback)
-    end
-  end
-
-  @doc """
-  Listeners that triggers once the player has performed `action` on the client.
-  """
-  defmacro on_client_action(_client, action, entity_id, callback) do
-    quote do
-
-      # TODO: Proper handler for multiple clients based on the `client` var
-      event = Web1ActionPerformedEvent
-
-      {callback_name, extra_meta} = get_callback_data(unquote(callback))
-
-      meta =
-        %{
-          action: to_string(unquote(action)),
-          relay_cb: callback_name
-        }
-        |> Map.merge(extra_meta)
-
-      story_listen unquote(entity_id), event, meta, :cb_client_action
-
     end
   end
 

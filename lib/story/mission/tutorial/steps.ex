@@ -173,7 +173,7 @@ defmodule Helix.Story.Mission.Tutorial do
     alias Helix.Software.Model.File
     alias Helix.Story.Action.Context, as: ContextAction
 
-    alias Helix.Client.Web1.Event.Action.Performed, as: Web1ActionPerformedEvent
+    alias Helix.Client.Event.Action.Performed, as: ClientActionPerformedEvent
     alias Helix.Server.Event.Server.Password.Acquired,
       as: ServerPasswordAcquiredEvent
 
@@ -314,7 +314,8 @@ defmodule Helix.Story.Mission.Tutorial do
     # Send `dlayd_much4` email when player opens TaskManager app
     filter(
       _step,
-      %Web1ActionPerformedEvent{
+      %ClientActionPerformedEvent{
+        client: _,
         action: :tutorial_accessed_task_manager
       },
       _meta,
@@ -324,7 +325,8 @@ defmodule Helix.Story.Mission.Tutorial do
     # Send `virus_spotted1` reply when player spots the virus
     filter(
       _step,
-      %Web1ActionPerformedEvent{
+      %ClientActionPerformedEvent{
+        client: _,
         action: :tutorial_spotted_nasty_virus
       },
       _meta,

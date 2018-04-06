@@ -1,32 +1,32 @@
 import Helix.Event
 
-# Note to self: When implementing `web2`, use a macro that generates the
-# skeleton of this event and each client then specializes it.
-defmodule Helix.Client.Web1.Event.Action do
+defmodule Helix.Client.Event.Action do
 
   event Performed do
     @moduledoc """
-    `Web1ActionPerformedEvent` is emitted when the client performed a custom
+    `ClientActionPerformedEvent` is emitted when the client performed a custom
     action that should be tracked by the backend for a specific behaviour.
     Examples include the tutorial quest, which awaits for the player to open
     apps in order to proceed with the storyline.
     """
 
     alias Helix.Entity.Model.Entity
-    alias Helix.Client.Web1.Model.Web1
+    alias Helix.Client.Model.Client
 
-    event_struct [:entity_id, :action]
+    event_struct [:client, :entity_id, :action]
 
     @type t ::
       %__MODULE__{
+        client: Client.t,
         entity_id: Entity.id,
-        action: Web1.action
+        action: Client.action
       }
 
-    @spec new(Entity.id, Web1.action) ::
+    @spec new(Client.t, Entity.id, Client.action) ::
       t
-    def new(entity_id, action) do
+    def new(client, entity_id, action) do
       %__MODULE__{
+        client: client,
         entity_id: entity_id,
         action: action
       }
