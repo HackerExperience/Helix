@@ -40,7 +40,7 @@ defmodule Helix.Event.Dispatcher do
   alias Helix.Core.Listener.Event.Handler.Listener, as: ListenerHandler
   alias Helix.Account.Event, as: AccountEvent
   alias Helix.Account.Event.Handler, as: AccountHandler
-  alias Helix.Client.Web1.Event, as: Web1Event
+  alias Helix.Client.Event, as: ClientEvent
   alias Helix.Entity.Event, as: EntityEvent
   alias Helix.Entity.Event.Handler, as: EntityHandler
   alias Helix.Log.Event, as: LogEvent
@@ -86,10 +86,10 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
-  event Web1Event.Action.Performed
+  event ClientEvent.Action.Performed
 
   # Custom handlers
-  event Web1Event.Action.Performed,
+  event ClientEvent.Action.Performed,
     StoryHandler.Story,
     :event_handler
 

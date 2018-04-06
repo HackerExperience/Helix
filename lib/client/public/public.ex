@@ -9,7 +9,7 @@ defmodule Helix.Client.Public.Client do
   alias Helix.Client.Model.Client
   alias Helix.Client.Web1.Public.Bootstrap, as: Web1Bootstrap
 
-  alias Helix.Client.Web1.Event.Action.Performed, as: Web1ActionPerformedEvent
+  alias Helix.Client.Event.Action.Performed, as: ClientActionPerformedEvent
 
   @typep bootstrap_result :: Web1Bootstrap.bootstrap
   @typep render_bootstrap_result :: Web1Bootstrap.rendered_bootstrap
@@ -39,12 +39,11 @@ defmodule Helix.Client.Public.Client do
   It's up to the handlers of the `ClientActionPerformedEvent` to determine what
   should be done with such information.
 
-  Emits: `Web1ActionPerformedEvent`
+  Emits: `ClientActionPerformedEvent`
   """
   def broadcast_action(client, entity_id, action) do
     client
-    |> get_action_event()
-    |> apply(:new, [entity_id, action])
+    |> ClientActionPerformedEvent.new(entity_id, action)
     |> Event.emit()
   end
 
@@ -61,7 +60,4 @@ defmodule Helix.Client.Public.Client do
     do: Web1Bootstrap.render_bootstrap(bootstrap)
   defp dispatch(_, :render_bootstrap, _),
     do: %{}
-
-  defp get_action_event(:web1),
-    do: Web1ActionPerformedEvent
 end
