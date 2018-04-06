@@ -18,6 +18,9 @@ defmodule Helix.Test.Server.Helper do
 
   @internet_id NetworkHelper.internet_id()
 
+  def fetch(server_id = %Server.ID{}),
+    do: ServerQuery.fetch(server_id)
+
   def get_ip(server, network_id \\ @internet_id)
   def get_ip(server = %Server{}, network_id),
     do: get_ip(server.server_id, network_id)

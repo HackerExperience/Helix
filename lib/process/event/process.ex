@@ -121,7 +121,12 @@ defmodule Helix.Process.Event.Process do
 
     listenable do
       listen(event = %_{confirmed: true}) do
-        [event.process.src_file_id, event.process.tgt_file_id]
+        [
+          event.process.gateway_id,
+          event.process.target_id,
+          event.process.src_file_id,
+          event.process.tgt_file_id,
+        ]
       end
     end
   end

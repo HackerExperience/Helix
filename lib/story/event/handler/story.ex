@@ -223,6 +223,8 @@ defmodule Helix.Story.Event.Handler.Story do
     do: emit(event, [], from: source_event)
   defp emit(event, [], from: source_event),
     do: Event.emit(event, from: source_event)
+  defp emit(event, [sleep: 0], from: source_event),
+    do: emit(event, from: source_event)
   defp emit(event, [sleep: interval], from: source_event),
     do: Event.emit_after(event, interval * 1000, from: source_event)
 end

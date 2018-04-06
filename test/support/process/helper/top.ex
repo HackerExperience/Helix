@@ -9,6 +9,16 @@ defmodule Helix.Test.Process.TOPHelper do
   alias Helix.Process.Action.TOP, as: TOPAction
 
   @doc """
+  Fetches a process from an event or its ID (binary or Helix.ID).
+  """
+  def fetch_process(event = %{event: "process_created"}),
+    do: fetch_process(event.data.process_id)
+  def fetch_process(process_id) when is_binary(process_id),
+    do: fetch_process(Process.ID.cast!(process_id))
+  def fetch_process(process_id = %Process.ID{}),
+    do: ProcessQuery.fetch(process_id)
+
+  @doc """
   Stops the TOP of a server.
   """
   def top_stop(_),
