@@ -8,6 +8,7 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Account.Websocket.Channel.Account.Join, as: AccountJoin
   alias Helix.Account.Websocket.Requests.Bootstrap, as: BootstrapRequest
   alias Helix.Account.Websocket.Requests.Logout, as: LogoutRequest
+  alias Helix.Client.Websocket.Requests.Action, as: ClientActionRequest
   alias Helix.Client.Websocket.Requests.Setup, as: ClientSetupProxyRequest
   alias Helix.Network.Websocket.Requests.Bounce.Create, as: BounceCreateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Update, as: BounceUpdateRequest
@@ -56,6 +57,23 @@ channel Helix.Account.Websocket.Channel.Account do
   + base errors
   """
   topic "client.setup", ClientSetupProxyRequest
+
+  @doc """
+  Notifies the backend that `action` has been performed by the player.
+
+  Params:
+    *action: Action performed by the player. [0]
+
+  Returns: :ok
+
+  Errors:
+  - "bad_action": The given `action` is not valid. See [0].
+  + base errors
+
+  Notes:
+    [0] - List of all possible actions can be found at `ClientModel`.
+  """
+  topic "client.action", ClientActionRequest
 
   @doc """
   Replies to a Storyline email.

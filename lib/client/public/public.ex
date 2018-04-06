@@ -4,9 +4,12 @@ defmodule Helix.Client.Public.Client do
   `Client.t` and dispatches to the corresponding client implementation.
   """
 
+  alias Helix.Event
   alias Helix.Entity.Model.Entity
   alias Helix.Client.Model.Client
   alias Helix.Client.Web1.Public.Bootstrap, as: Web1Bootstrap
+
+  alias Helix.Client.Web1.Event.Action.Performed, as: Web1ActionPerformedEvent
 
   @typep bootstrap_result :: Web1Bootstrap.bootstrap
   @typep render_bootstrap_result :: Web1Bootstrap.rendered_bootstrap
@@ -27,6 +30,24 @@ defmodule Helix.Client.Public.Client do
   def render_bootstrap(client, %{client: bootstrap}),
     do: %{client: dispatch(client, :render_bootstrap, bootstrap)}
 
+  @spec broadcast_action(Client.t, Entity.id, Client.action) ::
+    term
+  @doc """
+  Broadcasts to the world (i.e. Helix) that `action` has been performed by
+  `entity_id`, which is using `client`.
+
+  It's up to the handlers of the `ClientActionPerformedEvent` to determine what
+  should be done with such information.
+
+  Emits: `Web1ActionPerformedEvent`
+  """
+  def broadcast_action(client, entity_id, action) do
+    client
+    |> get_action_event()
+    |> apply(:new, [entity_id, action])
+    |> Event.emit()
+  end
+
   @spec dispatch(Client.t, :bootstrap, Entity.id) ::
     bootstrap_result
   defp dispatch(:web1, :bootstrap, entity_id),
@@ -40,4 +61,7 @@ defmodule Helix.Client.Public.Client do
     do: Web1Bootstrap.render_bootstrap(bootstrap)
   defp dispatch(_, :render_bootstrap, _),
     do: %{}
+
+  defp get_action_event(:web1),
+    do: Web1ActionPerformedEvent
 end
