@@ -77,6 +77,8 @@ defmodule Helix.Process.Model.Process do
     | :cracker_bruteforce
     | :cracker_overflow
     | :install_virus
+    | :bank_change_password
+    | :bank_reveal_password
 
   @typedoc """
   List of signals a process may receive during its lifetime.
