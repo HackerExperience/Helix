@@ -5,6 +5,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Action.Flow.Tunnel, as: TunnelFlow
+  alias Helix.Network.Model.Connection
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
@@ -15,6 +16,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
     as: BankAccountRevealPasswordProcess
+  alias Helix.Universe.Bank.Process.Bank.Account.ChangePassword,
+    as: BankAccountChangePasswordProcess
 
   @typep relay :: Event.relay
 
@@ -29,7 +32,12 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   Emits: ProcessCreatedEvent
   """
-  @spec reveal_password(BankAccount.t, BankToken.id, Server.t, Server.t, relay) ::
+  @spec reveal_password(
+    BankAccount.t,
+    BankToken.id,
+    Server.t,
+    Server.t,
+    relay) ::
     {:ok, Process.t}
     | BankAccountRevealPasswordProcess.executable_error
   def reveal_password(account, token_id, gateway, atm, relay) do
@@ -46,6 +54,41 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
     BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta, relay)
   end
 
+  @spec open(Account.id, ATM.id) ::
+  {:ok, BankAccount.t}
+  | {:error, :internal}
+  @doc """
+  Opens a new BankAccount to given Account.id
+  """
+  def open(account_id, atm_id) do
+    bank_account =
+      BankAction.open_account(account_id, atm_id)
+    case bank_account do
+      {:ok, bank_account} ->
+        {:ok, bank_account}
+      {:error, _} ->
+        {:error, :internal}
+    end
+  end
+
+  @spec change_password(BankAccount.t, Server.t, Server.t, relay) ::
+  {:ok, Process.t}
+  | BankAccountChangePasswordProcess.executable_error
+  @doc """
+  Starts a ChangePasswordProcess
+
+  Emits: ProcessCreatedEvent
+  """
+  def change_password(account, gateway, atm, relay) do
+    meta = %{
+      network_id: NetworkQuery.internet().network_id,
+      src_atm_id: atm.server_id,
+      src_acc_number: account.account_number,
+      bounce: nil
+    }
+
+    BankAccountChangePasswordProcess.execute(gateway, atm, %{}, meta, relay)
+  end
   @doc """
   Logs into a bank account using a password. If the given password matches the
   current account password, the login is successful, in which case a BankLogin
@@ -74,9 +117,9 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         {:ok, _, events} <- BankAction.login_password(acc, password, entity),
         on_success(fn -> Event.emit(events) end),
 
-        {:ok, _, connection} <- start_connection.()
+        {:ok, tunnel, connection} <- start_connection.()
       do
-        {:ok, connection}
+        {:ok, tunnel, connection}
       end
     end
   end
