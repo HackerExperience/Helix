@@ -254,14 +254,16 @@ defmodule Helix.Universe.Bank.Action.BankTest do
       {token, _} = BankSetup.token()
       entity_id = Entity.ID.generate()
 
-      refute BankAction.login_token(acc, token.token_id, entity_id)
+      assert {:error, {:token, :not_belongs}} =
+        BankAction.login_token(acc, token.token_id, entity_id)
     end
 
     test "login fails when given token is expired" do
       {token, %{acc: acc}} = BankSetup.token([expired: true])
       entity_id = Entity.ID.generate()
 
-      refute BankAction.login_token(acc, token.token_id, entity_id)
+      assert {:error, {:token, :expired}} =
+        BankAction.login_token(acc, token.token_id, entity_id)
     end
   end
 

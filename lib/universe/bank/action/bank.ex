@@ -10,6 +10,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
+  alias Helix.Universe.Bank.Henforcer.Bank, as: BankHenforcer
   alias Helix.Universe.Bank.Model.ATM
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
@@ -22,6 +23,8 @@ defmodule Helix.Universe.Bank.Action.Bank do
     as: BankAccountUpdatedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Password.Revealed,
     as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Password.Changed,
+    as: BankAccountPasswordChangedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Token.Acquired,
     as: BankAccountTokenAcquiredEvent
 
@@ -185,9 +188,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
   """
   def reveal_password(account, token_id, revealed_by) do
     with \
-      token = %{} <- BankQuery.fetch_token(token_id),
-      true <- account.account_number == token.account_number,
-      true <- account.atm_id == token.atm_id
+      {true, relay} <- BankHenforcer.token_valid?(account, token_id)
     do
       event = BankAccountPasswordRevealedEvent.new(account, revealed_by)
 
@@ -197,6 +198,21 @@ defmodule Helix.Universe.Bank.Action.Bank do
         {:error, {:token, :notfound}}
     end
   end
+
+  @spec change_password(BankAccount.t, Entity.id) ::
+  {:ok, BankAccount.t, [BankAccountPasswordChangedEvent.t]}
+   | {:error, :internal}
+   def change_password(account, changed_by) do
+     event = BankAccountPasswordChangedEvent.new(account, changed_by)
+     {:ok, account, [event]}
+   end
+
+  @spec update_password(BankAccount.t) ::
+  {:ok, BankAccount.t}
+  | {:error, :internal}
+  defdelegate update_password(account),
+    to: BankAccountInternal,
+    as: :change_password
 
   @spec login_password(BankAccount.t, String.t, Entity.idt) ::
     {:ok, BankAccount.t, [BankAccountLoginEvent.t]}
@@ -226,12 +242,14 @@ defmodule Helix.Universe.Bank.Action.Bank do
     | term
   def login_token(account, token_id, login_by) do
     with \
-      token = %{} <- BankQuery.fetch_token(token_id),
-      true <- token.account_number == account.account_number
+      {true, relay} <- BankHenforcer.token_valid?(account, token_id)
     do
       event = BankAccountLoginEvent.new(account, login_by, token_id)
 
       {:ok, account, [event]}
+    else
+      {false, reason, _} ->
+        {:error, reason}
     end
   end
 

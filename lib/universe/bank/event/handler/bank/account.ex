@@ -9,6 +9,10 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
   alias Helix.Software.Event.Virus.Collected, as: VirusCollectedEvent
   alias Helix.Universe.Bank.Event.RevealPassword.Processed,
     as: RevealPasswordProcessedEvent
+  alias Helix.Universe.Bank.Event.ChangePassword.Processed,
+    as: ChangePasswordProcessedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Password.Changed,
+    as: BankPasswordChangedEvent
 
   @doc """
   Handles the conclusion of a `PasswordRevealProcess`, described at
@@ -32,6 +36,25 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
         :ok
       end
     end
+  end
+
+  def password_change_processed(event = %ChangePasswordProcessedEvent{}) do
+    flowing do
+      with \
+           changed_by = %{} <- EntityQuery.fetch_by_server(event.gateway_id),
+           {:ok, _bank_account, events} <-
+           BankAction.change_password(
+             event.account, changed_by.entity_id
+           ),
+          on_success(fn -> Event.emit(events, from: event) end)
+      do
+        :ok
+      end
+    end
+  end
+
+  def bank_password_changed(event = %BankPasswordChangedEvent{}) do
+    BankAction.update_password(event.account)
   end
 
   @doc """

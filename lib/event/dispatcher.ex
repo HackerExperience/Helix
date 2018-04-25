@@ -301,9 +301,17 @@ defmodule Helix.Event.Dispatcher do
     BankHandler.Bank.Account,
     :password_reveal_processed
 
+  event BankEvent.ChangePassword.Processed,
+    BankHandler.Bank.Account,
+    :password_change_processed
+
   event BankEvent.Bank.Account.Password.Revealed,
     EntityHandler.Database,
     :bank_password_revealed
+
+  event BankEvent.Bank.Account.Password.Changed,
+    BankHandler.Bank.Account,
+    :bank_password_changed
 
   event BankEvent.Bank.Account.Login,
     EntityHandler.Database,
