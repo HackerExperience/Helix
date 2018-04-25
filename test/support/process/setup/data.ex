@@ -26,11 +26,14 @@ defmodule Helix.Test.Process.Data.Setup do
   alias Helix.Software.Model.SoftwareType.LogForge
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
   alias Helix.Software.Process.File.Install, as: FileInstallProcess
+  alias Helix.Universe.Bank.Process.Bank.Account.ChangePassword,
+    as: BankChangePassword
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Log.Helper, as: LogHelper
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Process.Helper.TOP, as: TOPHelper
-
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   @doc """
   Chooses a random implementation and uses it. Beware that `data_opts`, used by
   `custom/3`, is always an empty list when called from `random/1`.
@@ -166,6 +169,20 @@ defmodule Helix.Test.Process.Data.Setup do
     {:cracker_bruteforce, data, meta, resources}
   end
 
+  def custom(:bank_change_password, _data_opts, meta) do
+    data = BankChangePassword.new(%{})
+
+    resources =
+      %{
+        l_dynamic: [:cpu],
+        r_dynamic: [],
+        static: TOPHelper.Resources.random_static(),
+        objective: TOPHelper.Resources.objective(cpu: 500)
+      }
+
+    {:bank_login, data, meta, resources}
+  end
+
   @doc """
   Probably does not work
   """
@@ -196,7 +213,7 @@ defmodule Helix.Test.Process.Data.Setup do
   - operation: :edit | :create. Defaults to :edit.
   - target_log_id: Which log to edit. Won't generate a real one.
   - message: Revision message.
-  
+
   All others are automatically derived from process meta data.
   """
   def custom(:forge, data_opts, meta) do
