@@ -27,7 +27,7 @@ channel Helix.Account.Websocket.Channel.Account do
     authenticated on the socket.
   + base errors
   """
-  join _, AccountJoin
+  join "account:" <> _, AccountJoin
 
   @doc """
   Forces a bootstrap to happen. It is the exact same operation ran during join.
