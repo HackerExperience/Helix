@@ -16,6 +16,7 @@ defmodule Helix.Story.Model.Step.Macros do
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Query.Story, as: StoryQuery
 
+  alias Helix.Client.Event.Action.Performed, as: ClientActionPerformedEvent
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
@@ -314,6 +315,56 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
+  defmacro filter_download_started(meta_field, callback),
+    do: process_filter(:file_download, :tgt_file_id, meta_field, callback)
+
+  defmacro filter_bruteforce_started(meta_field, callback),
+    do: process_filter(:cracker_bruteforce, :target_id, meta_field, callback)
+
+  defmacro filter_process_created(type, field, meta_field, callback) do
+    quote do
+
+      filter(
+        _step,
+        %ProcessCreatedEvent{
+          process: %{
+            :type => unquote(type),
+            unquote(:"#{field}") => expected_id
+          },
+        },
+        %{
+          unquote(:"#{meta_field}") => expected_id
+        },
+        unquote(callback)
+      )
+
+    end
+  end
+
+  defp process_filter(type, field, meta_field, callback) do
+    quote do
+      filter_process_created(
+        unquote(type), unquote(field), unquote(meta_field), unquote(callback)
+      )
+    end
+  end
+
+  defmacro filter_client_action(action, callback, client \\ quote(do: _)) do
+    quote do
+
+      filter(
+        _step,
+        %ClientActionPerformedEvent{
+          client: unquote(client),
+          action: unquote(action)
+        },
+        _meta,
+        unquote(callback)
+      )
+
+    end
+  end
+
   defmacro on_download_started(elem_id, callback),
     do: process_listener(:file_download, elem_id, callback, :tgt_file_id)
 
@@ -455,6 +506,15 @@ defmodule Helix.Story.Model.Step.Macros do
                 {{:send_reply, unquote(reply_id), unquote(send_opts)}, step, []}
               end
 
+            [reply: reply_id, sleep: sleep] ->
+              quote do
+                {
+                  {:send_reply, unquote(reply_id), [sleep: unquote(sleep)]},
+                  step,
+                  []
+                }
+              end
+
             [send: email_id] ->
               quote do
                 meta = Keyword.get(unquote(opts), :meta, %{})
@@ -468,6 +528,17 @@ defmodule Helix.Story.Model.Step.Macros do
 
                 {
                   {:send_email, unquote(email_id), meta, unquote(send_opts)},
+                  step,
+                  []
+                }
+              end
+
+            [send: email_id, sleep: slp] ->
+              quote do
+                meta = Keyword.get(unquote(opts), :meta, %{})
+
+                {
+                  {:send_email, unquote(email_id), meta, [sleep: unquote(slp)]},
                   step,
                   []
                 }

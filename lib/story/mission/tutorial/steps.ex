@@ -116,9 +116,6 @@ defmodule Helix.Story.Mission.Tutorial do
       # Listeners
       hespawn fn ->
 
-        # Send `about_that` when download starts
-        on_download_started cracker.file_id, email: "about_that", sleep: 2
-
         # Reply `downloaded` when the cracker has been downloaded
         story_listen cracker.file_id, FileDownloadedEvent, reply: "downloaded"
 
@@ -128,6 +125,11 @@ defmodule Helix.Story.Mission.Tutorial do
 
       {meta, %{}, e1 ++ e2 ++ e3 ++ e4}
     end
+
+    # Filters
+
+    # Send `about_that` when download starts
+    filter_download_started :cracker_id, send: "about_that", sleep: 2
 
     # Callbacks
 
@@ -173,7 +175,6 @@ defmodule Helix.Story.Mission.Tutorial do
     alias Helix.Software.Model.File
     alias Helix.Story.Action.Context, as: ContextAction
 
-    alias Helix.Client.Event.Action.Performed, as: ClientActionPerformedEvent
     alias Helix.Server.Event.Server.Password.Acquired,
       as: ServerPasswordAcquiredEvent
 
@@ -294,15 +295,9 @@ defmodule Helix.Story.Mission.Tutorial do
       # Listeners
       hespawn fn ->
 
-        # Send `dlayd_much1` when bruteforce starts
-        on_bruteforce_started server.server_id, email: "dlayd_much1", sleep: 2
-
         # Send `nasty_virus3` when bruteforce finishes
         story_listen server.server_id, ServerPasswordAcquiredEvent,
           email: "nasty_virus3", sleep: 2
-
-        # Send `pointless_convo1` when download starts
-        on_download_started spyware.file_id, reply: "pointless_convo1", sleep: 2
 
       end
 
@@ -311,27 +306,18 @@ defmodule Helix.Story.Mission.Tutorial do
 
     # Filters
 
-    # Send `dlayd_much4` email when player opens TaskManager app
-    filter(
-      _step,
-      %ClientActionPerformedEvent{
-        client: _,
-        action: :tutorial_accessed_task_manager
-      },
-      _meta,
-      send: "dlayd_much4", send_opts: [sleep: 1]
-    )
+    # Send `dlayd_much1` when bruteforce starts
+    filter_bruteforce_started :server_id, send: "dlayd_much1", sleep: 2
 
-    # Send `virus_spotted1` reply when player spots the virus
-    filter(
-      _step,
-      %ClientActionPerformedEvent{
-        client: _,
-        action: :tutorial_spotted_nasty_virus
-      },
-      _meta,
-      reply: "virus_spotted1", send_opts: [sleep: 1]
-    )
+    # Send `pointless_convo1` when download starts
+    filter_download_started :spyware_id, reply: "pointless_convo1", sleep: 2
+
+    # Send `dlayd_much4` email when player opens TaskManager app
+    filter_client_action :tutorial_accessed_task_manager,
+      send: "dlayd_much4", sleep: 1
+
+    filter_client_action :tutorial_spotted_nasty_virus,
+      reply: "virus_spotted1", sleep: 1
 
     def start(step) do
       {meta, _, e1} = setup(step)

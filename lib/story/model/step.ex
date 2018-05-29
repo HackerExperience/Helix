@@ -203,6 +203,8 @@ defmodule Helix.Story.Model.Step do
     do: entity_id
   def get_entity(%_{source_entity_id: entity_id}),
     do: entity_id
+  def get_entity(%_{process: %{source_entity_id: entity_id}}),
+    do: entity_id
   def get_entity(_),
     do: false
 

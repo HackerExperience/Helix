@@ -152,6 +152,9 @@ defmodule Helix.Event.Dispatcher do
   event ProcessEvent.Process.Created,
     ProcessHandler.TOP,
     :recalque_handler
+  event ProcessEvent.Process.Created,
+    StoryHandler.Story,
+    :event_handler
 
   event ProcessEvent.TOP.BringMeToLife,
     ProcessHandler.TOP,
