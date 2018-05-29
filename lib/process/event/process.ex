@@ -118,17 +118,6 @@ defmodule Helix.Process.Event.Process do
       def whom_to_notify(event),
         do: %{server: [event.gateway_id, event.target_id]}
     end
-
-    listenable do
-      listen(event = %_{confirmed: true}) do
-        [
-          event.process.gateway_id,
-          event.process.target_id,
-          event.process.src_file_id,
-          event.process.tgt_file_id,
-        ]
-      end
-    end
   end
 
   event Completed do
