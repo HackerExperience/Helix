@@ -36,14 +36,6 @@ defmodule Helix.Universe.Bank.Internal.BankTokenTest do
       assert token2.token_id == token.token_id
     end
 
-    test "wont fetch expired token" do
-      {token, _} = BankSetup.token([expired: true])
-
-      token2 = BankTokenInternal.fetch_by_connection(token.connection_id)
-
-      refute token2
-    end
-
     test "with non-existing connection" do
       refute BankTokenInternal.fetch_by_connection(Connection.ID.generate())
     end

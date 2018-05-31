@@ -85,13 +85,8 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       atm_id = Enum.random(bank.servers).id
       owner_id = Random.pk()
 
-      params = %{
-        bank_id: bank.id,
-        atm_id: atm_id,
-        owner_id: owner_id
-      }
-
-      assert {:ok, acc} = BankAccountInternal.create(params)
+      assert {:ok, acc} =
+        BankAccountInternal.create(owner_id, atm_id, bank.id)
       assert_id acc.atm_id, atm_id
       assert_id acc.bank_id, bank.id
       assert_id acc.owner_id, owner_id
@@ -170,7 +165,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
 
       assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
       assert {:error, reason} = BankAccountInternal.close(acc)
-      assert reason == {:account, :notempty}
+      assert reason == {:bank_account, :not_empty}
       assert BankAccountInternal.fetch(acc.atm_id, acc.account_number)
     end
 
@@ -178,7 +173,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccountTest do
       {fake_acc, _} = BankSetup.fake_account()
 
       assert {:error, reason} = BankAccountInternal.close(fake_acc)
-      assert reason == {:account, :notfound}
+      assert reason == {:bank_account, :not_found}
     end
   end
 end
