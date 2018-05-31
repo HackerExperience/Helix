@@ -7,7 +7,6 @@ request Helix.Universe.Bank.Websocket.Requests.CreateAccount do
 
   It Returns :ok or :error
   """
-  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Public.Bank, as: BankPublic
@@ -60,9 +59,9 @@ request Helix.Universe.Bank.Websocket.Requests.CreateAccount do
     bank_account = BankPublic.open_account(account_id, atm_id)
     case bank_account do
       {:ok, bank_account} ->
-        {:ok, bank_account}
-       error ->
-         error
+        update_meta(request, %{bank_account: bank_account}, reply: true)
+      {:error, reason} ->
+        reply_error(request, reason)
     end
   end
   render_empty()
