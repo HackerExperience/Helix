@@ -5,8 +5,20 @@ defmodule Helix.Test.Event.Setup.Bank do
 
   alias Helix.Universe.Bank.Event.Bank.Account.Login,
     as: BankAccountLoginEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Removed,
+    as: BankAccountRemovedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Updated,
+    as: BankAccountUpdatedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Logout,
+    as: BankAccountLogoutEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Password.Revealed,
     as: BankAccountPasswordRevealedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Password.Changed,
+    as: BankAccountPasswordChangedEvent
+  alias Helix.Universe.Bank.Event.ChangePassword.Processed,
+    as: ChangePasswordProcessedEvent
+  alias Helix.Universe.Bank.Event.RevealPassword.Processed,
+    as: RevealPasswordProcessedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Token.Acquired,
     as: BankAccountTokenAcquiredEvent
 
@@ -47,8 +59,44 @@ defmodule Helix.Test.Event.Setup.Bank do
   end
 
   @doc """
+  Accepts (BankAccount.t, Server.id)
+  """
+  def password_change_processed(account, gateway_id),
+    do: ChangePasswordProcessedEvent.new(account, gateway_id)
+
+  @doc """
+  Accepts (BankAccount.t, Server.id)
+  """
+  def password_reveal_processed(account, gateway_id, token_id),
+    do: RevealPasswordProcessedEvent.new(account, gateway_id, token_id)
+
+  @doc """
+  Accepts (BankAccount.t, Entity.id)
+  """
+  def password_changed(account, entity_id),
+    do: BankAccountPasswordChangedEvent.new(account, entity_id)
+
+  @doc """
   Accepts: (BankAccount.t, Entity.id)
   """
   def login(account, entity_id, token_id \\ nil),
     do: BankAccountLoginEvent.new(account, entity_id, token_id)
+
+  @doc """
+  Accepts: (BankAccount.t, Entity.id)
+  """
+  def logout(account, entity_id),
+    do: BankAccountLogoutEvent.new(account, entity_id)
+
+  @doc """
+  Accepts: (BankAccount.t, term)
+  """
+  def updated(account, reason),
+    do: BankAccountUpdatedEvent.new(account, reason)
+
+  @doc """
+  Accepts: (BankAccount.t)
+  """
+  def removed(account),
+    do: BankAccountRemovedEvent.new(account)
 end

@@ -116,6 +116,12 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {inserted, related}
   end
 
+  def transfer!(opts \\ []) do
+    {transfer, related} = transfer(opts)
+
+    transfer
+  end
+
   @doc """
   - transfer_id: Force the transfer to have this id.
   - amount: Specify transfer amount. Defaults to a random number.

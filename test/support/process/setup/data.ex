@@ -31,9 +31,7 @@ defmodule Helix.Test.Process.Data.Setup do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Log.Helper, as: LogHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Process.Helper.TOP, as: TOPHelper
-  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   @doc """
   Chooses a random implementation and uses it. Beware that `data_opts`, used by
   `custom/3`, is always an empty list when called from `random/1`.
