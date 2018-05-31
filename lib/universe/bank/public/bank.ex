@@ -8,23 +8,15 @@ defmodule Helix.Universe.Bank.Public.Bank do
     as: BankAccountFlow
   alias Helix.Universe.Bank.Action.Flow.BankTransfer,
     as: BankTransferFlow
-  alias Helix.Universe.Bank.Internal.BankAccount,
-    as: BankAccountInternal
-  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
+  alias Helix.Universe.Bank.Public.Index, as: BankIndex
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Model.ATM
 
   #TODO: Add Transfer History
-  @type bootstrap ::
-    %{
-      balance: BankAccount.balance
-    }
+  @type bootstrap :: BankIndex.index
 
-  @type rendered_bootstrap ::
-    %{
-      balance: BankAccount.balance
-    }
+  @type rendered_bootstrap :: BankIndex.rendered_index
 
   @spec bootstrap({ATM.id, BankAccount.account}) ::
     bootstrap
@@ -32,11 +24,7 @@ defmodule Helix.Universe.Bank.Public.Bank do
   Gets the BankAccount information and puts into a map.
   """
   def bootstrap({atm_id, account_number}) do
-    bank_account = BankQuery.fetch_account(atm_id, account_number)
-
-    %{
-      balance: bank_account.balance
-    }
+    BankIndex.index(atm_id, account_number)
   end
 
   @spec render_bootstrap(bootstrap) ::
@@ -46,7 +34,7 @@ defmodule Helix.Universe.Bank.Public.Bank do
   Gets Bootstrap information and turns to client friendly format.
   """
   def render_bootstrap(bootstrap) do
-    bootstrap
+    BankIndex.render_index(bootstrap)
   end
 
   @spec change_password(
@@ -111,10 +99,9 @@ defmodule Helix.Universe.Bank.Public.Bank do
   @doc """
   Closes given account.
   """
-  defdelegate close_account(account),
+  def close_account(account),
     # TODO: Make as process
-    to: BankAccountInternal,
-    as: :close
+    do: BankAccountFlow.close(account)
 
   @spec transfer(
     BankAccount.t,
