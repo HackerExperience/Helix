@@ -8,9 +8,6 @@ request Helix.Universe.Bank.Websocket.Requests.Bootstrap do
   It returns the BankBootstrap, which is the exact same struct returned after
   joining a local or remote bank Channel.
   """
-  alias Helix.Server.Model.Server
-  alias Helix.Universe.Bank.Model.BankAccount
-  alias Helix.Universe.Bank.Henforcer.Bank, as: BankHenforcer
   alias Helix.Universe.Bank.Public.Bank, as: BankPublic
 
   def check_params(request, _socket) do
