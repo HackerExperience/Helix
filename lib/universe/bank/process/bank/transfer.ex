@@ -2,15 +2,17 @@ import Helix.Process
 
 process Helix.Universe.Bank.Process.Bank.Transfer do
 
+  alias Helix.Account.Model.Account
   alias Helix.Universe.Bank.Model.BankTransfer
 
-  process_struct [:transfer_id, :amount]
+  process_struct [:transfer_id, :started_by, :amount]
 
   @process_type :wire_transfer
 
   @type t ::
     %__MODULE__{
       transfer_id: BankTransfer.id,
+      started_by: Account.id,
       amount: BankTransfer.amount
     }
 
@@ -38,6 +40,7 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
   def new(%{transfer: transfer = %BankTransfer{}}) do
     %__MODULE__{
       transfer_id: transfer.transfer_id,
+      started_by: transfer.started_by,
       amount: transfer.amount
     }
   end
