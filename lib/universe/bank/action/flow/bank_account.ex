@@ -5,7 +5,6 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Action.Flow.Tunnel, as: TunnelFlow
-  alias Helix.Network.Model.Connection
   alias Helix.Network.Query.Network, as: NetworkQuery
   alias Helix.Process.Model.Process
   alias Helix.Server.Model.Server
@@ -61,13 +60,32 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   Opens a new BankAccount to given Account.id
   """
   def open(account_id, atm_id) do
-    bank_account =
-      BankAction.open_account(account_id, atm_id)
-    case bank_account do
-      {:ok, bank_account} ->
-        {:ok, bank_account}
-      {:error, _} ->
-        {:error, :internal}
+    flowing do
+      with \
+        {:ok, bank_acc, events} <- BankAction.open_account(account_id, atm_id),
+        on_success(fn -> Event.emit(events) end)
+      do
+        {:ok, bank_acc}
+      else
+        _ ->
+          {:error, :internal}
+      end
+    end
+  end
+
+  @spec close(BankAccount.t) ::
+  :ok
+  | {:error, {:bank_account, :not_found}}
+  | {:error, {:bank_account, :not_empty}}
+  def close(bank_account) do
+    flowing do
+      with \
+        true <- not is_nil(bank_account),
+        {:ok, events} <- BankAction.close_account(bank_account),
+        on_success(fn -> Event.emit(events) end)
+      do
+        :ok
+      end
     end
   end
 
@@ -75,7 +93,13 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   {:ok, Process.t}
   | BankAccountChangePasswordProcess.executable_error
   @doc """
-  Starts a ChangePasswordProcess
+  Starts the `bank_change_password` process.
+
+  This game mechanic happens on the BankAccount control panel where the
+  BankAccount's owner can change the BankAccount's Password
+
+  It is a process managed by TOP. in the sense that the password change does not
+  happen instantly. Completion is handled by `BankAccountEvent`.
 
   Emits: ProcessCreatedEvent
   """
@@ -152,9 +176,9 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
         {:ok, _, events} <- BankAction.login_token(acc, token, entity),
         on_success(fn -> Event.emit(events) end),
 
-        {:ok, _, connection} <- start_connection.()
+        {:ok, tunnel, connection} <- start_connection.()
       do
-        {:ok, connection}
+        {:ok, tunnel, connection}
       end
     end
   end

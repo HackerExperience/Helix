@@ -10,6 +10,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
   alias Helix.Universe.Bank.Action.Flow.BankAccount, as: BankAccountFlow
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
+  alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
   alias Helix.Test.Process.TOPHelper
@@ -180,7 +181,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       {server, %{entity: entity}} = ServerSetup.server()
 
       # Login with the right credentials
-      assert {:ok, connection} =
+      assert {:ok, _tunnel, connection} =
         BankAccountFlow.login_token(
           acc.atm_id, acc.account_number, server.server_id, nil, token.token_id
         )
@@ -213,7 +214,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       assert to_string(acc.owner_id) == to_string(entity.entity_id)
 
       # Login with the right token
-      assert {:ok, connection} =
+      assert {:ok, _tunnel, connection} =
         BankAccountFlow.login_token(
           acc.atm_id, acc.account_number, server.server_id, nil, token.token_id
         )
@@ -268,6 +269,32 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
 
       # Ensure nothing was added to the DB
       refute DatabaseQuery.fetch_bank_account(entity, acc)
+    end
+  end
+
+  describe "open/2" do
+    test "opens account when everything is OK" do
+      account  = AccountSetup.account!()
+      account_id = account.account_id
+
+      bank_acc = BankSetup.account!()
+      atm_id = bank_acc.atm_id
+
+      assert {:ok, bank_acc} = BankAccountFlow.open(account_id, atm_id)
+      assert bank_acc.atm_id == atm_id
+      assert BankQuery.fetch_account(atm_id, bank_acc.account_number)
+    end
+  end
+
+  describe "close/2" do
+    test "closes account" do
+      bank_acc = BankSetup.account!()
+
+      atm_id = bank_acc.atm_id
+      account_number = bank_acc.account_number
+
+      assert :ok = BankAccountFlow.close(bank_acc)
+      refute BankQuery.fetch_account(atm_id, account_number)
     end
   end
 end

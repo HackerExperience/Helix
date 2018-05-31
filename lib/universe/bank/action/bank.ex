@@ -27,11 +27,17 @@ defmodule Helix.Universe.Bank.Action.Bank do
     as: BankAccountPasswordChangedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Token.Acquired,
     as: BankAccountTokenAcquiredEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Removed,
+    as: BankAccountRemovedEvent
+  alias Helix.Universe.Bank.Event.Bank.Transfer.Successful,
+    as: BankTransferSuccessfulEvent
+  alias Helix.Universe.Bank.Event.Bank.Transfer.Failed,
+    as: BankTransferFailedEvent
 
   @spec start_transfer(BankAccount.t, BankAccount.t, pos_integer, Account.idt) ::
     {:ok, BankTransfer.t}
     | {:error, {:funds, :insufficient}}
-    | {:error, {:account, :notfound}}
+    | {:error, {:bank_account, :not_found}}
     | {:error, Ecto.Changeset.t}
   @doc """
   Starts a bank transfer.
@@ -51,9 +57,8 @@ defmodule Helix.Universe.Bank.Action.Bank do
     as: :start
 
   @spec complete_transfer(BankTransfer.t) ::
-    :ok
-    | {:error, {:transfer, :notfound}}
-    | {:error, :internal}
+    {:ok, BankTransfer.t, [BankTransferSuccessfulEvent.t]}
+    | {:error, term, [BankTransferFailedEvent.t]}
   @doc """
   Completes the transfer.
 
@@ -66,9 +71,19 @@ defmodule Helix.Universe.Bank.Action.Bank do
   This function should not be called directly by Public. Instead, it must be
   triggered by the BankTransferCompletedEvent.
   """
-  defdelegate complete_transfer(transfer),
-    to: BankTransferInternal,
-    as: :complete
+  def complete_transfer(transfer) do
+    case BankTransferInternal.complete(transfer) do
+      :ok ->
+        {:ok, transfer, [BankTransferSuccessfulEvent.new(transfer)]}
+
+      {:error, reason} ->
+        {
+          :error,
+          reason,
+          [BankTransferFailedEvent.new(transfer, reason)]
+        }
+    end
+  end
 
   @spec abort_transfer(BankTransfer.t) ::
     :ok
@@ -91,7 +106,7 @@ defmodule Helix.Universe.Bank.Action.Bank do
     as: :abort
 
   @spec open_account(Account.idt, ATM.id) ::
-    {:ok, BankAccount.t}
+    {:ok, BankAccount.t, [BankAccountUpdatedEvent.t]}
     | {:error, Ecto.Changeset.t}
   @doc """
   Opens a bank account.
@@ -103,23 +118,34 @@ defmodule Helix.Universe.Bank.Action.Bank do
       |> Map.get(:entity_id)
       |> NPCQuery.fetch()
 
-    %{owner_id: owner, atm_id: atm, bank_id: bank}
-    |> BankAccountInternal.create()
+    case BankAccountInternal.create(owner, atm, bank) do
+      {:ok, bank_acc} ->
+        {:ok, bank_acc, [BankAccountUpdatedEvent.new(bank_acc, :created)]}
+
+      error ->
+        error
+    end
   end
 
   @spec close_account(BankAccount.t) ::
     :ok
-    | {:error, {:account, :notfound}}
-    | {:error, {:account, :notempty}}
+    | {:error, {:bank_account, :not_found}}
+    | {:error, {:bank_account, :not_empty}}
   @doc """
   Closes a bank account.
 
   May fail if the account is invalid or not empty. In order to close an account,
   its balance must be empty.
   """
-  defdelegate close_account(account),
-    to: BankAccountInternal,
-    as: :close
+  def close_account(account) do
+    case BankAccountInternal.close(account) do
+      :ok ->
+        {:ok, [BankAccountRemovedEvent.new(account)]}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 
   @spec direct_deposit(BankAccount.t, BankAccount.amount) ::
     {:ok, BankAccount.t, [BankAccountUpdatedEvent.t]}
@@ -203,8 +229,14 @@ defmodule Helix.Universe.Bank.Action.Bank do
   {:ok, BankAccount.t, [BankAccountPasswordChangedEvent.t]}
    | {:error, :internal}
    def change_password(account, changed_by) do
-     event = BankAccountPasswordChangedEvent.new(account, changed_by)
-     {:ok, account, [event]}
+     with {:ok, account} <- update_password(account) do
+       event = BankAccountPasswordChangedEvent.new(account, changed_by)
+
+       {:ok, account, [event]}
+     else
+      _ ->
+        {:error, :internal}
+     end
    end
 
   @spec update_password(BankAccount.t) ::
