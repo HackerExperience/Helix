@@ -34,7 +34,7 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
   @spec start(BankAccount.t, BankAccount.t, pos_integer, Account.idt) ::
     {:ok, BankTransfer.t}
     | {:error, {:funds, :insufficient}}
-    | {:error, {:account, :notfound}}
+    | {:error, {:bank_account, :not_found}}
     | {:error, Ecto.Changeset.t}
   def start(from_acc, to_acc, amount, started_by) do
     Repo.transaction(fn ->
