@@ -49,7 +49,6 @@ request Helix.Universe.Bank.Websocket.Requests.Transfer do
     receiving_acc = request.params.bank_account
     amount = request.params.amount
     password = request.params.password
-    entity_id = socket.assigns.entity_id
     gateway_id = socket.assigns.gateway.server_id
     account_id = socket.assigns.account_id
 
