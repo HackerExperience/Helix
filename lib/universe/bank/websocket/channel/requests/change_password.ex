@@ -27,9 +27,10 @@ request Helix.Universe.Bank.Websocket.Requests.ChangePassword do
     account_number = socket.assigns.account_number
     bank_account = BankQuery.fetch_account(atm_id, account_number)
     with \
-      {true, relay} <- BankHenforcer.owns_account?(entity, bank_account)
+      {true, relay} <- BankHenforcer.owns_account?(entity, bank_account),
+      bank_account = relay.bank_account
     do
-      reply_ok(request)
+      update_meta(request, %{bank_account: bank_account}, reply: true)
     else
       {false, reason, _} ->
         reply_error(request, reason)
@@ -38,10 +39,10 @@ request Helix.Universe.Bank.Websocket.Requests.ChangePassword do
 
   def handle_request(request, socket) do
     atm_id = socket.assigns.atm_id
-    account_number = socket.assigns.account_number
-    account = BankQuery.fetch_account(atm_id, account_number)
+    account = request.meta.bank_account
     atm = ServerQuery.fetch(atm_id)
     gateway = ServerQuery.fetch(socket.assigns.gateway.server_id)
+
     password_change =
       BankPublic.change_password(account, gateway, atm, request.relay)
 
