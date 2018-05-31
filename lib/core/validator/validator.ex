@@ -5,6 +5,7 @@ defmodule Helix.Core.Validator do
     | :hostname
     | :bounce_name
     | :reply_id
+    | :token
 
   @regex_hostname ~r/^[a-zA-Z0-9-_.@#]{1,20}$/
 

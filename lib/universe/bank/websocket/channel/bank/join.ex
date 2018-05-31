@@ -54,7 +54,7 @@ join Helix.Universe.Bank.Websocket.Channel.Bank.Join do
 
     {_, token} =
       if request.unsafe["token"] do
-        validate_input(request.unsafe["token"], :token)
+        Ecto.UUID.cast(request.unsafe["token"])
       else
         {:ok, nil}
       end
@@ -93,9 +93,9 @@ join Helix.Universe.Bank.Websocket.Channel.Bank.Join do
 
       params =
        cond do
-        password != nil ->
+        not is_nil(password) ->
           Map.put(params, :password, password)
-        token != nil ->
+        not is_nil(token) ->
           Map.put(params, :token, token)
         true ->
           params
@@ -112,7 +112,6 @@ join Helix.Universe.Bank.Websocket.Channel.Bank.Join do
     atm_id = request.params.atm_id
     account_number = request.params.account_number
     account_id = request.params.account_id
-    password = request.params.password
     entity_id = EntityQuery.get_entity_id(account_id)
     gateway_id = request.params.gateway_id
     bounce_id = request.params.bounce_id
@@ -291,7 +290,7 @@ join Helix.Universe.Bank.Websocket.Channel.Bank.Join do
           account_number,
           gateway.server_id,
           bounce_id,
-          token
+          token.token_id
         )
     do
       gateway_data =
