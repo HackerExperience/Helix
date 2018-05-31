@@ -14,7 +14,7 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Network.Websocket.Requests.Bounce.Remove, as: BounceRemoveRequest
   alias Helix.Software.Websocket.Requests.Virus.Collect, as: VirusCollectRequest
   alias Helix.Story.Websocket.Requests.Email.Reply, as: EmailReplyRequest
-  alias Helix.Universe.Websocket.Channel.Requests.CreateAccount,
+  alias Helix.Universe.Bank.Websocket.Requests.CreateAccount,
     as: BankAccountCreateRequest
 
   @doc """

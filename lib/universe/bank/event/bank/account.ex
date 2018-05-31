@@ -2,6 +2,47 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
 
   import Helix.Event
 
+  event Removed do
+
+    alias Helix.Universe.Bank.Model.BankAccount
+
+    event_struct [:account]
+
+    @type t ::
+      %__MODULE__{
+        account: BankAccount.t
+      }
+
+    @spec new(BankAccount.t) ::
+      t
+
+    def new(account = %BankAccount{}) do
+      %__MODULE__{
+        account: account
+      }
+    end
+
+    notify do
+
+      @event :bank_account_removed
+
+      @doc false
+      def generate_payload(event, _socket) do
+        data =
+          %{
+            atm_id: to_string(event.account.atm_id),
+            account_number: event.account.account_number
+          }
+
+        {:ok, data}
+      end
+
+      @doc false
+      def whom_to_notify(event),
+        do: %{account: event.account.owner_id}
+    end
+  end
+
   event Updated do
     @moduledoc """
     `BankAccountUpdatedEvent` is fired when the underlying bank account has
@@ -19,7 +60,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
         reason: reason
       }
 
-    @type reason :: :balance | :password
+    @type reason :: :balance | :password | :created
 
     @spec new(BankAccount.t, reason) ::
       t
@@ -80,6 +121,74 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
         account: account,
         token_id: token_id
       }
+    end
+
+    notify do
+      @moduledoc """
+      Notifies the client of bank account login, so it can properly update
+      the local data.
+      """
+
+      @event :bank_login_event
+
+      @doc false
+      def generate_payload(event, _socket) do
+        data =
+          %{
+            atm_id: to_string(event.account.atm_id),
+            account_number: event.account.account_number,
+            balance: event.account.balance,
+            password: event.account.password
+          }
+
+        {:ok, data}
+      end
+
+      def whom_to_notify(event) do
+        %{
+          account: event.entity_id
+        }
+      end
+    end
+  end
+
+  event Logout do
+
+    alias Helix.Entity.Model.Entity
+    alias Helix.Universe.Bank.Model.BankAccount
+
+    event_struct [:account, :entity_id]
+
+    @type t :: %__MODULE__{
+      account: BankAccount.t,
+      entity_id: Entity.id
+    }
+
+    @spec new(BankAccount.t, Entity.id) ::
+      t
+    def new(account = %BankAccount{}, entity_id = %Entity.ID{}) do
+      %__MODULE__{
+        account: account,
+        entity_id: entity_id
+      }
+    end
+
+    notify do
+
+      @event :bank_logout_event
+
+      def generate_payload(event, _socket) do
+        data =
+          %{
+            atm_id: to_string(event.account.atm_id),
+            account_number: event.account.account_number
+          }
+
+        {:ok, data}
+      end
+
+      def whom_to_notify(event),
+        do: %{account: event.entity_id}
     end
   end
 end

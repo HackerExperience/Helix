@@ -7,6 +7,10 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
 
   alias Helix.Software.Event.Virus.Collected, as: VirusCollectedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Removed,
+    as: BankAccountRemovedEvent
+  alias Helix.Universe.Bank.Event.Bank.Account.Updated,
+    as: BankAccountUpdatedEvent
   alias Helix.Universe.Bank.Event.RevealPassword.Processed,
     as: RevealPasswordProcessedEvent
   alias Helix.Universe.Bank.Event.ChangePassword.Processed,
@@ -38,6 +42,12 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
     end
   end
 
+  @doc """
+  Handles the conclusion of a `PasswordChangeProcess`, described at
+  `BankAccountFlow`
+
+  Emits: `BankAccountPasswordChangedEvent`
+  """
   def password_change_processed(event = %ChangePasswordProcessedEvent{}) do
     flowing do
       with \
@@ -53,8 +63,15 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
     end
   end
 
-  def bank_password_changed(event = %BankPasswordChangedEvent{}) do
-    BankAction.update_password(event.account)
+  @doc """
+  Emits BankAccountUpdatedEvent with reason :password to client update local
+  information
+
+  Emits: `BankAccountUpdatedEvent`
+  """
+  def password_changed(event = %BankPasswordChangedEvent{}) do
+    account = event.account
+    Event.emit(BankAccountUpdatedEvent.new(account, :password), from: event)
   end
 
   @doc """

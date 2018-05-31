@@ -272,16 +272,20 @@ defmodule Helix.Event.Dispatcher do
   # All
   event BankEvent.Bank.Account.Login
   event BankEvent.Bank.Account.Updated
+  event BankEvent.Bank.Account.Removed
   event BankEvent.Bank.Account.Password.Revealed
+  event BankEvent.Bank.Account.Password.Changed
   event BankEvent.Bank.Account.Token.Acquired
   event BankEvent.Bank.Transfer.Processed
   event BankEvent.Bank.Transfer.Aborted
   event BankEvent.RevealPassword.Processed
+  event BankEvent.ChangePassword.Processed
 
   # Custom handlers
   event BankEvent.Bank.Transfer.Processed,
     BankHandler.Bank.Transfer,
     :transfer_processed
+
   event BankEvent.Bank.Transfer.Processed,
     NetworkHandler.Connection,
     :bank_transfer_processed
@@ -289,6 +293,7 @@ defmodule Helix.Event.Dispatcher do
   event BankEvent.Bank.Transfer.Aborted,
     BankHandler.Bank.Transfer,
     :transfer_aborted
+
   event BankEvent.Bank.Transfer.Aborted,
     SoftwareHandler.Cracker,
     :bank_transfer_aborted
@@ -311,9 +316,10 @@ defmodule Helix.Event.Dispatcher do
 
   event BankEvent.Bank.Account.Password.Changed,
     BankHandler.Bank.Account,
-    :bank_password_changed
+    :password_changed
 
   event BankEvent.Bank.Account.Login,
     EntityHandler.Database,
     :bank_account_login
+
 end
