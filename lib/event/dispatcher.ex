@@ -278,6 +278,7 @@ defmodule Helix.Event.Dispatcher do
   event BankEvent.Bank.Account.Token.Acquired
   event BankEvent.Bank.Transfer.Processed
   event BankEvent.Bank.Transfer.Aborted
+  event BankEvent.AccountCreate.Processed
   event BankEvent.RevealPassword.Processed
   event BankEvent.ChangePassword.Processed
 
@@ -310,6 +311,10 @@ defmodule Helix.Event.Dispatcher do
     BankHandler.Bank.Account,
     :password_change_processed
 
+  event BankEvent.AccountCreate.Processed,
+    BankHandler.Bank.Account,
+    :account_create_processed
+
   event BankEvent.Bank.Account.Password.Revealed,
     EntityHandler.Database,
     :bank_password_revealed
@@ -321,5 +326,6 @@ defmodule Helix.Event.Dispatcher do
   event BankEvent.Bank.Account.Login,
     EntityHandler.Database,
     :bank_account_login
+
 
 end

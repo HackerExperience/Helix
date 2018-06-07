@@ -53,24 +53,21 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
     BankAccountRevealPasswordProcess.execute(gateway, atm, params, meta, relay)
   end
 
-  @spec open(Account.id, ATM.id) ::
-  {:ok, BankAccount.t}
-  | {:error, :internal}
+  @spec open(Server.t, Account.id, Server.t, relay) ::
+  {:ok, Process.t}
+  | BankAccountAccountChangeProcess.executable_error
   @doc """
   Opens a new BankAccount to given Account.id
   """
-  def open(account_id, atm_id) do
-    flowing do
-      with \
-        {:ok, bank_acc, events} <- BankAction.open_account(account_id, atm_id),
-        on_success(fn -> Event.emit(events) end)
-      do
-        {:ok, bank_acc}
-      else
-        _ ->
-          {:error, :internal}
-      end
-    end
+  def open(gateway, account_id, atm, relay) do
+    entity_id = Entity.ID.cast!(to_string(account_id.id))
+
+    meta = %{
+      src_atm_id: atm.server_id,
+      source_entity_id: entity_id
+    }
+
+    BankAccountAccountCreateProcess.execute(gateway, atm, %{}, meta, relay)
   end
 
   @spec close(BankAccount.t) ::

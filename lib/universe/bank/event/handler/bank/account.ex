@@ -11,12 +11,26 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
     as: BankAccountRemovedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Updated,
     as: BankAccountUpdatedEvent
+  alias Helix.Universe.Bank.Event.AccountCreate.Processed,
+    as: AccountCreateProcessedEvent
   alias Helix.Universe.Bank.Event.RevealPassword.Processed,
     as: RevealPasswordProcessedEvent
   alias Helix.Universe.Bank.Event.ChangePassword.Processed,
     as: ChangePasswordProcessedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Password.Changed,
     as: BankPasswordChangedEvent
+
+  def account_create_processed(event = %AccountCreateProcessedEvent{}) do
+    flowing do
+      with \
+        {:ok, _bank_account, events} <-
+          BankAction.open_account(event.requester, event.atm),
+        on_success(fn -> Event.emit(events, from: event) end)
+      do
+        :ok
+      end
+    end
+  end
 
   @doc """
   Handles the conclusion of a `PasswordRevealProcess`, described at

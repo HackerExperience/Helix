@@ -55,11 +55,13 @@ request Helix.Universe.Bank.Websocket.Requests.CreateAccount do
   def handle_request(request, socket) do
     atm_id = request.meta.atm_id
     account_id = socket.assigns.account_id
+    gateway = ServerQuery.fetch(socket.assigns.gateway.server_id)
+    relay = request.relay
 
-    bank_account = BankPublic.open_account(account_id, atm_id)
-    case bank_account do
-      {:ok, bank_account} ->
-        update_meta(request, %{bank_account: bank_account}, reply: true)
+    process = BankPublic.open_account(gateway, account_id, atm, relay)
+    case process do
+      {:ok, process} ->
+        update_meta(request, %{process: process}, reply: true)
       {:error, reason} ->
         reply_error(request, reason)
     end

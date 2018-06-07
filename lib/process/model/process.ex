@@ -79,6 +79,7 @@ defmodule Helix.Process.Model.Process do
     | :install_virus
     | :bank_change_password
     | :bank_reveal_password
+    | :bank_account_create
 
   @typedoc """
   List of signals a process may receive during its lifetime.
