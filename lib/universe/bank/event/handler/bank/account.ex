@@ -32,6 +32,19 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
     end
   end
 
+ def account_close_processed(event = %AccountCloseProcessedEvent{}) do
+    flowing
+      with \
+        bank_account = BankQuery.fetch_account(event.atm_id, event.account_number)
+        true <- not is_nil(bank_account),
+        {:ok, events} <- BankAction.close_account(bank_account),
+        on_success(fn -> Event.emit(events) end)
+      do
+        :ok
+      end
+    end
+  end
+
   @doc """
   Handles the conclusion of a `PasswordRevealProcess`, described at
   `BankAccountFlow`. Note that actually *displaying* the password to the user

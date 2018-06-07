@@ -7,6 +7,7 @@ request Helix.Universe.Bank.Websocket.Requests.CloseAccount do
 
   It Returs :ok or :error
   """
+  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Henforcer.Bank, as: BankHenforcer
   alias Helix.Universe.Bank.Public.Bank, as: BankPublic
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
@@ -36,11 +37,13 @@ request Helix.Universe.Bank.Websocket.Requests.CloseAccount do
     atm_id = socket.assigns.atm_id
     account_number = socket.assigns.account_number
     bank_account = BankQuery.fetch_account(atm_id, account_number)
-    close_account = BankPublic.close_account(bank_account)
+    atm = ServerQuery.fetch(atm_id)
+    relay = request.relay
+    process = BankPublic.close_account(gateway, bank_account, atm, relay)
 
-    case close_account do
-      :ok ->
-        reply_ok(request)
+    case process do
+      {:ok, process} ->
+        update_meta(request, %{process: process}, reply: true)
       {:error, reason} ->
         reply_error(request, reason)
     end

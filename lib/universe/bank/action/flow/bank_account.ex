@@ -13,6 +13,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   alias Helix.Universe.Bank.Model.BankToken
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
+  alias Helix.Universe.Bank.Process.Bank.Account.AccountCreate,
+    as: BankAccountCreateProcess
   alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
     as: BankAccountRevealPasswordProcess
   alias Helix.Universe.Bank.Process.Bank.Account.ChangePassword,
@@ -55,9 +57,9 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   @spec open(Server.t, Account.id, Server.t, relay) ::
   {:ok, Process.t}
-  | BankAccountAccountChangeProcess.executable_error
+  | BankAccountChangeProcess.executable_error
   @doc """
-  Opens a new BankAccount to given Account.id
+  Starts the `bank_account_create` process.
   """
   def open(gateway, account_id, atm, relay) do
     entity_id = Entity.ID.cast!(to_string(account_id.id))
@@ -67,23 +69,22 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
       source_entity_id: entity_id
     }
 
-    BankAccountAccountCreateProcess.execute(gateway, atm, %{}, meta, relay)
+    BankAccountCreateProcess.execute(gateway, atm, %{}, meta, relay)
   end
 
   @spec close(BankAccount.t) ::
-  :ok
-  | {:error, {:bank_account, :not_found}}
-  | {:error, {:bank_account, :not_empty}}
-  def close(bank_account) do
-    flowing do
-      with \
-        true <- not is_nil(bank_account),
-        {:ok, events} <- BankAction.close_account(bank_account),
-        on_success(fn -> Event.emit(events) end)
-      do
-        :ok
-      end
-    end
+  {:ok, Process.t}
+  | BankAccountCloseProcess.executable_error
+  @doc """
+  Starts the `bank_account_close` process.
+  """
+  def close(gateway, bank_account, atm, relay) do
+    meta = %{
+      src_atm_id: bank_account.server_id,
+      src_account_number: bank_account.account_number
+    }
+
+    BankAccountCloseProcess.execute(gateway, atm, %{}, meta, relay)
   end
 
   @spec change_password(BankAccount.t, Server.t, Server.t, relay) ::

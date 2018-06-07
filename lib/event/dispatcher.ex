@@ -315,6 +315,10 @@ defmodule Helix.Event.Dispatcher do
     BankHandler.Bank.Account,
     :account_create_processed
 
+  event BankEvent.AccountClose.Processed,
+    BankHandler.Bank.Account,
+    :account_close_processed
+
   event BankEvent.Bank.Account.Password.Revealed,
     EntityHandler.Database,
     :bank_password_revealed
@@ -326,6 +330,5 @@ defmodule Helix.Event.Dispatcher do
   event BankEvent.Bank.Account.Login,
     EntityHandler.Database,
     :bank_account_login
-
 
 end
