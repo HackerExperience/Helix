@@ -3,6 +3,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   import HELF.Flow
 
   alias Helix.Event
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Action.Flow.Tunnel, as: TunnelFlow
   alias Helix.Network.Query.Network, as: NetworkQuery
@@ -15,6 +16,8 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
 
   alias Helix.Universe.Bank.Process.Bank.Account.AccountCreate,
     as: BankAccountCreateProcess
+  alias Helix.Universe.Bank.Process.Bank.Account.AccountClose,
+    as: BankAccountCloseProcess
   alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
     as: BankAccountRevealPasswordProcess
   alias Helix.Universe.Bank.Process.Bank.Account.ChangePassword,
@@ -62,17 +65,19 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   Starts the `bank_account_create` process.
   """
   def open(gateway, account_id, atm, relay) do
-    entity_id = Entity.ID.cast!(to_string(account_id.id))
+    entity_id = Entity.ID.cast!(to_string(account_id))
+    atm_id = atm.server_id
 
     meta = %{
-      src_atm_id: atm.server_id,
+      network_id: NetworkQuery.internet().network_id,
+      bounce: nil,
       source_entity_id: entity_id
     }
 
-    BankAccountCreateProcess.execute(gateway, atm, %{}, meta, relay)
+    BankAccountCreateProcess.execute(gateway, atm, %{atm_id: atm_id}, meta, relay)
   end
 
-  @spec close(BankAccount.t) ::
+  @spec close(Server.t, BankAccount.t, Server.t, relay) ::
   {:ok, Process.t}
   | BankAccountCloseProcess.executable_error
   @doc """
@@ -80,11 +85,16 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccount do
   """
   def close(gateway, bank_account, atm, relay) do
     meta = %{
-      src_atm_id: bank_account.server_id,
-      src_account_number: bank_account.account_number
+      network_id: NetworkQuery.internet().network_id,
+      bounce: nil
     }
 
-    BankAccountCloseProcess.execute(gateway, atm, %{}, meta, relay)
+    params = %{
+      atm_id: bank_account.atm_id,
+      account_number: bank_account.account_number
+    }
+
+    BankAccountCloseProcess.execute(gateway, atm, params, meta, relay)
   end
 
   @spec change_password(BankAccount.t, Server.t, Server.t, relay) ::

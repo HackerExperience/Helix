@@ -1,4 +1,4 @@
-defmodule Helix.Universe.Bank.Event.Bank.Account do
+  defmodule Helix.Universe.Bank.Event.Bank.Account do
 
   import Helix.Event
 

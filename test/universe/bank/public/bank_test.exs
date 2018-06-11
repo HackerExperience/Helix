@@ -180,43 +180,11 @@ defmodule Helix.Test.Universe.Bank.Public.BankTest do
     end
   end
 
-  describe "open_account/2" do
-    test "creates the account" do
-      # Setups an Account.
-      account = AccountSetup.account!()
-      account_id = account.account_id
-
-      # Gets the Bank Server.
-      {bank, _} = NPCHelper.bank
-      atm_id = List.first(bank.servers).id
-
-      # Asserts that BankAccount is being created.
-      assert {:ok, bank_account} =
-        BankPublic.open_account(account_id, atm_id)
-
-      # Asserts that BankAccount's Owner is the created account.
-      assert bank_account.owner_id == account_id
-
-      # Assert that BankAccount is on database.
-      assert BankQuery.fetch_account(atm_id, bank_account.account_number)
-    end
+  describe "open_account/4" do
+    # Tested on BankAccountFlowTest
   end
 
-  describe "close_account/1" do
-    test "deletes the account" do
-      # Setups a BankAccount.
-      bank_account = BankSetup.account!()
-
-      # Stores atm_id and account_number for trying fetch after deleting.
-      atm_id = bank_account.atm_id
-      account_number = bank_account.account_number
-
-      # Asserts the BankAccount is being deleted.
-      assert :ok =
-        BankPublic.close_account(bank_account)
-
-      # Refutes if BankAccount still exists on database.
-      refute BankQuery.fetch_account(atm_id, account_number)
-    end
+  describe "close_account/4" do
+    # Tested on BankAccountFlowTest
   end
 end

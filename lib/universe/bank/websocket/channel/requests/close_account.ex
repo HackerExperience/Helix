@@ -39,6 +39,7 @@ request Helix.Universe.Bank.Websocket.Requests.CloseAccount do
     bank_account = BankQuery.fetch_account(atm_id, account_number)
     atm = ServerQuery.fetch(atm_id)
     relay = request.relay
+    gateway = ServerQuery.fetch(socket.assigns.gateway.server_id)
     process = BankPublic.close_account(gateway, bank_account, atm, relay)
 
     case process do

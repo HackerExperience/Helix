@@ -29,5 +29,24 @@ defmodule Helix.Universe.Bank.Event.Bank.Account.Token do
         account: account
       }
     end
+
+    notify do
+
+      @event :bank_token_acquired
+
+      @doc false
+      def generate_payload(event, _socket) do
+        data =
+          %{
+            atm_id: to_string(event.account.atm_id),
+            account_number: to_string(event.account.account_number),
+            token_id: event.token.token_id
+          }
+      end
+
+      @doc false
+      def whom_to_notify(event),
+        do: %{account: event.entity_id}
+    end
   end
 end
