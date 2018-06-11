@@ -229,7 +229,8 @@ join Helix.Universe.Bank.Websocket.Channel.Bank.Join do
           account_number,
           gateway.server_id,
           bounce_id,
-          password
+          password,
+          request.relay
           )
     do
       gateway_data =
@@ -290,7 +291,8 @@ join Helix.Universe.Bank.Websocket.Channel.Bank.Join do
           account_number,
           gateway.server_id,
           bounce_id,
-          token.token_id
+          token.token_id,
+          request.relay
         )
     do
       gateway_data =

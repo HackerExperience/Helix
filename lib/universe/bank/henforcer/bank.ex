@@ -180,13 +180,11 @@ defmodule Helix.Universe.Bank.Henforcer.Bank do
 
   @type transfer_error ::
     account_exists_error
-    | password_valid_error
     | transfer_no_funds_error
 
   @type can_transfer_relay ::
     %{
       amount: BankAccount.amount,
-      password: BankAccount.password,
       to_account: BankAccount.t
     }
   @type transfer_no_funds_error ::
@@ -195,20 +193,14 @@ defmodule Helix.Universe.Bank.Henforcer.Bank do
     {Network.ID, Network.ip},
     BankAccount.account,
     {ATM.idt, BankAccount.account},
-    non_neg_integer,
-    BankAccount.password
+    non_neg_integer
     ) ::
     {true, can_transfer_relay}
     | {false, transfer_error, %{}}
   @doc """
   Henforces that given account can transfer to another given account
   """
-  def can_transfer?(
-    {net_id, ip},
-    to_acc_num,
-    {atm_id, acc_num},
-    amount,
-    password)
+  def can_transfer?({net_id, ip}, to_acc_num, {atm_id, acc_num}, amount)
     do
       with \
         {true, r1} <- NetworkHenforcer.nip_exists?(net_id, ip),
@@ -217,14 +209,13 @@ defmodule Helix.Universe.Bank.Henforcer.Bank do
         {true, r3} <- account_exists?(to_atm_id, to_acc_num),
         {_r3, to_account} <- get_and_drop(r3, :bank_account),
         {true, r4} <- account_exists?(atm_id, acc_num),
-        {true, r5} <- has_enough_funds?(r4.bank_account, amount),
-        {true, r6} <- password_valid?(r4.bank_account, password)
+        {true, r5} <- has_enough_funds?(r4.bank_account, amount)
       do
         relay =
           %{
             to_account: to_account
           }
-        reply_ok(relay([relay, r5, r6]))
+        reply_ok(relay([relay, r5]))
       end
   end
 

@@ -280,7 +280,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
     # Login with the right password
     {:ok, _, connection} =
       BankAccountFlow.login_password(
-        acc.atm_id, acc.account_number, server.server_id, nil, acc.password
+        acc.atm_id, acc.account_number, server.server_id, nil, acc.password, nil
       )
 
     {connection, %{acc: acc, server: server, entity: entity}}

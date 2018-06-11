@@ -1,4 +1,4 @@
-defmodule Helix.Universe.Bank.Event.Bank.Account do
+  defmodule Helix.Universe.Bank.Event.Bank.Account do
 
   import Helix.Event
 
@@ -101,11 +101,13 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
 
   event Login do
 
+    alias Helix.Account.Model.Account
     alias Helix.Entity.Model.Entity
+    alias Helix.Entity.Query.Entity, as: EntityQuery
     alias Helix.Universe.Bank.Model.BankAccount
     alias Helix.Universe.Bank.Model.BankToken
 
-    event_struct [:entity_id, :account, :token_id]
+    event_struct [:entity_id, :notify_owner, :account, :token_id]
 
     @type t :: %__MODULE__{
       entity_id: Entity.id,
@@ -113,13 +115,33 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
       token_id: BankToken.id | nil
     }
 
-    @spec new(BankAccount.t, Entity.id) ::
+    @spec new(BankAccount.t, Entity.idt) ::
       t
-    def new(account = %BankAccount{}, entity_id, token_id \\ nil) do
+    def new(account, entity_or_entity_id, token_id \\ nil)
+    def new(account = %BankAccount{}, entity = %Entity{}, token_id) do
+      is_account? = entity.entity_type == :account
+
+      %__MODULE__{
+        entity_id: entity.entity_id,
+        account: account,
+        token_id: token_id,
+        notify_owner: is_account?
+      }
+    end
+    def new(account = %BankAccount{}, entity_id = %Entity.ID{}, token_id) do
+      is_account? = EntityQuery.fetch(entity_id).entity_type == :account
+      entity_id =
+        if is_account? do
+          %Account.ID{id: entity_id.id, root: Account}
+        else
+          entity_id
+        end
+
       %__MODULE__{
         entity_id: entity_id,
         account: account,
-        token_id: token_id
+        token_id: token_id,
+        notify_owner: is_account?
       }
     end
 
@@ -129,7 +151,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
       the local data.
       """
 
-      @event :bank_login_event
+      @event :bank_login
 
       @doc false
       def generate_payload(event, _socket) do
@@ -145,9 +167,27 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
       end
 
       def whom_to_notify(event) do
-        %{
-          account: event.entity_id
-        }
+        atm_id = event.account.atm_id
+        bank_account = event.account.account_number
+
+        entity_id =
+          case event.entity_id do
+            entity = %Entity{} ->
+              %Account.ID{id: entity.entity_id.id, root: Account}
+            entity_id = %Entity.ID{} ->
+              %Account.ID{id: entity_id.id, root: Account}
+          end
+
+        base_map =
+          %{
+            bank_acc: [{atm_id, bank_account}]
+          }
+
+        if event.notify_owner do
+          Map.merge(%{account: entity_id}, base_map)
+        else
+          base_map
+        end
       end
     end
   end
@@ -175,7 +215,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
 
     notify do
 
-      @event :bank_logout_event
+      @event :bank_logout
 
       def generate_payload(event, _socket) do
         data =

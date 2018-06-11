@@ -32,8 +32,9 @@ defmodule Helix.Universe.Bank.Event.AccountCreate do
     @spec new(Process.t, AccountCreateProcess.t) :: t
     def new(process = %Process{}, data = %AccountCreateProcess{}) do
       %__MODULE__{
-        atm_id: process.src_atm_id,
+        atm_id: process.data.atm_id,
         requester: process.source_entity_id
       }
     end
   end
+end

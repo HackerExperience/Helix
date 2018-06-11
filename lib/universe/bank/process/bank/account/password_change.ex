@@ -89,4 +89,10 @@ process Helix.Universe.Bank.Process.Bank.Account.ChangePassword do
       {:create, :bank_login}
     end
   end
+  process_viewable do
+
+    @type data :: %{}
+
+    render_empty_data()
+  end
 end

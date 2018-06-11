@@ -17,7 +17,15 @@ defmodule Helix.Universe.Bank.Event.AccountClose do
 
     event_struct [:atm_id, :account_number]
 
-    @spec new(ATM.id, BankAccount.account) :: t
+    @spec new(Process.t, AccountCloseProcess.t) :: t
+    def new(process = %Process{}, data = %AccountCloseProcess{}) do
+      %__MODULE__{
+        atm_id: data.atm_id,
+        account_number: data.account_number
+      }
+    end
+
+    @spec new(ATM.id, BankAccount.account):: t
 
     def new(atm_id, account_number) do
       %__MODULE__{
@@ -25,12 +33,5 @@ defmodule Helix.Universe.Bank.Event.AccountClose do
         account_number: account_number
       }
     end
-
-    @spec new(Process.t, AccountCloseProcess.t) :: t
-    def new(process = %Process{}, data = %AccountCloseProcess{}) do
-      %__MODULE__{
-        atm_id: process.src_atm_id,
-        account_number: process.src_acc_number
-      }
-    end
   end
+end

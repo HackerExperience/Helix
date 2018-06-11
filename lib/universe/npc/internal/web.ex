@@ -1,6 +1,7 @@
 defmodule Helix.Universe.NPC.Internal.Web do
 
   alias HELL.IPv4
+  alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Network.Model.Network
   alias Helix.Universe.NPC.Model.NPC
 
@@ -18,9 +19,14 @@ defmodule Helix.Universe.NPC.Internal.Web do
 
     Map.merge(common, custom)
   end
-  def generate_content(%NPC{npc_type: :bank}, _net, _ip) do
+  def generate_content(%NPC{npc_type: :bank}, net, ip) do
     common = common("Nubank")
-    custom = %{}
+    {_, atm_id} =
+      CacheQuery.from_nip_get_server(net, ip)
+
+    custom = %{
+      atm_id: atm_id
+    }
 
     Map.merge(common, custom)
   end

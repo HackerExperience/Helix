@@ -9,13 +9,13 @@ process Helix.Universe.Bank.Process.Bank.Account.AccountCreate do
 
   @process_type :bank_create_account
 
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{atm_id: ATM.id}
 
-  @type creation_params :: %{}
+  @type creation_params :: %{atm_id: ATM.id}
 
   @type objective :: %{cpu: resource_usage}
 
-  @type resource :: %{
+  @type resources :: %{
     objective: objective,
     static: map,
     l_dynamic: [:cpu],
@@ -25,17 +25,17 @@ process Helix.Universe.Bank.Process.Bank.Account.AccountCreate do
   @type resources_params :: %{}
 
   @spec new(creation_params) :: t
-  def new do
-    %__MODULE__{}
+  def new(%{atm_id: atm_id}) do
+    %__MODULE__{atm_id: atm_id}
   end
 
-  @spec resources(resource_params) :: resources
+  @spec resources(resources_params) :: resources
   def resources(params = %{}),
     do: get_resources params
 
   processable do
 
-    alias Helix.Universe.Bank.Event.Bank.Account.AccountCreate.Processed,
+    alias Helix.Universe.Bank.Event.AccountCreate.Processed,
       as: AccountCreateProcess
 
     on_completion(process, data) do
@@ -56,6 +56,7 @@ process Helix.Universe.Bank.Process.Bank.Account.AccountCreate do
     # TODO proper balance
     get_factors(%{}) do end
 
+    # TODO: Use Time, not CPU #364
     cpu(_) do
       1
     end
@@ -63,22 +64,32 @@ process Helix.Universe.Bank.Process.Bank.Account.AccountCreate do
     dynamic do
       [:cpu]
     end
+  end
 
-    executable do
+  executable do
 
-      alias Helix.Universe.Bank.Process.Bank.Account.AccountCreate,
-        as: AccountCreateProcess
+    alias Helix.Universe.Bank.Process.Bank.Account.AccountCreate,
+      as: AccountCreateProcess
 
-      @type params :: AccountCreateProcess.creation_params
+    @type params :: AccountCreateProcess.creation_params
 
-      @type meta ::
-        ${
-          optional(atom) => term
-        }
+    @type meta ::
+      %{
+        optional(atom) => term
+      }
 
-      resources(_, _, %{}) do
-        %{}
-      end
+    resources(_, _, %{}, _) do
+      %{}
     end
+
+    source_connection(_gateway, _target, _params, _meta) do
+      {:create, :bank_login}
+    end
+  end
+  process_viewable do
+
+    @type data :: %{}
+
+    render_empty_data()
   end
 end

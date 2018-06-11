@@ -71,10 +71,10 @@ defmodule Helix.Test.Event.Setup.Bank do
     do: RevealPasswordProcessedEvent.new(account, gateway_id, token_id)
 
   @doc """
-  Accepts (BankAccount.t, Entity.id)
+  Accepts (BankAccount.t)
   """
-  def password_changed(account, entity_id),
-    do: BankAccountPasswordChangedEvent.new(account, entity_id)
+  def password_changed(account),
+    do: BankAccountPasswordChangedEvent.new(account)
 
   @doc """
   Accepts: (BankAccount.t, Entity.id)

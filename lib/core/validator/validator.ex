@@ -9,7 +9,7 @@ defmodule Helix.Core.Validator do
 
   @regex_hostname ~r/^[a-zA-Z0-9-_.@#]{1,20}$/
 
-  @regex_token ~r/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+  @uuid ~r/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
   @spec validate_input(input :: String.t, input_type, opts :: term) ::
     {:ok, validated_input :: String.t}
@@ -55,7 +55,7 @@ defmodule Helix.Core.Validator do
   defp validate_token(v) when not is_binary(v),
     do: :error
   defp validate_token(v) do
-    if Regex.match?(@regex_token, v) do
+    if Regex.match?(@uuid, v) do
       {:ok, v}
     else
       :error
@@ -73,4 +73,5 @@ defmodule Helix.Core.Validator do
 
   defp validate_money(v),
     do: validate_hostname(v)
+
 end

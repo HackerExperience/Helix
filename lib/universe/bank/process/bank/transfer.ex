@@ -115,4 +115,10 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       {:create, :wire_transfer}
     end
   end
+  process_viewable do
+
+    @type data :: %{}
+
+    render_empty_data()
+  end
 end

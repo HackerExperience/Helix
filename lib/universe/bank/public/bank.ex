@@ -81,27 +81,24 @@ defmodule Helix.Universe.Bank.Public.Bank do
       )
   end
 
-  @spec open_account(Account.id, Server.id) ::
+  @spec open_account(Server.t, Account.id, Server.t, Event.relay) ::
   {:ok, BankAccount.t}
   | {:error, :internal}
   @doc """
   Opens a BankAccount on given atm to given account_id.
   """
-  def open_account(account_id, atm_id) do
-    # TODO: Make as a process
-    BankAccountFlow.open(account_id, atm_id)
-  end
+  def open_account(gateway, account_id, atm, relay),
+    do: BankAccountFlow.open(gateway, account_id, atm, relay)
 
-  @spec close_account(BankAccount.t) ::
+  @spec close_account(Server.t, BankAccount.t, Server.t, Event.relay) ::
   :ok
   | {:error, {:bank_account, :not_found}}
   | {:error, {:bank_account, :not_empty}}
   @doc """
   Closes given account.
   """
-  def close_account(account),
-    # TODO: Make as process
-    do: BankAccountFlow.close(account)
+  def close_account(gateway, account, atm, relay),
+    do: BankAccountFlow.close(gateway, account, atm, relay)
 
   @spec transfer(
     BankAccount.t,

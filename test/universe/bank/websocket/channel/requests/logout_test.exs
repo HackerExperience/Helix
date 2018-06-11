@@ -8,8 +8,8 @@ defmodule Helix.Test.Universe.Bank.Websocket.Requests.LogoutTest do
   alias Helix.Test.Channel.Helper, as: ChannelHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
 
-  describe "bootstrap" do
-    test "returns expected result" do
+  describe "logout" do
+    test "terminates connection with the channel" do
       # Setups an Account socket.
       {socket, %{entity: entity, server: gateway}} =
         ChannelSetup.create_socket()

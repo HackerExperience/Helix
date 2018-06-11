@@ -5,6 +5,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
   alias Helix.Event
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Universe.Bank.Action.Bank, as: BankAction
+  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
   alias Helix.Software.Event.Virus.Collected, as: VirusCollectedEvent
   alias Helix.Universe.Bank.Event.Bank.Account.Removed,
@@ -13,6 +14,8 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
     as: BankAccountUpdatedEvent
   alias Helix.Universe.Bank.Event.AccountCreate.Processed,
     as: AccountCreateProcessedEvent
+  alias Helix.Universe.Bank.Event.AccountClose.Processed,
+    as: AccountCloseProcessedEvent
   alias Helix.Universe.Bank.Event.RevealPassword.Processed,
     as: RevealPasswordProcessedEvent
   alias Helix.Universe.Bank.Event.ChangePassword.Processed,
@@ -24,7 +27,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
     flowing do
       with \
         {:ok, _bank_account, events} <-
-          BankAction.open_account(event.requester, event.atm),
+          BankAction.open_account(event.requester, event.atm_id),
         on_success(fn -> Event.emit(events, from: event) end)
       do
         :ok
@@ -33,12 +36,12 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
   end
 
  def account_close_processed(event = %AccountCloseProcessedEvent{}) do
-    flowing
+    flowing do
       with \
-        bank_account = BankQuery.fetch_account(event.atm_id, event.account_number)
-        true <- not is_nil(bank_account),
-        {:ok, events} <- BankAction.close_account(bank_account),
-        on_success(fn -> Event.emit(events) end)
+        bank_acc = BankQuery.fetch_account(event.atm_id, event.account_number),
+        true <- not is_nil(bank_acc),
+        {:ok, events} <- BankAction.close_account(bank_acc),
+        on_success(fn -> Event.emit(events, from: event) end)
       do
         :ok
       end
@@ -80,9 +83,7 @@ defmodule Helix.Universe.Bank.Event.Handler.Bank.Account do
       with \
            changed_by = %{} <- EntityQuery.fetch_by_server(event.gateway_id),
            {:ok, _bank_account, events} <-
-           BankAction.change_password(
-             event.account, changed_by.entity_id
-           ),
+           BankAction.change_password(event.account),
           on_success(fn -> Event.emit(events, from: event) end)
       do
         :ok

@@ -104,7 +104,8 @@ defprotocol Helix.Event.Notificable do
   @type whom_to_notify ::
     %{
       optional(:server) => [Server.id],
-      optional(:account) => [Account.id]
+      optional(:account) => [Account.id],
+      optional(:bank_acc) => [term]
     }
 
   @spec generate_payload(event :: struct, Socket.t) ::

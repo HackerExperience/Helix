@@ -12,6 +12,7 @@ defmodule Helix.Event.NotificationHandler do
   alias Helix.Universe.Bank.Model.BankAccount
 
   @type channel_account_id :: Account.id | Entity.id
+  @type channel_bank_id :: {ATM.id, BankAccount.account}
 
   @doc """
   Handler responsible for guiding the event through the Notificable flow. It
@@ -36,6 +37,18 @@ defmodule Helix.Event.NotificationHandler do
   @spec channel_mapper(Notificable.whom_to_notify) ::
     channels :: [String.t]
   defp channel_mapper(whom_to_notify, acc \\ [])
+  defp channel_mapper(notify = %{bank_acc: bank_accs}, acc) do
+    acc =
+      bank_accs
+      |> Utils.ensure_list()
+      |> Enum.uniq()
+      |> get_bank_channels()
+      |> List.flatten()
+      |> Kernel.++(acc)
+
+      channel_mapper(Map.delete(notify, :bank_acc), acc)
+  end
+
   defp channel_mapper(notify = %{server: servers}, acc) do
     acc =
       servers
@@ -95,6 +108,13 @@ defmodule Helix.Event.NotificationHandler do
     do: Enum.map(accounts, &get_account_channels/1)
   defp get_account_channels(account_id),
     do: ["account:" <> to_string(account_id)]
+
+  @spec get_bank_channels([channel_bank_id] | channel_bank_id) ::
+    channels :: [String.t]
+  defp get_bank_channels(bank_accs) when is_list(bank_accs),
+    do: Enum.map(bank_accs, &get_bank_channels/1)
+  defp get_bank_channels({atm_id, account_number}),
+    do: ["bank:" <> to_string(account_number) <> "@" <> to_string(atm_id)]
 
   defp concat(a, b),
     do: a <> to_string(b)

@@ -105,25 +105,26 @@ defmodule Helix.Universe.Bank.Action.Bank do
     to: BankTransferInternal,
     as: :abort
 
-  @spec open_account(Account.idt, ATM.id) ::
+  @spec open_account(Account.id, ATM.id) ::
     {:ok, BankAccount.t, [BankAccountUpdatedEvent.t]}
-    | {:error, Ecto.Changeset.t}
+    | {:error, :internal}
   @doc """
   Opens a bank account.
   """
-  def open_account(owner, atm) do
-    bank =
-      atm
+  def open_account(owner, atm_id) do
+    bank_id =
+      atm_id
       |> EntityQuery.fetch_by_server()
       |> Map.get(:entity_id)
       |> NPCQuery.fetch()
+      |> Map.get(:npc_id)
 
-    case BankAccountInternal.create(owner, atm, bank) do
+    case BankAccountInternal.create(owner, atm_id, bank_id) do
       {:ok, bank_acc} ->
         {:ok, bank_acc, [BankAccountUpdatedEvent.new(bank_acc, :created)]}
 
-      error ->
-        error
+      {:error, _} ->
+        {:error, :internal}
     end
   end
 
@@ -225,12 +226,12 @@ defmodule Helix.Universe.Bank.Action.Bank do
     end
   end
 
-  @spec change_password(BankAccount.t, Entity.id) ::
+  @spec change_password(BankAccount.t) ::
   {:ok, BankAccount.t, [BankAccountPasswordChangedEvent.t]}
    | {:error, :internal}
-   def change_password(account, changed_by) do
+   def change_password(account) do
      with {:ok, account} <- update_password(account) do
-       event = BankAccountPasswordChangedEvent.new(account, changed_by)
+       event = BankAccountPasswordChangedEvent.new(account)
 
        {:ok, account, [event]}
      else

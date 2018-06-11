@@ -22,7 +22,6 @@ request Helix.Universe.Bank.Websocket.Requests.Transfer do
       {:ok, receiving_bank_acc} <- BankAccount.cast(receiving_bank_acc),
       {:ok, network_id} <- Network.ID.cast(request.unsafe["to_bank_net"]),
       {:ok, ip} <- IPv4.cast(request.unsafe["to_bank_ip"]),
-      {:ok, password} <- validate_input(request.unsafe["password"], :password),
       amount <- request.unsafe["amount"],
       {true, amount} <- (fn amount -> {amount > 0, amount} end).(amount)
     do
@@ -31,7 +30,6 @@ request Helix.Universe.Bank.Websocket.Requests.Transfer do
           bank_account: receiving_bank_acc,
           bank_ip: ip,
           bank_net: network_id,
-          password: password,
           amount: amount
         }
       update_params(request, params, reply: true)
@@ -48,7 +46,6 @@ request Helix.Universe.Bank.Websocket.Requests.Transfer do
     sending_acc = {socket.assigns.atm_id, socket.assigns.account_number}
     receiving_acc = request.params.bank_account
     amount = request.params.amount
-    password = request.params.password
     gateway_id = socket.assigns.gateway.server_id
     account_id = socket.assigns.account_id
 
@@ -58,8 +55,7 @@ request Helix.Universe.Bank.Websocket.Requests.Transfer do
           nip,
           receiving_acc,
           sending_acc,
-          amount,
-          password
+          amount
           ),
       amount = relay.amount,
       to_account = relay.to_account

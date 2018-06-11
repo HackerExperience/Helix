@@ -3,6 +3,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
   use Helix.Test.Case.Integration
 
   alias HELL.Utils
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
@@ -272,28 +273,51 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
     end
   end
 
-  describe "open/2" do
-    test "opens account when everything is OK" do
-      account  = AccountSetup.account!()
+  describe "open/4" do
+    test "creates a process to opens account when everything is OK" do
+      {account, %{server: gateway}}  = AccountSetup.account(with_server: true)
+
       account_id = account.account_id
 
       bank_acc = BankSetup.account!()
       atm_id = bank_acc.atm_id
+      atm = ServerQuery.fetch(atm_id)
 
-      assert {:ok, bank_acc} = BankAccountFlow.open(account_id, atm_id)
-      assert bank_acc.atm_id == atm_id
-      assert BankQuery.fetch_account(atm_id, bank_acc.account_number)
+      assert {:ok, process} =
+        BankAccountFlow.open(gateway, account_id, atm, @relay)
+
+      assert process.data.atm_id == atm_id
+      assert process.source_entity_id == %Entity.ID{id: account_id.id}
+
+      TOPHelper.force_completion(process)
+
+      refute ProcessQuery.fetch(process.process_id)
     end
   end
 
-  describe "close/2" do
-    test "closes account" do
-      bank_acc = BankSetup.account!()
+  describe "close/4" do
+    test "creates a process to close the given bank account" do
+      {account, %{server: gateway}}  = AccountSetup.account(with_server: true)
+      account_id = account.account_id
+
+      entity_id = %Entity.ID{id: account_id.id}
+
+      bank_acc = BankSetup.account!(owner_id: entity_id)
 
       atm_id = bank_acc.atm_id
+      atm = ServerQuery.fetch(atm_id)
       account_number = bank_acc.account_number
 
-      assert :ok = BankAccountFlow.close(bank_acc)
+      assert {:ok, process} =
+        BankAccountFlow.close(gateway, bank_acc, atm, @relay)
+
+      assert process.data.atm_id == atm_id
+      assert process.data.account_number == account_number
+
+      TOPHelper.force_completion(process)
+
+      refute ProcessQuery.fetch(process.process_id)
+
       refute BankQuery.fetch_account(atm_id, account_number)
     end
   end

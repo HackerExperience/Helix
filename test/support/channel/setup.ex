@@ -399,11 +399,7 @@ defmodule Helix.Test.Channel.Setup do
 
     account = AccountSetup.account!()
     account_id = account.account_id
-    tunnel =
-      NetworkSetup.tunnel!(
-        gateway_id: gateway_id,
-        target_id: atm_id
-      )
+    tunnel = NetworkSetup.tunnel!(gateway_id: gateway_id, target_id: atm_id)
 
     connection =
       ConnectionSetup.connection(
@@ -446,7 +442,9 @@ defmodule Helix.Test.Channel.Setup do
   """
   def fake_connection_socket_assigns(opts \\ []) do
     gen_account_id = fn entity_id ->
-      entity_id |> to_string() |> Account.ID.cast!()
+      entity_id
+      |> to_string()
+      |> Account.ID.cast!()
     end
 
     entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
