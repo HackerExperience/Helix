@@ -116,9 +116,6 @@ defmodule Helix.Story.Mission.Tutorial do
       # Listeners
       hespawn fn ->
 
-        # Send `about_that` when download starts
-        on_process_started :file_download, cracker.file_id, email: "about_that"
-
         # Reply `downloaded` when the cracker has been downloaded
         story_listen cracker.file_id, FileDownloadedEvent, reply: "downloaded"
 
@@ -128,6 +125,11 @@ defmodule Helix.Story.Mission.Tutorial do
 
       {meta, %{}, e1 ++ e2 ++ e3 ++ e4}
     end
+
+    # Filters
+
+    # Send `about_that` when download starts
+    filter_download_started :cracker_id, send: "about_that", sleep: 2
 
     # Callbacks
 
@@ -168,18 +170,175 @@ defmodule Helix.Story.Mission.Tutorial do
 
   step NastyVirus do
 
+    alias Helix.Server.Model.Server
+    alias Helix.Server.Query.Server, as: ServerQuery
+    alias Helix.Software.Model.File
+    alias Helix.Story.Action.Context, as: ContextAction
+
+    alias Helix.Server.Event.Server.Password.Acquired,
+      as: ServerPasswordAcquiredEvent
+
+    alias Helix.Software.Make.File, as: MakeFile
+
     email "nasty_virus1"
 
-    empty_setup()
+    on_email "nasty_virus1",
+      send: "nasty_virus2",
+      send_opts: [sleep: 3]
+
+    email "nasty_virus2",
+      replies: "punks1"
+
+    email "punks2"
+
+    on_reply "punks1",
+      send: "punks2",
+      send_opts: [sleep: 3]
+
+    email "punks3"
+
+    filter_email "punks2" do
+      {{:send_email, "punks3", %{ip: step.meta.ip}, [sleep: 2]}, step, []}
+    end
+
+    email "dlayd_much1",
+      replies: "dlayd_much2"
+
+    email "dlayd_much3"
+
+    on_reply "dlayd_much2",
+      send: "dlayd_much3",
+      send_opts: [sleep: 2]
+
+    email "dlayd_much4",
+      replies: "noice"
+
+    on_email "dlayd_much4",
+      reply: "noice",
+      send_opts: [sleep: 2]
+
+    email "nasty_virus3",
+      replies: ["virus_spotted1"]
+
+    reply "virus_spotted1"
+
+    on_reply "virus_spotted1",
+      send: "virus_spotted2",
+      send_opts: [sleep: 2]
+
+    email "virus_spotted2",
+      replies: ["pointless_convo1"]
+
+    reply "pointless_convo1"
+
+    on_reply "pointless_convo1",
+      send: "pointless_convo2",
+      send_opts: [sleep: 3]
+
+    email "pointless_convo2",
+      replies: ["pointless_convo3"]
+
+    on_email "pointless_convo2",
+      reply: "pointless_convo3",
+      send_opts: [sleep: 3]
+
+    reply "pointless_convo3"
+
+    on_reply "pointless_convo3",
+      send: "pointless_convo4",
+      send_opts: [sleep: 4]
+
+    email "pointless_convo4",
+      replies: ["pointless_convo5"]
+
+    on_email "pointless_convo4",
+      reply: "pointless_convo5",
+      send_opts: [sleep: 2]
+
+    def setup(step) do
+      # Create the underlying character (:rcn) and its server
+      {:ok, server, _, e1} =
+        setup_once :char, {step.entity_id, :rcn} do
+          result = {:ok, server, %{entity: entity}, _} =
+            StoryMake.char(step.manager.network_id)
+
+          ContextAction.save(
+            step.entity_id, :rcn, :server_id, server.server_id
+          )
+          ContextAction.save(
+            step.entity_id, :rcn, :entity_id, entity.entity_id
+          )
+
+          result
+        end
+
+      # Create the Spyware the player is supposed to download
+      {:ok, spyware, _, e2} =
+        setup_once :file, step.meta[:spyware_id] do
+          result = {:ok, spyware, _, _} =
+            MakeFile.spyware(server, %{vir_spyware: 30})
+
+          ContextAction.save(
+            step.entity_id, :rcn, :spyware_id, spyware.file_id
+          )
+
+          result
+        end
+
+      meta =
+        %{
+          ip: ServerQuery.get_ip(server, step.manager.network_id),
+          server_id: server.server_id,
+          spyware_id: spyware.file_id
+        }
+
+      # Listeners
+      hespawn fn ->
+
+        # Send `nasty_virus3` when bruteforce finishes
+        story_listen server.server_id, ServerPasswordAcquiredEvent,
+          email: "nasty_virus3", sleep: 2
+
+      end
+
+      {meta, %{}, e1 ++ e2}
+    end
+
+    # Filters
+
+    # Send `dlayd_much1` when bruteforce starts
+    filter_bruteforce_started :server_id, send: "dlayd_much1", sleep: 2
+
+    # Send `pointless_convo1` when download starts
+    filter_download_started :spyware_id, reply: "pointless_convo1", sleep: 2
+
+    # Send `dlayd_much4` email when player opens TaskManager app
+    filter_client_action :tutorial_accessed_task_manager,
+      send: "dlayd_much4", sleep: 1
+
+    filter_client_action :tutorial_spotted_nasty_virus,
+      reply: "virus_spotted1", sleep: 1
 
     def start(step) do
-      e1 = send_email step, "nasty_virus1", %{}
+      {meta, _, e1} = setup(step)
 
-      {:ok, step, e1, sleep: 4}
+      e2 = send_email step, "nasty_virus1", %{}
+
+      step = %{step| meta: meta}
+
+      {:ok, step, e1 ++ e2, sleep: 4}
     end
 
     def complete(step) do
       {:ok, step, []}
+    end
+
+    format_meta do
+      %{
+        ip: meta.ip,
+        server_id: meta.server_id |> Server.ID.cast!(),
+        spyware_id: meta.spyware_id |> File.ID.cast!()
+      }
     end
 
     next_step __MODULE__

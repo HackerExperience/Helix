@@ -9,9 +9,12 @@ defmodule Helix.Software.Make.File do
 
   alias Helix.Software.Event.File.Added, as: FileAddedEvent
 
-  @type modules :: cracker_modules
+  @type modules ::
+    cracker_modules
+    | spyware_modules
 
   @type cracker_modules :: %{bruteforce: version, overflow: version}
+  @type spyware_modules :: %{vir_spyware: version}
 
   @type data :: %{optional(:path) => File.path}
 
@@ -35,6 +38,14 @@ defmodule Helix.Software.Make.File do
     {:ok, file, _, _} = cracker(parent, modules, data)
     file
   end
+
+  @spec spyware(file_parent, spyware_modules, data) ::
+    file_return(:virus_spyware)
+  @doc """
+  Generates a spyware.
+  """
+  def spyware(parent, modules, data \\ %{}),
+    do: file(parent, :virus_spyware, modules, data)
 
   @spec file(file_parent, Software.type, modules, data) ::
     file_return(Software.type)

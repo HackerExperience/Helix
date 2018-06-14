@@ -263,6 +263,10 @@ defmodule Helix.Test.Channel.Setup do
     end
   end
 
+  @doc """
+  Opts:
+  - socket_opts: Opts to be relayed to `create_socket/1`
+  """
   def join_storyline_server(opts \\ []) do
     {socket, %{account: account}} = create_socket(opts[:socket_opts] || [])
 

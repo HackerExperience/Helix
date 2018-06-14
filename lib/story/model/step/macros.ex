@@ -16,7 +16,7 @@ defmodule Helix.Story.Model.Step.Macros do
   alias Helix.Story.Action.Story, as: StoryAction
   alias Helix.Story.Query.Story, as: StoryQuery
 
-  alias Helix.Client.Web1.Event.Action.Performed, as: Web1ActionPerformedEvent
+  alias Helix.Client.Event.Action.Performed, as: ClientActionPerformedEvent
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Story.Event.Email.Sent, as: StoryEmailSentEvent
   alias Helix.Story.Event.Reply.Sent, as: StoryReplySentEvent
@@ -130,40 +130,40 @@ defmodule Helix.Story.Model.Step.Macros do
           Predefined callback when user asks to `:send_email`. `meta` must
           contain required data, in this case at least `email_id`.
           """
-          callback :cb_send_email, _event, meta = %{email_id: email_id} do
+          callback :cb_send_email, event, meta = %{email_id: email_id} do
             email_meta = Map.get(meta, :email_meta, %{})
+            sleep = Map.get(meta, :sleep, 0)
+            email_opts = [sleep: sleep]
 
-            {{:send_email, email_id, email_meta, []}, []}
+            {{:send_email, email_id, email_meta, email_opts}, []}
           end
 
           @doc """
           Predefined callback when user asks to `:send_reply`. `meta` must
           contain required data, in this case at least `reply_id`.
           """
-          callback :cb_send_reply, _event, %{reply_id: reply_id} do
-            {{:send_reply, reply_id, []}, []}
+          callback :cb_send_reply, _event, meta = %{reply_id: reply_id} do
+            sleep = Map.get(meta, :sleep, 0)
+            reply_opts = [sleep: sleep]
+
+            {{:send_reply, reply_id, reply_opts}, []}
           end
 
           @doc """
           Predefined callback that is used by `on_process_started` listener.
           """
           callback :cb_process_started, event, meta do
-            if to_string(event.process.type) == meta.type do
-              relay_callback meta.relay_cb, event, meta
-            else
-              {:noop, []}
-            end
-          end
+            field = String.to_existing_atom(meta.process_field)
+            target_value = Map.fetch!(event.process, field)
 
-          @doc """
-          Callback used to filter the client action, making sure the action
-          broadcasted is the desired one. If so, relays to the proper callback.
-          """
-          callback :cb_client_action, event, meta do
-            if to_string(event.action) == meta.action do
+            with \
+              true <- to_string(event.process.type) == meta.type,
+              true <- to_string(target_value) == meta.element_id
+            do
               relay_callback meta.relay_cb, event, meta
             else
-              {:noop, []}
+              _ ->
+                {:noop, []}
             end
           end
         end
@@ -244,9 +244,59 @@ defmodule Helix.Story.Model.Step.Macros do
   end
 
   @doc """
+  Removes the registered listener for `event` on `object_id`.
+
+  It's a wrapper for `Core.Listener`
+  """
+  defmacro story_unlisten(object_id, event, owner_id) do
+    # Import `Helix.Core.Listener` only once within the Step context (ENV)
+    macro = has_macro?(__CALLER__, Helix.Core.Listener)
+    import_block = macro && [] ||  quote(do: import Helix.Core.Listener)
+
+    quote do
+
+      unquote(import_block)
+
+      unlisten unquote(owner_id), unquote(object_id), unquote(event), @step_name
+
+    end
+  end
+
+  @doc """
+  Allows the step to deregister a listener based on a top-level action.
+
+  `opts` may receive `step_entity`, which has the Entity.ID for the entity that
+  step belongs to. If no `step_entity` is given, the macro will attempt to get
+  the Entity.ID from the `step` var, which does not exist if called from within
+  a callback!
+
+  It's syntactic sugar for `story_unlisten/2`, allowing the step to unsubscribe
+  from a listener without it having to know the underlying event.
+  """
+  defmacro unsubscribe(action, element_id, opts \\ []) do
+    owner_id =
+      if opts == [] do
+        quote(do: var!(step).entity_id)
+      else
+        quote(do: unquote(opts)[:step_entity])
+      end
+
+    event = get_event_from_action(action)
+
+    quote do
+
+      story_unlisten(unquote(element_id), unquote(event), unquote(owner_id))
+
+    end
+  end
+
+  defp get_event_from_action(:process_started),
+    do: ProcessCreatedEvent
+
+  @doc """
   Listener that triggers once the process of type `type` acts over `element_id`.
   """
-  defmacro on_process_started(type, element_id, callback) do
+  defmacro on_process_started(type, {process_field, element_id}, callback) do
     quote do
 
       {callback_name, extra_meta} = get_callback_data(unquote(callback))
@@ -254,6 +304,8 @@ defmodule Helix.Story.Model.Step.Macros do
       meta =
         %{
           type: unquote(type),
+          element_id: unquote(element_id),
+          process_field: unquote(process_field),
           relay_cb: callback_name
         }
         |> Map.merge(extra_meta)
@@ -263,26 +315,66 @@ defmodule Helix.Story.Model.Step.Macros do
     end
   end
 
-  @doc """
-  Listeners that triggers once the player has performed `action` on the client.
-  """
-  defmacro on_client_action(_client, action, entity_id, callback) do
+  defmacro filter_download_started(meta_field, callback),
+    do: process_filter(:file_download, :tgt_file_id, meta_field, callback)
+
+  defmacro filter_bruteforce_started(meta_field, callback),
+    do: process_filter(:cracker_bruteforce, :target_id, meta_field, callback)
+
+  defmacro filter_process_created(type, field, meta_field, callback) do
     quote do
 
-      # TODO: Proper handler for multiple clients based on the `client` var
-      event = Web1ActionPerformedEvent
-
-      {callback_name, extra_meta} = get_callback_data(unquote(callback))
-
-      meta =
+      filter(
+        _step,
+        %ProcessCreatedEvent{
+          process: %{
+            :type => unquote(type),
+            unquote(:"#{field}") => expected_id
+          },
+        },
         %{
-          action: unquote(action),
-          relay_cb: callback_name
-        }
-        |> Map.merge(extra_meta)
+          unquote(:"#{meta_field}") => expected_id
+        },
+        unquote(callback)
+      )
 
-      story_listen unquote(entity_id), event, meta, :cb_client_action
+    end
+  end
 
+  defp process_filter(type, field, meta_field, callback) do
+    quote do
+      filter_process_created(
+        unquote(type), unquote(field), unquote(meta_field), unquote(callback)
+      )
+    end
+  end
+
+  defmacro filter_client_action(action, callback, client \\ quote(do: _)) do
+    quote do
+
+      filter(
+        _step,
+        %ClientActionPerformedEvent{
+          client: unquote(client),
+          action: unquote(action)
+        },
+        _meta,
+        unquote(callback)
+      )
+
+    end
+  end
+
+  defmacro on_download_started(elem_id, callback),
+    do: process_listener(:file_download, elem_id, callback, :tgt_file_id)
+
+  defmacro on_bruteforce_started(elem_id, callback),
+    do: process_listener(:cracker_bruteforce, elem_id, callback, :target_id)
+
+  defp process_listener(type, element_id, callback, field) do
+    quote do
+      on_process_started unquote(type), {unquote(field), unquote(element_id)},
+        unquote(callback)
     end
   end
 
@@ -388,7 +480,7 @@ defmodule Helix.Story.Model.Step.Macros do
     quote do
 
       @doc false
-      def handle_event(step = unquote(step), unquote(event), unquote(meta)) do
+      def handle_event(step = unquote(step), unquote(event), m = unquote(meta)) do
         unquote(
           case opts do
             [do: :complete, send_opts: send_opts] ->
@@ -414,6 +506,15 @@ defmodule Helix.Story.Model.Step.Macros do
                 {{:send_reply, unquote(reply_id), unquote(send_opts)}, step, []}
               end
 
+            [reply: reply_id, sleep: sleep] ->
+              quote do
+                {
+                  {:send_reply, unquote(reply_id), [sleep: unquote(sleep)]},
+                  step,
+                  []
+                }
+              end
+
             [send: email_id] ->
               quote do
                 meta = Keyword.get(unquote(opts), :meta, %{})
@@ -424,8 +525,20 @@ defmodule Helix.Story.Model.Step.Macros do
             [send: email_id, send_opts: send_opts] ->
               quote do
                 meta = Keyword.get(unquote(opts), :meta, %{})
+
                 {
                   {:send_email, unquote(email_id), meta, unquote(send_opts)},
+                  step,
+                  []
+                }
+              end
+
+            [send: email_id, sleep: slp] ->
+              quote do
+                meta = Keyword.get(unquote(opts), :meta, %{})
+
+                {
+                  {:send_email, unquote(email_id), meta, [sleep: unquote(slp)]},
                   step,
                   []
                 }
@@ -489,6 +602,37 @@ defmodule Helix.Story.Model.Step.Macros do
       end
 
     [email_block] ++ [reply_block]
+  end
+
+  @doc """
+  `filter_email` is workaround to a limitation on `filter` macro that is lacking
+  some flexibility. Works for now, but probably should be reworked later, in
+  order to make `filter` a more flexible method.
+  """
+  defmacro filter_email(email_id, do: block) do
+    quote do
+
+      @doc false
+      def handle_event(
+          step,
+          %StoryEmailSentEvent{
+            email: %{id: unquote(email_id)}
+          },
+          meta
+        )
+      do
+        var!(step) = step
+        var!(meta) = meta
+
+        # Mark unhygienic variables as used
+        var!(step)
+        var!(meta)
+
+        unquote(block)
+
+      end
+
+    end
   end
 
   @doc """
@@ -590,12 +734,17 @@ defmodule Helix.Story.Model.Step.Macros do
   Helper that analyzes the `story_listen` opts and returns the corresponding
   callback name, as well as extra metadata that we should feed to the callback.
   """
+  def get_callback_data(email: email_id, sleep: sleep),
+    do: {:cb_send_email, %{email_id: email_id, sleep: sleep}}
   def get_callback_data(email: {email_id, email_meta}),
     do: {:cb_send_email, %{email_id: email_id, email_meta: email_meta}}
   def get_callback_data(email: email_id) when is_binary(email_id),
     do: {:cb_send_email, %{email_id: email_id}}
+  def get_callback_data(reply: reply_id, sleep: sleep),
+    do: {:cb_send_reply, %{reply_id: reply_id, sleep: sleep}}
   def get_callback_data(reply: reply_id) when is_binary(reply_id),
     do: {:cb_send_reply, %{reply_id: reply_id}}
+
   def get_callback_data(:complete),
     do: {:cb_complete, %{}}
   def get_callback_data(callback) when is_atom(callback),

@@ -115,9 +115,11 @@
     },
     "Story.Story": {
       "receives": [
+        "Client.Action.Performed",
+        "Process.Created",
         "Story.Step.Email.Sent",
         "Story.Step.Reply.Sent",
-        "Story.Step.ActionRequested"
+        "Story.Step.ActionRequested",
       ],
       "emits": [
         "Story.Step.Proceeded",
@@ -188,8 +190,8 @@
     "File.Added",
     "File.Deleted",
     "File.Uploaded",
-    "StoryEmailSentEvent",
-    "StoryReplySentEvent",
+    "Story.Email.Sent",
+    "Story.Reply.Sent",
     "Story.Step.Restarted",
     "Story.Step.Proceeded",
     "Virus.Installed",
@@ -199,16 +201,29 @@
     "Tutorial": {
       "steps": {
         "SetupPC": {
-          "filters": ["Account.Created"],
-          "emits": []
+          "filters": [],
+          "emits": ["Story.Email.Sent"]
         },
         "DownloadCracker": {
           "filters": [
             "File.Downloaded",
-            "File.Deleted"
+            "File.Deleted",
+            "Process.Created"
           ],
           "emits": [
-            "File.Added"
+            "File.Added",
+            "Story.Email.Sent"
+          ]
+        },
+        "NastyVirus": {
+          "filters": [
+            "Process.Created",
+            "Client.Action.Performed",
+            "Server.Password.Acquired"
+          ],
+          "emits": [
+            "File.Added",
+            "Story.Email.Sent"
           ]
         }
       }

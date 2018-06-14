@@ -192,13 +192,13 @@ defmodule Helix.Test.Features.Virus.CollectTest do
         bank_acc.balance + expected_earnings1 + expected_earnings2
 
       # Both viruses had their `running_time` reset to 0
-      # (returning 1 is OK because slower systems (travis))
+      # (returning 1 or 2 is OK because slower systems (travis))
       new_virus1 = VirusQuery.fetch(file1.file_id)
-      assert_in_delta new_virus1.running_time, 0, 1
+      assert_in_delta new_virus1.running_time, 0, 2.01
       assert new_virus1.is_active?
 
       new_virus2 = VirusQuery.fetch(file2.file_id)
-      assert_in_delta new_virus2.running_time, 0, 1
+      assert_in_delta new_virus2.running_time, 0, 2.01
       assert new_virus2.is_active?
 
       # Processes no longer exist
