@@ -2,6 +2,8 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
+
   alias Helix.Websocket.Requestable
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Software.Websocket.Requests.Virus.Collect, as: VirusCollectRequest
@@ -113,6 +115,7 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
   end
 
   describe "check_permissions/2" do
+    skip_on_travis_slowpoke()
     test "accepts when data is valid" do
       {gateway, %{entity: entity}} = ServerSetup.server()
 
