@@ -1,7 +1,7 @@
 defmodule Helix.Core.Listener do
   @moduledoc """
   Main interface to be used by any service that would like to listen/unlisten to
-  events happening a specific `object_id`.
+  events happening to a specific `object_id`.
 
   I'm a Listener
 

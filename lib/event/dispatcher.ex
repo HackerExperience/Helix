@@ -40,6 +40,7 @@ defmodule Helix.Event.Dispatcher do
   alias Helix.Core.Listener.Event.Handler.Listener, as: ListenerHandler
   alias Helix.Account.Event, as: AccountEvent
   alias Helix.Account.Event.Handler, as: AccountHandler
+  alias Helix.Client.Web1.Event, as: Web1Event
   alias Helix.Entity.Event, as: EntityEvent
   alias Helix.Entity.Event.Handler, as: EntityHandler
   alias Helix.Log.Event, as: LogEvent
@@ -79,6 +80,13 @@ defmodule Helix.Event.Dispatcher do
   event AccountEvent.Account.Verified,
     AccountHandler.Account,
     :account_created
+
+  ##############################################################################
+  # Client events
+  ##############################################################################
+
+  # All
+  event Web1Event.Action.Performed
 
   ##############################################################################
   # Entity events
