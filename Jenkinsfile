@@ -1,141 +1,134 @@
-#!/usr/bin/env groovy
-
-retry(2) {
-  node('elixir') {
-    stage('Pre-build') {
-      step([$class: 'WsCleanup'])
-
-      env.BUILD_VERSION = sh(script: 'date +%Y.%m.%d%H%M', returnStdout: true).trim()
-      def ARTIFACT_PATH = "${env.BRANCH_NAME}/${env.BUILD_VERSION}"
-
-      checkout scm
-
-      sh 'mix local.hex --force'
-      sh 'mix local.rebar --force'
-      sh 'mix clean'
-      sh 'mix deps.get'
-
-      stash name: 'source', useDefaultExcludes: false
-    }
+node('master') {
+  stage('Setup'){
+    WS_PATH = sh(script: 'pwd', returnStdout: true).trim()
+    BUILD_VERSION = sh(script: 'date +%Y.%m.%d%H%M', returnStdout: true).trim()
+    TAG=sh(script: 'pwgen 5 1', returnStdout: true).trim()
+    sh "python3.6 ~/start.py utils small-1 ${TAG} 15"
+    sh "python3.6 ~/start.py helix large-1 ${TAG} 15"
+    sh "python3.6 ~/start.py helix large-2 ${TAG} 15"
   }
+}
 
-  node('elixir') {
-    stage('Build [test]') {
-      timeout(3) {
-        step([$class: 'WsCleanup'])
-
-        unstash 'source'
-
-        withEnv (['MIX_ENV=test']) {
-          sh 'mix compile'
+pipeline {
+  agent none
+  options {
+    skipDefaultCheckout()
+  }
+  stages {
+    stage("Checkout") {
+      agent {
+        node {
+          label "utils-small-1-${TAG}"
         }
+      }
+      steps {
+        checkout scm
 
-        stash 'build-test'
+        sh 'mix local.hex --force'
+        sh 'mix local.rebar --force'
+        sh 'mix clean'
+        sh 'mix deps.get'
+
+        stash name: 'source', useDefaultExcludes: false
       }
     }
-  }
-
-  node('elixir') {
-    stage('Build [prod]') {
-      timeout(3) {
-        step([$class: 'WsCleanup'])
-
-        unstash 'source'
-
-        withEnv (['MIX_ENV=prod']) {
-          sh 'mix compile'
-          sh 'mix release --env=prod --warnings-as-errors'
-        }
-
-        stash 'build-prod'
-      }
-    }
-  }
-
-  parallel (
-    'Lint': {
-      node('elixir') {
-        stage('Lint') {
-          timeout(3) {
-            step([$class: 'WsCleanup'])
-
-            unstash 'source'
-            unstash 'build-test'
-
-            withEnv (['MIX_ENV=test']) {
-              sh 'mix credo --strict'
+    stage('Build:') {
+      parallel {
+        stage('Test') {
+          agent {
+            node {
+              label "helix-large-1-${TAG}"
             }
+          }
+          environment {
+            MIX_ENV='test'
+          }
+          steps {
+            unstash 'source'
+            sh 'mix compile'
+
+            stash name: 'build-test', useDefaultExcludes: false
+          }
+        }
+        stage('Prod') {
+          agent {
+            node {
+              label "helix-large-2-${TAG}"
+            }
+          }
+          environment {
+            MIX_ENV='prod'
+          }
+          steps {
+            unstash 'source'
+            sh 'mix compile'
+            stash name: 'build-prod', useDefaultExcludes: false
           }
         }
       }
-    },
-    'Type validation': {
-      node('elixir') {
-        stage('Type validation') {
-          timeout(30) {
-            step([$class: 'WsCleanup'])
+    }
+    stage('Verify:') {
+      parallel {
+        stage('Syntax') {
+          agent {
+            node {
+              label "utils-small-1-${TAG}"
+            }
+          }
+          environment {
+            MIX_ENV='test'
+          }
+          steps {
+            cleanWs()
+            unstash 'build-test'
 
+            sh 'mix credo --strict'
+          }
+        }
+        stage('Tests') {
+          agent {
+            node {
+              label "helix-large-1-${TAG}"
+            }
+          }
+          environment {
+            MIX_ENV='test'
+            HELIX_SKIP_WARNINGS='false'
+            HELIX_TEST_ENV='jenkins'
+          }
+          steps {
+            cleanWs()
+            unstash 'build-test'
+
+            sh '#!/bin/sh -e\n' + '. ~/.profile && mix test.full'
+          }
+        }
+        stage('Types') {
+          agent {
+            node {
+              label "helix-large-2-${TAG}"
+            }
+          }
+          environment {
+            MIX_ENV='prod'
+          }
+          steps {
+            cleanWs()
             unstash 'build-prod'
 
-            // HACK: mix complains if I don't run deps.get again, not sure why
-            sh 'mix deps.get'
-
-            // Reuse existing plt
-            sh 'cp ~/.mix/*prod*.plt* _build/prod || :'
-
-            withEnv (['MIX_ENV=prod']) {
-              sh 'mix dialyzer --halt-exit-status'
-            }
-
-            // Store newly generated plt
-            // Do it on two commands because we want it failing if .plt is not found
-            sh 'cp _build/prod/*.plt ~/.mix/'
-            sh 'cp _build/prod/*.plt.hash ~/.mix/'
-          }
-        }
-
-      }
-    },
-    'Tests': {
-      node('helix') {
-        stage('Tests') {
-          timeout(4) {
-            step([$class: 'WsCleanup'])
-
-            unstash 'source'
-            unstash 'build-test'
-
-            withEnv (['MIX_ENV=test', 'HELIX_SKIP_WARNINGS=false', 'HELIX_TEST_ENV=jenkins']) {
-              // HACK: mix complains if I don't run deps.get again, not sure why
-              // TODO: it's compiling everything again, find out why
-              sh 'mix deps.get'
-
-              // Unset debug flag, load env vars on ~/.profile & run mix test
-              sh '#!/bin/sh -e\n' + '. ~/.profile && mix test.full'
-            }
+            sh "python3.6 ~/load_plt.py /usr/home${WS_PATH}"
+            sh 'mix dialyzer --halt-exit-status'
+            sh "python3.6 ~/save_plt.py /usr/home${WS_PATH}"
           }
         }
       }
     }
-  )
-
-  node('elixir') {
-
-    stage('Save artifacts') {
-      step([$class: 'WsCleanup'])
-
-      unstash 'build-prod'
-
-      sh "aws s3 cp _build/prod/rel/helix/releases/*/helix.tar.gz s3://he2-releases/helix/${env.BRANCH_NAME}/${env.BUILD_VERSION}.tar.gz --storage-class REDUCED_REDUNDANCY"
-    }
-
-    if (env.BRANCH_NAME == 'master'){
-      lock(resource: 'production-deployment', inversePrecedence: true) {
-        stage('Deploy') {
-          sh "ssh deployer deploy helix prod --branch master --version ${env.BUILD_VERSION}"
-        }
+  }
+  post {
+    always {
+      node('master') {
+        sh "python3.6 ~/stop.py ${TAG}"
       }
-      milestone()
     }
   }
 }
