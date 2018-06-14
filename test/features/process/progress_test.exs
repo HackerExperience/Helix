@@ -49,23 +49,23 @@ defmodule Helix.Test.Features.Process.Progress do
 
       # We've just started the downloaded, so it ran ~0%
       download0 = ProcessQuery.fetch(download_id)
-      assert_in_delta download0.percentage, 0, 0.07
-      assert_in_delta download0.time_left, 1.0, 0.07
+      assert_in_delta download0.percentage, 0, error_delta()
+      assert_in_delta download0.time_left, 1.0, error_delta()
 
       # Sleep 100ms, which is about 10%
       :timer.sleep(100)
 
       # Yep, we are somewhere near 10%
       download1 = ProcessQuery.fetch(download_id)
-      assert_in_delta download1.percentage, 0.1, 0.07
-      assert_in_delta download1.time_left, 0.9, 0.07
+      assert_in_delta download1.percentage, 0.1, error_delta()
+      assert_in_delta download1.time_left, 0.9, error_delta()
 
       # Sleep another 100ms (+10%)
       :timer.sleep(100)
 
       # Percentage is at 20%
       download2 = ProcessQuery.fetch(download_id)
-      assert_in_delta download2.percentage, 0.2, 0.07
+      assert_in_delta download2.percentage, 0.2, error_delta()
 
       # Now we'll tragically make increase the download time.
       # The time_left will increase, but the percentage shouldn't change
@@ -81,6 +81,14 @@ defmodule Helix.Test.Features.Process.Progress do
 
       # Percentage barely changed
       assert_in_delta download3.percentage, download2.percentage, 0.01
+    end
+
+    def error_delta do
+      if System.get_env("HELIX_TEST_ENV") == "jenkins" do
+        0.09
+      else
+        0.05
+      end
     end
   end
 end

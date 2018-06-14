@@ -2,6 +2,8 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
+
   alias Helix.Websocket.Requestable
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Software.Websocket.Requests.Virus.Collect, as: VirusCollectRequest
@@ -113,6 +115,7 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
   end
 
   describe "check_permissions/2" do
+    skip_on_travis_slowpoke()
     test "accepts when data is valid" do
       {gateway, %{entity: entity}} = ServerSetup.server()
 
@@ -155,10 +158,17 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
       assert request.meta.gateway == gateway
       assert request.meta.payment_info == {bank_account, nil}
       assert request.meta.bounce == bounce
+
       assert [
-        %{file: file1, virus: virus1},
-        %{file: file2, virus: virus2},
-      ] == request.meta.viruses
+        %{file: req_file1, virus: req_virus1},
+        %{file: req_file2, virus: req_virus2},
+      ] = request.meta.viruses
+
+      assert req_file1 == file1
+      assert_map req_virus1, virus1, skip: :running_time
+
+      assert req_file2 == file2
+      assert_map req_virus2, virus2, skip: :running_time
     end
 
     test "rejects when bad things happen" do

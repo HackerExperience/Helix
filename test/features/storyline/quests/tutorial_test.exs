@@ -125,6 +125,11 @@ defmodule Helix.Test.Features.Storyline.Quests.Tutorial do
       # Flush pending messages
       EventHelper.flush_timer()
 
+      # Jenkins slowpoke
+      if System.get_env("HELIX_TEST_ENV") == "jenkins" do
+        :timer.sleep(500)
+      end
+
       # And soon after that we'll receive yet another email and proceed to the
       # next step
       [story_email_sent, story_step_proceeded] =
