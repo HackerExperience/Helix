@@ -69,7 +69,7 @@ defmodule Helix.Software.Event.File.Transfer do
     @moduledoc """
     FileTransferAborted represents the moment a FileTransferProcess was aborted.
 
-    Useful mostly to notify the Client of the change.
+    Useful mostly to publish the change to the Client.
     """
 
     alias Helix.Entity.Model.Entity

@@ -32,9 +32,9 @@ defmodule Helix.Software.Event.Virus do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifying that a virus has been collected enables the client to reset the
+      Publishing that a virus has been collected enables the client to reset the
       running time of the virus.
       """
 
@@ -59,7 +59,7 @@ defmodule Helix.Software.Event.Virus do
       end
 
       @doc false
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.virus.entity_id}
     end
   end
@@ -94,9 +94,9 @@ defmodule Helix.Software.Event.Virus do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that the virus was successfully installed
+      Publishes to the client that the virus was successfully installed.
       """
 
       alias Helix.Software.Public.Index, as: SoftwareIndex
@@ -112,9 +112,9 @@ defmodule Helix.Software.Event.Virus do
       end
 
       @doc """
-      We only notify the player who installed the virus.
+      We only publish to the player who installed the virus.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
 
@@ -172,9 +172,9 @@ defmodule Helix.Software.Event.Virus do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that the virus was not installed for some `reason`
+      Publishes to the Client that the virus was not installed for some `reason`
       """
 
       @event :virus_install_failed
@@ -188,9 +188,9 @@ defmodule Helix.Software.Event.Virus do
       end
 
       @doc """
-      We only notify the player who tried to install the virus.
+      We only publish to the player who tried to install the virus.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end

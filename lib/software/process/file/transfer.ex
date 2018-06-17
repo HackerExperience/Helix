@@ -6,8 +6,8 @@ process Helix.Software.Process.File.Transfer do
   from one storage to another. It currently implements the `download`, `upload`
   and `pftp_download` backends.
 
-  Its process data consists basically of notifying what is the backend, and what
-  storage the file is being transferred to. All other information, like which
+  Its process data consists basically of which backend is being used, and what
+  storage the file is being transferred to. All other information, e.g. which
   file is being transferred, is already present on the standard process data.
   """
 

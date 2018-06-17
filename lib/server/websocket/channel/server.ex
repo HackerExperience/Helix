@@ -70,7 +70,7 @@ channel Helix.Server.Websocket.Channel.Server do
   Otherwise, simply ignore `counter` and everything will be fine.
 
   Params:
-  - *gateway_ip: Notifies which gateway ip this connection is originating from.
+  - *gateway_ip: Which gateway ip this connection is originating from.
   - *password: Target server password. Required if the connection is remote.
   - bounce_id: Which bounce to use on remote connections.
 

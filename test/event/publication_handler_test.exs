@@ -1,4 +1,4 @@
-defmodule Helix.Event.NotificationHandlerTest do
+defmodule Helix.Event.PublicationHandlerTest do
 
   use Helix.Test.Case.Integration
 
@@ -20,13 +20,13 @@ defmodule Helix.Event.NotificationHandlerTest do
   @moduletag :driver
 
   # Behold, adventurer! The tests below are meant to ensure
-  # `notification_handler/1` works correctly under the hood, as well as Phoenix
+  # `publication_handler/1` works correctly under the hood, as well as Phoenix
   # behavior of intercepting and filtering out an event.
   # It is not mean to extensively test all events. For this, refer to the
   # specific event's test file.
   # As such, we use `ProcessCreatedEvent` here merely as an example. Peace.
-  describe "notification_handler/1" do
-    test "notifies gateway that a process was created (single-server)" do
+  describe "publication_handler/1" do
+    test "publishes to gateway that a process was created (single-server)" do
       {_socket, %{gateway: gateway}} =
         ChannelSetup.join_server(own_server: true)
 
@@ -51,10 +51,10 @@ defmodule Helix.Event.NotificationHandlerTest do
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", notification, timeout()
-      assert notification.event == "process_created"
+      assert_push "event", publication, timeout()
+      assert publication.event == "process_created"
 
-      process = notification.data
+      process = publication.data
 
       # Make sure all we need is on the process return
       assert_id process.process_id, event.process.process_id
@@ -66,11 +66,11 @@ defmodule Helix.Event.NotificationHandlerTest do
       assert process.target_ip
 
       # Event id was generated
-      assert notification.meta.event_id
-      assert is_binary(notification.meta.event_id)
+      assert publication.meta.event_id
+      assert is_binary(publication.meta.event_id)
 
       # No process ID
-      refute notification.meta.process_id
+      refute publication.meta.process_id
     end
 
     test "multi-server" do
@@ -98,10 +98,10 @@ defmodule Helix.Event.NotificationHandlerTest do
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", notification, timeout()
-      assert notification.event == "process_created"
+      assert_push "event", publication, timeout()
+      assert publication.event == "process_created"
 
-      process = notification.data
+      process = publication.data
 
       # Make sure all we need is on the process return
       assert_id process.process_id, event.process.process_id
@@ -112,11 +112,11 @@ defmodule Helix.Event.NotificationHandlerTest do
       assert process.target_ip
 
       # Event id was generated
-      assert notification.meta.event_id
-      assert is_binary(notification.meta.event_id)
+      assert publication.meta.event_id
+      assert is_binary(publication.meta.event_id)
 
       # No process id
-      refute notification.meta.process_id
+      refute publication.meta.process_id
     end
 
     # This test is meant to verify that, on process completion, all events
@@ -164,7 +164,7 @@ defmodule Helix.Event.NotificationHandlerTest do
       # Intercept Helix internal events.
       # Note these events won't (necessarily) go out to the Client, they will
       # be intercepted and may be filtered out if they do not implement the
-      # Notificable protocol.
+      # Publishable protocol.
       # We are getting them here so we can inspect the actual metadata of
       # both `ProcessCompletedEvent` and `PasswordAcquiredEvent`
       assert_broadcast "event", _top_recalcado_event, timeout()

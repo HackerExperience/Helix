@@ -30,10 +30,10 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client of the bank account update, so it can properly update
-      the local data
+      Publishes to the Client that the bank account has updated, so it can
+      properly update the local data.
       """
 
       @event :bank_account_updated
@@ -53,7 +53,7 @@ defmodule Helix.Universe.Bank.Event.Bank.Account do
       end
 
       @doc false
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.account.owner_id}
     end
   end

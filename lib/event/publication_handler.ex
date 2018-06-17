@@ -1,9 +1,9 @@
-defmodule Helix.Event.NotificationHandler do
+defmodule Helix.Event.PublicationHandler do
 
   import HELL.Macros
 
   alias HELL.Utils
-  alias Helix.Event.Notificable
+  alias Helix.Event.Publishable
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
@@ -12,29 +12,29 @@ defmodule Helix.Event.NotificationHandler do
   @type channel_account_id :: Account.id | Entity.id
 
   @doc """
-  Handler responsible for guiding the event through the Notificable flow. It
-  will query `Notificable.whom_to_notify` to know which channels should receive
+  Handler responsible for guiding the event through the Publishable flow. It
+  will query `Publishable.whom_to_publish` to know which channels should receive
   the event. Then, this event is broadcasted to each channel.
   """
-  def notification_handler(event) do
-    if Notificable.impl_for(event) do
-      event = Notificable.Flow.add_event_identifier(event)
+  def publication_handler(event) do
+    if Publishable.impl_for(event) do
+      event = Publishable.Flow.add_event_identifier(event)
 
       event
-      |> Notificable.whom_to_notify()
+      |> Publishable.whom_to_publish()
       |> channel_mapper()
       |> Enum.each(&(Helix.Endpoint.broadcast(&1, "event", event)))
     end
   end
 
   docp """
-  Interprets the return `Notificable.whom_to_notify/1` format, returning a list
+  Interprets the return `Publishable.whom_to_publish/1` format, returning a list
   of valid channel topics/names.
   """
-  @spec channel_mapper(Notificable.whom_to_notify) ::
+  @spec channel_mapper(Publishable.whom_to_publish) ::
     channels :: [String.t]
-  defp channel_mapper(whom_to_notify, acc \\ [])
-  defp channel_mapper(notify = %{server: servers}, acc) do
+  defp channel_mapper(whom_to_publish, acc \\ [])
+  defp channel_mapper(publish = %{server: servers}, acc) do
     acc =
       servers
       |> Utils.ensure_list()
@@ -43,10 +43,10 @@ defmodule Helix.Event.NotificationHandler do
       |> List.flatten()
       |> Kernel.++(acc)
 
-    channel_mapper(Map.delete(notify, :server), acc)
+    channel_mapper(Map.delete(publish, :server), acc)
   end
 
-  defp channel_mapper(notify = %{account: accounts}, acc) do
+  defp channel_mapper(publish = %{account: accounts}, acc) do
     acc =
       accounts
       |> Utils.ensure_list()
@@ -55,7 +55,7 @@ defmodule Helix.Event.NotificationHandler do
       |> List.flatten()
       |> Kernel.++(acc)
 
-    channel_mapper(Map.delete(notify, :account), acc)
+    channel_mapper(Map.delete(publish, :account), acc)
   end
 
   defp channel_mapper(%{}, acc),

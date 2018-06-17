@@ -84,7 +84,7 @@ defmodule Helix.Websocket.Channel do
 
   @doc """
   Macro used to intercept and handle outgoing events. Handling of events is
-  done through the Notificable.Flow implemented at Helix.Websocket.
+  done through the Publishable.Flow implemented at Helix.Websocket.
   """
   defmacro event_handler(name) do
     quote do

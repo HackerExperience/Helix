@@ -35,7 +35,7 @@ defmodule Helix.Event.Dispatcher do
 
   use HELF.Event
 
-  alias Helix.Event.NotificationHandler
+  alias Helix.Event.PublicationHandler
 
   alias Helix.Core.Listener.Event.Handler.Listener, as: ListenerHandler
   alias Helix.Account.Event, as: AccountEvent
@@ -61,7 +61,7 @@ defmodule Helix.Event.Dispatcher do
   # Global handlers
   ##############################################################################
 
-  all_events NotificationHandler, :notification_handler
+  all_events PublicationHandler, :publication_handler
 
   all_events LogHandler.Log, :handle_event,
     skip: [LogEvent.Log.Created]

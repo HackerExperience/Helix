@@ -1,21 +1,21 @@
-defmodule Helix.Event.Notificable.Flow do
+defmodule Helix.Event.Publishable.Flow do
 
   import HELL.Macros
 
   alias Phoenix.Socket
   alias HELL.HETypes
   alias Helix.Event
-  alias Helix.Event.Notificable
+  alias Helix.Event.Publishable
 
   @type event_id :: HETypes.uuid
 
   @doc """
-  Top-level macro for an event that wants to implement the Notificable protocol.
+  Top-level macro for an event that wants to implement the Publishable protocol.
   """
-  defmacro notify(do: block) do
+  defmacro publish(do: block) do
     quote do
 
-      defimpl Helix.Event.Notificable do
+      defimpl Helix.Event.Publishable do
         @moduledoc false
 
         @event nil
@@ -40,17 +40,17 @@ defmodule Helix.Event.Notificable.Flow do
     | :noreply
   @doc """
   Attempts to generate the payload for that event. If the implementation of the
-  Notificable protocol returns a valid payload (i.e. it wants to notify that
+  Publishable protocol returns a valid payload (i.e. it wants to publish to that
   specific user), then we'll set up the event metadata and return it ready to
   be sent to the player.
   """
   def generate_event(event, socket) do
-    case Notificable.generate_payload(event, socket) do
+    case Publishable.generate_payload(event, socket) do
       {:ok, data} ->
         payload =
           %{
             data: data,
-            event: Notificable.get_event_name(event),
+            event: Publishable.get_event_name(event),
             meta: Event.Meta.render(event)
           }
 

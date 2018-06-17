@@ -411,7 +411,7 @@ defmodule Helix.Process.Executable do
             # Note that at this stage, we are not absolutely sure the process
             # will be confirmed/saved, as the `ProcessAction.create/1` step is
             # optimistic. If the server does not have enough resources to run
-            # that process, or some wild event occurs, the process may not be
+            # that process, or some ~wild event occurs~, the process may not be
             # correctly allocated and, as a result, deleted.
             # Check `ProcessCreatedEvent` documentation for more details
           do

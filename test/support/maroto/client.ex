@@ -1,7 +1,7 @@
 defmodule Helix.Maroto.ClientTools do
 
   alias Helix.Event
-  alias Helix.Event.Notificable
+  alias Helix.Event.Publishable
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
@@ -98,7 +98,7 @@ defmodule Helix.Maroto.ClientTools do
   send you back. This is the most reliable way to use `testcast`.
 
   NOTE: In order for this to work, the received Event.t must implement the
-  Notificable protocol (if it doesn't, you'd never receive the event anyway)
+  Publishable protocol (if it doesn't, you'd never receive the event anyway)
 
   ## Raw payload
 
@@ -200,11 +200,11 @@ defmodule Helix.Maroto.ClientTools do
     do: "server:" <> to_string(network_id) <> "@" <> ip
 
   defp build_event(event = %_{__meta__: _}, opts) do
-    {:ok, payload} = Notificable.generate_payload(event, %{})
+    {:ok, payload} = Publishable.generate_payload(event, %{})
 
     %{
       data: payload,
-      event: Notificable.get_event_name(event),
+      event: Publishable.get_event_name(event),
       meta: Event.Meta.render(event)
     }
     |> merge_meta(opts)

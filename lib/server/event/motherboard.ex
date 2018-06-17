@@ -8,7 +8,7 @@ defmodule Helix.Server.Event.Motherboard do
     as a result of a player's action. Changes include removal of the mobo
     (detach) as well as (un)linking components.
 
-    This data is Notificable, i.e. sent to the Client. The client receives the
+    This data is Publishable, i.e. sent to the Client. The client receives the
     new motherboard data through HardwareIndex (same data sent during the
     bootstrap step).
     """
@@ -33,13 +33,13 @@ defmodule Helix.Server.Event.Motherboard do
         # We save it on the event struct so it is only generated once;
         # otherwise it would have to be recalculated to every player joined
         # on the server channel.
-        # We save the full cache (`:local`) and, if the Notificable receiver is
+        # We save the full cache (`:local`) and, if the Publishable receiver is
         # a remote server, we nilify the `:motherboard` entry
         index_cache: HardwareIndex.index(server, :local)
       }
     end
 
-    notify do
+    publish do
 
       @event :motherboard_updated
 
@@ -63,7 +63,7 @@ defmodule Helix.Server.Event.Motherboard do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.server.server_id}
     end
   end
@@ -71,8 +71,8 @@ defmodule Helix.Server.Event.Motherboard do
   event UpdateFailed do
     @moduledoc """
     `MotherboardUpdateFailedEvent` is fired when the user attempted to update 
-    her motherboard but it failed with `reason`. Client is notified (mostly
-    because this is an asynchronous step).
+    her motherboard but it failed with `reason`. Client receives the publication
+    (mostly because this is an asynchronous step).
     """
 
     alias Helix.Server.Model.Server
@@ -97,12 +97,13 @@ defmodule Helix.Server.Event.Motherboard do
       }
     end
 
-    notify do
+    publish do
 
       @event :motherboard_update_failed
 
       @doc """
-      Only the player is notified (server channel with `local` access)
+      Only the player receives the publication (server channel with `local`
+      access)
       """
       def generate_payload(event, %{assigns: %{meta: %{access: :local}}}) do
         data = %{reason: event.reason}
@@ -112,7 +113,7 @@ defmodule Helix.Server.Event.Motherboard do
       def generate_payload(_, _),
         do: :noreply
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.server_id}
     end
   end

@@ -112,8 +112,8 @@ defprotocol Helix.Story.Model.Steppable do
   - :noop - Do nothing after `handle_event` is called.
   - :complete - Mark the step as completed by calling `complete/1`
   - {:restart, reason, checkpoint} - Mark the step as restarted by calling
-    `restart/3`. `reason` is used to notify the player why the step got
-    restarted, and `checkpoint` points to the last email that we'll rollback to.
+    `restart/3`. `reason` is used to tell the player why the step got restarted,
+    and `checkpoint` points to the last email that we'll rollback to.
 
   The `new_step` will be passed to the next functions if applicable (complete
   or restart). Any events on the list of events will always be emitted, even if
@@ -142,7 +142,7 @@ defprotocol Helix.Story.Model.Steppable do
   A step is restarted through `restart/3`, which basically will regenerate the
   step context (through `setup/1`) and return the updated step. Finally,
   `StoryHandler` will rollback to the given checkpoint ("last good email") and
-  will notify the client through the `StepRestartedEvent`.
+  will publish to the client through the `StepRestartedEvent`.
 
   Note that once `restart/3` is called, any incorrect/invalid data should have
   been purged from the database. That's because `setup/1` will only recreate

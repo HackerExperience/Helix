@@ -36,7 +36,7 @@ defmodule Helix.Test.Features.File.TransferTest do
           socket: socket
         )
 
-      # Connect to gateway channel too, so we can receive gateway notifications
+      # Connect to gateway channel too, so we can receive gateway publications
       ChannelSetup.join_server(socket: socket, own_server: true)
 
       gateway_storage = SoftwareHelper.get_storage(gateway)
@@ -137,7 +137,7 @@ defmodule Helix.Test.Features.File.TransferTest do
           socket: socket
         )
 
-      # Connect to gateway channel too, so we can receive gateway notifications
+      # Connect to gateway channel too, so we can receive gateway publications
       ChannelSetup.join_server(socket: socket, own_server: true)
 
       destination_storage = SoftwareHelper.get_storage(destination)

@@ -11,7 +11,7 @@ defmodule HELL.LogflixTest do
   alias Helix.Test.Channel.Setup, as: ChannelSetup
 
   describe "Logflix" do
-    test "receives log notification" do
+    test "receives log publication" do
       {socket, _} =  ChannelSetup.create_socket()
 
       # Join & subscribe to Logflix

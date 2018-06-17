@@ -34,7 +34,7 @@ defmodule Helix.Event do
         import Helix.Event.Utils
         import Helix.Event.Listenable.Flow
         import Helix.Event.Loggable.Flow
-        import Helix.Event.Notificable.Flow
+        import Helix.Event.Publishable.Flow
 
         unquote(block)
       end

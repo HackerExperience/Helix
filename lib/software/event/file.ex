@@ -28,9 +28,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Pushes the notification to the Client, so it can display the new file.
+      Publishes the event to the Client, so it can display the new file.
       """
 
       alias Helix.Software.Public.Index, as: SoftwareIndex
@@ -45,7 +45,7 @@ defmodule Helix.Software.Event.File do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: [event.server_id]}
     end
   end
@@ -76,9 +76,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Pushes the notification to the Client, so it can remove the deleted file.
+      Publishes the event to the Client, so it can remove the deleted file.
       """
 
       @event :file_deleted
@@ -91,7 +91,7 @@ defmodule Helix.Software.Event.File do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: [event.server_id]}
     end
 
@@ -158,9 +158,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the Client that a file has been downloaded.
+      Publishes to the Client that a file has been downloaded.
       """
 
       alias Helix.Software.Public.Index, as: SoftwareIndex
@@ -176,9 +176,9 @@ defmodule Helix.Software.Event.File do
       end
 
       @doc """
-      We only notify the "downloader" server.
+      We only publish to the "downloader" server.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.to_server_id}
     end
 
@@ -347,9 +347,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the Client that a file has been uploaded.
+      Publishes to the Client that a file has been uploaded.
       """
 
       alias Helix.Software.Public.Index, as: SoftwareIndex
@@ -365,9 +365,9 @@ defmodule Helix.Software.Event.File do
       end
 
       @doc """
-      We only notify the "uploader" server.
+      We only publish to the "uploader" server.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.from_server_id}
     end
 

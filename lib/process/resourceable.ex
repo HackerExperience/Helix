@@ -295,7 +295,8 @@ defmodule Helix.Process.Resourceable do
   defp set_resource(resource, params, block \\ nil) do
     quote do
 
-      # Notify resource is being handled; will be used later at `before_compile`
+      # Mark that `resource` is being handled; will be used later at
+      # `before_compile` step.
       Module.put_attribute(__MODULE__, :handled_resources, unquote(resource))
 
       def calculate(unquote(resource), unquote(params), factors) do

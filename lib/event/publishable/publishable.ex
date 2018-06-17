@@ -1,9 +1,9 @@
-defprotocol Helix.Event.Notificable do
+defprotocol Helix.Event.Publishable do
   @moduledoc """
-  # The Notificable protocol
+  # The Publishable protocol
 
   Events that are emitted from Helix to the Client must implement the
-  Notificable protocol. It is responsible for:
+  Publishable protocol. It is responsible for:
 
   - Telling Phoenix which Channels should receive the event.
   - Filtering or censoring the payload of the event according to each player
@@ -12,22 +12,22 @@ defprotocol Helix.Event.Notificable do
     JSON unfriendly structures that need prior handling.
   - Specifying the event type.
 
-  Notificable will deliver events based on players permissions and context.
+  Publishable will deliver events based on players permissions and context.
   This means that the same event may vary slightly from player to player, or
   not arrive at all for some players. Which players receive what messages
   depends on some game mechanics and other factors.
 
-  # Testing Notificable implementation
+  # Testing Publishable implementation
 
-  Naturally, Notificable becomes a key part of the architecture since it is the
-  conductor responsible for notifying and filtering out all in-game events. As
+  Naturally, Publishable becomes a key part of the architecture since it is the
+  conductor responsible for publishing and filtering out all in-game events. As
   such, extended and reliable test coverage is vital.
 
   Testing is relatively easy (stateless / no side-effects), however we may have
   several different contexts for a single event, which may cause some confusion
   as to which context is being tested at a given time.
 
-  In order to test Notificable properly, we must ensure that different players
+  In order to test Publishable properly, we must ensure that different players
   receive these different messages, so we must map all possible scenarios.
 
   The problem is describing which scenario the test case is testing. So I've
@@ -35,7 +35,7 @@ defprotocol Helix.Event.Notificable do
   you are familiar with it, it will make you quickly understand each test
   context.
 
-  # Notificable Test Terminology
+  # Publishable Test Terminology
 
   In many cases, we have an attacker and a victim. These attacks occur on the
   victim's servers, and originates on the attacker's server, possibly with
@@ -51,7 +51,7 @@ defprotocol Helix.Event.Notificable do
   Notice that `attack_source` refers to the server where the attack
   originated from, and `attack_target` refers to the victim's server.
 
-  We need to ensure that notifications are bound to server, not users. Say:
+  We need to ensure that publications are bound to server, not users. Say:
 
   - attacker AT attacker_server NOT attack_source
   - victim AT victim_server NOT attack_target
@@ -99,7 +99,7 @@ defprotocol Helix.Event.Notificable do
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
 
-  @type whom_to_notify ::
+  @type whom_to_publish ::
     %{
       optional(:server) => [Server.id],
       optional(:account) => [Account.id]
@@ -125,19 +125,19 @@ defprotocol Helix.Event.Notificable do
 
   ---
 
-  [1] - Note that Querying at Notificable should always be last resort, since
-  Notificable is executed every time an event is sent to any player.
+  [1] - Note that Querying at Publishable should always be last resort, since
+  Publishable is executed every time an event is sent to any player.
   """
   def generate_payload(event, socket)
 
-  @spec whom_to_notify(event :: struct) ::
-    whom_to_notify
+  @spec whom_to_publish(event :: struct) ::
+    whom_to_publish
   @doc """
   Specifies which topics should receive the event.
 
   For instance, suppose an `ProcessCreatedEvent` from server A to B. Both
-  servers A and B should be notified about the new process, so their TaskManager
-  is updated.
+  servers A and B should receive the new process's publication, so their
+  TaskManager can be updated accordingly.
 
   Note that the filtering does not happen here. It just tells Phoenix that we
   should broadcast the `ProcessCreatedEvent` to anyone listening to events on
@@ -149,7 +149,7 @@ defprotocol Helix.Event.Notificable do
   Must always return a list of Server IDs. (Requires a small change when
   implementing for Account or other channels)
   """
-  def whom_to_notify(event)
+  def whom_to_publish(event)
 
   @doc """
   Returns the name of the event that will be sent to the client.

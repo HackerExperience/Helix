@@ -33,7 +33,7 @@ defmodule Helix.Story.Event.Reply do
       }
     end
 
-    notify do
+    publish do
       @moduledoc false
 
       alias HELL.ClientUtils
@@ -59,7 +59,7 @@ defmodule Helix.Story.Event.Reply do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end

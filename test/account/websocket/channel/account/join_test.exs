@@ -7,7 +7,7 @@ defmodule Helix.Account.Websocket.Channel.Account.JoinTest do
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Account.Setup, as: AccountSetup
 
-  test "user can join his own notification channel" do
+  test "user can join his own channel" do
     {socket, %{account: player}} = ChannelSetup.create_socket()
 
     topic = "account:" <> to_string(player.account_id)
@@ -23,7 +23,7 @@ defmodule Helix.Account.Websocket.Channel.Account.JoinTest do
     assert new_socket.assigns.client
   end
 
-  test "an user can't join another user's notification channel" do
+  test "an user can't join another user's channel" do
     {socket, _} = ChannelSetup.create_socket()
 
     {another_player, _} = AccountSetup.account()

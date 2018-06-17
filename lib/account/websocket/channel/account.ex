@@ -2,7 +2,8 @@ import Helix.Websocket.Channel
 
 channel Helix.Account.Websocket.Channel.Account do
   @moduledoc """
-  Channel to notify an user of an action that affects them.
+  Two-way channel to receive requests and send out publications to an user about
+  actions that affects them.
   """
 
   alias Helix.Account.Websocket.Channel.Account.Join, as: AccountJoin
@@ -59,7 +60,7 @@ channel Helix.Account.Websocket.Channel.Account do
   topic "client.setup", ClientSetupProxyRequest
 
   @doc """
-  Notifies the backend that `action` has been performed by the player.
+  Notifies Helix that `action` has been performed by the player.
 
   Params:
     *action: Action performed by the player. [0]

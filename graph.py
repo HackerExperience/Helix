@@ -6,15 +6,15 @@ with open('events.json') as events_file:
 
 handlers = events["handlers"]
 flows = events["flows"]
-notificable = events["notificable"]
+publishable = events["publishable"]
 missions = events["missions"]
 process_conclusion = events["process_conclusion"]
 
-def is_notificable(name):
-    return name in notificable
+def is_publishable(name):
+    return name in publishable
 
 def node_event(g, name):
-    color = 'lightblue4' if is_notificable(name) else 'lightblue2'
+    color = 'lightblue4' if is_publishable(name) else 'lightblue2'
     g.node(name, shape='box', color=color, style='filled')
 
 def node_handler(g, name):
