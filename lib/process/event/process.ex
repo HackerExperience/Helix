@@ -125,7 +125,13 @@ defmodule Helix.Process.Event.Process do
     `ProcessCompletedEvent` is fired after a process has met its objective, and
     the corresponding `Processable.conclusion/2` callback was executed.
 
-    It is used to publish to the Client that a process has finished.
+    More specifically, `ProcessCompletedEvent` is emitted right after the
+    process is deleted - because it is now completed.
+
+    It is used to publish to the Client that a process has finished. Note that
+    it *only* means the process has completed, it has absolutely no information
+    whether the process succeeded or not. This information - the actual process
+    "result" - will be sent afterwards, as it is being computed in parallel.
     """
 
     alias Helix.Process.Model.Process

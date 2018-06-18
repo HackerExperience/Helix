@@ -236,6 +236,47 @@ defmodule Helix.Software.Event.File do
       end
     end
 
+    notification do
+
+      alias Helix.Server.Query.Server, as: ServerQuery
+
+      @moduledoc """
+      # TODO: Move documentation below to somewhere else.
+      # Mirrored Notifications
+
+      The `FileDownloadedNotification` will notify the user that a download has
+      completed. It has a peculiarity from a usability standpoint: it is what
+      we call a *Mirrored Notification*.
+
+      Suppose a player has just downloaded a file. In which server - the one
+      he downloaded from, or the one he downloaded to - should we display the
+      notification?
+
+      We've decided to shown on *both* servers, however if the player reads the
+      notification from one server, the other one is automatically mark as read.
+
+      The implementation of this Mirrored Notification is made exclusively on
+      the client, however I'm explaining it here for the sake of documentation.
+
+      Note several other notifications may be mirrored, including the opposite
+      of `FileDownloadedNotification`: `FileUploadedNotification`.
+      """
+
+      @class :server
+      @code :file_downloaded
+
+      def whom_to_notify(event) do
+        %{account_id: event.entity_id, server_id: event.to_server_id}
+      end
+
+      def extra_params(event) do
+        %{
+          network_id: event.network_id,
+          ip: ServerQuery.get_ip(event.to_server_id, event.network_id)
+        }
+      end
+    end
+
     listenable do
       listen(event) do
         [event.source_file_id]

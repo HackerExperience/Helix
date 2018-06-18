@@ -63,6 +63,16 @@ defmodule Helix.Server.Event.Server.Password do
         do: %{account: event.entity_id}
     end
 
+    notification do
+
+      @class :account
+      @code :server_password_acquired
+
+      def whom_to_notify(event) do
+        event.entity_id
+      end
+    end
+
     listenable do
       listen(event) do
         [event.server_id]

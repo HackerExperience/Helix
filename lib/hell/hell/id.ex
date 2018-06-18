@@ -53,6 +53,10 @@ defmodule HELL.ID do
           {:ok, %__MODULE__{id: id}}
         end
 
+        def cast(id = {_, _, _, _, _, _, _, _}) do
+          {:ok, %__MODULE__{id: id}}
+        end
+
         def cast(string) when is_binary(string) do
           case HELL.IPv6.binary_to_address_tuple(string) do
             {:ok, id} ->
