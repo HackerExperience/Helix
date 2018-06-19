@@ -20,4 +20,10 @@ defmodule Helix.Test.Universe.Bank.Helper do
   """
   def amount,
     do: Random.number(min: 1, max: 5000)
+
+  @doc """
+  Generates a random password
+  """
+  def password,
+    do: Random.string(min: 8, max: 20)
 end

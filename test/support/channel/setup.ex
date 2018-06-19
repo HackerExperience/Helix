@@ -20,8 +20,11 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Network.Setup.Connection, as: ConnectionSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Channel.Helper, as: ChannelHelper
 
   @endpoint Helix.Endpoint
@@ -383,6 +386,54 @@ defmodule Helix.Test.Channel.Setup do
       (opts[:connect_opts] || [])
       |> fake_connection_socket_assigns()
       |> Map.merge(acc_assigns)
+
+    %{
+      assigns: assigns,
+      joined: true
+    }
+  end
+
+  def mock_bank_socket(opts \\ []) do
+    gateway_id = Keyword.get(opts, :gateway_id, ServerSetup.id)
+    gateway_entity_id = Keyword.get(opts, :gateway_entity_id, EntitySetup.id())
+
+    account = BankSetup.account!()
+    atm_id = Keyword.get(opts, :atm_id, account.atm_id)
+    account_number = Keyword.get(opts, :account_number, account.account_number)
+
+    account = AccountSetup.account!()
+    account_id = account.account_id
+    tunnel =
+      NetworkSetup.tunnel!(
+        gateway_id: gateway_id,
+        target_id: atm_id
+      )
+
+    connection =
+      ConnectionSetup.connection(
+        entity_id: gateway_entity_id
+      )
+
+    gateway_data =
+      %{
+        server_id: gateway_id,
+        entity_id: gateway_entity_id
+      }
+
+    assigns =
+      %{
+        atm_id: atm_id,
+        account_number: account_number,
+        account_id: account_id,
+        gateway: gateway_data,
+        tunnel: tunnel,
+        bank_login: connection
+      }
+
+    assigns =
+      (opts[:connect_opts] || [])
+      |> fake_connection_socket_assigns()
+      |> Map.merge(assigns)
 
     %{
       assigns: assigns,

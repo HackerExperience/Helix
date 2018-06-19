@@ -318,8 +318,12 @@ defmodule Helix.Process.Executable do
             src_acc_number: BankAccount.account | nil
           }
         @doc false
-        defp get_source_bank_account(_, _, _, _),
-          do: %{src_atm_id: nil, src_acc_number: nil}
+        defp get_source_bank_account(_, _, _, meta) do
+          %{
+            src_atm_id: Map.get(meta, :src_atm_id, nil),
+            src_acc_number: Map.get(meta, :src_acc_number, nil)
+          }
+        end
 
         @spec get_target_bank_account(Server.t, Server.t, params, meta) ::
           %{
@@ -327,9 +331,12 @@ defmodule Helix.Process.Executable do
             tgt_acc_number: BankAccount.account | nil
           }
         @doc false
-        defp get_target_bank_account(_, _, _, _),
-          do: %{tgt_atm_id: nil, tgt_acc_number: nil}
-
+        defp get_target_bank_account(_, _, _, meta) do
+          %{
+            tgt_atm_id: Map.get(meta, :tgt_atm_id, nil),
+            tgt_acc_number: Map.get(meta, :tgt_acc_number, nil)
+          }
+        end
         @spec get_target_process(Server.t, Server.t, params, meta) ::
           %{tgt_process_id: Process.t | nil}
         @doc false

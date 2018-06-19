@@ -293,7 +293,7 @@ channel Helix.Server.Websocket.Channel.Server do
   Disables the PublicFTP server of the player.
 
   Params: none
-  
+
   Returns: %{}
 
   Errors:

@@ -288,16 +288,21 @@ defmodule Helix.Event.Dispatcher do
   # All
   event BankEvent.Bank.Account.Login
   event BankEvent.Bank.Account.Updated
+  event BankEvent.Bank.Account.Removed
   event BankEvent.Bank.Account.Password.Revealed
+  event BankEvent.Bank.Account.Password.Changed
   event BankEvent.Bank.Account.Token.Acquired
   event BankEvent.Bank.Transfer.Processed
   event BankEvent.Bank.Transfer.Aborted
+  event BankEvent.AccountCreate.Processed
   event BankEvent.RevealPassword.Processed
+  event BankEvent.ChangePassword.Processed
 
   # Custom handlers
   event BankEvent.Bank.Transfer.Processed,
     BankHandler.Bank.Transfer,
     :transfer_processed
+
   event BankEvent.Bank.Transfer.Processed,
     NetworkHandler.Connection,
     :bank_transfer_processed
@@ -305,6 +310,7 @@ defmodule Helix.Event.Dispatcher do
   event BankEvent.Bank.Transfer.Aborted,
     BankHandler.Bank.Transfer,
     :transfer_aborted
+
   event BankEvent.Bank.Transfer.Aborted,
     SoftwareHandler.Cracker,
     :bank_transfer_aborted
@@ -317,11 +323,28 @@ defmodule Helix.Event.Dispatcher do
     BankHandler.Bank.Account,
     :password_reveal_processed
 
+  event BankEvent.ChangePassword.Processed,
+    BankHandler.Bank.Account,
+    :password_change_processed
+
+  event BankEvent.AccountCreate.Processed,
+    BankHandler.Bank.Account,
+    :account_create_processed
+
+  event BankEvent.AccountClose.Processed,
+    BankHandler.Bank.Account,
+    :account_close_processed
+
   event BankEvent.Bank.Account.Password.Revealed,
     EntityHandler.Database,
     :bank_password_revealed
 
+  event BankEvent.Bank.Account.Password.Changed,
+    BankHandler.Bank.Account,
+    :password_changed
+
   event BankEvent.Bank.Account.Login,
     EntityHandler.Database,
     :bank_account_login
+
 end

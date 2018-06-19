@@ -35,6 +35,7 @@ defmodule Helix.Websocket do
 
   channel "account:*", Helix.Account.Websocket.Channel.Account
   channel "server:*", Helix.Server.Websocket.Channel.Server
+  channel "bank:*", Helix.Universe.Bank.Websocket.Channel.Bank
 
   unless Mix.env == :prod do
     channel "logflix", HELL.Logflix

@@ -3,12 +3,15 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
   use Helix.Test.Case.Integration
 
   alias HELL.Utils
+  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Database, as: DatabaseQuery
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Universe.Bank.Action.Flow.BankAccount, as: BankAccountFlow
+  alias Helix.Universe.Bank.Query.Bank, as: BankQuery
 
+  alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
   alias Helix.Test.Process.TOPHelper
@@ -58,6 +61,39 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
     end
   end
 
+  describe "change_password/4" do
+    test "default life cycle" do
+      bank_account = BankSetup.account!()
+      {gateway, _} = ServerSetup.server()
+
+      atm = ServerQuery.fetch(bank_account.atm_id)
+      old_password = bank_account.password
+
+      # Create process to change password
+      {:ok, process} =
+        BankAccountFlow.change_password(bank_account, gateway, atm, @relay)
+
+      # Ensure process is valid
+      assert process.gateway_id == gateway.server_id
+      assert process.target_id == bank_account.atm_id
+
+      assert process.src_atm_id == bank_account.atm_id
+      assert process.src_acc_number == bank_account.account_number
+
+      TOPHelper.force_completion(process)
+
+      # Process no longer exists
+      refute ProcessQuery.fetch(process.process_id)
+
+      # Ensure it changed the `BankAccount`'s password
+      atm_id = bank_account.atm_id
+      account_number = bank_account.account_number
+      bank_account = BankQuery.fetch_account(atm_id, account_number)
+
+      refute bank_account.password == old_password
+    end
+  end
+
   describe "login_password/5" do
     test "login with valid password on third-party account" do
       time_before_event = Utils.date_before(1)
@@ -65,7 +101,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       {server, %{entity: entity}} = ServerSetup.server()
 
       # Login with the right password
-      assert {:ok, connection} =
+      assert {:ok, _tunnel, connection} =
         BankAccountFlow.login_password(
           acc.atm_id, acc.account_number, server.server_id, nil, acc.password
         )
@@ -96,7 +132,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       assert to_string(acc.owner_id) == to_string(entity.entity_id)
 
       # Login with the right password
-      assert {:ok, connection} =
+      assert {:ok, _tunnel, connection} =
         BankAccountFlow.login_password(
           acc.atm_id, acc.account_number, server.server_id, nil, acc.password
         )
@@ -146,7 +182,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       {server, %{entity: entity}} = ServerSetup.server()
 
       # Login with the right credentials
-      assert {:ok, connection} =
+      assert {:ok, _tunnel, connection} =
         BankAccountFlow.login_token(
           acc.atm_id, acc.account_number, server.server_id, nil, token.token_id
         )
@@ -179,7 +215,7 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
       assert to_string(acc.owner_id) == to_string(entity.entity_id)
 
       # Login with the right token
-      assert {:ok, connection} =
+      assert {:ok, _tunnel, connection} =
         BankAccountFlow.login_token(
           acc.atm_id, acc.account_number, server.server_id, nil, token.token_id
         )
@@ -234,6 +270,55 @@ defmodule Helix.Universe.Bank.Action.Flow.BankAccountTest do
 
       # Ensure nothing was added to the DB
       refute DatabaseQuery.fetch_bank_account(entity, acc)
+    end
+  end
+
+  describe "open/4" do
+    test "creates a process to opens account when everything is OK" do
+      {account, %{server: gateway}}  = AccountSetup.account(with_server: true)
+
+      account_id = account.account_id
+
+      bank_acc = BankSetup.account!()
+      atm_id = bank_acc.atm_id
+      atm = ServerQuery.fetch(atm_id)
+
+      assert {:ok, process} =
+        BankAccountFlow.open(gateway, account_id, atm, @relay)
+
+      assert process.data.atm_id == atm_id
+      assert process.source_entity_id == %Entity.ID{id: account_id.id}
+
+      TOPHelper.force_completion(process)
+
+      refute ProcessQuery.fetch(process.process_id)
+    end
+  end
+
+  describe "close/4" do
+    test "creates a process to close the given bank account" do
+      {account, %{server: gateway}}  = AccountSetup.account(with_server: true)
+      account_id = account.account_id
+
+      entity_id = %Entity.ID{id: account_id.id}
+
+      bank_acc = BankSetup.account!(owner_id: entity_id)
+
+      atm_id = bank_acc.atm_id
+      atm = ServerQuery.fetch(atm_id)
+      account_number = bank_acc.account_number
+
+      assert {:ok, process} =
+        BankAccountFlow.close(gateway, bank_acc, atm, @relay)
+
+      assert process.data.atm_id == atm_id
+      assert process.data.account_number == account_number
+
+      TOPHelper.force_completion(process)
+
+      refute ProcessQuery.fetch(process.process_id)
+
+      refute BankQuery.fetch_account(atm_id, account_number)
     end
   end
 end

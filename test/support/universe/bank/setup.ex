@@ -80,13 +80,15 @@ defmodule Helix.Test.Universe.Bank.Setup do
           0
       end
 
+    password = Keyword.get(opts, :password, BankHelper.password())
+
     acc =
       %BankAccount{
         account_number: number,
         balance: balance,
         bank_id: bank.id,
         atm_id: atm_id,
-        password: "secret",
+        password: password,
         owner_id: owner_id,
         creation_date: DateTime.utc_now()
       }
@@ -112,6 +114,12 @@ defmodule Helix.Test.Universe.Bank.Setup do
       )
 
     {inserted, related}
+  end
+
+  def transfer!(opts \\ []) do
+    {transfer, related} = transfer(opts)
+
+    transfer
   end
 
   @doc """
@@ -175,6 +183,11 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {inserted, related}
   end
 
+  def token!(opts \\ []) do
+    {inserted, _related} = token(opts)
+
+    inserted
+  end
   @doc """
   - acc: Associate that account to the token (BankAccount.t)
   - connection_id: Specify the connection ID.
@@ -206,7 +219,10 @@ defmodule Helix.Test.Universe.Bank.Setup do
         |> Kernel.+(-1)
         |> DateTime.from_unix!(:second)
       else
-        nil
+        DateTime.utc_now()
+        |> DateTime.to_unix(:second)
+        |> Kernel.+(60 * 5)
+        |> DateTime.from_unix!(:second)
       end
 
     token =
@@ -262,7 +278,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
     {server, %{entity: entity}} = ServerSetup.server()
 
     # Login with the right password
-    {:ok, connection} =
+    {:ok, _, connection} =
       BankAccountFlow.login_password(
         acc.atm_id, acc.account_number, server.server_id, nil, acc.password
       )

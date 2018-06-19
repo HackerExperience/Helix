@@ -11,7 +11,6 @@ defmodule Helix.Universe.Bank.Internal.BankToken do
   def fetch(token) do
     token
     |> BankToken.Query.by_token()
-    |> BankToken.Query.filter_expired()
     |> Repo.one()
   end
 
@@ -21,7 +20,6 @@ defmodule Helix.Universe.Bank.Internal.BankToken do
   def fetch_by_connection(connection) do
     connection
     |> BankToken.Query.by_connection()
-    |> BankToken.Query.filter_expired()
     |> Repo.one()
   end
 

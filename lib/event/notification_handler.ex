@@ -8,6 +8,8 @@ defmodule Helix.Event.NotificationHandler do
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
+  alias Helix.Universe.Bank.Model.ATM
+  alias Helix.Universe.Bank.Model.BankAccount
 
   @type channel_account_id :: Account.id | Entity.id
 

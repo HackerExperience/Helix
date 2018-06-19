@@ -2,6 +2,7 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
 
   alias Helix.Account.Model.Account
   alias Helix.Universe.Bank.Model.ATM
+  alias Helix.Universe.Bank.Model.Bank
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Repo
 
@@ -63,11 +64,11 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
     total || 0
   end
 
-  @spec create(BankAccount.creation_params) ::
+  @spec create(Account.id, ATM.id, Bank.id) ::
     {:ok, BankAccount.t}
     | {:error, Ecto.Changeset.t}
-  def create(params) do
-    params
+  def create(owner, atm, bank_id) do
+    %{owner_id: owner, atm_id: atm, bank_id: bank_id}
     |> BankAccount.create_changeset()
     |> Repo.insert()
   end
@@ -128,8 +129,8 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
 
   @spec close(BankAccount.t) ::
     :ok
-    | {:error, {:account, :notfound}}
-    | {:error, {:account, :notempty}}
+    | {:error, {:bank_account, :not_found}}
+    | {:error, {:bank_account, :not_empty}}
   def close(account) do
     trans =
       Repo.transaction(fn ->
@@ -138,8 +139,8 @@ defmodule Helix.Universe.Bank.Internal.BankAccount do
         account = fetch_for_update(account.atm_id, account.account_number)
 
         with \
-          true <- not is_nil(account) || {:account, :notfound},
-          true <- account.balance == 0 || {:account, :notempty}
+          true <- not is_nil(account) || {:bank_account, :not_found},
+          true <- account.balance == 0 || {:bank_account, :not_empty}
         do
           delete(account)
         else

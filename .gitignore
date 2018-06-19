@@ -28,6 +28,12 @@ erl_crash.dump
 xref_graph.dot
 /graphs
 
+# Visual Code 
+.elixir_ls/
+
+# Elixir
+.iex.exs
+
 **GPATH
 **GRTAGS
 **GTAGS

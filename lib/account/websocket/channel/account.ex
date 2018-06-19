@@ -15,6 +15,8 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Network.Websocket.Requests.Bounce.Remove, as: BounceRemoveRequest
   alias Helix.Software.Websocket.Requests.Virus.Collect, as: VirusCollectRequest
   alias Helix.Story.Websocket.Requests.Email.Reply, as: EmailReplyRequest
+  alias Helix.Universe.Bank.Websocket.Requests.CreateAccount,
+    as: BankAccountCreateRequest
 
   @doc """
   Joins the Account channel.
@@ -28,7 +30,7 @@ channel Helix.Account.Websocket.Channel.Account do
     authenticated on the socket.
   + base errors
   """
-  join _, AccountJoin
+  join "account:" <> _, AccountJoin
 
   @doc """
   Forces a bootstrap to happen. It is the exact same operation ran during join.
@@ -250,6 +252,24 @@ channel Helix.Account.Websocket.Channel.Account do
   + base errors
   """
   topic "virus.collect", VirusCollectRequest
+
+  @doc """
+  Creates a BankAccount
+
+  Params:
+  *atm_id: ATM.id related to bank that player wants to create account in
+
+  Returns: :ok
+
+  Errors:
+
+  Henforcer:
+  - atm_not_a_bank: Given `atm_id` is not a bank
+
+  Input:
+  + base errors
+  """
+  topic "bank.createacc", BankAccountCreateRequest
 
   @doc """
   Intercepts and handles outgoing events.

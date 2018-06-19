@@ -63,7 +63,11 @@ defmodule Helix.Universe.Bank.Action.Flow.BankTransfer do
 
       meta = %{
         network_id: tunnel.network_id,
-        bounce: tunnel.bounce_id
+        bounce: tunnel.bounce_id,
+        src_atm_id: from_account.atm_id,
+        src_acc_number: from_account.account_number,
+        tgt_atm_id: to_account.atm_id,
+        tgt_acc_number: to_account.account_number
       }
 
       BankTransferProcess.execute(gateway, target_atm, params, meta, relay)

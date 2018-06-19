@@ -63,7 +63,7 @@ defprotocol Helix.Event.Notificable do
   action, also receive special treatment. Hence:
 
   - third AT attack_target - Third party on victim's server
-  - third AT attack_source - Third party on attacker's server. 
+  - third AT attack_source - Third party on attacker's server.
   - third AT random_server - Third party on unrelated (random) server.
 
   Last but not least, in some cases we do not have an attacker/victim
@@ -98,6 +98,8 @@ defprotocol Helix.Event.Notificable do
 
   alias Helix.Account.Model.Account
   alias Helix.Server.Model.Server
+  alias Helix.Universe.Bank.Model.ATM
+  alias Helix.Universe.Bank.Model.BankAccount
 
   @type whom_to_notify ::
     %{
