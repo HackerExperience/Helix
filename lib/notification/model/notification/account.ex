@@ -6,9 +6,32 @@ defmodule Helix.Notification.Model.Notification.Account do
   import Ecto.Changeset
   import HELL.Ecto.Macros
 
+  alias Ecto.Changeset
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
   alias Helix.Notification.Model.Code.Account.CodeEnum
+
+  @type t ::
+    %__MODULE__{
+      notification_id: id,
+      account_id: Account.id,
+      code: atom,
+      data: map,
+      is_read: boolean,
+      creation_time: DateTime.t
+    }
+
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
+  @type creation_params ::
+    %{
+      account_id: Account.id,
+      code: atom,
+      data: map
+    }
+
+  @type id_map :: %{account_id: Account.id}
+  @type id_map_input :: Entity.id | Account.id
 
   @creation_fields [:account_id, :code, :data]
   @required_fields [:account_id, :code, :data, :creation_time]
@@ -24,6 +47,8 @@ defmodule Helix.Notification.Model.Notification.Account do
     field :creation_time, :utc_datetime
   end
 
+  @spec create_changeset(creation_params) ::
+    changeset
   def create_changeset(params) do
     %__MODULE__{}
     |> cast(params, @creation_fields)
@@ -31,11 +56,15 @@ defmodule Helix.Notification.Model.Notification.Account do
     |> validate_required(@required_fields)
   end
 
-  def notification_map(entity_id = %Entity.ID{}),
+  @spec id_map(id_map_input) ::
+    id_map
+  def id_map(entity_id = %Entity.ID{}),
     do: %{account_id: Account.ID.cast!(to_string(entity_id))}
-  def notification_map(account_id = %Account.ID{}),
+  def id_map(account_id = %Account.ID{}),
     do: %{account_id: account_id}
 
+  @spec put_defaults(changeset) ::
+    changeset
   defp put_defaults(changeset) do
     changeset
     |> put_change(:creation_time, DateTime.utc_now())
@@ -45,6 +74,8 @@ defmodule Helix.Notification.Model.Notification.Account do
 
     alias Helix.Account.Model.Account
     alias Helix.Notification.Model.Notification
+
+    @type methods :: :by_id | :by_account
 
     @spec by_id(Queryable.t, Notification.Account.id) ::
       Queryable.t

@@ -13,7 +13,10 @@ defmodule Helix.Notification.Event.Notification do
     class and content.
     """
 
-    @type t :: term
+    @type t ::
+      %__MODULE__{
+        notification: Notification.t
+      }
 
     event_struct [:notification]
 
