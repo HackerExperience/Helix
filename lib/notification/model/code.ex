@@ -1,8 +1,17 @@
 defmodule Helix.Notification.Model.Code do
+  @moduledoc """
+  Top-level module used to generate all valid notification "codes".
+
+  A notification "code" is an internal identifier used to specify the exact type
+  of the notification. A notification code is unique within its `class`, but not
+  necessarily unique among all classes.
+  """
 
   import HELL.Macros
 
   alias HELL.Utils
+  alias Helix.Event
+  alias Helix.Notification.Model.Notification
 
   defmacro __using__(_) do
     quote do
@@ -28,6 +37,8 @@ defmodule Helix.Notification.Model.Code do
 
       defenum CodeEnum, @codes
 
+      @spec exists?(Notification.code) ::
+        boolean
       def exists?(code) do
         Enum.any?(@codes, fn {valid_code, _} -> valid_code == code end)
       end
@@ -37,6 +48,9 @@ defmodule Helix.Notification.Model.Code do
 
   @doc """
   Generates the underlying code module.
+
+  `enum_id` is used to map the internal EctoEnum to the given `name`. It must
+  not be changed after being used, as this would royally fork everything up.
   """
   defmacro code(name, enum_id, do: block) do
     module_name =
@@ -61,18 +75,47 @@ defmodule Helix.Notification.Model.Code do
     end
   end
 
+  @spec generate_data(Notification.class, Notification.code, Event.t) ::
+    Notification.data
+  @doc """
+  Dispatches to the underlying code's `generate_data/1`.
+
+  Returns the notification's `data`, a map of arbitrary data used to correctly
+  notify the target user.
+  """
   def generate_data(class, code, event) do
     class
     |> get_code_module(code)
     |> apply(:generate_data, [event])
   end
 
+  @spec after_read_hook(
+    Notification.class, Notification.code, Notification.data
+  ) ::
+    Notification.data
+  @doc """
+  Dispatches to the underlying code's `after_read_hook/1`.
+
+  The input is the raw `data` returned from DB (stored in JSONB format), and the
+  output is expected to comply to the internal Helix format.
+  """
   def after_read_hook(class, code, data) do
     class
     |> get_code_module(code)
     |> apply(:after_read_hook, [data])
   end
 
+  @spec render_data(
+    Notification.class, Notification.code, Notification.data
+  ) ::
+    Notification.data
+  @doc """
+  Dispatches to the underlying code's `render_data/1`.
+
+  Called right before the `NotificationAddedEvent` is published to the user. The
+  underlying `render_data/1` method shall censor/hide/format the final data that
+  will be published to the user.
+  """
   def render_data(class, code, data) do
     class
     |> get_code_module(code)
@@ -82,6 +125,8 @@ defmodule Helix.Notification.Model.Code do
   @doc """
   Checks whether the given notification class and code exists.
   """
+  @spec code_exists?(Notification.class, Notification.code) ::
+    boolean
   def code_exists?(class, code) do
     class
     |> get_class_module()
@@ -110,6 +155,11 @@ defmodule Helix.Notification.Model.Code do
     |> Module.concat(safe_name)
   end
 
+  @spec get_class(module :: atom) ::
+    Notification.class
+  docp """
+  Given the caller module, figure out which class it belongs to.
+  """
   defp get_class(module) do
     module
     |> Module.split()
@@ -118,6 +168,11 @@ defmodule Helix.Notification.Model.Code do
     |> String.to_existing_atom()
   end
 
+  docp """
+  Generates a "safe name" for the notification code.
+
+  This "safe name" is Capitalized and does not contain any un_der_scor_es.
+  """
   defp get_safe_name(code) do
     code
     |> to_string()

@@ -1,4 +1,9 @@
 defmodule Helix.Notification.Model.Notification.Account do
+  @moduledoc """
+  Data definition for Account-related notifications.
+
+  Probably one of the simplest notification classes; no secrets here.
+  """
 
   use Ecto.Schema
   use HELL.ID, field: :notification_id, meta: [0x0050, 0x0001]
@@ -10,13 +15,14 @@ defmodule Helix.Notification.Model.Notification.Account do
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
   alias Helix.Notification.Model.Code.Account.CodeEnum
+  alias Helix.Notification.Model.Notification
 
   @type t ::
     %__MODULE__{
       notification_id: id,
       account_id: Account.id,
-      code: atom,
-      data: map,
+      code: Notification.code,
+      data: Notification.data,
       is_read: boolean,
       creation_time: DateTime.t
     }
@@ -26,8 +32,8 @@ defmodule Helix.Notification.Model.Notification.Account do
   @type creation_params ::
     %{
       account_id: Account.id,
-      code: atom,
-      data: map
+      code: Notification.code,
+      data: Notification.data
     }
 
   @type id_map :: %{account_id: Account.id}

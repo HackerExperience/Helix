@@ -1,4 +1,10 @@
 defmodule Helix.Notification.Model.Notification.Server do
+  @moduledoc """
+  Data definition for Server-related notifications.
+
+  Notice we have to store the underlying server NIP information, as the Client
+  does not receive the `server_id`.
+  """
 
   use Ecto.Schema
   use HELL.ID, field: :notification_id, meta: [0x0050, 0x0002]
@@ -13,6 +19,7 @@ defmodule Helix.Notification.Model.Notification.Server do
   alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Notification.Model.Code.Server.CodeEnum
+  alias Helix.Notification.Model.Notification
 
   @type t ::
     %__MODULE__{
@@ -21,8 +28,8 @@ defmodule Helix.Notification.Model.Notification.Server do
       server_id: Server.id,
       network_id: Network.id,
       ip: Network.ip,
-      code: atom,
-      data: map,
+      code: Notification.code,
+      data: Notification.data,
       is_read: boolean,
       creation_time: DateTime.t
     }
@@ -35,8 +42,8 @@ defmodule Helix.Notification.Model.Notification.Server do
       server_id: Server.id,
       network_id: Network.id,
       ip: Network.ip,
-      code: atom,
-      data: map
+      code: Notification.code,
+      data: Notification.data
     }
 
   @type id_map :: %{account_id: Account.id, server_id: Server.id}
@@ -77,7 +84,7 @@ defmodule Helix.Notification.Model.Notification.Server do
     |> validate_required(@required_fields)
   end
 
-  @spec id_map({Server.id, Account.id | Entity.id}) ::
+  @spec id_map(id_map_input) ::
     id_map
   def id_map({server_id = %Server.ID{}, account_id = %Account.ID{}}),
     do: %{account_id: account_id, server_id: server_id}

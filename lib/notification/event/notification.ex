@@ -48,12 +48,14 @@ defmodule Helix.Notification.Event.Notification do
         {:ok, data}
       end
 
+      # Notification.Account are fired directly to the underlying account
       def whom_to_publish(
         %{notification: %Notification.Account{account_id: account_id}}
       ) do
         %{account: account_id}
       end
 
+      # Notification.Server are fired to the specified `account_id`
       def whom_to_publish(
         %{notification: %Notification.Server{account_id: account_id}}
       ) do

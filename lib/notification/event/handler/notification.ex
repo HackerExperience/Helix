@@ -8,6 +8,19 @@ defmodule Helix.Notification.Event.Handler.Notification do
   alias Helix.Notification.Model.Code, as: NotificationCode
   alias Helix.Notification.Model.Notification
 
+  @doc """
+  Handles all events that implement the `Notificable` protocol.
+
+  If an event implements the `Notificable` protocol, it means we are supposed to
+  create a notification and eventually publish it to the player. That's what we
+  do here.
+
+  Mind you, the actual publication of the notification to the player happens at
+  the next step, after the `NotificationAddedEvent` is fired. Not this handler's
+  problem.
+
+  Emits `NotificationAddedEvent`.
+  """
   def notification_handler(event) do
     if Notificable.impl_for(event) do
       {class, code} = Notificable.get_notification_data(event)
@@ -33,18 +46,21 @@ defmodule Helix.Notification.Event.Handler.Notification do
   @spec get_target_ids(Notification.class, Notificable.whom_to_notify) ::
     [Notification.id_map]
   docp """
-  Returns the list of players that shall receive the notification.
+  Returns the list of players ("targets") that shall receive the notification.
 
   This list was passed through `Notification.get_id_map/2` and it contains all
   id information the notification needs to be stored correctly.
+
+  Notice that the param sent to `get_id_map/2` isn't necessarily the same data
+  returned by `Notificable.whom_to_notify/1`; it may be altered.
   """
   defp get_target_ids(:account, account_id),
     do: [Notification.get_id_map(:account, account_id)]
   defp get_target_ids(:server, %{account_id: account_id, server_id: server_id}),
     do: [Notification.get_id_map(:server, {server_id, account_id})]
 
-  # Below snippet is an example on how to extend the `get_notification_list/2`
-  # defp get_notification_list(:server, server_id = %Server.ID{}) do
+  # Below snippet is an example on how to extend the `get_target_ids/2`
+  # defp get_target_ids(:server, server_id = %Server.ID{}) do
   #   server_id
   #   |> ServerQuery.get_all_accounts_logged_in_server()
   #   |> Enum.map(fn account_id ->
@@ -53,5 +69,4 @@ defmodule Helix.Notification.Event.Handler.Notification do
   #     )
   #   end)
   # end
-
 end

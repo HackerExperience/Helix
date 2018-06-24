@@ -14,6 +14,12 @@ defmodule Helix.Notification.Action.Notification do
   ) ::
     {:ok, Notification.t, [NotificationAddedEvent.t]}
     | {:error, Notification.changeset}
+  @doc """
+  Inserts the given notification into the database.
+
+  The given params contain all information required to correctly store the
+  notification.
+  """
   def add_notification(class, code, data, ids, extra) do
     case NotificationInternal.add_notification(class, code, data, ids, extra) do
       {:ok, notification} ->

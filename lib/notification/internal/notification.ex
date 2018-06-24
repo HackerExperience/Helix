@@ -16,6 +16,9 @@ defmodule Helix.Notification.Internal.Notification do
 
   @spec get_by_account(Notification.class, Account.id) ::
     [Notification.t]
+  @doc """
+  Queries the underlying `class` based on the recipient `account_id`.
+  """
   def get_by_account(class, account_id) do
     class
     |> Notification.query(:by_account, account_id)
