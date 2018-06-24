@@ -71,7 +71,8 @@ defmodule Helix.Notification.Model.Notification.Server do
     field :ip, IPv4
     field :code, CodeEnum
     field :data, :map
-    field :is_read, :boolean
+    field :is_read, :boolean,
+      default: false
     field :creation_time, :utc_datetime
   end
 

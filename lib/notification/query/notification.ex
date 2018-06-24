@@ -14,11 +14,8 @@ defmodule Helix.Notification.Query.Notification do
     |> fetch()
   end
 
-  def fetch(notification_id) do
-    notification_id
-    |> Notification.get_class()
-    |> NotificationInternal.fetch(notification_id)
-  end
+  def fetch(notification_id),
+    do: NotificationInternal.fetch(notification_id)
 
   @spec get_by_account(Notification.class, Entity.id | Account.id) ::
     [Notification.t]

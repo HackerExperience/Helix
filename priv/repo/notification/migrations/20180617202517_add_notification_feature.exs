@@ -8,7 +8,7 @@ defmodule Helix.Notification.Repo.Migrations.AddNotificationFeature do
       add :account_id, :inet, null: false
       add :code, :integer, null: false
       add :data, :jsonb, null: false
-      add :is_read, :boolean, default: false
+      add :is_read, :boolean, default: false, null: false
       add :creation_time, :utc_datetime, null: false
     end
     create index(:notifications_account, [:account_id])
@@ -22,7 +22,7 @@ defmodule Helix.Notification.Repo.Migrations.AddNotificationFeature do
       add :ip, :inet, null: false
       add :code, :integer, null: false
       add :data, :jsonb, null: false
-      add :is_read, :boolean, default: false
+      add :is_read, :boolean, default: false, null: false
       add :creation_time, :utc_datetime, null: false
     end
     create index(:notifications_server, [:account_id, :server_id])

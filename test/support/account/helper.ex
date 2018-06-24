@@ -21,4 +21,7 @@ defmodule Helix.Test.Account.Helper do
     |> Account.ID.cast!()
     |> AccountQuery.fetch()
   end
+
+  def id,
+    do: Account.ID.generate()
 end

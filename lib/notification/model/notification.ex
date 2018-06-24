@@ -4,6 +4,7 @@ defmodule Helix.Notification.Model.Notification do
   any calls to the underlying specialization, defined by `class`.
   """
 
+  alias Ecto.Changeset
   alias HELL.MapUtils
   alias Helix.Notification.Model.Code, as: NotificationCode
   alias Helix.Notification.Model.Notification
@@ -91,6 +92,17 @@ defmodule Helix.Notification.Model.Notification do
       |> Map.merge(extra)
 
     dispatch(class, :create_changeset, params)
+  end
+
+  @spec mark_as_read(Notification.t) ::
+    Notification.changeset
+  @doc """
+  Marks a notification as read.
+  """
+  def mark_as_read(notification = %_{notification_id: _}) do
+    notification
+    |> Changeset.change()
+    |> Changeset.put_change(:is_read, true)
   end
 
   @spec get_id_map(class, id_map_input) ::

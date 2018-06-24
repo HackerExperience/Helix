@@ -140,4 +140,10 @@ defmodule Helix.Test.Server.Helper do
   """
   def id,
     do: Server.ID.generate()
+
+  @doc """
+  Generates a random server password
+  """
+  def password,
+    do: HELL.Password.generate(:server)
 end

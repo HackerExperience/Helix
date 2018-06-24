@@ -49,7 +49,8 @@ defmodule Helix.Notification.Model.Notification.Account do
     field :account_id, Account.ID
     field :code, CodeEnum
     field :data, :map
-    field :is_read, :boolean
+    field :is_read, :boolean,
+      default: false
     field :creation_time, :utc_datetime
   end
 
