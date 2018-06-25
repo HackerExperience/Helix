@@ -4,6 +4,8 @@ defmodule Helix.Notification.Internal.Notification do
   alias Helix.Notification.Model.Notification
   alias Helix.Notification.Repo
 
+  @type custom_method :: :by_account_and_server
+
   @typep fetch_result ::
     Notification.t
     | nil
@@ -37,6 +39,24 @@ defmodule Helix.Notification.Internal.Notification do
   def get_by_account(class, account_id) do
     class
     |> Notification.query(:by_account, account_id)
+    |> Notification.order(:by_newest)
+    |> Repo.all()
+    |> Enum.map(&Notification.format/1)
+  end
+
+  @spec get_custom(custom_method, tuple) ::
+    [Notification.t]
+  @doc """
+  Queries sub-models with custom methods.
+
+  - `by_account_and_server`: queries `Notification.Server` for all notifications
+    that belong to the given `account_id` and `server_id`.
+  """
+  def get_custom(:by_account_and_server, {account_id, server_id}) do
+    :server
+    |> Notification.query(:by_account, account_id)
+    |> Notification.query(:by_server, server_id)
+    |> Notification.order(:by_newest)
     |> Repo.all()
     |> Enum.map(&Notification.format/1)
   end
@@ -50,6 +70,9 @@ defmodule Helix.Notification.Internal.Notification do
   ) ::
     {:ok, Notification.t}
     | {:error, Notification.changeset}
+  @doc """
+  Inserts a notification into the DB.
+  """
   def add_notification(class, code, data, id_map, extra_params) do
     class
     |> Notification.create_changeset(code, data, id_map, extra_params)

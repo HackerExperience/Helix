@@ -67,6 +67,7 @@ defmodule Helix.Notification.Model.Notification.Server do
 
     field :account_id, Account.ID
     field :server_id, Server.ID
+    # TODO: Nip is currently unused!
     field :network_id, Network.ID
     field :ip, IPv4
     field :code, CodeEnum
@@ -117,12 +118,22 @@ defmodule Helix.Notification.Model.Notification.Server do
 
     @spec by_account(Queryable.t, Account.id) ::
       Queryable.t
-    def by_account(query \\ Notification.Server, account_id),
+    def by_account(query \\ Notification.Server, account_id = %Account.ID{}),
       do: where(query, [n], n.account_id == ^account_id)
 
     @spec by_server(Queryable.t, Server.id) ::
       Queryable.t
-    def by_server(query \\ Notification.Server, server_id),
+    def by_server(query \\ Notification.Server, server_id = %Server.ID{}),
       do: where(query, [n], n.server_id == ^server_id)
+  end
+
+  order do
+
+    @type methods :: :by_newest
+
+    @spec by_newest(Queryable.t) ::
+      Queryable.t
+    def by_newest(query),
+      do: order_by(query, [n], desc: n.creation_time)
   end
 end

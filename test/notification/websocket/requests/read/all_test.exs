@@ -86,7 +86,7 @@ defmodule Helix.Notification.Websocket.Requests.Read.AllTest do
       assert {:ok, _} = Requestable.handle_request(request, socket)
 
       # Both notifications were marked as read
-      assert [new_n1, new_n2] =
+      assert [new_n2, new_n1] =
         NotificationQuery.get_by_account(class, account_id)
 
       assert new_n1.notification_id == n1.notification_id

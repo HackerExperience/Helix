@@ -72,7 +72,9 @@ defmodule Helix.Notification.Internal.NotificationTest do
       notification1 =
         NotificationSetup.notification!(account_id: account_id, class: class)
       notification2 =
-        NotificationSetup.notification!(account_id: account_id, is_read: true)
+        NotificationSetup.notification!(
+          account_id: account_id, class: class, is_read: true
+        )
       notification3 =
         NotificationSetup.notification!(account_id: account_id, class: class)
 
@@ -84,7 +86,7 @@ defmodule Helix.Notification.Internal.NotificationTest do
       NotificationInternal.mark_as_read(class, account_id)
 
       # Retrieve again all three notifications
-      [new_notif1, new_notif2, new_notif3] =
+      [new_notif3, new_notif2, new_notif1] =
         NotificationInternal.get_by_account(class, account_id)
 
       # Read

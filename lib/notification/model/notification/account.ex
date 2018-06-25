@@ -94,4 +94,14 @@ defmodule Helix.Notification.Model.Notification.Account do
     def by_account(query \\ Notification.Account, account_id),
       do: where(query, [n], n.account_id == ^account_id)
   end
+
+  order do
+
+    @type methods :: :by_newest
+
+    @spec by_newest(Queryable.t) ::
+      Queryable.t
+    def by_newest(query),
+      do: order_by(query, [n], desc: n.creation_time)
+  end
 end

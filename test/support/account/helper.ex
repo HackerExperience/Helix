@@ -24,4 +24,10 @@ defmodule Helix.Test.Account.Helper do
 
   def id,
     do: Account.ID.generate()
+
+  @doc """
+  Returns the Account.id that corresponds to the given Entity.id
+  """
+  def cast_from_entity(entity_id),
+    do: Account.cast_from_entity(entity_id)
 end

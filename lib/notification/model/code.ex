@@ -115,6 +115,8 @@ defmodule Helix.Notification.Model.Code do
   Called right before the `NotificationAddedEvent` is published to the user. The
   underlying `render_data/1` method shall censor/hide/format the final data that
   will be published to the user.
+
+  Also called by NotificationIndex during the bootstrap step.
   """
   def render_data(class, code, data) do
     class

@@ -6,6 +6,7 @@ defmodule Helix.Notification.Model.Notification do
 
   import Helix.Core.Validator.Model
 
+  alias Ecto.Queryable
   alias Ecto.Changeset
   alias HELL.MapUtils
   alias Helix.Notification.Model.Code, as: NotificationCode
@@ -39,6 +40,10 @@ defmodule Helix.Notification.Model.Notification do
   @typep query_method ::
     Notification.Account.Query.methods
     | Notification.Server.Query.methods
+
+  @typep order_method ::
+    Notification.Account.Order.methods
+    | Notification.Server.Order.methods
 
   @spec cast_id(tuple) ::
     {:ok, id}
@@ -130,20 +135,38 @@ defmodule Helix.Notification.Model.Notification do
   def get_id_map(class, id_map_input),
     do: dispatch(class, :id_map, id_map_input)
 
-  @spec query(class, query_method) ::
-    Ecto.Queryable.t
+  @spec query(Queryable.t | class, query_method) ::
+    Queryable.t
   @doc """
   `query/2` proxies the call to the Query module of the underlying `class`.
+
+  It may receive another `Queryable.t`, in which case it automatically detects
+  the underlying class module, as well as appends the Queryable to the args,
+  since the given Queryable should be used as a building block to the next one.
   """
   def query(class, query_method),
     do: query(class, query_method, [])
   def query(class, query_method, arg) when not is_list(arg),
     do: query(class, query_method, [arg])
-  def query(class, query_method, args) do
+  def query(queryable = %_{from: {_, module}}, query_method, args),
+    do: do_query(module, query_method, [queryable | args])
+  def query(class, query_method, args) when is_atom(class) do
     class
     |> get_module()
-    |> Module.concat(:Query)
-    |> apply(query_method, args)
+    |> do_query(query_method, args)
+  end
+
+  @spec order(Queryable.t, order_method) ::
+    Queryable.t
+  @doc """
+  Similar to `query/2,3`, but executes an `.Order` method instead.
+
+  Must always receive a `Queryable` as input.
+  """
+  def order(queryable = %_{from: {_, module}}, order_method) do
+    module
+    |> Module.concat(:Order)
+    |> apply(order_method, [queryable])
   end
 
   @spec valid_class?(atom) ::
@@ -157,6 +180,14 @@ defmodule Helix.Notification.Model.Notification do
     do: true
   def valid_class?(_),
     do: false
+
+  @spec do_query(module :: atom, query_method, list) ::
+    Queryable.t
+  defp do_query(module, query_method, args) do
+    module
+    |> Module.concat(:Query)
+    |> apply(query_method, args)
+  end
 
   defp dispatch(class, function, arg) when not is_list(arg),
     do: dispatch(class, function, [arg])

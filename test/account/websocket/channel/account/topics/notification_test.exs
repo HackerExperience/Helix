@@ -70,7 +70,7 @@ defmodule Helix.Account.Websocket.Channel.Account.Topics.NotificationTest do
       refute notification_read_event.data.notification_id
 
       # All underlying notifications were marked as read
-      assert [new_n1, new_n2, new_n3] =
+      assert [new_n3, new_n2, new_n1] =
         NotificationQuery.get_by_account(class, account_id)
 
       assert new_n1.notification_id == n1.notification_id

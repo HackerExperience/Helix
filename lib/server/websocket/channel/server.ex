@@ -402,9 +402,7 @@ channel Helix.Server.Websocket.Channel.Server do
 
   Returns: ServerBootstrap
 
-  Errors:
-  - "own_server_bootstrap": You can only request the bootstrap of remote servers
-  (obsolete, let me know if you need local server bootstrap)
+  Errors: none?
   """
   topic "bootstrap", BootstrapRequest
 
