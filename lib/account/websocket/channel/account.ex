@@ -229,9 +229,13 @@ channel Helix.Account.Websocket.Channel.Account do
   Errors:
 
   Henforcer:
+  - notification_not_found: The given `notification_id` does not exist.
+  - notification_not_belongs: Client attempted to read a notification that
+    belongs to another user.
 
   Input:
   - read_the_docs: Client did not read the docs. See [1].
+  - bad_class: The given class is not valid.
   + base errors
   """
   topic "notification.read", NotificationReadRequest

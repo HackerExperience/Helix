@@ -137,6 +137,7 @@ defmodule Helix.Event.Dispatcher do
 
   # All
   event NotificationEvent.Notification.Added
+  event NotificationEvent.Notification.Read
 
   ##############################################################################
   # Log events

@@ -1,7 +1,6 @@
 defmodule Helix.Websocket.Flow do
   @moduledoc """
-  ChannelFlow are common macros used by both `Helix.Websocket.Request` and
-  `Helix.Websocket.Join`.
+  Common macros used by `Helix.Websocket.Request` and `Helix.Websocket.Join`.
   """
 
   alias Helix.Websocket.Flow.Utils, as: FlowUtils
@@ -14,7 +13,7 @@ defmodule Helix.Websocket.Flow do
 
   If `ready: true` is passed as opts, we assume the error response is already
   formatted and send it without any modification. The `__ready__` flag is used
-  internally by `Helix.Websocket` so it knows it's supposed to relay that value
+  internally by `Helix.Websocket` so it knows it is supposed to relay that value
   directly to the client too.
   """
   defmacro reply_error(request, msg) when is_binary(msg) do
@@ -124,6 +123,24 @@ defmodule Helix.Websocket.Flow do
   end
 
   @doc """
+  Shorthand for `ensure_type(:binary)` from `RequestUtils`.
+  """
+  defmacro ensure_binary(input) do
+    quote do
+      FlowUtils.ensure_type(:binary, unquote(input))
+    end
+  end
+
+  @doc """
+  Helper to cast strings which are expected to already exist as atoms.
+  """
+  defmacro cast_existing_atom(unsafe_string) do
+    quote do
+      FlowUtils.cast_existing_atom(unquote(unsafe_string))
+    end
+  end
+
+  @doc """
   Helper to cast optional parameters, i.e. parameters that may not exist.
   """
   defmacro cast_optional(req, key, cast, default \\ quote(do: {:ok, nil})) do
@@ -176,7 +193,7 @@ defmodule Helix.Websocket.Flow.Utils do
   end
 
   @spec validate_input(unsafe_input :: String.t, Validator.input_type, term) ::
-    {:ok, validated_input :: String.t}
+    {:ok, Validator.validated_inputs}
     | :bad_request
   @doc """
   Delegates the input validation to `Validator`.
@@ -210,6 +227,23 @@ defmodule Helix.Websocket.Flow.Utils do
 
       :error ->
         :bad_request
+    end
+  end
+
+  @spec cast_existing_atom(String.t) ::
+    {:ok, atom}
+    | {:error, :atom_not_found}
+  @doc """
+  Ensures the given string already exists as an atom, and also converts it to an
+  atom.
+  """
+  def cast_existing_atom(unsafe) do
+    try do
+      atom = String.to_existing_atom(unsafe)
+      {:ok, atom}
+    rescue
+      _ ->
+        {:error, :atom_not_found}
     end
   end
 
@@ -254,4 +288,14 @@ defmodule Helix.Websocket.Flow.Utils do
       end
     end)
   end
+
+  @spec ensure_type(:binary, String.t) :: {:ok, String.t}
+  @spec ensure_type(:binary, list | integer | map) :: :error
+  @doc """
+  Ensures that the given `input` belongs to the underlying type.
+  """
+  def ensure_type(:binary, input) when is_binary(input),
+    do: {:ok, input}
+  def ensure_type(:binary, _),
+    do: :error
 end

@@ -14,13 +14,17 @@ defmodule Helix.Websocket.Request.Proxy do
 
   @doc """
   Selects which backend should handle the proxy request.
+
+  An `{:ok, module}` return means that the request should be dispatched to
+  `module`. On the other hand, returning `{:error, reason}` means the request
+  should fail immediately with `reason`.
   """
   defmacro select_backend(request, socket, do: block)  do
     quote do
 
       @spec select_backend(Request.t, Websocket.socket) ::
-        Request.t
-        | false
+        {:ok, Request.t}
+        | {:error, reason :: atom | String.t}
       def select_backend(unquote(request), unquote(socket)) do
         unquote(block)
       end
@@ -40,23 +44,28 @@ defmodule Helix.Websocket.Request.Proxy do
 
         alias Helix.Websocket.Requestable
 
+        @doc false
         def check_params(request, socket) do
-          backend = select_backend(request, socket)
+          request
+          |> select_backend(socket)
+          |> handle_backend(request, socket)
+        end
 
-          if backend do
-            sub_request =
-              backend
-              |> apply(:new, [request.unsafe, socket])
-              |> Map.replace(:relay, request.relay)
+        defp handle_backend({:ok, backend}, request, socket) do
+          sub_request =
+            backend
+            |> apply(:new, [request.unsafe, socket])
+            |> Map.replace(:relay, request.relay)
 
-            with {:ok, req} <- Requestable.check_params(sub_request, socket) do
-              update_meta(request, %{sub_request: req}, reply: true)
-            end
-          else
-            reply_error(request, "request_not_implemented_for_client")
+          with {:ok, req} <- Requestable.check_params(sub_request, socket) do
+            update_meta(request, %{sub_request: req}, reply: true)
           end
         end
 
+        defp handle_backend({:error, reason}, request, _socket),
+          do: reply_error(request, reason)
+
+        @doc false
         def check_permissions(request, socket) do
           sub_request = request.meta.sub_request
 
@@ -67,6 +76,7 @@ defmodule Helix.Websocket.Request.Proxy do
           end
         end
 
+        @doc false
         def handle_request(request, socket) do
           sub_request = request.meta.sub_request
 
@@ -80,6 +90,7 @@ defmodule Helix.Websocket.Request.Proxy do
         unquote(block)
 
         # Fallbacks to the backend request reply
+        @doc false
         def reply(request, socket) do
           sub_request = request.meta.sub_request
 

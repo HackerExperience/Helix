@@ -1,4 +1,4 @@
-defmodule Helix.Test.Notification.Event.Handler.NotificationTest do
+defmodule Helix.Notification.Event.Handler.NotificationTest do
 
   use Helix.Test.Case.Integration
 

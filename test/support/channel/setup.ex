@@ -111,11 +111,12 @@ defmodule Helix.Test.Channel.Setup do
 
     {:ok, _, socket} = subscribe_and_join(socket, AccountChannel, topic, %{})
 
-    related = %{
-      account_id: account_id,
-      entity_id: Entity.ID.cast!(to_string(account_id))
-    }
-    |> Map.merge(socket_related)
+    related =
+      %{
+        account_id: account_id,
+        entity_id: Entity.ID.cast!(to_string(account_id))
+      }
+      |> Map.merge(socket_related)
 
     {socket, related}
   end
@@ -398,12 +399,36 @@ defmodule Helix.Test.Channel.Setup do
   - client: Set the client platform/version. Defaults to `web2`
   """
   def fake_connection_socket_assigns(opts \\ []) do
-    gen_account_id = fn entity_id ->
-      entity_id |> to_string() |> Account.ID.cast!()
-    end
+    gen_account_id =
+      fn entity_id ->
+        entity_id |> to_string() |> Account.ID.cast!()
+      end
 
-    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
-    account_id = Keyword.get(opts, :account_id, gen_account_id.(entity_id))
+    gen_entity_id =
+      fn account_id ->
+        account_id |> to_string() |> Entity.ID.cast!()
+      end
+
+    {entity_id, account_id} =
+      cond do
+        # `entity_id and not account_id`
+        opts[:entity_id] != nil and opts[:account_id] == nil ->
+          {opts[:entity_id], gen_account_id.(opts[:entity_id])}
+
+        # `not entity_id and account_id`
+        opts[:entity_id] == nil and opts[:account_id] != nil ->
+          {gen_entity_id.(opts[:account_id]), opts[:account_id]}
+
+        # `entity_id and account_id`
+        opts[:entity_id] != nil and opts[:account_id] != nil ->
+          {opts[:entity_id], opts[:account_id]}
+
+        # `not entity_id and not account_id`
+        opts[:entity_id] == nil and opts[:account_id] == nil ->
+          entity_id = Entity.ID.generate()
+          {entity_id, gen_account_id.(entity_id)}
+      end
+
     client = Keyword.get(opts, :client, :web2)
 
     %{

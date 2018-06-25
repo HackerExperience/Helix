@@ -1,4 +1,4 @@
-defmodule Helix.Test.Notification.Internal.Notification do
+defmodule Helix.Notification.Internal.NotificationTest do
 
   use Helix.Test.Case.Integration
 
@@ -6,11 +6,12 @@ defmodule Helix.Test.Notification.Internal.Notification do
   alias Helix.Notification.Model.Notification
 
   alias Helix.Test.Account.Helper, as: AccountHelper
+  alias Helix.Test.Notification.Helper, as: NotificationHelper
   alias Helix.Test.Notification.Setup, as: NotificationSetup
 
   describe "add_notification/5" do
     test "adds notification when everything is valid" do
-      {class, code} = NotificationSetup.random_code()
+      {class, code} = NotificationHelper.random_code()
       {data, extra} = NotificationSetup.generate_data(class, code)
       id_map = NotificationSetup.generate_id_map(class)
 
@@ -25,7 +26,7 @@ defmodule Helix.Test.Notification.Internal.Notification do
     end
 
     test "fails miserably when code is invalid" do
-      {class, code} = NotificationSetup.random_code()
+      {class, code} = NotificationHelper.random_code()
       {data, extra} = NotificationSetup.generate_data(class, code)
       id_map = NotificationSetup.generate_id_map(class)
 

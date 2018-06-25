@@ -5,15 +5,9 @@ defmodule Helix.Notification.Query.Notification do
   alias Helix.Notification.Internal.Notification, as: NotificationInternal
   alias Helix.Notification.Model.Notification
 
-  @spec fetch(Notification.id | tuple) ::
+  @spec fetch(Notification.id) ::
     Notification.t
     | nil
-  def fetch(notification_id) when is_tuple(notification_id) do
-    notification_id
-    |> Notification.cast_id()
-    |> fetch()
-  end
-
   def fetch(notification_id),
     do: NotificationInternal.fetch(notification_id)
 

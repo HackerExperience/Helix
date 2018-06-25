@@ -19,10 +19,14 @@ defmodule Helix.Notification.Internal.Notification do
   @spec fetch(Notification.class, Notification.id) ::
     fetch_result
   def fetch(class, notification_id) do
-    class
-    |> Notification.query(:by_id, notification_id)
-    |> Repo.one()
-    |> Notification.format()
+    result =
+      class
+      |> Notification.query(:by_id, notification_id)
+      |> Repo.one()
+
+    with %{} <- result do
+      Notification.format(result)
+    end
   end
 
   @spec get_by_account(Notification.class, Account.id) ::
@@ -71,7 +75,7 @@ defmodule Helix.Notification.Internal.Notification do
   @doc """
   Marks all notifications that belong to `account_id` and `class` as read.
   """
-  def mark_as_read(class, account_id) do
+  def mark_as_read(class, account_id = %Account.ID{}) do
     class
     |> Notification.query(:by_account, account_id)
     |> Repo.update_all(set: [is_read: true])

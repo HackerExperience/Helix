@@ -10,10 +10,10 @@ proxy_request Helix.Client.Websocket.Requests.Setup do
   select_backend(_request, socket) do
     case socket.assigns.client do
       :web1 ->
-        Web1SetupRequest
+        {:ok, Web1SetupRequest}
 
       _ ->
-        false
+        {:error, "request_not_implemented_for_client"}
     end
   end
 end

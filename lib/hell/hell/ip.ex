@@ -35,11 +35,13 @@ defmodule HELL.IPv6 do
     {a, b, c, d, e, f, g, h}
   end
 
-  def binary_to_address_tuple(string) do
+  def binary_to_address_tuple(string) when is_binary(string) do
     string
     |> String.to_charlist()
     |> :inet.parse_ipv6strict_address()
   end
+  def binary_to_address_tuple(_),
+    do: {:error, :einval}
 
   @spec generate_octet_groups(pos_integer) ::
     [0..0xffff]

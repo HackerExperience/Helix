@@ -6,12 +6,7 @@ defmodule Helix.Test.Notification.Setup do
 
   alias Helix.Test.Account.Helper, as: AccountHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
-
-  @classes [:account, :server]
-  @code_map %{
-    account: [:server_password_acquired],
-    server: [:file_downloaded]
-  }
+  alias Helix.Test.Notification.Helper, as: NotificationHelper
 
   @doc """
   See docs on `fake_notification/1`.
@@ -43,8 +38,8 @@ defmodule Helix.Test.Notification.Setup do
     false
   """
   def fake_notification(opts) do
-    class = Keyword.get(opts, :class, random_class())
-    {_, code} = Keyword.get(opts, :code, random_code(class))
+    class = Keyword.get(opts, :class, NotificationHelper.random_class())
+    {_, code} = Keyword.get(opts, :code, NotificationHelper.random_code(class))
 
     {data, extra} =
       if opts[:data] do
@@ -71,6 +66,7 @@ defmodule Helix.Test.Notification.Setup do
         class: class,
         code: code,
         id_map: id_map,
+        account_id: account_id,
         data: data,
         extra: extra
       }
@@ -98,19 +94,4 @@ defmodule Helix.Test.Notification.Setup do
       account_id: account_id
     }
   end
-
-  @doc """
-  Returns a valid random code for the given class.
-  """
-  def random_code,
-    do: random_code(random_class())
-
-  def random_code(class),
-    do: {class, Enum.random(@code_map[class])}
-
-  @doc """
-  Returns a valid random class.
-  """
-  def random_class,
-    do: Enum.random(@classes)
 end

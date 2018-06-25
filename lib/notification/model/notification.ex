@@ -4,6 +4,8 @@ defmodule Helix.Notification.Model.Notification do
   any calls to the underlying specialization, defined by `class`.
   """
 
+  import Helix.Core.Validator.Model
+
   alias Ecto.Changeset
   alias HELL.MapUtils
   alias Helix.Notification.Model.Code, as: NotificationCode
@@ -39,15 +41,26 @@ defmodule Helix.Notification.Model.Notification do
     | Notification.Server.Query.methods
 
   @spec cast_id(tuple) ::
-    id
+    {:ok, id}
+    | :error
   @doc """
   Given a non-specialized Helix ID (inet-tuple format), return the underlying
   notification ID.
   """
   def cast_id(id = {80, 1, _, _, _, _, _, _}),
-    do: Notification.Account.ID.cast!(id)
+    do: Notification.Account.ID.cast(id)
   def cast_id(id = {80, 2, _, _, _, _, _, _}),
-    do: Notification.Server.ID.cast!(id)
+    do: Notification.Server.ID.cast(id)
+  def cast_id(_),
+    do: :error
+
+  @spec cast_id!(tuple) ::
+    id
+    | no_return
+  def cast_id!(id) when is_tuple(id) do
+    {:ok, casted_id} = cast_id(id)
+    casted_id
+  end
 
   @spec get_class(id | t) ::
     class
@@ -133,6 +146,18 @@ defmodule Helix.Notification.Model.Notification do
     |> apply(query_method, args)
   end
 
+  @spec valid_class?(atom) ::
+    boolean
+  @doc """
+  Checks whether the given atom represents a valid class
+  """
+  def valid_class?(:account),
+    do: true
+  def valid_class?(:server),
+    do: true
+  def valid_class?(_),
+    do: false
+
   defp dispatch(class, function, arg) when not is_list(arg),
     do: dispatch(class, function, [arg])
   defp dispatch(class, function, args) do
@@ -147,4 +172,42 @@ defmodule Helix.Notification.Model.Notification do
     do: __MODULE__.Account
   defp get_module(:server),
     do: __MODULE__.Server
+
+  validator do
+    @moduledoc """
+    Implementations for `Helix.Core.Validator`
+    """
+
+    alias HELL.IPv6
+
+    @type validated_inputs ::
+      Notification.id
+
+    @spec validate_id(String.t, opts :: term) ::
+      {:ok, Notification.id}
+      | :error
+    @doc """
+    Validates (and converts) the given string into a notification ID.
+
+    It must be:
+    - a string
+    - with an inet format
+    - with a valid suffix
+    """
+    def validate_id(str_id, _) when is_binary(str_id) do
+      with \
+        {:ok, tuple_id} <- IPv6.binary_to_address_tuple(str_id),
+        {:ok, notification_id} <- Notification.cast_id(tuple_id)
+      do
+        {:ok, notification_id}
+      else
+        _ ->
+          :error
+      end
+    end
+
+    def validate_id(_, _),
+      do: :error
+
+  end
 end
