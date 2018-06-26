@@ -4,6 +4,7 @@ defmodule Helix.Test.Features.Hack do
 
   import Phoenix.ChannelTest
   import Helix.Test.Case.ID
+  import Helix.Test.Channel.Macros
   import Helix.Test.Macros
 
   alias HELL.Utils
@@ -56,8 +57,7 @@ defmodule Helix.Test.Features.Hack do
       assert_reply ref, :ok, %{data: %{}}, timeout(:slow)
 
       # Wait for generic ProcessCreatedEvent
-      assert_push "event", _top_recalcado, timeout()
-      assert_push "event", process_created, timeout()
+      [process_created] = wait_events [:process_created]
 
       assert process_created.event == "process_created"
 
@@ -86,18 +86,26 @@ defmodule Helix.Test.Features.Hack do
       # Let's cheat and finish the process right now
       TOPHelper.force_completion(process)
 
-      # And soon we'll receive the PasswordAcquiredEvent
-      assert_push "event", password_acquired, timeout()
+      # And soon we'll receive the following events
+      [password_acquired, process_completed, notification_added] =
+        wait_events [
+          :server_password_acquired, :process_completed, :notification_added
+        ]
       assert password_acquired.event == "server_password_acquired"
 
-      # Which includes data about the server we've just hacked!
+      # ServerPasswordAcquired includes data about the server we've just hacked!
       assert_id password_acquired.data.network_id, target_nip.network_id
       assert password_acquired.data.server_ip == target_nip.ip
       assert password_acquired.data.password
 
       # We'll receive the generic ProcessCompletedEvent
-      assert_push "event", process_conclusion, timeout()
-      assert process_conclusion.event == "process_completed"
+      assert process_completed.event == "process_completed"
+
+      # And the notification that we've just hacked that server
+      assert notification_added.data.data.password == target.password
+      assert notification_added.data.data.ip == target_nip.ip
+      assert notification_added.data.data.network_id ==
+        to_string(target_nip.network_id)
 
       db_server =
         DatabaseQuery.fetch_server(

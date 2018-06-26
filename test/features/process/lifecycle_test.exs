@@ -45,8 +45,8 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       # The process was created
       assert response.data == %{}
 
-      assert_push "event", top_recalcado_event, timeout()
-      assert_push "event", process_created_event, timeout()
+      [top_recalcado_event, process_created_event] =
+        wait_events [:top_recalcado, :process_created]
 
       process_id = Process.ID.cast!(process_created_event.data.process_id)
 

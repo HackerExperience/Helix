@@ -3,6 +3,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.PFTPTest do
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
+  import Helix.Test.Channel.Macros
   import Helix.Test.Macros
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
@@ -112,8 +113,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.PFTPTest do
 
       assert_reply ref, :ok, %{}, timeout(:slow)
 
-      assert_push "event", _top_recalcado_event, timeout()
-      assert_push "event", process_created_event, timeout()
+      [process_created_event] = wait_events [:process_created]
 
       assert process_created_event.data.target_file.id ==
         to_string(file.file_id)

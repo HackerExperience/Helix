@@ -3,6 +3,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.CrackerTest do
   use Helix.Test.Case.Integration
 
   import Phoenix.ChannelTest
+  import Helix.Test.Channel.Macros
   import Helix.Test.Macros
 
   alias Helix.Cache.Query.Cache, as: CacheQuery
@@ -41,8 +42,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.CrackerTest do
       # Wait for response
       assert_reply ref, :ok, %{data: %{}}, timeout(:slow)
 
-      assert_push "event", _top_recalcado, timeout()
-      assert_push "event", process_created_event, timeout()
+      [process_created_event] = wait_events [:process_created]
 
       # All required fields are there
       assert process_created_event.data.type == "cracker_bruteforce"

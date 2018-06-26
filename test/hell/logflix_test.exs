@@ -4,6 +4,7 @@ defmodule HELL.LogflixTest do
   use Helix.Logger
 
   import Phoenix.ChannelTest
+  import Helix.Test.Channel.Macros
 
   alias HELL.Logflix
   alias Helix.Websocket.Request.Relay, as: RequestRelay
@@ -31,7 +32,7 @@ defmodule HELL.LogflixTest do
         relay: relay
 
       # Receive the "new_log" message
-      assert_push "event", log
+      [log] = wait_events [:new_log]
 
       # Log data is correct
       assert log.data.type == "logger_test"

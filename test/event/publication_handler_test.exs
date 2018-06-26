@@ -4,6 +4,7 @@ defmodule Helix.Event.PublicationHandlerTest do
 
   import Phoenix.ChannelTest
   import Helix.Test.Case.ID
+  import Helix.Test.Channel.Macros
   import Helix.Test.Macros
   import Helix.Test.Event.Macros
 
@@ -51,7 +52,7 @@ defmodule Helix.Event.PublicationHandlerTest do
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", publication, timeout()
+      [publication] = wait_events [:process_created]
       assert publication.event == "process_created"
 
       process = publication.data
@@ -98,7 +99,7 @@ defmodule Helix.Event.PublicationHandlerTest do
       assert_event internal_broadcast, event
 
       # Now that's what the client actually receives.
-      assert_push "event", publication, timeout()
+      [publication] = wait_events [:process_created]
       assert publication.event == "process_created"
 
       process = publication.data
@@ -152,8 +153,7 @@ defmodule Helix.Event.PublicationHandlerTest do
       assert_reply ref, :ok, %{}, timeout(:slow)
 
       # Wait for generic ProcessCreatedEvent
-      assert_push "event", _top_recalcado_event, timeout()
-      assert_push "event", process_created_event, timeout()
+      [process_created_event] = wait_events [:process_created]
 
       assert process_created_event.event == "process_created"
       process_id = Process.ID.cast!(process_created_event.data.process_id)
@@ -171,14 +171,16 @@ defmodule Helix.Event.PublicationHandlerTest do
       assert_broadcast "event", _process_created_t, timeout()
       assert_broadcast "event", _process_created_f, timeout()
       assert_broadcast "event", server_password_acquired_event, timeout()
+      assert_broadcast "event", _notification_added_event, timeout()
       assert_broadcast "event", process_completed_event, timeout()
 
       # They have the process IDs!
       assert process_id == process_completed_event.__meta__.process_id
       assert process_id == server_password_acquired_event.__meta__.process_id
 
-      # We'll receive the PasswordAcquiredEvent
-      assert_push "event", password_acquired_event, timeout()
+      # We'll receive the PasswordAcquiredEvent and ProcessCompletedEvent
+      [password_acquired_event, process_conclusion_event] =
+        wait_events [:server_password_acquired, :process_completed]
       assert password_acquired_event.event == "server_password_acquired"
 
       # Which has a valid `process_id` on the event metadata!
@@ -187,10 +189,6 @@ defmodule Helix.Event.PublicationHandlerTest do
       # And if `ServerPasswordAcquiredEvent` has the process_id, then
       # `BruteforceProcessedEvent` have it as well, and as such TOP should be
       # working for all kinds of events.
-
-      # Soon we'll receive the generic ProcessCompletedEvent
-      assert_push "event", process_conclusion_event, timeout()
-      assert process_conclusion_event.event == "process_completed"
 
       # As long as we are here, let's test that the metadata sent to the client
       # has been converted to JSON-friendly strings
