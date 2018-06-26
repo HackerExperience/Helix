@@ -1,9 +1,6 @@
 defmodule Helix.Notification.Model.Notification.Server do
   @moduledoc """
   Data definition for Server-related notifications.
-
-  Notice we have to store the underlying server NIP information, as the Client
-  does not receive the `server_id`.
   """
 
   use Ecto.Schema
@@ -13,10 +10,8 @@ defmodule Helix.Notification.Model.Notification.Server do
   import HELL.Ecto.Macros
 
   alias Ecto.Changeset
-  alias HELL.IPv4
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
-  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Notification.Model.Code.Server.CodeEnum
   alias Helix.Notification.Model.Notification
@@ -26,8 +21,6 @@ defmodule Helix.Notification.Model.Notification.Server do
       notification_id: id,
       account_id: Account.id,
       server_id: Server.id,
-      network_id: Network.id,
-      ip: Network.ip,
       code: Notification.code,
       data: Notification.data,
       is_read: boolean,
@@ -40,8 +33,6 @@ defmodule Helix.Notification.Model.Notification.Server do
     %{
       account_id: Account.id,
       server_id: Server.id,
-      network_id: Network.id,
-      ip: Network.ip,
       code: Notification.code,
       data: Notification.data
     }
@@ -49,17 +40,8 @@ defmodule Helix.Notification.Model.Notification.Server do
   @type id_map :: %{account_id: Account.id, server_id: Server.id}
   @type id_map_input :: {Server.id, Account.id | Entity.id}
 
-  @creation_fields [:account_id, :server_id, :network_id, :ip, :code, :data]
-
-  @required_fields [
-    :account_id,
-    :server_id,
-    :network_id,
-    :ip,
-    :code,
-    :data,
-    :creation_time
-  ]
+  @creation_fields [:account_id, :server_id, :code, :data]
+  @required_fields [:account_id, :server_id, :code, :data, :creation_time]
 
   schema "notifications_server" do
     field :notification_id, ID,
@@ -67,9 +49,6 @@ defmodule Helix.Notification.Model.Notification.Server do
 
     field :account_id, Account.ID
     field :server_id, Server.ID
-    # TODO: Nip is currently unused!
-    field :network_id, Network.ID
-    field :ip, IPv4
     field :code, CodeEnum
     field :data, :map
     field :is_read, :boolean,

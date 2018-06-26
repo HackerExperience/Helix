@@ -12,7 +12,6 @@ defmodule Helix.Notification.Event.Handler.NotificationTest do
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Event.Helper, as: EventHelper
   alias Helix.Test.Event.Setup, as: EventSetup
-  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Notification.Helper, as: NotificationHelper
 
@@ -59,7 +58,6 @@ defmodule Helix.Notification.Event.Handler.NotificationTest do
     test "publishes NotificationAddedEvent to the client" do
       event = EventSetup.Software.file_downloaded()
       account = AccountHelper.fetch_account_from_entity(event.entity_id)
-      target_ip = ServerHelper.get_ip(event.to_server_id)
 
       {socket, _} =
         ChannelSetup.create_socket(
@@ -83,22 +81,18 @@ defmodule Helix.Notification.Event.Handler.NotificationTest do
 
       assert notification.code == :file_downloaded
 
-      # Added extra params NIP (exclusive to Server class)
-      assert notification.network_id == event.network_id
-      assert notification.ip == target_ip
-
       # Client received the `notification_added_event` publication
       [notification_added_event] = wait_events [:notification_added]
 
       assert_id notification.notification_id,
         notification_added_event.data.notification_id
-      assert_id event.network_id, notification_added_event.data.network_id
-      assert target_ip == notification_added_event.data.ip
 
       refute Map.has_key?(notification_added_event, :server_id)
 
-      # TODO: `data` contents (file name + version + extension)
-
+      # Added file information on the notification data
+      assert notification_added_event.data.data.name == event.file.name
+      assert notification_added_event.data.data.id ==
+        to_string(event.file.file_id)
     end
   end
 end

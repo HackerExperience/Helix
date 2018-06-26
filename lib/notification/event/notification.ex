@@ -64,8 +64,8 @@ defmodule Helix.Notification.Event.Notification do
 
       defp get_extra_data(%Notification.Account{}),
         do: %{}
-      defp get_extra_data(%Notification.Server{network_id: network_id, ip: ip}),
-        do: %{network_id: to_string(network_id), ip: ip}
+      defp get_extra_data(%Notification.Server{}),
+        do: %{}
     end
   end
 

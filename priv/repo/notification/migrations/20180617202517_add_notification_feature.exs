@@ -18,8 +18,6 @@ defmodule Helix.Notification.Repo.Migrations.AddNotificationFeature do
 
       add :account_id, :inet, null: false
       add :server_id, :inet, null: false
-      add :network_id, :inet, null: false
-      add :ip, :inet, null: false
       add :code, :integer, null: false
       add :data, :jsonb, null: false
       add :is_read, :boolean, default: false, null: false

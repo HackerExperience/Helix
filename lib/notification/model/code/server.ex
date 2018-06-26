@@ -8,7 +8,6 @@ defmodule Helix.Notification.Model.Code.Server do
     just finished successfully.
     """
 
-    alias Helix.Network.Model.Network
     alias Helix.Software.Model.File
     alias Helix.Software.Public.Index, as: FileIndex
 

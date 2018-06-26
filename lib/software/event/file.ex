@@ -238,8 +238,6 @@ defmodule Helix.Software.Event.File do
 
     notification do
 
-      alias Helix.Server.Query.Server, as: ServerQuery
-
       @moduledoc """
       # TODO: Move documentation below to somewhere else.
       # Mirrored Notifications
@@ -265,16 +263,8 @@ defmodule Helix.Software.Event.File do
       @class :server
       @code :file_downloaded
 
-      def whom_to_notify(event) do
-        %{account_id: event.entity_id, server_id: event.to_server_id}
-      end
-
-      def extra_params(event) do
-        %{
-          network_id: event.network_id,
-          ip: ServerQuery.get_ip(event.to_server_id, event.network_id)
-        }
-      end
+      def whom_to_notify(event),
+        do: %{account_id: event.entity_id, server_id: event.to_server_id}
     end
 
     listenable do

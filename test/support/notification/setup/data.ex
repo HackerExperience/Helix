@@ -25,12 +25,6 @@ defmodule Helix.Test.Notification.Setup.Data do
         extension: SoftwareHelper.random_extension() |> to_string()
       }
 
-    extra =
-      %{
-        network_id: NetworkHelper.id(),
-        ip: NetworkHelper.ip()
-      }
-
-    {data, extra}
+    {data, %{}}
   end
 end
