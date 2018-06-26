@@ -103,7 +103,14 @@ defmodule Helix.Test.Features.File.TransferTest do
       # Client received the NotificationAddedEvent
       assert notification_added_event.data.class == :server
       assert notification_added_event.data.code == :file_downloaded
-      assert notification_added_event.data.data.file_name  # TODO
+
+      # Notification contains required data
+      notification_data = notification_added_event.data.data
+      assert notification_data.id == to_string(new_file.file_id)
+      assert notification_data.name == new_file.name
+      assert notification_data.type == to_string(new_file.software_type)
+      assert notification_data.extension
+      assert notification_data.version
 
       # Now let's check the log generation
 

@@ -111,6 +111,9 @@ defmodule Helix.Test.Software.Helper do
   def random_version,
     do: Random.number(min: 10, max: 50)
 
+  def random_extension,
+    do: random_file_type() |> get_extension()
+
   @doc """
   Generates a `File.ID`
   """
