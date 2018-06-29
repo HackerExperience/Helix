@@ -32,7 +32,7 @@ defmodule HELL.Hack.Experience do
       ],
       "Elixir.Helix.Event.Notificable" => [
         {:whom_to_notify, 1},
-        {:get_notification_data, 1},
+        {:get_notification_info, 1},
         {:extra_params, 1}
       ],
       "Elixir.Helix.Websocket.Requestable" => [

@@ -239,6 +239,5 @@ defmodule Helix.Notification.Model.Notification do
 
     def validate_id(_, _),
       do: :error
-
   end
 end

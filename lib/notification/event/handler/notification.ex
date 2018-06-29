@@ -23,7 +23,7 @@ defmodule Helix.Notification.Event.Handler.Notification do
   """
   def notification_handler(event) do
     if Notificable.impl_for(event) do
-      {class, code} = Notificable.get_notification_data(event)
+      {class, code} = Notificable.get_notification_info(event)
       extra_params = Notificable.extra_params(event)
       whom_to_notify = Notificable.whom_to_notify(event)
       data = NotificationCode.generate_data(class, code, event)

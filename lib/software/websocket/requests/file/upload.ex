@@ -36,6 +36,7 @@ request Helix.Software.Websocket.Requests.File.Upload do
     else
       :bad_access ->
         reply_error(request, "upload_self")
+
       _ ->
         bad_request(request)
     end

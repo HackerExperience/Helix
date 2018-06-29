@@ -148,7 +148,6 @@ defmodule Helix.Notification.Event.Notification do
 
       def whom_to_publish(event),
         do: %{account: event.account_id}
-
     end
   end
 end

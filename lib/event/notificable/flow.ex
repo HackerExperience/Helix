@@ -20,9 +20,9 @@ defmodule Helix.Event.Notificable.Flow do
         || raise "Notification not found: #{inspect {@class, @code}}"
 
         @doc """
-        Returns notification data (tuple with class and code)
+        Returns notification info (tuple with class and code)
         """
-        def get_notification_data(_event) do
+        def get_notification_info(_event) do
           {@class, @code}
         end
 
