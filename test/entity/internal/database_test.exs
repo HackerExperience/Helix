@@ -5,13 +5,13 @@ defmodule Helix.Entity.Internal.DatabaseTest do
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
-  alias Helix.Entity.Model.Entity
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Entity.Database.Setup, as: DatabaseSetup
 
@@ -46,7 +46,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     end
 
     test "returns empty when input isn't found" do
-      entity_id = Entity.ID.generate()
+      entity_id = EntityHelper.id()
       server_ip = Random.ipv4()
       network_id = NetworkHelper.internet_id()
 
@@ -62,7 +62,7 @@ defmodule Helix.Entity.Internal.DatabaseTest do
     end
 
     test "returns empty when input isn't found" do
-      entity_id = Entity.ID.generate()
+      entity_id = EntityHelper.id()
       {acc, _} = BankSetup.account()
 
       refute DatabaseInternal.fetch_bank_account(entity_id, acc)

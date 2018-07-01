@@ -23,7 +23,7 @@ defmodule Helix.Test.Network.Helper do
   Generates a Network.id
   """
   def random_id,
-    do: Network.ID.generate()
+    do: Network.ID.generate(%{}, {:network, :lan})
   def id,
     do: random_id()
 
@@ -31,13 +31,19 @@ defmodule Helix.Test.Network.Helper do
   Generates a random connection ID
   """
   def connection_id,
-    do: Connection.ID.generate()
+    do: Connection.ID.generate(%{}, {:connection, :ssh})
 
   @doc """
   Generates a random bounce ID
   """
   def bounce_id,
-    do: Bounce.ID.generate()
+    do: __MODULE__.Bounce.id()
+
+  @doc """
+  Generates a random tunnel ID
+  """
+  def tunnel_id,
+    do: Tunnel.ID.generate(%{}, :tunnel)
 
   @doc """
   Generates a random IP

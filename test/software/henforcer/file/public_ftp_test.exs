@@ -6,11 +6,11 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
 
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Software.Henforcer.File.PublicFTP, as: PFTPHenforcer
-  alias Helix.Software.Model.File
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "pftp_exists?/1" do
@@ -98,7 +98,7 @@ defmodule Helix.Software.Henforcer.File.PublicFTPTest do
       {pftp, _} = SoftwareSetup.PFTP.pftp()
 
       assert {false, reason, _} =
-        PFTPHenforcer.file_exists?(pftp.server_id, File.ID.generate())
+        PFTPHenforcer.file_exists?(pftp.server_id, SoftwareHelper.id())
 
       assert reason == {:file, :not_found}
     end

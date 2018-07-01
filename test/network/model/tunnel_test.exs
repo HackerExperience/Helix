@@ -5,7 +5,7 @@ defmodule Helix.Network.Model.TunnelTest do
   alias Ecto.Changeset
   alias Helix.Network.Model.Tunnel
 
-  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
@@ -24,8 +24,8 @@ defmodule Helix.Network.Model.TunnelTest do
 
   describe "create/4" do
     test "without bounce" do
-      gateway_id = ServerSetup.id()
-      target_id = ServerSetup.id()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
 
       changeset =
         @internet_id
@@ -43,8 +43,8 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "with bounce" do
-      gateway_id = ServerSetup.id()
-      target_id = ServerSetup.id()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
       {bounce, _} = NetworkSetup.Bounce.bounce()
 
       changeset =
@@ -65,14 +65,14 @@ defmodule Helix.Network.Model.TunnelTest do
     # TODO: Bounce responsibility
     # test "fails if node is repeated" do
     #   net = NetworkQuery.internet()
-    #   gateway = ServerSetup.id()
-    #   destination = ServerSetup.id()
-    #   repeated = ServerSetup.id()
+    #   gateway = ServerHelper.id()
+    #   destination = ServerHelper.id()
+    #   repeated = ServerHelper.id()
     #   bounces = [
-    #     ServerSetup.id(),
+    #     ServerHelper.id(),
     #     repeated,
-    #     ServerSetup.id(),
-    #     ServerSetup.id(),
+    #     ServerHelper.id(),
+    #     ServerHelper.id(),
     #     repeated
     #   ]
 
@@ -82,7 +82,7 @@ defmodule Helix.Network.Model.TunnelTest do
     # end
 
     test "fails if gateway and destination are the same" do
-      gateway_id = ServerSetup.id()
+      gateway_id = ServerHelper.id()
       target_id = gateway_id
 
       changeset =
@@ -95,23 +95,23 @@ defmodule Helix.Network.Model.TunnelTest do
     end
 
     test "fails if gateway or destination are on bounce list" do
-      gateway_id = ServerSetup.id()
-      target_id = ServerSetup.id()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
 
       {bounce_with_gateway, _} =
         NetworkSetup.Bounce.fake_bounce(
           links: [
-            {ServerSetup.id(), @internet_id, NetworkHelper.ip()},
+            {ServerHelper.id(), @internet_id, NetworkHelper.ip()},
             {gateway_id, @internet_id, NetworkHelper.ip()},
-            {ServerSetup.id(), @internet_id, NetworkHelper.ip()}
+            {ServerHelper.id(), @internet_id, NetworkHelper.ip()}
           ]
         )
       {bounce_with_target, _} =
         NetworkSetup.Bounce.fake_bounce(
           links: [
-            {ServerSetup.id(), @internet_id, NetworkHelper.ip()},
+            {ServerHelper.id(), @internet_id, NetworkHelper.ip()},
             {target_id, @internet_id, NetworkHelper.ip()},
-            {ServerSetup.id(), @internet_id, NetworkHelper.ip()}
+            {ServerHelper.id(), @internet_id, NetworkHelper.ip()}
           ]
         )
 

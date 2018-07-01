@@ -1,12 +1,12 @@
 defmodule Helix.Test.Software.Setup.PFTP do
 
   alias Ecto.Changeset
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.File
   alias Helix.Software.Model.PublicFTP
   alias Helix.Software.Repo, as: SoftwareRepo
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   @doc """
@@ -43,7 +43,7 @@ defmodule Helix.Test.Software.Setup.PFTP do
         opts[:server_id] ->
           {nil, opts[:server_id]}
         true ->
-          {nil, Server.ID.generate()}
+          {nil, ServerHelper.id()}
       end
 
     pftp =
@@ -92,13 +92,13 @@ defmodule Helix.Test.Software.Setup.PFTP do
     {file, file_id, server_id} =
       cond do
         opts[:real_file] == false ->
-          {nil, File.ID.generate(), Server.ID.generate()}
+          {nil, SoftwareHelper.id(), ServerHelper.id()}
 
         opts[:file_id] ->
           {nil, opts[:file_id], opts[:server_id]}
 
         true ->
-          server_id = Keyword.get(opts, :server_id, Server.ID.generate())
+          server_id = Keyword.get(opts, :server_id, ServerHelper.id())
           {file, _} = SoftwareSetup.file(server_id: server_id)
           {file, file.file_id, server_id}
       end

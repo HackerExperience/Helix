@@ -1,10 +1,11 @@
 defmodule Helix.Test.Log.Factory do
 
   alias Ecto.Changeset
-  alias Helix.Entity.Model.Entity
-  alias Helix.Server.Model.Server
   alias Helix.Log.Model.Log
   alias Helix.Log.Repo
+
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   @type thing :: :log
 
@@ -43,8 +44,8 @@ defmodule Helix.Test.Log.Factory do
     map
   defp params_for(:log) do
     %{
-      server_id: Server.ID.generate(),
-      entity_id: Entity.ID.generate,
+      server_id: ServerHelper.id(),
+      entity_id: EntityHelper.id,
       message: "TODO: Use a generator for nice messages"
     }
   end

@@ -3,8 +3,8 @@ defmodule Helix.Universe.NPC.Query.NPCTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.NPC.Query.NPC, as: NPCQuery
+
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   describe "fetch/1" do
@@ -20,7 +20,7 @@ defmodule Helix.Universe.NPC.Query.NPCTest do
     end
 
     test "with non-existing id" do
-      refute NPCQuery.fetch(NPC.ID.generate())
+      refute NPCQuery.fetch(NPCHelper.id())
     end
   end
 end

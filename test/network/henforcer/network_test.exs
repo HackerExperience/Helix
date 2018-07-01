@@ -5,11 +5,11 @@ defmodule Helix.Network.Henforcer.NetworkTest do
   import Helix.Test.Henforcer.Macros
 
   alias Helix.Network.Henforcer.Network, as: NetworkHenforcer
-  alias Helix.Network.Model.Network
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
   describe "nip_exists?/2" do
@@ -26,7 +26,7 @@ defmodule Helix.Network.Henforcer.NetworkTest do
 
     test "rejects when nip is not found" do
       assert {false, reason, _} =
-        NetworkHenforcer.nip_exists?(Network.ID.generate(), Random.ipv4())
+        NetworkHenforcer.nip_exists?(NetworkHelper.id(), Random.ipv4())
       assert reason == {:nip, :not_found}
     end
   end
@@ -44,7 +44,7 @@ defmodule Helix.Network.Henforcer.NetworkTest do
 
     test "rejects when network is not found" do
       assert {false, reason, _} =
-        NetworkHenforcer.network_exists?(Network.ID.generate())
+        NetworkHenforcer.network_exists?(NetworkHelper.id())
       assert reason == {:network, :not_found}
     end
   end

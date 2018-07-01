@@ -4,7 +4,6 @@ defmodule Helix.Test.Universe.Bank.Setup do
   alias Helix.Account.Model.Account
   alias Helix.Account.Model.Account
   alias Helix.Entity.Model.Entity
-  alias Helix.Network.Model.Connection
   alias Helix.Universe.Bank.Action.Flow.BankAccount, as: BankAccountFlow
   alias Helix.Universe.Bank.Action.Flow.BankTransfer, as: BankTransferFlow
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
@@ -13,7 +12,9 @@ defmodule Helix.Test.Universe.Bank.Setup do
   alias Helix.Universe.Bank.Model.BankTransfer
   alias Helix.Universe.Repo, as: UniverseRepo
 
+  alias Helix.Test.Account.Helper, as: AccountHelper
   alias Helix.Test.Account.Setup, as: AccountSetup
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
@@ -64,7 +65,7 @@ defmodule Helix.Test.Universe.Bank.Setup do
         account_id = %{} ->
           account_id
         nil ->
-          Account.ID.generate()
+          AccountHelper.id()
       end
 
     number = Keyword.get(opts, :number, BankHelper.account_number())
@@ -146,9 +147,9 @@ defmodule Helix.Test.Universe.Bank.Setup do
         account!([balance: balance2])
       end
 
-    started_by = Account.ID.generate()
+    started_by = AccountHelper.id()
 
-    transfer_id = Keyword.get(opts, :transfer_id, BankTransfer.ID.generate())
+    transfer_id = Keyword.get(opts, :transfer_id, BankHelper.transfer_id())
 
     transfer =
       %BankTransfer{
@@ -183,7 +184,8 @@ defmodule Helix.Test.Universe.Bank.Setup do
   Related data: BankAccount.t
   """
   def fake_token(opts \\ []) do
-    connection_id = Keyword.get(opts, :connection_id, Connection.ID.generate())
+    connection_id =
+      Keyword.get(opts, :connection_id, NetworkHelper.connection_id())
     acc =
       if opts[:acc] do
         opts[:acc]

@@ -4,8 +4,8 @@ defmodule Helix.Network.Internal.BounceTest do
 
   alias Helix.Network.Internal.Bounce, as: BounceInternal
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
-  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
@@ -55,7 +55,8 @@ defmodule Helix.Network.Internal.BounceTest do
     end
 
     test "returns empty list if nothing is found" do
-      assert Enum.empty?(BounceInternal.get_entries_on_server(ServerSetup.id()))
+      assert \
+        Enum.empty?(BounceInternal.get_entries_on_server(ServerHelper.id()))
     end
   end
 
@@ -88,7 +89,8 @@ defmodule Helix.Network.Internal.BounceTest do
     end
 
     test "returns empty list if nothing is found" do
-      assert Enum.empty?(BounceInternal.get_entries_on_server(ServerSetup.id()))
+      assert \
+        Enum.empty?(BounceInternal.get_entries_on_server(ServerHelper.id()))
     end
   end
 
@@ -110,15 +112,15 @@ defmodule Helix.Network.Internal.BounceTest do
 
   describe "create/3" do
     test "creates the Bounce and related structures" do
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
       name = NetworkHelper.Bounce.name()
 
-      link1_server_id = ServerSetup.id()
+      link1_server_id = ServerHelper.id()
       link1_network_id = @internet_id
       link1_ip = NetworkHelper.ip()
       link1 = {link1_server_id, link1_network_id, link1_ip}
 
-      link2_server_id = ServerSetup.id()
+      link2_server_id = ServerHelper.id()
       link2_network_id = @internet_id
       link2_ip = NetworkHelper.ip()
       link2 = {link2_server_id, link2_network_id, link2_ip}
@@ -149,10 +151,10 @@ defmodule Helix.Network.Internal.BounceTest do
     end
 
     test "refuses to create cyclic bounces" do
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
       name = NetworkHelper.Bounce.name()
 
-      link1_server_id = ServerSetup.id()
+      link1_server_id = ServerHelper.id()
       link1_network_id = @internet_id
       link1_ip = NetworkHelper.ip()
       link1 = {link1_server_id, link1_network_id, link1_ip}
@@ -178,7 +180,7 @@ defmodule Helix.Network.Internal.BounceTest do
 
       assert length(bounce.links) == 2
 
-      link_server_id = ServerSetup.id()
+      link_server_id = ServerHelper.id()
       {%{network_id: link_network_id}, _} = NetworkSetup.network()
       link_ip = NetworkHelper.ip()
       link = {link_server_id, link_network_id, link_ip}
@@ -211,7 +213,7 @@ defmodule Helix.Network.Internal.BounceTest do
       # Bounce3: [F]
 
       generate_link = fn ->
-        {ServerSetup.id(), @internet_id, NetworkHelper.ip()}
+        {ServerHelper.id(), @internet_id, NetworkHelper.ip()}
       end
 
       a = generate_link.()

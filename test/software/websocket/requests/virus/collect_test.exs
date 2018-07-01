@@ -13,6 +13,7 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Helper, as: BankHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
@@ -23,9 +24,9 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
 
   describe "check_params/2" do
     test "validates and casts expected data" do
-      gateway_id = ServerSetup.id()
-      file1_id = SoftwareSetup.id()
-      file2_id = SoftwareSetup.id()
+      gateway_id = ServerHelper.id()
+      file1_id = SoftwareHelper.id()
+      file2_id = SoftwareHelper.id()
       bounce_id = NetworkHelper.bounce_id()
       atm_id = BankHelper.atm_id()
       account_number = BankHelper.account_number()
@@ -54,9 +55,9 @@ defmodule Helix.Software.Websocket.Requests.Virus.CollectTest do
     end
 
     test "rejects when invalid data is given" do
-      gateway_id = ServerSetup.id()
-      file1_id = SoftwareSetup.id()
-      file2_id = SoftwareSetup.id()
+      gateway_id = ServerHelper.id()
+      file1_id = SoftwareHelper.id()
+      file2_id = SoftwareHelper.id()
       bounce_id = NetworkHelper.bounce_id()
       atm_id = BankHelper.atm_id()
       account_number = BankHelper.account_number()

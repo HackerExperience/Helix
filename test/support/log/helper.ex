@@ -1,5 +1,7 @@
 defmodule Helix.Test.Log.Helper do
 
+  alias Helix.Log.Model.Log
+
   @doc """
   Given a log, returns the expected format of a public view.
   """
@@ -16,4 +18,7 @@ defmodule Helix.Test.Log.Helper do
   def random_message do
     "This is a random log message"
   end
+
+  def id,
+    do: Log.ID.generate(%{}, :log)
 end

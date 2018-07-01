@@ -7,6 +7,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
   alias Helix.Software.Action.Virus, as: VirusAction
   alias Helix.Software.Henforcer.Virus, as: VirusHenforcer
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
@@ -63,7 +64,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
       virus = SoftwareSetup.virus!(storage_id: storage.storage_id)
 
       # Virus has already been installed by someone else
-      assert {:ok, _, _} = VirusAction.install(virus, EntitySetup.id())
+      assert {:ok, _, _} = VirusAction.install(virus, EntityHelper.id())
 
       assert {false, reason, _} = VirusHenforcer.can_install?(virus, entity)
       assert reason == {:virus, :active}
@@ -130,7 +131,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
 
       {virus1, %{file: file1}} =
         SoftwareSetup.Virus.virus(
-          entity_id: EntitySetup.id(),
+          entity_id: EntityHelper.id(),
           is_active?: true,
           real_file?: true
         )
@@ -182,7 +183,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
 
       {virus, %{file: file}} =
         SoftwareSetup.Virus.virus(
-          entity_id: EntitySetup.id(),  # Random entity
+          entity_id: EntityHelper.id(),  # Random entity
           is_active?: true,
           real_file?: true
         )
@@ -221,7 +222,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
       {entity, _} = EntitySetup.entity()
 
       assert {false, reason, _} =
-        VirusHenforcer.can_collect?(entity, SoftwareSetup.id(), {nil, nil})
+        VirusHenforcer.can_collect?(entity, SoftwareHelper.id(), {nil, nil})
       assert reason == {:virus, :not_found}
     end
 

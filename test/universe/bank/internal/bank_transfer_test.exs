@@ -4,11 +4,12 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
 
   import Helix.Test.Case.ID
 
-  alias HELL.TestHelper.Random
-  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
   alias Helix.Universe.Bank.Internal.BankAccount, as: BankAccountInternal
   alias Helix.Universe.Bank.Internal.BankTransfer, as: BankTransferInternal
-  alias Helix.Universe.Bank.Model.BankTransfer
+
+  alias HELL.TestHelper.Random
+  alias Helix.Test.Universe.Bank.Helper, as: BankHelper
+  alias Helix.Test.Universe.Bank.Setup, as: BankSetup
 
   describe "fetch/1" do
     test "fetches a transfer" do
@@ -17,7 +18,7 @@ defmodule Helix.Universe.Bank.Internal.BankTransferTest do
     end
 
     test "with invalid transfer" do
-      refute BankTransferInternal.fetch(BankTransfer.ID.generate())
+      refute BankTransferInternal.fetch(BankHelper.transfer_id())
     end
   end
 

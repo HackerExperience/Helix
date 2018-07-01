@@ -4,17 +4,17 @@ defmodule Helix.Story.Model.Story.StepTest do
 
   import Ecto.Changeset
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Story.Model.Story
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "create_changeset/1" do
     test "changeset is created as expected with valid input" do
       params = %{
-        entity_id: Entity.ID.generate(),
+        entity_id: EntityHelper.id(),
         contact_id: StoryHelper.contact_id(),
         step_name: Random.atom(),
         meta: %{}
@@ -33,7 +33,7 @@ defmodule Helix.Story.Model.Story.StepTest do
 
     test "refuses to create changeset if invalid data is given" do
       params = %{
-        entity_id: Entity.ID.generate(),
+        entity_id: EntityHelper.id(),
         step_name: Random.atom(),
         meta: %{}
       }

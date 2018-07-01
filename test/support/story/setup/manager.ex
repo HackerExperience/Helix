@@ -4,10 +4,10 @@ defmodule Helix.Test.Story.Setup.Manager do
   alias Helix.Story.Model.Story
   alias Helix.Story.Repo, as: StoryRepo
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
-  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   @doc """
   See docs on `fake_manager/1`
@@ -30,8 +30,8 @@ defmodule Helix.Test.Story.Setup.Manager do
   - real_network: Whether to use a real network. Defaults to false.
   """
   def fake_manager(opts \\ []) do
-    entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
-    server_id = Keyword.get(opts, :server_id, ServerSetup.id())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
+    server_id = Keyword.get(opts, :server_id, ServerHelper.id())
 
     network_id =
       cond do

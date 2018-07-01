@@ -2,9 +2,9 @@ defmodule Helix.Software.Query.FileTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
 
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   @moduletag :integration
@@ -18,7 +18,7 @@ defmodule Helix.Software.Query.FileTest do
     end
 
     test "fails when file doesn't exist" do
-      refute FileQuery.fetch(File.ID.generate())
+      refute FileQuery.fetch(SoftwareHelper.id())
     end
   end
 end

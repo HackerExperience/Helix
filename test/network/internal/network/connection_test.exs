@@ -2,11 +2,11 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Network.Internal.Network, as: NetworkInternal
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -39,7 +39,7 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
     test "creates a NC (without nic)" do
       network = NetworkHelper.internet()
       ip = Random.ipv4()
-      entity_id = Entity.ID.generate()
+      entity_id = EntityHelper.id()
 
       assert {:ok, nc} =
         NetworkInternal.Connection.create(network, ip, entity_id)
@@ -56,7 +56,7 @@ defmodule Helix.Network.Internal.Network.ConnectionTest do
     test "creates a NC (with nic)" do
       network = NetworkHelper.internet()
       ip = Random.ipv4()
-      entity_id = Entity.ID.generate()
+      entity_id = EntityHelper.id()
       {nic, _} = ComponentSetup.component(type: :nic)
 
       assert {:ok, nc} =

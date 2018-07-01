@@ -3,12 +3,13 @@ defmodule Helix.Server.Internal.ServerTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
   alias Helix.Server.Internal.Server, as: ServerInternal
   alias Helix.Server.Model.Server
 
+  alias Helix.Test.Server.Component.Helper, as: ComponentHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   describe "fetch/1" do
@@ -18,7 +19,7 @@ defmodule Helix.Server.Internal.ServerTest do
     end
 
     test "fails when server doesn't exists" do
-      refute ServerInternal.fetch(Server.ID.generate())
+      refute ServerInternal.fetch(ServerHelper.id())
     end
   end
 
@@ -31,7 +32,7 @@ defmodule Helix.Server.Internal.ServerTest do
     end
 
     test "fails with non-existing id" do
-      refute ServerInternal.fetch_by_motherboard(Component.ID.generate())
+      refute ServerInternal.fetch_by_motherboard(ComponentHelper.id())
     end
 
     test "succeeds with mobo component" do
@@ -44,7 +45,7 @@ defmodule Helix.Server.Internal.ServerTest do
     end
 
     test "fails with non-existing component" do
-      bogus_mobus = %Motherboard{motherboard_id: Component.ID.generate()}
+      bogus_mobus = %Motherboard{motherboard_id: ComponentHelper.id()}
       refute ServerInternal.fetch_by_motherboard(bogus_mobus)
     end
   end

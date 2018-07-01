@@ -3,9 +3,10 @@ defmodule Helix.Log.Model.LogTest do
   use ExUnit.Case, async: true
 
   alias Ecto.Changeset
-  alias Helix.Entity.Model.Entity
-  alias Helix.Server.Model.Server
   alias Helix.Log.Model.Log
+
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   @moduletag :unit
 
@@ -13,8 +14,8 @@ defmodule Helix.Log.Model.LogTest do
     test "adds timestamp" do
       params =
         %{
-          server_id: Server.ID.generate(),
-          entity_id: Entity.ID.generate(),
+          server_id: ServerHelper.id(),
+          entity_id: EntityHelper.id(),
           message: "wut"
         }
 

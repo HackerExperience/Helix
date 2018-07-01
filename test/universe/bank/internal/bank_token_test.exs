@@ -3,11 +3,10 @@ defmodule Helix.Universe.Bank.Internal.BankTokenTest do
   use Helix.Test.Case.Integration
 
   alias Ecto.UUID
-  alias Helix.Network.Model.Connection
   alias Helix.Universe.Bank.Internal.BankToken, as: BankTokenInternal
 
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
-  alias Helix.Network.Model.Connection
 
   @token_ttl 60 * 5
 
@@ -53,14 +52,15 @@ defmodule Helix.Universe.Bank.Internal.BankTokenTest do
     end
 
     test "with non-existing connection" do
-      refute BankTokenInternal.fetch_by_connection(Connection.ID.generate())
+      fake_connection_id = NetworkHelper.connection_id()
+      refute BankTokenInternal.fetch_by_connection(fake_connection_id)
     end
   end
 
   describe "generate/2" do
     test "generates a token" do
       {acc, _} = BankSetup.account()
-      connection_id = Connection.ID.generate()
+      connection_id = NetworkHelper.connection_id()
 
       assert {:ok, token} = BankTokenInternal.generate(acc, connection_id)
       assert String.length(token.token_id) == 36

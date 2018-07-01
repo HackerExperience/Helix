@@ -3,10 +3,11 @@ defmodule Helix.Test.Process.Setup do
   alias Helix.Process.Internal.Process, as: ProcessInternal
   alias Helix.Process.Model.Process
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Process.Data.Setup, as: ProcessDataSetup
+  alias Helix.Test.Process.Helper, as: ProcessHelper
 
   @internet NetworkHelper.internet_id()
 
@@ -48,8 +49,8 @@ defmodule Helix.Test.Process.Setup do
     tmp_check.(:connection_id)
     tmp_check.(:target_connection_id)
 
-    gateway_id = Keyword.get(opts, :gateway_id, ServerSetup.id())
-    source_entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
+    gateway_id = Keyword.get(opts, :gateway_id, ServerHelper.id())
+    source_entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
     {target_id, target_entity_id} =
       cond do
         opts[:single_server] ->
@@ -57,7 +58,7 @@ defmodule Helix.Test.Process.Setup do
         opts[:target_id] ->
           {opts[:target_id], nil}
         true ->
-          {ServerSetup.id(), EntitySetup.id()}
+          {ServerHelper.id(), EntityHelper.id()}
       end
 
     src_file_id = Keyword.get(opts, :src_file_id, nil)
@@ -115,7 +116,7 @@ defmodule Helix.Test.Process.Setup do
       params
       |> Process.create_changeset()
       |> Ecto.Changeset.apply_changes()
-      |> Map.replace(:process_id, Process.ID.generate())
+      |> Map.replace(:process_id, ProcessHelper.id())
 
     related = %{
       source_entity_id: source_entity_id,

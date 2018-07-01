@@ -1,7 +1,6 @@
 defmodule Helix.Test.Network.Setup do
 
   alias Ecto.Changeset
-  alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Bounce, as: BounceInternal
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Link
@@ -10,6 +9,7 @@ defmodule Helix.Test.Network.Setup do
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Network.Repo, as: NetworkRepo
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
 
@@ -55,8 +55,8 @@ defmodule Helix.Test.Network.Setup do
   def fake_tunnel(opts \\ []) do
     {gateway_id, target_id, related} =
       if opts[:fake_servers] do
-        gateway_id = Keyword.get(opts, :gateway_id, Server.ID.generate())
-        target_id = Keyword.get(opts, :target_id, Server.ID.generate())
+        gateway_id = Keyword.get(opts, :gateway_id, ServerHelper.id())
+        target_id = Keyword.get(opts, :target_id, ServerHelper.id())
         related = %{gateway: gateway_id, target: target_id}
 
         {gateway_id, target_id, related}
@@ -70,7 +70,7 @@ defmodule Helix.Test.Network.Setup do
 
     bounce_id = Keyword.get(opts, :bounce_id, nil)
     network_id = Keyword.get(opts, :network_id, @internet)
-    tunnel_id = Keyword.get(opts, :tunnel_id, Tunnel.ID.generate())
+    tunnel_id = Keyword.get(opts, :tunnel_id, NetworkHelper.tunnel_id())
 
     bounce =
       if bounce_id do
@@ -141,7 +141,8 @@ defmodule Helix.Test.Network.Setup do
         create_or_fetch_tunnel(opts[:tunnel_id])
       end
 
-    connection_id = Keyword.get(opts, :connection_id, Connection.ID.generate())
+    connection_id =
+      Keyword.get(opts, :connection_id, NetworkHelper.connection_id())
     type = Keyword.get(opts, :type, :ssh)
     meta = Keyword.get(opts, :meta, nil)
 
@@ -171,7 +172,7 @@ defmodule Helix.Test.Network.Setup do
   - type: Set network type. Defaults to `lan`.
   """
   def fake_network(opts \\ []) do
-    network_id = Keyword.get(opts, :network_id, Network.ID.generate())
+    network_id = Keyword.get(opts, :network_id, NetworkHelper.id())
     name = Keyword.get(opts, :name, "LAN")
     type = Keyword.get(opts, :type, :lan)
 
@@ -191,5 +192,5 @@ defmodule Helix.Test.Network.Setup do
   Generates a random Tunnel.ID
   """
   def tunnel_id,
-    do: Tunnel.ID.generate()
+    do: NetworkHelper.tunnel_id()
 end

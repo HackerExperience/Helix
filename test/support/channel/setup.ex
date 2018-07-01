@@ -9,7 +9,6 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
-  alias Helix.Network.Model.Network
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
@@ -18,8 +17,9 @@ defmodule Helix.Test.Channel.Setup do
   alias HELL.TestHelper.Random
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
   alias Helix.Test.Channel.Helper, as: ChannelHelper
@@ -313,17 +313,17 @@ defmodule Helix.Test.Channel.Setup do
   - connect_opts: Opts that will be relayed to the `mock_connection_socket`
   """
   def mock_server_socket(opts \\ []) do
-    gateway_id = Access.get(opts, :gateway_id, ServerSetup.id())
+    gateway_id = Access.get(opts, :gateway_id, ServerHelper.id())
     gateway_ip = Keyword.get(opts, :gateway_ip, Random.ipv4())
-    gateway_entity_id = Access.get(opts, :gateway_entity_id, EntitySetup.id())
+    gateway_entity_id = Access.get(opts, :gateway_entity_id, EntityHelper.id())
 
     {destination_id, destination_ip, destination_entity_id} =
       if opts[:own_server] do
         {gateway_id, gateway_ip, gateway_entity_id}
       else
-        server_id = Access.get(opts, :destination_id, ServerSetup.id())
+        server_id = Access.get(opts, :destination_id, ServerHelper.id())
         server_ip = Keyword.get(opts, :server_ip, Random.ipv4())
-        entity_id = Access.get(opts, :destination_entity_id, EntitySetup.id())
+        entity_id = Access.get(opts, :destination_entity_id, EntityHelper.id())
 
         {server_id, server_ip, entity_id}
       end
@@ -340,7 +340,7 @@ defmodule Helix.Test.Channel.Setup do
           :remote
       end
 
-    network_id = Keyword.get(opts, :network_id, Network.ID.generate())
+    network_id = Keyword.get(opts, :network_id, NetworkHelper.id())
     counter = Keyword.get(opts, :counter, 0)
     meta = %{
       access: access,
@@ -425,7 +425,7 @@ defmodule Helix.Test.Channel.Setup do
 
         # `not entity_id and not account_id`
         opts[:entity_id] == nil and opts[:account_id] == nil ->
-          entity_id = Entity.ID.generate()
+          entity_id = EntityHelper.id()
           {entity_id, gen_account_id.(entity_id)}
       end
 

@@ -1,13 +1,12 @@
 defmodule Helix.Test.Software.Setup.Virus do
 
   alias Ecto.Changeset
-  alias Helix.Entity.Model.Entity
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.Virus, as: VirusInternal
-  alias Helix.Software.Model.File
   alias Helix.Software.Model.Virus
   alias Helix.Software.Repo, as: SoftwareRepo
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
@@ -68,8 +67,8 @@ defmodule Helix.Test.Software.Setup.Virus do
     if opts[:real_file?] == true and not is_nil(opts[:file_id]),
       do: raise "Cant ask me to generate a file and provide the file id. Duh."
 
-    file_id = Keyword.get(opts, :file_id, File.ID.generate())
-    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    file_id = Keyword.get(opts, :file_id, SoftwareHelper.id())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
     is_active? = Keyword.get(opts, :is_active?, true)
 
     server =

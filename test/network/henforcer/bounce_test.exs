@@ -7,6 +7,7 @@ defmodule Helix.Network.Henforcer.BounceTest do
   alias Helix.Network.Henforcer.Bounce, as: BounceHenforcer
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -126,7 +127,7 @@ defmodule Helix.Network.Henforcer.BounceTest do
     test "rejects when entity does not own the bounce" do
       assert {false, reason, _} =
           BounceHenforcer.can_update_bounce?(
-            EntitySetup.id(), NetworkHelper.Bounce.id(), "newname", []
+            EntityHelper.id(), NetworkHelper.Bounce.id(), "newname", []
           )
       assert reason == {:entity, :not_found}
     end

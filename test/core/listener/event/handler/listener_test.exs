@@ -7,9 +7,9 @@ defmodule Helix.Core.Listener.Event.Handler.ListenerTest do
   alias Helix.Event
   alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
   alias Helix.Software.Event.File.Uploaded, as: FileUploadedEvent
-  alias Helix.Software.Model.File
 
   alias Helix.Test.Event.Setup, as: EventSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
 
   def callback(%FileDownloadedEvent{}) do
     send(self(), :hello_joe)
@@ -40,7 +40,7 @@ defmodule Helix.Core.Listener.Event.Handler.ListenerTest do
       file_downloaded = EventSetup.Software.file_downloaded()
 
       # Listening to the same event but on a different object
-      listen File.ID.generate(), FileDownloadedEvent, :callback,
+      listen SoftwareHelper.id(), FileDownloadedEvent, :callback,
         owner_id: file_downloaded.entity_id,
         subscriber: :teste_daora
 
