@@ -4,10 +4,9 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   import Helix.Test.Macros
 
-  alias Helix.Server.Model.Server
   alias Helix.Network.Internal.Tunnel, as: TunnelInternal
 
-  alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
@@ -78,8 +77,8 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "create/4" do
     test "creates tunnel and underlying links" do
-      gateway_id = ServerSetup.id()
-      target_id = ServerSetup.id()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
       {bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
 
       assert {:ok, tunnel} =
@@ -109,8 +108,8 @@ defmodule Helix.Network.Internal.TunnelTest do
     end
 
     test "creates tunnel without a bounce" do
-      gateway_id = ServerSetup.id()
-      target_id = ServerSetup.id()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
 
       assert {:ok, tunnel} =
         TunnelInternal.create(@internet, gateway_id, target_id, nil)
@@ -156,7 +155,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
     test "returns empty (nil) when there's no tunnel between the servers" do
       assert Enum.empty?(
-        TunnelInternal.tunnels_between(ServerSetup.id(), ServerSetup.id())
+        TunnelInternal.tunnels_between(ServerHelper.id(), ServerHelper.id())
       )
     end
 
@@ -183,7 +182,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "connections_through_node/1" do
     test "returns all connections that pass through node" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
       opts = [fake_servers: true]
 
       {tunnel1, _} = NetworkSetup.tunnel([gateway_id: server_id] ++ opts)
@@ -198,7 +197,7 @@ defmodule Helix.Network.Internal.TunnelTest do
       {bounce, _} =
         NetworkSetup.Bounce.bounce(
           servers: [
-            ServerSetup.id(), server_id, ServerSetup.id(), ServerSetup.id()
+            ServerHelper.id(), server_id, ServerHelper.id(), ServerHelper.id()
           ]
         )
       {tunnel3, _} = NetworkSetup.tunnel([bounce_id: bounce.bounce_id] ++ opts)
@@ -215,7 +214,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "inbound_connections/1" do
     test "list the conections that are incident on node" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
 
       {dummy_bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
 
@@ -248,7 +247,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       {bounce_with_server, _} =
         NetworkSetup.Bounce.bounce(
-          servers: [ServerSetup.id(), server_id, ServerSetup.id()]
+          servers: [ServerHelper.id(), server_id, ServerHelper.id()]
         )
 
       {tunnel3, _} =
@@ -269,7 +268,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "outbound_connections/1" do
     test "list the conections that emanate from node" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
 
       {dummy_bounce, _} = NetworkSetup.Bounce.bounce(total: 2)
 
@@ -301,7 +300,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
       {bounce_with_server, _} =
         NetworkSetup.Bounce.bounce(
-          servers: [ServerSetup.id(), server_id, ServerSetup.id()]
+          servers: [ServerHelper.id(), server_id, ServerHelper.id()]
         )
 
       {tunnel3, _} =
@@ -349,8 +348,8 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "get_links/1" do
     test "with a direct connection" do
-      gateway_id = Server.ID.generate()
-      target_id = Server.ID.generate()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
 
       {tunnel, _} =
         NetworkSetup.tunnel(
@@ -367,8 +366,8 @@ defmodule Helix.Network.Internal.TunnelTest do
     end
 
     test "with n=1 bounce" do
-      gateway_id = Server.ID.generate()
-      target_id = Server.ID.generate()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
 
       {bounce, _} = NetworkSetup.Bounce.bounce(total: 1)
       [{hop1_id, _, _}] = bounce.links
@@ -390,8 +389,8 @@ defmodule Helix.Network.Internal.TunnelTest do
     end
 
     test "with n>1 bounce" do
-      gateway_id = Server.ID.generate()
-      target_id = Server.ID.generate()
+      gateway_id = ServerHelper.id()
+      target_id = ServerHelper.id()
 
       {bounce, _} = NetworkSetup.Bounce.bounce(total: 3)
       [{hop1_id, _, _}, {hop2_id, _, _}, {hop3_id, _, _}] = bounce.links
@@ -419,7 +418,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "connections_originating_from/1" do
     test "lists connections correctly" do
-      gateway_id = Server.ID.generate()
+      gateway_id = ServerHelper.id()
 
       # Tunnel1 has connections originating *from* `gateway`
       tunnel1_opts = [fake_servers: true, gateway_id: gateway_id]
@@ -458,7 +457,7 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "connections_destined_to/1" do
     test "lists connections correctly" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
 
       # Tunnel1 has connections originating *from* `server`
       tunnel1_opts = [fake_servers: true, gateway_id: server_id]
@@ -491,15 +490,15 @@ defmodule Helix.Network.Internal.TunnelTest do
 
   describe "get_remote_endpoints/1" do
     test "returns expected data" do
-      gateway1 = Server.ID.generate()
-      gateway2 = Server.ID.generate()
+      gateway1 = ServerHelper.id()
+      gateway2 = ServerHelper.id()
 
-      target1 = Server.ID.generate()
-      target2 = Server.ID.generate()
-      target3 = Server.ID.generate()
+      target1 = ServerHelper.id()
+      target2 = ServerHelper.id()
+      target3 = ServerHelper.id()
 
-      bounce1 = Server.ID.generate()
-      bounce2 = Server.ID.generate()
+      bounce1 = ServerHelper.id()
+      bounce2 = ServerHelper.id()
 
       {g2_bounce, _} = NetworkSetup.Bounce.bounce(servers: [bounce1, bounce2])
 

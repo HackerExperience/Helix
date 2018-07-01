@@ -3,10 +3,10 @@ defmodule Helix.Process.Event.Process.CreatedTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Event.Publishable
-  alias Helix.Server.Model.Server
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Event.Setup, as: EventSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
 
   describe "Publishable.whom_to_publish/1" do
@@ -106,7 +106,7 @@ defmodule Helix.Process.Event.Process.CreatedTest do
       event =
         EventSetup.Process.created(
           gateway_id: attack_source_id,
-          target_id: Server.ID.generate(),
+          target_id: ServerHelper.id(),
           entity_id: attacker_entity_id,
           type: :bruteforce
         )
@@ -141,7 +141,7 @@ defmodule Helix.Process.Event.Process.CreatedTest do
       # Simulate event/action from random `attacker` targeting `victim`.
       event =
         EventSetup.Process.created(
-          gateway_id: Server.ID.generate(),
+          gateway_id: ServerHelper.id(),
           target_id: attack_target_id,
           entity_id: attacker_entity_id,
           type: :bruteforce

@@ -4,6 +4,7 @@ defmodule Helix.Universe.NPC.Internal.NPCTest do
 
   alias Helix.Universe.NPC.Internal.NPC, as: NPCInternal
   alias Helix.Universe.NPC.Model.NPC
+
   alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   test "creation" do
@@ -22,7 +23,7 @@ defmodule Helix.Universe.NPC.Internal.NPCTest do
     end
 
     test "fails when npc doesn't exist" do
-      refute NPCInternal.fetch(NPC.ID.generate())
+      refute NPCInternal.fetch(NPCHelper.id())
     end
   end
 

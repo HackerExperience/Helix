@@ -4,9 +4,9 @@ defmodule Helix.Server.Internal.MotherboardTest do
 
   alias Helix.Network.Model.Network
   alias Helix.Server.Internal.Motherboard, as: MotherboardInternal
-  alias Helix.Server.Model.Component
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Component.Helper, as: ComponentHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
 
   @internet_id NetworkHelper.internet_id()
@@ -24,7 +24,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
     end
 
     test "returns nil if not found" do
-      refute MotherboardInternal.fetch(Component.ID.generate())
+      refute MotherboardInternal.fetch(ComponentHelper.id())
     end
   end
 
@@ -38,7 +38,7 @@ defmodule Helix.Server.Internal.MotherboardTest do
     end
 
     test "returns nil if not found" do
-      refute MotherboardInternal.fetch_by_component(Component.ID.generate())
+      refute MotherboardInternal.fetch_by_component(ComponentHelper.id())
     end
   end
 

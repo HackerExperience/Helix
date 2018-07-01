@@ -130,7 +130,7 @@ defmodule Helix.Server.Public.IndexTest do
       {target, _} = ServerSetup.server()
       target_nip = ServerHelper.get_nip(target)
 
-      tunnel_bounce = [ServerSetup.id()]
+      tunnel_bounce = [ServerHelper.id()]
       tunnel_opts =
         [gateway_id: player.server_id,
          target_id: target.server_id,

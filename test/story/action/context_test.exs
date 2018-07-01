@@ -2,10 +2,10 @@ defmodule Helix.Story.Action.ContextTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Model.Server
   alias Helix.Story.Action.Context, as: ContextAction
   alias Helix.Story.Query.Context, as: ContextQuery
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "save/4" do
@@ -32,7 +32,7 @@ defmodule Helix.Story.Action.ContextTest do
     test "handles Helix ID transparently" do
       {%{entity_id: entity_id}, _} = StorySetup.Context.context()
 
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
       assert {:ok, story_context} =
         ContextAction.save(entity_id, :foo, [:id], server_id)
 
@@ -79,8 +79,8 @@ defmodule Helix.Story.Action.ContextTest do
     test "handles Helix ID transparently" do
       {%{entity_id: entity_id}, _} = StorySetup.Context.context()
 
-      id_1 = Server.ID.generate()
-      id_2 = Server.ID.generate()
+      id_1 = ServerHelper.id()
+      id_2 = ServerHelper.id()
 
       # Let's add a Server.ID to `foo.bar`
       assert {:ok, _} = ContextAction.save(entity_id, :foo, :bar, id_1)

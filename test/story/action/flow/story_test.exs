@@ -7,7 +7,7 @@ defmodule Helix.Story.Action.Flow.StoryTest do
   alias Helix.Story.Action.Flow.Story, as: StoryFlow
   alias Helix.Story.Query.Story, as: StoryQuery
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
@@ -52,7 +52,7 @@ defmodule Helix.Story.Action.Flow.StoryTest do
     test "fails when player is not in a mission" do
       assert {:error, :bad_step} ==
         StoryFlow.send_reply(
-          EntitySetup.id(),
+          EntityHelper.id(),
           StoryHelper.contact_id(),
           "reply_id"
         )

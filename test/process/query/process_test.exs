@@ -2,11 +2,11 @@ defmodule Helix.Process.Query.ProcessTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.File
   alias Helix.Process.Query.Process, as: ProcessQuery
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
 
@@ -56,7 +56,7 @@ defmodule Helix.Process.Query.ProcessTest do
 
   describe "get_custom/3" do
     test "returns expected processes" do
-      gateway_id = Server.ID.generate()
+      gateway_id = ServerHelper.id()
 
       {download1, _} =
         ProcessSetup.process(gateway_id: gateway_id, type: :file_download)
@@ -81,7 +81,7 @@ defmodule Helix.Process.Query.ProcessTest do
         ProcessQuery.get_custom(
           download1.type,
           gateway_id,
-          %{tgt_file_id: File.ID.generate()}
+          %{tgt_file_id: SoftwareHelper.id()}
         )
 
       TOPHelper.top_stop()
@@ -90,8 +90,8 @@ defmodule Helix.Process.Query.ProcessTest do
     test "returns empty list if no process is found" do
       refute ProcessQuery.get_custom(
         :file_download,
-        Server.ID.generate(),
-        %{src_file_id: File.ID.generate()}
+        ServerHelper.id(),
+        %{src_file_id: SoftwareHelper.id()}
       )
     end
   end

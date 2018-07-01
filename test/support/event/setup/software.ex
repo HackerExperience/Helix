@@ -22,10 +22,11 @@ defmodule Helix.Test.Event.Setup.Software do
     as: OverflowProcessedEvent
 
   alias HELL.TestHelper.Random
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   @internet NetworkHelper.internet_id()
 
@@ -53,9 +54,9 @@ defmodule Helix.Test.Event.Setup.Software do
     do: BruteforceProcessedEvent.new(process, process.data)
   def bruteforce_conclusion do
     %BruteforceProcessedEvent{
-      source_entity_id: EntitySetup.id(),
+      source_entity_id: EntityHelper.id(),
       network_id: @internet,
-      target_id: Server.ID.generate(),
+      target_id: ServerHelper.id(),
       target_server_ip: Random.ipv4()
     }
   end
@@ -108,7 +109,7 @@ defmodule Helix.Test.Event.Setup.Software do
   """
   def file_install_processed(:virus, fake: true) do
     virus = SoftwareSetup.virus!()
-    entity_id = EntitySetup.id()
+    entity_id = EntityHelper.id()
 
     %FileInstallProcessedEvent{
       file: virus,

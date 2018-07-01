@@ -5,7 +5,6 @@ defmodule Helix.Software.Henforcer.FileTest do
   import Helix.Test.Henforcer.Macros
 
   alias Helix.Software.Henforcer.File, as: FileHenforcer
-  alias Helix.Software.Model.File
 
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
@@ -19,7 +18,8 @@ defmodule Helix.Software.Henforcer.FileTest do
     end
 
     test "rejects non-existing file" do
-      assert {false, reason, _} = FileHenforcer.file_exists?(File.ID.generate())
+      assert {false, reason, _} =
+        FileHenforcer.file_exists?(SoftwareHelper.id())
       assert reason == {:file, :not_found}
     end
   end

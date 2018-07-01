@@ -21,4 +21,7 @@ defmodule Helix.Test.Server.Component.Helper do
 
   defp possible_types,
     do: Componentable.get_types()
+
+  def id,
+    do: Component.ID.generate(%{}, {:component, :cpu})
 end

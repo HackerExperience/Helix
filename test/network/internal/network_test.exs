@@ -2,10 +2,10 @@ defmodule Helix.Network.Internal.NetworkTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Network.Model.Network
   alias Helix.Network.Internal.Network, as: NetworkInternal
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
   describe "fetch/1" do
@@ -18,7 +18,7 @@ defmodule Helix.Network.Internal.NetworkTest do
     end
 
     test "returns empty when not found" do
-      refute NetworkInternal.fetch(Network.ID.generate())
+      refute NetworkInternal.fetch(NetworkHelper.id())
     end
   end
 

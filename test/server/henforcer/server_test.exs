@@ -5,9 +5,9 @@ defmodule Helix.Server.Henforcer.ServerTest do
   import Helix.Test.Henforcer.Macros
 
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
-  alias Helix.Server.Model.Server
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   describe "server_exists?/1" do
@@ -20,7 +20,7 @@ defmodule Helix.Server.Henforcer.ServerTest do
     end
 
     test "rejects when server doesn't exists" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
       assert {false, reason, _} = ServerHenforcer.server_exists?(server_id)
       assert reason == {:server, :not_found}
     end

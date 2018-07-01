@@ -76,4 +76,7 @@ defmodule Helix.Test.Universe.NPC.Helper do
 
   def get_server_id(%{servers: [server]}),
     do: server.id
+
+  def id,
+    do: NPC.ID.generate(%{}, :npc)
 end

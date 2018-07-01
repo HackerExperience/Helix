@@ -4,16 +4,17 @@ defmodule Helix.Core.ListenerTest do
 
   import Helix.Core.Listener
 
-  alias Helix.Entity.Model.Entity
-  alias Helix.Software.Model.File
   alias Helix.Core.Listener.Query.Listener, as: ListenerQuery
 
   alias Helix.Software.Event.File.Downloaded, as: FileDownloadedEvent
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
+
   describe "listen/4" do
     test "persists entry on DB" do
-      file_id = File.ID.generate()
-      entity_id = Entity.ID.generate()
+      file_id = SoftwareHelper.id()
+      entity_id = EntityHelper.id()
 
       # Listen for `FileDownloadedEvent` on `file_id`
       listen file_id, FileDownloadedEvent, :callback,
@@ -32,8 +33,8 @@ defmodule Helix.Core.ListenerTest do
 
   describe "unlisten/4" do
     test "removes entry from DB" do
-      file_id = File.ID.generate()
-      entity_id = Entity.ID.generate()
+      file_id = SoftwareHelper.id()
+      entity_id = EntityHelper.id()
 
       # Listen for `FileDownloadedEvent` on `file_id`
       listen file_id, FileDownloadedEvent, :callback,

@@ -15,12 +15,6 @@ defmodule Helix.Test.Process.Data.Setup do
   This is prone to error and, as such, you should use `*FlowSetup` instead.
   """
 
-  alias Helix.Network.Model.Connection
-  alias Helix.Log.Model.Log
-  alias Helix.Server.Model.Server
-  alias Helix.Software.Model.File
-  alias Helix.Software.Model.Storage
-
   # Processes
   alias Helix.Software.Process.Cracker.Bruteforce, as: CrackerBruteforce
   alias Helix.Software.Model.SoftwareType.LogForge
@@ -29,6 +23,9 @@ defmodule Helix.Test.Process.Data.Setup do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Log.Helper, as: LogHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Process.Helper.TOP, as: TOPHelper
 
   @doc """
@@ -50,16 +47,17 @@ defmodule Helix.Test.Process.Data.Setup do
   def custom(:file_download, data_opts, meta) do
     meta =
       if meta.gateway_id == meta.target_id do
-        %{meta| target_id: Server.ID.generate()}
+        %{meta| target_id: ServerHelper.id()}
       else
         meta
       end
 
-    src_connection_id = meta.src_connection_id || Connection.ID.generate()
-    tgt_file_id = meta.tgt_file_id || File.ID.generate()
+    src_connection_id = meta.src_connection_id || NetworkHelper.connection_id()
+    tgt_file_id = meta.tgt_file_id || SoftwareHelper.id()
 
     connection_type = Keyword.get(data_opts, :type, :download)
-    storage_id = Keyword.get(data_opts, :storage_id, Storage.ID.generate())
+    storage_id =
+      Keyword.get(data_opts, :storage_id, SoftwareHelper.storage_id())
 
     data = %FileTransferProcess{
       type: :download,
@@ -94,15 +92,16 @@ defmodule Helix.Test.Process.Data.Setup do
   def custom(:file_upload, data_opts, meta) do
     target_id =
       if meta.gateway_id == meta.target_id do
-        Server.ID.generate()
+        ServerHelper.id()
       else
         meta.target_id
       end
 
-    src_connection_id = meta.src_connection_id || Connection.ID.generate()
-    tgt_file_id = meta.tgt_file_id || File.ID.generate()
+    src_connection_id = meta.src_connection_id || NetworkHelper.connection_id()
+    tgt_file_id = meta.tgt_file_id || SoftwareHelper.id()
 
-    storage_id = Keyword.get(data_opts, :storage_id, Storage.ID.generate())
+    storage_id =
+      Keyword.get(data_opts, :storage_id, SoftwareHelper.storage_id())
 
     data = %FileTransferProcess{
       type: :upload,
@@ -149,7 +148,7 @@ defmodule Helix.Test.Process.Data.Setup do
           Random.ipv4()
       end
 
-    src_file_id = meta.src_file_id || File.ID.generate()
+    src_file_id = meta.src_file_id || SoftwareHelper.id()
 
     data = CrackerBruteforce.new(%{target_server_ip: target_server_ip})
 
@@ -170,8 +169,8 @@ defmodule Helix.Test.Process.Data.Setup do
   Probably does not work
   """
   def custom(:install_virus, _data_opts, meta) do
-    src_connection_id = meta.src_connection_id || Connection.ID.generate()
-    tgt_file_id = meta.tgt_file_id || File.ID.generate()
+    src_connection_id = meta.src_connection_id || NetworkHelper.connection_id()
+    tgt_file_id = meta.tgt_file_id || SoftwareHelper.id()
 
     data = FileInstallProcess.new(%{backend: :virus})
 
@@ -201,12 +200,12 @@ defmodule Helix.Test.Process.Data.Setup do
   """
   def custom(:forge, data_opts, meta) do
     target_id = meta.target_id
-    target_log_id = Keyword.get(data_opts, :target_log_id, Log.ID.generate())
+    target_log_id = Keyword.get(data_opts, :target_log_id, LogHelper.id())
     entity_id = meta.source_entity_id
     operation = Keyword.get(data_opts, :operation, :edit)
     message = LogHelper.random_message()
     version = 100
-    src_file_id = meta.src_file_id || File.ID.generate()
+    src_file_id = meta.src_file_id || SoftwareHelper.id()
 
     data =
       %LogForge{

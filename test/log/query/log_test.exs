@@ -2,12 +2,13 @@ defmodule Helix.Log.Query.LogTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
-  alias Helix.Server.Model.Server
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Log.Query.Log, as: LogQuery
 
   alias Helix.Test.Log.Factory, as: Factory
+
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   describe "get_logs_on_server/1" do
     # Well, i think that the function name might be a bit obvious, eh ?
@@ -15,7 +16,7 @@ defmodule Helix.Log.Query.LogTest do
       # Random logs on other servers
       Enum.each(1..5, fn _ -> Factory.insert(:log) end)
 
-      server = Server.ID.generate()
+      server = ServerHelper.id()
       expected =
         Enum.map(1..5, fn _ ->
           Factory.insert(:log, server_id: server)
@@ -35,13 +36,13 @@ defmodule Helix.Log.Query.LogTest do
 
   describe "get_logs_from_entity_on_server/2" do
     test "returns logs that were created by the entity" do
-      server = Server.ID.generate()
-      entity = Entity.ID.generate()
+      server = ServerHelper.id()
+      entity = EntityHelper.id()
 
       create_log = fn params ->
         defaults = %{
-          server_id: Server.ID.generate(),
-          entity_id: Entity.ID.generate(),
+          server_id: ServerHelper.id(),
+          entity_id: EntityHelper.id(),
           message: "Default message"
         }
         p = Map.merge(defaults, params)
@@ -70,8 +71,8 @@ defmodule Helix.Log.Query.LogTest do
     end
 
     test "returns logs that were touched by entity" do
-      server = Server.ID.generate()
-      entity = Entity.ID.generate()
+      server = ServerHelper.id()
+      entity = EntityHelper.id()
 
       # Random logs that were not touched by the entity
       Enum.each(1..5, fn _ ->

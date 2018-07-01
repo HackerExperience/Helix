@@ -3,7 +3,6 @@ defmodule Helix.Software.Internal.FileTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Software.Internal.File, as: FileInternal
-  alias Helix.Software.Model.File
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -99,7 +98,7 @@ defmodule Helix.Software.Internal.FileTest do
     end
 
     test "returns nil if file doesn't exist" do
-      refute FileInternal.fetch(File.ID.generate())
+      refute FileInternal.fetch(SoftwareHelper.id())
     end
   end
 

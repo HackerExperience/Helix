@@ -2,9 +2,9 @@ defmodule Helix.Story.Query.ContextTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Story.Query.Context, as: ContextQuery
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "get/2" do
@@ -24,7 +24,7 @@ defmodule Helix.Story.Query.ContextTest do
       {story_context, _} = StorySetup.Context.context(context: context)
 
       # Searching from entity
-      refute ContextQuery.get(Entity.ID.generate(), :wat)
+      refute ContextQuery.get(EntityHelper.id(), :wat)
       refute ContextQuery.get(story_context.entity_id, :wat)
 
       # Searching from Story.Context

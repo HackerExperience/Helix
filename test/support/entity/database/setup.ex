@@ -4,9 +4,9 @@ defmodule Helix.Test.Entity.Database.Setup do
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Entity.Internal.Database, as: DatabaseInternal
   alias Helix.Entity.Model.Database
-  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Repo, as: EntityRepo
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -108,7 +108,7 @@ defmodule Helix.Test.Entity.Database.Setup do
   def fake_entry_bank_account(opts \\ []) do
     {entity, entity_id} =
       if opts[:real_entity] == false do
-        {nil, Entity.ID.generate()}
+        {nil, EntityHelper.id()}
       else
         entity = EntitySetup.create_or_fetch(opts[:entity_id])
 
@@ -164,7 +164,7 @@ defmodule Helix.Test.Entity.Database.Setup do
           opts[:entity_id]
 
         true ->
-          Entity.ID.generate()
+          EntityHelper.id()
       end
 
     server_id =

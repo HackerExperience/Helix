@@ -1,7 +1,6 @@
 defmodule Helix.Test.Entity.Setup do
 
   alias Helix.Entity.Action.Entity, as: EntityAction
-  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
   alias Helix.Test.Account.Setup, as: AccountSetup
@@ -46,7 +45,4 @@ defmodule Helix.Test.Entity.Setup do
     |> EntityQuery.get_entity_id()
     |> EntityQuery.fetch()
   end
-
-  def id,
-    do: Entity.ID.generate()
 end

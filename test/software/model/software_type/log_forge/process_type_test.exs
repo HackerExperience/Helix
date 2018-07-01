@@ -10,6 +10,9 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.SoftwareType.LogForge
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Log.Helper, as: LogHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
@@ -56,16 +59,16 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
     test "accepts binary input" do
       params_edit = %{
-        "target_log_id" => to_string(Log.ID.generate()),
+        "target_log_id" => to_string(LogHelper.id()),
         "message" => "WAKE ME UP INSIDE (can't wake up)",
         "operation" => :edit,
-        "entity_id" => to_string(Entity.ID.generate())
+        "entity_id" => to_string(EntityHelper.id())
       }
       params_create = %{
-        "target_id" => to_string(Server.ID.generate()),
+        "target_id" => to_string(ServerHelper.id()),
         "message" => "A weapon to surpass Datal Gear",
         "operation" => :create,
-        "entity_id" => to_string(Entity.ID.generate())
+        "entity_id" => to_string(EntityHelper.id())
       }
 
       assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_edit)
@@ -74,16 +77,16 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
     test "accepts native erlang term entries" do
       params_edit = %{
-        target_log_id: Log.ID.generate(),
+        target_log_id: LogHelper.id(),
         message: "Oh yeah",
         operation: :edit,
-        entity_id: Entity.ID.generate()
+        entity_id: EntityHelper.id()
       }
       params_create = %{
-        target_id: Server.ID.generate(),
+        target_id: ServerHelper.id(),
         message: "Oh noes",
         operation: :create,
-        entity_id: Entity.ID.generate()
+        entity_id: EntityHelper.id()
       }
 
       assert {:ok, %LogForge{}} = LogForge.create(forger_file(), params_edit)
@@ -94,16 +97,16 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   describe "edit_objective/3" do
     test "returns a higher objective when the revision count is bigger" do
       process_data = %LogForge{
-        target_log_id: Log.ID.generate(),
-        entity_id: Entity.ID.generate(),
+        target_log_id: LogHelper.id(),
+        entity_id: EntityHelper.id(),
         operation: :edit,
         message: "ring ring ring banana phone",
         version: 100
       }
       log = %Log{
         log_id: process_data.target_log_id,
-        server_id: Server.ID.generate(),
-        entity_id: Entity.ID.generate(),
+        server_id: ServerHelper.id(),
+        entity_id: EntityHelper.id(),
         message: ""
       }
 
@@ -119,16 +122,16 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
     test "returns a higher objective the higher the forger version is" do
       data = %LogForge{
-        target_log_id: Log.ID.generate(),
-        entity_id: Entity.ID.generate(),
+        target_log_id: LogHelper.id(),
+        entity_id: EntityHelper.id(),
         operation: :edit,
         message: "Okay robot",
         version: 100
       }
       log = %Log{
         log_id: data.target_log_id,
-        server_id: Server.ID.generate(),
-        entity_id: Entity.ID.generate(),
+        server_id: ServerHelper.id(),
+        entity_id: EntityHelper.id(),
         message: ""
       }
 
@@ -144,19 +147,19 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
 
     test "ignores first revision that created the log" do
       process_data = %LogForge{
-        target_log_id: Log.ID.generate(),
-        entity_id: Entity.ID.generate(),
+        target_log_id: LogHelper.id(),
+        entity_id: EntityHelper.id(),
         operation: :edit,
         message: "ring ring ring banana phone",
         version: 100
       }
       same_entity_log = %Log{
         log_id: process_data.target_log_id,
-        server_id: Server.ID.generate(),
+        server_id: ServerHelper.id(),
         entity_id: process_data.entity_id,
         message: ""
       }
-      diferent_entity_log = %{same_entity_log| entity_id: Entity.ID.generate()}
+      diferent_entity_log = %{same_entity_log| entity_id: EntityHelper.id()}
 
       x = LogForge.edit_objective(process_data, same_entity_log, 3)
       y = LogForge.edit_objective(process_data, diferent_entity_log, 3)
@@ -173,8 +176,8 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
   describe "create_objective/1" do
     test "returns a higher objective the higher the forger version is" do
       data = %LogForge{
-        target_id: Server.ID.generate(),
-        entity_id: Entity.ID.generate(),
+        target_id: ServerHelper.id(),
+        entity_id: EntityHelper.id(),
         operation: :create,
         message: "Digital style",
         version: 100
@@ -231,7 +234,7 @@ defmodule Helix.Software.Model.SoftwareType.LogForgeTest do
       attacker_server = process.gateway_id
       victim_server = process.target_id
       attacker_entity = process.source_entity_id
-      third_entity = Entity.ID.generate()
+      third_entity = EntityHelper.id()
 
       # Third-party rendering Log process on victim. Partial access.
       third_view =

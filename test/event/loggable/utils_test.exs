@@ -3,8 +3,9 @@ defmodule Helix.Loggable.UtilsTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Event.Loggable.Utils, as: LoggableUtils
-  alias Helix.Server.Model.Server
-  alias Helix.Network.Model.Network
+
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
 
   describe "censor_ip/1" do
     test "orwellian censorship" do
@@ -49,7 +50,7 @@ defmodule Helix.Loggable.UtilsTest do
 
   describe "get_ip/2" do
     test "Returns `Unknow` if not found" do
-      ip = LoggableUtils.get_ip(Server.ID.generate(), Network.ID.generate())
+      ip = LoggableUtils.get_ip(ServerHelper.id(), NetworkHelper.id())
       assert ip == "Unknown"
     end
   end

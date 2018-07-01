@@ -2,7 +2,6 @@ defmodule Helix.Test.Software.Setup do
 
   alias Ecto.Changeset
   alias Helix.Cache.Query.Cache, as: CacheQuery
-  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
@@ -12,6 +11,7 @@ defmodule Helix.Test.Software.Setup do
   alias Helix.Software.Repo, as: SoftwareRepo
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Server.Component.Helper, as: ComponentHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
 
@@ -189,11 +189,11 @@ defmodule Helix.Test.Software.Setup do
   Related: StorageDrive.t, drive :: Component.id
   """
   def fake_storage(_opts \\ []) do
-    drive_id = Component.ID.generate()
+    drive_id = ComponentHelper.id()
 
     storage =
       %Storage{
-        storage_id: Storage.ID.generate()
+        storage_id: SoftwareHelper.storage_id()
       }
 
     storage_drive =
@@ -248,10 +248,4 @@ defmodule Helix.Test.Software.Setup do
   def non_executable_file do
     file(type: :crypto_key)
   end
-
-  @doc """
-  Generates a `File.ID`
-  """
-  def id,
-    do: File.ID.generate()
 end

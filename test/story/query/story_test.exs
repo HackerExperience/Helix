@@ -5,6 +5,7 @@ defmodule Helix.Story.Query.StoryTest do
   alias Helix.Entity.Model.Entity
   alias Helix.Story.Query.Story, as: StoryQuery
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
@@ -21,7 +22,7 @@ defmodule Helix.Story.Query.StoryTest do
 
     test "returns nil if nothing was found" do
       refute StoryQuery.fetch_step(
-        Entity.ID.generate(), StoryHelper.contact_id()
+        EntityHelper.id(), StoryHelper.contact_id()
       )
     end
   end

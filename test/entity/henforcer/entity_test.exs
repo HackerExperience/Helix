@@ -4,7 +4,6 @@ defmodule Helix.Entity.Henforcer.EntityTest do
 
   import Helix.Test.Henforcer.Macros
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Entity.Henforcer.Entity, as: EntityHenforcer
 
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -13,6 +12,7 @@ defmodule Helix.Entity.Henforcer.EntityTest do
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Universe.Bank.Setup, as: BankSetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
 
   @internet_id NetworkHelper.internet_id()
@@ -29,7 +29,7 @@ defmodule Helix.Entity.Henforcer.EntityTest do
 
     test "rejects when entity doesnt exists" do
       assert {false, reason, _} =
-        EntityHenforcer.entity_exists?(Entity.ID.generate())
+        EntityHenforcer.entity_exists?(EntityHelper.id())
       assert reason == {:entity, :not_found}
     end
   end

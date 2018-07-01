@@ -3,10 +3,10 @@ defmodule Helix.Process.Internal.ProcessTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Process.Internal.Process, as: ProcessInternal
-  alias Helix.Process.Model.Process
 
   alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
+  alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.TOPHelper
 
   describe "create/1" do
@@ -105,7 +105,7 @@ defmodule Helix.Process.Internal.ProcessTest do
     end
 
     test "returns empty when process does not exist" do
-      refute ProcessInternal.fetch(Process.ID.generate())
+      refute ProcessInternal.fetch(ProcessHelper.id())
     end
   end
 

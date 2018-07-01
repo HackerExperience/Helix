@@ -23,7 +23,7 @@ defmodule Helix.Test.Account.Helper do
   end
 
   def id,
-    do: Account.ID.generate()
+    do: Account.ID.generate(%{}, :account)
 
   @doc """
   Returns the Account.id that corresponds to the given Entity.id

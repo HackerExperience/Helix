@@ -5,7 +5,7 @@ defmodule Helix.Software.Internal.File.MetaTest do
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Internal.Virus, as: VirusInternal
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "gather_metadata/1" do
@@ -15,7 +15,7 @@ defmodule Helix.Software.Internal.File.MetaTest do
       assert %{meta: meta} = FileInternal.Meta.gather_metadata(file)
       refute meta.installed?
 
-      VirusInternal.install(file, EntitySetup.id())
+      VirusInternal.install(file, EntityHelper.id())
 
       assert %{meta: meta} = FileInternal.Meta.gather_metadata(file)
       assert meta.installed?

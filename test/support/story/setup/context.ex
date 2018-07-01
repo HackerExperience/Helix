@@ -4,7 +4,7 @@ defmodule Helix.Test.Story.Setup.Context do
   alias Helix.Story.Model.Story
   alias Helix.Story.Repo, as: StoryRepo
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
 
   @doc """
   See docs on `fake_context/1`.
@@ -21,7 +21,7 @@ defmodule Helix.Test.Story.Setup.Context do
   - context: Specify context value. Defaults to empty (%{})
   """
   def fake_context(opts \\ []) do
-    entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
     context = Keyword.get(opts, :context, %{})
 
     story_context =

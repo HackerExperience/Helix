@@ -5,7 +5,7 @@ defmodule Helix.Network.Action.Flow.BounceTest do
   alias Helix.Network.Action.Flow.Bounce, as: BounceFlow
   alias Helix.Network.Query.Bounce, as: BounceQuery
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
 
@@ -13,7 +13,7 @@ defmodule Helix.Network.Action.Flow.BounceTest do
 
   describe "create/4" do
     test "creates a bounce entry with the given links" do
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
       links = NetworkHelper.Bounce.links(total: 3)
       name = NetworkHelper.Bounce.name()
 

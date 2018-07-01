@@ -186,10 +186,6 @@ defmodule Helix.IDTest do
       time_end = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
       time_with_grandparent = time_end - time_start
 
-      IO.inspect(time_without_heritage)
-      IO.inspect(time_with_parent)
-      IO.inspect(time_with_grandparent)
-
       # Below time (in milliseconds) required to generate 1000 IDs. Seems OK.
       # Note that these values were tuned while stressing the system (with cross
       # compilations and dialyzer verifications). Under normal load, it should

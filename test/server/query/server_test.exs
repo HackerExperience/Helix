@@ -5,6 +5,7 @@ defmodule Helix.Server.Query.ServerTest do
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
@@ -16,7 +17,7 @@ defmodule Helix.Server.Query.ServerTest do
     end
 
     test "fails when server doesn't exist" do
-      refute ServerQuery.fetch(Server.ID.generate())
+      refute ServerQuery.fetch(ServerHelper.id())
     end
   end
 
@@ -55,7 +56,7 @@ defmodule Helix.Server.Query.ServerTest do
     end
 
     test "with non-existing server" do
-      fake_server_id = ServerSetup.id()
+      fake_server_id = ServerHelper.id()
 
       assert {:error, reason} = ServerQuery.get_password(fake_server_id)
       assert reason == {:server, :notfound}

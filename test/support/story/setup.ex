@@ -1,6 +1,5 @@
 defmodule Helix.Test.Story.Setup do
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Story.Internal.Email, as: EmailInternal
   alias Helix.Story.Internal.Step, as: StepInternal
   alias Helix.Story.Model.Step
@@ -10,6 +9,7 @@ defmodule Helix.Test.Story.Setup do
   alias Helix.Story.Repo, as: StoryRepo
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.StepHelper, as: StoryStepHelper
   alias __MODULE__, as: StorySetup
@@ -35,7 +35,7 @@ defmodule Helix.Test.Story.Setup do
         || raise "You need to specify either both `name` and `meta`, or none"
       end
 
-    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
 
     manager =
       if opts[:ready] do
@@ -122,7 +122,7 @@ defmodule Helix.Test.Story.Setup do
         || raise "You need to specify either both `name` and `meta`, or none"
       end
 
-    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
 
     manager =
       if opts[:ready] do
@@ -177,7 +177,7 @@ defmodule Helix.Test.Story.Setup do
   {prev_step :: Step.t, next_step :: Step.t, Related (Entity.id)}
   """
   def step_sequence(opts \\ []) do
-    entity = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    entity = Keyword.get(opts, :entity_id, EntityHelper.id())
 
     {prev_step, _} =
       step(name: :fake_steps@test_one, meta: %{step: :one}, entity_id: entity)
@@ -222,7 +222,7 @@ defmodule Helix.Test.Story.Setup do
   Related: %{}
   """
   def fake_story_email(opts \\ []) do
-    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
     contact_id = Keyword.get(opts, :contact_id, StoryStepHelper.get_contact())
     email_total = Keyword.get(opts, :email_total, 1)
     emails = Keyword.get(opts, :emails, fake_emails(total: email_total))
@@ -312,7 +312,7 @@ defmodule Helix.Test.Story.Setup do
   Related: Entity.id, [Step.contact], [Story.Email.email]
   """
   def lots_of_emails_and_contacts(opts \\ []) do
-    entity = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    entity = Keyword.get(opts, :entity_id, EntityHelper.id())
 
     c1 = :contact_1
     c2 = :contact_2
