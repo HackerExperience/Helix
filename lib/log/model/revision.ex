@@ -7,9 +7,10 @@ defmodule Helix.Log.Model.Revision do
   """
 
   use Ecto.Schema
-  use HELL.ID, field: :revision_id, meta: [0x0030, 0x0001]
+  use HELL.ID, field: :revision_id
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
@@ -66,6 +67,7 @@ defmodule Helix.Log.Model.Revision do
     %__MODULE__{}
     |> changeset(params)
     |> put_assoc(:log, log)
+    |> put_pk(%{}, {:log, :revision})  # Correct heritage is TODO
   end
 
   @spec changeset(%__MODULE__{} | Changeset.t, creation_params) ::
@@ -76,12 +78,11 @@ defmodule Helix.Log.Model.Revision do
     |> validate_required([:entity_id, :message])
     |> validate_number(:forge_version, greater_than: 0)
     |> put_change(:creation_time, DateTime.utc_now())
+    |> put_pk(%{}, {:log, :revision})  # Correct heritage is TODO
   end
 
-  defmodule Query do
-    import Ecto.Query
+  query do
 
-    alias Ecto.Queryable
     alias Helix.Entity.Model.Entity
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.Revision

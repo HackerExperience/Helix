@@ -139,7 +139,7 @@ defmodule Helix.Test.Server.Helper do
   Generates a random Server ID
   """
   def id,
-    do: Server.ID.generate()
+    do: Server.ID.generate({:server, :desktop})
 
   @doc """
   Generates a random server password

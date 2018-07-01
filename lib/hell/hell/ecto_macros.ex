@@ -39,4 +39,36 @@ defmodule HELL.Ecto.Macros do
 
     end
   end
+
+  defmacro cast_pk(changeset, field, pk) do
+    quote do
+      put_change(unquote(changeset), unquote(field), unquote(pk))
+    end
+  end
+
+  defmacro put_pk(changeset, heritage, domain, opts \\ unquote([])) do
+    module = get_pk_module(opts, __CALLER__.module)
+
+    gen_pk(changeset, heritage, domain, module)
+  end
+
+  defp gen_pk(changeset, heritage, domain, module) do
+    quote do
+
+      if unquote(changeset).valid? do
+        field = unquote(module).get_field()
+        id = unquote(module).generate(unquote(heritage), unquote(domain))
+
+        put_change(unquote(changeset), field, id)
+      else
+        unquote(changeset)
+      end
+
+    end
+  end
+
+  defp get_pk_module([id: module], _),
+    do: module
+  defp get_pk_module([], parent_module),
+    do: Module.concat(parent_module, :ID)
 end

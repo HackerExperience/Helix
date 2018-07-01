@@ -13,7 +13,6 @@ defmodule Helix.Notification.Event.Handler.NotificationTest do
   alias Helix.Test.Event.Helper, as: EventHelper
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Server.Setup, as: ServerSetup
-  alias Helix.Test.Notification.Helper, as: NotificationHelper
 
   # Dear reader,
   # This broad test is meant to make sure notifications work right. We've picked
@@ -33,11 +32,9 @@ defmodule Helix.Notification.Event.Handler.NotificationTest do
       assert [notification] =
         NotificationQuery.get_by_account(:account, entity.entity_id)
 
-      # Notification ID has the correct Account class suffix
-      expected_suffix = NotificationHelper.expected_suffix(:account)
-      suffix = NotificationHelper.get_suffix(notification.notification_id)
-
-      assert expected_suffix == suffix
+      # Notification ID has the correct Account domain prefix
+      str_notification_id = to_string(notification.notification_id)
+      assert String.ends_with?(str_notification_id, "0f")
 
       # Notification code is OK
       assert notification.code == :server_password_acquired
@@ -73,11 +70,9 @@ defmodule Helix.Notification.Event.Handler.NotificationTest do
       assert [notification] =
         NotificationQuery.get_by_account(:server, event.entity_id)
 
-      # Correct suffix was used
-      expected_suffix = NotificationHelper.expected_suffix(:server)
-      suffix = NotificationHelper.get_suffix(notification.notification_id)
-
-      assert expected_suffix == suffix
+      # Notification ID has the correct Account domain prefix
+      str_notification_id = to_string(notification.notification_id)
+      assert String.ends_with?(str_notification_id, "1f")
 
       assert notification.code == :file_downloaded
 

@@ -58,6 +58,7 @@ defmodule Helix.Account.HTTP.Controller.Webhook do
         nil ->
           # Account does not exists
           account = %Account{
+            account_id: Account.ID.generate(%{}, :account),
             password: password,
             email: String.downcase(email),
             username: String.downcase(username),

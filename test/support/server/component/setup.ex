@@ -6,6 +6,7 @@ defmodule Helix.Test.Server.Component.Setup do
   alias Helix.Server.Model.Component
   alias Helix.Server.Repo, as: ServerRepo
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Component.Helper, as: ComponentHelper
 
@@ -33,7 +34,7 @@ defmodule Helix.Test.Server.Component.Setup do
         ComponentHelper.random_spec(comp_opts)
       end
 
-    changeset = Component.create_from_spec(spec)
+    changeset = Component.create_from_spec(spec, EntityHelper.id())
 
     component = Changeset.apply_changes(changeset)
 
