@@ -25,7 +25,8 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
 
     test "fails when entity_type is invalid" do
-      {:error, cs} = EntityInternal.create(%{entity_type: :foobar})
+      params = %{entity_type: :foobar, entity_id: "::"}
+      {:error, cs} = EntityInternal.create(params)
       assert :entity_type in Keyword.keys(cs.errors)
     end
   end

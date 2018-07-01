@@ -1,9 +1,10 @@
 defmodule Helix.Account.Model.Account do
 
   use Ecto.Schema
-  use HELL.ID, field: :account_id, meta: [0x0001]
+  use HELL.ID, field: :account_id
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
   import HELL.Macros
 
   alias Comeonin.Bcrypt
@@ -60,6 +61,7 @@ defmodule Helix.Account.Model.Account do
     |> cast(params, @creation_fields)
     |> generic_validations()
     |> prepare_changes()
+    |> put_pk(%{}, :account)
   end
 
   @spec update_changeset(t | Changeset.t, update_params) ::
@@ -159,10 +161,8 @@ defmodule Helix.Account.Model.Account do
     || [username: "has invalid format"]
   end
 
-  defmodule Query do
-    import Ecto.Query
+  query do
 
-    alias Ecto.Queryable
     alias Helix.Account.Model.Account
 
     @spec by_id(Queryable.t, Account.idtb) ::

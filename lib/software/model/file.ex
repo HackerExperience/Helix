@@ -1,10 +1,11 @@
 defmodule Helix.Software.Model.File do
 
   use Ecto.Schema
-  use HELL.ID, field: :file_id, meta: [0x0020]
+  use HELL.ID, field: :file_id
 
   import Ecto.Changeset
   import HELL.Macros
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -109,12 +110,14 @@ defmodule Helix.Software.Model.File do
   Creates the `File` changeset, as well as its modules' associations.
   """
   def create_changeset(params, modules_params) do
+    heritage = build_heritage(params)
     modules = Enum.map(modules_params, &create_module_assoc/1)
 
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> put_assoc(:modules, modules)
     |> validate_changeset(params)
+    |> put_pk(heritage, {:file, params.software_type})
   end
 
   @spec format(t) ::
@@ -221,6 +224,11 @@ defmodule Helix.Software.Model.File do
     end
   end
 
+  @spec build_heritage(creation_params) ::
+    Helix.ID.heritage
+  defp build_heritage(params),
+    do: %{parent: params.storage_id}
+
   defmodule Default do
     @moduledoc """
     File.Default returns the default value expected for the file.
@@ -244,12 +252,10 @@ defmodule Helix.Software.Model.File do
       do: "/"
   end
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
     import HELL.Macros
 
-    alias Ecto.Queryable
     alias Helix.Software.Model.File
     alias Helix.Software.Model.Storage
 

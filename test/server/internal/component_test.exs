@@ -5,6 +5,7 @@ defmodule Helix.Server.Internal.ComponentTest do
   alias Helix.Server.Component.Specable
   alias Helix.Server.Internal.Component, as: ComponentInternal
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Server.Component.Helper, as: ComponentHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
@@ -20,11 +21,12 @@ defmodule Helix.Server.Internal.ComponentTest do
     end
   end
 
-  describe "create/1" do
+  describe "create/2" do
     test "inserts the component in the database" do
+      entity_id = EntityHelper.id()
       spec = ComponentHelper.random_spec()
 
-      assert {:ok, component} = ComponentInternal.create(spec)
+      assert {:ok, component} = ComponentInternal.create(spec, entity_id)
 
       assert component.spec_id == spec.spec_id
       assert component.type == spec.component_type
@@ -57,9 +59,11 @@ defmodule Helix.Server.Internal.ComponentTest do
      end
   end
 
-  describe "create_initial_components/0" do
+  describe "create_initial_components/1" do
     test "creates all initial components" do
-      assert {:ok, components} = ComponentInternal.create_initial_components()
+      entity_id = EntityHelper.id()
+      assert {:ok, components} =
+        ComponentInternal.create_initial_components(entity_id)
 
       Enum.each(components, fn component ->
         assert ComponentInternal.fetch(component.component_id)

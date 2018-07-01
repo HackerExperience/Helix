@@ -45,25 +45,25 @@ defmodule Helix.Notification.Model.Notification do
     Notification.Account.Order.methods
     | Notification.Server.Order.methods
 
-  @spec cast_id(tuple) ::
+  @spec cast_id(tuple, Helix.ID.parsed_id) ::
     {:ok, id}
     | :error
   @doc """
   Given a non-specialized Helix ID (inet-tuple format), return the underlying
   notification ID.
   """
-  def cast_id(id = {80, 1, _, _, _, _, _, _}),
+  def cast_id(id, %{domain: %{bin: "00001111"}}),
     do: Notification.Account.ID.cast(id)
-  def cast_id(id = {80, 2, _, _, _, _, _, _}),
+  def cast_id(id, %{domain: %{bin: "00011111"}}),
     do: Notification.Server.ID.cast(id)
-  def cast_id(_),
+  def cast_id(_, _),
     do: :error
 
-  @spec cast_id!(tuple) ::
+  @spec cast_id!(tuple, Helix.ID.parsed_id) ::
     id
     | no_return
-  def cast_id!(id) when is_tuple(id) do
-    {:ok, casted_id} = cast_id(id)
+  def cast_id!(id, parsed_id) when is_tuple(id) do
+    {:ok, casted_id} = cast_id(id, parsed_id)
     casted_id
   end
 
@@ -228,7 +228,8 @@ defmodule Helix.Notification.Model.Notification do
     def validate_id(str_id, _) when is_binary(str_id) do
       with \
         {:ok, tuple_id} <- IPv6.binary_to_address_tuple(str_id),
-        {:ok, notification_id} <- Notification.cast_id(tuple_id)
+        parsed_id = Helix.ID.parse(tuple_id),
+        {:ok, notification_id} <- Notification.cast_id(tuple_id, parsed_id)
       do
         {:ok, notification_id}
       else

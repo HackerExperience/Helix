@@ -10,13 +10,14 @@ defmodule Helix.Server.Model.Component do
   """
 
   use Ecto.Schema
-  use HELL.ID, field: :component_id, meta: [0x0012]
+  use HELL.ID, field: :component_id
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Componentable
   alias Helix.Server.Component.Specable
   alias __MODULE__, as: Component
@@ -75,14 +76,14 @@ defmodule Helix.Server.Model.Component do
     }
   end
 
-  @spec create_from_spec(Component.Spec.t) ::
+  @spec create_from_spec(Component.Spec.t, Entity.id) ::
     changeset
   @doc """
   Creates the changeset for a Component. A new component is always created from
   a `Component.Spec`, i.e. a spec defined at `Specable` that specifies exactly
   what component we are looking for.
   """
-  def create_from_spec(spec = %Component.Spec{}) do
+  def create_from_spec(spec = %Component.Spec{}, entity_id) do
     params =
       %{
         type: spec.component_type,
@@ -90,9 +91,12 @@ defmodule Helix.Server.Model.Component do
         custom: Component.Spec.create_custom(spec)
       }
 
+    heritage = build_heritage(entity_id)
+
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
+    |> put_pk(heritage, {:component, spec.component_type})
   end
 
   defdelegate get_types,
@@ -113,6 +117,11 @@ defmodule Helix.Server.Model.Component do
     |> change()
     |> put_change(:custom, new_custom)
   end
+
+  @spec build_heritage(Entity.id) ::
+    Helix.ID.heritage
+  defp build_heritage(entity_id),
+    do: %{parent: entity_id}
 
   query do
 

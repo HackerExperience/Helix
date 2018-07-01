@@ -20,7 +20,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
       {target, _} = ServerSetup.server()
 
       storage = SoftwareHelper.get_storage(target)
-      virus = SoftwareSetup.virus!(storage_id: storage)
+      virus = SoftwareSetup.virus!(storage_id: storage.storage_id)
 
       assert {true, relay} = VirusHenforcer.can_install?(virus, entity)
 
@@ -36,7 +36,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
       {server, %{entity: entity}} = ServerSetup.server()
 
       storage = SoftwareHelper.get_storage(server)
-      file = SoftwareSetup.virus!(storage_id: storage)
+      file = SoftwareSetup.virus!(storage_id: storage.storage_id)
 
       assert {false, reason, _} = VirusHenforcer.can_install?(file, entity)
 
@@ -48,7 +48,8 @@ defmodule Helix.Software.Henforcer.VirusTest do
       {target, _} = ServerSetup.server()
 
       storage = SoftwareHelper.get_storage(target)
-      not_virus = SoftwareSetup.file!(type: :cracker, storage_id: storage)
+      not_virus =
+        SoftwareSetup.file!(type: :cracker, storage_id: storage.storage_id)
 
       assert {false, reason, _} = VirusHenforcer.can_install?(not_virus, entity)
       assert reason == {:file, :not_virus}
@@ -59,7 +60,7 @@ defmodule Helix.Software.Henforcer.VirusTest do
       {target, _} = ServerSetup.server()
 
       storage = SoftwareHelper.get_storage(target)
-      virus = SoftwareSetup.virus!(storage_id: storage)
+      virus = SoftwareSetup.virus!(storage_id: storage.storage_id)
 
       # Virus has already been installed by someone else
       assert {:ok, _, _} = VirusAction.install(virus, EntitySetup.id())
@@ -73,8 +74,8 @@ defmodule Helix.Software.Henforcer.VirusTest do
       {target, _} = ServerSetup.server()
 
       storage = SoftwareHelper.get_storage(target)
-      virus1 = SoftwareSetup.virus!(storage_id: storage)
-      virus2 = SoftwareSetup.virus!(storage_id: storage)
+      virus1 = SoftwareSetup.virus!(storage_id: storage.storage_id)
+      virus2 = SoftwareSetup.virus!(storage_id: storage.storage_id)
 
       # Virus1 has been installed
       assert {:ok, _, _} = VirusAction.install(virus1, entity.entity_id)

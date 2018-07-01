@@ -36,12 +36,5 @@ defmodule Helix.Log.Model.LogTest do
       refute revision.forge_version
       assert revision.creation_time == log.creation_time
     end
-
-    test "requires entity_id and server_id" do
-      log = Log.create_changeset(%{})
-
-      assert :entity_id in Keyword.keys(log.errors)
-      assert :server_id in Keyword.keys(log.errors)
-    end
   end
 end

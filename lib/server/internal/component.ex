@@ -1,5 +1,6 @@
 defmodule Helix.Server.Internal.Component do
 
+  alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Component
   alias Helix.Server.Model.Motherboard
   alias Helix.Server.Repo
@@ -18,15 +19,15 @@ defmodule Helix.Server.Internal.Component do
     end
   end
 
-  @spec create(Component.Spec.t) ::
+  @spec create(Component.Spec.t, Entity.id) ::
     {:ok, Component.t}
     | {:error, Component.changeset}
   @doc """
   Creates a new component from an existing `Component.Spec`
   """
-  def create(spec = %Component.Spec{}) do
+  def create(spec = %Component.Spec{}, entity_id) do
     spec
-    |> Component.create_from_spec()
+    |> Component.create_from_spec(entity_id)
     |> Repo.insert()
   end
 
@@ -42,7 +43,7 @@ defmodule Helix.Server.Internal.Component do
     |> Repo.update()
   end
 
-  @spec create_initial_components() ::
+  @spec create_initial_components(Entity.id) ::
     {:ok, [Component.t]}
     | {:error, :internal}
   @doc """
@@ -50,14 +51,14 @@ defmodule Helix.Server.Internal.Component do
 
   Used after a player joins the game and the initial server has to be created.
   """
-  def create_initial_components do
+  def create_initial_components(entity_id) do
     Repo.transaction(fn ->
       result =
         Motherboard.get_initial_components() ++ [:mobo]
         |> Enum.map(fn component_type ->
             component_type
             |> Component.Spec.get_initial()
-            |> Component.create_from_spec()
+            |> Component.create_from_spec(entity_id)
             |> Repo.insert()
           end)
 

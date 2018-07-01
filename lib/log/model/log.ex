@@ -1,9 +1,10 @@
 defmodule Helix.Log.Model.Log do
 
   use Ecto.Schema
-  use HELL.ID, field: :log_id, meta: [0x0030]
+  use HELL.ID, field: :log_id
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
@@ -63,6 +64,7 @@ defmodule Helix.Log.Model.Log do
   @spec create_changeset(creation_params) ::
     Changeset.t
   def create_changeset(params) do
+    heritage = build_heritage(params)
     revision = Revision.changeset(%Revision{}, params)
     revision_time = get_change(revision, :creation_time)
 
@@ -71,6 +73,7 @@ defmodule Helix.Log.Model.Log do
     |> validate_required(@required_fields)
     |> put_assoc(:revisions, [revision])
     |> put_change(:creation_time, revision_time)
+    |> put_pk(heritage, :log)
   end
 
   @spec update_changeset(t | Changeset.t, update_params) ::
@@ -82,10 +85,13 @@ defmodule Helix.Log.Model.Log do
     |> validate_number(:crypto_version, greater_than_or_equal_to: 0)
   end
 
-  defmodule Query do
-    import Ecto.Query
+  @spec build_heritage(creation_params) ::
+    Helix.ID.heritage
+  defp build_heritage(params),
+    do: %{parent: params.server_id}
 
-    alias Ecto.Queryable
+  query do
+
     alias Helix.Entity.Model.Entity
     alias Helix.Server.Model.Server
     alias Helix.Log.Model.Log

@@ -1,7 +1,7 @@
 defmodule Helix.Universe.Bank.Model.BankTransfer do
 
   use Ecto.Schema
-  use HELL.ID, field: :transfer_id, meta: [0x0040]
+  use HELL.ID, field: :transfer_id
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
@@ -61,6 +61,7 @@ defmodule Helix.Universe.Bank.Model.BankTransfer do
     |> cast(params, @creation_fields)
     |> generic_validations()
     |> add_time_information()
+    |> put_pk(%{}, {:bank, :transfer})
   end
 
   defp generic_validations(changeset) do

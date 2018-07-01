@@ -1,7 +1,7 @@
 defmodule Helix.Network.Model.Bounce do
 
   use Ecto.Schema
-  use HELL.ID, field: :bounce_id, meta: [0x0000, 0x0001, 0x0002]
+  use HELL.ID, field: :bounce_id
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
@@ -61,7 +61,8 @@ defmodule Helix.Network.Model.Bounce do
   @spec create(Entity.id, name, [link]) ::
     [changeset | Bounce.Entry.changeset]
   def create(entity_id, name, links) do
-    id = ID.generate()
+    heritage = build_heritage(entity_id)
+    id = ID.generate(heritage, :bounce)
 
     sorted = Bounce.Sorted.create(id, links)
     bounce =
@@ -111,6 +112,11 @@ defmodule Helix.Network.Model.Bounce do
     |> validate_required(@required_fields)
     |> put_assoc(:sorted, sorted)
   end
+
+  @spec build_heritage(Entity.id) ::
+    Helix.ID.heritage
+  defp build_heritage(entity_id),
+    do: %{parent: entity_id}
 
   query do
 

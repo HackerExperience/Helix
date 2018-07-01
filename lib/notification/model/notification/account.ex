@@ -6,7 +6,7 @@ defmodule Helix.Notification.Model.Notification.Account do
   """
 
   use Ecto.Schema
-  use HELL.ID, field: :notification_id, meta: [0x0050, 0x0001]
+  use HELL.ID, field: :notification_id
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
@@ -57,11 +57,19 @@ defmodule Helix.Notification.Model.Notification.Account do
   @spec create_changeset(creation_params) ::
     changeset
   def create_changeset(params) do
+    heritage = build_heritage(params)
+
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> put_defaults()
     |> validate_required(@required_fields)
+    |> put_pk(heritage, {:notification, :account})
   end
+
+  @spec build_heritage(creation_params) ::
+    Helix.ID.heritage
+  defp build_heritage(params),
+    do: %{parent: params.account_id}
 
   @spec id_map(id_map_input) ::
     id_map

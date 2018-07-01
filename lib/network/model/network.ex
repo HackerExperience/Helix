@@ -1,7 +1,7 @@
 defmodule Helix.Network.Model.Network do
 
   use Ecto.Schema
-  use HELL.ID, field: :network_id, meta: [0x0000]
+  use HELL.ID, field: :network_id
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
@@ -53,6 +53,7 @@ defmodule Helix.Network.Model.Network do
     |> cast(params, @creation_fields)
     |> validate_inclusion(:type, possible_types())
     |> validate_required(@required_fields)
+    |> put_pk(%{}, {:network, params.type})
   end
 
   @spec possible_types() ::

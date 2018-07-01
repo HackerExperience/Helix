@@ -2,19 +2,11 @@ defmodule HELL.ID do
 
   defmacro __using__(params) do
     model = __CALLER__.module
-
     field = Keyword.fetch!(params, :field)
-    meta =
-      params
-      |> Keyword.get(:meta, [])
-      |> List.wrap()
-      |> pad()
-
     id_root = Keyword.get(params, :root, model)
 
-    autogenerate = Keyword.get(params, :autogenerate, true)
-
     quote do
+
       defmodule ID do
         @behaviour Ecto.Type
 
@@ -22,18 +14,17 @@ defmodule HELL.ID do
           %__MODULE__{}
           | %{:__struct__ => atom, root: unquote(id_root), id: tuple}
 
-        defstruct [
-          id: nil,
-          root: unquote(id_root)
-        ]
+        defstruct [id: nil, root: unquote(id_root)]
+
+        @field unquote(field)
 
         @doc false
         def type,
           do: :inet
 
-        def cast(id = %__MODULE__{}) do
-          {:ok, id}
-        end
+        @doc false
+        def cast(id = %__MODULE__{}),
+          do: {:ok, id}
 
         # HACK: use __struct__ to avoid mutual compilation dependency.
         # Extracts id from the input record as long as it is the model that
@@ -45,17 +36,14 @@ defmodule HELL.ID do
           {:ok, id}
         end
 
-        def cast(%Postgrex.INET{address: id}) do
-          {:ok, %__MODULE__{id: id}}
-        end
+        def cast(%Postgrex.INET{address: id}),
+          do: {:ok, %__MODULE__{id: id}}
 
-        def cast(%_{root: unquote(id_root), id: id}) when tuple_size(id) == 8 do
-          {:ok, %__MODULE__{id: id}}
-        end
+        def cast(%_{root: unquote(id_root), id: id}) when tuple_size(id) == 8,
+          do: {:ok, %__MODULE__{id: id}}
 
-        def cast(id = {_, _, _, _, _, _, _, _}) do
-          {:ok, %__MODULE__{id: id}}
-        end
+        def cast(id = {_, _, _, _, _, _, _, _}),
+          do: {:ok, %__MODULE__{id: id}}
 
         def cast(string) when is_binary(string) do
           case HELL.IPv6.binary_to_address_tuple(string) do
@@ -66,10 +54,10 @@ defmodule HELL.ID do
           end
         end
 
-        def cast(_) do
-          :error
-        end
+        def cast(_),
+          do: :error
 
+        @doc false
         def cast!(term) do
           {:ok, id} = cast(term)
           id
@@ -88,8 +76,16 @@ defmodule HELL.ID do
           do: :error
 
         def generate do
-          %__MODULE__{id: HELL.IPv6.generate_address_tuple(unquote(meta))}
+          generate(%{}, :log)
         end
+
+        def generate(domain) when is_tuple(domain) or is_atom(domain),
+          do: generate(%{}, domain)
+        def generate(heritage, domain),
+          do: %__MODULE__{id: Helix.ID.generate(heritage, domain)}
+
+        def get_field,
+          do: @field
 
         defimpl String.Chars do
           defdelegate to_string(struct),
@@ -100,32 +96,16 @@ defmodule HELL.ID do
           def encode(struct, _),
             do: "\"" <> HELL.ID.to_string(struct) <> "\""
         end
+
       end
 
-      # Inject the PK module as the PK autogenerator for the module
-      alias __MODULE__.ID
-
-      @type id :: ID.t
+      @type id :: __MODULE__.ID.t
       @type idt :: id | %__MODULE__{unquote(field) => id}
       @type idtb :: idt | String.t
 
       @primary_key false
-
-      if unquote(autogenerate) do
-        @ecto_autogenerate {unquote(field), {ID, :generate, []}}
-      end
     end
   end
-
-  @doc false
-  def pad([]),
-    do: [0, 0, 0]
-  def pad([x]),
-    do: [x, 0, 0]
-  def pad([x, y]),
-    do: [x, y, 0]
-  def pad(list = [_, _, _]),
-    do: list
 
   @doc false
   def to_string(%_{id: id, root: _}) when tuple_size(id) == 8 do

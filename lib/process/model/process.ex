@@ -10,7 +10,7 @@ defmodule Helix.Process.Model.Process do
   """
 
   use Ecto.Schema
-  use HELL.ID, field: :process_id, meta: [0x0021]
+  use HELL.ID, field: :process_id
 
   import Ecto.Changeset
   import HELL.Macros
@@ -77,6 +77,10 @@ defmodule Helix.Process.Model.Process do
     | :cracker_bruteforce
     | :cracker_overflow
     | :install_virus
+    | :virus_collect
+    | :bank_reveal_password
+    | :wire_transfer
+    | :log_forger
 
   @typedoc """
   List of signals a process may receive during its lifetime.
@@ -447,10 +451,13 @@ defmodule Helix.Process.Model.Process do
   This is the moment a process is born.
   """
   def create_changeset(params) do
+    heritage = build_heritage(params)
+
     %__MODULE__{}
     |> cast(params, @creation_fields)
     |> validate_required(@required_fields)
     |> put_defaults()
+    |> put_pk(heritage, {:process, params.type})
   end
 
   @spec format(raw_process :: t) ::
@@ -696,6 +703,11 @@ defmodule Helix.Process.Model.Process do
     changeset
     |> put_change(:creation_time, DateTime.utc_now())
   end
+
+  @spec build_heritage(creation_params) ::
+    Helix.ID.heritage
+  defp build_heritage(params),
+    do: %{grandparent: params.source_entity_id, parent: params.gateway_id}
 
   query do
 

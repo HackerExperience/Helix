@@ -4,11 +4,6 @@ defmodule HELL.PK do
 
   @type t :: String.t
 
-  @spec pk_for(atom) ::
-    t
-  defdelegate pk_for(atom),
-    to: HELL.PK.Header
-
   def type,
     do: :inet
 
