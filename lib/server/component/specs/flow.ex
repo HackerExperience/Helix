@@ -194,7 +194,7 @@ defmodule Helix.Server.Component.Spec.Flow do
 
     quote do
 
-      # Notify Component.Specs that the spec #{name} is declared
+      # Tell Component.Specs that the spec #{name} is declared
       Module.put_attribute(
         unquote(__CALLER__.module),
         :specs,
@@ -253,7 +253,7 @@ defmodule Helix.Server.Component.Spec.Flow do
 
     quote location: :keep do
 
-      # Notifies `Component.Spec` that `spec_name` is declared
+      # Tell `Component.Spec` that `spec_name` is declared
       Module.put_attribute(
         unquote(specs_module),
         unquote(spec_attr),

@@ -181,8 +181,8 @@ defmodule Helix.Story.Event.Handler.Story do
       # Update step meta
       {:ok, _} <- StoryAction.update_step_meta(next_step),
 
-      # Notify about step progress
-      event = StoryAction.notify_step(prev_step, next_step),
+      # Send out publication about step progress
+      event = StoryAction.publish_step(prev_step, next_step),
       Event.emit(event, from: prev_step.event)
     do
       :ok
@@ -195,7 +195,7 @@ defmodule Helix.Story.Event.Handler.Story do
   It will:
   - update the DB with the new step metadata
   - rollback the emails to the specified checkpoint
-  - notify the client that the step has been restarted
+  - publish to the client that the step has been restarted
 
   Emits: StepRestartedEvent.t
   """
@@ -207,8 +207,8 @@ defmodule Helix.Story.Event.Handler.Story do
       # Rollback to the specified checkpoint
       {:ok, _, _} <- StoryAction.rollback_emails(step, checkpoint, meta),
 
-      # Notify about step restart
-      event = StoryAction.notify_restart(step, reason, checkpoint, meta),
+      # Send out publication about step restart
+      event = StoryAction.publish_restart(step, reason, checkpoint, meta),
       Event.emit(event, from: step.event)
     do
       :ok

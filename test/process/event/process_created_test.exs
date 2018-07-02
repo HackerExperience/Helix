@@ -2,23 +2,23 @@ defmodule Helix.Process.Event.Process.CreatedTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Event.Notificable
+  alias Helix.Event.Publishable
   alias Helix.Server.Model.Server
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Process.View.Helper, as: ProcessViewHelper
 
-  describe "Notificable.whom_to_notify/1" do
+  describe "Publishable.whom_to_publish/1" do
     test "servers are listed correctly" do
       event = EventSetup.Process.created()
 
       assert %{server: [event.gateway_id, event.target_id]} ==
-        Notificable.whom_to_notify(event)
+        Publishable.whom_to_publish(event)
     end
   end
 
-  describe "Notificable.generate_payload/2" do
+  describe "Publishable.generate_payload/2" do
     test "single server process create (player AT action_server)" do
       socket = ChannelSetup.mock_server_socket(own_server: true)
 
@@ -34,7 +34,7 @@ defmodule Helix.Process.Event.Process.CreatedTest do
           type: :bruteforce
         )
 
-      assert {:ok, data} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Publishable.generate_payload(event, socket)
 
       ProcessViewHelper.assert_keys(data, :full)
     end
@@ -62,7 +62,7 @@ defmodule Helix.Process.Event.Process.CreatedTest do
       refute event.target_id == attack_source_id
 
       # Attacker has full access to the output payload
-      assert {:ok, data} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Publishable.generate_payload(event, socket)
 
       ProcessViewHelper.assert_keys(data, :full)
     end
@@ -84,7 +84,7 @@ defmodule Helix.Process.Event.Process.CreatedTest do
         )
 
       # Attacker has full access to the output payload
-      assert {:ok, data} = Notificable.generate_payload(event, socket)
+      assert {:ok, data} = Publishable.generate_payload(event, socket)
 
       ProcessViewHelper.assert_keys(data, :full)
     end
@@ -119,7 +119,7 @@ defmodule Helix.Process.Event.Process.CreatedTest do
       refute event.target_id == third_server_id
 
       # Generates the payload as if `third` was receiving it
-      assert {:ok, data} = Notificable.generate_payload(event, third_socket)
+      assert {:ok, data} = Publishable.generate_payload(event, third_socket)
 
       # Third can see the full process, since the process originated at
       # `attack_source` and `third` is connected to `attack_source`.
@@ -147,8 +147,8 @@ defmodule Helix.Process.Event.Process.CreatedTest do
           type: :bruteforce
         )
 
-      # `third` never gets the notification
-      assert {:ok, data} = Notificable.generate_payload(event, third_socket)
+      # `third` never gets the publication
+      assert {:ok, data} = Publishable.generate_payload(event, third_socket)
 
       # Third-party can see the process exists, but not who created it.
       ProcessViewHelper.assert_keys(data, :partial)

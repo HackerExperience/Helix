@@ -51,8 +51,8 @@ defmodule Helix.Entity.Repo.Migrations.AddEntityDatabase do
     create index(:database_servers, [:network_id, :server_ip])
     create index(:database_servers, [:entity_id, :last_update])
     # NOTE: Index below currently not used, but probably will be once we add
-    # e.g. password reset, where we'd have to invalidate/notify all users who
-    # have that Server on the Database that it has changed IP.
+    # e.g. password reset, where we'd have to invalidate/publish to all users
+    # who have that Server on the Database that it has changed IP.
     create index(:database_servers, [:server_id])
   end
 end

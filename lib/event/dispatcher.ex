@@ -35,7 +35,7 @@ defmodule Helix.Event.Dispatcher do
 
   use HELF.Event
 
-  alias Helix.Event.NotificationHandler
+  alias Helix.Event.PublicationHandler
 
   alias Helix.Core.Listener.Event.Handler.Listener, as: ListenerHandler
   alias Helix.Account.Event, as: AccountEvent
@@ -47,6 +47,8 @@ defmodule Helix.Event.Dispatcher do
   alias Helix.Log.Event.Handler, as: LogHandler
   alias Helix.Network.Event, as: NetworkEvent
   alias Helix.Network.Event.Handler, as: NetworkHandler
+  alias Helix.Notification.Event, as: NotificationEvent
+  alias Helix.Notification.Event.Handler, as: NotificationHandler
   alias Helix.Process.Event, as: ProcessEvent
   alias Helix.Process.Event.Handler, as: ProcessHandler
   alias Helix.Server.Event, as: ServerEvent
@@ -61,12 +63,14 @@ defmodule Helix.Event.Dispatcher do
   # Global handlers
   ##############################################################################
 
-  all_events NotificationHandler, :notification_handler
+  all_events ListenerHandler, :listener_handler
 
   all_events LogHandler.Log, :handle_event,
     skip: [LogEvent.Log.Created]
 
-  all_events ListenerHandler, :listener_handler
+  all_events NotificationHandler.Notification, :notification_handler
+
+  all_events PublicationHandler, :publication_handler
 
   ##############################################################################
   # Account events
@@ -126,6 +130,14 @@ defmodule Helix.Event.Dispatcher do
   event NetworkEvent.Connection.Closed,
     ProcessHandler.TOP,
     :object_handler
+
+  ##############################################################################
+  # Notification events
+  ##############################################################################
+
+  # All
+  event NotificationEvent.Notification.Added
+  event NotificationEvent.Notification.Read
 
   ##############################################################################
   # Log events

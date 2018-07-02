@@ -14,7 +14,7 @@ defmodule Helix.Process.Event.Process do
 
     This same event may be fired again from the TOPHandler, in which case the
     allocation was successful and the process creation has been confirmed. We
-    only notify the Client if the process is confirmed as created.
+    only publish to the Client if the process is confirmed as created.
 
     If creation fails, we emit the `ProcessCreateFailedEvent`.
     """
@@ -67,7 +67,7 @@ defmodule Helix.Process.Event.Process do
     def new(event = %__MODULE__{confirmed: false}),
       do: %{event| confirmed: true}
 
-    notify do
+    publish do
 
       alias Helix.Process.Public.View.Process, as: ProcessView
 
@@ -112,10 +112,10 @@ defmodule Helix.Process.Event.Process do
         do: :noreply
 
       @doc """
-      Both gateway and destination are notified. If they are the same, obviously
-      notifies only one.
+      Both gateway and destination receive the publication. If they are the
+      same, only one publication will be sent out.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: [event.gateway_id, event.target_id]}
     end
   end
@@ -125,7 +125,13 @@ defmodule Helix.Process.Event.Process do
     `ProcessCompletedEvent` is fired after a process has met its objective, and
     the corresponding `Processable.conclusion/2` callback was executed.
 
-    It's used to notify the Client a process has finished.
+    More specifically, `ProcessCompletedEvent` is emitted right after the
+    process is deleted - because it is now completed.
+
+    It is used to publish to the Client that a process has finished. Note that
+    it *only* means the process has completed, it has absolutely no information
+    whether the process succeeded or not. This information - the actual process
+    "result" - will be sent afterwards, as it is being computed in parallel.
     """
 
     alias Helix.Process.Model.Process
@@ -144,7 +150,7 @@ defmodule Helix.Process.Event.Process do
       }
     end
 
-    notify do
+    publish do
 
       @event :process_completed
 
@@ -156,7 +162,7 @@ defmodule Helix.Process.Event.Process do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: [event.process.gateway_id, event.process.target_id]}
     end
   end
@@ -217,7 +223,7 @@ defmodule Helix.Process.Event.Process do
       }
     end
 
-    notify do
+    publish do
 
       @event :process_killed
 
@@ -232,7 +238,7 @@ defmodule Helix.Process.Event.Process do
       end
 
       @doc false
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: [event.process.gateway_id, event.process.target_id]}
     end
   end

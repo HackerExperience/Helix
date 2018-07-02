@@ -41,7 +41,7 @@ defmodule HELL.Utils do
     do: String.to_atom(a <> b)
 
   @doc """
-  Similar to `String.upcase`, but applied to an atom.
+  Similar to `String.upcase/1`, but applied to an atom.
   """
   def upcase_atom(a) when is_atom(a) do
     a
@@ -51,12 +51,22 @@ defmodule HELL.Utils do
   end
 
   @doc """
-  Similar to `String.downcase`, but applied to an atom.
+  Similar to `String.downcase/1`, but applied to an atom.
   """
   def downcase_atom(a) when is_atom(a) do
     a
     |> Atom.to_string()
     |> String.downcase()
+    |> String.to_atom()
+  end
+
+  @doc """
+  Similar to `String.capitalize/1`, but applied to an atom.
+  """
+  def capitalize_atom(a) when is_atom(a) do
+    a
+    |> Atom.to_string()
+    |> String.capitalize()
     |> String.to_atom()
   end
 

@@ -30,7 +30,7 @@ defmodule Helix.Story.Event.Step do
       }
     end
 
-    notify do
+    publish do
       @moduledoc false
 
       @event :story_step_proceeded
@@ -45,9 +45,9 @@ defmodule Helix.Story.Event.Step do
       end
 
       @doc """
-      Notifies only the player
+      Publishes only to the player
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end
@@ -84,7 +84,7 @@ defmodule Helix.Story.Event.Step do
       }
     end
 
-    notify do
+    publish do
       @moduledoc false
 
       alias HELL.Utils
@@ -109,9 +109,9 @@ defmodule Helix.Story.Event.Step do
       end
 
       @doc """
-      Notifies only the player
+      Publishes only to the player
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end

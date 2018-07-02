@@ -31,9 +31,9 @@ defmodule Helix.Story.Event.Email do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Logic of the notification that will be sent to the client once the event
+      Logic of the event that will be published to the client once the event
       `StoryEmailSentEvent` is fired.
       """
 
@@ -61,9 +61,9 @@ defmodule Helix.Story.Event.Email do
       end
 
       @doc """
-      Notify the player on his own channel.
+      Publish to the player on his own channel.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end

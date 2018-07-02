@@ -45,8 +45,8 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       # The process was created
       assert response.data == %{}
 
-      assert_push "event", top_recalcado_event, timeout()
-      assert_push "event", process_created_event, timeout()
+      [top_recalcado_event, process_created_event] =
+        wait_events [:top_recalcado, :process_created]
 
       process_id = Process.ID.cast!(process_created_event.data.process_id)
 
@@ -81,7 +81,7 @@ defmodule Helix.Test.Features.Process.Lifecycle do
       {socket, %{gateway: gateway, destination: destination}} =
         ChannelSetup.join_server()
 
-      # Connect to gateway channel too, so we can receive gateway notifications
+      # Connect to gateway channel too, so we can receive gateway publications
       ChannelSetup.join_server(socket: socket, own_server: true)
 
       # Let's cheat and give ourselves (and destination) a decent link

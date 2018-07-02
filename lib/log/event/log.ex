@@ -27,7 +27,7 @@ defmodule Helix.Log.Event.Log do
       }
     end
 
-    notify do
+    publish do
 
       alias HELL.ClientUtils
 
@@ -44,7 +44,7 @@ defmodule Helix.Log.Event.Log do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.server_id}
     end
   end
@@ -77,7 +77,7 @@ defmodule Helix.Log.Event.Log do
       }
     end
 
-    notify do
+    publish do
 
       alias HELL.ClientUtils
 
@@ -94,7 +94,7 @@ defmodule Helix.Log.Event.Log do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.server_id}
     end
   end
@@ -125,7 +125,7 @@ defmodule Helix.Log.Event.Log do
       }
     end
 
-    notify do
+    publish do
 
       @event :log_deleted
 
@@ -138,7 +138,7 @@ defmodule Helix.Log.Event.Log do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.server_id}
     end
   end

@@ -13,6 +13,7 @@ defmodule Helix.Test.Features.File.TransferTest do
   alias Helix.Software.Query.File, as: FileQuery
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Account.Helper, as: AccountHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
@@ -36,8 +37,13 @@ defmodule Helix.Test.Features.File.TransferTest do
           socket: socket
         )
 
-      # Connect to gateway channel too, so we can receive gateway notifications
+      account_id = AccountHelper.cast_from_entity(entity.entity_id)
+
+      # Connect to gateway channel too, so we can receive gateway publications
       ChannelSetup.join_server(socket: socket, own_server: true)
+
+      # Connect to account channel, so we can receive notifications
+      ChannelSetup.join_account(socket: socket, account_id: account_id)
 
       gateway_storage = SoftwareHelper.get_storage(gateway)
       {dl_file, _} = SoftwareSetup.file(server_id: destination.server_id)
@@ -73,8 +79,8 @@ defmodule Helix.Test.Features.File.TransferTest do
       TOPHelper.force_completion(process)
 
       # Note we are subscribed to events on both the `gateway` and `destination`
-      [file_downloaded_event, file_added_event] =
-        wait_events [:file_downloaded, :file_added]
+      [file_downloaded_event, file_added_event, notification_added_event] =
+        wait_events [:file_downloaded, :file_added, :notification_added]
 
       # Process no longer exists
       refute ProcessQuery.fetch(process.process_id)
@@ -93,6 +99,18 @@ defmodule Helix.Test.Features.File.TransferTest do
 
       # Client received the FileAddedEvent
       assert file_added_event.data.file.id == to_string(new_file.file_id)
+
+      # Client received the NotificationAddedEvent
+      assert notification_added_event.data.class == :server
+      assert notification_added_event.data.code == :file_downloaded
+
+      # Notification contains required data
+      notification_data = notification_added_event.data.data
+      assert notification_data.id == to_string(new_file.file_id)
+      assert notification_data.name == new_file.name
+      assert notification_data.type == to_string(new_file.software_type)
+      assert notification_data.extension
+      assert notification_data.version
 
       # Now let's check the log generation
 
@@ -137,7 +155,7 @@ defmodule Helix.Test.Features.File.TransferTest do
           socket: socket
         )
 
-      # Connect to gateway channel too, so we can receive gateway notifications
+      # Connect to gateway channel too, so we can receive gateway publications
       ChannelSetup.join_server(socket: socket, own_server: true)
 
       destination_storage = SoftwareHelper.get_storage(destination)

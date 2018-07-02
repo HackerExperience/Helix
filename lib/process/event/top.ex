@@ -38,7 +38,7 @@ defmodule Helix.Process.Event.TOP do
     The `TOPRecalcadoEvent` is fired every time a TOP recalculation takes place
     in a server.
 
-    It's quite important to notify the Client that the TOP has changed.
+    It's quite important to publish to the Client that the TOP has changed.
     """
 
     alias Helix.Server.Model.Server
@@ -58,11 +58,11 @@ defmodule Helix.Process.Event.TOP do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies a client that the TOP has changed. Instead of sending a diff of
-      what has changed, we send the whole TOP, as the Client would receive if it
-      were logging in for the first time.
+      Publishes to the Client(s) that the TOP has changed. Instead of sending a
+      diff of what has changed, we send the whole TOP, as the Client would
+      receive if it were logging in for the first time.
       """
 
       alias Helix.Process.Public.Index, as: ProcessIndex
@@ -75,7 +75,7 @@ defmodule Helix.Process.Event.TOP do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.server_id}
     end
   end

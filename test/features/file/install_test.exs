@@ -26,7 +26,7 @@ defmodule Helix.Test.Features.File.InstallTest do
         %{gateway: gateway, destination: destination, gateway_entity: entity}
       } = ChannelSetup.join_server()
 
-      # Connect to the account channel so we can receive Account notifications
+      # Connect to the account channel so we can receive Account publications
       ChannelSetup.join_account(account_id: entity.entity_id, socket: socket)
 
       file = SoftwareSetup.virus!(server_id: destination.server_id)

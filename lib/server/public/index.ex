@@ -2,6 +2,7 @@ defmodule Helix.Server.Public.Index do
 
   import HELL.Macros
 
+  alias Helix.Account.Model.Account
   alias Helix.Cache.Query.Cache, as: CacheQuery
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
@@ -11,6 +12,7 @@ defmodule Helix.Server.Public.Index do
   alias Helix.Network.Model.Tunnel
   alias Helix.Network.Public.Index, as: NetworkIndex
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
+  alias Helix.Notification.Public.Index.Server, as: ServerNotificationIndex
   alias Helix.Process.Public.Index, as: ProcessIndex
   alias Helix.Software.Model.Storage
   alias Helix.Software.Public.Index, as: FileIndex
@@ -79,6 +81,7 @@ defmodule Helix.Server.Public.Index do
       hardware: HardwareIndex.index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.index,
+      notifications: ServerNotificationIndex.index
     }
 
   @type rendered_gateway ::
@@ -93,6 +96,7 @@ defmodule Helix.Server.Public.Index do
       hardware: HardwareIndex.rendered_index,
       processes: ProcessIndex.index,
       tunnels: NetworkIndex.rendered_index,
+      notifications: ServerNotificationIndex.rendered_index
     }
 
   @type remote ::
@@ -103,7 +107,8 @@ defmodule Helix.Server.Public.Index do
       storages: FileIndex.index,
       hardware: HardwareIndex.index,
       processes: ProcessIndex.index,
-      tunnels: NetworkIndex.index
+      tunnels: NetworkIndex.index,
+      notifications: ServerNotificationIndex.index
     }
 
   @type rendered_remote ::
@@ -114,7 +119,8 @@ defmodule Helix.Server.Public.Index do
       storages: FileIndex.rendered_index,
       hardware: HardwareIndex.rendered_index,
       processes: ProcessIndex.index,
-      tunnels: NetworkIndex.rendered_index
+      tunnels: NetworkIndex.rendered_index,
+      notifications: ServerNotificationIndex.rendered_index
     }
 
   @spec index(Entity.t) ::
@@ -294,25 +300,24 @@ defmodule Helix.Server.Public.Index do
   Common values to both local and remote servers being generated.
   """
   defp server_common(server = %Server{}, entity_id) do
-    {:ok, nips} = CacheQuery.from_server_get_nips(server.server_id)
+    server_id = server.server_id
+    account_id = Account.cast_from_entity(entity_id)
 
-    log_index = LogIndex.index(server.server_id)
-    filesystem_index = FileIndex.index(server.server_id)
-    tunnel_index = NetworkIndex.index(server.server_id)
-    process_index = ProcessIndex.index(server.server_id, entity_id)
+    {:ok, nips} = CacheQuery.from_server_get_nips(server_id)
 
     main_storage_id =
-      server.server_id
+      server_id
       |> CacheQuery.from_server_get_storages!()
       |> List.first()
 
     %{
       nips: nips,
-      logs: log_index,
       main_storage: main_storage_id,
-      storages: filesystem_index,
-      processes: process_index,
-      tunnels: tunnel_index
+      logs: LogIndex.index(server_id),
+      storages: FileIndex.index(server_id),
+      processes: ProcessIndex.index(server_id, entity_id),
+      tunnels: NetworkIndex.index(server_id),
+      notifications: ServerNotificationIndex.index(server_id, account_id)
     }
   end
 
@@ -328,12 +333,13 @@ defmodule Helix.Server.Public.Index do
 
     %{
       nips: nips,
-      logs: LogIndex.render_index(server.logs),
       main_storage: server.main_storage |> to_string(),
+      logs: LogIndex.render_index(server.logs),
       storages: FileIndex.render_index(server.storages),
       hardware: HardwareIndex.render_index(server.hardware),
       processes: server.processes,
-      tunnels: NetworkIndex.render_index(server.tunnels)
+      tunnels: NetworkIndex.render_index(server.tunnels),
+      notifications: ServerNotificationIndex.render_index(server.notifications)
     }
   end
 

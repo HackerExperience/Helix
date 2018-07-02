@@ -28,9 +28,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Pushes the notification to the Client, so it can display the new file.
+      Publishes the event to the Client, so it can display the new file.
       """
 
       alias Helix.Software.Public.Index, as: SoftwareIndex
@@ -45,7 +45,7 @@ defmodule Helix.Software.Event.File do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: [event.server_id]}
     end
   end
@@ -76,9 +76,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Pushes the notification to the Client, so it can remove the deleted file.
+      Publishes the event to the Client, so it can remove the deleted file.
       """
 
       @event :file_deleted
@@ -91,7 +91,7 @@ defmodule Helix.Software.Event.File do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: [event.server_id]}
     end
 
@@ -158,9 +158,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the Client that a file has been downloaded.
+      Publishes to the Client that a file has been downloaded.
       """
 
       alias Helix.Software.Public.Index, as: SoftwareIndex
@@ -176,9 +176,9 @@ defmodule Helix.Software.Event.File do
       end
 
       @doc """
-      We only notify the "downloader" server.
+      We only publish to the "downloader" server.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.to_server_id}
     end
 
@@ -234,6 +234,37 @@ defmodule Helix.Software.Event.File do
           msg_endpoint: msg_endpoint
         }
       end
+    end
+
+    notification do
+
+      @moduledoc """
+      # TODO: Move documentation below to somewhere else.
+      # Mirrored Notifications
+
+      The `FileDownloadedNotification` will notify the user that a download has
+      completed. It has a peculiarity from a usability standpoint: it is what
+      we call a *Mirrored Notification*.
+
+      Suppose a player has just downloaded a file. In which server - the one
+      he downloaded from, or the one he downloaded to - should we display the
+      notification?
+
+      We've decided to shown on *both* servers, however if the player reads the
+      notification from one server, the other one is automatically mark as read.
+
+      The implementation of this Mirrored Notification is made exclusively on
+      the client, however I'm explaining it here for the sake of documentation.
+
+      Note several other notifications may be mirrored, including the opposite
+      of `FileDownloadedNotification`: `FileUploadedNotification`.
+      """
+
+      @class :server
+      @code :file_downloaded
+
+      def whom_to_notify(event),
+        do: %{account_id: event.entity_id, server_id: event.to_server_id}
     end
 
     listenable do
@@ -347,9 +378,9 @@ defmodule Helix.Software.Event.File do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the Client that a file has been uploaded.
+      Publishes to the Client that a file has been uploaded.
       """
 
       alias Helix.Software.Public.Index, as: SoftwareIndex
@@ -365,9 +396,9 @@ defmodule Helix.Software.Event.File do
       end
 
       @doc """
-      We only notify the "uploader" server.
+      We only publish to the "uploader" server.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{server: event.from_server_id}
     end
 

@@ -41,7 +41,7 @@ defmodule Helix.Server.Event.Server.Password do
       }
     end
 
-    notify do
+    publish do
 
       @event :server_password_acquired
 
@@ -59,8 +59,18 @@ defmodule Helix.Server.Event.Server.Password do
       It is always sent to the Account channel, so we don't need to filter data
       to unwanted listeners, like is the case for Server-channel events.
       """
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
+    end
+
+    notification do
+
+      @class :account
+      @code :server_password_acquired
+
+      def whom_to_notify(event) do
+        event.entity_id
+      end
     end
 
     listenable do

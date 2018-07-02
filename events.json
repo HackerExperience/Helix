@@ -127,9 +127,9 @@
         "Steppable (custom)"
       ]
     },
-    "Notification": {
+    "Publication": {
       "receives": ["All"],
-      "emits": ["Notificable (custom)"]
+      "emits": ["Publishable (custom)"]
     }
   },
   "flows": {
@@ -173,7 +173,7 @@
     "File.Install.Processed",
     "File.Transfer.Processed"
   ],
-  "notificable": [
+  "publishable": [
     "Log.Created",
     "Log.Modified",
     "Log.Deleted",

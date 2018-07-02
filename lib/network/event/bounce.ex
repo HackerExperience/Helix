@@ -29,10 +29,10 @@ defmodule Helix.Network.Event.Bounce do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that a new bounce was created, so the client-side data
-      may be updated.
+      Publishes to the Client that a new bounce was created, so the client-side
+      data may be updated.
       """
 
       alias Helix.Client.Renderer, as: ClientRenderer
@@ -45,7 +45,7 @@ defmodule Helix.Network.Event.Bounce do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.bounce.entity_id}
     end
   end
@@ -75,10 +75,10 @@ defmodule Helix.Network.Event.Bounce do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that the bounce creation attempt has failed, so the
-      client who made the request can notify the failure to the player.
+      Publishes to the client that the bounce creation attempt has failed, so
+      the client who made the request can describe the failure to the player.
       """
 
       @event :bounce_create_failed
@@ -89,7 +89,7 @@ defmodule Helix.Network.Event.Bounce do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end
@@ -121,9 +121,9 @@ defmodule Helix.Network.Event.Bounce do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that the bounce was updated.
+      Publishes to the client that the bounce was updated.
       """
 
       alias Helix.Client.Renderer, as: ClientRenderer
@@ -136,7 +136,7 @@ defmodule Helix.Network.Event.Bounce do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.bounce.entity_id}
     end
   end
@@ -166,10 +166,10 @@ defmodule Helix.Network.Event.Bounce do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that the bounce update attempt has failed, so the
-      client who made the request can notify the failure to the player.
+      Publishes to the client that the bounce update attempt has failed, so the
+      client who made the request can describe the failure to the player.
       """
 
       @event :bounce_update_failed
@@ -180,7 +180,7 @@ defmodule Helix.Network.Event.Bounce do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end
@@ -211,9 +211,9 @@ defmodule Helix.Network.Event.Bounce do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that the bounce was removed.
+      Publishes to the client that the bounce was removed.
       """
 
       @event :bounce_removed
@@ -224,7 +224,7 @@ defmodule Helix.Network.Event.Bounce do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end
@@ -254,10 +254,10 @@ defmodule Helix.Network.Event.Bounce do
       }
     end
 
-    notify do
+    publish do
       @moduledoc """
-      Notifies the client that the bounce removal attempt has failed, so the
-      client who made the request can notify the failure to the player.
+      Publishes to the Client that the bounce removal attempt has failed, so the
+      Client who made the request can describe the failure to the player.
       """
 
       @event :bounce_remove_failed
@@ -268,7 +268,7 @@ defmodule Helix.Network.Event.Bounce do
         {:ok, data}
       end
 
-      def whom_to_notify(event),
+      def whom_to_publish(event),
         do: %{account: event.entity_id}
     end
   end

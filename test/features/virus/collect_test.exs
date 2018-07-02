@@ -76,7 +76,7 @@ defmodule Helix.Test.Features.Virus.CollectTest do
       [process_created1, process_created2] =
         wait_events [:process_created, :process_created]
 
-      # Notifications seem OK
+      # Publications seem OK
       assert process_created1.data.type == "virus_collect"
       assert process_created1.meta.request_id == params["request_id"]
       assert process_created2.data.type == "virus_collect"

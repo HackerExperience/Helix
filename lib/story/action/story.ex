@@ -56,22 +56,22 @@ defmodule Helix.Story.Action.Story do
   def lock_reply(step, reply_id),
     do: StepInternal.lock_reply(step, reply_id)
 
-  @spec notify_step(Step.t, Step.t) ::
+  @spec publish_step(Step.t, Step.t) ::
     [StepProceededEvent.t]
   @doc """
-  Generates the StepProceededEvent, used to notify the client about the progress
-  made.
+  Generates the StepProceededEvent, used to publish to the Client about the
+  progress made.
   """
-  def notify_step(prev_step, next_step),
+  def publish_step(prev_step, next_step),
     do: [StepProceededEvent.new(prev_step, next_step)]
 
-  @spec notify_restart(Step.t, atom, Step.email_id, Step.email_meta) ::
+  @spec publish_restart(Step.t, atom, Step.email_id, Step.email_meta) ::
     [StepRestartedEvent.t]
   @doc """
-  Generates the StepRestartedEvent, used to notify the client that the step has
-  been restarted
+  Generates the StepRestartedEvent, used to publish to the Client that the step
+  has been restarted
   """
-  def notify_restart(step, reason, checkpoint, meta),
+  def publish_restart(step, reason, checkpoint, meta),
     do: [StepRestartedEvent.new(step, reason, checkpoint, meta)]
 
   @spec send_email(Step.t, Step.email_id, Step.email_meta) ::

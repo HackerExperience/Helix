@@ -4,7 +4,7 @@ defmodule Helix.Websocket do
   use Helix.Logger
 
   alias Phoenix.Socket
-  alias Helix.Event.Notificable
+  alias Helix.Event.Publishable
   alias Helix.Account.Model.AccountSession
   alias Helix.Account.Action.Session, as: SessionAction
   alias Helix.Client.Model.Client
@@ -177,15 +177,15 @@ defmodule Helix.Websocket do
   end
 
   @doc """
-  Generic notification ("event going out") handler. It guides the notification
-  through the Notificable flow, making sure the payload sent to the client is
+  Generic publication ("event going out") handler. It guides the event through
+  the Publishable flow, making sure the payload sent to the client is
   filtered/censored according to each player's context.
 
   Once everything is ready, it pushes the payload to the client by using the
   function pointing to the Channel's `push` method, passed as argument.
   """
   def handle_event(event, socket, channel_push) do
-    case Notificable.Flow.generate_event(event, socket) do
+    case Publishable.Flow.generate_event(event, socket) do
       {:ok, payload} ->
         channel_push.(socket, "event", payload)
 

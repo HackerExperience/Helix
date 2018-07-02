@@ -28,7 +28,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
   @doc """
   Callback executed when a bruteforce process is completed. It will attempt to
   retrieve the target server password, an in case of success will emit a new
-  event that will 1) notify the client and 2) update the Database.
+  event that will 1) publish to the client and 2) update the Database.
 
   Emits: ServerPasswordAcquiredEvent | CrackerBruteforceFailedEvent
   """
@@ -64,7 +64,7 @@ defmodule Helix.Software.Event.Handler.Cracker do
   process/connection.
 
   Note that this function only handles the process *conclusion*. The actual
-  notification of the overflow result to the user is done on more specific
+  publication of the overflow result to the user is done on more specific
   events, e.g. the `BankTokenAcquiredEvent`.
   """
   def overflow_conclusion(
@@ -94,9 +94,9 @@ defmodule Helix.Software.Event.Handler.Cracker do
     | term
   docp """
   Overflow attack on wire transfer generates an access token for the transfer's
-  source account. Once the token is obtained, an event is emitted to notify the
-  client.
-  This function handles the conclusion of the event. Actual notification of the
+  source account. Once the token is obtained, an event is emitted so the Client
+  can receive the publication.
+  This function handles the conclusion of the event. Actual publication of the
   result (i.e. which token was obtained through the attack) is managed by other
   event handlers.
 
@@ -123,8 +123,9 @@ defmodule Helix.Software.Event.Handler.Cracker do
 
   docp """
   Overflow attack on bank login connection generates an access token for the
-  account. Once the token is obtained, an event is emitted to notify the client.
-  This function handles the conclusion of the event. Actual notification of the
+  account. Once the token is obtained, an event is emitted so the Client can
+  receive the publication.
+  This function handles the conclusion of the event. Actual publication of the
   result (i.e. which token was obtained through the attack) is managed by other
   event handlers.
 

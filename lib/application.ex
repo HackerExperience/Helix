@@ -83,6 +83,7 @@ defmodule Helix.Application.DomainsSupervisor do
       supervisor(Helix.Event.Supervisor, []),
       supervisor(Helix.Log.Supervisor, []),
       supervisor(Helix.Network.Supervisor, []),
+      supervisor(Helix.Notification.Supervisor, []),
       supervisor(Helix.Process.Supervisor, []),
       supervisor(Helix.Server.Supervisor, []),
       supervisor(Helix.Software.Supervisor, []),

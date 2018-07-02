@@ -2,7 +2,8 @@ import Helix.Websocket.Channel
 
 channel Helix.Account.Websocket.Channel.Account do
   @moduledoc """
-  Channel to notify an user of an action that affects them.
+  Two-way channel to receive requests and send out publications to an user about
+  actions that affects them.
   """
 
   alias Helix.Account.Websocket.Channel.Account.Join, as: AccountJoin
@@ -13,6 +14,7 @@ channel Helix.Account.Websocket.Channel.Account do
   alias Helix.Network.Websocket.Requests.Bounce.Create, as: BounceCreateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Update, as: BounceUpdateRequest
   alias Helix.Network.Websocket.Requests.Bounce.Remove, as: BounceRemoveRequest
+  alias Helix.Notification.Websocket.Requests.Read, as: NotificationReadRequest
   alias Helix.Software.Websocket.Requests.Virus.Collect, as: VirusCollectRequest
   alias Helix.Story.Websocket.Requests.Email.Reply, as: EmailReplyRequest
 
@@ -59,7 +61,7 @@ channel Helix.Account.Websocket.Channel.Account do
   topic "client.setup", ClientSetupProxyRequest
 
   @doc """
-  Notifies the backend that `action` has been performed by the player.
+  Notifies Helix that `action` has been performed by the player.
 
   Params:
     *action: Action performed by the player. [0]
@@ -202,9 +204,41 @@ channel Helix.Account.Websocket.Channel.Account do
 
   Input:
   + base errors
-
   """
   topic "bounce.remove", BounceRemoveRequest
+
+  @doc """
+  Marks one (or all) notifications as read.
+
+  Params:
+    - notification_id: Which notification to mark as read. See [1].
+    - class: Which class the notification belongs to. See [1].
+
+  [1] - This request can be used to mark a single notification as read, or all
+    notifications within a class as read. If the `notification_id` param is
+    given, we assume only that notification must be marked as read. On the other
+    hand, if only `class` is given, we assume all notifications of that class
+    shall be marked as read. Only one of them must be given. If both are given,
+    we blow up and assume the client did not read this documentation.
+
+  Returns: :ok
+
+  Events:
+  - notification_read_event: Emitted when notification(s) are successfully read.
+
+  Errors:
+
+  Henforcer:
+  - notification_not_found: The given `notification_id` does not exist.
+  - notification_not_belongs: Client attempted to read a notification that
+    belongs to another user.
+
+  Input:
+  - read_the_docs: Client did not read the docs. See [1].
+  - bad_class: The given class is not valid.
+  + base errors
+  """
+  topic "notification.read", NotificationReadRequest
 
   @doc """
   Collects money off of active viruses.

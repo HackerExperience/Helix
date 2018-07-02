@@ -1,15 +1,22 @@
 defmodule Helix.Core.Validator do
 
+  alias Helix.Notification.Model.Notification
+
   @type input_type ::
     :password
     | :hostname
     | :bounce_name
     | :reply_id
+    | :notification_id
+
+  @type validated_inputs ::
+    String.t
+    | Notification.Validator.validated_inputs
 
   @regex_hostname ~r/^[a-zA-Z0-9-_.@#]{1,20}$/
 
   @spec validate_input(input :: String.t, input_type, opts :: term) ::
-    {:ok, validated_input :: String.t}
+    {:ok, validated_inputs}
     | :error
   @doc """
   This is a generic function meant to validate external input that does not
@@ -32,6 +39,11 @@ defmodule Helix.Core.Validator do
 
   def validate_input(input, :reply_id, _),
     do: validate_reply_id(input)
+
+  def validate_input(input, :notification_id, opts),
+    do: Notification.Validator.validate_id(input, opts)
+
+  # Implementations
 
   defp validate_hostname(v) when not is_binary(v),
     do: :error

@@ -8,6 +8,7 @@ defmodule Helix.Account.Model.Account do
 
   alias Comeonin.Bcrypt
   alias Ecto.Changeset
+  alias Helix.Entity.Model.Entity
 
   @type email :: String.t
   @type username :: String.t
@@ -88,6 +89,14 @@ defmodule Helix.Account.Model.Account do
   """
   def check_password(account = %__MODULE__{}, pass),
     do: Bcrypt.checkpw(pass, account.password)
+
+  @spec cast_from_entity(Entity.id) ::
+    id
+  @doc """
+  "Translates" an Entity.id into Account.id
+  """
+  def cast_from_entity(entity_id = %Entity.ID{}),
+    do: __MODULE__.ID.cast!(to_string(entity_id))
 
   @spec generic_validations(Changeset.t) ::
     Changeset.t

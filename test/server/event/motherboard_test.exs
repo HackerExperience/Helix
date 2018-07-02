@@ -2,7 +2,7 @@ defmodule Helix.Server.Event.MotherboardTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Event.Notificable
+  alias Helix.Event.Publishable
 
   alias Helix.Test.Channel.Setup, as: ChannelSetup
   alias Helix.Test.Event.Setup, as: EventSetup
@@ -14,7 +14,7 @@ defmodule Helix.Server.Event.MotherboardTest do
     test "generates full hardware index on gateway (local)" do
       event = EventSetup.Server.motherboard_updated()
 
-      assert {:ok, data} = Notificable.generate_payload(event, @socket_local)
+      assert {:ok, data} = Publishable.generate_payload(event, @socket_local)
 
       # Returns full data about the motherboard
       assert data.motherboard.motherboard_id
@@ -25,7 +25,7 @@ defmodule Helix.Server.Event.MotherboardTest do
     test "generates partial hardware index on endpoint (remote)" do
       event = EventSetup.Server.motherboard_updated()
 
-      assert {:ok, data} = Notificable.generate_payload(event, @socket_remote)
+      assert {:ok, data} = Publishable.generate_payload(event, @socket_remote)
 
       # Does not return information about the motherboard
       refute data.motherboard

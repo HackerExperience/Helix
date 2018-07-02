@@ -25,6 +25,7 @@ defmodule Helix.Account.Public.IndexTest do
       assert index.bounces == [bounce]
       assert index.bank_accounts == [bank_account]
       assert index.database
+      assert index.notifications
     end
   end
 
@@ -62,6 +63,9 @@ defmodule Helix.Account.Public.IndexTest do
 
       # Database was rendered (full test at DatabaseIndex)
       assert rendered.database
+
+      # Notifications were rendered (full test at AccountNotificationIndex)
+      assert rendered.notifications
     end
   end
 end

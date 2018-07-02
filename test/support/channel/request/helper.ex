@@ -5,6 +5,10 @@ defmodule Helix.Test.Channel.Request.Helper do
 
   @mock_socket ChannelSetup.mock_account_socket()
 
+  @doc """
+  Mocks a request. By using this helper, you can bypass any checks and directly
+  create a request with custom `params` and `meta`.
+  """
   def mock_request(module, params, meta \\  %{}) do
     %{
       __struct__: module,

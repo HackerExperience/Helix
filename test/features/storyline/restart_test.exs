@@ -56,14 +56,14 @@ defmodule Helix.Test.Features.Storyline.Restart do
       |> FileInternal.fetch()
       |> FileInternal.delete()
 
-      # And notify the user...
+      # And publish to the user...
       step.meta.cracker_id
       |> EventSetup.Software.file_deleted(step.meta.server_id)
       |> EventHelper.emit()
 
       [story_step_restarted] = wait_events [:story_step_restarted]
 
-      # The client received the notification about the new step
+      # The client received the publication about the new step
       assert story_step_restarted.data.reason == "file_deleted"
       assert story_step_restarted.data.checkpoint == "download_cracker1"
       assert story_step_restarted.data.step == to_string(step.name)

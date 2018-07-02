@@ -193,6 +193,7 @@ defmodule Helix.Server.Public.IndexTest do
       assert gateway.logs
       assert gateway.processes
       assert gateway.tunnels
+      assert gateway.notifications
     end
   end
 
@@ -220,6 +221,7 @@ defmodule Helix.Server.Public.IndexTest do
       assert rendered.logs
       assert rendered.processes
       assert rendered.tunnels
+      assert rendered.notifications
     end
   end
 
@@ -245,6 +247,7 @@ defmodule Helix.Server.Public.IndexTest do
       assert remote.logs
       assert remote.processes
       assert remote.tunnels
+      assert remote.notifications
     end
   end
 
@@ -269,10 +272,10 @@ defmodule Helix.Server.Public.IndexTest do
       assert rendered.logs
       assert rendered.processes
       assert rendered.tunnels
+      assert rendered.notifications
     end
   end
 
-  defp find_endpoint(endpoints, %{network_id: network_id, ip: ip}) do
-    Enum.find(endpoints, &(&1.network_id == network_id and &1.ip == ip))
-  end
+  defp find_endpoint(endpoints, %{network_id: network_id, ip: ip}),
+    do: Enum.find(endpoints, &(&1.network_id == network_id and &1.ip == ip))
 end

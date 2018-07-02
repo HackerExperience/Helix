@@ -6,6 +6,7 @@ defmodule Helix.Account.Public.Index do
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Query.Bounce, as: BounceQuery
+  alias Helix.Notification.Public.Index.Account, as: AccountNotificationIndex
   alias Helix.Server.Model.Server
   alias Helix.Universe.Bank.Model.BankAccount
   alias Helix.Universe.Bank.Query.Bank, as: BankQuery
@@ -18,7 +19,8 @@ defmodule Helix.Account.Public.Index do
       inventory: InventoryIndex.index,
       bounces: [Bounce.t],
       database: DatabaseIndex.index,
-      bank_accounts: [BankAccount.t]
+      bank_accounts: [BankAccount.t],
+      notifications: AccountNotificationIndex.index
     }
 
   @type rendered_index ::
@@ -27,7 +29,8 @@ defmodule Helix.Account.Public.Index do
       inventory: InventoryIndex.rendered_index,
       bounces: [ClientRenderer.rendered_bounce],
       database: DatabaseIndex.rendered_index,
-      bank_accounts: [rendered_bank_account]
+      bank_accounts: [rendered_bank_account],
+      notifications: AccountNotificationIndex.rendered_index
     }
 
   @typep rendered_bank_account ::
@@ -56,7 +59,8 @@ defmodule Helix.Account.Public.Index do
       inventory: InventoryIndex.index(entity),
       bounces: bounces,
       database: DatabaseIndex.index(entity),
-      bank_accounts: BankQuery.get_accounts(account_id)
+      bank_accounts: BankQuery.get_accounts(account_id),
+      notifications: AccountNotificationIndex.index(account_id)
     }
   end
 
@@ -68,7 +72,8 @@ defmodule Helix.Account.Public.Index do
       inventory: InventoryIndex.render_index(index.inventory),
       bounces: Enum.map(index.bounces, &ClientRenderer.render_bounce/1),
       database: DatabaseIndex.render_index(index.database),
-      bank_accounts: Enum.map(index.bank_accounts, &render_bank_account/1)
+      bank_accounts: Enum.map(index.bank_accounts, &render_bank_account/1),
+      notifications: AccountNotificationIndex.render_index(index.notifications)
     }
   end
 
