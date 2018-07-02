@@ -52,7 +52,7 @@ defmodule Helix.Entity.Model.Entity do
     |> cast(params, @creation_fields)
     |> validate_required(@creation_fields)
     |> validate_inclusion(:entity_type, EntityType.possible_types())
-    |> cast_pk(:entity_id, params.entity_id)
+    |> put_change(:entity_id, params.entity_id)
   end
 
   query do

@@ -7,6 +7,12 @@ defmodule HELL.ID do
 
     quote do
 
+      @type id :: __MODULE__.ID.t
+      @type idt :: id | %__MODULE__{unquote(field) => id}
+      @type idtb :: idt | String.t
+
+      @primary_key false
+
       defmodule ID do
         @behaviour Ecto.Type
 
@@ -75,15 +81,13 @@ defmodule HELL.ID do
         def dump(_),
           do: :error
 
-        def generate do
-          generate(%{}, :log)
-        end
-
+        @doc false
         def generate(domain) when is_tuple(domain) or is_atom(domain),
           do: generate(%{}, domain)
         def generate(heritage, domain),
           do: %__MODULE__{id: Helix.ID.generate(heritage, domain)}
 
+        @doc false
         def get_field,
           do: @field
 
@@ -98,12 +102,6 @@ defmodule HELL.ID do
         end
 
       end
-
-      @type id :: __MODULE__.ID.t
-      @type idt :: id | %__MODULE__{unquote(field) => id}
-      @type idtb :: idt | String.t
-
-      @primary_key false
     end
   end
 

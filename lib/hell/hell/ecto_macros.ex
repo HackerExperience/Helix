@@ -40,12 +40,12 @@ defmodule HELL.Ecto.Macros do
     end
   end
 
-  defmacro cast_pk(changeset, field, pk) do
-    quote do
-      put_change(unquote(changeset), unquote(field), unquote(pk))
-    end
-  end
+  @doc """
+  Generates and then inserts the Helix.ID into the changeset.
 
+  A custom ID module may be specified at `opts`, otherwise __CALLER__.ID shall
+  be used.
+  """
   defmacro put_pk(changeset, heritage, domain, opts \\ unquote([])) do
     module = get_pk_module(opts, __CALLER__.module)
 
