@@ -2,7 +2,6 @@ defmodule Helix.Story.Query.StoryTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Story.Query.Story, as: StoryQuery
 
   alias Helix.Test.Entity.Helper, as: EntityHelper

@@ -189,7 +189,7 @@ defmodule Helix.ID do
     d = ID.Domain.get_domain(domain)
 
     gp <> p <> t <> o <> d
-    |> ID.Utils.hex_to_id()
+    |> ID.Utils.bin_to_id()
   end
 
   def hash_time do

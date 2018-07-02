@@ -30,22 +30,22 @@ defmodule Helix.Universe.NPC.Model.Seed do
 
   @ids %{
     "DC0" => %{
-      npc: "2::920e:c06c:abea:b249:a158",
-      servers: ["10::15c1:d147:47f9:b4b2:cbbd"]
+      npc: "ffff:000e:af12:a800:184b:3116:3b09:d61a",
+      servers: ["ffe0:f12:a827:5800:1868:d1d3:912:6825"]
     },
     "Bank1" => %{
-      npc: "2::920e:c06c:abea:b249:a159",
+      npc: "ffff:100e:af12:a800:184b:3116:3b09:d61a",
       servers: [
-        "10::15c1:d147:47f9:b4b2:cbbe",
-        "10::15c1:d147:47f9:b4b2:cbbf",
-        "10::15c1:d147:47f9:b4b2:cbc0"
+        "ffe2:f12:a827:5800:1870:38a5:2462:3925",
+        "ffe2:f12:a827:5800:1871:ebec:5461:de25",
+        "ffe2:f12:a827:5800:1872:7abd:b7b1:a725"
       ]
     },
     "Bank2" => %{
-      npc: "2::920e:c06c:abea:b249:a160",
+      npc: "ffff:200e:af12:a800:184b:3116:3b09:d61a",
       servers: [
-        "10::15c1:d147:47f9:b4b2:cbc0",
-        "10::15c1:d147:47f9:b4b2:cbc1",
+        "ffe4:f12:a827:5800:1875:3388:ab69:7425",
+        "ffe4:f12:a827:5800:1875:ed3e:5406:7925",
       ]
     }
   }

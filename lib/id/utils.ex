@@ -74,21 +74,21 @@ defmodule Helix.ID.Utils do
     |> String.pad_leading(size, "0")
   end
 
-  @spec hex_to_id(binary) ::
+  @spec bin_to_id(binary) ::
     ID.id
   @doc """
-  Converts the given `hex` string into the internal ID (tuple) format.
+  Converts the given `bin` string into the internal ID (tuple) format.
   """
-  def hex_to_id(hex) do
+  def bin_to_id(bin) do
     {
-      String.slice(hex, 0..15) |> Integer.parse(2) |> elem(0),
-      String.slice(hex, 16..31) |> Integer.parse(2) |> elem(0),
-      String.slice(hex, 32..47) |> Integer.parse(2) |> elem(0),
-      String.slice(hex, 48..63) |> Integer.parse(2) |> elem(0),
-      String.slice(hex, 64..79) |> Integer.parse(2) |> elem(0),
-      String.slice(hex, 80..95) |> Integer.parse(2) |> elem(0),
-      String.slice(hex, 96..111) |> Integer.parse(2) |> elem(0),
-      String.slice(hex, 112..128) |> Integer.parse(2) |> elem(0)
+      String.slice(bin, 0..15) |> Integer.parse(2) |> elem(0),
+      String.slice(bin, 16..31) |> Integer.parse(2) |> elem(0),
+      String.slice(bin, 32..47) |> Integer.parse(2) |> elem(0),
+      String.slice(bin, 48..63) |> Integer.parse(2) |> elem(0),
+      String.slice(bin, 64..79) |> Integer.parse(2) |> elem(0),
+      String.slice(bin, 80..95) |> Integer.parse(2) |> elem(0),
+      String.slice(bin, 96..111) |> Integer.parse(2) |> elem(0),
+      String.slice(bin, 112..128) |> Integer.parse(2) |> elem(0)
     }
   end
 
