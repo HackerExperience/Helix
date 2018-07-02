@@ -190,9 +190,17 @@ defmodule Helix.IDTest do
       # Note that these values were tuned while stressing the system (with cross
       # compilations and dialyzer verifications). Under normal load, it should
       # take half of the time listed below.
-      assert time_without_heritage <= 250
-      assert time_with_parent <= 350
-      assert time_with_grandparent <= 450
+      assert time_without_heritage <= 250 * env_multiplier()
+      assert time_with_parent <= 350 * env_multiplier()
+      assert time_with_grandparent <= 450 * env_multiplier()
+    end
+
+    defp env_multiplier do
+      if System.get_env("HELIX_TEST_ENV") == "jenkins" do
+        1.3
+      else
+        1.0
+      end
     end
 
     defp slice(str, range),
