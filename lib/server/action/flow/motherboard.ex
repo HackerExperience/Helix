@@ -36,7 +36,7 @@ defmodule Helix.Server.Action.Flow.Motherboard do
     flowing do
       with \
         {:ok, components} <-
-          ComponentAction.create_initial_components(),
+          ComponentAction.create_initial_components(entity.entity_id),
         on_fail(fn -> Enum.each(components, &ComponentAction.delete/1) end),
 
         # Insert the default slot_id for each component

@@ -7,6 +7,7 @@ defmodule Helix.Software.Henforcer.File.InstallTest do
   alias Helix.Software.Henforcer.File, as: FileHenforcer
 
   alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "can_install?/2" do
@@ -48,7 +49,7 @@ defmodule Helix.Software.Henforcer.File.InstallTest do
 
     test "rejects when file does not exist" do
       assert {false, reason, _} =
-        FileHenforcer.Install.is_installable?(SoftwareSetup.id())
+        FileHenforcer.Install.is_installable?(SoftwareHelper.id())
       assert reason == {:file, :not_found}
     end
   end

@@ -7,12 +7,12 @@ defmodule Helix.Server.Henforcer.ComponentTest do
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Network.Action.Network, as: NetworkAction
   alias Helix.Server.Henforcer.Component, as: ComponentHenforcer
-  alias Helix.Server.Model.Component
   alias Helix.Server.Query.Server, as: ServerQuery
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Server.Component.Helper, as: ComponentHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
@@ -96,7 +96,7 @@ defmodule Helix.Server.Henforcer.ComponentTest do
     test "rejects when component does not exist" do
       {server, %{entity: entity}} = ServerSetup.server()
 
-      components = [{:cpu_1, Component.ID.generate()}]
+      components = [{:cpu_1, ComponentHelper.id()}]
 
       assert {false, reason, _} =
         ComponentHenforcer.can_update_mobo?(

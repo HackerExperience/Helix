@@ -118,7 +118,10 @@ defmodule Helix.Test.Software.Helper do
   Generates a `File.ID`
   """
   def id,
-    do: File.ID.generate()
+    do: File.ID.generate(%{}, {:file, :cracker})
+
+  def storage_id,
+    do: Storage.ID.generate(%{}, {:software, :storage})
 
   @doc """
   FileModel performs some operation on the file path, like ensuring leading

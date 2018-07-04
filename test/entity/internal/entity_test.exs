@@ -3,19 +3,20 @@ defmodule Helix.Entity.Internal.EntityTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Server.Model.Component
-  alias Helix.Server.Model.Server
   alias Helix.Entity.Internal.Entity, as: EntityInternal
   alias Helix.Entity.Model.Entity
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Server.Component.Helper, as: ComponentHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
 
   describe "entity creation" do
     test "succeeds with valid params" do
       params =
         %{
-          entity_id: Entity.ID.generate(),
+          entity_id: EntityHelper.id(),
           entity_type: :account
         }
 
@@ -25,7 +26,8 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
 
     test "fails when entity_type is invalid" do
-      {:error, cs} = EntityInternal.create(%{entity_type: :foobar})
+      params = %{entity_type: :foobar, entity_id: "::"}
+      {:error, cs} = EntityInternal.create(params)
       assert :entity_type in Keyword.keys(cs.errors)
     end
   end
@@ -41,7 +43,7 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
 
     test "returns nil if entity doesn't exists" do
-      refute EntityInternal.fetch(Entity.ID.generate())
+      refute EntityInternal.fetch(EntityHelper.id())
     end
   end
 
@@ -56,7 +58,7 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
 
     test "returns nil if server is not owned" do
-      refute EntityInternal.fetch_by_server(Server.ID.generate())
+      refute EntityInternal.fetch_by_server(ServerHelper.id())
     end
   end
 
@@ -77,7 +79,7 @@ defmodule Helix.Entity.Internal.EntityTest do
   describe "link_component/2" do
     test "succeeds with entity struct" do
       {entity, _} = EntitySetup.entity()
-      component_id = Component.ID.generate()
+      component_id = ComponentHelper.id()
 
       {:ok, link} = EntityInternal.link_component(entity, component_id)
 
@@ -88,7 +90,7 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
 
     test "fails when entity doesn't exist" do
-      component_id = Component.ID.generate()
+      component_id = ComponentHelper.id()
       {:error, _} = EntityInternal.link_component(%Entity{}, component_id)
     end
   end
@@ -122,7 +124,7 @@ defmodule Helix.Entity.Internal.EntityTest do
     test "succeeds with entity struct" do
       {entity, _} = EntitySetup.entity()
 
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
 
       {:ok, link} = EntityInternal.link_server(entity, server_id)
 
@@ -133,7 +135,7 @@ defmodule Helix.Entity.Internal.EntityTest do
     end
 
     test "fails when entity doesn't exist" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
       {:error, _} = EntityInternal.link_server(%Entity{}, server_id)
     end
   end

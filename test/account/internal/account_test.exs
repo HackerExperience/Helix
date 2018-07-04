@@ -10,6 +10,7 @@ defmodule Helix.Account.Internal.AccountTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Account.Helper, as: AccountHelper
   alias Helix.Test.Account.Setup, as: AccountSetup
 
   defp params do
@@ -74,7 +75,7 @@ defmodule Helix.Account.Internal.AccountTest do
     end
 
     test "fails when account with id doesn't exist" do
-      refute AccountInternal.fetch(Account.ID.generate())
+      refute AccountInternal.fetch(AccountHelper.id())
     end
 
     test "fails when account with email doesn't exist" do

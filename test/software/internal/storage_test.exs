@@ -6,6 +6,7 @@ defmodule Helix.Software.Internal.StorageTest do
   alias Helix.Software.Model.Storage
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "create/1" do
@@ -21,7 +22,7 @@ defmodule Helix.Software.Internal.StorageTest do
     end
 
     test "returns nil if storage doesn't exists" do
-      refute StorageInternal.fetch(Storage.ID.generate())
+      refute StorageInternal.fetch(SoftwareHelper.storage_id())
     end
   end
 

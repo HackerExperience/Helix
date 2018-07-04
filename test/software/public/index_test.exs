@@ -5,7 +5,7 @@ defmodule Helix.Software.Public.IndexTest do
   alias Helix.Software.Internal.Virus, as: VirusInternal
   alias Helix.Software.Public.Index, as: FileIndex
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
@@ -48,7 +48,7 @@ defmodule Helix.Software.Public.IndexTest do
       virus2 = SoftwareSetup.file!(file_opts ++ [type: :virus_spyware])
 
       # `virus2` is installed
-      VirusInternal.install(virus2, EntitySetup.id())
+      VirusInternal.install(virus2, EntityHelper.id())
 
       index = FileIndex.index(server.server_id)
 
@@ -74,7 +74,7 @@ defmodule Helix.Software.Public.IndexTest do
 
       # `file4` is a virus that's installed on the filesystem. Nasty!
       file4 = SoftwareSetup.file!(file_opts ++ [type: :virus_spyware])
-      VirusInternal.install(file4, EntitySetup.id())
+      VirusInternal.install(file4, EntityHelper.id())
 
       # Render index
       index = FileIndex.index(server.server_id)

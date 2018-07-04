@@ -2,13 +2,13 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Network.Query.Tunnel, as: TunnelQuery
   alias Helix.Process.Model.Processable
   alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Process.Helper, as: ProcessHelper
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
@@ -85,7 +85,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       attacker_id = meta.source_entity_id
       victim_id = meta.target_entity_id
-      third_id = Entity.ID.generate()
+      third_id = EntityHelper.id()
 
       # Here we cover all possible cases on `attack_source`, so regardless of
       # *who* is listing the processes, as long as it's on the `attack_source`,
@@ -122,7 +122,7 @@ defmodule Helix.Software.Process.Cracker.BruteforceTest do
 
       data = process.data
       server_id = process.target_id
-      entity_id = Entity.ID.generate()
+      entity_id = EntityHelper.id()
 
       # `entity` is unrelated to the process, and it's being rendering on the
       # receiving end of the process (victim), so partial access is applied.

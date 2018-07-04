@@ -2,11 +2,11 @@ defmodule Helix.Entity.Query.EntityTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Model.Server
   alias Helix.Entity.Action.Entity, as: EntityAction
   alias Helix.Entity.Query.Entity, as: EntityQuery
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
 
   describe "get_servers/1" do
@@ -14,7 +14,7 @@ defmodule Helix.Entity.Query.EntityTest do
       {entity, _} = EntitySetup.entity()
 
       server_ids = Enum.map(1..5, fn _ ->
-        server_id = Server.ID.generate()
+        server_id = ServerHelper.id()
 
         EntityAction.link_server(entity, server_id)
 

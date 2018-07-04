@@ -1,12 +1,12 @@
 defmodule Helix.Test.Story.StepHelper do
 
-  alias Helix.Entity.Model.Entity
+  alias Helix.Test.Entity.Helper, as: EntityHelper
 
   def all_steps do
     [
       %{
         name: :fake_steps@test_meta,
-        meta: %{foo: :bar, id: Entity.ID.generate()}
+        meta: %{foo: :bar, id: EntityHelper.id()}
       },
       %{
         name: :fake_steps@test_simple,

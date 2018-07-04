@@ -1,11 +1,11 @@
 defmodule Helix.Test.Network.Setup.Connection do
 
   alias Ecto.Changeset
-  alias Helix.Entity.Model.Entity
   alias Helix.Network.Model.Network
   alias Helix.Network.Repo, as: NetworkRepo
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
   alias Helix.Test.Network.Helper, as: NetworkHelper
 
@@ -45,7 +45,7 @@ defmodule Helix.Test.Network.Setup.Connection do
           {nil, nil}
       end
 
-    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
 
     params =
       %{

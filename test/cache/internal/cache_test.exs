@@ -6,14 +6,15 @@ defmodule Helix.Cache.Internal.CacheTest do
   import Helix.Test.Case.ID
 
   alias Helix.Server.Action.Server, as: ServerAction
-  alias Helix.Server.Model.Server
-  alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Cache.Internal.Builder, as: BuilderInternal
   alias Helix.Cache.Internal.Cache, as: CacheInternal
   alias Helix.Cache.Internal.Populate, as: PopulateInternal
   alias Helix.Cache.Model.ServerCache
   alias Helix.Cache.Repo
   alias Helix.Cache.State.PurgeQueue, as: StatePurgeQueue
+
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Cache.Helper, as: CacheHelper
 
   setup do
     CacheHelper.cache_context()
@@ -56,7 +57,7 @@ defmodule Helix.Cache.Internal.CacheTest do
     end
 
     test "fails on invalid data"  do
-      id = Server.ID.generate()
+      id = ServerHelper.id()
       {:error, _} = CacheInternal.lookup({:server, :storages}, id)
     end
 

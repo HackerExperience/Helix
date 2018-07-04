@@ -2,14 +2,14 @@ defmodule Helix.Story.Model.Story.ContextTest do
 
   use ExUnit.Case, async: true
 
-  alias Helix.Server.Model.Server
   alias Helix.Story.Model.Story
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "format/1" do
     test "handles Helix IDs" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
 
       context = %{foo: %{server_id: Story.Context.store_id(server_id)}}
       {fake_story_context, _} = StorySetup.Context.context(context: context)

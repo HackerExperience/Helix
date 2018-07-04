@@ -4,18 +4,18 @@ defmodule Helix.Server.State.Websocket.ChannelTest do
 
   import HELL.Macros
 
-  alias Helix.Entity.Model.Entity
-  alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Server
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.State.Helper, as: ServerStateHelper
 
   defp generate_join do
-    entity_id = Entity.ID.generate()
-    server_id = Server.ID.generate()
-    network_id = Network.ID.generate()
+    entity_id = EntityHelper.id()
+    server_id = ServerHelper.id()
+    network_id = NetworkHelper.id()
     ip = Random.ipv4()
 
     {entity_id, server_id, {network_id, ip}}
@@ -312,7 +312,7 @@ defmodule Helix.Server.State.Websocket.ChannelTest do
     end
 
     test "unlisted server" do
-      server_id = Server.ID.generate()
+      server_id = ServerHelper.id()
       refute ServerWebsocketChannelState.list_open_channels(server_id)
     end
   end

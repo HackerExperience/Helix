@@ -5,7 +5,7 @@ defmodule Helix.Test.Network.Setup.Bounce do
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Repo, as: NetworkRepo
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
 
   @doc """
@@ -39,7 +39,7 @@ defmodule Helix.Test.Network.Setup.Bounce do
     server's NIP (fake IPs are generated).
   """
   def fake_bounce(opts \\ []) do
-    entity_id = Keyword.get(opts, :entity_id, EntitySetup.id())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
     name = Keyword.get(opts, :name, NetworkHelper.Bounce.name())
     total = Keyword.get(opts, :total, 3)
 

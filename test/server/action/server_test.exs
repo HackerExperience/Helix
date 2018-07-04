@@ -8,8 +8,9 @@ defmodule Helix.Server.Action.ServerTest do
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Cache.Helper, as: CacheHelper
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Server.Component.Setup, as: ComponentSetup
 
@@ -91,7 +92,7 @@ defmodule Helix.Server.Action.ServerTest do
 
   describe "crack/4" do
     test "retrieves the password of the target server" do
-      attacker = EntitySetup.id()
+      attacker = EntityHelper.id()
       {target, _} = ServerSetup.server()
 
       {:ok, [nip]} = CacheQuery.from_server_get_nips(target.server_id)
@@ -112,9 +113,9 @@ defmodule Helix.Server.Action.ServerTest do
     end
 
     test "fails in case target nip is not found" do
-      attacker = EntitySetup.id()
+      attacker = EntityHelper.id()
 
-      target_id = ServerSetup.id()
+      target_id = ServerHelper.id()
       network_id = NetworkHelper.internet_id()
       ip = Random.ipv4()
 

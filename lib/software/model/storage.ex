@@ -1,9 +1,10 @@
 defmodule Helix.Software.Model.Storage do
 
   use Ecto.Schema
-  use HELL.ID, field: :storage_id, meta: [0x0020, 0x0001]
+  use HELL.ID, field: :storage_id
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias Helix.Software.Model.File
@@ -31,14 +32,14 @@ defmodule Helix.Software.Model.Storage do
 
   @spec create_changeset() ::
     Changeset.t
-  def create_changeset,
-    do: cast(%__MODULE__{}, %{}, [])
+  def create_changeset do
+    %__MODULE__{}
+    |> cast(%{}, [])
+    |> put_pk(%{}, {:software, :storage})
+  end
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
-
-    alias Ecto.Queryable
     alias Helix.Server.Model.Component
     alias Helix.Software.Model.Storage
     alias Helix.Software.Model.StorageDrive

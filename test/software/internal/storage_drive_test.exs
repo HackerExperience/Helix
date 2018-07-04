@@ -2,14 +2,14 @@ defmodule Helix.Software.Internal.StorageDriveTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Model.Component
   alias Helix.Software.Internal.StorageDrive, as: StorageDriveInternal
 
   alias Helix.Test.Cache.Helper, as: CacheHelper
+  alias Helix.Test.Server.Component.Helper, as: ComponentHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   test "linking succeeds with a valid storage" do
-    drive_id = Component.ID.generate()
+    drive_id = ComponentHelper.id()
     {storage, _} = SoftwareSetup.storage()
 
     StorageDriveInternal.link_drive(storage, drive_id)
@@ -26,7 +26,7 @@ defmodule Helix.Software.Internal.StorageDriveTest do
       expected_drives =
         1..3
         |> Enum.map(fn _ ->
-          drive_id = Component.ID.generate()
+          drive_id = ComponentHelper.id()
           StorageDriveInternal.link_drive(storage, drive_id)
           drive_id
         end)

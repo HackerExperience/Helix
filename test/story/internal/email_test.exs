@@ -2,9 +2,9 @@ defmodule Helix.Story.Internal.EmailTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Story.Internal.Email, as: EmailInternal
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "fetch/2" do
@@ -32,7 +32,7 @@ defmodule Helix.Story.Internal.EmailTest do
     end
 
     test "returns nil if no {entity,contact} entry was found" do
-      refute EmailInternal.fetch(Entity.ID.generate(), :contact_id)
+      refute EmailInternal.fetch(EntityHelper.id(), :contact_id)
     end
   end
 

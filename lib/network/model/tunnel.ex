@@ -1,7 +1,7 @@
 defmodule Helix.Network.Model.Tunnel do
 
   use Ecto.Schema
-  use HELL.ID, field: :tunnel_id, meta: [0x0000, 0x0001]
+  use HELL.ID, field: :tunnel_id
 
   import Ecto.Changeset
   import HELL.Macros
@@ -94,6 +94,7 @@ defmodule Helix.Network.Model.Tunnel do
     |> cast(params, @creation_fields)
     |> put_bounce_data(bounce)
     |> validate_tunnel()
+    |> put_pk(%{}, :tunnel)
   end
 
   @spec put_bounce_data(changeset, bounce) ::

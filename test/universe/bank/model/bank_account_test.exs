@@ -2,19 +2,20 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
 
   use ExUnit.Case, async: true
 
-  alias Helix.Account.Model.Account
-  alias Helix.Server.Model.Server
-  alias Helix.Universe.NPC.Model.NPC
   alias Helix.Universe.Bank.Model.BankAccount
+
+  alias Helix.Test.Account.Helper, as: AccountHelper
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Universe.NPC.Helper, as: NPCHelper
 
   describe "change_password/1" do
     test "changes password" do
       acc =
         %BankAccount{
-          bank_id: NPC.ID.generate(),
-          atm_id: Server.ID.generate(),
+          bank_id: NPCHelper.id(),
+          atm_id: ServerHelper.id(),
           password: "1234",
-          owner_id: Account.ID.generate(),
+          owner_id: AccountHelper.id(),
           balance: 1234
         }
 
@@ -29,10 +30,10 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
     test "increases the account balance" do
       acc =
         %BankAccount{
-          bank_id: NPC.ID.generate(),
-          atm_id: Server.ID.generate(),
+          bank_id: NPCHelper.id(),
+          atm_id: ServerHelper.id(),
           password: "1234",
-          owner_id: Account.ID.generate(),
+          owner_id: AccountHelper.id(),
           balance: 1000
         }
 
@@ -55,10 +56,10 @@ defmodule Helix.Universe.Bank.Model.BankAccountTest do
     test "decreases the account balance" do
       acc =
         %BankAccount{
-          bank_id: NPC.ID.generate(),
-          atm_id: Server.ID.generate(),
+          bank_id: NPCHelper.id(),
+          atm_id: ServerHelper.id(),
           password: "1234",
-          owner_id: Account.ID.generate(),
+          owner_id: AccountHelper.id(),
           balance: 1000
         }
 

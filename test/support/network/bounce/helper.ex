@@ -3,8 +3,8 @@ defmodule Helix.Test.Network.Helper.Bounce do
   alias Helix.Network.Model.Bounce
 
   alias HELL.TestHelper.Random
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
 
   @internet_id NetworkHelper.internet_id()
 
@@ -24,11 +24,11 @@ defmodule Helix.Test.Network.Helper.Bounce do
   Generates a fake link
   """
   def fake_link,
-    do: {ServerSetup.id(), @internet_id, Random.ipv4()}
+    do: {ServerHelper.id(), @internet_id, Random.ipv4()}
 
   @doc """
   Generates a bounce ID
   """
   def id,
-    do: Bounce.ID.generate()
+    do: Bounce.ID.generate(%{}, :bounce)
 end

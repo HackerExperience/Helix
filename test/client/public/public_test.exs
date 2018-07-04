@@ -2,9 +2,9 @@ defmodule Helix.Client.Public.ClientTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Client.Public.Client, as: ClientPublic
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Client.Web1.Setup, as: Web1Setup
 
   describe "bootstrap/2" do
@@ -19,7 +19,7 @@ defmodule Helix.Client.Public.ClientTest do
 
     test "web1 bootstrap (empty)" do
       assert %{client: bootstrap} =
-        ClientPublic.bootstrap(:web1, Entity.ID.generate())
+        ClientPublic.bootstrap(:web1, EntityHelper.id())
 
       assert bootstrap.setup.pages == []
     end
@@ -38,7 +38,7 @@ defmodule Helix.Client.Public.ClientTest do
     end
 
     test "web1 rbootstrap (empty)" do
-      bootstrap = ClientPublic.bootstrap(:web1, Entity.ID.generate())
+      bootstrap = ClientPublic.bootstrap(:web1, EntityHelper.id())
 
       assert %{client: render_bootstrap} =
         ClientPublic.render_bootstrap(:web1, bootstrap)

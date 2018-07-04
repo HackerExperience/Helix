@@ -2,10 +2,10 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   use Helix.Test.Case.Integration
 
-  alias Helix.Server.Model.Server
   alias Helix.Software.Internal.PublicFTP, as: PublicFTPInternal
   alias Helix.Software.Model.PublicFTP
 
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "fetch/1" do
@@ -25,7 +25,7 @@ defmodule Helix.Software.Internal.PublicFTPTest do
     end
 
     test "returns nil if nothing was found" do
-      refute PublicFTPInternal.fetch(Server.ID.generate())
+      refute PublicFTPInternal.fetch(ServerHelper.id())
     end
   end
 
@@ -77,7 +77,7 @@ defmodule Helix.Software.Internal.PublicFTPTest do
 
   describe "setup_server/1" do
     test "creates the PublicFTP entry" do
-      assert {:ok, entry} = PublicFTPInternal.setup_server(Server.ID.generate())
+      assert {:ok, entry} = PublicFTPInternal.setup_server(ServerHelper.id())
       assert %PublicFTP{} = entry
       assert entry.is_active
     end

@@ -1,9 +1,10 @@
 defmodule Helix.Entity.Model.Entity do
 
   use Ecto.Schema
-  use HELL.ID, field: :entity_id, autogenerate: false
+  use HELL.ID, field: :entity_id
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -26,7 +27,7 @@ defmodule Helix.Entity.Model.Entity do
     entity_type: type
   }
 
-  @creation_fields ~w/entity_type entity_id/a
+  @creation_fields [:entity_type]
 
   schema "entities" do
     field :entity_id, ID,
@@ -51,12 +52,11 @@ defmodule Helix.Entity.Model.Entity do
     |> cast(params, @creation_fields)
     |> validate_required(@creation_fields)
     |> validate_inclusion(:entity_type, EntityType.possible_types())
+    |> put_change(:entity_id, params.entity_id)
   end
 
-  defmodule Query do
-    import Ecto.Query
+  query do
 
-    alias Ecto.Queryable
     alias Helix.Server.Model.Server
     alias Helix.Entity.Model.Entity
     alias Helix.Entity.Model.EntityServer

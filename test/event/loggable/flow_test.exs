@@ -3,30 +3,30 @@ defmodule Helix.Event.Loggable.FlowTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Log.Query.Log, as: LogQuery
-  alias Helix.Network.Model.Network
-  alias Helix.Server.Model.Server
   alias Helix.Event.Loggable.Flow, as: LoggableFlow
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
 
   describe "get_ip/2" do
     test "returns empty string if not found " do
-      ip = LoggableFlow.get_ip(Server.ID.generate(), Network.ID.generate())
+      ip = LoggableFlow.get_ip(ServerHelper.id(), NetworkHelper.id())
       assert is_binary(ip)
     end
   end
 
   describe "build_bounce_entries/2" do
     test "creates bounce log entries in the correct order" do
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
 
-      gateway = {ServerSetup.id(), "::", "1.2.3.4"}
-      link1 = {ServerSetup.id(), "::", "1.1.1.1"}
-      link2 = {ServerSetup.id(), "::", "1.1.1.2"}
-      link3 = {ServerSetup.id(), "::", "1.1.1.3"}
-      target = {ServerSetup.id(), "::", "4.3.2.1"}
+      gateway = {ServerHelper.id(), "::", "1.2.3.4"}
+      link1 = {ServerHelper.id(), "::", "1.1.1.1"}
+      link2 = {ServerHelper.id(), "::", "1.1.1.2"}
+      link3 = {ServerHelper.id(), "::", "1.1.1.3"}
+      target = {ServerHelper.id(), "::", "4.3.2.1"}
 
       {bounce, _} = NetworkSetup.Bounce.bounce(links: [link1, link2, link3])
 

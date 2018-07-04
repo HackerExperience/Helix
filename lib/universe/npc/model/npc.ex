@@ -1,9 +1,10 @@
 defmodule Helix.Universe.NPC.Model.NPC do
 
   use Ecto.Schema
-  use HELL.ID, field: :npc_id, meta: [0x0002]
+  use HELL.ID, field: :npc_id
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias HELL.Constant
   alias Helix.Universe.Bank.Model.Bank
@@ -50,13 +51,11 @@ defmodule Helix.Universe.NPC.Model.NPC do
     |> cast(params, @creation_fields)
     |> validate_required(:npc_type)
     |> validate_inclusion(:npc_type, NPCType.possible_types())
+    |> put_pk(%{}, :npc)
   end
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query, only: [where: 3]
-
-    alias Ecto.Queryable
     alias Helix.Universe.NPC.Model.NPC
 
     @spec by_id(Queryable.t, NPC.idtb) ::

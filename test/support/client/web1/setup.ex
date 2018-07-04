@@ -1,9 +1,9 @@
 defmodule Helix.Test.Client.Web1.Setup do
 
-  alias Helix.Entity.Model.Entity
   alias Helix.Client.Web1.Model.Setup
   alias Helix.Client.Repo, as: ClientRepo
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Client.Web1.Helper, as: Web1Helper
 
   @doc """
@@ -25,7 +25,7 @@ defmodule Helix.Test.Client.Web1.Setup do
   """
   def fake_setup(opts \\ []) do
 
-    entity_id = Keyword.get(opts, :entity_id, Entity.ID.generate())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
     pages = Keyword.get(opts, :pages, Web1Helper.random_pages())
 
     params =

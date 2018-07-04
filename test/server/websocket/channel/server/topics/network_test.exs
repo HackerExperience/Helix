@@ -120,7 +120,7 @@ defmodule Helix.Server.Websocket.Channel.Server.Topics.NetworkTest do
 
       params = %{
         address: npc_ip,
-        origin: ServerSetup.id(),
+        origin: ServerHelper.id(),
         network_id: @internet_str
       }
 

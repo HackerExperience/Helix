@@ -5,7 +5,7 @@ defmodule Helix.Story.Internal.StepTest do
   alias Helix.Story.Model.Story
   alias Helix.Story.Internal.Step, as: StepInternal
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Helper, as: StoryHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
@@ -24,7 +24,7 @@ defmodule Helix.Story.Internal.StepTest do
       {story_step, %{step: step}} =
         StorySetup.story_step(
           name: :fake_steps@test_meta,
-          meta: %{foo: :bar, id: EntitySetup.id()}
+          meta: %{foo: :bar, id: EntityHelper.id()}
         )
 
       %{entry: entry} =
@@ -35,7 +35,8 @@ defmodule Helix.Story.Internal.StepTest do
     end
 
     test "returns nil when entity isn't part of any step" do
-      refute StepInternal.fetch_step(EntitySetup.id(), StoryHelper.contact_id())
+      refute \
+        StepInternal.fetch_step(EntityHelper.id(), StoryHelper.contact_id())
     end
   end
 
@@ -62,13 +63,13 @@ defmodule Helix.Story.Internal.StepTest do
     end
 
     test "returns empty list when not found" do
-      assert Enum.empty?(StepInternal.get_steps(EntitySetup.id()))
+      assert Enum.empty?(StepInternal.get_steps(EntityHelper.id()))
     end
   end
 
   describe "proceed/1 and proceed/2" do
     test "proceed/1 setups the first step" do
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
       {first_step, _} = StorySetup.step(entity_id: entity_id)
 
       # Not part of any step

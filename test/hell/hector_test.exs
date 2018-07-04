@@ -7,10 +7,11 @@ defmodule HectorTest do
   alias Helix.Server.Model.Server
   alias Helix.Software.Internal.File, as: FileInternal
   alias Helix.Software.Model.File
-  alias Helix.Software.Model.Storage
   alias Helix.Software.Repo, as: SoftwareRepo
 
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "get/3" do
@@ -151,15 +152,15 @@ defmodule HectorTest do
       WHERE t.gateway_id IN (##1::server_id) AND c.connection_type = 'ssh';
       """
 
-      gateway1 = Server.ID.generate()
-      gateway2 = Server.ID.generate()
+      gateway1 = ServerHelper.id()
+      gateway2 = ServerHelper.id()
 
-      target1 = Server.ID.generate()
-      target2 = Server.ID.generate()
-      target3 = Server.ID.generate()
+      target1 = ServerHelper.id()
+      target2 = ServerHelper.id()
+      target3 = ServerHelper.id()
 
-      bounce1 = Server.ID.generate()
-      bounce2 = Server.ID.generate()
+      bounce1 = ServerHelper.id()
+      bounce2 = ServerHelper.id()
 
       g2_bounces = [bounce1, bounce2]
 
@@ -219,8 +220,8 @@ defmodule HectorTest do
         end
       end
 
-      f_id = File.ID.generate()
-      s_id = Storage.ID.generate()
+      f_id = SoftwareHelper.id()
+      s_id = SoftwareHelper.storage_id()
 
       sql1 = "SELECT * FROM files WHERE nome = 'abc'"
       p1 = []

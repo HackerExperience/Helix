@@ -1,9 +1,10 @@
 defmodule Helix.Network.Model.Connection do
 
   use Ecto.Schema
-  use HELL.ID, field: :connection_id, meta: [0x0000, 0x0001, 0x0001]
+  use HELL.ID, field: :connection_id
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -73,17 +74,15 @@ defmodule Helix.Network.Model.Connection do
     %__MODULE__{}
     |> cast(params, [:tunnel_id, :connection_type, :meta])
     |> validate_required([:connection_type])
+    |> put_pk(%{}, {:connection, params.connection_type})
   end
 
   @doc false
   def close_reasons,
     do: @close_reasons
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
-
-    alias Ecto.Queryable
     alias Helix.Server.Model.Server
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Link

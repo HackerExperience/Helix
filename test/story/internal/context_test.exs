@@ -7,7 +7,7 @@ defmodule Helix.Story.Internal.ContextTest do
   alias Helix.Story.Repo, as: StoryRepo
 
   alias HELL.TestHelper.Random
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Story.Setup, as: StorySetup
 
   describe "fetch/1" do
@@ -32,7 +32,7 @@ defmodule Helix.Story.Internal.ContextTest do
     end
 
     test "returns empty when nothing is found" do
-      refute ContextInternal.fetch(EntitySetup.id())
+      refute ContextInternal.fetch(EntityHelper.id())
     end
   end
 
@@ -50,14 +50,14 @@ defmodule Helix.Story.Internal.ContextTest do
 
     test "blows up when not in transaction" do
       assert_raise RuntimeError, fn ->
-        ContextInternal.fetch_for_update(EntitySetup.id())
+        ContextInternal.fetch_for_update(EntityHelper.id())
       end
     end
   end
 
   describe "create/1" do
     test "creates the entry for entity" do
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
 
       assert {:ok, context} = ContextInternal.create(entity_id)
 

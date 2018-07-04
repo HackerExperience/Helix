@@ -1,7 +1,7 @@
 defmodule Helix.Server.Model.Server do
 
   use Ecto.Schema
-  use HELL.ID, field: :server_id, meta: [0x0010]
+  use HELL.ID, field: :server_id
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
@@ -63,6 +63,7 @@ defmodule Helix.Server.Model.Server do
     |> unique_constraint(:motherboard_id)
     |> validate_required(@required_fields)
     |> validate_inclusion(:type, Server.Type.possible_types())
+    |> put_pk(%{}, {:server, params.type})
   end
 
   @spec set_hostname(t, hostname) ::

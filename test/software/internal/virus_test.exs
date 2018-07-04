@@ -4,7 +4,7 @@ defmodule Helix.Software.Internal.VirusTest do
 
   alias Helix.Software.Internal.Virus, as: VirusInternal
 
-  alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Software.Setup, as: SoftwareSetup
 
   describe "list_by_storage/1" do
@@ -16,7 +16,7 @@ defmodule Helix.Software.Internal.VirusTest do
       # `file3` exists on a different storage
       file3 = SoftwareSetup.virus!()
 
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
 
       # Install all viruses
       {:ok, _} = VirusInternal.install(file1, entity_id)
@@ -51,8 +51,8 @@ defmodule Helix.Software.Internal.VirusTest do
       file2 = SoftwareSetup.virus!()
       file3 = SoftwareSetup.virus!()
 
-      entity_id1 = EntitySetup.id()
-      entity_id2 = EntitySetup.id()
+      entity_id1 = EntityHelper.id()
+      entity_id2 = EntityHelper.id()
 
       # `file1` and `file2` were installed by `entity_id1`
       {:ok, _} = VirusInternal.install(file1, entity_id1)
@@ -77,8 +77,8 @@ defmodule Helix.Software.Internal.VirusTest do
       file3 = SoftwareSetup.virus!(storage_id: file1.storage_id)
       file4 = SoftwareSetup.virus!()
 
-      entity_id1 = EntitySetup.id()
-      entity_id2 = EntitySetup.id()
+      entity_id1 = EntityHelper.id()
+      entity_id2 = EntityHelper.id()
 
       # Files 1, 2 and 4 were installed by the same entity.
       # File 3 is on the same storage of 1 and 2 but installed by other entity
@@ -113,7 +113,7 @@ defmodule Helix.Software.Internal.VirusTest do
   describe "install/2" do
     test "installs virus and automatically activates it" do
       file = SoftwareSetup.virus!()
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
 
       assert {:ok, virus} = VirusInternal.install(file, entity_id)
 
@@ -127,7 +127,7 @@ defmodule Helix.Software.Internal.VirusTest do
     end
 
     test "second virus install (same entity, storage) won't auto activate it" do
-      entity_id = EntitySetup.id()
+      entity_id = EntityHelper.id()
       file1 = SoftwareSetup.virus!()
 
       assert {:ok, virus1} = VirusInternal.install(file1, entity_id)

@@ -2,7 +2,6 @@ defmodule Helix.Test.Server.Setup do
 
   alias HELL.Password
   alias Helix.Account.Action.Flow.Account, as: AccountFlow
-  alias Helix.Server.Model.Component
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
 
@@ -10,6 +9,7 @@ defmodule Helix.Test.Server.Setup do
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
+  alias Helix.Test.Server.Component.Helper, as: ComponentHelper
 
   @doc """
   - entity_id: Specify the entity that owns such server. Defaults to generating
@@ -52,8 +52,8 @@ defmodule Helix.Test.Server.Setup do
   - password: set the password.
   """
   def fake_server(opts \\ []) do
-    server_id = Access.get(opts, :server_id, id())
-    motherboard_id = Access.get(opts, :mobo_id, Component.ID.generate())
+    server_id = Access.get(opts, :server_id, ServerHelper.id())
+    motherboard_id = Access.get(opts, :mobo_id, ComponentHelper.id())
     password = Access.get(opts, :password, Password.generate(:server))
 
     server =
@@ -74,13 +74,6 @@ defmodule Helix.Test.Server.Setup do
   def create_or_fetch(server_id) do
     ServerQuery.fetch(server_id)
   end
-
-  @doc """
-  Generates a random Server ID. It's the same as Server.ID.generate(), but may
-  be helpful/more readable/more portable for some tests/contexts.
-  """
-  def id,
-    do: Server.ID.generate()
 
   defp server_create_flow do
     {account, _} = AccountSetup.account()

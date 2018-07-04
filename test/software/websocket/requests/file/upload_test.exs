@@ -3,8 +3,6 @@ defmodule Helix.Software.Websocket.Requests.File.UploadTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Websocket.Requestable
-  alias Helix.Software.Model.File
-  alias Helix.Software.Model.Storage
   alias Helix.Software.Websocket.Requests.File.Upload, as: FileUploadRequest
 
   alias Helix.Test.Channel.Request.Helper, as: RequestHelper
@@ -18,8 +16,8 @@ defmodule Helix.Software.Websocket.Requests.File.UploadTest do
 
   describe "FileUploadRequest.check_params" do
     test "validates expected data" do
-      file_id = File.ID.generate()
-      storage_id = Storage.ID.generate()
+      file_id = SoftwareHelper.id()
+      storage_id = SoftwareHelper.storage_id()
 
       params = %{
         "file_id" => to_string(file_id),
@@ -46,7 +44,7 @@ defmodule Helix.Software.Websocket.Requests.File.UploadTest do
         )
 
       params = %{
-        "file_id" => to_string(File.ID.generate())
+        "file_id" => to_string(SoftwareHelper.id())
       }
 
       request = FileUploadRequest.new(params)
@@ -61,8 +59,8 @@ defmodule Helix.Software.Websocket.Requests.File.UploadTest do
       local_socket = ChannelSetup.mock_server_socket(own_server: true)
 
       params = %{
-        "file_id" => to_string(File.ID.generate()),
-        "storage_id" => to_string(Storage.ID.generate())
+        "file_id" => to_string(SoftwareHelper.id()),
+        "storage_id" => to_string(SoftwareHelper.storage_id())
       }
       request = FileUploadRequest.new(params)
 
@@ -101,8 +99,8 @@ defmodule Helix.Software.Websocket.Requests.File.UploadTest do
 
     test "rejects if invalid file was passed" do
       params = %{
-        file_id: File.ID.generate(),
-        storage_id: Storage.ID.generate()
+        file_id: SoftwareHelper.id(),
+        storage_id: SoftwareHelper.storage_id()
       }
 
       request = RequestHelper.mock_request(FileUploadRequest, params)

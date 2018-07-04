@@ -5,6 +5,7 @@ defmodule Helix.Test.Log.Setup do
   alias Helix.Log.Model.Log
   alias Helix.Log.Internal.Log, as: LogInternal
 
+  alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Log.Helper, as: LogHelper
@@ -64,7 +65,7 @@ defmodule Helix.Test.Log.Setup do
       changeset
       |> Ecto.Changeset.apply_changes()
       |> Map.replace(:creation_time, DateTime.utc_now())
-      |> Map.replace(:log_id, Log.ID.generate())
+      |> Map.replace(:log_id, LogHelper.id())
 
     related = %{
       params: params,
@@ -116,7 +117,7 @@ defmodule Helix.Test.Log.Setup do
 
         # All else: generate a fake entity id.
         true ->
-          EntitySetup.id()
+          EntityHelper.id()
       end
 
     message = Access.get(opts, :message, LogHelper.random_message())
