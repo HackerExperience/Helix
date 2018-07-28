@@ -21,9 +21,8 @@ defmodule Helix.Universe.Bank.Internal.BankTransfer do
   a transaction.
   """
   def fetch_for_update(transfer_id) do
-    unless Repo.in_transaction?() do
-      raise "Transaction required in order to acquire lock"
-    end
+    unless Repo.in_transaction?(),
+      do: raise "Transaction required in order to acquire lock"
 
     transfer_id
     |> BankTransfer.Query.by_id()

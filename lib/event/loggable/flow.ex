@@ -24,6 +24,8 @@ defmodule Helix.Event.Loggable.Flow do
   alias Helix.Event
   alias Helix.Event.Loggable.Utils, as: LoggableUtils
   alias Helix.Entity.Model.Entity
+  alias Helix.Log.Model.Log
+  alias Helix.Log.Model.LogType
   alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
@@ -31,10 +33,8 @@ defmodule Helix.Event.Loggable.Flow do
   alias Helix.Network.Query.Bounce, as: BounceQuery
   alias Helix.Server.Model.Server
 
-  @type log_entry ::
-    {Server.id, Entity.id, log_msg}
-
-  @type log_msg :: String.t
+  @typep log_entry ::
+    {Server.id, Entity.id, Log.info}
 
   @doc """
   Top-level macro for events wanting to implement the Loggable protocol.
@@ -66,13 +66,12 @@ defmodule Helix.Event.Loggable.Flow do
   """
   defmacro log_map(map) do
     quote do
-      map = unquote(map)
+      unquote(map)
 
       # Put default values (if not specified)
-      map
       |> Map.put_new(:network_id, nil)
       |> Map.put_new(:endpoint_id, nil)
-      |> Map.put_new(:msg_endpoint, nil)
+      |> Map.put_new(:data_both, %{})
       |> Map.put_new(:opts, %{})
     end
   end
@@ -119,8 +118,11 @@ defmodule Helix.Event.Loggable.Flow do
       gateway_id: gateway_id,
       endpoint_id: endpoint_id,
       network_id: network_id,
-      msg_gateway: msg_gateway,
-      msg_endpoint: msg_endpoint,
+      type_gateway: type_gateway,
+      data_gateway: data_gateway,
+      type_endpoint: type_endpoint,
+      data_endpoint: data_endpoint,
+      data_both: data_both,
       opts: opts
     })
   do
@@ -147,13 +149,23 @@ defmodule Helix.Event.Loggable.Flow do
       end
       |> customize_last_ip(opts)
 
-    msg_gateway = String.replace(msg_gateway, "$first_ip", first_ip)
-    msg_endpoint = String.replace(msg_endpoint, "$last_ip", last_ip)
+    data_gateway =
+      data_gateway
+      |> replace_ips(first_ip, last_ip)
+      |> Map.merge(data_both)
 
-    log_gateway = build_entry(gateway_id, entity_id, msg_gateway)
-    log_endpoint = build_entry(endpoint_id, entity_id, msg_endpoint)
+    data_endpoint =
+      data_endpoint
+      |> replace_ips(first_ip, last_ip)
+      |> Map.merge(data_both)
 
-    bounce_logs =
+    log_gateway = {type_gateway, LogType.new(type_gateway, data_gateway)}
+    log_endpoint = {type_endpoint, LogType.new(type_endpoint, data_endpoint)}
+
+    entry_gateway = build_entry(gateway_id, entity_id, log_gateway)
+    entry_endpoint = build_entry(endpoint_id, entity_id, log_endpoint)
+
+    bounce_entries =
       if skip_bounce? do
         []
       else
@@ -161,11 +173,12 @@ defmodule Helix.Event.Loggable.Flow do
           bounce,
           {gateway_id, network_id, gateway_ip},
           {endpoint_id, network_id, endpoint_ip},
-          entity_id
+          entity_id,
+          network_id
         )
       end
 
-    [log_gateway, log_endpoint, bounce_logs] |> List.flatten()
+    [entry_gateway, entry_endpoint, bounce_entries] |> List.flatten()
   end
 
   @doc """
@@ -178,10 +191,13 @@ defmodule Helix.Event.Loggable.Flow do
       event: _,
       server_id: server_id,
       entity_id: entity_id,
-      msg_server: msg_server
+      type: type,
+      data: data
     })
   do
-    [build_entry(server_id, entity_id, msg_server)]
+    log_type = LogType.new(type, data)
+
+    [build_entry(server_id, entity_id, {type, log_type})]
   end
 
   @doc """
@@ -249,7 +265,7 @@ defmodule Helix.Event.Loggable.Flow do
   defdelegate format_ip(ip),
     to: LoggableUtils
 
-  @spec build_entry(Server.id, Entity.id, log_msg) ::
+  @spec build_entry(Server.id, Entity.id, Log.info) ::
     log_entry
   @doc """
   Returns data required to insert the log
@@ -263,16 +279,23 @@ defmodule Helix.Event.Loggable.Flow do
 
   Messages follow the format "Connection bounced from hop (n-1) to (n+1)"
   """
-  def build_bounce_entries(nil, _, _, _),
+  def build_bounce_entries(nil, _, _, _, _),
     do: []
-  def build_bounce_entries(bounce_id = %Bounce.ID{}, gateway, endpoint, entity) do
+  def build_bounce_entries(
+    bounce_id = %Bounce.ID{}, gateway, endpoint, entity, network
+  ) do
     bounce_id
     |> BounceQuery.fetch()
-    |> build_bounce_entries(gateway, endpoint, entity)
+    |> build_bounce_entries(gateway, endpoint, entity, network)
   end
+
   def build_bounce_entries(
-    bounce = %Bounce{}, gateway = {_, _, _}, endpoint = {_, _, _}, entity_id)
-  do
+    bounce = %Bounce{},
+    gateway = {_, _, _},
+    endpoint = {_, _, _},
+    entity_id,
+    network_id
+  ) do
     full_path = [gateway | bounce.links] ++ [endpoint]
     length_hop = length(full_path)
 
@@ -298,8 +321,11 @@ defmodule Helix.Event.Loggable.Flow do
         {_, _, ip_prev} = bounce_map[idx - 1]
         {_, _, ip_next} = bounce_map[idx + 1]
 
-        msg = "Connection bounced from #{ip_prev} to #{ip_next}"
-        entry = build_entry(server_id, entity_id, msg)
+        data = %{ip_prev: ip_prev, ip_next: ip_next, network_id: network_id}
+        # TODO
+        log_type = {:connection_bounced, LogType.new(:connection_bounced, data)}
+
+        entry = build_entry(server_id, entity_id, log_type)
 
         {idx + 1, acc ++ [entry]}
       end
@@ -321,8 +347,8 @@ defmodule Helix.Event.Loggable.Flow do
     do: save([log_entry])
   def save(logs) do
     logs
-    |> Enum.map(fn {server_id, entity_id, msg} ->
-      {:ok, _, events} = LogAction.create(server_id, entity_id, msg)
+    |> Enum.map(fn {server_id, entity_id, log_type} ->
+      {:ok, _, events} = LogAction.create(server_id, entity_id, log_type)
       events
     end)
     |> List.flatten()
@@ -378,4 +404,24 @@ defmodule Helix.Event.Loggable.Flow do
     do: censor_ip(ip)
   defp customize_last_ip(ip, _),
     do: ip
+
+  defp replace_ips(params, first_ip, last_ip) do
+    params
+    |> Enum.reduce([], fn {k, v}, acc ->
+      new_v =
+        case v do
+          "$first_ip" ->
+            first_ip
+
+          "$last_ip" ->
+            last_ip
+
+          _ ->
+            v
+        end
+
+      [{k, new_v} | acc]
+    end)
+    |> Enum.into(%{})
+  end
 end

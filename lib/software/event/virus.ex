@@ -120,13 +120,13 @@ defmodule Helix.Software.Event.Virus do
 
     loggable do
 
+      @doc """
+        Gateway: "localhost installed virus $file_name at $first_ip"
+        Endpoint: "$last_ip installed virus $file_name at localhost"
+      """
       log(event) do
         process = get_process(event)
-
         file_name = get_file_name(event.file)
-
-        msg_gateway = "localhost installed virus #{file_name} at $first_ip"
-        msg_endpoint = "$last_ip installed virus #{file_name} at localhost"
 
         log_map %{
           event: event,
@@ -134,8 +134,11 @@ defmodule Helix.Software.Event.Virus do
           gateway_id: process.gateway_id,
           endpoint_id: process.target_id,
           network_id: process.network_id,
-          msg_gateway: msg_gateway,
-          msg_endpoint: msg_endpoint
+          type_gateway: :virus_installed_gateway,
+          data_gateway: %{ip: "$first_ip"},
+          type_endpoint: :virus_installed_endpoint,
+          data_endpoint: %{ip: "$last_ip"},
+          data_both: %{network_id: process.network_id, file_name: file_name}
         }
       end
 

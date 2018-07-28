@@ -7,7 +7,6 @@ defmodule Helix.Test.Features.File.TransferTest do
   import Helix.Test.Channel.Macros
   import Helix.Test.Log.Macros
 
-  alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Software.Model.File
   alias Helix.Software.Query.File, as: FileQuery
@@ -15,6 +14,7 @@ defmodule Helix.Test.Features.File.TransferTest do
   alias HELL.TestHelper.Random
   alias Helix.Test.Account.Helper, as: AccountHelper
   alias Helix.Test.Channel.Setup, as: ChannelSetup
+  alias Helix.Test.Log.Helper, as: LogHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Software.Helper, as: SoftwareHelper
@@ -118,25 +118,22 @@ defmodule Helix.Test.Features.File.TransferTest do
 
       # Now let's check the log generation
 
-      # Log on gateway (`gateway` downloaded from `<someone>`)
-      assert [log_gateway | _] = LogQuery.get_logs_on_server(gateway.server_id)
-      assert_log \
-        log_gateway, gateway.server_id, entity.entity_id,
-        "localhost downloaded",
-        contains: [dl_file.name]
+      log_gateway = LogHelper.get_last_log(gateway, :file_download_gateway)
+
+      file_name = LogHelper.log_file_name(dl_file)
+
+      assert_log log_gateway, gateway.server_id, entity.entity_id,
+        :file_download_gateway, %{file_name: file_name}
 
       # Verify logging worked correctly within the bounce nodes
-      assert_bounce \
-        bounce, gateway, destination, entity,
-        rejects: [dl_file.name, "download"]
+      assert_bounce bounce, gateway, destination, entity
+
+      log_destination =
+        LogHelper.get_last_log(destination, :file_download_endpoint)
 
       # Log on destination (`<someone>` downloaded file at `destination`)
-      assert [log_destination | _] =
-        LogQuery.get_logs_on_server(destination.server_id)
-      assert_log \
-        log_destination, destination.server_id, entity.entity_id,
-        "from localhost",
-        contains: [dl_file.name]
+      assert_log log_destination, destination.server_id, entity.entity_id,
+        :file_download_endpoint, %{file_name: file_name}
 
       # TODO: #388 Underlying connection(s) were removed
 
@@ -218,27 +215,21 @@ defmodule Helix.Test.Features.File.TransferTest do
       assert file_added_event.data.file.id == to_string(new_file.file_id)
 
       # Now let's check the log generation
-      LogQuery.get_logs_on_server(gateway.server_id)
+      file_name = LogHelper.log_file_name(up_file)
 
       # Log on gateway (`gateway` uploaded to `<someone>`)
-      assert [log_gateway | _] = LogQuery.get_logs_on_server(gateway.server_id)
-      assert_log \
-        log_gateway, gateway.server_id, entity.entity_id,
-        "localhost uploaded",
-        contains: [up_file.name]
+      log_gateway = LogHelper.get_last_log(gateway, :file_upload_gateway)
+      assert_log log_gateway, gateway.server_id, entity.entity_id,
+        :file_upload_gateway, %{file_name: file_name}
 
       # Verify logging worked correctly within the bounce nodes
-      assert_bounce \
-        bounce, gateway, destination, entity,
-        rejects: [up_file.name, "upload"]
+      assert_bounce bounce, gateway, destination, entity
 
       # Log on destination (`<someone>` uploaded file at `destination`)
-      assert [log_destination | _] =
-        LogQuery.get_logs_on_server(destination.server_id)
-      assert_log \
-        log_destination, destination.server_id, entity.entity_id,
-        "to localhost",
-        contains: [up_file.name]
+      log_destination =
+        LogHelper.get_last_log(destination, :file_upload_endpoint)
+      assert_log log_destination, destination.server_id, entity.entity_id,
+        :file_upload_endpoint, %{file_name: file_name}
 
       # TODO: #388 Underlying connection(s) were removed
 

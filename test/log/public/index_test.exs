@@ -11,18 +11,18 @@ defmodule Helix.Log.Public.IndexTest do
     test "indexes correctly" do
       {server, _} = ServerSetup.server()
 
-      log1 = LogSetup.log!([server_id: server.server_id, own_log: true])
-      log2 = LogSetup.log!([server_id: server.server_id, own_log: true])
+      log1 = LogSetup.log!(server_id: server.server_id, own_log: true)
+      log2 = LogSetup.log!(server_id: server.server_id, own_log: true)
 
       index = LogIndex.index(server.server_id)
 
       result_log1 = Enum.find(index, &(&1.log_id == log1.log_id))
-      assert result_log1.message == log1.message
-      assert result_log1.timestamp == log1.creation_time
+      assert result_log1.revision.type == log1.revision.type
+      assert result_log1.creation_time == log1.creation_time
 
       result_log2 = Enum.find(index, &(&1.log_id == log2.log_id))
-      assert result_log2.message == log2.message
-      assert result_log2.timestamp == log2.creation_time
+      assert result_log2.revision.type == log2.revision.type
+      assert result_log2.creation_time == log2.creation_time
     end
   end
 
@@ -30,8 +30,8 @@ defmodule Helix.Log.Public.IndexTest do
     test "returns JSON friendly output" do
       {server, _} = ServerSetup.server()
 
-      log1 = LogSetup.log!([server_id: server.server_id, own_log: true])
-      log2 = LogSetup.log!([server_id: server.server_id, own_log: true])
+      log1 = LogSetup.log!(server_id: server.server_id, own_log: true)
+      log2 = LogSetup.log!(server_id: server.server_id, own_log: true)
 
       index = LogIndex.index(server.server_id)
       rendered = LogIndex.render_index(index)

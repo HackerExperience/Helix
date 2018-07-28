@@ -71,7 +71,6 @@ defmodule Helix.Mixfile do
       {:entropy_string, "~> 1.3"},
       {:burette, git: "https://github.com/HackerExperience/burette"},
 
-      {:ex_machina, "~> 2.1", only: :test},
       {:earmark, "~> 1.2.4", only: :dev},
       {:ex_doc, "~> 0.18.1", only: :dev},
       {:inch_ex, "~> 0.5.6", only: [:dev, :test]},

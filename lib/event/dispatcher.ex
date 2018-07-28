@@ -146,7 +146,7 @@ defmodule Helix.Event.Dispatcher do
   # All
   event LogEvent.Log.Created
   event LogEvent.Log.Deleted
-  event LogEvent.Log.Modified
+  # event LogEvent.Log.Modified
 
   ##############################################################################
   # Process events

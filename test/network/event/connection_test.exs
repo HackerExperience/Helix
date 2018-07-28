@@ -25,18 +25,12 @@ defmodule Helix.Network.Event.ConnectionTest do
       target_ip = ServerHelper.get_ip(event.tunnel.target_id)
 
       [log_source] = LogQuery.get_logs_on_server(event.tunnel.gateway_id)
-      assert_log \
-        log_source, event.tunnel.gateway_id, entity_id,
-        "localhost logged into",
-        contains: target_ip,
-        rejects: gateway_ip
+      assert_log log_source, event.tunnel.gateway_id, entity_id,
+        :remote_login_gateway, %{ip: target_ip}
 
       [log_target] = LogQuery.get_logs_on_server(event.tunnel.target_id)
-      assert_log \
-        log_target, event.tunnel.target_id, entity_id,
-        "logged in as",
-        contains: gateway_ip,
-        rejects: target_ip
+      assert_log log_target, event.tunnel.target_id, entity_id,
+        :remote_login_endpoint, %{ip: gateway_ip}
     end
 
     test "new log is created when ssh connection is started (with bounce)" do
@@ -51,25 +45,18 @@ defmodule Helix.Network.Event.ConnectionTest do
 
       entity_id = ServerHelper.get_owner(event.tunnel.gateway_id).entity_id
 
-      gateway_ip = ServerHelper.get_ip(event.tunnel.gateway_id)
-      target_ip = ServerHelper.get_ip(event.tunnel.target_id)
-
       # First log does not contain the target ip (it uses the bounce ip instead)
       [log_source] = LogQuery.get_logs_on_server(event.tunnel.gateway_id)
-      assert_log \
-        log_source, event.tunnel.gateway_id, entity_id,
-        "localhost logged into",
-        rejects: target_ip
+      assert_log log_source, event.tunnel.gateway_id, entity_id,
+        :remote_login_gateway, %{}
 
       assert_bounce \
         bounce, event.tunnel.gateway_id, event.tunnel.target_id, entity_id
 
       # Last log does not contain the source ip (it uses the bounce ip instead)
       [log_target] = LogQuery.get_logs_on_server(event.tunnel.target_id)
-      assert_log \
-        log_target, event.tunnel.target_id, entity_id,
-        "logged in as",
-        rejects: gateway_ip
+      assert_log log_target, event.tunnel.target_id, entity_id,
+        :remote_login_endpoint, %{}
     end
   end
 end

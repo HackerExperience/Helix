@@ -1,15 +1,23 @@
 defmodule Helix.Log.Public.Index do
 
   alias HELL.ClientUtils
+  alias HELL.HETypes
+  alias HELL.Utils
   alias Helix.Server.Model.Server
   alias Helix.Log.Model.Log
   alias Helix.Log.Query.Log, as: LogQuery
 
-  @type index ::
-    [%{log_id: Log.id, message: Log.message, timestamp: DateTime.t}]
+  @type index :: [Log.t]
 
-  @type rendered_index ::
-    [%{log_id: String.t, message: String.t, timestamp: String.t}]
+  @type rendered_index :: [rendered_log]
+
+  @typep rendered_log ::
+    %{
+      log_id: String.t,
+      type: String.t,
+      data: map,
+      timestamp: HETypes.client_timestamp
+    }
 
   @spec index(Server.id) ::
     index
@@ -23,13 +31,6 @@ defmodule Helix.Log.Public.Index do
   def index(server_id) do
     server_id
     |> LogQuery.get_logs_on_server()
-    |> Enum.map(fn log ->
-      %{
-        log_id: log.log_id,
-        message: log.message,
-        timestamp: log.creation_time
-      }
-    end)
   end
 
   @spec render_index(index) ::
@@ -37,13 +38,17 @@ defmodule Helix.Log.Public.Index do
   @doc """
   Top-level renderer for `index/1`
   """
-  def render_index(index) do
-    Enum.map(index, fn log ->
-      %{
-        log_id: to_string(log.log_id),
-        message: log.message,
-        timestamp: ClientUtils.to_timestamp(log.timestamp)
-      }
-    end)
+  def render_index(index),
+    do: Enum.map(index, &render_log/1)
+
+  @spec render_log(Log.t) ::
+    rendered_log
+  def render_log(log = %Log{}) do
+    %{
+      log_id: to_string(log.log_id),
+      type: to_string(log.revision.type),
+      data: Utils.stringify_map(log.revision.data),
+      timestamp: ClientUtils.to_timestamp(log.creation_time)
+    }
   end
 end

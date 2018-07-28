@@ -25,73 +25,56 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Log.Event.Log.Deleted, as: LogDeletedEvent
   alias Helix.Log.Event.Log.Modified, as: LogModifiedEvent
 
-  @spec create(Server.idt, Entity.idt, String.t, pos_integer | nil) ::
+  @spec create(Server.id, Entity.id, Log.info, pos_integer | nil) ::
     {:ok, Log.t, [LogCreatedEvent.t]}
-    | {:error, Ecto.Changeset.t}
+    | :error
   @doc """
-  Creates a new log linked to `entity` on `server` with `message` as content.
+  Creates a new log linked to `entity` on `server` with `log_info` as content.
   """
-  def create(server, entity, message, forge \\ nil) do
-    with {:ok, log} <- LogInternal.create(server, entity, message, forge) do
-      event = LogCreatedEvent.new(log)
+  def create(server_id, entity_id, log_info, forge_version \\ nil) do
+    case LogInternal.create(server_id, entity_id, log_info, forge_version) do
+      {:ok, log} ->
+        {:ok, log, [LogCreatedEvent.new(log)]}
 
-      {:ok, log, [event]}
+      {:error, _} ->
+        :error
     end
   end
 
-  @spec revise(Log.t, Entity.idt, String.t, pos_integer) ::
-    {:ok, Log.t, [LogModifiedEvent.t]}
-    | {:error, Ecto.Changeset.t}
+  @spec revise(Log.t, Entity.id, Log.info, pos_integer) ::
+    {:ok, Log.t, [LogRevisedEvent.t]}
+    | :error
   @doc """
-  Adds a revision over `log`.
-
-  ### Params
-  - `entity` is the the entity that is doing the revision.
-  - `message` is the new log's content.
-  - `forge_version` is the version of log forger used to make this revision.
-
-  ### Examples
-
-      iex> revise(%Log{}, %Entity{}, "empty log", 100)
-      {:ok, %Log{message: "empty log"}, [%LogModifiedEvent{}]}
+  Adds a revision to the given `log`.
   """
-  def revise(log, entity, message, forge_version) do
-    with \
-      {:ok, log} <- LogInternal.revise(log, entity, message, forge_version)
-    do
-      event = LogModifiedEvent.new(log)
+  def revise(log = %Log{}, entity_id, log_info, forge_version) do
+    case LogInternal.revise(log, entity_id, log_info, forge_version) do
+      {:ok, log} ->
+        event = LogRevisedEvent.new(log)
+        {:ok, log, [event]}
 
-      {:ok, log, [event]}
+      {:error, _} ->
+        :error
     end
   end
 
   @spec recover(Log.t) ::
-    {:ok, :recovered, [LogModifiedEvent.t]}
-    | {:ok, :deleted, [LogDeletedEvent.t]}
-    | {:error, :original_revision}
+    {:ok, :destroyed, [LogDeletedEvent.t]}
+    | {:ok, :original, []}
+    | {:ok, :recovered, [LogRecoveredEvent.t]}
   @doc """
-  Recovers `log` to a previous revision.
-
-  ### Notes
-  - If the log is in its original state and it is not a forged log, the
-  operation will fail with `{:error, :original_revision}`.
-  - If the log is in its original state and it is forged, it will be deleted,
-  returning `{:ok, :deleted, [Helix.Event.t]}`.
-  - Otherwise the revision will be deleted and the log will be updated to use
-  the last revision's message, returning `{:ok, :recovered, [Helix.Event.t]}`.
+  Attempts to recover the given `log`.
   """
-  def recover(log) do
+  def recover(log = %Log{}) do
     case LogInternal.recover(log) do
-      {:ok, :deleted} ->
-        event = LogDeletedEvent.new(log)
-        {:ok, :deleted, [event]}
+      :destroyed ->
+        {:ok, :destroyed, [LogDeletedEvent.new(log)]}
 
-      {:ok, :recovered} ->
-        event = LogModifiedEvent.new(log)
-        {:ok, :recovered, [event]}
+      {:original, _} ->
+        {:ok, :original, []}
 
-      {:error, :original_revision} ->
-        {:error, :original_revision}
+      {:recovered, new_log} ->
+        {:ok, :recovered, [LogRecoveredEvent.new(new_log)]}
     end
   end
 end

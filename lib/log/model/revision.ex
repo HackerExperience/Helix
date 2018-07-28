@@ -7,7 +7,6 @@ defmodule Helix.Log.Model.Revision do
   """
 
   use Ecto.Schema
-  use HELL.ID, field: :revision_id
 
   import Ecto.Changeset
   import HELL.Ecto.Macros
@@ -15,35 +14,50 @@ defmodule Helix.Log.Model.Revision do
   alias Ecto.Changeset
   alias Helix.Entity.Model.Entity
   alias Helix.Log.Model.Log
+  alias Helix.Log.Model.LogType.LogEnum
 
   @type t :: %__MODULE__{
-    revision_id: id,
     log_id: Log.id,
+    revision_id: id,
     entity_id: Entity.id,
-    message: String.t,
-    forge_version: pos_integer | nil,
-    log: term,
+    type: Log.type,
+    data: Log.data,
     creation_time: DateTime.t,
   }
 
+  @type changeset :: %Changeset{data: %__MODULE__{}}
+
   @type creation_params :: %{
-    :entity_id => Entity.idtb,
-    :message => String.t,
-    optional(:forge_version) => pos_integer | nil,
-    optional(atom) => any
+    entity_id: Entity.id,
+    type: Log.type,
+    data: Log.data,
+    forge_version: pos_integer | nil,
   }
 
-  @creation_fields ~w/entity_id message forge_version/a
+  @typedoc """
+  `Revision.id` is a sequential, non-negative integer that acts as a counter.
+  Each revision increments it, and if a LogRecoveryProcess removes a revision,
+  it decrements.
+  """
+  @type id :: non_neg_integer
 
-  schema "revisions" do
-    field :revision_id, ID,
+  @creation_fields [:entity_id, :type, :data, :forge_version, :revision_id]
+  @required_fields [:log_id, :entity_id, :type, :data, :revision_id]
+
+  @primary_key false
+  schema "log_revisions" do
+    field :log_id, Log.ID,
+      primary_key: true
+    field :revision_id, :integer,
       primary_key: true
 
-    field :log_id, Log.ID
     field :entity_id, Entity.ID
 
-    field :message, :string
-    field :forge_version, :integer
+    field :type, LogEnum
+    field :data, :map
+
+    field :forge_version, :integer,
+      default: nil
 
     field :creation_time, :utc_datetime
 
@@ -53,66 +67,30 @@ defmodule Helix.Log.Model.Revision do
       define_field: false
   end
 
-  @spec create(Log.t, Entity.idtb, String.t, pos_integer | nil) ::
-    Changeset.t
-  def create(log, entity, message, forge \\ nil) do
-    params = %{
-      entity_id: entity,
-      message: message,
-      forge_version: forge
-    }
-
-    log = Log.update_changeset(log, %{message: message})
-
+  @spec create_changeset(Log.id, id, creation_params) ::
+    changeset
+  def create_changeset(log_id, revision_id, params) do
     %__MODULE__{}
-    |> changeset(params)
-    |> put_assoc(:log, log)
-    |> put_pk(%{}, {:log, :revision})  # Correct heritage is TODO
-  end
-
-  @spec changeset(%__MODULE__{} | Changeset.t, creation_params) ::
-    Changeset.t
-  def changeset(struct, params) do
-    struct
     |> cast(params, @creation_fields)
-    |> validate_required([:entity_id, :message])
-    |> validate_number(:forge_version, greater_than: 0)
+    |> put_change(:log_id, log_id)
+    |> put_change(:revision_id, revision_id)
     |> put_change(:creation_time, DateTime.utc_now())
-    |> put_pk(%{}, {:log, :revision})  # Correct heritage is TODO
+    |> validate_required(@required_fields)
   end
 
   query do
 
-    alias Helix.Entity.Model.Entity
     alias Helix.Log.Model.Log
     alias Helix.Log.Model.Revision
 
-    @spec by_id(Queryable.t, Revision.idtb) ::
+    @spec by_log(Queryable.t, Log.id) ::
       Queryable.t
-    def by_id(query \\ Revision, id),
-      do: where(query, [r], r.revision_id == ^id)
+    def by_log(query \\ Revision, log_id),
+      do: where(query, [lr], lr.log_id == ^log_id)
 
-    @spec by_log(Queryable.t, Log.idtb) ::
+    @spec by_revision(Queryable.t, Revision.id) ::
       Queryable.t
-    def by_log(query \\ Revision, id),
-      do: where(query, [r], r.log_id == ^id)
-
-    @spec by_entity(Queryable.t, Entity.idtb) ::
-      Queryable.t
-    def by_entity(query \\ Revision, id),
-      do: where(query, [r], r.entity_id == ^id)
-
-    @spec select_count(Queryable.t) ::
-      Queryable.t
-    def select_count(query \\ Revision),
-      do: select(query, [r], count(r.revision_id))
-
-    @spec last(Queryable.t, non_neg_integer) ::
-      Queryable.t
-    def last(query, n) do
-      query
-      |> order_by([r], desc: r.creation_time)
-      |> limit(^n)
-    end
+    def by_revision(query, revision_id),
+      do: where(query, [lr], lr.revision_id == ^revision_id)
   end
 end
