@@ -81,7 +81,7 @@ defmodule Helix.Notification.Event.Notification do
           %{server_id: notification.server_id |> to_string()}
         else
           notification.server_id
-          |> CacheQuery.from_server_get_nips()
+          |> CacheQuery.from_server_get_nips!()
           |> List.first()
           |> Utils.stringify_map()
         end
