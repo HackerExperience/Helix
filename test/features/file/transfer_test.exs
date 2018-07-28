@@ -104,6 +104,10 @@ defmodule Helix.Test.Features.File.TransferTest do
       assert notification_added_event.data.class == :server
       assert notification_added_event.data.code == :file_downloaded
 
+      # Notification contains information about which server it took place
+      assert notification_added_event.data.server_id ==
+        to_string(gateway.server_id)
+
       # Notification contains required data
       notification_data = notification_added_event.data.data
       assert notification_data.id == to_string(new_file.file_id)

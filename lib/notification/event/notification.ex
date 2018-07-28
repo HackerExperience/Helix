@@ -28,6 +28,11 @@ defmodule Helix.Notification.Event.Notification do
 
     publish do
 
+      alias HELL.Utils
+      alias Helix.Account.Model.Account
+      alias Helix.Cache.Query.Cache, as: CacheQuery
+      alias Helix.Entity.Query.Entity, as: EntityQuery
+
       @event :notification_added
 
       def generate_payload(event, _socket) do
@@ -64,8 +69,23 @@ defmodule Helix.Notification.Event.Notification do
 
       defp get_extra_data(%Notification.Account{}),
         do: %{}
-      defp get_extra_data(%Notification.Server{}),
-        do: %{}
+      defp get_extra_data(notification = %Notification.Server{}) do
+        # We have to publish the server information to the Client, so it knows
+        # where to display the notification.
+        # If the server belongs to the given account, we publish the raw
+        # `server_id`. Otherwise, we publish the server's `network_id` and `ip`.
+        entity = EntityQuery.fetch_by_server(notification.server_id)
+        account_id = Account.cast_from_entity(entity.entity_id)
+
+        if account_id == notification.account_id do
+          %{server_id: notification.server_id |> to_string()}
+        else
+          notification.server_id
+          |> CacheQuery.from_server_get_nips!()
+          |> List.first()
+          |> Utils.stringify_map()
+        end
+      end
     end
   end
 

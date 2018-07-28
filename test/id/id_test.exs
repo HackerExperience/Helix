@@ -153,6 +153,7 @@ defmodule Helix.IDTest do
       refute slice(proc3_s1_id_bin, 24..53) == slice(proc3_s2_id_bin, 24..53)
     end
 
+    skip_on_travis_slowpoke()
     test "benchmark" do
       # Generate 1000 IDs without parent and gp
       time_start = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
