@@ -1,20 +1,4 @@
 defmodule Helix.Log.Action.Log do
-  @moduledoc """
-  Functions to work with in-game logs.
-
-  An in-game log is a record registering an action done by an entity on a
-  server.
-
-  It can be forged and recovered to a previous state.
-
-  Its forging mechanics is implemented as an stack where the last revision is
-  the currently displayed message and to see the original log all revisions must
-  be recovered.
-
-  Note that on Log context _forging_ and _revising_ are used interchangeably and
-  means changing the current message of a log by adding a (forged) revision to
-  it's stack.
-  """
 
   alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
@@ -23,13 +7,16 @@ defmodule Helix.Log.Action.Log do
 
   alias Helix.Log.Event.Log.Created, as: LogCreatedEvent
   alias Helix.Log.Event.Log.Deleted, as: LogDeletedEvent
-  alias Helix.Log.Event.Log.Modified, as: LogModifiedEvent
+  alias Helix.Log.Event.Log.Revised, as: LogRevisedEvent
 
   @spec create(Server.id, Entity.id, Log.info, pos_integer | nil) ::
     {:ok, Log.t, [LogCreatedEvent.t]}
     | :error
   @doc """
   Creates a new log linked to `entity` on `server` with `log_info` as content.
+
+  This log may be natural (created automatically by the game as a result to a
+  player's action) or artificial (explicitly created using LogForger.Edit).
   """
   def create(server_id, entity_id, log_info, forge_version \\ nil) do
     case LogInternal.create(server_id, entity_id, log_info, forge_version) do

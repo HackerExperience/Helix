@@ -1,5 +1,8 @@
 defmodule Helix.Test.Macros do
 
+  alias HELL.Utils
+  alias HELL.MapUtils
+
   defmacro assert_between(a, range_min, range_max) do
     quote bind_quoted: binding() do
       assert a >= range_min
@@ -11,6 +14,24 @@ defmodule Helix.Test.Macros do
     skip = is_list(skip) && skip || [skip]
     quote bind_quoted: binding() do
       assert Map.drop(a, skip) == Map.drop(b, skip)
+    end
+  end
+
+  @doc """
+  Ensures two maps are identical, ignoring type differences. Especially useful
+  for cases where there's no practical distinction between Helix internal format
+  (e.g. structs or IDs) and plain maps.
+
+  Example:
+
+    %{foo: :bar} == %{"foo" => "bar"}  # True
+  """
+  defmacro assert_map_str(a, b) do
+    quote do
+      a = unquote(a) |> Utils.stringify_map() |> MapUtils.atomize_keys()
+      b = unquote(b) |> Utils.stringify_map() |> MapUtils.atomize_keys()
+
+      assert a == b
     end
   end
 

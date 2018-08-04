@@ -29,5 +29,6 @@ balance Software do
       |> mul(modules.overflow.version)
 
     bruteforce + overflow
+    # |> float_div(2)
   end
 end

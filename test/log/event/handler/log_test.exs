@@ -2,13 +2,10 @@ defmodule Helix.Log.Event.Handler.LogTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
   import Helix.Test.Log.Macros
 
   alias Helix.Event
-  alias Helix.Software.Event.LogForge.LogEdit.Processed,
-    as: LogForgeEditComplete
-  alias Helix.Software.Event.LogForge.LogCreate.Processed,
-    as: LogForgeCreateComplete
   alias Helix.Log.Event.Handler.Log, as: LogHandler
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo
@@ -16,10 +13,11 @@ defmodule Helix.Log.Event.Handler.LogTest do
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
-  # alias Helix.Test.Log.Factory, as: LogFactory
   alias Helix.Test.Log.Helper, as: LogHelper
+  alias Helix.Test.Log.Setup, as: LogSetup
 
   describe "handle_event/1" do
     test "follows the LoggableFlow" do
@@ -114,46 +112,66 @@ defmodule Helix.Log.Event.Handler.LogTest do
     end
   end
 
-  # describe "log_forge_conclusion/1 for LogForge.Edit" do
-  #   test "adds revision to target log" do
-  #     target_log = LogFactory.insert(:log)
-  #     {entity, _} = EntitySetup.entity()
-  #     message = "I just got hidden"
+  describe "log_forge_processed/1 for LogForge.Edit" do
+    test "adds a revision to the target log" do
+      log = LogSetup.log!()
+      process =
+        ProcessSetup.fake_process!(
+          type: :log_forge_edit,
+          tgt_log_id: log.log_id,
+          data: [forger_version: 50]
+        )
+      event = EventSetup.Log.forge_processed(process: process)
 
-  #     event = %LogForgeEditComplete{
-  #       target_log_id: target_log.log_id,
-  #       entity_id: entity.entity_id,
-  #       message: message,
-  #       version: 100
-  #     }
+      # Sanity check: we are editing the log we've created
+      assert event.target_log_id == process.tgt_log_id
+      assert event.action == :edit
 
-  #     revisions_before = LogQuery.count_revisions_of_entity(target_log, entity)
-  #     LogHandler.log_forge_conclusion(event)
-  #     revisions_after = LogQuery.count_revisions_of_entity(target_log, entity)
-  #     target_log = LogQuery.fetch(target_log.log_id)
+      log_before = LogQuery.fetch(log.log_id)
 
-  #     assert revisions_after == revisions_before + 1
-  #     assert message == target_log.message
-  #   end
-  # end
+      # Simulate handling of the event
+      LogHandler.log_forge_processed(event)
 
-  # describe "log_forge_conclusion/1 for LogForge.Create" do
-  #   test "creates specified log on target server" do
-  #     {server, %{entity: entity}} = ServerSetup.server()
+      log_after = LogQuery.fetch(log.log_id)
 
-  #     message = "Mess with the best, die like the rest"
+      # `log_after` had a revision added to it.
+      assert log_after.revision_id == log_before.revision_id + 1
+      assert log_after.revision != log_before.revision
 
-  #     event = %LogForgeCreateComplete{
-  #       entity_id: entity.entity_id,
-  #       target_id: server.server_id,
-  #       message: message,
-  #       version: 456
-  #     }
+      # `log_after` revision is exactly the one specified at `event`/`process`
+      assert log_after.revision.type == process.data.log_type
+      assert_map_str log_after.revision.data,
+        Map.from_struct(process.data.log_data)
+      assert log_after.revision.forge_version == 50
+    end
+  end
 
-  #     LogHandler.log_forge_conclusion(event)
+  describe "log_forge_processed/1 for LogForge.Create" do
+    test "creates a new log" do
+      process =
+        ProcessSetup.fake_process!(
+          type: :log_forge_create, data: [forger_version: 50]
+        )
+      event = EventSetup.Log.forge_processed(process: process)
 
-  #     assert [log] = LogQuery.get_logs_on_server(server)
-  #     assert [%{forge_version: 456}] = Repo.preload(log, :revisions).revisions
-  #   end
-  # end
+      # Sanity check: we are creating a new log
+      refute event.target_log_id
+      assert event.action == :create
+
+      # Initially, the process (target) server has no logs
+      assert [] == LogQuery.get_logs_on_server(process.target_id)
+
+      # Simulate handling of the event
+      LogHandler.log_forge_processed(event)
+
+      # Now the process server has a new log
+      assert [log] = LogQuery.get_logs_on_server(process.target_id)
+
+      # And the new log has exactly the data described at `event`/`process`
+      assert log.revision_id == 1
+      assert log.revision.type == process.data.log_type
+      assert_map_str log.revision.data, Map.from_struct(process.data.log_data)
+      assert log.revision.forge_version == 50
+    end
+  end
 end

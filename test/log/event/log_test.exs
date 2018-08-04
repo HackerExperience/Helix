@@ -33,23 +33,23 @@ defmodule Helix.Log.Event.LogTest do
     end
   end
 
-  # describe "LogModifiedEvent" do
-  #   test "Publishable.generate_payload/2" do
-  #     event = EventSetup.Log.modified()
+  describe "LogRevisedEvent" do
+    test "Publishable.generate_payload/2" do
+      event = EventSetup.Log.revised()
 
-  #     # Generates the payload
-  #     assert {:ok, data} = Publishable.generate_payload(event, @mocked_socket)
+      # Generates the payload
+      assert {:ok, data} = Publishable.generate_payload(event, @mocked_socket)
 
-  #     # Returned payload is json-friendly
-  #     assert data.log_id == to_string(event.log.log_id)
-  #     assert data.message == event.log.message
-  #     assert data.server_id == to_string(event.log.server_id)
-  #     assert is_float(data.timestamp)
+      # Returned payload is json-friendly
+      assert data.log_id == to_string(event.log.log_id)
+      assert data.type == to_string(event.log.revision.type)
+      assert data.data
+      assert is_float(data.timestamp)
 
-  #     # Returned event is correct
-  #     assert "log_modified" == Publishable.get_event_name(event)
-  #   end
-  # end
+      # Returned event is correct
+      assert "log_revised" == Publishable.get_event_name(event)
+    end
+  end
 
   describe "LogDeletedEvent" do
     test "Publishable.generate_payload/2" do
@@ -60,7 +60,6 @@ defmodule Helix.Log.Event.LogTest do
 
       # Returned payload is json-friendly
       assert data.log_id == to_string(event.log.log_id)
-      assert data.server_id == to_string(event.log.server_id)
 
       # Returned event is correct
       assert "log_deleted" == Publishable.get_event_name(event)

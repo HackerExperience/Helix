@@ -14,6 +14,7 @@ defmodule Helix.Software.Model.File.Module do
   use Ecto.Schema
 
   import Ecto.Changeset
+  import HELL.Ecto.Macros
 
   alias Ecto.Changeset
   alias HELL.Constant
@@ -129,11 +130,8 @@ defmodule Helix.Software.Model.File.Module do
     end
   end
 
-  defmodule Query do
+  query do
 
-    import Ecto.Query
-
-    alias Ecto.Queryable
     alias HELL.Constant
     alias Helix.Software.Model.File
 

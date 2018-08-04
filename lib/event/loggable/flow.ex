@@ -322,10 +322,9 @@ defmodule Helix.Event.Loggable.Flow do
         {_, _, ip_next} = bounce_map[idx + 1]
 
         data = %{ip_prev: ip_prev, ip_next: ip_next, network_id: network_id}
-        # TODO
-        log_type = {:connection_bounced, LogType.new(:connection_bounced, data)}
+        log_info = {:connection_bounced, LogType.new(:connection_bounced, data)}
 
-        entry = build_entry(server_id, entity_id, log_type)
+        entry = build_entry(server_id, entity_id, log_info)
 
         {idx + 1, acc ++ [entry]}
       end

@@ -144,9 +144,10 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
+  event LogEvent.Forge.Processed
   event LogEvent.Log.Created
   event LogEvent.Log.Deleted
-  # event LogEvent.Log.Modified
+  event LogEvent.Log.Revised
 
   ##############################################################################
   # Process events
@@ -209,8 +210,6 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.File.Transfer.Processed
   event SoftwareEvent.Firewall.Started
   event SoftwareEvent.Firewall.Stopped
-  event SoftwareEvent.LogForge.LogCreate.Processed
-  event SoftwareEvent.LogForge.LogEdit.Processed
   event SoftwareEvent.Virus.Collect.Processed
   event SoftwareEvent.Virus.Collected
   event SoftwareEvent.Virus.Installed
@@ -248,14 +247,6 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Firewall.Stopped,
     ProcessHandler.Cracker,
     :firewall_stopped
-
-  event SoftwareEvent.LogForge.LogCreate.Processed,
-    LogHandler.Log,
-    :log_forge_conclusion
-
-  event SoftwareEvent.LogForge.LogEdit.Processed,
-    LogHandler.Log,
-    :log_forge_conclusion
 
   event SoftwareEvent.Virus.Collect.Processed,
     SoftwareHandler.Virus,

@@ -26,10 +26,10 @@ defmodule Helix.ID.Domain do
       crc_bruteforce:   23
       crc_overflow:     33
       install_virus:    43
-      log_forger:       53
-      virus_collect:    63
-      wire_transfer:    73
-      bank_reveal_pass: 83
+      virus_collect:    53
+      wire_transfer:    63
+      bank_reveal_pass: 73
+      log_forge:        83
       reserved_until:   F3
       reserved_until:   F4
 
@@ -154,10 +154,11 @@ defmodule Helix.ID.Domain do
     {{:process, :cracker_bruteforce}, 0x23},
     {{:process, :cracker_overflow}, 0x33},
     {{:process, :install_virus}, 0x43},
-    {{:process, :log_forger}, 0x53},
-    {{:process, :virus_collect}, 0x63},
-    {{:process, :wire_transfer}, 0x73},
-    {{:process, :bank_reveal_password}, 0x83},
+    {{:process, :virus_collect}, 0x53},
+    {{:process, :wire_transfer}, 0x63},
+    {{:process, :bank_reveal_password}, 0x73},
+    {{:process, :log_forge_create}, 0x83},
+    {{:process, :log_forge_edit}, 0x83},
     {{:server, :desktop}, 0x05},
     {{:server, :mobile}, 0x15},
     {{:server, :npc}, 0x25},

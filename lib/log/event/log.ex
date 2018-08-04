@@ -5,25 +5,27 @@ defmodule Helix.Log.Event.Log do
   event Created do
     @moduledoc """
     LogCreatedEvent is fired when a brand new log entry is added to the server.
+
+    The newly created log may be either natural (automatically created by the
+    game) or artificial (explicitly created by the player through LogForge
+    mechanics). Either way, the receiving end of the event (Client) DOES NOT
+    know whether the log is natural or artificial.
     """
 
-    alias Helix.Server.Model.Server
     alias Helix.Log.Model.Log
 
     @type t ::
       %__MODULE__{
-        log: Log.t,
-        server_id: Server.id
+        log: Log.t
       }
 
-    event_struct [:server_id, :log]
+    event_struct [:log]
 
     @spec new(Log.t) ::
       t
     def new(log = %Log{}) do
       %__MODULE__{
-        log: log,
-        server_id: log.server_id
+        log: log
       }
     end
 
@@ -40,59 +42,51 @@ defmodule Helix.Log.Event.Log do
       end
 
       def whom_to_publish(event),
-        do: %{server: event.server_id}
+        do: %{server: event.log.server_id}
     end
   end
 
-  # event Modified do
-  #   @moduledoc """
-  #   LogModifiedEvent is fired when an existing log has changed (revised) or
-  #   has been recovered.
+  event Revised do
+    @moduledoc """
+    `LogRevisedEvent` is fired when an existing log had a revision added to it.
 
-  #   TODO: we'll probably want to create a LogRecovered event instead.
-  #   """
+    The revision may be stacked up on a natural or artificial log - the log
+    origin is transparent to the Client.
+    """
 
-  #   alias Helix.Server.Model.Server
-  #   alias Helix.Log.Model.Log
+    alias Helix.Log.Model.Log
 
-  #   @type t ::
-  #     %__MODULE__{
-  #       log: Log.t,
-  #       server_id: Server.id
-  #     }
+    event_struct [:log]
 
-  #   event_struct [:server_id, :log]
+    @type t ::
+      %__MODULE__{
+        log: Log.t
+      }
 
-  #   @spec new(Log.t) ::
-  #     t
-  #   def new(log = %Log{}) do
-  #     %__MODULE__{
-  #       log: log,
-  #       server_id: log.server_id
-  #     }
-  #   end
+    @spec new(Log.t) ::
+      t
+    def new(log = %Log{}) do
+      %__MODULE__{
+        log: log
+      }
+    end
 
-  #   publish do
+    publish do
 
-  #     alias HELL.ClientUtils
+      alias Helix.Log.Public.Index, as: LogIndex
 
-  #     @event :log_modified
+      @event :log_revised
 
-  #     def generate_payload(event, _socket) do
-  #       data = %{
-  #         log_id: to_string(event.log.log_id),
-  #         server_id: to_string(event.server_id),
-  #         timestamp: ClientUtils.to_timestamp(event.log.creation_time),
-  #         message: event.log.message
-  #       }
+      def generate_payload(event, _socket) do
+        data = LogIndex.render_log(event.log)
 
-  #       {:ok, data}
-  #     end
+        {:ok, data}
+      end
 
-  #     def whom_to_publish(event),
-  #       do: %{server: event.server_id}
-  #   end
-  # end
+      def whom_to_publish(event),
+        do: %{server: event.log.server_id}
+    end
+  end
 
   event Deleted do
     @moduledoc """
@@ -100,23 +94,20 @@ defmodule Helix.Log.Event.Log do
     revision, leading to the log deletion.
     """
 
-    alias Helix.Server.Model.Server
     alias Helix.Log.Model.Log
 
     @type t ::
       %__MODULE__{
-        log: Log.t,
-        server_id: Server.id
+        log: Log.t
       }
 
-    event_struct [:server_id, :log]
+    event_struct [:log]
 
     @spec new(Log.t) ::
       t
     def new(log = %Log{}) do
       %__MODULE__{
-        log: log,
-        server_id: log.server_id
+        log: log
       }
     end
 
@@ -126,15 +117,14 @@ defmodule Helix.Log.Event.Log do
 
       def generate_payload(event, _socket) do
         data = %{
-          log_id: to_string(event.log.log_id),
-          server_id: to_string(event.server_id)
+          log_id: to_string(event.log.log_id)
         }
 
         {:ok, data}
       end
 
       def whom_to_publish(event),
-        do: %{server: event.server_id}
+        do: %{server: event.log.server_id}
     end
   end
 end

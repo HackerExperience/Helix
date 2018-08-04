@@ -2,14 +2,12 @@ defmodule Helix.Log.Event.Handler.Log do
   @moduledoc false
 
   alias Helix.Event
-  alias Helix.Log.Action.Log, as: LogAction
   alias Helix.Event.Loggable
+  alias Helix.Log.Action.Log, as: LogAction
+  alias Helix.Log.Model.Log
   alias Helix.Log.Query.Log, as: LogQuery
 
-  alias Helix.Software.Event.LogForge.LogCreate.Processed,
-    as: LogForgeCreateComplete
-  alias Helix.Software.Event.LogForge.LogEdit.Processed,
-    as: LogForgeEditComplete
+  alias Helix.Log.Event.Forge.Processed, as: LogForgeProcessedEvent
 
   @doc """
   Generic event handler for all Helix events. If the event implement the
@@ -28,24 +26,36 @@ defmodule Helix.Log.Event.Handler.Log do
   end
 
   @doc """
-  Forges a revision onto a log or creates a fake new log
-  """
-  def log_forge_conclusion(event = %LogForgeEditComplete{}) do
-    {:ok, _, events} =
-      event.target_log_id
-      |> LogQuery.fetch()
-      |> LogAction.revise(event.entity_id, event.message, event.version)
+  Handler called right after a `LogForgeProcess` has completed. It will then
+  either create a new log out of thin air, or edit an existing log.
 
-    Event.emit(events, from: event)
+  Emits: `LogCreatedEvent`, `LogRevisedEvent`
+  """
+  def log_forge_processed(event = %LogForgeProcessedEvent{action: :create}) do
+    # `action` is `:create`, so we'll create a new log out of thin air!
+    result =
+      LogAction.create(
+        event.server_id, event.entity_id, event.log_info, event.forger_version
+      )
+
+    with {:ok, _, events} <- result do
+      Event.emit(events)
+    end
   end
 
-  def log_forge_conclusion(event = %LogForgeCreateComplete{}) do
-    {:ok, _, events} = LogAction.create(
-      event.target_id,
-      event.entity_id,
-      event.message,
-      event.version)
+  def log_forge_processed(event = %LogForgeProcessedEvent{action: :edit}) do
+    # `action` is `:edit`, so we'll stack up a revision on an existing log
+    revise = fn log ->
+      LogAction.revise(
+        log, event.entity_id, event.log_info, event.forger_version
+      )
+    end
 
-    Event.emit(events, from: event)
+    with \
+      log = %Log{} <- LogQuery.fetch(event.target_log_id),
+      {:ok, _, events} <- revise.(log)
+    do
+      Event.emit(events)
+    end
   end
 end
