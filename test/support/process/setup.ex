@@ -9,7 +9,7 @@ defmodule Helix.Test.Process.Setup do
   alias Helix.Test.Process.Data.Setup, as: ProcessDataSetup
   alias Helix.Test.Process.Helper, as: ProcessHelper
 
-  @internet NetworkHelper.internet_id()
+  @internet_id NetworkHelper.internet_id()
 
   def process(opts \\ []) do
     {_, related = %{params: params}} = fake_process(opts)
@@ -31,6 +31,7 @@ defmodule Helix.Test.Process.Setup do
   - network_id:
   - src_connection_id:
   - tgt_connection_id:
+  - tgt_log_id:
   - single_server:
   - type: Set process type. If not specified, a random one is generated.
   - data: Data for that specific process type. Ignored if `type` is not set.
@@ -38,17 +39,6 @@ defmodule Helix.Test.Process.Setup do
   Related: source_entity_id :: Entity.id, target_entity_id :: Entity.id
   """
   def fake_process(opts \\ []) do
-    tmp_check = fn key ->
-      if opts[key] do
-        raise "#{inspect key} no longer used"
-      end
-    end
-
-    tmp_check.(:file_id)
-    tmp_check.(:target_file_id)
-    tmp_check.(:connection_id)
-    tmp_check.(:target_connection_id)
-
     gateway_id = Keyword.get(opts, :gateway_id, ServerHelper.id())
     source_entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
     {target_id, target_entity_id} =
@@ -65,7 +55,8 @@ defmodule Helix.Test.Process.Setup do
     tgt_file_id = Keyword.get(opts, :tgt_file_id, nil)
     src_connection_id = Keyword.get(opts, :src_connection_id, nil)
     tgt_connection_id = Keyword.get(opts, :tgt_connection_id, nil)
-    network_id = Keyword.get(opts, :network_id, @internet)
+    tgt_log_id = Keyword.get(opts, :tgt_log_id, nil)
+    network_id = Keyword.get(opts, :network_id, @internet_id)
 
     meta = %{
       source_entity_id: source_entity_id,
@@ -76,6 +67,7 @@ defmodule Helix.Test.Process.Setup do
       tgt_file_id: tgt_file_id,
       src_connection_id: src_connection_id,
       tgt_connection_id: tgt_connection_id,
+      tgt_log_id: tgt_log_id,
       network_id: network_id
     }
 
@@ -104,6 +96,7 @@ defmodule Helix.Test.Process.Setup do
       network_id: meta.network_id,
       src_connection_id: meta.src_connection_id,
       tgt_connection_id: meta.tgt_connection_id,
+      tgt_log_id: meta.tgt_log_id,
       static: static,
       l_limit: l_limit,
       r_limit: r_limit,
@@ -125,5 +118,10 @@ defmodule Helix.Test.Process.Setup do
     }
 
     {process, related}
+  end
+
+  def fake_process!(opts) do
+    {process, _} = fake_process(opts)
+    process
   end
 end

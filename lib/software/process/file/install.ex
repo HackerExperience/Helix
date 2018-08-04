@@ -33,6 +33,11 @@ process Helix.Software.Process.File.Install do
     }
 
   @type creation_params :: %{backend: backend}
+  @type executable_meta ::
+    %{
+      file: File.t,
+      type: process_type
+    }
 
   @type objective :: %{cpu: resource_usage}
 
@@ -42,9 +47,9 @@ process Helix.Software.Process.File.Install do
       backend: backend
     }
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(%{backend: backend}) do
+  def new(%{backend: backend}, _meta) do
     %__MODULE__{
       backend: backend
     }
@@ -111,16 +116,6 @@ process Helix.Software.Process.File.Install do
   end
 
   executable do
-
-    @type params :: FileInstallProcess.creation_params
-
-    @type meta ::
-      %{
-        file: File.t,
-        type: process_type
-      }
-
-    @typep process_type :: FileInstallProcess.process_type
 
     resources(_gateway, _target, %{backend: backend}, %{file: file}) do
       %{

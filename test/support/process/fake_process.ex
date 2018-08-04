@@ -8,13 +8,16 @@ defmodule Helix.Test.Process do
 
     process_struct [:file_id]
 
+    @type creation_params :: term
+    @type executable_meta :: term
+
     def new do
       %__MODULE__{
         file_id: Random.number()
       }
     end
 
-    def new(%{file_id: file_id}) do
+    def new(%{file_id: file_id}, _) do
       %__MODULE__{
         file_id: file_id
       }
@@ -57,9 +60,6 @@ defmodule Helix.Test.Process do
 
     executable do
 
-      @type params :: term
-      @type meta :: term
-
       resources(_, _, _, _) do
         %{}
       end
@@ -69,6 +69,9 @@ defmodule Helix.Test.Process do
   process FakeDefaultProcess do
 
     process_struct [:foo]
+
+    @type creation_params :: term
+    @type executable_meta :: term
 
     def new do
       %__MODULE__{
@@ -102,9 +105,6 @@ defmodule Helix.Test.Process do
     end
 
     executable do
-
-      @type params :: term
-      @type meta :: term
 
       resources(_, _, _, _) do
         %{}

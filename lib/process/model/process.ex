@@ -21,6 +21,7 @@ defmodule Helix.Process.Model.Process do
   alias HELL.MapUtils
   alias HELL.NaiveStruct
   alias Helix.Entity.Model.Entity
+  alias Helix.Log.Model.Log
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
@@ -50,6 +51,7 @@ defmodule Helix.Process.Model.Process do
       tgt_atm_id: Server.id | nil,
       tgt_acc_number: BankAccount.account | nil,
       tgt_process_id: Process.id | nil,
+      tgt_log_id: Log.id | nil,
       priority: term,
       l_allocated: Process.Resources.t | nil,
       r_allocated: Process.Resources.t | nil,
@@ -80,7 +82,8 @@ defmodule Helix.Process.Model.Process do
     | :virus_collect
     | :bank_reveal_password
     | :wire_transfer
-    | :log_forger
+    | :log_forge_create
+    | :log_forge_edit
 
   @typedoc """
   List of signals a process may receive during its lifetime.
@@ -225,6 +228,7 @@ defmodule Helix.Process.Model.Process do
     :tgt_atm_id => Server.id | nil,
     :tgt_acc_number => BankAccount.account | nil,
     :tgt_process_id => Process.id | nil,
+    :tgt_log_id => Log.id | nil,
     :objective => map,
     :l_dynamic => dynamic,
     :r_dynamic => dynamic,
@@ -248,6 +252,7 @@ defmodule Helix.Process.Model.Process do
     :tgt_atm_id,
     :tgt_acc_number,
     :tgt_process_id,
+    :tgt_log_id,
     :objective,
     :static,
     :l_dynamic,
@@ -357,6 +362,10 @@ defmodule Helix.Process.Model.Process do
 
     # Which process (if any) is the target of this process
     field :tgt_process_id, Process.ID,
+      default: nil
+
+    # Which log (if any) is the target of this process
+    field :tgt_log_id, Log.ID,
       default: nil
 
     ### Helix.Process required data

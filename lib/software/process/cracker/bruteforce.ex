@@ -24,6 +24,11 @@ process Helix.Software.Process.Cracker.Bruteforce do
       target_server_ip: Network.ip
     }
 
+  @type executable_meta ::
+    %{
+      cracker: File.t
+    }
+
   @type objective :: %{cpu: resource_usage}
 
   @type resources ::
@@ -40,9 +45,9 @@ process Helix.Software.Process.Cracker.Bruteforce do
       hasher: File.t_of_type(:hasher) | nil
     }
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(%{target_server_ip: ip}) do
+  def new(%{target_server_ip: ip}, _) do
     %__MODULE__{
       target_server_ip: ip
     }
@@ -141,16 +146,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
     Defines how a BruteforceProcess should be executed.
     """
 
-    alias Helix.Software.Process.Cracker.Bruteforce, as: BruteforceProcess
     alias Helix.Software.Query.File, as: FileQuery
-
-    @type params :: BruteforceProcess.creation_params
-
-    @type meta ::
-      %{
-        :cracker => File.t,
-        optional(atom) => term
-      }
 
     resources(_, target, _, %{cracker: cracker}) do
       hasher = FileQuery.fetch_best(target, :password)

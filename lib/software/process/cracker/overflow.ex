@@ -11,6 +11,11 @@ process Helix.Software.Process.Cracker.Overflow do
 
   @type creation_params :: %{}
 
+  @type executable_meta ::
+    %{
+      cracker: File.t
+    }
+
   @type objective :: %{cpu: resource_usage}
 
   @type resources ::
@@ -28,9 +33,9 @@ process Helix.Software.Process.Cracker.Overflow do
 
   @process_type :cracker_overflow
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(_),
+  def new(_, _),
     do: %__MODULE__{}
 
   @spec resources(resources_params) ::
@@ -88,16 +93,6 @@ process Helix.Software.Process.Cracker.Overflow do
   end
 
   executable do
-
-    alias Helix.Software.Model.File
-    alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
-
-    @type params :: OverflowProcess.creation_params
-    @type meta ::
-      %{
-        :cracker => File.t,
-        optional(atom) => term
-      }
 
     resources(_, _, _, %{cracker: cracker}) do
       %{cracker: cracker}

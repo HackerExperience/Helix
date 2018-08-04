@@ -11,6 +11,7 @@ process Helix.Software.Process.File.Transfer do
   file is being transferred, is already present on the standard process data.
   """
 
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
   alias Helix.Software.Model.File
   alias Helix.Software.Model.Storage
@@ -45,15 +46,22 @@ process Helix.Software.Process.File.Transfer do
     destination_storage_id: Storage.id
   }
 
+  @type executable_meta :: %{
+    file: File.t,
+    type: process_type,
+    network_id: Network.id,
+    bounce: Bounce.idt | nil
+  }
+
   @type resources_params :: %{
     type: transfer_type,
     file: File.t,
     network_id: Network.id
   }
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(params = %{destination_storage_id: %Storage.ID{}}) do
+  def new(params = %{destination_storage_id: %Storage.ID{}}, _) do
     %__MODULE__{
       type: params.type,
       destination_storage_id: params.destination_storage_id,
@@ -197,21 +205,6 @@ process Helix.Software.Process.File.Transfer do
     @moduledoc """
     Defines how FileTransferProcess should be executed.
     """
-
-    alias Helix.Network.Model.Bounce
-    alias Helix.Network.Model.Network
-    alias Helix.Software.Model.File
-    alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
-
-    @type params :: FileTransferProcess.creation_params
-
-    @type meta ::
-      %{
-        file: File.t,
-        type: FileTransferProcess.process_type,
-        network_id: Network.id,
-        bounce: Bounce.idt | nil
-      }
 
     resources(_, _, params, meta) do
       %{

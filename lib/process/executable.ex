@@ -43,14 +43,14 @@ defmodule Helix.Process.Executable do
   """
   defp handlers(process) do
     quote do
-      @spec get_process_data(params) ::
+      @spec get_process_data(params, meta) ::
         %{data: unquote(process).t}
       docp """
       Retrieves the `process_data`, according to how it was defined at the
       Process' `new/1`. Subset of the full process params.
       """
-      defp get_process_data(params) do
-        data = call_process(:new, params)
+      defp get_process_data(params, meta) do
+        data = call_process(:new, [params, meta])
         %{data: data}
       end
 
@@ -130,8 +130,10 @@ defmodule Helix.Process.Executable do
       """
       defp call_process(function),
         do: apply(unquote(process), function, [])
+      defp call_process(function, param) when not is_list(param),
+        do: apply(unquote(process), function, [param])
       defp call_process(function, params),
-        do: apply(unquote(process), function, [params])
+        do: apply(unquote(process), function, params)
 
       @spec setup_connection(
         Server.t,
@@ -257,6 +259,9 @@ defmodule Helix.Process.Executable do
         import HELL.Macros
         import Helix.Process.Executable
 
+        @type params :: unquote(process).creation_params
+        @type meta :: unquote(process).executable_meta
+
         @type executable_error ::
           {:error, :resources}
           | {:error, :internal}
@@ -277,7 +282,6 @@ defmodule Helix.Process.Executable do
 
         @spec get_bounce_id(Server.t, Server.t, params, meta) ::
           %{bounce_id: Bounce.id | nil}
-        @doc false
         defp get_bounce_id(_, _, _, %{bounce: bounce = %Bounce{}}),
           do: %{bounce_id: bounce.bounce_id}
         defp get_bounce_id(_, _, _, %{bounce: bounce_id = %Bounce.ID{}}),
@@ -288,7 +292,6 @@ defmodule Helix.Process.Executable do
         @spec get_source_connection(Server.t, Server.t, params, meta) ::
           {:create, Connection.type}
           | nil
-        @doc false
         defp get_source_connection(_, _, _, _),
           do: nil
 
@@ -296,19 +299,16 @@ defmodule Helix.Process.Executable do
           {:create, Connection.type}
           | :same_origin
           | nil
-        @doc false
         defp get_target_connection(_, _, _, _),
           do: nil
 
         @spec get_source_file(Server.t, Server.t, params, meta) ::
           %{src_file_id: File.id | nil}
-        @doc false
         defp get_source_file(_, _, _, _),
           do: %{src_file_id: nil}
 
         @spec get_target_file(Server.t, Server.t, params, meta) ::
           %{tgt_file_id: File.id | nil}
-        @doc false
         defp get_target_file(_, _, _, _),
           do: %{tgt_file_id: nil}
 
@@ -317,7 +317,6 @@ defmodule Helix.Process.Executable do
             src_atm_id: Server.t | nil,
             src_acc_number: BankAccount.account | nil
           }
-        @doc false
         defp get_source_bank_account(_, _, _, _),
           do: %{src_atm_id: nil, src_acc_number: nil}
 
@@ -326,15 +325,18 @@ defmodule Helix.Process.Executable do
             tgt_atm_id: Server.t | nil,
             tgt_acc_number: BankAccount.account | nil
           }
-        @doc false
         defp get_target_bank_account(_, _, _, _),
           do: %{tgt_atm_id: nil, tgt_acc_number: nil}
 
         @spec get_target_process(Server.t, Server.t, params, meta) ::
           %{tgt_process_id: Process.t | nil}
-        @doc false
         defp get_target_process(_, _, _, _),
           do: %{tgt_process_id: nil}
+
+        @spec get_target_log(Server.t, Server.t, params, meta) ::
+          %{tgt_log_id: Process.t | nil}
+        defp get_target_log(_, _, _, _),
+          do: %{tgt_log_id: nil}
       end
     end
   end
@@ -354,13 +356,14 @@ defmodule Helix.Process.Executable do
       Executes the process.
       """
       def execute(unquote_splicing(args), relay) do
-        process_data = get_process_data(unquote(params))
+        process_data = get_process_data(unquote(params), unquote(meta))
         resources = get_resources(unquote_splicing(args))
         source_file = get_source_file(unquote_splicing(args))
         target_file = get_target_file(unquote_splicing(args))
         source_bank_account = get_source_bank_account(unquote_splicing(args))
         target_bank_account = get_target_bank_account(unquote_splicing(args))
         target_process = get_target_process(unquote_splicing(args))
+        target_log = get_target_log(unquote_splicing(args))
         bounce_id = get_bounce_id(unquote_splicing(args))
         ownership = get_ownership(unquote_splicing(args))
         process_type = get_process_type(unquote(meta))
@@ -374,6 +377,7 @@ defmodule Helix.Process.Executable do
           |> Map.merge(source_bank_account)
           |> Map.merge(target_bank_account)
           |> Map.merge(target_process)
+          |> Map.merge(target_log)
           |> Map.merge(bounce_id)
           |> Map.merge(ownership)
           |> Map.merge(process_type)
@@ -579,6 +583,24 @@ defmodule Helix.Process.Executable do
   end
 
   @doc """
+  Returns the process' `tgt_log_id`, as defined on the `target_log` section of
+  the Process.Executable.
+  """
+  defmacro target_log(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      defp get_target_log(unquote_splicing(args)) do
+        log_id = unquote(block)
+
+        %{tgt_log_id: log_id}
+      end
+
+    end
+  end
+
+  @doc """
   Returns information about the resource usage of that process, including:
 
   - what is the process objective
@@ -593,7 +615,6 @@ defmodule Helix.Process.Executable do
 
       @spec get_resources(Server.t, Server.t, params, meta) ::
         unquote(process).resources
-      @doc false
       defp get_resources(unquote_splicing(args)) do
         params = unquote(block)
 

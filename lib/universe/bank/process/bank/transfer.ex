@@ -19,6 +19,8 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       transfer: BankTransfer.t
     }
 
+  @type executable_meta :: map
+
   @type objective :: %{cpu: resource_usage}
 
   @type resources :: %{
@@ -33,9 +35,9 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
       transfer: BankTransfer.t
     }
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(%{transfer: transfer = %BankTransfer{}}) do
+  def new(%{transfer: transfer = %BankTransfer{}}, _) do
     %__MODULE__{
       transfer_id: transfer.transfer_id,
       amount: transfer.amount
@@ -98,11 +100,6 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
   end
 
   executable do
-
-    alias Helix.Universe.Bank.Process.Bank.Transfer, as: BankTransferProcess
-
-    @type params :: BankTransferProcess.creation_params
-    @type meta :: term
 
     resources(_gateway, _atm, %{transfer: transfer}, _meta) do
       %{transfer: transfer}

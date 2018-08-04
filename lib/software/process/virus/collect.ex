@@ -12,7 +12,10 @@ process Helix.Software.Process.Virus.Collect do
   is performed by `VirusHandler` once `VirusCollectProcessedEvent` is fired.
   """
 
+  alias Helix.Network.Model.Bounce
+  alias Helix.Network.Model.Network
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Software.Model.File
 
   process_struct [:wallet]
 
@@ -40,11 +43,18 @@ process Helix.Software.Process.Virus.Collect do
       bank_account: BankAccount.t | nil
     }
 
+  @type executable_meta ::
+    %{
+      virus: File.t,
+      network_id: Network.id,
+      bounce: Bounce.idt | nil
+    }
+
   @type resources_params :: map
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(%{wallet: wallet}) do
+  def new(%{wallet: wallet}, _) do
     %__MODULE__{
       wallet: wallet
     }
@@ -95,20 +105,6 @@ process Helix.Software.Process.Virus.Collect do
   end
 
   executable do
-
-    alias Helix.Network.Model.Bounce
-    alias Helix.Network.Model.Network
-    alias Helix.Software.Model.File
-    alias Helix.Software.Process.Virus.Collect, as: VirusCollectProcess
-
-    @type params :: VirusCollectProcess.creation_params
-
-    @type meta ::
-      %{
-        virus: File.t,
-        network_id: Network.id,
-        bounce: Bounce.idt | nil
-      }
 
     resources(_, _, _params, _meta) do
       %{}
