@@ -28,21 +28,44 @@ defmodule Helix.Log.Model.LogType.Macros do
 
       defenum LogEnum, @logs
 
-      # @spec exists?(term) ::
-      #   boolean
-      def exists?(log) do
-        Enum.any?(@logs, fn {valid_log, _} -> valid_log == log end)
-      end
+      @spec exists?(atom) ::
+        boolean
+      def exists?(log_type),
+        do: Enum.any?(@logs, fn {valid_type, _} -> valid_type == log_type end)
 
-      def new(type, data_params) do
+      @spec new(type, map) ::
+        struct
+      @doc """
+      Creates a new struct for the given log `type`.
+      """
+      def new(type, data_params),
+        do: dispatch(type, :new, data_params)
+
+      @spec parse(type, map) ::
+        {:ok, struct}
+        | :error
+      @doc """
+      Attempts to parse the potentially unsafe input into a valid LogData.
+      """
+      def parse(type, unsafe_data_params),
+        do: dispatch(type, :parse, unsafe_data_params)
+
+      @spec dispatch(type, atom, term) ::
+        term
+      defp dispatch(type, method, param) when not is_list(param),
+        do: dispatch(type, method, [param])
+      defp dispatch(type, method, params) do
         type
         |> get_type_module()
-        |> apply(:new, [data_params])
+        |> apply(method, params)
       end
 
     end
   end
 
+  @doc """
+  Top-level macro used to define a LogType and its underlying LogData.
+  """
   defmacro log(name, enum_id, do: block) do
     module_name =
       __CALLER__.module
@@ -67,6 +90,9 @@ defmodule Helix.Log.Model.LogType.Macros do
     end
   end
 
+  @doc """
+  Converts the module into a LogData struct.
+  """
   defmacro data_struct(keys) do
     quote do
 
@@ -76,13 +102,44 @@ defmodule Helix.Log.Model.LogType.Macros do
     end
   end
 
-  defmacro new(args, do: block) do
+  @doc """
+  Creates a new LogData from the given `data` map.
+  """
+  defmacro new(data, do: block) do
     quote do
 
       @doc false
-      def new(unquote(args)) do
+      def new(unquote(data)) do
         unquote(block)
       end
+
+    end
+  end
+
+  @doc """
+  Attempts to parse the given unsafe input into a valid LogData.
+  """
+  defmacro parse(data, do: block) do
+    quote do
+
+      @spec parse(term) ::
+        {:ok, data :: struct}
+        | :error
+      @doc false
+      def parse(map = unquote(data)) when is_map(map) do
+        try do
+          {:ok, unquote(block)}
+        rescue
+          RuntimeError ->
+            :error
+
+          KeyError ->
+            :error
+        end
+      end
+
+      def parse(not_map) when not is_map(not_map),
+        do: :error
 
     end
   end
@@ -115,22 +172,6 @@ defmodule Helix.Log.Model.LogType.Macros do
     do: do_gen2(p1, p2)
   defmacro gen3(p1, p2, p3),
     do: do_gen3(p1, p2, p3)
-
-  defmacro parse(args, do: block) do
-    quote do
-
-      @doc false
-      def parse(unquote(args)) do
-        try do
-          {:ok, unquote(block)}
-        rescue
-          RuntimeError ->
-            :error
-        end
-      end
-
-    end
-  end
 
   def validate(field_type, field_value) when is_atom(field_type) do
     fun = Utils.concat_atom(:validate_, field_type)
@@ -222,9 +263,9 @@ defmodule Helix.Log.Model.LogType.Macros do
       parse(unsafe) do
         %__MODULE__{
           unquote(f1) =>
-          validate(unquote(v_f1), Map.get(unsafe, unquote(str_f1))),
+            validate(unquote(v_f1), Map.fetch!(unsafe, unquote(str_f1))),
           unquote(f2) =>
-            validate(unquote(v_f2), Map.get(unsafe, unquote(str_f2)))
+            validate(unquote(v_f2), Map.fetch!(unsafe, unquote(str_f2)))
         }
       end
 
@@ -249,11 +290,11 @@ defmodule Helix.Log.Model.LogType.Macros do
       parse(unsafe) do
         %__MODULE__{
           unquote(f1) =>
-            validate(unquote(v_f1), Map.get(unsafe, unquote(str_f1))),
+            validate(unquote(v_f1), Map.fetch!(unsafe, unquote(str_f1))),
           unquote(f2) =>
-            validate(unquote(v_f2), Map.get(unsafe, unquote(str_f2))),
+            validate(unquote(v_f2), Map.fetch!(unsafe, unquote(str_f2))),
           unquote(f3) =>
-            validate(unquote(v_f3), Map.get(unsafe, unquote(str_f3)))
+            validate(unquote(v_f3), Map.fetch!(unsafe, unquote(str_f3)))
         }
       end
 

@@ -12,6 +12,7 @@ defprotocol Helix.Event.Notificable do
     | %{account_id: Account.id, server_id: Server.id}
     | %{account_id: Entity.id, server_id: Server.id}
     | Server.id
+    | :no_one
 
   @spec get_notification_info(Event.t) ::
     {Notification.class, Notification.code}

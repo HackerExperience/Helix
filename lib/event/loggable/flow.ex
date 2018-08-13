@@ -33,7 +33,7 @@ defmodule Helix.Event.Loggable.Flow do
   alias Helix.Network.Query.Bounce, as: BounceQuery
   alias Helix.Server.Model.Server
 
-  @typep log_entry ::
+  @type log_entry ::
     {Server.id, Entity.id, Log.info}
 
   @doc """

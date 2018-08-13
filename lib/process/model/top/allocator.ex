@@ -203,10 +203,10 @@ defmodule Helix.Process.Model.TOP.Allocator do
   defp identify_origin(server_id, processes) do
     Enum.map(processes, fn process ->
       local? =
-        if process.target_id == server_id do
-          false
-        else
+        if process.gateway_id == server_id do
           true
+        else
+          false
         end
 
       %{process| local?: local?}

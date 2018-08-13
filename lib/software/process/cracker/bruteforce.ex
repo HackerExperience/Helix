@@ -7,6 +7,7 @@ process Helix.Software.Process.Cracker.Bruteforce do
   `target_id`).
   """
 
+  alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Network
   alias Helix.Software.Model.File
 
@@ -26,7 +27,9 @@ process Helix.Software.Process.Cracker.Bruteforce do
 
   @type executable_meta ::
     %{
-      cracker: File.t
+      cracker: File.t,
+      network_id: Network.id,
+      bounce: Bounce.t | nil
     }
 
   @type objective :: %{cpu: resource_usage}

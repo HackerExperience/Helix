@@ -7,7 +7,6 @@ defmodule Helix.Log.Model.Log do
   import HELL.Ecto.Macros
 
   alias Ecto.Changeset
-  alias Helix.Entity.Model.Entity
   alias Helix.Server.Model.Server
   alias Helix.Log.Model.LogType
   alias Helix.Log.Model.Revision
@@ -28,11 +27,7 @@ defmodule Helix.Log.Model.Log do
   @type data :: LogType.data
   @type info :: {type, data}
 
-  @type creation_params ::
-    %{
-      server_id: Server.id,
-      entity_id: Entity.id
-    }
+  @type creation_params :: %{server_id: Server.id}
 
   @creation_fields [:server_id]
   @required_fields [:server_id, :revision_id, :creation_time, :log_id]
@@ -130,6 +125,16 @@ defmodule Helix.Log.Model.Log do
 
     {:recover, changeset}
   end
+
+  @spec is_artificial?(Log.t) ::
+    boolean
+  @doc """
+  Returns whether the log is artificial or not.
+  """
+  def is_artificial?(%Log{revision: %{forge_version: nil}}),
+    do: false
+  def is_artificial?(%Log{}),
+    do: true
 
   @spec build_heritage(creation_params) ::
     Helix.ID.heritage

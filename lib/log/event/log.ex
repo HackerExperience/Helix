@@ -44,6 +44,23 @@ defmodule Helix.Log.Event.Log do
       def whom_to_publish(event),
         do: %{server: event.log.server_id}
     end
+
+    notification do
+      @moduledoc """
+      When the created log is artificial a notification is sent to the player.
+      """
+
+      @class :server
+      @code :log_created
+
+      def whom_to_notify(%_{log: log}) do
+        if Log.is_artificial?(log) do
+          %{account_id: log.revision.entity_id, server_id: log.server_id}
+        else
+          :no_one
+        end
+      end
+    end
   end
 
   event Revised do
@@ -85,6 +102,18 @@ defmodule Helix.Log.Event.Log do
 
       def whom_to_publish(event),
         do: %{server: event.log.server_id}
+    end
+
+    notification do
+      @moduledoc """
+      When the created log is artificial a notification is sent to the player.
+      """
+
+      @class :server
+      @code :log_revised
+
+      def whom_to_notify(%_{log: log}),
+        do: %{account_id: log.revision.entity_id, server_id: log.server_id}
     end
   end
 

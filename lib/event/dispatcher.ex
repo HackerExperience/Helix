@@ -149,6 +149,11 @@ defmodule Helix.Event.Dispatcher do
   event LogEvent.Log.Deleted
   event LogEvent.Log.Revised
 
+  # Custom handlers
+  event LogEvent.Forge.Processed,
+    LogHandler.Log,
+    :log_forge_processed
+
   ##############################################################################
   # Process events
   ##############################################################################

@@ -1,7 +1,6 @@
 defmodule Helix.Test.Log.Setup do
 
   alias Ecto.Changeset
-  alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Entity.Query.Entity, as: EntityQuery
   alias Helix.Log.Model.Log
   alias Helix.Log.Internal.Log, as: LogInternal
@@ -9,6 +8,7 @@ defmodule Helix.Test.Log.Setup do
 
   alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
+  alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
   alias Helix.Test.Log.Helper, as: LogHelper
@@ -63,9 +63,10 @@ defmodule Helix.Test.Log.Setup do
   """
   def fake_log(opts \\ []) do
     # Makes credo happy...
-    {server, entity_id, {type, data}, forge_version} = fake_log_get_data(opts)
+    {server_id, entity_id, {type, data}, forge_version} =
+      fake_log_get_data(opts)
 
-    params = %{server_id: server.server_id}
+    params = %{server_id: server_id}
 
     revision_params = %{
       entity_id: entity_id,
@@ -81,7 +82,6 @@ defmodule Helix.Test.Log.Setup do
     related = %{
       params: params,
       revision_params: revision_params,
-      server: server,
       entity_id: entity_id,
       type: type,
       data: data,
@@ -93,24 +93,24 @@ defmodule Helix.Test.Log.Setup do
   end
 
   defp fake_log_get_data(opts) do
-    {server, server_owner} =
+    {server_id, server_owner} =
       cond do
         # User asked for fake server
         opts[:real_server] ->
           {server, %{entity: entity}} = ServerSetup.server()
-          {server, entity}
+          {server.server_id, entity}
 
         # User specified a server_id (must exist on the DB)
         opts[:server_id] ->
-          server = ServerQuery.fetch(opts[:server_id])
-          entity = EntityQuery.fetch_by_server(opts[:server_id])
+          entity_id =
+            EntityQuery.fetch_by_server(opts[:server_id])
+            || EntityHelper.id()
 
-          {server, entity}
+          {opts[:server_id], entity_id}
 
         # All else: generate a real server
         true ->
-          {server, _} = ServerSetup.fake_server()
-          {server, nil}
+          {ServerHelper.id(), nil}
       end
 
     entity_id =
@@ -135,6 +135,6 @@ defmodule Helix.Test.Log.Setup do
     log_info = LogHelper.log_info(opts)
     forge_version = Keyword.get(opts, :forge_version, nil)
 
-    {server, entity_id, log_info, forge_version}
+    {server_id, entity_id, log_info, forge_version}
   end
 end

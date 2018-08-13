@@ -8,6 +8,9 @@ process Helix.Software.Process.File.Install do
   the process finishes, as well as how much resources it should take, etc.
   """
 
+  alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Network
+  alias Helix.Network.Model.Tunnel
   alias Helix.Software.Model.File
   alias __MODULE__, as: FileInstallProcess
 
@@ -36,7 +39,9 @@ process Helix.Software.Process.File.Install do
   @type executable_meta ::
     %{
       file: File.t,
-      type: process_type
+      network_id: Network.id,
+      bounce: Tunnel.bounce_id,
+      ssh: Connection.ssh
     }
 
   @type objective :: %{cpu: resource_usage}
@@ -70,9 +75,9 @@ process Helix.Software.Process.File.Install do
   def get_backend(%File{}),
     do: :virus
 
-  @spec get_process_type(backend) ::
+  @spec get_process_type(creation_params, executable_meta) ::
     process_type
-  def get_process_type(:virus),
+  def get_process_type(%{backend: :virus}, _),
     do: :install_virus
 
   processable do
@@ -125,7 +130,7 @@ process Helix.Software.Process.File.Install do
     end
 
     source_connection(_gateway, _target, _params, %{ssh: ssh}) do
-      ssh.connection_id
+      ssh
     end
 
     target_file(_gateway, _target, _params, %{file: file}) do

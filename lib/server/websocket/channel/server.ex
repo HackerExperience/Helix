@@ -13,6 +13,8 @@ channel Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
+  alias Helix.Log.Websocket.Requests.Forge, as: LogForgeRequest
+
   alias Helix.Network.Websocket.Requests.Browse, as: BrowseRequest
 
   alias Helix.Software.Websocket.Requests.Cracker.Bruteforce,
@@ -136,6 +138,38 @@ channel Helix.Server.Websocket.Channel.Server do
   May return the corresponding permission error defined for each key.
   """
   topic "config.check", ConfigCheckRequest
+
+  @doc """
+  Starts a LogForgeProcess. When forging, the player may want to edit an
+  existing log, or create a brand new log.
+
+  Params (create):
+    - *log_type: Type of the desired log revision.
+    - *log_data: Data of the desired log revision.
+    - *action: Explicitly set action to "create".
+
+  Params (edit):
+    - *log_id: ID of the log that will be edited.
+    - *log_type: Type of the desired log revision.
+    - *log_data: Data of the desired log revision.
+    - *action: Explicitly set action to "edit".
+
+  Errors:
+
+  Input validation:
+  - "bad_action" - Action is neither "edit" or "create".
+  - "bad_log_type" - The given `log_type` is not valid.
+  - "bad_log_data" - The given `log_data` is not valid for the `log_type`.
+
+  Henforcer:
+  - "forger_not_found" - Player does not have a valid LogForger file.
+  - "log_not_found" (edit) - The given log ID was not found.
+  - "log_not_belongs" (edit) - Attempting to edit a log that does not belong to
+    the open channel.
+
+  - base errors
+  """
+  topic "log.forge", LogForgeRequest
 
   @doc """
   Updates the player's motherboard. May be used to attach, detach or update the

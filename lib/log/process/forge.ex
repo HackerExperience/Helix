@@ -6,6 +6,9 @@ process Helix.Log.Process.Forge do
   create a new one from scratch.
   """
 
+  alias Helix.Entity.Model.Entity
+  alias Helix.Network.Model.Connection
+  alias Helix.Network.Model.Network
   alias Helix.Software.Model.File
   alias Helix.Log.Model.Log
   alias __MODULE__, as: LogForgeProcess
@@ -29,14 +32,17 @@ process Helix.Log.Process.Forge do
       forger: File.t_of_type(:log_forger),
       action: LogForgeProcess.action,
       log: Log.t | nil,
-      ssh: Connection.t | nil
+      ssh: Connection.t | nil,
+      entity_id: Entity.id | nil,
+      network_id: Network.id | nil
     }
 
   @type resources_params ::
     %{
       action: action,
       log: Log.t | nil,
-      forger: File.t_of_type(:log_forger)
+      forger: File.t_of_type(:log_forger),
+      entity_id: Entity.id | nil
     }
 
   @type resources ::
@@ -53,7 +59,7 @@ process Helix.Log.Process.Forge do
     t
   def new(
     %{log_info: {log_type, log_data}},
-    %{action: action, forger: forger = %File{type: :log_forger}}
+    %{action: action, forger: forger = %File{software_type: :log_forger}}
   ) do
     %__MODULE__{
       log_type: log_type,
@@ -61,6 +67,13 @@ process Helix.Log.Process.Forge do
       forger_version: get_forger_version(forger, action)
     }
   end
+
+  @spec get_process_type(creation_params, executable_meta) ::
+    process_type
+  def get_process_type(_, %{action: :create}),
+    do: :log_forge_create
+  def get_process_type(_, %{action: :edit}),
+    do: :log_forge_edit
 
   @spec resources(resources_params) ::
     resources
@@ -76,7 +89,8 @@ process Helix.Log.Process.Forge do
 
   processable do
 
-    alias HELL.MapUtils
+    alias Helix.Log.Model.LogType
+
     alias Helix.Log.Event.Forge.Processed, as: LogForgeProcessedEvent
 
     on_completion(process, data) do
@@ -87,9 +101,11 @@ process Helix.Log.Process.Forge do
 
     @doc false
     def after_read_hook(data) do
+      log_type = String.to_existing_atom(data.log_type)
+
       %LogForgeProcess{
-        log_type: String.to_existing_atom(data.log_type),
-        log_data: MapUtils.atomize_keys(data.log_data),
+        log_type: log_type,
+        log_data: LogType.parse(log_type, data.log_data) |> elem(1),
         forger_version: data.forger_version
       }
     end
@@ -107,16 +123,11 @@ process Helix.Log.Process.Forge do
         optional(:log) => LogFactor.fact_revisions
       }
 
-    get_factors(params = %{action: :edit}) do
+    get_factors(params) do
       factor FileFactor, %{file: params.forger},
         only: [:version], as: :forger
       factor LogFactor, %{log: params.log, entity_id: params.entity_id},
-        only: [:revisions]
-    end
-
-    get_factors(params = %{action: :create}) do
-      factor FileFactor, %{file: params.forger},
-        only: [:version], as: :forger
+        if: params.action == :edit, only: [:revisions], as: :log
     end
 
     # TODO: time resource (for minimum duration) #364
@@ -143,11 +154,14 @@ process Helix.Log.Process.Forge do
 
   executable do
 
+    import HELL.Macros
+
     resources(_gateway, _target, _params, meta) do
       %{
         log: meta.log,
         forger: meta.forger,
-        action: meta.action
+        action: meta.action,
+        entity_id: meta.entity_id
       }
     end
 
@@ -155,12 +169,31 @@ process Helix.Log.Process.Forge do
       forger.file_id
     end
 
-    source_connection(_gateway, _target, _params, %{ssh: ssh}) do
-      ssh.connection_id
+    docp """
+    The LogForgeProcess have a `source_connection` when the player is forging a
+    log on a remote server.
+
+    However, if the operation is local, there is no `source_connection`.
+    """
+    source_connection(_, _, _, %{ssh: ssh = %Connection{}}) do
+      ssh
     end
 
+    docp """
+    When editing an existing log, we have a valid `target_log` entry.
+
+    If, however, we are creating a new log, there is no such entry, as the
+    soon-to-be-created log does not exist yet!
+    """
     target_log(_gateway, _target, _params, %{action: :edit, log: log}) do
       log.log_id
     end
+  end
+
+  process_viewable do
+
+    @type data :: %{}
+
+    render_empty_data()
   end
 end

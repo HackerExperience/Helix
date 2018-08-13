@@ -2,6 +2,8 @@ defmodule Helix.Event.Loggable.FlowTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
+
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Event.Loggable.Flow, as: LoggableFlow
 
@@ -85,7 +87,7 @@ defmodule Helix.Event.Loggable.FlowTest do
       assert log.server_id == server.server_id
       assert log.revision.entity_id == entity.entity_id
       assert log.revision.type == log_type
-      assert log.revision.data == Map.from_struct(log_data)
+      assert_map_str log.revision.data, Map.from_struct(log_data)
     end
 
     test "performs a noop on empty list" do

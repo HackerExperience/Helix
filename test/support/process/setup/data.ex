@@ -221,8 +221,6 @@ defmodule Helix.Test.Process.Data.Setup do
     do: custom_log_forge({:log_forge_create, :create}, data_opts, meta)
 
   defp custom_log_forge({process_type, action}, data_opts, meta) do
-    target_id = meta.target_id
-    entity_id = meta.source_entity_id
     version = Keyword.get(data_opts, :forger_version, 100)
     src_file_id = meta.src_file_id || SoftwareHelper.id()
     {log_type, log_data} =

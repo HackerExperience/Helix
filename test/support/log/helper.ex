@@ -5,7 +5,6 @@ defmodule Helix.Test.Log.Helper do
   alias Helix.Event.Loggable.Utils, as: LoggableUtils
   alias Helix.Server.Model.Server
   alias Helix.Log.Model.Log
-  alias Helix.Log.Model.LogType
   alias Helix.Log.Model.Revision
   alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Log.Repo, as: LogRepo

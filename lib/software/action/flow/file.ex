@@ -33,7 +33,7 @@ defmodule Helix.Software.Action.Flow.File do
 
   @typep relay :: Event.relay
 
-  @spec execute_file(executable, Server.t, Server.t, params, meta, relay) ::
+  @spec execute_file(executable, Server.t, Server.t, params, meta | term, relay) ::
     {:ok, Process.t}
     | executable_errors
     | {:error, :not_executable}

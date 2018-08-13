@@ -95,7 +95,7 @@ defmodule Helix.Process.Model.Process do
   ## SIGTERM
 
   Process reached its objective. Handled by Processable's `on_completion`.
-  This callback must be implemented by the process.
+  This callback MUST be implemented by the process.
 
   Note that, despite the name, it has no similarities with UNIX's SIGTERM.
 
@@ -323,6 +323,10 @@ defmodule Helix.Process.Model.Process do
       default: nil
 
     # Which bounce (if any) is this process bound to
+    # The `bounce_id` information will be used after the process completes, when
+    # it generates the underlying action log, creating `connection_bounced` logs
+    # on all hops within the bounce.
+    # If the process does not generate a log, this field may be ignored.
     field :bounce_id, Bounce.ID,
       default: nil
 

@@ -8,14 +8,11 @@ defmodule Helix.Log.Event.Handler.LogTest do
   alias Helix.Event
   alias Helix.Log.Event.Handler.Log, as: LogHandler
   alias Helix.Log.Query.Log, as: LogQuery
-  alias Helix.Log.Repo
 
   alias Helix.Test.Event.Setup, as: EventSetup
-  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Log.Helper, as: LogHelper
   alias Helix.Test.Log.Setup, as: LogSetup
 

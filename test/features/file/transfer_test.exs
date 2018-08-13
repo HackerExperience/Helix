@@ -37,9 +37,8 @@ defmodule Helix.Test.Features.File.TransferTest do
           socket: socket
         )
 
-      account_id = AccountHelper.cast_from_entity(entity.entity_id)
-
       # Connect to gateway channel too, so we can receive gateway publications
+      account_id = AccountHelper.cast_from_entity(entity.entity_id)
       ChannelSetup.join_server(socket: socket, own_server: true)
 
       # Connect to account channel, so we can receive notifications

@@ -2,11 +2,12 @@ defmodule Helix.Log.Henforcer.Log.Forge do
 
   import Helix.Henforcer
 
-  alias Helix.Server.Model.Server
   alias Helix.Server.Henforcer.Server, as: ServerHenforcer
+  alias Helix.Server.Model.Server
   alias Helix.Software.Henforcer.File, as: FileHenforcer
-  alias Helix.Log.Model.Log
+  alias Helix.Software.Model.File
   alias Helix.Log.Henforcer.Log, as: LogHenforcer
+  alias Helix.Log.Model.Log
 
   @type can_edit_relay :: %{log: Log.t, gateway: Server.t, forger: File.t}
   @type can_edit_relay_partial :: map

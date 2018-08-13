@@ -54,6 +54,8 @@ defmodule Helix.Notification.Event.Handler.Notification do
   Notice that the param sent to `get_id_map/2` isn't necessarily the same data
   returned by `Notificable.whom_to_notify/1`; it may be altered.
   """
+  defp get_target_ids(_, :no_one),
+    do: []
   defp get_target_ids(:account, account_id),
     do: [Notification.get_id_map(:account, account_id)]
   defp get_target_ids(:server, %{account_id: account_id, server_id: server_id}),

@@ -73,15 +73,15 @@ defmodule Helix.Process.Executable do
         }
       end
 
-      @spec get_process_type(term) ::
+      @spec get_process_type(params, meta) ::
         %{type: Process.type}
       docp """
       Returns the `process_type` parameter, a subset of the full process params.
       """
-      defp get_process_type(%{type: process_type}),
+      defp get_process_type(_, %{type: process_type}),
         do: %{type: process_type}
-      defp get_process_type(_) do
-        process_type = call_process(:get_process_type)
+      defp get_process_type(params, meta) do
+        process_type = call_process(:get_process_type, [params, meta])
         %{type: process_type}
       end
 
@@ -90,7 +90,7 @@ defmodule Helix.Process.Executable do
       docp """
       Returns the `network_id` parameter, a subset of the full process params.
       """
-      defp get_network_id(%{network_id: network_id}),
+      defp get_network_id(%{network_id: network_id = %Network.ID{}}),
         do: %{network_id: network_id}
       defp get_network_id(_),
         do: %{network_id: nil}
@@ -280,23 +280,25 @@ defmodule Helix.Process.Executable do
         # Defaults: in case these functions were not defined, we assume the
         # process is not interested on this (optional) data.
 
-        @spec get_bounce_id(Server.t, Server.t, params, meta) ::
+        @spec get_bounce_id(Bounce.idt | nil) ::
           %{bounce_id: Bounce.id | nil}
-        defp get_bounce_id(_, _, _, %{bounce: bounce = %Bounce{}}),
+        defp get_bounce_id(bounce = %Bounce{}),
           do: %{bounce_id: bounce.bounce_id}
-        defp get_bounce_id(_, _, _, %{bounce: bounce_id = %Bounce.ID{}}),
+        defp get_bounce_id(bounce_id = %Bounce.ID{}),
           do: %{bounce_id: bounce_id}
-        defp get_bounce_id(_, _, _, _),
+        defp get_bounce_id(nil),
           do: %{bounce_id: nil}
 
         @spec get_source_connection(Server.t, Server.t, params, meta) ::
           {:create, Connection.type}
+          | Connection.idt
           | nil
         defp get_source_connection(_, _, _, _),
           do: nil
 
         @spec get_target_connection(Server.t, Server.t, params, meta) ::
           {:create, Connection.type}
+          | Connection.idt
           | :same_origin
           | nil
         defp get_target_connection(_, _, _, _),
@@ -356,6 +358,7 @@ defmodule Helix.Process.Executable do
       Executes the process.
       """
       def execute(unquote_splicing(args), relay) do
+        process_type = get_process_type(unquote(params), unquote(meta))
         process_data = get_process_data(unquote(params), unquote(meta))
         resources = get_resources(unquote_splicing(args))
         source_file = get_source_file(unquote_splicing(args))
@@ -364,9 +367,8 @@ defmodule Helix.Process.Executable do
         target_bank_account = get_target_bank_account(unquote_splicing(args))
         target_process = get_target_process(unquote_splicing(args))
         target_log = get_target_log(unquote_splicing(args))
-        bounce_id = get_bounce_id(unquote_splicing(args))
+        bounce_id = get_bounce_id(unquote(meta)[:bounce])
         ownership = get_ownership(unquote_splicing(args))
-        process_type = get_process_type(unquote(meta))
         network_id = get_network_id(unquote(meta))
 
         partial =

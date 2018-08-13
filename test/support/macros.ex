@@ -24,12 +24,22 @@ defmodule Helix.Test.Macros do
 
   Example:
 
-    %{foo: :bar} == %{"foo" => "bar"}  # True
+    %Struct{foo: :bar} == %{"foo" => "bar"}  # True
   """
   defmacro assert_map_str(a, b) do
     quote do
-      a = unquote(a) |> Utils.stringify_map() |> MapUtils.atomize_keys()
-      b = unquote(b) |> Utils.stringify_map() |> MapUtils.atomize_keys()
+      cast_map = fn map ->
+        if Map.has_key?(map, :__struct__) do
+          Map.from_struct(map)
+        else
+          map
+        end
+        |> Utils.stringify_map()
+        |> MapUtils.atomize_keys()
+      end
+
+      a = cast_map.(unquote(a))
+      b = cast_map.(unquote(b))
 
       assert a == b
     end

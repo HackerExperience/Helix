@@ -8,7 +8,9 @@ defmodule Helix.Log.Event.Forge do
     achieved its objective and finished executing.
     """
 
+    alias Helix.Entity.Model.Entity
     alias Helix.Process.Model.Process
+    alias Helix.Server.Model.Server
     alias Helix.Log.Model.Log
     alias Helix.Log.Process.Forge, as: LogForgeProcess
 
