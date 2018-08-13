@@ -97,37 +97,36 @@ process Helix.Log.Process.Forge do
 
   resourceable do
 
+    alias Helix.Software.Factor.File, as: FileFactor
+    alias Helix.Log.Factor.Log, as: LogFactor
+
     @type params :: LogForgeProcess.resources_params
     @type factors ::
       %{
         :forger => %{version: FileFactor.fact_version},
-        optional(:log) => Log.t
+        optional(:log) => LogFactor.fact_revisions
       }
 
-    get_factors(_) do
-
+    get_factors(params = %{action: :edit}) do
+      factor FileFactor, %{file: params.forger},
+        only: [:version], as: :forger
+      factor LogFactor, %{log: params.log, entity_id: params.entity_id},
+        only: [:revisions]
     end
 
-    # get_factors(%{action: :edit, log: log, forger: forger}) do
-    #   factor FileFactor, %{file: forger},
-    #     only: [:version], as: :forger
-    #   factor LogFactor, %{log: log},
-    #     only: [:total_revisions]
-    # end
+    get_factors(params = %{action: :create}) do
+      factor FileFactor, %{file: params.forger},
+        only: [:version], as: :forger
+    end
 
-    # get_factors(%{action: :create, forger: forger}) do
-    #   factor FileFactor, %{file: forger},
-    #     only: [:version], as: :forger
-    # end
-
-    # TODO: time resource (for minimum duration)
+    # TODO: time resource (for minimum duration) #364
 
     cpu(%{action: :edit}) do
-      f.forger.version.log_edit * f.log.revisions.total
+      f.forger.version.log_edit * (1 + f.log.revisions.from_entity) + 5000
     end
 
     cpu(%{action: :create}) do
-      f.forger.version.log_create
+      f.forger.version.log_create + 5000
     end
 
     dynamic do

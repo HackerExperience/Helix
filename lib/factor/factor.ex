@@ -326,6 +326,13 @@ defmodule Helix.Factor do
       |> String.downcase()
       |> String.to_atom()
 
+    # Generates typespecs for each fact
+    for key <- keys do
+      quote do
+        @spec unquote(key)(params, relay) :: {unquote(key), relay}
+      end
+    end
+
     quote do
 
       @doc """
@@ -381,8 +388,6 @@ defmodule Helix.Factor do
     fname = :"fact_#{name}"
     quote do
 
-      @spec unquote(fname)(term, term) ::
-        {unquote(fname), term}
       def unquote(fname)(unquote(params), var!(relay) = unquote(relay)) do
         unquote(block)
       end
@@ -518,6 +523,29 @@ defmodule Helix.Factor do
       # the final assembly steps.
       var!(facts) = Map.merge(var!(facts), facts)
       var!(relay) = Map.merge(var!(relay), relay)
+    end
+  end
+
+  @doc """
+  Used when `fact/3` was called without the required relay(s). It will append
+  the `append_relay` to the current relay, and execute the fact again.
+  """
+  defmacro set_relay(params, current_relay, append_relay) do
+    {fname, _} = __CALLER__.function
+
+    quote do
+
+      # `set_relay` called again within the same fact; probably an infinite loop
+      if unquote(current_relay)[:__loop_checker] == unquote(fname),
+        do: raise "infinite loop detected"
+
+      new_relay =
+        unquote(current_relay)
+        |> Map.merge(unquote(append_relay))
+        |> Map.merge(%{__loop_checker: unquote(fname)})
+
+      apply(__MODULE__, unquote(fname), [unquote(params), new_relay])
+
     end
   end
 

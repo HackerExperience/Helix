@@ -24,8 +24,6 @@ defmodule Helix.Factor.Client do
   defmacro get_factors(params, do: block) do
     quote do
 
-      @spec get_factors(map) ::
-        map
       def get_factors(unquote(params)) do
         var!(relay) = %{}
         var!(factors) = %{}

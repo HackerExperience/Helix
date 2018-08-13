@@ -41,6 +41,14 @@ defmodule Helix.Log.Internal.Log do
     |> Repo.one()
   end
 
+  @spec fetch_revisions(Log.t) ::
+    [Revision.t]
+  def fetch_revisions(log = %Log{}) do
+    log.log_id
+    |> Revision.Query.by_log()
+    |> Repo.all()
+  end
+
   @spec get_logs_on_server(Server.id, pos_integer) ::
     [Log.t]
   def get_logs_on_server(server_id, count \\ 20) do

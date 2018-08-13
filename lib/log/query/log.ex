@@ -8,13 +8,13 @@ defmodule Helix.Log.Query.Log do
   alias Helix.Log.Internal.Log, as: LogInternal
   alias Helix.Log.Model.Log
 
-  @spec fetch(Log.id) ::
-    Log.t
-    | nil
   @doc """
   Fetches a log
   """
   defdelegate fetch(id),
+    to: LogInternal
+
+  defdelegate fetch_revisions(log),
     to: LogInternal
 
   @spec get_logs_on_server(Server.idt) ::
