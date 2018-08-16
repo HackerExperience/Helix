@@ -60,6 +60,7 @@ defmodule Helix.Process.Model.Process do
       l_reserved: Process.Resources.t,
       r_reserved: Process.Resources.t,
       last_checkpoint_time: DateTime.t,
+      objective: map,
       static: static,
       l_dynamic: dynamic,
       r_dynamic: dynamic,
@@ -84,6 +85,8 @@ defmodule Helix.Process.Model.Process do
     | :wire_transfer
     | :log_forge_create
     | :log_forge_edit
+    | :log_recover_global
+    | :log_recover_custom
 
   @typedoc """
   List of signals a process may receive during its lifetime.
@@ -121,6 +124,17 @@ defmodule Helix.Process.Model.Process do
   Signal sent when the user requested the process to be resumed.
 
   Default action is to resume the process.
+
+  ## SIGRETARGET
+
+  Signal sent when the process finished prior execution and is now looking for
+  a new target to work on.
+
+  Keep in mind that, when using `SIGRETARGET` on recursive processes, you might
+  want the signal to be sent only after the side-effect of the process has been
+  properly processed. As an example, see `LogRecoverProcess`.
+
+  Default action is to ignore the signal.
 
   ## SIGPRIO
 
@@ -179,6 +193,7 @@ defmodule Helix.Process.Model.Process do
     | :SIGKILL
     | :SIGSTOP
     | :SIGCONT
+    | :SIGRETARGET
     | :SIGPRIO
     | :SIGSRCCONND
     | :SIGTGTCONND
@@ -195,6 +210,7 @@ defmodule Helix.Process.Model.Process do
     | %{priority: term}
     | %{connection: Connection.t}
     | %{file: File.t}
+    | %{}
 
   @typedoc """
   Valid reasons for which a Process may be killed.
@@ -208,6 +224,11 @@ defmodule Helix.Process.Model.Process do
     | :tgt_file_deleted
     | :src_bank_acc_closed
     | :tgt_bank_acc_closed
+
+  @typedoc """
+  Return type for `retarget` changes.
+  """
+  @type retarget_changes :: map
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -471,6 +492,31 @@ defmodule Helix.Process.Model.Process do
     |> validate_required(@required_fields)
     |> put_defaults()
     |> put_pk(heritage, {:process, params.type})
+  end
+
+  @retarget_fields [
+    # A retarget may change the process' resources, listed below
+    :static,
+    :l_dynamic,
+    :r_dynamic,
+    :objective,
+
+    # It may also change some objects (add as needed)
+    :tgt_log_id
+  ]
+
+  @spec retarget(t, retarget_changes :: map) ::
+    changeset
+  @doc """
+  Updates the process according to the retarget changes. It also empties any
+  amount of previous work (`processed`).
+  """
+  def retarget(process = %Process{}, changes) do
+    process
+    |> change()
+    |> cast(changes, @retarget_fields)
+    |> put_change(:processed, %{})
+    |> validate_required(@required_fields)
   end
 
   @spec format(raw_process :: t) ::

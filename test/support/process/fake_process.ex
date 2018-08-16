@@ -60,7 +60,9 @@ defmodule Helix.Test.Process do
 
     executable do
 
-      resources(_, _, _, _) do
+      @type custom :: %{}
+
+      resources(_, _, _, _, _) do
         %{}
       end
     end
@@ -106,7 +108,9 @@ defmodule Helix.Test.Process do
 
     executable do
 
-      resources(_, _, _, _) do
+      @type custom :: %{}
+
+      resources(_, _, _, _, _) do
         %{}
       end
     end

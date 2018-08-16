@@ -62,6 +62,9 @@ defmodule Helix.Test.Log.Setup do
   Related: Log.creation_params, Server.t, Entity.id, message :: String.t
   """
   def fake_log(opts \\ []) do
+    if opts[:forger_version],
+      do: raise "It's `forge_version`"
+
     # Makes credo happy...
     {server_id, entity_id, {type, data}, forge_version} =
       fake_log_get_data(opts)

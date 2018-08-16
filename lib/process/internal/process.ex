@@ -5,15 +5,6 @@ defmodule Helix.Process.Internal.Process do
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
 
-  @spec create(Process.creation_params) ::
-    {:ok, Process.t}
-    | {:error, Process.changeset}
-  def create(params) do
-    params
-    |> Process.create_changeset()
-    |> Repo.insert()
-  end
-
   @spec fetch(Process.id) ::
     Process.t
     | nil
@@ -21,6 +12,15 @@ defmodule Helix.Process.Internal.Process do
     with process = %Process{} <- Repo.get(Process, process_id) do
       Process.format(process)
     end
+  end
+
+  @spec create(Process.creation_params) ::
+    {:ok, Process.t}
+    | {:error, Process.changeset}
+  def create(params) do
+    params
+    |> Process.create_changeset()
+    |> Repo.insert()
   end
 
   @spec get_processes_on_server(Server.idt) ::
@@ -77,6 +77,12 @@ defmodule Helix.Process.Internal.Process do
         Repo.update(process)
       end)
     end)
+  end
+
+  def retarget(process, changes) do
+    process
+    |> Process.retarget(changes)
+    |> Repo.update()
   end
 
   @spec delete(Process.t) ::

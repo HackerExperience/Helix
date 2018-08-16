@@ -54,7 +54,7 @@ defmodule Helix.Process.Executable do
         %{data: data}
       end
 
-      @spec get_ownership(Server.t, Server.t, params, meta) ::
+      @spec get_ownership(Server.t, Server.t, params, meta, custom) ::
         %{
           gateway_id: Server.id,
           target_id: Server.id,
@@ -64,8 +64,9 @@ defmodule Helix.Process.Executable do
       Infers ownership information about the process, which is a subset of the
       full process params.
       """
-      defp get_ownership(gateway, target, params, meta) do
+      defp get_ownership(gateway, target, params, meta, _custom) do
         entity = EntityQuery.fetch_by_server(gateway.server_id)
+
         %{
           gateway_id: gateway.server_id,
           target_id: target.server_id,
@@ -280,6 +281,11 @@ defmodule Helix.Process.Executable do
         # Defaults: in case these functions were not defined, we assume the
         # process is not interested on this (optional) data.
 
+        @spec pre_hook_custom(Server.t, Server.t, params, meta) ::
+          custom
+        defp pre_hook_custom(_, _, _, _),
+          do: %{}
+
         @spec get_bounce_id(Bounce.idt | nil) ::
           %{bounce_id: Bounce.id | nil}
         defp get_bounce_id(bounce = %Bounce{}),
@@ -289,55 +295,55 @@ defmodule Helix.Process.Executable do
         defp get_bounce_id(nil),
           do: %{bounce_id: nil}
 
-        @spec get_source_connection(Server.t, Server.t, params, meta) ::
+        @spec get_source_connection(Server.t, Server.t, params, meta, custom) ::
           {:create, Connection.type}
           | Connection.idt
           | nil
-        defp get_source_connection(_, _, _, _),
+        defp get_source_connection(_, _, _, _, _),
           do: nil
 
-        @spec get_target_connection(Server.t, Server.t, params, meta) ::
+        @spec get_target_connection(Server.t, Server.t, params, meta, custom) ::
           {:create, Connection.type}
           | Connection.idt
           | :same_origin
           | nil
-        defp get_target_connection(_, _, _, _),
+        defp get_target_connection(_, _, _, _, _),
           do: nil
 
-        @spec get_source_file(Server.t, Server.t, params, meta) ::
+        @spec get_source_file(Server.t, Server.t, params, meta, custom) ::
           %{src_file_id: File.id | nil}
-        defp get_source_file(_, _, _, _),
+        defp get_source_file(_, _, _, _, _),
           do: %{src_file_id: nil}
 
-        @spec get_target_file(Server.t, Server.t, params, meta) ::
+        @spec get_target_file(Server.t, Server.t, params, meta, custom) ::
           %{tgt_file_id: File.id | nil}
-        defp get_target_file(_, _, _, _),
+        defp get_target_file(_, _, _, _, _),
           do: %{tgt_file_id: nil}
 
-        @spec get_source_bank_account(Server.t, Server.t, params, meta) ::
+        @spec get_source_bank_account(Server.t, Server.t, params, meta, custom) ::
           %{
             src_atm_id: Server.t | nil,
             src_acc_number: BankAccount.account | nil
           }
-        defp get_source_bank_account(_, _, _, _),
+        defp get_source_bank_account(_, _, _, _, _),
           do: %{src_atm_id: nil, src_acc_number: nil}
 
-        @spec get_target_bank_account(Server.t, Server.t, params, meta) ::
+        @spec get_target_bank_account(Server.t, Server.t, params, meta, custom) ::
           %{
             tgt_atm_id: Server.t | nil,
             tgt_acc_number: BankAccount.account | nil
           }
-        defp get_target_bank_account(_, _, _, _),
+        defp get_target_bank_account(_, _, _, _, _),
           do: %{tgt_atm_id: nil, tgt_acc_number: nil}
 
-        @spec get_target_process(Server.t, Server.t, params, meta) ::
+        @spec get_target_process(Server.t, Server.t, params, meta, custom) ::
           %{tgt_process_id: Process.t | nil}
-        defp get_target_process(_, _, _, _),
+        defp get_target_process(_, _, _, _, _),
           do: %{tgt_process_id: nil}
 
-        @spec get_target_log(Server.t, Server.t, params, meta) ::
+        @spec get_target_log(Server.t, Server.t, params, meta, custom) ::
           %{tgt_log_id: Process.t | nil}
-        defp get_target_log(_, _, _, _),
+        defp get_target_log(_, _, _, _, _),
           do: %{tgt_log_id: nil}
       end
     end
@@ -358,17 +364,19 @@ defmodule Helix.Process.Executable do
       Executes the process.
       """
       def execute(unquote_splicing(args), relay) do
+        custom = pre_hook_custom(unquote_splicing(args))
+
         process_type = get_process_type(unquote(params), unquote(meta))
         process_data = get_process_data(unquote(params), unquote(meta))
-        resources = get_resources(unquote_splicing(args))
-        source_file = get_source_file(unquote_splicing(args))
-        target_file = get_target_file(unquote_splicing(args))
-        source_bank_account = get_source_bank_account(unquote_splicing(args))
-        target_bank_account = get_target_bank_account(unquote_splicing(args))
-        target_process = get_target_process(unquote_splicing(args))
-        target_log = get_target_log(unquote_splicing(args))
+        resources = get_resources(unquote_splicing(args), custom)
+        source_file = get_source_file(unquote_splicing(args), custom)
+        target_file = get_target_file(unquote_splicing(args), custom)
+        src_bank_acc = get_source_bank_account(unquote_splicing(args), custom)
+        tgt_bank_acc = get_target_bank_account(unquote_splicing(args), custom)
+        target_process = get_target_process(unquote_splicing(args), custom)
+        target_log = get_target_log(unquote_splicing(args), custom)
         bounce_id = get_bounce_id(unquote(meta)[:bounce])
-        ownership = get_ownership(unquote_splicing(args))
+        ownership = get_ownership(unquote_splicing(args), custom)
         network_id = get_network_id(unquote(meta))
 
         partial =
@@ -376,8 +384,8 @@ defmodule Helix.Process.Executable do
           |> Map.merge(resources)
           |> Map.merge(source_file)
           |> Map.merge(target_file)
-          |> Map.merge(source_bank_account)
-          |> Map.merge(target_bank_account)
+          |> Map.merge(src_bank_acc)
+          |> Map.merge(tgt_bank_acc)
           |> Map.merge(target_process)
           |> Map.merge(target_log)
           |> Map.merge(bounce_id)
@@ -385,8 +393,10 @@ defmodule Helix.Process.Executable do
           |> Map.merge(process_type)
           |> Map.merge(network_id)
 
-        source_connection_info = get_source_connection(unquote_splicing(args))
-        target_connection_info = get_target_connection(unquote_splicing(args))
+        source_connection_info =
+          get_source_connection(unquote_splicing(args), custom)
+        target_connection_info =
+          get_target_connection(unquote_splicing(args), custom)
 
         flowing do
           with \
@@ -436,13 +446,29 @@ defmodule Helix.Process.Executable do
   end
 
   @doc """
+  Creates a `custom` map that will be sent to all executable callbacks. Called
+  as a pre-hook to Executable.
+  """
+  defmacro custom(gateway, target, params, meta, do: block) do
+    args = [gateway, target, params, meta]
+
+    quote do
+
+      defp pre_hook_custom(unquote_splicing(args)) do
+        unquote(block)
+      end
+
+    end
+  end
+
+  @doc """
   Returns the raw result of the Executable's `source_connection` section. It
   will be later interpreted by `setup_connection`, which will make sense whether
   a new connection should be created, and what the `src_connection_id` should be
   set to.
   """
-  defmacro source_connection(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro source_connection(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -462,8 +488,8 @@ defmodule Helix.Process.Executable do
   If `:same_origin` is returned, the process will target the same connection
   that originated it.
   """
-  defmacro target_connection(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro target_connection(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -478,8 +504,8 @@ defmodule Helix.Process.Executable do
   Returns the process' `src_file_id`, as defined on the `source_file` section of
   the Process.Executable.
   """
-  defmacro source_file(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro source_file(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -496,8 +522,8 @@ defmodule Helix.Process.Executable do
   Returns the process' `tgt_file_id`, as defined on the `target_file` section of
   the Process.Executable.
   """
-  defmacro target_file(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro target_file(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -514,8 +540,8 @@ defmodule Helix.Process.Executable do
   Returns the process' `src_atm_id` and `src_acc_number`, as defined on the
   `source_bank_account` section of the Process.Executable
   """
-  defmacro source_bank_account(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro source_bank_account(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -537,8 +563,8 @@ defmodule Helix.Process.Executable do
   Returns the process' `tgt_atm_id` and `tgt_acc_number`, as defined on the
   `target_bank_account` section of the Process.Executable
   """
-  defmacro target_bank_account(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro target_bank_account(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -570,8 +596,8 @@ defmodule Helix.Process.Executable do
   Returns the process' `tgt_process_id`, as defined on the `target_process`
   section of the Process.Executable.
   """
-  defmacro target_process(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro target_process(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -588,8 +614,8 @@ defmodule Helix.Process.Executable do
   Returns the process' `tgt_log_id`, as defined on the `target_log` section of
   the Process.Executable.
   """
-  defmacro target_log(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro target_log(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
 
     quote do
 
@@ -609,13 +635,13 @@ defmodule Helix.Process.Executable do
   - which resources can be allocated dynamically
   - what are the statically allocated resources
   """
-  defmacro resources(gateway, target, params, meta, do: block) do
-    args = [gateway, target, params, meta]
+  defmacro resources(gateway, target, params, meta, custom, do: block) do
+    args = [gateway, target, params, meta, custom]
     process = get_process(__CALLER__)
 
     quote do
 
-      @spec get_resources(Server.t, Server.t, params, meta) ::
+      @spec get_resources(Server.t, Server.t, params, meta, custom) ::
         unquote(process).resources
       defp get_resources(unquote_splicing(args)) do
         params = unquote(block)

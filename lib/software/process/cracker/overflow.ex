@@ -94,23 +94,25 @@ process Helix.Software.Process.Cracker.Overflow do
 
   executable do
 
-    resources(_, _, _, %{cracker: cracker}) do
+    @type custom :: %{}
+
+    resources(_, _, _, %{cracker: cracker}, _) do
       %{cracker: cracker}
     end
 
-    source_file(_gateway, _target, _params, %{cracker: cracker}) do
+    source_file(_gateway, _target, _params, %{cracker: cracker}, _) do
       cracker.file_id
     end
 
-    source_connection(_, _, _, %{ssh: ssh}) do
+    source_connection(_, _, _, %{ssh: ssh}, _) do
       ssh.connection_id
     end
 
-    target_connection(_, _, _, %{connection: connection}) do
+    target_connection(_, _, _, %{connection: connection}, _) do
       connection.connection_id
     end
 
-    target_process(_, _, _, %{process: process}) do
+    target_process(_, _, _, %{process: process}, _) do
       process.process_id
     end
   end

@@ -88,7 +88,9 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
 
   executable do
 
-    resources(_, _, %{account: account}, _) do
+    @type custom :: %{}
+
+    resources(_, _, %{account: account}, _, _) do
       %{account: account}
     end
   end

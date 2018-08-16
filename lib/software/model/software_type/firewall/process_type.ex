@@ -30,6 +30,10 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
       {:delete, [event]}
     end
 
+    def retarget(_, _) do
+      {:noop, []}
+    end
+
     def source_connection_closed(_, _, _) do
       {:delete, []}
     end

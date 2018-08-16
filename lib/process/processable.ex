@@ -33,6 +33,10 @@ defmodule Helix.Process.Processable do
           {:delete, []}
         end
 
+        on_retarget(_process, _data) do
+          {:noop, []}
+        end
+
         on_source_connection_closed(_process, _data, _connection) do
           {{:SIGKILL, :src_connection_closed}, []}
         end
@@ -101,6 +105,24 @@ defmodule Helix.Process.Processable do
   end
 
   @doc """
+  Called when the process receives a SIGRETARGET.
+
+  Defines what should happen when the process is asked to look for a new target.
+
+  Default behaviour is to ignore the signal.
+  """
+  defmacro on_retarget(process, data, do: block) do
+    quote do
+
+      def retarget(unquote(data), p = unquote(process)) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  @doc """
   Called when the process receives a SIGSRCCONND.
 
   Defines what should happen when the process' underlying connection is closed.
@@ -111,10 +133,8 @@ defmodule Helix.Process.Processable do
     quote do
 
       def source_connection_closed(
-        unquote(data),
-        p = unquote(process),
-        unquote(connection))
-      do
+        unquote(data), p = unquote(process), unquote(connection)
+      ) do
         unquote(block)
         |> add_fingerprint(p)
       end
@@ -133,10 +153,8 @@ defmodule Helix.Process.Processable do
     quote do
 
       def target_connection_closed(
-        unquote(data),
-        p = unquote(process),
-        unquote(connection))
-      do
+        unquote(data), p = unquote(process), unquote(connection)
+      ) do
         unquote(block)
         |> add_fingerprint(p)
       end

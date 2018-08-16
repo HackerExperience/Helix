@@ -126,7 +126,7 @@ defmodule Helix.Log.Model.Log do
     {:recover, changeset}
   end
 
-  @spec is_artificial?(Log.t) ::
+  @spec is_artificial?(t) ::
     boolean
   @doc """
   Returns whether the log is artificial or not.
@@ -135,6 +135,26 @@ defmodule Helix.Log.Model.Log do
     do: false
   def is_artificial?(%Log{}),
     do: true
+
+  @spec count_extra_revisions(t) ::
+    non_neg_integer
+  @doc """
+  Counts how many revisions are there on top of the original one.
+
+  The "original" revision for an artificial log is considered to be an empty
+  log, so when an artificial log is at `revision_id=1`, there still is one extra
+  revision on top of the original.
+
+  On the other hand, natural longs at `revision_id=1` are already at the
+  original one.
+  """
+  def count_extra_revisions(log = %Log{}) do
+    if is_artificial?(log) do
+      log.revision_id
+    else
+      log.revision_id - 1
+    end
+  end
 
   @spec build_heritage(creation_params) ::
     Helix.ID.heritage

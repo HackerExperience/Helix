@@ -149,9 +149,11 @@ process Helix.Software.Process.Cracker.Bruteforce do
     Defines how a BruteforceProcess should be executed.
     """
 
+    @type custom :: %{}
+
     alias Helix.Software.Query.File, as: FileQuery
 
-    resources(_, target, _, %{cracker: cracker}) do
+    resources(_, target, _, %{cracker: cracker}, _) do
       hasher = FileQuery.fetch_best(target, :password)
 
       %{
@@ -160,11 +162,11 @@ process Helix.Software.Process.Cracker.Bruteforce do
       }
     end
 
-    source_file(_gateway, _target, _params, %{cracker: cracker}) do
+    source_file(_gateway, _target, _params, %{cracker: cracker}, _) do
       cracker.file_id
     end
 
-    source_connection(_gateway, _target, _params, _meta) do
+    source_connection(_gateway, _target, _params, _meta, _) do
       {:create, :cracker_bruteforce}
     end
   end

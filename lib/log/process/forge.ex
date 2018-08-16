@@ -33,8 +33,8 @@ process Helix.Log.Process.Forge do
       action: LogForgeProcess.action,
       log: Log.t | nil,
       ssh: Connection.t | nil,
-      entity_id: Entity.id | nil,
-      network_id: Network.id | nil
+      network_id: Network.id | nil,
+      entity_id: Entity.id | nil
     }
 
   @type resources_params ::
@@ -125,9 +125,9 @@ process Helix.Log.Process.Forge do
 
     get_factors(params) do
       factor FileFactor, %{file: params.forger},
-        only: [:version], as: :forger
+        only: :version, as: :forger
       factor LogFactor, %{log: params.log, entity_id: params.entity_id},
-        if: params.action == :edit, only: [:revisions], as: :log
+        if: params.action == :edit, only: :revisions, as: :log
     end
 
     # TODO: time resource (for minimum duration) #364
@@ -156,7 +156,9 @@ process Helix.Log.Process.Forge do
 
     import HELL.Macros
 
-    resources(_gateway, _target, _params, meta) do
+    @type custom :: %{}
+
+    resources(_gateway, _target, _params, meta, _) do
       %{
         log: meta.log,
         forger: meta.forger,
@@ -165,7 +167,7 @@ process Helix.Log.Process.Forge do
       }
     end
 
-    source_file(_gateway, _target, _params, %{forger: forger}) do
+    source_file(_gateway, _target, _params, %{forger: forger}, _) do
       forger.file_id
     end
 
@@ -175,7 +177,7 @@ process Helix.Log.Process.Forge do
 
     However, if the operation is local, there is no `source_connection`.
     """
-    source_connection(_, _, _, %{ssh: ssh = %Connection{}}) do
+    source_connection(_, _, _, %{ssh: ssh = %Connection{}}, _) do
       ssh
     end
 
@@ -185,7 +187,7 @@ process Helix.Log.Process.Forge do
     If, however, we are creating a new log, there is no such entry, as the
     soon-to-be-created log does not exist yet!
     """
-    target_log(_gateway, _target, _params, %{action: :edit, log: log}) do
+    target_log(_gateway, _target, _params, %{action: :edit, log: log}, _) do
       log.log_id
     end
   end

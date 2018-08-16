@@ -14,7 +14,7 @@ defmodule Helix.Process.Action.Flow.Process do
   Emits ProcessSignaledEvent and any other event defined at the Processable
   callback.
   """
-  def signal(process = %Process{}, signal, params) do
+  def signal(process = %Process{}, signal, params \\ %{}) do
     flowing do
       with {:ok, events} <- ProcessAction.signal(process, signal, params) do
         Event.emit(events)

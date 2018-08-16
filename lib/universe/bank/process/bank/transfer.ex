@@ -101,11 +101,13 @@ process Helix.Universe.Bank.Process.Bank.Transfer do
 
   executable do
 
-    resources(_gateway, _atm, %{transfer: transfer}, _meta) do
+    @type custom :: %{}
+
+    resources(_gateway, _atm, %{transfer: transfer}, _meta, _) do
       %{transfer: transfer}
     end
 
-    source_connection(_gateway, _atm, _, _) do
+    source_connection(_gateway, _atm, _, _, _) do
       {:create, :wire_transfer}
     end
   end

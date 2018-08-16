@@ -60,6 +60,19 @@ defmodule Helix.Process.Action.Process do
     {:ok, [event]}
   end
 
+  @spec retarget(Process.t, Process.retarget_changes) ::
+    {:ok, list}
+  @doc """
+  Retargets a process.
+
+  Modifies the process target and/or objectives according to `changes`.
+  """
+  def retarget(process = %Process{}, changes) do
+    ProcessInternal.retarget(process, changes)
+
+    {:ok, []}
+  end
+
   # def pause(process = %Process{}) do
   #   ProcessInternal.pause(process)
 
@@ -103,6 +116,9 @@ defmodule Helix.Process.Action.Process do
 
   # defp signal_handler(:SIGPRIO, process, %{priority: priority}),
   #   do: Processable.priority(process.data, process, priority)
+
+  defp signal_handler(:SIGRETARGET, process, _),
+    do: Processable.retarget(process.data, process)
 
   defp signal_handler(:SIGSRCCONND, process, %{connection: connection}),
     do: Processable.source_connection_closed(process.data, process, connection)

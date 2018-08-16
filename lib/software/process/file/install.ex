@@ -122,18 +122,20 @@ process Helix.Software.Process.File.Install do
 
   executable do
 
-    resources(_gateway, _target, %{backend: backend}, %{file: file}) do
+    @type custom :: %{}
+
+    resources(_gateway, _target, %{backend: backend}, %{file: file}, _) do
       %{
         file: file,
         backend: backend
       }
     end
 
-    source_connection(_gateway, _target, _params, %{ssh: ssh}) do
+    source_connection(_gateway, _target, _params, %{ssh: ssh}, _) do
       ssh
     end
 
-    target_file(_gateway, _target, _params, %{file: file}) do
+    target_file(_gateway, _target, _params, %{file: file}, _) do
       file.file_id
     end
   end

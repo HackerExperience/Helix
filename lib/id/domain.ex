@@ -30,6 +30,7 @@ defmodule Helix.ID.Domain do
       wire_transfer:    63
       bank_reveal_pass: 73
       log_forge:        83
+      log_recover:      93
       reserved_until:   F3
       reserved_until:   F4
 
@@ -159,6 +160,8 @@ defmodule Helix.ID.Domain do
     {{:process, :bank_reveal_password}, 0x73},
     {{:process, :log_forge_create}, 0x83},
     {{:process, :log_forge_edit}, 0x83},
+    {{:process, :log_recover_global}, 0x93},
+    {{:process, :log_recover_custom}, 0x93},
     {{:server, :desktop}, 0x05},
     {{:server, :mobile}, 0x15},
     {{:server, :npc}, 0x25},

@@ -106,25 +106,27 @@ process Helix.Software.Process.Virus.Collect do
 
   executable do
 
-    resources(_, _, _params, _meta) do
+    @type custom :: %{}
+
+    resources(_, _, _params, _meta, _) do
       %{}
     end
 
-    source_file(_, _, _, %{virus: virus}) do
+    source_file(_, _, _, %{virus: virus}, _) do
       virus.file_id
     end
 
-    source_connection(_, _, _, _) do
+    source_connection(_, _, _, _, _) do
       {:create, :virus_collect}
     end
 
     # There's no bank account when collecting the earnings of a `miner` virus
-    target_bank_account(_, _, _, %{virus: %{software_type: :virus_miner}}) do
+    target_bank_account(_, _, _, %{virus: %{software_type: :virus_miner}}, _) do
       nil
     end
 
     # For any other virus, there must always have a bank account
-    target_bank_account(_, _, %{bank_account: bank_acc}, _) do
+    target_bank_account(_, _, %{bank_account: bank_acc}, _, _) do
       bank_acc
     end
   end

@@ -50,7 +50,14 @@ defprotocol Helix.Process.Model.Processable do
 
   ## :restart
 
+  Resets any work the process may have done, and starts from scratch.
+
   Not implemented yet.
+
+  ## :retarget
+
+  Modify the target of a process, potentially changing its resources and/or
+  relevant objects. Commonly used with recursive processes.
 
   ## {:SIGKILL, <reason>}
 
@@ -60,6 +67,13 @@ defprotocol Helix.Process.Model.Processable do
 
   Later on, the process *might* be killed. Depends on how it implements the
   `on_kill` callback.
+
+  ## :SIGRETARGET
+
+  Sends a SIGRETARGET to itself
+
+  Later on, the process *might* change. Depends on how it implements the
+  `on_retarget` callback.
 
   ## :noop
 
@@ -73,7 +87,9 @@ defprotocol Helix.Process.Model.Processable do
     | :resume
     | :renice
     | :restart
+    | {:retarget, Process.retarget_changes}
     | {:SIGKILL, Process.kill_reason}
+    | :SIGRETARGET
     | :noop
 
   @spec complete(t, Process.t) ::
@@ -89,6 +105,15 @@ defprotocol Helix.Process.Model.Processable do
   Called when the process receives a SIGKILL. Also receives the kill reason.
   """
   def kill(data, process, reason)
+
+  @spec retarget(t, Process.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIGRETARGET, meaning the process finished
+  its previous objective and is now looking for something else to do. Commonly
+  used on recursive processes.
+  """
+  def retarget(data, process)
 
   @spec source_connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}

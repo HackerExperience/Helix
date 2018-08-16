@@ -206,7 +206,9 @@ process Helix.Software.Process.File.Transfer do
     Defines how FileTransferProcess should be executed.
     """
 
-    resources(_, _, params, meta) do
+    @type custom :: %{}
+
+    resources(_, _, params, meta, _) do
       %{
         type: params.type,
         file: meta.file,
@@ -214,11 +216,11 @@ process Helix.Software.Process.File.Transfer do
       }
     end
 
-    target_file(_gateway, _target, _params, %{file: file}) do
+    target_file(_gateway, _target, _params, %{file: file}, _) do
       file.file_id
     end
 
-    source_connection(_gateway, _target, params, _) do
+    source_connection(_gateway, _target, params, _, _) do
       {:create, params.connection_type}
     end
   end
