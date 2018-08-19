@@ -127,7 +127,7 @@ defmodule Helix.Log.Event.Handler.LogTest do
       log_before = LogQuery.fetch(log.log_id)
 
       # Simulate handling of the event
-      LogHandler.log_forge_processed(event)
+      LogHandler.forge_processed(event)
 
       log_after = LogQuery.fetch(log.log_id)
 
@@ -159,7 +159,7 @@ defmodule Helix.Log.Event.Handler.LogTest do
       assert [] == LogQuery.get_logs_on_server(process.target_id)
 
       # Simulate handling of the event
-      LogHandler.log_forge_processed(event)
+      LogHandler.forge_processed(event)
 
       # Now the process server has a new log
       assert [log] = LogQuery.get_logs_on_server(process.target_id)
@@ -169,6 +169,35 @@ defmodule Helix.Log.Event.Handler.LogTest do
       assert log.revision.type == process.data.log_type
       assert_map_str log.revision.data, Map.from_struct(process.data.log_data)
       assert log.revision.forge_version == 50
+    end
+  end
+
+  describe "log_recover_processed/1" do
+    test "pops out revision from stack" do
+      server_id = ServerHelper.id()
+      log = LogSetup.log!(server_id: server_id, revisions: 2)
+
+      process =
+        ProcessSetup.process!(
+          target_id: server_id,
+          type: :log_recover_custom,
+          tgt_log_id: log.log_id,
+          data: [recover_version: 50]
+        )
+
+      event = EventSetup.Log.recover_processed(process: process)
+
+      assert [old_log] = LogQuery.get_logs_on_server(process.target_id)
+
+      LogHandler.recover_processed(event)
+
+      assert [new_log] = LogQuery.get_logs_on_server(process.target_id)
+
+      # Old log was at revision 2...
+      assert old_log.revision_id == 2
+
+      # But new log is at revision 1
+      assert new_log.revision_id == 1
     end
   end
 end

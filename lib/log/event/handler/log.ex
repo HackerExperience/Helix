@@ -41,7 +41,7 @@ defmodule Helix.Log.Event.Handler.Log do
       )
 
     with {:ok, _, events} <- result do
-      Event.emit(events)
+      Event.emit(events, from: event)
     end
   end
 
@@ -57,7 +57,7 @@ defmodule Helix.Log.Event.Handler.Log do
       log = %Log{} <- LogQuery.fetch(event.target_log_id),
       {:ok, _, events} <- revise.(log)
     do
-      Event.emit(events)
+      Event.emit(events, from: event)
     end
   end
 
@@ -74,12 +74,12 @@ defmodule Helix.Log.Event.Handler.Log do
   """
   def recover_processed(event = %LogRecoverProcessedEvent{target_log_id: nil}),
     do: sigretarget(event)
-  def recover_processed(event = %LogRecoverProcessedEvent{target_log_id: _) do
+  def recover_processed(event = %LogRecoverProcessedEvent{target_log_id: _}) do
     with \
       log = %Log{} <- LogQuery.fetch(event.target_log_id),
-      {:ok, _, events} <- LogAction.recover(log)
+      {:ok, _, events} <- LogAction.recover(log, event.entity_id)
     do
-      Event.emit(events)
+      Event.emit(events, from: event)
     end
 
     sigretarget(event)

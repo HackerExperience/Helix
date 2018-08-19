@@ -117,32 +117,35 @@ defmodule Helix.Log.Event.Log do
     end
   end
 
-  event Deleted do
+  event Recovered do
     @moduledoc """
-    LogDeletedEvent is fired when a forged log is recovered beyond its original
-    revision, leading to the log deletion.
+    LogRecoveredEvent is fired when a forged log has a revision popped out of
+    its stack, and a new revision is discovered.
     """
 
+    alias Helix.Entity.Model.Entity
     alias Helix.Log.Model.Log
 
     @type t ::
-      %__MODULE__{
-        log: Log.t
-      }
+    %__MODULE__{
+      log: Log.t,
+      entity_id: Entity.id
+    }
 
-    event_struct [:log]
+    event_struct [:log, :entity_id]
 
-    @spec new(Log.t) ::
+    @spec new(Log.t, Entity.id) ::
       t
-    def new(log = %Log{}) do
+    def new(log = %Log{}, entity_id) do
       %__MODULE__{
-        log: log
+        log: log,
+        entity_id: entity_id
       }
     end
 
     publish do
 
-      @event :log_deleted
+      @event :log_recovered
 
       def generate_payload(event, _socket) do
         data = %{
@@ -154,6 +157,74 @@ defmodule Helix.Log.Event.Log do
 
       def whom_to_publish(event),
         do: %{server: event.log.server_id}
+    end
+
+    notification do
+      @moduledoc """
+      Notify the user when the process finishes and the log got recovered.
+      """
+
+      @class :server
+      @code :log_recovered
+
+      def whom_to_notify(event),
+        do: %{account_id: event.entity_id, server_id: event.log.server_id}
+    end
+  end
+
+  event Destroyed do
+    @moduledoc """
+    LogDestroyedEvent is fired when a forged log is recovered beyond its
+    original revision, leading to the log deletion.
+    """
+
+    alias Helix.Entity.Model.Entity
+    alias Helix.Log.Model.Log
+
+    @type t ::
+      %__MODULE__{
+        log: Log.t,
+        entity_id: Entity.id
+      }
+
+    event_struct [:log, :entity_id]
+
+    @spec new(Log.t, Entity.id) ::
+      t
+    def new(log = %Log{}, entity_id) do
+      %__MODULE__{
+        log: log,
+        entity_id: entity_id
+      }
+    end
+
+    publish do
+
+      @event :log_destroyed
+
+      def generate_payload(event, _socket) do
+        data = %{
+          log_id: to_string(event.log.log_id)
+        }
+
+        {:ok, data}
+      end
+
+      def whom_to_publish(event),
+        do: %{server: event.log.server_id}
+    end
+
+    notification do
+      @moduledoc """
+      Notify the user when the process finishes and the artificial log is
+      destroyed.
+      """
+
+      @class :server
+      @code :log_destroyed
+
+      def whom_to_notify(event),
+        do: %{account_id: event.entity_id, server_id: event.log.server_id}
     end
   end
 end

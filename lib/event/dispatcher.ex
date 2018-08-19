@@ -147,7 +147,8 @@ defmodule Helix.Event.Dispatcher do
   event LogEvent.Forge.Processed
   event LogEvent.Recover.Processed
   event LogEvent.Log.Created
-  event LogEvent.Log.Deleted
+  event LogEvent.Log.Destroyed
+  event LogEvent.Log.Recovered
   event LogEvent.Log.Revised
 
   # Custom handlers

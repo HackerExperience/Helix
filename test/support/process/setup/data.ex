@@ -17,6 +17,7 @@ defmodule Helix.Test.Process.Data.Setup do
 
   # Processes
   alias Helix.Log.Process.Forge, as: LogForgeProcess
+  alias Helix.Log.Process.Recover, as: LogRecoverProcess
   alias Helix.Software.Process.Cracker.Bruteforce, as: CrackerBruteforce
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
   alias Helix.Software.Process.File.Install, as: FileInstallProcess
@@ -253,11 +254,51 @@ defmodule Helix.Test.Process.Data.Setup do
     {process_type, data, meta, resources}
   end
 
+  def custom(:log_recover, data_opts, meta) do
+    [:log_recover_custom, :log_recover_global]
+    |> Enum.random()
+    |> custom(data_opts, meta)
+  end
+
+  def custom(:log_recover_custom, data_opts, meta),
+    do: custom_log_recover({:log_recover_custom, :custom}, data_opts, meta)
+
+  def custom(:log_recover_global, data_opts, meta),
+    do: custom_log_recover({:log_recover_global, :global}, data_opts, meta)
+
+  defp custom_log_recover({process_type, method}, data_opts, meta) do
+    version =
+      Keyword.get(data_opts, :recover_version, SoftwareHelper.random_version())
+
+    src_file_id = meta.src_file_id || SoftwareHelper.id()
+    tgt_log_id = meta.tgt_log_id || LogHelper.id()
+
+    data = %LogRecoverProcess{recover_version: version}
+
+    resources =
+      %{
+        l_dynamic: [:cpu],
+        r_dynamic: [],
+        static: TOPHelper.Resources.random_static(),
+        objective: TOPHelper.Resources.objective(cpu: 500)
+      }
+
+    meta =
+      %{meta |
+        tgt_log_id: tgt_log_id,
+        src_file_id: src_file_id
+      }
+
+    {process_type, data, meta, resources}
+  end
+
   defp custom_implementations do
     [
       :bruteforce,
       :log_forge_edit,
       :log_forge_create,
+      :log_recover_custom,
+      :log_recover_global,
       :file_download,
       :file_upload,
       :install_virus

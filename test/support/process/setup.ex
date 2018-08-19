@@ -11,6 +11,8 @@ defmodule Helix.Test.Process.Setup do
 
   @internet_id NetworkHelper.internet_id()
 
+  def process!(opts \\ []),
+    do: process(opts) |> elem(0)
   def process(opts \\ []) do
     {_, related = %{params: params}} = fake_process(opts)
     {:ok, inserted} = ProcessInternal.create(params)

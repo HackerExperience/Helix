@@ -6,7 +6,8 @@ defmodule Helix.Log.Action.Log do
   alias Helix.Log.Model.Log
 
   alias Helix.Log.Event.Log.Created, as: LogCreatedEvent
-  alias Helix.Log.Event.Log.Deleted, as: LogDeletedEvent
+  alias Helix.Log.Event.Log.Destroyed, as: LogDestroyedEvent
+  alias Helix.Log.Event.Log.Recovered, as: LogRecoveredEvent
   alias Helix.Log.Event.Log.Revised, as: LogRevisedEvent
 
   @spec create(Server.id, Entity.id, Log.info, pos_integer | nil) ::
@@ -15,7 +16,7 @@ defmodule Helix.Log.Action.Log do
   @doc """
   Creates a new log linked to `entity` on `server` with `log_info` as content.
 
-  This log may be natural (created automatically by the game as a result to a
+  This log may be natural (created automatically by the game as a result of a
   player's action) or artificial (explicitly created using LogForger.Edit).
   """
   def create(server_id, entity_id, log_info, forge_version \\ nil) do
@@ -45,23 +46,23 @@ defmodule Helix.Log.Action.Log do
     end
   end
 
-  @spec recover(Log.t) ::
-    {:ok, :destroyed, [LogDeletedEvent.t]}
+  @spec recover(Log.t, Entity.id) ::
+    {:ok, :destroyed, [LogDestroyedEvent.t]}
     | {:ok, :original, []}
     | {:ok, :recovered, [LogRecoveredEvent.t]}
   @doc """
   Attempts to recover the given `log`.
   """
-  def recover(log = %Log{}) do
+  def recover(log = %Log{}, entity_id = %Entity.ID{}) do
     case LogInternal.recover(log) do
       :destroyed ->
-        {:ok, :destroyed, [LogDeletedEvent.new(log)]}
+        {:ok, :destroyed, [LogDestroyedEvent.new(log, entity_id)]}
 
       {:original, _} ->
         {:ok, :original, []}
 
       {:recovered, new_log} ->
-        {:ok, :recovered, [LogRecoveredEvent.new(new_log)]}
+        {:ok, :recovered, [LogRecoveredEvent.new(new_log, entity_id)]}
     end
   end
 end

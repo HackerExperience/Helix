@@ -73,7 +73,7 @@
       "emits": [
         "Log.Created",
         "Log.Modified",
-        "Log.Deleted"
+        "Log.Destroyed"
       ]
     },
     "Process.Process":{
@@ -176,7 +176,7 @@
   "publishable": [
     "Log.Created",
     "Log.Modified",
-    "Log.Deleted",
+    "Log.Destroyed",
     "Network.Bounce.Created",
     "Network.Bounce.CreateFailed",
     "Network.Bounce.Removed",
@@ -188,7 +188,7 @@
     "Process.Completed",
     "Process.Killed",
     "File.Added",
-    "File.Deleted",
+    "File.Destroyed",
     "File.Uploaded",
     "Story.Email.Sent",
     "Story.Reply.Sent",
@@ -207,7 +207,7 @@
         "DownloadCracker": {
           "filters": [
             "File.Downloaded",
-            "File.Deleted",
+            "File.Destroyed",
             "Process.Created"
           ],
           "emits": [

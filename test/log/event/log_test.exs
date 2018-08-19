@@ -51,9 +51,9 @@ defmodule Helix.Log.Event.LogTest do
     end
   end
 
-  describe "LogDeletedEvent" do
+  describe "LogDestroyedEvent" do
     test "Publishable.generate_payload/2" do
-      event = EventSetup.Log.deleted()
+      event = EventSetup.Log.destroyed()
 
       # Generates the payload
       assert {:ok, data} = Publishable.generate_payload(event, @mocked_socket)
@@ -62,7 +62,7 @@ defmodule Helix.Log.Event.LogTest do
       assert data.log_id == to_string(event.log.log_id)
 
       # Returned event is correct
-      assert "log_deleted" == Publishable.get_event_name(event)
+      assert "log_destroyed" == Publishable.get_event_name(event)
     end
   end
 end
