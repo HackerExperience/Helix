@@ -145,12 +145,12 @@ defmodule Helix.Log.Event.Log do
 
     publish do
 
+      alias Helix.Log.Public.Index, as: LogIndex
+
       @event :log_recovered
 
       def generate_payload(event, _socket) do
-        data = %{
-          log_id: to_string(event.log.log_id)
-        }
+        data = LogIndex.render_log(event.log)
 
         {:ok, data}
       end

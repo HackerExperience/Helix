@@ -139,12 +139,12 @@ process Helix.Log.Process.Recover do
 
     on_retarget(process, _data) do
       {new_log, method} =
-        # On `log_recover_global`, we must select a new log on each iteration
+        # On `log_recover_global`, we must select a new log on each iteration.
         if process.type == :log_recover_global do
           log = LogRecoverProcess.find_next_target(process.target_id)
           {log, :global}
 
-        # On `log_recover_custom` we always work at the same log
+        # On `log_recover_custom` we always work at the same log. May be `nil`.
         else
           log = LogQuery.fetch(process.tgt_log_id)
           {log, :custom}
@@ -231,7 +231,9 @@ process Helix.Log.Process.Recover do
       if f.log.revisions.extra == 0 do
         999_999_999_999
       else
-        (f.log.revisions.total * multiplier) / f.recover.version.log_recover
+        t = (f.log.revisions.total * multiplier) / f.recover.version.log_recover
+
+        t + 5000
       end
     end
 

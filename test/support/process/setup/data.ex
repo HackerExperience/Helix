@@ -221,6 +221,18 @@ defmodule Helix.Test.Process.Data.Setup do
   def custom(:log_forge_create, data_opts, meta),
     do: custom_log_forge({:log_forge_create, :create}, data_opts, meta)
 
+  def custom(:log_recover, data_opts, meta) do
+    [:log_recover_custom, :log_recover_global]
+    |> Enum.random()
+    |> custom(data_opts, meta)
+  end
+
+  def custom(:log_recover_custom, data_opts, meta),
+    do: custom_log_recover({:log_recover_custom, :custom}, data_opts, meta)
+
+  def custom(:log_recover_global, data_opts, meta),
+    do: custom_log_recover({:log_recover_global, :global}, data_opts, meta)
+
   defp custom_log_forge({process_type, action}, data_opts, meta) do
     version = Keyword.get(data_opts, :forger_version, 100)
     src_file_id = meta.src_file_id || SoftwareHelper.id()
@@ -254,19 +266,7 @@ defmodule Helix.Test.Process.Data.Setup do
     {process_type, data, meta, resources}
   end
 
-  def custom(:log_recover, data_opts, meta) do
-    [:log_recover_custom, :log_recover_global]
-    |> Enum.random()
-    |> custom(data_opts, meta)
-  end
-
-  def custom(:log_recover_custom, data_opts, meta),
-    do: custom_log_recover({:log_recover_custom, :custom}, data_opts, meta)
-
-  def custom(:log_recover_global, data_opts, meta),
-    do: custom_log_recover({:log_recover_global, :global}, data_opts, meta)
-
-  defp custom_log_recover({process_type, method}, data_opts, meta) do
+  defp custom_log_recover({process_type, _method}, data_opts, meta) do
     version =
       Keyword.get(data_opts, :recover_version, SoftwareHelper.random_version())
 

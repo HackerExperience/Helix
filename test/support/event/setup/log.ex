@@ -7,6 +7,7 @@ defmodule Helix.Test.Event.Setup.Log do
 
   alias Helix.Log.Event.Log.Created, as: LogCreatedEvent
   alias Helix.Log.Event.Log.Destroyed, as: LogDestroyedEvent
+  alias Helix.Log.Event.Log.Recovered, as: LogRecoveredEvent
   alias Helix.Log.Event.Log.Revised, as: LogRevisedEvent
 
   alias Helix.Test.Entity.Helper, as: EntityHelper
@@ -22,6 +23,11 @@ defmodule Helix.Test.Event.Setup.Log do
     do: revised(generate_fake_log())
   def revised(log = %Log{}),
     do: LogRevisedEvent.new(log)
+
+  def recovered,
+    do: recovered(generate_fake_log(), EntityHelper.id())
+  def recovered(log = %Log{}, entity_id),
+    do: LogRecoveredEvent.new(log, entity_id)
 
   @doc """
   Opts:

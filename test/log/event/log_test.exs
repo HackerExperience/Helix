@@ -51,6 +51,24 @@ defmodule Helix.Log.Event.LogTest do
     end
   end
 
+  describe "LogRecoveredEvent" do
+    test "Publishable.generate_payload/2" do
+      event = EventSetup.Log.recovered()
+
+      # Generates the payload
+      assert {:ok, data} = Publishable.generate_payload(event, @mocked_socket)
+
+      # Returned payload is json-friendly
+      assert data.log_id == to_string(event.log.log_id)
+      assert data.type == to_string(event.log.revision.type)
+      assert data.data
+      assert is_float(data.timestamp)
+
+      # Returned event is correct
+      assert "log_recovered" == Publishable.get_event_name(event)
+    end
+  end
+
   describe "LogDestroyedEvent" do
     test "Publishable.generate_payload/2" do
       event = EventSetup.Log.destroyed()
