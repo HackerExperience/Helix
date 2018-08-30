@@ -11,6 +11,7 @@ defprotocol Helix.Process.Model.Processable do
   """
 
   alias Helix.Event
+  alias Helix.Log.Model.Log
   alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
 
@@ -132,6 +133,32 @@ defprotocol Helix.Process.Model.Processable do
   recently closed.
   """
   def target_connection_closed(data, process, connection)
+
+  @spec target_log_revised(t, Process.t, Log.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIG_TGT_LOG_REVISED, meaning the log that
+  process is targeting has been revised. Also receives the newly revised log.
+  """
+  def target_log_revised(data, process, log)
+
+  @spec target_log_recovered(t, Process.t, Log.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIG_TGT_LOG_RECOVERED, meaning the log that
+  process is targeting has been recovered. Also receives the newly recovered
+  log.
+  """
+  def target_log_recovered(data, process, log)
+
+  @spec target_log_destroyed(t, Process.t, Log.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIG_TGT_LOG_DESTROYED, meaning the log that
+  process is targeting has been destroyed. Also receives the newly destroyed
+  log.
+  """
+  def target_log_destroyed(data, process, log)
 
   @spec after_read_hook(term) ::
     t

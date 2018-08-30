@@ -6,11 +6,13 @@ defmodule Helix.Test.Log.Setup do
   alias Helix.Log.Internal.Log, as: LogInternal
   alias Helix.Log.Repo, as: LogRepo
 
+  alias HELL.TestHelper.Random
   alias Helix.Test.Entity.Helper, as: EntityHelper
   alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Helper, as: SoftwareHelper
+  alias Helix.Test.Software.Setup, as: SoftwareSetup
   alias Helix.Test.Log.Helper, as: LogHelper
 
   @doc """
@@ -139,5 +141,110 @@ defmodule Helix.Test.Log.Setup do
     forge_version = Keyword.get(opts, :forge_version, nil)
 
     {server_id, entity_id, log_info, forge_version}
+  end
+
+  @relay nil
+
+  alias Helix.Log.Action.Flow.Recover, as: LogRecoverFlow
+
+  @doc """
+  Starts a LogRecoverProcess.
+
+  Opts:
+  - *method: Whether the process is `global` or `custom`. Random otherwise.
+  - local?: Whether the process is recovering a log from the same gateway.
+    Defaults to random.
+  - gateway: Set gateway server. Type: `Server.t`.
+  - endpoint: Set endpoint server. Type: `Server.t`.
+  - recover: Set recover software. Type: `File.t`.
+  - entity_id: Set entity who is performing action. Defaults to *random* entity.
+  - conn_info: Conn info ({tunnel, connection}). Defaults to `nil` (local).
+  - log: Log to be recovered. Only valid to `custom`.
+  """
+  def recover_flow(opts \\ []) do
+    method = Keyword.get(opts, :method, Enum.random([:global, :custom]))
+
+    if not is_nil(opts[:conn_info]) and opts[:local?] == false,
+      do: raise("Can't set both `conn_info` and `local?`. ")
+
+    if method == :global and not is_nil(opts[:log]),
+      do: raise("Can't use `global` method with custom `log`")
+
+    local? =
+      cond do
+        not is_nil(opts[:conn_info]) ->
+          false
+
+        not is_nil(opts[:local?]) ->
+          opts[:local?]
+
+        true ->
+          Random.boolean()
+      end
+
+    gateway = Keyword.get(opts, :gateway, ServerSetup.server!())
+    entity_id = Keyword.get(opts, :entity_id, EntityHelper.id())
+
+    endpoint =
+      if local? do
+        gateway
+      else
+        Keyword.get(opts, :endpoint, ServerSetup.server!())
+      end
+
+    recover =
+      Keyword.get(
+        opts, :recover, SoftwareSetup.log_recover!(server_id: gateway.server_id)
+      )
+
+    conn_info =
+      if local? do
+        nil
+      else
+        Keyword.get(opts, :conn_info, raise("Remote conn_info is TODO"))
+      end
+
+    logs =
+      if method == :global do
+        total = Keyword.get(opts, :total_logs, 1)
+
+        0..(total - 1)
+        |> Enum.reduce([], fn _, acc ->
+          [log!(server_id: endpoint.server_id, revisions: 2) | acc]
+        end)
+      else
+        log =
+          Keyword.get(
+            opts, :log, log!(server_id: endpoint.server_id, revisions: 2)
+          )
+
+        [log]
+      end
+
+    result =
+      if method == :global do
+        LogRecoverFlow.global(
+          gateway, endpoint, recover, entity_id, conn_info, @relay
+        )
+      else
+        log = Enum.random(logs)
+
+        LogRecoverFlow.custom(
+          gateway, endpoint, log, recover, entity_id, conn_info, @relay
+        )
+      end
+
+    related =
+      %{
+        gateway: gateway,
+        endpoint: endpoint,
+        logs: logs,
+        entity_id: entity_id,
+        method: method,
+        recover: recover,
+        conn_info: conn_info
+      }
+
+    {result, related}
   end
 end

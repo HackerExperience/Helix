@@ -99,6 +99,14 @@ process Helix.Log.Process.Forge do
       {:delete, [event]}
     end
 
+    @doc """
+    If the Log currently being forged was destroyed, the process should be
+    killed and the user notified.
+    """
+    on_target_log_destroyed(_process, _data, _log) do
+      {{:SIGKILL, :tgt_log_deleted}, []}
+    end
+
     @doc false
     def after_read_hook(data) do
       log_type = String.to_existing_atom(data.log_type)

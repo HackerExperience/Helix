@@ -45,6 +45,18 @@ defmodule Helix.Process.Processable do
           {{:SIGKILL, :tgt_connection_closed}, []}
         end
 
+        on_target_log_revised(_process, _data, _log) do
+          {:noop, []}
+        end
+
+        on_target_log_recovered(_process, _data, _log) do
+          {:noop, []}
+        end
+
+        on_target_log_destroyed(_process, _data, _log) do
+          {:noop, []}
+        end
+
         @doc false
         def after_read_hook(data),
           do: data
@@ -154,6 +166,45 @@ defmodule Helix.Process.Processable do
 
       def target_connection_closed(
         unquote(data), p = unquote(process), unquote(connection)
+      ) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  defmacro on_target_log_revised(process, data, log, do: block) do
+    quote do
+
+      def target_log_revised(
+        unquote(data), p = unquote(process), unquote(log)
+      ) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  defmacro on_target_log_recovered(process, data, log, do: block) do
+    quote do
+
+      def target_log_recovered(
+        unquote(data), p = unquote(process), unquote(log)
+      ) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  defmacro on_target_log_destroyed(process, data, log, do: block) do
+    quote do
+
+      def target_log_destroyed(
+        unquote(data), p = unquote(process), unquote(log)
       ) do
         unquote(block)
         |> add_fingerprint(p)

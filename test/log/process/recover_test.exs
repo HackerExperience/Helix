@@ -3,13 +3,17 @@ defmodule Helix.Log.Process.RecoverTest do
   use Helix.Test.Case.Integration
 
   alias Helix.Process.Model.Processable
+  alias Helix.Process.Query.Process, as: ProcessQuery
   alias Helix.Log.Process.Recover, as: LogRecoverProcess
+  alias Helix.Log.Query.Log, as: LogQuery
 
   alias Helix.Test.Event.Helper, as: EventHelper
+  alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Process.TOPHelper
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
+  alias Helix.Test.Log.Helper, as: LogHelper
   alias Helix.Test.Log.Setup, as: LogSetup
 
   @relay nil
@@ -209,6 +213,58 @@ defmodule Helix.Log.Process.RecoverTest do
       # revision of `log`. Now it is currently at the original revision.
       assert changes.objective.cpu == 999_999_999_999
       assert changes.tgt_log_id == log.log_id
+
+      TOPHelper.top_stop(gateway)
+    end
+
+    test "on_target_log: retargets either process when log is recovered" do
+      {{:ok, process1}, %{gateway: gateway, entity_id: entity_id}} =
+        LogSetup.recover_flow(method: :global, local?: true)
+
+      # TODO: How to ensure it was retargeted?
+    end
+
+    test "on_target_log: retargets `global` process when log is destroyed" do
+      # `process` is recovering `log` at `gateway`
+      {{:ok, process1}, %{gateway: gateway, entity_id: entity_id}} =
+        LogSetup.recover_flow(method: :global, local?: true)
+
+      # Refetch the process so it contains allocation data
+      process1 = ProcessQuery.fetch(process1.process_id)
+
+      # This is the `log` that the process is currently targeting
+      log = LogQuery.fetch(process1.tgt_log_id)
+
+      # Now we'll gladly destroy it with LogDestroyedEvent
+      # (And *actually* destroy the Log. Needed for test sequence below)
+      LogHelper.delete(log)
+
+      log
+      |> EventSetup.Log.destroyed(entity_id)
+      |> EventHelper.emit()
+
+      # Process still exists
+      process2 = ProcessQuery.fetch(process1.process_id)
+
+      # The new process exists but isn't working on any log, because there was
+      # only one recoverable log on `gateway` and it was destroyed. Retargeted.
+      refute process2.tgt_log_id
+
+      TOPHelper.top_stop(gateway)
+    end
+
+    test "on_target_log: deletes `custom` process when log is destroyed" do
+      # `process` is recovering `log` at `gateway`
+      {{:ok, process}, %{gateway: gateway, logs: [log], entity_id: entity_id}} =
+        LogSetup.recover_flow(method: :custom, local?: true)
+
+      # Now we'll gladly destroy it with LogDestroyedEvent
+      log
+      |> EventSetup.Log.destroyed(entity_id)
+      |> EventHelper.emit()
+
+      # Process no longer exists
+      refute ProcessQuery.fetch(process.process_id)
 
       TOPHelper.top_stop(gateway)
     end

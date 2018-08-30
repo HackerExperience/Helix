@@ -83,4 +83,10 @@ defmodule Helix.Test.Log.Helper do
 
     LogRepo.all(query)
   end
+
+  @doc """
+  Directly deletes a log on the DB. Use with caution!
+  """
+  def delete(log = %Log{}),
+    do: LogRepo.delete(log)
 end

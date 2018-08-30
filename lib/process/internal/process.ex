@@ -1,5 +1,6 @@
 defmodule Helix.Process.Internal.Process do
 
+  alias Helix.Log.Model.Log
   alias Helix.Network.Model.Connection
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
@@ -61,6 +62,15 @@ defmodule Helix.Process.Internal.Process do
   def get_processes_targeting_connection(connection_id) do
     connection_id
     |> Process.Query.by_target_connection()
+    |> Repo.all()
+    |> Enum.map(&Process.format/1)
+  end
+
+  @spec get_processes_targeting_log(Log.id) ::
+    [Process.t]
+  def get_processes_targeting_log(log_id) do
+    log_id
+    |> Process.Query.by_target_log()
     |> Repo.all()
     |> Enum.map(&Process.format/1)
   end

@@ -160,6 +160,18 @@ defmodule Helix.Event.Dispatcher do
     LogHandler.Log,
     :recover_processed
 
+  event LogEvent.Log.Revised,
+    ProcessHandler.TOP,
+    :object_handler
+
+  event LogEvent.Log.Recovered,
+    ProcessHandler.TOP,
+    :object_handler
+
+  event LogEvent.Log.Destroyed,
+    ProcessHandler.TOP,
+    :object_handler
+
   ##############################################################################
   # Process events
   ##############################################################################

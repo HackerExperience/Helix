@@ -126,6 +126,15 @@ defmodule Helix.Process.Action.Process do
   defp signal_handler(:SIGTGTCONND, process, %{connection: connection}),
     do: Processable.target_connection_closed(process.data, process, connection)
 
+  defp signal_handler(:SIG_TGT_LOG_REVISED, process, %{log: log}),
+    do: Processable.target_log_revised(process.data, process, log)
+
+  defp signal_handler(:SIG_TGT_LOG_RECOVERED, process, %{log: log}),
+    do: Processable.target_log_recovered(process.data, process, log)
+
+  defp signal_handler(:SIG_TGT_LOG_DESTROYED, process, %{log: log}),
+    do: Processable.target_log_destroyed(process.data, process, log)
+
   # defp signal_handler(:SIGSRCFILED, process, %{file: file}),
   #   do: Processable.file_deleted(process.data, process, file)
 

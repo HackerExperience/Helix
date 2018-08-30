@@ -187,6 +187,28 @@ defmodule Helix.Process.Model.Process do
   Signal sent when the bank account the process is targeting was closed.
 
   Default action is to send itself a SIGKILL with `:tgt_bank_acc_closed` reason.
+
+  ## SIG_TGT_LOG_REVISED
+
+  Signal sent when the log the process is targeting was revised (i.e. a new
+  revision was added).
+
+  Default action it to ignore the signal.
+
+  ## SIG_TGT_LOG_RECOVERED
+
+  Signal sent when the log the process is targeting was recovered (i.e. a
+  revision was removed from the stack).
+
+  Default action it to ignore the signal.
+
+  ## SIG_TGT_LOG_DESTROYED
+
+  Signal sent when the log the process is targeting was destroyed (i.e. it was
+  an artificial log that got recovered beyond the original revision, hence it no
+  longer exists).
+
+  Default action it to ignore the signal.
   """
   @type signal ::
     :SIGTERM
@@ -201,6 +223,9 @@ defmodule Helix.Process.Model.Process do
     | :SIGTGTFILED
     | :SIGSRCBANKACCD
     | :SIGTGTBANKACCD
+    | :SIG_TGT_LOG_REVISED
+    | :SIG_TGT_LOG_RECOVERED
+    | :SIG_TGT_LOG_DESTROYED
 
   @typedoc """
   Valid params for each type of signal.
@@ -210,6 +235,7 @@ defmodule Helix.Process.Model.Process do
     | %{priority: term}
     | %{connection: Connection.t}
     | %{file: File.t}
+    | %{log: Log.t}
     | %{}
 
   @typedoc """
@@ -224,6 +250,7 @@ defmodule Helix.Process.Model.Process do
     | :tgt_file_deleted
     | :src_bank_acc_closed
     | :tgt_bank_acc_closed
+    | :tgt_log_destroyed
 
   @typedoc """
   Return type for `retarget` changes.
@@ -293,6 +320,17 @@ defmodule Helix.Process.Model.Process do
     :priority,
     :l_dynamic,
     :priority
+  ]
+
+  @retarget_fields [
+    # A retarget may change the process' resources, listed below
+    :static,
+    :l_dynamic,
+    :r_dynamic,
+    :objective,
+
+    # It may also change some objects (add as needed)
+    :tgt_log_id
   ]
 
   @type state ::
@@ -494,17 +532,6 @@ defmodule Helix.Process.Model.Process do
     |> put_pk(heritage, {:process, params.type})
   end
 
-  @retarget_fields [
-    # A retarget may change the process' resources, listed below
-    :static,
-    :l_dynamic,
-    :r_dynamic,
-    :objective,
-
-    # It may also change some objects (add as needed)
-    :tgt_log_id
-  ]
-
   @spec retarget(t, retarget_changes :: map) ::
     changeset
   @doc """
@@ -512,6 +539,12 @@ defmodule Helix.Process.Model.Process do
   amount of previous work (`processed`).
   """
   def retarget(process = %Process{}, changes) do
+    # TODO: Potential bug: retarget directly changes the process, but does not
+    # force it to be re-scheduled. Specifically, it does not modify the last
+    # checkpoint date. This may cause issues.
+    # Possible solution: change here \/ `last_checkpoint_time` and force
+    # TOP recalque.
+
     process
     |> change()
     |> cast(changes, @retarget_fields)
@@ -770,10 +803,11 @@ defmodule Helix.Process.Model.Process do
 
   query do
 
-    alias Helix.Software.Model.File
+    alias Helix.Log.Model.Log
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
+    alias Helix.Software.Model.File
 
     @spec by_id(Queryable.t, Process.idtb) ::
       Queryable.t
@@ -822,6 +856,11 @@ defmodule Helix.Process.Model.Process do
       Queryable.t
     def by_target_connection(query \\ Process, id),
       do: where(query, [p], p.tgt_connection_id == ^id)
+
+    @spec by_target_log(Queryable.t, Log.id) ::
+      Queryable.t
+    def by_target_log(query \\ Process, id),
+      do: where(query, [p], p.tgt_log_id == ^id)
 
     @spec by_target_process(Queryable.t, Process.id) ::
       Queryable.t

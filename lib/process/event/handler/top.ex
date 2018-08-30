@@ -4,11 +4,15 @@ defmodule Helix.Process.Event.Handler.TOP do
   import HELL.Macros
 
   alias Helix.Event
-  alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
   alias Helix.Process.Action.Flow.Process, as: ProcessFlow
   alias Helix.Process.Action.TOP, as: TOPAction
   alias Helix.Process.Model.Process
   alias Helix.Process.Query.Process, as: ProcessQuery
+
+  alias Helix.Network.Event.Connection.Closed, as: ConnectionClosedEvent
+  alias Helix.Log.Event.Log.Revised, as: LogRevisedEvent
+  alias Helix.Log.Event.Log.Recovered, as: LogRecoveredEvent
+  alias Helix.Log.Event.Log.Destroyed, as: LogDestroyedEvent
 
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
   alias Helix.Process.Event.TOP.BringMeToLife, as: TOPBringMeToLifeEvent
@@ -122,6 +126,36 @@ defmodule Helix.Process.Event.Handler.TOP do
     |> ProcessQuery.get_processes_targeting_connection()
     |> filter_self_message(event)
     |> Enum.each(&ProcessFlow.signal(&1, :SIGTGTCONND, signal_param))
+  end
+
+  def object_handler(event = %LogRevisedEvent{}) do
+    signal_param = %{log: event.log}
+
+    # Send SIG_TGT_LOG_REVISED for process that are targeting such log
+    event.log.log_id
+    |> ProcessQuery.get_processes_targeting_log()
+    |> filter_self_message(event)
+    |> Enum.each(&ProcessFlow.signal(&1, :SIG_TGT_LOG_REVISED, signal_param))
+  end
+
+  def object_handler(event = %LogRecoveredEvent{}) do
+    signal_param = %{log: event.log}
+
+    # Send SIG_TGT_LOG_RECOVERED for process that are targeting such log
+    event.log.log_id
+    |> ProcessQuery.get_processes_targeting_log()
+    |> filter_self_message(event)
+    |> Enum.each(&ProcessFlow.signal(&1, :SIG_TGT_LOG_RECOVERED, signal_param))
+  end
+
+  def object_handler(event = %LogDestroyedEvent{}) do
+    signal_param = %{log: event.log}
+
+    # Send SIG_TGT_LOG_DESTROYED for process that are targeting such log
+    event.log.log_id
+    |> ProcessQuery.get_processes_targeting_log()
+    |> filter_self_message(event)
+    |> Enum.each(&ProcessFlow.signal(&1, :SIG_TGT_LOG_DESTROYED, signal_param))
   end
 
   docp """

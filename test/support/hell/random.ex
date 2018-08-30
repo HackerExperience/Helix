@@ -206,6 +206,13 @@ defmodule HELL.TestHelper.Random do
     |> String.downcase()
   end
 
+  @doc """
+  Randomly returns `true` or `false`.
+  """
+  def boolean do
+    Enum.random([true, false])
+  end
+
   docp """
   Fetches a random letter from an alphabet
   """

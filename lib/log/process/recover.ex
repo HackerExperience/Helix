@@ -137,6 +137,11 @@ process Helix.Log.Process.Recover do
       {:noop, [event]}
     end
 
+    @doc """
+    When a `:retarget` is requested, we'll find a new target for the process. If
+    it's a `Global` process, a random log is selected on each iteration. If it's
+    a `Custom` process, however, the same log is always selected.
+    """
     on_retarget(process, _data) do
       {new_log, method} =
         # On `log_recover_global`, we must select a new log on each iteration.
@@ -167,17 +172,26 @@ process Helix.Log.Process.Recover do
       {{:retarget, changes}, []}
     end
 
-    # TODO \/: React to log deletion.
-    # on_target_log_deleted(process, data) do
-    #   action =
-    #     if process.type == :log_recover_global do
-    #       :retarget
-    #     else
-    #       {:SIGKILL, :log_deleted}
-    #     end
+    @doc """
+    If the Log currently being recovered was recovered by someone else,
+    automatically `:retarget` the process.
+    """
+    on_target_log_recovered(_process, _data, _log) do
+      {:SIGRETARGET, []}
+    end
 
-    #   {action, []}
-    # end
+    @doc """
+    If the Log currently being recovered was destroyed, `:retarget` if it's a
+    global process, otherwise the custom process should be killed and the user
+    notified.
+    """
+    on_target_log_destroyed(%{type: :log_recover_global}, _data, _log) do
+      {:SIGRETARGET, []}
+    end
+
+    on_target_log_destroyed(%{type: :log_recover_custom}, _data, _log) do
+      {{:SIGKILL, :tgt_log_deleted}, []}
+    end
   end
 
   resourceable do
