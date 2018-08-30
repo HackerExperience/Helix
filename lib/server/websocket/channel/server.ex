@@ -488,10 +488,7 @@ channel Helix.Server.Websocket.Channel.Server do
       ip = socket.assigns.destination.ip
 
       ServerWebsocketChannelState.leave(
-        entity_id,
-        server_id,
-        {network_id, ip},
-        counter
+        entity_id, server_id, {network_id, ip}, counter
       )
     end
   end

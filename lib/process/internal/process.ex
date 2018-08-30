@@ -89,6 +89,13 @@ defmodule Helix.Process.Internal.Process do
     end)
   end
 
+  @spec retarget(Process.t, changes :: map) ::
+    {:ok, Process.t}
+    | {:error, Process.changeset}
+  @doc """
+  Retargets a process, modifying resources objectives and objects as defined on
+  the Process' Processable, which demanded these changes.
+  """
   def retarget(process, changes) do
     process
     |> Process.retarget(changes)

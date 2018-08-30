@@ -221,7 +221,27 @@ defmodule Helix.Log.Process.RecoverTest do
       {{:ok, process1}, %{gateway: gateway, entity_id: entity_id}} =
         LogSetup.recover_flow(method: :global, local?: true)
 
-      # TODO: How to ensure it was retargeted?
+      # Refetch the process so it contains allocation data
+      process1 = ProcessQuery.fetch(process1.process_id)
+
+      # This is the `log` that the process is currently targeting
+      log = LogQuery.fetch(process1.tgt_log_id)
+
+      # Now we'll recover it with LogRecoveredEvent
+      log
+      |> EventSetup.Log.recovered(entity_id)
+      |> EventHelper.emit()
+
+      # Process still exists
+      process2 = ProcessQuery.fetch(process1.process_id)
+
+      # The new process exists and is working on whatever log it selected.
+      assert process2.process_id
+
+      # `last_checkpoint_time` has changed! So it was retargeted.
+      refute process1.last_checkpoint_time == process2.last_checkpoint_time
+
+      TOPHelper.top_stop(gateway)
     end
 
     test "on_target_log: retargets `global` process when log is destroyed" do
@@ -249,6 +269,9 @@ defmodule Helix.Log.Process.RecoverTest do
       # The new process exists but isn't working on any log, because there was
       # only one recoverable log on `gateway` and it was destroyed. Retargeted.
       refute process2.tgt_log_id
+
+      # Another proof of retarget: `last_checkpoint_time` has changed.
+      refute process1.last_checkpoint_time == process2.last_checkpoint_time
 
       TOPHelper.top_stop(gateway)
     end

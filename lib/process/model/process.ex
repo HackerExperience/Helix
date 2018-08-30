@@ -329,6 +329,9 @@ defmodule Helix.Process.Model.Process do
     :r_dynamic,
     :objective,
 
+    # Retarget must always reset the `last_checkpoint_time`
+    :last_checkpoint_time,
+
     # It may also change some objects (add as needed)
     :tgt_log_id
   ]
@@ -535,20 +538,15 @@ defmodule Helix.Process.Model.Process do
   @spec retarget(t, retarget_changes :: map) ::
     changeset
   @doc """
-  Updates the process according to the retarget changes. It also empties any
-  amount of previous work (`processed`).
+  Updates the process according to the retarget changes. It also resets any
+  previous work (`processed`) and checkpoints (`last_checkpoint_time`).
   """
   def retarget(process = %Process{}, changes) do
-    # TODO: Potential bug: retarget directly changes the process, but does not
-    # force it to be re-scheduled. Specifically, it does not modify the last
-    # checkpoint date. This may cause issues.
-    # Possible solution: change here \/ `last_checkpoint_time` and force
-    # TOP recalque.
-
     process
     |> change()
     |> cast(changes, @retarget_fields)
     |> put_change(:processed, %{})
+    |> put_change(:last_checkpoint_time, DateTime.utc_now())
     |> validate_required(@required_fields)
   end
 
