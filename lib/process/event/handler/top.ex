@@ -115,17 +115,17 @@ defmodule Helix.Process.Event.Handler.TOP do
   def object_handler(event = %ConnectionClosedEvent{}) do
     signal_param = %{connection: event.connection}
 
-    # Send SIGSRCCONND for processes that originated on such connection
+    # Send SIG_SRC_CONN_DELETED for processes that originated on such connection
     event.connection.connection_id
     |> ProcessQuery.get_processes_originated_on_connection()
     |> filter_self_message(event)
-    |> Enum.each(&ProcessFlow.signal(&1, :SIGSRCCONND, signal_param))
+    |> Enum.each(&ProcessFlow.signal(&1, :SIG_SRC_CONN_DELETED, signal_param))
 
-    # Send SIGTGTCONND for processes that are targeting such connection
+    # Send SIG_TGT_CONN_DELETED for processes that are targeting such connection
     event.connection.connection_id
     |> ProcessQuery.get_processes_targeting_connection()
     |> filter_self_message(event)
-    |> Enum.each(&ProcessFlow.signal(&1, :SIGTGTCONND, signal_param))
+    |> Enum.each(&ProcessFlow.signal(&1, :SIG_TGT_CONN_DELETED, signal_param))
   end
 
   def object_handler(event = %LogRevisedEvent{}) do
@@ -173,7 +173,7 @@ defmodule Helix.Process.Event.Handler.TOP do
 
   Imagine, however, that `ProcessSignaledEvent` takes really long to arrive. It
   could happen that `FileDeletedEvent` arrives first. Now, it's the TOPHandler's
-  role to listen to `FileDeletedEvent`s and emit a SIGTGTFILED on all processes
+  role to listen to `FileDeletedEvent`s and emit a SIG_TGT_FILE_DELETED on all processes
   that target that file, including our recently completed process.
 
   This would not create an infinite loop, but it would affect the expected

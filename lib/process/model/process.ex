@@ -125,18 +125,18 @@ defmodule Helix.Process.Model.Process do
 
   Default action is to resume the process.
 
-  ## SIGRETARGET
+  ## SIG_RETARGET
 
   Signal sent when the process finished prior execution and is now looking for
   a new target to work on.
 
-  Keep in mind that, when using `SIGRETARGET` on recursive processes, you might
+  Keep in mind that, when using `SIG_RETARGET` on recursive processes, you might
   want the signal to be sent only after the side-effect of the process has been
   properly processed. As an example, see `LogRecoverProcess`.
 
   Default action is to ignore the signal.
 
-  ## SIGPRIO
+  ## SIG_RENICE
 
   Signal sent when the user changed the priority of the process.
 
@@ -150,43 +150,31 @@ defmodule Helix.Process.Model.Process do
   Note that these signals are NOT sent to the process that originated them. See
   `TOPHandler.filter_self_message/2` for context.
 
-  ## SIGSRCCONND
+  ## SIG_SRC_CONN_DELETED
 
   Signal sent when the connection that originated the Process was closed.
 
   Default action is to send itself a SIGKILL with `:src_connection_closed`
   reason.
 
-  ## SIGTGTCONND
+  ## SIG_TGT_CONN_DELETED
 
   Signal sent when the connection that the process is targeting was closed.
 
   Default action is to send itself a SIGKILL with `:tgt_connection_closed`
   reason.
 
-  ## SIGSRCFILED
+  ## SIG_SRC_FILE_DELETED
 
   Signal sent when the file that originated the process was deleted.
 
   Default action is to send itself a SIGKILL with `:src_file_deleted` reason.
 
-  ## SIGTGTFILED
+  ## SIG_TGT_FILE_DELETED
 
   Signal sent when the File that the process is targeting was deleted.
 
   Default action is to send itself a SIGKILL with `:tgt_file_deleted` reason.
-
-  ## SIGSRCBANKACCD
-
-  Signal sent when the bank account the process uses as source was closed.
-
-  Default action is to send itself a SIGKILL with `:src_bank_acc_closed` reason.
-
-  ## SIGTGTBANKACCD
-
-  Signal sent when the bank account the process is targeting was closed.
-
-  Default action is to send itself a SIGKILL with `:tgt_bank_acc_closed` reason.
 
   ## SIG_TGT_LOG_REVISED
 
@@ -215,14 +203,12 @@ defmodule Helix.Process.Model.Process do
     | :SIGKILL
     | :SIGSTOP
     | :SIGCONT
-    | :SIGRETARGET
-    | :SIGPRIO
-    | :SIGSRCCONND
-    | :SIGTGTCONND
-    | :SIGSRCFILED
-    | :SIGTGTFILED
-    | :SIGSRCBANKACCD
-    | :SIGTGTBANKACCD
+    | :SIG_RETARGET
+    | :SIG_RENICE
+    | :SIG_SRC_CONN_DELETED
+    | :SIG_TGT_CONN_DELETED
+    | :SIG_SRC_FILE_DELETED
+    | :SIG_TGT_FILE_DELETED
     | :SIG_TGT_LOG_REVISED
     | :SIG_TGT_LOG_RECOVERED
     | :SIG_TGT_LOG_DESTROYED

@@ -68,9 +68,9 @@ defmodule Helix.Log.Event.Handler.Log do
 
   If the `target_log_id` is nil, it means the process have been working on a
   log that is already on its original state, so there's nothing we can do other
-  than send a SIGRETARGET signal to the process.
+  than send a SIG_RETARGET signal to the process.
 
-  Otherwise, we pop the revision out and send the SIGRETARGET signal.
+  Otherwise, we pop the revision out and send the SIG_RETARGET signal.
   """
   def recover_processed(event = %LogRecoverProcessedEvent{target_log_id: nil}),
     do: sigretarget(event)
@@ -88,6 +88,6 @@ defmodule Helix.Log.Event.Handler.Log do
   defp sigretarget(event = %LogRecoverProcessedEvent{}) do
     event
     |> Event.get_process()
-    |> ProcessFlow.signal(:SIGRETARGET)
+    |> ProcessFlow.signal(:SIG_RETARGET)
   end
 end

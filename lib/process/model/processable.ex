@@ -69,9 +69,9 @@ defprotocol Helix.Process.Model.Processable do
   Later on, the process *might* be killed. Depends on how it implements the
   `on_kill` callback.
 
-  ## :SIGRETARGET
+  ## :SIG_RETARGET
 
-  Sends a SIGRETARGET to itself
+  Sends a SIG_RETARGET to itself
 
   Later on, the process *might* change. Depends on how it implements the
   `on_retarget` callback.
@@ -90,7 +90,7 @@ defprotocol Helix.Process.Model.Processable do
     | :restart
     | {:retarget, Process.retarget_changes}
     | {:SIGKILL, Process.kill_reason}
-    | :SIGRETARGET
+    | :SIG_RETARGET
     | :noop
 
   @spec complete(t, Process.t) ::
@@ -110,7 +110,7 @@ defprotocol Helix.Process.Model.Processable do
   @spec retarget(t, Process.t) ::
     {action, [Event.t]}
   @doc """
-  Called when the process receives a SIGRETARGET, meaning the process finished
+  Called when the process receives a SIG_RETARGET, meaning the process finished
   its previous objective and is now looking for something else to do. Commonly
   used on recursive processes.
   """
@@ -119,7 +119,7 @@ defprotocol Helix.Process.Model.Processable do
   @spec source_connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}
   @doc """
-  Called when the process receives a SIGSRCCONND, meaning the connection that
+  Called when the process receives a SIG_SRC_CONN_DELETED, meaning the connection that
   originated that process has been closed. Also receives the connection that was
   recently closed.
   """
@@ -128,7 +128,7 @@ defprotocol Helix.Process.Model.Processable do
   @spec target_connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}
   @doc """
-  Called when the process receives a SIGTGTCONND, meaning the connection that
+  Called when the process receives a SIG_TGT_CONN_DELETED, meaning the connection that
   process is targeting has been closed. Also receives the connection that was
   recently closed.
   """

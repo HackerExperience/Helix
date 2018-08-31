@@ -117,7 +117,7 @@ defmodule Helix.Process.Processable do
   end
 
   @doc """
-  Called when the process receives a SIGRETARGET.
+  Called when the process receives a SIG_RETARGET.
 
   Defines what should happen when the process is asked to look for a new target.
 
@@ -135,7 +135,7 @@ defmodule Helix.Process.Processable do
   end
 
   @doc """
-  Called when the process receives a SIGSRCCONND.
+  Called when the process receives a SIG_SRC_CONN_DELETED.
 
   Defines what should happen when the process' underlying connection is closed.
 
@@ -155,7 +155,7 @@ defmodule Helix.Process.Processable do
   end
 
   @doc """
-  Called when the process receives a SIGTGTCONND.
+  Called when the process receives a SIG_TGT_CONN_DELETED.
 
   Defines what should happen when the process' target connection is closed.
 

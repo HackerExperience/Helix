@@ -45,8 +45,8 @@ defmodule Helix.Process.Event.Handler.Process do
     events
   end
 
-  defp action_handler(:SIGRETARGET, process, _) do
-    {:ok, events} = ProcessAction.signal(process, :SIGRETARGET)
+  defp action_handler(:SIG_RETARGET, process, _) do
+    {:ok, events} = ProcessAction.signal(process, :SIG_RETARGET)
 
     events
   end

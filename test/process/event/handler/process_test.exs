@@ -31,7 +31,7 @@ defmodule Helix.Process.Event.Handler.ProcessTest do
 
       # Force retarget
       process1
-      |> EventSetup.Process.signaled(:SIGRETARGET, {:retarget, changes}, %{})
+      |> EventSetup.Process.signaled(:SIG_RETARGET, {:retarget, changes}, %{})
       |> EventHelper.emit()
 
       process2 = ProcessQuery.fetch(process1.process_id)

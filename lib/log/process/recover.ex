@@ -13,7 +13,7 @@ process Helix.Log.Process.Recover do
     a log and then the LogRecoverProcess will work on that log.
 
   In both methods, the process will run in a recursive fashion: once a revision
-  is found, it will send a `SIGRETARGET` and the process will find a new target.
+  is found, it will send a `SIG_RETARGET` and the process will find a new target.
   `global` processes might choose a different log to recover, while `custom`
   processes will keep working on the same log.
 
@@ -129,11 +129,11 @@ process Helix.Log.Process.Recover do
     on_completion(process, data) do
       event = LogRecoverProcessedEvent.new(process, data)
 
-      # We can't send a SIGRETARGET now because if we do so, it might fetch the
+      # We can't send a SIG_RETARGET now because if we do so, it might fetch the
       # existing Log before the freshly recovered revision isn't removed from it
       # yet. So, to fix this race condition, we first process the log recovery
       # (by handling `LogRecoverProcessedEvent`), and only then we send the
-      # SIGRETARGET to this process.
+      # SIG_RETARGET to this process.
       {:noop, [event]}
     end
 
@@ -177,7 +177,7 @@ process Helix.Log.Process.Recover do
     automatically `:retarget` the process.
     """
     on_target_log_recovered(_process, _data, _log) do
-      {:SIGRETARGET, []}
+      {:SIG_RETARGET, []}
     end
 
     @doc """
@@ -186,7 +186,7 @@ process Helix.Log.Process.Recover do
     notified.
     """
     on_target_log_destroyed(%{type: :log_recover_global}, _data, _log) do
-      {:SIGRETARGET, []}
+      {:SIG_RETARGET, []}
     end
 
     on_target_log_destroyed(%{type: :log_recover_custom}, _data, _log) do

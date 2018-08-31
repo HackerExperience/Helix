@@ -44,7 +44,7 @@ defmodule Helix.Log.Event.Recover do
       }
 
       # Later on, after we pop out the revision from the stack, we'll send a
-      # SIGRETARGET signal to the process, so it can keep working on another log
+      # SIG_RETARGET signal to the process, so it can keep focus on another log.
       |> put_process(process)
     end
 
