@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Channel.Setup do
 
   import Phoenix.ChannelTest
@@ -9,6 +10,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
@@ -18,6 +20,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Log.Helper, as: LogHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
   alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
@@ -135,6 +138,7 @@ defmodule Helix.Test.Channel.Setup do
   - destination_files: Whether to generate random files on destination. Defaults
     to false.
   - socket_opts: Relays opts to the `create_socket/1` method (if applicable)
+  - no_logs: Whether to disable the server join log creation.
 
   Related:
     Account.t, \
@@ -210,6 +214,20 @@ defmodule Helix.Test.Channel.Setup do
           destination_files: destination_files
         }
       end
+
+    if opts[:skip_logs] do
+      server_id =
+        if local? do
+          gateway.server_id
+        else
+          destination.server_id
+        end
+
+      server_id
+      |> LogQuery.get_logs_on_server()
+      |> List.last()
+      |> LogHelper.delete()
+    end
 
     related = Map.merge(gateway_related, destination_related)
 

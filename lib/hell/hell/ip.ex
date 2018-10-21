@@ -43,6 +43,12 @@ defmodule HELL.IPv6 do
   def binary_to_address_tuple(_),
     do: {:error, :einval}
 
+  def binary_to_address_tuple!(string) do
+    string
+    |> binary_to_address_tuple()
+    |> elem(1)
+  end
+
   @spec generate_octet_groups(pos_integer) ::
     [0..0xffff]
   defp generate_octet_groups(groups) do

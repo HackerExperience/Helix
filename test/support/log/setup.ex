@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Log.Setup do
 
   alias Ecto.Changeset
@@ -48,6 +49,7 @@ defmodule Helix.Test.Log.Setup do
   end
 
   @doc """
+  - log_id: Hardcode the log id. Useful for pagination tests. Optional.
   - server_id: Server which that log belongs to.
   - entity_id: Entity which that log belongs to.
   - type: Underlying log type. Defaults to random type.
@@ -81,6 +83,25 @@ defmodule Helix.Test.Log.Setup do
     }
 
     changeset = Log.create_changeset(params, revision_params)
+
+    # Override generated `log_id` with custom `log_id` if specified
+    changeset =
+      if opts[:log_id] do
+        log_id = %Log.ID{id: HELL.IPv6.binary_to_address_tuple!(opts[:log_id])}
+
+        revision = Changeset.get_change(changeset, :revision)
+        new_revisions =
+          changeset
+          |> Changeset.get_change(:revisions)
+          |> Enum.map(&(Changeset.force_change(&1, :log_id, log_id)))
+
+        changeset
+        |> Changeset.force_change(:log_id, log_id)
+        |> Changeset.force_change(:revision, Map.put(revision, :log_id, log_id))
+        |> Changeset.put_assoc(:revisions, new_revisions)
+      else
+        changeset
+      end
 
     log = Changeset.apply_changes(changeset)
 

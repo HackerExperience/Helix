@@ -14,6 +14,7 @@ channel Helix.Server.Websocket.Channel.Server do
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
   alias Helix.Log.Websocket.Requests.Forge, as: LogForgeRequest
+  alias Helix.Log.Websocket.Requests.Paginate, as: LogPaginateRequest
   alias Helix.Log.Websocket.Requests.Recover, as: LogRecoverRequest
 
   alias Helix.Network.Websocket.Requests.Browse, as: BrowseRequest
@@ -171,6 +172,18 @@ channel Helix.Server.Websocket.Channel.Server do
   - base errors
   """
   topic "log.forge", LogForgeRequest
+
+  @doc """
+  Fetches the logs in the server with pagination support.
+
+  Params:
+    - *log_id: ID of the last seen log on the client.
+    - total: Total of logs to be returned. Defaults to 20. Max allowed is 100.
+
+  Errors:
+  - base errors
+  """
+  topic "log.paginate", LogPaginateRequest
 
   @doc """
   Starts a LogRecoverProcess. When recovering, the player may either start the

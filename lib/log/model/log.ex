@@ -195,7 +195,7 @@ defmodule Helix.Log.Model.Log do
     Returns only logs that are older than the given `log_id`.
     """
     def paginate_after_log(query, log_id),
-      do: where(query, [l], l.log_id < ^log_id)
+      do: where(query, [l], l.log_id > ^log_id)
 
     @spec only(Queryable.t, pos_integer) ::
       Queryable.t

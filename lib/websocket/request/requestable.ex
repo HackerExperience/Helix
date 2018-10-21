@@ -95,8 +95,8 @@ defprotocol Helix.Websocket.Requestable do
   def handle_request(request, socket)
 
   @spec reply(Request.t, Websocket.t) ::
-    {:ok, reply :: map}
-    | {:error, reply :: map}
+    {:ok, reply :: map | list}
+    | {:error, reply :: map | list}
     | {:stop, reason :: term}
     | :noreply
   @doc """
@@ -122,12 +122,12 @@ defprotocol Helix.Websocket.Requestable do
   whole Requestable protocol is controlled at Websocket.Socket, which will reply
   to the request according to the return of `reply/2`.
 
-  If `reply/2` returns a `{:ok, data :: map}` tuple, it is indicating that the
-  response should reach the user. On the other hand, if it returns a `:noreply`
-  atom, well, the user will get no reply.
+  If `reply/2` returns a `{:ok, data}` tuple, it is indicating that the response
+  should reach the user. On the other hand, if it returns a `:noreply` atom, the
+  user will get no reply.
 
-  A return of `{:error, data ::  map}` will send the rendered data to the client
-  with an error code.
+  A return of `{:error, data}` will send the rendered data to the client with an
+  error code.
 
   This can further be extended to include all possible Channel responses, namely
   missing the `{:stop, reason}` response.

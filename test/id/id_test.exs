@@ -153,6 +153,19 @@ defmodule Helix.IDTest do
       refute slice(proc3_s1_id_bin, 24..53) == slice(proc3_s2_id_bin, 24..53)
     end
 
+    test "ids timestamp are sequential" do
+      parent = ID.generate(%{}, {:entity, :account})
+
+      id1 = ID.generate(%{parent: parent}, {:server, :desktop})
+      :timer.sleep(1000)
+      id2 = ID.generate(%{parent: parent}, {:server, :desktop})
+
+      parse1 = ID.Utils.parse(id1)
+      parse2 = ID.Utils.parse(id2)
+
+      assert parse2.timestamp.dec == parse1.timestamp.dec + 1
+    end
+
     skip_on_travis_slowpoke()
     test "benchmark" do
       # Generate 1000 IDs without parent and gp
