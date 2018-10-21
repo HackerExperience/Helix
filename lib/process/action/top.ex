@@ -115,7 +115,7 @@ defmodule Helix.Process.Action.TOP do
     # This organization is useful because we can only forecast local processes.
     # (A process may be completed only on its local server; so the remote
     # processes here that are not being forecast will be forecast during *their*
-    # server's TOP recalque, which should happen shortly).
+    # server's TOP recalque, which should happen soon).
     local_processes = Enum.filter(processes, &(&1.local? == true))
     remote_processes = Enum.filter(processes, &(&1.local? == false))
 

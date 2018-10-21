@@ -2,6 +2,7 @@ defmodule Helix.Process.Query.Process do
 
   import __MODULE__.Macros
 
+  alias Helix.Log.Model.Log
   alias Helix.Network.Model.Connection
   alias Helix.Server.Model.Server
   alias Helix.Software.Model.File
@@ -73,6 +74,14 @@ defmodule Helix.Process.Query.Process do
   Returns a list of processes that are targeting `connection`.
   """
   defdelegate get_processes_targeting_connection(connection),
+    to: ProcessInternal
+
+  @spec get_processes_targeting_log(Log.idt) ::
+    [Process.t]
+  @doc """
+  Returns a list of processes that are targeting `log`.
+  """
+  defdelegate get_processes_targeting_log(log),
     to: ProcessInternal
 
   @spec get_custom(Process.type, Server.idt, meta :: map) ::

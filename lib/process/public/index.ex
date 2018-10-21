@@ -5,7 +5,7 @@ defmodule Helix.Process.Public.Index do
   alias Helix.Process.Public.View.Process, as: ProcessView
   alias Helix.Process.Query.Process, as: ProcessQuery
 
-  @type index :: [map]
+  @type index :: [ProcessView.full_process | ProcessView.partial_process]
 
   @spec index(Server.id, Entity.id) ::
     index

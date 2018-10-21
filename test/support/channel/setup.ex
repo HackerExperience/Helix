@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Helix.Test.Channel.Setup do
 
   import Phoenix.ChannelTest
@@ -9,6 +10,7 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Account.Websocket.Channel.Account, as: AccountChannel
   alias Helix.Entity.Model.Entity
   alias Helix.Entity.Query.Entity, as: EntityQuery
+  alias Helix.Log.Query.Log, as: LogQuery
   alias Helix.Server.Model.Server
   alias Helix.Server.Query.Server, as: ServerQuery
   alias Helix.Server.Websocket.Channel.Server, as: ServerChannel
@@ -18,7 +20,9 @@ defmodule Helix.Test.Channel.Setup do
   alias Helix.Test.Account.Setup, as: AccountSetup
   alias Helix.Test.Cache.Helper, as: CacheHelper
   alias Helix.Test.Entity.Helper, as: EntityHelper
+  alias Helix.Test.Log.Helper, as: LogHelper
   alias Helix.Test.Network.Helper, as: NetworkHelper
+  alias Helix.Test.Network.Setup, as: NetworkSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
   alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Software.Setup, as: SoftwareSetup
@@ -134,6 +138,7 @@ defmodule Helix.Test.Channel.Setup do
   - destination_files: Whether to generate random files on destination. Defaults
     to false.
   - socket_opts: Relays opts to the `create_socket/1` method (if applicable)
+  - no_logs: Whether to disable the server join log creation.
 
   Related:
     Account.t, \
@@ -209,6 +214,20 @@ defmodule Helix.Test.Channel.Setup do
           destination_files: destination_files
         }
       end
+
+    if opts[:skip_logs] do
+      server_id =
+        if local? do
+          gateway.server_id
+        else
+          destination.server_id
+        end
+
+      server_id
+      |> LogQuery.get_logs_on_server()
+      |> List.last()
+      |> LogHelper.delete()
+    end
 
     related = Map.merge(gateway_related, destination_related)
 
@@ -311,6 +330,8 @@ defmodule Helix.Test.Channel.Setup do
   - own_server: Force socket to represent own server channel. Defaults to false.
   - counter: Defaults to 0.
   - connect_opts: Opts that will be relayed to the `mock_connection_socket`
+  - real_connection?: Whether to create the underlying SSH connection (and
+    tunnel). Defaults to false.
   """
   def mock_server_socket(opts \\ []) do
     gateway_id = Access.get(opts, :gateway_id, ServerHelper.id())
@@ -348,6 +369,26 @@ defmodule Helix.Test.Channel.Setup do
       counter: counter
     }
 
+    if not is_nil(opts[:real_connection?]) and access == :local,
+      do: raise "Can't create SSH connection on :local socket"
+
+    {ssh, tunnel} =
+      if opts[:real_connection?] do
+        tunnel_opts =
+          [
+            gateway_id: gateway_id,
+            target_id: destination_id,
+            fake_servers: true
+          ]
+
+        {connection, %{tunnel: tunnel}} =
+          NetworkSetup.connection(type: :ssh, tunnel_opts: tunnel_opts)
+
+        {connection, tunnel}
+      else
+        {nil, nil}
+      end
+
     server_assigns = %{
       gateway: %{
         server_id: gateway_id,
@@ -359,7 +400,9 @@ defmodule Helix.Test.Channel.Setup do
         ip: destination_ip,
         entity_id: destination_entity_id
       },
-      meta: meta
+      meta: meta,
+      ssh: ssh,
+      tunnel: tunnel
     }
 
     assigns =

@@ -60,6 +60,19 @@ defmodule Helix.Process.Action.Process do
     {:ok, [event]}
   end
 
+  @spec retarget(Process.t, Process.retarget_changes) ::
+    {:ok, list}
+  @doc """
+  Retargets a process.
+
+  Modifies the process target and/or objectives according to `changes`.
+  """
+  def retarget(process = %Process{}, changes) do
+    ProcessInternal.retarget(process, changes)
+
+    {:ok, []}
+  end
+
   # def pause(process = %Process{}) do
   #   ProcessInternal.pause(process)
 
@@ -101,16 +114,28 @@ defmodule Helix.Process.Action.Process do
   # defp signal_handler(:SIGCONT, process, _),
   #   do: Processable.resume(process.data, process, reason)
 
-  # defp signal_handler(:SIGPRIO, process, %{priority: priority}),
+  # defp signal_handler(:SIG_RENICE, process, %{priority: priority}),
   #   do: Processable.priority(process.data, process, priority)
 
-  defp signal_handler(:SIGSRCCONND, process, %{connection: connection}),
+  defp signal_handler(:SIG_RETARGET, process, _),
+    do: Processable.retarget(process.data, process)
+
+  defp signal_handler(:SIG_SRC_CONN_DELETED, process, %{connection: connection}),
     do: Processable.source_connection_closed(process.data, process, connection)
 
-  defp signal_handler(:SIGTGTCONND, process, %{connection: connection}),
+  defp signal_handler(:SIG_TGT_CONN_DELETED, process, %{connection: connection}),
     do: Processable.target_connection_closed(process.data, process, connection)
 
-  # defp signal_handler(:SIGSRCFILED, process, %{file: file}),
+  defp signal_handler(:SIG_TGT_LOG_REVISED, process, %{log: log}),
+    do: Processable.target_log_revised(process.data, process, log)
+
+  defp signal_handler(:SIG_TGT_LOG_RECOVERED, process, %{log: log}),
+    do: Processable.target_log_recovered(process.data, process, log)
+
+  defp signal_handler(:SIG_TGT_LOG_DESTROYED, process, %{log: log}),
+    do: Processable.target_log_destroyed(process.data, process, log)
+
+  # defp signal_handler(:SIG_SRC_FILE_DELETED, process, %{file: file}),
   #   do: Processable.file_deleted(process.data, process, file)
 
   @spec get_process_ips(Process.creation_params) ::

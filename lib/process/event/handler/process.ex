@@ -21,6 +21,8 @@ defmodule Helix.Process.Event.Handler.Process do
     |> Event.emit(from: event)
   end
 
+  # Actions
+
   @spec action_handler(Processable.action, Process.t, Process.signal_params) ::
     [Event.t]
   defp action_handler(:delete, process, %{reason: reason}) do
@@ -29,8 +31,22 @@ defmodule Helix.Process.Event.Handler.Process do
     events
   end
 
+  defp action_handler({:retarget, changes}, process, _) do
+    {:ok, events} = ProcessAction.retarget(process, changes)
+
+    events
+  end
+
+  # Signals
+
   defp action_handler({:SIGKILL, reason}, process, _) do
     {:ok, events} = ProcessAction.signal(process, :SIGKILL, %{reason: reason})
+
+    events
+  end
+
+  defp action_handler(:SIG_RETARGET, process, _) do
+    {:ok, events} = ProcessAction.signal(process, :SIG_RETARGET)
 
     events
   end

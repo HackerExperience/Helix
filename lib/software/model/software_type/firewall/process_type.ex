@@ -30,12 +30,28 @@ defmodule Helix.Software.Model.SoftwareType.Firewall.Passive do
       {:delete, [event]}
     end
 
+    def retarget(_, _) do
+      {:noop, []}
+    end
+
     def source_connection_closed(_, _, _) do
       {:delete, []}
     end
 
     def target_connection_closed(_, _, _) do
       {:delete, []}
+    end
+
+    def target_log_revised(_, _, _) do
+      {:noop, []}
+    end
+
+    def target_log_recovered(_, _, _) do
+      {:noop, []}
+    end
+
+    def target_log_destroyed(_, _, _) do
+      {:noop, []}
     end
 
     def after_read_hook(data),

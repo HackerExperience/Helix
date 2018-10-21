@@ -12,7 +12,10 @@ process Helix.Software.Process.Virus.Collect do
   is performed by `VirusHandler` once `VirusCollectProcessedEvent` is fired.
   """
 
+  alias Helix.Network.Model.Bounce
+  alias Helix.Network.Model.Network
   alias Helix.Universe.Bank.Model.BankAccount
+  alias Helix.Software.Model.File
 
   process_struct [:wallet]
 
@@ -40,11 +43,18 @@ process Helix.Software.Process.Virus.Collect do
       bank_account: BankAccount.t | nil
     }
 
+  @type executable_meta ::
+    %{
+      virus: File.t,
+      network_id: Network.id,
+      bounce: Bounce.idt | nil
+    }
+
   @type resources_params :: map
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(%{wallet: wallet}) do
+  def new(%{wallet: wallet}, _) do
     %__MODULE__{
       wallet: wallet
     }
@@ -96,39 +106,27 @@ process Helix.Software.Process.Virus.Collect do
 
   executable do
 
-    alias Helix.Network.Model.Bounce
-    alias Helix.Network.Model.Network
-    alias Helix.Software.Model.File
-    alias Helix.Software.Process.Virus.Collect, as: VirusCollectProcess
+    @type custom :: %{}
 
-    @type params :: VirusCollectProcess.creation_params
-
-    @type meta ::
-      %{
-        virus: File.t,
-        network_id: Network.id,
-        bounce: Bounce.idt | nil
-      }
-
-    resources(_, _, _params, _meta) do
+    resources(_, _, _params, _meta, _) do
       %{}
     end
 
-    source_file(_, _, _, %{virus: virus}) do
+    source_file(_, _, _, %{virus: virus}, _) do
       virus.file_id
     end
 
-    source_connection(_, _, _, _) do
+    source_connection(_, _, _, _, _) do
       {:create, :virus_collect}
     end
 
     # There's no bank account when collecting the earnings of a `miner` virus
-    target_bank_account(_, _, _, %{virus: %{software_type: :virus_miner}}) do
+    target_bank_account(_, _, _, %{virus: %{software_type: :virus_miner}}, _) do
       nil
     end
 
     # For any other virus, there must always have a bank account
-    target_bank_account(_, _, %{bank_account: bank_acc}, _) do
+    target_bank_account(_, _, %{bank_account: bank_acc}, _, _) do
       bank_acc
     end
   end

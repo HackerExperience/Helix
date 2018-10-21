@@ -60,6 +60,7 @@ request Helix.Software.Websocket.Requests.File.Install do
     end
   end
 
+  # TODO: This does not support local installations
   def handle_request(request, socket) do
     file = request.meta.file
     gateway = request.meta.gateway

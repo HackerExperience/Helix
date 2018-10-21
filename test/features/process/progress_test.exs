@@ -87,7 +87,7 @@ defmodule Helix.Test.Features.Process.Progress do
       if System.get_env("HELIX_TEST_ENV") == "jenkins" do
         0.20  # Almost useless test
       else
-        0.05
+        0.06
       end
     end
   end

@@ -16,8 +16,9 @@ defmodule Helix.Test.Process.Data.Setup do
   """
 
   # Processes
+  alias Helix.Log.Process.Forge, as: LogForgeProcess
+  alias Helix.Log.Process.Recover, as: LogRecoverProcess
   alias Helix.Software.Process.Cracker.Bruteforce, as: CrackerBruteforce
-  alias Helix.Software.Model.SoftwareType.LogForge
   alias Helix.Software.Process.File.Transfer, as: FileTransferProcess
   alias Helix.Software.Process.File.Install, as: FileInstallProcess
 
@@ -142,15 +143,17 @@ defmodule Helix.Test.Process.Data.Setup do
       cond do
         data_opts[:target_server_ip] ->
           data_opts[:target_server_ip]
+
         data_opts[:real_ip] ->
           raise "todo"
+
         true ->
           Random.ipv4()
       end
 
     src_file_id = meta.src_file_id || SoftwareHelper.id()
 
-    data = CrackerBruteforce.new(%{target_server_ip: target_server_ip})
+    data = CrackerBruteforce.new(%{target_server_ip: target_server_ip}, %{})
 
     meta = %{meta| src_file_id: src_file_id}
 
@@ -172,7 +175,7 @@ defmodule Helix.Test.Process.Data.Setup do
     src_connection_id = meta.src_connection_id || NetworkHelper.connection_id()
     tgt_file_id = meta.tgt_file_id || SoftwareHelper.id()
 
-    data = FileInstallProcess.new(%{backend: :virus})
+    data = FileInstallProcess.new(%{backend: :virus}, %{})
 
     meta =
       meta
@@ -191,37 +194,57 @@ defmodule Helix.Test.Process.Data.Setup do
   end
 
   @doc """
-  Opts for forge:
-  - operation: :edit | :create. Defaults to :edit.
-  - target_log_id: Which log to edit. Won't generate a real one.
-  - message: Revision message.
-  
+  `:log_forge` process will randomly select either `edit` or `create` operation.
+  """
+  def custom(:log_forge, data_opts, meta) do
+    [:log_forge_edit, :log_forge_create]
+    |> Enum.random()
+    |> custom(data_opts, meta)
+  end
+
+  @doc """
+  Opts for `log_forge_edit:`
+  - tgt_log_id: Which log to edit. Won't generate a real one.
+  - log_info: Tuple with log type and data
+  - forger_version: Set forger version. Defaults to 100.
+
   All others are automatically derived from process meta data.
   """
-  def custom(:forge, data_opts, meta) do
-    target_id = meta.target_id
-    target_log_id = Keyword.get(data_opts, :target_log_id, LogHelper.id())
-    entity_id = meta.source_entity_id
-    operation = Keyword.get(data_opts, :operation, :edit)
-    message = LogHelper.random_message()
-    version = 100
+  def custom(:log_forge_edit, data_opts, meta),
+    do: custom_log_forge({:log_forge_edit, :edit}, data_opts, meta)
+
+  @doc """
+  Opts for `log_forge_create`:
+  - log_info: Tuple with log type and data.
+  - forger_version: Set forger version. Defaults to 100.
+  """
+  def custom(:log_forge_create, data_opts, meta),
+    do: custom_log_forge({:log_forge_create, :create}, data_opts, meta)
+
+  def custom(:log_recover, data_opts, meta) do
+    [:log_recover_custom, :log_recover_global]
+    |> Enum.random()
+    |> custom(data_opts, meta)
+  end
+
+  def custom(:log_recover_custom, data_opts, meta),
+    do: custom_log_recover({:log_recover_custom, :custom}, data_opts, meta)
+
+  def custom(:log_recover_global, data_opts, meta),
+    do: custom_log_recover({:log_recover_global, :global}, data_opts, meta)
+
+  defp custom_log_forge({process_type, action}, data_opts, meta) do
+    version = Keyword.get(data_opts, :forger_version, 100)
     src_file_id = meta.src_file_id || SoftwareHelper.id()
+    {log_type, log_data} =
+      Keyword.get(data_opts, :log_info, LogHelper.log_info())
 
     data =
-      %LogForge{
-        target_id: target_id,
-        entity_id: entity_id,
-        operation: operation,
-        message: message,
-        version: version
+      %LogForgeProcess{
+        log_type: log_type,
+        log_data: log_data,
+        forger_version: version
       }
-
-    data =
-      if operation == :edit do
-        Map.merge(data, %{target_log_id: target_log_id})
-      else
-        data
-      end
 
     resources =
       %{
@@ -233,13 +256,49 @@ defmodule Helix.Test.Process.Data.Setup do
 
     meta = %{meta| src_file_id: src_file_id}
 
-    {:log_forger, data, meta, resources}
+    meta =
+      if action == :edit do
+        %{meta| tgt_log_id: meta.tgt_log_id || LogHelper.id()}
+      else
+        meta
+      end
+
+    {process_type, data, meta, resources}
+  end
+
+  defp custom_log_recover({process_type, _method}, data_opts, meta) do
+    version =
+      Keyword.get(data_opts, :recover_version, SoftwareHelper.random_version())
+
+    src_file_id = meta.src_file_id || SoftwareHelper.id()
+    tgt_log_id = meta.tgt_log_id || LogHelper.id()
+
+    data = %LogRecoverProcess{recover_version: version}
+
+    resources =
+      %{
+        l_dynamic: [:cpu],
+        r_dynamic: [],
+        static: TOPHelper.Resources.random_static(),
+        objective: TOPHelper.Resources.objective(cpu: 500)
+      }
+
+    meta =
+      %{meta |
+        tgt_log_id: tgt_log_id,
+        src_file_id: src_file_id
+      }
+
+    {process_type, data, meta, resources}
   end
 
   defp custom_implementations do
     [
       :bruteforce,
-      :forge,
+      :log_forge_edit,
+      :log_forge_create,
+      :log_recover_custom,
+      :log_recover_global,
       :file_download,
       :file_upload,
       :install_virus

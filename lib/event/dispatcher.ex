@@ -144,9 +144,33 @@ defmodule Helix.Event.Dispatcher do
   ##############################################################################
 
   # All
+  event LogEvent.Forge.Processed
+  event LogEvent.Recover.Processed
   event LogEvent.Log.Created
-  event LogEvent.Log.Deleted
-  event LogEvent.Log.Modified
+  event LogEvent.Log.Destroyed
+  event LogEvent.Log.Recovered
+  event LogEvent.Log.Revised
+
+  # Custom handlers
+  event LogEvent.Forge.Processed,
+    LogHandler.Log,
+    :forge_processed
+
+  event LogEvent.Recover.Processed,
+    LogHandler.Log,
+    :recover_processed
+
+  event LogEvent.Log.Revised,
+    ProcessHandler.TOP,
+    :object_handler
+
+  event LogEvent.Log.Recovered,
+    ProcessHandler.TOP,
+    :object_handler
+
+  event LogEvent.Log.Destroyed,
+    ProcessHandler.TOP,
+    :object_handler
 
   ##############################################################################
   # Process events
@@ -209,8 +233,6 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.File.Transfer.Processed
   event SoftwareEvent.Firewall.Started
   event SoftwareEvent.Firewall.Stopped
-  event SoftwareEvent.LogForge.LogCreate.Processed
-  event SoftwareEvent.LogForge.LogEdit.Processed
   event SoftwareEvent.Virus.Collect.Processed
   event SoftwareEvent.Virus.Collected
   event SoftwareEvent.Virus.Installed
@@ -248,14 +270,6 @@ defmodule Helix.Event.Dispatcher do
   event SoftwareEvent.Firewall.Stopped,
     ProcessHandler.Cracker,
     :firewall_stopped
-
-  event SoftwareEvent.LogForge.LogCreate.Processed,
-    LogHandler.Log,
-    :log_forge_conclusion
-
-  event SoftwareEvent.LogForge.LogEdit.Processed,
-    LogHandler.Log,
-    :log_forge_conclusion
 
   event SoftwareEvent.Virus.Collect.Processed,
     SoftwareHandler.Virus,

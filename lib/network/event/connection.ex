@@ -33,11 +33,12 @@ defmodule Helix.Network.Event.Connection do
 
     loggable do
 
+      @doc """
+      Gateway: "localhost logged into $first_ip as root"
+      Endpoint: "$last_ip logged in as root"
+      """
       log(event = %__MODULE__{type: :ssh}) do
         entity = EntityQuery.fetch_by_server(event.tunnel.gateway_id)
-
-        msg_gateway = "localhost logged into $first_ip"
-        msg_endpoint = "$last_ip logged in as root"
 
         log_map %{
           event: event,
@@ -45,8 +46,11 @@ defmodule Helix.Network.Event.Connection do
           gateway_id: event.tunnel.gateway_id,
           endpoint_id: event.tunnel.target_id,
           network_id: event.tunnel.network_id,
-          msg_gateway: msg_gateway,
-          msg_endpoint: msg_endpoint
+          type_gateway: :remote_login_gateway,
+          data_gateway: %{ip: "$first_ip"},
+          type_endpoint: :remote_login_endpoint,
+          data_endpoint: %{ip: "$last_ip"},
+          data_both: %{network_id: event.tunnel.network_id}
         }
       end
     end

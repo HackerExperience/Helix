@@ -39,7 +39,7 @@ defmodule Helix.Event.Loggable.Utils do
       end
     end)
     |> elem(0)
-    |> Enum.reverse
+    |> Enum.reverse()
     |> List.to_string()
   end
 

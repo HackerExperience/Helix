@@ -21,6 +21,7 @@ defmodule Helix.Process.Model.Process do
   alias HELL.MapUtils
   alias HELL.NaiveStruct
   alias Helix.Entity.Model.Entity
+  alias Helix.Log.Model.Log
   alias Helix.Network.Model.Bounce
   alias Helix.Network.Model.Connection
   alias Helix.Network.Model.Network
@@ -50,6 +51,7 @@ defmodule Helix.Process.Model.Process do
       tgt_atm_id: Server.id | nil,
       tgt_acc_number: BankAccount.account | nil,
       tgt_process_id: Process.id | nil,
+      tgt_log_id: Log.id | nil,
       priority: term,
       l_allocated: Process.Resources.t | nil,
       r_allocated: Process.Resources.t | nil,
@@ -58,6 +60,7 @@ defmodule Helix.Process.Model.Process do
       l_reserved: Process.Resources.t,
       r_reserved: Process.Resources.t,
       last_checkpoint_time: DateTime.t,
+      objective: map,
       static: static,
       l_dynamic: dynamic,
       r_dynamic: dynamic,
@@ -80,7 +83,10 @@ defmodule Helix.Process.Model.Process do
     | :virus_collect
     | :bank_reveal_password
     | :wire_transfer
-    | :log_forger
+    | :log_forge_create
+    | :log_forge_edit
+    | :log_recover_global
+    | :log_recover_custom
 
   @typedoc """
   List of signals a process may receive during its lifetime.
@@ -92,7 +98,7 @@ defmodule Helix.Process.Model.Process do
   ## SIGTERM
 
   Process reached its objective. Handled by Processable's `on_completion`.
-  This callback must be implemented by the process.
+  This callback MUST be implemented by the process.
 
   Note that, despite the name, it has no similarities with UNIX's SIGTERM.
 
@@ -119,7 +125,18 @@ defmodule Helix.Process.Model.Process do
 
   Default action is to resume the process.
 
-  ## SIGPRIO
+  ## SIG_RETARGET
+
+  Signal sent when the process finished prior execution and is now looking for
+  a new target to work on.
+
+  Keep in mind that, when using `SIG_RETARGET` on recursive processes, you might
+  want the signal to be sent only after the side-effect of the process has been
+  properly processed. As an example, see `LogRecoverProcess`.
+
+  Default action is to ignore the signal.
+
+  ## SIG_RENICE
 
   Signal sent when the user changed the priority of the process.
 
@@ -133,56 +150,68 @@ defmodule Helix.Process.Model.Process do
   Note that these signals are NOT sent to the process that originated them. See
   `TOPHandler.filter_self_message/2` for context.
 
-  ## SIGSRCCONND
+  ## SIG_SRC_CONN_DELETED
 
   Signal sent when the connection that originated the Process was closed.
 
   Default action is to send itself a SIGKILL with `:src_connection_closed`
   reason.
 
-  ## SIGTGTCONND
+  ## SIG_TGT_CONN_DELETED
 
   Signal sent when the connection that the process is targeting was closed.
 
   Default action is to send itself a SIGKILL with `:tgt_connection_closed`
   reason.
 
-  ## SIGSRCFILED
+  ## SIG_SRC_FILE_DELETED
 
   Signal sent when the file that originated the process was deleted.
 
   Default action is to send itself a SIGKILL with `:src_file_deleted` reason.
 
-  ## SIGTGTFILED
+  ## SIG_TGT_FILE_DELETED
 
   Signal sent when the File that the process is targeting was deleted.
 
   Default action is to send itself a SIGKILL with `:tgt_file_deleted` reason.
 
-  ## SIGSRCBANKACCD
+  ## SIG_TGT_LOG_REVISED
 
-  Signal sent when the bank account the process uses as source was closed.
+  Signal sent when the log the process is targeting was revised (i.e. a new
+  revision was added).
 
-  Default action is to send itself a SIGKILL with `:src_bank_acc_closed` reason.
+  Default action it to ignore the signal.
 
-  ## SIGTGTBANKACCD
+  ## SIG_TGT_LOG_RECOVERED
 
-  Signal sent when the bank account the process is targeting was closed.
+  Signal sent when the log the process is targeting was recovered (i.e. a
+  revision was removed from the stack).
 
-  Default action is to send itself a SIGKILL with `:tgt_bank_acc_closed` reason.
+  Default action it to ignore the signal.
+
+  ## SIG_TGT_LOG_DESTROYED
+
+  Signal sent when the log the process is targeting was destroyed (i.e. it was
+  an artificial log that got recovered beyond the original revision, hence it no
+  longer exists).
+
+  Default action it to ignore the signal.
   """
   @type signal ::
     :SIGTERM
     | :SIGKILL
     | :SIGSTOP
     | :SIGCONT
-    | :SIGPRIO
-    | :SIGSRCCONND
-    | :SIGTGTCONND
-    | :SIGSRCFILED
-    | :SIGTGTFILED
-    | :SIGSRCBANKACCD
-    | :SIGTGTBANKACCD
+    | :SIG_RETARGET
+    | :SIG_RENICE
+    | :SIG_SRC_CONN_DELETED
+    | :SIG_TGT_CONN_DELETED
+    | :SIG_SRC_FILE_DELETED
+    | :SIG_TGT_FILE_DELETED
+    | :SIG_TGT_LOG_REVISED
+    | :SIG_TGT_LOG_RECOVERED
+    | :SIG_TGT_LOG_DESTROYED
 
   @typedoc """
   Valid params for each type of signal.
@@ -192,6 +221,8 @@ defmodule Helix.Process.Model.Process do
     | %{priority: term}
     | %{connection: Connection.t}
     | %{file: File.t}
+    | %{log: Log.t}
+    | %{}
 
   @typedoc """
   Valid reasons for which a Process may be killed.
@@ -205,6 +236,12 @@ defmodule Helix.Process.Model.Process do
     | :tgt_file_deleted
     | :src_bank_acc_closed
     | :tgt_bank_acc_closed
+    | :tgt_log_destroyed
+
+  @typedoc """
+  Return type for `retarget` changes.
+  """
+  @type retarget_changes :: map
 
   @type changeset :: %Changeset{data: %__MODULE__{}}
 
@@ -225,6 +262,7 @@ defmodule Helix.Process.Model.Process do
     :tgt_atm_id => Server.id | nil,
     :tgt_acc_number => BankAccount.account | nil,
     :tgt_process_id => Process.id | nil,
+    :tgt_log_id => Log.id | nil,
     :objective => map,
     :l_dynamic => dynamic,
     :r_dynamic => dynamic,
@@ -248,6 +286,7 @@ defmodule Helix.Process.Model.Process do
     :tgt_atm_id,
     :tgt_acc_number,
     :tgt_process_id,
+    :tgt_log_id,
     :objective,
     :static,
     :l_dynamic,
@@ -267,6 +306,20 @@ defmodule Helix.Process.Model.Process do
     :priority,
     :l_dynamic,
     :priority
+  ]
+
+  @retarget_fields [
+    # A retarget may change the process' resources, listed below
+    :static,
+    :l_dynamic,
+    :r_dynamic,
+    :objective,
+
+    # Retarget must always reset the `last_checkpoint_time`
+    :last_checkpoint_time,
+
+    # It may also change some objects (add as needed)
+    :tgt_log_id
   ]
 
   @type state ::
@@ -318,6 +371,10 @@ defmodule Helix.Process.Model.Process do
       default: nil
 
     # Which bounce (if any) is this process bound to
+    # The `bounce_id` information will be used after the process completes, when
+    # it generates the underlying action log, creating `connection_bounced` logs
+    # on all hops within the bounce.
+    # If the process does not generate a log, this field may be ignored.
     field :bounce_id, Bounce.ID,
       default: nil
 
@@ -357,6 +414,10 @@ defmodule Helix.Process.Model.Process do
 
     # Which process (if any) is the target of this process
     field :tgt_process_id, Process.ID,
+      default: nil
+
+    # Which log (if any) is the target of this process
+    field :tgt_log_id, Log.ID,
       default: nil
 
     ### Helix.Process required data
@@ -458,6 +519,21 @@ defmodule Helix.Process.Model.Process do
     |> validate_required(@required_fields)
     |> put_defaults()
     |> put_pk(heritage, {:process, params.type})
+  end
+
+  @spec retarget(t, retarget_changes :: map) ::
+    changeset
+  @doc """
+  Updates the process according to the retarget changes. It also resets any
+  previous work (`processed`) and checkpoints (`last_checkpoint_time`).
+  """
+  def retarget(process = %Process{}, changes) do
+    process
+    |> change()
+    |> cast(changes, @retarget_fields)
+    |> put_change(:processed, %{})
+    |> put_change(:last_checkpoint_time, DateTime.utc_now())
+    |> validate_required(@required_fields)
   end
 
   @spec format(raw_process :: t) ::
@@ -711,10 +787,11 @@ defmodule Helix.Process.Model.Process do
 
   query do
 
-    alias Helix.Software.Model.File
+    alias Helix.Log.Model.Log
     alias Helix.Network.Model.Connection
     alias Helix.Network.Model.Network
     alias Helix.Server.Model.Server
+    alias Helix.Software.Model.File
 
     @spec by_id(Queryable.t, Process.idtb) ::
       Queryable.t
@@ -763,6 +840,11 @@ defmodule Helix.Process.Model.Process do
       Queryable.t
     def by_target_connection(query \\ Process, id),
       do: where(query, [p], p.tgt_connection_id == ^id)
+
+    @spec by_target_log(Queryable.t, Log.id) ::
+      Queryable.t
+    def by_target_log(query \\ Process, id),
+      do: where(query, [p], p.tgt_log_id == ^id)
 
     @spec by_target_process(Queryable.t, Process.id) ::
       Queryable.t

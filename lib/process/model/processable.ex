@@ -11,6 +11,7 @@ defprotocol Helix.Process.Model.Processable do
   """
 
   alias Helix.Event
+  alias Helix.Log.Model.Log
   alias Helix.Network.Model.Connection
   alias Helix.Process.Model.Process
 
@@ -50,7 +51,14 @@ defprotocol Helix.Process.Model.Processable do
 
   ## :restart
 
+  Resets any work the process may have done, and starts from scratch.
+
   Not implemented yet.
+
+  ## :retarget
+
+  Modify the target of a process, potentially changing its resources and/or
+  relevant objects. Commonly used with recursive processes.
 
   ## {:SIGKILL, <reason>}
 
@@ -60,6 +68,13 @@ defprotocol Helix.Process.Model.Processable do
 
   Later on, the process *might* be killed. Depends on how it implements the
   `on_kill` callback.
+
+  ## :SIG_RETARGET
+
+  Sends a SIG_RETARGET to itself
+
+  Later on, the process *might* change. Depends on how it implements the
+  `on_retarget` callback.
 
   ## :noop
 
@@ -73,7 +88,9 @@ defprotocol Helix.Process.Model.Processable do
     | :resume
     | :renice
     | :restart
+    | {:retarget, Process.retarget_changes}
     | {:SIGKILL, Process.kill_reason}
+    | :SIG_RETARGET
     | :noop
 
   @spec complete(t, Process.t) ::
@@ -90,10 +107,19 @@ defprotocol Helix.Process.Model.Processable do
   """
   def kill(data, process, reason)
 
+  @spec retarget(t, Process.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIG_RETARGET, meaning the process finished
+  its previous objective and is now looking for something else to do. Commonly
+  used on recursive processes.
+  """
+  def retarget(data, process)
+
   @spec source_connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}
   @doc """
-  Called when the process receives a SIGSRCCONND, meaning the connection that
+  Called when the process receives a SIG_SRC_CONN_DELETED, meaning the connection that
   originated that process has been closed. Also receives the connection that was
   recently closed.
   """
@@ -102,11 +128,37 @@ defprotocol Helix.Process.Model.Processable do
   @spec target_connection_closed(t, Process.t, Connection.t) ::
     {action, [Event.t]}
   @doc """
-  Called when the process receives a SIGTGTCONND, meaning the connection that
+  Called when the process receives a SIG_TGT_CONN_DELETED, meaning the connection that
   process is targeting has been closed. Also receives the connection that was
   recently closed.
   """
   def target_connection_closed(data, process, connection)
+
+  @spec target_log_revised(t, Process.t, Log.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIG_TGT_LOG_REVISED, meaning the log that
+  process is targeting has been revised. Also receives the newly revised log.
+  """
+  def target_log_revised(data, process, log)
+
+  @spec target_log_recovered(t, Process.t, Log.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIG_TGT_LOG_RECOVERED, meaning the log that
+  process is targeting has been recovered. Also receives the newly recovered
+  log.
+  """
+  def target_log_recovered(data, process, log)
+
+  @spec target_log_destroyed(t, Process.t, Log.t) ::
+    {action, [Event.t]}
+  @doc """
+  Called when the process receives a SIG_TGT_LOG_DESTROYED, meaning the log that
+  process is targeting has been destroyed. Also receives the newly destroyed
+  log.
+  """
+  def target_log_destroyed(data, process, log)
 
   @spec after_read_hook(term) ::
     t

@@ -39,14 +39,16 @@ defmodule Helix.Server.Event.Server do
 
     loggable do
 
+      @doc """
+        localhost logged in
+      """
       log(event = %__MODULE__{join_type: :local}) do
-        msg = "Localhost logged in"
-
         log_map %{
           event: event,
           server_id: event.server_id,
           entity_id: event.entity_id,
-          msg_server: msg
+          type: :local_login,
+          data: %{}
         }
       end
 

@@ -214,7 +214,6 @@ join Helix.Server.Websocket.Channel.Server.Join do
 
     socket =
       socket
-      |> assign.(:access, :local)
       |> assign.(:gateway, gateway_data)
       |> assign.(:destination, gateway_data)
       |> assign.(:meta, build_meta(request))

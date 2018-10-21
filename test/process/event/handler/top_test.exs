@@ -8,10 +8,10 @@ defmodule Helix.Process.Event.Handler.TOPTest do
 
   alias Helix.Test.Event.Setup, as: EventSetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Server.Setup, as: ServerSetup
   alias Helix.Test.Process.FakeDefaultProcess
   alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Process.TOPHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
 
   test "process is killed when its originating connection is closed" do
     {connection, _} = NetworkSetup.fake_connection()

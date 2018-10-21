@@ -21,8 +21,7 @@ defmodule Helix.Notification.Model.Code do
       Module.register_attribute(
         __MODULE__,
         :codes,
-        accumulate: true,
-        persist: :false
+        accumulate: true, persist: :false
       )
 
       @before_compile unquote(__MODULE__)

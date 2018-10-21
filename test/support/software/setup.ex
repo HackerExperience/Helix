@@ -213,34 +213,64 @@ defmodule Helix.Test.Software.Setup do
   @doc """
   - bruteforce: set bruteforce module version. Defaults to random.
   - overflow: set overflow module version. Defaults to random.
+
   Remaining opts are passed to `file/1`
   """
+  def cracker!(opts \\ []),
+    do: cracker(opts) |> elem(0)
   def cracker(opts \\ []) do
-    bruteforce = Access.get(opts, :bruteforce, SoftwareHelper.random_version())
-    overflow = Access.get(opts, :overflow, SoftwareHelper.random_version())
+    bruteforce = Keyword.get(opts, :bruteforce, SoftwareHelper.random_version())
+    overflow = Keyword.get(opts, :overflow, SoftwareHelper.random_version())
 
-    version_map = %{
-      bruteforce: bruteforce,
-      overflow: overflow
-    }
-
+    version_map = %{bruteforce: bruteforce, overflow: overflow}
     modules = SoftwareHelper.generate_module(:cracker, version_map)
 
     file(opts ++ [type: :cracker, modules: modules])
   end
 
-  def cracker!(opts \\ []),
-    do: cracker(opts) |> elem(0)
+  @doc """
+  - log_create: set `log_create` module version. Defaults to random.
+  - log_edit: set `log_edit` module version. Defaults to random.
+
+  Remaining opts are passed to `file/1`
+  """
+  def log_forger!(opts \\ []),
+    do: log_forger(opts) |> elem(0)
+  def log_forger(opts \\ []) do
+    log_create = Keyword.get(opts, :log_create, SoftwareHelper.random_version())
+    log_edit = Keyword.get(opts, :log_edit, SoftwareHelper.random_version())
+
+    version_map = %{log_create: log_create, log_edit: log_edit}
+    modules = SoftwareHelper.generate_module(:log_forger, version_map)
+
+    file(opts ++ [type: :log_forger, modules: modules])
+  end
+
+  @doc """
+  - log_recover: set `log_recover` module version. Defaults to random
+
+  Remaining opts are passed to `file/1`
+  """
+  def log_recover!(opts \\ []),
+    do: log_recover(opts) |> elem(0)
+  def log_recover(opts \\ []) do
+    log_recover =
+      Keyword.get(opts, :log_recover, SoftwareHelper.random_version())
+
+    version_map = %{log_recover: log_recover}
+    modules = SoftwareHelper.generate_module(:log_recover, version_map)
+
+    file(opts ++ [type: :log_recover, modules: modules])
+  end
 
   @doc """
   Opts are passed to `file/1`
   """
+  def virus!(opts \\ []),
+    do: virus(opts) |> elem(0)
   def virus(opts \\ []) do
     file(opts ++ [type: :virus_spyware])
   end
-
-  def virus!(opts \\ []),
-    do: virus(opts) |> elem(0)
 
   @doc """
   Generates a non-executable file

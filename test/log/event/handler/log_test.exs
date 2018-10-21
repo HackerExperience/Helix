@@ -2,23 +2,19 @@ defmodule Helix.Log.Event.Handler.LogTest do
 
   use Helix.Test.Case.Integration
 
+  import Helix.Test.Macros
   import Helix.Test.Log.Macros
 
   alias Helix.Event
-  alias Helix.Software.Event.LogForge.LogEdit.Processed,
-    as: LogForgeEditComplete
-  alias Helix.Software.Event.LogForge.LogCreate.Processed,
-    as: LogForgeCreateComplete
   alias Helix.Log.Event.Handler.Log, as: LogHandler
   alias Helix.Log.Query.Log, as: LogQuery
-  alias Helix.Log.Repo
 
   alias Helix.Test.Event.Setup, as: EventSetup
-  alias Helix.Test.Entity.Setup, as: EntitySetup
   alias Helix.Test.Network.Setup, as: NetworkSetup
+  alias Helix.Test.Process.Setup, as: ProcessSetup
   alias Helix.Test.Server.Helper, as: ServerHelper
-  alias Helix.Test.Server.Setup, as: ServerSetup
-  alias Helix.Test.Log.Factory, as: LogFactory
+  alias Helix.Test.Log.Helper, as: LogHelper
+  alias Helix.Test.Log.Setup, as: LogSetup
 
   describe "handle_event/1" do
     test "follows the LoggableFlow" do
@@ -32,25 +28,22 @@ defmodule Helix.Log.Event.Handler.LogTest do
       # Simulates the handler receiving the event
       assert :ok == LogHandler.handle_event(event)
 
+      file_name = LogHelper.log_file_name(event.file)
+
       # Now we verify that the corresponding log has been saved on the relevant
       # places.
       [log_gateway] = LogQuery.get_logs_on_server(event.to_server_id)
-      assert_log \
-        log_gateway,
-        event.to_server_id,
-        event.entity_id,
-        "localhost downloaded"
+      assert_log log_gateway, event.to_server_id, event.entity_id,
+        :file_download_gateway, %{file_name: file_name}
 
       [log_destination] = LogQuery.get_logs_on_server(event.from_server_id)
-      assert_log \
-        log_destination,
-        event.from_server_id,
-        event.entity_id,
-        "from localhost"
+      assert_log log_destination, event.from_server_id, event.entity_id,
+        :file_download_endpoint, %{file_name: file_name}
     end
 
     test "creates logs on intermediary nodes (bounces)" do
       {bounce, _} = NetworkSetup.Bounce.bounce(total: 4)
+
       [
         {l1_server_id, _, l1_ip},
         {l2_server_id, _, l2_ip},
@@ -62,6 +55,8 @@ defmodule Helix.Log.Event.Handler.LogTest do
         EventSetup.Software.file_downloaded()
         |> Event.set_bounce(bounce)
 
+      file_name = LogHelper.log_file_name(event.file)
+
       gateway_ip = ServerHelper.get_ip(event.to_server_id)
       endpoint_ip = ServerHelper.get_ip(event.from_server_id)
 
@@ -71,36 +66,32 @@ defmodule Helix.Log.Event.Handler.LogTest do
       # Now we verify that the corresponding log has been saved on the relevant
       # places.
       [log_gateway] = LogQuery.get_logs_on_server(event.to_server_id)
-      assert_log \
-        log_gateway, event.to_server_id, event.entity_id, "localhost downloaded"
+      assert_log log_gateway, event.to_server_id, event.entity_id,
+        :file_download_gateway, %{file_name: file_name, ip: l1_ip}
 
       # log on `l1` tells connection was bounced from `gateway` to `l2`
       [log_bounce1] = LogQuery.get_logs_on_server(l1_server_id)
-      assert_log \
-        log_bounce1, l1_server_id, event.entity_id,
-        "Connection bounced", contains: "from #{gateway_ip} to #{l2_ip}"
+      assert_log log_bounce1, l1_server_id, event.entity_id,
+        :connection_bounced, %{ip_prev: gateway_ip, ip_next: l2_ip}
 
       # log on `l2` tells connection was bounced from `l1` to `l3`
       [log_bounce2] = LogQuery.get_logs_on_server(l2_server_id)
-      assert_log \
-        log_bounce2, l2_server_id, event.entity_id,
-          "Connection bounced", contains: "from #{l1_ip} to #{l3_ip}"
+      assert_log log_bounce2, l2_server_id, event.entity_id,
+          :connection_bounced, %{ip_prev: l1_ip, ip_next: l3_ip}
 
       # log on `l3` tells connection was bounced from `l2` to `l4`
       [log_bounce3] = LogQuery.get_logs_on_server(l3_server_id)
-      assert_log \
-        log_bounce3, l3_server_id, event.entity_id,
-          "Connection bounced", contains: "from #{l2_ip} to #{l4_ip}"
+      assert_log log_bounce3, l3_server_id, event.entity_id,
+          :connection_bounced, %{ip_prev: l2_ip, ip_next: l4_ip}
 
       # log on `l4` tells connection was bounced from `l3` to `endpoint`
       [log_bounce4] = LogQuery.get_logs_on_server(l4_server_id)
-      assert_log \
-        log_bounce4, l4_server_id, event.entity_id,
-          "Connection bounced", contains: "from #{l3_ip} to #{endpoint_ip}"
+      assert_log log_bounce4, l4_server_id, event.entity_id,
+          :connection_bounced, %{ip_prev: l3_ip, ip_next: endpoint_ip}
 
       [log_destination] = LogQuery.get_logs_on_server(event.from_server_id)
-      assert_log \
-        log_destination, event.from_server_id, event.entity_id, "from localhost"
+      assert_log log_destination, event.from_server_id, event.entity_id,
+        :file_download_endpoint, %{file_name: file_name, ip: l4_ip}
     end
 
     test "works on single-node log ('offline log')" do
@@ -113,52 +104,100 @@ defmodule Helix.Log.Event.Handler.LogTest do
       assert :ok == LogHandler.handle_event(event)
 
       [log_server] = LogQuery.get_logs_on_server(event.server_id)
-      assert_log \
-        log_server, event.server_id, event.entity_id,
-        "Localhost logged in"
+      assert_log log_server, event.server_id, event.entity_id,
+        :local_login, %{}
     end
   end
 
-  describe "log_forge_conclusion/1 for LogForge.Edit" do
-    test "adds revision to target log" do
-      target_log = LogFactory.insert(:log)
-      {entity, _} = EntitySetup.entity()
-      message = "I just got hidden"
+  describe "log_forge_processed/1 for LogForge.Edit" do
+    test "adds a revision to the target log" do
+      log = LogSetup.log!()
+      process =
+        ProcessSetup.fake_process!(
+          type: :log_forge_edit,
+          tgt_log_id: log.log_id,
+          data: [forger_version: 50]
+        )
+      event = EventSetup.Log.forge_processed(process: process)
 
-      event = %LogForgeEditComplete{
-        target_log_id: target_log.log_id,
-        entity_id: entity.entity_id,
-        message: message,
-        version: 100
-      }
+      # Sanity check: we are editing the log we've created
+      assert event.target_log_id == process.tgt_log_id
+      assert event.action == :edit
 
-      revisions_before = LogQuery.count_revisions_of_entity(target_log, entity)
-      LogHandler.log_forge_conclusion(event)
-      revisions_after = LogQuery.count_revisions_of_entity(target_log, entity)
-      target_log = LogQuery.fetch(target_log.log_id)
+      log_before = LogQuery.fetch(log.log_id)
 
-      assert revisions_after == revisions_before + 1
-      assert message == target_log.message
+      # Simulate handling of the event
+      LogHandler.forge_processed(event)
+
+      log_after = LogQuery.fetch(log.log_id)
+
+      # `log_after` had a revision added to it.
+      assert log_after.revision_id == log_before.revision_id + 1
+      assert log_after.revision != log_before.revision
+
+      # `log_after` revision is exactly the one specified at `event`/`process`
+      assert log_after.revision.type == process.data.log_type
+      assert_map_str log_after.revision.data,
+        Map.from_struct(process.data.log_data)
+      assert log_after.revision.forge_version == 50
     end
   end
 
-  describe "log_forge_conclusion/1 for LogForge.Create" do
-    test "creates specified log on target server" do
-      {server, %{entity: entity}} = ServerSetup.server()
+  describe "log_forge_processed/1 for LogForge.Create" do
+    test "creates a new log" do
+      process =
+        ProcessSetup.fake_process!(
+          type: :log_forge_create, data: [forger_version: 50]
+        )
+      event = EventSetup.Log.forge_processed(process: process)
 
-      message = "Mess with the best, die like the rest"
+      # Sanity check: we are creating a new log
+      refute event.target_log_id
+      assert event.action == :create
 
-      event = %LogForgeCreateComplete{
-        entity_id: entity.entity_id,
-        target_id: server.server_id,
-        message: message,
-        version: 456
-      }
+      # Initially, the process (target) server has no logs
+      assert [] == LogQuery.get_logs_on_server(process.target_id)
 
-      LogHandler.log_forge_conclusion(event)
+      # Simulate handling of the event
+      LogHandler.forge_processed(event)
 
-      assert [log] = LogQuery.get_logs_on_server(server)
-      assert [%{forge_version: 456}] = Repo.preload(log, :revisions).revisions
+      # Now the process server has a new log
+      assert [log] = LogQuery.get_logs_on_server(process.target_id)
+
+      # And the new log has exactly the data described at `event`/`process`
+      assert log.revision_id == 1
+      assert log.revision.type == process.data.log_type
+      assert_map_str log.revision.data, Map.from_struct(process.data.log_data)
+      assert log.revision.forge_version == 50
+    end
+  end
+
+  describe "log_recover_processed/1" do
+    test "pops out revision from stack" do
+      server_id = ServerHelper.id()
+      log = LogSetup.log!(server_id: server_id, revisions: 2)
+
+      process =
+        ProcessSetup.process!(
+          target_id: server_id,
+          type: :log_recover_custom,
+          tgt_log_id: log.log_id,
+          data: [recover_version: 50]
+        )
+
+      event = EventSetup.Log.recover_processed(process: process)
+
+      assert [old_log] = LogQuery.get_logs_on_server(process.target_id)
+
+      LogHandler.recover_processed(event)
+
+      assert [new_log] = LogQuery.get_logs_on_server(process.target_id)
+
+      # Old log was at revision 2...
+      assert old_log.revision_id == 2
+
+      # But new log is at revision 1
+      assert new_log.revision_id == 1
     end
   end
 end

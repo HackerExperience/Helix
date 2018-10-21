@@ -23,6 +23,8 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
       account: BankAccount.t
     }
 
+  @type executable_meta :: map
+
   @type objective :: %{cpu: resource_usage}
 
   @type resources :: %{
@@ -37,9 +39,9 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
       account: BankAccount.t
     }
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(%{token_id: token_id, account: account = %BankAccount{}}) do
+  def new(%{token_id: token_id, account: account = %BankAccount{}}, _) do
     %__MODULE__{
       token_id: token_id,
       atm_id: account.atm_id,
@@ -86,17 +88,9 @@ process Helix.Universe.Bank.Process.Bank.Account.RevealPassword do
 
   executable do
 
-    alias Helix.Universe.Bank.Process.Bank.Account.RevealPassword,
-      as: RevealPasswordProcess
+    @type custom :: %{}
 
-    @type params :: RevealPasswordProcess.creation_params
-
-    @type meta ::
-      %{
-        optional(atom) => term
-      }
-
-    resources(_, _, %{account: account}, _) do
+    resources(_, _, %{account: account}, _, _) do
       %{account: account}
     end
   end

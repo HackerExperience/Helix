@@ -1,18 +1,10 @@
 defmodule Helix.Process.Internal.Process do
 
+  alias Helix.Log.Model.Log
   alias Helix.Network.Model.Connection
   alias Helix.Server.Model.Server
   alias Helix.Process.Model.Process
   alias Helix.Process.Repo
-
-  @spec create(Process.creation_params) ::
-    {:ok, Process.t}
-    | {:error, Process.changeset}
-  def create(params) do
-    params
-    |> Process.create_changeset()
-    |> Repo.insert()
-  end
 
   @spec fetch(Process.id) ::
     Process.t
@@ -21,6 +13,15 @@ defmodule Helix.Process.Internal.Process do
     with process = %Process{} <- Repo.get(Process, process_id) do
       Process.format(process)
     end
+  end
+
+  @spec create(Process.creation_params) ::
+    {:ok, Process.t}
+    | {:error, Process.changeset}
+  def create(params) do
+    params
+    |> Process.create_changeset()
+    |> Repo.insert()
   end
 
   @spec get_processes_on_server(Server.idt) ::
@@ -65,6 +66,15 @@ defmodule Helix.Process.Internal.Process do
     |> Enum.map(&Process.format/1)
   end
 
+  @spec get_processes_targeting_log(Log.id) ::
+    [Process.t]
+  def get_processes_targeting_log(log_id) do
+    log_id
+    |> Process.Query.by_target_log()
+    |> Repo.all()
+    |> Enum.map(&Process.format/1)
+  end
+
   @spec batch_update([Process.t]) ::
     term
   @doc """
@@ -77,6 +87,19 @@ defmodule Helix.Process.Internal.Process do
         Repo.update(process)
       end)
     end)
+  end
+
+  @spec retarget(Process.t, changes :: map) ::
+    {:ok, Process.t}
+    | {:error, Process.changeset}
+  @doc """
+  Retargets a process, modifying resources objectives and objects as defined on
+  the Process' Processable, which demanded these changes.
+  """
+  def retarget(process, changes) do
+    process
+    |> Process.retarget(changes)
+    |> Repo.update()
   end
 
   @spec delete(Process.t) ::

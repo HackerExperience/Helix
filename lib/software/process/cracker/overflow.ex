@@ -11,6 +11,11 @@ process Helix.Software.Process.Cracker.Overflow do
 
   @type creation_params :: %{}
 
+  @type executable_meta ::
+    %{
+      cracker: File.t
+    }
+
   @type objective :: %{cpu: resource_usage}
 
   @type resources ::
@@ -28,9 +33,9 @@ process Helix.Software.Process.Cracker.Overflow do
 
   @process_type :cracker_overflow
 
-  @spec new(creation_params) ::
+  @spec new(creation_params, executable_meta) ::
     t
-  def new(_),
+  def new(_, _),
     do: %__MODULE__{}
 
   @spec resources(resources_params) ::
@@ -89,33 +94,25 @@ process Helix.Software.Process.Cracker.Overflow do
 
   executable do
 
-    alias Helix.Software.Model.File
-    alias Helix.Software.Process.Cracker.Overflow, as: OverflowProcess
+    @type custom :: %{}
 
-    @type params :: OverflowProcess.creation_params
-    @type meta ::
-      %{
-        :cracker => File.t,
-        optional(atom) => term
-      }
-
-    resources(_, _, _, %{cracker: cracker}) do
+    resources(_, _, _, %{cracker: cracker}, _) do
       %{cracker: cracker}
     end
 
-    source_file(_gateway, _target, _params, %{cracker: cracker}) do
+    source_file(_gateway, _target, _params, %{cracker: cracker}, _) do
       cracker.file_id
     end
 
-    source_connection(_, _, _, %{ssh: ssh}) do
+    source_connection(_, _, _, %{ssh: ssh}, _) do
       ssh.connection_id
     end
 
-    target_connection(_, _, _, %{connection: connection}) do
+    target_connection(_, _, _, %{connection: connection}, _) do
       connection.connection_id
     end
 
-    target_process(_, _, _, %{process: process}) do
+    target_process(_, _, _, %{process: process}, _) do
       process.process_id
     end
   end

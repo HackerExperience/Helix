@@ -21,6 +21,21 @@ defmodule Helix.Process.Model.TOP.Scheduler do
       running: [Process.t]
     }
 
+  @spec estimate_completion(Process.t) ::
+    {Process.t, Process.time_left | -1 | :infinity}
+  @doc """
+  `estimate_completion/1` will, as the name says, estimate how long it will take
+  for the process to reach its current objectives.
+
+  It may return `:infinity` if the process is paused or do not have allocated
+  resources to it; and `-1` if the process is already completed.
+  """
+  def estimate_completion(process) do
+    process
+    |> simulate()
+    |> seconds_for_completion()
+  end
+
   @spec simulate(Process.t) ::
     {:completed, Process.t}
     | {:running, Process.t}
@@ -43,7 +58,6 @@ defmodule Helix.Process.Model.TOP.Scheduler do
   will modify the process state to `:running`. This is done because `simulate/1`
   (and all methods on `TOP.Scheduler`) are called from `TOP.Action`, after the
   process was allocated. So it's safe to update the Process state to `:running`.
-
   """
   def simulate(process = %{state: :paused}),
     do: {:paused, process}
@@ -134,21 +148,6 @@ defmodule Helix.Process.Model.TOP.Scheduler do
            }
       end
     end)
-  end
-
-  @spec estimate_completion(Process.t) ::
-    {Process.t, Process.time_left | -1 | :infinity}
-  @doc """
-  `estimate_completion/1` will, as the name says, estimate how long it will take
-  for the process to reach its current objectives.
-
-  It may return `:infinity` if the process is paused or do not have allocated
-  resources to it; and `-1` if the process is already completed.
-  """
-  def estimate_completion(process) do
-    process
-    |> simulate()
-    |> seconds_for_completion()
   end
 
   @spec checkpoint(Process.t) ::

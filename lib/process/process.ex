@@ -35,7 +35,7 @@ defmodule Helix.Process do
           @doc """
           Returns the process type.
           """
-          def get_process_type,
+          def get_process_type(_, _),
             do: @process_type
 
         end

@@ -198,31 +198,29 @@ defmodule Helix.Software.Event.File do
       log(event = %{connection_type: :public_ftp}) do
         file = get_file_name(event.file)
 
-        msg_gateway =
-            "localhost downloaded file #{file} from Public FTP server $first_ip"
-        msg_endpoint =
-          "$last_ip downloaded file #{file} from localhost Public FTP"
-
         log_map %{
           event: event,
           entity_id: event.entity_id,
           gateway_id: event.to_server_id,
           endpoint_id: event.from_server_id,
           network_id: event.network_id,
-          msg_gateway: msg_gateway,
-          msg_endpoint: msg_endpoint,
+          type_gateway: :pftp_file_download_gateway,
+          data_gateway: %{ip: "$first_ip"},
+          type_endpoint: :pftp_file_download_endpoint,
+          data_endpoint: %{ip: "$last_ip"},
+          data_both: %{network_id: event.network_id, file_name: file},
           opts: %{skip_bounce: true, censor_last: true}
         }
       end
 
       @doc """
       Generates a log entry when a File has been downloaded from a server.
+
+        Gateway: "localhost downloaded file $file_name from $first_ip"
+        Endpoint: "$last_ip downloaded file $file_name from localhost"
       """
       log(event = %{connection_type: :ftp}) do
         file_name = get_file_name(event.file)
-
-        msg_gateway = "localhost downloaded file #{file_name} from $first_ip"
-        msg_endpoint = "$last_ip downloaded file #{file_name} from localhost"
 
         log_map %{
           event: event,
@@ -230,8 +228,11 @@ defmodule Helix.Software.Event.File do
           gateway_id: event.to_server_id,
           endpoint_id: event.from_server_id,
           network_id: event.network_id,
-          msg_gateway: msg_gateway,
-          msg_endpoint: msg_endpoint
+          type_gateway: :file_download_gateway,
+          data_gateway: %{ip: "$first_ip"},
+          type_endpoint: :file_download_endpoint,
+          data_endpoint: %{ip: "$last_ip"},
+          data_both: %{network_id: event.network_id, file_name: file_name}
         }
       end
     end
@@ -405,12 +406,12 @@ defmodule Helix.Software.Event.File do
     loggable do
       @doc """
       Generates a log entry when a File has been uploaded to a server.
+
+        Gateway: "localhost uploaded file $file_name to $first_ip"
+        Endpoint: "$last_ip uploaded file $file_name to localhost"
       """
       log(event) do
         file_name = get_file_name(event.file)
-
-        msg_gateway = "localhost uploaded file #{file_name} to $first_ip"
-        msg_endpoint = "$last_ip uploaded file #{file_name} to localhost"
 
         log_map %{
           event: event,
@@ -418,8 +419,11 @@ defmodule Helix.Software.Event.File do
           gateway_id: event.from_server_id,
           endpoint_id: event.to_server_id,
           network_id: event.network_id,
-          msg_gateway: msg_gateway,
-          msg_endpoint: msg_endpoint
+          type_gateway: :file_upload_gateway,
+          data_gateway: %{ip: "$first_ip"},
+          type_endpoint: :file_upload_endpoint,
+          data_endpoint: %{ip: "$last_ip"},
+          data_both: %{network_id: event.network_id, file_name: file_name}
         }
       end
     end

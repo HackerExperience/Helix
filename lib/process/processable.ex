@@ -33,12 +33,28 @@ defmodule Helix.Process.Processable do
           {:delete, []}
         end
 
+        on_retarget(_process, _data) do
+          {:noop, []}
+        end
+
         on_source_connection_closed(_process, _data, _connection) do
           {{:SIGKILL, :src_connection_closed}, []}
         end
 
         on_target_connection_closed(_process, _data, _connection) do
           {{:SIGKILL, :tgt_connection_closed}, []}
+        end
+
+        on_target_log_revised(_process, _data, _log) do
+          {:noop, []}
+        end
+
+        on_target_log_recovered(_process, _data, _log) do
+          {:noop, []}
+        end
+
+        on_target_log_destroyed(_process, _data, _log) do
+          {:noop, []}
         end
 
         @doc false
@@ -101,7 +117,25 @@ defmodule Helix.Process.Processable do
   end
 
   @doc """
-  Called when the process receives a SIGSRCCONND.
+  Called when the process receives a SIG_RETARGET.
+
+  Defines what should happen when the process is asked to look for a new target.
+
+  Default behaviour is to ignore the signal.
+  """
+  defmacro on_retarget(process, data, do: block) do
+    quote do
+
+      def retarget(unquote(data), p = unquote(process)) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  @doc """
+  Called when the process receives a SIG_SRC_CONN_DELETED.
 
   Defines what should happen when the process' underlying connection is closed.
 
@@ -111,10 +145,8 @@ defmodule Helix.Process.Processable do
     quote do
 
       def source_connection_closed(
-        unquote(data),
-        p = unquote(process),
-        unquote(connection))
-      do
+        unquote(data), p = unquote(process), unquote(connection)
+      ) do
         unquote(block)
         |> add_fingerprint(p)
       end
@@ -123,7 +155,7 @@ defmodule Helix.Process.Processable do
   end
 
   @doc """
-  Called when the process receives a SIGTGTCONND.
+  Called when the process receives a SIG_TGT_CONN_DELETED.
 
   Defines what should happen when the process' target connection is closed.
 
@@ -133,10 +165,47 @@ defmodule Helix.Process.Processable do
     quote do
 
       def target_connection_closed(
-        unquote(data),
-        p = unquote(process),
-        unquote(connection))
-      do
+        unquote(data), p = unquote(process), unquote(connection)
+      ) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  defmacro on_target_log_revised(process, data, log, do: block) do
+    quote do
+
+      def target_log_revised(
+        unquote(data), p = unquote(process), unquote(log)
+      ) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  defmacro on_target_log_recovered(process, data, log, do: block) do
+    quote do
+
+      def target_log_recovered(
+        unquote(data), p = unquote(process), unquote(log)
+      ) do
+        unquote(block)
+        |> add_fingerprint(p)
+      end
+
+    end
+  end
+
+  defmacro on_target_log_destroyed(process, data, log, do: block) do
+    quote do
+
+      def target_log_destroyed(
+        unquote(data), p = unquote(process), unquote(log)
+      ) do
         unquote(block)
         |> add_fingerprint(p)
       end

@@ -80,7 +80,7 @@ defmodule Helix.Software.Public.File do
     gateway :: Server.t,
     target :: Server.t,
     target_nip :: {Network.id, Network.ip},
-    term,
+    Tunnel.bounce,
     relay)
   ::
     {:ok, Process.t}
@@ -126,17 +126,16 @@ defmodule Helix.Software.Public.File do
   Installs a generic file using FileInstallProcess with the given `backend`.
   """
   def install(file = %File{}, gateway, target, backend, {tunnel, ssh}, relay) do
-    process_type = FileInstallProcess.get_process_type(backend)
-
     params = %{backend: backend}
     meta =
       %{
         file: file,
-        type: process_type,
         network_id: tunnel.network_id,
         bounce: tunnel.bounce_id,
         ssh: ssh
       }
+
+    process_type = FileInstallProcess.get_process_type(params, meta)
 
     install_process =
       ProcessQuery.get_custom(

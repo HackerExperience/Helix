@@ -1,6 +1,7 @@
 defmodule Helix.Test.Event.Setup.Process do
 
   alias Helix.Process.Event.Process.Created, as: ProcessCreatedEvent
+  alias Helix.Process.Event.Process.Signaled, as: ProcessSignaledEvent
 
   alias HELL.TestHelper.Random
   alias Helix.Test.Process.Setup, as: ProcessSetup
@@ -17,4 +18,7 @@ defmodule Helix.Test.Event.Setup.Process do
       target_ip: Random.ipv4()
     }
   end
+
+  def signaled(process, signal, action, params),
+    do: ProcessSignaledEvent.new(signal, process, action, params)
 end

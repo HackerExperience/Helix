@@ -13,6 +13,10 @@ channel Helix.Server.Websocket.Channel.Server do
 
   alias Helix.Server.State.Websocket.Channel, as: ServerWebsocketChannelState
 
+  alias Helix.Log.Websocket.Requests.Forge, as: LogForgeRequest
+  alias Helix.Log.Websocket.Requests.Paginate, as: LogPaginateRequest
+  alias Helix.Log.Websocket.Requests.Recover, as: LogRecoverRequest
+
   alias Helix.Network.Websocket.Requests.Browse, as: BrowseRequest
 
   alias Helix.Software.Websocket.Requests.Cracker.Bruteforce,
@@ -136,6 +140,79 @@ channel Helix.Server.Websocket.Channel.Server do
   May return the corresponding permission error defined for each key.
   """
   topic "config.check", ConfigCheckRequest
+
+  @doc """
+  Starts a LogForgeProcess. When forging, the player may want to edit an
+  existing log, or create a brand new log.
+
+  Params (create):
+    - *log_type: Type of the desired log revision.
+    - *log_data: Data of the desired log revision.
+    - *action: Explicitly set action to "create".
+
+  Params (edit):
+    - *log_id: ID of the log that will be edited.
+    - *log_type: Type of the desired log revision.
+    - *log_data: Data of the desired log revision.
+    - *action: Explicitly set action to "edit".
+
+  Errors:
+
+  Input validation:
+  - "bad_action" - Action is neither "edit" or "create".
+  - "bad_log_type" - The given `log_type` is not valid.
+  - "bad_log_data" - The given `log_data` is not valid for the `log_type`.
+
+  Henforcer:
+  - "forger_not_found" - Player does not have a valid LogForger software.
+  - "log_not_found" (edit) - The given log ID was not found.
+  - "log_not_belongs" (edit) - Attempting to edit a log that does not belong to
+    the open channel.
+
+  - base errors
+  """
+  topic "log.forge", LogForgeRequest
+
+  @doc """
+  Fetches the logs in the server with pagination support.
+
+  Params:
+    - *log_id: ID of the last seen log on the client.
+    - total: Total of logs to be returned. Defaults to 20. Max allowed is 100.
+
+  Errors:
+  - base errors
+  """
+  topic "log.paginate", LogPaginateRequest
+
+  @doc """
+  Starts a LogRecoverProcess. When recovering, the player may either start the
+  process using the `global` method or the `custom` method.
+
+  The `global` method scans all logs on the server, randomly selects a
+  recoverable log and starts working on it. The `custom` method works on a
+  specific log defined by the user.
+
+  Params (global):
+    - *method: Explicitly set method to "global"
+
+  Params (custom):
+    - *log_id: ID of the log that will be recovered.
+    - *method: Explicitly set method to "custom"
+
+  Errors:
+
+  Henforcer:
+  - "recover_not_found" - Player does not have a valid LogRecover software.
+  - "log_not_found" (custom) - The given log ID was not found.
+  - "log_not_belongs" (custom) - Attempting to recover a log that does not
+    belong to the open channel.
+
+  Input Validation:
+  - "bad_method" - Method is neither "global" or "custom"
+  + base errors
+  """
+  topic "log.recover", LogRecoverRequest
 
   @doc """
   Updates the player's motherboard. May be used to attach, detach or update the
@@ -424,10 +501,7 @@ channel Helix.Server.Websocket.Channel.Server do
       ip = socket.assigns.destination.ip
 
       ServerWebsocketChannelState.leave(
-        entity_id,
-        server_id,
-        {network_id, ip},
-        counter
+        entity_id, server_id, {network_id, ip}, counter
       )
     end
   end

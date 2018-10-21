@@ -46,8 +46,8 @@ defmodule Helix.Test.Process.TOPHelper do
     |> ProcessRepo.update()
 
     # Force a recalque on the server
-    if opts[:from] do
-      TOPAction.recalque(process, opts[:from])
+    if opts[:source] do
+      TOPAction.recalque(process, source: opts[:source])
     else
       TOPAction.recalque(process)
     end

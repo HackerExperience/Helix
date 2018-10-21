@@ -34,6 +34,7 @@ defmodule Helix.Process.Public.View.Process.Helper do
 
     Map.merge(common, %{access: partial})
   end
+
   def default_process_render(process, :full) do
     source_connection_id =
       process.src_connection_id && to_string(process.src_connection_id)
@@ -46,7 +47,17 @@ defmodule Helix.Process.Public.View.Process.Helper do
     # OPTIMIZE: Possibly cache `origin_ip` and `target_ip` on the Process.t
     # It's used on several other places and must be queried every time it's
     # displayed.
-    origin_ip = ServerQuery.get_ip(process.gateway_id, process.network_id)
+    # TODO: Snippet below seems hacky and smelly
+    origin_ip =
+      if process.network_id do
+        ServerQuery.get_ip(process.gateway_id, process.network_id) || "Unknown"
+      else
+        if process.gateway_id == process.target_id do
+          "localhost"
+        else
+          "Unknown"
+        end
+      end
 
     full = %{
       origin_ip: origin_ip,
@@ -103,13 +114,13 @@ defmodule Helix.Process.Public.View.Process.Helper do
   """
   defp build_file(nil, _),
     do: nil
+  defp build_file(file_id, :partial),
+    do: build_file_common(file_id)
   defp build_file(file_id, :full) do
     file_id
     |> build_file_common()
     |> Map.put(:id, to_string(file_id))
   end
-  defp build_file(file_id, :partial),
-    do: build_file_common(file_id)
 
   docp """
   It's possible that a file related to a process has been deleted and the
@@ -160,6 +171,8 @@ defmodule Helix.Process.Public.View.Process.Helper do
 
   @spec get_target_ip(Process.t) ::
     String.t
+  defp get_target_ip(%Process{network_id: nil}),
+    do: "localhost"
   defp get_target_ip(process = %Process{}) do
     case CacheQuery.from_server_get_nips(process.target_id) do
       {:ok, nips} ->
